@@ -7,14 +7,16 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <header>
     <div class="header-inner">
-      <h1>&#127944; Football Card Sales Tracker</h1>
-      <p>Search recent eBay sold listings for football trading cards</p>
+      <h1>🏈 Football Card Sales Tracker</h1>
+      <p>Search recent eBay sold listings for any football trading card</p>
     </div>
   </header>
 
   <main>
+    <!-- Search -->
     <section class="search-section">
       <form id="search-form">
         <input
@@ -24,13 +26,15 @@
           autocomplete="off"
           required
         />
-        <button type="submit" id="search-btn">Search</button>
+        <button type="submit" id="search-btn">🔍 Search</button>
       </form>
+      <p class="search-hint">Type any player name, year, set, or grade — then hit Search</p>
       <div id="search-meta" class="search-meta hidden"></div>
     </section>
 
-    <section id="suggestions-section" class="suggestions-section">
-      <p class="suggestions-label">Popular searches</p>
+    <!-- Quick picks -->
+    <section class="suggestions-section" id="suggestions-section">
+      <p class="suggestions-label">Quick picks</p>
       <div class="suggestions-chips">
         <button class="chip" data-query="Patrick Mahomes Prizm">Mahomes</button>
         <button class="chip" data-query="Tom Brady Rookie">Brady RC</button>
@@ -43,6 +47,7 @@
       </div>
     </section>
 
+    <!-- Results -->
     <section id="results-section">
       <div id="chart-section" class="chart-section hidden">
         <h2 class="chart-title">Price Trend — Recent Sales</h2>
@@ -50,17 +55,19 @@
           <canvas id="price-chart"></canvas>
         </div>
       </div>
+
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
-        <span>Searching eBay sold listings...</span>
+        <span>Searching sold listings…</span>
       </div>
+
       <div id="error-message" class="error-message hidden"></div>
       <div id="results-grid" class="results-grid"></div>
     </section>
   </main>
 
   <footer>
-    <p>Sales data sourced from eBay &bull; Results show recently sold listings &bull; Prices in USD</p>
+    <p>Demo mode — showing realistic sample data &bull; <a href="https://www.ebay.com/sch/i.html?_nkw=football+card&LH_Sold=1" target="_blank" rel="noopener">Browse real sales on eBay ↗</a></p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

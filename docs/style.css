@@ -109,6 +109,13 @@ main {
   transform: none;
 }
 
+.search-hint {
+  text-align: center;
+  color: #4a5568;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+}
+
 .search-meta {
   text-align: center;
   color: #8d99ae;
@@ -343,6 +350,15 @@ footer {
   color: #4a5568;
   font-size: 0.8rem;
   border-top: 1px solid #1a202c;
+}
+
+footer a {
+  color: #52b788;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
 }
 
 /* ---- Suggestions ---- */
