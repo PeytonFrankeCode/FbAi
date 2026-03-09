@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Football Card Sales Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>&#127944; Football Card Sales Tracker</h1>
+      <p>Search recent eBay sold listings for football trading cards</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-section">
+      <form id="search-form">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="e.g. Patrick Mahomes 2020 Prizm PSA 10"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" id="search-btn">Search</button>
+      </form>
+      <div id="search-meta" class="search-meta hidden"></div>
+    </section>
+
+    <section id="results-section">
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Searching eBay sold listings...</span>
+      </div>
+      <div id="error-message" class="error-message hidden"></div>
+      <div id="results-grid" class="results-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Sales data sourced from eBay &bull; Results show recently sold listings &bull; Prices in USD</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
