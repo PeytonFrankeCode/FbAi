@@ -2,13 +2,22 @@ const form = document.getElementById('search-form');
 const input = document.getElementById('search-input');
 const btn = document.getElementById('search-btn');
 const loading = document.getElementById('loading');
+const loadingText = loading.querySelector('span');
 const errorMsg = document.getElementById('error-message');
 const grid = document.getElementById('results-grid');
 const meta = document.getElementById('search-meta');
 const suggestionsSection = document.getElementById('suggestions-section');
 const chartSection = document.getElementById('chart-section');
 const chartCanvas = document.getElementById('price-chart');
+const variantsSection = document.getElementById('variants-section');
+const variantsGrid = document.getElementById('variants-grid');
+const variantsTitle = document.getElementById('variants-title');
+const backBtn = document.getElementById('back-btn');
 let priceChart = null;
+
+// State
+let cachedVariants = null;
+let currentVariantQuery = '';
 
 // ---- Form submit ----
 form.addEventListener('submit', async (e) => {
@@ -16,7 +25,7 @@ form.addEventListener('submit', async (e) => {
   const query = input.value.trim();
   if (!query) return;
   suggestionsSection.classList.add('hidden');
-  await performSearch(query);
+  await fetchVariants(query);
 });
 
 // ---- Suggestion chips ----
@@ -25,11 +34,125 @@ document.querySelectorAll('.chip').forEach(chip => {
     const query = chip.dataset.query;
     input.value = query;
     suggestionsSection.classList.add('hidden');
-    performSearch(query);
+    fetchVariants(query);
   });
 });
 
-// ---- Search ----
+// ---- Back button ----
+backBtn.addEventListener('click', goBackToVariants);
+
+// ---- Fetch Variants (Stage 1) ----
+async function fetchVariants(query) {
+  currentVariantQuery = query;
+  cachedVariants = null;
+
+  // Reset UI
+  variantsSection.classList.add('hidden');
+  backBtn.classList.add('hidden');
+  grid.innerHTML = '';
+  meta.classList.add('hidden');
+  chartSection.classList.add('hidden');
+  errorMsg.classList.add('hidden');
+  if (priceChart) { priceChart.destroy(); priceChart = null; }
+
+  loadingText.textContent = 'Finding card variants...';
+  setLoading(true);
+
+  try {
+    const params = new URLSearchParams({ q: query });
+    const response = await fetch(`/api/variants?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Server error ${response.status}`);
+    }
+
+    cachedVariants = data.variants;
+    displayVariants(data.variants, query, data.mock);
+
+  } catch (err) {
+    errorMsg.textContent = `Error: ${err.message}`;
+    errorMsg.classList.remove('hidden');
+  } finally {
+    setLoading(false);
+    loadingText.textContent = 'Searching eBay sold listings...';
+  }
+}
+
+// ---- Display Variants ----
+function displayVariants(variants, query, mock) {
+  variantsGrid.innerHTML = '';
+
+  const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
+  variantsTitle.innerHTML = `Results for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
+
+  if (variants.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'no-results';
+    empty.textContent = 'No card variants found. Try a broader search term.';
+    variantsGrid.appendChild(empty);
+  } else {
+    variants.forEach(v => variantsGrid.appendChild(buildVariantCard(v)));
+  }
+
+  variantsSection.classList.remove('hidden');
+}
+
+// ---- Build Variant Card Tile ----
+function buildVariantCard(variant) {
+  const card = document.createElement('div');
+  card.className = 'variant-card';
+
+  const imageHtml = variant.imageUrl
+    ? `<img src="${escHtml(variant.imageUrl)}" alt="${escHtml(variant.displayName)}" loading="lazy" />`
+    : `<div class="variant-no-image"><span>&#127944;</span></div>`;
+
+  const priceRange = variant.priceRange
+    ? `<span class="variant-price-range">$${variant.priceRange.min.toFixed(0)} – $${variant.priceRange.max.toFixed(0)}</span>`
+    : '';
+
+  card.innerHTML = `
+    <div class="variant-card-image">${imageHtml}</div>
+    <div class="variant-card-body">
+      <p class="variant-name">${escHtml(variant.displayName)}</p>
+      <p class="variant-avg-price">Avg $${variant.avgPrice.toFixed(2)}</p>
+      <div class="variant-footer">
+        <span class="variant-sales-count">${variant.salesCount} sales</span>
+        ${priceRange}
+      </div>
+    </div>
+  `;
+
+  card.addEventListener('click', () => selectVariant(variant));
+  return card;
+}
+
+// ---- Select a Variant (Stage 2) ----
+function selectVariant(variant) {
+  variantsSection.classList.add('hidden');
+  backBtn.classList.remove('hidden');
+  input.value = variant.displayName;
+  performSearch(variant.searchQuery);
+}
+
+// ---- Go Back to Variants ----
+function goBackToVariants() {
+  backBtn.classList.add('hidden');
+  grid.innerHTML = '';
+  meta.classList.add('hidden');
+  chartSection.classList.add('hidden');
+  errorMsg.classList.add('hidden');
+  if (priceChart) { priceChart.destroy(); priceChart = null; }
+  input.value = currentVariantQuery;
+
+  if (cachedVariants) {
+    displayVariants(cachedVariants, currentVariantQuery, false);
+  } else {
+    fetchVariants(currentVariantQuery);
+  }
+}
+
+// ---- Search (fetch individual sales for a specific variant) ----
 async function performSearch(query) {
   setLoading(true);
   grid.innerHTML = '';
@@ -208,7 +331,7 @@ function getTeamColor(title) {
   return '#52b788';
 }
 
-// ---- Build Card ----
+// ---- Build Sale Card ----
 function buildCard(item) {
   const card = document.createElement('div');
   card.className = 'card';
