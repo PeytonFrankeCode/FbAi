@@ -18,13 +18,59 @@ body {
 header {
   background: linear-gradient(135deg, #1a1f2e 0%, #16213e 100%);
   border-bottom: 2px solid #2d6a4f;
-  padding: 2.5rem 1.5rem;
-  text-align: center;
+  padding: 1.5rem 2rem;
 }
 
 .header-inner {
-  max-width: 800px;
+  max-width: 1300px;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-text {
+  text-align: left;
+}
+
+/* ---- Watchlist Button ---- */
+.watchlist-btn {
+  background: transparent;
+  border: 2px solid #2d6a4f;
+  color: #74c69d;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.watchlist-btn:hover {
+  background: #2d6a4f;
+  color: #d8f3dc;
+  border-color: #52b788;
+}
+
+.wl-count {
+  background: #52b788;
+  color: #0f1117;
+  font-size: 0.75rem;
+  font-weight: 900;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.3rem;
 }
 
 header h1 {
@@ -526,6 +572,159 @@ footer a:hover {
   overflow: hidden;
 }
 
+/* ---- Recent Searches ---- */
+.recent-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  max-width: 700px;
+  margin: 0.6rem auto 0;
+}
+
+.recent-label {
+  font-size: 0.75rem;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.recent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip-sm {
+  font-size: 0.75rem !important;
+  padding: 0.3rem 0.75rem !important;
+}
+
+/* ---- Filter Bar ---- */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  background: #1a202c;
+  border: 1px solid #2d3748;
+  border-radius: 10px;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.8rem;
+  color: #8d99ae;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.filter-group select {
+  background: #0f1117;
+  color: #e8eaf0;
+  border: 1px solid #2d3748;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #52b788;
+}
+
+.filter-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: #4a5568;
+}
+
+/* ---- Bookmark Button ---- */
+.bookmark-btn {
+  position: absolute;
+  top: 12px;
+  left: 10px;
+  z-index: 3;
+  background: rgba(15, 17, 23, 0.75);
+  border: 1px solid #2d3748;
+  color: #8d99ae;
+  font-size: 1rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+  line-height: 1;
+}
+
+.bookmark-btn:hover {
+  background: rgba(82, 183, 136, 0.15);
+  color: #52b788;
+  border-color: #52b788;
+  transform: scale(1.15);
+}
+
+.bookmark-btn.saved {
+  color: #f6ad55;
+  border-color: #f6ad55;
+  background: rgba(246, 173, 85, 0.1);
+}
+
+.bookmark-btn.remove-btn {
+  width: auto;
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  color: #fc8181;
+  border-color: #c53030;
+  background: rgba(197, 48, 48, 0.1);
+}
+
+.bookmark-btn.remove-btn:hover {
+  background: rgba(197, 48, 48, 0.25);
+  color: #feb2b2;
+  border-color: #fc8181;
+  transform: none;
+}
+
+/* ---- Watchlist Panel ---- */
+.watchlist-panel {
+  max-width: 1300px;
+  margin: 0 auto 2rem;
+  width: 100%;
+  padding: 0 1.5rem;
+}
+
+.wl-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f6ad55;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #2d3748;
+}
+
+.wl-empty {
+  color: #4a5568;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2.5rem 0;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   #search-form {
@@ -540,6 +739,15 @@ footer a:hover {
     font-size: 1.4rem;
   }
 
+  .header-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .header-text {
+    text-align: center;
+  }
+
   .stats-bar {
     gap: 1rem;
   }
@@ -550,5 +758,9 @@ footer a:hover {
 
   .chart-wrap {
     height: 160px;
+  }
+
+  .filter-bar {
+    gap: 1rem;
   }
 }
