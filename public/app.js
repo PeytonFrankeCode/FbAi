@@ -132,6 +132,7 @@ function selectVariant(variant) {
   variantsSection.classList.add('hidden');
   backBtn.classList.remove('hidden');
   input.value = variant.displayName;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   performSearch(variant.searchQuery);
 }
 
