@@ -29,7 +29,27 @@
       <div id="search-meta" class="search-meta hidden"></div>
     </section>
 
+    <section id="suggestions-section" class="suggestions-section">
+      <p class="suggestions-label">Popular searches</p>
+      <div class="suggestions-chips">
+        <button class="chip" data-query="Patrick Mahomes Prizm">Mahomes</button>
+        <button class="chip" data-query="Tom Brady Rookie">Brady RC</button>
+        <button class="chip" data-query="Justin Jefferson Prizm PSA 10">J. Jefferson</button>
+        <button class="chip" data-query="Josh Allen Prizm">Josh Allen</button>
+        <button class="chip" data-query="Ja'Marr Chase Rookie">Ja'Marr Chase</button>
+        <button class="chip" data-query="CeeDee Lamb Prizm">CeeDee Lamb</button>
+        <button class="chip" data-query="Lamar Jackson Prizm">Lamar Jackson</button>
+        <button class="chip" data-query="Joe Burrow Rookie PSA">Joe Burrow</button>
+      </div>
+    </section>
+
     <section id="results-section">
+      <div id="chart-section" class="chart-section hidden">
+        <h2 class="chart-title">Price Trend — Recent Sales</h2>
+        <div class="chart-wrap">
+          <canvas id="price-chart"></canvas>
+        </div>
+      </div>
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
         <span>Searching eBay sold listings...</span>
@@ -43,6 +63,7 @@
     <p>Sales data sourced from eBay &bull; Results show recently sold listings &bull; Prices in USD</p>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -345,6 +345,171 @@ footer {
   border-top: 1px solid #1a202c;
 }
 
+/* ---- Suggestions ---- */
+.suggestions-section {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.suggestions-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a5568;
+  margin-bottom: 0.75rem;
+}
+
+.suggestions-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.chip {
+  background: #1a202c;
+  border: 1px solid #2d6a4f;
+  color: #74c69d;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: #2d6a4f;
+  color: #d8f3dc;
+  border-color: #52b788;
+  transform: translateY(-2px);
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+/* ---- Price Chart ---- */
+.chart-section {
+  margin-bottom: 2rem;
+  background: #1a202c;
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 1.5rem;
+  grid-column: 1 / -1;
+}
+
+.chart-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #8d99ae;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1.25rem;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 220px;
+}
+
+/* ---- Trading Card Redesign ---- */
+.card {
+  background: linear-gradient(160deg, #1e2535 0%, #141925 100%);
+  border: 1px solid #2d3748;
+  border-radius: 14px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  aspect-ratio: 2.5 / 3.5;
+  cursor: pointer;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 15px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(82, 183, 136, 0) 40%,
+    rgba(82, 183, 136, 0) 60%,
+    transparent 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card:hover::before {
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(82, 183, 136, 0.6) 35%,
+    rgba(116, 198, 157, 0.9) 50%,
+    rgba(154, 230, 180, 0.6) 65%,
+    transparent 100%
+  );
+  opacity: 1;
+}
+
+.card:hover {
+  transform: translateY(-8px) rotate(1deg);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(82, 183, 136, 0.4),
+    0 0 30px rgba(82, 183, 136, 0.2);
+}
+
+.card-accent {
+  height: 5px;
+  width: 100%;
+  border-radius: 14px 14px 0 0;
+  background: var(--team-color, #52b788);
+  flex-shrink: 0;
+}
+
+.sold-badge {
+  position: absolute;
+  top: 14px;
+  right: -6px;
+  background: #c53030;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px 0 0 4px;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+.sold-badge::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -5px;
+  border-top: 5px solid #7b1c1c;
+  border-right: 6px solid transparent;
+}
+
+.card-image-wrap {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   #search-form {
@@ -361,5 +526,13 @@ footer {
 
   .stats-bar {
     gap: 1rem;
+  }
+
+  .card {
+    aspect-ratio: auto;
+  }
+
+  .chart-wrap {
+    height: 160px;
   }
 }
