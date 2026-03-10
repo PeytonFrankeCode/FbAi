@@ -7,6 +7,10 @@ services:
     envVars:
       - key: EBAY_APP_ID
         value: PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8
+      - key: EBAY_CERT_ID
+        sync: false
+      - key: EBAY_API_MODE
+        value: finding
       - key: USE_MOCK_DATA
         value: false
       - key: AUTH_CODE

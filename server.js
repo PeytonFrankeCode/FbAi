@@ -7,9 +7,13 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
+const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for OAuth (Marketplace Insights)
 const AUTH_CODE = process.env.AUTH_CODE;
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
+
+// Which eBay API to use: 'finding' (legacy) or 'insights' (Marketplace Insights)
+const EBAY_API_MODE = process.env.EBAY_API_MODE || 'finding';
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -36,8 +40,112 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// ---- Shared eBay fetch function ----
-async function fetchEbaySoldItems(keywords, limit = 20) {
+// ---- In-memory cache (30 min TTL) to reduce eBay API calls ----
+const ebayCache = new Map();
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+function getCached(key) {
+  const entry = ebayCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) {
+    ebayCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  ebayCache.set(key, { data, ts: Date.now() });
+  if (ebayCache.size > 200) {
+    const oldest = ebayCache.keys().next().value;
+    ebayCache.delete(oldest);
+  }
+}
+
+// ---- OAuth token management for Marketplace Insights API ----
+let oauthToken = null;
+let oauthExpiry = 0;
+
+async function getOAuthToken() {
+  if (oauthToken && Date.now() < oauthExpiry) return oauthToken;
+  if (!EBAY_APP_ID || !EBAY_CERT_ID) {
+    throw new Error('EBAY_APP_ID and EBAY_CERT_ID required for Marketplace Insights API');
+  }
+  const credentials = Buffer.from(`${EBAY_APP_ID}:${EBAY_CERT_ID}`).toString('base64');
+  const res = await axios.post(
+    'https://api.ebay.com/identity/v1/oauth2/token',
+    'grant_type=client_credentials&scope=https://api.ebay.com/oauth/api_scope',
+    {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${credentials}`,
+      },
+      timeout: 10000,
+    }
+  );
+  oauthToken = res.data.access_token;
+  // Expire 5 min early to be safe
+  oauthExpiry = Date.now() + (res.data.expires_in - 300) * 1000;
+  console.log('eBay OAuth token refreshed');
+  return oauthToken;
+}
+
+// ---- Rate limit aware retry helper ----
+async function withRetry(fn, maxRetries = 2) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isRateLimit = err.response?.status === 500 &&
+        JSON.stringify(err.response?.data || '').includes('RateLimiter');
+      if (isRateLimit && attempt < maxRetries) {
+        const delay = (attempt + 1) * 3000; // 3s, 6s
+        console.log(`Rate limited, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+// ---- Marketplace Insights API (sold items) ----
+async function fetchViaInsightsAPI(keywords, limit) {
+  const token = await getOAuthToken();
+  const res = await axios.get(
+    'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
+    {
+      params: {
+        q: keywords,
+        category_ids: '261328',
+        limit,
+        sort: '-endDate',
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+      },
+      timeout: 15000,
+    }
+  );
+
+  const items = res.data?.itemSales || [];
+  const results = items.map(item => ({
+    itemId: item.itemId || '',
+    title: item.title || '',
+    price: item.lastSoldPrice?.value || '0',
+    currency: item.lastSoldPrice?.currency || 'USD',
+    soldDate: item.lastSoldDate || '',
+    imageUrl: item.image?.imageUrl || null,
+    itemUrl: item.itemWebUrl || '',
+    condition: item.condition || 'Unknown',
+  }));
+
+  return { results, total: res.data?.total || results.length };
+}
+
+// ---- Finding API (legacy, sold items) ----
+async function fetchViaFindingAPI(keywords, limit) {
   let ebayResponse;
   try {
     ebayResponse = await axios.get(
@@ -62,7 +170,6 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
       }
     );
   } catch (axiosErr) {
-    // Log the actual response body from eBay for debugging
     if (axiosErr.response) {
       console.error(`eBay HTTP ${axiosErr.response.status}:`, JSON.stringify(axiosErr.response.data).slice(0, 500));
     }
@@ -93,6 +200,21 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
   }));
 
   return { results, total: parseInt(searchResult?.['@count'] || '0') };
+}
+
+// ---- Shared fetch function (routes to correct API + cache + retry) ----
+async function fetchEbaySoldItems(keywords, limit = 20) {
+  const cacheKey = `${keywords}|${limit}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const fetchFn = EBAY_API_MODE === 'insights'
+    ? () => fetchViaInsightsAPI(keywords, limit)
+    : () => fetchViaFindingAPI(keywords, limit);
+
+  const response = await withRetry(fetchFn);
+  setCache(cacheKey, response);
+  return response;
 }
 
 app.get('/api/search', requireAuth, async (req, res) => {
@@ -364,20 +486,11 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA (add EBAY_APP_ID to .env for live data)' : 'LIVE API'}`);
-  // Quick API health check on startup
-  if (!USE_MOCK) {
-    try {
-      const test = await fetchEbaySoldItems('football card', 1);
-      console.log(`eBay API health check: OK (${test.total} total results)`);
-    } catch (err) {
-      console.error(`eBay API health check FAILED: ${err.message}`);
-      if (err.response) {
-        console.error(`  Status: ${err.response.status}, Body: ${JSON.stringify(err.response.data).slice(0, 300)}`);
-      }
-    }
+  console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
+  if (EBAY_API_MODE === 'insights' && !EBAY_CERT_ID) {
+    console.warn('WARNING: EBAY_API_MODE is "insights" but EBAY_CERT_ID is not set. Requests will fail.');
   }
 });
 
