@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: fb-card-tracker
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: EBAY_APP_ID
+        value: PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8
+      - key: USE_MOCK_DATA
+        value: false
+      - key: AUTH_CODE
+        sync: false
