@@ -216,7 +216,7 @@ app.get('/api/ebay/account-deletion', (req, res) => {
   if (!challengeCode) {
     return res.status(400).json({ error: 'Missing challenge_code' });
   }
-  const endpointUrl = 'https://fb-card-tracker.onrender.com/api/ebay/account-deletion';
+  const endpointUrl = 'https://theaifbtracker.onrender.com/api/ebay/account-deletion';
   const hash = crypto.createHash('sha256')
     .update(challengeCode + EBAY_VERIFICATION_TOKEN + endpointUrl)
     .digest('hex');
