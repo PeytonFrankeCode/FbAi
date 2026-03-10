@@ -11,3 +11,5 @@ services:
         value: false
       - key: AUTH_CODE
         sync: false
+      - key: EBAY_VERIFICATION_TOKEN
+        sync: false

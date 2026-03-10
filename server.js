@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const AUTH_CODE = process.env.AUTH_CODE;
+const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
 app.use(express.json());
@@ -207,6 +208,24 @@ app.get('/api/variants', requireAuth, async (req, res) => {
     const status = err.response?.status || 500;
     res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: err.message });
   }
+});
+
+// ---- eBay Marketplace Account Deletion compliance ----
+app.get('/api/ebay/account-deletion', (req, res) => {
+  const challengeCode = req.query.challenge_code;
+  if (!challengeCode) {
+    return res.status(400).json({ error: 'Missing challenge_code' });
+  }
+  const endpointUrl = 'https://fb-card-tracker.onrender.com/api/ebay/account-deletion';
+  const hash = crypto.createHash('sha256')
+    .update(challengeCode + EBAY_VERIFICATION_TOKEN + endpointUrl)
+    .digest('hex');
+  res.json({ challengeResponse: hash });
+});
+
+app.post('/api/ebay/account-deletion', (req, res) => {
+  // Acknowledge account deletion notifications (no user data stored)
+  res.sendStatus(200);
 });
 
 app.get('*', (req, res) => {
