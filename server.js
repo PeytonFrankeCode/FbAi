@@ -36,8 +36,34 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// ---- Simple in-memory cache (5 min TTL) to reduce eBay API calls ----
+const ebayCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCached(key) {
+  const entry = ebayCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) {
+    ebayCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  ebayCache.set(key, { data, ts: Date.now() });
+  // Evict old entries if cache grows too large
+  if (ebayCache.size > 100) {
+    const oldest = ebayCache.keys().next().value;
+    ebayCache.delete(oldest);
+  }
+}
+
 // ---- Shared eBay fetch function ----
 async function fetchEbaySoldItems(keywords, limit = 20) {
+  const cacheKey = `${keywords}|${limit}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
   let ebayResponse;
   try {
     ebayResponse = await axios.get(
@@ -92,7 +118,9 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
     condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
   }));
 
-  return { results, total: parseInt(searchResult?.['@count'] || '0') };
+  const response = { results, total: parseInt(searchResult?.['@count'] || '0') };
+  setCache(cacheKey, response);
+  return response;
 }
 
 app.get('/api/search', requireAuth, async (req, res) => {
@@ -364,21 +392,9 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA (add EBAY_APP_ID to .env for live data)' : 'LIVE API'}`);
-  // Quick API health check on startup
-  if (!USE_MOCK) {
-    try {
-      const test = await fetchEbaySoldItems('football card', 1);
-      console.log(`eBay API health check: OK (${test.total} total results)`);
-    } catch (err) {
-      console.error(`eBay API health check FAILED: ${err.message}`);
-      if (err.response) {
-        console.error(`  Status: ${err.response.status}, Body: ${JSON.stringify(err.response.data).slice(0, 300)}`);
-      }
-    }
-  }
 });
 
 function getMockVariants(query) {
