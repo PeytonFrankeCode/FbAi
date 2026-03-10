@@ -117,7 +117,8 @@ async function fetchVariants(query) {
 
     if (response.status === 401) { showLogin(); return; }
     if (!response.ok) {
-      throw new Error(data.error || `Server error ${response.status}`);
+      const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
+      throw new Error(msg);
     }
 
     cachedVariants = data.variants;
@@ -227,7 +228,8 @@ async function performSearch(query) {
 
     if (response.status === 401) { showLogin(); return; }
     if (!response.ok) {
-      throw new Error(data.error || `Server error ${response.status}`);
+      const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
+      throw new Error(msg);
     }
 
     const { results, mock } = data;

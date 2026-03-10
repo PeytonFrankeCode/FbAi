@@ -72,6 +72,15 @@ app.get('/api/search', requireAuth, async (req, res) => {
     );
 
     const raw = ebayResponse.data;
+
+    // Check for eBay-level errors (HTTP 200 but ack: Failure)
+    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
+    if (ack === 'Failure') {
+      const ebayError = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0] || 'eBay API returned a failure response';
+      console.error('eBay search ack failure:', ebayError);
+      return res.status(502).json({ error: 'eBay API error', detail: ebayError });
+    }
+
     const searchResult = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0];
     const items = searchResult?.item || [];
 
@@ -157,6 +166,15 @@ app.get('/api/variants', requireAuth, async (req, res) => {
     );
 
     const raw = ebayResponse.data;
+
+    // Check for eBay-level errors (HTTP 200 but ack: Failure)
+    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
+    if (ack === 'Failure') {
+      const ebayError = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0] || 'eBay API returned a failure response';
+      console.error('eBay variants ack failure:', ebayError);
+      return res.status(502).json({ error: 'eBay API error', detail: ebayError });
+    }
+
     const items = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item || [];
 
     const variantMap = {};
