@@ -63,11 +63,30 @@ const variantsSection = document.getElementById('variants-section');
 const variantsGrid = document.getElementById('variants-grid');
 const variantsTitle = document.getElementById('variants-title');
 const backBtn = document.getElementById('back-btn');
+const approxSection = document.getElementById('approx-section');
 let priceChart = null;
 
 // State
 let cachedVariants = null;
 let currentVariantQuery = '';
+let currentSearchMode = 'variants'; // 'variants' or 'direct'
+
+// ---- Known sets/parallels for client-side detection ----
+const CLIENT_KNOWN_SETS = ['Prizm', 'Select', 'Mosaic', 'Optic', 'Donruss', 'Bowman', 'Topps', 'Chronicles',
+  'Contenders', 'Score', 'Immaculate', 'Spectra', 'Fleer', 'Hoops', 'Revolution', 'Absolute',
+  'Certified', 'Playoff', 'National Treasures'];
+const CLIENT_KNOWN_PARALLELS = ['Silver', 'Gold', 'Blue', 'Green', 'Red', 'Purple', 'Orange', 'Pink',
+  'Holo', 'Shimmer', 'Hyper', 'Concourse', 'Rainbow', 'Scope', 'Disco', 'Neon', 'Wave', 'Camo',
+  'Tie-Dye', 'Black', 'White', 'Aqua', 'Teal', 'Emerald', 'Ruby', 'Sapphire', 'Copper'];
+
+function isDirectCardSearch(query) {
+  const lower = query.toLowerCase();
+  let matches = 0;
+  if (/\b(201[5-9]|202[0-9])\b/.test(query)) matches++;
+  if (CLIENT_KNOWN_SETS.some(s => lower.includes(s.toLowerCase()))) matches++;
+  if (CLIENT_KNOWN_PARALLELS.some(p => lower.includes(p.toLowerCase()))) matches++;
+  return matches >= 2;
+}
 
 // ---- Form submit ----
 form.addEventListener('submit', async (e) => {
@@ -75,7 +94,11 @@ form.addEventListener('submit', async (e) => {
   const query = input.value.trim();
   if (!query) return;
   suggestionsSection.classList.add('hidden');
-  await fetchVariants(query);
+  if (isDirectCardSearch(query)) {
+    await fetchDirectSearch(query);
+  } else {
+    await fetchVariants(query);
+  }
 });
 
 // ---- Suggestion chips ----
@@ -93,6 +116,7 @@ backBtn.addEventListener('click', goBackToVariants);
 
 // ---- Fetch Variants (Stage 1) ----
 async function fetchVariants(query) {
+  currentSearchMode = 'variants';
   currentVariantQuery = query;
   cachedVariants = null;
 
@@ -190,21 +214,138 @@ function selectVariant(variant) {
   performSearch(variant.searchQuery);
 }
 
-// ---- Go Back to Variants ----
+// ---- Go Back ----
 function goBackToVariants() {
   backBtn.classList.add('hidden');
+  approxSection.classList.add('hidden');
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
   errorMsg.classList.add('hidden');
   if (priceChart) { priceChart.destroy(); priceChart = null; }
-  input.value = currentVariantQuery;
 
+  if (currentSearchMode === 'direct') {
+    // Return to search home
+    currentSearchMode = 'variants';
+    input.value = '';
+    suggestionsSection.classList.remove('hidden');
+    return;
+  }
+
+  input.value = currentVariantQuery;
   if (cachedVariants) {
     displayVariants(cachedVariants, currentVariantQuery, false);
   } else {
     fetchVariants(currentVariantQuery);
   }
+}
+
+// ---- Direct Card Search (Stage: direct) ----
+async function fetchDirectSearch(query) {
+  currentSearchMode = 'direct';
+
+  // Reset UI
+  variantsSection.classList.add('hidden');
+  backBtn.classList.add('hidden');
+  approxSection.classList.add('hidden');
+  grid.innerHTML = '';
+  meta.classList.add('hidden');
+  chartSection.classList.add('hidden');
+  errorMsg.classList.add('hidden');
+  if (priceChart) { priceChart.destroy(); priceChart = null; }
+
+  loadingText.textContent = 'Searching eBay sold listings...';
+  setLoading(true);
+
+  try {
+    const params = new URLSearchParams({ q: query });
+    const response = await fetch(`/api/direct-search?${params}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    });
+    const data = await response.json();
+
+    if (response.status === 401) { showLogin(); return; }
+    if (!response.ok) {
+      const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
+      throw new Error(msg);
+    }
+
+    const { results, mock, searchType, approximateValue } = data;
+
+    // Show approximate value section if broadened
+    if (searchType === 'broadened' && approximateValue) {
+      buildApproxValueSection(approximateValue, query);
+      approxSection.classList.remove('hidden');
+    }
+
+    // Stats bar
+    if (results.length > 0) {
+      const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+      const minP = Math.min(...prices);
+      const maxP = Math.max(...prices);
+
+      const statsEl = document.createElement('div');
+      statsEl.className = 'stats-bar';
+      statsEl.innerHTML = `
+        <div class="stat-item">
+          <span class="stat-label">Results</span>
+          <span class="stat-value">${results.length}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Avg Sale</span>
+          <span class="stat-value">$${avg.toFixed(2)}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Low</span>
+          <span class="stat-value">$${minP.toFixed(2)}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">High</span>
+          <span class="stat-value">$${maxP.toFixed(2)}</span>
+        </div>
+      `;
+      grid.appendChild(statsEl);
+    }
+
+    const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
+    const typeLabel = searchType === 'broadened' ? ' (similar cards)' : '';
+    meta.innerHTML = `${results.length} sold listing${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}`;
+    meta.classList.remove('hidden');
+
+    if (results.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'no-results';
+      empty.textContent = 'No sold listings found. Try a broader search term.';
+      grid.appendChild(empty);
+    } else {
+      results.forEach(item => grid.appendChild(buildCard(item)));
+      updatePriceChart(results);
+    }
+
+    backBtn.classList.remove('hidden');
+
+  } catch (err) {
+    errorMsg.textContent = `Error: ${err.message}`;
+    errorMsg.classList.remove('hidden');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ---- Approximate Value Section ----
+function buildApproxValueSection(approx, originalQuery) {
+  approxSection.innerHTML = `
+    <div class="approx-badge">APPROXIMATE VALUE</div>
+    <div class="approx-note">No exact sales found for "${escHtml(originalQuery)}"</div>
+    <div class="approx-price">~$${approx.medianPrice.toFixed(2)}</div>
+    <div class="approx-details">
+      <span>Avg: $${approx.avgPrice.toFixed(2)}</span>
+      <span>Range: $${approx.priceRange.min.toFixed(0)} – $${approx.priceRange.max.toFixed(0)}</span>
+      <span>Based on ${approx.sampleSize} sale${approx.sampleSize !== 1 ? 's' : ''}</span>
+    </div>
+    <div class="approx-source">Estimated from: ${escHtml(approx.basedOn)}</div>
+  `;
 }
 
 // ---- Search (fetch individual sales for a specific variant) ----
