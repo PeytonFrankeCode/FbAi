@@ -38,27 +38,36 @@ function requireAuth(req, res, next) {
 
 // ---- Shared eBay fetch function ----
 async function fetchEbaySoldItems(keywords, limit = 20) {
-  const ebayResponse = await axios.get(
-    'https://svcs.ebay.com/services/search/FindingService/v1',
-    {
-      params: {
-        'OPERATION-NAME': 'findCompletedItems',
-        'SERVICE-VERSION': '1.0.0',
-        'SECURITY-APPNAME': EBAY_APP_ID,
-        'RESPONSE-DATA-FORMAT': 'JSON',
-        'REST-PAYLOAD': '',
-        'keywords': keywords,
-        'categoryId': '261328',
-        'itemFilter(0).name': 'SoldItemsOnly',
-        'itemFilter(0).value': 'true',
-        'sortOrder': 'EndTimeSoonest',
-        'paginationInput.entriesPerPage': limit,
-        'outputSelector(0)': 'PictureURLLarge',
-        'outputSelector(1)': 'GalleryInfo',
-      },
-      timeout: 10000,
+  let ebayResponse;
+  try {
+    ebayResponse = await axios.get(
+      'https://svcs.ebay.com/services/search/FindingService/v1',
+      {
+        params: {
+          'OPERATION-NAME': 'findCompletedItems',
+          'SERVICE-VERSION': '1.0.0',
+          'SECURITY-APPNAME': EBAY_APP_ID,
+          'RESPONSE-DATA-FORMAT': 'JSON',
+          'REST-PAYLOAD': '',
+          'keywords': keywords,
+          'categoryId': '261328',
+          'itemFilter(0).name': 'SoldItemsOnly',
+          'itemFilter(0).value': 'true',
+          'sortOrder': 'EndTimeSoonest',
+          'paginationInput.entriesPerPage': limit,
+          'outputSelector(0)': 'PictureURLLarge',
+          'outputSelector(1)': 'GalleryInfo',
+        },
+        timeout: 15000,
+      }
+    );
+  } catch (axiosErr) {
+    // Log the actual response body from eBay for debugging
+    if (axiosErr.response) {
+      console.error(`eBay HTTP ${axiosErr.response.status}:`, JSON.stringify(axiosErr.response.data).slice(0, 500));
     }
-  );
+    throw axiosErr;
+  }
 
   const raw = ebayResponse.data;
   const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
@@ -107,8 +116,9 @@ app.get('/api/search', requireAuth, async (req, res) => {
       return res.status(502).json({ error: 'eBay API error', detail: err.message });
     }
     console.error('eBay API error:', err.message);
+    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
     const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to fetch from eBay', detail: err.message });
+    res.status(status).json({ error: 'Failed to fetch from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
   }
 });
 
@@ -257,8 +267,9 @@ app.get('/api/direct-search', requireAuth, async (req, res) => {
       return res.status(502).json({ error: 'eBay API error', detail: err.message });
     }
     console.error('eBay direct-search error:', err.message);
+    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
     const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to fetch from eBay', detail: err.message });
+    res.status(status).json({ error: 'Failed to fetch from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
   }
 });
 
@@ -325,8 +336,9 @@ app.get('/api/variants', requireAuth, async (req, res) => {
       return res.status(502).json({ error: 'eBay API error', detail: err.message });
     }
     console.error('eBay variants API error:', err.message);
+    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
     const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: err.message });
+    res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
   }
 });
 
@@ -352,9 +364,21 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA (add EBAY_APP_ID to .env for live data)' : 'LIVE API'}`);
+  // Quick API health check on startup
+  if (!USE_MOCK) {
+    try {
+      const test = await fetchEbaySoldItems('football card', 1);
+      console.log(`eBay API health check: OK (${test.total} total results)`);
+    } catch (err) {
+      console.error(`eBay API health check FAILED: ${err.message}`);
+      if (err.response) {
+        console.error(`  Status: ${err.response.status}, Body: ${JSON.stringify(err.response.data).slice(0, 300)}`);
+      }
+    }
+  }
 });
 
 function getMockVariants(query) {
