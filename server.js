@@ -144,6 +144,43 @@ async function fetchViaInsightsAPI(keywords, limit) {
   return { results, total: res.data?.total || results.length };
 }
 
+// ---- Browse API (sold/completed items) ----
+async function fetchViaBrowseAPI(keywords, limit) {
+  const token = await getOAuthToken();
+  const res = await axios.get(
+    'https://api.ebay.com/buy/browse/v1/item_summary/search',
+    {
+      params: {
+        q: keywords,
+        category_ids: '261328',
+        limit,
+        sort: '-endDate',
+        filter: 'buyingOptions:{FIXED_PRICE|AUCTION},conditions:{NEW|LIKE_NEW|VERY_GOOD|GOOD}',
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        'X-EBAY-C-ENDUSERCTX': 'affiliateCampaignId=<ePNCampaignId>,affiliateReferenceId=<referenceId>',
+      },
+      timeout: 15000,
+    }
+  );
+
+  const items = res.data?.itemSummaries || [];
+  const results = items.map(item => ({
+    itemId: item.itemId || '',
+    title: item.title || '',
+    price: item.price?.value || '0',
+    currency: item.price?.currency || 'USD',
+    soldDate: item.itemEndDate || '',
+    imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
+    itemUrl: item.itemWebUrl || '',
+    condition: item.condition || 'Unknown',
+  }));
+
+  return { results, total: res.data?.total || results.length };
+}
+
 // ---- Finding API (legacy, sold items) ----
 async function fetchViaFindingAPI(keywords, limit) {
   let ebayResponse;
@@ -210,6 +247,8 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
 
   const fetchFn = EBAY_API_MODE === 'insights'
     ? () => fetchViaInsightsAPI(keywords, limit)
+    : EBAY_API_MODE === 'browse'
+    ? () => fetchViaBrowseAPI(keywords, limit)
     : () => fetchViaFindingAPI(keywords, limit);
 
   const response = await withRetry(fetchFn);
