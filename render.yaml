@@ -10,7 +10,7 @@ services:
       - key: EBAY_CERT_ID
         sync: false
       - key: EBAY_API_MODE
-        value: finding
+        value: browse
       - key: USE_MOCK_DATA
         value: false
       - key: AUTH_CODE
