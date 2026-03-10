@@ -747,6 +747,63 @@ footer {
   color: #4a5568;
 }
 
+/* ---- Approximate Value Section ---- */
+.approx-value-section {
+  background: #1a202c;
+  border: 2px solid #d69e2e;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin: 0 auto 1.5rem;
+  max-width: 900px;
+  text-align: center;
+  position: relative;
+}
+
+.approx-value-section.hidden {
+  display: none;
+}
+
+.approx-badge {
+  display: inline-block;
+  background: #744210;
+  color: #f6ad55;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.approx-note {
+  color: #8d99ae;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.approx-price {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #f6ad55;
+  margin-bottom: 0.5rem;
+}
+
+.approx-details {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  color: #e8eaf0;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.approx-source {
+  color: #8d99ae;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   #search-form {

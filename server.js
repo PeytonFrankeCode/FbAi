@@ -36,6 +36,56 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// ---- Shared eBay fetch function ----
+async function fetchEbaySoldItems(keywords, limit = 20) {
+  const ebayResponse = await axios.get(
+    'https://svcs.ebay.com/services/search/FindingService/v1',
+    {
+      params: {
+        'OPERATION-NAME': 'findCompletedItems',
+        'SERVICE-VERSION': '1.0.0',
+        'SECURITY-APPNAME': EBAY_APP_ID,
+        'RESPONSE-DATA-FORMAT': 'JSON',
+        'REST-PAYLOAD': '',
+        'keywords': keywords,
+        'categoryId': '261328',
+        'itemFilter(0).name': 'SoldItemsOnly',
+        'itemFilter(0).value': 'true',
+        'sortOrder': 'EndTimeSoonest',
+        'paginationInput.entriesPerPage': limit,
+        'outputSelector(0)': 'PictureURLLarge',
+        'outputSelector(1)': 'GalleryInfo',
+      },
+      timeout: 10000,
+    }
+  );
+
+  const raw = ebayResponse.data;
+  const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
+  if (ack === 'Failure') {
+    const ebayError = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0] || 'eBay API returned a failure response';
+    const err = new Error(ebayError);
+    err.isEbayError = true;
+    throw err;
+  }
+
+  const searchResult = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0];
+  const items = searchResult?.item || [];
+
+  const results = items.map(item => ({
+    itemId: item.itemId?.[0],
+    title: item.title?.[0],
+    price: item.sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'],
+    currency: item.sellingStatus?.[0]?.currentPrice?.[0]?.['@currencyId'] || 'USD',
+    soldDate: item.listingInfo?.[0]?.endTime?.[0],
+    imageUrl: item.pictureURLLarge?.[0] || item.galleryURL?.[0] || null,
+    itemUrl: item.viewItemURL?.[0],
+    condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
+  }));
+
+  return { results, total: parseInt(searchResult?.['@count'] || '0') };
+}
+
 app.get('/api/search', requireAuth, async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
@@ -49,55 +99,13 @@ app.get('/api/search', requireAuth, async (req, res) => {
   }
 
   try {
-    const ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findCompletedItems',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID,
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'REST-PAYLOAD': '',
-          'keywords': query,
-          'categoryId': '261328',
-          'itemFilter(0).name': 'SoldItemsOnly',
-          'itemFilter(0).value': 'true',
-          'sortOrder': 'EndTimeSoonest',
-          'paginationInput.entriesPerPage': limit,
-          'outputSelector(0)': 'PictureURLLarge',
-          'outputSelector(1)': 'GalleryInfo',
-        },
-        timeout: 10000,
-      }
-    );
-
-    const raw = ebayResponse.data;
-
-    // Check for eBay-level errors (HTTP 200 but ack: Failure)
-    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
-    if (ack === 'Failure') {
-      const ebayError = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0] || 'eBay API returned a failure response';
-      console.error('eBay search ack failure:', ebayError);
-      return res.status(502).json({ error: 'eBay API error', detail: ebayError });
-    }
-
-    const searchResult = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0];
-    const items = searchResult?.item || [];
-
-    const results = items.map(item => ({
-      itemId: item.itemId?.[0],
-      title: item.title?.[0],
-      price: item.sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'],
-      currency: item.sellingStatus?.[0]?.currentPrice?.[0]?.['@currencyId'] || 'USD',
-      soldDate: item.listingInfo?.[0]?.endTime?.[0],
-      imageUrl: item.pictureURLLarge?.[0] || item.galleryURL?.[0] || null,
-      itemUrl: item.viewItemURL?.[0],
-      condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
-    }));
-
-    res.json({ results, total: parseInt(searchResult?.['@count'] || '0'), mock: false });
-
+    const { results, total } = await fetchEbaySoldItems(query, limit);
+    res.json({ results, total, mock: false });
   } catch (err) {
+    if (err.isEbayError) {
+      console.error('eBay search ack failure:', err.message);
+      return res.status(502).json({ error: 'eBay API error', detail: err.message });
+    }
     console.error('eBay API error:', err.message);
     const status = err.response?.status || 500;
     res.status(status).json({ error: 'Failed to fetch from eBay', detail: err.message });
@@ -131,6 +139,129 @@ function extractParallel(title) {
   return '';
 }
 
+// ---- Query parsing helpers for direct search ----
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'base', 'card', 'football', 'nfl'];
+
+function extractPlayerName(query) {
+  let name = query;
+  // Remove years
+  name = name.replace(/\b(201[5-9]|202[0-9])\b/g, '');
+  // Remove known sets (case-insensitive)
+  for (const s of KNOWN_SETS) {
+    name = name.replace(new RegExp('\\b' + s + '\\b', 'gi'), '');
+  }
+  // Remove known parallels
+  for (const p of KNOWN_PARALLELS) {
+    name = name.replace(new RegExp('\\b' + p + '\\b', 'gi'), '');
+  }
+  // Remove noise words
+  for (const w of NOISE_WORDS) {
+    name = name.replace(new RegExp('\\b' + w + '\\b', 'gi'), '');
+  }
+  // Remove grading numbers like "10", "9.5"
+  name = name.replace(/\b\d+\.?\d*\b/g, '');
+  // Remove special chars like #, /
+  name = name.replace(/[#\/]/g, '');
+  // Collapse whitespace
+  return name.replace(/\s+/g, ' ').trim();
+}
+
+function parseCardQuery(query) {
+  return {
+    year: extractYear(query),
+    set: extractSet(query),
+    parallel: extractParallel(query),
+    playerName: extractPlayerName(query),
+  };
+}
+
+function buildBroadenedQueries(parsed) {
+  const { year, set, parallel, playerName } = parsed;
+  const queries = [];
+
+  // Level 1: drop parallel (keep year + set + player)
+  if (parallel && (year || set)) {
+    const q = [year, set, playerName].filter(Boolean).join(' ');
+    queries.push({ query: q, label: `${[year, set].filter(Boolean).join(' ')} ${playerName} (all parallels)`.trim() });
+  }
+
+  // Level 2: drop year (keep set + player)
+  if (year && set) {
+    const q = [set, playerName].filter(Boolean).join(' ');
+    queries.push({ query: q, label: `${set} ${playerName} (all years)`.trim() });
+  }
+
+  // Level 3: player name only
+  if (playerName) {
+    queries.push({ query: playerName, label: `${playerName} (all cards)` });
+  }
+
+  return queries;
+}
+
+function computeApproxValue(results, label) {
+  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
+  if (prices.length === 0) return null;
+
+  prices.sort((a, b) => a - b);
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const median = prices.length % 2 === 0
+    ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
+    : prices[Math.floor(prices.length / 2)];
+
+  return {
+    avgPrice: avg,
+    medianPrice: median,
+    priceRange: { min: prices[0], max: prices[prices.length - 1] },
+    sampleSize: prices.length,
+    basedOn: label,
+  };
+}
+
+// ---- /api/direct-search ----
+app.get('/api/direct-search', requireAuth, async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
+  }
+
+  if (USE_MOCK) {
+    return res.json(getMockDirectSearch(query));
+  }
+
+  try {
+    // Try exact search first
+    const exact = await fetchEbaySoldItems(query, 20);
+    if (exact.results.length > 0) {
+      return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null });
+    }
+
+    // No exact results — try broadening
+    const parsed = parseCardQuery(query);
+    const broader = buildBroadenedQueries(parsed);
+
+    for (const level of broader) {
+      const { results, total } = await fetchEbaySoldItems(level.query, 20);
+      if (results.length > 0) {
+        const approx = computeApproxValue(results, level.label);
+        return res.json({ results, total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
+      }
+    }
+
+    // Nothing found at any level
+    res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null });
+
+  } catch (err) {
+    if (err.isEbayError) {
+      console.error('eBay direct-search ack failure:', err.message);
+      return res.status(502).json({ error: 'eBay API error', detail: err.message });
+    }
+    console.error('eBay direct-search error:', err.message);
+    const status = err.response?.status || 500;
+    res.status(status).json({ error: 'Failed to fetch from eBay', detail: err.message });
+  }
+});
+
 // ---- /api/variants ----
 app.get('/api/variants', requireAuth, async (req, res) => {
   const query = req.query.q;
@@ -143,62 +274,29 @@ app.get('/api/variants', requireAuth, async (req, res) => {
   }
 
   try {
-    const ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findCompletedItems',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID,
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'REST-PAYLOAD': '',
-          'keywords': query,
-          'categoryId': '261328',
-          'itemFilter(0).name': 'SoldItemsOnly',
-          'itemFilter(0).value': 'true',
-          'sortOrder': 'EndTimeSoonest',
-          'paginationInput.entriesPerPage': '50',
-          'outputSelector(0)': 'PictureURLLarge',
-          'outputSelector(1)': 'GalleryInfo',
-        },
-        timeout: 10000,
-      }
-    );
-
-    const raw = ebayResponse.data;
-
-    // Check for eBay-level errors (HTTP 200 but ack: Failure)
-    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
-    if (ack === 'Failure') {
-      const ebayError = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0] || 'eBay API returned a failure response';
-      console.error('eBay variants ack failure:', ebayError);
-      return res.status(502).json({ error: 'eBay API error', detail: ebayError });
-    }
-
-    const items = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item || [];
+    const { results: rawResults } = await fetchEbaySoldItems(query, 50);
 
     const variantMap = {};
-    items.forEach(item => {
-      const title = item.title?.[0] || '';
+    rawResults.forEach(item => {
+      const title = item.title || '';
       const year = extractYear(title);
       const set = extractSet(title);
       const parallel = extractParallel(title);
 
-      if (!year && !set) return; // skip if we can't identify any variant info
+      if (!year && !set) return;
 
       const displayName = [year, set && `Panini ${set}`, parallel].filter(Boolean).join(' ').trim()
         || [year, set, parallel].filter(Boolean).join(' ').trim();
       const key = displayName.toLowerCase();
       if (!key) return;
 
-      const price = parseFloat(item.sellingStatus?.[0]?.currentPrice?.[0]?.['__value__']) || 0;
-      const imgUrl = item.pictureURLLarge?.[0] || item.galleryURL?.[0] || null;
+      const price = parseFloat(item.price) || 0;
 
       if (!variantMap[key]) {
         variantMap[key] = { displayName, prices: [], imageUrl: null };
       }
       if (price > 0) variantMap[key].prices.push(price);
-      if (!variantMap[key].imageUrl && imgUrl) variantMap[key].imageUrl = imgUrl;
+      if (!variantMap[key].imageUrl && item.imageUrl) variantMap[key].imageUrl = item.imageUrl;
     });
 
     const variants = Object.entries(variantMap)
@@ -222,6 +320,10 @@ app.get('/api/variants', requireAuth, async (req, res) => {
     res.json({ variants, mock: false });
 
   } catch (err) {
+    if (err.isEbayError) {
+      console.error('eBay variants ack failure:', err.message);
+      return res.status(502).json({ error: 'eBay API error', detail: err.message });
+    }
     console.error('eBay variants API error:', err.message);
     const status = err.response?.status || 500;
     res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: err.message });
@@ -277,6 +379,35 @@ function getMockVariants(query) {
       imageUrl: null,
     })),
     mock: true,
+  };
+}
+
+function getMockDirectSearch(query) {
+  const parsed = parseCardQuery(query);
+  const hasSpecificCard = (parsed.parallel || parsed.set) && parsed.year;
+  const today = new Date();
+  const day = ms => new Date(today - ms).toISOString();
+
+  if (hasSpecificCard) {
+    // Simulate exact match
+    return {
+      results: [
+        { itemId: 'ds001', title: `${query} PSA 10`, price: '285.00', currency: 'USD', soldDate: day(1 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Graded - PSA 10' },
+        { itemId: 'ds002', title: `${query} Raw`, price: '120.00', currency: 'USD', soldDate: day(3 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Near Mint or Better' },
+      ],
+      total: 2, mock: true, searchType: 'exact', broadenedQuery: null, approximateValue: null,
+    };
+  }
+
+  // Simulate broadened fallback
+  return {
+    results: [
+      { itemId: 'ds010', title: `${parsed.playerName} 2020 Panini Prizm Silver`, price: '245.00', currency: 'USD', soldDate: day(1 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Near Mint or Better' },
+      { itemId: 'ds011', title: `${parsed.playerName} 2020 Panini Prizm Gold`, price: '310.00', currency: 'USD', soldDate: day(2 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Graded - PSA 9' },
+      { itemId: 'ds012', title: `${parsed.playerName} 2020 Panini Prizm Base`, price: '85.00', currency: 'USD', soldDate: day(4 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Near Mint or Better' },
+    ],
+    total: 3, mock: true, searchType: 'broadened', broadenedQuery: `${parsed.playerName} Prizm`,
+    approximateValue: { avgPrice: 213.33, medianPrice: 245.00, priceRange: { min: 85, max: 310 }, sampleSize: 3, basedOn: `Prizm ${parsed.playerName} (all parallels)` },
   };
 }
 
