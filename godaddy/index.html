@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Football Card Sales Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Login Overlay -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-icon">&#127944;</div>
+      <h2>Football Card Tracker</h2>
+      <p>Enter your access code to continue</p>
+      <form id="login-form">
+        <input
+          type="password"
+          id="code-input"
+          placeholder="Access code"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" id="login-btn">Access</button>
+      </form>
+      <p id="login-error" class="login-error hidden">Incorrect code. Please try again.</p>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-inner">
+      <h1>&#127944; Football Card Sales Tracker</h1>
+      <p>Search recent eBay sold listings for football trading cards</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-section">
+      <form id="search-form">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="e.g. Patrick Mahomes 2020 Prizm PSA 10"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" id="search-btn">Search</button>
+      </form>
+      <div id="search-meta" class="search-meta hidden"></div>
+    </section>
+
+    <section id="suggestions-section" class="suggestions-section">
+      <p class="suggestions-label">Popular searches</p>
+      <div class="suggestions-chips">
+        <button class="chip" data-query="Patrick Mahomes Prizm">Mahomes</button>
+        <button class="chip" data-query="Tom Brady Rookie">Brady RC</button>
+        <button class="chip" data-query="Justin Jefferson Prizm PSA 10">J. Jefferson</button>
+        <button class="chip" data-query="Josh Allen Prizm">Josh Allen</button>
+        <button class="chip" data-query="Ja'Marr Chase Rookie">Ja'Marr Chase</button>
+        <button class="chip" data-query="CeeDee Lamb Prizm">CeeDee Lamb</button>
+        <button class="chip" data-query="Lamar Jackson Prizm">Lamar Jackson</button>
+        <button class="chip" data-query="Joe Burrow Rookie PSA">Joe Burrow</button>
+      </div>
+    </section>
+
+    <!-- Variant selection view -->
+    <section id="variants-section" class="variants-section hidden">
+      <div class="variants-header">
+        <h2 id="variants-title"></h2>
+        <p class="variants-subtitle">Select a card to view recent eBay sales</p>
+      </div>
+      <div id="variants-grid" class="variants-grid"></div>
+    </section>
+
+    <!-- Back button shown in sales view -->
+    <button id="back-btn" class="back-btn hidden">&#8592; Back to Cards</button>
+
+    <section id="results-section">
+      <div id="chart-section" class="chart-section hidden">
+        <h2 class="chart-title">Price Trend — Recent Sales</h2>
+        <div class="chart-wrap">
+          <canvas id="price-chart"></canvas>
+        </div>
+      </div>
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Searching eBay sold listings...</span>
+      </div>
+      <div id="error-message" class="error-message hidden"></div>
+      <div id="results-grid" class="results-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Sales data sourced from eBay &bull; Results show recently sold listings &bull; Prices in USD</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

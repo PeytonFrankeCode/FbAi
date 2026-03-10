@@ -1,0 +1,4 @@
+# Pass the Authorization header through to PHP (required on most shared hosts)
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
