@@ -67,7 +67,7 @@ app.get('/api/search', requireAuth, async (req, res) => {
           'outputSelector(0)': 'PictureURLLarge',
           'outputSelector(1)': 'GalleryInfo',
         },
-        timeout: 10000,
+        timeout: 15000,
       }
     );
 
@@ -161,7 +161,7 @@ app.get('/api/variants', requireAuth, async (req, res) => {
           'outputSelector(0)': 'PictureURLLarge',
           'outputSelector(1)': 'GalleryInfo',
         },
-        timeout: 10000,
+        timeout: 15000,
       }
     );
 
@@ -225,6 +225,49 @@ app.get('/api/variants', requireAuth, async (req, res) => {
     console.error('eBay variants API error:', err.message);
     const status = err.response?.status || 500;
     res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: err.message });
+  }
+});
+
+// ---- eBay API connectivity test (no auth required) ----
+app.get('/api/test-ebay', async (req, res) => {
+  try {
+    const start = Date.now();
+    const ebayResponse = await axios.get(
+      'https://svcs.ebay.com/services/search/FindingService/v1',
+      {
+        params: {
+          'OPERATION-NAME': 'findItemsByKeywords',
+          'SERVICE-VERSION': '1.0.0',
+          'SECURITY-APPNAME': EBAY_APP_ID || 'NOT_SET',
+          'RESPONSE-DATA-FORMAT': 'JSON',
+          'keywords': 'test',
+          'paginationInput.entriesPerPage': '1',
+        },
+        timeout: 15000,
+      }
+    );
+    const elapsed = Date.now() - start;
+    const raw = ebayResponse.data;
+    const ack = raw?.findItemsByKeywordsResponse?.[0]?.ack?.[0];
+    const errorMsg = raw?.findItemsByKeywordsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0];
+    res.json({
+      status: 'reachable',
+      httpStatus: ebayResponse.status,
+      ack,
+      ebayError: errorMsg || null,
+      elapsedMs: elapsed,
+      appIdConfigured: !!EBAY_APP_ID,
+      useMock: USE_MOCK,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'unreachable',
+      error: err.message,
+      code: err.code,
+      httpStatus: err.response?.status || null,
+      appIdConfigured: !!EBAY_APP_ID,
+      useMock: USE_MOCK,
+    });
   }
 });
 
