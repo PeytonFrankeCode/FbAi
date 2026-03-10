@@ -7,6 +7,26 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Login Overlay -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-icon">&#127944;</div>
+      <h2>Football Card Tracker</h2>
+      <p>Enter your access code to continue</p>
+      <form id="login-form">
+        <input
+          type="password"
+          id="code-input"
+          placeholder="Access code"
+          autocomplete="off"
+          required
+        />
+        <button type="submit" id="login-btn">Access</button>
+      </form>
+      <p id="login-error" class="login-error hidden">Incorrect code. Please try again.</p>
+    </div>
+  </div>
+
   <header>
     <div class="header-inner">
       <h1>&#127944; Football Card Sales Tracker</h1>
