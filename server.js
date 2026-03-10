@@ -2,15 +2,40 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
+const AUTH_CODE = process.env.AUTH_CODE;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/search', async (req, res) => {
+// ---- Auth ----
+const validTokens = new Set();
+
+app.post('/api/auth', (req, res) => {
+  const { code } = req.body || {};
+  if (!AUTH_CODE || code !== AUTH_CODE) {
+    return res.status(401).json({ error: 'Invalid access code' });
+  }
+  const token = crypto.randomUUID();
+  validTokens.add(token);
+  res.json({ token });
+});
+
+function requireAuth(req, res, next) {
+  const auth = req.headers['authorization'];
+  const token = auth && auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token || !validTokens.has(token)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
+
+app.get('/api/search', requireAuth, async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
 
@@ -97,7 +122,7 @@ function extractParallel(title) {
 }
 
 // ---- /api/variants ----
-app.get('/api/variants', async (req, res) => {
+app.get('/api/variants', requireAuth, async (req, res) => {
   const query = req.query.q;
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });

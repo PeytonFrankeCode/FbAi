@@ -1,3 +1,53 @@
+// ---- Auth ----
+const loginOverlay = document.getElementById('login-overlay');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
+const loginBtn = document.getElementById('login-btn');
+let authToken = sessionStorage.getItem('authToken');
+
+function showLogin() {
+  authToken = null;
+  sessionStorage.removeItem('authToken');
+  loginOverlay.classList.remove('hidden');
+}
+
+function hideLogin() {
+  loginOverlay.classList.add('hidden');
+}
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const code = document.getElementById('code-input').value.trim();
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Checking...';
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Invalid code');
+    authToken = data.token;
+    sessionStorage.setItem('authToken', authToken);
+    loginError.classList.add('hidden');
+    hideLogin();
+  } catch (_) {
+    loginError.classList.remove('hidden');
+    document.getElementById('code-input').value = '';
+    document.getElementById('code-input').focus();
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Access';
+  }
+});
+
+// Show login on load if no token
+if (!authToken) {
+  showLogin();
+}
+
+// ---- App ----
 const form = document.getElementById('search-form');
 const input = document.getElementById('search-input');
 const btn = document.getElementById('search-btn');
@@ -60,9 +110,12 @@ async function fetchVariants(query) {
 
   try {
     const params = new URLSearchParams({ q: query });
-    const response = await fetch(`/api/variants?${params}`);
+    const response = await fetch(`/api/variants?${params}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    });
     const data = await response.json();
 
+    if (response.status === 401) { showLogin(); return; }
     if (!response.ok) {
       throw new Error(data.error || `Server error ${response.status}`);
     }
@@ -167,9 +220,12 @@ async function performSearch(query) {
 
   try {
     const params = new URLSearchParams({ q: query, limit: '20' });
-    const response = await fetch(`/api/search?${params}`);
+    const response = await fetch(`/api/search?${params}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    });
     const data = await response.json();
 
+    if (response.status === 401) { showLogin(); return; }
     if (!response.ok) {
       throw new Error(data.error || `Server error ${response.status}`);
     }
