@@ -64,6 +64,10 @@ const variantsGrid = document.getElementById('variants-grid');
 const variantsTitle = document.getElementById('variants-title');
 const backBtn = document.getElementById('back-btn');
 const approxSection = document.getElementById('approx-section');
+const skeletonGrid = document.getElementById('skeleton-grid');
+const sortControls = document.getElementById('sort-controls');
+const recentSection = document.getElementById('recent-section');
+const recentChips = document.getElementById('recent-chips');
 let priceChart = null;
 
 // State
@@ -71,6 +75,66 @@ let cachedVariants = null;
 let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
 let currentMode = 'forsale'; // 'forsale' or 'sold'
+let currentResults = []; // store results for sorting
+
+// ---- Recent Searches (localStorage) ----
+const MAX_RECENT = 6;
+
+function getRecentSearches() {
+  try {
+    return JSON.parse(localStorage.getItem('recentSearches') || '[]');
+  } catch { return []; }
+}
+
+function addRecentSearch(query) {
+  let recent = getRecentSearches();
+  recent = recent.filter(q => q.toLowerCase() !== query.toLowerCase());
+  recent.unshift(query);
+  if (recent.length > MAX_RECENT) recent = recent.slice(0, MAX_RECENT);
+  localStorage.setItem('recentSearches', JSON.stringify(recent));
+  renderRecentSearches();
+}
+
+function removeRecentSearch(query) {
+  let recent = getRecentSearches();
+  recent = recent.filter(q => q !== query);
+  localStorage.setItem('recentSearches', JSON.stringify(recent));
+  renderRecentSearches();
+}
+
+function renderRecentSearches() {
+  const recent = getRecentSearches();
+  if (recent.length === 0) {
+    recentSection.classList.add('hidden');
+    return;
+  }
+  recentChips.innerHTML = '';
+  recent.forEach(query => {
+    const chip = document.createElement('button');
+    chip.className = 'recent-chip';
+    chip.innerHTML = `${escHtml(query)}<span class="remove-recent">&times;</span>`;
+    chip.addEventListener('click', (e) => {
+      if (e.target.classList.contains('remove-recent')) {
+        e.stopPropagation();
+        removeRecentSearch(query);
+        return;
+      }
+      input.value = query;
+      suggestionsSection.classList.add('hidden');
+      recentSection.classList.add('hidden');
+      if (isDirectCardSearch(query)) {
+        fetchDirectSearch(query);
+      } else {
+        fetchVariants(query);
+      }
+    });
+    recentChips.appendChild(chip);
+  });
+  recentSection.classList.remove('hidden');
+}
+
+// Show recent on load
+renderRecentSearches();
 
 // ---- Mode Tabs ----
 document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -96,6 +160,44 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
   });
 });
 
+// ---- Sort Controls ----
+document.querySelectorAll('.sort-btn').forEach(sortBtn => {
+  sortBtn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    sortBtn.classList.add('active');
+    applySortToResults(sortBtn.dataset.sort);
+  });
+});
+
+function applySortToResults(sortType) {
+  if (!currentResults.length) return;
+
+  let sorted = [...currentResults];
+  switch (sortType) {
+    case 'price-low':
+      sorted.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
+      break;
+    case 'price-high':
+      sorted.sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+      break;
+    case 'date':
+      sorted.sort((a, b) => new Date(b.soldDate || 0) - new Date(a.soldDate || 0));
+      break;
+    default: // 'default' — keep original order
+      sorted = [...currentResults];
+  }
+
+  // Re-render cards only (keep stats bar)
+  const statsBar = grid.querySelector('.stats-bar');
+  grid.innerHTML = '';
+  if (statsBar) grid.appendChild(statsBar);
+  sorted.forEach((item, i) => {
+    const card = buildCard(item);
+    card.style.animationDelay = `${i * 0.05}s`;
+    grid.appendChild(card);
+  });
+}
+
 // ---- Known sets/parallels for client-side detection ----
 const CLIENT_KNOWN_SETS = ['Prizm', 'Select', 'Mosaic', 'Optic', 'Donruss', 'Bowman', 'Topps', 'Chronicles',
   'Contenders', 'Score', 'Immaculate', 'Spectra', 'Fleer', 'Hoops', 'Revolution', 'Absolute',
@@ -113,12 +215,37 @@ function isDirectCardSearch(query) {
   return matches >= 2;
 }
 
+// ---- Skeleton Loader ----
+function showSkeleton() {
+  skeletonGrid.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const skel = document.createElement('div');
+    skel.className = 'skeleton-card';
+    skel.innerHTML = `
+      <div class="skeleton-image"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line short"></div>
+        <div class="skeleton-line price"></div>
+      </div>
+    `;
+    skeletonGrid.appendChild(skel);
+  }
+  skeletonGrid.classList.remove('hidden');
+}
+
+function hideSkeleton() {
+  skeletonGrid.classList.add('hidden');
+}
+
 // ---- Form submit ----
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const query = input.value.trim();
   if (!query) return;
   suggestionsSection.classList.add('hidden');
+  recentSection.classList.add('hidden');
+  addRecentSearch(query);
   if (isDirectCardSearch(query)) {
     await fetchDirectSearch(query);
   } else {
@@ -132,6 +259,8 @@ document.querySelectorAll('.chip').forEach(chip => {
     const query = chip.dataset.query;
     input.value = query;
     suggestionsSection.classList.add('hidden');
+    recentSection.classList.add('hidden');
+    addRecentSearch(query);
     fetchVariants(query);
   });
 });
@@ -144,10 +273,12 @@ async function fetchVariants(query) {
   currentSearchMode = 'variants';
   currentVariantQuery = query;
   cachedVariants = null;
+  currentResults = [];
 
   // Reset UI
   variantsSection.classList.add('hidden');
   backBtn.classList.add('hidden');
+  sortControls.classList.add('hidden');
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
@@ -156,6 +287,7 @@ async function fetchVariants(query) {
 
   loadingText.textContent = currentMode === 'sold' ? 'Finding sold card variants...' : 'Finding card variants...';
   setLoading(true);
+  showSkeleton();
 
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
@@ -178,6 +310,7 @@ async function fetchVariants(query) {
     errorMsg.classList.remove('hidden');
   } finally {
     setLoading(false);
+    hideSkeleton();
     loadingText.textContent = currentMode === 'sold' ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
   }
 }
@@ -197,7 +330,11 @@ function displayVariants(variants, query, mock) {
     empty.textContent = 'No card variants found. Try a broader search term.';
     variantsGrid.appendChild(empty);
   } else {
-    variants.forEach(v => variantsGrid.appendChild(buildVariantCard(v)));
+    variants.forEach((v, i) => {
+      const card = buildVariantCard(v);
+      card.style.animationDelay = `${i * 0.06}s`;
+      variantsGrid.appendChild(card);
+    });
   }
 
   variantsSection.classList.remove('hidden');
@@ -245,10 +382,12 @@ function selectVariant(variant) {
 function goBackToVariants() {
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
+  sortControls.classList.add('hidden');
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
   errorMsg.classList.add('hidden');
+  currentResults = [];
   if (priceChart) { priceChart.destroy(); priceChart = null; }
 
   if (currentSearchMode === 'direct') {
@@ -256,6 +395,7 @@ function goBackToVariants() {
     currentSearchMode = 'variants';
     input.value = '';
     suggestionsSection.classList.remove('hidden');
+    renderRecentSearches();
     return;
   }
 
@@ -270,11 +410,13 @@ function goBackToVariants() {
 // ---- Direct Card Search (Stage: direct) ----
 async function fetchDirectSearch(query) {
   currentSearchMode = 'direct';
+  currentResults = [];
 
   // Reset UI
   variantsSection.classList.add('hidden');
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
+  sortControls.classList.add('hidden');
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
@@ -284,6 +426,7 @@ async function fetchDirectSearch(query) {
   const isSold = currentMode === 'sold';
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
   setLoading(true);
+  showSkeleton();
 
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
@@ -299,6 +442,7 @@ async function fetchDirectSearch(query) {
     }
 
     const { results, mock, searchType, approximateValue } = data;
+    currentResults = results;
 
     // Show approximate value section if broadened
     if (searchType === 'broadened' && approximateValue) {
@@ -308,32 +452,11 @@ async function fetchDirectSearch(query) {
 
     // Stats bar
     if (results.length > 0) {
-      const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
-      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-      const minP = Math.min(...prices);
-      const maxP = Math.max(...prices);
-
-      const statsEl = document.createElement('div');
-      statsEl.className = 'stats-bar';
-      statsEl.innerHTML = `
-        <div class="stat-item">
-          <span class="stat-label">Results</span>
-          <span class="stat-value">${results.length}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
-          <span class="stat-value">$${avg.toFixed(2)}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Low</span>
-          <span class="stat-value">$${minP.toFixed(2)}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">High</span>
-          <span class="stat-value">$${maxP.toFixed(2)}</span>
-        </div>
-      `;
-      grid.appendChild(statsEl);
+      renderStatsBar(results, isSold);
+      sortControls.classList.remove('hidden');
+      // Reset sort to default
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.sort-btn[data-sort="default"]').classList.add('active');
     }
 
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
@@ -348,7 +471,11 @@ async function fetchDirectSearch(query) {
       empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
-      results.forEach(item => grid.appendChild(buildCard(item)));
+      results.forEach((item, i) => {
+        const card = buildCard(item);
+        card.style.animationDelay = `${i * 0.05}s`;
+        grid.appendChild(card);
+      });
       if (isSold) updatePriceChart(results);
     }
 
@@ -359,6 +486,7 @@ async function fetchDirectSearch(query) {
     errorMsg.classList.remove('hidden');
   } finally {
     setLoading(false);
+    hideSkeleton();
   }
 }
 
@@ -377,13 +505,48 @@ function buildApproxValueSection(approx, originalQuery) {
   `;
 }
 
+// ---- Render Stats Bar ----
+function renderStatsBar(results, isSold) {
+  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+  if (prices.length === 0) return;
+
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+
+  const statsEl = document.createElement('div');
+  statsEl.className = 'stats-bar';
+  statsEl.innerHTML = `
+    <div class="stat-item">
+      <span class="stat-label">Results</span>
+      <span class="stat-value">${results.length}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
+      <span class="stat-value">$${avg.toFixed(2)}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Low</span>
+      <span class="stat-value">$${minP.toFixed(2)}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">High</span>
+      <span class="stat-value">$${maxP.toFixed(2)}</span>
+    </div>
+  `;
+  grid.appendChild(statsEl);
+}
+
 // ---- Search (fetch individual sales for a specific variant) ----
 async function performSearch(query) {
   setLoading(true);
+  showSkeleton();
   grid.innerHTML = '';
   errorMsg.classList.add('hidden');
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
+  sortControls.classList.add('hidden');
+  currentResults = [];
   if (priceChart) {
     priceChart.destroy();
     priceChart = null;
@@ -406,35 +569,14 @@ async function performSearch(query) {
     }
 
     const { results, mock } = data;
+    currentResults = results;
 
     // Stats bar
     if (results.length > 0) {
-      const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
-      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-      const minP = Math.min(...prices);
-      const maxP = Math.max(...prices);
-
-      const statsEl = document.createElement('div');
-      statsEl.className = 'stats-bar';
-      statsEl.innerHTML = `
-        <div class="stat-item">
-          <span class="stat-label">Results</span>
-          <span class="stat-value">${results.length}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
-          <span class="stat-value">$${avg.toFixed(2)}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Low</span>
-          <span class="stat-value">$${minP.toFixed(2)}</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">High</span>
-          <span class="stat-value">$${maxP.toFixed(2)}</span>
-        </div>
-      `;
-      grid.appendChild(statsEl);
+      renderStatsBar(results, isSold);
+      sortControls.classList.remove('hidden');
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.sort-btn[data-sort="default"]').classList.add('active');
     }
 
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
@@ -448,7 +590,11 @@ async function performSearch(query) {
       empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
-      results.forEach(item => grid.appendChild(buildCard(item)));
+      results.forEach((item, i) => {
+        const card = buildCard(item);
+        card.style.animationDelay = `${i * 0.05}s`;
+        grid.appendChild(card);
+      });
       if (isSold) updatePriceChart(results);
     }
 
@@ -457,6 +603,7 @@ async function performSearch(query) {
     errorMsg.classList.remove('hidden');
   } finally {
     setLoading(false);
+    hideSkeleton();
   }
 }
 
@@ -521,13 +668,13 @@ function updatePriceChart(results) {
       scales: {
         x: {
           grid: { color: '#1a2030' },
-          ticks: { color: '#8d99ae', font: { size: 11 } }
+          ticks: { color: '#8d99ae', font: { size: 11, family: 'Inter' } }
         },
         y: {
           grid: { color: '#2d3748' },
           ticks: {
             color: '#8d99ae',
-            font: { size: 11 },
+            font: { size: 11, family: 'Inter' },
             callback: val => `$${val}`
           },
           beginAtZero: false
