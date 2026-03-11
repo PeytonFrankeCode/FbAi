@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for OAuth (Marketplace Insights)
-const AUTH_CODE = process.env.AUTH_CODE;
+
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
@@ -18,27 +18,6 @@ const EBAY_API_MODE = process.env.EBAY_API_MODE || 'finding';
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ---- Auth ----
-const validTokens = new Set();
-
-app.post('/api/auth', (req, res) => {
-  const { code } = req.body || {};
-  if (!AUTH_CODE || code !== AUTH_CODE) {
-    return res.status(401).json({ error: 'Invalid access code' });
-  }
-  const token = crypto.randomUUID();
-  validTokens.add(token);
-  res.json({ token });
-});
-
-function requireAuth(req, res, next) {
-  const auth = req.headers['authorization'];
-  const token = auth && auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token || !validTokens.has(token)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
-}
 
 // ---- In-memory cache (30 min TTL) to reduce eBay API calls ----
 const ebayCache = new Map();
