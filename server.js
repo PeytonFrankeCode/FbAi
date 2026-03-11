@@ -407,6 +407,25 @@ app.get('/api/direct-search', async (req, res) => {
   }
 
   try {
+    const ebayResponse = await axios.get(
+      'https://svcs.ebay.com/services/search/FindingService/v1',
+      {
+        params: {
+          'OPERATION-NAME': 'findCompletedItems',
+          'SERVICE-VERSION': '1.0.0',
+          'SECURITY-APPNAME': EBAY_APP_ID,
+          'RESPONSE-DATA-FORMAT': 'JSON',
+          'REST-PAYLOAD': '',
+          'keywords': query,
+          'categoryId': '261328',
+          'itemFilter(0).name': 'SoldItemsOnly',
+          'itemFilter(0).value': 'true',
+          'sortOrder': 'EndTimeSoonest',
+          'paginationInput.entriesPerPage': '50',
+          'outputSelector(0)': 'PictureURLLarge',
+          'outputSelector(1)': 'GalleryInfo',
+        },
+        timeout: 15000,
     // Try exact search first
     const exact = await fetchEbayItems(query, 20, mode);
     if (exact.results.length > 0) {
@@ -513,6 +532,49 @@ app.get('/api/variants', async (req, res) => {
 // ---- Health check for Render ----
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ---- eBay API connectivity test (no auth required) ----
+app.get('/api/test-ebay', async (req, res) => {
+  try {
+    const start = Date.now();
+    const ebayResponse = await axios.get(
+      'https://svcs.ebay.com/services/search/FindingService/v1',
+      {
+        params: {
+          'OPERATION-NAME': 'findItemsByKeywords',
+          'SERVICE-VERSION': '1.0.0',
+          'SECURITY-APPNAME': EBAY_APP_ID || 'NOT_SET',
+          'RESPONSE-DATA-FORMAT': 'JSON',
+          'keywords': 'test',
+          'paginationInput.entriesPerPage': '1',
+        },
+        timeout: 15000,
+      }
+    );
+    const elapsed = Date.now() - start;
+    const raw = ebayResponse.data;
+    const ack = raw?.findItemsByKeywordsResponse?.[0]?.ack?.[0];
+    const errorMsg = raw?.findItemsByKeywordsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0];
+    res.json({
+      status: 'reachable',
+      httpStatus: ebayResponse.status,
+      ack,
+      ebayError: errorMsg || null,
+      elapsedMs: elapsed,
+      appIdConfigured: !!EBAY_APP_ID,
+      useMock: USE_MOCK,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'unreachable',
+      error: err.message,
+      code: err.code,
+      httpStatus: err.response?.status || null,
+      appIdConfigured: !!EBAY_APP_ID,
+      useMock: USE_MOCK,
+    });
+  }
 });
 
 // ---- eBay Marketplace Account Deletion compliance ----
