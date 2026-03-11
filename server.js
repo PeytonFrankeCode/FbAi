@@ -260,7 +260,7 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
   return fetchEbayItems(keywords, limit, 'sold');
 }
 
-app.get('/api/search', requireAuth, async (req, res) => {
+app.get('/api/search', async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
@@ -395,7 +395,7 @@ function computeApproxValue(results, label) {
 }
 
 // ---- /api/direct-search ----
-app.get('/api/direct-search', requireAuth, async (req, res) => {
+app.get('/api/direct-search', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
   if (!query || query.trim().length < 2) {
@@ -460,7 +460,7 @@ app.get('/api/direct-search', requireAuth, async (req, res) => {
 });
 
 // ---- /api/variants ----
-app.get('/api/variants', requireAuth, async (req, res) => {
+app.get('/api/variants', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
   if (!query || query.trim().length < 2) {
@@ -527,6 +527,11 @@ app.get('/api/variants', requireAuth, async (req, res) => {
     const status = err.response?.status || 500;
     res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
   }
+});
+
+// ---- Health check for Render ----
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ---- eBay API connectivity test (no auth required) ----
