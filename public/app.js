@@ -42,10 +42,8 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-// Show login on load if no token
-if (!authToken) {
-  showLogin();
-}
+// Auth disabled — site is publicly accessible
+// if (!authToken) { showLogin(); }
 
 // ---- App ----
 const form = document.getElementById('search-form');
@@ -292,7 +290,7 @@ async function fetchVariants(query) {
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
     const response = await fetch(`/api/variants?${params}`, {
-      headers: { 'Authorization': `Bearer ${authToken}` },
+      headers: {},
     });
     const data = await response.json();
 
@@ -431,7 +429,7 @@ async function fetchDirectSearch(query) {
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
     const response = await fetch(`/api/direct-search?${params}`, {
-      headers: { 'Authorization': `Bearer ${authToken}` },
+      headers: {},
     });
     const data = await response.json();
 
@@ -558,7 +556,7 @@ async function performSearch(query) {
   try {
     const params = new URLSearchParams({ q: query, limit: '20', mode: currentMode });
     const response = await fetch(`/api/search?${params}`, {
-      headers: { 'Authorization': `Bearer ${authToken}` },
+      headers: {},
     });
     const data = await response.json();
 
