@@ -30,7 +30,7 @@
   <header>
     <div class="header-inner">
       <h1>&#127944; Football Card Sales Tracker</h1>
-      <p>Search recent eBay sold listings for football trading cards</p>
+      <p>Search eBay for football trading cards — for sale &amp; sold</p>
     </div>
   </header>
 
@@ -46,6 +46,10 @@
         />
         <button type="submit" id="search-btn">Search</button>
       </form>
+      <div id="mode-tabs" class="mode-tabs">
+        <button class="mode-tab active" data-mode="forsale">For Sale</button>
+        <button class="mode-tab" data-mode="sold">Sold</button>
+      </div>
       <div id="search-meta" class="search-meta hidden"></div>
     </section>
 
@@ -67,7 +71,7 @@
     <section id="variants-section" class="variants-section hidden">
       <div class="variants-header">
         <h2 id="variants-title"></h2>
-        <p class="variants-subtitle">Select a card to view recent eBay sales</p>
+        <p id="variants-subtitle" class="variants-subtitle">Select a card to view recent eBay sales</p>
       </div>
       <div id="variants-grid" class="variants-grid"></div>
     </section>
@@ -95,7 +99,7 @@
   </main>
 
   <footer>
-    <p>Sales data sourced from eBay &bull; Results show recently sold listings &bull; Prices in USD</p>
+    <p>Data sourced from eBay &bull; Prices in USD</p>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

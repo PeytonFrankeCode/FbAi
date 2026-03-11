@@ -240,25 +240,30 @@ async function fetchViaFindingAPI(keywords, limit) {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-async function fetchEbaySoldItems(keywords, limit = 20) {
-  const cacheKey = `${keywords}|${limit}`;
+// mode: 'forsale' (Browse API) or 'sold' (Insights API)
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale') {
+  const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const fetchFn = EBAY_API_MODE === 'insights'
+  const fetchFn = mode === 'sold'
     ? () => fetchViaInsightsAPI(keywords, limit)
-    : EBAY_API_MODE === 'browse'
-    ? () => fetchViaBrowseAPI(keywords, limit)
-    : () => fetchViaFindingAPI(keywords, limit);
+    : () => fetchViaBrowseAPI(keywords, limit);
 
   const response = await withRetry(fetchFn);
   setCache(cacheKey, response);
   return response;
 }
 
+// Legacy alias for backward compatibility
+async function fetchEbaySoldItems(keywords, limit = 20) {
+  return fetchEbayItems(keywords, limit, 'sold');
+}
+
 app.get('/api/search', requireAuth, async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
 
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
@@ -269,8 +274,8 @@ app.get('/api/search', requireAuth, async (req, res) => {
   }
 
   try {
-    const { results, total } = await fetchEbaySoldItems(query, limit);
-    res.json({ results, total, mock: false });
+    const { results, total } = await fetchEbayItems(query, limit, mode);
+    res.json({ results, total, mock: false, mode });
   } catch (err) {
     if (err.isEbayError) {
       console.error('eBay search ack failure:', err.message);
@@ -392,6 +397,7 @@ function computeApproxValue(results, label) {
 // ---- /api/direct-search ----
 app.get('/api/direct-search', requireAuth, async (req, res) => {
   const query = req.query.q;
+  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
@@ -402,9 +408,9 @@ app.get('/api/direct-search', requireAuth, async (req, res) => {
 
   try {
     // Try exact search first
-    const exact = await fetchEbaySoldItems(query, 20);
+    const exact = await fetchEbayItems(query, 20, mode);
     if (exact.results.length > 0) {
-      return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null });
+      return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
 
     // No exact results — try broadening
@@ -412,15 +418,15 @@ app.get('/api/direct-search', requireAuth, async (req, res) => {
     const broader = buildBroadenedQueries(parsed);
 
     for (const level of broader) {
-      const { results, total } = await fetchEbaySoldItems(level.query, 20);
+      const { results, total } = await fetchEbayItems(level.query, 20, mode);
       if (results.length > 0) {
         const approx = computeApproxValue(results, level.label);
-        return res.json({ results, total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
+        return res.json({ results, total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
       }
     }
 
     // Nothing found at any level
-    res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null });
+    res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
 
   } catch (err) {
     if (err.isEbayError) {
@@ -437,6 +443,7 @@ app.get('/api/direct-search', requireAuth, async (req, res) => {
 // ---- /api/variants ----
 app.get('/api/variants', requireAuth, async (req, res) => {
   const query = req.query.q;
+  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
@@ -446,7 +453,7 @@ app.get('/api/variants', requireAuth, async (req, res) => {
   }
 
   try {
-    const { results: rawResults } = await fetchEbaySoldItems(query, 50);
+    const { results: rawResults } = await fetchEbayItems(query, 50, mode);
 
     const variantMap = {};
     rawResults.forEach(item => {
@@ -489,7 +496,7 @@ app.get('/api/variants', requireAuth, async (req, res) => {
       .sort((a, b) => b.salesCount - a.salesCount)
       .slice(0, 12);
 
-    res.json({ variants, mock: false });
+    res.json({ variants, mock: false, mode });
 
   } catch (err) {
     if (err.isEbayError) {
