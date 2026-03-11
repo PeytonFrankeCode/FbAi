@@ -510,6 +510,11 @@ app.get('/api/variants', async (req, res) => {
   }
 });
 
+// ---- Health check for Render ----
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ---- eBay Marketplace Account Deletion compliance ----
 app.get('/api/ebay/account-deletion', (req, res) => {
   const challengeCode = req.query.challenge_code;
