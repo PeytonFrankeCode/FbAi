@@ -3,8 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Football Card Sales Tracker</title>
+  <title>Football Card Price Tracker — Fair Market Values from eBay Sales</title>
+  <meta name="description" content="Track football trading card prices with real eBay sold data. Research fair market values for Prizm, Select, Mosaic, Optic and more. Make informed buying and selling decisions." />
+  <meta name="keywords" content="football cards, trading card prices, eBay sold prices, Prizm, card values, sports cards tracker" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Football Card Price Tracker" />
+  <meta property="og:description" content="Aggregates recent eBay sold listings to help collectors research fair market values and make informed decisions." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://theaifbtracker.onrender.com" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Football Card Price Tracker" />
+  <meta name="twitter:description" content="Research fair market values for football trading cards based on real eBay sold data." />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Football Card Price Tracker",
+    "description": "A web-based football trading card price tracker that aggregates recent eBay sold listings to help collectors research fair market values.",
+    "url": "https://theaifbtracker.onrender.com",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web"
+  }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Google AdSense (replace ca-pub-XXXXX with your publisher ID) -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXX" crossorigin="anonymous"></script> -->
 </head>
 <body>
   <!-- Login Overlay -->
@@ -29,21 +64,24 @@
 
   <header>
     <div class="header-inner">
-      <h1>&#127944; Football Card Sales Tracker</h1>
-      <p>Search eBay for football trading cards — for sale &amp; sold</p>
+      <h1>&#127944; Football Card Price Tracker</h1>
+      <p class="header-tagline">Real sold data. Fair market prices. Smarter decisions.</p>
     </div>
   </header>
 
   <main>
-    <section class="search-section">
-      <form id="search-form">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="e.g. Patrick Mahomes or 2020 Prizm Silver Mahomes"
-          autocomplete="off"
-          required
-        />
+    <section class="search-section" aria-label="Search">
+      <form id="search-form" role="search">
+        <div class="search-input-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="e.g. Patrick Mahomes or 2020 Prizm Silver Mahomes"
+            autocomplete="off"
+            required
+          />
+        </div>
         <button type="submit" id="search-btn">Search</button>
       </form>
       <div id="mode-tabs" class="mode-tabs">
@@ -53,8 +91,14 @@
       <div id="search-meta" class="search-meta hidden"></div>
     </section>
 
-    <section id="suggestions-section" class="suggestions-section">
-      <p class="suggestions-label">Popular searches</p>
+    <!-- Recent Searches -->
+    <section id="recent-section" class="recent-section hidden" aria-label="Recent searches">
+      <p class="section-label">Recent searches</p>
+      <div id="recent-chips" class="recent-chips"></div>
+    </section>
+
+    <section id="suggestions-section" class="suggestions-section" aria-label="Popular searches">
+      <p class="section-label">Popular searches</p>
       <div class="suggestions-chips">
         <button class="chip" data-query="Patrick Mahomes Prizm">Mahomes</button>
         <button class="chip" data-query="Tom Brady Rookie">Brady RC</button>
@@ -67,8 +111,15 @@
       </div>
     </section>
 
+    <!-- Ad Banner (top) -->
+    <div class="ad-slot ad-slot-top" aria-hidden="true">
+      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="YYYYYYY" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
+      <div class="ad-placeholder">Ad Space</div>
+    </div>
+
     <!-- Variant selection view -->
-    <section id="variants-section" class="variants-section hidden">
+    <section id="variants-section" class="variants-section hidden" aria-label="Card variants">
       <div class="variants-header">
         <h2 id="variants-title"></h2>
         <p id="variants-subtitle" class="variants-subtitle">Select a card to view recent eBay sales</p>
@@ -79,10 +130,19 @@
     <!-- Back button shown in sales view -->
     <button id="back-btn" class="back-btn hidden">&#8592; Back to Cards</button>
 
+    <!-- Sort Controls -->
+    <div id="sort-controls" class="sort-controls hidden">
+      <span class="sort-label">Sort by:</span>
+      <button class="sort-btn active" data-sort="default">Relevance</button>
+      <button class="sort-btn" data-sort="price-low">Price Low</button>
+      <button class="sort-btn" data-sort="price-high">Price High</button>
+      <button class="sort-btn" data-sort="date">Most Recent</button>
+    </div>
+
     <!-- Approximate value section (shown when no exact sales found) -->
     <div id="approx-section" class="approx-value-section hidden"></div>
 
-    <section id="results-section">
+    <section id="results-section" aria-label="Results">
       <div id="chart-section" class="chart-section hidden">
         <h2 class="chart-title">Price Trend — Recent Sales</h2>
         <div class="chart-wrap">
@@ -93,13 +153,34 @@
         <div class="spinner"></div>
         <span>Searching eBay sold listings...</span>
       </div>
+      <!-- Skeleton loader -->
+      <div id="skeleton-grid" class="results-grid skeleton-grid hidden"></div>
       <div id="error-message" class="error-message hidden"></div>
       <div id="results-grid" class="results-grid"></div>
     </section>
+
+    <!-- Ad Banner (bottom) -->
+    <div class="ad-slot ad-slot-bottom" aria-hidden="true">
+      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="ZZZZZZZ" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
+      <div class="ad-placeholder">Ad Space</div>
+    </div>
   </main>
 
   <footer>
-    <p>Data sourced from eBay &bull; Prices in USD</p>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo">&#127944;</span>
+        <span>Football Card Price Tracker</span>
+      </div>
+      <p class="footer-description">Helping collectors research fair market values with real eBay sold data. Transparent pricing for smarter buying and selling.</p>
+      <div class="footer-links">
+        <span>Data sourced from eBay</span>
+        <span class="footer-sep">&bull;</span>
+        <span>Prices in USD</span>
+      </div>
+      <p class="footer-copy">&copy; 2024 Football Card Price Tracker. Not affiliated with eBay Inc.</p>
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
