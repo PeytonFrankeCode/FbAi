@@ -144,9 +144,11 @@ async function fetchViaInsightsAPI(keywords, limit) {
   return { results, total: res.data?.total || results.length };
 }
 
-// ---- Browse API (sold/completed items) ----
+// ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit) {
+  console.log(`[Browse API] Searching for: "${keywords}", limit: ${limit}`);
   const token = await getOAuthToken();
+  console.log('[Browse API] Got OAuth token, making search request...');
   const res = await axios.get(
     'https://api.ebay.com/buy/browse/v1/item_summary/search',
     {
@@ -154,18 +156,16 @@ async function fetchViaBrowseAPI(keywords, limit) {
         q: keywords,
         category_ids: '261328',
         limit,
-        sort: '-endDate',
-        filter: 'buyingOptions:{FIXED_PRICE|AUCTION},conditions:{NEW|LIKE_NEW|VERY_GOOD|GOOD}',
       },
       headers: {
         'Authorization': `Bearer ${token}`,
         'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-        'X-EBAY-C-ENDUSERCTX': 'affiliateCampaignId=<ePNCampaignId>,affiliateReferenceId=<referenceId>',
       },
       timeout: 15000,
     }
   );
 
+  console.log(`[Browse API] Got ${res.data?.total || 0} total results`);
   const items = res.data?.itemSummaries || [];
   const results = items.map(item => ({
     itemId: item.itemId || '',
@@ -528,8 +528,10 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
-  if (EBAY_API_MODE === 'insights' && !EBAY_CERT_ID) {
-    console.warn('WARNING: EBAY_API_MODE is "insights" but EBAY_CERT_ID is not set. Requests will fail.');
+  console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
+  console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
+  if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
+    console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
   }
 });
 
