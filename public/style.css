@@ -224,6 +224,63 @@ main {
   vertical-align: middle;
 }
 
+/* ---- Mode Tabs ---- */
+.mode-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mode-tab {
+  background: #1a202c;
+  border: 1px solid #2d3748;
+  color: #8d99ae;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.mode-tab:hover {
+  border-color: #52b788;
+  color: #74c69d;
+}
+
+.mode-tab.active {
+  background: #52b788;
+  color: #0f1117;
+  border-color: #52b788;
+}
+
+/* ---- For Sale Badge ---- */
+.for-sale-badge {
+  position: absolute;
+  top: 14px;
+  right: -6px;
+  background: #2d6a4f;
+  color: #d8f3dc;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px 0 0 4px;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+.for-sale-badge::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -5px;
+  border-top: 5px solid #1b4332;
+  border-right: 6px solid transparent;
+}
+
 /* ---- States ---- */
 .hidden {
   display: none !important;

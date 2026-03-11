@@ -70,6 +70,31 @@ let priceChart = null;
 let cachedVariants = null;
 let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
+let currentMode = 'forsale'; // 'forsale' or 'sold'
+
+// ---- Mode Tabs ----
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const newMode = tab.dataset.mode;
+    if (newMode === currentMode) return;
+    currentMode = newMode;
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    cachedVariants = null; // clear cached variants since mode changed
+    // Re-run current search if there's an active query
+    const query = input.value.trim();
+    if (query) {
+      if (currentSearchMode === 'direct') {
+        fetchDirectSearch(query);
+      } else if (currentSearchMode === 'variants' && !backBtn.classList.contains('hidden')) {
+        // Viewing a variant's results — re-search with new mode
+        performSearch(query);
+      } else if (currentSearchMode === 'variants') {
+        fetchVariants(currentVariantQuery || query);
+      }
+    }
+  });
+});
 
 // ---- Known sets/parallels for client-side detection ----
 const CLIENT_KNOWN_SETS = ['Prizm', 'Select', 'Mosaic', 'Optic', 'Donruss', 'Bowman', 'Topps', 'Chronicles',
@@ -129,11 +154,11 @@ async function fetchVariants(query) {
   errorMsg.classList.add('hidden');
   if (priceChart) { priceChart.destroy(); priceChart = null; }
 
-  loadingText.textContent = 'Finding card variants...';
+  loadingText.textContent = currentMode === 'sold' ? 'Finding sold card variants...' : 'Finding card variants...';
   setLoading(true);
 
   try {
-    const params = new URLSearchParams({ q: query });
+    const params = new URLSearchParams({ q: query, mode: currentMode });
     const response = await fetch(`/api/variants?${params}`, {
       headers: { 'Authorization': `Bearer ${authToken}` },
     });
@@ -153,7 +178,7 @@ async function fetchVariants(query) {
     errorMsg.classList.remove('hidden');
   } finally {
     setLoading(false);
-    loadingText.textContent = 'Searching eBay sold listings...';
+    loadingText.textContent = currentMode === 'sold' ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
   }
 }
 
@@ -163,6 +188,8 @@ function displayVariants(variants, query, mock) {
 
   const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
   variantsTitle.innerHTML = `Results for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
+  const subtitle = document.getElementById('variants-subtitle');
+  subtitle.textContent = currentMode === 'sold' ? 'Select a card to view recent sold listings' : 'Select a card to view current listings';
 
   if (variants.length === 0) {
     const empty = document.createElement('p');
@@ -195,7 +222,7 @@ function buildVariantCard(variant) {
       <p class="variant-name">${escHtml(variant.displayName)}</p>
       <p class="variant-avg-price">Avg $${variant.avgPrice.toFixed(2)}</p>
       <div class="variant-footer">
-        <span class="variant-sales-count">${variant.salesCount} sales</span>
+        <span class="variant-sales-count">${variant.salesCount} ${currentMode === 'sold' ? 'sales' : 'listings'}</span>
         ${priceRange}
       </div>
     </div>
@@ -254,11 +281,12 @@ async function fetchDirectSearch(query) {
   errorMsg.classList.add('hidden');
   if (priceChart) { priceChart.destroy(); priceChart = null; }
 
-  loadingText.textContent = 'Searching eBay sold listings...';
+  const isSold = currentMode === 'sold';
+  loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
   setLoading(true);
 
   try {
-    const params = new URLSearchParams({ q: query });
+    const params = new URLSearchParams({ q: query, mode: currentMode });
     const response = await fetch(`/api/direct-search?${params}`, {
       headers: { 'Authorization': `Bearer ${authToken}` },
     });
@@ -293,7 +321,7 @@ async function fetchDirectSearch(query) {
           <span class="stat-value">${results.length}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Avg Sale</span>
+          <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
           <span class="stat-value">$${avg.toFixed(2)}</span>
         </div>
         <div class="stat-item">
@@ -310,17 +338,18 @@ async function fetchDirectSearch(query) {
 
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
     const typeLabel = searchType === 'broadened' ? ' (similar cards)' : '';
-    meta.innerHTML = `${results.length} sold listing${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}`;
+    const listingWord = isSold ? 'sold listing' : 'listing';
+    meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}`;
     meta.classList.remove('hidden');
 
     if (results.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'no-results';
-      empty.textContent = 'No sold listings found. Try a broader search term.';
+      empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
       results.forEach(item => grid.appendChild(buildCard(item)));
-      updatePriceChart(results);
+      if (isSold) updatePriceChart(results);
     }
 
     backBtn.classList.remove('hidden');
@@ -360,8 +389,11 @@ async function performSearch(query) {
     priceChart = null;
   }
 
+  const isSold = currentMode === 'sold';
+  loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
+
   try {
-    const params = new URLSearchParams({ q: query, limit: '20' });
+    const params = new URLSearchParams({ q: query, limit: '20', mode: currentMode });
     const response = await fetch(`/api/search?${params}`, {
       headers: { 'Authorization': `Bearer ${authToken}` },
     });
@@ -390,7 +422,7 @@ async function performSearch(query) {
           <span class="stat-value">${results.length}</span>
         </div>
         <div class="stat-item">
-          <span class="stat-label">Avg Sale</span>
+          <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
           <span class="stat-value">$${avg.toFixed(2)}</span>
         </div>
         <div class="stat-item">
@@ -406,17 +438,18 @@ async function performSearch(query) {
     }
 
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
-    meta.innerHTML = `${results.length} sold listing${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
+    const listingWord = isSold ? 'sold listing' : 'listing';
+    meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
     meta.classList.remove('hidden');
 
     if (results.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'no-results';
-      empty.textContent = 'No sold listings found. Try a broader search term.';
+      empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
       results.forEach(item => grid.appendChild(buildCard(item)));
-      updatePriceChart(results);
+      if (isSold) updatePriceChart(results);
     }
 
   } catch (err) {
@@ -543,11 +576,23 @@ function buildCard(item) {
     ? `$${parseFloat(item.price).toFixed(2)}`
     : 'Price N/A';
 
-  const date = item.soldDate
+  const isSold = currentMode === 'sold';
+
+  const dateStr = item.soldDate
     ? new Date(item.soldDate).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
       })
-    : 'Date N/A';
+    : '';
+
+  const dateHtml = isSold && dateStr
+    ? `<span class="card-date">Sold: ${dateStr}</span>`
+    : !isSold && dateStr
+    ? `<span class="card-date">Ends: ${dateStr}</span>`
+    : '';
+
+  const badgeHtml = isSold
+    ? '<div class="sold-badge">SOLD</div>'
+    : '<div class="for-sale-badge">FOR SALE</div>';
 
   const imageHtml = item.imageUrl
     ? `<img src="${escHtml(item.imageUrl)}" alt="${escHtml(item.title)}" loading="lazy" />`
@@ -558,13 +603,13 @@ function buildCard(item) {
 
   card.innerHTML = `
     <div class="card-accent"></div>
-    <div class="sold-badge">SOLD</div>
+    ${badgeHtml}
     <div class="card-image-wrap">${imageHtml}</div>
     <div class="card-body">
       <p class="card-title">${escHtml(item.title)}</p>
       <p class="card-price">${price}</p>
       <div class="card-meta">
-        <span class="card-date">Sold: ${date}</span>
+        ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
       </div>
       <a class="card-link"
