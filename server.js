@@ -240,14 +240,14 @@ async function fetchViaFindingAPI(keywords, limit) {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Insights API)
+// mode: 'forsale' (Browse API) or 'sold' (Finding API)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   const fetchFn = mode === 'sold'
-    ? () => fetchViaInsightsAPI(keywords, limit)
+    ? () => fetchViaFindingAPI(keywords, limit)
     : () => fetchViaBrowseAPI(keywords, limit);
 
   const response = await withRetry(fetchFn);
