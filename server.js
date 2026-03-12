@@ -239,13 +239,10 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
   return fetchEbayItems(keywords, limit, 'sold');
 }
 
-// Extract serial number like /4, /25, /99 from a query or title
-// Also handles "5/125" format (extracts the print run "125")
+// Extract print run serial like /4, /25, /99 from a query
 function extractSerial(text) {
-  // First check for /N format (e.g. "/5", "/99")
-  const slashMatch = text.match(/\/(\d{1,4})(?![0-9])/);
-  if (slashMatch) return slashMatch[1];
-  return '';
+  const match = text.match(/\/(\d{1,4})(?![0-9])/);
+  return match ? match[1] : '';
 }
 
 app.get('/api/search', async (req, res) => {
@@ -270,37 +267,42 @@ app.get('/api/search', async (req, res) => {
       return res.json({ results, total, mock: false, mode, serial: null, similarResults: [] });
     }
 
-    // Has serial number (e.g. /4) — fetch broader results, then filter
+    // Has serial number (e.g. /5 means print run of 5)
+    // Run two searches: one with the serial to get targeted results from eBay,
+    // and one without to catch cards that might not have /5 in the title format
     const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
-    const { results: allResults } = await fetchEbayItems(baseQuery, 50, mode);
+    const [targetedResults, broadResults] = await Promise.all([
+      fetchEbayItems(`${baseQuery} /${serial}`, 50, mode),
+      fetchEbayItems(baseQuery, 50, mode),
+    ]);
 
-    // Exact matches: title contains the specific serial number
-    // Matches /5 (print run of 5), or 5/125 (card #5 of 125), but not /50 or /125
-    const serialNum = parseInt(serial, 10);
-    const exact = allResults.filter(item => {
-      const title = item.title || '';
-      // Match /N format (print run): /5 but not /50
-      const printRunPattern = new RegExp(`\\/${serial}(?![0-9])`);
-      if (printRunPattern.test(title)) return true;
-      // Match N/NNN format (card number out of print run): "5/125", "#5/125"
-      const cardNumPattern = new RegExp(`(?:^|[^0-9])${serial}\\/\\d+`, 'i');
-      if (cardNumPattern.test(title)) return true;
-      return false;
-    });
+    // Merge results, dedup by itemId
+    const seen = new Set();
+    const allResults = [];
+    for (const item of [...targetedResults.results, ...broadResults.results]) {
+      if (!seen.has(item.itemId)) {
+        seen.add(item.itemId);
+        allResults.push(item);
+      }
+    }
+
+    // Exact matches: title contains a print run of the requested serial
+    // /5 means "printed to 5" — matches "/5", "1/5", "3/5" but NOT "/50", "/125", "5/125"
+    const printRunPattern = new RegExp(`\\/${serial}(?![0-9])`);
+    const exact = allResults.filter(item => printRunPattern.test(item.title || ''));
 
     // Similar: other numbered cards from same search (exclude exact matches)
-    // Sort by serial number proximity to the requested one (closest first)
+    // Sort by print run proximity (closest print run first)
     const numberedPattern = /\/(\d{1,4})(?![0-9])/;
     const requestedSerial = parseInt(serial, 10);
     const exactIds = new Set(exact.map(r => r.itemId));
     const similar = allResults
-      .filter(item => !exactIds.has(item.itemId) && numberedPattern.test(item.title))
+      .filter(item => !exactIds.has(item.itemId) && numberedPattern.test(item.title || ''))
       .sort((a, b) => {
         const aMatch = a.title.match(numberedPattern);
         const bMatch = b.title.match(numberedPattern);
         const aNum = aMatch ? parseInt(aMatch[1], 10) : 9999;
         const bNum = bMatch ? parseInt(bMatch[1], 10) : 9999;
-        // Sort by proximity to requested serial, then by lower number first
         const aDiff = Math.abs(aNum - requestedSerial);
         const bDiff = Math.abs(bNum - requestedSerial);
         return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
