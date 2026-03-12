@@ -433,6 +433,7 @@ app.get('/api/variants', async (req, res) => {
 
   try {
     const { results: rawResults } = await fetchEbayItems(query, 50, mode);
+    const playerName = extractPlayerName(query);
 
     const variantMap = {};
     rawResults.forEach(item => {
@@ -451,7 +452,7 @@ app.get('/api/variants', async (req, res) => {
       const price = parseFloat(item.price) || 0;
 
       if (!variantMap[key]) {
-        variantMap[key] = { displayName, prices: [], imageUrl: null };
+        variantMap[key] = { displayName, year, set, parallel, prices: [], imageUrl: null };
       }
       if (price > 0) variantMap[key].prices.push(price);
       if (!variantMap[key].imageUrl && item.imageUrl) variantMap[key].imageUrl = item.imageUrl;
@@ -461,10 +462,12 @@ app.get('/api/variants', async (req, res) => {
       .map(([key, v]) => {
         const prices = v.prices;
         const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+        // Build a specific search query using player name + variant's actual year/set/parallel
+        const searchParts = [playerName, v.year, v.set, v.parallel].filter(Boolean);
         return {
           id: key.replace(/[^a-z0-9]+/g, '-'),
           displayName: v.displayName,
-          searchQuery: `${query.split(' ').slice(0, 2).join(' ')} ${v.displayName}`,
+          searchQuery: searchParts.join(' '),
           salesCount: prices.length,
           avgPrice: avg,
           priceRange: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
