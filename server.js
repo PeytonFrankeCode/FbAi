@@ -239,6 +239,12 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
   return fetchEbayItems(keywords, limit, 'sold');
 }
 
+// Extract serial number like /4, /25, /99 from a query or title
+function extractSerial(text) {
+  const match = text.match(/\/(\d{1,4})(?:\b|$)/);
+  return match ? match[1] : '';
+}
+
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 20, 50);
@@ -253,8 +259,37 @@ app.get('/api/search', async (req, res) => {
   }
 
   try {
-    const { results, total } = await fetchEbayItems(query, limit, mode);
-    res.json({ results, total, mock: false, mode });
+    const serial = extractSerial(query);
+
+    if (!serial) {
+      // No serial number in query — standard search
+      const { results, total } = await fetchEbayItems(query, limit, mode);
+      return res.json({ results, total, mock: false, mode, serial: null, similarResults: [] });
+    }
+
+    // Has serial number (e.g. /4) — fetch broader results, then filter
+    const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
+    const { results: allResults } = await fetchEbayItems(baseQuery, 50, mode);
+
+    // Exact matches: title contains the specific serial (e.g. "/4" but not "/40" or "/49")
+    const serialPattern = new RegExp(`\\/${serial}(?:\\b|\\s|$|[^0-9])`);
+    const exact = allResults.filter(item => serialPattern.test(item.title));
+
+    // Similar: other numbered cards from same search (exclude exact matches)
+    const numberedPattern = /\/\d{1,4}/;
+    const exactIds = new Set(exact.map(r => r.itemId));
+    const similar = allResults.filter(item =>
+      !exactIds.has(item.itemId) && numberedPattern.test(item.title)
+    );
+
+    res.json({
+      results: exact,
+      total: exact.length,
+      mock: false,
+      mode,
+      serial,
+      similarResults: similar.slice(0, 20),
+    });
   } catch (err) {
     if (err.isEbayError) {
       console.error('eBay search ack failure:', err.message);
@@ -433,6 +468,7 @@ app.get('/api/variants', async (req, res) => {
 
   try {
     const { results: rawResults } = await fetchEbayItems(query, 50, mode);
+    const playerName = extractPlayerName(query);
 
     const variantMap = {};
     rawResults.forEach(item => {
@@ -451,7 +487,7 @@ app.get('/api/variants', async (req, res) => {
       const price = parseFloat(item.price) || 0;
 
       if (!variantMap[key]) {
-        variantMap[key] = { displayName, prices: [], imageUrl: null };
+        variantMap[key] = { displayName, year, set, parallel, prices: [], imageUrl: null };
       }
       if (price > 0) variantMap[key].prices.push(price);
       if (!variantMap[key].imageUrl && item.imageUrl) variantMap[key].imageUrl = item.imageUrl;
@@ -461,10 +497,12 @@ app.get('/api/variants', async (req, res) => {
       .map(([key, v]) => {
         const prices = v.prices;
         const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+        // Build a specific search query using player name + variant's actual year/set/parallel
+        const searchParts = [playerName, v.year, v.set, v.parallel].filter(Boolean);
         return {
           id: key.replace(/[^a-z0-9]+/g, '-'),
           displayName: v.displayName,
-          searchQuery: `${query.split(' ').slice(0, 2).join(' ')} ${v.displayName}`,
+          searchQuery: searchParts.join(' '),
           salesCount: prices.length,
           avgPrice: avg,
           priceRange: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,

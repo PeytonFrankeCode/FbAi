@@ -19,6 +19,9 @@ const skeletonGrid = document.getElementById('skeleton-grid');
 const sortControls = document.getElementById('sort-controls');
 const recentSection = document.getElementById('recent-section');
 const recentChips = document.getElementById('recent-chips');
+const similarSection = document.getElementById('similar-section');
+const similarGrid = document.getElementById('similar-grid');
+const similarTitle = document.getElementById('similar-title');
 let priceChart = null;
 
 // State
@@ -301,6 +304,8 @@ async function fetchVariants(query) {
   variantsSection.classList.add('hidden');
   backBtn.classList.add('hidden');
   sortControls.classList.add('hidden');
+  similarSection.classList.add('hidden');
+  similarGrid.innerHTML = '';
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
@@ -405,6 +410,8 @@ function goBackToVariants() {
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
   sortControls.classList.add('hidden');
+  similarSection.classList.add('hidden');
+  similarGrid.innerHTML = '';
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
@@ -439,6 +446,8 @@ async function fetchDirectSearch(query) {
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
   sortControls.classList.add('hidden');
+  similarSection.classList.add('hidden');
+  similarGrid.innerHTML = '';
   grid.innerHTML = '';
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
@@ -568,6 +577,8 @@ async function performSearch(query) {
   meta.classList.add('hidden');
   chartSection.classList.add('hidden');
   sortControls.classList.add('hidden');
+  similarSection.classList.add('hidden');
+  similarGrid.innerHTML = '';
   currentResults = [];
   if (priceChart) {
     priceChart.destroy();
@@ -590,7 +601,7 @@ async function performSearch(query) {
       throw new Error(msg);
     }
 
-    const { results, mock } = data;
+    const { results, mock, serial, similarResults } = data;
     currentResults = results;
 
     // Stats bar
@@ -607,10 +618,28 @@ async function performSearch(query) {
     meta.classList.remove('hidden');
 
     if (results.length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'no-results';
-      empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
-      grid.appendChild(empty);
+      // Show "No Listings" box instead of plain text
+      const noBox = document.createElement('div');
+      noBox.className = 'no-listings-box';
+      const serialLabel = serial ? ` /${serial}` : '';
+      noBox.innerHTML = `
+        <div class="no-listings-icon">&#128269;</div>
+        <h3>No Listings Found</h3>
+        <p>No ${isSold ? 'sold listings' : 'listings'} found for &ldquo;${escHtml(query)}&rdquo;${serialLabel ? ` numbered <strong>${escHtml(serialLabel.trim())}</strong>` : ''}.</p>
+      `;
+      grid.appendChild(noBox);
+
+      // Show similar numbered cards if available
+      if (similarResults && similarResults.length > 0) {
+        similarTitle.textContent = `Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}`;
+        similarGrid.innerHTML = '';
+        similarResults.forEach((item, i) => {
+          const card = buildCard(item);
+          card.style.animationDelay = `${i * 0.05}s`;
+          similarGrid.appendChild(card);
+        });
+        similarSection.classList.remove('hidden');
+      }
     } else {
       results.forEach((item, i) => {
         const card = buildCard(item);
@@ -618,6 +647,18 @@ async function performSearch(query) {
         grid.appendChild(card);
       });
       if (isSold) updatePriceChart(results);
+
+      // Also show similar cards below if serial search returned both
+      if (serial && similarResults && similarResults.length > 0) {
+        similarTitle.textContent = `Other Numbered Cards`;
+        similarGrid.innerHTML = '';
+        similarResults.forEach((item, i) => {
+          const card = buildCard(item);
+          card.style.animationDelay = `${i * 0.05}s`;
+          similarGrid.appendChild(card);
+        });
+        similarSection.classList.remove('hidden');
+      }
     }
 
   } catch (err) {
