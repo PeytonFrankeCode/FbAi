@@ -719,8 +719,80 @@ function buildCard(item) {
     </div>
   `;
 
+  // Open modal on card click (but not when clicking the eBay link)
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.card-link')) return;
+    openCardModal(item);
+  });
+
   return card;
 }
+
+// ---- Card Detail Modal ----
+const cardModal = document.getElementById('card-modal');
+const cardModalShowing = document.getElementById('card-modal-showing');
+const cardModalImage = document.getElementById('card-modal-image');
+const cardModalTitle = document.getElementById('card-modal-title');
+const cardModalPrice = document.getElementById('card-modal-price');
+const cardModalMeta = document.getElementById('card-modal-meta');
+const cardModalLink = document.getElementById('card-modal-link');
+
+function openCardModal(item) {
+  // "Showing X card" header
+  cardModalShowing.textContent = `Showing ${item.title}`;
+
+  // Image
+  cardModalImage.innerHTML = item.imageUrl
+    ? `<img src="${escHtml(item.imageUrl)}" alt="${escHtml(item.title)}" />`
+    : `<div class="no-image"><span class="no-image-icon">&#127183;</span><span>No image</span></div>`;
+
+  // Title & Price
+  cardModalTitle.textContent = item.title || '';
+  cardModalPrice.textContent = item.price
+    ? `$${parseFloat(item.price).toFixed(2)}`
+    : 'Price N/A';
+
+  // Meta info
+  const isSold = currentMode === 'sold';
+  const badgeClass = isSold ? 'sold' : 'for-sale';
+  const badgeText = isSold ? 'SOLD' : 'FOR SALE';
+
+  const dateStr = item.soldDate
+    ? new Date(item.soldDate).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+      })
+    : '';
+
+  const dateLabel = isSold ? 'Sold' : 'Ends';
+
+  let metaHtml = `<span class="modal-badge ${badgeClass}">${badgeText}</span>`;
+  if (dateStr) metaHtml += `<span>${dateLabel}: ${dateStr}</span>`;
+  if (item.condition) metaHtml += `<span class="modal-condition">${escHtml(item.condition)}</span>`;
+  cardModalMeta.innerHTML = metaHtml;
+
+  // eBay link
+  cardModalLink.href = item.itemUrl || '#';
+
+  // Show modal
+  cardModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCardModal() {
+  cardModal.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+// Close on overlay click
+cardModal.querySelector('.card-modal-overlay').addEventListener('click', closeCardModal);
+// Close on X button
+cardModal.querySelector('.card-modal-close').addEventListener('click', closeCardModal);
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !cardModal.classList.contains('hidden')) {
+    closeCardModal();
+  }
+});
 
 // ---- Helpers ----
 function escHtml(str) {

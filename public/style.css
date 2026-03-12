@@ -1119,6 +1119,206 @@ footer {
   font-size: 0.75rem;
 }
 
+/* ---- Card Detail Modal ---- */
+.card-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.card-modal.hidden {
+  display: none !important;
+}
+
+.card-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.card-modal-content {
+  position: relative;
+  background: linear-gradient(160deg, #1e2535 0%, #141925 100%);
+  border: 1px solid #2d3748;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(82, 183, 136, 0.1);
+  animation: fadeUp 0.3s ease;
+}
+
+.card-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #2d3748;
+  border: none;
+  color: #8d99ae;
+  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  z-index: 2;
+}
+
+.card-modal-close:hover {
+  background: #4a5568;
+  color: #e8eaf0;
+}
+
+.card-modal-showing {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #52b788;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1.25rem;
+  padding-right: 2.5rem;
+}
+
+.card-modal-layout {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.card-modal-image {
+  flex: 0 0 220px;
+  aspect-ratio: 2.5 / 3.5;
+  background: #0d1117;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-modal-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.card-modal-image .no-image {
+  color: #4a5568;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-modal-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.card-modal-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e8eaf0;
+  line-height: 1.5;
+}
+
+.card-modal-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #52b788;
+  letter-spacing: -0.5px;
+}
+
+.card-modal-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: #8d99ae;
+  font-size: 0.875rem;
+}
+
+.card-modal-meta .modal-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+.card-modal-meta .modal-badge.sold {
+  background: #c53030;
+  color: #fff;
+}
+
+.card-modal-meta .modal-badge.for-sale {
+  background: #2d6a4f;
+  color: #d8f3dc;
+}
+
+.card-modal-meta .modal-condition {
+  background: #2d3748;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #a0aec0;
+  align-self: flex-start;
+}
+
+.card-modal-ebay-link {
+  display: block;
+  margin-top: auto;
+  padding: 0.75rem;
+  text-align: center;
+  background: #2d6a4f;
+  color: #d8f3dc;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.card-modal-ebay-link:hover {
+  background: #40916c;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+  .card-modal-layout {
+    flex-direction: column;
+  }
+
+  .card-modal-image {
+    flex: none;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+
+  .card-modal-content {
+    padding: 1.5rem;
+  }
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   header {
