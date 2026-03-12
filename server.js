@@ -240,9 +240,12 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
 }
 
 // Extract serial number like /4, /25, /99 from a query or title
+// Also handles "5/125" format (extracts the print run "125")
 function extractSerial(text) {
-  const match = text.match(/\/(\d{1,4})(?![0-9])/);
-  return match ? match[1] : '';
+  // First check for /N format (e.g. "/5", "/99")
+  const slashMatch = text.match(/\/(\d{1,4})(?![0-9])/);
+  if (slashMatch) return slashMatch[1];
+  return '';
 }
 
 app.get('/api/search', async (req, res) => {
@@ -271,16 +274,37 @@ app.get('/api/search', async (req, res) => {
     const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
     const { results: allResults } = await fetchEbayItems(baseQuery, 50, mode);
 
-    // Exact matches: title contains the specific serial (e.g. "/4" but not "/40" or "/49")
-    const serialPattern = new RegExp(`\\/${serial}(?![0-9])`);
-    const exact = allResults.filter(item => serialPattern.test(item.title));
+    // Exact matches: title contains the specific serial number
+    // Matches /5 (print run of 5), or 5/125 (card #5 of 125), but not /50 or /125
+    const serialNum = parseInt(serial, 10);
+    const exact = allResults.filter(item => {
+      const title = item.title || '';
+      // Match /N format (print run): /5 but not /50
+      const printRunPattern = new RegExp(`\\/${serial}(?![0-9])`);
+      if (printRunPattern.test(title)) return true;
+      // Match N/NNN format (card number out of print run): "5/125", "#5/125"
+      const cardNumPattern = new RegExp(`(?:^|[^0-9])${serial}\\/\\d+`, 'i');
+      if (cardNumPattern.test(title)) return true;
+      return false;
+    });
 
     // Similar: other numbered cards from same search (exclude exact matches)
-    const numberedPattern = /\/\d{1,4}/;
+    // Sort by serial number proximity to the requested one (closest first)
+    const numberedPattern = /\/(\d{1,4})(?![0-9])/;
+    const requestedSerial = parseInt(serial, 10);
     const exactIds = new Set(exact.map(r => r.itemId));
-    const similar = allResults.filter(item =>
-      !exactIds.has(item.itemId) && numberedPattern.test(item.title)
-    );
+    const similar = allResults
+      .filter(item => !exactIds.has(item.itemId) && numberedPattern.test(item.title))
+      .sort((a, b) => {
+        const aMatch = a.title.match(numberedPattern);
+        const bMatch = b.title.match(numberedPattern);
+        const aNum = aMatch ? parseInt(aMatch[1], 10) : 9999;
+        const bNum = bMatch ? parseInt(bMatch[1], 10) : 9999;
+        // Sort by proximity to requested serial, then by lower number first
+        const aDiff = Math.abs(aNum - requestedSerial);
+        const bDiff = Math.abs(bNum - requestedSerial);
+        return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
+      });
 
     res.json({
       results: exact,
