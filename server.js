@@ -447,7 +447,56 @@ app.get('/api/direct-search', async (req, res) => {
   }
 
   try {
-    // Try exact search first
+    const serial = extractSerial(query);
+
+    if (serial) {
+      // Serial search (e.g. /5 = print run of 5)
+      // Dual search: targeted with serial + broad without, then filter
+      const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
+      const [targetedResults, broadResults] = await Promise.all([
+        fetchEbayItems(query, 50, mode),
+        fetchEbayItems(baseQuery, 50, mode),
+      ]);
+
+      // Merge and dedup
+      const seen = new Set();
+      const allResults = [];
+      for (const item of [...targetedResults.results, ...broadResults.results]) {
+        if (!seen.has(item.itemId)) {
+          seen.add(item.itemId);
+          allResults.push(item);
+        }
+      }
+
+      // Exact: print run matches (e.g. /5, 1/5, 3/5 but not /50 or 5/125)
+      const printRunPattern = new RegExp(`\\/${serial}(?![0-9])`);
+      const exactMatches = allResults.filter(item => printRunPattern.test(item.title || ''));
+
+      // Similar: other numbered cards sorted by print run proximity
+      const numberedPattern = /\/(\d{1,4})(?![0-9])/;
+      const requestedSerial = parseInt(serial, 10);
+      const exactIds = new Set(exactMatches.map(r => r.itemId));
+      const similarMatches = allResults
+        .filter(item => !exactIds.has(item.itemId) && numberedPattern.test(item.title || ''))
+        .sort((a, b) => {
+          const aNum = parseInt((a.title.match(numberedPattern) || [])[1], 10) || 9999;
+          const bNum = parseInt((b.title.match(numberedPattern) || [])[1], 10) || 9999;
+          const aDiff = Math.abs(aNum - requestedSerial);
+          const bDiff = Math.abs(bNum - requestedSerial);
+          return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
+        });
+
+      // Return exact matches first, then similar
+      const combined = [...exactMatches, ...similarMatches];
+      if (combined.length > 0) {
+        const approx = computeApproxValue(exactMatches.length > 0 ? exactMatches : combined.slice(0, 10), 'serial');
+        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: similarMatches.slice(0, 20) });
+      }
+
+      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [] });
+    }
+
+    // No serial — standard search: try exact first
     const exact = await fetchEbayItems(query, 20, mode);
     if (exact.results.length > 0) {
       return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
@@ -493,11 +542,29 @@ app.get('/api/variants', async (req, res) => {
   }
 
   try {
-    // Extract serial number (e.g. /4) from query and strip it for eBay search
+    // Extract serial number (e.g. /5 = print run of 5)
     const serial = extractSerial(query);
-    const searchQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
+    const baseQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
 
-    const { results: rawResults } = await fetchEbayItems(searchQuery, 50, mode);
+    // Dual search when serial present: targeted + broad for better coverage
+    let rawResults;
+    if (serial) {
+      const [targeted, broad] = await Promise.all([
+        fetchEbayItems(`${baseQuery} /${serial}`, 50, mode),
+        fetchEbayItems(baseQuery, 50, mode),
+      ]);
+      const seen = new Set();
+      rawResults = [];
+      for (const item of [...targeted.results, ...broad.results]) {
+        if (!seen.has(item.itemId)) {
+          seen.add(item.itemId);
+          rawResults.push(item);
+        }
+      }
+    } else {
+      const result = await fetchEbayItems(baseQuery, 50, mode);
+      rawResults = result.results;
+    }
     const playerName = extractPlayerName(query);
 
     const variantMap = {};
