@@ -241,7 +241,7 @@ async function fetchEbaySoldItems(keywords, limit = 20) {
 
 // Extract serial number like /4, /25, /99 from a query or title
 function extractSerial(text) {
-  const match = text.match(/\/(\d{1,4})(?:\b|$)/);
+  const match = text.match(/\/(\d{1,4})(?![0-9])/);
   return match ? match[1] : '';
 }
 
@@ -272,7 +272,7 @@ app.get('/api/search', async (req, res) => {
     const { results: allResults } = await fetchEbayItems(baseQuery, 50, mode);
 
     // Exact matches: title contains the specific serial (e.g. "/4" but not "/40" or "/49")
-    const serialPattern = new RegExp(`\\/${serial}(?:\\b|\\s|$|[^0-9])`);
+    const serialPattern = new RegExp(`\\/${serial}(?![0-9])`);
     const exact = allResults.filter(item => serialPattern.test(item.title));
 
     // Similar: other numbered cards from same search (exclude exact matches)
@@ -467,7 +467,11 @@ app.get('/api/variants', async (req, res) => {
   }
 
   try {
-    const { results: rawResults } = await fetchEbayItems(query, 50, mode);
+    // Extract serial number (e.g. /4) from query and strip it for eBay search
+    const serial = extractSerial(query);
+    const searchQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
+
+    const { results: rawResults } = await fetchEbayItems(searchQuery, 50, mode);
     const playerName = extractPlayerName(query);
 
     const variantMap = {};
@@ -498,7 +502,9 @@ app.get('/api/variants', async (req, res) => {
         const prices = v.prices;
         const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
         // Build a specific search query using player name + variant's actual year/set/parallel
+        // Append serial number (e.g. /4) so it flows through to /api/search for filtering
         const searchParts = [playerName, v.year, v.set, v.parallel].filter(Boolean);
+        if (serial) searchParts.push(`/${serial}`);
         return {
           id: key.replace(/[^a-z0-9]+/g, '-'),
           displayName: v.displayName,
@@ -513,7 +519,7 @@ app.get('/api/variants', async (req, res) => {
       .sort((a, b) => b.salesCount - a.salesCount)
       .slice(0, 12);
 
-    res.json({ variants, mock: false, mode });
+    res.json({ variants, mock: false, mode, serial: serial || null });
 
   } catch (err) {
     if (err.isEbayError) {

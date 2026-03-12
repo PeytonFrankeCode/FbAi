@@ -330,7 +330,7 @@ async function fetchVariants(query) {
     }
 
     cachedVariants = data.variants;
-    displayVariants(data.variants, query, data.mock);
+    displayVariants(data.variants, query, data.mock, data.serial);
 
   } catch (err) {
     errorMsg.textContent = `Error: ${err.message}`;
@@ -343,13 +343,14 @@ async function fetchVariants(query) {
 }
 
 // ---- Display Variants ----
-function displayVariants(variants, query, mock) {
+function displayVariants(variants, query, mock, serial) {
   variantsGrid.innerHTML = '';
 
   const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
   variantsTitle.innerHTML = `Results for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
   const subtitle = document.getElementById('variants-subtitle');
-  subtitle.textContent = currentMode === 'sold' ? 'Select a card to view recent sold listings' : 'Select a card to view current listings';
+  const serialNote = serial ? ` — filtering for /${serial} numbered cards` : '';
+  subtitle.textContent = (currentMode === 'sold' ? 'Select a card to view recent sold listings' : 'Select a card to view current listings') + serialNote;
 
   if (variants.length === 0) {
     const empty = document.createElement('p');
@@ -400,7 +401,8 @@ function buildVariantCard(variant) {
 function selectVariant(variant) {
   variantsSection.classList.add('hidden');
   backBtn.classList.remove('hidden');
-  input.value = variant.displayName;
+  // Show the full search query in the input (includes serial like /4 if present)
+  input.value = variant.searchQuery;
   window.scrollTo({ top: 0, behavior: 'smooth' });
   performSearch(variant.searchQuery);
 }
