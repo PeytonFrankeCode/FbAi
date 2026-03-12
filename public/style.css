@@ -1119,6 +1119,57 @@ footer {
   font-size: 0.75rem;
 }
 
+/* ---- No Listings Message ---- */
+.no-listings-box {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: linear-gradient(135deg, #1a202c 0%, #1e2535 100%);
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  animation: fadeUp 0.3s ease;
+}
+
+.no-listings-box .no-listings-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-listings-box h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #e8eaf0;
+  margin-bottom: 0.5rem;
+}
+
+.no-listings-box p {
+  color: #8d99ae;
+  font-size: 0.9rem;
+}
+
+/* ---- Similar Cards Section ---- */
+.similar-section {
+  margin-top: 2rem;
+  animation: fadeUp 0.4s ease;
+}
+
+.similar-header {
+  margin-bottom: 1.25rem;
+}
+
+.similar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e8eaf0;
+}
+
+.similar-subtitle {
+  font-size: 0.85rem;
+  color: #8d99ae;
+  margin-top: 0.3rem;
+}
+
 /* ---- Card Detail Modal ---- */
 .card-modal {
   position: fixed;
