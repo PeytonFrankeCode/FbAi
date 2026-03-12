@@ -157,6 +157,77 @@ const CLIENT_KNOWN_PARALLELS = ['Silver', 'Gold', 'Blue', 'Green', 'Red', 'Purpl
   'Holo', 'Shimmer', 'Hyper', 'Concourse', 'Rainbow', 'Scope', 'Disco', 'Neon', 'Wave', 'Camo',
   'Tie-Dye', 'Black', 'White', 'Aqua', 'Teal', 'Emerald', 'Ruby', 'Sapphire', 'Copper'];
 
+// ---- Parse card details from title ----
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'base', 'card', 'football', 'nfl',
+  'gem', 'mint', 'nm', 'mt', 'nm-mt', 'near', 'better', 'graded', 'raw', 'ungraded', 'auto', 'refractor'];
+
+function parseCardTitle(title) {
+  if (!title) return { player: '', set: '', parallel: '', cardNumber: '', year: '' };
+  const lower = title.toLowerCase();
+
+  // Year
+  const yearMatch = title.match(/\b(201[5-9]|202[0-9])\b/);
+  const year = yearMatch ? yearMatch[1] : '';
+
+  // Set
+  let set = '';
+  for (const s of CLIENT_KNOWN_SETS) {
+    if (lower.includes(s.toLowerCase())) { set = s; break; }
+  }
+
+  // Parallel
+  let parallel = '';
+  for (const p of CLIENT_KNOWN_PARALLELS) {
+    if (lower.includes(p.toLowerCase())) { parallel = p; break; }
+  }
+
+  // Card number (#123, /99, #/99, No. 123)
+  const numMatch = title.match(/#\s*(\d+)|No\.?\s*(\d+)/i);
+  const cardNumber = numMatch ? (numMatch[1] || numMatch[2]) : '';
+
+  // Player name: remove known tokens from title to isolate the name
+  let name = title;
+  if (year) name = name.replace(new RegExp('\\b' + year + '\\b', 'g'), '');
+  if (set) name = name.replace(new RegExp('\\b' + set + '\\b', 'gi'), '');
+  if (parallel) name = name.replace(new RegExp('\\b' + parallel + '\\b', 'gi'), '');
+  for (const w of NOISE_WORDS) {
+    name = name.replace(new RegExp('\\b' + w + '\\b', 'gi'), '');
+  }
+  // Remove card numbers, grading scores, serial numbers like /99
+  name = name.replace(/#\s*\d+/g, '');
+  name = name.replace(/\/\s*\d+/g, '');
+  name = name.replace(/\b\d+\.?\d*\b/g, '');
+  // Remove special characters and dashes used as separators
+  name = name.replace(/[-–—]/g, ' ');
+  name = name.replace(/[#\/\\|:;,!]/g, ' ');
+  // Collapse whitespace and take the first 2-3 capitalized words as the player name
+  name = name.replace(/\s+/g, ' ').trim();
+  const words = name.split(' ').filter(w => w.length > 1);
+  // Take leading proper-case words (first letter uppercase) as the player name
+  const nameWords = [];
+  for (const w of words) {
+    if (/^[A-Z]/.test(w) && nameWords.length < 3) {
+      nameWords.push(w);
+    } else if (nameWords.length > 0) {
+      break;
+    }
+  }
+  const player = nameWords.join(' ') || words.slice(0, 2).join(' ');
+
+  return { player, set, parallel, cardNumber, year };
+}
+
+function buildShowingText(item) {
+  const p = parseCardTitle(item.title);
+  const parts = [];
+  if (p.player) parts.push(p.player);
+  if (p.year) parts.push(p.year);
+  if (p.set) parts.push(p.set);
+  if (p.parallel) parts.push(p.parallel);
+  if (p.cardNumber) parts.push(`#${p.cardNumber}`);
+  return parts.length > 0 ? `Showing ${parts.join(' ')}` : `Showing ${item.title}`;
+}
+
 function isDirectCardSearch(query) {
   const lower = query.toLowerCase();
   let matches = 0;
@@ -738,8 +809,8 @@ const cardModalMeta = document.getElementById('card-modal-meta');
 const cardModalLink = document.getElementById('card-modal-link');
 
 function openCardModal(item) {
-  // "Showing X card" header
-  cardModalShowing.textContent = `Showing ${item.title}`;
+  // "Showing X card" header with parsed details
+  cardModalShowing.textContent = buildShowingText(item);
 
   // Image
   cardModalImage.innerHTML = item.imageUrl
