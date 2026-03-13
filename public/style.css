@@ -97,6 +97,129 @@
   margin-top: 0.75rem;
 }
 
+.login-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: #8d99ae;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+
+.login-close:hover {
+  color: #e8eaf0;
+}
+
+.login-box {
+  position: relative;
+}
+
+.login-toggle {
+  color: #8d99ae;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.login-toggle a {
+  color: #52b788;
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+
+.login-toggle a:hover {
+  text-decoration: underline;
+}
+
+/* ---- Header Auth Button ---- */
+.header-auth {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+.auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(82, 183, 136, 0.12);
+  border: 1px solid rgba(82, 183, 136, 0.25);
+  color: #52b788;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-family: inherit;
+}
+
+.auth-btn:hover {
+  background: rgba(82, 183, 136, 0.2);
+  border-color: rgba(82, 183, 136, 0.4);
+}
+
+.auth-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.auth-btn.logged-in {
+  background: rgba(82, 183, 136, 0.18);
+  border-color: #52b788;
+}
+
+.auth-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.4rem;
+  background: #1a1f2e;
+  border: 1px solid #2d3748;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 160px;
+  z-index: 100;
+  animation: fadeUp 0.2s ease;
+}
+
+.auth-dropdown.hidden {
+  display: none;
+}
+
+.auth-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  color: #e8eaf0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.auth-dropdown button:hover {
+  background: rgba(82, 183, 136, 0.1);
+}
+
+.auth-dropdown button:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.auth-dropdown button:last-child {
+  border-radius: 0 0 8px 8px;
+  color: #fc8181;
+}
+
 /* ---- Reset & Base ---- */
 *, *::before, *::after {
   box-sizing: border-box;

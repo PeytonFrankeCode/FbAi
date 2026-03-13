@@ -44,10 +44,38 @@
 <body>
 <header>
     <div class="header-inner">
+      <div class="header-auth">
+        <button id="auth-btn" class="auth-btn" onclick="showLogin()">
+          <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="auth-btn-text">Log In</span>
+        </button>
+      </div>
       <h1>&#127944; The Card Huddle</h1>
       <p class="header-tagline">Real sold data. Fair market prices. Smarter decisions.</p>
     </div>
   </header>
+
+  <!-- Login / Sign Up Modal -->
+  <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-label="Login">
+    <div class="login-box">
+      <button class="login-close" aria-label="Close" onclick="closeLogin()">&times;</button>
+      <div class="login-icon">&#127944;</div>
+      <h2 id="login-heading">Log In</h2>
+      <p id="login-subtext">Welcome back to The Card Huddle</p>
+      <form id="login-form" onsubmit="return handleAuth(event)">
+        <input type="text" id="auth-username" placeholder="Username" required minlength="3" maxlength="30" autocomplete="username" />
+        <input type="password" id="auth-password" placeholder="Password" required minlength="6" autocomplete="current-password" />
+        <input type="password" id="auth-confirm" class="hidden" placeholder="Confirm Password" autocomplete="new-password" />
+        <input type="email" id="auth-email" class="hidden" placeholder="Email (optional)" autocomplete="email" />
+        <button type="submit" id="auth-submit-btn">Log In</button>
+      </form>
+      <p id="login-error" class="login-error hidden"></p>
+      <p class="login-toggle">
+        <span id="login-toggle-text">Don't have an account?</span>
+        <a href="#" id="login-toggle-link" onclick="toggleAuthMode(event)">Sign Up</a>
+      </p>
+    </div>
+  </div>
 
   <main>
     <section class="search-section" aria-label="Search">
