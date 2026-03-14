@@ -58,6 +58,10 @@
       </div>
       <h1>&#127944; The Card Huddle</h1>
       <p class="header-tagline">Real sold data. Fair market prices. Smarter decisions.</p>
+      <nav class="header-nav">
+        <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
+        <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
+      </nav>
     </div>
   </header>
 
@@ -242,6 +246,40 @@
       <div class="ad-placeholder">Ad Space</div>
     </div>
   </main>
+
+  <!-- Checklist View (hidden by default) -->
+  <div id="checklist-view" class="checklist-view hidden">
+    <div class="checklist-container">
+      <!-- Product selector -->
+      <div id="checklist-products" class="checklist-products">
+        <h2 class="checklist-page-title">Browse Checklists</h2>
+        <p class="checklist-page-subtitle">Explore complete card checklists with every parallel and print run</p>
+        <div id="checklist-product-grid" class="checklist-product-grid"></div>
+      </div>
+
+      <!-- Set browser (shown after selecting a product) -->
+      <div id="checklist-browser" class="checklist-browser hidden">
+        <button class="checklist-back-btn" onclick="checklistBack()">&larr; All Checklists</button>
+        <h2 id="checklist-product-name" class="checklist-product-name"></h2>
+
+        <!-- Search within checklist -->
+        <div class="checklist-search-wrap">
+          <input type="text" id="checklist-search" class="checklist-search-input" placeholder="Search player, team, or card number..." />
+        </div>
+
+        <!-- Category filter tabs -->
+        <div class="checklist-category-tabs" id="checklist-category-tabs">
+          <button class="checklist-cat-tab active" data-cat="all">All</button>
+          <button class="checklist-cat-tab" data-cat="base">Base</button>
+          <button class="checklist-cat-tab" data-cat="autograph">Autographs</button>
+          <button class="checklist-cat-tab" data-cat="insert">Inserts</button>
+        </div>
+
+        <!-- Sets list -->
+        <div id="checklist-sets" class="checklist-sets"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- Card Detail Modal -->
   <div id="card-modal" class="card-modal hidden" role="dialog" aria-label="Card details">
