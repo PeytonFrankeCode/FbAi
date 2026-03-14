@@ -2223,6 +2223,233 @@ footer {
   opacity: 1;
 }
 
+/* ---- Inline Player Listings ---- */
+.cl-player-link {
+  color: #52b788;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  font-weight: 600;
+}
+
+.cl-player-link:hover {
+  color: #6fcf97;
+  text-decoration: underline;
+}
+
+.cl-player-link.cl-player-active {
+  color: #6fcf97;
+}
+
+.cl-listings-row {
+  animation: clPanelSlide 0.2s ease-out;
+}
+
+@keyframes clPanelSlide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cl-listings-cell {
+  padding: 0 !important;
+  border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+}
+
+.cl-listings-panel {
+  background: rgba(20, 25, 35, 0.8);
+  border: 1px solid rgba(82, 183, 136, 0.2);
+  border-radius: 8px;
+  margin: 0.5rem 0.75rem;
+  overflow: hidden;
+}
+
+.cl-listings-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(82, 183, 136, 0.08);
+  border-bottom: 1px solid rgba(82, 183, 136, 0.15);
+}
+
+.cl-listings-title {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #e8eaf0;
+  white-space: nowrap;
+}
+
+.cl-listings-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.cl-listings-tab {
+  background: rgba(45, 55, 72, 0.5);
+  border: 1px solid rgba(82, 183, 136, 0.15);
+  border-radius: 6px;
+  color: #a0aec0;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cl-listings-tab:hover {
+  color: #e8eaf0;
+  border-color: rgba(82, 183, 136, 0.3);
+}
+
+.cl-listings-tab.active {
+  background: rgba(82, 183, 136, 0.15);
+  border-color: #52b788;
+  color: #52b788;
+}
+
+.cl-listings-close {
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.cl-listings-close:hover {
+  color: #e8eaf0;
+}
+
+.cl-listings-body {
+  padding: 0.75rem 1rem;
+  min-height: 80px;
+}
+
+.cl-listings-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  color: #a0aec0;
+  font-size: 0.8rem;
+}
+
+.cl-listings-loading .spinner {
+  width: 18px;
+  height: 18px;
+}
+
+.cl-listings-empty {
+  text-align: center;
+  color: #a0aec0;
+  font-size: 0.8rem;
+  padding: 1.5rem;
+}
+
+.cl-listings-stats {
+  display: flex;
+  gap: 1.25rem;
+  padding: 0.4rem 0 0.75rem;
+  font-size: 0.75rem;
+  color: #a0aec0;
+  border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cl-listings-stats span {
+  font-weight: 600;
+}
+
+.cl-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.6rem;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-bottom: 0.25rem;
+}
+
+.cl-listing-item {
+  display: flex;
+  flex-direction: column;
+  background: rgba(30, 36, 50, 0.8);
+  border: 1px solid rgba(45, 55, 72, 0.6);
+  border-radius: 6px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.cl-listing-item:hover {
+  border-color: rgba(82, 183, 136, 0.4);
+  transform: translateY(-2px);
+}
+
+.cl-item-img {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cl-item-noimg {
+  font-size: 1.5rem;
+  opacity: 0.3;
+}
+
+.cl-item-info {
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cl-item-price {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #e8eaf0;
+}
+
+.cl-item-badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.cl-item-badge.sold {
+  background: rgba(245, 101, 101, 0.15);
+  color: #fc8181;
+}
+
+.cl-item-badge.forsale {
+  background: rgba(82, 183, 136, 0.15);
+  color: #52b788;
+}
+
+.cl-item-date {
+  font-size: 0.65rem;
+  color: #718096;
+}
+
 /* ---- Checklist Responsive ---- */
 @media (max-width: 600px) {
   .checklist-view {
@@ -2244,5 +2471,22 @@ footer {
 
   .checklist-parallels-row {
     display: none;
+  }
+
+  .cl-listings-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .cl-listings-tabs {
+    margin-left: 0;
+  }
+
+  .cl-listings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+
+  .cl-listings-panel {
+    margin: 0.25rem;
   }
 }

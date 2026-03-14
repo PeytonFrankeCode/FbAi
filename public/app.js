@@ -1351,14 +1351,19 @@ function renderChecklistSets() {
             </tr>
           </thead>
           <tbody>
-            ${cards.map(c => `
+            ${cards.map(c => {
+              const playerEsc = escHtml(c.player).replace(/'/g, "\\'");
+              const year = checklistData.year || '2025';
+              const brand = escHtml(checklistData.brand || 'Bowman').replace(/'/g, "\\'");
+              const setName = escHtml(set.name).replace(/'/g, "\\'");
+              return `
               <tr>
                 <td class="cl-num">${escHtml(c.number)}</td>
-                <td class="cl-player">${escHtml(c.player)}</td>
+                <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}')">${escHtml(c.player)}</a></td>
                 <td class="cl-team">${escHtml(c.team)}</td>
-                <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${escHtml(c.player)}', '2025', 'Bowman')" title="Search eBay">&#128269;</button></td>
-              </tr>
-            `).join('')}
+                <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}')" title="Search eBay">&#128269;</button></td>
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -1374,4 +1379,150 @@ function searchFromChecklist(player, year, brand) {
   switchView('search');
   addRecentSearch(query);
   fetchVariants(query);
+}
+
+// ---- Inline Player Listings in Checklist ----
+let activePlayerPanel = null;
+
+function togglePlayerListings(linkEl, player, year, brand, setName) {
+  const row = linkEl.closest('tr');
+  const existingPanel = row.nextElementSibling;
+
+  // If already open for this player, close it
+  if (existingPanel && existingPanel.classList.contains('cl-listings-row')) {
+    existingPanel.remove();
+    linkEl.classList.remove('cl-player-active');
+    if (activePlayerPanel === existingPanel) activePlayerPanel = null;
+    return;
+  }
+
+  // Close any other open panel
+  if (activePlayerPanel) {
+    const prevLink = activePlayerPanel.previousElementSibling?.querySelector('.cl-player-active');
+    if (prevLink) prevLink.classList.remove('cl-player-active');
+    activePlayerPanel.remove();
+    activePlayerPanel = null;
+  }
+
+  linkEl.classList.add('cl-player-active');
+
+  // Create the expandable row
+  const panelRow = document.createElement('tr');
+  panelRow.className = 'cl-listings-row';
+  const td = document.createElement('td');
+  td.colSpan = 4;
+  td.className = 'cl-listings-cell';
+
+  const query = `${year} ${brand} ${player}`;
+
+  td.innerHTML = `
+    <div class="cl-listings-panel">
+      <div class="cl-listings-header">
+        <h4 class="cl-listings-title">${escHtml(player)}</h4>
+        <div class="cl-listings-tabs">
+          <button class="cl-listings-tab active" data-lmode="forsale">For Sale</button>
+          <button class="cl-listings-tab" data-lmode="sold">Sold</button>
+        </div>
+        <button class="cl-listings-close" title="Close">&times;</button>
+      </div>
+      <div class="cl-listings-body">
+        <div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>
+      </div>
+    </div>
+  `;
+
+  panelRow.appendChild(td);
+  row.after(panelRow);
+  activePlayerPanel = panelRow;
+
+  // Tab switching
+  const tabs = td.querySelectorAll('.cl-listings-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      fetchPlayerListings(td, query, tab.dataset.lmode);
+    });
+  });
+
+  // Close button
+  td.querySelector('.cl-listings-close').addEventListener('click', () => {
+    linkEl.classList.remove('cl-player-active');
+    panelRow.remove();
+    if (activePlayerPanel === panelRow) activePlayerPanel = null;
+  });
+
+  // Fetch for-sale by default
+  fetchPlayerListings(td, query, 'forsale');
+}
+
+async function fetchPlayerListings(container, query, mode) {
+  const body = container.querySelector('.cl-listings-body');
+  body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
+
+  try {
+    const params = new URLSearchParams({ q: query, mode: mode, limit: '12' });
+    const response = await fetch(`/api/search?${params}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || `Server error ${response.status}`);
+    }
+
+    const results = data.results || [];
+
+    if (results.length === 0) {
+      body.innerHTML = `<div class="cl-listings-empty">No ${mode === 'sold' ? 'sold listings' : 'listings'} found.</div>`;
+      return;
+    }
+
+    // Stats
+    const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+    const avg = prices.length ? (prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
+    const low = prices.length ? Math.min(...prices) : 0;
+    const high = prices.length ? Math.max(...prices) : 0;
+
+    const isSold = mode === 'sold';
+    const mockBadge = data.mock ? '<span class="mock-badge" style="font-size:0.65rem;">DEMO</span>' : '';
+
+    let html = `
+      <div class="cl-listings-stats">
+        <span>${results.length} ${isSold ? 'sold' : 'listings'} ${mockBadge}</span>
+        <span>Avg: $${avg.toFixed(2)}</span>
+        <span>Low: $${low.toFixed(2)}</span>
+        <span>High: $${high.toFixed(2)}</span>
+      </div>
+      <div class="cl-listings-grid">
+    `;
+
+    results.forEach(item => {
+      const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
+      const dateStr = item.soldDate
+        ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        : '';
+      const badge = isSold
+        ? '<span class="cl-item-badge sold">SOLD</span>'
+        : '<span class="cl-item-badge forsale">FOR SALE</span>';
+      const imgHtml = item.imageUrl
+        ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
+        : `<div class="cl-item-noimg">&#127944;</div>`;
+
+      html += `
+        <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+          <div class="cl-item-img">${imgHtml}</div>
+          <div class="cl-item-info">
+            <span class="cl-item-price">${price}</span>
+            ${badge}
+            ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
+          </div>
+        </a>
+      `;
+    });
+
+    html += '</div>';
+    body.innerHTML = html;
+
+  } catch (err) {
+    body.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+  }
 }
