@@ -161,7 +161,7 @@ const CLIENT_KNOWN_PARALLELS = ['Silver', 'Gold', 'Blue', 'Green', 'Red', 'Purpl
   'Tie-Dye', 'Black', 'White', 'Aqua', 'Teal', 'Emerald', 'Ruby', 'Sapphire', 'Copper'];
 
 // ---- Parse card details from title ----
-const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'base', 'card', 'football', 'nfl',
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl',
   'gem', 'mint', 'nm', 'mt', 'nm-mt', 'near', 'better', 'graded', 'raw', 'ungraded', 'auto', 'refractor'];
 
 function parseCardTitle(title) {
@@ -178,11 +178,12 @@ function parseCardTitle(title) {
     if (lower.includes(s.toLowerCase())) { set = s; break; }
   }
 
-  // Parallel
+  // Parallel (default to Base if set is known but no parallel detected)
   let parallel = '';
   for (const p of CLIENT_KNOWN_PARALLELS) {
     if (lower.includes(p.toLowerCase())) { parallel = p; break; }
   }
+  if (!parallel && set) parallel = 'Base';
 
   // Card number (#123, /99, #/99, No. 123)
   const numMatch = title.match(/#\s*(\d+)|No\.?\s*(\d+)/i);
@@ -813,11 +814,18 @@ function buildCard(item) {
          <span>No image</span>
        </div>`;
 
+  // Parse card details for a specific subtitle
+  const parsed = parseCardTitle(item.title);
+  const tagParts = [parsed.year, parsed.set, parsed.parallel].filter(Boolean);
+  const cardTag = tagParts.length >= 2 ? tagParts.join(' ') : '';
+  const cardTagHtml = cardTag ? `<p class="card-tag">${escHtml(cardTag)}</p>` : '';
+
   card.innerHTML = `
     <div class="card-accent"></div>
     ${badgeHtml}
     <div class="card-image-wrap">${imageHtml}</div>
     <div class="card-body">
+      ${cardTagHtml}
       <p class="card-title">${escHtml(item.title)}</p>
       <p class="card-price">${price}</p>
       <div class="card-meta">
@@ -1185,3 +1193,185 @@ document.addEventListener('keydown', (e) => {
 
 // Init pro button state
 updateProButton();
+
+// ---- Checklist Browse Feature ----
+const checklistView = document.getElementById('checklist-view');
+const checklistProducts = document.getElementById('checklist-products');
+const checklistProductGrid = document.getElementById('checklist-product-grid');
+const checklistBrowser = document.getElementById('checklist-browser');
+const checklistProductName = document.getElementById('checklist-product-name');
+const checklistSearch = document.getElementById('checklist-search');
+const checklistSets = document.getElementById('checklist-sets');
+const checklistCategoryTabs = document.getElementById('checklist-category-tabs');
+const mainEl = document.querySelector('main');
+
+let checklistData = null;
+let checklistFilter = 'all';
+
+function switchView(view) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.nav-tab[data-view="${view}"]`).classList.add('active');
+
+  if (view === 'checklist') {
+    mainEl.classList.add('hidden');
+    checklistView.classList.remove('hidden');
+    if (!checklistData) loadChecklistProducts();
+  } else {
+    mainEl.classList.remove('hidden');
+    checklistView.classList.add('hidden');
+  }
+}
+
+async function loadChecklistProducts() {
+  checklistProductGrid.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading checklists...</span></div>';
+  try {
+    const res = await fetch('/api/checklists');
+    const data = await res.json();
+    checklistProductGrid.innerHTML = '';
+    data.products.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'checklist-product-card';
+      card.innerHTML = `
+        <div class="checklist-product-info">
+          <h3>${escHtml(p.name)}</h3>
+          <div class="checklist-product-stats">
+            <span>${p.setCount} sets</span>
+            <span>${p.totalCards} cards</span>
+          </div>
+        </div>
+        <span class="checklist-product-arrow">&rarr;</span>
+      `;
+      card.addEventListener('click', () => loadProduct(p.id));
+      checklistProductGrid.appendChild(card);
+    });
+  } catch (err) {
+    checklistProductGrid.innerHTML = `<p class="checklist-error">Failed to load checklists: ${escHtml(err.message)}</p>`;
+  }
+}
+
+async function loadProduct(productId) {
+  checklistProducts.classList.add('hidden');
+  checklistBrowser.classList.remove('hidden');
+  checklistSets.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading...</span></div>';
+
+  try {
+    const res = await fetch(`/api/checklists/${productId}`);
+    checklistData = await res.json();
+    checklistProductName.textContent = checklistData.name;
+    checklistFilter = 'all';
+    checklistSearch.value = '';
+    document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
+    renderChecklistSets();
+  } catch (err) {
+    checklistSets.innerHTML = `<p class="checklist-error">Failed to load: ${escHtml(err.message)}</p>`;
+  }
+}
+
+function checklistBack() {
+  checklistBrowser.classList.add('hidden');
+  checklistProducts.classList.remove('hidden');
+  checklistData = null;
+}
+
+// Category tabs
+checklistCategoryTabs.addEventListener('click', (e) => {
+  const tab = e.target.closest('.checklist-cat-tab');
+  if (!tab) return;
+  checklistFilter = tab.dataset.cat;
+  document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t === tab));
+  renderChecklistSets();
+});
+
+// Search
+checklistSearch.addEventListener('input', () => renderChecklistSets());
+
+function renderChecklistSets() {
+  if (!checklistData) return;
+  const q = checklistSearch.value.toLowerCase().trim();
+  checklistSets.innerHTML = '';
+
+  const filteredSets = checklistData.sets.filter(s => {
+    if (checklistFilter !== 'all' && s.category !== checklistFilter) return false;
+    if (!q) return true;
+    // If searching, filter to sets that have matching cards
+    return s.cards.some(c =>
+      c.player.toLowerCase().includes(q) ||
+      c.team.toLowerCase().includes(q) ||
+      c.number.toLowerCase().includes(q)
+    );
+  });
+
+  if (filteredSets.length === 0) {
+    checklistSets.innerHTML = '<p class="checklist-empty">No matching cards found.</p>';
+    return;
+  }
+
+  filteredSets.forEach(set => {
+    const setEl = document.createElement('div');
+    setEl.className = 'checklist-set';
+
+    // Filter cards if searching
+    let cards = set.cards;
+    if (q) {
+      cards = cards.filter(c =>
+        c.player.toLowerCase().includes(q) ||
+        c.team.toLowerCase().includes(q) ||
+        c.number.toLowerCase().includes(q)
+      );
+    }
+
+    const categoryBadge = set.category === 'autograph' ? '<span class="checklist-badge auto">AUTO</span>'
+      : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
+      : '<span class="checklist-badge base">BASE</span>';
+
+    // Parallels summary
+    const parallelsList = set.parallels.map(p => {
+      const pr = p.printRun ? ` /${p.printRun}` : '';
+      return `<span class="checklist-parallel">${escHtml(p.name)}${pr}</span>`;
+    }).join('');
+
+    setEl.innerHTML = `
+      <div class="checklist-set-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <div class="checklist-set-title-row">
+          ${categoryBadge}
+          <h3 class="checklist-set-name">${escHtml(set.name)}</h3>
+          <span class="checklist-set-count">${cards.length}${q ? '/' + set.totalCards : ''} cards</span>
+          <span class="checklist-set-toggle">&#9660;</span>
+        </div>
+        <div class="checklist-parallels-row">${parallelsList}</div>
+      </div>
+      <div class="checklist-set-body">
+        <table class="checklist-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Team</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cards.map(c => `
+              <tr>
+                <td class="cl-num">${escHtml(c.number)}</td>
+                <td class="cl-player">${escHtml(c.player)}</td>
+                <td class="cl-team">${escHtml(c.team)}</td>
+                <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${escHtml(c.player)}', '2025', 'Bowman')" title="Search eBay">&#128269;</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    checklistSets.appendChild(setEl);
+  });
+}
+
+function searchFromChecklist(player, year, brand) {
+  const query = `${year} ${brand} ${player}`;
+  input.value = query;
+  switchView('search');
+  addRecentSearch(query);
+  fetchVariants(query);
+}

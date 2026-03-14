@@ -356,7 +356,7 @@ function extractParallel(title) {
 }
 
 // ---- Query parsing helpers for direct search ----
-const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'base', 'card', 'football', 'nfl'];
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl'];
 
 function extractPlayerName(query) {
   let name = query;
@@ -572,7 +572,7 @@ app.get('/api/variants', async (req, res) => {
       const title = item.title || '';
       const year = extractYear(title);
       const set = extractSet(title);
-      const parallel = extractParallel(title);
+      const parallel = extractParallel(title) || 'Base';
 
       if (!year && !set) return;
 
@@ -690,6 +690,55 @@ app.get('/api/ebay/account-deletion', (req, res) => {
 app.post('/api/ebay/account-deletion', (req, res) => {
   // Acknowledge account deletion notifications (no user data stored)
   res.sendStatus(200);
+});
+
+// ---- Checklist Data API ----
+const checklistData = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'checklists.json'), 'utf8'));
+
+// GET /api/checklists — list all products
+app.get('/api/checklists', (req, res) => {
+  const products = checklistData.products.map(p => ({
+    id: p.id,
+    name: p.name,
+    year: p.year,
+    brand: p.brand,
+    sport: p.sport,
+    setCount: p.sets.length,
+    totalCards: p.sets.reduce((sum, s) => sum + s.totalCards, 0),
+  }));
+  res.json({ products });
+});
+
+// GET /api/checklists/:productId — get full product with all sets
+app.get('/api/checklists/:productId', (req, res) => {
+  const product = checklistData.products.find(p => p.id === req.params.productId);
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+  res.json(product);
+});
+
+// GET /api/checklists/:productId/search?q=player — search cards within a product
+app.get('/api/checklists/:productId/search', (req, res) => {
+  const product = checklistData.products.find(p => p.id === req.params.productId);
+  if (!product) return res.status(404).json({ error: 'Product not found' });
+
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q) return res.json({ results: [] });
+
+  const results = [];
+  for (const set of product.sets) {
+    for (const card of set.cards) {
+      if (card.player.toLowerCase().includes(q) || card.team.toLowerCase().includes(q) || card.number.toLowerCase().includes(q)) {
+        results.push({
+          ...card,
+          setId: set.id,
+          setName: set.name,
+          category: set.category,
+          parallels: set.parallels,
+        });
+      }
+    }
+  }
+  res.json({ results, query: q });
 });
 
 app.get('*', (req, res) => {
