@@ -161,7 +161,7 @@ const CLIENT_KNOWN_PARALLELS = ['Silver', 'Gold', 'Blue', 'Green', 'Red', 'Purpl
   'Tie-Dye', 'Black', 'White', 'Aqua', 'Teal', 'Emerald', 'Ruby', 'Sapphire', 'Copper'];
 
 // ---- Parse card details from title ----
-const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'base', 'card', 'football', 'nfl',
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl',
   'gem', 'mint', 'nm', 'mt', 'nm-mt', 'near', 'better', 'graded', 'raw', 'ungraded', 'auto', 'refractor'];
 
 function parseCardTitle(title) {
@@ -178,11 +178,12 @@ function parseCardTitle(title) {
     if (lower.includes(s.toLowerCase())) { set = s; break; }
   }
 
-  // Parallel
+  // Parallel (default to Base if set is known but no parallel detected)
   let parallel = '';
   for (const p of CLIENT_KNOWN_PARALLELS) {
     if (lower.includes(p.toLowerCase())) { parallel = p; break; }
   }
+  if (!parallel && set) parallel = 'Base';
 
   // Card number (#123, /99, #/99, No. 123)
   const numMatch = title.match(/#\s*(\d+)|No\.?\s*(\d+)/i);
@@ -813,11 +814,18 @@ function buildCard(item) {
          <span>No image</span>
        </div>`;
 
+  // Parse card details for a specific subtitle
+  const parsed = parseCardTitle(item.title);
+  const tagParts = [parsed.year, parsed.set, parsed.parallel].filter(Boolean);
+  const cardTag = tagParts.length >= 2 ? tagParts.join(' ') : '';
+  const cardTagHtml = cardTag ? `<p class="card-tag">${escHtml(cardTag)}</p>` : '';
+
   card.innerHTML = `
     <div class="card-accent"></div>
     ${badgeHtml}
     <div class="card-image-wrap">${imageHtml}</div>
     <div class="card-body">
+      ${cardTagHtml}
       <p class="card-title">${escHtml(item.title)}</p>
       <p class="card-price">${price}</p>
       <div class="card-meta">

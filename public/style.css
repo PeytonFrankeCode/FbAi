@@ -1174,6 +1174,15 @@ main {
   flex: 0 0 auto;
 }
 
+.card-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #52b788;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
 .card-title {
   font-size: 0.85rem;
   font-weight: 500;

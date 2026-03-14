@@ -356,7 +356,7 @@ function extractParallel(title) {
 }
 
 // ---- Query parsing helpers for direct search ----
-const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'base', 'card', 'football', 'nfl'];
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl'];
 
 function extractPlayerName(query) {
   let name = query;
@@ -572,7 +572,7 @@ app.get('/api/variants', async (req, res) => {
       const title = item.title || '';
       const year = extractYear(title);
       const set = extractSet(title);
-      const parallel = extractParallel(title);
+      const parallel = extractParallel(title) || 'Base';
 
       if (!year && !set) return;
 
