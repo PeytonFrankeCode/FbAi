@@ -922,3 +922,184 @@ function setLoading(isLoading) {
   btn.disabled = isLoading;
   loading.classList.toggle('hidden', !isLoading);
 }
+
+// ---- Auth (localStorage-based) ----
+const loginOverlay = document.getElementById('login-overlay');
+const authBtn = document.getElementById('auth-btn');
+const authBtnText = document.getElementById('auth-btn-text');
+const loginHeading = document.getElementById('login-heading');
+const loginSubtext = document.getElementById('login-subtext');
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+const loginError = document.getElementById('login-error');
+const authConfirm = document.getElementById('auth-confirm');
+const authEmail = document.getElementById('auth-email');
+const loginToggleText = document.getElementById('login-toggle-text');
+const loginToggleLink = document.getElementById('login-toggle-link');
+
+let authMode = 'login'; // 'login' or 'signup'
+
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleUsers') || '{}'); }
+  catch { return {}; }
+}
+
+function getCurrentUser() {
+  return localStorage.getItem('cardHuddleCurrentUser') || null;
+}
+
+function setCurrentUser(username) {
+  if (username) {
+    localStorage.setItem('cardHuddleCurrentUser', username);
+  } else {
+    localStorage.removeItem('cardHuddleCurrentUser');
+  }
+  updateAuthButton();
+}
+
+function updateAuthButton() {
+  const user = getCurrentUser();
+  if (user) {
+    authBtnText.textContent = user;
+    authBtn.classList.add('logged-in');
+    authBtn.onclick = toggleAuthDropdown;
+  } else {
+    authBtnText.textContent = 'Log In';
+    authBtn.classList.remove('logged-in');
+    authBtn.onclick = showLogin;
+    // Remove dropdown if present
+    const existing = document.querySelector('.auth-dropdown');
+    if (existing) existing.remove();
+  }
+}
+
+function toggleAuthDropdown() {
+  let dropdown = document.querySelector('.auth-dropdown');
+  if (dropdown) {
+    dropdown.remove();
+    return;
+  }
+  dropdown = document.createElement('div');
+  dropdown.className = 'auth-dropdown';
+  dropdown.innerHTML = `
+    <button onclick="closeAuthDropdown()">My Account</button>
+    <button onclick="handleLogout()">Log Out</button>
+  `;
+  authBtn.parentElement.appendChild(dropdown);
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', closeDropdownOutside, { once: true });
+  }, 0);
+}
+
+function closeDropdownOutside(e) {
+  const dropdown = document.querySelector('.auth-dropdown');
+  if (dropdown && !dropdown.contains(e.target) && !authBtn.contains(e.target)) {
+    dropdown.remove();
+  }
+}
+
+function closeAuthDropdown() {
+  const dropdown = document.querySelector('.auth-dropdown');
+  if (dropdown) dropdown.remove();
+}
+
+function showLogin() {
+  authMode = 'login';
+  updateLoginForm();
+  loginOverlay.classList.remove('hidden');
+  document.getElementById('auth-username').focus();
+}
+
+function closeLogin() {
+  loginOverlay.classList.add('hidden');
+  loginError.classList.add('hidden');
+  document.getElementById('login-form').reset();
+}
+
+function toggleAuthMode(e) {
+  e.preventDefault();
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  updateLoginForm();
+}
+
+function updateLoginForm() {
+  loginError.classList.add('hidden');
+  if (authMode === 'signup') {
+    loginHeading.textContent = 'Create Account';
+    loginSubtext.textContent = 'Join The Card Huddle';
+    authSubmitBtn.textContent = 'Create Account';
+    authConfirm.classList.remove('hidden');
+    authConfirm.required = true;
+    authEmail.classList.remove('hidden');
+    loginToggleText.textContent = 'Already have an account?';
+    loginToggleLink.textContent = 'Log In';
+  } else {
+    loginHeading.textContent = 'Log In';
+    loginSubtext.textContent = 'Welcome back to The Card Huddle';
+    authSubmitBtn.textContent = 'Log In';
+    authConfirm.classList.add('hidden');
+    authConfirm.required = false;
+    authEmail.classList.add('hidden');
+    loginToggleText.textContent = "Don't have an account?";
+    loginToggleLink.textContent = 'Sign Up';
+  }
+}
+
+function handleAuth(e) {
+  e.preventDefault();
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  loginError.classList.add('hidden');
+
+  if (authMode === 'signup') {
+    const confirm = authConfirm.value;
+    if (password !== confirm) {
+      loginError.textContent = 'Passwords do not match';
+      loginError.classList.remove('hidden');
+      return false;
+    }
+    const users = getUsers();
+    if (users[username.toLowerCase()]) {
+      loginError.textContent = 'Username already taken';
+      loginError.classList.remove('hidden');
+      return false;
+    }
+    const email = document.getElementById('auth-email').value.trim();
+    users[username.toLowerCase()] = { username, password, email, createdAt: new Date().toISOString() };
+    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+    setCurrentUser(username);
+    closeLogin();
+  } else {
+    const users = getUsers();
+    const user = users[username.toLowerCase()];
+    if (!user || user.password !== password) {
+      loginError.textContent = 'Invalid username or password';
+      loginError.classList.remove('hidden');
+      return false;
+    }
+    setCurrentUser(user.username);
+    closeLogin();
+  }
+  return false;
+}
+
+function handleLogout() {
+  closeAuthDropdown();
+  setCurrentUser(null);
+}
+
+// Close login modal on overlay click
+loginOverlay.addEventListener('click', (e) => {
+  if (e.target === loginOverlay) closeLogin();
+});
+
+// Close login on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !loginOverlay.classList.contains('hidden')) {
+    closeLogin();
+  }
+});
+
+// Init auth state on load
+updateAuthButton();
