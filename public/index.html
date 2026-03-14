@@ -50,6 +50,12 @@
           <span id="auth-btn-text">Log In</span>
         </button>
       </div>
+      <div class="header-pro">
+        <button id="pro-btn" class="pro-btn" onclick="showPricing()">
+          <svg class="pro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span id="pro-btn-text">Go Pro</span>
+        </button>
+      </div>
       <h1>&#127944; The Card Huddle</h1>
       <p class="header-tagline">Real sold data. Fair market prices. Smarter decisions.</p>
     </div>
@@ -74,6 +80,57 @@
         <span id="login-toggle-text">Don't have an account?</span>
         <a href="#" id="login-toggle-link" onclick="toggleAuthMode(event)">Sign Up</a>
       </p>
+    </div>
+  </div>
+
+  <!-- Pricing / Subscription Modal -->
+  <div id="pricing-overlay" class="pricing-overlay hidden" role="dialog" aria-label="Subscription plans">
+    <div class="pricing-box">
+      <button class="login-close" aria-label="Close" onclick="closePricing()">&times;</button>
+      <h2 class="pricing-heading">Choose Your Plan</h2>
+      <p class="pricing-subtext">Unlock premium features for smarter card collecting</p>
+
+      <div class="pricing-toggle">
+        <button class="pricing-period active" data-period="monthly" onclick="setPricingPeriod('monthly')">Monthly</button>
+        <button class="pricing-period" data-period="yearly" onclick="setPricingPeriod('yearly')">Yearly</button>
+        <span class="pricing-save-badge">Save 33%</span>
+      </div>
+
+      <div class="pricing-cards">
+        <div class="pricing-card">
+          <h3 class="pricing-tier">Free</h3>
+          <div class="pricing-price"><span class="pricing-amount">$0</span><span class="pricing-freq">/mo</span></div>
+          <ul class="pricing-features">
+            <li class="included">Basic card search</li>
+            <li class="included">For Sale &amp; Sold listings</li>
+            <li class="included">Price trend charts</li>
+            <li class="excluded">Portfolio tracking</li>
+            <li class="excluded">Price alerts</li>
+            <li class="excluded">Market analytics</li>
+            <li class="excluded">Ad-free experience</li>
+          </ul>
+          <button class="pricing-cta free" onclick="closePricing()">Current Plan</button>
+        </div>
+
+        <div class="pricing-card featured">
+          <div class="pricing-badge">Most Popular</div>
+          <h3 class="pricing-tier">Pro</h3>
+          <div class="pricing-price">
+            <span class="pricing-amount" id="pro-price">$4.99</span>
+            <span class="pricing-freq" id="pro-freq">/mo</span>
+          </div>
+          <ul class="pricing-features">
+            <li class="included">Unlimited card searches</li>
+            <li class="included">For Sale &amp; Sold listings</li>
+            <li class="included">Price trend charts</li>
+            <li class="included">Portfolio tracking</li>
+            <li class="included">Price alerts</li>
+            <li class="included">Market analytics</li>
+            <li class="included">Ad-free experience</li>
+          </ul>
+          <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
+        </div>
+      </div>
     </div>
   </div>
 
