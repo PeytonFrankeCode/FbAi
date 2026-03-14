@@ -954,6 +954,7 @@ function setCurrentUser(username) {
     localStorage.removeItem('cardHuddleCurrentUser');
   }
   updateAuthButton();
+  if (typeof updateProButton === 'function') updateProButton();
 }
 
 function updateAuthButton() {
@@ -1103,3 +1104,84 @@ document.addEventListener('keydown', (e) => {
 
 // Init auth state on load
 updateAuthButton();
+
+// ---- Subscription / Pricing ----
+const pricingOverlay = document.getElementById('pricing-overlay');
+const proBtn = document.getElementById('pro-btn');
+const proBtnText = document.getElementById('pro-btn-text');
+let pricingPeriod = 'monthly';
+
+function showPricing() {
+  pricingOverlay.classList.remove('hidden');
+}
+
+function closePricing() {
+  pricingOverlay.classList.add('hidden');
+}
+
+function setPricingPeriod(period) {
+  pricingPeriod = period;
+  document.querySelectorAll('.pricing-period').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  const priceEl = document.getElementById('pro-price');
+  const freqEl = document.getElementById('pro-freq');
+  if (period === 'yearly') {
+    priceEl.textContent = '$39.99';
+    freqEl.textContent = '/yr';
+  } else {
+    priceEl.textContent = '$4.99';
+    freqEl.textContent = '/mo';
+  }
+}
+
+function handleSubscribe(plan) {
+  const user = getCurrentUser();
+  if (!user) {
+    closePricing();
+    showLogin();
+    return;
+  }
+  // Store subscription in localStorage
+  const users = getUsers();
+  const key = user.toLowerCase();
+  if (users[key]) {
+    users[key].subscription = { plan, period: pricingPeriod, subscribedAt: new Date().toISOString() };
+    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+  }
+  updateProButton();
+  closePricing();
+}
+
+function getUserSubscription() {
+  const user = getCurrentUser();
+  if (!user) return null;
+  const users = getUsers();
+  return users[user.toLowerCase()]?.subscription || null;
+}
+
+function updateProButton() {
+  const sub = getUserSubscription();
+  if (sub) {
+    proBtnText.textContent = 'Pro';
+    proBtn.classList.add('subscribed');
+  } else {
+    proBtnText.textContent = 'Go Pro';
+    proBtn.classList.remove('subscribed');
+  }
+}
+
+// Close pricing on overlay click
+pricingOverlay.addEventListener('click', (e) => {
+  if (e.target === pricingOverlay) closePricing();
+});
+
+// Close pricing on Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !pricingOverlay.classList.contains('hidden')) {
+    closePricing();
+  }
+});
+
+// Init pro button state
+updateProButton();
