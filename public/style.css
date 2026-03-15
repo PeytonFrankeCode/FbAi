@@ -2414,6 +2414,33 @@ footer {
   padding: 1.5rem;
 }
 
+.cl-reasoning {
+  padding: 0.5rem 0.75rem;
+  margin: 0.4rem 0 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #cbd5e0;
+  background: rgba(82, 183, 136, 0.08);
+  border-left: 3px solid #52b788;
+  border-radius: 0 6px 6px 0;
+}
+
+.cl-similar-section {
+  margin-top: 0.75rem;
+  border-top: 1px solid rgba(45, 55, 72, 0.5);
+  padding-top: 0.5rem;
+}
+
+.cl-similar-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #a0aec0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+  padding: 0 0.25rem;
+}
+
 .cl-listings-stats {
   display: flex;
   gap: 1.25rem;
