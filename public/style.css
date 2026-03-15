@@ -2912,3 +2912,210 @@ footer {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* ---- Card Alerts Section ---- */
+.settings-alerts-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-primary);
+}
+
+.settings-alerts-header {
+  margin-bottom: 1rem;
+}
+
+.settings-alerts-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.pro-feature-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  background: var(--gold);
+  color: var(--bg-primary);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.settings-alerts-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.alerts-upgrade-prompt {
+  text-align: center;
+  padding: 1.25rem;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  border: 1px dashed var(--border-primary);
+}
+
+.alerts-upgrade-prompt p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.alerts-add-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.alerts-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.alerts-input::placeholder {
+  color: var(--text-muted);
+}
+
+.alerts-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.alerts-add-btn {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.alerts-add-btn:hover {
+  background: var(--accent-hover);
+}
+
+.alerts-error {
+  color: var(--error);
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.alerts-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  animation: fadeUp 0.2s ease;
+}
+
+.alert-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-item-query {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alert-item-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.alert-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.alert-delete-btn:hover {
+  color: var(--error);
+}
+
+/* Alert bell button for search results */
+.card-alert-btn {
+  position: absolute;
+  top: 24px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--gold);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.15s;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover .card-alert-btn,
+.variant-card:hover .card-alert-btn {
+  opacity: 1;
+}
+
+.card-alert-btn:hover {
+  background: var(--gold);
+  color: var(--bg-primary);
+}
+
+.card-alert-btn.alerted {
+  opacity: 1;
+  background: var(--gold);
+  color: var(--bg-primary);
+}
+
+/* Widen settings box for alerts content */
+.settings-box {
+  max-width: 480px;
+}

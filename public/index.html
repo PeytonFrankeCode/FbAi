@@ -333,6 +333,32 @@
           <div id="settings-sub-action"></div>
         </div>
       </div>
+
+      <!-- Card Alerts (Pro Feature) -->
+      <div class="settings-alerts-section" id="settings-alerts-section">
+        <div class="settings-alerts-header">
+          <h3 class="settings-alerts-title">Card Alerts <span class="pro-feature-badge">PRO</span></h3>
+          <p class="settings-alerts-desc">Get email notifications when new listings appear on eBay</p>
+        </div>
+        <div id="settings-alerts-gate">
+          <!-- Shown if not Pro -->
+          <div class="alerts-upgrade-prompt" id="alerts-upgrade-prompt">
+            <p>Upgrade to Pro to set up card alerts and never miss a listing.</p>
+            <button class="settings-sub-btn settings-sub-upgrade" onclick="closeSettings(); showPricing();">Upgrade to Pro</button>
+          </div>
+          <!-- Shown if Pro -->
+          <div class="alerts-manager hidden" id="alerts-manager">
+            <form class="alerts-add-form" id="alerts-add-form" onsubmit="return handleAddAlert(event)">
+              <input type="text" id="alert-query-input" class="alerts-input" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" required minlength="3" />
+              <button type="submit" class="alerts-add-btn">Add Alert</button>
+            </form>
+            <p id="alerts-error" class="alerts-error hidden"></p>
+            <div id="alerts-list" class="alerts-list">
+              <p class="alerts-empty">No alerts yet. Add one above to get started.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

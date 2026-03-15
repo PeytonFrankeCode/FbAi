@@ -19,6 +19,7 @@ function toggleTheme() {
 
 function showSettings() {
   updateSettingsSubscription();
+  updateSettingsAlerts();
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
@@ -69,6 +70,129 @@ document.addEventListener('click', function(e) {
   const overlay = document.getElementById('settings-overlay');
   if (e.target === overlay) closeSettings();
 });
+
+// ---- Card Alerts (Pro Feature) ----
+function updateSettingsAlerts() {
+  const gate = document.getElementById('alerts-upgrade-prompt');
+  const manager = document.getElementById('alerts-manager');
+  const sub = typeof getUserSubscription === 'function' ? getUserSubscription() : null;
+
+  if (!sub) {
+    gate.classList.remove('hidden');
+    manager.classList.add('hidden');
+    return;
+  }
+
+  gate.classList.add('hidden');
+  manager.classList.remove('hidden');
+  loadAlertsList();
+}
+
+async function loadAlertsList() {
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!user) return;
+
+  const listEl = document.getElementById('alerts-list');
+  try {
+    const res = await fetch(`/api/alerts?username=${encodeURIComponent(user)}`);
+    const data = await res.json();
+    if (!data.alerts || data.alerts.length === 0) {
+      listEl.innerHTML = '<p class="alerts-empty">No alerts yet. Add one above to get started.</p>';
+      return;
+    }
+    listEl.innerHTML = data.alerts.map(a => {
+      const date = new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return `
+        <div class="alert-item" data-id="${a.id}">
+          <div class="alert-item-info">
+            <div class="alert-item-query">${escHtml(a.label)}</div>
+            <div class="alert-item-date">Added ${date}</div>
+          </div>
+          <button class="alert-delete-btn" onclick="deleteAlert('${a.id}')" title="Remove alert">&times;</button>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    listEl.innerHTML = '<p class="alerts-empty">Failed to load alerts.</p>';
+  }
+}
+
+async function handleAddAlert(e) {
+  e.preventDefault();
+  const user = getCurrentUser();
+  const users = getUsers();
+  const userData = users[user.toLowerCase()];
+  const email = userData?.email;
+  const query = document.getElementById('alert-query-input').value.trim();
+  const errEl = document.getElementById('alerts-error');
+  errEl.classList.add('hidden');
+
+  if (!email) {
+    errEl.textContent = 'Please add an email to your account first (log out, sign up again with email).';
+    errEl.classList.remove('hidden');
+    return false;
+  }
+
+  try {
+    const res = await fetch('/api/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, email, query, label: query }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Failed to create alert';
+      errEl.classList.remove('hidden');
+      return false;
+    }
+    document.getElementById('alert-query-input').value = '';
+    loadAlertsList();
+  } catch (err) {
+    errEl.textContent = 'Network error. Try again.';
+    errEl.classList.remove('hidden');
+  }
+  return false;
+}
+
+async function deleteAlert(id) {
+  const user = getCurrentUser();
+  if (!user) return;
+  try {
+    await fetch(`/api/alerts/${id}?username=${encodeURIComponent(user)}`, { method: 'DELETE' });
+    loadAlertsList();
+  } catch (err) {
+    console.error('Failed to delete alert:', err);
+  }
+}
+
+async function addAlertForCard(query) {
+  const user = getCurrentUser();
+  if (!user) { showLogin(); return; }
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return; }
+  const users = getUsers();
+  const userData = users[user.toLowerCase()];
+  if (!userData?.email) {
+    alert('Please add an email to your account to use alerts. Log out and sign up again with an email.');
+    return;
+  }
+  try {
+    const res = await fetch('/api/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, email: userData.email, query, label: query }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      // Visual feedback
+      const btn = document.querySelector(`.card-alert-btn[data-query="${CSS.escape(query)}"]`);
+      if (btn) btn.classList.add('alerted');
+    } else {
+      alert(data.error || 'Failed to create alert');
+    }
+  } catch (err) {
+    alert('Network error');
+  }
+}
 
 // ---- App ----
 const form = document.getElementById('search-form');
