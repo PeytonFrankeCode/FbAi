@@ -1998,10 +1998,38 @@ footer {
 .checklist-search-wrap {
   margin-bottom: 1rem;
   max-width: 500px;
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.checklist-search-btn {
+  padding: 0.75rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  background: #52b788;
+  color: #0f1117;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.checklist-search-btn:hover {
+  background: #74c69d;
+  box-shadow: 0 4px 12px rgba(82, 183, 136, 0.3);
+}
+
+.checklist-search-btn:active {
+  transform: scale(0.97);
 }
 
 .checklist-search-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 0.75rem 1rem;
   border-radius: 10px;
   border: 2px solid #2d3748;

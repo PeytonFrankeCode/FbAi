@@ -1284,6 +1284,9 @@ checklistCategoryTabs.addEventListener('click', (e) => {
 
 // Search
 checklistSearch.addEventListener('input', () => renderChecklistSets());
+checklistSearch.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); searchChecklistQuery(); }
+});
 
 function renderChecklistSets() {
   if (!checklistData) return;
@@ -1411,6 +1414,21 @@ function sortChecklistByPrintRun(thEl) {
   });
 
   rows.forEach(r => tbody.appendChild(r));
+}
+
+// Search eBay using whatever is typed in the checklist search bar
+function searchChecklistQuery() {
+  const q = checklistSearch.value.trim();
+  if (!q || q.length < 2) return;
+  // Prepend year + brand for context if not already present
+  const year = checklistData?.year || '2025';
+  const brand = checklistData?.brand || '';
+  const hasYear = /\b20\d{2}\b/.test(q);
+  const query = hasYear ? q : `${year} ${brand} ${q}`.trim();
+  input.value = query;
+  switchView('search');
+  addRecentSearch(query);
+  fetchVariants(query);
 }
 
 function searchFromChecklist(player, year, brand, setName, category) {
