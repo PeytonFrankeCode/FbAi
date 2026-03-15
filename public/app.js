@@ -18,7 +18,46 @@ function toggleTheme() {
 }
 
 function showSettings() {
+  updateSettingsSubscription();
   document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+function updateSettingsSubscription() {
+  const desc = document.getElementById('settings-sub-desc');
+  const action = document.getElementById('settings-sub-action');
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+
+  if (!user) {
+    desc.textContent = 'Log in to manage your plan';
+    action.innerHTML = `<button class="settings-sub-btn" onclick="closeSettings(); showLogin();">Log In</button>`;
+    return;
+  }
+
+  const sub = typeof getUserSubscription === 'function' ? getUserSubscription() : null;
+
+  if (!sub) {
+    desc.textContent = 'You\'re on the Free plan';
+    action.innerHTML = `<button class="settings-sub-btn settings-sub-upgrade" onclick="closeSettings(); showPricing();">Upgrade</button>`;
+  } else {
+    const period = sub.period === 'yearly' ? 'Yearly' : 'Monthly';
+    const date = new Date(sub.subscribedAt);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    desc.innerHTML = `<strong>Pro</strong> &middot; ${period} &middot; Since ${dateStr}`;
+    action.innerHTML = `<button class="settings-sub-btn settings-sub-cancel" onclick="cancelSubscription()">Cancel</button>`;
+  }
+}
+
+function cancelSubscription() {
+  const user = getCurrentUser();
+  if (!user) return;
+  const users = getUsers();
+  const key = user.toLowerCase();
+  if (users[key] && users[key].subscription) {
+    delete users[key].subscription;
+    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+    updateProButton();
+    updateSettingsSubscription();
+  }
 }
 
 function closeSettings() {

@@ -2865,3 +2865,50 @@ footer {
 .settings-tab svg {
   display: block;
 }
+
+/* ---- Settings Subscription ---- */
+.settings-sub-btn {
+  padding: 0.45rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.settings-sub-btn:hover {
+  transform: translateY(-1px);
+}
+
+.settings-sub-btn:not(.settings-sub-cancel):not(.settings-sub-upgrade) {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.settings-sub-upgrade {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.settings-sub-upgrade:hover {
+  background: var(--accent-hover);
+}
+
+.settings-sub-cancel {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
+}
+
+.settings-sub-cancel:hover {
+  background: var(--error);
+  color: #fff;
+}
+
+#settings-sub-desc strong {
+  color: var(--accent);
+  font-weight: 700;
+}
