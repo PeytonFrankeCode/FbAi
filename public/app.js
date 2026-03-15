@@ -19,7 +19,6 @@ function toggleTheme() {
 
 function showSettings() {
   updateSettingsSubscription();
-  updateSettingsAlerts();
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
@@ -71,96 +70,121 @@ document.addEventListener('click', function(e) {
   if (e.target === overlay) closeSettings();
 });
 
-// ---- Card Alerts (Pro Feature) ----
-function updateSettingsAlerts() {
-  const gate = document.getElementById('alerts-upgrade-prompt');
-  const manager = document.getElementById('alerts-manager');
-  const sub = typeof getUserSubscription === 'function' ? getUserSubscription() : null;
+// ---- Tracked Cards / Card Alerts (Pro Feature) ----
+
+function initTrackedView() {
+  const user = getCurrentUser();
+  const sub = user ? getUserSubscription() : null;
+  const gate = document.getElementById('tracked-gate');
+  const content = document.getElementById('tracked-content');
+  const upgradeBtn = document.getElementById('tracked-upgrade-btn');
+
+  if (!user) {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+    gate.querySelector('h3').textContent = 'Log in Required';
+    gate.querySelector('p').textContent = 'Log in or sign up to track cards and receive email alerts.';
+    upgradeBtn.textContent = 'Log In';
+    upgradeBtn.onclick = () => showLogin();
+    return;
+  }
 
   if (!sub) {
     gate.classList.remove('hidden');
-    manager.classList.add('hidden');
+    content.classList.add('hidden');
+    gate.querySelector('h3').textContent = 'Pro Feature';
+    gate.querySelector('p').textContent = 'Card tracking with email alerts is an exclusive Pro feature. Upgrade to never miss a listing.';
+    upgradeBtn.textContent = 'Upgrade to Pro';
+    upgradeBtn.onclick = () => showPricing();
     return;
   }
 
   gate.classList.add('hidden');
-  manager.classList.remove('hidden');
-  loadAlertsList();
+  content.classList.remove('hidden');
+  loadTrackedCards();
 }
 
-async function loadAlertsList() {
-  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+async function loadTrackedCards() {
+  const user = getCurrentUser();
   if (!user) return;
 
-  const listEl = document.getElementById('alerts-list');
+  const listEl = document.getElementById('tracked-list');
   try {
     const res = await fetch(`/api/alerts?username=${encodeURIComponent(user)}`);
     const data = await res.json();
     if (!data.alerts || data.alerts.length === 0) {
-      listEl.innerHTML = '<p class="alerts-empty">No alerts yet. Add one above to get started.</p>';
+      listEl.innerHTML = '<p class="alerts-empty">No tracked cards yet. Add one above or use the bell icon in Checklists.</p>';
       return;
     }
     listEl.innerHTML = data.alerts.map(a => {
-      const date = new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const date = new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       return `
-        <div class="alert-item" data-id="${a.id}">
-          <div class="alert-item-info">
-            <div class="alert-item-query">${escHtml(a.label)}</div>
-            <div class="alert-item-date">Added ${date}</div>
+        <div class="tracked-card-item" data-id="${a.id}">
+          <div class="tracked-card-icon">&#128276;</div>
+          <div class="tracked-card-info">
+            <div class="tracked-card-query">${escHtml(a.label)}</div>
+            <div class="tracked-card-date">Tracking since ${date}</div>
           </div>
-          <button class="alert-delete-btn" onclick="deleteAlert('${a.id}')" title="Remove alert">&times;</button>
+          <button class="tracked-card-search" onclick="switchView('search'); document.getElementById('search-input').value='${escHtml(a.query).replace(/'/g, "\\'")}'; document.getElementById('search-form').dispatchEvent(new Event('submit'))" title="Search eBay">&#128269;</button>
+          <button class="tracked-card-delete" onclick="deleteTrackedCard('${a.id}')" title="Stop tracking">&times;</button>
         </div>`;
     }).join('');
   } catch (err) {
-    listEl.innerHTML = '<p class="alerts-empty">Failed to load alerts.</p>';
+    listEl.innerHTML = '<p class="alerts-empty">Failed to load tracked cards.</p>';
   }
 }
 
-async function handleAddAlert(e) {
-  e.preventDefault();
-  const user = getCurrentUser();
-  const users = getUsers();
-  const userData = users[user.toLowerCase()];
-  const email = userData?.email;
-  const query = document.getElementById('alert-query-input').value.trim();
-  const errEl = document.getElementById('alerts-error');
-  errEl.classList.add('hidden');
+// Form handler for tracked view
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('tracked-add-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = getCurrentUser();
+      const users = getUsers();
+      const userData = users[user.toLowerCase()];
+      const email = userData?.email;
+      const input = document.getElementById('tracked-query-input');
+      const query = input.value.trim();
+      const errEl = document.getElementById('tracked-error');
+      errEl.classList.add('hidden');
 
-  if (!email) {
-    errEl.textContent = 'Please add an email to your account first (log out, sign up again with email).';
-    errEl.classList.remove('hidden');
-    return false;
-  }
+      if (!email) {
+        errEl.textContent = 'Add an email to your account to receive alerts (sign up again with email).';
+        errEl.classList.remove('hidden');
+        return;
+      }
 
-  try {
-    const res = await fetch('/api/alerts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, email, query, label: query }),
+      try {
+        const res = await fetch('/api/alerts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, email, query, label: query }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Failed to track card';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        input.value = '';
+        loadTrackedCards();
+      } catch (err) {
+        errEl.textContent = 'Network error. Try again.';
+        errEl.classList.remove('hidden');
+      }
     });
-    const data = await res.json();
-    if (!res.ok) {
-      errEl.textContent = data.error || 'Failed to create alert';
-      errEl.classList.remove('hidden');
-      return false;
-    }
-    document.getElementById('alert-query-input').value = '';
-    loadAlertsList();
-  } catch (err) {
-    errEl.textContent = 'Network error. Try again.';
-    errEl.classList.remove('hidden');
   }
-  return false;
-}
+});
 
-async function deleteAlert(id) {
+async function deleteTrackedCard(id) {
   const user = getCurrentUser();
   if (!user) return;
   try {
     await fetch(`/api/alerts/${id}?username=${encodeURIComponent(user)}`, { method: 'DELETE' });
-    loadAlertsList();
+    loadTrackedCards();
   } catch (err) {
-    console.error('Failed to delete alert:', err);
+    console.error('Failed to delete tracked card:', err);
   }
 }
 
@@ -172,7 +196,7 @@ async function addAlertForCard(query) {
   const users = getUsers();
   const userData = users[user.toLowerCase()];
   if (!userData?.email) {
-    alert('Please add an email to your account to use alerts. Log out and sign up again with an email.');
+    alert('Add an email to your account to use card tracking. Sign up again with an email address.');
     return;
   }
   try {
@@ -183,11 +207,16 @@ async function addAlertForCard(query) {
     });
     const data = await res.json();
     if (res.ok) {
-      // Visual feedback
-      const btn = document.querySelector(`.card-alert-btn[data-query="${CSS.escape(query)}"]`);
-      if (btn) btn.classList.add('alerted');
+      // Visual feedback — find the button that triggered this
+      const btns = document.querySelectorAll('.cl-alert-btn');
+      btns.forEach(btn => {
+        if (btn.getAttribute('onclick')?.includes(query.replace(/'/g, "\\'"))) {
+          btn.classList.add('cl-alert-active');
+          btn.title = 'Tracking this card';
+        }
+      });
     } else {
-      alert(data.error || 'Failed to create alert');
+      alert(data.error || 'Failed to track card');
     }
   } catch (err) {
     alert('Network error');
@@ -1404,17 +1433,25 @@ const mainEl = document.querySelector('main');
 let checklistData = null;
 let checklistFilter = 'all';
 
+const trackedView = document.getElementById('tracked-view');
+
 function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`.nav-tab[data-view="${view}"]`).classList.add('active');
+  const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
+  if (activeTab) activeTab.classList.add('active');
+
+  mainEl.classList.add('hidden');
+  checklistView.classList.add('hidden');
+  trackedView.classList.add('hidden');
 
   if (view === 'checklist') {
-    mainEl.classList.add('hidden');
     checklistView.classList.remove('hidden');
     if (!checklistData) loadChecklistProducts();
+  } else if (view === 'tracked') {
+    trackedView.classList.remove('hidden');
+    initTrackedView();
   } else {
     mainEl.classList.remove('hidden');
-    checklistView.classList.add('hidden');
   }
 }
 
@@ -1565,13 +1602,17 @@ function renderChecklistSets() {
               const cardNum = escHtml(c.number).replace(/'/g, "\\'");
               const printRun = c.printRun ? String(c.printRun) : '';
               const cardNote = c.note ? escHtml(c.note).replace(/'/g, "\\'") : '';
+              const alertQuery = `${c.player} ${year} ${checklistData.brand || 'Bowman'} ${set.name}`.replace(/'/g, "\\'");
               return `
               <tr data-print-run="${c.printRun || ''}" data-card-num="${c.number}">
                 <td class="cl-num">${escHtml(c.number)}</td>
                 <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${printRun}')">${escHtml(c.player)}</a></td>
                 <td class="cl-team">${escHtml(c.team)}</td>
                 ${hasPrintRuns ? `<td class="cl-printrun ${printRun && parseInt(printRun) <= 25 ? 'cl-pr-rare' : printRun && parseInt(printRun) <= 99 ? 'cl-pr-low' : ''}">${printRun ? '/' + printRun : ''}</td>` : ''}
-                <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${category}')" title="Search eBay">&#128269;</button></td>
+                <td class="cl-action">
+                  <button class="cl-alert-btn" onclick="event.stopPropagation(); addAlertForCard('${alertQuery}')" title="Track this card (Pro)">&#128276;</button>
+                  <button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${category}')" title="Search eBay">&#128269;</button>
+                </td>
               </tr>`;
             }).join('')}
           </tbody>

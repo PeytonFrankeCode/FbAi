@@ -2913,27 +2913,7 @@ footer {
   font-weight: 700;
 }
 
-/* ---- Card Alerts Section ---- */
-.settings-alerts-section {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--border-primary);
-}
-
-.settings-alerts-header {
-  margin-bottom: 1rem;
-}
-
-.settings-alerts-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
+/* ---- Shared Alert/Tracked Styles ---- */
 .pro-feature-badge {
   font-size: 0.6rem;
   font-weight: 800;
@@ -2942,25 +2922,6 @@ footer {
   color: var(--bg-primary);
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
-}
-
-.settings-alerts-desc {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.alerts-upgrade-prompt {
-  text-align: center;
-  padding: 1.25rem;
-  background: var(--bg-tertiary);
-  border-radius: 10px;
-  border: 1px dashed var(--border-primary);
-}
-
-.alerts-upgrade-prompt p {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  margin-bottom: 0.75rem;
 }
 
 .alerts-add-form {
@@ -3030,25 +2991,135 @@ footer {
   padding: 1rem;
 }
 
-.alert-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  animation: fadeUp 0.2s ease;
+
+/* ---- Checklist Alert Bell Button ---- */
+.cl-alert-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem 0.35rem;
+  border-radius: 6px;
+  opacity: 0.35;
+  transition: opacity 0.15s, background 0.15s, transform 0.15s;
+  vertical-align: middle;
 }
 
-.alert-item-info {
+.cl-alert-btn:hover {
+  opacity: 1;
+  background: rgba(212, 175, 55, 0.15);
+  transform: scale(1.15);
+}
+
+.cl-alert-btn.cl-alert-active {
+  opacity: 1;
+  color: var(--gold);
+}
+
+tr:hover .cl-alert-btn {
+  opacity: 0.7;
+}
+
+/* ---- Tracked Cards View ---- */
+.tracked-view {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+.tracked-container {
+  background: var(--bg-secondary);
+  border-radius: 14px;
+  border: 1px solid var(--border-primary);
+  padding: 1.75rem;
+}
+
+.tracked-header {
+  margin-bottom: 1.5rem;
+}
+
+.tracked-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.tracked-title svg {
+  color: var(--gold);
+}
+
+.tracked-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.tracked-gate {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  border: 1px dashed var(--border-primary);
+}
+
+.tracked-gate-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tracked-gate h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tracked-gate p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tracked-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tracked-card-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  animation: fadeUp 0.2s ease;
+  transition: border-color 0.15s;
+}
+
+.tracked-card-item:hover {
+  border-color: var(--gold);
+}
+
+.tracked-card-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.tracked-card-info {
   flex: 1;
   min-width: 0;
 }
 
-.alert-item-query {
-  font-size: 0.85rem;
+.tracked-card-query {
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -3056,66 +3127,39 @@ footer {
   text-overflow: ellipsis;
 }
 
-.alert-item-date {
-  font-size: 0.7rem;
+.tracked-card-date {
+  font-size: 0.72rem;
   color: var(--text-muted);
+  margin-top: 0.1rem;
 }
 
-.alert-delete-btn {
+.tracked-card-search {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.tracked-card-search:hover {
+  opacity: 1;
+}
+
+.tracked-card-delete {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.2rem;
+  padding: 0.2rem 0.4rem;
   line-height: 1;
   transition: color 0.15s;
   flex-shrink: 0;
 }
 
-.alert-delete-btn:hover {
+.tracked-card-delete:hover {
   color: var(--error);
-}
-
-/* Alert bell button for search results */
-.card-alert-btn {
-  position: absolute;
-  top: 24px;
-  left: 8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: var(--bg-secondary);
-  color: var(--gold);
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s, background 0.15s;
-  z-index: 3;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.card:hover .card-alert-btn,
-.variant-card:hover .card-alert-btn {
-  opacity: 1;
-}
-
-.card-alert-btn:hover {
-  background: var(--gold);
-  color: var(--bg-primary);
-}
-
-.card-alert-btn.alerted {
-  opacity: 1;
-  background: var(--gold);
-  color: var(--bg-primary);
-}
-
-/* Widen settings box for alerts content */
-.settings-box {
-  max-width: 480px;
 }
