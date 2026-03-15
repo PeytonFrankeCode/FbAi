@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -756,6 +758,209 @@ app.get('/api/checklists/:productId/search', (req, res) => {
   }
   res.json({ results, query: q });
 });
+
+// ---- Card Alerts System (Pro Feature) ----
+const ALERTS_FILE = path.join(__dirname, 'data', 'alerts.json');
+
+function loadAlerts() {
+  try {
+    if (fs.existsSync(ALERTS_FILE)) {
+      return JSON.parse(fs.readFileSync(ALERTS_FILE, 'utf-8'));
+    }
+  } catch (e) {
+    console.error('Error loading alerts:', e.message);
+  }
+  return { alerts: [] };
+}
+
+function saveAlerts(data) {
+  fs.writeFileSync(ALERTS_FILE, JSON.stringify(data, null, 2));
+}
+
+// Email transporter (configured via env vars)
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT || 587;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_FROM = process.env.SMTP_FROM || 'alerts@thecardhuddle.com';
+
+let emailTransporter = null;
+if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  emailTransporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT),
+    secure: Number(SMTP_PORT) === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+  console.log(`Email configured: ${SMTP_HOST}:${SMTP_PORT}`);
+} else {
+  console.log('Email not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS to enable)');
+}
+
+// Create alert
+app.post('/api/alerts', (req, res) => {
+  const { username, email, query, label } = req.body;
+  if (!username || !email || !query) {
+    return res.status(400).json({ error: 'username, email, and query are required' });
+  }
+  if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+
+  const data = loadAlerts();
+  // Limit per user
+  const userAlerts = data.alerts.filter(a => a.username.toLowerCase() === username.toLowerCase());
+  if (userAlerts.length >= 10) {
+    return res.status(400).json({ error: 'Maximum 10 alerts per account' });
+  }
+  // No duplicate queries for same user
+  if (userAlerts.some(a => a.query.toLowerCase() === query.toLowerCase())) {
+    return res.status(400).json({ error: 'You already have an alert for this card' });
+  }
+
+  const alert = {
+    id: crypto.randomUUID(),
+    username: username.toLowerCase(),
+    email,
+    query,
+    label: label || query,
+    createdAt: new Date().toISOString(),
+    lastChecked: null,
+    lastSeenIds: [],
+  };
+
+  data.alerts.push(alert);
+  saveAlerts(data);
+  res.json({ alert: { id: alert.id, query: alert.query, label: alert.label, createdAt: alert.createdAt } });
+});
+
+// List alerts for a user
+app.get('/api/alerts', (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ error: 'username is required' });
+
+  const data = loadAlerts();
+  const userAlerts = data.alerts
+    .filter(a => a.username === username.toLowerCase())
+    .map(a => ({ id: a.id, query: a.query, label: a.label, createdAt: a.createdAt }));
+
+  res.json({ alerts: userAlerts });
+});
+
+// Delete alert
+app.delete('/api/alerts/:id', (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ error: 'username is required' });
+
+  const data = loadAlerts();
+  const idx = data.alerts.findIndex(a => a.id === req.params.id && a.username === username.toLowerCase());
+  if (idx === -1) return res.status(404).json({ error: 'Alert not found' });
+
+  data.alerts.splice(idx, 1);
+  saveAlerts(data);
+  res.json({ ok: true });
+});
+
+// ---- Background Alert Checker ----
+const ALERT_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
+
+async function checkAlerts() {
+  const data = loadAlerts();
+  if (!data.alerts.length) return;
+
+  console.log(`[Alerts] Checking ${data.alerts.length} alerts...`);
+
+  for (const alert of data.alerts) {
+    try {
+      let searchResult;
+      if (USE_MOCK) {
+        searchResult = getMockData(alert.query);
+      } else if (EBAY_API_MODE === 'browse') {
+        searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10));
+      } else if (EBAY_API_MODE === 'insights') {
+        searchResult = await withRetry(() => fetchViaInsightsAPI(alert.query, 10));
+      } else {
+        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10));
+      }
+
+      const currentIds = searchResult.results.map(r => r.itemId);
+      const previousIds = new Set(alert.lastSeenIds || []);
+      const newListings = searchResult.results.filter(r => !previousIds.has(r.itemId));
+
+      alert.lastChecked = new Date().toISOString();
+      alert.lastSeenIds = currentIds;
+
+      if (newListings.length > 0 && previousIds.size > 0) {
+        // Only notify if this isn't the first check (previousIds.size > 0)
+        console.log(`[Alerts] ${newListings.length} new listing(s) for "${alert.query}" -> ${alert.email}`);
+        await sendAlertEmail(alert, newListings);
+      }
+
+      // Small delay between checks to avoid rate limits
+      await new Promise(r => setTimeout(r, 2000));
+    } catch (err) {
+      console.error(`[Alerts] Error checking "${alert.query}":`, err.message);
+    }
+  }
+
+  saveAlerts(data);
+  console.log('[Alerts] Check complete.');
+}
+
+async function sendAlertEmail(alert, newListings) {
+  if (!emailTransporter) {
+    console.log(`[Alerts] Email not configured, would notify ${alert.email} about ${newListings.length} new listing(s) for "${alert.query}"`);
+    return;
+  }
+
+  const listingsHtml = newListings.map(item => `
+    <tr>
+      <td style="padding:8px;border-bottom:1px solid #eee;">
+        <a href="${item.itemUrl}" style="color:#2d6a4f;font-weight:600;">${item.title}</a>
+      </td>
+      <td style="padding:8px;border-bottom:1px solid #eee;font-weight:700;color:#2d6a4f;">
+        $${item.price}
+      </td>
+    </tr>
+  `).join('');
+
+  const html = `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+      <h2 style="color:#2d6a4f;margin-bottom:4px;">New Listing Alert</h2>
+      <p style="color:#666;margin-bottom:16px;">
+        ${newListings.length} new listing${newListings.length > 1 ? 's' : ''} found for <strong>${alert.label}</strong>
+      </p>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f5f7fa;">
+            <th style="text-align:left;padding:8px;font-size:0.85rem;color:#666;">Card</th>
+            <th style="text-align:left;padding:8px;font-size:0.85rem;color:#666;">Price</th>
+          </tr>
+        </thead>
+        <tbody>${listingsHtml}</tbody>
+      </table>
+      <p style="color:#999;font-size:0.8rem;margin-top:20px;">
+        You're receiving this because you set up a card alert on The Card Huddle.
+      </p>
+    </div>
+  `;
+
+  try {
+    await emailTransporter.sendMail({
+      from: SMTP_FROM,
+      to: alert.email,
+      subject: `New listing: ${alert.label}`,
+      html,
+    });
+  } catch (err) {
+    console.error(`[Alerts] Failed to send email to ${alert.email}:`, err.message);
+  }
+}
+
+// Start alert checker loop
+setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
+// Run first check 30 seconds after startup
+setTimeout(checkAlerts, 30000);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
