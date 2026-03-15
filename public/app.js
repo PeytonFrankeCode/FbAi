@@ -1524,6 +1524,72 @@ function togglePlayerListings(linkEl, player, year, brand, setName, category, ca
   fetchPlayerListings(td, query, 'forsale');
 }
 
+// Generate reasoning text from listing results
+function generateListingReasoning(results, isSold, serial) {
+  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+  if (prices.length === 0) return '';
+
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  const spread = high - low;
+  const spreadPct = avg > 0 ? ((spread / avg) * 100) : 0;
+
+  const lines = [];
+
+  // Price range insight
+  if (prices.length >= 2) {
+    if (spreadPct < 20) {
+      lines.push(`Tight pricing — most listings clustered around $${avg.toFixed(2)}.`);
+    } else if (spreadPct < 50) {
+      lines.push(`Moderate spread ($${low.toFixed(2)}–$${high.toFixed(2)}).`);
+    } else {
+      lines.push(`Wide price range ($${low.toFixed(2)}–$${high.toFixed(2)}) — condition or variant differences likely.`);
+    }
+  }
+
+  // Market activity
+  if (isSold) {
+    if (results.length >= 8) {
+      lines.push('Active market with strong recent sales volume.');
+    } else if (results.length >= 3) {
+      lines.push('Moderate sales activity.');
+    } else {
+      lines.push('Limited recent sales — harder to pin down value.');
+    }
+  } else {
+    if (results.length >= 10) {
+      lines.push('Plenty of supply available — buyers have options.');
+    } else if (results.length <= 2) {
+      lines.push('Very low supply — could command a premium.');
+    }
+  }
+
+  // Print run context
+  if (serial) {
+    const pr = parseInt(serial, 10);
+    if (pr <= 10) {
+      lines.push(`Numbered /${pr} — extremely limited, expect premium pricing.`);
+    } else if (pr <= 25) {
+      lines.push(`Numbered /${pr} — low print run, scarce card.`);
+    } else if (pr <= 99) {
+      lines.push(`Numbered /${pr} — short print parallel.`);
+    } else if (pr <= 199) {
+      lines.push(`Numbered /${pr} — mid-tier numbered parallel.`);
+    }
+  }
+
+  // Value call
+  if (isSold && prices.length >= 3) {
+    const median = [...prices].sort((a, b) => a - b)[Math.floor(prices.length / 2)];
+    lines.push(`Fair market value is around $${median.toFixed(2)} (median sale).`);
+  } else if (!isSold && prices.length >= 2) {
+    lines.push(`Best available price is $${low.toFixed(2)}.`);
+  }
+
+  return lines.join(' ');
+}
+
 async function fetchPlayerListings(container, query, mode) {
   const body = container.querySelector('.cl-listings-body');
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
@@ -1538,9 +1604,44 @@ async function fetchPlayerListings(container, query, mode) {
     }
 
     const results = data.results || [];
+    const serial = data.serial || null;
+    const similarResults = data.similarResults || [];
 
     if (results.length === 0) {
-      body.innerHTML = `<div class="cl-listings-empty">No ${mode === 'sold' ? 'sold listings' : 'listings'} found.</div>`;
+      // No exact results — show similar items if available (same as main search)
+      let emptyHtml = `<div class="cl-listings-empty">No ${mode === 'sold' ? 'sold listings' : 'listings'} found${serial ? ` numbered /${serial}` : ''}.</div>`;
+
+      if (similarResults.length > 0) {
+        emptyHtml += `<div class="cl-similar-section">`;
+        emptyHtml += `<div class="cl-similar-header">Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}</div>`;
+        emptyHtml += `<div class="cl-listings-grid">`;
+        similarResults.slice(0, 8).forEach(item => {
+          const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
+          const dateStr = item.soldDate
+            ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : '';
+          const isSold = mode === 'sold';
+          const badge = isSold
+            ? '<span class="cl-item-badge sold">SOLD</span>'
+            : '<span class="cl-item-badge forsale">FOR SALE</span>';
+          const imgHtml = item.imageUrl
+            ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
+            : `<div class="cl-item-noimg">&#127944;</div>`;
+          emptyHtml += `
+            <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+              <div class="cl-item-img">${imgHtml}</div>
+              <div class="cl-item-info">
+                <span class="cl-item-price">${price}</span>
+                ${badge}
+                ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
+              </div>
+            </a>
+          `;
+        });
+        emptyHtml += '</div></div>';
+      }
+
+      body.innerHTML = emptyHtml;
       return;
     }
 
@@ -1553,6 +1654,9 @@ async function fetchPlayerListings(container, query, mode) {
     const isSold = mode === 'sold';
     const mockBadge = data.mock ? '<span class="mock-badge" style="font-size:0.65rem;">DEMO</span>' : '';
 
+    // Generate reasoning
+    const reasoning = generateListingReasoning(results, isSold, serial);
+
     let html = `
       <div class="cl-listings-stats">
         <span>${results.length} ${isSold ? 'sold' : 'listings'} ${mockBadge}</span>
@@ -1560,8 +1664,13 @@ async function fetchPlayerListings(container, query, mode) {
         <span>Low: $${low.toFixed(2)}</span>
         <span>High: $${high.toFixed(2)}</span>
       </div>
-      <div class="cl-listings-grid">
     `;
+
+    if (reasoning) {
+      html += `<div class="cl-reasoning">${escHtml(reasoning)}</div>`;
+    }
+
+    html += '<div class="cl-listings-grid">';
 
     results.forEach(item => {
       const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
@@ -1588,6 +1697,37 @@ async function fetchPlayerListings(container, query, mode) {
     });
 
     html += '</div>';
+
+    // Show similar numbered cards below exact results if serial search
+    if (serial && similarResults.length > 0) {
+      html += `<div class="cl-similar-section">`;
+      html += `<div class="cl-similar-header">Other Numbered Cards</div>`;
+      html += `<div class="cl-listings-grid">`;
+      similarResults.slice(0, 6).forEach(item => {
+        const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
+        const dateStr = item.soldDate
+          ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          : '';
+        const badge = isSold
+          ? '<span class="cl-item-badge sold">SOLD</span>'
+          : '<span class="cl-item-badge forsale">FOR SALE</span>';
+        const imgHtml = item.imageUrl
+          ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
+          : `<div class="cl-item-noimg">&#127944;</div>`;
+        html += `
+          <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+            <div class="cl-item-img">${imgHtml}</div>
+            <div class="cl-item-info">
+              <span class="cl-item-price">${price}</span>
+              ${badge}
+              ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
+            </div>
+          </a>
+        `;
+      });
+      html += '</div></div>';
+    }
+
     body.innerHTML = html;
 
   } catch (err) {
