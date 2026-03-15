@@ -10443,6 +10443,1025 @@
               "team": "Oklahoma"
             }
           ]
+        },
+        {
+          "id": "chrome-sapphire-prospect-autographs",
+          "name": "Chrome Sapphire Prospect Autographs",
+          "category": "autograph",
+          "totalCards": 134,
+          "parallels": [
+            {
+              "name": "Base",
+              "printRun": null
+            },
+            {
+              "name": "Orange Sapphire",
+              "printRun": 25
+            },
+            {
+              "name": "Black Sapphire",
+              "printRun": 10
+            },
+            {
+              "name": "Red Sapphire",
+              "printRun": 5
+            },
+            {
+              "name": "Padparadscha Sapphire",
+              "printRun": 1
+            }
+          ],
+          "cards": [
+            {
+              "number": "BCA-JM",
+              "player": "John Mateer",
+              "team": "Oklahoma"
+            },
+            {
+              "number": "BCA-DDA",
+              "player": "Devon Dampier",
+              "team": "Utah"
+            },
+            {
+              "number": "BCA-KM",
+              "player": "Kamari Moulton",
+              "team": "Iowa"
+            },
+            {
+              "number": "BCA-KFA",
+              "player": "Keldric Faulk",
+              "team": "Auburn"
+            },
+            {
+              "number": "BCA-BE",
+              "player": "Billy Edwards Jr.",
+              "team": "Wisconsin"
+            },
+            {
+              "number": "BCA-NH",
+              "player": "Nyziah Hunter",
+              "team": "Nebraska"
+            },
+            {
+              "number": "BCA-JG",
+              "player": "Jerrick Gibson",
+              "team": "Texas"
+            },
+            {
+              "number": "BCA-DM",
+              "player": "Darian Mensah",
+              "team": "Duke"
+            },
+            {
+              "number": "BCA-SA",
+              "player": "Sedrick Alexander",
+              "team": "Vanderbilt"
+            },
+            {
+              "number": "BCA-PA",
+              "player": "Pofele Ashlock",
+              "team": "Hawaii"
+            },
+            {
+              "number": "BCA-LA",
+              "player": "Luke Altmyer",
+              "team": "Illinois"
+            },
+            {
+              "number": "BCA-JCO",
+              "player": "Jonah Coleman",
+              "team": "Washington"
+            },
+            {
+              "number": "BCA-MZ",
+              "player": "Matt Zollers",
+              "team": "Missouri"
+            },
+            {
+              "number": "BCA-AH",
+              "player": "Anthony Hankerson",
+              "team": "Oregon State"
+            },
+            {
+              "number": "BCA-MR",
+              "player": "Malik Rutherford",
+              "team": "Georgia Tech"
+            },
+            {
+              "number": "BCA-MM",
+              "player": "Maddux Madsen",
+              "team": "Boise State"
+            },
+            {
+              "number": "BCA-TWH",
+              "player": "Trey White",
+              "team": "San Diego State"
+            },
+            {
+              "number": "BCA-BW",
+              "player": "Bryant Wesco Jr.",
+              "team": "Clemson"
+            },
+            {
+              "number": "BCA-CE",
+              "player": "Coy Eakin",
+              "team": "Texas Tech"
+            },
+            {
+              "number": "BCA-JTY",
+              "player": "Jordyn Tyson",
+              "team": "Arizona State"
+            },
+            {
+              "number": "BCA-IB",
+              "player": "Isaac Brown",
+              "team": "Louisville"
+            },
+            {
+              "number": "BCA-SR",
+              "player": "Sawyer Robertson",
+              "team": "Baylor"
+            },
+            {
+              "number": "BCA-DB",
+              "player": "Denzel Boston",
+              "team": "Washington"
+            },
+            {
+              "number": "BCA-AB",
+              "player": "Alonza Barnett III",
+              "team": "James Madison"
+            },
+            {
+              "number": "BCA-OK",
+              "player": "Omari Kelly",
+              "team": "Michigan State"
+            },
+            {
+              "number": "BCA-JB",
+              "player": "Jacory Barney Jr.",
+              "team": "Nebraska"
+            },
+            {
+              "number": "BCA-AJ",
+              "player": "Avery Johnson",
+              "team": "Kansas State"
+            },
+            {
+              "number": "BCA-JP",
+              "player": "James Peoples",
+              "team": "Ohio State"
+            },
+            {
+              "number": "BCA-LR",
+              "player": "Luke Reynolds",
+              "team": "Penn State"
+            },
+            {
+              "number": "BCA-BL",
+              "player": "Brendon Lewis",
+              "team": "Memphis"
+            },
+            {
+              "number": "BCA-IS",
+              "player": "Isaiah Sategna",
+              "team": "Oklahoma"
+            },
+            {
+              "number": "BCA-LW",
+              "player": "Luke Wysong",
+              "team": "Arizona"
+            },
+            {
+              "number": "BCA-CL",
+              "player": "Cayden Lee",
+              "team": "Ole Miss"
+            },
+            {
+              "number": "BCA-CR",
+              "player": "Chase Roberts",
+              "team": "BYU"
+            },
+            {
+              "number": "BCA-MV",
+              "player": "Michael Van Buren Jr.",
+              "team": "LSU"
+            },
+            {
+              "number": "BCA-TW",
+              "player": "Trent Walker",
+              "team": "Oregon State"
+            },
+            {
+              "number": "BCA-CH",
+              "player": "Carson Hansen",
+              "team": "Iowa State"
+            },
+            {
+              "number": "BCA-BWA",
+              "player": "Bryson Washington",
+              "team": "Baylor"
+            },
+            {
+              "number": "BCA-KCJ",
+              "player": "Kevin Coleman Jr.",
+              "team": "Missouri"
+            },
+            {
+              "number": "BCA-MKL",
+              "player": "Max Klare",
+              "team": "Ohio State"
+            },
+            {
+              "number": "BCA-JCA",
+              "player": "Josh Cameron",
+              "team": "Baylor"
+            },
+            {
+              "number": "BCA-LH",
+              "player": "Luke Hasz",
+              "team": "Ole Miss"
+            },
+            {
+              "number": "BCA-BP",
+              "player": "Beau Pribula",
+              "team": "Missouri"
+            },
+            {
+              "number": "BCA-JGR",
+              "player": "Jaden Greathouse",
+              "team": "Notre Dame"
+            },
+            {
+              "number": "BCA-MU",
+              "player": "Matayo Uiagalelei",
+              "team": "Oregon"
+            },
+            {
+              "number": "BCA-JBA",
+              "player": "Jadan Baugh",
+              "team": "Florida"
+            },
+            {
+              "number": "BCA-MB",
+              "player": "Mazeo Bennett Jr.",
+              "team": "South Carolina"
+            },
+            {
+              "number": "BCA-DBI",
+              "player": "DeSean Bishop",
+              "team": "Tennessee"
+            },
+            {
+              "number": "BCA-AR",
+              "player": "Anthony Rogers",
+              "team": "Ohio State"
+            },
+            {
+              "number": "BCA-KA",
+              "player": "Kaytron Allen",
+              "team": "Penn State"
+            },
+            {
+              "number": "BCA-JBR",
+              "player": "Jayce Brown",
+              "team": "Kansas State"
+            },
+            {
+              "number": "BCA-ZB",
+              "player": "Zabien Brown",
+              "team": "Alabama"
+            },
+            {
+              "number": "BCA-HC",
+              "player": "Hudson Clement",
+              "team": "Illinois"
+            },
+            {
+              "number": "BCA-CD",
+              "player": "Caleb Douglas",
+              "team": "Texas Tech"
+            },
+            {
+              "number": "BCA-NR",
+              "player": "Nolan Ray",
+              "team": "Maryland"
+            },
+            {
+              "number": "BCA-NF",
+              "player": "Nate Frazier",
+              "team": "Georgia"
+            },
+            {
+              "number": "BCA-NHA",
+              "player": "Nyck Harbor",
+              "team": "South Carolina"
+            },
+            {
+              "number": "BCA-AHJ",
+              "player": "Anthony Hill Jr.",
+              "team": "Texas"
+            },
+            {
+              "number": "BCA-ER",
+              "player": "Eric Rivers",
+              "team": "Georgia Tech"
+            },
+            {
+              "number": "BCA-AM",
+              "player": "Aidan Mizell",
+              "team": "Florida"
+            },
+            {
+              "number": "BCA-KCO",
+              "player": "KC Concepcion",
+              "team": "Texas A&M"
+            },
+            {
+              "number": "BCA-TDW",
+              "player": "Trey'Dez Green",
+              "team": "LSU"
+            },
+            {
+              "number": "BCA-QPO",
+              "player": "Quincy Porter",
+              "team": "Ohio State"
+            },
+            {
+              "number": "BCA-DLI",
+              "player": "Drake Lindsey",
+              "team": "Minnesota"
+            },
+            {
+              "number": "BCA-PLE",
+              "player": "Peyton Lewis",
+              "team": "Tennessee"
+            },
+            {
+              "number": "BCA-LBO",
+              "player": "Lewis Bond",
+              "team": "Boston College"
+            },
+            {
+              "number": "BCA-MT",
+              "player": "Michael Taaffe",
+              "team": "Texas"
+            },
+            {
+              "number": "BCA-TP",
+              "player": "Trebor Pena",
+              "team": "Penn State"
+            },
+            {
+              "number": "BCA-JT",
+              "player": "Jaivian Thomas",
+              "team": "UCLA"
+            },
+            {
+              "number": "BCA-DA",
+              "player": "Deuce Alexander",
+              "team": "Ole Miss"
+            },
+            {
+              "number": "BCA-JHA",
+              "player": "Jay Haynes",
+              "team": "Clemson"
+            },
+            {
+              "number": "BCA-DPO",
+              "player": "D'Angelo Ponds",
+              "team": "Indiana"
+            },
+            {
+              "number": "BCA-DG",
+              "player": "Davion Gause",
+              "team": "North Carolina"
+            },
+            {
+              "number": "BCA-LM",
+              "player": "LJ Martin",
+              "team": "BYU"
+            },
+            {
+              "number": "BCA-FME",
+              "player": "Fernando Mendoza",
+              "team": "Indiana"
+            },
+            {
+              "number": "BCA-BM",
+              "player": "Behren Morton",
+              "team": "Texas Tech"
+            },
+            {
+              "number": "BCA-JN",
+              "player": "Jaden Nixon",
+              "team": "UCF"
+            },
+            {
+              "number": "BCA-TJP",
+              "player": "T.J. Parker",
+              "team": "Clemson"
+            },
+            {
+              "number": "BCA-DP",
+              "player": "Dawson Pendergrass",
+              "team": "Baylor"
+            },
+            {
+              "number": "BCA-KP",
+              "player": "Koi Perich",
+              "team": "Minnesota"
+            },
+            {
+              "number": "BCA-JPR",
+              "player": "Jadarian Price",
+              "team": "Notre Dame"
+            },
+            {
+              "number": "BCA-IAN",
+              "player": "Ian Strong",
+              "team": "Rutgers"
+            },
+            {
+              "number": "BCA-BR",
+              "player": "Braylen Russell",
+              "team": "Arkansas"
+            },
+            {
+              "number": "BCA-CS",
+              "player": "Colin Simmons",
+              "team": "Texas"
+            },
+            {
+              "number": "BCA-DS",
+              "player": "Dylan Stewart",
+              "team": "South Carolina"
+            },
+            {
+              "number": "BCA-DT",
+              "player": "Darius Taylor",
+              "team": "Minnesota"
+            },
+            {
+              "number": "BCA-MG",
+              "player": "Mark Gronowski",
+              "team": "Iowa"
+            },
+            {
+              "number": "BCA-WW",
+              "player": "Whit Weeks",
+              "team": "LSU"
+            },
+            {
+              "number": "BCA-JWI",
+              "player": "Jamarion Wilcox",
+              "team": "Kentucky"
+            },
+            {
+              "number": "BCA-GS",
+              "player": "Gunner Stockton",
+              "team": "Georgia"
+            },
+            {
+              "number": "BCA-MRE",
+              "player": "Marcel Reed",
+              "team": "Texas A&M"
+            },
+            {
+              "number": "BCA-JMA",
+              "player": "Justin Marshall",
+              "team": "Colorado State"
+            },
+            {
+              "number": "BCA-DAM",
+              "player": "Dante Moore",
+              "team": "Oregon"
+            },
+            {
+              "number": "BCA-CBE",
+              "player": "Carson Beck",
+              "team": "Miami"
+            },
+            {
+              "number": "BCA-MMO",
+              "player": "Miller Moss",
+              "team": "Louisville"
+            },
+            {
+              "number": "BCA-HK",
+              "player": "Haynes King",
+              "team": "Georgia Tech"
+            },
+            {
+              "number": "BCA-BS",
+              "player": "Brendan Sorsby",
+              "team": "Cincinnati"
+            },
+            {
+              "number": "BCA-JHO",
+              "player": "Josh Hoover",
+              "team": "TCU"
+            },
+            {
+              "number": "BCA-OM",
+              "player": "Owen McCown",
+              "team": "UTSA"
+            },
+            {
+              "number": "BCA-DRO",
+              "player": "Durell Robinson",
+              "team": "Auburn"
+            },
+            {
+              "number": "BCA-KSA",
+              "player": "Kaidon Salter",
+              "team": "Colorado"
+            },
+            {
+              "number": "BCA-ACH",
+              "player": "Aidan Chiles",
+              "team": "Michigan State"
+            },
+            {
+              "number": "BCA-TS",
+              "player": "Ty Simpson",
+              "team": "Alabama"
+            },
+            {
+              "number": "BCA-KJ",
+              "player": "Kevin Jennings",
+              "team": "SMU"
+            },
+            {
+              "number": "BCA-RJM",
+              "player": "RJ Maryland",
+              "team": "SMU"
+            },
+            {
+              "number": "BCA-CMC",
+              "player": "Chrishon McCray",
+              "team": "Michigan State"
+            },
+            {
+              "number": "BCA-HW",
+              "player": "Harrison Wallace III",
+              "team": "Ole Miss"
+            },
+            {
+              "number": "BCA-MLA",
+              "player": "Matt Lauter",
+              "team": "Boise State"
+            },
+            {
+              "number": "BCA-JKJ",
+              "player": "Ja'Kobi Jackson",
+              "team": "Florida"
+            },
+            {
+              "number": "BCA-LNS",
+              "player": "LaNorris Sellers",
+              "team": "South Carolina"
+            },
+            {
+              "number": "BCA-QW",
+              "player": "Quintrevion Wisner",
+              "team": "Texas"
+            },
+            {
+              "number": "BCA-LBJ",
+              "player": "Lee Beebe Jr.",
+              "team": "Indiana"
+            },
+            {
+              "number": "BCA-VA",
+              "player": "Vinny Anthony II",
+              "team": "Wisconsin"
+            },
+            {
+              "number": "BCA-AHA",
+              "player": "Ahmad Hardy",
+              "team": "Missouri"
+            },
+            {
+              "number": "BCA-ESA",
+              "player": "Eli Sanders",
+              "team": "USC"
+            },
+            {
+              "number": "BCA-MAM",
+              "player": "Maalik Murphy",
+              "team": "Oregon State"
+            },
+            {
+              "number": "BCA-TTA",
+              "player": "Talyn Taylor",
+              "team": "Georgia"
+            },
+            {
+              "number": "BCA-DWI",
+              "player": "Dallas Wilson",
+              "team": "Florida"
+            },
+            {
+              "number": "BCA-DST",
+              "player": "De'Zhaun Stribling",
+              "team": "Ole Miss"
+            },
+            {
+              "number": "BCA-DEM",
+              "player": "DeAndre Moore Jr.",
+              "team": "Texas"
+            },
+            {
+              "number": "BCA-MKE",
+              "player": "Mikey Keene",
+              "team": "Michigan"
+            },
+            {
+              "number": "BCA-KUD",
+              "player": "Kanye Udoh",
+              "team": "Arizona State"
+            },
+            {
+              "number": "BCA-ESI",
+              "player": "Eric Singleton Jr.",
+              "team": "Auburn"
+            },
+            {
+              "number": "BCA-GB",
+              "player": "Germie Bernard",
+              "team": "Alabama"
+            },
+            {
+              "number": "BCA-RB",
+              "player": "Rocco Becht",
+              "team": "Iowa State"
+            },
+            {
+              "number": "BCA-GN",
+              "player": "Garrett Nussmeier",
+              "team": "LSU"
+            },
+            {
+              "number": "BCA-DPA",
+              "player": "Diego Pavia",
+              "team": "Vanderbilt"
+            },
+            {
+              "number": "BCA-EST",
+              "player": "Eli Stowers",
+              "team": "Vanderbilt"
+            },
+            {
+              "number": "BCA-JAG",
+              "player": "Joey Aguilar",
+              "team": "Tennessee"
+            },
+            {
+              "number": "BCA-ANG",
+              "player": "Steve Angeli",
+              "team": "Syracuse"
+            },
+            {
+              "number": "BCA-EHO",
+              "player": "Eli Holstein",
+              "team": "Pittsburgh"
+            },
+            {
+              "number": "BCA-SL",
+              "player": "Sam Leavitt",
+              "team": "Arizona State"
+            },
+            {
+              "number": "BCA-BUN",
+              "player": "Bryce Underwood",
+              "team": "Michigan"
+            },
+            {
+              "number": "BCA-PS",
+              "player": "Preston Stone",
+              "team": "Northwestern"
+            }
+          ]
+        },
+        {
+          "id": "sapphire-selections-autographs",
+          "name": "Sapphire Selections Autographs",
+          "category": "autograph",
+          "totalCards": 20,
+          "parallels": [
+            {
+              "name": "Base",
+              "printRun": null
+            },
+            {
+              "name": "Orange Sapphire",
+              "printRun": 25
+            },
+            {
+              "name": "Black Sapphire",
+              "printRun": 10
+            },
+            {
+              "name": "Red Sapphire",
+              "printRun": 5
+            },
+            {
+              "name": "Padparadscha Sapphire",
+              "printRun": 1
+            }
+          ],
+          "cards": [
+            {
+              "number": "SS-AJ",
+              "player": "Avery Johnson",
+              "team": "Kansas State"
+            },
+            {
+              "number": "SS-BP",
+              "player": "Beau Pribula",
+              "team": "Missouri"
+            },
+            {
+              "number": "SS-BU",
+              "player": "Bryce Underwood",
+              "team": "Michigan"
+            },
+            {
+              "number": "SS-CB",
+              "player": "Carson Beck",
+              "team": "Miami"
+            },
+            {
+              "number": "SS-DM",
+              "player": "Dante Moore",
+              "team": "Oregon"
+            },
+            {
+              "number": "SS-DS",
+              "player": "Dylan Stewart",
+              "team": "South Carolina"
+            },
+            {
+              "number": "SS-EH",
+              "player": "Eli Holstein",
+              "team": "Pittsburgh"
+            },
+            {
+              "number": "SS-FM",
+              "player": "Fernando Mendoza",
+              "team": "Indiana"
+            },
+            {
+              "number": "SS-GN",
+              "player": "Garrett Nussmeier",
+              "team": "LSU"
+            },
+            {
+              "number": "SS-GS",
+              "player": "Gunner Stockton",
+              "team": "Georgia"
+            },
+            {
+              "number": "SS-JB",
+              "player": "Jadan Baugh",
+              "team": "Florida"
+            },
+            {
+              "number": "SS-JM",
+              "player": "John Mateer",
+              "team": "Oklahoma"
+            },
+            {
+              "number": "SS-KJ",
+              "player": "Kevin Jennings",
+              "team": "SMU"
+            },
+            {
+              "number": "SS-KP",
+              "player": "Koi Perich",
+              "team": "Minnesota"
+            },
+            {
+              "number": "SS-KS",
+              "player": "Kaidon Salter",
+              "team": "Colorado"
+            },
+            {
+              "number": "SS-LS",
+              "player": "LaNorris Sellers",
+              "team": "South Carolina"
+            },
+            {
+              "number": "SS-MR",
+              "player": "Marcel Reed",
+              "team": "Texas A&M"
+            },
+            {
+              "number": "SS-NF",
+              "player": "Nate Frazier",
+              "team": "Georgia"
+            },
+            {
+              "number": "SS-RB",
+              "player": "Rocco Becht",
+              "team": "Iowa State"
+            },
+            {
+              "number": "SS-SL",
+              "player": "Sam Leavitt",
+              "team": "Arizona State"
+            }
+          ]
+        },
+        {
+          "id": "sapphire-selections",
+          "name": "Sapphire Selections",
+          "category": "insert",
+          "totalCards": 20,
+          "parallels": [
+            {
+              "name": "Base",
+              "printRun": null
+            },
+            {
+              "name": "Orange Sapphire",
+              "printRun": 25
+            },
+            {
+              "name": "Black Sapphire",
+              "printRun": 10
+            },
+            {
+              "name": "Red Sapphire",
+              "printRun": 5
+            },
+            {
+              "name": "Padparadscha Sapphire",
+              "printRun": 1
+            }
+          ],
+          "cards": [
+            {
+              "number": "SS-1",
+              "player": "Avery Johnson",
+              "team": "Kansas State"
+            },
+            {
+              "number": "SS-2",
+              "player": "Kaidon Salter",
+              "team": "Colorado"
+            },
+            {
+              "number": "SS-3",
+              "player": "Koi Perich",
+              "team": "Minnesota"
+            },
+            {
+              "number": "SS-4",
+              "player": "LaNorris Sellers",
+              "team": "South Carolina"
+            },
+            {
+              "number": "SS-5",
+              "player": "Sam Leavitt",
+              "team": "Arizona State"
+            },
+            {
+              "number": "SS-6",
+              "player": "Nate Frazier",
+              "team": "Georgia"
+            },
+            {
+              "number": "SS-7",
+              "player": "Dante Moore",
+              "team": "Oregon"
+            },
+            {
+              "number": "SS-8",
+              "player": "Dylan Stewart",
+              "team": "South Carolina"
+            },
+            {
+              "number": "SS-9",
+              "player": "Garrett Nussmeier",
+              "team": "LSU"
+            },
+            {
+              "number": "SS-10",
+              "player": "Marcel Reed",
+              "team": "Texas A&M"
+            },
+            {
+              "number": "SS-11",
+              "player": "Rocco Becht",
+              "team": "Iowa State"
+            },
+            {
+              "number": "SS-12",
+              "player": "Beau Pribula",
+              "team": "Missouri"
+            },
+            {
+              "number": "SS-13",
+              "player": "Jadan Baugh",
+              "team": "Florida"
+            },
+            {
+              "number": "SS-14",
+              "player": "Gunner Stockton",
+              "team": "Georgia"
+            },
+            {
+              "number": "SS-15",
+              "player": "Kevin Jennings",
+              "team": "SMU"
+            },
+            {
+              "number": "SS-16",
+              "player": "Bryce Underwood",
+              "team": "Michigan"
+            },
+            {
+              "number": "SS-17",
+              "player": "John Mateer",
+              "team": "Oklahoma"
+            },
+            {
+              "number": "SS-18",
+              "player": "Carson Beck",
+              "team": "Miami"
+            },
+            {
+              "number": "SS-19",
+              "player": "Fernando Mendoza",
+              "team": "Indiana"
+            },
+            {
+              "number": "SS-20",
+              "player": "Eli Holstein",
+              "team": "Pittsburgh"
+            }
+          ]
+        },
+        {
+          "id": "treasured-talent",
+          "name": "Treasured Talent",
+          "category": "insert",
+          "totalCards": 10,
+          "parallels": [],
+          "cards": [
+            {
+              "number": "TT-1",
+              "player": "Bryce Underwood",
+              "team": "Michigan"
+            },
+            {
+              "number": "TT-2",
+              "player": "Sam Leavitt",
+              "team": "Arizona State"
+            },
+            {
+              "number": "TT-3",
+              "player": "Avery Johnson",
+              "team": "Kansas State"
+            },
+            {
+              "number": "TT-4",
+              "player": "LaNorris Sellers",
+              "team": "South Carolina"
+            },
+            {
+              "number": "TT-5",
+              "player": "John Mateer",
+              "team": "Oklahoma"
+            },
+            {
+              "number": "TT-6",
+              "player": "Marcel Reed",
+              "team": "Texas A&M"
+            },
+            {
+              "number": "TT-7",
+              "player": "Dylan Stewart",
+              "team": "South Carolina"
+            },
+            {
+              "number": "TT-8",
+              "player": "KC Concepcion",
+              "team": "Texas A&M"
+            },
+            {
+              "number": "TT-9",
+              "player": "Nate Frazier",
+              "team": "Georgia"
+            },
+            {
+              "number": "TT-10",
+              "player": "Eli Holstein",
+              "team": "Pittsburgh"
+            }
+          ]
         }
       ]
     }
