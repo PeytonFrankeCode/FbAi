@@ -2129,6 +2129,11 @@ footer {
   color: #90cdf4;
 }
 
+.checklist-badge.memo {
+  background: #553c6e;
+  color: #d6bcfa;
+}
+
 /* ---- Parallels Row ---- */
 .checklist-parallels-row {
   display: flex;
@@ -2272,11 +2277,31 @@ footer {
   border-bottom: 1px solid rgba(82, 183, 136, 0.15);
 }
 
+.cl-listings-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
 .cl-listings-title {
   margin: 0;
   font-size: 0.9rem;
   color: #e8eaf0;
   white-space: nowrap;
+}
+
+.cl-listings-subtitle {
+  font-size: 0.7rem;
+  color: #52b788;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cl-listings-printrun {
+  color: #a0aec0;
+  font-weight: 600;
 }
 
 .cl-listings-tabs {
