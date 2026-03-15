@@ -1,3 +1,36 @@
+// ---- Theme ----
+(function initTheme() {
+  const saved = localStorage.getItem('cardHuddleTheme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('cardHuddleTheme', 'dark');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    localStorage.setItem('cardHuddleTheme', 'light');
+  }
+}
+
+function showSettings() {
+  document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+
+// Close settings on overlay click
+document.addEventListener('click', function(e) {
+  const overlay = document.getElementById('settings-overlay');
+  if (e.target === overlay) closeSettings();
+});
+
 // ---- App ----
 const form = document.getElementById('search-form');
 const input = document.getElementById('search-input');

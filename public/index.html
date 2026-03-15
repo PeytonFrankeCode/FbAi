@@ -61,6 +61,9 @@
       <nav class="header-nav">
         <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
         <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
+        <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -298,6 +301,27 @@
           <a id="card-modal-link" class="card-modal-ebay-link" href="#" target="_blank" rel="noopener noreferrer">
             View on eBay &#8599;
           </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-overlay" class="settings-overlay hidden" role="dialog" aria-label="Settings">
+    <div class="settings-box">
+      <button class="login-close" aria-label="Close" onclick="closeSettings()">&times;</button>
+      <h2 class="settings-heading">Settings</h2>
+      <div class="settings-group">
+        <div class="settings-row">
+          <div class="settings-label">
+            <span class="settings-label-text">Appearance</span>
+            <span class="settings-label-desc">Switch between dark and light mode</span>
+          </div>
+          <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" role="button" tabindex="0" aria-label="Toggle theme">
+            <span class="theme-toggle-icon" id="theme-icon-dark">&#9790;</span>
+            <span class="theme-toggle-icon" id="theme-icon-light">&#9788;</span>
+            <div class="theme-toggle-thumb" id="theme-thumb"></div>
+          </div>
         </div>
       </div>
     </div>
