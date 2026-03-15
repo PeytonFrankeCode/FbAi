@@ -1590,6 +1590,31 @@ function generateListingReasoning(results, isSold, serial) {
   return lines.join(' ');
 }
 
+// Build a single listing card for checklist inline results
+function buildClListingCard(item, mode) {
+  const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
+  const dateStr = item.soldDate
+    ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '';
+  const isSold = mode === 'sold';
+  const badge = isSold
+    ? '<span class="cl-item-badge sold">SOLD</span>'
+    : '<span class="cl-item-badge forsale">FOR SALE</span>';
+  const imgHtml = item.imageUrl
+    ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
+    : `<div class="cl-item-noimg">&#127944;</div>`;
+  return `
+    <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+      <div class="cl-item-img">${imgHtml}</div>
+      <div class="cl-item-info">
+        <span class="cl-item-price">${price}</span>
+        ${badge}
+        ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
+      </div>
+    </a>
+  `;
+}
+
 async function fetchPlayerListings(container, query, mode) {
   const body = container.querySelector('.cl-listings-body');
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
@@ -1606,9 +1631,12 @@ async function fetchPlayerListings(container, query, mode) {
     const results = data.results || [];
     const serial = data.serial || null;
     const similarResults = data.similarResults || [];
+    const searchType = data.searchType || 'exact';
+    const broadenedQuery = data.broadenedQuery || null;
+    const approximateValue = data.approximateValue || null;
 
     if (results.length === 0) {
-      // No exact results — show similar items if available (same as main search)
+      // No results at all — show similar numbered cards if available, otherwise empty message
       let emptyHtml = `<div class="cl-listings-empty">No ${mode === 'sold' ? 'sold listings' : 'listings'} found${serial ? ` numbered /${serial}` : ''}.</div>`;
 
       if (similarResults.length > 0) {
@@ -1616,27 +1644,7 @@ async function fetchPlayerListings(container, query, mode) {
         emptyHtml += `<div class="cl-similar-header">Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}</div>`;
         emptyHtml += `<div class="cl-listings-grid">`;
         similarResults.slice(0, 8).forEach(item => {
-          const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
-          const dateStr = item.soldDate
-            ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            : '';
-          const isSold = mode === 'sold';
-          const badge = isSold
-            ? '<span class="cl-item-badge sold">SOLD</span>'
-            : '<span class="cl-item-badge forsale">FOR SALE</span>';
-          const imgHtml = item.imageUrl
-            ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
-            : `<div class="cl-item-noimg">&#127944;</div>`;
-          emptyHtml += `
-            <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
-              <div class="cl-item-img">${imgHtml}</div>
-              <div class="cl-item-info">
-                <span class="cl-item-price">${price}</span>
-                ${badge}
-                ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
-              </div>
-            </a>
-          `;
+          emptyHtml += buildClListingCard(item, mode);
         });
         emptyHtml += '</div></div>';
       }
@@ -1657,9 +1665,23 @@ async function fetchPlayerListings(container, query, mode) {
     // Generate reasoning
     const reasoning = generateListingReasoning(results, isSold, serial);
 
-    let html = `
+    let html = '';
+
+    // If broadened, show a notice about similar items being displayed
+    if (searchType === 'broadened') {
+      html += `<div class="cl-broadened-notice">`;
+      html += `<span class="cl-broadened-icon">&#128270;</span> `;
+      html += `No exact match found. Showing similar items`;
+      if (approximateValue) {
+        html += ` &mdash; estimated value <strong>~$${approximateValue.medianPrice.toFixed(2)}</strong>`;
+        html += ` <span class="cl-broadened-detail">(based on ${approximateValue.sampleSize} ${approximateValue.sampleSize === 1 ? 'sale' : 'sales'} of ${escHtml(approximateValue.basedOn)})</span>`;
+      }
+      html += `</div>`;
+    }
+
+    html += `
       <div class="cl-listings-stats">
-        <span>${results.length} ${isSold ? 'sold' : 'listings'} ${mockBadge}</span>
+        <span>${results.length} ${isSold ? 'sold' : 'listings'}${searchType === 'broadened' ? ' (similar)' : ''} ${mockBadge}</span>
         <span>Avg: $${avg.toFixed(2)}</span>
         <span>Low: $${low.toFixed(2)}</span>
         <span>High: $${high.toFixed(2)}</span>
@@ -1673,27 +1695,7 @@ async function fetchPlayerListings(container, query, mode) {
     html += '<div class="cl-listings-grid">';
 
     results.forEach(item => {
-      const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
-      const dateStr = item.soldDate
-        ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-        : '';
-      const badge = isSold
-        ? '<span class="cl-item-badge sold">SOLD</span>'
-        : '<span class="cl-item-badge forsale">FOR SALE</span>';
-      const imgHtml = item.imageUrl
-        ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
-        : `<div class="cl-item-noimg">&#127944;</div>`;
-
-      html += `
-        <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
-          <div class="cl-item-img">${imgHtml}</div>
-          <div class="cl-item-info">
-            <span class="cl-item-price">${price}</span>
-            ${badge}
-            ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
-          </div>
-        </a>
-      `;
+      html += buildClListingCard(item, mode);
     });
 
     html += '</div>';
@@ -1704,26 +1706,7 @@ async function fetchPlayerListings(container, query, mode) {
       html += `<div class="cl-similar-header">Other Numbered Cards</div>`;
       html += `<div class="cl-listings-grid">`;
       similarResults.slice(0, 6).forEach(item => {
-        const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
-        const dateStr = item.soldDate
-          ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : '';
-        const badge = isSold
-          ? '<span class="cl-item-badge sold">SOLD</span>'
-          : '<span class="cl-item-badge forsale">FOR SALE</span>';
-        const imgHtml = item.imageUrl
-          ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
-          : `<div class="cl-item-noimg">&#127944;</div>`;
-        html += `
-          <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
-            <div class="cl-item-img">${imgHtml}</div>
-            <div class="cl-item-info">
-              <span class="cl-item-price">${price}</span>
-              ${badge}
-              ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
-            </div>
-          </a>
-        `;
+        html += buildClListingCard(item, mode);
       });
       html += '</div></div>';
     }

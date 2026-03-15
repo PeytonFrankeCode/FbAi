@@ -264,7 +264,23 @@ app.get('/api/search', async (req, res) => {
     if (!serial) {
       // No serial number in query — standard search
       const { results, total } = await fetchEbayItems(query, limit, mode);
-      return res.json({ results, total, mock: false, mode, serial: null, similarResults: [] });
+      if (results.length > 0) {
+        return res.json({ results, total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null });
+      }
+
+      // No results — try broadened search (same as main search)
+      const parsed = parseCardQuery(query);
+      const broader = buildBroadenedQueries(parsed);
+
+      for (const level of broader) {
+        const broadened = await fetchEbayItems(level.query, limit, mode);
+        if (broadened.results.length > 0) {
+          const approx = computeApproxValue(broadened.results, level.label);
+          return res.json({ results: broadened.results, total: broadened.total, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
+        }
+      }
+
+      return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null });
     }
 
     // Has serial number (e.g. /5 means print run of 5)

@@ -2425,6 +2425,30 @@ footer {
   border-radius: 0 6px 6px 0;
 }
 
+.cl-broadened-notice {
+  padding: 0.5rem 0.75rem;
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #f6ad55;
+  background: rgba(246, 173, 85, 0.1);
+  border-left: 3px solid #f6ad55;
+  border-radius: 0 6px 6px 0;
+}
+
+.cl-broadened-notice strong {
+  color: #fbd38d;
+}
+
+.cl-broadened-icon {
+  font-size: 0.85rem;
+}
+
+.cl-broadened-detail {
+  color: #a0aec0;
+  font-size: 0.72rem;
+}
+
 .cl-similar-section {
   margin-top: 0.75rem;
   border-top: 1px solid rgba(45, 55, 72, 0.5);
