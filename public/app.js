@@ -1331,6 +1331,10 @@ function renderChecklistSets() {
       return `<span class="checklist-parallel">${escHtml(p.name)}${pr}</span>`;
     }).join('');
 
+    // Detect if this set has per-card print runs
+    const hasPrintRuns = cards.some(c => c.printRun);
+    const setId = set.id || '';
+
     setEl.innerHTML = `
       <div class="checklist-set-header" onclick="this.parentElement.classList.toggle('expanded')">
         <div class="checklist-set-title-row">
@@ -1348,6 +1352,7 @@ function renderChecklistSets() {
               <th>#</th>
               <th>Player</th>
               <th>Team</th>
+              ${hasPrintRuns ? `<th class="cl-pr-header" data-set-id="${escHtml(setId)}" onclick="sortChecklistByPrintRun(this)">Print Run <span class="cl-sort-arrow">&#9660;</span></th>` : ''}
               <th></th>
             </tr>
           </thead>
@@ -1362,10 +1367,11 @@ function renderChecklistSets() {
               const printRun = c.printRun ? String(c.printRun) : '';
               const cardNote = c.note ? escHtml(c.note).replace(/'/g, "\\'") : '';
               return `
-              <tr>
+              <tr data-print-run="${c.printRun || ''}" data-card-num="${c.number}">
                 <td class="cl-num">${escHtml(c.number)}</td>
                 <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${printRun}')">${escHtml(c.player)}</a></td>
                 <td class="cl-team">${escHtml(c.team)}</td>
+                ${hasPrintRuns ? `<td class="cl-printrun ${printRun && parseInt(printRun) <= 25 ? 'cl-pr-rare' : printRun && parseInt(printRun) <= 99 ? 'cl-pr-low' : ''}">${printRun ? '/' + printRun : ''}</td>` : ''}
                 <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${category}')" title="Search eBay">&#128269;</button></td>
               </tr>`;
             }).join('')}
@@ -1378,6 +1384,35 @@ function renderChecklistSets() {
   });
 }
 
+// Sort checklist table by print run
+function sortChecklistByPrintRun(thEl) {
+  const table = thEl.closest('table');
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const arrow = thEl.querySelector('.cl-sort-arrow');
+
+  // Toggle sort direction
+  const currentDir = thEl.dataset.sortDir || 'none';
+  let newDir;
+  if (currentDir === 'none' || currentDir === 'desc') {
+    newDir = 'asc'; // Low print run first (most rare)
+  } else {
+    newDir = 'desc'; // High print run first
+  }
+  thEl.dataset.sortDir = newDir;
+  arrow.innerHTML = newDir === 'asc' ? '&#9650;' : '&#9660;';
+  arrow.classList.add('cl-sort-active');
+
+  rows.sort((a, b) => {
+    const prA = parseInt(a.dataset.printRun) || 99999;
+    const prB = parseInt(b.dataset.printRun) || 99999;
+    if (newDir === 'asc') return prA - prB;
+    return prB - prA;
+  });
+
+  rows.forEach(r => tbody.appendChild(r));
+}
+
 function searchFromChecklist(player, year, brand, setName, category) {
   const query = buildChecklistQuery(player, year, brand, setName, category);
   input.value = query;
@@ -1386,16 +1421,24 @@ function searchFromChecklist(player, year, brand, setName, category) {
   fetchVariants(query);
 }
 
-function buildChecklistQuery(player, year, brand, setName, category) {
+function buildChecklistQuery(player, year, brand, setName, category, printRun) {
   // For base/base-variant sets, just use year + brand + player
   if (!category || category === 'base') {
+    // If card has individual print run (Season Stat Line, Jersey Number), include it
+    if (printRun) {
+      return `${year} ${brand} ${player} /${printRun}`;
+    }
     return `${year} ${brand} ${player}`;
   }
   // For autographs, memorabilia, inserts — include the set name for specificity
   // Clean up set name: remove redundant brand name, "Checklist" etc.
   let setLabel = setName || '';
   setLabel = setLabel.replace(/Checklist/gi, '').trim();
-  return `${year} ${brand} ${setLabel} ${player}`;
+  let q = `${year} ${brand} ${setLabel} ${player}`;
+  if (printRun) {
+    q += ` /${printRun}`;
+  }
+  return q;
 }
 
 // ---- Inline Player Listings in Checklist ----
@@ -1427,11 +1470,13 @@ function togglePlayerListings(linkEl, player, year, brand, setName, category, ca
   const panelRow = document.createElement('tr');
   panelRow.className = 'cl-listings-row';
   const td = document.createElement('td');
-  td.colSpan = 4;
+  // Span all columns: #, Player, Team, (Print Run if present), Action
+  const headerCols = row.closest('table').querySelectorAll('thead th').length;
+  td.colSpan = headerCols;
   td.className = 'cl-listings-cell';
 
-  const query = buildChecklistQuery(player, year, brand, setName, category);
-  const subtitle = setName && category !== 'base' ? setName : '';
+  const query = buildChecklistQuery(player, year, brand, setName, category, printRun);
+  const subtitle = (setName && category !== 'base') ? setName : (printRun ? setName : '');
   const printRunLabel = printRun ? ` /${printRun}` : '';
 
   const subtitleHtml = subtitle ? `<span class="cl-listings-subtitle">${escHtml(subtitle)}${printRunLabel ? ' <span class="cl-listings-printrun">' + escHtml(printRunLabel) + '</span>' : ''}</span>` : '';

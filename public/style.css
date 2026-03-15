@@ -2209,6 +2209,45 @@ footer {
   font-size: 0.8rem;
 }
 
+.cl-printrun {
+  color: #a0aec0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  width: 70px;
+  text-align: center;
+}
+
+.cl-pr-rare {
+  color: #f6ad55;
+  font-weight: 700;
+}
+
+.cl-pr-low {
+  color: #68d391;
+}
+
+.cl-pr-header {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.cl-pr-header:hover {
+  color: #52b788;
+}
+
+.cl-sort-arrow {
+  font-size: 0.6rem;
+  opacity: 0.4;
+  margin-left: 0.2rem;
+}
+
+.cl-sort-arrow.cl-sort-active {
+  opacity: 1;
+  color: #52b788;
+}
+
 .cl-action {
   width: 40px;
   text-align: center;
