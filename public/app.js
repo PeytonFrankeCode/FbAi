@@ -1321,6 +1321,7 @@ function renderChecklistSets() {
     }
 
     const categoryBadge = set.category === 'autograph' ? '<span class="checklist-badge auto">AUTO</span>'
+      : set.category === 'memorabilia' ? '<span class="checklist-badge memo">MEMO</span>'
       : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
       : '<span class="checklist-badge base">BASE</span>';
 
@@ -1356,12 +1357,16 @@ function renderChecklistSets() {
               const year = checklistData.year || '2025';
               const brand = escHtml(checklistData.brand || 'Bowman').replace(/'/g, "\\'");
               const setName = escHtml(set.name).replace(/'/g, "\\'");
+              const category = set.category || 'base';
+              const cardNum = escHtml(c.number).replace(/'/g, "\\'");
+              const printRun = c.printRun ? String(c.printRun) : '';
+              const cardNote = c.note ? escHtml(c.note).replace(/'/g, "\\'") : '';
               return `
               <tr>
                 <td class="cl-num">${escHtml(c.number)}</td>
-                <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}')">${escHtml(c.player)}</a></td>
+                <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${printRun}')">${escHtml(c.player)}</a></td>
                 <td class="cl-team">${escHtml(c.team)}</td>
-                <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}')" title="Search eBay">&#128269;</button></td>
+                <td class="cl-action"><button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${category}')" title="Search eBay">&#128269;</button></td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -1373,18 +1378,30 @@ function renderChecklistSets() {
   });
 }
 
-function searchFromChecklist(player, year, brand) {
-  const query = `${year} ${brand} ${player}`;
+function searchFromChecklist(player, year, brand, setName, category) {
+  const query = buildChecklistQuery(player, year, brand, setName, category);
   input.value = query;
   switchView('search');
   addRecentSearch(query);
   fetchVariants(query);
 }
 
+function buildChecklistQuery(player, year, brand, setName, category) {
+  // For base/base-variant sets, just use year + brand + player
+  if (!category || category === 'base') {
+    return `${year} ${brand} ${player}`;
+  }
+  // For autographs, memorabilia, inserts — include the set name for specificity
+  // Clean up set name: remove redundant brand name, "Checklist" etc.
+  let setLabel = setName || '';
+  setLabel = setLabel.replace(/Checklist/gi, '').trim();
+  return `${year} ${brand} ${setLabel} ${player}`;
+}
+
 // ---- Inline Player Listings in Checklist ----
 let activePlayerPanel = null;
 
-function togglePlayerListings(linkEl, player, year, brand, setName) {
+function togglePlayerListings(linkEl, player, year, brand, setName, category, cardNum, printRun) {
   const row = linkEl.closest('tr');
   const existingPanel = row.nextElementSibling;
 
@@ -1413,12 +1430,18 @@ function togglePlayerListings(linkEl, player, year, brand, setName) {
   td.colSpan = 4;
   td.className = 'cl-listings-cell';
 
-  const query = `${year} ${brand} ${player}`;
+  const query = buildChecklistQuery(player, year, brand, setName, category);
+  const subtitle = setName && category !== 'base' ? setName : '';
+  const printRunLabel = printRun ? ` /${printRun}` : '';
 
+  const subtitleHtml = subtitle ? `<span class="cl-listings-subtitle">${escHtml(subtitle)}${printRunLabel ? ' <span class="cl-listings-printrun">' + escHtml(printRunLabel) + '</span>' : ''}</span>` : '';
   td.innerHTML = `
     <div class="cl-listings-panel">
       <div class="cl-listings-header">
-        <h4 class="cl-listings-title">${escHtml(player)}</h4>
+        <div class="cl-listings-title-group">
+          <h4 class="cl-listings-title">${escHtml(player)}</h4>
+          ${subtitleHtml}
+        </div>
         <div class="cl-listings-tabs">
           <button class="cl-listings-tab active" data-lmode="forsale">For Sale</button>
           <button class="cl-listings-tab" data-lmode="sold">Sold</button>
