@@ -2337,6 +2337,30 @@ footer {
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+
+.checklist-parallel:hover {
+  background: var(--bg-hover, rgba(255,255,255,0.08));
+  color: var(--text-primary);
+}
+
+.checklist-parallel-active {
+  background: var(--accent, #10b981) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 1px var(--accent, #10b981);
+}
+
+.checklist-variant-label {
+  font-size: 0.7rem;
+  color: var(--accent, #10b981);
+  background: rgba(16, 185, 129, 0.12);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  white-space: nowrap;
 }
 
 /* ---- Checklist Table ---- */
