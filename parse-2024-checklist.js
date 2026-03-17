@@ -62,6 +62,15 @@ async function main() {
 
   console.log(`\nTotal 2024 products parsed: ${products.length}`);
 
+  // Consolidate color variant sets into parent sets as parallels
+  let totalBefore = 0, totalAfter = 0;
+  products.forEach(p => {
+    totalBefore += p.sets.length;
+    p.sets = consolidateSets(p.sets);
+    totalAfter += p.sets.length;
+  });
+  console.log(`\nConsolidated sets: ${totalBefore} -> ${totalAfter} (merged ${totalBefore - totalAfter} color variants)`);
+
   // Load existing checklists.json and merge
   const existing = JSON.parse(fs.readFileSync(CHECKLISTS_PATH, 'utf8'));
 
@@ -461,6 +470,122 @@ function splitNumberedCards(line, useDash) {
   }
 
   return results;
+}
+
+// ---- Set Consolidation ----
+// Color variant suffixes that indicate a parallel, not a separate set
+// All known color/material/finish variant names used across products
+const VARIANT_WORDS = 'Red|Blue|Green|Gold|Silver|Purple|Orange|Pink|Black|White|Bronze|Yellow|Aqua|Teal|Platinum|Neon|Holo|Chrome|Shimmer|Sparkle|Ice|Wave|Press Proof|Die-Cut|Canvas|Camo|Finite|Vinyl|Foil|Hyper|Zone|Stars|Pandora|Velocity|Prizm|Mojo|Scope|Fluorescent|Reactive|Cracked Ice|Ruby|Sapphire|Emerald|Diamond|Tiger Stripe|Kaboom|Nebula|Peacock|Knight|Power|Cherry Blossom|Checker|Pulsar|Lazer|Disco|Snakeskin|Mosaic|Color Blast|Lava|Fractor|X-Fractor|Refractor|Stained Glass|Meta|Neon Splatter|Psychedelic|Spectris|Supernova|Interstellar|Universal|Splatter';
+const COLOR_VARIANT_PATTERN = new RegExp(`\\s+(${VARIANT_WORDS})(\\s+(${VARIANT_WORDS}))*\\s*$`, 'i');
+
+function getBaseSetName(name) {
+  return name.replace(COLOR_VARIANT_PATTERN, '').trim();
+}
+
+function getVariantName(name, baseName) {
+  if (name === baseName) return null;
+  return name.substring(baseName.length).trim();
+}
+
+function consolidateSets(sets) {
+  const groups = new Map(); // baseName+category -> { baseSet, variants }
+  const result = [];
+
+  for (const set of sets) {
+    const baseName = getBaseSetName(set.name);
+    const variantName = getVariantName(set.name, baseName);
+    const key = `${set.category}:${baseName}`;
+
+    if (!variantName) {
+      // This is a base set (no color suffix)
+      if (groups.has(key)) {
+        // Already have a base - merge cards if this one has more
+        const existing = groups.get(key);
+        if (set.cards.length > existing.baseSet.cards.length) {
+          // Keep the one with more cards as the base, add old one's cards as variant
+          if (existing.baseSet.cards.length > 0) {
+            existing.variants.push({ name: 'Base (alt)', cards: existing.baseSet.cards, printRun: null });
+          }
+          existing.baseSet.cards = set.cards;
+          existing.baseSet.totalCards = Math.max(existing.baseSet.totalCards, set.totalCards);
+        } else if (set.cards.length > 0) {
+          existing.variants.push({ name: 'Base (alt)', cards: set.cards, printRun: null });
+        }
+        // Merge parallels
+        for (const p of set.parallels) {
+          if (!existing.baseSet.parallels.some(ep => ep.name === p.name)) {
+            existing.baseSet.parallels.push(p);
+          }
+        }
+      } else {
+        groups.set(key, { baseSet: { ...set }, variants: [] });
+      }
+    } else {
+      // This is a color variant
+      if (!groups.has(key)) {
+        // No base set yet - create a placeholder
+        groups.set(key, {
+          baseSet: {
+            id: baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''),
+            name: baseName,
+            category: set.category,
+            totalCards: 0,
+            parallels: [{ name: 'Base', printRun: null }],
+            cards: []
+          },
+          variants: []
+        });
+      }
+
+      const group = groups.get(key);
+      // Extract print run from the variant's parallels or cards
+      let variantPrintRun = null;
+      if (set.parallels.length === 1 && set.parallels[0].printRun) {
+        variantPrintRun = set.parallels[0].printRun;
+      }
+      // Check if cards have consistent print runs
+      if (!variantPrintRun && set.cards.length > 0 && set.cards[0].printRun) {
+        variantPrintRun = set.cards[0].printRun;
+      }
+
+      // Add as a parallel to the base set
+      if (!group.baseSet.parallels.some(p => p.name === variantName)) {
+        group.baseSet.parallels.push({ name: variantName, printRun: variantPrintRun });
+      }
+
+      // If the base set has no cards but this variant does, use these cards
+      if (group.baseSet.cards.length === 0 && set.cards.length > 0) {
+        group.baseSet.cards = set.cards.map(c => {
+          const { printRun, ...rest } = c;
+          return rest;
+        });
+        group.baseSet.totalCards = Math.max(group.baseSet.totalCards, set.totalCards || set.cards.length);
+      } else if (set.cards.length > group.baseSet.cards.length) {
+        // This variant has more cards than current base - use it
+        group.baseSet.cards = set.cards.map(c => {
+          const { printRun, ...rest } = c;
+          return rest;
+        });
+        group.baseSet.totalCards = Math.max(group.baseSet.totalCards, set.totalCards || set.cards.length);
+      }
+    }
+  }
+
+  // Build the result, maintaining original order
+  const seen = new Set();
+  for (const set of sets) {
+    const baseName = getBaseSetName(set.name);
+    const key = `${set.category}:${baseName}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    if (groups.has(key)) {
+      const group = groups.get(key);
+      result.push(group.baseSet);
+    }
+  }
+
+  return result;
 }
 
 main().catch(err => {
