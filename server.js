@@ -257,7 +257,7 @@ app.get('/api/search', async (req, res) => {
   }
 
   if (USE_MOCK) {
-    return res.json(getMockData(query));
+    return res.json(getMockData(query, mode));
   }
 
   try {
@@ -461,7 +461,7 @@ app.get('/api/direct-search', async (req, res) => {
   }
 
   if (USE_MOCK) {
-    return res.json(getMockDirectSearch(query));
+    return res.json(getMockDirectSearch(query, mode));
   }
 
   try {
@@ -556,7 +556,7 @@ app.get('/api/variants', async (req, res) => {
   }
 
   if (USE_MOCK) {
-    return res.json(getMockVariants(query));
+    return res.json(getMockVariants(query, mode));
   }
 
   try {
@@ -874,7 +874,7 @@ async function checkAlerts() {
     try {
       let searchResult;
       if (USE_MOCK) {
-        searchResult = getMockData(alert.query);
+        searchResult = getMockData(alert.query, 'sold');
       } else if (EBAY_API_MODE === 'browse') {
         searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10));
       } else if (EBAY_API_MODE === 'insights') {
@@ -976,117 +976,206 @@ app.listen(PORT, () => {
   }
 });
 
-function getMockVariants(query) {
-  // Extract first 2 words as player name for search queries
+function getMockVariants(query, mode) {
   const player = query.trim().split(/\s+/).slice(0, 2).join(' ');
-  const mockSets = [
-    { year: '2020', set: 'Panini Prizm', parallel: 'Silver', avg: 245.50, count: 12, min: 180, max: 320 },
-    { year: '2021', set: 'Panini Select', parallel: 'Base Silver', avg: 89.00, count: 8, min: 65, max: 120 },
-    { year: '2022', set: 'Panini Prizm', parallel: 'Silver', avg: 198.00, count: 6, min: 150, max: 260 },
-    { year: '2021', set: 'Panini Mosaic', parallel: 'Silver', avg: 67.50, count: 5, min: 45, max: 95 },
-    { year: '2023', set: 'Panini Optic', parallel: 'Silver', avg: 52.00, count: 4, min: 35, max: 78 },
-    { year: '2022', set: 'Panini Chronicles', parallel: 'Silver', avg: 34.00, count: 3, min: 22, max: 49 },
+  // Seed from query for varied but deterministic data
+  let hash = 0;
+  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
+  const seed = Math.abs(hash);
+
+  const setPool = [
+    { year: '2024', set: 'Panini Prizm', parallels: ['Base', 'Silver', 'Red White Blue /175', 'Blue /199', 'Green /75', 'Gold /10'] },
+    { year: '2024', set: 'Panini Select', parallels: ['Base Concourse', 'Silver Concourse', 'Premier Level', 'Club Level Blue /149'] },
+    { year: '2024', set: 'Panini Mosaic', parallels: ['Base', 'Silver', 'Green /99', 'Gold /10'] },
+    { year: '2024', set: 'Donruss Optic', parallels: ['Base', 'Holo', 'Purple /75', 'Gold /10'] },
+    { year: '2025', set: 'Panini Prizm', parallels: ['Base', 'Silver', 'Shimmer', 'Teal /199'] },
+    { year: '2025', set: 'Bowman', parallels: ['Base', 'Refractor', 'Blue Refractor /199', 'Gold Refractor /50'] },
+    { year: '2024', set: 'Panini Certified', parallels: ['Base', 'Mirror Red /299', 'Mirror Blue /75'] },
+    { year: '2024', set: 'Panini Phoenix', parallels: ['Base', 'Fire Burst', 'Green /199'] },
   ];
-  return {
-    variants: mockSets.map(v => ({
-      id: `${v.year}-${v.set.toLowerCase().replace(/\s+/g, '-')}-${v.parallel.toLowerCase().replace(/\s+/g, '-')}`,
-      displayName: `${v.year} ${v.set} ${v.parallel}`,
-      searchQuery: `${player} ${v.year} ${v.set} ${v.parallel}`,
-      salesCount: v.count,
-      avgPrice: v.avg,
-      priceRange: { min: v.min, max: v.max },
+
+  // Pick 5-7 variants seeded by query
+  const count = 5 + (seed % 3);
+  const variants = [];
+  for (let i = 0; i < count && i < setPool.length; i++) {
+    const idx = (seed + i * 3) % setPool.length;
+    const s = setPool[idx];
+    const parallelIdx = (seed + i) % s.parallels.length;
+    const parallel = s.parallels[parallelIdx];
+    const baseAvg = 15 + (seed % 150) + (i * 12);
+    const salesCount = 3 + ((seed + i) % 10);
+    const min = Math.round(baseAvg * 0.6);
+    const max = Math.round(baseAvg * 1.5);
+
+    variants.push({
+      id: `${s.year}-${s.set.toLowerCase().replace(/\s+/g, '-')}-${parallel.toLowerCase().replace(/[\s/]+/g, '-')}`,
+      displayName: `${s.year} ${s.set} ${parallel}`,
+      searchQuery: `${player} ${s.year} ${s.set} ${parallel}`,
+      salesCount,
+      avgPrice: baseAvg,
+      priceRange: { min, max },
       imageUrl: null,
-    })),
-    mock: true,
-  };
+    });
+  }
+
+  return { variants, mock: true };
 }
 
-function getMockDirectSearch(query) {
+function getMockDirectSearch(query, mode) {
   const parsed = parseCardQuery(query);
   const hasSpecificCard = (parsed.parallel || parsed.set) && parsed.year;
   const today = new Date();
   const day = ms => new Date(today - ms).toISOString();
+  const ebayUrl = 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query);
+
+  let hash = 0;
+  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
+  const seed = Math.abs(hash);
+  const basePrice = 20 + (seed % 250);
+
+  const isSold = mode === 'sold';
+  const conditions = ['Near Mint', 'Mint', 'Near Mint or Better', 'Excellent'];
+  const gradedConditions = ['PSA 10 Gem Mint', 'PSA 9 Mint', 'BGS 9.5 Gem Mint', 'SGC 10 Pristine'];
 
   if (hasSpecificCard) {
-    // Simulate exact match
+    const count = 3 + (seed % 4);
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const variance = 0.65 + (((seed + i * 7) % 70) / 100);
+      const price = (basePrice * variance).toFixed(2);
+      const isGraded = i < 2;
+      const cond = isGraded ? gradedConditions[(seed + i) % gradedConditions.length] : conditions[(seed + i) % conditions.length];
+      results.push({
+        itemId: `ds-${seed}-${i}`,
+        title: `${query} ${isGraded ? cond.split(' ').slice(0, 2).join(' ') : 'Raw'}`,
+        price,
+        currency: 'USD',
+        soldDate: isSold ? day((1 + i * 2) * 86400000) : null,
+        imageUrl: null,
+        itemUrl: ebayUrl,
+        condition: cond,
+      });
+    }
     return {
-      results: [
-        { itemId: 'ds001', title: `${query} PSA 10`, price: '285.00', currency: 'USD', soldDate: day(1 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Graded - PSA 10' },
-        { itemId: 'ds002', title: `${query} Raw`, price: '120.00', currency: 'USD', soldDate: day(3 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Near Mint or Better' },
-      ],
-      total: 2, mock: true, searchType: 'exact', broadenedQuery: null, approximateValue: null,
+      results, total: results.length, mock: true, mode, searchType: 'exact',
+      broadenedQuery: null, approximateValue: null,
     };
   }
 
-  // Simulate broadened fallback
+  // Broadened fallback
+  const parallels = ['Silver', 'Gold /10', 'Base', 'Blue /199', 'Red /149'];
+  const count = 4 + (seed % 3);
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const variance = 0.5 + (((seed + i * 11) % 100) / 100);
+    const price = (basePrice * variance).toFixed(2);
+    const parallel = parallels[(seed + i) % parallels.length];
+    results.push({
+      itemId: `ds-b-${seed}-${i}`,
+      title: `${parsed.playerName || query} 2024 Panini Prizm ${parallel}`,
+      price,
+      currency: 'USD',
+      soldDate: isSold ? day((1 + i * 3) * 86400000) : null,
+      imageUrl: null,
+      itemUrl: ebayUrl,
+      condition: conditions[(seed + i) % conditions.length],
+    });
+  }
+
+  const prices = results.map(r => parseFloat(r.price)).sort((a, b) => a - b);
+  const median = prices[Math.floor(prices.length / 2)];
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+
   return {
-    results: [
-      { itemId: 'ds010', title: `${parsed.playerName} 2020 Panini Prizm Silver`, price: '245.00', currency: 'USD', soldDate: day(1 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Near Mint or Better' },
-      { itemId: 'ds011', title: `${parsed.playerName} 2020 Panini Prizm Gold`, price: '310.00', currency: 'USD', soldDate: day(2 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Graded - PSA 9' },
-      { itemId: 'ds012', title: `${parsed.playerName} 2020 Panini Prizm Base`, price: '85.00', currency: 'USD', soldDate: day(4 * 86400000), imageUrl: null, itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query), condition: 'Near Mint or Better' },
-    ],
-    total: 3, mock: true, searchType: 'broadened', broadenedQuery: `${parsed.playerName} Prizm`,
-    approximateValue: { avgPrice: 213.33, medianPrice: 245.00, priceRange: { min: 85, max: 310 }, sampleSize: 3, basedOn: `Prizm ${parsed.playerName} (all parallels)` },
+    results, total: results.length, mock: true, mode, searchType: 'broadened',
+    broadenedQuery: `${parsed.playerName || query} Prizm`,
+    approximateValue: {
+      avgPrice: parseFloat(avg.toFixed(2)),
+      medianPrice: parseFloat(median.toFixed(2)),
+      priceRange: { min: prices[0], max: prices[prices.length - 1] },
+      sampleSize: prices.length,
+      basedOn: `Prizm ${parsed.playerName || query} (all parallels)`,
+    },
   };
 }
 
-function getMockData(query) {
+function getMockData(query, mode) {
   const today = new Date();
   const day = ms => new Date(today - ms).toISOString();
-  return {
-    results: [
-      {
-        itemId: '111111111001',
-        title: `${query} - 2020 Panini Prizm PSA 10 Gem Mint`,
-        price: '249.99',
+  const ebayUrl = 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query);
+
+  // Seed a simple hash from the query for deterministic but varied pricing
+  let hash = 0;
+  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
+  const seed = Math.abs(hash);
+  const basePrice = 5 + (seed % 200); // $5-$204 range based on query
+
+  // Detect context from the query
+  const isAuto = /auto|signature|signed/i.test(query);
+  const isNumbered = /\/\d{1,4}/.test(query);
+  const isRookie = /rookie|rc\b/i.test(query);
+  const multiplier = (isAuto ? 2.5 : 1) * (isNumbered ? 1.8 : 1) * (isRookie ? 1.4 : 1);
+
+  const parallels = ['Base', 'Silver', 'Blue /199', 'Red /149', 'Green /75', 'Gold /10', 'Black 1/1'];
+  const conditions = ['Near Mint', 'Mint', 'Excellent', 'Near Mint or Better'];
+  const gradedConditions = ['PSA 10 Gem Mint', 'PSA 9 Mint', 'BGS 9.5 Gem Mint', 'BGS 10 Pristine', 'SGC 10 Pristine'];
+
+  if (mode === 'sold') {
+    // Sold listings: 6-10 results with dates spread over the last 30 days
+    const count = 6 + (seed % 5);
+    const results = [];
+    for (let i = 0; i < count; i++) {
+      const daysAgo = 1 + (((seed + i * 7) % 28));
+      const priceVariance = 0.6 + (((seed + i * 13) % 80) / 100); // 0.60 - 1.39x
+      const price = (basePrice * multiplier * priceVariance).toFixed(2);
+      const isGraded = i < 3; // first few are graded
+      const parallel = parallels[(seed + i) % parallels.length];
+      const cond = isGraded
+        ? gradedConditions[(seed + i) % gradedConditions.length]
+        : conditions[(seed + i) % conditions.length];
+
+      results.push({
+        itemId: `mock-sold-${seed}-${i}`,
+        title: `${query} ${parallel !== 'Base' ? parallel : ''} ${isGraded ? cond.split(' ')[0] + ' ' + cond.split(' ')[1] : ''}`.replace(/\s+/g, ' ').trim(),
+        price,
         currency: 'USD',
-        soldDate: day(1 * 86400000),
+        soldDate: day(daysAgo * 86400000),
         imageUrl: null,
-        itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query),
-        condition: 'Graded - PSA 10',
-      },
-      {
-        itemId: '111111111002',
-        title: `${query} - 2020 Panini Prizm Silver PSA 9`,
-        price: '89.00',
-        currency: 'USD',
-        soldDate: day(2 * 86400000),
-        imageUrl: null,
-        itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query),
-        condition: 'Graded - PSA 9',
-      },
-      {
-        itemId: '111111111003',
-        title: `${query} - 2021 Donruss Optic Holo Rookie RC BGS 9.5`,
-        price: '134.50',
-        currency: 'USD',
-        soldDate: day(3 * 86400000),
-        imageUrl: null,
-        itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query),
-        condition: 'Graded - BGS 9.5',
-      },
-      {
-        itemId: '111111111004',
-        title: `${query} - 2020 Panini Prizm Red White Blue /175 Ungraded NM-MT`,
-        price: '45.00',
-        currency: 'USD',
-        soldDate: day(4 * 86400000),
-        imageUrl: null,
-        itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query),
-        condition: 'Near Mint or Better',
-      },
-      {
-        itemId: '111111111005',
-        title: `${query} - 2022 Topps Chrome Refractor Auto #/99`,
-        price: '312.00',
-        currency: 'USD',
-        soldDate: day(5 * 86400000),
-        imageUrl: null,
-        itemUrl: 'https://www.ebay.com/sch/i.html?_nkw=' + encodeURIComponent(query),
-        condition: 'Near Mint or Better',
-      },
-    ],
-    total: 5,
-    mock: true,
-  };
+        itemUrl: ebayUrl,
+        condition: cond,
+      });
+    }
+    // Sort by date descending (most recent first)
+    results.sort((a, b) => new Date(b.soldDate) - new Date(a.soldDate));
+    return { results, total: results.length, mock: true, mode: 'sold', serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null };
+  }
+
+  // For-sale listings: 4-8 results, no soldDate
+  const count = 4 + (seed % 5);
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const priceVariance = 0.7 + (((seed + i * 11) % 90) / 100); // 0.70 - 1.59x
+    const price = (basePrice * multiplier * priceVariance).toFixed(2);
+    const isGraded = i < 2;
+    const parallel = parallels[(seed + i * 3) % parallels.length];
+    const cond = isGraded
+      ? gradedConditions[(seed + i) % gradedConditions.length]
+      : conditions[(seed + i) % conditions.length];
+    const daysAgo = ((seed + i * 5) % 14); // listed 0-13 days ago
+
+    results.push({
+      itemId: `mock-sale-${seed}-${i}`,
+      title: `${query} ${parallel !== 'Base' ? parallel : ''} ${isGraded ? cond.split(' ')[0] + ' ' + cond.split(' ')[1] : ''}`.replace(/\s+/g, ' ').trim(),
+      price,
+      currency: 'USD',
+      soldDate: null,
+      listDate: day(daysAgo * 86400000),
+      imageUrl: null,
+      itemUrl: ebayUrl,
+      condition: cond,
+    });
+  }
+  // Sort by price ascending (cheapest first)
+  results.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+  return { results, total: results.length, mock: true, mode: 'forsale', serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null };
 }

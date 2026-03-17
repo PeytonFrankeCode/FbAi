@@ -1987,9 +1987,76 @@ footer {
 }
 
 .checklist-product-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Year dropdown sections */
+.checklist-year-section {
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.checklist-year-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: var(--bg-tertiary);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.checklist-year-header:hover {
+  background: var(--border-primary);
+}
+
+.checklist-year-label {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.checklist-year-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
+.checklist-year-toggle {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  transition: transform 0.25s;
+}
+
+.checklist-year-header.open .checklist-year-toggle {
+  transform: rotate(180deg);
+}
+
+.checklist-year-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+.checklist-year-body.open {
+  max-height: 2000px;
+}
+
+.checklist-year-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
+  padding: 1rem 1.25rem;
 }
 
 .checklist-product-card {
