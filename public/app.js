@@ -1461,21 +1461,64 @@ async function loadChecklistProducts() {
     const res = await fetch('/api/checklists');
     const data = await res.json();
     checklistProductGrid.innerHTML = '';
+
+    // Group products by year
+    const byYear = {};
     data.products.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'checklist-product-card';
-      card.innerHTML = `
-        <div class="checklist-product-info">
-          <h3>${escHtml(p.name)}</h3>
-          <div class="checklist-product-stats">
-            <span>${p.setCount} sets</span>
-            <span>${p.totalCards} cards</span>
-          </div>
-        </div>
-        <span class="checklist-product-arrow">&rarr;</span>
+      const yr = p.year || 'Other';
+      if (!byYear[yr]) byYear[yr] = [];
+      byYear[yr].push(p);
+    });
+
+    // Sort years descending (newest first)
+    const years = Object.keys(byYear).sort((a, b) => b - a);
+
+    years.forEach((year, idx) => {
+      const section = document.createElement('div');
+      section.className = 'checklist-year-section';
+
+      const header = document.createElement('button');
+      header.className = 'checklist-year-header';
+      // First year expanded by default
+      if (idx === 0) header.classList.add('open');
+      header.innerHTML = `
+        <span class="checklist-year-label">${escHtml(String(year))}</span>
+        <span class="checklist-year-count">${byYear[year].length} product${byYear[year].length !== 1 ? 's' : ''}</span>
+        <span class="checklist-year-toggle">&#9662;</span>
       `;
-      card.addEventListener('click', () => loadProduct(p.id));
-      checklistProductGrid.appendChild(card);
+
+      const body = document.createElement('div');
+      body.className = 'checklist-year-body';
+      if (idx === 0) body.classList.add('open');
+
+      const grid = document.createElement('div');
+      grid.className = 'checklist-year-grid';
+
+      byYear[year].forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'checklist-product-card';
+        card.innerHTML = `
+          <div class="checklist-product-info">
+            <h3>${escHtml(p.name)}</h3>
+            <div class="checklist-product-stats">
+              <span>${p.setCount} sets</span>
+              <span>${p.totalCards} cards</span>
+            </div>
+          </div>
+          <span class="checklist-product-arrow">&rarr;</span>
+        `;
+        card.addEventListener('click', () => loadProduct(p.id));
+        grid.appendChild(card);
+      });
+
+      body.appendChild(grid);
+      header.addEventListener('click', () => {
+        header.classList.toggle('open');
+        body.classList.toggle('open');
+      });
+      section.appendChild(header);
+      section.appendChild(body);
+      checklistProductGrid.appendChild(section);
     });
   } catch (err) {
     checklistProductGrid.innerHTML = `<p class="checklist-error">Failed to load checklists: ${escHtml(err.message)}</p>`;
