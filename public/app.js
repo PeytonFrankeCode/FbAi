@@ -1432,6 +1432,7 @@ const mainEl = document.querySelector('main');
 
 let checklistData = null;
 let checklistFilter = 'all';
+let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 
 const trackedView = document.getElementById('tracked-view');
 
@@ -1535,6 +1536,7 @@ async function loadProduct(productId) {
     checklistData = await res.json();
     checklistProductName.textContent = checklistData.name;
     checklistFilter = 'all';
+    checklistVariantFilters = {};
     checklistSearch.value = '';
     document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
     renderChecklistSets();
@@ -1604,10 +1606,15 @@ function renderChecklistSets() {
       : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
       : '<span class="checklist-badge base">BASE</span>';
 
-    // Parallels summary
+    // Parallels summary (clickable to filter)
+    const setIdx = checklistData.sets.indexOf(set);
+    const activeVariant = checklistVariantFilters[setIdx];
     const parallelsList = set.parallels.map(p => {
       const pr = p.printRun ? ` /${p.printRun}` : '';
-      return `<span class="checklist-parallel">${escHtml(p.name)}${pr}</span>`;
+      const isActive = activeVariant && activeVariant.name === p.name;
+      const nameEsc = escHtml(p.name).replace(/'/g, "\\'");
+      const printRunVal = p.printRun || '';
+      return `<span class="checklist-parallel ${isActive ? 'checklist-parallel-active' : ''}" onclick="event.stopPropagation(); toggleVariantFilter(${setIdx}, '${nameEsc}', '${printRunVal}')">${escHtml(p.name)}${pr}</span>`;
     }).join('');
 
     // Detect if this set has per-card print runs
@@ -1620,6 +1627,7 @@ function renderChecklistSets() {
           ${categoryBadge}
           <h3 class="checklist-set-name">${escHtml(set.name)}</h3>
           <span class="checklist-set-count">${cards.length}${q ? '/' + set.totalCards : ''} cards</span>
+          ${activeVariant ? `<span class="checklist-variant-label">${escHtml(activeVariant.name)}${activeVariant.printRun ? ' /' + activeVariant.printRun : ''}</span>` : ''}
           <span class="checklist-set-toggle">&#9660;</span>
         </div>
         <div class="checklist-parallels-row">${parallelsList}</div>
@@ -1631,7 +1639,7 @@ function renderChecklistSets() {
               <th>#</th>
               <th>Player</th>
               <th>Team</th>
-              ${hasPrintRuns ? `<th class="cl-pr-header" data-set-id="${escHtml(setId)}" onclick="sortChecklistByPrintRun(this)">Print Run <span class="cl-sort-arrow">&#9660;</span></th>` : ''}
+              ${hasPrintRuns || activeVariant?.printRun ? `<th class="cl-pr-header" data-set-id="${escHtml(setId)}" onclick="sortChecklistByPrintRun(this)">Print Run <span class="cl-sort-arrow">&#9660;</span></th>` : ''}
               <th></th>
             </tr>
           </thead>
@@ -1645,16 +1653,21 @@ function renderChecklistSets() {
               const cardNum = escHtml(c.number).replace(/'/g, "\\'");
               const printRun = c.printRun ? String(c.printRun) : '';
               const cardNote = c.note ? escHtml(c.note).replace(/'/g, "\\'") : '';
-              const alertQuery = `${c.player} ${year} ${checklistData.brand || 'Bowman'} ${set.name}`.replace(/'/g, "\\'");
+              const variantLabel = activeVariant ? escHtml(activeVariant.name).replace(/'/g, "\\'") : '';
+              const variantPR = activeVariant ? (activeVariant.printRun || '') : '';
+              const alertVariant = activeVariant ? ` ${activeVariant.name}${activeVariant.printRun ? ' /' + activeVariant.printRun : ''}` : '';
+              const alertQuery = `${c.player} ${year} ${checklistData.brand || 'Bowman'} ${set.name}${alertVariant}`.replace(/'/g, "\\'");
+              // Show the variant's print run in the table when a variant filter is active
+              const displayPR = activeVariant && activeVariant.printRun ? activeVariant.printRun : printRun;
               return `
               <tr data-print-run="${c.printRun || ''}" data-card-num="${c.number}">
                 <td class="cl-num">${escHtml(c.number)}</td>
-                <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${printRun}')">${escHtml(c.player)}</a></td>
+                <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${variantPR || printRun}')">${escHtml(c.player)}</a></td>
                 <td class="cl-team">${escHtml(c.team)}</td>
-                ${hasPrintRuns ? `<td class="cl-printrun ${printRun && parseInt(printRun) <= 25 ? 'cl-pr-rare' : printRun && parseInt(printRun) <= 99 ? 'cl-pr-low' : ''}">${printRun ? '/' + printRun : ''}</td>` : ''}
+                ${hasPrintRuns || activeVariant?.printRun ? `<td class="cl-printrun ${displayPR && parseInt(displayPR) <= 25 ? 'cl-pr-rare' : displayPR && parseInt(displayPR) <= 99 ? 'cl-pr-low' : ''}">${displayPR ? '/' + displayPR : ''}</td>` : ''}
                 <td class="cl-action">
                   <button class="cl-alert-btn" onclick="event.stopPropagation(); addAlertForCard('${alertQuery}')" title="Track this card (Pro)">&#128276;</button>
-                  <button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${category}')" title="Search eBay">&#128269;</button>
+                  <button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}${variantLabel ? ' ' + variantLabel : ''}', '${category}')" title="Search eBay">&#128269;</button>
                 </td>
               </tr>`;
             }).join('')}
@@ -1665,6 +1678,18 @@ function renderChecklistSets() {
 
     checklistSets.appendChild(setEl);
   });
+}
+
+// Toggle variant/parallel filter for a set
+function toggleVariantFilter(setIdx, variantName, printRun) {
+  const current = checklistVariantFilters[setIdx];
+  if (current && current.name === variantName) {
+    // Clicking the same variant again clears the filter
+    delete checklistVariantFilters[setIdx];
+  } else {
+    checklistVariantFilters[setIdx] = { name: variantName, printRun: printRun || '' };
+  }
+  renderChecklistSets();
 }
 
 // Sort checklist table by print run
