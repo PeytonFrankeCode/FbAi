@@ -799,7 +799,7 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
 
 // Create alert
 app.post('/api/alerts', (req, res) => {
-  const { username, email, query, label } = req.body;
+  const { username, email, query, label, priceThreshold, priceCondition } = req.body;
   if (!username || !email || !query) {
     return res.status(400).json({ error: 'username, email, and query are required' });
   }
@@ -810,11 +810,11 @@ app.post('/api/alerts', (req, res) => {
   const data = loadAlerts();
   // Limit per user
   const userAlerts = data.alerts.filter(a => a.username.toLowerCase() === username.toLowerCase());
-  if (userAlerts.length >= 10) {
-    return res.status(400).json({ error: 'Maximum 10 alerts per account' });
+  if (userAlerts.length >= 25) {
+    return res.status(400).json({ error: 'Maximum 25 alerts per account' });
   }
   // No duplicate queries for same user
-  if (userAlerts.some(a => a.query.toLowerCase() === query.toLowerCase())) {
+  if (userAlerts.some(a => a.query.toLowerCase() === query.toLowerCase() && !a.priceThreshold)) {
     return res.status(400).json({ error: 'You already have an alert for this card' });
   }
 
@@ -824,6 +824,8 @@ app.post('/api/alerts', (req, res) => {
     email,
     query,
     label: label || query,
+    priceThreshold: priceThreshold ? parseFloat(priceThreshold) : null,
+    priceCondition: priceCondition || null, // 'below' or 'above'
     createdAt: new Date().toISOString(),
     lastChecked: null,
     lastSeenIds: [],
@@ -831,7 +833,7 @@ app.post('/api/alerts', (req, res) => {
 
   data.alerts.push(alert);
   saveAlerts(data);
-  res.json({ alert: { id: alert.id, query: alert.query, label: alert.label, createdAt: alert.createdAt } });
+  res.json({ alert: { id: alert.id, query: alert.query, label: alert.label, createdAt: alert.createdAt, priceThreshold: alert.priceThreshold, priceCondition: alert.priceCondition } });
 });
 
 // List alerts for a user
@@ -842,7 +844,7 @@ app.get('/api/alerts', (req, res) => {
   const data = loadAlerts();
   const userAlerts = data.alerts
     .filter(a => a.username === username.toLowerCase())
-    .map(a => ({ id: a.id, query: a.query, label: a.label, createdAt: a.createdAt }));
+    .map(a => ({ id: a.id, query: a.query, label: a.label, createdAt: a.createdAt, priceThreshold: a.priceThreshold || null, priceCondition: a.priceCondition || null }));
 
   res.json({ alerts: userAlerts });
 });
@@ -885,14 +887,22 @@ async function checkAlerts() {
 
       const currentIds = searchResult.results.map(r => r.itemId);
       const previousIds = new Set(alert.lastSeenIds || []);
-      const newListings = searchResult.results.filter(r => !previousIds.has(r.itemId));
+      let newListings = searchResult.results.filter(r => !previousIds.has(r.itemId));
+
+      // Apply price threshold filter if set
+      if (alert.priceThreshold && alert.priceCondition && newListings.length > 0) {
+        newListings = newListings.filter(r => {
+          const price = parseFloat(r.price);
+          if (isNaN(price)) return false;
+          return alert.priceCondition === 'below' ? price <= alert.priceThreshold : price >= alert.priceThreshold;
+        });
+      }
 
       alert.lastChecked = new Date().toISOString();
       alert.lastSeenIds = currentIds;
 
       if (newListings.length > 0 && previousIds.size > 0) {
-        // Only notify if this isn't the first check (previousIds.size > 0)
-        console.log(`[Alerts] ${newListings.length} new listing(s) for "${alert.query}" -> ${alert.email}`);
+        console.log(`[Alerts] ${newListings.length} new listing(s) for "${alert.query}"${alert.priceThreshold ? ` (${alert.priceCondition} $${alert.priceThreshold})` : ''} -> ${alert.email}`);
         await sendAlertEmail(alert, newListings);
       }
 
@@ -961,6 +971,84 @@ async function sendAlertEmail(alert, newListings) {
 setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
 // Run first check 30 seconds after startup
 setTimeout(checkAlerts, 30000);
+
+// ---- Player Dashboard: Search across ALL products ----
+app.get('/api/player-search', (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q || q.length < 2) return res.json({ results: [] });
+
+  const results = [];
+  for (const product of checklistData.products) {
+    for (const set of product.sets) {
+      for (const card of set.cards) {
+        if (card.player.toLowerCase().includes(q)) {
+          results.push({
+            ...card,
+            productId: product.id,
+            productName: product.name,
+            year: product.year,
+            brand: product.brand,
+            setId: set.id,
+            setName: set.name,
+            category: set.category,
+            parallels: set.parallels,
+          });
+        }
+      }
+    }
+  }
+  res.json({ results, query: q });
+});
+
+// ---- Price History Storage ----
+const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
+
+function loadPriceHistory() {
+  try {
+    if (fs.existsSync(PRICE_HISTORY_FILE)) {
+      return JSON.parse(fs.readFileSync(PRICE_HISTORY_FILE, 'utf-8'));
+    }
+  } catch (e) { console.error('Error loading price history:', e.message); }
+  return {};
+}
+
+function savePriceHistory(data) {
+  fs.writeFileSync(PRICE_HISTORY_FILE, JSON.stringify(data, null, 2));
+}
+
+// Record a price data point (called after searches)
+app.post('/api/price-history', (req, res) => {
+  const { query, avgPrice, medianPrice, highPrice, lowPrice, sampleSize } = req.body;
+  if (!query || avgPrice == null) return res.status(400).json({ error: 'query and avgPrice required' });
+
+  const history = loadPriceHistory();
+  const key = query.toLowerCase().trim();
+  if (!history[key]) history[key] = [];
+
+  history[key].push({
+    date: new Date().toISOString().slice(0, 10),
+    avg: parseFloat(avgPrice),
+    median: medianPrice ? parseFloat(medianPrice) : null,
+    high: highPrice ? parseFloat(highPrice) : null,
+    low: lowPrice ? parseFloat(lowPrice) : null,
+    n: sampleSize || 0,
+  });
+
+  // Keep only last 90 days
+  if (history[key].length > 90) history[key] = history[key].slice(-90);
+
+  savePriceHistory(history);
+  res.json({ ok: true });
+});
+
+// Get price history for a query
+app.get('/api/price-history', (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q) return res.json({ history: [] });
+
+  const history = loadPriceHistory();
+  res.json({ history: history[q] || [], query: q });
+});
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

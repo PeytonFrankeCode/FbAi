@@ -702,6 +702,7 @@ async function fetchDirectSearch(query) {
 
     const { results, mock, searchType, approximateValue } = data;
     currentResults = results;
+    recordPriceHistory(query, results);
 
     // Show approximate value section if broadened
     if (searchType === 'broadened' && approximateValue) {
@@ -831,6 +832,7 @@ async function performSearch(query) {
 
     const { results, mock, serial, similarResults } = data;
     currentResults = results;
+    recordPriceHistory(query, results);
 
     // Stats bar
     if (results.length > 0) {
@@ -1436,6 +1438,8 @@ let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 
 const trackedView = document.getElementById('tracked-view');
 
+const collectionView = document.getElementById('collection-view');
+
 function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
@@ -1444,6 +1448,7 @@ function switchView(view) {
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
+  collectionView.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -1451,6 +1456,9 @@ function switchView(view) {
   } else if (view === 'tracked') {
     trackedView.classList.remove('hidden');
     initTrackedView();
+  } else if (view === 'collection') {
+    collectionView.classList.remove('hidden');
+    initCollectionView();
   } else {
     mainEl.classList.remove('hidden');
   }
@@ -1666,6 +1674,7 @@ function renderChecklistSets() {
                 <td class="cl-team">${escHtml(c.team)}</td>
                 ${hasPrintRuns || activeVariant?.printRun ? `<td class="cl-printrun ${displayPR && parseInt(displayPR) <= 25 ? 'cl-pr-rare' : displayPR && parseInt(displayPR) <= 99 ? 'cl-pr-low' : ''}">${displayPR ? '/' + displayPR : ''}</td>` : ''}
                 <td class="cl-action">
+                  <button class="cl-coll-btn" onclick="event.stopPropagation(); addToCollectionFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${variantLabel}', '${variantPR || printRun}'); this.textContent='&#10003;'; this.classList.add('cl-coll-added')" title="Add to collection">+</button>
                   <button class="cl-alert-btn" onclick="event.stopPropagation(); addAlertForCard('${alertQuery}')" title="Track this card (Pro)">&#128276;</button>
                   <button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}${variantLabel ? ' ' + variantLabel : ''}', '${category}')" title="Search eBay">&#128269;</button>
                 </td>
@@ -1937,6 +1946,525 @@ function buildClListingCard(item, mode) {
     </a>
   `;
 }
+
+// ---- Collection & Portfolio (localStorage) ----
+function getCollection() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleCollection') || '[]'); }
+  catch { return []; }
+}
+function saveCollection(coll) {
+  localStorage.setItem('cardHuddleCollection', JSON.stringify(coll));
+}
+
+function initCollectionView() {
+  renderPortfolio();
+  loadCompletionProducts();
+}
+
+function switchCollectionTab(tab) {
+  document.querySelectorAll('.coll-tab').forEach(t => t.classList.toggle('active', t.dataset.coll === tab));
+  document.querySelectorAll('.coll-panel').forEach(p => p.classList.add('hidden'));
+  const panel = document.getElementById(`coll-${tab}`);
+  if (panel) panel.classList.remove('hidden');
+  if (tab === 'portfolio') renderPortfolio();
+  if (tab === 'completion') loadCompletionProducts();
+}
+
+function renderPortfolio() {
+  const coll = getCollection();
+  document.getElementById('portfolio-total-cards').textContent = coll.length;
+  const totalCost = coll.reduce((s, c) => s + (c.purchasePrice || 0), 0);
+  const totalValue = coll.reduce((s, c) => s + (c.estValue || c.purchasePrice || 0), 0);
+  const gainLoss = totalValue - totalCost;
+  document.getElementById('portfolio-total-cost').textContent = `$${totalCost.toFixed(2)}`;
+  document.getElementById('portfolio-total-value').textContent = `$${totalValue.toFixed(2)}`;
+  const glEl = document.getElementById('portfolio-gain-loss');
+  glEl.textContent = `${gainLoss >= 0 ? '+' : ''}$${gainLoss.toFixed(2)}`;
+  glEl.className = `portfolio-stat-value ${gainLoss >= 0 ? 'gain' : 'loss'}`;
+
+  const listEl = document.getElementById('portfolio-list');
+  if (coll.length === 0) {
+    listEl.innerHTML = '<p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>';
+    return;
+  }
+  listEl.innerHTML = coll.map((c, i) => {
+    const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+    const glClass = gl >= 0 ? 'gain' : 'loss';
+    return `
+      <div class="portfolio-card-item">
+        <div class="portfolio-card-info">
+          <div class="portfolio-card-name">${escHtml(c.name)}</div>
+          <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
+        </div>
+        <div class="portfolio-card-prices">
+          <span class="portfolio-card-cost">Paid: $${(c.purchasePrice || 0).toFixed(2)}</span>
+          <span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>
+        </div>
+        <button class="portfolio-card-remove" onclick="removeFromCollection(${i})" title="Remove">&times;</button>
+      </div>`;
+  }).join('');
+}
+
+function showAddCardModal() {
+  document.getElementById('add-card-modal').classList.remove('hidden');
+}
+function closeAddCardModal() {
+  document.getElementById('add-card-modal').classList.add('hidden');
+}
+
+function handleAddCard(e) {
+  e.preventDefault();
+  const name = document.getElementById('add-card-name').value.trim();
+  const price = parseFloat(document.getElementById('add-card-price').value) || 0;
+  const condition = document.getElementById('add-card-condition').value.trim();
+  const notes = document.getElementById('add-card-notes').value.trim();
+  if (!name) return false;
+
+  const coll = getCollection();
+  coll.push({ name, purchasePrice: price, estValue: price, condition, notes, addedAt: new Date().toISOString() });
+  saveCollection(coll);
+  closeAddCardModal();
+  document.getElementById('add-card-form').reset();
+  renderPortfolio();
+  return false;
+}
+
+function addToCollectionFromChecklist(player, year, brand, setName, parallel, printRun) {
+  const name = `${player} ${year} ${brand} ${setName}${parallel ? ' ' + parallel : ''}`;
+  const coll = getCollection();
+  coll.push({ name, purchasePrice: 0, estValue: 0, condition: '', notes: printRun ? `/${printRun}` : '', addedAt: new Date().toISOString() });
+  saveCollection(coll);
+}
+
+function removeFromCollection(idx) {
+  const coll = getCollection();
+  coll.splice(idx, 1);
+  saveCollection(coll);
+  renderPortfolio();
+}
+
+// ---- Set Completion Tracker ----
+let completionData = null;
+let rainbowMode = false;
+
+function getCompletionState() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleCompletion') || '{}'); }
+  catch { return {}; }
+}
+function saveCompletionState(state) {
+  localStorage.setItem('cardHuddleCompletion', JSON.stringify(state));
+}
+
+async function loadCompletionProducts() {
+  const select = document.getElementById('completion-product-select');
+  if (select.options.length > 1) return; // already loaded
+  try {
+    const res = await fetch('/api/checklists');
+    const data = await res.json();
+    data.products.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.year} ${p.name}`;
+      select.appendChild(opt);
+    });
+  } catch (err) { console.error('Failed to load products for completion:', err); }
+}
+
+async function loadCompletionProduct() {
+  const select = document.getElementById('completion-product-select');
+  const productId = select.value;
+  const setsEl = document.getElementById('completion-sets');
+  const progressEl = document.getElementById('completion-progress');
+  if (!productId) { setsEl.innerHTML = ''; progressEl.classList.add('hidden'); return; }
+
+  setsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading...</span></div>';
+  try {
+    const res = await fetch(`/api/checklists/${productId}`);
+    completionData = await res.json();
+    progressEl.classList.remove('hidden');
+    renderCompletionSets();
+  } catch (err) {
+    setsEl.innerHTML = `<p>Error loading product.</p>`;
+  }
+}
+
+function toggleRainbowMode() {
+  rainbowMode = document.getElementById('rainbow-mode').checked;
+  if (completionData) renderCompletionSets();
+}
+
+function renderCompletionSets() {
+  if (!completionData) return;
+  const state = getCompletionState();
+  const productKey = completionData.id || completionData.name;
+  const owned = state[productKey] || {};
+
+  let totalCards = 0, ownedCount = 0;
+  const setsEl = document.getElementById('completion-sets');
+
+  let html = '';
+  completionData.sets.forEach((set, si) => {
+    const setKey = `s${si}`;
+    const cards = set.cards || [];
+    let setTotal = 0, setOwned = 0;
+
+    if (rainbowMode && set.parallels && set.parallels.length > 0) {
+      // Rainbow: each card x each parallel
+      const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
+      setTotal = cards.length * variants.length;
+      cards.forEach((c, ci) => {
+        variants.forEach((v, vi) => {
+          const key = `${setKey}_c${ci}_v${vi}`;
+          if (owned[key]) setOwned++;
+        });
+      });
+    } else {
+      setTotal = cards.length;
+      cards.forEach((c, ci) => {
+        const key = `${setKey}_c${ci}`;
+        if (owned[key]) setOwned++;
+      });
+    }
+    totalCards += setTotal;
+    ownedCount += setOwned;
+
+    const pct = setTotal > 0 ? Math.round((setOwned / setTotal) * 100) : 0;
+    const isComplete = pct === 100;
+
+    html += `<div class="completion-set ${isComplete ? 'complete' : ''}">
+      <div class="completion-set-header" onclick="toggleCompletionSet(${si})">
+        <span class="completion-set-name">${escHtml(set.name)}</span>
+        <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
+        <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="completion-set-cards hidden" id="completion-cards-${si}">`;
+
+    cards.forEach((c, ci) => {
+      if (rainbowMode && set.parallels && set.parallels.length > 0) {
+        const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
+        html += `<div class="completion-card-row">
+          <span class="completion-card-player">${escHtml(c.number)} ${escHtml(c.player)}</span>
+          <div class="completion-variants">`;
+        variants.forEach((v, vi) => {
+          const key = `${setKey}_c${ci}_v${vi}`;
+          const checked = owned[key] ? 'checked' : '';
+          html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
+            <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
+            <span>${escHtml(v.name)}${v.printRun ? ' /' + v.printRun : ''}</span>
+          </label>`;
+        });
+        html += `</div></div>`;
+      } else {
+        const key = `${setKey}_c${ci}`;
+        const checked = owned[key] ? 'checked' : '';
+        html += `<label class="completion-card-row completion-check-row ${owned[key] ? 'owned' : ''}">
+          <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
+          <span>${escHtml(c.number)} ${escHtml(c.player)}${c.team ? ' — ' + escHtml(c.team) : ''}</span>
+        </label>`;
+      }
+    });
+    html += `</div></div>`;
+  });
+
+  setsEl.innerHTML = html;
+
+  // Update overall progress
+  const overallPct = totalCards > 0 ? Math.round((ownedCount / totalCards) * 100) : 0;
+  document.getElementById('completion-bar').style.width = overallPct + '%';
+  document.getElementById('completion-text').textContent = `${ownedCount} / ${totalCards} cards (${overallPct}%)`;
+}
+
+function toggleCompletionSet(idx) {
+  const el = document.getElementById(`completion-cards-${idx}`);
+  if (el) el.classList.toggle('hidden');
+}
+
+function toggleCompletionCard(productKey, cardKey, checkbox) {
+  const state = getCompletionState();
+  if (!state[productKey]) state[productKey] = {};
+  if (checkbox.checked) {
+    state[productKey][cardKey] = true;
+  } else {
+    delete state[productKey][cardKey];
+  }
+  saveCompletionState(state);
+  renderCompletionSets();
+}
+
+// ---- Hot/Cold Cards ----
+function loadHotCold(days) {
+  document.querySelectorAll('.hotcold-period-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.days) === days));
+  const listEl = document.getElementById('hotcold-list');
+  // Use price history from localStorage
+  const history = JSON.parse(localStorage.getItem('cardHuddlePriceHistory') || '{}');
+  const movers = [];
+  const now = Date.now();
+  const cutoff = now - days * 86400000;
+
+  for (const [query, entries] of Object.entries(history)) {
+    if (entries.length < 2) continue;
+    const recent = entries.filter(e => new Date(e.date).getTime() >= cutoff);
+    if (recent.length < 1) continue;
+    const oldest = entries[0];
+    const newest = entries[entries.length - 1];
+    const change = newest.avg - oldest.avg;
+    const pctChange = oldest.avg > 0 ? (change / oldest.avg) * 100 : 0;
+    movers.push({ query, oldAvg: oldest.avg, newAvg: newest.avg, change, pctChange });
+  }
+
+  movers.sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
+
+  if (movers.length === 0) {
+    listEl.innerHTML = '<p class="hotcold-empty">Not enough price data yet. Search for cards to build price history.</p>';
+    return;
+  }
+
+  listEl.innerHTML = movers.slice(0, 20).map(m => {
+    const isHot = m.change > 0;
+    return `<div class="hotcold-item ${isHot ? 'hot' : 'cold'}">
+      <span class="hotcold-icon">${isHot ? '&#128293;' : '&#10052;'}</span>
+      <span class="hotcold-query">${escHtml(m.query)}</span>
+      <span class="hotcold-change ${isHot ? 'gain' : 'loss'}">${isHot ? '+' : ''}${m.pctChange.toFixed(1)}%</span>
+      <span class="hotcold-prices">$${m.oldAvg.toFixed(2)} &rarr; $${m.newAvg.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ---- Player Dashboard ----
+function showPlayerDashboard() {
+  document.getElementById('player-dashboard-modal').classList.remove('hidden');
+  document.getElementById('player-dash-input').focus();
+}
+function closePlayerDashboard() {
+  document.getElementById('player-dashboard-modal').classList.add('hidden');
+}
+
+async function searchPlayerDashboard() {
+  const q = document.getElementById('player-dash-input').value.trim();
+  const resultsEl = document.getElementById('player-dash-results');
+  if (!q || q.length < 2) return;
+
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  try {
+    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      resultsEl.innerHTML = '<p class="player-dash-empty">No cards found for this player.</p>';
+      return;
+    }
+
+    // Group by product
+    const byProduct = {};
+    data.results.forEach(r => {
+      const key = `${r.year} ${r.productName}`;
+      if (!byProduct[key]) byProduct[key] = [];
+      byProduct[key].push(r);
+    });
+
+    let html = `<p class="player-dash-count">${data.results.length} cards across ${Object.keys(byProduct).length} products</p>`;
+    for (const [prod, cards] of Object.entries(byProduct)) {
+      html += `<div class="player-dash-product">
+        <h3 class="player-dash-product-name">${escHtml(prod)}</h3>
+        <div class="player-dash-cards">`;
+      cards.forEach(c => {
+        const parallels = c.parallels ? c.parallels.map(p => `<span class="player-dash-parallel">${escHtml(p.name)}${p.printRun ? ' /' + p.printRun : ''}</span>`).join(' ') : '';
+        html += `<div class="player-dash-card">
+          <span class="player-dash-num">#${escHtml(c.number)}</span>
+          <span class="player-dash-set">${escHtml(c.setName)}</span>
+          <span class="player-dash-cat">${escHtml(c.category || '')}</span>
+          ${parallels ? `<div class="player-dash-parallels">${parallels}</div>` : ''}
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+    resultsEl.innerHTML = html;
+  } catch (err) {
+    resultsEl.innerHTML = `<p class="player-dash-empty">Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+// Enter key for player dashboard search
+document.addEventListener('DOMContentLoaded', () => {
+  const pdInput = document.getElementById('player-dash-input');
+  if (pdInput) pdInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchPlayerDashboard(); });
+});
+
+// ---- Break Even Calculator ----
+function showBreakEvenCalc() {
+  document.getElementById('breakeven-modal').classList.remove('hidden');
+}
+function closeBreakEvenCalc() {
+  document.getElementById('breakeven-modal').classList.add('hidden');
+}
+
+function addBreakEvenHit() {
+  const container = document.getElementById('breakeven-hits');
+  const row = document.createElement('div');
+  row.className = 'breakeven-hit-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Hit description" class="be-hit-desc" />
+    <input type="number" placeholder="Value ($)" class="be-hit-value" step="0.01" min="0" />
+    <input type="number" placeholder="Qty" class="be-hit-qty" value="1" min="1" />
+    <button type="button" class="be-hit-remove" onclick="this.parentElement.remove()">&times;</button>`;
+  container.appendChild(row);
+}
+
+function calculateBreakEven() {
+  const cost = parseFloat(document.getElementById('breakeven-cost').value) || 0;
+  const rows = document.querySelectorAll('.breakeven-hit-row');
+  let totalHitValue = 0;
+  rows.forEach(row => {
+    const val = parseFloat(row.querySelector('.be-hit-value')?.value) || 0;
+    const qty = parseInt(row.querySelector('.be-hit-qty')?.value) || 1;
+    totalHitValue += val * qty;
+  });
+
+  const resultEl = document.getElementById('breakeven-result');
+  const diff = totalHitValue - cost;
+  const isProfit = diff >= 0;
+  resultEl.classList.remove('hidden');
+  resultEl.innerHTML = `
+    <div class="be-summary">
+      <div class="be-summary-row"><span>Box Cost:</span><span>$${cost.toFixed(2)}</span></div>
+      <div class="be-summary-row"><span>Total Hit Value:</span><span>$${totalHitValue.toFixed(2)}</span></div>
+      <div class="be-summary-row be-summary-result ${isProfit ? 'gain' : 'loss'}">
+        <span>${isProfit ? 'Profit' : 'Loss'}:</span>
+        <span>${isProfit ? '+' : ''}$${diff.toFixed(2)}</span>
+      </div>
+    </div>
+    <p class="be-verdict">${isProfit ? 'This break is profitable!' : 'This break loses money. Consider the fun factor!'}</p>`;
+}
+
+// ---- eBay Listing Helper ----
+function showEbayListingHelper() {
+  document.getElementById('listing-helper-modal').classList.remove('hidden');
+  document.getElementById('listing-helper-input').focus();
+}
+function closeEbayListingHelper() {
+  document.getElementById('listing-helper-modal').classList.add('hidden');
+}
+
+async function generateListingTitles() {
+  const q = document.getElementById('listing-helper-input').value.trim();
+  const resultsEl = document.getElementById('listing-helper-results');
+  if (!q || q.length < 2) return;
+
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  try {
+    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      resultsEl.innerHTML = '<p>No matching cards found.</p>';
+      return;
+    }
+
+    let html = '';
+    const seen = new Set();
+    data.results.slice(0, 30).forEach(c => {
+      const parallels = c.parallels || [];
+      const allVariants = [{ name: '', printRun: '' }, ...parallels];
+      allVariants.forEach(p => {
+        const pr = p.printRun ? ` /${p.printRun}` : '';
+        const pName = p.name ? ` ${p.name}` : '';
+        const title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr} ${c.category === 'autograph' ? 'AUTO' : ''} Football Card`.replace(/\s+/g, ' ').trim();
+        if (title.length <= 80 && !seen.has(title)) {
+          seen.add(title);
+          html += `<div class="listing-title-row">
+            <span class="listing-title-text">${escHtml(title)}</span>
+            <span class="listing-title-len">${title.length}/80</span>
+            <button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${title.replace(/'/g, "\\'")}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+          </div>`;
+        }
+      });
+    });
+    resultsEl.innerHTML = html || '<p>No titles generated.</p>';
+  } catch (err) {
+    resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+// Enter key for listing helper
+document.addEventListener('DOMContentLoaded', () => {
+  const lhInput = document.getElementById('listing-helper-input');
+  if (lhInput) lhInput.addEventListener('keydown', e => { if (e.key === 'Enter') generateListingTitles(); });
+});
+
+// ---- CSV Export ----
+function exportCollectionCSV() {
+  const coll = getCollection();
+  if (coll.length === 0) { alert('No cards in your collection to export.'); return; }
+
+  const headers = ['Name', 'Purchase Price', 'Est Value', 'Condition', 'Notes', 'Date Added'];
+  const rows = coll.map(c => [
+    `"${(c.name || '').replace(/"/g, '""')}"`,
+    (c.purchasePrice || 0).toFixed(2),
+    (c.estValue || 0).toFixed(2),
+    `"${(c.condition || '').replace(/"/g, '""')}"`,
+    `"${(c.notes || '').replace(/"/g, '""')}"`,
+    c.addedAt || '',
+  ]);
+
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'card-huddle-collection.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---- Price History Recording (auto-record after searches) ----
+function recordPriceHistory(query, results) {
+  if (!results || results.length === 0) return;
+  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+  if (prices.length < 2) return;
+
+  const sorted = [...prices].sort((a, b) => a - b);
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const today = new Date().toISOString().slice(0, 10);
+
+  const history = JSON.parse(localStorage.getItem('cardHuddlePriceHistory') || '{}');
+  const key = query.toLowerCase().trim();
+  if (!history[key]) history[key] = [];
+
+  // Don't record same day twice
+  if (history[key].length > 0 && history[key][history[key].length - 1].date === today) return;
+
+  history[key].push({ date: today, avg, median, high: Math.max(...prices), low: Math.min(...prices), n: prices.length });
+  if (history[key].length > 90) history[key] = history[key].slice(-90);
+  localStorage.setItem('cardHuddlePriceHistory', JSON.stringify(history));
+
+  // Also send to server for persistence
+  fetch('/api/price-history', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: key, avgPrice: avg, medianPrice: median, highPrice: Math.max(...prices), lowPrice: Math.min(...prices), sampleSize: prices.length }),
+  }).catch(() => {});
+}
+
+// ---- Comp Analyzer (inline in checklist listings) ----
+function buildCompAnalysis(results) {
+  if (!results || results.length < 2) return '';
+  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p)).sort((a, b) => a - b);
+  if (prices.length < 2) return '';
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const median = prices[Math.floor(prices.length / 2)];
+  return `<div class="comp-analyzer">
+    <span class="comp-label">Comp Analysis:</span>
+    <span class="comp-stat">Avg: $${avg.toFixed(2)}</span>
+    <span class="comp-stat">Med: $${median.toFixed(2)}</span>
+    <span class="comp-stat">Hi: $${prices[prices.length - 1].toFixed(2)}</span>
+    <span class="comp-stat">Lo: $${prices[0].toFixed(2)}</span>
+  </div>`;
+}
+
+// Close modals on overlay click
+document.addEventListener('click', function(e) {
+  ['add-card-modal', 'player-dashboard-modal', 'breakeven-modal', 'listing-helper-modal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (e.target === el) el.classList.add('hidden');
+  });
+});
 
 async function fetchPlayerListings(container, query, mode) {
   const body = container.querySelector('.cl-listings-body');
