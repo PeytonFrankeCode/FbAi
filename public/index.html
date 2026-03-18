@@ -61,6 +61,7 @@
       <nav class="header-nav">
         <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
         <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
+        <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection</button>
         <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
         </button>
@@ -286,6 +287,176 @@
         <!-- Sets list -->
         <div id="checklist-sets" class="checklist-sets"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Collection View -->
+  <div id="collection-view" class="collection-view hidden">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">My Collection</h2>
+        <p class="collection-subtitle">Track your cards, monitor portfolio value, and complete sets</p>
+        <div class="collection-tabs">
+          <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
+          <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
+          <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
+          <button class="coll-tab" data-coll="tools" onclick="switchCollectionTab('tools')">Tools</button>
+        </div>
+      </div>
+
+      <!-- Portfolio Tab -->
+      <div id="coll-portfolio" class="coll-panel">
+        <div class="portfolio-stats">
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Total Cards</span>
+            <span class="portfolio-stat-value" id="portfolio-total-cards">0</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Total Invested</span>
+            <span class="portfolio-stat-value" id="portfolio-total-cost">$0.00</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Est. Value</span>
+            <span class="portfolio-stat-value" id="portfolio-total-value">$0.00</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Gain/Loss</span>
+            <span class="portfolio-stat-value" id="portfolio-gain-loss">$0.00</span>
+          </div>
+        </div>
+        <div class="portfolio-actions">
+          <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
+          <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
+          <button class="portfolio-action-btn" onclick="showPlayerDashboard()">Player Dashboard</button>
+        </div>
+        <div id="portfolio-list" class="portfolio-list">
+          <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
+        </div>
+      </div>
+
+      <!-- Set Completion Tab -->
+      <div id="coll-completion" class="coll-panel hidden">
+        <div class="completion-controls">
+          <select id="completion-product-select" class="completion-select" onchange="loadCompletionProduct()">
+            <option value="">Select a product...</option>
+          </select>
+          <label class="rainbow-toggle">
+            <input type="checkbox" id="rainbow-mode" onchange="toggleRainbowMode()" />
+            <span class="rainbow-label">Rainbow Mode</span>
+          </label>
+        </div>
+        <div id="completion-progress" class="completion-progress hidden">
+          <div class="completion-progress-bar-wrap">
+            <div class="completion-progress-bar" id="completion-bar"></div>
+          </div>
+          <span class="completion-progress-text" id="completion-text">0 / 0 cards</span>
+        </div>
+        <div id="completion-sets" class="completion-sets"></div>
+      </div>
+
+      <!-- Hot/Cold Tab -->
+      <div id="coll-hotcold" class="coll-panel hidden">
+        <p class="hotcold-desc">Biggest price movers based on your tracked searches.</p>
+        <div class="hotcold-period">
+          <button class="hotcold-period-btn active" data-days="7" onclick="loadHotCold(7)">7 Days</button>
+          <button class="hotcold-period-btn" data-days="30" onclick="loadHotCold(30)">30 Days</button>
+        </div>
+        <div id="hotcold-list" class="hotcold-list">
+          <p class="hotcold-empty">Track cards via search to see price movements here.</p>
+        </div>
+      </div>
+
+      <!-- Tools Tab -->
+      <div id="coll-tools" class="coll-panel hidden">
+        <div class="tools-grid">
+          <div class="tool-card" onclick="showBreakEvenCalc()">
+            <div class="tool-icon">&#128200;</div>
+            <h3>Break Even Calculator</h3>
+            <p>Calculate if breaking a box is worth it based on hit values</p>
+          </div>
+          <div class="tool-card" onclick="showEbayListingHelper()">
+            <div class="tool-icon">&#128230;</div>
+            <h3>eBay Listing Helper</h3>
+            <p>Auto-generate optimized listing titles from your checklist data</p>
+          </div>
+          <div class="tool-card" onclick="showPlayerDashboard()">
+            <div class="tool-icon">&#127944;</div>
+            <h3>Player Dashboard</h3>
+            <p>See ALL cards for a player across every product and year</p>
+          </div>
+          <div class="tool-card" onclick="exportCollectionCSV()">
+            <div class="tool-icon">&#128196;</div>
+            <h3>CSV Export</h3>
+            <p>Export your collection, watchlist, or price data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Card to Collection Modal -->
+  <div id="add-card-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:440px">
+      <button class="login-close" onclick="closeAddCardModal()">&times;</button>
+      <h2>Add Card to Collection</h2>
+      <form id="add-card-form" onsubmit="return handleAddCard(event)">
+        <input type="text" id="add-card-name" placeholder="Card name (e.g. Patrick Mahomes 2017 Prizm Silver)" required />
+        <input type="number" id="add-card-price" placeholder="Purchase price ($)" step="0.01" min="0" />
+        <input type="text" id="add-card-condition" placeholder="Condition (e.g. PSA 10, Raw NM)" />
+        <input type="text" id="add-card-notes" placeholder="Notes (optional)" />
+        <button type="submit">Add to Collection</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Player Dashboard Modal -->
+  <div id="player-dashboard-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box modal-box-lg">
+      <button class="login-close" onclick="closePlayerDashboard()">&times;</button>
+      <h2>Player Dashboard</h2>
+      <div class="player-dash-search">
+        <input type="text" id="player-dash-input" placeholder="Search player name..." />
+        <button onclick="searchPlayerDashboard()">Search</button>
+      </div>
+      <div id="player-dash-results" class="player-dash-results">
+        <p class="player-dash-empty">Search for a player to see all their cards across every product.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Break Even Calculator Modal -->
+  <div id="breakeven-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:500px">
+      <button class="login-close" onclick="closeBreakEvenCalc()">&times;</button>
+      <h2>Break Even Calculator</h2>
+      <p class="breakeven-desc">Enter your box cost and the estimated values of hits to see if breaking is worth it.</p>
+      <form id="breakeven-form" onsubmit="return false">
+        <input type="number" id="breakeven-cost" placeholder="Box cost ($)" step="0.01" min="0" required />
+        <div id="breakeven-hits" class="breakeven-hits">
+          <div class="breakeven-hit-row">
+            <input type="text" placeholder="Hit description" class="be-hit-desc" />
+            <input type="number" placeholder="Value ($)" class="be-hit-value" step="0.01" min="0" />
+            <input type="number" placeholder="Qty" class="be-hit-qty" value="1" min="1" />
+          </div>
+        </div>
+        <button type="button" class="breakeven-add-hit" onclick="addBreakEvenHit()">+ Add Hit</button>
+        <div id="breakeven-result" class="breakeven-result hidden"></div>
+        <button type="button" class="breakeven-calc-btn" onclick="calculateBreakEven()">Calculate</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- eBay Listing Helper Modal -->
+  <div id="listing-helper-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box modal-box-lg">
+      <button class="login-close" onclick="closeEbayListingHelper()">&times;</button>
+      <h2>eBay Listing Helper</h2>
+      <p class="listing-helper-desc">Generate optimized eBay listing titles from your checklist data.</p>
+      <div class="listing-helper-search">
+        <input type="text" id="listing-helper-input" placeholder="Search for a card..." />
+        <button onclick="generateListingTitles()">Generate</button>
+      </div>
+      <div id="listing-helper-results" class="listing-helper-results"></div>
     </div>
   </div>
 
