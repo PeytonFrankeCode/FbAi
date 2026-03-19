@@ -364,13 +364,33 @@
             <span class="rainbow-label">Rainbow Mode</span>
           </label>
         </div>
-        <div id="completion-progress" class="completion-progress hidden">
-          <div class="completion-progress-bar-wrap">
-            <div class="completion-progress-bar" id="completion-bar"></div>
-          </div>
-          <span class="completion-progress-text" id="completion-text">0 / 0 cards</span>
+        <div class="completion-subtabs" id="completion-subtabs" style="display:none">
+          <button class="completion-subtab active" data-subtab="set" onclick="switchCompletionSubtab('set')">Set</button>
+          <button class="completion-subtab" data-subtab="player" onclick="switchCompletionSubtab('player')">Player</button>
         </div>
-        <div id="completion-sets" class="completion-sets"></div>
+        <div id="completion-set-panel">
+          <div id="completion-progress" class="completion-progress hidden">
+            <div class="completion-progress-bar-wrap">
+              <div class="completion-progress-bar" id="completion-bar"></div>
+            </div>
+            <span class="completion-progress-text" id="completion-text">0 / 0 cards</span>
+          </div>
+          <div id="completion-sets" class="completion-sets"></div>
+        </div>
+        <div id="completion-player-panel" style="display:none">
+          <div class="completion-player-picker">
+            <select id="completion-player-select" class="completion-select" onchange="loadPlayerCompletion()">
+              <option value="">Select a player...</option>
+            </select>
+          </div>
+          <div id="player-completion-progress" class="completion-progress hidden">
+            <div class="completion-progress-bar-wrap">
+              <div class="completion-progress-bar" id="player-completion-bar"></div>
+            </div>
+            <span class="completion-progress-text" id="player-completion-text">0 / 0 cards</span>
+          </div>
+          <div id="player-completion-sets" class="completion-sets"></div>
+        </div>
       </div>
 
       <!-- Hot/Cold Tab -->
