@@ -3392,6 +3392,32 @@ tr:hover .cl-alert-btn {
 .modal-box input[type="text"], .modal-box input[type="number"], .modal-box input[type="email"] { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-main); color: var(--text-primary); font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; }
 .modal-box button[type="submit"] { width: 100%; padding: 0.6rem; border: none; border-radius: 6px; background: var(--accent, #10b981); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
 
+/* Marketplace */
+.marketplace-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
+.marketplace-search { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.marketplace-search input { flex: 1; min-width: 180px; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 0.85rem; }
+.marketplace-sort-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.5rem; font-size: 0.8rem; color: var(--text-primary); }
+.marketplace-search button { background: var(--accent, #10b981); color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1.25rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+.marketplace-search button:hover { opacity: 0.9; }
+.marketplace-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem; }
+.marketplace-count { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+.marketplace-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+.marketplace-card { display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; text-decoration: none; color: var(--text-primary); transition: border-color 0.15s, box-shadow 0.15s; }
+.marketplace-card:hover { border-color: var(--accent, #10b981); box-shadow: 0 2px 12px rgba(16, 185, 129, 0.1); }
+.marketplace-card-img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #111; }
+.marketplace-no-img { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.75rem; }
+.marketplace-card-body { padding: 0.6rem 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+.marketplace-card-title { font-size: 0.78rem; font-weight: 500; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.marketplace-card-meta { display: flex; align-items: baseline; gap: 0.5rem; }
+.marketplace-card-price { font-size: 1rem; font-weight: 700; color: var(--accent, #10b981); }
+.marketplace-card-shipping { font-size: 0.7rem; color: var(--text-muted); }
+.marketplace-card-badge { display: inline-block; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(16, 185, 129, 0.12); color: var(--accent, #10b981); width: fit-content; }
+.marketplace-card-seller { font-size: 0.7rem; color: var(--text-muted); display: flex; gap: 0.4rem; align-items: center; margin-top: auto; }
+.marketplace-seller-fb { font-size: 0.65rem; opacity: 0.7; }
+.marketplace-load-more { display: block; margin: 1.25rem auto 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 2rem; color: var(--text-primary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s; }
+.marketplace-load-more:hover { border-color: var(--accent, #10b981); }
+.marketplace-load-more:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* eBay Listing Helper */
 .listing-helper-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
 .listing-helper-search { display: flex; gap: 0.5rem; margin-bottom: 1rem; }

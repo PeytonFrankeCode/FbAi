@@ -972,6 +972,69 @@ setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
 // Run first check 30 seconds after startup
 setTimeout(checkAlerts, 30000);
 
+// ---- Marketplace: Browse active eBay listings ----
+app.get('/api/marketplace', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  const sort = req.query.sort || '';
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = Math.min(parseInt(req.query.limit) || 24, 50);
+
+  if (!q || q.length < 2) return res.json({ results: [], total: 0 });
+
+  if (USE_MOCK) {
+    return res.json({ results: [], total: 0, mock: true });
+  }
+
+  const cacheKey = `marketplace:${q}:${sort}:${offset}:${limit}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const token = await getOAuthToken();
+    const params = {
+      q,
+      category_ids: '261328',
+      limit,
+      offset,
+    };
+    if (sort) params.sort = sort;
+
+    const response = await axios.get(
+      'https://api.ebay.com/buy/browse/v1/item_summary/search',
+      {
+        params,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        },
+        timeout: 15000,
+      }
+    );
+
+    const items = (response.data?.itemSummaries || []).map(item => ({
+      itemId: item.itemId || '',
+      title: item.title || '',
+      price: item.price?.value || '0',
+      currency: item.price?.currency || 'USD',
+      imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
+      itemUrl: item.itemWebUrl || '',
+      condition: item.condition || 'Unknown',
+      seller: item.seller?.username || '',
+      sellerFeedback: item.seller?.feedbackPercentage || '',
+      shippingCost: item.shippingOptions?.[0]?.shippingCost?.value || null,
+      listingDate: item.itemCreationDate || '',
+      buyingOptions: item.buyingOptions || [],
+    }));
+
+    const result = { results: items, total: response.data?.total || items.length, offset, limit };
+    setCached(cacheKey, result);
+    res.json(result);
+  } catch (err) {
+    console.error('Marketplace API error:', err.message);
+    res.status(502).json({ error: 'eBay API error', detail: err.message });
+  }
+});
+
 // ---- Price History Storage ----
 const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
 

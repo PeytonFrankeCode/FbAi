@@ -320,6 +320,7 @@
           <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
           <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
           <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
+          <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
           <button class="coll-tab" data-coll="tools" onclick="switchCollectionTab('tools')">Tools</button>
         </div>
       </div>
@@ -402,6 +403,24 @@
         </div>
         <div id="hotcold-list" class="hotcold-list">
           <p class="hotcold-empty">Track cards via search to see price movements here.</p>
+        </div>
+      </div>
+
+      <!-- Marketplace Tab -->
+      <div id="coll-marketplace" class="coll-panel hidden">
+        <p class="marketplace-desc">Browse active eBay listings for sports cards. Powered by the eBay Browse API.</p>
+        <div class="marketplace-search">
+          <input type="text" id="marketplace-input" placeholder="Search cards (e.g. 2023 Prizm Justin Jefferson)..." />
+          <select id="marketplace-sort" class="marketplace-sort-select">
+            <option value="">Best Match</option>
+            <option value="price">Price: Low to High</option>
+            <option value="-price">Price: High to Low</option>
+            <option value="newlyListed">Newly Listed</option>
+          </select>
+          <button onclick="searchMarketplace()">Search</button>
+        </div>
+        <div id="marketplace-results" class="marketplace-results">
+          <p class="marketplace-empty">Search for cards to browse active eBay listings.</p>
         </div>
       </div>
 
