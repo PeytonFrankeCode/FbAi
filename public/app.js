@@ -2466,6 +2466,102 @@ document.addEventListener('click', function(e) {
   });
 });
 
+// ---- Device Preview ----
+const DEVICE_SIZES = {
+  'none': null,
+  'iphone-se': { w: 375, h: 667, label: 'iPhone SE', notch: false, home: true },
+  'iphone-14': { w: 390, h: 844, label: 'iPhone 14', notch: true, home: false },
+  'iphone-15-pro-max': { w: 430, h: 932, label: 'iPhone 15 Pro Max', notch: true, home: false },
+  'ipad': { w: 768, h: 1024, label: 'iPad', notch: false, home: true },
+  'ipad-pro': { w: 1024, h: 1366, label: 'iPad Pro 12.9"', notch: false, home: false },
+  'android-sm': { w: 360, h: 740, label: 'Android Small', notch: false, home: false },
+  'android-lg': { w: 412, h: 915, label: 'Android Large', notch: false, home: false },
+};
+let currentDevice = 'none';
+
+function toggleDeviceMenu() {
+  document.getElementById('device-menu').classList.toggle('hidden');
+}
+
+function setDevicePreview(device) {
+  currentDevice = device;
+  document.querySelectorAll('.device-option').forEach(b => b.classList.toggle('active', b.dataset.device === device));
+  document.getElementById('device-menu').classList.add('hidden');
+
+  const frame = document.getElementById('device-frame');
+  const spec = DEVICE_SIZES[device];
+
+  if (!spec) {
+    frame.classList.add('hidden');
+    document.body.classList.remove('device-preview-active');
+    const iframe = document.getElementById('device-iframe');
+    if (iframe) iframe.remove();
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    return;
+  }
+
+  const vpW = window.innerWidth;
+  const vpH = window.innerHeight;
+  const bezelPad = 40;
+  const maxW = vpW - 80;
+  const maxH = vpH - 80;
+  const scaleW = maxW / (spec.w + bezelPad);
+  const scaleH = maxH / (spec.h + bezelPad + 60);
+  const scale = Math.min(scaleW, scaleH, 1);
+
+  frame.classList.remove('hidden');
+  document.body.classList.add('device-preview-active');
+
+  const bezel = frame.querySelector('.device-frame-bezel');
+  bezel.style.width = (spec.w + bezelPad) + 'px';
+  bezel.style.height = (spec.h + bezelPad + 20) + 'px';
+  bezel.style.transform = `scale(${scale})`;
+
+  const screen = document.getElementById('device-screen');
+  screen.style.width = spec.w + 'px';
+  screen.style.height = spec.h + 'px';
+
+  document.getElementById('device-notch').style.display = spec.notch ? 'block' : 'none';
+  document.getElementById('device-home').style.display = spec.home ? 'block' : 'none';
+  document.getElementById('device-label').textContent = `${spec.label} — ${spec.w} x ${spec.h}`;
+
+  let iframe = document.getElementById('device-iframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'device-iframe';
+    iframe.className = 'device-iframe';
+    screen.appendChild(iframe);
+  }
+  iframe.style.width = spec.w + 'px';
+  iframe.style.height = spec.h + 'px';
+  iframe.src = window.location.href.split('?')[0] + '?nodevice=1';
+
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+}
+
+// Close device menu on outside click
+document.addEventListener('click', function(e) {
+  const fab = document.getElementById('device-preview-fab');
+  const menu = document.getElementById('device-menu');
+  if (menu && !menu.contains(e.target) && !fab.contains(e.target)) {
+    menu.classList.add('hidden');
+  }
+});
+
+// Hide device FAB inside the preview iframe
+if (new URLSearchParams(window.location.search).get('nodevice') === '1') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const fab = document.getElementById('device-preview-fab');
+    if (fab) fab.style.display = 'none';
+    const menu = document.getElementById('device-menu');
+    if (menu) menu.style.display = 'none';
+    const deviceFrame = document.getElementById('device-frame');
+    if (deviceFrame) deviceFrame.style.display = 'none';
+  });
+}
+
 async function fetchPlayerListings(container, query, mode) {
   const body = container.querySelector('.cl-listings-body');
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
