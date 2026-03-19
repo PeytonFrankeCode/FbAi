@@ -347,7 +347,6 @@
         <div class="portfolio-actions">
           <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
           <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
-          <button class="portfolio-action-btn" onclick="showPlayerDashboard()">Player Dashboard</button>
         </div>
         <div id="portfolio-list" class="portfolio-list">
           <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
@@ -389,20 +388,10 @@
       <!-- Tools Tab -->
       <div id="coll-tools" class="coll-panel hidden">
         <div class="tools-grid">
-          <div class="tool-card" onclick="showBreakEvenCalc()">
-            <div class="tool-icon">&#128200;</div>
-            <h3>Break Even Calculator</h3>
-            <p>Calculate if breaking a box is worth it based on hit values</p>
-          </div>
           <div class="tool-card" onclick="showEbayListingHelper()">
             <div class="tool-icon">&#128230;</div>
             <h3>eBay Listing Helper</h3>
             <p>Auto-generate optimized listing titles from your checklist data</p>
-          </div>
-          <div class="tool-card" onclick="showPlayerDashboard()">
-            <div class="tool-icon">&#127944;</div>
-            <h3>Player Dashboard</h3>
-            <p>See ALL cards for a player across every product and year</p>
           </div>
           <div class="tool-card" onclick="exportCollectionCSV()">
             <div class="tool-icon">&#128196;</div>
@@ -425,43 +414,6 @@
         <input type="text" id="add-card-condition" placeholder="Condition (e.g. PSA 10, Raw NM)" />
         <input type="text" id="add-card-notes" placeholder="Notes (optional)" />
         <button type="submit">Add to Collection</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Player Dashboard Modal -->
-  <div id="player-dashboard-modal" class="modal-overlay hidden" role="dialog">
-    <div class="modal-box modal-box-lg">
-      <button class="login-close" onclick="closePlayerDashboard()">&times;</button>
-      <h2>Player Dashboard</h2>
-      <div class="player-dash-search">
-        <input type="text" id="player-dash-input" placeholder="Search player name..." />
-        <button onclick="searchPlayerDashboard()">Search</button>
-      </div>
-      <div id="player-dash-results" class="player-dash-results">
-        <p class="player-dash-empty">Search for a player to see all their cards across every product.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Break Even Calculator Modal -->
-  <div id="breakeven-modal" class="modal-overlay hidden" role="dialog">
-    <div class="modal-box" style="max-width:500px">
-      <button class="login-close" onclick="closeBreakEvenCalc()">&times;</button>
-      <h2>Break Even Calculator</h2>
-      <p class="breakeven-desc">Enter your box cost and the estimated values of hits to see if breaking is worth it.</p>
-      <form id="breakeven-form" onsubmit="return false">
-        <input type="number" id="breakeven-cost" placeholder="Box cost ($)" step="0.01" min="0" required />
-        <div id="breakeven-hits" class="breakeven-hits">
-          <div class="breakeven-hit-row">
-            <input type="text" placeholder="Hit description" class="be-hit-desc" />
-            <input type="number" placeholder="Value ($)" class="be-hit-value" step="0.01" min="0" />
-            <input type="number" placeholder="Qty" class="be-hit-qty" value="1" min="1" />
-          </div>
-        </div>
-        <button type="button" class="breakeven-add-hit" onclick="addBreakEvenHit()">+ Add Hit</button>
-        <div id="breakeven-result" class="breakeven-result hidden"></div>
-        <button type="button" class="breakeven-calc-btn" onclick="calculateBreakEven()">Calculate</button>
       </form>
     </div>
   </div>

@@ -2230,111 +2230,6 @@ function loadHotCold(days) {
   }).join('');
 }
 
-// ---- Player Dashboard ----
-function showPlayerDashboard() {
-  document.getElementById('player-dashboard-modal').classList.remove('hidden');
-  document.getElementById('player-dash-input').focus();
-}
-function closePlayerDashboard() {
-  document.getElementById('player-dashboard-modal').classList.add('hidden');
-}
-
-async function searchPlayerDashboard() {
-  const q = document.getElementById('player-dash-input').value.trim();
-  const resultsEl = document.getElementById('player-dash-results');
-  if (!q || q.length < 2) return;
-
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
-  try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      resultsEl.innerHTML = '<p class="player-dash-empty">No cards found for this player.</p>';
-      return;
-    }
-
-    // Group by product
-    const byProduct = {};
-    data.results.forEach(r => {
-      const key = `${r.year} ${r.productName}`;
-      if (!byProduct[key]) byProduct[key] = [];
-      byProduct[key].push(r);
-    });
-
-    let html = `<p class="player-dash-count">${data.results.length} cards across ${Object.keys(byProduct).length} products</p>`;
-    for (const [prod, cards] of Object.entries(byProduct)) {
-      html += `<div class="player-dash-product">
-        <h3 class="player-dash-product-name">${escHtml(prod)}</h3>
-        <div class="player-dash-cards">`;
-      cards.forEach(c => {
-        const parallels = c.parallels ? c.parallels.map(p => `<span class="player-dash-parallel">${escHtml(p.name)}${p.printRun ? ' /' + p.printRun : ''}</span>`).join(' ') : '';
-        html += `<div class="player-dash-card">
-          <span class="player-dash-num">#${escHtml(c.number)}</span>
-          <span class="player-dash-set">${escHtml(c.setName)}</span>
-          <span class="player-dash-cat">${escHtml(c.category || '')}</span>
-          ${parallels ? `<div class="player-dash-parallels">${parallels}</div>` : ''}
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-    resultsEl.innerHTML = html;
-  } catch (err) {
-    resultsEl.innerHTML = `<p class="player-dash-empty">Error: ${escHtml(err.message)}</p>`;
-  }
-}
-
-// Enter key for player dashboard search
-document.addEventListener('DOMContentLoaded', () => {
-  const pdInput = document.getElementById('player-dash-input');
-  if (pdInput) pdInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchPlayerDashboard(); });
-});
-
-// ---- Break Even Calculator ----
-function showBreakEvenCalc() {
-  document.getElementById('breakeven-modal').classList.remove('hidden');
-}
-function closeBreakEvenCalc() {
-  document.getElementById('breakeven-modal').classList.add('hidden');
-}
-
-function addBreakEvenHit() {
-  const container = document.getElementById('breakeven-hits');
-  const row = document.createElement('div');
-  row.className = 'breakeven-hit-row';
-  row.innerHTML = `
-    <input type="text" placeholder="Hit description" class="be-hit-desc" />
-    <input type="number" placeholder="Value ($)" class="be-hit-value" step="0.01" min="0" />
-    <input type="number" placeholder="Qty" class="be-hit-qty" value="1" min="1" />
-    <button type="button" class="be-hit-remove" onclick="this.parentElement.remove()">&times;</button>`;
-  container.appendChild(row);
-}
-
-function calculateBreakEven() {
-  const cost = parseFloat(document.getElementById('breakeven-cost').value) || 0;
-  const rows = document.querySelectorAll('.breakeven-hit-row');
-  let totalHitValue = 0;
-  rows.forEach(row => {
-    const val = parseFloat(row.querySelector('.be-hit-value')?.value) || 0;
-    const qty = parseInt(row.querySelector('.be-hit-qty')?.value) || 1;
-    totalHitValue += val * qty;
-  });
-
-  const resultEl = document.getElementById('breakeven-result');
-  const diff = totalHitValue - cost;
-  const isProfit = diff >= 0;
-  resultEl.classList.remove('hidden');
-  resultEl.innerHTML = `
-    <div class="be-summary">
-      <div class="be-summary-row"><span>Box Cost:</span><span>$${cost.toFixed(2)}</span></div>
-      <div class="be-summary-row"><span>Total Hit Value:</span><span>$${totalHitValue.toFixed(2)}</span></div>
-      <div class="be-summary-row be-summary-result ${isProfit ? 'gain' : 'loss'}">
-        <span>${isProfit ? 'Profit' : 'Loss'}:</span>
-        <span>${isProfit ? '+' : ''}$${diff.toFixed(2)}</span>
-      </div>
-    </div>
-    <p class="be-verdict">${isProfit ? 'This break is profitable!' : 'This break loses money. Consider the fun factor!'}</p>`;
-}
-
 // ---- eBay Listing Helper ----
 function showEbayListingHelper() {
   document.getElementById('listing-helper-modal').classList.remove('hidden');
@@ -2466,7 +2361,7 @@ function buildCompAnalysis(results) {
 
 // Close modals on overlay click
 document.addEventListener('click', function(e) {
-  ['add-card-modal', 'player-dashboard-modal', 'breakeven-modal', 'listing-helper-modal'].forEach(id => {
+  ['add-card-modal', 'listing-helper-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (e.target === el) el.classList.add('hidden');
   });
