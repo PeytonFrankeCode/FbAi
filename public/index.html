@@ -42,6 +42,26 @@
   <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXX" crossorigin="anonymous"></script> -->
 </head>
 <body>
+<!-- Layout Picker Popup (shown on first visit) -->
+<div id="layout-picker" class="layout-picker" role="dialog" aria-label="Choose your layout">
+  <div class="layout-picker-box">
+    <h2 class="layout-picker-title">Welcome to The Card Huddle</h2>
+    <p class="layout-picker-subtitle">Choose your device for the best experience</p>
+    <div class="layout-picker-options">
+      <button class="layout-pick-btn" onclick="setLayoutMode('desktop')">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span class="layout-pick-label">Computer</span>
+        <span class="layout-pick-desc">Full-size layout</span>
+      </button>
+      <button class="layout-pick-btn" onclick="setLayoutMode('mobile')">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <span class="layout-pick-label">Mobile</span>
+        <span class="layout-pick-desc">Optimized for phones</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <header>
     <div class="header-inner">
       <div class="header-auth">
@@ -531,6 +551,18 @@
           </div>
         </div>
 
+        <!-- Layout Mode -->
+        <div class="settings-row">
+          <div class="settings-label">
+            <span class="settings-label-text">Layout</span>
+            <span class="settings-label-desc">Switch between desktop and mobile layout</span>
+          </div>
+          <div class="layout-toggle-btns">
+            <button class="layout-toggle-btn" id="layout-btn-desktop" onclick="setLayoutMode('desktop')">Computer</button>
+            <button class="layout-toggle-btn" id="layout-btn-mobile" onclick="setLayoutMode('mobile')">Mobile</button>
+          </div>
+        </div>
+
         <!-- Subscription Management -->
         <div class="settings-row" id="settings-sub-row">
           <div class="settings-label">
@@ -542,55 +574,6 @@
       </div>
 
     </div>
-  </div>
-
-  <!-- Device Preview Selector -->
-  <div id="device-preview-fab" class="device-fab" onclick="toggleDeviceMenu()" title="Device Preview">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-  </div>
-  <div id="device-menu" class="device-menu hidden">
-    <div class="device-menu-header">Device Preview</div>
-    <button class="device-option active" data-device="none" onclick="setDevicePreview('none')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-      Desktop (Default)
-    </button>
-    <button class="device-option" data-device="iphone-se" onclick="setDevicePreview('iphone-se')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      iPhone SE (375 x 667)
-    </button>
-    <button class="device-option" data-device="iphone-14" onclick="setDevicePreview('iphone-14')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      iPhone 14 (390 x 844)
-    </button>
-    <button class="device-option" data-device="iphone-15-pro-max" onclick="setDevicePreview('iphone-15-pro-max')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      iPhone 15 Pro Max (430 x 932)
-    </button>
-    <button class="device-option" data-device="ipad" onclick="setDevicePreview('ipad')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      iPad (768 x 1024)
-    </button>
-    <button class="device-option" data-device="ipad-pro" onclick="setDevicePreview('ipad-pro')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="2" width="18" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      iPad Pro 12.9" (1024 x 1366)
-    </button>
-    <button class="device-option" data-device="android-sm" onclick="setDevicePreview('android-sm')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="1"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      Android Small (360 x 740)
-    </button>
-    <button class="device-option" data-device="android-lg" onclick="setDevicePreview('android-lg')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="1"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-      Android Large (412 x 915)
-    </button>
-  </div>
-  <!-- Device Preview Frame (wraps the entire page when active) -->
-  <div id="device-frame" class="device-frame hidden">
-    <div class="device-frame-bezel">
-      <div class="device-frame-notch" id="device-notch"></div>
-      <div class="device-frame-screen" id="device-screen"></div>
-      <div class="device-frame-home" id="device-home"></div>
-    </div>
-    <div class="device-frame-label" id="device-label"></div>
   </div>
 
   <footer>
