@@ -3405,3 +3405,31 @@ tr:hover .cl-alert-btn {
 .cl-coll-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; padding: 0; line-height: 1; }
 .cl-coll-btn:hover { border-color: var(--accent, #10b981); color: var(--accent, #10b981); }
 .cl-coll-added { background: var(--accent, #10b981) !important; color: #fff !important; border-color: var(--accent, #10b981) !important; }
+
+/* ---- Device Preview ---- */
+.device-fab { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 44px; height: 44px; border-radius: 50%; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; box-shadow: 0 2px 12px rgba(0,0,0,0.3); transition: all 0.15s; }
+.device-fab:hover { border-color: var(--accent, #10b981); color: var(--accent, #10b981); transform: scale(1.08); }
+.device-menu { position: fixed; bottom: 4.5rem; right: 1.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.5rem 0; z-index: 2001; min-width: 230px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.device-menu-header { padding: 0.5rem 1rem 0.4rem; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border); margin-bottom: 0.25rem; }
+.device-option { display: flex; align-items: center; gap: 0.6rem; width: 100%; background: none; border: none; padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; text-align: left; transition: all 0.15s; }
+.device-option:hover { background: var(--bg-hover, rgba(255,255,255,0.04)); color: var(--text-primary); }
+.device-option.active { color: var(--accent, #10b981); font-weight: 600; background: rgba(16, 185, 129, 0.08); }
+
+/* Device Frame */
+.device-frame { position: fixed; inset: 0; z-index: 1500; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.device-frame-bezel { background: #1a1a1a; border-radius: 40px; border: 3px solid #333; position: relative; display: flex; flex-direction: column; align-items: center; padding: 20px; transform-origin: center center; box-shadow: 0 0 0 2px #111, 0 20px 60px rgba(0,0,0,0.5); }
+.device-frame-notch { width: 120px; height: 28px; background: #1a1a1a; border-radius: 0 0 16px 16px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; display: none; }
+.device-frame-screen { background: var(--bg-primary); border-radius: 8px; overflow: hidden; position: relative; }
+.device-frame-home { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #444; margin-top: 8px; display: none; }
+.device-iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
+.device-frame-label { margin-top: 1rem; font-size: 0.8rem; color: #888; font-weight: 500; }
+
+/* When device preview is active, dim the background page */
+body.device-preview-active > header,
+body.device-preview-active > main,
+body.device-preview-active > footer,
+body.device-preview-active > .collection-view,
+body.device-preview-active > .checklist-view,
+body.device-preview-active > .tracked-view { opacity: 0; pointer-events: none; }
+body.device-preview-active > .device-fab { z-index: 2000; }
+body.device-preview-active > .device-menu { z-index: 2001; }
