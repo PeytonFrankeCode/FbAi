@@ -977,11 +977,15 @@ app.get('/api/player-search', (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
   if (!q || q.length < 2) return res.json({ results: [] });
 
+  const terms = q.split(/\s+/);
   const results = [];
   for (const product of checklistData.products) {
     for (const set of product.sets) {
       for (const card of set.cards) {
-        if (card.player.toLowerCase().includes(q)) {
+        // Build a searchable string from all card metadata
+        const searchable = `${card.player} ${card.team || ''} ${set.name} ${set.category || ''} ${product.name} ${product.year} ${product.brand || ''}`.toLowerCase();
+        // All search terms must appear somewhere in the searchable string
+        if (terms.every(t => searchable.includes(t))) {
           results.push({
             ...card,
             productId: product.id,
@@ -997,7 +1001,7 @@ app.get('/api/player-search', (req, res) => {
       }
     }
   }
-  res.json({ results, query: q });
+  res.json({ results: results.slice(0, 200), query: q });
 });
 
 // ---- Price History Storage ----

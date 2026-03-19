@@ -2360,24 +2360,30 @@ async function generateListingTitles() {
 
     let html = '';
     const seen = new Set();
-    data.results.slice(0, 30).forEach(c => {
+    data.results.slice(0, 50).forEach(c => {
       const parallels = c.parallels || [];
-      const allVariants = [{ name: '', printRun: '' }, ...parallels];
+      const allVariants = [{ name: '', printRun: '' }, ...parallels.slice(0, 5)];
       allVariants.forEach(p => {
         const pr = p.printRun ? ` /${p.printRun}` : '';
         const pName = p.name ? ` ${p.name}` : '';
-        const title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr} ${c.category === 'autograph' ? 'AUTO' : ''} Football Card`.replace(/\s+/g, ' ').trim();
-        if (title.length <= 80 && !seen.has(title)) {
+        const autoTag = c.category === 'autograph' ? ' AUTO' : '';
+        const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
+        // Build title — eBay allows up to 80 chars
+        let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
+        // Truncate if over 80 chars
+        if (title.length > 80) title = title.substring(0, 80).trim();
+        if (!seen.has(title)) {
           seen.add(title);
+          const titleEsc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
           html += `<div class="listing-title-row">
             <span class="listing-title-text">${escHtml(title)}</span>
             <span class="listing-title-len">${title.length}/80</span>
-            <button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${title.replace(/'/g, "\\'")}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
+            <button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${titleEsc}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
           </div>`;
         }
       });
     });
-    resultsEl.innerHTML = html || '<p>No titles generated.</p>';
+    resultsEl.innerHTML = html || '<p>No titles generated. Try a different search.</p>';
   } catch (err) {
     resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
   }
