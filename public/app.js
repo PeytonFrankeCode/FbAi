@@ -2431,6 +2431,99 @@ document.addEventListener('DOMContentLoaded', () => {
   if (lhInput) lhInput.addEventListener('keydown', e => { if (e.key === 'Enter') generateListingTitles(); });
 });
 
+// ---- Marketplace (eBay Browse) ----
+let marketplaceOffset = 0;
+let marketplaceQuery = '';
+let marketplaceSort = '';
+
+async function searchMarketplace(loadMore) {
+  const input = document.getElementById('marketplace-input');
+  const sortEl = document.getElementById('marketplace-sort');
+  const resultsEl = document.getElementById('marketplace-results');
+
+  if (!loadMore) {
+    marketplaceQuery = input.value.trim();
+    marketplaceSort = sortEl.value;
+    marketplaceOffset = 0;
+  }
+
+  if (!marketplaceQuery || marketplaceQuery.length < 2) return;
+
+  if (!loadMore) {
+    resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
+  } else {
+    const btn = document.getElementById('marketplace-load-more');
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+  }
+
+  try {
+    const params = new URLSearchParams({ q: marketplaceQuery, offset: marketplaceOffset, limit: 24 });
+    if (marketplaceSort) params.set('sort', marketplaceSort);
+    const res = await fetch(`/api/marketplace?${params}`);
+    const data = await res.json();
+
+    if (data.error) {
+      resultsEl.innerHTML = `<p class="marketplace-empty">Error: ${escHtml(data.detail || data.error)}</p>`;
+      return;
+    }
+
+    if (!data.results || data.results.length === 0) {
+      if (!loadMore) resultsEl.innerHTML = '<p class="marketplace-empty">No listings found. Try a different search.</p>';
+      return;
+    }
+
+    let html = loadMore ? '' : `<p class="marketplace-count">${data.total.toLocaleString()} listings found</p><div class="marketplace-grid">`;
+
+    data.results.forEach(item => {
+      const shipping = item.shippingCost ? `+$${parseFloat(item.shippingCost).toFixed(2)} ship` : 'Free shipping';
+      const buyNow = item.buyingOptions?.includes('FIXED_PRICE');
+      const auction = item.buyingOptions?.includes('AUCTION');
+      const badge = buyNow ? 'Buy It Now' : auction ? 'Auction' : '';
+
+      html += `<a class="marketplace-card" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+        ${item.imageUrl ? `<img class="marketplace-card-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="marketplace-card-img marketplace-no-img">No Image</div>'}
+        <div class="marketplace-card-body">
+          <p class="marketplace-card-title">${escHtml(item.title)}</p>
+          <div class="marketplace-card-meta">
+            <span class="marketplace-card-price">$${parseFloat(item.price).toFixed(2)}</span>
+            <span class="marketplace-card-shipping">${shipping}</span>
+          </div>
+          ${badge ? `<span class="marketplace-card-badge">${badge}</span>` : ''}
+          <div class="marketplace-card-seller">
+            <span>${escHtml(item.seller)}</span>
+            ${item.sellerFeedback ? `<span class="marketplace-seller-fb">${item.sellerFeedback}% positive</span>` : ''}
+          </div>
+        </div>
+      </a>`;
+    });
+
+    marketplaceOffset += data.results.length;
+    const hasMore = marketplaceOffset < data.total;
+
+    if (!loadMore) {
+      html += `</div>`;
+      if (hasMore) html += `<button class="marketplace-load-more" id="marketplace-load-more" onclick="searchMarketplace(true)">Load More</button>`;
+      resultsEl.innerHTML = html;
+    } else {
+      const grid = resultsEl.querySelector('.marketplace-grid');
+      if (grid) grid.insertAdjacentHTML('beforeend', html);
+      const oldBtn = document.getElementById('marketplace-load-more');
+      if (oldBtn) {
+        if (hasMore) { oldBtn.disabled = false; oldBtn.textContent = 'Load More'; }
+        else oldBtn.remove();
+      }
+    }
+  } catch (err) {
+    if (!loadMore) resultsEl.innerHTML = `<p class="marketplace-empty">Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+// Enter key for marketplace search
+document.addEventListener('DOMContentLoaded', () => {
+  const mpInput = document.getElementById('marketplace-input');
+  if (mpInput) mpInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchMarketplace(); });
+});
+
 // ---- CSV Export ----
 function exportCollectionCSV() {
   const coll = getCollection();
