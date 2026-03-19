@@ -3327,6 +3327,11 @@ tr:hover .cl-alert-btn {
 .portfolio-card-remove:hover { color: var(--error); }
 
 /* Set Completion */
+.completion-subtabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem; width: fit-content; }
+.completion-subtab { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.completion-subtab.active { background: var(--accent, #10b981); color: #fff; }
+.completion-subtab:not(.active):hover { color: var(--text-primary); background: var(--bg-hover, rgba(255,255,255,0.04)); }
+.completion-player-picker { margin-bottom: 1rem; }
 .completion-controls { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
 .completion-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.85rem; color: var(--text-primary); min-width: 200px; flex: 1; }
 .rainbow-toggle { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); }
@@ -3385,41 +3390,7 @@ tr:hover .cl-alert-btn {
 .modal-box-lg { max-width: 800px; }
 .modal-box h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
 .modal-box input[type="text"], .modal-box input[type="number"], .modal-box input[type="email"] { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-main); color: var(--text-primary); font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; }
-.modal-box button[type="submit"], .modal-box .breakeven-calc-btn { width: 100%; padding: 0.6rem; border: none; border-radius: 6px; background: var(--accent, #10b981); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-
-/* Player Dashboard */
-.player-dash-search { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-.player-dash-search input { flex: 1; }
-.player-dash-search button { background: var(--accent, #10b981); color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; }
-.player-dash-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem; }
-.player-dash-count { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
-.player-dash-product { margin-bottom: 1rem; }
-.player-dash-product-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid var(--border); }
-.player-dash-cards { display: flex; flex-direction: column; gap: 0.3rem; }
-.player-dash-card { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; padding: 0.3rem 0; flex-wrap: wrap; }
-.player-dash-num { font-weight: 600; color: var(--accent, #10b981); min-width: 2.5rem; }
-.player-dash-set { flex: 1; }
-.player-dash-cat { font-size: 0.7rem; color: var(--text-muted); text-transform: capitalize; }
-.player-dash-parallels { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-.player-dash-parallel { font-size: 0.65rem; background: rgba(255,255,255,0.06); padding: 0.1rem 0.4rem; border-radius: 4px; color: var(--text-muted); }
-
-/* Break Even Calculator */
-.breakeven-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
-.breakeven-hits { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.5rem; }
-.breakeven-hit-row { display: flex; gap: 0.4rem; align-items: center; }
-.breakeven-hit-row input { flex: 1; min-width: 0; }
-.breakeven-hit-row .be-hit-qty { max-width: 60px; }
-.be-hit-remove { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 0.2rem; }
-.be-hit-remove:hover { color: var(--error); }
-.breakeven-add-hit { background: none; border: 1px dashed var(--border); border-radius: 6px; padding: 0.4rem; width: 100%; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; margin-bottom: 0.5rem; }
-.breakeven-add-hit:hover { border-color: var(--accent, #10b981); color: var(--text-primary); }
-.breakeven-result { margin-top: 0.75rem; padding: 1rem; background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid var(--border); }
-.be-summary { display: flex; flex-direction: column; gap: 0.3rem; }
-.be-summary-row { display: flex; justify-content: space-between; font-size: 0.85rem; }
-.be-summary-result { font-weight: 700; font-size: 1rem; padding-top: 0.4rem; border-top: 1px solid var(--border); margin-top: 0.3rem; }
-.be-summary-result.gain { color: #10b981; }
-.be-summary-result.loss { color: #ef4444; }
-.be-verdict { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; text-align: center; }
+.modal-box button[type="submit"] { width: 100%; padding: 0.6rem; border: none; border-radius: 6px; background: var(--accent, #10b981); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
 
 /* eBay Listing Helper */
 .listing-helper-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }

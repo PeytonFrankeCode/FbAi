@@ -2075,14 +2075,24 @@ async function loadCompletionProduct() {
   const productId = select.value;
   const setsEl = document.getElementById('completion-sets');
   const progressEl = document.getElementById('completion-progress');
-  if (!productId) { setsEl.innerHTML = ''; progressEl.classList.add('hidden'); return; }
+  const subtabs = document.getElementById('completion-subtabs');
+  if (!productId) {
+    setsEl.innerHTML = ''; progressEl.classList.add('hidden');
+    subtabs.style.display = 'none';
+    document.getElementById('completion-player-panel').style.display = 'none';
+    document.getElementById('completion-set-panel').style.display = '';
+    return;
+  }
 
   setsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading...</span></div>';
   try {
     const res = await fetch(`/api/checklists/${productId}`);
     completionData = await res.json();
     progressEl.classList.remove('hidden');
+    subtabs.style.display = '';
+    switchCompletionSubtab('set');
     renderCompletionSets();
+    populatePlayerSelect();
   } catch (err) {
     setsEl.innerHTML = `<p>Error loading product.</p>`;
   }
@@ -2191,6 +2201,137 @@ function toggleCompletionCard(productKey, cardKey, checkbox) {
   renderCompletionSets();
 }
 
+// ---- Completion Sub-tabs & Player Completion ----
+function switchCompletionSubtab(tab) {
+  document.querySelectorAll('.completion-subtab').forEach(b => b.classList.toggle('active', b.dataset.subtab === tab));
+  document.getElementById('completion-set-panel').style.display = tab === 'set' ? '' : 'none';
+  document.getElementById('completion-player-panel').style.display = tab === 'player' ? '' : 'none';
+  if (tab === 'player' && completionData) loadPlayerCompletion();
+}
+
+function populatePlayerSelect() {
+  const select = document.getElementById('completion-player-select');
+  select.innerHTML = '<option value="">Select a player...</option>';
+  if (!completionData) return;
+
+  const players = new Set();
+  completionData.sets.forEach(set => {
+    (set.cards || []).forEach(c => { if (c.player) players.add(c.player); });
+  });
+
+  [...players].sort().forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    select.appendChild(opt);
+  });
+}
+
+function loadPlayerCompletion() {
+  const player = document.getElementById('completion-player-select').value;
+  const setsEl = document.getElementById('player-completion-sets');
+  const progressEl = document.getElementById('player-completion-progress');
+  if (!player || !completionData) { setsEl.innerHTML = ''; progressEl.classList.add('hidden'); return; }
+
+  const state = getCompletionState();
+  const productKey = completionData.id || completionData.name;
+  const owned = state[productKey] || {};
+
+  let totalCards = 0, ownedCount = 0;
+  let html = '';
+
+  completionData.sets.forEach((set, si) => {
+    const setKey = `s${si}`;
+    const playerCards = (set.cards || []).map((c, ci) => ({ ...c, ci })).filter(c => c.player === player);
+    if (playerCards.length === 0) return;
+
+    let setTotal = 0, setOwned = 0;
+
+    if (rainbowMode && set.parallels && set.parallels.length > 0) {
+      const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
+      setTotal = playerCards.length * variants.length;
+      playerCards.forEach(c => {
+        variants.forEach((v, vi) => {
+          const key = `${setKey}_c${c.ci}_v${vi}`;
+          if (owned[key]) setOwned++;
+        });
+      });
+    } else {
+      setTotal = playerCards.length;
+      playerCards.forEach(c => {
+        const key = `${setKey}_c${c.ci}`;
+        if (owned[key]) setOwned++;
+      });
+    }
+
+    totalCards += setTotal;
+    ownedCount += setOwned;
+    const pct = setTotal > 0 ? Math.round((setOwned / setTotal) * 100) : 0;
+    const isComplete = pct === 100;
+
+    html += `<div class="completion-set ${isComplete ? 'complete' : ''}">
+      <div class="completion-set-header" onclick="togglePlayerCompletionSet(${si})">
+        <span class="completion-set-name">${escHtml(set.name)}</span>
+        <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
+        <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="completion-set-cards hidden" id="player-completion-cards-${si}">`;
+
+    playerCards.forEach(c => {
+      if (rainbowMode && set.parallels && set.parallels.length > 0) {
+        const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
+        html += `<div class="completion-card-row">
+          <span class="completion-card-player">${escHtml(c.number)} ${escHtml(c.player)}</span>
+          <div class="completion-variants">`;
+        variants.forEach((v, vi) => {
+          const key = `${setKey}_c${c.ci}_v${vi}`;
+          const checked = owned[key] ? 'checked' : '';
+          html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
+            <input type="checkbox" ${checked} onchange="togglePlayerCompletionCard('${productKey}','${key}',this)" />
+            <span>${escHtml(v.name)}${v.printRun ? ' /' + v.printRun : ''}</span>
+          </label>`;
+        });
+        html += `</div></div>`;
+      } else {
+        const key = `${setKey}_c${c.ci}`;
+        const checked = owned[key] ? 'checked' : '';
+        html += `<label class="completion-card-row completion-check-row ${owned[key] ? 'owned' : ''}">
+          <input type="checkbox" ${checked} onchange="togglePlayerCompletionCard('${productKey}','${key}',this)" />
+          <span>${escHtml(c.number)} ${escHtml(c.player)}${c.team ? ' — ' + escHtml(c.team) : ''}</span>
+        </label>`;
+      }
+    });
+    html += `</div></div>`;
+  });
+
+  if (!html) html = '<p style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:2rem;">No cards found for this player in this product.</p>';
+  setsEl.innerHTML = html;
+  progressEl.classList.remove('hidden');
+
+  const overallPct = totalCards > 0 ? Math.round((ownedCount / totalCards) * 100) : 0;
+  document.getElementById('player-completion-bar').style.width = overallPct + '%';
+  document.getElementById('player-completion-text').textContent = `${ownedCount} / ${totalCards} cards (${overallPct}%)`;
+}
+
+function togglePlayerCompletionSet(idx) {
+  const el = document.getElementById(`player-completion-cards-${idx}`);
+  if (el) el.classList.toggle('hidden');
+}
+
+function togglePlayerCompletionCard(productKey, cardKey, checkbox) {
+  const state = getCompletionState();
+  if (!state[productKey]) state[productKey] = {};
+  if (checkbox.checked) {
+    state[productKey][cardKey] = true;
+  } else {
+    delete state[productKey][cardKey];
+  }
+  saveCompletionState(state);
+  loadPlayerCompletion();
+  // Also refresh set view so counts stay in sync
+  renderCompletionSets();
+}
+
 // ---- Hot/Cold Cards ----
 function loadHotCold(days) {
   document.querySelectorAll('.hotcold-period-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.days) === days));
@@ -2228,111 +2369,6 @@ function loadHotCold(days) {
       <span class="hotcold-prices">$${m.oldAvg.toFixed(2)} &rarr; $${m.newAvg.toFixed(2)}</span>
     </div>`;
   }).join('');
-}
-
-// ---- Player Dashboard ----
-function showPlayerDashboard() {
-  document.getElementById('player-dashboard-modal').classList.remove('hidden');
-  document.getElementById('player-dash-input').focus();
-}
-function closePlayerDashboard() {
-  document.getElementById('player-dashboard-modal').classList.add('hidden');
-}
-
-async function searchPlayerDashboard() {
-  const q = document.getElementById('player-dash-input').value.trim();
-  const resultsEl = document.getElementById('player-dash-results');
-  if (!q || q.length < 2) return;
-
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
-  try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      resultsEl.innerHTML = '<p class="player-dash-empty">No cards found for this player.</p>';
-      return;
-    }
-
-    // Group by product
-    const byProduct = {};
-    data.results.forEach(r => {
-      const key = `${r.year} ${r.productName}`;
-      if (!byProduct[key]) byProduct[key] = [];
-      byProduct[key].push(r);
-    });
-
-    let html = `<p class="player-dash-count">${data.results.length} cards across ${Object.keys(byProduct).length} products</p>`;
-    for (const [prod, cards] of Object.entries(byProduct)) {
-      html += `<div class="player-dash-product">
-        <h3 class="player-dash-product-name">${escHtml(prod)}</h3>
-        <div class="player-dash-cards">`;
-      cards.forEach(c => {
-        const parallels = c.parallels ? c.parallels.map(p => `<span class="player-dash-parallel">${escHtml(p.name)}${p.printRun ? ' /' + p.printRun : ''}</span>`).join(' ') : '';
-        html += `<div class="player-dash-card">
-          <span class="player-dash-num">#${escHtml(c.number)}</span>
-          <span class="player-dash-set">${escHtml(c.setName)}</span>
-          <span class="player-dash-cat">${escHtml(c.category || '')}</span>
-          ${parallels ? `<div class="player-dash-parallels">${parallels}</div>` : ''}
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-    resultsEl.innerHTML = html;
-  } catch (err) {
-    resultsEl.innerHTML = `<p class="player-dash-empty">Error: ${escHtml(err.message)}</p>`;
-  }
-}
-
-// Enter key for player dashboard search
-document.addEventListener('DOMContentLoaded', () => {
-  const pdInput = document.getElementById('player-dash-input');
-  if (pdInput) pdInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchPlayerDashboard(); });
-});
-
-// ---- Break Even Calculator ----
-function showBreakEvenCalc() {
-  document.getElementById('breakeven-modal').classList.remove('hidden');
-}
-function closeBreakEvenCalc() {
-  document.getElementById('breakeven-modal').classList.add('hidden');
-}
-
-function addBreakEvenHit() {
-  const container = document.getElementById('breakeven-hits');
-  const row = document.createElement('div');
-  row.className = 'breakeven-hit-row';
-  row.innerHTML = `
-    <input type="text" placeholder="Hit description" class="be-hit-desc" />
-    <input type="number" placeholder="Value ($)" class="be-hit-value" step="0.01" min="0" />
-    <input type="number" placeholder="Qty" class="be-hit-qty" value="1" min="1" />
-    <button type="button" class="be-hit-remove" onclick="this.parentElement.remove()">&times;</button>`;
-  container.appendChild(row);
-}
-
-function calculateBreakEven() {
-  const cost = parseFloat(document.getElementById('breakeven-cost').value) || 0;
-  const rows = document.querySelectorAll('.breakeven-hit-row');
-  let totalHitValue = 0;
-  rows.forEach(row => {
-    const val = parseFloat(row.querySelector('.be-hit-value')?.value) || 0;
-    const qty = parseInt(row.querySelector('.be-hit-qty')?.value) || 1;
-    totalHitValue += val * qty;
-  });
-
-  const resultEl = document.getElementById('breakeven-result');
-  const diff = totalHitValue - cost;
-  const isProfit = diff >= 0;
-  resultEl.classList.remove('hidden');
-  resultEl.innerHTML = `
-    <div class="be-summary">
-      <div class="be-summary-row"><span>Box Cost:</span><span>$${cost.toFixed(2)}</span></div>
-      <div class="be-summary-row"><span>Total Hit Value:</span><span>$${totalHitValue.toFixed(2)}</span></div>
-      <div class="be-summary-row be-summary-result ${isProfit ? 'gain' : 'loss'}">
-        <span>${isProfit ? 'Profit' : 'Loss'}:</span>
-        <span>${isProfit ? '+' : ''}$${diff.toFixed(2)}</span>
-      </div>
-    </div>
-    <p class="be-verdict">${isProfit ? 'This break is profitable!' : 'This break loses money. Consider the fun factor!'}</p>`;
 }
 
 // ---- eBay Listing Helper ----
@@ -2466,7 +2502,7 @@ function buildCompAnalysis(results) {
 
 // Close modals on overlay click
 document.addEventListener('click', function(e) {
-  ['add-card-modal', 'player-dashboard-modal', 'breakeven-modal', 'listing-helper-modal'].forEach(id => {
+  ['add-card-modal', 'listing-helper-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (e.target === el) el.classList.add('hidden');
   });

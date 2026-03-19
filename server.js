@@ -972,38 +972,6 @@ setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
 // Run first check 30 seconds after startup
 setTimeout(checkAlerts, 30000);
 
-// ---- Player Dashboard: Search across ALL products ----
-app.get('/api/player-search', (req, res) => {
-  const q = (req.query.q || '').toLowerCase().trim();
-  if (!q || q.length < 2) return res.json({ results: [] });
-
-  const terms = q.split(/\s+/);
-  const results = [];
-  for (const product of checklistData.products) {
-    for (const set of product.sets) {
-      for (const card of set.cards) {
-        // Build a searchable string from all card metadata
-        const searchable = `${card.player} ${card.team || ''} ${set.name} ${set.category || ''} ${product.name} ${product.year} ${product.brand || ''}`.toLowerCase();
-        // All search terms must appear somewhere in the searchable string
-        if (terms.every(t => searchable.includes(t))) {
-          results.push({
-            ...card,
-            productId: product.id,
-            productName: product.name,
-            year: product.year,
-            brand: product.brand,
-            setId: set.id,
-            setName: set.name,
-            category: set.category,
-            parallels: set.parallels,
-          });
-        }
-      }
-    }
-  }
-  res.json({ results: results.slice(0, 200), query: q });
-});
-
 // ---- Price History Storage ----
 const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
 
