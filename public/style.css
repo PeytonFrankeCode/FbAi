@@ -3463,7 +3463,7 @@ tr:hover .cl-alert-btn {
    MOBILE LAYOUT — applied via .mobile-layout on <html>
    Shrinks all UI to fit phone screens natively
    =========================================================== */
-.mobile-layout body { font-size: 13px; }
+.mobile-layout body { font-size: 11px; zoom: 0.85; }
 
 /* Header */
 .mobile-layout header { padding: 1.25rem 0.75rem; }
