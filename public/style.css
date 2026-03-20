@@ -3376,13 +3376,72 @@ tr:hover .cl-alert-btn {
 .hotcold-change.loss { color: #ef4444; }
 .hotcold-prices { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
 
-/* Tools Grid */
-.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
-.tool-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; cursor: pointer; transition: all 0.15s; text-align: center; }
-.tool-card:hover { border-color: var(--accent, #10b981); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-.tool-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-.tool-card h3 { font-size: 0.9rem; margin-bottom: 0.25rem; }
-.tool-card p { font-size: 0.75rem; color: var(--text-muted); }
+/* eBay Seller Section */
+.seller-header { margin-bottom: 1rem; }
+.seller-section-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.15rem; }
+.seller-section-desc { font-size: 0.8rem; color: var(--text-muted); }
+
+.seller-subtabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem; width: fit-content; }
+.seller-subtab { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.seller-subtab.active { background: var(--accent, #10b981); color: #fff; }
+.seller-subtab:not(.active):hover { color: var(--text-primary); background: var(--bg-hover, rgba(255,255,255,0.04)); }
+
+.seller-panel.hidden { display: none; }
+
+/* Seller Form */
+.seller-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.seller-form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+.seller-form-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; }
+.seller-form-full { grid-column: 1 / -1; }
+.seller-char-count { font-size: 0.65rem; font-weight: 400; color: var(--text-muted); }
+.seller-title-row { display: flex; gap: 0.5rem; }
+.seller-title-row input { flex: 1; }
+.seller-autofill-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: var(--accent, #10b981); white-space: nowrap; transition: all 0.15s; }
+.seller-autofill-btn:hover { border-color: var(--accent, #10b981); background: rgba(16, 185, 129, 0.08); }
+
+.seller-form-group input[type="text"],
+.seller-form-group input[type="number"],
+.seller-form-group select,
+.seller-form-group textarea { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-main); color: var(--text-primary); font-size: 0.85rem; box-sizing: border-box; }
+.seller-form-group select { cursor: pointer; }
+.seller-form-group textarea { resize: vertical; font-family: inherit; }
+
+.seller-photo-placeholder { background: var(--bg-main); border: 1px dashed var(--border); border-radius: 8px; padding: 0.75rem; }
+.seller-photo-placeholder span { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+.seller-photo-placeholder textarea { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-primary); font-size: 0.8rem; padding: 0.5rem; box-sizing: border-box; }
+
+.seller-auction-field.hidden { display: none; }
+.seller-custom-shipping.hidden { display: none; }
+
+.seller-form-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.seller-save-btn { flex: 1; padding: 0.6rem; border: none; border-radius: 6px; background: var(--accent, #10b981); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: opacity 0.15s; }
+.seller-save-btn:hover { opacity: 0.9; }
+.seller-clear-btn { padding: 0.6rem 1.25rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-secondary); font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+.seller-clear-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+/* My Listings */
+.seller-listings-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+.seller-listings-stats { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text-muted); }
+.seller-listings-stats span { font-weight: 600; }
+.seller-export-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: var(--text-secondary); transition: all 0.15s; }
+.seller-export-btn:hover { border-color: var(--accent, #10b981); color: var(--accent, #10b981); }
+
+.seller-listings-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.seller-empty { color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 2rem; }
+
+.seller-listing-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; transition: border-color 0.15s; }
+.seller-listing-card:hover { border-color: var(--accent, #10b981); }
+.seller-listing-info { flex: 1; min-width: 0; }
+.seller-listing-title-text { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.seller-listing-meta { display: flex; gap: 0.75rem; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; flex-wrap: wrap; }
+.seller-listing-price { font-size: 0.95rem; font-weight: 700; color: var(--accent, #10b981); white-space: nowrap; }
+.seller-listing-actions { display: flex; gap: 0.35rem; }
+.seller-listing-actions button { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.7rem; cursor: pointer; color: var(--text-muted); transition: all 0.15s; }
+.seller-listing-actions button:hover { border-color: var(--accent, #10b981); color: var(--accent, #10b981); }
+.seller-listing-actions .seller-delete-btn:hover { border-color: #ef4444; color: #ef4444; }
+.seller-listing-badge { display: inline-block; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 4px; text-transform: uppercase; }
+.seller-listing-badge.auction { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.seller-listing-badge.fixed { background: rgba(16, 185, 129, 0.12); color: #10b981; }
 
 /* Modal Overlay (shared) */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
@@ -3552,11 +3611,11 @@ tr:hover .cl-alert-btn {
 .mobile-layout .portfolio-card-value { font-size: 0.7rem; }
 .mobile-layout .completion-controls { flex-direction: column; gap: 0.4rem; }
 .mobile-layout .completion-select { min-width: 0; width: 100%; font-size: 0.78rem; }
-.mobile-layout .tools-grid { grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
-.mobile-layout .tool-card { padding: 0.7rem; }
-.mobile-layout .tool-card h3 { font-size: 0.75rem; }
-.mobile-layout .tool-card p { font-size: 0.62rem; }
-.mobile-layout .tool-icon { font-size: 1.3rem; }
+.mobile-layout .seller-form-grid { grid-template-columns: 1fr; }
+.mobile-layout .seller-subtabs { flex-wrap: wrap; }
+.mobile-layout .seller-subtab { font-size: 0.7rem; padding: 0.35rem 0.65rem; }
+.mobile-layout .seller-listing-card { flex-direction: column; align-items: stretch; }
+.mobile-layout .seller-listing-actions { justify-content: flex-end; }
 
 /* Tracked view */
 .mobile-layout .tracked-container { padding: 0 0.25rem; }
@@ -3609,11 +3668,9 @@ tr:hover .cl-alert-btn {
   .completion-controls { flex-direction: column; gap: 0.5rem; }
   .completion-select { min-width: 0; width: 100%; }
 
-  .tools-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-  .tool-card { padding: 0.85rem; }
-  .tool-card h3 { font-size: 0.8rem; }
-  .tool-card p { font-size: 0.68rem; }
-  .tool-icon { font-size: 1.5rem; }
+  .seller-form-grid { grid-template-columns: 1fr; }
+  .seller-subtabs { flex-wrap: wrap; }
+  .seller-listing-card { flex-direction: column; align-items: stretch; }
 
   .modal-box { padding: 1.25rem; margin: 0.5rem; }
   .modal-box h2 { font-size: 1rem; }
@@ -3625,7 +3682,7 @@ tr:hover .cl-alert-btn {
 @media (max-width: 400px) {
   .portfolio-stats { grid-template-columns: repeat(2, 1fr); }
   .portfolio-stat-value { font-size: 0.9rem; }
-  .tools-grid { grid-template-columns: 1fr; }
+  .seller-form-grid { grid-template-columns: 1fr; }
   .collection-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
   .collection-tabs::-webkit-scrollbar { display: none; }
   .coll-tab { flex-shrink: 0; font-size: 0.65rem; }

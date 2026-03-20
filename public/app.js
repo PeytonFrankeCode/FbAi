@@ -1968,6 +1968,7 @@ function switchCollectionTab(tab) {
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
   if (tab === 'completion') loadCompletionProducts();
+  if (tab === 'seller') renderMyListings();
 }
 
 function renderPortfolio() {
@@ -2371,15 +2372,263 @@ function loadHotCold(days) {
   }).join('');
 }
 
-// ---- eBay Listing Helper ----
-function showEbayListingHelper() {
-  document.getElementById('listing-helper-modal').classList.remove('hidden');
-  document.getElementById('listing-helper-input').focus();
-}
-function closeEbayListingHelper() {
-  document.getElementById('listing-helper-modal').classList.add('hidden');
+// ---- eBay Seller Section ----
+
+// Seller sub-tab switching
+function switchSellerTab(tab) {
+  document.querySelectorAll('.seller-subtab').forEach(b => b.classList.toggle('active', b.dataset.seller === tab));
+  document.querySelectorAll('.seller-panel').forEach(p => p.classList.add('hidden'));
+  const panel = document.getElementById(`seller-${tab}`);
+  if (panel) panel.classList.remove('hidden');
+  if (tab === 'mylistings') renderMyListings();
 }
 
+// Title character counter
+function updateTitleCount() {
+  const input = document.getElementById('seller-listing-title');
+  const counter = document.getElementById('listing-title-count');
+  if (input && counter) counter.textContent = `${input.value.length}/80`;
+}
+
+// Toggle auction-specific fields
+function toggleAuctionFields() {
+  const format = document.getElementById('seller-format').value;
+  const auctionFields = document.querySelectorAll('.seller-auction-field');
+  const priceLabel = document.getElementById('seller-price-label');
+  auctionFields.forEach(f => f.classList.toggle('hidden', format !== 'auction'));
+  if (priceLabel) priceLabel.textContent = format === 'auction' ? 'Buy It Now Price ($) (optional)' : 'Buy It Now Price ($)';
+  const priceInput = document.getElementById('seller-price');
+  if (priceInput) priceInput.required = format !== 'auction';
+}
+
+// Toggle custom shipping field
+document.addEventListener('change', e => {
+  if (e.target && e.target.id === 'seller-shipping') {
+    const customField = document.querySelector('.seller-custom-shipping');
+    if (customField) customField.classList.toggle('hidden', e.target.value !== 'custom');
+  }
+});
+
+// Get/save listings from localStorage
+function getSellerListings() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleSellerListings') || '[]'); }
+  catch { return []; }
+}
+function saveSellerListings(listings) {
+  localStorage.setItem('cardHuddleSellerListings', JSON.stringify(listings));
+}
+
+// Create listing handler
+function handleCreateListing(e) {
+  e.preventDefault();
+  const title = document.getElementById('seller-listing-title').value.trim();
+  const category = document.getElementById('seller-category').value;
+  const condition = document.getElementById('seller-condition').value;
+  const format = document.getElementById('seller-format').value;
+  const price = parseFloat(document.getElementById('seller-price').value) || 0;
+  const startBid = parseFloat(document.getElementById('seller-start-bid')?.value) || 0;
+  const quantity = parseInt(document.getElementById('seller-quantity').value) || 1;
+  const shipping = document.getElementById('seller-shipping').value;
+  const shippingCost = parseFloat(document.getElementById('seller-shipping-cost')?.value) || 0;
+  const description = document.getElementById('seller-description').value.trim();
+  const photoNotes = document.getElementById('seller-photo-notes').value.trim();
+
+  if (!title) return;
+
+  const listing = {
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    title, category, condition, format, price, startBid, quantity,
+    shipping, shippingCost, description, photoNotes,
+    createdAt: new Date().toISOString(),
+    status: 'draft'
+  };
+
+  const listings = getSellerListings();
+  listings.unshift(listing);
+  saveSellerListings(listings);
+  clearListingForm();
+  switchSellerTab('mylistings');
+}
+
+// Clear the listing form
+function clearListingForm() {
+  document.getElementById('create-listing-form').reset();
+  updateTitleCount();
+  toggleAuctionFields();
+  document.querySelector('.seller-custom-shipping')?.classList.add('hidden');
+}
+
+// Render My Listings
+function renderMyListings() {
+  const listings = getSellerListings();
+  const listEl = document.getElementById('seller-listings-list');
+  const countEl = document.getElementById('seller-listing-count');
+  const valueEl = document.getElementById('seller-total-value');
+
+  countEl.textContent = `${listings.length} listing${listings.length !== 1 ? 's' : ''}`;
+  const totalVal = listings.reduce((s, l) => s + (l.price || l.startBid || 0) * (l.quantity || 1), 0);
+  valueEl.textContent = `Est. Value: $${totalVal.toFixed(2)}`;
+
+  if (listings.length === 0) {
+    listEl.innerHTML = '<p class="seller-empty">No listing drafts yet. Create your first listing above!</p>';
+    return;
+  }
+
+  const conditionLabels = {
+    'ungraded-nm': 'Near Mint', 'ungraded-ex': 'Excellent', 'ungraded-vg': 'Very Good', 'ungraded-good': 'Good',
+    'psa10': 'PSA 10', 'psa9': 'PSA 9', 'psa8': 'PSA 8', 'bgs10': 'BGS 10', 'bgs9.5': 'BGS 9.5', 'sgc10': 'SGC 10'
+  };
+  const shippingLabels = { 'free': 'Free Ship', 'standard': '$3.99 Ship', 'economy': '$2.49 Ship', 'priority': '$7.99 Ship', 'custom': 'Custom Ship' };
+
+  listEl.innerHTML = listings.map(l => {
+    const priceDisplay = l.format === 'auction'
+      ? (l.startBid ? `$${l.startBid.toFixed(2)} start` : '$0.99 start') + (l.price ? ` / $${l.price.toFixed(2)} BIN` : '')
+      : `$${l.price.toFixed(2)}`;
+    const shipLabel = l.shipping === 'custom' ? `$${(l.shippingCost || 0).toFixed(2)} Ship` : (shippingLabels[l.shipping] || '');
+    const date = new Date(l.createdAt).toLocaleDateString();
+    return `<div class="seller-listing-card">
+      <div class="seller-listing-info">
+        <span class="seller-listing-title-text">${escHtml(l.title)}</span>
+        <div class="seller-listing-meta">
+          <span class="seller-listing-badge ${l.format}">${l.format === 'auction' ? 'Auction' : 'BIN'}</span>
+          <span>${conditionLabels[l.condition] || l.condition}</span>
+          <span>${shipLabel}</span>
+          <span>Qty: ${l.quantity}</span>
+          <span>${date}</span>
+        </div>
+      </div>
+      <span class="seller-listing-price">${priceDisplay}</span>
+      <div class="seller-listing-actions">
+        <button onclick="editSellerListing('${l.id}')">Edit</button>
+        <button onclick="copyListingToClipboard('${l.id}')">Copy</button>
+        <button class="seller-delete-btn" onclick="deleteSellerListing('${l.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Delete a listing
+function deleteSellerListing(id) {
+  const listings = getSellerListings().filter(l => l.id !== id);
+  saveSellerListings(listings);
+  renderMyListings();
+}
+
+// Edit a listing — load it back into the form
+function editSellerListing(id) {
+  const listings = getSellerListings();
+  const listing = listings.find(l => l.id === id);
+  if (!listing) return;
+
+  document.getElementById('seller-listing-title').value = listing.title;
+  document.getElementById('seller-category').value = listing.category;
+  document.getElementById('seller-condition').value = listing.condition;
+  document.getElementById('seller-format').value = listing.format;
+  document.getElementById('seller-price').value = listing.price || '';
+  const startBidEl = document.getElementById('seller-start-bid');
+  if (startBidEl) startBidEl.value = listing.startBid || '';
+  document.getElementById('seller-quantity').value = listing.quantity || 1;
+  document.getElementById('seller-shipping').value = listing.shipping;
+  const shipCostEl = document.getElementById('seller-shipping-cost');
+  if (shipCostEl) shipCostEl.value = listing.shippingCost || '';
+  document.getElementById('seller-description').value = listing.description || '';
+  document.getElementById('seller-photo-notes').value = listing.photoNotes || '';
+
+  updateTitleCount();
+  toggleAuctionFields();
+  if (listing.shipping === 'custom') document.querySelector('.seller-custom-shipping')?.classList.remove('hidden');
+
+  // Remove the old listing so saving creates an updated one
+  deleteSellerListing(id);
+  switchSellerTab('create');
+}
+
+// Copy listing details to clipboard
+function copyListingToClipboard(id) {
+  const listing = getSellerListings().find(l => l.id === id);
+  if (!listing) return;
+  const text = `Title: ${listing.title}\nPrice: $${(listing.price || 0).toFixed(2)}\nCondition: ${listing.condition}\nDescription: ${listing.description || 'N/A'}`;
+  navigator.clipboard.writeText(text);
+}
+
+// Export listings as CSV
+function exportListingsCSV() {
+  const listings = getSellerListings();
+  if (listings.length === 0) return;
+  const headers = ['Title', 'Category', 'Condition', 'Format', 'Price', 'Start Bid', 'Quantity', 'Shipping', 'Description', 'Created'];
+  const rows = listings.map(l => [
+    `"${(l.title || '').replace(/"/g, '""')}"`, l.category, l.condition, l.format,
+    l.price || '', l.startBid || '', l.quantity || 1, l.shipping,
+    `"${(l.description || '').replace(/"/g, '""')}"`, l.createdAt
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ebay-listings.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Title Auto-Fill modal (searches checklist data)
+function showTitleAutofill() {
+  document.getElementById('title-autofill-modal').classList.remove('hidden');
+  document.getElementById('autofill-search-input').focus();
+}
+function closeTitleAutofill() {
+  document.getElementById('title-autofill-modal').classList.add('hidden');
+}
+
+async function searchAutofillTitles() {
+  const q = document.getElementById('autofill-search-input').value.trim();
+  const resultsEl = document.getElementById('autofill-results');
+  if (!q || q.length < 2) return;
+
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  try {
+    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      resultsEl.innerHTML = '<p>No matching cards found.</p>';
+      return;
+    }
+
+    let html = '';
+    const seen = new Set();
+    data.results.slice(0, 50).forEach(c => {
+      const parallels = c.parallels || [];
+      const allVariants = [{ name: '', printRun: '' }, ...parallels.slice(0, 5)];
+      allVariants.forEach(p => {
+        const pr = p.printRun ? ` /${p.printRun}` : '';
+        const pName = p.name ? ` ${p.name}` : '';
+        const autoTag = c.category === 'autograph' ? ' AUTO' : '';
+        const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
+        let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
+        if (title.length > 80) title = title.substring(0, 80).trim();
+        if (!seen.has(title)) {
+          seen.add(title);
+          const titleEsc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+          html += `<div class="listing-title-row">
+            <span class="listing-title-text">${escHtml(title)}</span>
+            <span class="listing-title-len">${title.length}/80</span>
+            <button class="listing-copy-btn" onclick="useAutofillTitle('${titleEsc}')">Use</button>
+          </div>`;
+        }
+      });
+    });
+    resultsEl.innerHTML = html || '<p>No titles generated. Try a different search.</p>';
+  } catch (err) {
+    resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+// Use a generated title and fill the listing form
+function useAutofillTitle(title) {
+  document.getElementById('seller-listing-title').value = title;
+  updateTitleCount();
+  closeTitleAutofill();
+}
+
+// Title Generator tab (standalone — same as old listing helper)
 async function generateListingTitles() {
   const q = document.getElementById('listing-helper-input').value.trim();
   const resultsEl = document.getElementById('listing-helper-results');
@@ -2404,9 +2653,7 @@ async function generateListingTitles() {
         const pName = p.name ? ` ${p.name}` : '';
         const autoTag = c.category === 'autograph' ? ' AUTO' : '';
         const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
-        // Build title — eBay allows up to 80 chars
         let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
-        // Truncate if over 80 chars
         if (title.length > 80) title = title.substring(0, 80).trim();
         if (!seen.has(title)) {
           seen.add(title);
@@ -2425,10 +2672,12 @@ async function generateListingTitles() {
   }
 }
 
-// Enter key for listing helper
+// Enter key for listing helper & autofill
 document.addEventListener('DOMContentLoaded', () => {
   const lhInput = document.getElementById('listing-helper-input');
   if (lhInput) lhInput.addEventListener('keydown', e => { if (e.key === 'Enter') generateListingTitles(); });
+  const afInput = document.getElementById('autofill-search-input');
+  if (afInput) afInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchAutofillTitles(); });
 });
 
 // ---- Marketplace (eBay Browse) ----
@@ -2595,7 +2844,7 @@ function buildCompAnalysis(results) {
 
 // Close modals on overlay click
 document.addEventListener('click', function(e) {
-  ['add-card-modal', 'listing-helper-modal'].forEach(id => {
+  ['add-card-modal', 'title-autofill-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (e.target === el) el.classList.add('hidden');
   });
