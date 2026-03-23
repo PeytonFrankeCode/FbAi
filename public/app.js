@@ -2789,7 +2789,47 @@ function autofillPromoteFromListing(listingId) {
   document.getElementById('promote-autofill-select').value = '';
 }
 
-function handleAddPromotedCard(e) {
+// Auto-fill promote form from an eBay listing URL
+async function autoFillFromEbayUrl() {
+  const urlInput = document.getElementById('promote-url');
+  const url = urlInput.value.trim();
+  if (!url.includes('ebay.com/itm/')) return;
+
+  const titleEl = document.getElementById('promote-title');
+  const priceEl = document.getElementById('promote-price');
+  const imageEl = document.getElementById('promote-image');
+  const conditionEl = document.getElementById('promote-condition');
+  const submitBtn = document.getElementById('promote-submit-btn');
+
+  // Show loading state
+  const origText = submitBtn.textContent;
+  submitBtn.textContent = 'Fetching listing...';
+  submitBtn.disabled = true;
+
+  try {
+    const resp = await fetch(`/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
+    const data = await resp.json();
+
+    if (data.title && !titleEl.value.trim()) titleEl.value = data.title;
+    if (data.price && !priceEl.value) priceEl.value = data.price;
+    if (data.imageUrl && !imageEl.value.trim()) imageEl.value = data.imageUrl;
+
+    // Try to map eBay condition to our dropdown options
+    if (data.condition) {
+      const raw = data.condition.toLowerCase();
+      const options = Array.from(conditionEl.options);
+      const match = options.find(o => raw.includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(raw));
+      if (match) conditionEl.value = match.value;
+    }
+  } catch (err) {
+    console.warn('Could not auto-fetch eBay listing details:', err);
+  } finally {
+    submitBtn.textContent = origText;
+    submitBtn.disabled = false;
+  }
+}
+
+async function handleAddPromotedCard(e) {
   e.preventDefault();
   const sub = getUserSubscription();
   if (!sub) { showPricing(); return false; }
@@ -2804,10 +2844,21 @@ function handleAddPromotedCard(e) {
   const title = document.getElementById('promote-title').value.trim();
   const url = document.getElementById('promote-url').value.trim();
   const price = document.getElementById('promote-price').value;
-  const imageUrl = document.getElementById('promote-image').value.trim();
+  let imageUrl = document.getElementById('promote-image').value.trim();
   const condition = document.getElementById('promote-condition').value;
 
   if (!title || !url || !price) return false;
+
+  // Last-resort: auto-fetch image if still empty at submission time
+  if (!imageUrl && url.includes('ebay.com/itm/')) {
+    try {
+      const resp = await fetch(`/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
+      const data = await resp.json();
+      if (data.imageUrl) imageUrl = data.imageUrl;
+    } catch (err) {
+      console.warn('Could not auto-fetch eBay listing image:', err);
+    }
+  }
 
   // If this card fills a slot beyond the base 5, mark it as using an extra slot
   const usedExtraSlot = cards.length >= 5;
@@ -2967,8 +3018,8 @@ function injectPromotedCards(grid) {
   const count = existingCards.length;
   if (count < 2) return; // Don't inject if too few results
 
-  // Space promoted cards evenly: every N results insert one
-  const spacing = Math.max(3, Math.floor(count / (shuffled.length + 1)));
+  // Show a promoted card every 10 results
+  const spacing = 10;
 
   shuffled.forEach((promo, i) => {
     const insertIndex = spacing * (i + 1);

@@ -710,6 +710,62 @@ app.post('/api/ebay/account-deletion', (req, res) => {
   res.sendStatus(200);
 });
 
+// ---- Fetch listing details from an eBay listing URL ----
+app.get('/api/ebay-listing-details', async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.includes('ebay.com/itm/')) {
+    return res.status(400).json({ error: 'Invalid eBay listing URL' });
+  }
+  try {
+    const response = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 8000,
+    });
+    const html = response.data;
+
+    // Extract og:image
+    const imgMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
+                  || html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+    const imageUrl = imgMatch ? imgMatch[1] : null;
+
+    // Extract og:title (eBay sets this to the listing title)
+    const titleMatch = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i)
+                    || html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:title["']/i);
+    let title = titleMatch ? titleMatch[1].replace(/\s*\|\s*eBay$/i, '').trim() : null;
+
+    // Extract price from structured data or meta tags
+    const priceMatch = html.match(/"price"\s*:\s*"?([\d.]+)"?/i)
+                    || html.match(/<span[^>]*class="[^"]*ux-textspans[^"]*"[^>]*>US \$([\d,.]+)<\/span>/i)
+                    || html.match(/itemprop=["']price["']\s+content=["']([\d.]+)["']/i);
+    const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null;
+
+    // Extract condition
+    const condMatch = html.match(/"conditionDisplayName"\s*:\s*"([^"]+)"/i)
+                   || html.match(/itemprop=["']itemCondition["'][^>]*content=["']([^"']+)["']/i)
+                   || html.match(/<span[^>]*class="[^"]*ux-icon-text[^"]*"[^>]*>([^<]*(?:New|Used|Ungraded|PSA|BGS|SGC|Mint|Near Mint)[^<]*)<\/span>/i);
+    const condition = condMatch ? condMatch[1].trim() : null;
+
+    res.json({ title, price, imageUrl, condition });
+  } catch (err) {
+    console.error('eBay listing details fetch error:', err.message);
+    res.json({ title: null, price: null, imageUrl: null, condition: null });
+  }
+});
+
+// Backward compat alias
+app.get('/api/ebay-listing-image', async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.includes('ebay.com/itm/')) {
+    return res.status(400).json({ error: 'Invalid eBay listing URL' });
+  }
+  try {
+    const resp = await axios.get(`http://localhost:${PORT}/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
+    res.json({ imageUrl: resp.data.imageUrl });
+  } catch (err) {
+    res.json({ imageUrl: null });
+  }
+});
+
 // ---- Checklist Data API ----
 const checklistData = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'checklists.json'), 'utf8'));
 
