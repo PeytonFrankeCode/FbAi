@@ -1439,6 +1439,7 @@ let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 const trackedView = document.getElementById('tracked-view');
 
 const collectionView = document.getElementById('collection-view');
+const sellerView = document.getElementById('seller-view');
 
 function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1449,6 +1450,7 @@ function switchView(view) {
   checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
   collectionView.classList.add('hidden');
+  sellerView.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -1459,6 +1461,9 @@ function switchView(view) {
   } else if (view === 'collection') {
     collectionView.classList.remove('hidden');
     initCollectionView();
+  } else if (view === 'seller') {
+    sellerView.classList.remove('hidden');
+    renderMyListings();
   } else {
     mainEl.classList.remove('hidden');
   }
@@ -1968,7 +1973,6 @@ function switchCollectionTab(tab) {
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
   if (tab === 'completion') loadCompletionProducts();
-  if (tab === 'seller') renderMyListings();
 }
 
 function renderPortfolio() {

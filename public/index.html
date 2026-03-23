@@ -82,6 +82,7 @@
         <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
         <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
         <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection</button>
+        <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
         <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
         </button>
@@ -321,7 +322,6 @@
           <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
           <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
           <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
-          <button class="coll-tab" data-coll="seller" onclick="switchCollectionTab('seller')">eBay Seller</button>
         </div>
       </div>
 
@@ -424,143 +424,145 @@
         </div>
       </div>
 
-      <!-- eBay Seller Tab -->
-      <div id="coll-seller" class="coll-panel hidden">
-        <div class="seller-header">
-          <h3 class="seller-section-title">eBay Seller Tools</h3>
-          <p class="seller-section-desc">Create, manage, and optimize your eBay card listings</p>
-        </div>
+    </div>
+  </div>
 
-        <div class="seller-subtabs">
+  <!-- eBay Seller View (standalone) -->
+  <div id="seller-view" class="collection-view hidden">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">eBay Seller Tools</h2>
+        <p class="collection-subtitle">Create, manage, and optimize your eBay card listings</p>
+        <div class="collection-tabs">
           <button class="seller-subtab active" data-seller="create" onclick="switchSellerTab('create')">Create Listing</button>
           <button class="seller-subtab" data-seller="mylistings" onclick="switchSellerTab('mylistings')">My Listings</button>
           <button class="seller-subtab" data-seller="titlegenerator" onclick="switchSellerTab('titlegenerator')">Title Generator</button>
         </div>
+      </div>
 
-        <!-- Create Listing Sub-tab -->
-        <div id="seller-create" class="seller-panel">
-          <form id="create-listing-form" onsubmit="return handleCreateListing(event)">
-            <div class="seller-form-grid">
-              <div class="seller-form-group seller-form-full">
-                <label>Listing Title <span class="seller-char-count" id="listing-title-count">0/80</span></label>
-                <div class="seller-title-row">
-                  <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm Football" maxlength="80" required oninput="updateTitleCount()" />
-                  <button type="button" class="seller-autofill-btn" onclick="showTitleAutofill()">Auto-Fill</button>
-                </div>
-              </div>
-
-              <div class="seller-form-group">
-                <label>Category</label>
-                <select id="seller-category">
-                  <option value="sports-cards">Sports Trading Cards</option>
-                  <option value="singles">Singles</option>
-                  <option value="lots">Lots</option>
-                  <option value="boxes">Boxes & Packs</option>
-                  <option value="graded">Graded Cards</option>
-                </select>
-              </div>
-
-              <div class="seller-form-group">
-                <label>Condition</label>
-                <select id="seller-condition">
-                  <option value="ungraded-nm">Ungraded - Near Mint</option>
-                  <option value="ungraded-ex">Ungraded - Excellent</option>
-                  <option value="ungraded-vg">Ungraded - Very Good</option>
-                  <option value="ungraded-good">Ungraded - Good</option>
-                  <option value="psa10">PSA 10</option>
-                  <option value="psa9">PSA 9</option>
-                  <option value="psa8">PSA 8</option>
-                  <option value="bgs10">BGS 10</option>
-                  <option value="bgs9.5">BGS 9.5</option>
-                  <option value="sgc10">SGC 10</option>
-                </select>
-              </div>
-
-              <div class="seller-form-group">
-                <label>Listing Format</label>
-                <select id="seller-format" onchange="toggleAuctionFields()">
-                  <option value="fixed">Buy It Now (Fixed Price)</option>
-                  <option value="auction">Auction</option>
-                </select>
-              </div>
-
-              <div class="seller-form-group">
-                <label id="seller-price-label">Buy It Now Price ($)</label>
-                <input type="number" id="seller-price" placeholder="0.00" step="0.01" min="0.01" required />
-              </div>
-
-              <div class="seller-form-group seller-auction-field hidden">
-                <label>Starting Bid ($)</label>
-                <input type="number" id="seller-start-bid" placeholder="0.99" step="0.01" min="0.01" />
-              </div>
-
-              <div class="seller-form-group">
-                <label>Quantity</label>
-                <input type="number" id="seller-quantity" value="1" min="1" max="99" />
-              </div>
-
-              <div class="seller-form-group">
-                <label>Shipping</label>
-                <select id="seller-shipping">
-                  <option value="free">Free Shipping</option>
-                  <option value="standard">Standard ($3.99)</option>
-                  <option value="economy">Economy ($2.49)</option>
-                  <option value="priority">Priority ($7.99)</option>
-                  <option value="custom">Custom Amount</option>
-                </select>
-              </div>
-
-              <div class="seller-form-group seller-custom-shipping hidden">
-                <label>Shipping Cost ($)</label>
-                <input type="number" id="seller-shipping-cost" placeholder="0.00" step="0.01" min="0" />
-              </div>
-
-              <div class="seller-form-group seller-form-full">
-                <label>Description</label>
-                <textarea id="seller-description" rows="4" placeholder="Add details about your card — condition notes, centering, corners, edges, any flaws..."></textarea>
-              </div>
-
-              <div class="seller-form-group seller-form-full">
-                <label>Photo Notes</label>
-                <div class="seller-photo-placeholder">
-                  <span>Upload photos directly on eBay when creating your final listing</span>
-                  <textarea id="seller-photo-notes" rows="2" placeholder="Note which photos to include (e.g. front, back, close-up of corners)..."></textarea>
-                </div>
+      <!-- Create Listing Sub-tab -->
+      <div id="seller-create" class="seller-panel">
+        <form id="create-listing-form" onsubmit="return handleCreateListing(event)">
+          <div class="seller-form-grid">
+            <div class="seller-form-group seller-form-full">
+              <label>Listing Title <span class="seller-char-count" id="listing-title-count">0/80</span></label>
+              <div class="seller-title-row">
+                <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm Football" maxlength="80" required oninput="updateTitleCount()" />
+                <button type="button" class="seller-autofill-btn" onclick="showTitleAutofill()">Auto-Fill</button>
               </div>
             </div>
 
-            <div class="seller-form-actions">
-              <button type="submit" class="seller-save-btn">Save Listing Draft</button>
-              <button type="button" class="seller-clear-btn" onclick="clearListingForm()">Clear Form</button>
+            <div class="seller-form-group">
+              <label>Category</label>
+              <select id="seller-category">
+                <option value="sports-cards">Sports Trading Cards</option>
+                <option value="singles">Singles</option>
+                <option value="lots">Lots</option>
+                <option value="boxes">Boxes & Packs</option>
+                <option value="graded">Graded Cards</option>
+              </select>
             </div>
-          </form>
-        </div>
 
-        <!-- My Listings Sub-tab -->
-        <div id="seller-mylistings" class="seller-panel hidden">
-          <div class="seller-listings-controls">
-            <div class="seller-listings-stats">
-              <span id="seller-listing-count">0 listings</span>
-              <span id="seller-total-value">Est. Value: $0.00</span>
+            <div class="seller-form-group">
+              <label>Condition</label>
+              <select id="seller-condition">
+                <option value="ungraded-nm">Ungraded - Near Mint</option>
+                <option value="ungraded-ex">Ungraded - Excellent</option>
+                <option value="ungraded-vg">Ungraded - Very Good</option>
+                <option value="ungraded-good">Ungraded - Good</option>
+                <option value="psa10">PSA 10</option>
+                <option value="psa9">PSA 9</option>
+                <option value="psa8">PSA 8</option>
+                <option value="bgs10">BGS 10</option>
+                <option value="bgs9.5">BGS 9.5</option>
+                <option value="sgc10">SGC 10</option>
+              </select>
             </div>
-            <div class="seller-listings-actions">
-              <button class="seller-export-btn" onclick="exportListingsCSV()">Export CSV</button>
+
+            <div class="seller-form-group">
+              <label>Listing Format</label>
+              <select id="seller-format" onchange="toggleAuctionFields()">
+                <option value="fixed">Buy It Now (Fixed Price)</option>
+                <option value="auction">Auction</option>
+              </select>
+            </div>
+
+            <div class="seller-form-group">
+              <label id="seller-price-label">Buy It Now Price ($)</label>
+              <input type="number" id="seller-price" placeholder="0.00" step="0.01" min="0.01" required />
+            </div>
+
+            <div class="seller-form-group seller-auction-field hidden">
+              <label>Starting Bid ($)</label>
+              <input type="number" id="seller-start-bid" placeholder="0.99" step="0.01" min="0.01" />
+            </div>
+
+            <div class="seller-form-group">
+              <label>Quantity</label>
+              <input type="number" id="seller-quantity" value="1" min="1" max="99" />
+            </div>
+
+            <div class="seller-form-group">
+              <label>Shipping</label>
+              <select id="seller-shipping">
+                <option value="free">Free Shipping</option>
+                <option value="standard">Standard ($3.99)</option>
+                <option value="economy">Economy ($2.49)</option>
+                <option value="priority">Priority ($7.99)</option>
+                <option value="custom">Custom Amount</option>
+              </select>
+            </div>
+
+            <div class="seller-form-group seller-custom-shipping hidden">
+              <label>Shipping Cost ($)</label>
+              <input type="number" id="seller-shipping-cost" placeholder="0.00" step="0.01" min="0" />
+            </div>
+
+            <div class="seller-form-group seller-form-full">
+              <label>Description</label>
+              <textarea id="seller-description" rows="4" placeholder="Add details about your card — condition notes, centering, corners, edges, any flaws..."></textarea>
+            </div>
+
+            <div class="seller-form-group seller-form-full">
+              <label>Photo Notes</label>
+              <div class="seller-photo-placeholder">
+                <span>Upload photos directly on eBay when creating your final listing</span>
+                <textarea id="seller-photo-notes" rows="2" placeholder="Note which photos to include (e.g. front, back, close-up of corners)..."></textarea>
+              </div>
             </div>
           </div>
-          <div id="seller-listings-list" class="seller-listings-list">
-            <p class="seller-empty">No listing drafts yet. Create your first listing above!</p>
-          </div>
-        </div>
 
-        <!-- Title Generator Sub-tab -->
-        <div id="seller-titlegenerator" class="seller-panel hidden">
-          <p class="listing-helper-desc">Generate optimized eBay listing titles from your checklist data.</p>
-          <div class="listing-helper-search">
-            <input type="text" id="listing-helper-input" placeholder="Search for a card..." />
-            <button onclick="generateListingTitles()">Generate</button>
+          <div class="seller-form-actions">
+            <button type="submit" class="seller-save-btn">Save Listing Draft</button>
+            <button type="button" class="seller-clear-btn" onclick="clearListingForm()">Clear Form</button>
           </div>
-          <div id="listing-helper-results" class="listing-helper-results"></div>
+        </form>
+      </div>
+
+      <!-- My Listings Sub-tab -->
+      <div id="seller-mylistings" class="seller-panel hidden">
+        <div class="seller-listings-controls">
+          <div class="seller-listings-stats">
+            <span id="seller-listing-count">0 listings</span>
+            <span id="seller-total-value">Est. Value: $0.00</span>
+          </div>
+          <div class="seller-listings-actions">
+            <button class="seller-export-btn" onclick="exportListingsCSV()">Export CSV</button>
+          </div>
         </div>
+        <div id="seller-listings-list" class="seller-listings-list">
+          <p class="seller-empty">No listing drafts yet. Create your first listing above!</p>
+        </div>
+      </div>
+
+      <!-- Title Generator Sub-tab -->
+      <div id="seller-titlegenerator" class="seller-panel hidden">
+        <p class="listing-helper-desc">Generate optimized eBay listing titles from your checklist data.</p>
+        <div class="listing-helper-search">
+          <input type="text" id="listing-helper-input" placeholder="Search for a card..." />
+          <button onclick="generateListingTitles()">Generate</button>
+        </div>
+        <div id="listing-helper-results" class="listing-helper-results"></div>
       </div>
     </div>
   </div>
