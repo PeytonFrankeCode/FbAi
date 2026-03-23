@@ -576,7 +576,12 @@
         </div>
         <div id="promote-content">
           <p class="listing-helper-desc">Add up to 5 eBay listings to promote in search results. Your cards will appear between results when other users search.</p>
-          <div class="promote-count"><span id="promote-card-count">0</span> / 5 slots used</div>
+          <div class="promote-count"><span id="promote-card-count">0</span> / <span id="promote-max-count">5</span> slots used</div>
+          <div id="promote-buy-slot-wrap" class="promote-buy-slot hidden">
+            <p>All slots filled! Need more room? <span style="font-size:0.8rem;opacity:0.7;">(Extra slots expire when the card sells)</span></p>
+            <button class="promote-buy-slot-btn" onclick="handleBuyExtraSlot()">+ Add Extra Slot &mdash; $2.99</button>
+            <p id="promote-extra-cap-info" class="promote-cap-info"></p>
+          </div>
           <div class="promote-autofill-wrap">
             <label>Fill from My Listings</label>
             <select id="promote-autofill-select" onchange="autofillPromoteFromListing(this.value)">

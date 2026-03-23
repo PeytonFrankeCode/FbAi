@@ -1282,6 +1282,70 @@ main {
   color: var(--accent);
 }
 
+.promote-buy-slot {
+  text-align: center;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px dashed var(--gold-border);
+  border-radius: 10px;
+  background: var(--gold-bg);
+}
+.promote-buy-slot p {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.promote-buy-slot-btn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--gold);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.promote-buy-slot-btn:hover {
+  opacity: 0.85;
+}
+.promote-buy-slot-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.promote-cap-info {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+.promote-sold-btn {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.promote-sold-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.promote-extra-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--gold-bg);
+  color: var(--gold);
+  border: 1px solid var(--gold-border);
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
 .promote-autofill-wrap {
   margin-bottom: 1rem;
 }
