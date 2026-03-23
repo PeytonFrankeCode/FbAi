@@ -2714,13 +2714,20 @@ function handleBuyExtraSlot() {
   const sub = getUserSubscription();
   if (!sub) { showPricing(); return; }
 
-  const currentMax = getPromoteSlotCount();
-  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.`)) return;
-
   const users = getUsers();
   const key = user.toLowerCase();
+  const currentExtra = users[key]?.extraPromoteSlots || 0;
+
+  if (currentExtra >= 10) {
+    alert('You've reached the maximum of 10 extra slots (15 total).');
+    return;
+  }
+
+  const currentMax = getPromoteSlotCount();
+  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.\n\nNote: This slot expires when the card sells.`)) return;
+
   if (users[key]) {
-    users[key].extraPromoteSlots = (users[key].extraPromoteSlots || 0) + 1;
+    users[key].extraPromoteSlots = currentExtra + 1;
     localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
   }
   renderPromotedCards();
@@ -2802,6 +2809,9 @@ function handleAddPromotedCard(e) {
 
   if (!title || !url || !price) return false;
 
+  // If this card fills a slot beyond the base 5, mark it as using an extra slot
+  const usedExtraSlot = cards.length >= 5;
+
   cards.push({
     id: Date.now().toString(),
     title,
@@ -2809,6 +2819,7 @@ function handleAddPromotedCard(e) {
     price: parseFloat(price),
     imageUrl: imageUrl || '',
     condition,
+    usedExtraSlot,
     createdAt: new Date().toISOString()
   });
 
@@ -2823,6 +2834,29 @@ function handleAddPromotedCard(e) {
 function removePromotedCard(id) {
   const cards = getPromotedCards().filter(c => c.id !== id);
   savePromotedCards(cards);
+  renderPromotedCards();
+}
+
+function markPromotedCardSold(id) {
+  const cards = getPromotedCards();
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+
+  // If this card used an extra slot, expire that slot
+  if (card.usedExtraSlot) {
+    const user = getCurrentUser();
+    if (user) {
+      const users = getUsers();
+      const key = user.toLowerCase();
+      if (users[key] && (users[key].extraPromoteSlots || 0) > 0) {
+        users[key].extraPromoteSlots -= 1;
+        localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+      }
+    }
+  }
+
+  const remaining = cards.filter(c => c.id !== id);
+  savePromotedCards(remaining);
   renderPromotedCards();
 }
 
@@ -2842,6 +2876,13 @@ function renderPromotedCards() {
   // Show/hide buy extra slot button
   if (buySlotWrap) {
     buySlotWrap.classList.toggle('hidden', cards.length < maxSlots);
+    const user = getCurrentUser();
+    const users = user ? getUsers() : {};
+    const extraUsed = user ? (users[user.toLowerCase()]?.extraPromoteSlots || 0) : 0;
+    const capInfo = document.getElementById('promote-extra-cap-info');
+    const buyBtn = buySlotWrap.querySelector('.promote-buy-slot-btn');
+    if (capInfo) capInfo.textContent = `Extra slots: ${extraUsed} / 10 purchased`;
+    if (buyBtn) buyBtn.disabled = extraUsed >= 10;
   }
 
   if (cards.length === 0) {
@@ -2853,17 +2894,21 @@ function renderPromotedCards() {
     const imgHtml = c.imageUrl
       ? `<img src="${escHtml(c.imageUrl)}" alt="" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />`
       : '<div style="width:50px;height:50px;background:var(--surface);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&#127183;</div>';
+    const extraBadge = c.usedExtraSlot ? '<span class="promote-extra-badge">Extra Slot</span>' : '';
     return `<div class="seller-listing-card" style="display:flex;align-items:center;gap:12px;">
       ${imgHtml}
       <div style="flex:1;min-width:0;">
-        <p class="seller-listing-title" style="margin:0 0 4px;">${escHtml(c.title)}</p>
+        <p class="seller-listing-title" style="margin:0 0 4px;">${escHtml(c.title)} ${extraBadge}</p>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span style="font-weight:600;color:var(--accent);">$${parseFloat(c.price).toFixed(2)}</span>
           <span style="font-size:0.75rem;opacity:0.7;">${escHtml(c.condition)}</span>
           <a href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
         </div>
       </div>
-      <button class="seller-delete-btn" onclick="removePromotedCard('${c.id}')" title="Remove">&times;</button>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="promote-sold-btn" onclick="markPromotedCardSold('${c.id}')" title="Mark as Sold">Sold</button>
+        <button class="seller-delete-btn" onclick="removePromotedCard('${c.id}')" title="Remove">&times;</button>
+      </div>
     </div>`;
   }).join('');
 }
