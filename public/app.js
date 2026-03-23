@@ -2789,6 +2789,46 @@ function autofillPromoteFromListing(listingId) {
   document.getElementById('promote-autofill-select').value = '';
 }
 
+// Auto-fill promote form from an eBay listing URL
+async function autoFillFromEbayUrl() {
+  const urlInput = document.getElementById('promote-url');
+  const url = urlInput.value.trim();
+  if (!url.includes('ebay.com/itm/')) return;
+
+  const titleEl = document.getElementById('promote-title');
+  const priceEl = document.getElementById('promote-price');
+  const imageEl = document.getElementById('promote-image');
+  const conditionEl = document.getElementById('promote-condition');
+  const submitBtn = document.getElementById('promote-submit-btn');
+
+  // Show loading state
+  const origText = submitBtn.textContent;
+  submitBtn.textContent = 'Fetching listing...';
+  submitBtn.disabled = true;
+
+  try {
+    const resp = await fetch(`/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
+    const data = await resp.json();
+
+    if (data.title && !titleEl.value.trim()) titleEl.value = data.title;
+    if (data.price && !priceEl.value) priceEl.value = data.price;
+    if (data.imageUrl && !imageEl.value.trim()) imageEl.value = data.imageUrl;
+
+    // Try to map eBay condition to our dropdown options
+    if (data.condition) {
+      const raw = data.condition.toLowerCase();
+      const options = Array.from(conditionEl.options);
+      const match = options.find(o => raw.includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(raw));
+      if (match) conditionEl.value = match.value;
+    }
+  } catch (err) {
+    console.warn('Could not auto-fetch eBay listing details:', err);
+  } finally {
+    submitBtn.textContent = origText;
+    submitBtn.disabled = false;
+  }
+}
+
 async function handleAddPromotedCard(e) {
   e.preventDefault();
   const sub = getUserSubscription();
@@ -2809,10 +2849,10 @@ async function handleAddPromotedCard(e) {
 
   if (!title || !url || !price) return false;
 
-  // Auto-fetch image from eBay listing if no image URL provided
+  // Last-resort: auto-fetch image if still empty at submission time
   if (!imageUrl && url.includes('ebay.com/itm/')) {
     try {
-      const resp = await fetch(`/api/ebay-listing-image?url=${encodeURIComponent(url)}`);
+      const resp = await fetch(`/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
       const data = await resp.json();
       if (data.imageUrl) imageUrl = data.imageUrl;
     } catch (err) {

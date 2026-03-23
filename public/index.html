@@ -596,7 +596,7 @@
               </div>
               <div class="seller-form-group">
                 <label>eBay Listing URL</label>
-                <input type="url" id="promote-url" placeholder="https://www.ebay.com/itm/..." required />
+                <input type="url" id="promote-url" placeholder="https://www.ebay.com/itm/..." required onchange="autoFillFromEbayUrl()" onpaste="setTimeout(autoFillFromEbayUrl, 100)" />
               </div>
               <div class="seller-form-group">
                 <label>Price ($)</label>
