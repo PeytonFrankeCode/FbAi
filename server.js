@@ -710,6 +710,31 @@ app.post('/api/ebay/account-deletion', (req, res) => {
   res.sendStatus(200);
 });
 
+// ---- Fetch image from an eBay listing URL ----
+app.get('/api/ebay-listing-image', async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.includes('ebay.com/itm/')) {
+    return res.status(400).json({ error: 'Invalid eBay listing URL' });
+  }
+  try {
+    const response = await axios.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      timeout: 8000,
+    });
+    const html = response.data;
+    // Extract og:image meta tag
+    const match = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i)
+               || html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+    if (match && match[1]) {
+      return res.json({ imageUrl: match[1] });
+    }
+    res.json({ imageUrl: null });
+  } catch (err) {
+    console.error('eBay listing image fetch error:', err.message);
+    res.json({ imageUrl: null });
+  }
+});
+
 // ---- Checklist Data API ----
 const checklistData = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'checklists.json'), 'utf8'));
 
