@@ -2699,6 +2699,33 @@ function savePromotedCards(cards) {
   localStorage.setItem('cardHuddlePromotedCards', JSON.stringify(cards));
 }
 
+// Extra promotion slots — default 5 + purchased extras
+function getPromoteSlotCount() {
+  const user = getCurrentUser();
+  if (!user) return 5;
+  const users = getUsers();
+  const extra = users[user.toLowerCase()]?.extraPromoteSlots || 0;
+  return 5 + extra;
+}
+
+function handleBuyExtraSlot() {
+  const user = getCurrentUser();
+  if (!user) { showLogin(); return; }
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return; }
+
+  const currentMax = getPromoteSlotCount();
+  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.`)) return;
+
+  const users = getUsers();
+  const key = user.toLowerCase();
+  if (users[key]) {
+    users[key].extraPromoteSlots = (users[key].extraPromoteSlots || 0) + 1;
+    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+  }
+  renderPromotedCards();
+}
+
 function initPromoteTab() {
   const sub = getUserSubscription();
   const gate = document.getElementById('promote-pro-gate');
@@ -2761,8 +2788,9 @@ function handleAddPromotedCard(e) {
   if (!sub) { showPricing(); return false; }
 
   const cards = getPromotedCards();
-  if (cards.length >= 5) {
-    alert('You can promote up to 5 cards. Remove one to add another.');
+  const maxSlots = getPromoteSlotCount();
+  if (cards.length >= maxSlots) {
+    alert(`You've used all ${maxSlots} promotion slots. Remove one or buy an extra slot.`);
     return false;
   }
 
@@ -2802,10 +2830,19 @@ function renderPromotedCards() {
   const cards = getPromotedCards();
   const listEl = document.getElementById('promoted-cards-list');
   const countEl = document.getElementById('promote-card-count');
+  const maxEl = document.getElementById('promote-max-count');
   const submitBtn = document.getElementById('promote-submit-btn');
+  const buySlotWrap = document.getElementById('promote-buy-slot-wrap');
 
+  const maxSlots = getPromoteSlotCount();
   countEl.textContent = cards.length;
-  submitBtn.disabled = cards.length >= 5;
+  if (maxEl) maxEl.textContent = maxSlots;
+  submitBtn.disabled = cards.length >= maxSlots;
+
+  // Show/hide buy extra slot button
+  if (buySlotWrap) {
+    buySlotWrap.classList.toggle('hidden', cards.length < maxSlots);
+  }
 
   if (cards.length === 0) {
     listEl.innerHTML = '<p class="seller-empty">No promoted cards yet. Add your first listing above!</p>';

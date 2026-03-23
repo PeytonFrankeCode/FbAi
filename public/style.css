@@ -1282,6 +1282,34 @@ main {
   color: var(--accent);
 }
 
+.promote-buy-slot {
+  text-align: center;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px dashed var(--gold-border);
+  border-radius: 10px;
+  background: var(--gold-bg);
+}
+.promote-buy-slot p {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.promote-buy-slot-btn {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--gold);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.promote-buy-slot-btn:hover {
+  opacity: 0.85;
+}
+
 .promote-autofill-wrap {
   margin-bottom: 1rem;
 }
