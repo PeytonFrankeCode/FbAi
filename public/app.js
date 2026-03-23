@@ -2709,8 +2709,50 @@ function initPromoteTab() {
   } else {
     gate.classList.add('hidden');
     content.classList.remove('hidden');
+    populatePromoteAutofill();
     renderPromotedCards();
   }
+}
+
+// Populate the autofill dropdown with current seller listings
+function populatePromoteAutofill() {
+  const select = document.getElementById('promote-autofill-select');
+  if (!select) return;
+  const listings = getSellerListings();
+  select.innerHTML = '<option value="">-- Select a listing to autofill --</option>';
+  listings.forEach(l => {
+    const price = l.price ? ` - $${l.price.toFixed(2)}` : '';
+    const opt = document.createElement('option');
+    opt.value = l.id;
+    opt.textContent = l.title + price;
+    select.appendChild(opt);
+  });
+}
+
+// Autofill the promote form from a seller listing
+function autofillPromoteFromListing(listingId) {
+  if (!listingId) return;
+  const listing = getSellerListings().find(l => l.id === listingId);
+  if (!listing) return;
+
+  // Map seller condition values to promote condition values
+  const conditionMap = {
+    'ungraded-nm': 'Ungraded - Near Mint',
+    'ungraded-ex': 'Ungraded - Excellent',
+    'psa10': 'PSA 10',
+    'psa9': 'PSA 9',
+    'bgs10': 'BGS 10',
+    'bgs9.5': 'BGS 9.5',
+    'sgc10': 'SGC 10'
+  };
+
+  document.getElementById('promote-title').value = listing.title || '';
+  document.getElementById('promote-price').value = listing.price || '';
+  const mappedCondition = conditionMap[listing.condition] || 'Ungraded - Near Mint';
+  document.getElementById('promote-condition').value = mappedCondition;
+
+  // Reset the select back to placeholder
+  document.getElementById('promote-autofill-select').value = '';
 }
 
 function handleAddPromotedCard(e) {
