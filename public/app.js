@@ -2719,7 +2719,7 @@ function handleBuyExtraSlot() {
   const currentExtra = users[key]?.extraPromoteSlots || 0;
 
   if (currentExtra >= 10) {
-    alert('You've reached the maximum of 10 extra slots (15 total).');
+    alert('You\'ve reached the maximum of 10 extra slots (15 total).');
     return;
   }
 
