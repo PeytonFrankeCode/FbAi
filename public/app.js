@@ -3171,9 +3171,14 @@ document.addEventListener('click', function(e) {
 function setLayoutMode(mode) {
   localStorage.setItem('cardHuddleLayout', mode);
   document.documentElement.classList.toggle('mobile-layout', mode === 'mobile');
-  // Hide the popup
+  // Hide the first-visit picker popup
   const picker = document.getElementById('layout-picker');
   if (picker) picker.classList.add('hidden');
+  // Close settings overlay if open
+  const settingsOverlay = document.getElementById('settings-overlay');
+  if (settingsOverlay && !settingsOverlay.classList.contains('hidden')) {
+    settingsOverlay.classList.add('hidden');
+  }
   updateLayoutButtons(mode);
 }
 
