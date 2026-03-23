@@ -375,6 +375,7 @@ function applySortToResults(sortType) {
     card.style.animationDelay = `${i * 0.05}s`;
     grid.appendChild(card);
   });
+  injectPromotedCards(grid);
 }
 
 // ---- Known sets/parallels for client-side detection ----
@@ -736,6 +737,7 @@ async function fetchDirectSearch(query) {
         card.style.animationDelay = `${i * 0.05}s`;
         grid.appendChild(card);
       });
+      injectPromotedCards(grid);
       if (isSold) updatePriceChart(results);
     }
 
@@ -876,6 +878,7 @@ async function performSearch(query) {
         card.style.animationDelay = `${i * 0.05}s`;
         grid.appendChild(card);
       });
+      injectPromotedCards(grid);
       if (isSold) updatePriceChart(results);
 
       // Also show similar cards below if serial search returned both
@@ -1439,6 +1442,7 @@ let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 const trackedView = document.getElementById('tracked-view');
 
 const collectionView = document.getElementById('collection-view');
+const sellerView = document.getElementById('seller-view');
 
 function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1449,6 +1453,7 @@ function switchView(view) {
   checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
   collectionView.classList.add('hidden');
+  sellerView.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -1459,6 +1464,9 @@ function switchView(view) {
   } else if (view === 'collection') {
     collectionView.classList.remove('hidden');
     initCollectionView();
+  } else if (view === 'seller') {
+    sellerView.classList.remove('hidden');
+    renderMyListings();
   } else {
     mainEl.classList.remove('hidden');
   }
@@ -1968,7 +1976,6 @@ function switchCollectionTab(tab) {
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
   if (tab === 'completion') loadCompletionProducts();
-  if (tab === 'seller') renderMyListings();
 }
 
 function renderPortfolio() {
@@ -2381,6 +2388,7 @@ function switchSellerTab(tab) {
   const panel = document.getElementById(`seller-${tab}`);
   if (panel) panel.classList.remove('hidden');
   if (tab === 'mylistings') renderMyListings();
+  if (tab === 'promote') initPromoteTab();
 }
 
 // Title character counter
@@ -2679,6 +2687,179 @@ document.addEventListener('DOMContentLoaded', () => {
   const afInput = document.getElementById('autofill-search-input');
   if (afInput) afInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchAutofillTitles(); });
 });
+
+// ---- Promoted Cards (Pro Feature) ----
+
+function getPromotedCards() {
+  try { return JSON.parse(localStorage.getItem('cardHuddlePromotedCards') || '[]'); }
+  catch { return []; }
+}
+
+function savePromotedCards(cards) {
+  localStorage.setItem('cardHuddlePromotedCards', JSON.stringify(cards));
+}
+
+function initPromoteTab() {
+  const sub = getUserSubscription();
+  const gate = document.getElementById('promote-pro-gate');
+  const content = document.getElementById('promote-content');
+  if (!sub) {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+  } else {
+    gate.classList.add('hidden');
+    content.classList.remove('hidden');
+    renderPromotedCards();
+  }
+}
+
+function handleAddPromotedCard(e) {
+  e.preventDefault();
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return false; }
+
+  const cards = getPromotedCards();
+  if (cards.length >= 5) {
+    alert('You can promote up to 5 cards. Remove one to add another.');
+    return false;
+  }
+
+  const title = document.getElementById('promote-title').value.trim();
+  const url = document.getElementById('promote-url').value.trim();
+  const price = document.getElementById('promote-price').value;
+  const imageUrl = document.getElementById('promote-image').value.trim();
+  const condition = document.getElementById('promote-condition').value;
+
+  if (!title || !url || !price) return false;
+
+  cards.push({
+    id: Date.now().toString(),
+    title,
+    itemUrl: url,
+    price: parseFloat(price),
+    imageUrl: imageUrl || '',
+    condition,
+    createdAt: new Date().toISOString()
+  });
+
+  savePromotedCards(cards);
+  renderPromotedCards();
+
+  // Reset form
+  document.getElementById('promote-card-form').reset();
+  return false;
+}
+
+function removePromotedCard(id) {
+  const cards = getPromotedCards().filter(c => c.id !== id);
+  savePromotedCards(cards);
+  renderPromotedCards();
+}
+
+function renderPromotedCards() {
+  const cards = getPromotedCards();
+  const listEl = document.getElementById('promoted-cards-list');
+  const countEl = document.getElementById('promote-card-count');
+  const submitBtn = document.getElementById('promote-submit-btn');
+
+  countEl.textContent = cards.length;
+  submitBtn.disabled = cards.length >= 5;
+
+  if (cards.length === 0) {
+    listEl.innerHTML = '<p class="seller-empty">No promoted cards yet. Add your first listing above!</p>';
+    return;
+  }
+
+  listEl.innerHTML = cards.map(c => {
+    const imgHtml = c.imageUrl
+      ? `<img src="${escHtml(c.imageUrl)}" alt="" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />`
+      : '<div style="width:50px;height:50px;background:var(--surface);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&#127183;</div>';
+    return `<div class="seller-listing-card" style="display:flex;align-items:center;gap:12px;">
+      ${imgHtml}
+      <div style="flex:1;min-width:0;">
+        <p class="seller-listing-title" style="margin:0 0 4px;">${escHtml(c.title)}</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-weight:600;color:var(--accent);">$${parseFloat(c.price).toFixed(2)}</span>
+          <span style="font-size:0.75rem;opacity:0.7;">${escHtml(c.condition)}</span>
+          <a href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
+        </div>
+      </div>
+      <button class="seller-delete-btn" onclick="removePromotedCard('${c.id}')" title="Remove">&times;</button>
+    </div>`;
+  }).join('');
+}
+
+// Build a promoted card element for injection into search results
+function buildPromotedCard(promo) {
+  const card = document.createElement('div');
+  card.className = 'card promoted-card';
+
+  const teamColor = getTeamColor(promo.title);
+  card.style.setProperty('--team-color', teamColor);
+
+  const price = `$${parseFloat(promo.price).toFixed(2)}`;
+
+  const imageHtml = promo.imageUrl
+    ? `<img src="${escHtml(promo.imageUrl)}" alt="${escHtml(promo.title)}" loading="lazy" />`
+    : `<div class="no-image"><span class="no-image-icon">&#127183;</span><span>No image</span></div>`;
+
+  const parsed = parseCardTitle(promo.title);
+  const tagParts = [parsed.year, parsed.set, parsed.parallel].filter(Boolean);
+  const cardTag = tagParts.length >= 2 ? tagParts.join(' ') : '';
+  const cardTagHtml = cardTag ? `<p class="card-tag">${escHtml(cardTag)}</p>` : '';
+
+  card.innerHTML = `
+    <div class="card-accent"></div>
+    <div class="promoted-badge">PROMOTED</div>
+    <div class="card-image-wrap">${imageHtml}</div>
+    <div class="card-body">
+      ${cardTagHtml}
+      <p class="card-title">${escHtml(promo.title)}</p>
+      <p class="card-price">${price}</p>
+      <div class="card-meta">
+        <span class="card-condition">${escHtml(promo.condition)}</span>
+      </div>
+      <a class="card-link"
+         href="${escHtml(promo.itemUrl)}"
+         target="_blank"
+         rel="noopener noreferrer">
+        View on eBay &#8599;
+      </a>
+    </div>
+  `;
+
+  return card;
+}
+
+// Inject promoted cards into a results grid at evenly spaced positions
+function injectPromotedCards(grid) {
+  const promos = getPromotedCards();
+  if (promos.length === 0) return;
+
+  // Shuffle so it's not always the same order
+  const shuffled = [...promos].sort(() => Math.random() - 0.5);
+
+  const existingCards = grid.querySelectorAll('.card:not(.promoted-card)');
+  const count = existingCards.length;
+  if (count < 2) return; // Don't inject if too few results
+
+  // Space promoted cards evenly: every N results insert one
+  const spacing = Math.max(3, Math.floor(count / (shuffled.length + 1)));
+
+  shuffled.forEach((promo, i) => {
+    const insertIndex = spacing * (i + 1);
+    const refCards = grid.querySelectorAll('.card:not(.promoted-card)');
+    if (insertIndex < refCards.length) {
+      const promoCard = buildPromotedCard(promo);
+      promoCard.style.animationDelay = `${insertIndex * 0.05}s`;
+      refCards[insertIndex].before(promoCard);
+    } else {
+      // Append at end
+      const promoCard = buildPromotedCard(promo);
+      grid.appendChild(promoCard);
+    }
+  });
+}
 
 // ---- Marketplace (eBay Browse) ----
 let marketplaceOffset = 0;
