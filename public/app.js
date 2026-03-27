@@ -2439,6 +2439,7 @@ function handleCreateListing(e) {
   const shipping = document.getElementById('seller-shipping').value;
   const shippingCost = parseFloat(document.getElementById('seller-shipping-cost')?.value) || 0;
   const description = document.getElementById('seller-description').value.trim();
+  const listingUrl = document.getElementById('seller-listing-url').value.trim();
   const photoNotes = document.getElementById('seller-photo-notes').value.trim();
 
   if (!title) return;
@@ -2446,7 +2447,7 @@ function handleCreateListing(e) {
   const listing = {
     id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
     title, category, condition, format, price, startBid, quantity,
-    shipping, shippingCost, description, photoNotes,
+    shipping, shippingCost, description, listingUrl, photoNotes,
     createdAt: new Date().toISOString(),
     status: 'draft'
   };
@@ -2496,7 +2497,7 @@ function renderMyListings() {
     const date = new Date(l.createdAt).toLocaleDateString();
     return `<div class="seller-listing-card">
       <div class="seller-listing-info">
-        <span class="seller-listing-title-text">${escHtml(l.title)}</span>
+        <span class="seller-listing-title-text">${l.listingUrl ? `<a href="${escHtml(l.listingUrl)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escHtml(l.title)}</a>` : escHtml(l.title)}</span>
         <div class="seller-listing-meta">
           <span class="seller-listing-badge ${l.format}">${l.format === 'auction' ? 'Auction' : 'BIN'}</span>
           <span>${conditionLabels[l.condition] || l.condition}</span>
@@ -2540,6 +2541,7 @@ function editSellerListing(id) {
   const shipCostEl = document.getElementById('seller-shipping-cost');
   if (shipCostEl) shipCostEl.value = listing.shippingCost || '';
   document.getElementById('seller-description').value = listing.description || '';
+  document.getElementById('seller-listing-url').value = listing.listingUrl || '';
   document.getElementById('seller-photo-notes').value = listing.photoNotes || '';
 
   updateTitleCount();
@@ -2555,7 +2557,7 @@ function editSellerListing(id) {
 function copyListingToClipboard(id) {
   const listing = getSellerListings().find(l => l.id === id);
   if (!listing) return;
-  const text = `Title: ${listing.title}\nPrice: $${(listing.price || 0).toFixed(2)}\nCondition: ${listing.condition}\nDescription: ${listing.description || 'N/A'}`;
+  const text = `Title: ${listing.title}\nPrice: $${(listing.price || 0).toFixed(2)}\nCondition: ${listing.condition}${listing.listingUrl ? `\nURL: ${listing.listingUrl}` : ''}\nDescription: ${listing.description || 'N/A'}`;
   navigator.clipboard.writeText(text);
 }
 
@@ -2563,11 +2565,11 @@ function copyListingToClipboard(id) {
 function exportListingsCSV() {
   const listings = getSellerListings();
   if (listings.length === 0) return;
-  const headers = ['Title', 'Category', 'Condition', 'Format', 'Price', 'Start Bid', 'Quantity', 'Shipping', 'Description', 'Created'];
+  const headers = ['Title', 'Category', 'Condition', 'Format', 'Price', 'Start Bid', 'Quantity', 'Shipping', 'Description', 'URL', 'Created'];
   const rows = listings.map(l => [
     `"${(l.title || '').replace(/"/g, '""')}"`, l.category, l.condition, l.format,
     l.price || '', l.startBid || '', l.quantity || 1, l.shipping,
-    `"${(l.description || '').replace(/"/g, '""')}"`, l.createdAt
+    `"${(l.description || '').replace(/"/g, '""')}"`, `"${(l.listingUrl || '').replace(/"/g, '""')}"`, l.createdAt
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
