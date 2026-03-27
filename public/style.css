@@ -3523,6 +3523,23 @@ tr:hover .cl-alert-btn {
 .portfolio-card-remove { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; padding: 0.2rem; line-height: 1; }
 .portfolio-card-remove:hover { color: var(--error); }
 
+/* Portfolio checklist-style cards */
+.portfolio-set { margin-bottom: 0.75rem; }
+.portfolio-set .checklist-set-body { display: block; }
+.portfolio-set:not(.expanded) .checklist-set-body { display: none; }
+.portfolio-detail-cell { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.portfolio-parallel-tag { font-size: 0.68rem; background: rgba(16, 185, 129, 0.12); color: var(--accent, #10b981); padding: 0.1rem 0.4rem; border-radius: 4px; white-space: nowrap; }
+.cl-printrun-inline { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+.cl-printrun-inline.cl-pr-rare { color: #f6ad55; font-weight: 700; }
+.cl-printrun-inline.cl-pr-low { color: #68d391; }
+.portfolio-cond-tag { font-size: 0.68rem; background: var(--bg-hover, rgba(255,255,255,0.06)); color: var(--text-secondary); padding: 0.1rem 0.4rem; border-radius: 4px; white-space: nowrap; }
+.portfolio-price-cell { white-space: nowrap; text-align: right; }
+.portfolio-price-cell .portfolio-card-cost { font-size: 0.75rem; color: var(--text-muted); }
+.portfolio-price-cell .portfolio-card-value { font-size: 0.75rem; font-weight: 600; margin-left: 0.4rem; }
+.portfolio-price-cell .portfolio-card-value.gain { color: #10b981; }
+.portfolio-price-cell .portfolio-card-value.loss { color: #ef4444; }
+.portfolio-manual-header { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 1.25rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); }
+
 /* Set Completion */
 .completion-subtabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem; width: fit-content; }
 .completion-subtab { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
