@@ -1682,7 +1682,7 @@ function renderChecklistSets() {
                 <td class="cl-team">${escHtml(c.team)}</td>
                 ${hasPrintRuns || activeVariant?.printRun ? `<td class="cl-printrun ${displayPR && parseInt(displayPR) <= 25 ? 'cl-pr-rare' : displayPR && parseInt(displayPR) <= 99 ? 'cl-pr-low' : ''}">${displayPR ? '/' + displayPR : ''}</td>` : ''}
                 <td class="cl-action">
-                  <button class="cl-coll-btn" onclick="event.stopPropagation(); addToCollectionFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${variantLabel}', '${variantPR || printRun}'); this.textContent='&#10003;'; this.classList.add('cl-coll-added')" title="Add to collection">+</button>
+                  <button class="cl-coll-btn" onclick="event.stopPropagation(); addToCollectionFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${variantLabel}', '${variantPR || printRun}', '${cardNum}', '${escHtml(c.team).replace(/'/g, "\\'")}', '${category}'); this.textContent='&#10003;'; this.classList.add('cl-coll-added')" title="Add to collection">+</button>
                   <button class="cl-alert-btn" onclick="event.stopPropagation(); addAlertForCard('${alertQuery}')" title="Track this card (Pro)">&#128276;</button>
                   <button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}${variantLabel ? ' ' + variantLabel : ''}', '${category}')" title="Search eBay">&#128269;</button>
                 </td>
@@ -1995,22 +1995,110 @@ function renderPortfolio() {
     listEl.innerHTML = '<p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>';
     return;
   }
-  listEl.innerHTML = coll.map((c, i) => {
-    const gl = (c.estValue || 0) - (c.purchasePrice || 0);
-    const glClass = gl >= 0 ? 'gain' : 'loss';
-    return `
-      <div class="portfolio-card-item">
-        <div class="portfolio-card-info">
-          <div class="portfolio-card-name">${escHtml(c.name)}</div>
-          <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
+
+  // Separate checklist cards (have player field) from manually added cards
+  const checklistCards = [];
+  const manualCards = [];
+  coll.forEach((c, i) => {
+    if (c.player) {
+      checklistCards.push({ ...c, _idx: i });
+    } else {
+      manualCards.push({ ...c, _idx: i });
+    }
+  });
+
+  let html = '';
+
+  // Group checklist cards by set (year + brand + setName)
+  if (checklistCards.length > 0) {
+    const groups = {};
+    checklistCards.forEach(c => {
+      const key = `${c.year || ''} ${c.brand || ''} ${c.setName || ''}`.trim() || 'Unknown Set';
+      if (!groups[key]) groups[key] = { category: c.category || 'base', cards: [] };
+      groups[key].cards.push(c);
+    });
+
+    const categoryBadgeMap = {
+      'autograph': '<span class="checklist-badge auto">AUTO</span>',
+      'memorabilia': '<span class="checklist-badge memo">MEMO</span>',
+      'insert': '<span class="checklist-badge insert">INSERT</span>',
+      'base': '<span class="checklist-badge base">BASE</span>'
+    };
+
+    Object.keys(groups).forEach(setKey => {
+      const group = groups[setKey];
+      const badge = categoryBadgeMap[group.category] || categoryBadgeMap['base'];
+      html += `<div class="checklist-set portfolio-set expanded">
+        <div class="checklist-set-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <div class="checklist-set-title-row">
+            ${badge}
+            <h3 class="checklist-set-name">${escHtml(setKey)}</h3>
+            <span class="checklist-set-count">${group.cards.length} card${group.cards.length !== 1 ? 's' : ''}</span>
+            <span class="checklist-set-toggle">&#9660;</span>
+          </div>
         </div>
-        <div class="portfolio-card-prices">
-          <span class="portfolio-card-cost">Paid: $${(c.purchasePrice || 0).toFixed(2)}</span>
-          <span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>
+        <div class="checklist-set-body">
+          <table class="checklist-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th>Details</th>
+                <th>Paid</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${group.cards.map(c => {
+                const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+                const glClass = gl >= 0 ? 'gain' : 'loss';
+                const parallelTag = c.parallel ? `<span class="portfolio-parallel-tag">${escHtml(c.parallel)}</span>` : '';
+                const prTag = c.printRun ? `<span class="cl-printrun-inline ${parseInt(c.printRun) <= 25 ? 'cl-pr-rare' : parseInt(c.printRun) <= 99 ? 'cl-pr-low' : ''}">${'/' + c.printRun}</span>` : '';
+                const condTag = c.condition ? `<span class="portfolio-cond-tag">${escHtml(c.condition)}</span>` : '';
+                return `<tr>
+                  <td class="cl-num">${escHtml(c.cardNumber || '')}</td>
+                  <td class="cl-player">${escHtml(c.player)}</td>
+                  <td class="cl-team">${escHtml(c.team || '')}</td>
+                  <td class="portfolio-detail-cell">${parallelTag}${prTag}${condTag}</td>
+                  <td class="portfolio-price-cell">
+                    <span class="portfolio-card-cost">$${(c.purchasePrice || 0).toFixed(2)}</span>
+                    ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
+                  </td>
+                  <td class="cl-action"><button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
-        <button class="portfolio-card-remove" onclick="removeFromCollection(${i})" title="Remove">&times;</button>
       </div>`;
-  }).join('');
+    });
+  }
+
+  // Render manually added cards in the original simple format
+  if (manualCards.length > 0) {
+    if (checklistCards.length > 0) {
+      html += '<div class="portfolio-manual-header">Manually Added</div>';
+    }
+    html += manualCards.map(c => {
+      const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+      const glClass = gl >= 0 ? 'gain' : 'loss';
+      return `
+        <div class="portfolio-card-item">
+          <div class="portfolio-card-info">
+            <div class="portfolio-card-name">${escHtml(c.name)}</div>
+            <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
+          </div>
+          <div class="portfolio-card-prices">
+            <span class="portfolio-card-cost">Paid: $${(c.purchasePrice || 0).toFixed(2)}</span>
+            <span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>
+          </div>
+          <button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button>
+        </div>`;
+    }).join('');
+  }
+
+  listEl.innerHTML = html;
 }
 
 function showAddCardModal() {
@@ -2037,10 +2125,16 @@ function handleAddCard(e) {
   return false;
 }
 
-function addToCollectionFromChecklist(player, year, brand, setName, parallel, printRun) {
+function addToCollectionFromChecklist(player, year, brand, setName, parallel, printRun, cardNumber, team, category) {
   const name = `${player} ${year} ${brand} ${setName}${parallel ? ' ' + parallel : ''}`;
   const coll = getCollection();
-  coll.push({ name, purchasePrice: 0, estValue: 0, condition: '', notes: printRun ? `/${printRun}` : '', addedAt: new Date().toISOString() });
+  coll.push({
+    name, purchasePrice: 0, estValue: 0, condition: '', notes: printRun ? `/${printRun}` : '',
+    player: player || '', team: team || '', cardNumber: cardNumber || '', setName: setName || '',
+    year: year || '', brand: brand || '', parallel: parallel || '', printRun: printRun || '',
+    category: category || 'base',
+    addedAt: new Date().toISOString()
+  });
   saveCollection(coll);
 }
 
