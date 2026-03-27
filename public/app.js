@@ -2218,63 +2218,95 @@ function renderCompletionSets() {
   completionData.sets.forEach((set, si) => {
     const setKey = `s${si}`;
     const cards = set.cards || [];
+    const variants = (set.parallels && set.parallels.length > 0)
+      ? [{ name: 'Base', printRun: '' }, ...set.parallels]
+      : [{ name: 'Base', printRun: '' }];
     let setTotal = 0, setOwned = 0;
 
-    if (rainbowMode && set.parallels && set.parallels.length > 0) {
-      // Rainbow: each card x each parallel
-      const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
-      setTotal = cards.length * variants.length;
-      cards.forEach((c, ci) => {
-        variants.forEach((v, vi) => {
-          const key = `${setKey}_c${ci}_v${vi}`;
-          if (owned[key]) setOwned++;
-        });
-      });
-    } else {
-      setTotal = cards.length;
-      cards.forEach((c, ci) => {
-        const key = `${setKey}_c${ci}`;
+    // Always count by variants (rainbow style)
+    cards.forEach((c, ci) => {
+      variants.forEach((v, vi) => {
+        setTotal++;
+        const key = `${setKey}_c${ci}_v${vi}`;
         if (owned[key]) setOwned++;
       });
-    }
+    });
     totalCards += setTotal;
     ownedCount += setOwned;
 
     const pct = setTotal > 0 ? Math.round((setOwned / setTotal) * 100) : 0;
     const isComplete = pct === 100;
 
+    const categoryBadge = set.category === 'autograph' ? '<span class="checklist-badge auto">AUTO</span>'
+      : set.category === 'memorabilia' ? '<span class="checklist-badge memo">MEMO</span>'
+      : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
+      : '<span class="checklist-badge base">BASE</span>';
+
     html += `<div class="completion-set ${isComplete ? 'complete' : ''}">
       <div class="completion-set-header" onclick="toggleCompletionSet(${si})">
+        ${categoryBadge}
         <span class="completion-set-name">${escHtml(set.name)}</span>
         <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
         <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
       </div>
       <div class="completion-set-cards hidden" id="completion-cards-${si}">`;
 
+    // Group cards by player
+    const playerGroups = {};
     cards.forEach((c, ci) => {
-      if (rainbowMode && set.parallels && set.parallels.length > 0) {
-        const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
-        html += `<div class="completion-card-row">
-          <span class="completion-card-player">${escHtml(c.number)} ${escHtml(c.player)}</span>
-          <div class="completion-variants">`;
+      const pName = c.player || 'Unknown';
+      if (!playerGroups[pName]) playerGroups[pName] = [];
+      playerGroups[pName].push({ ...c, ci });
+    });
+
+    Object.keys(playerGroups).forEach(playerName => {
+      const playerCards = playerGroups[playerName];
+      const firstCard = playerCards[0];
+      // Count owned for this player
+      let playerOwned = 0, playerTotal = 0;
+      playerCards.forEach(c => {
         variants.forEach((v, vi) => {
-          const key = `${setKey}_c${ci}_v${vi}`;
+          playerTotal++;
+          const key = `${setKey}_c${c.ci}_v${vi}`;
+          if (owned[key]) playerOwned++;
+        });
+      });
+      const playerPct = playerTotal > 0 ? Math.round((playerOwned / playerTotal) * 100) : 0;
+
+      const year = completionData.year || '2025';
+      const brand = (completionData.brand || 'Bowman').replace(/'/g, "\\'");
+      const setName = set.name.replace(/'/g, "\\'");
+      const category = set.category || 'base';
+      const playerEsc = escHtml(playerName).replace(/'/g, "\\'");
+      const cardNum = escHtml(firstCard.number).replace(/'/g, "\\'");
+      const printRun = firstCard.printRun ? String(firstCard.printRun) : '';
+
+      html += `<div class="completion-player-group">
+        <div class="completion-player-header">
+          <span class="completion-player-num">${playerCards.map(c => '#' + escHtml(c.number)).join(', ')}</span>
+          <a href="#" class="completion-player-name" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${printRun}')">${escHtml(playerName)}</a>
+          <span class="completion-player-team">${escHtml(firstCard.team || '')}</span>
+          <span class="completion-player-pct ${playerPct === 100 ? 'complete' : ''}">${playerOwned}/${playerTotal}</span>
+        </div>
+        <div class="completion-variants">`;
+
+      playerCards.forEach(c => {
+        variants.forEach((v, vi) => {
+          const key = `${setKey}_c${c.ci}_v${vi}`;
           const checked = owned[key] ? 'checked' : '';
+          const prDisplay = v.printRun ? ' /' + v.printRun : (c.printRun ? ' /' + c.printRun : '');
           html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
             <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
-            <span>${escHtml(v.name)}${v.printRun ? ' /' + v.printRun : ''}</span>
+            <span>${escHtml(v.name)}${prDisplay}</span>
           </label>`;
         });
-        html += `</div></div>`;
-      } else {
-        const key = `${setKey}_c${ci}`;
-        const checked = owned[key] ? 'checked' : '';
-        html += `<label class="completion-card-row completion-check-row ${owned[key] ? 'owned' : ''}">
-          <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
-          <span>${escHtml(c.number)} ${escHtml(c.player)}${c.team ? ' — ' + escHtml(c.team) : ''}</span>
-        </label>`;
-      }
+      });
+
+      html += `</div>
+        <div class="completion-player-listings-slot" id="completion-listings-${si}-${firstCard.ci}"></div>
+      </div>`;
     });
+
     html += `</div></div>`;
   });
 
@@ -2301,6 +2333,53 @@ function toggleCompletionCard(productKey, cardKey, checkbox) {
   }
   saveCompletionState(state);
   renderCompletionSets();
+}
+
+// Toggle inline for-sale listings in completion view
+function toggleCompletionListings(linkEl, player, year, brand, setName, category, cardNum, printRun) {
+  const group = linkEl.closest('.completion-player-group');
+  const slot = group.querySelector('.completion-player-listings-slot');
+
+  // If already open, close it
+  if (slot.innerHTML) {
+    slot.innerHTML = '';
+    linkEl.classList.remove('cl-player-active');
+    return;
+  }
+
+  linkEl.classList.add('cl-player-active');
+  const query = buildChecklistQuery(player, year, brand, setName, category, printRun);
+
+  slot.innerHTML = `
+    <div class="cl-listings-panel completion-listings-panel">
+      <div class="cl-listings-header">
+        <div class="cl-listings-tabs">
+          <button class="cl-listings-tab active" data-lmode="forsale">For Sale</button>
+          <button class="cl-listings-tab" data-lmode="sold">Sold</button>
+        </div>
+        <button class="cl-listings-close" title="Close">&times;</button>
+      </div>
+      <div class="cl-listings-body">
+        <div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>
+      </div>
+    </div>
+  `;
+
+  const tabs = slot.querySelectorAll('.cl-listings-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      fetchPlayerListings(slot, query, tab.dataset.lmode);
+    });
+  });
+
+  slot.querySelector('.cl-listings-close').addEventListener('click', () => {
+    slot.innerHTML = '';
+    linkEl.classList.remove('cl-player-active');
+  });
+
+  fetchPlayerListings(slot, query, 'forsale');
 }
 
 // ---- Completion Sub-tabs & Player Completion ----
@@ -2347,63 +2426,73 @@ function loadPlayerCompletion() {
     const playerCards = (set.cards || []).map((c, ci) => ({ ...c, ci })).filter(c => c.player === player);
     if (playerCards.length === 0) return;
 
-    let setTotal = 0, setOwned = 0;
+    // Always show all variants (rainbow) for player completion
+    const variants = (set.parallels && set.parallels.length > 0)
+      ? [{ name: 'Base', printRun: '' }, ...set.parallels]
+      : [{ name: 'Base', printRun: '' }];
 
-    if (rainbowMode && set.parallels && set.parallels.length > 0) {
-      const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
-      setTotal = playerCards.length * variants.length;
-      playerCards.forEach(c => {
-        variants.forEach((v, vi) => {
-          const key = `${setKey}_c${c.ci}_v${vi}`;
-          if (owned[key]) setOwned++;
-        });
-      });
-    } else {
-      setTotal = playerCards.length;
-      playerCards.forEach(c => {
-        const key = `${setKey}_c${c.ci}`;
+    let setTotal = 0, setOwned = 0;
+    playerCards.forEach(c => {
+      variants.forEach((v, vi) => {
+        setTotal++;
+        const key = `${setKey}_c${c.ci}_v${vi}`;
         if (owned[key]) setOwned++;
       });
-    }
+    });
 
     totalCards += setTotal;
     ownedCount += setOwned;
     const pct = setTotal > 0 ? Math.round((setOwned / setTotal) * 100) : 0;
     const isComplete = pct === 100;
 
+    const categoryBadge = set.category === 'autograph' ? '<span class="checklist-badge auto">AUTO</span>'
+      : set.category === 'memorabilia' ? '<span class="checklist-badge memo">MEMO</span>'
+      : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
+      : '<span class="checklist-badge base">BASE</span>';
+
+    const year = completionData.year || '2025';
+    const brand = (completionData.brand || 'Bowman').replace(/'/g, "\\'");
+    const setNameEsc = set.name.replace(/'/g, "\\'");
+    const category = set.category || 'base';
+    const playerEsc = escHtml(player).replace(/'/g, "\\'");
+    const firstCard = playerCards[0];
+    const cardNum = escHtml(firstCard.number).replace(/'/g, "\\'");
+    const printRun = firstCard.printRun ? String(firstCard.printRun) : '';
+
     html += `<div class="completion-set ${isComplete ? 'complete' : ''}">
       <div class="completion-set-header" onclick="togglePlayerCompletionSet(${si})">
+        ${categoryBadge}
         <span class="completion-set-name">${escHtml(set.name)}</span>
         <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
         <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
       </div>
-      <div class="completion-set-cards hidden" id="player-completion-cards-${si}">`;
+      <div class="completion-set-cards hidden" id="player-completion-cards-${si}">
+        <div class="completion-player-group">
+          <div class="completion-player-header">
+            <span class="completion-player-num">${playerCards.map(c => '#' + escHtml(c.number)).join(', ')}</span>
+            <a href="#" class="completion-player-name" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setNameEsc}', '${category}', '${cardNum}', '${printRun}')">${escHtml(player)}</a>
+            <span class="completion-player-team">${escHtml(firstCard.team || '')}</span>
+            <span class="completion-player-pct ${pct === 100 ? 'complete' : ''}">${setOwned}/${setTotal}</span>
+          </div>
+          <div class="completion-variants">`;
 
     playerCards.forEach(c => {
-      if (rainbowMode && set.parallels && set.parallels.length > 0) {
-        const variants = [{ name: 'Base', printRun: '' }, ...set.parallels];
-        html += `<div class="completion-card-row">
-          <span class="completion-card-player">${escHtml(c.number)} ${escHtml(c.player)}</span>
-          <div class="completion-variants">`;
-        variants.forEach((v, vi) => {
-          const key = `${setKey}_c${c.ci}_v${vi}`;
-          const checked = owned[key] ? 'checked' : '';
-          html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
-            <input type="checkbox" ${checked} onchange="togglePlayerCompletionCard('${productKey}','${key}',this)" />
-            <span>${escHtml(v.name)}${v.printRun ? ' /' + v.printRun : ''}</span>
-          </label>`;
-        });
-        html += `</div></div>`;
-      } else {
-        const key = `${setKey}_c${c.ci}`;
+      variants.forEach((v, vi) => {
+        const key = `${setKey}_c${c.ci}_v${vi}`;
         const checked = owned[key] ? 'checked' : '';
-        html += `<label class="completion-card-row completion-check-row ${owned[key] ? 'owned' : ''}">
+        const prDisplay = v.printRun ? ' /' + v.printRun : (c.printRun ? ' /' + c.printRun : '');
+        html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
           <input type="checkbox" ${checked} onchange="togglePlayerCompletionCard('${productKey}','${key}',this)" />
-          <span>${escHtml(c.number)} ${escHtml(c.player)}${c.team ? ' — ' + escHtml(c.team) : ''}</span>
+          <span>${escHtml(v.name)}${prDisplay}</span>
         </label>`;
-      }
+      });
     });
-    html += `</div></div>`;
+
+    html += `</div>
+          <div class="completion-player-listings-slot" id="player-completion-listings-${si}"></div>
+        </div>
+      </div>
+    </div>`;
   });
 
   if (!html) html = '<p style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:2rem;">No cards found for this player in this product.</p>';

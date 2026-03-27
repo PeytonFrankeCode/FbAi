@@ -3575,6 +3575,20 @@ tr:hover .cl-alert-btn {
 .completion-variant-check.owned { background: rgba(16, 185, 129, 0.15); color: var(--accent, #10b981); }
 .completion-variant-check input { accent-color: var(--accent, #10b981); width: 12px; height: 12px; }
 
+/* Completion Player Groups */
+.completion-player-group { padding: 0.6rem 0; border-bottom: 1px solid rgba(45, 55, 72, 0.3); }
+.completion-player-group:last-child { border-bottom: none; }
+.completion-player-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.completion-player-num { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; min-width: 40px; }
+.completion-player-name { color: var(--accent, #10b981); font-weight: 600; font-size: 0.85rem; text-decoration: none; cursor: pointer; transition: color 0.15s; }
+.completion-player-name:hover { color: var(--accent-light, #34d399); text-decoration: underline; }
+.completion-player-name.cl-player-active { color: var(--accent-light, #34d399); text-decoration: underline; }
+.completion-player-team { font-size: 0.78rem; color: var(--text-secondary); flex: 1; }
+.completion-player-pct { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+.completion-player-pct.complete { color: var(--accent, #10b981); }
+.completion-player-listings-slot { margin-top: 0.25rem; }
+.completion-listings-panel { margin-top: 0.5rem; border-radius: 8px; overflow: hidden; }
+
 /* Hot/Cold */
 .hotcold-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
 .hotcold-period { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
