@@ -17,6 +17,87 @@ const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_AP
 // Which eBay API to use: 'finding' (legacy) or 'insights' (Marketplace Insights)
 const EBAY_API_MODE = process.env.EBAY_API_MODE || 'finding';
 
+// ---- Stripe Setup ----
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
+let stripe = null;
+if (stripeEnabled) {
+  stripe = require('stripe')(STRIPE_SECRET_KEY);
+}
+
+// Stripe webhook needs raw body — must be before express.json()
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe not configured' });
+
+  let event;
+  try {
+    if (STRIPE_WEBHOOK_SECRET && !STRIPE_WEBHOOK_SECRET.includes('REPLACE')) {
+      event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET);
+    } else {
+      event = JSON.parse(req.body);
+    }
+  } catch (err) {
+    console.error('Stripe webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  const subs = loadSubscriptions();
+
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object;
+      const username = session.metadata?.username;
+      if (!username) break;
+
+      if (session.metadata?.type === 'extra_slot') {
+        // One-time purchase for extra promote slot
+        if (!subs[username]) subs[username] = {};
+        subs[username].extraPromoteSlots = (subs[username].extraPromoteSlots || 0) + 1;
+        subs[username].lastPayment = { type: 'extra_slot', amount: 299, date: new Date().toISOString(), sessionId: session.id };
+      } else if (session.subscription) {
+        // Pro subscription started
+        if (!subs[username]) subs[username] = {};
+        subs[username].plan = 'pro';
+        subs[username].period = session.metadata?.period || 'monthly';
+        subs[username].stripeCustomerId = session.customer;
+        subs[username].stripeSubscriptionId = session.subscription;
+        subs[username].subscribedAt = new Date().toISOString();
+        subs[username].status = 'active';
+      }
+      saveSubscriptions(subs);
+      break;
+    }
+    case 'customer.subscription.deleted': {
+      const sub = event.data.object;
+      // Find user by stripe customer ID
+      for (const [user, data] of Object.entries(subs)) {
+        if (data.stripeCustomerId === sub.customer) {
+          data.status = 'cancelled';
+          data.cancelledAt = new Date().toISOString();
+          break;
+        }
+      }
+      saveSubscriptions(subs);
+      break;
+    }
+    case 'customer.subscription.updated': {
+      const sub = event.data.object;
+      for (const [user, data] of Object.entries(subs)) {
+        if (data.stripeCustomerId === sub.customer) {
+          data.status = sub.status === 'active' ? 'active' : sub.status;
+          break;
+        }
+      }
+      saveSubscriptions(subs);
+      break;
+    }
+  }
+
+  res.json({ received: true });
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -1141,6 +1222,121 @@ app.get('/api/price-history', (req, res) => {
   res.json({ history: history[q] || [], query: q });
 });
 
+// ---- Stripe Subscription Storage (JSON file) ----
+const SUBS_FILE = path.join(__dirname, 'data', 'subscriptions.json');
+
+function loadSubscriptions() {
+  try {
+    if (fs.existsSync(SUBS_FILE)) return JSON.parse(fs.readFileSync(SUBS_FILE, 'utf-8'));
+  } catch (err) { console.error('Error loading subscriptions:', err); }
+  return {};
+}
+
+function saveSubscriptions(subs) {
+  try {
+    const dir = path.dirname(SUBS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(SUBS_FILE, JSON.stringify(subs, null, 2));
+  } catch (err) { console.error('Error saving subscriptions:', err); }
+}
+
+// ---- Stripe API Routes ----
+
+// Get Stripe publishable key
+app.get('/api/stripe/config', (req, res) => {
+  res.json({
+    publishableKey: stripeEnabled ? STRIPE_PUBLISHABLE_KEY : null,
+    enabled: stripeEnabled
+  });
+});
+
+// Create checkout session for Pro subscription
+app.post('/api/stripe/create-checkout', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
+
+  const { username, period } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  try {
+    const priceData = period === 'yearly'
+      ? { unit_amount: 3999, recurring: { interval: 'year' } }
+      : { unit_amount: 499, recurring: { interval: 'month' } };
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: { name: `Card Huddle Pro (${period === 'yearly' ? 'Yearly' : 'Monthly'})` },
+          ...priceData
+        },
+        quantity: 1
+      }],
+      metadata: { username: username.toLowerCase(), period: period || 'monthly' },
+      success_url: `${req.protocol}://${req.get('host')}/?payment=success&plan=pro`,
+      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+    });
+
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('Stripe checkout error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create checkout session for extra promote slot
+app.post('/api/stripe/buy-slot', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
+
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  const subs = loadSubscriptions();
+  const userSub = subs[username.toLowerCase()];
+  if (!userSub || userSub.status !== 'active') {
+    return res.status(403).json({ error: 'Pro subscription required' });
+  }
+
+  const currentExtra = userSub.extraPromoteSlots || 0;
+  if (currentExtra >= 10) {
+    return res.status(400).json({ error: 'Maximum extra slots reached (10)' });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: { name: 'Extra Promote Slot' },
+          unit_amount: 299
+        },
+        quantity: 1
+      }],
+      metadata: { username: username.toLowerCase(), type: 'extra_slot' },
+      success_url: `${req.protocol}://${req.get('host')}/?payment=success&type=slot`,
+      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+    });
+
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('Stripe slot purchase error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get subscription status for a user
+app.get('/api/stripe/subscription', (req, res) => {
+  const username = req.query.username;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  const subs = loadSubscriptions();
+  const userSub = subs[username.toLowerCase()] || null;
+  res.json({ subscription: userSub, stripeEnabled });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -1150,6 +1346,7 @@ app.listen(PORT, () => {
   console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
   console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
   console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
+  console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
   if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
     console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
   }

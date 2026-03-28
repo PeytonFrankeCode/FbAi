@@ -1373,14 +1373,40 @@ function setPricingPeriod(period) {
   }
 }
 
-function handleSubscribe(plan) {
+async function handleSubscribe(plan) {
   const user = getCurrentUser();
   if (!user) {
     closePricing();
     showLogin();
     return;
   }
-  // Store subscription in localStorage
+
+  // Check if Stripe is enabled
+  try {
+    const configRes = await fetch('/api/stripe/config');
+    const config = await configRes.json();
+
+    if (config.enabled) {
+      // Redirect to Stripe Checkout
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, period: pricingPeriod })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      } else {
+        alert(data.error || 'Failed to start checkout');
+        return;
+      }
+    }
+  } catch (err) {
+    console.log('Stripe not available, using local subscription:', err);
+  }
+
+  // Fallback: local subscription (when Stripe not configured)
   const users = getUsers();
   const key = user.toLowerCase();
   if (users[key]) {
@@ -1394,8 +1420,49 @@ function handleSubscribe(plan) {
 function getUserSubscription() {
   const user = getCurrentUser();
   if (!user) return null;
+  // Check localStorage first (includes server-synced data)
   const users = getUsers();
   return users[user.toLowerCase()]?.subscription || null;
+}
+
+// Sync subscription status from server (called on login and page load)
+async function syncSubscriptionStatus() {
+  const user = getCurrentUser();
+  if (!user) return;
+  try {
+    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`);
+    const data = await res.json();
+    if (data.subscription && data.subscription.status === 'active') {
+      const users = getUsers();
+      const key = user.toLowerCase();
+      if (!users[key]) users[key] = {};
+      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt };
+      if (data.subscription.extraPromoteSlots) {
+        users[key].extraPromoteSlots = data.subscription.extraPromoteSlots;
+      }
+      localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+      updateProButton();
+    }
+  } catch (err) { /* server unavailable, use local data */ }
+}
+
+// Check for payment success/cancel in URL params
+function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  if (payment === 'success') {
+    const type = params.get('type');
+    if (type === 'slot') {
+      alert('Extra promote slot purchased successfully!');
+    } else {
+      alert('Pro subscription activated! Welcome to Card Huddle Pro.');
+    }
+    // Sync from server and clean URL
+    syncSubscriptionStatus();
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (payment === 'cancelled') {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 function updateProButton() {
@@ -1423,6 +1490,9 @@ document.addEventListener('keydown', (e) => {
 
 // Init pro button state
 updateProButton();
+// Sync Stripe subscription status and check for payment return
+syncSubscriptionStatus();
+checkPaymentReturn();
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
@@ -2893,7 +2963,7 @@ function getPromoteSlotCount() {
   return 5 + extra;
 }
 
-function handleBuyExtraSlot() {
+async function handleBuyExtraSlot() {
   const user = getCurrentUser();
   if (!user) { showLogin(); return; }
   const sub = getUserSubscription();
@@ -2909,8 +2979,33 @@ function handleBuyExtraSlot() {
   }
 
   const currentMax = getPromoteSlotCount();
-  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.\n\nNote: This slot expires when the card sells.`)) return;
+  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.`)) return;
 
+  // Try Stripe checkout
+  try {
+    const configRes = await fetch('/api/stripe/config');
+    const config = await configRes.json();
+
+    if (config.enabled) {
+      const res = await fetch('/api/stripe/buy-slot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      } else {
+        alert(data.error || 'Failed to start checkout');
+        return;
+      }
+    }
+  } catch (err) {
+    console.log('Stripe not available, using local purchase:', err);
+  }
+
+  // Fallback: local (when Stripe not configured)
   if (users[key]) {
     users[key].extraPromoteSlots = currentExtra + 1;
     localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
