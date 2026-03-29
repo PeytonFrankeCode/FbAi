@@ -1373,14 +1373,40 @@ function setPricingPeriod(period) {
   }
 }
 
-function handleSubscribe(plan) {
+async function handleSubscribe(plan) {
   const user = getCurrentUser();
   if (!user) {
     closePricing();
     showLogin();
     return;
   }
-  // Store subscription in localStorage
+
+  // Check if Stripe is enabled
+  try {
+    const configRes = await fetch('/api/stripe/config');
+    const config = await configRes.json();
+
+    if (config.enabled) {
+      // Redirect to Stripe Checkout
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, period: pricingPeriod })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      } else {
+        alert(data.error || 'Failed to start checkout');
+        return;
+      }
+    }
+  } catch (err) {
+    console.log('Stripe not available, using local subscription:', err);
+  }
+
+  // Fallback: local subscription (when Stripe not configured)
   const users = getUsers();
   const key = user.toLowerCase();
   if (users[key]) {
@@ -1394,8 +1420,49 @@ function handleSubscribe(plan) {
 function getUserSubscription() {
   const user = getCurrentUser();
   if (!user) return null;
+  // Check localStorage first (includes server-synced data)
   const users = getUsers();
   return users[user.toLowerCase()]?.subscription || null;
+}
+
+// Sync subscription status from server (called on login and page load)
+async function syncSubscriptionStatus() {
+  const user = getCurrentUser();
+  if (!user) return;
+  try {
+    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`);
+    const data = await res.json();
+    if (data.subscription && data.subscription.status === 'active') {
+      const users = getUsers();
+      const key = user.toLowerCase();
+      if (!users[key]) users[key] = {};
+      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt };
+      if (data.subscription.extraPromoteSlots) {
+        users[key].extraPromoteSlots = data.subscription.extraPromoteSlots;
+      }
+      localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+      updateProButton();
+    }
+  } catch (err) { /* server unavailable, use local data */ }
+}
+
+// Check for payment success/cancel in URL params
+function checkPaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  if (payment === 'success') {
+    const type = params.get('type');
+    if (type === 'slot') {
+      alert('Extra promote slot purchased successfully!');
+    } else {
+      alert('Pro subscription activated! Welcome to Card Huddle Pro.');
+    }
+    // Sync from server and clean URL
+    syncSubscriptionStatus();
+    window.history.replaceState({}, '', window.location.pathname);
+  } else if (payment === 'cancelled') {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 function updateProButton() {
@@ -1423,6 +1490,9 @@ document.addEventListener('keydown', (e) => {
 
 // Init pro button state
 updateProButton();
+// Sync Stripe subscription status and check for payment return
+syncSubscriptionStatus();
+checkPaymentReturn();
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
@@ -2893,7 +2963,7 @@ function getPromoteSlotCount() {
   return 5 + extra;
 }
 
-function handleBuyExtraSlot() {
+async function handleBuyExtraSlot() {
   const user = getCurrentUser();
   if (!user) { showLogin(); return; }
   const sub = getUserSubscription();
@@ -2909,8 +2979,33 @@ function handleBuyExtraSlot() {
   }
 
   const currentMax = getPromoteSlotCount();
-  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.\n\nNote: This slot expires when the card sells.`)) return;
+  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.`)) return;
 
+  // Try Stripe checkout
+  try {
+    const configRes = await fetch('/api/stripe/config');
+    const config = await configRes.json();
+
+    if (config.enabled) {
+      const res = await fetch('/api/stripe/buy-slot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user })
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      } else {
+        alert(data.error || 'Failed to start checkout');
+        return;
+      }
+    }
+  } catch (err) {
+    console.log('Stripe not available, using local purchase:', err);
+  }
+
+  // Fallback: local (when Stripe not configured)
   if (users[key]) {
     users[key].extraPromoteSlots = currentExtra + 1;
     localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
@@ -3220,6 +3315,144 @@ function injectPromotedCards(grid) {
     }
   });
 }
+
+// ---- Market Insights ----
+async function searchInsights() {
+  const input = document.getElementById('insights-input');
+  const resultsEl = document.getElementById('insights-results');
+  const query = input.value.trim();
+  if (!query || query.length < 2) return;
+
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Analyzing market data...</span></div>';
+
+  try {
+    const res = await fetch(`/api/marketplace-insights?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    if (data.error) {
+      resultsEl.innerHTML = `<p class="insights-empty">Error: ${escHtml(data.detail || data.error)}</p>`;
+      return;
+    }
+
+    if (!data.insights || data.totalSold === 0) {
+      resultsEl.innerHTML = '<p class="insights-empty">No sold data found. Try a different search.</p>';
+      return;
+    }
+
+    const ins = data.insights;
+    const trendIcon = ins.trend === 'rising' ? '&#9650;' : ins.trend === 'falling' ? '&#9660;' : '&#9679;';
+    const trendClass = ins.trend === 'rising' ? 'insights-trend-up' : ins.trend === 'falling' ? 'insights-trend-down' : 'insights-trend-flat';
+
+    let html = `<div class="insights-dashboard">`;
+
+    // Summary stats
+    html += `<div class="insights-stats">
+      <div class="insights-stat">
+        <span class="insights-stat-label">Avg Price</span>
+        <span class="insights-stat-value">$${ins.avgPrice.toFixed(2)}</span>
+      </div>
+      <div class="insights-stat">
+        <span class="insights-stat-label">Median Price</span>
+        <span class="insights-stat-value">$${ins.medianPrice.toFixed(2)}</span>
+      </div>
+      <div class="insights-stat">
+        <span class="insights-stat-label">Range</span>
+        <span class="insights-stat-value">$${ins.minPrice.toFixed(2)} - $${ins.maxPrice.toFixed(2)}</span>
+      </div>
+      <div class="insights-stat">
+        <span class="insights-stat-label">Trend</span>
+        <span class="insights-stat-value ${trendClass}">${trendIcon} ${ins.trend.charAt(0).toUpperCase() + ins.trend.slice(1)}</span>
+      </div>
+      <div class="insights-stat">
+        <span class="insights-stat-label">Sold</span>
+        <span class="insights-stat-value">${data.totalSold} cards</span>
+      </div>
+    </div>`;
+
+    // Sales timeline chart (ASCII bar chart)
+    if (ins.salesByDate && ins.salesByDate.length > 0) {
+      const maxVol = Math.max(...ins.salesByDate.map(d => d.totalVolume));
+      html += `<div class="insights-section">
+        <h4 class="insights-section-title">Sales Timeline</h4>
+        <div class="insights-timeline">`;
+      ins.salesByDate.forEach(d => {
+        const pct = maxVol > 0 ? (d.totalVolume / maxVol) * 100 : 0;
+        const dateLabel = d.date.slice(5); // MM-DD
+        html += `<div class="insights-timeline-row">
+          <span class="insights-timeline-date">${dateLabel}</span>
+          <div class="insights-timeline-bar-wrap">
+            <div class="insights-timeline-bar" style="width:${pct}%"></div>
+          </div>
+          <span class="insights-timeline-val">${d.count} sold &middot; avg $${d.avgPrice.toFixed(2)}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    // Price distribution
+    if (ins.priceDistribution) {
+      const distEntries = Object.entries(ins.priceDistribution);
+      const maxCount = Math.max(...distEntries.map(([, c]) => c));
+      html += `<div class="insights-section">
+        <h4 class="insights-section-title">Price Distribution</h4>
+        <div class="insights-distribution">`;
+      distEntries.forEach(([bucket, count]) => {
+        const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+        html += `<div class="insights-dist-row">
+          <span class="insights-dist-label">${escHtml(bucket)}</span>
+          <div class="insights-dist-bar-wrap">
+            <div class="insights-dist-bar" style="width:${pct}%"></div>
+          </div>
+          <span class="insights-dist-count">${count}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    // Condition breakdown
+    if (ins.conditionBreakdown && ins.conditionBreakdown.length > 0) {
+      html += `<div class="insights-section">
+        <h4 class="insights-section-title">By Condition</h4>
+        <div class="insights-conditions">`;
+      ins.conditionBreakdown.forEach(c => {
+        html += `<div class="insights-condition-row">
+          <span class="insights-condition-name">${escHtml(c.condition)}</span>
+          <span class="insights-condition-count">${c.count} sold</span>
+          <span class="insights-condition-price">avg $${c.avgPrice.toFixed(2)}</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+
+    // Top sales
+    if (ins.topSales && ins.topSales.length > 0) {
+      html += `<div class="insights-section">
+        <h4 class="insights-section-title">Top Sales</h4>
+        <div class="insights-top-sales">`;
+      ins.topSales.forEach(s => {
+        html += `<a class="insights-top-sale" href="${escHtml(s.url)}" target="_blank" rel="noopener noreferrer">
+          ${s.imageUrl ? `<img class="insights-sale-img" src="${escHtml(s.imageUrl)}" alt="" loading="lazy" />` : '<div class="insights-sale-img insights-no-img">No Img</div>'}
+          <div class="insights-sale-info">
+            <span class="insights-sale-title">${escHtml(s.title)}</span>
+            <span class="insights-sale-meta">$${s.price.toFixed(2)}${s.date ? ` &middot; ${s.date}` : ''}</span>
+          </div>
+        </a>`;
+      });
+      html += `</div></div>`;
+    }
+
+    html += `</div>`;
+    resultsEl.innerHTML = html;
+  } catch (err) {
+    resultsEl.innerHTML = `<p class="insights-empty">Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+// Enter key for insights search
+document.addEventListener('DOMContentLoaded', () => {
+  const insInput = document.getElementById('insights-input');
+  if (insInput) insInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchInsights(); });
+});
 
 // ---- Marketplace (eBay Browse) ----
 let marketplaceOffset = 0;
