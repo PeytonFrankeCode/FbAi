@@ -3951,6 +3951,42 @@ tr:hover .cl-alert-btn {
   .hotcold-item { padding: 0.5rem 0.65rem; font-size: 0.75rem; gap: 0.5rem; }
 }
 
+/* ---- SportsCardsPro Price Guide ---- */
+.scp-price-guide { margin-top: 1.5rem; }
+.scp-title {
+  font-size: 1rem; font-weight: 700; color: var(--text-primary);
+  margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;
+}
+.scp-source {
+  font-size: 0.7rem; font-weight: 500; color: var(--text-muted);
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+}
+.scp-results { display: flex; flex-direction: column; gap: 0.5rem; }
+.scp-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; transition: border-color 0.15s;
+}
+.scp-card:hover { border-color: var(--accent); }
+.scp-card-name {
+  font-size: 0.8rem; font-weight: 600; color: var(--text-primary);
+  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.scp-card-set { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; }
+.scp-prices { display: flex; gap: 0.75rem; flex-shrink: 0; }
+.scp-price-col { text-align: center; min-width: 60px; }
+.scp-price-label { font-size: 0.6rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em; }
+.scp-price-value { font-size: 0.85rem; font-weight: 700; color: var(--accent); margin-top: 0.1rem; }
+.scp-price-value.scp-na { color: var(--text-muted); font-weight: 400; font-size: 0.75rem; }
+.scp-loading { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1rem; }
+.scp-empty { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1rem; }
+
+@media (max-width: 600px) {
+  .scp-card { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .scp-prices { width: 100%; justify-content: space-between; }
+}
+
 @media (max-width: 400px) {
   .portfolio-stats { grid-template-columns: repeat(2, 1fr); }
   .portfolio-stat-value { font-size: 0.9rem; }
