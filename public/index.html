@@ -322,6 +322,7 @@
           <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
           <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
           <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
+          <button class="coll-tab" data-coll="insights" onclick="switchCollectionTab('insights')">Insights</button>
         </div>
       </div>
 
@@ -403,6 +404,18 @@
         </div>
         <div id="hotcold-list" class="hotcold-list">
           <p class="hotcold-empty">Track cards via search to see price movements here.</p>
+        </div>
+      </div>
+
+      <!-- Insights Tab -->
+      <div id="coll-insights" class="coll-panel hidden">
+        <p class="insights-desc">Market analytics powered by real sold data. Search any card to see pricing trends, volume, and distribution.</p>
+        <div class="insights-search">
+          <input type="text" id="insights-input" placeholder="Search cards (e.g. 2024 Prizm Justin Jefferson Silver)..." />
+          <button onclick="searchInsights()">Analyze</button>
+        </div>
+        <div id="insights-results" class="insights-results">
+          <p class="insights-empty">Search for a card to view market insights.</p>
         </div>
       </div>
 

@@ -1016,9 +1016,8 @@ async function checkAlerts() {
         searchResult = getMockData(alert.query, 'sold');
       } else if (EBAY_API_MODE === 'browse') {
         searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10));
-      } else if (EBAY_API_MODE === 'insights') {
-        searchResult = await withRetry(() => fetchViaInsightsAPI(alert.query, 10));
       } else {
+        // Always use Finding API for alerts (Insights API requires beta access)
         searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10));
       }
 
@@ -1171,6 +1170,178 @@ app.get('/api/marketplace', async (req, res) => {
     res.status(502).json({ error: 'eBay API error', detail: err.message });
   }
 });
+
+// ---- Marketplace Insights (built from Finding API sold data) ----
+app.get('/api/marketplace-insights', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q || q.length < 2) return res.status(400).json({ error: 'Query required (min 2 chars)' });
+
+  const cacheKey = `insights:${q}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  if (USE_MOCK) {
+    const mock = buildMockInsights(q);
+    setCache(cacheKey, mock);
+    return res.json(mock);
+  }
+
+  try {
+    // Fetch up to 50 sold items via Finding API
+    const { results } = await withRetry(() => fetchViaFindingAPI(q, 50));
+
+    if (results.length === 0) {
+      return res.json({ query: q, totalSold: 0, insights: null });
+    }
+
+    const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
+    prices.sort((a, b) => a - b);
+
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const median = prices.length % 2 === 0
+      ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
+      : prices[Math.floor(prices.length / 2)];
+
+    // Price distribution buckets
+    const buckets = {};
+    prices.forEach(p => {
+      let label;
+      if (p < 5) label = 'Under $5';
+      else if (p < 10) label = '$5-$10';
+      else if (p < 25) label = '$10-$25';
+      else if (p < 50) label = '$25-$50';
+      else if (p < 100) label = '$50-$100';
+      else if (p < 250) label = '$100-$250';
+      else if (p < 500) label = '$250-$500';
+      else label = '$500+';
+      buckets[label] = (buckets[label] || 0) + 1;
+    });
+
+    // Sales timeline (group by date)
+    const timeline = {};
+    results.forEach(r => {
+      if (!r.soldDate) return;
+      const date = r.soldDate.slice(0, 10);
+      if (!timeline[date]) timeline[date] = { count: 0, total: 0, prices: [] };
+      const p = parseFloat(r.price);
+      if (!isNaN(p) && p > 0) {
+        timeline[date].count++;
+        timeline[date].total += p;
+        timeline[date].prices.push(p);
+      }
+    });
+
+    const salesByDate = Object.entries(timeline)
+      .map(([date, d]) => ({
+        date,
+        count: d.count,
+        avgPrice: d.count > 0 ? d.total / d.count : 0,
+        totalVolume: d.total,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Condition breakdown
+    const conditionMap = {};
+    results.forEach(r => {
+      const cond = r.condition || 'Unknown';
+      if (!conditionMap[cond]) conditionMap[cond] = { count: 0, prices: [] };
+      conditionMap[cond].count++;
+      const p = parseFloat(r.price);
+      if (!isNaN(p) && p > 0) conditionMap[cond].prices.push(p);
+    });
+
+    const conditionBreakdown = Object.entries(conditionMap).map(([cond, d]) => ({
+      condition: cond,
+      count: d.count,
+      avgPrice: d.prices.length > 0 ? d.prices.reduce((a, b) => a + b, 0) / d.prices.length : 0,
+    })).sort((a, b) => b.count - a.count);
+
+    // Top sales
+    const topSales = [...results]
+      .filter(r => parseFloat(r.price) > 0)
+      .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+      .slice(0, 5)
+      .map(r => ({ title: r.title, price: parseFloat(r.price), date: r.soldDate?.slice(0, 10), url: r.itemUrl, imageUrl: r.imageUrl }));
+
+    // Price trend (compare first half vs second half of results by date)
+    let trend = 'stable';
+    if (salesByDate.length >= 2) {
+      const mid = Math.floor(salesByDate.length / 2);
+      const olderAvg = salesByDate.slice(0, mid).reduce((s, d) => s + d.avgPrice, 0) / mid;
+      const newerAvg = salesByDate.slice(mid).reduce((s, d) => s + d.avgPrice, 0) / (salesByDate.length - mid);
+      const pctChange = olderAvg > 0 ? ((newerAvg - olderAvg) / olderAvg) * 100 : 0;
+      if (pctChange > 10) trend = 'rising';
+      else if (pctChange < -10) trend = 'falling';
+    }
+
+    const result = {
+      query: q,
+      totalSold: results.length,
+      insights: {
+        avgPrice: Math.round(avg * 100) / 100,
+        medianPrice: Math.round(median * 100) / 100,
+        minPrice: prices[0],
+        maxPrice: prices[prices.length - 1],
+        priceSpread: Math.round((prices[prices.length - 1] - prices[0]) * 100) / 100,
+        trend,
+        salesByDate,
+        priceDistribution: buckets,
+        conditionBreakdown,
+        topSales,
+        sampleSize: prices.length,
+      },
+    };
+
+    setCache(cacheKey, result);
+    res.json(result);
+  } catch (err) {
+    console.error('Marketplace insights error:', err.message);
+    const status = err.response?.status || 500;
+    res.status(status).json({ error: 'Failed to generate insights', detail: err.message });
+  }
+});
+
+function buildMockInsights(query) {
+  const player = query.trim().split(/\s+/).slice(0, 2).join(' ');
+  let hash = 0;
+  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
+  const seed = Math.abs(hash);
+  const basePrice = 5 + (seed % 50);
+
+  const salesByDate = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const count = 1 + (seed + i) % 5;
+    const avg = basePrice + ((seed * (i + 1)) % 20) - 10;
+    salesByDate.push({ date: d.toISOString().slice(0, 10), count, avgPrice: Math.max(1, Math.round(avg * 100) / 100), totalVolume: Math.round(avg * count * 100) / 100 });
+  }
+
+  return {
+    query,
+    totalSold: 30 + (seed % 20),
+    mock: true,
+    insights: {
+      avgPrice: basePrice,
+      medianPrice: basePrice - 2,
+      minPrice: Math.max(1, basePrice - 15),
+      maxPrice: basePrice + 30,
+      priceSpread: 45,
+      trend: ['rising', 'falling', 'stable'][seed % 3],
+      salesByDate,
+      priceDistribution: { 'Under $5': 3, '$5-$10': 8, '$10-$25': 12, '$25-$50': 5, '$50-$100': 2 },
+      conditionBreakdown: [
+        { condition: 'Ungraded', count: 20, avgPrice: basePrice - 3 },
+        { condition: 'PSA 10', count: 5, avgPrice: basePrice + 25 },
+        { condition: 'PSA 9', count: 3, avgPrice: basePrice + 10 },
+      ],
+      topSales: [
+        { title: `${player} 2024 Prizm Silver`, price: basePrice + 30, date: salesByDate[0].date, url: '#', imageUrl: null },
+        { title: `${player} 2024 Prizm Gold /10`, price: basePrice + 50, date: salesByDate[1].date, url: '#', imageUrl: null },
+      ],
+      sampleSize: 30,
+    },
+  };
+}
 
 // ---- Price History Storage ----
 const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
