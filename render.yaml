@@ -1,10 +1,15 @@
 services:
   - type: web
-    name: fb-card-tracker
+    name: the-card-huddle
     env: node
     buildCommand: npm install
     startCommand: node server.js
+    customDomains:
+      - name: thecardhuddle.com
+      - name: www.thecardhuddle.com
     envVars:
+      - key: SITE_URL
+        value: https://thecardhuddle.com
       - key: EBAY_APP_ID
         value: PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8
       - key: EBAY_CERT_ID

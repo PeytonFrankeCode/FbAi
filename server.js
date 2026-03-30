@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
@@ -100,6 +101,24 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
   }
 
   res.json({ received: true });
+});
+
+app.use(cors({
+  origin: [
+    'https://thecardhuddle.com',
+    'https://www.thecardhuddle.com',
+    /\.thecardhuddle\.com$/
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
+
+// Security headers for Cloudflare deployment
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
 });
 
 app.use(express.json());
@@ -783,7 +802,7 @@ app.get('/api/ebay/account-deletion', (req, res) => {
   if (!challengeCode) {
     return res.status(400).json({ error: 'Missing challenge_code' });
   }
-  const endpointUrl = 'https://theaifbtracker.onrender.com/api/ebay/account-deletion';
+  const endpointUrl = (process.env.SITE_URL || 'https://thecardhuddle.com') + '/api/ebay/account-deletion';
   const hash = crypto.createHash('sha256')
     .update(challengeCode + EBAY_VERIFICATION_TOKEN + endpointUrl)
     .digest('hex');
