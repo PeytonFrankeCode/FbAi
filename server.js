@@ -17,6 +17,10 @@ const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_AP
 // Which eBay API to use: 'finding' (legacy) or 'insights' (Marketplace Insights)
 const EBAY_API_MODE = process.env.EBAY_API_MODE || 'finding';
 
+// ---- SportsCardsPro / PriceCharting API Setup ----
+const SPORTSCARDSPRO_API_KEY = process.env.SPORTSCARDSPRO_API_KEY;
+const SPORTSCARDSPRO_ENABLED = SPORTSCARDSPRO_API_KEY && !SPORTSCARDSPRO_API_KEY.includes('your-api-key');
+
 // ---- Stripe Setup ----
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
@@ -1508,6 +1512,85 @@ app.get('/api/stripe/subscription', (req, res) => {
   res.json({ subscription: userSub, stripeEnabled });
 });
 
+// ---- SportsCardsPro / PriceCharting API ----
+async function fetchSportsCardsProPrices(query) {
+  const cacheKey = `scp:${query.toLowerCase()}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const token = SPORTSCARDSPRO_API_KEY;
+  // Search for the product by name
+  const searchRes = await axios.get('https://www.pricecharting.com/api/products', {
+    params: { t: token, q: query, type: 'prices', category: 'football-cards' },
+    timeout: 10000,
+  });
+
+  const products = searchRes.data?.products || [];
+  if (products.length === 0) return { products: [], source: 'sportscardspro' };
+
+  // Get detailed prices for first few results (limit to 5 to avoid rate limits)
+  const detailed = products.slice(0, 5).map(p => ({
+    id: p.id,
+    name: p['product-name'] || p.name || '',
+    consoleName: p['console-name'] || '',
+    ungraded: p['ungraded-price'] ? (p['ungraded-price'] / 100).toFixed(2) : null,
+    psa9: p['graded-price'] ? (p['graded-price'] / 100).toFixed(2) : null,
+    psa10: p['manual-only-price'] ? (p['manual-only-price'] / 100).toFixed(2) : null,
+    boxOnly: p['box-only-price'] ? (p['box-only-price'] / 100).toFixed(2) : null,
+  }));
+
+  const result = { products: detailed, source: 'sportscardspro' };
+  setCache(cacheKey, result);
+  return result;
+}
+
+function getMockSportsCardsProPrices(query) {
+  // Extract player name by removing years, known sets, and noise words
+  const playerName = extractPlayerName(query) || query.trim().split(/\s+/).slice(0, 2).join(' ') || 'Player';
+  const year = extractYear(query) || '2024';
+  let hash = 0;
+  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
+  const seed = Math.abs(hash);
+
+  const sets = ['Prizm Base', 'Prizm Silver', 'Select Concourse', 'Donruss Rated Rookie', 'Mosaic Base'];
+  const products = [];
+  const count = Math.min(3 + (seed % 3), 5);
+
+  for (let i = 0; i < count; i++) {
+    const basePrice = (5 + ((seed * (i + 1)) % 200));
+    products.push({
+      id: `mock-${seed}-${i}`,
+      name: `${year} ${sets[i % sets.length]} ${playerName}`,
+      consoleName: 'Football Cards',
+      ungraded: (basePrice * 0.6).toFixed(2),
+      psa9: (basePrice * 1.2).toFixed(2),
+      psa10: (basePrice * 3.5).toFixed(2),
+      boxOnly: null,
+    });
+  }
+
+  return { products, source: 'sportscardspro-mock' };
+}
+
+app.get('/api/card-prices', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q || q.length < 2) return res.status(400).json({ error: 'Query required (min 2 chars)' });
+
+  if (!SPORTSCARDSPRO_ENABLED) {
+    // Return mock data when API key not configured
+    return res.json(getMockSportsCardsProPrices(q));
+  }
+
+  try {
+    const data = await withRetry(() => fetchSportsCardsProPrices(q), 1);
+    res.json(data);
+  } catch (err) {
+    console.error('SportsCardsPro API error:', err.message);
+    // Fall back to mock on error
+    res.json(getMockSportsCardsProPrices(q));
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -1518,6 +1601,7 @@ app.listen(PORT, () => {
   console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
   console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
   console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
+  console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
   if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
     console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
   }

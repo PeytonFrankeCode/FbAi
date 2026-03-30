@@ -3325,6 +3325,9 @@ async function searchInsights() {
 
   resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Analyzing market data...</span></div>';
 
+  // Fetch SportsCardsPro price guide in parallel
+  fetchCardPrices(query);
+
   try {
     const res = await fetch(`/api/marketplace-insights?q=${encodeURIComponent(query)}`);
     const data = await res.json();
@@ -3445,6 +3448,58 @@ async function searchInsights() {
     resultsEl.innerHTML = html;
   } catch (err) {
     resultsEl.innerHTML = `<p class="insights-empty">Error: ${escHtml(err.message)}</p>`;
+  }
+}
+
+// ---- SportsCardsPro Price Guide ----
+async function fetchCardPrices(query) {
+  const guideEl = document.getElementById('scp-price-guide');
+  const resultsEl = document.getElementById('scp-results');
+  if (!guideEl || !resultsEl) return;
+
+  guideEl.classList.remove('hidden');
+  resultsEl.innerHTML = '<div class="scp-loading">Loading price guide data...</div>';
+
+  try {
+    const res = await fetch(`/api/card-prices?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    if (data.error || !data.products || data.products.length === 0) {
+      resultsEl.innerHTML = '<p class="scp-empty">No price guide data found for this card.</p>';
+      return;
+    }
+
+    const sourceLabel = data.source === 'sportscardspro-mock' ? 'Sample Data' : 'SportsCardsPro';
+    const titleSource = guideEl.querySelector('.scp-source');
+    if (titleSource) titleSource.textContent = `via ${sourceLabel}`;
+
+    let html = '';
+    data.products.forEach(p => {
+      html += `<div class="scp-card">
+        <div>
+          <div class="scp-card-name">${escHtml(p.name)}</div>
+          ${p.consoleName ? `<div class="scp-card-set">${escHtml(p.consoleName)}</div>` : ''}
+        </div>
+        <div class="scp-prices">
+          <div class="scp-price-col">
+            <div class="scp-price-label">Ungraded</div>
+            <div class="scp-price-value${p.ungraded ? '' : ' scp-na'}">${p.ungraded ? '$' + p.ungraded : 'N/A'}</div>
+          </div>
+          <div class="scp-price-col">
+            <div class="scp-price-label">PSA 9</div>
+            <div class="scp-price-value${p.psa9 ? '' : ' scp-na'}">${p.psa9 ? '$' + p.psa9 : 'N/A'}</div>
+          </div>
+          <div class="scp-price-col">
+            <div class="scp-price-label">PSA 10</div>
+            <div class="scp-price-value${p.psa10 ? '' : ' scp-na'}">${p.psa10 ? '$' + p.psa10 : 'N/A'}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    resultsEl.innerHTML = html;
+  } catch (err) {
+    resultsEl.innerHTML = `<p class="scp-empty">Price guide unavailable: ${escHtml(err.message)}</p>`;
   }
 }
 
