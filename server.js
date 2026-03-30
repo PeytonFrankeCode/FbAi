@@ -313,7 +313,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale') {
   if (cached) return cached;
 
   const fetchFn = mode === 'sold'
-    ? () => fetchViaFindingAPI(keywords, limit)
+    ? () => fetchViaInsightsAPI(keywords, limit)
     : () => fetchViaBrowseAPI(keywords, limit);
 
   const response = await withRetry(fetchFn);
@@ -1021,8 +1021,7 @@ async function checkAlerts() {
       } else if (EBAY_API_MODE === 'browse') {
         searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10));
       } else {
-        // Always use Finding API for alerts (Insights API requires beta access)
-        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10));
+        searchResult = await withRetry(() => fetchViaInsightsAPI(alert.query, 10));
       }
 
       const currentIds = searchResult.results.map(r => r.itemId);
@@ -1191,8 +1190,8 @@ app.get('/api/marketplace-insights', async (req, res) => {
   }
 
   try {
-    // Fetch up to 50 sold items via Finding API
-    const { results } = await withRetry(() => fetchViaFindingAPI(q, 50));
+    // Fetch up to 50 sold items via Insights API
+    const { results } = await withRetry(() => fetchViaInsightsAPI(q, 50));
 
     if (results.length === 0) {
       return res.json({ query: q, totalSold: 0, insights: null });
