@@ -1,0 +1,5 @@
+# Redirect www to apex domain
+https://www.thecardhuddle.com/* https://thecardhuddle.com/:splat 301
+
+# Redirect old Render domain to new domain
+https://theaifbtracker.onrender.com/* https://thecardhuddle.com/:splat 301
