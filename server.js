@@ -125,6 +125,79 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+// ---- eBay Finding API Call Tracker ----
+const API_CALLS_FILE = path.join(__dirname, 'data', 'api-call-log.json');
+
+function loadApiCallLog() {
+  try {
+    if (fs.existsSync(API_CALLS_FILE)) {
+      return JSON.parse(fs.readFileSync(API_CALLS_FILE, 'utf8'));
+    }
+  } catch (e) { console.error('Error loading API call log:', e.message); }
+  return { daily: {}, calls: [] };
+}
+
+function saveApiCallLog(log) {
+  try {
+    // Keep only last 7 days of detailed calls to prevent file bloat
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    log.calls = (log.calls || []).filter(c => new Date(c.time).getTime() > cutoff);
+    // Keep daily totals for 30 days
+    const dayCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    for (const day of Object.keys(log.daily)) {
+      if (day < dayCutoff) delete log.daily[day];
+    }
+    fs.writeFileSync(API_CALLS_FILE, JSON.stringify(log, null, 2));
+  } catch (e) { console.error('Error saving API call log:', e.message); }
+}
+
+function trackApiCall(apiName, endpoint, keywords, source) {
+  const log = loadApiCallLog();
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+
+  if (!log.daily[today]) log.daily[today] = { total: 0, finding: 0, browse: 0, insights: 0 };
+  log.daily[today].total++;
+  if (apiName === 'finding') log.daily[today].finding++;
+  else if (apiName === 'browse') log.daily[today].browse++;
+  else if (apiName === 'insights') log.daily[today].insights++;
+
+  log.calls.push({
+    time: now.toISOString(),
+    api: apiName,
+    keywords: keywords,
+    source: source,
+    endpoint: endpoint
+  });
+
+  saveApiCallLog(log);
+  const dayStats = log.daily[today];
+  console.log(`[API Tracker] ${apiName.toUpperCase()} call #${dayStats.total} today (finding: ${dayStats.finding}, browse: ${dayStats.browse}) | source: ${source} | query: "${keywords}"`);
+  return dayStats;
+}
+
+function getApiCallStats() {
+  const log = loadApiCallLog();
+  const today = new Date().toISOString().slice(0, 10);
+  const todayStats = log.daily[today] || { total: 0, finding: 0, browse: 0, insights: 0 };
+
+  // Last 24h calls grouped by source
+  const cutoff24h = Date.now() - 24 * 60 * 60 * 1000;
+  const recent = (log.calls || []).filter(c => new Date(c.time).getTime() > cutoff24h);
+  const bySource = {};
+  for (const c of recent) {
+    bySource[c.source] = (bySource[c.source] || 0) + 1;
+  }
+
+  return {
+    today: todayStats,
+    daily: log.daily,
+    last24hBySource: bySource,
+    last24hTotal: recent.length,
+    recentCalls: (log.calls || []).slice(-20)
+  };
+}
+
 // ---- In-memory cache (30 min TTL) to reduce eBay API calls ----
 const ebayCache = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
@@ -230,7 +303,8 @@ async function fetchViaInsightsAPI(keywords, limit) {
 }
 
 // ---- Browse API (active listings) ----
-async function fetchViaBrowseAPI(keywords, limit) {
+async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
+  trackApiCall('browse', 'browse/search', keywords, source);
   console.log(`[Browse API] Searching for: "${keywords}", limit: ${limit}`);
   const token = await getOAuthToken();
   console.log('[Browse API] Got OAuth token, making search request...');
@@ -267,7 +341,8 @@ async function fetchViaBrowseAPI(keywords, limit) {
 }
 
 // ---- Finding API (legacy, sold items) ----
-async function fetchViaFindingAPI(keywords, limit) {
+async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
+  trackApiCall('finding', 'findCompletedItems', keywords, source);
   let ebayResponse;
   try {
     ebayResponse = await axios.get(
@@ -326,14 +401,14 @@ async function fetchViaFindingAPI(keywords, limit) {
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
 // mode: 'forsale' (Browse API) or 'sold' (Finding API)
-async function fetchEbayItems(keywords, limit = 20, mode = 'forsale') {
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   const fetchFn = mode === 'sold'
-    ? () => fetchViaFindingAPI(keywords, limit)
-    : () => fetchViaBrowseAPI(keywords, limit);
+    ? () => fetchViaFindingAPI(keywords, limit, source)
+    : () => fetchViaBrowseAPI(keywords, limit, source);
 
   const response = await withRetry(fetchFn);
   setCache(cacheKey, response);
@@ -369,7 +444,7 @@ app.get('/api/search', async (req, res) => {
 
     if (!serial) {
       // No serial number in query — standard search
-      const { results, total } = await fetchEbayItems(query, limit, mode);
+      const { results, total } = await fetchEbayItems(query, limit, mode, 'search');
       if (results.length > 0) {
         return res.json({ results, total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null });
       }
@@ -379,7 +454,7 @@ app.get('/api/search', async (req, res) => {
       const broader = buildBroadenedQueries(parsed);
 
       for (const level of broader) {
-        const broadened = await fetchEbayItems(level.query, limit, mode);
+        const broadened = await fetchEbayItems(level.query, limit, mode, 'search-broadened');
         if (broadened.results.length > 0) {
           const approx = computeApproxValue(broadened.results, level.label);
           return res.json({ results: broadened.results, total: broadened.total, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
@@ -394,8 +469,8 @@ app.get('/api/search', async (req, res) => {
     // and one without to catch cards that might not have /5 in the title format
     const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
     const [targetedResults, broadResults] = await Promise.all([
-      fetchEbayItems(`${baseQuery} /${serial}`, 50, mode),
-      fetchEbayItems(baseQuery, 50, mode),
+      fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'search-serial'),
+      fetchEbayItems(baseQuery, 50, mode, 'search-serial-broad'),
     ]);
 
     // Merge results, dedup by itemId
@@ -576,8 +651,8 @@ app.get('/api/direct-search', async (req, res) => {
       // Dual search: targeted with serial + broad without, then filter
       const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
       const [targetedResults, broadResults] = await Promise.all([
-        fetchEbayItems(query, 50, mode),
-        fetchEbayItems(baseQuery, 50, mode),
+        fetchEbayItems(query, 50, mode, 'variants-serial'),
+        fetchEbayItems(baseQuery, 50, mode, 'variants-serial-broad'),
       ]);
 
       // Merge and dedup
@@ -619,7 +694,7 @@ app.get('/api/direct-search', async (req, res) => {
     }
 
     // No serial — standard search: try exact first
-    const exact = await fetchEbayItems(query, 20, mode);
+    const exact = await fetchEbayItems(query, 20, mode, 'variants');
     if (exact.results.length > 0) {
       return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
@@ -629,7 +704,7 @@ app.get('/api/direct-search', async (req, res) => {
     const broader = buildBroadenedQueries(parsed);
 
     for (const level of broader) {
-      const { results, total } = await fetchEbayItems(level.query, 20, mode);
+      const { results, total } = await fetchEbayItems(level.query, 20, mode, 'variants-broadened');
       if (results.length > 0) {
         const approx = computeApproxValue(results, level.label);
         return res.json({ results, total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
@@ -672,8 +747,8 @@ app.get('/api/variants', async (req, res) => {
     let rawResults;
     if (serial) {
       const [targeted, broad] = await Promise.all([
-        fetchEbayItems(`${baseQuery} /${serial}`, 50, mode),
-        fetchEbayItems(baseQuery, 50, mode),
+        fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
+        fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
       ]);
       const seen = new Set();
       rawResults = [];
@@ -684,7 +759,7 @@ app.get('/api/variants', async (req, res) => {
         }
       }
     } else {
-      const result = await fetchEbayItems(baseQuery, 50, mode);
+      const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
       rawResults = result.results;
     }
     const playerName = extractPlayerName(query);
@@ -753,9 +828,29 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ---- API Call Stats (monitor eBay API usage) ----
+app.get('/api/stats/api-calls', (req, res) => {
+  const stats = getApiCallStats();
+  const today = stats.today;
+  res.json({
+    today: {
+      ...today,
+      findingRemaining: Math.max(0, 5000 - today.finding),
+      browseRemaining: null, // Browse API uses OAuth, different limits
+    },
+    daily: stats.daily,
+    last24h: {
+      total: stats.last24hTotal,
+      bySource: stats.last24hBySource,
+    },
+    recentCalls: stats.recentCalls,
+  });
+});
+
 // ---- eBay API connectivity test (no auth required) ----
 app.get('/api/test-ebay', async (req, res) => {
   try {
+    trackApiCall('finding', 'findItemsByKeywords', 'test', 'test-ebay');
     const start = Date.now();
     const ebayResponse = await axios.get(
       'https://svcs.ebay.com/services/search/FindingService/v1',
@@ -1038,7 +1133,7 @@ async function checkAlerts() {
       if (USE_MOCK) {
         searchResult = getMockData(alert.query, 'sold');
       } else if (EBAY_API_MODE === 'browse') {
-        searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10));
+        searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10, 'alerts'));
       } else {
         searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10));
       }
@@ -1210,7 +1305,7 @@ app.get('/api/marketplace-insights', async (req, res) => {
 
   try {
     // Fetch up to 50 sold items via Finding API
-    const { results } = await withRetry(() => fetchViaFindingAPI(q, 50));
+    const { results } = await withRetry(() => fetchViaFindingAPI(q, 50, 'marketplace-insights'));
 
     if (results.length === 0) {
       return res.json({ query: q, totalSold: 0, insights: null });

@@ -315,6 +315,24 @@ function renderRecentSearches() {
 // Show recent on load
 renderRecentSearches();
 
+// ---- Under Construction Banner for Sold Mode ----
+function showSoldUnderConstruction() {
+  grid.innerHTML = '';
+  variantsSection.classList.add('hidden');
+  sortControls.classList.add('hidden');
+  similarSection.classList.add('hidden');
+  chartSection.classList.add('hidden');
+  meta.classList.add('hidden');
+  errorMsg.classList.add('hidden');
+  grid.innerHTML = `
+    <div class="under-construction-banner">
+      <div class="under-construction-icon">&#128679;</div>
+      <h2>Under Construction</h2>
+      <p>The Sold listings feature is currently being rebuilt for a better experience. Check back soon!</p>
+    </div>
+  `;
+}
+
 // ---- Mode Tabs ----
 document.querySelectorAll('.mode-tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -324,6 +342,10 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
     document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     cachedVariants = null; // clear cached variants since mode changed
+    if (newMode === 'sold') {
+      showSoldUnderConstruction();
+      return;
+    }
     // Re-run current search if there's an active query
     const query = input.value.trim();
     if (query) {
@@ -522,6 +544,7 @@ backBtn.addEventListener('click', goBackToVariants);
 
 // ---- Fetch Variants (Stage 1) ----
 async function fetchVariants(query) {
+  if (currentMode === 'sold') { showSoldUnderConstruction(); return; }
   currentSearchMode = 'variants';
   currentVariantQuery = query;
   cachedVariants = null;
@@ -667,6 +690,7 @@ function goBackToVariants() {
 
 // ---- Direct Card Search (Stage: direct) ----
 async function fetchDirectSearch(query) {
+  if (currentMode === 'sold') { showSoldUnderConstruction(); return; }
   currentSearchMode = 'direct';
   currentResults = [];
 
@@ -801,6 +825,7 @@ function renderStatsBar(results, isSold) {
 
 // ---- Search (fetch individual sales for a specific variant) ----
 async function performSearch(query) {
+  if (currentMode === 'sold') { showSoldUnderConstruction(); return; }
   setLoading(true);
   showSkeleton();
   grid.innerHTML = '';
@@ -3715,6 +3740,16 @@ function updateLayoutButtons(mode) {
 
 async function fetchPlayerListings(container, query, mode) {
   const body = container.querySelector('.cl-listings-body');
+  if (mode === 'sold') {
+    body.innerHTML = `
+      <div class="under-construction-banner under-construction-inline">
+        <div class="under-construction-icon">&#128679;</div>
+        <h3>Under Construction</h3>
+        <p>Sold listings coming soon!</p>
+      </div>
+    `;
+    return;
+  }
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
 
   try {

@@ -3995,3 +3995,50 @@ tr:hover .cl-alert-btn {
   .collection-tabs::-webkit-scrollbar { display: none; }
   .coll-tab { flex-shrink: 0; font-size: 0.65rem; }
 }
+
+/* ---- Under Construction Banner ---- */
+.under-construction-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  grid-column: 1 / -1;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  margin: 2rem auto;
+  max-width: 500px;
+  width: 100%;
+}
+.under-construction-banner .under-construction-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+.under-construction-banner h2,
+.under-construction-banner h3 {
+  color: var(--accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+.under-construction-banner p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.5;
+}
+.under-construction-inline {
+  padding: 2rem 1.5rem;
+  margin: 1rem 0;
+}
+.under-construction-inline h3 {
+  font-size: 1.15rem;
+}
+.under-construction-inline .under-construction-icon {
+  font-size: 2.5rem;
+}
+.under-construction-inline p {
+  font-size: 0.9rem;
+}
