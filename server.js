@@ -1135,8 +1135,7 @@ async function checkAlerts() {
       } else if (EBAY_API_MODE === 'browse') {
         searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10, 'alerts'));
       } else {
-        // Always use Finding API for alerts (Insights API requires beta access)
-        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10, 'alerts'));
+        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10));
       }
 
       const currentIds = searchResult.results.map(r => r.itemId);
