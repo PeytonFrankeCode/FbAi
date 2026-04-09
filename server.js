@@ -139,6 +139,8 @@ function loadApiCallLog() {
 
 function saveApiCallLog(log) {
   try {
+    const dir = path.dirname(API_CALLS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     // Keep only last 7 days of detailed calls to prevent file bloat
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     log.calls = (log.calls || []).filter(c => new Date(c.time).getTime() > cutoff);
@@ -830,21 +832,32 @@ app.get('/api/health', (req, res) => {
 
 // ---- API Call Stats (monitor eBay API usage) ----
 app.get('/api/stats/api-calls', (req, res) => {
-  const stats = getApiCallStats();
-  const today = stats.today;
-  res.json({
-    today: {
-      ...today,
-      findingRemaining: Math.max(0, 5000 - today.finding),
-      browseRemaining: null, // Browse API uses OAuth, different limits
-    },
-    daily: stats.daily,
-    last24h: {
-      total: stats.last24hTotal,
-      bySource: stats.last24hBySource,
-    },
-    recentCalls: stats.recentCalls,
-  });
+  try {
+    const stats = getApiCallStats();
+    const today = stats.today;
+    res.json({
+      today: {
+        ...today,
+        findingRemaining: Math.max(0, 5000 - today.finding),
+        browseRemaining: null, // Browse API uses OAuth, different limits
+      },
+      daily: stats.daily,
+      last24h: {
+        total: stats.last24hTotal,
+        bySource: stats.last24hBySource,
+      },
+      recentCalls: stats.recentCalls,
+    });
+  } catch (err) {
+    console.error('Error in /api/stats/api-calls:', err.message);
+    res.json({
+      today: { total: 0, finding: 0, browse: 0, insights: 0, findingRemaining: 5000, browseRemaining: null },
+      daily: {},
+      last24h: { total: 0, bySource: {} },
+      recentCalls: [],
+      error: err.message,
+    });
+  }
 });
 
 // ---- eBay API connectivity test (no auth required) ----
