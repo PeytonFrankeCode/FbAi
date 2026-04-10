@@ -705,6 +705,17 @@ async function fetchDirectSearch(query) {
     currentResults = results;
     recordPriceHistory(query, results);
 
+    // Check for rate limiting
+    if (data.rateLimited) {
+      meta.classList.add('hidden');
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>eBay\'s sold listings API has reached its limit. Please try again in a few minutes, or switch to For Sale mode.</p>';
+      grid.appendChild(msg);
+      backBtn.classList.remove('hidden');
+      return;
+    }
+
     // Show approximate value section if broadened
     if (searchType === 'broadened' && approximateValue) {
       buildApproxValueSection(approximateValue, query);
@@ -835,6 +846,16 @@ async function performSearch(query) {
     const { results, mock, serial, similarResults } = data;
     currentResults = results;
     recordPriceHistory(query, results);
+
+    // Check for rate limiting
+    if (data.rateLimited) {
+      meta.classList.add('hidden');
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>eBay\'s sold listings API has reached its limit. Please try again in a few minutes, or switch to For Sale mode.</p>';
+      grid.appendChild(msg);
+      return;
+    }
 
     // Stats bar
     if (results.length > 0) {
