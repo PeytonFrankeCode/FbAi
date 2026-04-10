@@ -254,8 +254,13 @@ async function getOAuthToken() {
 async function withRetry(fn, maxRetries = 2) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await fn();
+      const result = await fn();
+      // If the function returned a rateLimited response, don't retry — just pass it through
+      if (result && result.rateLimited) return result;
+      return result;
     } catch (err) {
+      // eBay errors (ack=Failure) should not be retried
+      if (err.isEbayError) throw err;
       const isRateLimit = err.response?.status === 500 &&
         JSON.stringify(err.response?.data || '').includes('RateLimiter');
       if (isRateLimit && attempt < maxRetries) {
@@ -369,15 +374,33 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
       }
     );
   } catch (axiosErr) {
-    if (axiosErr.response) {
-      console.error(`eBay HTTP ${axiosErr.response.status}:`, JSON.stringify(axiosErr.response.data).slice(0, 500));
+    const status = axiosErr.response?.status;
+    const respData = axiosErr.response?.data;
+    console.error(`[Finding API] HTTP error ${status || 'NETWORK'}:`, JSON.stringify(respData || axiosErr.message).slice(0, 500));
+
+    // If eBay returned an HTTP error with a JSON body, try to parse it
+    if (respData?.findCompletedItemsResponse) {
+      const ack = respData.findCompletedItemsResponse[0]?.ack?.[0];
+      const ebayErrors = respData.findCompletedItemsResponse[0]?.errorMessage?.[0]?.error || [];
+      const errorMsg = ebayErrors[0]?.message?.[0] || `eBay HTTP ${status}`;
+      console.error(`[Finding API] Error in HTTP ${status} body: ack=${ack}, msg=${errorMsg}`);
+      return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
     }
-    throw axiosErr;
+
+    // Network error or non-JSON response — return gracefully
+    return { results: [], total: 0, rateLimited: true, errorMessage: `eBay API unavailable (HTTP ${status || 'timeout'})` };
   }
 
   const raw = ebayResponse.data;
-  const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
-  const ebayErrors = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error || [];
+
+  // Safety check: eBay sometimes returns non-JSON or unexpected structure
+  if (!raw || !raw.findCompletedItemsResponse) {
+    console.error('[Finding API] Unexpected response structure:', JSON.stringify(raw).slice(0, 500));
+    return { results: [], total: 0, rateLimited: true, errorMessage: 'eBay returned an unexpected response' };
+  }
+
+  const ack = raw.findCompletedItemsResponse[0]?.ack?.[0];
+  const ebayErrors = raw.findCompletedItemsResponse[0]?.errorMessage?.[0]?.error || [];
 
   if (ebayErrors.length > 0) {
     const errorId = ebayErrors[0]?.errorId?.[0];
@@ -387,22 +410,14 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
   }
 
   if (ack === 'Failure') {
+    // Return gracefully for ALL failures — don't throw, let the caller decide
     const errorId = ebayErrors[0]?.errorId?.[0];
     const errorMsg = ebayErrors[0]?.message?.[0] || 'eBay API returned a failure response';
-
-    // eBay call limit errors — return empty results instead of crashing
-    // Error 18: exceeded daily call limit, Error 10004: service busy
-    if (errorId === '18' || errorId === '10004' || errorMsg.toLowerCase().includes('limit') || errorMsg.toLowerCase().includes('exceeded')) {
-      console.error(`[Finding API] Call limit hit (errorId=${errorId}): ${errorMsg}`);
-      return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
-    }
-
-    const err = new Error(errorMsg);
-    err.isEbayError = true;
-    throw err;
+    console.error(`[Finding API] FAILURE (errorId=${errorId}): ${errorMsg}`);
+    return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
   }
 
-  const searchResult = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0];
+  const searchResult = raw.findCompletedItemsResponse[0]?.searchResult?.[0];
   const items = searchResult?.item || [];
 
   const results = items.map(item => ({
@@ -431,7 +446,10 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     : () => fetchViaBrowseAPI(keywords, limit, source);
 
   const response = await withRetry(fetchFn);
-  setCache(cacheKey, response);
+  // Don't cache rate-limited or error responses
+  if (!response.rateLimited) {
+    setCache(cacheKey, response);
+  }
   return response;
 }
 
@@ -786,6 +804,9 @@ app.get('/api/variants', async (req, res) => {
         fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
       ]);
+      if (targeted.rateLimited || broad.rateLimited) {
+        return res.json({ variants: [], mock: false, serial, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
       const seen = new Set();
       rawResults = [];
       for (const item of [...targeted.results, ...broad.results]) {
@@ -796,6 +817,9 @@ app.get('/api/variants', async (req, res) => {
       }
     } else {
       const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
+      if (result.rateLimited) {
+        return res.json({ variants: [], mock: false, serial: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
       rawResults = result.results;
     }
     const playerName = extractPlayerName(query);
@@ -862,6 +886,66 @@ app.get('/api/variants', async (req, res) => {
 // ---- Health check for Render ----
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ---- Debug endpoint: raw eBay Finding API response ----
+app.get('/api/debug/sold-test', async (req, res) => {
+  const q = req.query.q || 'mahomes prizm';
+  if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
+
+  try {
+    const ebayResponse = await axios.get(
+      'https://svcs.ebay.com/services/search/FindingService/v1',
+      {
+        params: {
+          'OPERATION-NAME': 'findCompletedItems',
+          'SERVICE-VERSION': '1.0.0',
+          'SECURITY-APPNAME': EBAY_APP_ID,
+          'RESPONSE-DATA-FORMAT': 'JSON',
+          'REST-PAYLOAD': '',
+          'keywords': q,
+          'categoryId': '261328',
+          'itemFilter(0).name': 'SoldItemsOnly',
+          'itemFilter(0).value': 'true',
+          'paginationInput.entriesPerPage': 3,
+        },
+        timeout: 15000,
+      }
+    );
+
+    const raw = ebayResponse.data;
+    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
+    const errors = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error || [];
+    const totalResults = raw?.findCompletedItemsResponse?.[0]?.paginationOutput?.[0]?.totalEntries?.[0];
+    const items = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item || [];
+
+    res.json({
+      query: q,
+      httpStatus: ebayResponse.status,
+      ack,
+      totalResults,
+      itemCount: items.length,
+      errors: errors.map(e => ({
+        errorId: e.errorId?.[0],
+        domain: e.domain?.[0],
+        severity: e.severity?.[0],
+        category: e.category?.[0],
+        message: e.message?.[0],
+      })),
+      firstItem: items[0] ? { title: items[0].title?.[0], price: items[0].sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'] } : null,
+      rawResponseKeys: Object.keys(raw),
+      appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET',
+      apiMode: EBAY_API_MODE,
+    });
+  } catch (err) {
+    res.json({
+      query: q,
+      error: err.message,
+      httpStatus: err.response?.status || null,
+      responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 1000) : null,
+      appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET',
+    });
+  }
 });
 
 // ---- API Call Stats (monitor eBay API usage) ----
