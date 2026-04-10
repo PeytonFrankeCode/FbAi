@@ -377,9 +377,27 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 
   const raw = ebayResponse.data;
   const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
+  const ebayErrors = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error || [];
+
+  if (ebayErrors.length > 0) {
+    const errorId = ebayErrors[0]?.errorId?.[0];
+    const errorMsg = ebayErrors[0]?.message?.[0] || 'Unknown eBay error';
+    console.error(`[Finding API] ack=${ack}, errorId=${errorId}, message: ${errorMsg}`);
+    console.error(`[Finding API] Full error response:`, JSON.stringify(ebayErrors).slice(0, 500));
+  }
+
   if (ack === 'Failure') {
-    const ebayError = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0] || 'eBay API returned a failure response';
-    const err = new Error(ebayError);
+    const errorId = ebayErrors[0]?.errorId?.[0];
+    const errorMsg = ebayErrors[0]?.message?.[0] || 'eBay API returned a failure response';
+
+    // eBay call limit errors — return empty results instead of crashing
+    // Error 18: exceeded daily call limit, Error 10004: service busy
+    if (errorId === '18' || errorId === '10004' || errorMsg.toLowerCase().includes('limit') || errorMsg.toLowerCase().includes('exceeded')) {
+      console.error(`[Finding API] Call limit hit (errorId=${errorId}): ${errorMsg}`);
+      return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
+    }
+
+    const err = new Error(errorMsg);
     err.isEbayError = true;
     throw err;
   }
@@ -446,9 +464,12 @@ app.get('/api/search', async (req, res) => {
 
     if (!serial) {
       // No serial number in query — standard search
-      const { results, total } = await fetchEbayItems(query, limit, mode, 'search');
-      if (results.length > 0) {
-        return res.json({ results, total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null });
+      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      if (searchData.rateLimited) {
+        return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
+      if (searchData.results.length > 0) {
+        return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null });
       }
 
       // No results — try broadened search (same as main search)
@@ -457,6 +478,9 @@ app.get('/api/search', async (req, res) => {
 
       for (const level of broader) {
         const broadened = await fetchEbayItems(level.query, limit, mode, 'search-broadened');
+        if (broadened.rateLimited) {
+          return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+        }
         if (broadened.results.length > 0) {
           const approx = computeApproxValue(broadened.results, level.label);
           return res.json({ results: broadened.results, total: broadened.total, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
@@ -657,6 +681,10 @@ app.get('/api/direct-search', async (req, res) => {
         fetchEbayItems(baseQuery, 50, mode, 'variants-serial-broad'),
       ]);
 
+      if (targetedResults.rateLimited || broadResults.rateLimited) {
+        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [], rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
+
       // Merge and dedup
       const seen = new Set();
       const allResults = [];
@@ -697,6 +725,9 @@ app.get('/api/direct-search', async (req, res) => {
 
     // No serial — standard search: try exact first
     const exact = await fetchEbayItems(query, 20, mode, 'variants');
+    if (exact.rateLimited) {
+      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+    }
     if (exact.results.length > 0) {
       return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
@@ -706,10 +737,13 @@ app.get('/api/direct-search', async (req, res) => {
     const broader = buildBroadenedQueries(parsed);
 
     for (const level of broader) {
-      const { results, total } = await fetchEbayItems(level.query, 20, mode, 'variants-broadened');
-      if (results.length > 0) {
-        const approx = computeApproxValue(results, level.label);
-        return res.json({ results, total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
+      const broadResult = await fetchEbayItems(level.query, 20, mode, 'variants-broadened');
+      if (broadResult.rateLimited) {
+        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
+      if (broadResult.results.length > 0) {
+        const approx = computeApproxValue(broadResult.results, level.label);
+        return res.json({ results: broadResult.results, total: broadResult.total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
       }
     }
 
