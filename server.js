@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
@@ -122,6 +123,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(compression());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -481,7 +483,7 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (cascade: Insights → Finding → Browse)
+// mode: 'forsale' (Browse API) or 'sold' (Finding API with Browse fallback)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -489,29 +491,17 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    // Try Marketplace Insights API first (OAuth, separate rate limits)
-    try {
-      response = await fetchViaInsightsAPI(keywords, limit, source);
-      if (response.results.length > 0) {
-        setCache(cacheKey, response);
-        return response;
-      }
-      console.log(`[Sold Cascade] Insights API returned 0 results for "${keywords}", trying Finding API...`);
-    } catch (insightsErr) {
-      console.log(`[Sold Cascade] Insights API failed: ${insightsErr.message}, trying Finding API...`);
-    }
-
-    // Try Finding API (legacy, may be rate limited)
+    // Try Finding API (primary for sold items)
     response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
     if (!response.rateLimited && response.results.length > 0) {
       setCache(cacheKey, response);
       return response;
     }
     if (response.rateLimited) {
-      console.log(`[Sold Cascade] Finding API rate limited for "${keywords}", trying Browse API fallback...`);
+      console.log(`[Sold] Finding API rate limited for "${keywords}", trying Browse API fallback...`);
     }
 
-    // Last resort: Browse API for recently ended items
+    // Fallback: Browse API for recently ended items
     try {
       const browseSold = await fetchViaBrowseSoldAPI(keywords, limit, source);
       if (browseSold.results.length > 0) {
@@ -519,10 +509,10 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
         return browseSold;
       }
     } catch (browseErr) {
-      console.log(`[Sold Cascade] Browse sold fallback failed: ${browseErr.message}`);
+      console.log(`[Sold] Browse sold fallback failed: ${browseErr.message}`);
     }
 
-    // All three failed — return whatever we got (might be rateLimited with 0 results)
+    // Both failed — return whatever we got
     return response;
   }
 
