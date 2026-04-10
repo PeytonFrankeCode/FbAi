@@ -125,6 +125,21 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+// ---- Finding API throttle (serialize calls to avoid per-second rate limits) ----
+let lastFindingCallTime = 0;
+const FINDING_API_MIN_INTERVAL = 1500; // 1.5 seconds between Finding API calls
+
+async function throttleFindingAPI() {
+  const now = Date.now();
+  const elapsed = now - lastFindingCallTime;
+  if (elapsed < FINDING_API_MIN_INTERVAL) {
+    const wait = FINDING_API_MIN_INTERVAL - elapsed;
+    console.log(`[Finding API] Throttling: waiting ${wait}ms before next call`);
+    await new Promise(r => setTimeout(r, wait));
+  }
+  lastFindingCallTime = Date.now();
+}
+
 // ---- eBay Finding API Call Tracker ----
 const API_CALLS_FILE = path.join(__dirname, 'data', 'api-call-log.json');
 
@@ -250,22 +265,22 @@ async function getOAuthToken() {
   return oauthToken;
 }
 
-// ---- Rate limit aware retry helper ----
-async function withRetry(fn, maxRetries = 2) {
+// ---- Retry helper (network errors only, NOT rate limits) ----
+async function withRetry(fn, maxRetries = 1) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await fn();
-      // If the function returned a rateLimited response, don't retry — just pass it through
+      // If the function returned a rateLimited response, don't retry
       if (result && result.rateLimited) return result;
       return result;
     } catch (err) {
-      // eBay errors (ack=Failure) should not be retried
+      // eBay API errors should not be retried
       if (err.isEbayError) throw err;
-      const isRateLimit = err.response?.status === 500 &&
-        JSON.stringify(err.response?.data || '').includes('RateLimiter');
-      if (isRateLimit && attempt < maxRetries) {
-        const delay = (attempt + 1) * 3000; // 3s, 6s
-        console.log(`Rate limited, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})`);
+      // Only retry on network/timeout errors, not HTTP errors
+      const isNetworkError = !err.response && (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND');
+      if (isNetworkError && attempt < maxRetries) {
+        const delay = (attempt + 1) * 2000;
+        console.log(`Network error, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise(r => setTimeout(r, delay));
         continue;
       }
@@ -349,6 +364,7 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
 
 // ---- Finding API (legacy, sold items) ----
 async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
+  await throttleFindingAPI();
   trackApiCall('finding', 'findCompletedItems', keywords, source);
   let ebayResponse;
   try {
@@ -894,6 +910,7 @@ app.get('/api/debug/sold-test', async (req, res) => {
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
 
   try {
+    await throttleFindingAPI();
     const ebayResponse = await axios.get(
       'https://svcs.ebay.com/services/search/FindingService/v1',
       {
@@ -981,6 +998,7 @@ app.get('/api/stats/api-calls', (req, res) => {
 // ---- eBay API connectivity test (no auth required) ----
 app.get('/api/test-ebay', async (req, res) => {
   try {
+    await throttleFindingAPI();
     trackApiCall('finding', 'findItemsByKeywords', 'test', 'test-ebay');
     const start = Date.now();
     const ebayResponse = await axios.get(
@@ -1266,7 +1284,7 @@ async function checkAlerts() {
       } else if (EBAY_API_MODE === 'browse') {
         searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10, 'alerts'));
       } else {
-        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10));
+        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10, 'alerts'));
       }
 
       const currentIds = searchResult.results.map(r => r.itemId);
