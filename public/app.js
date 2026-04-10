@@ -2250,6 +2250,7 @@ function removeFromCollection(idx) {
 // ---- Set Completion Tracker ----
 let completionData = null;
 let rainbowMode = false;
+let completionVariantFilters = {}; // { setIndex: { name, printRun } }
 
 function getCompletionState() {
   try { return JSON.parse(localStorage.getItem('cardHuddleCompletion') || '{}'); }
@@ -2307,6 +2308,16 @@ function toggleRainbowMode() {
   if (completionData) renderCompletionSets();
 }
 
+function toggleCompletionVariantFilter(si, variantName, printRun) {
+  const current = completionVariantFilters[si];
+  if (current && current.name === variantName) {
+    delete completionVariantFilters[si];
+  } else {
+    completionVariantFilters[si] = { name: variantName, printRun: printRun || '' };
+  }
+  renderCompletionSets();
+}
+
 function renderCompletionSets() {
   if (!completionData) return;
   const state = getCompletionState();
@@ -2320,17 +2331,27 @@ function renderCompletionSets() {
   completionData.sets.forEach((set, si) => {
     const setKey = `s${si}`;
     const cards = set.cards || [];
-    const variants = (set.parallels && set.parallels.length > 0)
+    const allVariants = (set.parallels && set.parallels.length > 0)
       ? [{ name: 'Base', printRun: '' }, ...set.parallels]
       : [{ name: 'Base', printRun: '' }];
+
+    // Determine which variants to show based on filter
+    const activeFilter = completionVariantFilters[si];
+    const displayVariants = activeFilter
+      ? allVariants.filter(v => v.name === activeFilter.name)
+      : allVariants;
+    // Find the variant index for the active filter (for checkbox keys)
+    const activeVi = activeFilter
+      ? allVariants.findIndex(v => v.name === activeFilter.name)
+      : -1;
+
     let setTotal = 0, setOwned = 0;
 
-    // Always count by variants (rainbow style)
+    // Count totals across ALL variants (not just filtered)
     cards.forEach((c, ci) => {
-      variants.forEach((v, vi) => {
+      allVariants.forEach((v, vi) => {
         setTotal++;
-        const key = `${setKey}_c${ci}_v${vi}`;
-        if (owned[key]) setOwned++;
+        if (owned[`${setKey}_c${ci}_v${vi}`]) setOwned++;
       });
     });
     totalCards += setTotal;
@@ -2344,72 +2365,74 @@ function renderCompletionSets() {
       : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
       : '<span class="checklist-badge base">BASE</span>';
 
+    // Build parallel filter badges (like normal checklist)
+    const parallelsList = allVariants.map(v => {
+      const pr = v.printRun ? ` /${v.printRun}` : '';
+      const isActive = activeFilter && activeFilter.name === v.name;
+      const nameEsc = escHtml(v.name).replace(/'/g, "\\'");
+      return `<span class="checklist-parallel ${isActive ? 'checklist-parallel-active' : ''}" onclick="event.stopPropagation(); toggleCompletionVariantFilter(${si}, '${nameEsc}', '${v.printRun || ''}')">${escHtml(v.name)}${pr}</span>`;
+    }).join('');
+
+    const filterLabel = activeFilter ? `<span class="checklist-variant-label">${escHtml(activeFilter.name)}${activeFilter.printRun ? ' /' + activeFilter.printRun : ''}</span>` : '';
+
     html += `<div class="completion-set ${isComplete ? 'complete' : ''}">
       <div class="completion-set-header" onclick="toggleCompletionSet(${si})">
-        ${categoryBadge}
-        <span class="completion-set-name">${escHtml(set.name)}</span>
-        <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
-        <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
+        <div class="completion-set-title-row">
+          ${categoryBadge}
+          <span class="completion-set-name">${escHtml(set.name)}</span>
+          <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
+          ${filterLabel}
+          <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="checklist-parallels-row">${parallelsList}</div>
       </div>
-      <div class="completion-set-cards hidden" id="completion-cards-${si}">`;
+      <div class="completion-set-cards hidden" id="completion-cards-${si}">
+        <table class="checklist-table completion-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Team</th>
+              ${!activeFilter ? '<th>Variant</th>' : ''}
+              <th class="completion-check-col">Owned</th>
+            </tr>
+          </thead>
+          <tbody>`;
 
-    // Group cards by player
-    const playerGroups = {};
     cards.forEach((c, ci) => {
-      const pName = c.player || 'Unknown';
-      if (!playerGroups[pName]) playerGroups[pName] = [];
-      playerGroups[pName].push({ ...c, ci });
-    });
-
-    Object.keys(playerGroups).forEach(playerName => {
-      const playerCards = playerGroups[playerName];
-      const firstCard = playerCards[0];
-      // Count owned for this player
-      let playerOwned = 0, playerTotal = 0;
-      playerCards.forEach(c => {
-        variants.forEach((v, vi) => {
-          playerTotal++;
-          const key = `${setKey}_c${c.ci}_v${vi}`;
-          if (owned[key]) playerOwned++;
-        });
-      });
-      const playerPct = playerTotal > 0 ? Math.round((playerOwned / playerTotal) * 100) : 0;
-
       const year = completionData.year || '2025';
       const brand = (completionData.brand || 'Bowman').replace(/'/g, "\\'");
       const setName = set.name.replace(/'/g, "\\'");
       const category = set.category || 'base';
-      const playerEsc = escHtml(playerName).replace(/'/g, "\\'");
-      const cardNum = escHtml(firstCard.number).replace(/'/g, "\\'");
-      const printRun = firstCard.printRun ? String(firstCard.printRun) : '';
+      const playerEsc = escHtml(c.player || 'Unknown').replace(/'/g, "\\'");
+      const cardNum = escHtml(c.number).replace(/'/g, "\\'");
+      const printRun = c.printRun ? String(c.printRun) : '';
 
-      html += `<div class="completion-player-group">
-        <div class="completion-player-header">
-          <span class="completion-player-num">${playerCards.map(c => '#' + escHtml(c.number)).join(', ')}</span>
-          <a href="#" class="completion-player-name" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${printRun}')">${escHtml(playerName)}</a>
-          <span class="completion-player-team">${escHtml(firstCard.team || '')}</span>
-          <span class="completion-player-pct ${playerPct === 100 ? 'complete' : ''}">${playerOwned}/${playerTotal}</span>
-        </div>
-        <div class="completion-variants">`;
+      const variantsToRender = activeFilter ? [{ v: displayVariants[0], vi: activeVi }] : allVariants.map((v, vi) => ({ v, vi }));
 
-      playerCards.forEach(c => {
-        variants.forEach((v, vi) => {
-          const key = `${setKey}_c${c.ci}_v${vi}`;
-          const checked = owned[key] ? 'checked' : '';
-          const prDisplay = v.printRun ? ' /' + v.printRun : (c.printRun ? ' /' + c.printRun : '');
-          html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
-            <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
-            <span>${escHtml(v.name)}${prDisplay}</span>
-          </label>`;
-        });
+      variantsToRender.forEach(({ v, vi }, idx) => {
+        const key = `${setKey}_c${ci}_v${vi}`;
+        const checked = owned[key] ? 'checked' : '';
+        const isOwned = owned[key];
+        const prDisplay = v.printRun ? ' /' + v.printRun : '';
+        const showPlayer = idx === 0; // Only show player name on first variant row
+
+        html += `<tr class="${isOwned ? 'completion-row-owned' : ''}">
+          <td class="cl-num">${showPlayer ? escHtml(c.number) : ''}</td>
+          <td class="cl-player">${showPlayer ? `<a href="#" class="cl-player-link" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${v.printRun || printRun}')">${escHtml(c.player || 'Unknown')}</a>` : ''}</td>
+          <td class="cl-team">${showPlayer ? escHtml(c.team || '') : ''}</td>
+          ${!activeFilter ? `<td class="completion-variant-name">${escHtml(v.name)}${prDisplay}</td>` : ''}
+          <td class="completion-check-cell">
+            <label class="completion-variant-check ${isOwned ? 'owned' : ''}">
+              <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
+            </label>
+          </td>
+        </tr>`;
       });
-
-      html += `</div>
-        <div class="completion-player-listings-slot" id="completion-listings-${si}-${firstCard.ci}"></div>
-      </div>`;
     });
 
-    html += `</div></div>`;
+    html += `</tbody></table>
+      </div></div>`;
   });
 
   setsEl.innerHTML = html;
@@ -2434,7 +2457,89 @@ function toggleCompletionCard(productKey, cardKey, checkbox) {
     delete state[productKey][cardKey];
   }
   saveCompletionState(state);
-  renderCompletionSets();
+
+  // Update the label styling without re-rendering
+  const label = checkbox.closest('.completion-variant-check');
+  if (label) label.classList.toggle('owned', checkbox.checked);
+
+  // Update counts in-place
+  updateCompletionCounts();
+}
+
+function updateCompletionCounts() {
+  if (!completionData) return;
+  const state = getCompletionState();
+  const productKey = completionData.id || completionData.name;
+  const owned = state[productKey] || {};
+
+  let totalCards = 0, ownedCount = 0;
+
+  completionData.sets.forEach((set, si) => {
+    const setKey = `s${si}`;
+    const cards = set.cards || [];
+    const variants = (set.parallels && set.parallels.length > 0)
+      ? [{ name: 'Base', printRun: '' }, ...set.parallels]
+      : [{ name: 'Base', printRun: '' }];
+    let setTotal = 0, setOwned = 0;
+
+    cards.forEach((c, ci) => {
+      variants.forEach((v, vi) => {
+        setTotal++;
+        if (owned[`${setKey}_c${ci}_v${vi}`]) setOwned++;
+      });
+    });
+    totalCards += setTotal;
+    ownedCount += setOwned;
+
+    const pct = setTotal > 0 ? Math.round((setOwned / setTotal) * 100) : 0;
+
+    // Update set header count and progress bar
+    const setEl = document.querySelectorAll('.completion-set')[si];
+    if (setEl) {
+      const countEl = setEl.querySelector('.completion-set-count');
+      if (countEl) countEl.textContent = `${setOwned}/${setTotal} (${pct}%)`;
+      const fillEl = setEl.querySelector('.completion-mini-fill');
+      if (fillEl) fillEl.style.width = pct + '%';
+      setEl.classList.toggle('complete', pct === 100);
+    }
+
+    // Update player counts within this set
+    const cardsContainer = document.getElementById(`completion-cards-${si}`);
+    if (cardsContainer) {
+      const playerGroups = {};
+      cards.forEach((c, ci) => {
+        const pName = c.player || 'Unknown';
+        if (!playerGroups[pName]) playerGroups[pName] = [];
+        playerGroups[pName].push({ ci });
+      });
+
+      const pctEls = cardsContainer.querySelectorAll('.completion-player-pct');
+      let pIdx = 0;
+      Object.keys(playerGroups).forEach(playerName => {
+        const playerCards = playerGroups[playerName];
+        let pOwned = 0, pTotal = 0;
+        playerCards.forEach(c => {
+          variants.forEach((v, vi) => {
+            pTotal++;
+            if (owned[`${setKey}_c${c.ci}_v${vi}`]) pOwned++;
+          });
+        });
+        const pctEl = pctEls[pIdx];
+        if (pctEl) {
+          pctEl.textContent = `${pOwned}/${pTotal}`;
+          pctEl.classList.toggle('complete', pOwned === pTotal && pTotal > 0);
+        }
+        pIdx++;
+      });
+    }
+  });
+
+  // Update overall progress
+  const overallPct = totalCards > 0 ? Math.round((ownedCount / totalCards) * 100) : 0;
+  const barEl = document.getElementById('completion-bar');
+  const textEl = document.getElementById('completion-text');
+  if (barEl) barEl.style.width = overallPct + '%';
+  if (textEl) textEl.textContent = `${ownedCount} / ${totalCards} cards (${overallPct}%)`;
 }
 
 // Toggle inline for-sale listings in completion view
@@ -3845,5 +3950,59 @@ async function fetchPlayerListings(container, query, mode) {
 
   } catch (err) {
     body.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+  }
+}
+
+// ---- Feedback / Report Bug ----
+function openFeedbackModal(type) {
+  const modal = document.getElementById('feedback-modal');
+  const title = document.getElementById('feedback-modal-title');
+  const typeInput = document.getElementById('feedback-type');
+  const msgEl = document.getElementById('feedback-message');
+  const statusEl = document.getElementById('feedback-status');
+
+  typeInput.value = type;
+  title.textContent = type === 'bug' ? 'Report a Bug' : 'Send Feedback';
+  msgEl.placeholder = type === 'bug'
+    ? 'Describe the bug: what happened, what you expected, and steps to reproduce...'
+    : 'Tell us what you think, suggest features, or share your experience...';
+  statusEl.classList.add('hidden');
+  modal.classList.remove('hidden');
+}
+
+function closeFeedbackModal() {
+  document.getElementById('feedback-modal').classList.add('hidden');
+  document.getElementById('feedback-form').reset();
+  document.getElementById('feedback-status').classList.add('hidden');
+}
+
+async function submitFeedback(e) {
+  e.preventDefault();
+  const type = document.getElementById('feedback-type').value;
+  const email = document.getElementById('feedback-email').value.trim();
+  const message = document.getElementById('feedback-message').value.trim();
+  const statusEl = document.getElementById('feedback-status');
+
+  if (!message) return;
+
+  try {
+    const resp = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, email, message, timestamp: new Date().toISOString(), userAgent: navigator.userAgent }),
+    });
+
+    if (resp.ok) {
+      statusEl.textContent = 'Thank you! Your ' + (type === 'bug' ? 'bug report' : 'feedback') + ' has been sent.';
+      statusEl.className = 'feedback-status success';
+      statusEl.classList.remove('hidden');
+      setTimeout(closeFeedbackModal, 2000);
+    } else {
+      throw new Error('Server error');
+    }
+  } catch (err) {
+    statusEl.textContent = 'Failed to send. Please try again.';
+    statusEl.className = 'feedback-status error';
+    statusEl.classList.remove('hidden');
   }
 }

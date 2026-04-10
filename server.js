@@ -1917,6 +1917,56 @@ app.get('/api/card-prices', async (req, res) => {
   }
 });
 
+// ---- Feedback / Bug Reports ----
+const FEEDBACK_FILE = path.join(__dirname, 'data', 'feedback.json');
+
+app.post('/api/feedback', (req, res) => {
+  const { type, email, message, timestamp, userAgent } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const dir = path.dirname(FEEDBACK_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    let feedback = [];
+    try {
+      if (fs.existsSync(FEEDBACK_FILE)) {
+        feedback = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf8'));
+      }
+    } catch (e) { /* start fresh */ }
+
+    feedback.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      type: type || 'feedback',
+      email: email || '',
+      message: message.trim(),
+      timestamp: timestamp || new Date().toISOString(),
+      userAgent: userAgent || '',
+    });
+
+    fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(feedback, null, 2));
+    console.log(`[Feedback] New ${type || 'feedback'} received${email ? ' from ' + email : ''}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error saving feedback:', err.message);
+    res.status(500).json({ error: 'Failed to save feedback' });
+  }
+});
+
+app.get('/api/feedback', (req, res) => {
+  try {
+    if (fs.existsSync(FEEDBACK_FILE)) {
+      const data = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf8'));
+      return res.json(data);
+    }
+    res.json([]);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
