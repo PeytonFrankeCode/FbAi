@@ -556,6 +556,17 @@ async function fetchVariants(query) {
       throw new Error(msg);
     }
 
+    if (data.rateLimited) {
+      variantsGrid.innerHTML = '';
+      variantsTitle.innerHTML = '';
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>eBay\'s sold listings API has reached its limit. Please try again in a few minutes, or switch to For Sale mode.</p>';
+      variantsGrid.appendChild(msg);
+      variantsSection.classList.remove('hidden');
+      return;
+    }
+
     cachedVariants = data.variants;
     displayVariants(data.variants, query, data.mock, data.serial);
 
