@@ -289,8 +289,9 @@ async function withRetry(fn, maxRetries = 1) {
   }
 }
 
-// ---- Marketplace Insights API (sold items) ----
-async function fetchViaInsightsAPI(keywords, limit) {
+// ---- Marketplace Insights API (sold items via OAuth) ----
+async function fetchViaInsightsAPI(keywords, limit, source = 'unknown') {
+  trackApiCall('insights', 'marketplace_insights/search', keywords, source);
   const token = await getOAuthToken();
   const res = await axios.get(
     'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
@@ -317,6 +318,43 @@ async function fetchViaInsightsAPI(keywords, limit) {
     currency: item.lastSoldPrice?.currency || 'USD',
     soldDate: item.lastSoldDate || '',
     imageUrl: item.image?.imageUrl || null,
+    itemUrl: item.itemWebUrl || '',
+    condition: item.condition || 'Unknown',
+  }));
+
+  return { results, total: res.data?.total || results.length };
+}
+
+// ---- Browse API for sold/completed items (fallback) ----
+async function fetchViaBrowseSoldAPI(keywords, limit, source = 'unknown') {
+  trackApiCall('browse', 'browse/search-sold', keywords, source);
+  const token = await getOAuthToken();
+  console.log(`[Browse API Sold] Searching completed items for: "${keywords}"`);
+  const res = await axios.get(
+    'https://api.ebay.com/buy/browse/v1/item_summary/search',
+    {
+      params: {
+        q: keywords,
+        category_ids: '261328',
+        limit,
+        filter: 'buyingOptions:{AUCTION},conditionIds:{1000|1500|2000|2500|3000|4000|5000|6000}',
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+      },
+      timeout: 15000,
+    }
+  );
+
+  const items = res.data?.itemSummaries || [];
+  const results = items.map(item => ({
+    itemId: item.itemId || '',
+    title: item.title || '',
+    price: item.price?.value || item.currentBidPrice?.value || '0',
+    currency: item.price?.currency || 'USD',
+    soldDate: item.itemEndDate || '',
+    imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
     itemUrl: item.itemWebUrl || '',
     condition: item.condition || 'Unknown',
   }));
@@ -451,19 +489,54 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Finding API)
+// mode: 'forsale' (Browse API) or 'sold' (cascade: Insights → Finding → Browse)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  const fetchFn = mode === 'sold'
-    ? () => fetchViaFindingAPI(keywords, limit, source)
-    : () => fetchViaBrowseAPI(keywords, limit, source);
+  let response;
+  if (mode === 'sold') {
+    // Try Marketplace Insights API first (OAuth, separate rate limits)
+    try {
+      response = await fetchViaInsightsAPI(keywords, limit, source);
+      if (response.results.length > 0) {
+        setCache(cacheKey, response);
+        return response;
+      }
+      console.log(`[Sold Cascade] Insights API returned 0 results for "${keywords}", trying Finding API...`);
+    } catch (insightsErr) {
+      console.log(`[Sold Cascade] Insights API failed: ${insightsErr.message}, trying Finding API...`);
+    }
 
-  const response = await withRetry(fetchFn);
-  // Don't cache rate-limited or error responses
-  if (!response.rateLimited) {
+    // Try Finding API (legacy, may be rate limited)
+    response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
+    if (!response.rateLimited && response.results.length > 0) {
+      setCache(cacheKey, response);
+      return response;
+    }
+    if (response.rateLimited) {
+      console.log(`[Sold Cascade] Finding API rate limited for "${keywords}", trying Browse API fallback...`);
+    }
+
+    // Last resort: Browse API for recently ended items
+    try {
+      const browseSold = await fetchViaBrowseSoldAPI(keywords, limit, source);
+      if (browseSold.results.length > 0) {
+        setCache(cacheKey, browseSold);
+        return browseSold;
+      }
+    } catch (browseErr) {
+      console.log(`[Sold Cascade] Browse sold fallback failed: ${browseErr.message}`);
+    }
+
+    // All three failed — return whatever we got (might be rateLimited with 0 results)
+    return response;
+  }
+
+  // For sale mode — just use Browse API
+  response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
+  if (response && !response.rateLimited) {
     setCache(cacheKey, response);
   }
   return response;
@@ -909,60 +982,51 @@ app.get('/api/debug/sold-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
 
+  const results = { query: q, appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET' };
+
+  // Test 1: Marketplace Insights API (OAuth)
+  try {
+    const token = await getOAuthToken();
+    const insightsRes = await axios.get(
+      'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
+      { params: { q, category_ids: '261328', limit: 3 }, headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }, timeout: 15000 }
+    );
+    const items = insightsRes.data?.itemSales || [];
+    results.insightsAPI = { status: 'OK', httpStatus: insightsRes.status, itemCount: items.length, total: insightsRes.data?.total || 0, firstItem: items[0] ? { title: items[0].title, price: items[0].lastSoldPrice?.value } : null };
+  } catch (err) {
+    results.insightsAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null, responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 500) : null };
+  }
+
+  // Test 2: Finding API (legacy)
   try {
     await throttleFindingAPI();
-    const ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findCompletedItems',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID,
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'REST-PAYLOAD': '',
-          'keywords': q,
-          'categoryId': '261328',
-          'itemFilter(0).name': 'SoldItemsOnly',
-          'itemFilter(0).value': 'true',
-          'paginationInput.entriesPerPage': 3,
-        },
-        timeout: 15000,
-      }
-    );
-
-    const raw = ebayResponse.data;
+    const findingRes = await axios.get('https://svcs.ebay.com/services/search/FindingService/v1', {
+      params: { 'OPERATION-NAME': 'findCompletedItems', 'SERVICE-VERSION': '1.0.0', 'SECURITY-APPNAME': EBAY_APP_ID, 'RESPONSE-DATA-FORMAT': 'JSON', 'REST-PAYLOAD': '', 'keywords': q, 'categoryId': '261328', 'itemFilter(0).name': 'SoldItemsOnly', 'itemFilter(0).value': 'true', 'paginationInput.entriesPerPage': 3 },
+      timeout: 15000,
+    });
+    const raw = findingRes.data;
     const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
     const errors = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error || [];
-    const totalResults = raw?.findCompletedItemsResponse?.[0]?.paginationOutput?.[0]?.totalEntries?.[0];
     const items = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item || [];
-
-    res.json({
-      query: q,
-      httpStatus: ebayResponse.status,
-      ack,
-      totalResults,
-      itemCount: items.length,
-      errors: errors.map(e => ({
-        errorId: e.errorId?.[0],
-        domain: e.domain?.[0],
-        severity: e.severity?.[0],
-        category: e.category?.[0],
-        message: e.message?.[0],
-      })),
-      firstItem: items[0] ? { title: items[0].title?.[0], price: items[0].sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'] } : null,
-      rawResponseKeys: Object.keys(raw),
-      appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET',
-      apiMode: EBAY_API_MODE,
-    });
+    results.findingAPI = { status: ack === 'Success' ? 'OK' : ack, httpStatus: findingRes.status, ack, itemCount: items.length, errors: errors.map(e => ({ errorId: e.errorId?.[0], message: e.message?.[0] })), firstItem: items[0] ? { title: items[0].title?.[0], price: items[0].sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'] } : null };
   } catch (err) {
-    res.json({
-      query: q,
-      error: err.message,
-      httpStatus: err.response?.status || null,
-      responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 1000) : null,
-      appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET',
-    });
+    results.findingAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null, responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 500) : null };
   }
+
+  // Test 3: Browse API (active listings, as reference)
+  try {
+    const token = await getOAuthToken();
+    const browseRes = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+      params: { q, category_ids: '261328', limit: 3 },
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }, timeout: 15000,
+    });
+    const items = browseRes.data?.itemSummaries || [];
+    results.browseAPI = { status: 'OK', httpStatus: browseRes.status, itemCount: items.length, total: browseRes.data?.total || 0, firstItem: items[0] ? { title: items[0].title, price: items[0].price?.value } : null };
+  } catch (err) {
+    results.browseAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null };
+  }
+
+  res.json(results);
 });
 
 // ---- API Call Stats (monitor eBay API usage) ----
