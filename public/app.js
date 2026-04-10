@@ -1578,6 +1578,7 @@ async function loadChecklistProducts() {
   checklistProductGrid.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading checklists...</span></div>';
   try {
     const res = await fetch('/api/checklists');
+    if (!res.ok) throw new Error(`Server error (${res.status})`);
     const data = await res.json();
     checklistProductGrid.innerHTML = '';
 
@@ -1650,7 +1651,8 @@ async function loadProduct(productId) {
   checklistSets.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading...</span></div>';
 
   try {
-    const res = await fetch(`/api/checklists/${productId}`);
+    const res = await fetch(`/api/checklists/${encodeURIComponent(productId)}`);
+    if (!res.ok) throw new Error(`Server error (${res.status})`);
     checklistData = await res.json();
     checklistProductName.textContent = checklistData.name;
     checklistFilter = 'all';
@@ -2265,6 +2267,7 @@ async function loadCompletionProducts() {
   if (select.options.length > 1) return; // already loaded
   try {
     const res = await fetch('/api/checklists');
+    if (!res.ok) throw new Error(`Server error (${res.status})`);
     const data = await res.json();
     data.products.forEach(p => {
       const opt = document.createElement('option');
@@ -2291,7 +2294,8 @@ async function loadCompletionProduct() {
 
   setsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading...</span></div>';
   try {
-    const res = await fetch(`/api/checklists/${productId}`);
+    const res = await fetch(`/api/checklists/${encodeURIComponent(productId)}`);
+    if (!res.ok) throw new Error(`Server error (${res.status})`);
     completionData = await res.json();
     progressEl.classList.remove('hidden');
     subtabs.style.display = '';
