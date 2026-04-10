@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { connectDB, loadData, saveData } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -144,28 +145,19 @@ async function throttleFindingAPI() {
 const API_CALLS_FILE = path.join(__dirname, 'data', 'api-call-log.json');
 
 function loadApiCallLog() {
-  try {
-    if (fs.existsSync(API_CALLS_FILE)) {
-      return JSON.parse(fs.readFileSync(API_CALLS_FILE, 'utf8'));
-    }
-  } catch (e) { console.error('Error loading API call log:', e.message); }
-  return { daily: {}, calls: [] };
+  return loadData('apiCallLog', API_CALLS_FILE, { daily: {}, calls: [] });
 }
 
 function saveApiCallLog(log) {
-  try {
-    const dir = path.dirname(API_CALLS_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    // Keep only last 7 days of detailed calls to prevent file bloat
-    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    log.calls = (log.calls || []).filter(c => new Date(c.time).getTime() > cutoff);
-    // Keep daily totals for 30 days
-    const dayCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    for (const day of Object.keys(log.daily)) {
-      if (day < dayCutoff) delete log.daily[day];
-    }
-    fs.writeFileSync(API_CALLS_FILE, JSON.stringify(log, null, 2));
-  } catch (e) { console.error('Error saving API call log:', e.message); }
+  // Keep only last 7 days of detailed calls to prevent file bloat
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  log.calls = (log.calls || []).filter(c => new Date(c.time).getTime() > cutoff);
+  // Keep daily totals for 30 days
+  const dayCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  for (const day of Object.keys(log.daily)) {
+    if (day < dayCutoff) delete log.daily[day];
+  }
+  saveData('apiCallLog', API_CALLS_FILE, log);
 }
 
 function trackApiCall(apiName, endpoint, keywords, source) {
@@ -1231,18 +1223,11 @@ app.get('/api/checklists/:productId/search', (req, res) => {
 const ALERTS_FILE = path.join(__dirname, 'data', 'alerts.json');
 
 function loadAlerts() {
-  try {
-    if (fs.existsSync(ALERTS_FILE)) {
-      return JSON.parse(fs.readFileSync(ALERTS_FILE, 'utf-8'));
-    }
-  } catch (e) {
-    console.error('Error loading alerts:', e.message);
-  }
-  return { alerts: [] };
+  return loadData('alerts', ALERTS_FILE, { alerts: [] });
 }
 
 function saveAlerts(data) {
-  fs.writeFileSync(ALERTS_FILE, JSON.stringify(data, null, 2));
+  saveData('alerts', ALERTS_FILE, data);
 }
 
 // Email transporter (configured via env vars)
@@ -1677,16 +1662,11 @@ function buildMockInsights(query) {
 const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
 
 function loadPriceHistory() {
-  try {
-    if (fs.existsSync(PRICE_HISTORY_FILE)) {
-      return JSON.parse(fs.readFileSync(PRICE_HISTORY_FILE, 'utf-8'));
-    }
-  } catch (e) { console.error('Error loading price history:', e.message); }
-  return {};
+  return loadData('priceHistory', PRICE_HISTORY_FILE, {});
 }
 
 function savePriceHistory(data) {
-  fs.writeFileSync(PRICE_HISTORY_FILE, JSON.stringify(data, null, 2));
+  saveData('priceHistory', PRICE_HISTORY_FILE, data);
 }
 
 // Record a price data point (called after searches)
@@ -1723,22 +1703,15 @@ app.get('/api/price-history', (req, res) => {
   res.json({ history: history[q] || [], query: q });
 });
 
-// ---- Stripe Subscription Storage (JSON file) ----
+// ---- Stripe Subscription Storage ----
 const SUBS_FILE = path.join(__dirname, 'data', 'subscriptions.json');
 
 function loadSubscriptions() {
-  try {
-    if (fs.existsSync(SUBS_FILE)) return JSON.parse(fs.readFileSync(SUBS_FILE, 'utf-8'));
-  } catch (err) { console.error('Error loading subscriptions:', err); }
-  return {};
+  return loadData('subscriptions', SUBS_FILE, {});
 }
 
 function saveSubscriptions(subs) {
-  try {
-    const dir = path.dirname(SUBS_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(SUBS_FILE, JSON.stringify(subs, null, 2));
-  } catch (err) { console.error('Error saving subscriptions:', err); }
+  saveData('subscriptions', SUBS_FILE, subs);
 }
 
 // ---- Stripe API Routes ----
@@ -1927,15 +1900,7 @@ app.post('/api/feedback', (req, res) => {
   }
 
   try {
-    const dir = path.dirname(FEEDBACK_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-    let feedback = [];
-    try {
-      if (fs.existsSync(FEEDBACK_FILE)) {
-        feedback = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf8'));
-      }
-    } catch (e) { /* start fresh */ }
+    const feedback = loadData('feedback', FEEDBACK_FILE, []);
 
     feedback.push({
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -1946,7 +1911,7 @@ app.post('/api/feedback', (req, res) => {
       userAgent: userAgent || '',
     });
 
-    fs.writeFileSync(FEEDBACK_FILE, JSON.stringify(feedback, null, 2));
+    saveData('feedback', FEEDBACK_FILE, feedback);
     console.log(`[Feedback] New ${type || 'feedback'} received${email ? ' from ' + email : ''}`);
     res.json({ ok: true });
   } catch (err) {
@@ -1957,11 +1922,7 @@ app.post('/api/feedback', (req, res) => {
 
 app.get('/api/feedback', (req, res) => {
   try {
-    if (fs.existsSync(FEEDBACK_FILE)) {
-      const data = JSON.parse(fs.readFileSync(FEEDBACK_FILE, 'utf8'));
-      return res.json(data);
-    }
-    res.json([]);
+    res.json(loadData('feedback', FEEDBACK_FILE, []));
   } catch (err) {
     res.json([]);
   }
@@ -1971,16 +1932,19 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
-  console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
-  console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
-  console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
-  console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
-  if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
-    console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
-  }
+// Connect to MongoDB (if configured) then start server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
+    console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
+    console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
+    console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
+    console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
+    if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
+      console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
+    }
+  });
 });
 
 function getMockVariants(query, mode) {
