@@ -789,14 +789,39 @@
         <span>The Card Huddle</span>
       </div>
       <p class="footer-description">Helping collectors research fair market values with real eBay sold data. Transparent pricing for smarter buying and selling.</p>
+      <div class="footer-actions">
+        <button class="footer-btn feedback-btn" onclick="openFeedbackModal('feedback')">&#128172; Feedback</button>
+        <button class="footer-btn bug-btn" onclick="openFeedbackModal('bug')">&#128027; Report Bug</button>
+      </div>
       <div class="footer-links">
         <span>Data sourced from eBay</span>
         <span class="footer-sep">&bull;</span>
         <span>Prices in USD</span>
       </div>
-      <p class="footer-copy">&copy; 2024 The Card Huddle. Not affiliated with eBay Inc.</p>
+      <p class="footer-copy">&copy; 2025 The Card Huddle. Not affiliated with eBay Inc.</p>
     </div>
   </footer>
+
+  <!-- Feedback / Report Bug Modal -->
+  <div id="feedback-modal" class="feedback-modal hidden" onclick="if(event.target===this)closeFeedbackModal()">
+    <div class="feedback-modal-box">
+      <button class="feedback-close" onclick="closeFeedbackModal()">&times;</button>
+      <h2 id="feedback-modal-title">Send Feedback</h2>
+      <form id="feedback-form" onsubmit="submitFeedback(event)">
+        <input type="hidden" id="feedback-type" value="feedback" />
+        <div class="feedback-field">
+          <label for="feedback-email">Email (optional)</label>
+          <input type="email" id="feedback-email" placeholder="your@email.com" />
+        </div>
+        <div class="feedback-field">
+          <label for="feedback-message">Message</label>
+          <textarea id="feedback-message" rows="5" placeholder="Tell us what you think..." required></textarea>
+        </div>
+        <button type="submit" class="feedback-submit">Send</button>
+        <p id="feedback-status" class="feedback-status hidden"></p>
+      </form>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
