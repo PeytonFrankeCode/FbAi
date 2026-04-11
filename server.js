@@ -446,7 +446,7 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Finding API only)
+// mode: 'forsale' (Browse API) or 'sold' (Insights API → Finding API fallback)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -454,7 +454,19 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    // Finding API is the only eBay API that returns actual sold/completed items
+    // Primary: Marketplace Insights API (OAuth, separate rate limit pool)
+    try {
+      response = await fetchViaInsightsAPI(keywords, limit, source);
+      if (response.results.length > 0) {
+        setCache(cacheKey, response);
+        return response;
+      }
+      console.log(`[Sold] Insights API returned 0 results for "${keywords}", trying Finding API...`);
+    } catch (insightsErr) {
+      console.log(`[Sold] Insights API failed: ${insightsErr.message}, trying Finding API...`);
+    }
+
+    // Fallback: Finding API (may be rate limited by eBay)
     response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
     if (!response.rateLimited && response.results.length > 0) {
       setCache(cacheKey, response);
