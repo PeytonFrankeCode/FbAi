@@ -448,23 +448,20 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Finding API — single call, heavily cached)
+// mode: 'forsale' (Browse API) or 'sold' (unavailable — Finding API decommissioned, Insights API requires approval)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  let response;
   if (mode === 'sold') {
-    // Finding API findCompletedItems is the only available sold data source.
-    // eBay rate-limits this operation aggressively, so we cache for 2 hours
-    // and limit to 1 call per search (no broadening or dual serial searches).
-    response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
-    if (!response.rateLimited && response.results.length > 0) {
-      setCache(cacheKey, response);
-    }
-    return response;
+    // Finding API was decommissioned by eBay in Feb 2025.
+    // Marketplace Insights API is the replacement but requires eBay Business approval.
+    // Return a clear message until Insights API access is granted.
+    return { results: [], total: 0, soldUnavailable: true };
   }
+
+  let response;
 
   // For sale mode — just use Browse API
   response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
@@ -501,14 +498,9 @@ app.get('/api/search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
+    // Sold mode: currently unavailable (Finding API decommissioned, Insights API pending approval)
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, limit, mode, 'search');
-      if (searchData.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
-      const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
-      return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
+      return res.json({ results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, soldUnavailable: true, rateLimitMessage: 'Sold search is currently unavailable. eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Check back soon!' });
     }
 
     if (!serial) {
@@ -723,12 +715,7 @@ app.get('/api/direct-search', async (req, res) => {
 
     // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
-      if (searchData.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial: serial || null, similarResults: [], rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
-      const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
-      return res.json({ results: searchData.results, total: searchData.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
+      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial: serial || null, similarResults: [], soldUnavailable: true, rateLimitMessage: 'Sold search is currently unavailable. eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Check back soon!' });
     }
 
     if (serial) {
@@ -844,7 +831,7 @@ app.get('/api/variants', async (req, res) => {
     if (mode === 'sold') {
       const result = await fetchEbayItems(query, 50, mode, 'variants');
       if (result.rateLimited) {
-        return res.json({ variants: [], mock: false, serial: serial || null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+        return res.json({ variants: [], mock: false, serial: serial || null, soldUnavailable: true, rateLimitMessage: 'Sold search is currently unavailable. eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Check back soon!' });
       }
       rawResults = result.results;
     } else if (serial) {

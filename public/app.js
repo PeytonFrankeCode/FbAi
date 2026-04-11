@@ -556,12 +556,12 @@ async function fetchVariants(query) {
       throw new Error(msg);
     }
 
-    if (data.rateLimited) {
+    if (data.rateLimited || data.soldUnavailable) {
       variantsGrid.innerHTML = '';
       variantsTitle.innerHTML = '';
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>eBay\'s sold listings API has reached its limit. Please try again in a few minutes, or switch to For Sale mode.</p>';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
       variantsGrid.appendChild(msg);
       variantsSection.classList.remove('hidden');
       return;
@@ -717,11 +717,11 @@ async function fetchDirectSearch(query) {
     recordPriceHistory(query, results);
 
     // Check for rate limiting
-    if (data.rateLimited) {
+    if (data.rateLimited || data.soldUnavailable) {
       meta.classList.add('hidden');
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>eBay\'s sold listings API has reached its limit. Please try again in a few minutes, or switch to For Sale mode.</p>';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
       grid.appendChild(msg);
       backBtn.classList.remove('hidden');
       return;
@@ -859,11 +859,11 @@ async function performSearch(query) {
     recordPriceHistory(query, results);
 
     // Check for rate limiting
-    if (data.rateLimited) {
+    if (data.rateLimited || data.soldUnavailable) {
       meta.classList.add('hidden');
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>eBay\'s sold listings API has reached its limit. Please try again in a few minutes, or switch to For Sale mode.</p>';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
       grid.appendChild(msg);
       return;
     }
@@ -3865,6 +3865,11 @@ async function fetchPlayerListings(container, query, mode) {
 
     if (!response.ok) {
       throw new Error(data.error || `Server error ${response.status}`);
+    }
+
+    if (data.rateLimited || data.soldUnavailable) {
+      listingsContainer.innerHTML = '<div class="cl-listings-empty" style="text-align:center;padding:1.5rem;"><strong>Sold Search Currently Unavailable</strong><br>eBay retired the Finding API. We are awaiting approval for the Marketplace Insights API. Use For Sale mode in the meantime.</div>';
+      return;
     }
 
     const results = data.results || [];
