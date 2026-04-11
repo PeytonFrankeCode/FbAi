@@ -130,7 +130,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ---- Finding API throttle (serialize calls to avoid per-second rate limits) ----
 let lastFindingCallTime = 0;
-const FINDING_API_MIN_INTERVAL = 1500; // 1.5 seconds between Finding API calls
+const FINDING_API_MIN_INTERVAL = 5000; // 5 seconds between Finding API calls (eBay is strict on findCompletedItems)
 
 async function throttleFindingAPI() {
   const now = Date.now();
@@ -209,14 +209,16 @@ function getApiCallStats() {
   };
 }
 
-// ---- In-memory cache (30 min TTL) to reduce eBay API calls ----
+// ---- In-memory cache to reduce eBay API calls ----
 const ebayCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL = 30 * 60 * 1000;         // 30 min for active listings
+const SOLD_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours for sold data (Finding API is heavily rate limited)
 
 function getCached(key) {
   const entry = ebayCache.get(key);
   if (!entry) return null;
-  if (Date.now() - entry.ts > CACHE_TTL) {
+  const ttl = key.startsWith('sold|') ? SOLD_CACHE_TTL : CACHE_TTL;
+  if (Date.now() - entry.ts > ttl) {
     ebayCache.delete(key);
     return null;
   }
@@ -446,7 +448,7 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Insights API → Finding API fallback)
+// mode: 'forsale' (Browse API) or 'sold' (Finding API — single call, heavily cached)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -454,19 +456,9 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    // Primary: Marketplace Insights API (OAuth, separate rate limit pool)
-    try {
-      response = await fetchViaInsightsAPI(keywords, limit, source);
-      if (response.results.length > 0) {
-        setCache(cacheKey, response);
-        return response;
-      }
-      console.log(`[Sold] Insights API returned 0 results for "${keywords}", trying Finding API...`);
-    } catch (insightsErr) {
-      console.log(`[Sold] Insights API failed: ${insightsErr.message}, trying Finding API...`);
-    }
-
-    // Fallback: Finding API (may be rate limited by eBay)
+    // Finding API findCompletedItems is the only available sold data source.
+    // eBay rate-limits this operation aggressively, so we cache for 2 hours
+    // and limit to 1 call per search (no broadening or dual serial searches).
     response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
     if (!response.rateLimited && response.results.length > 0) {
       setCache(cacheKey, response);
@@ -508,6 +500,16 @@ app.get('/api/search', async (req, res) => {
 
   try {
     const serial = extractSerial(query);
+
+    // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
+    if (mode === 'sold') {
+      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      if (searchData.rateLimited) {
+        return res.json({ results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
+      const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
+      return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
+    }
 
     if (!serial) {
       // No serial number in query — standard search
@@ -719,6 +721,16 @@ app.get('/api/direct-search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
+    // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
+    if (mode === 'sold') {
+      const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
+      if (searchData.rateLimited) {
+        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial: serial || null, similarResults: [], rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
+      const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
+      return res.json({ results: searchData.results, total: searchData.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
+    }
+
     if (serial) {
       // Serial search (e.g. /5 = print run of 5)
       // Dual search: targeted with serial + broad without, then filter
@@ -826,9 +838,17 @@ app.get('/api/variants', async (req, res) => {
     const serial = extractSerial(query);
     const baseQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
 
-    // Dual search when serial present: targeted + broad for better coverage
     let rawResults;
-    if (serial) {
+
+    // Sold mode: single API call only (Finding API is heavily rate limited)
+    if (mode === 'sold') {
+      const result = await fetchEbayItems(query, 50, mode, 'variants');
+      if (result.rateLimited) {
+        return res.json({ variants: [], mock: false, serial: serial || null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
+      }
+      rawResults = result.results;
+    } else if (serial) {
+      // Dual search when serial present: targeted + broad for better coverage
       const [targeted, broad] = await Promise.all([
         fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
