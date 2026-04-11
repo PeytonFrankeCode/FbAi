@@ -319,43 +319,6 @@ async function fetchViaInsightsAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
-// ---- Browse API for sold/completed items (fallback) ----
-async function fetchViaBrowseSoldAPI(keywords, limit, source = 'unknown') {
-  trackApiCall('browse', 'browse/search-sold', keywords, source);
-  const token = await getOAuthToken();
-  console.log(`[Browse API Sold] Searching completed items for: "${keywords}"`);
-  const res = await axios.get(
-    'https://api.ebay.com/buy/browse/v1/item_summary/search',
-    {
-      params: {
-        q: keywords,
-        category_ids: '261328',
-        limit,
-        filter: 'buyingOptions:{AUCTION},conditionIds:{1000|1500|2000|2500|3000|4000|5000|6000}',
-      },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-      },
-      timeout: 15000,
-    }
-  );
-
-  const items = res.data?.itemSummaries || [];
-  const results = items.map(item => ({
-    itemId: item.itemId || '',
-    title: item.title || '',
-    price: item.price?.value || item.currentBidPrice?.value || '0',
-    currency: item.price?.currency || 'USD',
-    soldDate: item.itemEndDate || '',
-    imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
-    itemUrl: item.itemWebUrl || '',
-    condition: item.condition || 'Unknown',
-  }));
-
-  return { results, total: res.data?.total || results.length };
-}
-
 // ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   trackApiCall('browse', 'browse/search', keywords, source);
@@ -483,7 +446,7 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Finding API with Browse fallback)
+// mode: 'forsale' (Browse API) or 'sold' (Finding API only)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -491,28 +454,11 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    // Try Finding API (primary for sold items)
+    // Finding API is the only eBay API that returns actual sold/completed items
     response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
     if (!response.rateLimited && response.results.length > 0) {
       setCache(cacheKey, response);
-      return response;
     }
-    if (response.rateLimited) {
-      console.log(`[Sold] Finding API rate limited for "${keywords}", trying Browse API fallback...`);
-    }
-
-    // Fallback: Browse API for recently ended items
-    try {
-      const browseSold = await fetchViaBrowseSoldAPI(keywords, limit, source);
-      if (browseSold.results.length > 0) {
-        setCache(cacheKey, browseSold);
-        return browseSold;
-      }
-    } catch (browseErr) {
-      console.log(`[Sold] Browse sold fallback failed: ${browseErr.message}`);
-    }
-
-    // Both failed — return whatever we got
     return response;
   }
 
