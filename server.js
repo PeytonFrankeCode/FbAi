@@ -289,6 +289,103 @@ async function withRetry(fn, maxRetries = 1) {
   }
 }
 
+// ---- Cardsights API (sold listings via catalog search + pricing) ----
+async function fetchViaCardsights(keywords, limit = 20, source = 'unknown') {
+  trackApiCall('cardsights', 'pricing', keywords, source);
+  console.log(`[Cardsights] Searching for: "${keywords}", limit: ${limit}`);
+
+  const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
+
+  // Step 1: Search the catalog for matching cards
+  const searchRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+    params: { query: keywords, type: 'cards' },
+    headers,
+    timeout: 15000,
+  });
+
+  const allItems = searchRes.data?.data || searchRes.data?.results || searchRes.data || [];
+  const cardMatches = (Array.isArray(allItems) ? allItems : [])
+    .filter(item => !item.type || item.type === 'card')
+    .slice(0, 5);
+
+  if (!cardMatches.length) {
+    console.log(`[Cardsights] No catalog matches for "${keywords}"`);
+    return { results: [], total: 0 };
+  }
+
+  console.log(`[Cardsights] Found ${cardMatches.length} match(es), fetching pricing...`);
+
+  // Step 2: Fetch completed sales (pricing) for each matching card
+  const results = [];
+
+  for (const card of cardMatches) {
+    const cardId = card.id || card.cardId;
+    if (!cardId) continue;
+
+    try {
+      const pricingRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, {
+        params: { days: 90 },
+        headers,
+        timeout: 15000,
+      });
+
+      const pricing = pricingRes.data;
+      const cardTitle = [card.name, card.setName, card.year].filter(Boolean).join(' ') || keywords;
+      const imageUrl = card.imageUrl || card.image || null;
+
+      // Map raw (ungraded) sales
+      const rawSales = pricing.raw?.sales || pricing.raw?.listings || (Array.isArray(pricing.raw) ? pricing.raw : []);
+      for (const sale of rawSales) {
+        results.push({
+          itemId: sale.id || sale.listingId || `cs-raw-${results.length}`,
+          title: cardTitle,
+          price: String(sale.price || sale.salePrice || sale.amount || '0'),
+          currency: sale.currency || 'USD',
+          soldDate: sale.date || sale.saleDate || sale.soldDate || sale.endDate || '',
+          imageUrl,
+          itemUrl: sale.url || sale.listingUrl || sale.link || '',
+          condition: 'Ungraded',
+        });
+      }
+
+      // Map graded sales (organized by company → grade → sales[])
+      const graded = pricing.graded || {};
+      for (const [company, grades] of Object.entries(graded)) {
+        if (!grades || typeof grades !== 'object') continue;
+        for (const [grade, data] of Object.entries(grades)) {
+          const gradedSales = data?.sales || data?.listings || (Array.isArray(data) ? data : []);
+          for (const sale of gradedSales) {
+            results.push({
+              itemId: sale.id || sale.listingId || `cs-${company}-${grade}-${results.length}`,
+              title: `${cardTitle} ${company} ${grade}`,
+              price: String(sale.price || sale.salePrice || sale.amount || '0'),
+              currency: sale.currency || 'USD',
+              soldDate: sale.date || sale.saleDate || sale.soldDate || sale.endDate || '',
+              imageUrl,
+              itemUrl: sale.url || sale.listingUrl || sale.link || '',
+              condition: `${company} ${grade}`,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`[Cardsights] Pricing failed for card ${card.id}:`, err.message);
+    }
+
+    if (results.length >= limit) break;
+  }
+
+  // Sort by most recent first
+  results.sort((a, b) => {
+    if (!a.soldDate) return 1;
+    if (!b.soldDate) return -1;
+    return new Date(b.soldDate) - new Date(a.soldDate);
+  });
+
+  console.log(`[Cardsights] Returning ${Math.min(results.length, limit)} sold results`);
+  return { results: results.slice(0, limit), total: results.length };
+}
+
 // ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   trackApiCall('browse', 'browse/search', keywords, source);
@@ -416,7 +513,7 @@ async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
 }
 
 // ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (Finding API — single call, heavily cached)
+// mode: 'forsale' (eBay Browse API) or 'sold' (Cardsights, fallback to eBay Finding API)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -424,17 +521,19 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    // Finding API findCompletedItems is the only available sold data source.
-    // eBay rate-limits this operation aggressively, so we cache for 2 hours
-    // and limit to 1 call per search (no broadening or dual serial searches).
-    response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
-    if (!response.rateLimited && response.results.length > 0) {
+    if (CARDSIGHTS_ENABLED) {
+      response = await fetchViaCardsights(keywords, limit, source);
+    } else {
+      // Fallback: eBay Finding API (heavily rate limited, use only if Cardsights not configured)
+      response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
+    }
+    if (response.results.length > 0) {
       setCache(cacheKey, response);
     }
     return response;
   }
 
-  // For sale mode — just use Browse API
+  // For sale mode — eBay Browse API
   response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
   if (response && !response.rateLimited) {
     setCache(cacheKey, response);
@@ -469,12 +568,9 @@ app.get('/api/search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
+    // Sold mode — uses Cardsights API (catalog search + pricing)
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search');
-      if (searchData.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
       return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
     }
@@ -1254,7 +1350,7 @@ async function checkAlerts() {
       if (USE_MOCK) {
         searchResult = getMockData(alert.query, 'sold');
       } else {
-        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10, 'alerts'));
+        searchResult = await fetchEbayItems(alert.query, 10, 'sold', 'alerts');
       }
 
       const currentIds = searchResult.results.map(r => r.itemId);
@@ -1690,7 +1786,7 @@ connectDB().then(() => {
     console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
     console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
     console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
-    console.log(`Cardsights: ${CARDSIGHTS_ENABLED ? 'ENABLED' : 'NOT CONFIGURED — add CARDSIGHTS_API_KEY to .env'}`);
+    console.log(`Cardsights: ${CARDSIGHTS_ENABLED ? 'ENABLED — sold listings via Cardsights API' : 'NOT CONFIGURED — falling back to eBay Finding API for sold data'}`);
   });
 });
 
