@@ -953,7 +953,7 @@ app.get('/api/test-ebay', async (req, res) => {
   const q = req.query.q || 'Patrick Mahomes Prizm Silver';
 
   // Test 1: Cardsights catalog search
-  let firstCardId = null;
+  let matchedCards = [];
   try {
     const start = Date.now();
     const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
@@ -961,35 +961,30 @@ app.get('/api/test-ebay', async (req, res) => {
       headers: csHeaders,
       timeout: 10000,
     });
-    const items = r.data?.data || r.data?.results || [];
-    firstCardId = items[0]?.id || null;
-    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, items: items.slice(0, 5).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
+    matchedCards = r.data?.data || r.data?.results || [];
+    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: matchedCards.length, items: matchedCards.slice(0, 8).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
   } catch (err) {
     results.cardsights_search = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
   }
 
-  // Test 2: Cardsights pricing for first matched card
-  if (firstCardId) {
+  // Test 2: Check pricing for each matched card until we find one with records
+  results.cardsights_pricing = [];
+  for (const card of matchedCards.slice(0, 8)) {
     try {
-      const start = Date.now();
-      const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${firstCardId}`, {
-        headers: csHeaders,
-        timeout: 10000,
+      const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${card.id}`, {
+        headers: csHeaders, timeout: 10000,
       });
-      const raw = r.data?.raw || {};
-      const graded = r.data?.graded || [];
-      results.cardsights_pricing = {
-        status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, cardId: firstCardId,
-        rawCount: raw.count || raw.records?.length || 0,
-        gradedEntries: graded.length,
-        firstRawRecord: raw.records?.[0] || null,
-        firstGradedEntry: graded[0] || null,
-      };
+      const rawCount = r.data?.raw?.count || r.data?.raw?.records?.length || 0;
+      const gradedCount = Array.isArray(r.data?.graded) ? r.data.graded.reduce((s, e) => s + (e.records?.length || 0), 0) : 0;
+      results.cardsights_pricing.push({
+        cardId: card.id, name: card.name, year: card.year, set: card.setName,
+        rawCount, gradedCount, totalRecords: rawCount + gradedCount,
+        firstRawRecord: r.data?.raw?.records?.[0] || null,
+        firstGradedEntry: Array.isArray(r.data?.graded) ? r.data.graded.find(e => e.records?.length > 0) || null : null,
+      });
     } catch (err) {
-      results.cardsights_pricing = { status: 'FAILED', cardId: firstCardId, httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+      results.cardsights_pricing.push({ cardId: card.id, name: card.name, error: err.message });
     }
-  } else {
-    results.cardsights_pricing = { skipped: 'no card ID from search' };
   }
 
   // Test eBay Browse API connectivity
