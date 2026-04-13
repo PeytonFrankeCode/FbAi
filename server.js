@@ -12,13 +12,17 @@ const { connectDB, loadData, saveData } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
-const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for OAuth (Marketplace Insights)
+const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (Browse API)
 
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
-// Which eBay API to use: 'finding' (legacy) or 'insights' (Marketplace Insights)
-const EBAY_API_MODE = process.env.EBAY_API_MODE || 'finding';
+// ---- Cardsights API Setup ----
+// Get your API key at https://app.cardsight.ai (750 free calls/month)
+// Docs: https://api.cardsight.ai/documentation
+const CARDSIGHTS_API_KEY = process.env.CARDSIGHTS_API_KEY;
+const CARDSIGHTS_ENABLED = !!(CARDSIGHTS_API_KEY && CARDSIGHTS_API_KEY.length > 0);
+const CARDSIGHTS_BASE_URL = 'https://api.cardsight.ai';
 
 // ---- SportsCardsPro / PriceCharting API Setup ----
 const SPORTSCARDSPRO_API_KEY = process.env.SPORTSCARDSPRO_API_KEY;
@@ -233,14 +237,14 @@ function setCache(key, data) {
   }
 }
 
-// ---- OAuth token management for Marketplace Insights API ----
+// ---- OAuth token management for eBay Browse API ----
 let oauthToken = null;
 let oauthExpiry = 0;
 
 async function getOAuthToken() {
   if (oauthToken && Date.now() < oauthExpiry) return oauthToken;
   if (!EBAY_APP_ID || !EBAY_CERT_ID) {
-    throw new Error('EBAY_APP_ID and EBAY_CERT_ID required for Marketplace Insights API');
+    throw new Error('EBAY_APP_ID and EBAY_CERT_ID required for eBay OAuth');
   }
   const credentials = Buffer.from(`${EBAY_APP_ID}:${EBAY_CERT_ID}`).toString('base64');
   const res = await axios.post(
@@ -283,42 +287,6 @@ async function withRetry(fn, maxRetries = 1) {
       throw err;
     }
   }
-}
-
-// ---- Marketplace Insights API (sold items via OAuth) ----
-async function fetchViaInsightsAPI(keywords, limit, source = 'unknown') {
-  trackApiCall('insights', 'marketplace_insights/search', keywords, source);
-  const token = await getOAuthToken();
-  const res = await axios.get(
-    'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
-    {
-      params: {
-        q: keywords,
-        category_ids: '261328',
-        limit,
-        sort: '-endDate',
-      },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-      },
-      timeout: 15000,
-    }
-  );
-
-  const items = res.data?.itemSales || [];
-  const results = items.map(item => ({
-    itemId: item.itemId || '',
-    title: item.title || '',
-    price: item.lastSoldPrice?.value || '0',
-    currency: item.lastSoldPrice?.currency || 'USD',
-    soldDate: item.lastSoldDate || '',
-    imageUrl: item.image?.imageUrl || null,
-    itemUrl: item.itemWebUrl || '',
-    condition: item.condition || 'Unknown',
-  }));
-
-  return { results, total: res.data?.total || results.length };
 }
 
 // ---- Browse API (active listings) ----
@@ -944,20 +912,7 @@ app.get('/api/debug/sold-test', async (req, res) => {
 
   const results = { query: q, appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET' };
 
-  // Test 1: Marketplace Insights API (OAuth)
-  try {
-    const token = await getOAuthToken();
-    const insightsRes = await axios.get(
-      'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
-      { params: { q, category_ids: '261328', limit: 3 }, headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }, timeout: 15000 }
-    );
-    const items = insightsRes.data?.itemSales || [];
-    results.insightsAPI = { status: 'OK', httpStatus: insightsRes.status, itemCount: items.length, total: insightsRes.data?.total || 0, firstItem: items[0] ? { title: items[0].title, price: items[0].lastSoldPrice?.value } : null };
-  } catch (err) {
-    results.insightsAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null, responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 500) : null };
-  }
-
-  // Test 2: Finding API (legacy)
+  // Test 1: Finding API (sold items)
   try {
     await throttleFindingAPI();
     const findingRes = await axios.get('https://svcs.ebay.com/services/search/FindingService/v1', {
@@ -1298,8 +1253,6 @@ async function checkAlerts() {
       let searchResult;
       if (USE_MOCK) {
         searchResult = getMockData(alert.query, 'sold');
-      } else if (EBAY_API_MODE === 'browse') {
-        searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10, 'alerts'));
       } else {
         searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10, 'alerts'));
       }
@@ -1453,178 +1406,6 @@ app.get('/api/marketplace', async (req, res) => {
     res.status(502).json({ error: 'eBay API error', detail: err.message });
   }
 });
-
-// ---- Marketplace Insights (built from Finding API sold data) ----
-app.get('/api/marketplace-insights', async (req, res) => {
-  const q = (req.query.q || '').trim();
-  if (!q || q.length < 2) return res.status(400).json({ error: 'Query required (min 2 chars)' });
-
-  const cacheKey = `insights:${q}`;
-  const cached = getCached(cacheKey);
-  if (cached) return res.json(cached);
-
-  if (USE_MOCK) {
-    const mock = buildMockInsights(q);
-    setCache(cacheKey, mock);
-    return res.json(mock);
-  }
-
-  try {
-    // Fetch up to 50 sold items via Finding API
-    const { results } = await withRetry(() => fetchViaFindingAPI(q, 50, 'marketplace-insights'));
-
-    if (results.length === 0) {
-      return res.json({ query: q, totalSold: 0, insights: null });
-    }
-
-    const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
-    prices.sort((a, b) => a - b);
-
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const median = prices.length % 2 === 0
-      ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
-      : prices[Math.floor(prices.length / 2)];
-
-    // Price distribution buckets
-    const buckets = {};
-    prices.forEach(p => {
-      let label;
-      if (p < 5) label = 'Under $5';
-      else if (p < 10) label = '$5-$10';
-      else if (p < 25) label = '$10-$25';
-      else if (p < 50) label = '$25-$50';
-      else if (p < 100) label = '$50-$100';
-      else if (p < 250) label = '$100-$250';
-      else if (p < 500) label = '$250-$500';
-      else label = '$500+';
-      buckets[label] = (buckets[label] || 0) + 1;
-    });
-
-    // Sales timeline (group by date)
-    const timeline = {};
-    results.forEach(r => {
-      if (!r.soldDate) return;
-      const date = r.soldDate.slice(0, 10);
-      if (!timeline[date]) timeline[date] = { count: 0, total: 0, prices: [] };
-      const p = parseFloat(r.price);
-      if (!isNaN(p) && p > 0) {
-        timeline[date].count++;
-        timeline[date].total += p;
-        timeline[date].prices.push(p);
-      }
-    });
-
-    const salesByDate = Object.entries(timeline)
-      .map(([date, d]) => ({
-        date,
-        count: d.count,
-        avgPrice: d.count > 0 ? d.total / d.count : 0,
-        totalVolume: d.total,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    // Condition breakdown
-    const conditionMap = {};
-    results.forEach(r => {
-      const cond = r.condition || 'Unknown';
-      if (!conditionMap[cond]) conditionMap[cond] = { count: 0, prices: [] };
-      conditionMap[cond].count++;
-      const p = parseFloat(r.price);
-      if (!isNaN(p) && p > 0) conditionMap[cond].prices.push(p);
-    });
-
-    const conditionBreakdown = Object.entries(conditionMap).map(([cond, d]) => ({
-      condition: cond,
-      count: d.count,
-      avgPrice: d.prices.length > 0 ? d.prices.reduce((a, b) => a + b, 0) / d.prices.length : 0,
-    })).sort((a, b) => b.count - a.count);
-
-    // Top sales
-    const topSales = [...results]
-      .filter(r => parseFloat(r.price) > 0)
-      .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-      .slice(0, 5)
-      .map(r => ({ title: r.title, price: parseFloat(r.price), date: r.soldDate?.slice(0, 10), url: r.itemUrl, imageUrl: r.imageUrl }));
-
-    // Price trend (compare first half vs second half of results by date)
-    let trend = 'stable';
-    if (salesByDate.length >= 2) {
-      const mid = Math.floor(salesByDate.length / 2);
-      const olderAvg = salesByDate.slice(0, mid).reduce((s, d) => s + d.avgPrice, 0) / mid;
-      const newerAvg = salesByDate.slice(mid).reduce((s, d) => s + d.avgPrice, 0) / (salesByDate.length - mid);
-      const pctChange = olderAvg > 0 ? ((newerAvg - olderAvg) / olderAvg) * 100 : 0;
-      if (pctChange > 10) trend = 'rising';
-      else if (pctChange < -10) trend = 'falling';
-    }
-
-    const result = {
-      query: q,
-      totalSold: results.length,
-      insights: {
-        avgPrice: Math.round(avg * 100) / 100,
-        medianPrice: Math.round(median * 100) / 100,
-        minPrice: prices[0],
-        maxPrice: prices[prices.length - 1],
-        priceSpread: Math.round((prices[prices.length - 1] - prices[0]) * 100) / 100,
-        trend,
-        salesByDate,
-        priceDistribution: buckets,
-        conditionBreakdown,
-        topSales,
-        sampleSize: prices.length,
-      },
-    };
-
-    setCache(cacheKey, result);
-    res.json(result);
-  } catch (err) {
-    console.error('Marketplace insights error:', err.message);
-    const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to generate insights', detail: err.message });
-  }
-});
-
-function buildMockInsights(query) {
-  const player = query.trim().split(/\s+/).slice(0, 2).join(' ');
-  let hash = 0;
-  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
-  const seed = Math.abs(hash);
-  const basePrice = 5 + (seed % 50);
-
-  const salesByDate = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const count = 1 + (seed + i) % 5;
-    const avg = basePrice + ((seed * (i + 1)) % 20) - 10;
-    salesByDate.push({ date: d.toISOString().slice(0, 10), count, avgPrice: Math.max(1, Math.round(avg * 100) / 100), totalVolume: Math.round(avg * count * 100) / 100 });
-  }
-
-  return {
-    query,
-    totalSold: 30 + (seed % 20),
-    mock: true,
-    insights: {
-      avgPrice: basePrice,
-      medianPrice: basePrice - 2,
-      minPrice: Math.max(1, basePrice - 15),
-      maxPrice: basePrice + 30,
-      priceSpread: 45,
-      trend: ['rising', 'falling', 'stable'][seed % 3],
-      salesByDate,
-      priceDistribution: { 'Under $5': 3, '$5-$10': 8, '$10-$25': 12, '$25-$50': 5, '$50-$100': 2 },
-      conditionBreakdown: [
-        { condition: 'Ungraded', count: 20, avgPrice: basePrice - 3 },
-        { condition: 'PSA 10', count: 5, avgPrice: basePrice + 25 },
-        { condition: 'PSA 9', count: 3, avgPrice: basePrice + 10 },
-      ],
-      topSales: [
-        { title: `${player} 2024 Prizm Silver`, price: basePrice + 30, date: salesByDate[0].date, url: '#', imageUrl: null },
-        { title: `${player} 2024 Prizm Gold /10`, price: basePrice + 50, date: salesByDate[1].date, url: '#', imageUrl: null },
-      ],
-      sampleSize: 30,
-    },
-  };
-}
 
 // ---- Price History Storage ----
 const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
@@ -1904,14 +1685,12 @@ app.get('*', (req, res) => {
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
+    console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : 'LIVE API'}`);
     console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
-    console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
+    console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
     console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
     console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
-    if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
-      console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
-    }
+    console.log(`Cardsights: ${CARDSIGHTS_ENABLED ? 'ENABLED' : 'NOT CONFIGURED — add CARDSIGHTS_API_KEY to .env'}`);
   });
 });
 

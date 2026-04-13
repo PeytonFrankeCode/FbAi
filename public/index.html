@@ -41,8 +41,7 @@
 
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Google AdSense (replace ca-pub-XXXXX with your publisher ID) -->
-  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXX" crossorigin="anonymous"></script> -->
+
 </head>
 <body>
 <!-- Layout Picker Popup (shown on first visit) -->
@@ -213,13 +212,6 @@
       </div>
     </section>
 
-    <!-- Ad Banner (top) -->
-    <div class="ad-slot ad-slot-top" aria-hidden="true">
-      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="YYYYYYY" data-ad-format="auto" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
-      <div class="ad-placeholder">Ad Space</div>
-    </div>
-
     <!-- Variant selection view -->
     <section id="variants-section" class="variants-section hidden" aria-label="Card variants">
       <div class="variants-header">
@@ -270,12 +262,6 @@
       <div id="similar-grid" class="results-grid"></div>
     </section>
 
-    <!-- Ad Banner (bottom) -->
-    <div class="ad-slot ad-slot-bottom" aria-hidden="true">
-      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="ZZZZZZZ" data-ad-format="auto" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
-      <div class="ad-placeholder">Ad Space</div>
-    </div>
   </main>
 
   <!-- Checklist View (hidden by default) -->
@@ -325,7 +311,7 @@
           <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
           <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
           <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
-          <button class="coll-tab" data-coll="insights" onclick="switchCollectionTab('insights')">Insights</button>
+
         </div>
       </div>
 
@@ -407,23 +393,6 @@
         </div>
         <div id="hotcold-list" class="hotcold-list">
           <p class="hotcold-empty">Track cards via search to see price movements here.</p>
-        </div>
-      </div>
-
-      <!-- Insights Tab -->
-      <div id="coll-insights" class="coll-panel hidden">
-        <p class="insights-desc">Market analytics powered by real sold data. Search any card to see pricing trends, volume, and distribution.</p>
-        <div class="insights-search">
-          <input type="text" id="insights-input" placeholder="Search cards (e.g. 2024 Prizm Justin Jefferson Silver)..." />
-          <button onclick="searchInsights()">Analyze</button>
-        </div>
-        <div id="insights-results" class="insights-results">
-          <p class="insights-empty">Search for a card to view market insights.</p>
-        </div>
-        <!-- SportsCardsPro Price Guide -->
-        <div id="scp-price-guide" class="scp-price-guide hidden">
-          <h3 class="scp-title">Price Guide <span class="scp-source">via SportsCardsPro</span></h3>
-          <div id="scp-results" class="scp-results"></div>
         </div>
       </div>
 
