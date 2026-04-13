@@ -132,22 +132,8 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// ---- Finding API throttle (serialize calls to avoid per-second rate limits) ----
-let lastFindingCallTime = 0;
-const FINDING_API_MIN_INTERVAL = 5000; // 5 seconds between Finding API calls (eBay is strict on findCompletedItems)
 
-async function throttleFindingAPI() {
-  const now = Date.now();
-  const elapsed = now - lastFindingCallTime;
-  if (elapsed < FINDING_API_MIN_INTERVAL) {
-    const wait = FINDING_API_MIN_INTERVAL - elapsed;
-    console.log(`[Finding API] Throttling: waiting ${wait}ms before next call`);
-    await new Promise(r => setTimeout(r, wait));
-  }
-  lastFindingCallTime = Date.now();
-}
-
-// ---- eBay Finding API Call Tracker ----
+// ---- API Call Tracker ----
 const API_CALLS_FILE = path.join(__dirname, 'data', 'api-call-log.json');
 
 function loadApiCallLog() {
@@ -215,8 +201,8 @@ function getApiCallStats() {
 
 // ---- In-memory cache to reduce eBay API calls ----
 const ebayCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000;         // 30 min for active listings
-const SOLD_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours for sold data (Finding API is heavily rate limited)
+const CACHE_TTL = 30 * 60 * 1000;      // 30 min for active listings
+const SOLD_CACHE_TTL = 30 * 60 * 1000; // 30 min for sold data
 
 function getCached(key) {
   const entry = ebayCache.get(key);
@@ -424,96 +410,8 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
-// ---- Finding API (legacy, sold items) ----
-async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
-  await throttleFindingAPI();
-  trackApiCall('finding', 'findCompletedItems', keywords, source);
-  let ebayResponse;
-  try {
-    ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findCompletedItems',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID,
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'REST-PAYLOAD': '',
-          'keywords': keywords,
-          'categoryId': '261328',
-          'itemFilter(0).name': 'SoldItemsOnly',
-          'itemFilter(0).value': 'true',
-          'sortOrder': 'EndTimeSoonest',
-          'paginationInput.entriesPerPage': limit,
-          'outputSelector(0)': 'PictureURLLarge',
-          'outputSelector(1)': 'GalleryInfo',
-        },
-        timeout: 15000,
-      }
-    );
-  } catch (axiosErr) {
-    const status = axiosErr.response?.status;
-    const respData = axiosErr.response?.data;
-    console.error(`[Finding API] HTTP error ${status || 'NETWORK'}:`, JSON.stringify(respData || axiosErr.message).slice(0, 500));
-
-    // If eBay returned an HTTP error with a JSON body, try to parse it
-    if (respData?.findCompletedItemsResponse) {
-      const ack = respData.findCompletedItemsResponse[0]?.ack?.[0];
-      const ebayErrors = respData.findCompletedItemsResponse[0]?.errorMessage?.[0]?.error || [];
-      const errorMsg = ebayErrors[0]?.message?.[0] || `eBay HTTP ${status}`;
-      console.error(`[Finding API] Error in HTTP ${status} body: ack=${ack}, msg=${errorMsg}`);
-      return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
-    }
-
-    // Network error or non-JSON response — return gracefully
-    return { results: [], total: 0, rateLimited: true, errorMessage: `eBay API unavailable (HTTP ${status || 'timeout'})` };
-  }
-
-  const raw = ebayResponse.data;
-
-  // Safety check: eBay sometimes returns non-JSON or unexpected structure
-  if (!raw || !raw.findCompletedItemsResponse) {
-    console.error('[Finding API] Unexpected response structure:', JSON.stringify(raw).slice(0, 500));
-    return { results: [], total: 0, rateLimited: true, errorMessage: 'eBay returned an unexpected response' };
-  }
-
-  const ack = raw.findCompletedItemsResponse[0]?.ack?.[0];
-  const ebayErrors = raw.findCompletedItemsResponse[0]?.errorMessage?.[0]?.error || [];
-
-  if (ebayErrors.length > 0) {
-    const errorId = ebayErrors[0]?.errorId?.[0];
-    const errorMsg = ebayErrors[0]?.message?.[0] || 'Unknown eBay error';
-    console.error(`[Finding API] ack=${ack}, errorId=${errorId}, message: ${errorMsg}`);
-    console.error(`[Finding API] Full error response:`, JSON.stringify(ebayErrors).slice(0, 500));
-  }
-
-  if (ack === 'Failure') {
-    // Return gracefully for ALL failures — don't throw, let the caller decide
-    const errorId = ebayErrors[0]?.errorId?.[0];
-    const errorMsg = ebayErrors[0]?.message?.[0] || 'eBay API returned a failure response';
-    console.error(`[Finding API] FAILURE (errorId=${errorId}): ${errorMsg}`);
-    return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
-  }
-
-  const searchResult = raw.findCompletedItemsResponse[0]?.searchResult?.[0];
-  const items = searchResult?.item || [];
-
-  const results = items.map(item => ({
-    itemId: item.itemId?.[0],
-    title: item.title?.[0],
-    price: item.sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'],
-    currency: item.sellingStatus?.[0]?.currentPrice?.[0]?.['@currencyId'] || 'USD',
-    soldDate: item.listingInfo?.[0]?.endTime?.[0],
-    imageUrl: item.pictureURLLarge?.[0] || item.galleryURL?.[0] || null,
-    itemUrl: item.viewItemURL?.[0],
-    condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
-  }));
-
-  return { results, total: parseInt(searchResult?.['@count'] || '0') };
-}
-
-// ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (Cardsights, fallback to eBay Finding API)
+// ---- Shared fetch function (routes to correct API + cache) ----
+// mode: 'forsale' (eBay Browse API) or 'sold' (Cardsights API)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -521,12 +419,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    if (CARDSIGHTS_ENABLED) {
-      response = await fetchViaCardsights(keywords, limit, source);
-    } else {
-      // Fallback: eBay Finding API (heavily rate limited, use only if Cardsights not configured)
-      response = await withRetry(() => fetchViaFindingAPI(keywords, limit, source));
-    }
+    response = await fetchViaCardsights(keywords, limit, source);
     if (response.results.length > 0) {
       setCache(cacheKey, response);
     }
@@ -785,12 +678,9 @@ app.get('/api/direct-search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
+    // Sold mode — Cardsights API
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
-      if (searchData.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial: serial || null, similarResults: [], rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
       return res.json({ results: searchData.results, total: searchData.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
     }
@@ -803,10 +693,6 @@ app.get('/api/direct-search', async (req, res) => {
         fetchEbayItems(query, 50, mode, 'variants-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'variants-serial-broad'),
       ]);
-
-      if (targetedResults.rateLimited || broadResults.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [], rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
 
       // Merge and dedup
       const seen = new Set();
@@ -848,9 +734,6 @@ app.get('/api/direct-search', async (req, res) => {
 
     // No serial — standard search: try exact first
     const exact = await fetchEbayItems(query, 20, mode, 'variants');
-    if (exact.rateLimited) {
-      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-    }
     if (exact.results.length > 0) {
       return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
@@ -904,12 +787,9 @@ app.get('/api/variants', async (req, res) => {
 
     let rawResults;
 
-    // Sold mode: single API call only (Finding API is heavily rate limited)
+    // Sold mode — Cardsights API
     if (mode === 'sold') {
       const result = await fetchEbayItems(query, 50, mode, 'variants');
-      if (result.rateLimited) {
-        return res.json({ variants: [], mock: false, serial: serial || null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       rawResults = result.results;
     } else if (serial) {
       // Dual search when serial present: targeted + broad for better coverage
@@ -917,9 +797,6 @@ app.get('/api/variants', async (req, res) => {
         fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
       ]);
-      if (targeted.rateLimited || broad.rateLimited) {
-        return res.json({ variants: [], mock: false, serial, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       const seen = new Set();
       rawResults = [];
       for (const item of [...targeted.results, ...broad.results]) {
@@ -930,9 +807,6 @@ app.get('/api/variants', async (req, res) => {
       }
     } else {
       const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
-      if (result.rateLimited) {
-        return res.json({ variants: [], mock: false, serial: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       rawResults = result.results;
     }
     const playerName = extractPlayerName(query);
@@ -1001,35 +875,33 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ---- Debug endpoint: raw eBay Finding API response ----
+// ---- Debug endpoint: test Cardsights + eBay Browse APIs ----
 app.get('/api/debug/sold-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
 
-  const results = { query: q, appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET' };
+  const results = { query: q };
 
-  // Test 1: Finding API (sold items)
+  // Test 1: Cardsights API (sold data)
   try {
-    await throttleFindingAPI();
-    const findingRes = await axios.get('https://svcs.ebay.com/services/search/FindingService/v1', {
-      params: { 'OPERATION-NAME': 'findCompletedItems', 'SERVICE-VERSION': '1.0.0', 'SECURITY-APPNAME': EBAY_APP_ID, 'RESPONSE-DATA-FORMAT': 'JSON', 'REST-PAYLOAD': '', 'keywords': q, 'categoryId': '261328', 'itemFilter(0).name': 'SoldItemsOnly', 'itemFilter(0).value': 'true', 'paginationInput.entriesPerPage': 3 },
-      timeout: 15000,
-    });
-    const raw = findingRes.data;
-    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
-    const errors = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error || [];
-    const items = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item || [];
-    results.findingAPI = { status: ack === 'Success' ? 'OK' : ack, httpStatus: findingRes.status, ack, itemCount: items.length, errors: errors.map(e => ({ errorId: e.errorId?.[0], message: e.message?.[0] })), firstItem: items[0] ? { title: items[0].title?.[0], price: items[0].sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'] } : null };
+    const cardsightsResult = await fetchViaCardsights(q, 3, 'debug');
+    results.cardsightsAPI = {
+      status: 'OK',
+      resultCount: cardsightsResult.results.length,
+      total: cardsightsResult.total,
+      firstItem: cardsightsResult.results[0] || null,
+    };
   } catch (err) {
-    results.findingAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null, responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 500) : null };
+    results.cardsightsAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null };
   }
 
-  // Test 3: Browse API (active listings, as reference)
+  // Test 2: eBay Browse API (active listings)
   try {
     const token = await getOAuthToken();
     const browseRes = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
       params: { q, category_ids: '261328', limit: 3 },
-      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }, timeout: 15000,
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+      timeout: 15000,
     });
     const items = browseRes.data?.itemSummaries || [];
     results.browseAPI = { status: 'OK', httpStatus: browseRes.status, itemCount: items.length, total: browseRes.data?.total || 0, firstItem: items[0] ? { title: items[0].title, price: items[0].price?.value } : null };
@@ -1070,49 +942,38 @@ app.get('/api/stats/api-calls', (req, res) => {
   }
 });
 
-// ---- eBay API connectivity test (no auth required) ----
+// ---- API connectivity test ----
 app.get('/api/test-ebay', async (req, res) => {
+  const results = { cardsightsConfigured: CARDSIGHTS_ENABLED, ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
+
+  // Test Cardsights connectivity
   try {
-    await throttleFindingAPI();
-    trackApiCall('finding', 'findItemsByKeywords', 'test', 'test-ebay');
     const start = Date.now();
-    const ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findItemsByKeywords',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID || 'NOT_SET',
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'keywords': 'test',
-          'paginationInput.entriesPerPage': '1',
-        },
-        timeout: 15000,
-      }
-    );
-    const elapsed = Date.now() - start;
-    const raw = ebayResponse.data;
-    const ack = raw?.findItemsByKeywordsResponse?.[0]?.ack?.[0];
-    const errorMsg = raw?.findItemsByKeywordsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0];
-    res.json({
-      status: 'reachable',
-      httpStatus: ebayResponse.status,
-      ack,
-      ebayError: errorMsg || null,
-      elapsedMs: elapsed,
-      appIdConfigured: !!EBAY_APP_ID,
-      useMock: USE_MOCK,
+    await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+      params: { query: 'test', type: 'cards' },
+      headers: { 'x-api-key': CARDSIGHTS_API_KEY },
+      timeout: 10000,
     });
+    results.cardsights = { status: 'reachable', elapsedMs: Date.now() - start };
   } catch (err) {
-    res.status(500).json({
-      status: 'unreachable',
-      error: err.message,
-      code: err.code,
-      httpStatus: err.response?.status || null,
-      appIdConfigured: !!EBAY_APP_ID,
-      useMock: USE_MOCK,
-    });
+    results.cardsights = { status: 'unreachable', error: err.message, httpStatus: err.response?.status || null };
   }
+
+  // Test eBay Browse API connectivity
+  try {
+    const start = Date.now();
+    const token = await getOAuthToken();
+    await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+      params: { q: 'test', category_ids: '261328', limit: 1 },
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+      timeout: 10000,
+    });
+    results.ebayBrowse = { status: 'reachable', elapsedMs: Date.now() - start };
+  } catch (err) {
+    results.ebayBrowse = { status: 'unreachable', error: err.message, httpStatus: err.response?.status || null };
+  }
+
+  res.json(results);
 });
 
 // ---- eBay Marketplace Account Deletion compliance ----
@@ -1786,7 +1647,7 @@ connectDB().then(() => {
     console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
     console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
     console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
-    console.log(`Cardsights: ${CARDSIGHTS_ENABLED ? 'ENABLED — sold listings via Cardsights API' : 'NOT CONFIGURED — falling back to eBay Finding API for sold data'}`);
+    console.log(`Cardsights: ${CARDSIGHTS_ENABLED ? 'ENABLED' : 'NOT CONFIGURED — add CARDSIGHTS_API_KEY to .env'}`);
   });
 });
 
