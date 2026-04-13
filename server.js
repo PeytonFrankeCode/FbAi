@@ -946,17 +946,42 @@ app.get('/api/stats/api-calls', (req, res) => {
 app.get('/api/test-ebay', async (req, res) => {
   const results = { cardsightsConfigured: CARDSIGHTS_ENABLED, ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
 
-  // Test Cardsights connectivity
+  // Test Cardsights — try x-api-key header
   try {
     const start = Date.now();
-    await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { query: 'test', type: 'cards' },
+    const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+      params: { query: 'mahomes' },
       headers: { 'x-api-key': CARDSIGHTS_API_KEY },
       timeout: 10000,
     });
-    results.cardsights = { status: 'reachable', elapsedMs: Date.now() - start };
+    results.cardsights_xapikey = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: r.data?.data?.length ?? r.data?.results?.length ?? null };
   } catch (err) {
-    results.cardsights = { status: 'unreachable', error: err.message, httpStatus: err.response?.status || null };
+    results.cardsights_xapikey = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+  }
+
+  // Test Cardsights — try Authorization: Bearer header
+  try {
+    const start = Date.now();
+    const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+      params: { query: 'mahomes' },
+      headers: { 'Authorization': `Bearer ${CARDSIGHTS_API_KEY}` },
+      timeout: 10000,
+    });
+    results.cardsights_bearer = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: r.data?.data?.length ?? r.data?.results?.length ?? null };
+  } catch (err) {
+    results.cardsights_bearer = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+  }
+
+  // Test Cardsights — try apiKey query param
+  try {
+    const start = Date.now();
+    const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+      params: { query: 'mahomes', apiKey: CARDSIGHTS_API_KEY },
+      timeout: 10000,
+    });
+    results.cardsights_queryparam = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: r.data?.data?.length ?? r.data?.results?.length ?? null };
+  } catch (err) {
+    results.cardsights_queryparam = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
   }
 
   // Test eBay Browse API connectivity
