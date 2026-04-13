@@ -310,48 +310,50 @@ async function fetchViaCardsights(keywords, limit = 20, source = 'unknown') {
 
     try {
       const pricingRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, {
-        params: { days: 90 },
         headers,
         timeout: 15000,
       });
 
       const pricing = pricingRes.data;
-      const cardTitle = [card.name, card.setName, card.year].filter(Boolean).join(' ') || keywords;
+      // Title: prefer API card name, fall back to search result fields
+      const cardName = pricing.card?.name || card.name || keywords;
+      const cardYear = pricing.card?.set?.year || card.year || '';
+      const cardSet  = pricing.card?.set?.release || card.setName || '';
+      const cardTitle = [cardYear, cardSet, cardName].filter(Boolean).join(' ');
       const imageUrl = card.imageUrl || card.image || null;
 
-      // Map raw (ungraded) sales
-      const rawSales = pricing.raw?.sales || pricing.raw?.listings || (Array.isArray(pricing.raw) ? pricing.raw : []);
-      for (const sale of rawSales) {
+      // Raw (ungraded) sales — response: raw.records[]
+      const rawRecords = pricing.raw?.records || [];
+      for (const sale of rawRecords) {
         results.push({
-          itemId: sale.id || sale.listingId || `cs-raw-${results.length}`,
+          itemId: sale.id || sale.listing_id || `cs-raw-${results.length}`,
           title: cardTitle,
-          price: String(sale.price || sale.salePrice || sale.amount || '0'),
+          price: String(sale.price || sale.sale_price || sale.amount || '0'),
           currency: sale.currency || 'USD',
-          soldDate: sale.date || sale.saleDate || sale.soldDate || sale.endDate || '',
+          soldDate: sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
           imageUrl,
-          itemUrl: sale.url || sale.listingUrl || sale.link || '',
+          itemUrl: sale.url || sale.listing_url || sale.link || '',
           condition: 'Ungraded',
         });
       }
 
-      // Map graded sales (organized by company → grade → sales[])
-      const graded = pricing.graded || {};
-      for (const [company, grades] of Object.entries(graded)) {
-        if (!grades || typeof grades !== 'object') continue;
-        for (const [grade, data] of Object.entries(grades)) {
-          const gradedSales = data?.sales || data?.listings || (Array.isArray(data) ? data : []);
-          for (const sale of gradedSales) {
-            results.push({
-              itemId: sale.id || sale.listingId || `cs-${company}-${grade}-${results.length}`,
-              title: `${cardTitle} ${company} ${grade}`,
-              price: String(sale.price || sale.salePrice || sale.amount || '0'),
-              currency: sale.currency || 'USD',
-              soldDate: sale.date || sale.saleDate || sale.soldDate || sale.endDate || '',
-              imageUrl,
-              itemUrl: sale.url || sale.listingUrl || sale.link || '',
-              condition: `${company} ${grade}`,
-            });
-          }
+      // Graded sales — response: graded[] array of { company, grade, records[] }
+      const gradedEntries = Array.isArray(pricing.graded) ? pricing.graded : [];
+      for (const entry of gradedEntries) {
+        const company = entry.company || entry.grader || '';
+        const grade   = entry.grade || '';
+        const gradedRecords = entry.records || entry.sales || [];
+        for (const sale of gradedRecords) {
+          results.push({
+            itemId: sale.id || sale.listing_id || `cs-${company}-${grade}-${results.length}`,
+            title: `${cardTitle} ${company} ${grade}`.trim(),
+            price: String(sale.price || sale.sale_price || sale.amount || '0'),
+            currency: sale.currency || 'USD',
+            soldDate: sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
+            imageUrl,
+            itemUrl: sale.url || sale.listing_url || sale.link || '',
+            condition: `${company} ${grade}`.trim(),
+          });
         }
       }
     } catch (err) {
@@ -948,18 +950,20 @@ app.get('/api/test-ebay', async (req, res) => {
 
   const csHeaders = { 'x-api-key': CARDSIGHTS_API_KEY };
 
-  // Test 1: Cardsights catalog search (specific football query)
+  const q = req.query.q || 'Patrick Mahomes Prizm Silver';
+
+  // Test 1: Cardsights catalog search
   let firstCardId = null;
   try {
     const start = Date.now();
     const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { q: 'Patrick Mahomes Prizm football' },
+      params: { q },
       headers: csHeaders,
       timeout: 10000,
     });
     const items = r.data?.data || r.data?.results || [];
     firstCardId = items[0]?.id || null;
-    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, allItems: items.slice(0, 5).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
+    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, items: items.slice(0, 5).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
   } catch (err) {
     results.cardsights_search = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
   }
@@ -969,11 +973,18 @@ app.get('/api/test-ebay', async (req, res) => {
     try {
       const start = Date.now();
       const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${firstCardId}`, {
-        params: { days: 90 },
         headers: csHeaders,
         timeout: 10000,
       });
-      results.cardsights_pricing = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, cardId: firstCardId, responseKeys: Object.keys(r.data || {}), rawSalesCount: r.data?.raw?.sales?.length ?? r.data?.raw?.length ?? 'unknown', gradedKeys: Object.keys(r.data?.graded || {}), rawData: r.data };
+      const raw = r.data?.raw || {};
+      const graded = r.data?.graded || [];
+      results.cardsights_pricing = {
+        status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, cardId: firstCardId,
+        rawCount: raw.count || raw.records?.length || 0,
+        gradedEntries: graded.length,
+        firstRawRecord: raw.records?.[0] || null,
+        firstGradedEntry: graded[0] || null,
+      };
     } catch (err) {
       results.cardsights_pricing = { status: 'FAILED', cardId: firstCardId, httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
     }
