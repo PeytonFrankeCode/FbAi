@@ -946,18 +946,39 @@ app.get('/api/stats/api-calls', (req, res) => {
 app.get('/api/test-ebay', async (req, res) => {
   const results = { cardsightsConfigured: CARDSIGHTS_ENABLED, ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
 
-  // Test Cardsights API
+  const csHeaders = { 'x-api-key': CARDSIGHTS_API_KEY };
+
+  // Test 1: Cardsights catalog search (specific football query)
+  let firstCardId = null;
   try {
     const start = Date.now();
     const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { q: 'mahomes' },
-      headers: { 'x-api-key': CARDSIGHTS_API_KEY },
+      params: { q: 'Patrick Mahomes Prizm football' },
+      headers: csHeaders,
       timeout: 10000,
     });
     const items = r.data?.data || r.data?.results || [];
-    results.cardsights = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, firstItem: items[0] || null };
+    firstCardId = items[0]?.id || null;
+    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, allItems: items.slice(0, 5).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
   } catch (err) {
-    results.cardsights = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+    results.cardsights_search = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+  }
+
+  // Test 2: Cardsights pricing for first matched card
+  if (firstCardId) {
+    try {
+      const start = Date.now();
+      const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${firstCardId}`, {
+        params: { days: 90 },
+        headers: csHeaders,
+        timeout: 10000,
+      });
+      results.cardsights_pricing = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, cardId: firstCardId, responseKeys: Object.keys(r.data || {}), rawSalesCount: r.data?.raw?.sales?.length ?? r.data?.raw?.length ?? 'unknown', gradedKeys: Object.keys(r.data?.graded || {}), rawData: r.data };
+    } catch (err) {
+      results.cardsights_pricing = { status: 'FAILED', cardId: firstCardId, httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+    }
+  } else {
+    results.cardsights_pricing = { skipped: 'no card ID from search' };
   }
 
   // Test eBay Browse API connectivity
