@@ -284,7 +284,7 @@ async function fetchViaCardsights(keywords, limit = 20, source = 'unknown') {
 
   // Step 1: Search the catalog for matching cards
   const searchRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-    params: { query: keywords, type: 'cards' },
+    params: { q: keywords },
     headers,
     timeout: 15000,
   });
@@ -946,42 +946,18 @@ app.get('/api/stats/api-calls', (req, res) => {
 app.get('/api/test-ebay', async (req, res) => {
   const results = { cardsightsConfigured: CARDSIGHTS_ENABLED, ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
 
-  // Test Cardsights — try x-api-key header
+  // Test Cardsights API
   try {
     const start = Date.now();
     const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { query: 'mahomes' },
+      params: { q: 'mahomes' },
       headers: { 'x-api-key': CARDSIGHTS_API_KEY },
       timeout: 10000,
     });
-    results.cardsights_xapikey = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: r.data?.data?.length ?? r.data?.results?.length ?? null };
+    const items = r.data?.data || r.data?.results || [];
+    results.cardsights = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, firstItem: items[0] || null };
   } catch (err) {
-    results.cardsights_xapikey = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
-  }
-
-  // Test Cardsights — try Authorization: Bearer header
-  try {
-    const start = Date.now();
-    const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { query: 'mahomes' },
-      headers: { 'Authorization': `Bearer ${CARDSIGHTS_API_KEY}` },
-      timeout: 10000,
-    });
-    results.cardsights_bearer = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: r.data?.data?.length ?? r.data?.results?.length ?? null };
-  } catch (err) {
-    results.cardsights_bearer = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
-  }
-
-  // Test Cardsights — try apiKey query param
-  try {
-    const start = Date.now();
-    const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { query: 'mahomes', apiKey: CARDSIGHTS_API_KEY },
-      timeout: 10000,
-    });
-    results.cardsights_queryparam = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: r.data?.data?.length ?? r.data?.results?.length ?? null };
-  } catch (err) {
-    results.cardsights_queryparam = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+    results.cardsights = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
   }
 
   // Test eBay Browse API connectivity
