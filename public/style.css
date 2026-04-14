@@ -2298,6 +2298,23 @@ footer {
   font-weight: 700;
 }
 
+.checklist-show-more-btn {
+  grid-column: 1 / -1;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.checklist-show-more-btn:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--accent);
+}
+
 .checklist-loading {
   display: flex;
   align-items: center;
@@ -3773,8 +3790,8 @@ tr:hover .cl-alert-btn {
 .mobile-layout header h1 { font-size: 1.15rem; }
 .mobile-layout .header-tagline { font-size: 0.72rem; }
 .mobile-layout .header-auth { position: static; }
-.mobile-layout .header-pro { position: static; }
-.mobile-layout .header-inner { display: flex; flex-direction: column; align-items: center; }
+.mobile-layout .header-pro { position: static; margin-top: 0.5rem; }
+.mobile-layout .header-inner { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 .mobile-layout .auth-btn, .mobile-layout .pro-btn { font-size: 0.7rem; padding: 0.3rem 0.6rem; }
 
 /* Nav tabs */
