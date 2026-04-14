@@ -355,6 +355,7 @@ async function fetchViaCardsights(keywords, limit = 20, source = 'unknown') {
         const cardId = card.id || card.cardId;
         if (!cardId) continue;
 
+        await new Promise(r => setTimeout(r, 300)); // stay under Cardsights rate limit
         try {
           const pricingRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, {
             headers,
@@ -978,53 +979,56 @@ app.get('/api/debug/cardsights-raw', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE' });
   const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
-  const queries = buildCardsightsQueries(q);
-  const report = { original: q, queriesTried: [] };
-  for (const query of queries) {
-    const entry = { query, catalogMatches: [], pricingChecked: [] };
-    try {
-      const sr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-        params: { q: query }, headers, timeout: 15000,
-      });
-      const allItems = sr.data?.data || sr.data?.results || sr.data || [];
-      const cards = (Array.isArray(allItems) ? allItems : []).slice(0, 5);
-      entry.catalogRawKeys = cards[0] ? Object.keys(cards[0]) : [];
-      entry.catalogMatches = cards.map(c => ({
-        id: c.id || c.cardId, name: c.name, type: c.type, year: c.year, setName: c.setName,
-      }));
-      for (const card of cards) {
-        const cardId = card.id || card.cardId;
-        if (!cardId) continue;
-        try {
-          const pr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, { headers, timeout: 15000 });
-          const d = pr.data;
-          entry.pricingChecked.push({
-            cardId,
-            cardName: d.card?.name || card.name,
-            topLevelKeys: Object.keys(d),
-            rawKeys: d.raw ? Object.keys(d.raw) : [],
-            rawRecordCount: d.raw?.records?.length ?? d.raw?.count ?? 'N/A',
-            rawSampleRecord: d.raw?.records?.[0] || null,
-            gradedType: Array.isArray(d.graded) ? 'array' : typeof d.graded,
-            gradedLength: Array.isArray(d.graded) ? d.graded.length : 'N/A',
-            gradedSample: Array.isArray(d.graded) && d.graded[0] ? {
-              company: d.graded[0].company, grade: d.graded[0].grade,
-              recordCount: d.graded[0].records?.length,
-              sampleRecord: d.graded[0].records?.[0] || null,
-            } : null,
-            metaKeys: d.meta ? Object.keys(d.meta) : [],
-          });
-        } catch (e) {
-          entry.pricingChecked.push({ cardId, error: e.message, httpStatus: e.response?.status });
-        }
+  // Only test the first query level to avoid 429s
+  const firstQuery = buildCardsightsQueries(q)[0];
+  const report = { original: q, queryTested: firstQuery, pricingChecked: [] };
+  try {
+    const sr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+      params: { q: firstQuery }, headers, timeout: 15000,
+    });
+    const allItems = sr.data?.data || sr.data?.results || sr.data || [];
+    const cards = (Array.isArray(allItems) ? allItems : []).slice(0, 3);
+    report.catalogRawKeys = cards[0] ? Object.keys(cards[0]) : [];
+    report.catalogMatches = cards.map(c => ({
+      id: c.id || c.cardId, name: c.name, type: c.type, year: c.year,
+      setName: c.setName, parallelName: c.parallelName, releaseName: c.releaseName,
+    }));
+    for (const card of cards) {
+      const cardId = card.id || card.cardId;
+      if (!cardId) continue;
+      await new Promise(r => setTimeout(r, 400)); // avoid 429
+      try {
+        const pr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, { headers, timeout: 15000 });
+        const d = pr.data;
+        report.pricingChecked.push({
+          cardId,
+          cardName: d.card?.name || card.name,
+          topLevelKeys: Object.keys(d),
+          // raw section
+          rawPeriodDays: d.raw?.period_days,
+          rawCount: d.raw?.count,           // ← may differ from records.length if paginated
+          rawRecordsLength: d.raw?.records?.length ?? 0,
+          rawSampleRecord: d.raw?.records?.[0] || null,
+          // graded section
+          gradedType: Array.isArray(d.graded) ? 'array' : typeof d.graded,
+          gradedLength: Array.isArray(d.graded) ? d.graded.length : 'N/A',
+          gradedSample: Array.isArray(d.graded) && d.graded[0] ? {
+            company: d.graded[0].company, grade: d.graded[0].grade,
+            recordCount: d.graded[0].records?.length,
+            sampleRecord: d.graded[0].records?.[0] || null,
+          } : null,
+          // meta section - show actual values
+          metaTotalRecords: d.meta?.total_records,
+          metaLastSaleDate: d.meta?.last_sale_date,
+          metaSources: d.meta?.sources,
+        });
+      } catch (e) {
+        report.pricingChecked.push({ cardId, error: e.message, httpStatus: e.response?.status });
       }
-    } catch (e) {
-      entry.catalogError = e.message;
-      entry.catalogHttpStatus = e.response?.status;
     }
-    report.queriesTried.push(entry);
-    // Stop early if any card had data
-    if (entry.pricingChecked.some(p => p.rawRecordCount > 0 || (typeof p.gradedLength === 'number' && p.gradedLength > 0))) break;
+  } catch (e) {
+    report.catalogError = e.message;
+    report.catalogHttpStatus = e.response?.status;
   }
   res.json(report);
 });
