@@ -2245,11 +2245,11 @@ footer {
 .checklist-year-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.35s ease;
+  transition: max-height 0.4s ease;
 }
 
 .checklist-year-body.open {
-  max-height: 2000px;
+  max-height: 9999px;
 }
 
 .checklist-year-grid {
