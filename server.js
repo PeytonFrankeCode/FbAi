@@ -1033,6 +1033,61 @@ app.get('/api/debug/cardsights-raw', async (req, res) => {
   res.json(report);
 });
 
+// ---- Cardsights data availability scan: find any football card with actual pricing ----
+app.get('/api/debug/cardsights-scan', async (req, res) => {
+  if (USE_MOCK) return res.json({ debug: 'MOCK MODE' });
+  const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
+  const probes = [
+    'Patrick Mahomes 2018 Prizm',
+    'Patrick Mahomes 2020 Prizm',
+    'Patrick Mahomes 2021 Prizm',
+    'Joe Burrow 2020 Prizm',
+    'Josh Allen 2020 Prizm',
+    'Justin Herbert 2020 Prizm',
+    'Lamar Jackson 2018 Prizm',
+    'Tom Brady 2019 Prizm',
+  ];
+  const report = { probesChecked: [] };
+  for (const probe of probes) {
+    await new Promise(r => setTimeout(r, 500));
+    try {
+      const sr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+        params: { q: probe }, headers, timeout: 15000,
+      });
+      const allItems = sr.data?.data || sr.data?.results || sr.data || [];
+      const cards = (Array.isArray(allItems) ? allItems : []).slice(0, 2);
+      const entry = { probe, catalogCount: cards.length, cards: [] };
+      for (const card of cards) {
+        const cardId = card.id || card.cardId;
+        if (!cardId) continue;
+        await new Promise(r => setTimeout(r, 400));
+        try {
+          const pr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, { headers, timeout: 15000 });
+          const d = pr.data;
+          entry.cards.push({
+            cardId, name: card.name, year: card.year,
+            releaseName: card.releaseName, parallelName: card.parallelName,
+            totalRecords: d.meta?.total_records,
+            lastSaleDate: d.meta?.last_sale_date,
+            rawCount: d.raw?.count,
+            sources: d.meta?.sources,
+          });
+          if ((d.meta?.total_records || 0) > 0) entry.hasData = true;
+        } catch (e) {
+          entry.cards.push({ cardId, error: e.message, httpStatus: e.response?.status });
+        }
+      }
+      report.probesChecked.push(entry);
+    } catch (e) {
+      report.probesChecked.push({ probe, error: e.message, httpStatus: e.response?.status });
+    }
+  }
+  report.summary = report.probesChecked
+    .filter(p => p.hasData)
+    .map(p => `"${p.probe}" → ${p.cards.filter(c => (c.totalRecords || 0) > 0).map(c => `${c.releaseName} ${c.parallelName || ''} totalRecords=${c.totalRecords}`).join(', ')}`);
+  res.json(report);
+});
+
 // ---- API Call Stats (monitor eBay API usage) ----
 app.get('/api/stats/api-calls', (req, res) => {
   try {
