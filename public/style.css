@@ -2245,11 +2245,25 @@ footer {
 .checklist-year-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s ease;
+  transition: max-height 0.35s ease;
 }
 
 .checklist-year-body.open {
-  max-height: 9999px;
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.checklist-year-body.open::-webkit-scrollbar {
+  width: 4px;
+}
+.checklist-year-body.open::-webkit-scrollbar-track {
+  background: transparent;
+}
+.checklist-year-body.open::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
 .checklist-year-grid {
