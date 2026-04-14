@@ -24,6 +24,12 @@ const CARDSIGHTS_API_KEY = process.env.CARDSIGHTS_API_KEY;
 const CARDSIGHTS_ENABLED = !!(CARDSIGHTS_API_KEY && CARDSIGHTS_API_KEY.length > 0);
 const CARDSIGHTS_BASE_URL = 'https://api.cardsight.ai';
 
+// ---- Card Hedge API Setup ----
+// Docs: https://api.cardhedge.com/docs
+const CARDHEDGE_API_KEY = process.env.CARDHEDGE_API_KEY;
+const CARDHEDGE_ENABLED = !!(CARDHEDGE_API_KEY && CARDHEDGE_API_KEY.length > 0);
+const CARDHEDGE_BASE_URL = 'https://api.cardhedge.com';
+
 // ---- SportsCardsPro / PriceCharting API Setup ----
 const SPORTSCARDSPRO_API_KEY = process.env.SPORTSCARDSPRO_API_KEY;
 const SPORTSCARDSPRO_ENABLED = SPORTSCARDSPRO_API_KEY && !SPORTSCARDSPRO_API_KEY.includes('your-api-key');
@@ -472,8 +478,52 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
+// ---- Card Hedge API (sold listings) ----
+async function fetchViaCardHedge(keywords, limit = 20, source = 'unknown') {
+  trackApiCall('cardhedge', 'search', keywords, source);
+
+  const res = await axios.post(
+    `${CARDHEDGE_BASE_URL}/v1/cards/search`,
+    { query: keywords, limit },
+    {
+      headers: {
+        'Authorization': `Bearer ${CARDHEDGE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 15000,
+    }
+  );
+
+  // Log the raw response shape on first call to verify field names
+  if (process.env.NODE_ENV !== 'production') {
+    const sample = Array.isArray(res.data) ? res.data[0] : (res.data?.results?.[0] || res.data?.data?.[0] || res.data);
+    console.log('[CardHedge] Response top-level keys:', Object.keys(res.data || {}));
+    if (sample && typeof sample === 'object') console.log('[CardHedge] First item keys:', Object.keys(sample));
+  }
+
+  // Normalise — map whichever shape the API returns to our standard format.
+  // Field names are best-guesses from docs; we'll tune after seeing a real response.
+  const items = Array.isArray(res.data)
+    ? res.data
+    : (res.data?.results || res.data?.data || res.data?.sales || res.data?.cards || []);
+
+  const results = items.map((item, i) => ({
+    itemId:    item.id         || item.itemId      || item.listing_id || `ch-${i}`,
+    title:     item.title      || item.name        || item.card_name  || keywords,
+    price:     String(item.price?.value ?? item.sale_price ?? item.sold_price ?? item.amount ?? item.price ?? '0'),
+    currency:  item.price?.currency ?? item.currency ?? 'USD',
+    soldDate:  item.sold_date  || item.date        || item.end_date   || item.soldDate || '',
+    imageUrl:  item.image_url  || item.imageUrl    || item.image      || item.thumbnail || null,
+    itemUrl:   item.url        || item.itemUrl     || item.listing_url || item.link     || '',
+    condition: item.condition  || item.grade       || item.grading    || 'Unknown',
+  }));
+
+  console.log(`[CardHedge] ${results.length} sold results for "${keywords}"`);
+  return { results, total: res.data?.total ?? res.data?.count ?? results.length };
+}
+
 // ---- Shared fetch function (routes to correct API + cache) ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (Cardsights API)
+// mode: 'forsale' (eBay Browse API) or 'sold' (Card Hedge API)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
@@ -481,7 +531,11 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
 
   let response;
   if (mode === 'sold') {
-    response = await fetchViaCardsights(keywords, limit, source);
+    if (CARDHEDGE_ENABLED) {
+      response = await fetchViaCardHedge(keywords, limit, source);
+    } else {
+      response = await fetchViaCardsights(keywords, limit, source);
+    }
     if (response.results.length > 0) {
       setCache(cacheKey, response);
     }
@@ -937,24 +991,24 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ---- Debug endpoint: test Cardsights + eBay Browse APIs ----
+// ---- Debug endpoint: test Card Hedge + eBay Browse APIs ----
 app.get('/api/debug/sold-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
 
   const results = { query: q };
 
-  // Test 1: Cardsights API (sold data)
+  // Test 1: Card Hedge API (sold data)
   try {
-    const cardsightsResult = await fetchViaCardsights(q, 3, 'debug');
-    results.cardsightsAPI = {
+    const chResult = await fetchViaCardHedge(q, 3, 'debug');
+    results.cardHedgeAPI = {
       status: 'OK',
-      resultCount: cardsightsResult.results.length,
-      total: cardsightsResult.total,
-      firstItem: cardsightsResult.results[0] || null,
+      resultCount: chResult.results.length,
+      total: chResult.total,
+      firstItem: chResult.results[0] || null,
     };
   } catch (err) {
-    results.cardsightsAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null };
+    results.cardHedgeAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null };
   }
 
   // Test 2: eBay Browse API (active listings)

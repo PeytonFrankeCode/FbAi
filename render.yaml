@@ -16,6 +16,8 @@ services:
         sync: false
       - key: CARDSIGHTS_API_KEY
         sync: false
+      - key: CARDHEDGE_API_KEY
+        sync: false
       - key: USE_MOCK_DATA
         value: false
       - key: AUTH_CODE
