@@ -16,6 +16,14 @@ services:
         sync: false
       - key: CARDSIGHTS_API_KEY
         sync: false
+      - key: CARDHEDGE_API_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: USE_MOCK_DATA
         value: false
       - key: AUTH_CODE
