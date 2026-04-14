@@ -973,6 +973,62 @@ app.get('/api/debug/sold-test', async (req, res) => {
   res.json(results);
 });
 
+// ---- Verbose Cardsights diagnostic: raw catalog + pricing structure per query level ----
+app.get('/api/debug/cardsights-raw', async (req, res) => {
+  const q = req.query.q || 'mahomes prizm';
+  if (USE_MOCK) return res.json({ debug: 'MOCK MODE' });
+  const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
+  const queries = buildCardsightsQueries(q);
+  const report = { original: q, queriesTried: [] };
+  for (const query of queries) {
+    const entry = { query, catalogMatches: [], pricingChecked: [] };
+    try {
+      const sr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+        params: { q: query }, headers, timeout: 15000,
+      });
+      const allItems = sr.data?.data || sr.data?.results || sr.data || [];
+      const cards = (Array.isArray(allItems) ? allItems : []).slice(0, 5);
+      entry.catalogRawKeys = cards[0] ? Object.keys(cards[0]) : [];
+      entry.catalogMatches = cards.map(c => ({
+        id: c.id || c.cardId, name: c.name, type: c.type, year: c.year, setName: c.setName,
+      }));
+      for (const card of cards) {
+        const cardId = card.id || card.cardId;
+        if (!cardId) continue;
+        try {
+          const pr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, { headers, timeout: 15000 });
+          const d = pr.data;
+          entry.pricingChecked.push({
+            cardId,
+            cardName: d.card?.name || card.name,
+            topLevelKeys: Object.keys(d),
+            rawKeys: d.raw ? Object.keys(d.raw) : [],
+            rawRecordCount: d.raw?.records?.length ?? d.raw?.count ?? 'N/A',
+            rawSampleRecord: d.raw?.records?.[0] || null,
+            gradedType: Array.isArray(d.graded) ? 'array' : typeof d.graded,
+            gradedLength: Array.isArray(d.graded) ? d.graded.length : 'N/A',
+            gradedSample: Array.isArray(d.graded) && d.graded[0] ? {
+              company: d.graded[0].company, grade: d.graded[0].grade,
+              recordCount: d.graded[0].records?.length,
+              sampleRecord: d.graded[0].records?.[0] || null,
+            } : null,
+            metaKeys: d.meta ? Object.keys(d.meta) : [],
+          });
+        } catch (e) {
+          entry.pricingChecked.push({ cardId, error: e.message, httpStatus: e.response?.status });
+        }
+      }
+    } catch (e) {
+      entry.catalogError = e.message;
+      entry.catalogHttpStatus = e.response?.status;
+    }
+    report.queriesTried.push(entry);
+    // Stop early if any card had data
+    if (entry.pricingChecked.some(p => p.rawRecordCount > 0 || (typeof p.gradedLength === 'number' && p.gradedLength > 0))) break;
+  }
+  res.json(report);
+});
+
 // ---- API Call Stats (monitor eBay API usage) ----
 app.get('/api/stats/api-calls', (req, res) => {
   try {
