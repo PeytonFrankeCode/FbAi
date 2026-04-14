@@ -1252,7 +1252,7 @@ function toggleAuthDropdown() {
   dropdown = document.createElement('div');
   dropdown.className = 'auth-dropdown';
   dropdown.innerHTML = `
-    <button onclick="closeAuthDropdown()">My Account</button>
+    <button onclick="closeAuthDropdown(); showSettings()">My Account</button>
     <button onclick="handleLogout()">Log Out</button>
   `;
   authBtn.parentElement.appendChild(dropdown);
@@ -1539,6 +1539,7 @@ const mainEl = document.querySelector('main');
 
 let checklistData = null;
 let checklistFilter = 'all';
+let checklistTeamFilter = '';
 let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 
 const trackedView = document.getElementById('tracked-view');
@@ -1656,9 +1657,11 @@ async function loadProduct(productId) {
     checklistData = await res.json();
     checklistProductName.textContent = checklistData.name;
     checklistFilter = 'all';
+    checklistTeamFilter = '';
     checklistVariantFilters = {};
     checklistSearch.value = '';
     document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
+    populateTeamFilter();
     renderChecklistSets();
   } catch (err) {
     checklistSets.innerHTML = `<p class="checklist-error">Failed to load: ${escHtml(err.message)}</p>`;
@@ -1669,6 +1672,22 @@ function checklistBack() {
   checklistBrowser.classList.add('hidden');
   checklistProducts.classList.remove('hidden');
   checklistData = null;
+}
+
+function populateTeamFilter() {
+  const select = document.getElementById('checklist-team-filter');
+  if (!select || !checklistData) return;
+  const teams = new Set();
+  (checklistData.sets || []).forEach(s => (s.cards || []).forEach(c => { if (c.team) teams.add(c.team); }));
+  const sorted = [...teams].sort();
+  select.innerHTML = '<option value="">All Teams</option>' +
+    sorted.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('');
+  select.value = '';
+}
+
+function filterChecklistByTeam(team) {
+  checklistTeamFilter = team;
+  renderChecklistSets();
 }
 
 // Category tabs
@@ -1693,6 +1712,7 @@ function renderChecklistSets() {
 
   const filteredSets = checklistData.sets.filter(s => {
     if (checklistFilter !== 'all' && s.category !== checklistFilter) return false;
+    if (checklistTeamFilter && !s.cards.some(c => c.team === checklistTeamFilter)) return false;
     if (!q) return true;
     // If searching, filter to sets that have matching cards
     return s.cards.some(c =>
@@ -1711,8 +1731,9 @@ function renderChecklistSets() {
     const setEl = document.createElement('div');
     setEl.className = 'checklist-set';
 
-    // Filter cards if searching
+    // Filter cards by search and team
     let cards = set.cards;
+    if (checklistTeamFilter) cards = cards.filter(c => c.team === checklistTeamFilter);
     if (q) {
       cards = cards.filter(c =>
         c.player.toLowerCase().includes(q) ||
