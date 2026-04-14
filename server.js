@@ -38,6 +38,8 @@ const SPORTSCARDSPRO_ENABLED = SPORTSCARDSPRO_API_KEY && !SPORTSCARDSPRO_API_KEY
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const STRIPE_PRODUCT_PRO = 'prod_UKcw8SMnNESbuE';
+const STRIPE_PRODUCT_SLOT = 'prod_UKczmqAaEo7wa9';
 const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
 let stripe = null;
 if (stripeEnabled) {
@@ -1704,7 +1706,7 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
       line_items: [{
         price_data: {
           currency: 'usd',
-          product_data: { name: `Card Huddle Pro (${period === 'yearly' ? 'Yearly' : 'Monthly'})` },
+          product: STRIPE_PRODUCT_PRO,
           ...priceData
         },
         quantity: 1
@@ -1746,7 +1748,7 @@ app.post('/api/stripe/buy-slot', async (req, res) => {
       line_items: [{
         price_data: {
           currency: 'usd',
-          product_data: { name: 'Extra Promote Slot' },
+          product: STRIPE_PRODUCT_SLOT,
           unit_amount: 299
         },
         quantity: 1
