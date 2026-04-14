@@ -3627,17 +3627,15 @@ document.addEventListener('click', function(e) {
   });
 });
 
-// ---- Layout Mode (Computer vs Mobile) ----
+// ---- Layout Mode (auto-detect screen size, allow manual override) ----
 (function initLayoutPicker() {
   const saved = localStorage.getItem('cardHuddleLayout');
-  if (saved) {
-    // Already chosen — apply immediately, hide picker
-    document.documentElement.classList.toggle('mobile-layout', saved === 'mobile');
-    const picker = document.getElementById('layout-picker');
-    if (picker) picker.classList.add('hidden');
-    updateLayoutButtons(saved);
-  }
-  // If no saved preference, the picker popup will show (it's visible by default)
+  const mode = saved || (window.innerWidth <= 768 ? 'mobile' : 'desktop');
+  document.documentElement.classList.toggle('mobile-layout', mode === 'mobile');
+  const picker = document.getElementById('layout-picker');
+  if (picker) picker.classList.add('hidden');
+  updateLayoutButtons(mode);
+  if (!saved) localStorage.setItem('cardHuddleLayout', mode);
 })();
 
 function setLayoutMode(mode) {
