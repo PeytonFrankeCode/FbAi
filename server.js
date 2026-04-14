@@ -275,103 +275,162 @@ async function withRetry(fn, maxRetries = 1) {
   }
 }
 
+// ---- Cardsights query broadening ----
+// Builds a list of progressively simpler queries to try if exact search yields no priced cards.
+// e.g. "Patrick Mahomes 2017 Prizm Silver /150" →
+//      "Patrick Mahomes 2017 Prizm Silver" →
+//      "Patrick Mahomes 2017 Prizm" →
+//      "Patrick Mahomes Prizm" →
+//      "Patrick Mahomes"
+function buildCardsightsQueries(keywords) {
+  const queries = [keywords];
+
+  // Strip serial number (/99, /10, etc.)
+  const noSerial = keywords.replace(/\/\d{1,4}(?!\d)/g, '').replace(/\s+/g, ' ').trim();
+  if (noSerial !== keywords) queries.push(noSerial);
+
+  // Strip parallel color words
+  const parallelWords = ['Silver', 'Gold', 'Blue', 'Red', 'Green', 'Purple', 'Orange', 'Pink',
+    'Holo', 'Shimmer', 'Hyper', 'Prizmatic', 'Rainbow', 'Black', 'White', 'Aqua', 'Teal',
+    'Neon', 'Wave', 'Camo', 'Disco', 'Scope', 'Cracked Ice', 'Mojo', 'Neon Green'];
+  let noParallel = noSerial;
+  for (const p of parallelWords) {
+    noParallel = noParallel.replace(new RegExp(`\\b${p}\\b`, 'gi'), '').replace(/\s+/g, ' ').trim();
+  }
+  if (noParallel !== noSerial && noParallel.length > 2) queries.push(noParallel);
+
+  // Strip year
+  const noYear = noParallel.replace(/\b(20\d{2}|19\d{2})\b/, '').replace(/\s+/g, ' ').trim();
+  if (noYear !== noParallel && noYear.length > 2) queries.push(noYear);
+
+  // Player name + set name only (first 2 words + any known set name found)
+  const SET_NAMES = ['Prizm', 'Select', 'Mosaic', 'Optic', 'Donruss', 'Bowman', 'Chronicles',
+    'Immaculate', 'Spectra', 'Contenders', 'Score', 'Hoops', 'Absolute', 'Certified',
+    'National Treasures', 'Phoenix', 'Flux'];
+  const words = noYear.split(/\s+/);
+  const setWord = words.find(w => SET_NAMES.some(s => s.toLowerCase() === w.toLowerCase()));
+  const playerWords = words.slice(0, 2);
+  if (setWord && !playerWords.includes(setWord)) {
+    queries.push([...playerWords, setWord].join(' '));
+  }
+
+  // Player name only (first 2 words)
+  const playerOnly = playerWords.join(' ');
+  if (playerOnly.length > 3) queries.push(playerOnly);
+
+  return [...new Set(queries.filter(q => q.length > 2))];
+}
+
 // ---- Cardsights API (sold listings via catalog search + pricing) ----
 async function fetchViaCardsights(keywords, limit = 20, source = 'unknown') {
   trackApiCall('cardsights', 'pricing', keywords, source);
-  console.log(`[Cardsights] Searching for: "${keywords}", limit: ${limit}`);
 
   const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
+  const queries = buildCardsightsQueries(keywords);
 
-  // Step 1: Search the catalog for matching cards
-  const searchRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-    params: { q: keywords },
-    headers,
-    timeout: 15000,
-  });
-
-  const allItems = searchRes.data?.data || searchRes.data?.results || searchRes.data || [];
-  const cardMatches = (Array.isArray(allItems) ? allItems : [])
-    .filter(item => !item.type || item.type === 'card')
-    .slice(0, 5);
-
-  if (!cardMatches.length) {
-    console.log(`[Cardsights] No catalog matches for "${keywords}"`);
-    return { results: [], total: 0 };
-  }
-
-  console.log(`[Cardsights] Found ${cardMatches.length} match(es), fetching pricing...`);
-
-  // Step 2: Fetch completed sales (pricing) for each matching card
-  const results = [];
-
-  for (const card of cardMatches) {
-    const cardId = card.id || card.cardId;
-    if (!cardId) continue;
+  for (const q of queries) {
+    console.log(`[Cardsights] Trying: "${q}"`);
 
     try {
-      const pricingRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, {
+      // Search catalog
+      const searchRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
+        params: { q },
         headers,
         timeout: 15000,
       });
 
-      const pricing = pricingRes.data;
-      // Title: prefer API card name, fall back to search result fields
-      const cardName = pricing.card?.name || card.name || keywords;
-      const cardYear = pricing.card?.set?.year || card.year || '';
-      const cardSet  = pricing.card?.set?.release || card.setName || '';
-      const cardTitle = [cardYear, cardSet, cardName].filter(Boolean).join(' ');
-      const imageUrl = card.imageUrl || card.image || null;
+      const allItems = searchRes.data?.data || searchRes.data?.results || searchRes.data || [];
+      const cardMatches = (Array.isArray(allItems) ? allItems : [])
+        .filter(item => !item.type || item.type === 'card')
+        .slice(0, 10); // check up to 10 cards per query level
 
-      // Raw (ungraded) sales — response: raw.records[]
-      const rawRecords = pricing.raw?.records || [];
-      for (const sale of rawRecords) {
-        results.push({
-          itemId: sale.id || sale.listing_id || `cs-raw-${results.length}`,
-          title: cardTitle,
-          price: String(sale.price || sale.sale_price || sale.amount || '0'),
-          currency: sale.currency || 'USD',
-          soldDate: sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
-          imageUrl,
-          itemUrl: sale.url || sale.listing_url || sale.link || '',
-          condition: 'Ungraded',
-        });
+      if (!cardMatches.length) {
+        console.log(`[Cardsights] No catalog matches for "${q}"`);
+        continue;
       }
 
-      // Graded sales — response: graded[] array of { company, grade, records[] }
-      const gradedEntries = Array.isArray(pricing.graded) ? pricing.graded : [];
-      for (const entry of gradedEntries) {
-        const company = entry.company || entry.grader || '';
-        const grade   = entry.grade || '';
-        const gradedRecords = entry.records || entry.sales || [];
-        for (const sale of gradedRecords) {
-          results.push({
-            itemId: sale.id || sale.listing_id || `cs-${company}-${grade}-${results.length}`,
-            title: `${cardTitle} ${company} ${grade}`.trim(),
-            price: String(sale.price || sale.sale_price || sale.amount || '0'),
-            currency: sale.currency || 'USD',
-            soldDate: sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
-            imageUrl,
-            itemUrl: sale.url || sale.listing_url || sale.link || '',
-            condition: `${company} ${grade}`.trim(),
+      // Fetch pricing for each matched card, collect any with actual records
+      const results = [];
+      for (const card of cardMatches) {
+        const cardId = card.id || card.cardId;
+        if (!cardId) continue;
+
+        try {
+          const pricingRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, {
+            headers,
+            timeout: 15000,
           });
-        }
-      }
-    } catch (err) {
-      console.warn(`[Cardsights] Pricing failed for card ${card.id}:`, err.message);
-    }
 
-    if (results.length >= limit) break;
+          const pricing = pricingRes.data;
+          const rawRecords   = pricing.raw?.records || [];
+          const gradedGroups = Array.isArray(pricing.graded) ? pricing.graded : [];
+          const totalRecords = rawRecords.length +
+            gradedGroups.reduce((s, e) => s + (e.records?.length || 0), 0);
+
+          if (totalRecords === 0) continue; // no data for this card, skip
+
+          const cardName  = pricing.card?.name  || card.name    || keywords;
+          const cardYear  = pricing.card?.set?.year    || card.year    || '';
+          const cardSet   = pricing.card?.set?.release || card.setName || '';
+          const cardTitle = [cardYear, cardSet, cardName].filter(Boolean).join(' ');
+          const imageUrl  = card.imageUrl || card.image || null;
+
+          // Raw (ungraded) records
+          for (const sale of rawRecords) {
+            results.push({
+              itemId:    sale.id || sale.listing_id || `cs-raw-${results.length}`,
+              title:     cardTitle,
+              price:     String(sale.price || sale.sale_price || sale.amount || '0'),
+              currency:  sale.currency || 'USD',
+              soldDate:  sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
+              imageUrl,
+              itemUrl:   sale.url || sale.listing_url || sale.link || '',
+              condition: 'Ungraded',
+            });
+          }
+
+          // Graded records
+          for (const entry of gradedGroups) {
+            const company = entry.company || entry.grader || '';
+            const grade   = entry.grade || '';
+            for (const sale of (entry.records || entry.sales || [])) {
+              results.push({
+                itemId:    sale.id || sale.listing_id || `cs-${company}-${grade}-${results.length}`,
+                title:     `${cardTitle} ${company} ${grade}`.trim(),
+                price:     String(sale.price || sale.sale_price || sale.amount || '0'),
+                currency:  sale.currency || 'USD',
+                soldDate:  sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
+                imageUrl,
+                itemUrl:   sale.url || sale.listing_url || sale.link || '',
+                condition: `${company} ${grade}`.trim(),
+              });
+            }
+          }
+        } catch (err) {
+          console.warn(`[Cardsights] Pricing failed for ${card.id}:`, err.message);
+        }
+
+        if (results.length >= limit) break;
+      }
+
+      if (results.length > 0) {
+        results.sort((a, b) => {
+          if (!a.soldDate) return 1;
+          if (!b.soldDate) return -1;
+          return new Date(b.soldDate) - new Date(a.soldDate);
+        });
+        console.log(`[Cardsights] ${results.length} results via query: "${q}"`);
+        return { results: results.slice(0, limit), total: results.length };
+      }
+
+      console.log(`[Cardsights] Matched ${cardMatches.length} cards for "${q}" but none had pricing data, broadening...`);
+    } catch (err) {
+      console.warn(`[Cardsights] Search error for "${q}":`, err.message);
+    }
   }
 
-  // Sort by most recent first
-  results.sort((a, b) => {
-    if (!a.soldDate) return 1;
-    if (!b.soldDate) return -1;
-    return new Date(b.soldDate) - new Date(a.soldDate);
-  });
-
-  console.log(`[Cardsights] Returning ${Math.min(results.length, limit)} sold results`);
-  return { results: results.slice(0, limit), total: results.length };
+  console.log(`[Cardsights] No pricing data found for: "${keywords}"`);
+  return { results: [], total: 0 };
 }
 
 // ---- Browse API (active listings) ----
@@ -953,7 +1012,7 @@ app.get('/api/test-ebay', async (req, res) => {
   const q = req.query.q || 'Patrick Mahomes Prizm Silver';
 
   // Test 1: Cardsights catalog search
-  let firstCardId = null;
+  let matchedCards = [];
   try {
     const start = Date.now();
     const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
@@ -961,35 +1020,30 @@ app.get('/api/test-ebay', async (req, res) => {
       headers: csHeaders,
       timeout: 10000,
     });
-    const items = r.data?.data || r.data?.results || [];
-    firstCardId = items[0]?.id || null;
-    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: items.length, items: items.slice(0, 5).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
+    matchedCards = r.data?.data || r.data?.results || [];
+    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: matchedCards.length, items: matchedCards.slice(0, 8).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
   } catch (err) {
     results.cardsights_search = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
   }
 
-  // Test 2: Cardsights pricing for first matched card
-  if (firstCardId) {
+  // Test 2: Check pricing for each matched card until we find one with records
+  results.cardsights_pricing = [];
+  for (const card of matchedCards.slice(0, 8)) {
     try {
-      const start = Date.now();
-      const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${firstCardId}`, {
-        headers: csHeaders,
-        timeout: 10000,
+      const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${card.id}`, {
+        headers: csHeaders, timeout: 10000,
       });
-      const raw = r.data?.raw || {};
-      const graded = r.data?.graded || [];
-      results.cardsights_pricing = {
-        status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, cardId: firstCardId,
-        rawCount: raw.count || raw.records?.length || 0,
-        gradedEntries: graded.length,
-        firstRawRecord: raw.records?.[0] || null,
-        firstGradedEntry: graded[0] || null,
-      };
+      const rawCount = r.data?.raw?.count || r.data?.raw?.records?.length || 0;
+      const gradedCount = Array.isArray(r.data?.graded) ? r.data.graded.reduce((s, e) => s + (e.records?.length || 0), 0) : 0;
+      results.cardsights_pricing.push({
+        cardId: card.id, name: card.name, year: card.year, set: card.setName,
+        rawCount, gradedCount, totalRecords: rawCount + gradedCount,
+        firstRawRecord: r.data?.raw?.records?.[0] || null,
+        firstGradedEntry: Array.isArray(r.data?.graded) ? r.data.graded.find(e => e.records?.length > 0) || null : null,
+      });
     } catch (err) {
-      results.cardsights_pricing = { status: 'FAILED', cardId: firstCardId, httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
+      results.cardsights_pricing.push({ cardId: card.id, name: card.name, error: err.message });
     }
-  } else {
-    results.cardsights_pricing = { skipped: 'no card ID from search' };
   }
 
   // Test eBay Browse API connectivity
