@@ -1614,40 +1614,23 @@ async function loadChecklistProducts() {
       const grid = document.createElement('div');
       grid.className = 'checklist-year-grid';
 
-      const INITIAL_SHOW = 4;
-      const products = byYear[year];
-
-      function renderProducts(showAll) {
-        grid.innerHTML = '';
-        const visible = showAll ? products : products.slice(0, INITIAL_SHOW);
-        visible.forEach(p => {
-          const card = document.createElement('div');
-          card.className = 'checklist-product-card';
-          card.innerHTML = `
-            <div class="checklist-product-info">
-              <h3>${escHtml(p.name)}</h3>
-              <div class="checklist-product-stats">
-                <span>${p.setCount} sets</span>
-                <span>${p.totalCards} cards</span>
-              </div>
+      byYear[year].forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'checklist-product-card';
+        card.innerHTML = `
+          <div class="checklist-product-info">
+            <h3>${escHtml(p.name)}</h3>
+            <div class="checklist-product-stats">
+              <span>${p.setCount} sets</span>
+              <span>${p.totalCards} cards</span>
             </div>
-            <span class="checklist-product-arrow">&rarr;</span>
-          `;
-          card.addEventListener('click', () => loadProduct(p.id));
-          grid.appendChild(card);
-        });
+          </div>
+          <span class="checklist-product-arrow">&rarr;</span>
+        `;
+        card.addEventListener('click', () => loadProduct(p.id));
+        grid.appendChild(card);
+      });
 
-        // Show more / show less button
-        if (products.length > INITIAL_SHOW) {
-          const toggleBtn = document.createElement('button');
-          toggleBtn.className = 'checklist-show-more-btn';
-          toggleBtn.textContent = showAll ? 'Show less' : `Show ${products.length - INITIAL_SHOW} more`;
-          toggleBtn.addEventListener('click', () => renderProducts(!showAll));
-          grid.appendChild(toggleBtn);
-        }
-      }
-
-      renderProducts(false);
       body.appendChild(grid);
       header.addEventListener('click', () => {
         header.classList.toggle('open');
