@@ -3723,24 +3723,40 @@ tr:hover .cl-alert-btn {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-secondary);
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: 20px;
-  padding: 0.3rem 0.75rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 0.35rem 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  position: relative;
+  user-select: none;
 }
 .rainbow-toggle:hover {
   border-color: #8b5cf6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  transform: translateY(-1px);
+}
+.rainbow-toggle:active {
+  transform: scale(0.93) translateY(0);
+}
+.rainbow-toggle.rainbow-pop {
+  animation: rainbowPop 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 .rainbow-toggle input { display: none; }
 .rainbow-toggle:has(input:checked) {
   border-color: transparent;
-  background: linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
-              linear-gradient(90deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6) border-box;
-  box-shadow: 0 0 8px rgba(139, 92, 246, 0.25);
+  background:
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    linear-gradient(var(--rainbow-angle, 0deg), #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444) border-box;
+  box-shadow:
+    0 0 14px rgba(139, 92, 246, 0.45),
+    0 0 28px rgba(239, 68, 68, 0.2),
+    0 0 0 1px rgba(139, 92, 246, 0.3);
+  animation: rainbowBorderSpin 2.5s linear infinite;
+  color: var(--text-primary);
 }
 .rainbow-label {
   background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6);
@@ -3749,6 +3765,48 @@ tr:hover .cl-alert-btn {
   background-clip: text;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+.rainbow-toggle:has(input:checked) .rainbow-label {
+  background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rainbowLabelScroll 1.8s linear infinite;
+}
+
+/* ✨ Rainbow icon shown only when active */
+.rainbow-toggle::before {
+  content: '✨';
+  font-size: 0;
+  opacity: 0;
+  transition: font-size 0.2s, opacity 0.2s;
+  line-height: 1;
+}
+.rainbow-toggle:has(input:checked)::before {
+  font-size: 0.9rem;
+  opacity: 1;
+}
+
+@keyframes rainbowBorderSpin {
+  0%   { --rainbow-angle: 0deg; box-shadow: 0 0 14px rgba(239, 68, 68, 0.5),  0 0 32px rgba(239, 68, 68, 0.2); }
+  25%  { --rainbow-angle: 90deg; box-shadow: 0 0 14px rgba(245, 158, 11, 0.5), 0 0 32px rgba(245, 158, 11, 0.2); }
+  50%  { --rainbow-angle: 180deg; box-shadow: 0 0 14px rgba(16, 185, 129, 0.5), 0 0 32px rgba(16, 185, 129, 0.2); }
+  75%  { --rainbow-angle: 270deg; box-shadow: 0 0 14px rgba(59, 130, 246, 0.5), 0 0 32px rgba(59, 130, 246, 0.2); }
+  100% { --rainbow-angle: 360deg; box-shadow: 0 0 14px rgba(139, 92, 246, 0.5), 0 0 32px rgba(139, 92, 246, 0.2); }
+}
+
+@keyframes rainbowLabelScroll {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+@keyframes rainbowPop {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.18) rotate(-2deg); }
+  55%  { transform: scale(0.92) rotate(1.5deg); }
+  80%  { transform: scale(1.06) rotate(-0.5deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 .completion-progress { margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
 .completion-progress-bar-wrap { flex: 1; height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }

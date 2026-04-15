@@ -2382,6 +2382,15 @@ async function loadCompletionProduct() {
 
 function toggleRainbowMode() {
   rainbowMode = document.getElementById('rainbow-mode').checked;
+  // Pop animation on the toggle label
+  const label = document.querySelector('.rainbow-toggle');
+  if (label) {
+    label.classList.remove('rainbow-pop');
+    // Force reflow so re-adding the class triggers the animation fresh
+    void label.offsetWidth;
+    label.classList.add('rainbow-pop');
+    label.addEventListener('animationend', () => label.classList.remove('rainbow-pop'), { once: true });
+  }
   if (completionData) renderCompletionSets();
 }
 
