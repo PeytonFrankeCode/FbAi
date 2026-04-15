@@ -2142,6 +2142,34 @@ function saveCollection(coll) {
 }
 
 function initCollectionView() {
+  const user = getCurrentUser();
+  const sub = user ? getUserSubscription() : null;
+  const gate = document.getElementById('collection-gate');
+  const content = document.getElementById('collection-content');
+  const upgradeBtn = document.getElementById('collection-upgrade-btn');
+
+  if (!user) {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+    gate.querySelector('h3').textContent = 'Log In Required';
+    gate.querySelector('p').textContent = 'Log in or sign up to access your collection and portfolio.';
+    upgradeBtn.textContent = 'Log In';
+    upgradeBtn.onclick = () => showLogin();
+    return;
+  }
+
+  if (!sub) {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+    gate.querySelector('h3').textContent = 'Pro Feature';
+    gate.querySelector('p').textContent = 'Collection tracking, portfolio value, and set completion are exclusive Pro features. Upgrade to unlock.';
+    upgradeBtn.textContent = 'Upgrade to Pro';
+    upgradeBtn.onclick = () => showPricing();
+    return;
+  }
+
+  gate.classList.add('hidden');
+  content.classList.remove('hidden');
   renderPortfolio();
   loadCompletionProducts();
 }
@@ -2382,6 +2410,15 @@ async function loadCompletionProduct() {
 
 function toggleRainbowMode() {
   rainbowMode = document.getElementById('rainbow-mode').checked;
+  // Pop animation on the toggle label
+  const label = document.querySelector('.rainbow-toggle');
+  if (label) {
+    label.classList.remove('rainbow-pop');
+    // Force reflow so re-adding the class triggers the animation fresh
+    void label.offsetWidth;
+    label.classList.add('rainbow-pop');
+    label.addEventListener('animationend', () => label.classList.remove('rainbow-pop'), { once: true });
+  }
   if (completionData) renderCompletionSets();
 }
 
