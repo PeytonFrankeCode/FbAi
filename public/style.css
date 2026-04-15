@@ -792,6 +792,35 @@ header h1 {
   z-index: 1;
 }
 
+/* ---- Header Logo ---- */
+.header-brand {
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.header-logo {
+  height: 90px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 12px;
+  /* multiply blends the white background into the dark header */
+  mix-blend-mode: multiply;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0.97;
+}
+
+.header-logo:hover {
+  transform: scale(1.04);
+  opacity: 1;
+}
+
+/* Light theme: logo shows naturally without blend */
+[data-theme="light"] .header-logo {
+  mix-blend-mode: normal;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12));
+}
+
 .header-tagline {
   color: var(--text-secondary);
   margin-top: 0.4rem;
@@ -1910,6 +1939,14 @@ footer::before {
 
 .footer-logo {
   font-size: 1.4rem;
+}
+
+.footer-logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  opacity: 0.9;
 }
 
 .footer-description {
