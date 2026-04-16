@@ -781,6 +781,57 @@ function computeApproxValue(results, label) {
   };
 }
 
+// ---- /api/grading-advisor ----
+// Returns sold price stats for raw, PSA 8, PSA 9, PSA 10 for a given card query.
+app.get('/api/grading-advisor', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required' });
+  }
+
+  const GRADING_COST = { economy: 25, express: 50 };
+
+  try {
+    const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
+      fetchEbayItems(query.trim(), 20, 'sold', 'grading-raw'),
+      fetchEbayItems(`${query.trim()} PSA 8`, 20, 'sold', 'grading-psa8'),
+      fetchEbayItems(`${query.trim()} PSA 9`, 20, 'sold', 'grading-psa9'),
+      fetchEbayItems(`${query.trim()} PSA 10`, 20, 'sold', 'grading-psa10'),
+    ]);
+
+    const summarize = (data, label) => {
+      const v = computeApproxValue(data.results, label);
+      return v ? { avg: v.avgPrice, median: v.medianPrice, min: v.priceRange.min, max: v.priceRange.max, sales: v.sampleSize } : null;
+    };
+
+    const raw   = summarize(rawData,   'Raw');
+    const psa8  = summarize(psa8Data,  'PSA 8');
+    const psa9  = summarize(psa9Data,  'PSA 9');
+    const psa10 = summarize(psa10Data, 'PSA 10');
+
+    // Calculate grade premiums over raw median
+    const calcPremium = (graded, rawVal) => {
+      if (!graded || !rawVal) return null;
+      const net = graded.median - rawVal.median - GRADING_COST.economy;
+      return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
+    };
+
+    res.json({
+      query: query.trim(),
+      grades: { raw, psa8, psa9, psa10 },
+      premiums: {
+        psa8:  calcPremium(psa8,  raw),
+        psa9:  calcPremium(psa9,  raw),
+        psa10: calcPremium(psa10, raw),
+      },
+      gradingCost: GRADING_COST,
+    });
+  } catch (err) {
+    console.error('Grading advisor error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch grading data', detail: err.message });
+  }
+});
+
 // ---- /api/direct-search ----
 app.get('/api/direct-search', async (req, res) => {
   const query = req.query.q;
