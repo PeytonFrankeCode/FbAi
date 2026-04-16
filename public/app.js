@@ -118,11 +118,14 @@ async function loadTrackedCards() {
     }
     listEl.innerHTML = data.alerts.map(a => {
       const date = new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const thresholdBadge = a.priceThreshold && a.priceCondition
+        ? `<span class="tracked-threshold-badge">${a.priceCondition === 'below' ? '↓' : '↑'} $${parseFloat(a.priceThreshold).toFixed(2)}</span>`
+        : '';
       return `
         <div class="tracked-card-item" data-id="${a.id}">
           <div class="tracked-card-icon">&#128276;</div>
           <div class="tracked-card-info">
-            <div class="tracked-card-query">${escHtml(a.label)}</div>
+            <div class="tracked-card-query">${escHtml(a.label)}${thresholdBadge}</div>
             <div class="tracked-card-date">Tracking since ${date}</div>
           </div>
           <button class="tracked-card-search" onclick="switchView('search'); document.getElementById('search-input').value='${escHtml(a.query).replace(/'/g, "\\'")}'; document.getElementById('search-form').dispatchEvent(new Event('submit'))" title="Search eBay">&#128269;</button>
@@ -146,6 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = userData?.email;
       const input = document.getElementById('tracked-query-input');
       const query = input.value.trim();
+      const conditionEl = document.getElementById('tracked-condition');
+      const thresholdEl = document.getElementById('tracked-threshold');
+      const priceCondition = conditionEl ? conditionEl.value || null : null;
+      const priceThreshold = thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
       const errEl = document.getElementById('tracked-error');
       errEl.classList.add('hidden');
 
@@ -159,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('/api/alerts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: user, email, query, label: query }),
+          body: JSON.stringify({ username: user, email, query, label: query, priceThreshold, priceCondition }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -168,6 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         input.value = '';
+        if (conditionEl) conditionEl.value = '';
+        if (thresholdEl) thresholdEl.value = '';
         loadTrackedCards();
       } catch (err) {
         errEl.textContent = 'Network error. Try again.';
@@ -832,6 +841,7 @@ async function performSearch(query) {
   sortControls.classList.add('hidden');
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
+  document.getElementById('grade-panel').classList.add('hidden');
   currentResults = [];
   if (priceChart) {
     priceChart.destroy();
@@ -911,7 +921,10 @@ async function performSearch(query) {
         grid.appendChild(card);
       });
       injectPromotedCards(grid);
-      if (isSold) updatePriceChart(results);
+      if (isSold) {
+        updatePriceChart(results);
+        loadGradePanel(query);
+      }
 
       // Also show similar cards below if serial search returned both
       if (serial && similarResults && similarResults.length > 0) {
@@ -935,13 +948,78 @@ async function performSearch(query) {
   }
 }
 
+// ---- Grade Value Panel ----
+async function loadGradePanel(query) {
+  const panel   = document.getElementById('grade-panel');
+  const body    = document.getElementById('grade-panel-body');
+  const loading = document.getElementById('grade-panel-loading');
+
+  panel.classList.remove('hidden');
+  loading.classList.remove('hidden');
+  body.innerHTML = '';
+
+  try {
+    const res  = await fetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    const { grades } = data;
+    const fmt = v => v != null ? `$${v.toFixed(2)}` : '—';
+
+    const entries = [
+      { label: 'Raw',    stats: grades.raw,   color: 'var(--text-secondary)' },
+      { label: 'PSA 8',  stats: grades.psa8,  color: '#f59e0b' },
+      { label: 'PSA 9',  stats: grades.psa9,  color: '#3b82f6' },
+      { label: 'PSA 10', stats: grades.psa10, color: 'var(--accent)' },
+    ];
+
+    body.innerHTML = entries.map(({ label, stats, color }) => `
+      <div class="grade-chip">
+        <span class="grade-chip-label" style="color:${color}">${label}</span>
+        <span class="grade-chip-price">${stats ? fmt(stats.median) : '—'}</span>
+        ${stats ? `<span class="grade-chip-sales">${stats.sales} sales</span>` : '<span class="grade-chip-sales">no data</span>'}
+      </div>
+    `).join('');
+  } catch {
+    body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Could not load grade data</span>';
+  } finally {
+    loading.classList.add('hidden');
+  }
+}
+
 // ---- Price Chart ----
 function updatePriceChart(results) {
   if (typeof Chart === 'undefined') return;
 
-  const sorted = [...results]
+  const sub = getUserSubscription();
+  const isPro = !!sub;
+  const cutoffDays = isPro ? 365 : 30;
+  const cutoffDate = new Date(Date.now() - cutoffDays * 24 * 60 * 60 * 1000);
+
+  const allSorted = [...results]
     .filter(r => r.soldDate && r.price)
     .sort((a, b) => new Date(a.soldDate) - new Date(b.soldDate));
+
+  const sorted = allSorted.filter(r => new Date(r.soldDate) >= cutoffDate);
+  const hiddenCount = allSorted.length - sorted.length;
+
+  // Show depth notice
+  let depthEl = document.getElementById('chart-depth-notice');
+  if (!depthEl) {
+    depthEl = document.createElement('div');
+    depthEl.id = 'chart-depth-notice';
+    depthEl.className = 'chart-depth-notice';
+    chartSection.appendChild(depthEl);
+  }
+  if (!isPro && hiddenCount > 0) {
+    depthEl.innerHTML = `Last 30 days shown &middot; <a href="#" onclick="showPricing();return false;" class="chart-depth-upgrade">${hiddenCount} older sale${hiddenCount !== 1 ? 's' : ''} hidden — Upgrade to Pro for full history</a>`;
+    depthEl.classList.remove('hidden');
+  } else if (isPro && allSorted.length > 0) {
+    depthEl.textContent = `Showing up to 1 year of price history`;
+    depthEl.classList.remove('hidden');
+  } else {
+    depthEl.classList.add('hidden');
+  }
 
   if (sorted.length < 2) {
     chartSection.classList.add('hidden');
@@ -1598,6 +1676,7 @@ const trackedView = document.getElementById('tracked-view');
 
 const collectionView = document.getElementById('collection-view');
 const sellerView = document.getElementById('seller-view');
+const gradingView = document.getElementById('grading-view');
 
 function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
@@ -1609,6 +1688,7 @@ function switchView(view) {
   trackedView.classList.add('hidden');
   collectionView.classList.add('hidden');
   sellerView.classList.add('hidden');
+  gradingView.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -1622,9 +1702,98 @@ function switchView(view) {
   } else if (view === 'seller') {
     sellerView.classList.remove('hidden');
     renderMyListings();
+  } else if (view === 'grading') {
+    gradingView.classList.remove('hidden');
   } else {
     mainEl.classList.remove('hidden');
   }
+}
+
+// ---- Grading Advisor ----
+async function runGradingAdvisor(e) {
+  e.preventDefault();
+  const query = document.getElementById('grading-input').value.trim();
+  if (!query) return false;
+
+  const loading  = document.getElementById('grading-loading');
+  const errorEl  = document.getElementById('grading-error');
+  const results  = document.getElementById('grading-results');
+  const btn      = document.getElementById('grading-btn');
+
+  loading.classList.remove('hidden');
+  errorEl.classList.add('hidden');
+  results.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+
+  try {
+    const res  = await fetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch data');
+    renderGradingResults(data);
+  } catch (err) {
+    errorEl.textContent = err.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Analyze';
+  }
+  return false;
+}
+
+function renderGradingResults(data) {
+  const { grades, premiums, query } = data;
+  const tbody  = document.getElementById('grading-tbody');
+  const recBox = document.getElementById('grading-recommendation');
+  const results = document.getElementById('grading-results');
+
+  const fmt = v => v != null ? `$${v.toFixed(2)}` : '—';
+  const fmtNet = net => {
+    if (net == null) return '—';
+    const cls = net > 0 ? 'grading-positive' : 'grading-negative';
+    return `<span class="${cls}">${net > 0 ? '+' : ''}$${net.toFixed(2)}</span>`;
+  };
+
+  const rows = [
+    { label: 'Raw', stats: grades.raw,   premium: null },
+    { label: 'PSA 8',  stats: grades.psa8,  premium: premiums.psa8  },
+    { label: 'PSA 9',  stats: grades.psa9,  premium: premiums.psa9  },
+    { label: 'PSA 10', stats: grades.psa10, premium: premiums.psa10 },
+  ];
+
+  tbody.innerHTML = rows.map(({ label, stats, premium }) => {
+    if (!stats) return `<tr class="grading-no-data"><td>${label}</td><td colspan="6" style="color:var(--text-muted);font-style:italic">No recent sold data found</td></tr>`;
+    const gross = premium ? fmt(premium.gross) : '—';
+    const net   = premium ? fmtNet(premium.net) : '—';
+    const isRaw = label === 'Raw';
+    return `<tr class="${isRaw ? 'grading-raw-row' : ''}">
+      <td><strong>${label}</strong></td>
+      <td>${fmt(stats.avg)}</td>
+      <td>${fmt(stats.median)}</td>
+      <td>${fmt(stats.min)} – ${fmt(stats.max)}</td>
+      <td>${stats.sales}</td>
+      <td>${gross}</td>
+      <td>${net}</td>
+    </tr>`;
+  }).join('');
+
+  // Recommendation banner
+  const bestGrade = ['psa10','psa9','psa8'].find(g => premiums[g]?.worthIt);
+  if (bestGrade) {
+    const label = bestGrade === 'psa10' ? 'PSA 10' : bestGrade === 'psa9' ? 'PSA 9' : 'PSA 8';
+    const net   = premiums[bestGrade].net;
+    recBox.className = 'grading-recommendation grading-rec-yes';
+    recBox.innerHTML = `<span class="grading-rec-icon">✅</span> <strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the $25 grading fee.`;
+  } else if (!grades.psa10 && !grades.psa9 && !grades.psa8) {
+    recBox.className = 'grading-recommendation grading-rec-unknown';
+    recBox.innerHTML = `<span class="grading-rec-icon">❓</span> <strong>Not enough data</strong> — no recent graded sales found for this card.`;
+  } else {
+    recBox.className = 'grading-recommendation grading-rec-no';
+    recBox.innerHTML = `<span class="grading-rec-icon">❌</span> <strong>Probably not worth grading</strong> — the grade premium doesn't cover the $25 fee based on recent sales.`;
+  }
+
+  results.classList.remove('hidden');
 }
 
 async function loadChecklistProducts() {
@@ -2181,6 +2350,7 @@ function switchCollectionTab(tab) {
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
   if (tab === 'completion') loadCompletionProducts();
+  if (tab === 'watchlist') renderWatchlist();
 }
 
 function renderPortfolio() {
@@ -2194,6 +2364,17 @@ function renderPortfolio() {
   const glEl = document.getElementById('portfolio-gain-loss');
   glEl.textContent = `${gainLoss >= 0 ? '+' : ''}$${gainLoss.toFixed(2)}`;
   glEl.className = `portfolio-stat-value ${gainLoss >= 0 ? 'gain' : 'loss'}`;
+  const roiEl = document.getElementById('portfolio-roi');
+  if (roiEl) {
+    if (totalCost > 0) {
+      const roi = ((totalValue - totalCost) / totalCost) * 100;
+      roiEl.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
+      roiEl.className = `portfolio-stat-value ${roi >= 0 ? 'gain' : 'loss'}`;
+    } else {
+      roiEl.textContent = '—';
+      roiEl.className = 'portfolio-stat-value';
+    }
+  }
 
   const listEl = document.getElementById('portfolio-list');
   if (coll.length === 0) {
@@ -2251,13 +2432,19 @@ function renderPortfolio() {
                 <th>Team</th>
                 <th>Details</th>
                 <th>Paid</th>
+                <th>Mkt Value</th>
+                <th>ROI</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               ${group.cards.map(c => {
-                const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+                const paid = c.purchasePrice || 0;
+                const mkt = c.estValue || 0;
+                const gl = mkt - paid;
+                const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
                 const glClass = gl >= 0 ? 'gain' : 'loss';
+                const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
                 const parallelTag = c.parallel ? `<span class="portfolio-parallel-tag">${escHtml(c.parallel)}</span>` : '';
                 const prTag = c.printRun ? `<span class="cl-printrun-inline ${parseInt(c.printRun) <= 25 ? 'cl-pr-rare' : parseInt(c.printRun) <= 99 ? 'cl-pr-low' : ''}">${'/' + c.printRun}</span>` : '';
                 const condTag = c.condition ? `<span class="portfolio-cond-tag">${escHtml(c.condition)}</span>` : '';
@@ -2266,9 +2453,12 @@ function renderPortfolio() {
                   <td class="cl-player">${escHtml(c.player)}</td>
                   <td class="cl-team">${escHtml(c.team || '')}</td>
                   <td class="portfolio-detail-cell">${parallelTag}${prTag}${condTag}</td>
+                  <td class="portfolio-price-cell"><span class="portfolio-card-cost">$${paid.toFixed(2)}</span></td>
                   <td class="portfolio-price-cell">
-                    <span class="portfolio-card-cost">$${(c.purchasePrice || 0).toFixed(2)}</span>
-                    ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
+                    ${mkt > 0 ? `<span class="portfolio-card-cost">$${mkt.toFixed(2)}</span>${gl !== 0 ? `<span class="portfolio-card-value ${glClass}"> ${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}` : '<span class="portfolio-no-value">—</span>'}
+                  </td>
+                  <td class="portfolio-roi-cell ${roiClass}">
+                    ${roi !== null ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}
                   </td>
                   <td class="cl-action"><button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button></td>
                 </tr>`;
@@ -2286,8 +2476,12 @@ function renderPortfolio() {
       html += '<div class="portfolio-manual-header">Manually Added</div>';
     }
     html += manualCards.map(c => {
-      const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+      const paid = c.purchasePrice || 0;
+      const mkt = c.estValue || 0;
+      const gl = mkt - paid;
+      const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
       const glClass = gl >= 0 ? 'gain' : 'loss';
+      const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
       return `
         <div class="portfolio-card-item">
           <div class="portfolio-card-info">
@@ -2295,8 +2489,10 @@ function renderPortfolio() {
             <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
           </div>
           <div class="portfolio-card-prices">
-            <span class="portfolio-card-cost">Paid: $${(c.purchasePrice || 0).toFixed(2)}</span>
-            <span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>
+            <span class="portfolio-card-cost">Paid: $${paid.toFixed(2)}</span>
+            ${mkt > 0 ? `<span class="portfolio-card-cost"> Mkt: $${mkt.toFixed(2)}</span>` : ''}
+            ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
+            ${roi !== null ? `<span class="portfolio-roi-inline ${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}% ROI</span>` : ''}
           </div>
           <button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button>
         </div>`;
@@ -2348,6 +2544,267 @@ function removeFromCollection(idx) {
   coll.splice(idx, 1);
   saveCollection(coll);
   renderPortfolio();
+}
+
+async function refreshPortfolioValues() {
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return; }
+
+  const btn = document.getElementById('refresh-market-btn');
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing… <span class="pro-badge-inline">PRO</span>'; }
+
+  const coll = getCollection();
+  const updates = [];
+  for (const c of coll) {
+    const query = c.player
+      ? `${c.player} ${c.year || ''} ${c.brand || ''} ${c.setName || ''} ${c.parallel || ''}`.replace(/\s+/g, ' ').trim()
+      : c.name || '';
+    if (!query) { updates.push(null); continue; }
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&mode=sold`);
+      const data = await res.json();
+      if (data.approximateValue && data.approximateValue.medianPrice) {
+        updates.push(data.approximateValue.medianPrice);
+      } else if (data.results && data.results.length > 0) {
+        const v = data.results.map(r => r.price).filter(p => p > 0).sort((a, b) => a - b);
+        if (v.length) {
+          const mid = Math.floor(v.length / 2);
+          updates.push(v.length % 2 === 0 ? (v[mid - 1] + v[mid]) / 2 : v[mid]);
+        } else updates.push(null);
+      } else updates.push(null);
+    } catch { updates.push(null); }
+  }
+
+  let refreshed = 0;
+  coll.forEach((c, i) => {
+    if (updates[i] !== null) { c.estValue = updates[i]; refreshed++; }
+  });
+  saveCollection(coll);
+  renderPortfolio();
+
+  if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  showPortfolioToast(refreshed > 0
+    ? `Updated market values for ${refreshed} card${refreshed !== 1 ? 's' : ''}.`
+    : 'No market data found. Try cards with more specific names.');
+}
+
+function showPortfolioToast(msg) {
+  let t = document.getElementById('portfolio-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'portfolio-toast';
+    t.className = 'portfolio-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('visible');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('visible'), 3500);
+}
+
+// ---- Monthly Market Report PDF ----
+function generateMarketReport() {
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return; }
+
+  const coll = getCollection();
+  const user = getCurrentUser() || 'Collector';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const totalCost = coll.reduce((s, c) => s + (c.purchasePrice || 0), 0);
+  const totalValue = coll.reduce((s, c) => s + (c.estValue || c.purchasePrice || 0), 0);
+  const gainLoss = totalValue - totalCost;
+  const roi = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : null;
+  const glSign = gainLoss >= 0 ? '+' : '';
+  const glColor = gainLoss >= 0 ? '#10b981' : '#ef4444';
+  const roiColor = roi === null ? '#888' : roi >= 0 ? '#10b981' : '#ef4444';
+
+  const cardRows = coll.map(c => {
+    const name = c.player ? `${c.player}${c.year ? ' ' + c.year : ''}${c.brand ? ' ' + c.brand : ''}${c.setName ? ' ' + c.setName : ''}${c.parallel ? ' ' + c.parallel : ''}` : c.name || '—';
+    const paid = c.purchasePrice || 0;
+    const mkt = c.estValue || 0;
+    const gl = mkt - paid;
+    const r = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
+    const glC = gl >= 0 ? '#10b981' : '#ef4444';
+    return `<tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;font-size:13px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(name)}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px">$${paid.toFixed(2)}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px">${mkt > 0 ? '$' + mkt.toFixed(2) : '—'}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px;color:${mkt > 0 ? glC : '#888'}">${mkt > 0 ? (gl >= 0 ? '+' : '') + '$' + gl.toFixed(2) : '—'}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px;color:${r !== null ? glC : '#888'}">${r !== null ? (r >= 0 ? '+' : '') + r.toFixed(1) + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>The Card Huddle — Market Report ${dateStr}</title>
+  <style>
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #0f1117; color: #e2e8f0; padding: 32px; }
+    .rpt-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1db954; padding-bottom: 18px; margin-bottom: 24px; }
+    .rpt-title { font-size: 22px; font-weight: 800; background: linear-gradient(135deg,#52b788,#38a169); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .rpt-meta { font-size: 12px; color: #8d99ae; text-align: right; }
+    .rpt-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+    .rpt-stat { background: #1a1f2e; border: 1px solid #2a2a3a; border-radius: 10px; padding: 14px 16px; }
+    .rpt-stat-label { font-size: 11px; color: #8d99ae; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .rpt-stat-value { font-size: 20px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #1a1f2e; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #8d99ae; text-align: left; }
+    thead th:not(:first-child) { text-align: right; }
+    .rpt-footer { margin-top: 24px; font-size: 11px; color: #4a5568; text-align: center; border-top: 1px solid #2a2a3a; padding-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="rpt-header">
+    <div class="rpt-title">The Card Huddle</div>
+    <div class="rpt-meta">Monthly Market Report<br/>${escHtml(user)} &middot; ${dateStr}</div>
+  </div>
+  <div class="rpt-stats">
+    <div class="rpt-stat"><div class="rpt-stat-label">Total Cards</div><div class="rpt-stat-value">${coll.length}</div></div>
+    <div class="rpt-stat"><div class="rpt-stat-label">Total Invested</div><div class="rpt-stat-value">$${totalCost.toFixed(2)}</div></div>
+    <div class="rpt-stat"><div class="rpt-stat-label">Est. Value</div><div class="rpt-stat-value">$${totalValue.toFixed(2)}</div></div>
+    <div class="rpt-stat"><div class="rpt-stat-label">Gain / Loss</div><div class="rpt-stat-value" style="color:${glColor}">${glSign}$${gainLoss.toFixed(2)}</div></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Card</th><th style="text-align:right">Paid</th><th style="text-align:right">Mkt Value</th><th style="text-align:right">Gain/Loss</th><th style="text-align:right">ROI</th>
+    </tr></thead>
+    <tbody>${cardRows}</tbody>
+  </table>
+  <div class="rpt-footer">Generated by The Card Huddle &middot; thecardhuddle.com &middot; ${dateStr}</div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  } else {
+    showPortfolioToast('Allow popups to generate the report.');
+  }
+}
+
+// ---- Player Watchlist ----
+function getWatchlist() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleWatchlist') || '[]'); }
+  catch { return []; }
+}
+function saveWatchlist(list) {
+  localStorage.setItem('cardHuddleWatchlist', JSON.stringify(list));
+}
+
+function renderWatchlist() {
+  const list = getWatchlist();
+  const el = document.getElementById('watchlist-list');
+  if (!el) return;
+  if (list.length === 0) {
+    el.innerHTML = '<p class="watchlist-empty">No players on your watchlist yet. Add a card above to start tracking.</p>';
+    return;
+  }
+  el.innerHTML = list.map((item, idx) => {
+    const hasCurrent = item.currentPrice != null;
+    const hasPrev = item.prevPrice != null;
+    const change = hasCurrent && hasPrev ? item.currentPrice - item.prevPrice : null;
+    const changePct = hasCurrent && hasPrev && item.prevPrice > 0 ? ((item.currentPrice - item.prevPrice) / item.prevPrice) * 100 : null;
+    const changeClass = change === null ? '' : change >= 0 ? 'gain' : 'loss';
+    return `<div class="watchlist-card" data-idx="${idx}">
+      <div class="watchlist-card-info">
+        <div class="watchlist-card-query">${escHtml(item.query)}</div>
+        <div class="watchlist-card-meta">Added ${new Date(item.addedAt).toLocaleDateString()}${item.updatedAt ? ' · Updated ' + new Date(item.updatedAt).toLocaleDateString() : ''}</div>
+      </div>
+      <div class="watchlist-card-prices">
+        ${hasCurrent
+          ? `<span class="watchlist-price">$${item.currentPrice.toFixed(2)}</span>
+             ${change !== null ? `<span class="watchlist-change ${changeClass}">${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)} (${change >= 0 ? '+' : ''}${changePct.toFixed(1)}%)</span>` : ''}`
+          : '<span class="watchlist-no-price">No price data</span>'}
+      </div>
+      <div class="watchlist-card-actions">
+        <button class="watchlist-search-btn" onclick="searchFromWatchlist(${idx})" title="Search">&#128269;</button>
+        <button class="watchlist-remove-btn" onclick="removeFromWatchlist(${idx})" title="Remove">&times;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addToWatchlist() {
+  const input = document.getElementById('watchlist-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  const list = getWatchlist();
+  if (list.some(item => item.query.toLowerCase() === query.toLowerCase())) {
+    showPortfolioToast('Already on your watchlist.');
+    return;
+  }
+  list.push({ query, addedAt: new Date().toISOString(), currentPrice: null, prevPrice: null, updatedAt: null });
+  saveWatchlist(list);
+  input.value = '';
+  renderWatchlist();
+}
+
+function removeFromWatchlist(idx) {
+  const list = getWatchlist();
+  list.splice(idx, 1);
+  saveWatchlist(list);
+  renderWatchlist();
+}
+
+function searchFromWatchlist(idx) {
+  const list = getWatchlist();
+  if (!list[idx]) return;
+  const q = list[idx].query;
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.value = q;
+    switchView('search');
+    performSearch();
+  }
+}
+
+async function refreshWatchlistPrices() {
+  const list = getWatchlist();
+  if (list.length === 0) { showPortfolioToast('Nothing on your watchlist yet.'); return; }
+
+  const btn = document.getElementById('watchlist-refresh-btn');
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing…'; }
+
+  let updated = 0;
+  for (const item of list) {
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(item.query)}&mode=sold`);
+      const data = await res.json();
+      let newPrice = null;
+      if (data.approximateValue && data.approximateValue.medianPrice) {
+        newPrice = data.approximateValue.medianPrice;
+      } else if (data.results && data.results.length > 0) {
+        const v = data.results.map(r => r.price).filter(p => p > 0).sort((a, b) => a - b);
+        if (v.length) {
+          const mid = Math.floor(v.length / 2);
+          newPrice = v.length % 2 === 0 ? (v[mid - 1] + v[mid]) / 2 : v[mid];
+        }
+      }
+      if (newPrice !== null) {
+        item.prevPrice = item.currentPrice;
+        item.currentPrice = newPrice;
+        item.updatedAt = new Date().toISOString();
+        updated++;
+      }
+    } catch { /* skip */ }
+  }
+
+  saveWatchlist(list);
+  renderWatchlist();
+  if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  showPortfolioToast(updated > 0
+    ? `Refreshed prices for ${updated} item${updated !== 1 ? 's' : ''}.`
+    : 'No price data found.');
 }
 
 // ---- Set Completion Tracker ----
