@@ -17,6 +17,10 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
+// ---- SerpApi Setup ----
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
+const SERPAPI_ENABLED = !!(SERPAPI_KEY && SERPAPI_KEY.length > 0);
+
 // ---- Stripe Setup ----
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
@@ -304,17 +308,66 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
+// ---- SerpApi (eBay sold/completed listings) ----
+async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
+  trackApiCall('serpapi', 'ebay-sold', keywords, source);
+  console.log(`[SerpApi] Searching sold: "${keywords}"`);
+
+  const res = await axios.get('https://serpapi.com/search', {
+    params: {
+      engine: 'ebay',
+      _nkw: keywords,
+      LH_Sold: '1',
+      LH_Complete: '1',
+      _ipg: Math.min(limit, 200),
+      api_key: SERPAPI_KEY,
+    },
+    timeout: 15000,
+  });
+
+  const items = res.data?.organic_results || [];
+  console.log(`[SerpApi] ${items.length} sold results for "${keywords}"`);
+
+  const results = items.map((item, i) => {
+    // Price can be an object {raw, extracted} or a plain number/string
+    const priceRaw = item.price?.extracted ?? item.price?.raw ?? item.price ?? 0;
+    const price = typeof priceRaw === 'string'
+      ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) || 0
+      : parseFloat(priceRaw) || 0;
+
+    // Sold date — may not always be present
+    const soldDate = item.date || item.sold_date || item.end_date || item.listing_date || '';
+
+    return {
+      itemId:    item.product_id || item.item_id || item.link || `serp-${i}`,
+      title:     item.title || keywords,
+      price:     String(price),
+      currency:  'USD',
+      soldDate,
+      imageUrl:  item.thumbnail || item.image || null,
+      itemUrl:   item.link || '',
+      condition: item.condition || 'Unknown',
+    };
+  });
+
+  return { results: results.slice(0, limit), total: res.data?.search_information?.total_results || results.length };
+}
+
 // ---- Shared fetch function ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (no provider configured — returns empty)
+// mode: 'forsale' (eBay Browse API) or 'sold' (SerpApi eBay completed)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   if (mode === 'sold') {
-    // No sold-data provider configured yet — return empty
-    console.log(`[Sold] No sold data provider configured for: "${keywords}"`);
-    return { results: [], total: 0, noProvider: true };
+    if (!SERPAPI_ENABLED) {
+      console.log(`[Sold] SerpApi not configured — add SERPAPI_KEY to .env`);
+      return { results: [], total: 0, noProvider: true };
+    }
+    const response = await fetchViaSerpApi(keywords, limit, source);
+    if (response.results.length > 0) setCache(cacheKey, response);
+    return response;
   }
 
   // For sale mode — eBay Browse API
@@ -1474,7 +1527,7 @@ connectDB().then(() => {
     console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
     console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
     console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);
-    console.log(`Sold data: No provider configured — for-sale listings only via eBay Browse API`);
+    console.log(`SerpApi: ${SERPAPI_ENABLED ? 'ENABLED (sold listings active)' : 'NOT CONFIGURED — add SERPAPI_KEY to .env'}`);
   });
 });
 
