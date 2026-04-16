@@ -17,22 +17,9 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
-// ---- Cardsights API Setup ----
-// Get your API key at https://app.cardsight.ai (750 free calls/month)
-// Docs: https://api.cardsight.ai/documentation
-const CARDSIGHTS_API_KEY = process.env.CARDSIGHTS_API_KEY;
-const CARDSIGHTS_ENABLED = !!(CARDSIGHTS_API_KEY && CARDSIGHTS_API_KEY.length > 0);
-const CARDSIGHTS_BASE_URL = 'https://api.cardsight.ai';
-
-// ---- Card Hedge API Setup ----
-// Docs: https://api.cardhedge.com/docs
-const CARDHEDGE_API_KEY = process.env.CARDHEDGE_API_KEY;
-const CARDHEDGE_ENABLED = !!(CARDHEDGE_API_KEY && CARDHEDGE_API_KEY.length > 0);
-const CARDHEDGE_BASE_URL = 'https://api.cardhedge.com';
-
-// ---- SportsCardsPro / PriceCharting API Setup ----
-const SPORTSCARDSPRO_API_KEY = process.env.SPORTSCARDSPRO_API_KEY;
-const SPORTSCARDSPRO_ENABLED = SPORTSCARDSPRO_API_KEY && !SPORTSCARDSPRO_API_KEY.includes('your-api-key');
+// ---- SerpApi Setup ----
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
+const SERPAPI_ENABLED = !!(SERPAPI_KEY && SERPAPI_KEY.length > 0);
 
 // ---- Stripe Setup ----
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -283,165 +270,6 @@ async function withRetry(fn, maxRetries = 1) {
   }
 }
 
-// ---- Cardsights query broadening ----
-// Builds a list of progressively simpler queries to try if exact search yields no priced cards.
-// e.g. "Patrick Mahomes 2017 Prizm Silver /150" →
-//      "Patrick Mahomes 2017 Prizm Silver" →
-//      "Patrick Mahomes 2017 Prizm" →
-//      "Patrick Mahomes Prizm" →
-//      "Patrick Mahomes"
-function buildCardsightsQueries(keywords) {
-  const queries = [keywords];
-
-  // Strip serial number (/99, /10, etc.)
-  const noSerial = keywords.replace(/\/\d{1,4}(?!\d)/g, '').replace(/\s+/g, ' ').trim();
-  if (noSerial !== keywords) queries.push(noSerial);
-
-  // Strip parallel color words
-  const parallelWords = ['Silver', 'Gold', 'Blue', 'Red', 'Green', 'Purple', 'Orange', 'Pink',
-    'Holo', 'Shimmer', 'Hyper', 'Prizmatic', 'Rainbow', 'Black', 'White', 'Aqua', 'Teal',
-    'Neon', 'Wave', 'Camo', 'Disco', 'Scope', 'Cracked Ice', 'Mojo', 'Neon Green'];
-  let noParallel = noSerial;
-  for (const p of parallelWords) {
-    noParallel = noParallel.replace(new RegExp(`\\b${p}\\b`, 'gi'), '').replace(/\s+/g, ' ').trim();
-  }
-  if (noParallel !== noSerial && noParallel.length > 2) queries.push(noParallel);
-
-  // Strip year
-  const noYear = noParallel.replace(/\b(20\d{2}|19\d{2})\b/, '').replace(/\s+/g, ' ').trim();
-  if (noYear !== noParallel && noYear.length > 2) queries.push(noYear);
-
-  // Player name + set name only (first 2 words + any known set name found)
-  const SET_NAMES = ['Prizm', 'Select', 'Mosaic', 'Optic', 'Donruss', 'Bowman', 'Chronicles',
-    'Immaculate', 'Spectra', 'Contenders', 'Score', 'Hoops', 'Absolute', 'Certified',
-    'National Treasures', 'Phoenix', 'Flux'];
-  const words = noYear.split(/\s+/);
-  const setWord = words.find(w => SET_NAMES.some(s => s.toLowerCase() === w.toLowerCase()));
-  const playerWords = words.slice(0, 2);
-  if (setWord && !playerWords.includes(setWord)) {
-    queries.push([...playerWords, setWord].join(' '));
-  }
-
-  // Player name only (first 2 words)
-  const playerOnly = playerWords.join(' ');
-  if (playerOnly.length > 3) queries.push(playerOnly);
-
-  return [...new Set(queries.filter(q => q.length > 2))];
-}
-
-// ---- Cardsights API (sold listings via catalog search + pricing) ----
-async function fetchViaCardsights(keywords, limit = 20, source = 'unknown') {
-  trackApiCall('cardsights', 'pricing', keywords, source);
-
-  const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
-  const queries = buildCardsightsQueries(keywords);
-
-  for (const q of queries) {
-    console.log(`[Cardsights] Trying: "${q}"`);
-
-    try {
-      // Search catalog
-      const searchRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-        params: { q },
-        headers,
-        timeout: 15000,
-      });
-
-      const allItems = searchRes.data?.data || searchRes.data?.results || searchRes.data || [];
-      const cardMatches = (Array.isArray(allItems) ? allItems : [])
-        .filter(item => !item.type || item.type === 'card')
-        .slice(0, 10); // check up to 10 cards per query level
-
-      if (!cardMatches.length) {
-        console.log(`[Cardsights] No catalog matches for "${q}"`);
-        continue;
-      }
-
-      // Fetch pricing for each matched card, collect any with actual records
-      const results = [];
-      for (const card of cardMatches) {
-        const cardId = card.id || card.cardId;
-        if (!cardId) continue;
-
-        await new Promise(r => setTimeout(r, 300)); // stay under Cardsights rate limit
-        try {
-          const pricingRes = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, {
-            headers,
-            timeout: 15000,
-          });
-
-          const pricing = pricingRes.data;
-          const rawRecords   = pricing.raw?.records || [];
-          const gradedGroups = Array.isArray(pricing.graded) ? pricing.graded : [];
-          const totalRecords = rawRecords.length +
-            gradedGroups.reduce((s, e) => s + (e.records?.length || 0), 0);
-
-          if (totalRecords === 0) continue; // no data for this card, skip
-
-          const cardName  = pricing.card?.name  || card.name    || keywords;
-          const cardYear  = pricing.card?.set?.year    || card.year    || '';
-          const cardSet   = pricing.card?.set?.release || card.setName || '';
-          const cardTitle = [cardYear, cardSet, cardName].filter(Boolean).join(' ');
-          const imageUrl  = card.imageUrl || card.image || null;
-
-          // Raw (ungraded) records
-          for (const sale of rawRecords) {
-            results.push({
-              itemId:    sale.id || sale.listing_id || `cs-raw-${results.length}`,
-              title:     cardTitle,
-              price:     String(sale.price || sale.sale_price || sale.amount || '0'),
-              currency:  sale.currency || 'USD',
-              soldDate:  sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
-              imageUrl,
-              itemUrl:   sale.url || sale.listing_url || sale.link || '',
-              condition: 'Ungraded',
-            });
-          }
-
-          // Graded records
-          for (const entry of gradedGroups) {
-            const company = entry.company || entry.grader || '';
-            const grade   = entry.grade || '';
-            for (const sale of (entry.records || entry.sales || [])) {
-              results.push({
-                itemId:    sale.id || sale.listing_id || `cs-${company}-${grade}-${results.length}`,
-                title:     `${cardTitle} ${company} ${grade}`.trim(),
-                price:     String(sale.price || sale.sale_price || sale.amount || '0'),
-                currency:  sale.currency || 'USD',
-                soldDate:  sale.date || sale.sold_date || sale.sale_date || sale.end_date || '',
-                imageUrl,
-                itemUrl:   sale.url || sale.listing_url || sale.link || '',
-                condition: `${company} ${grade}`.trim(),
-              });
-            }
-          }
-        } catch (err) {
-          console.warn(`[Cardsights] Pricing failed for ${card.id}:`, err.message);
-        }
-
-        if (results.length >= limit) break;
-      }
-
-      if (results.length > 0) {
-        results.sort((a, b) => {
-          if (!a.soldDate) return 1;
-          if (!b.soldDate) return -1;
-          return new Date(b.soldDate) - new Date(a.soldDate);
-        });
-        console.log(`[Cardsights] ${results.length} results via query: "${q}"`);
-        return { results: results.slice(0, limit), total: results.length };
-      }
-
-      console.log(`[Cardsights] Matched ${cardMatches.length} cards for "${q}" but none had pricing data, broadening...`);
-    } catch (err) {
-      console.warn(`[Cardsights] Search error for "${q}":`, err.message);
-    }
-  }
-
-  console.log(`[Cardsights] No pricing data found for: "${keywords}"`);
-  return { results: [], total: 0 };
-}
-
 // ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   trackApiCall('browse', 'browse/search', keywords, source);
@@ -480,81 +308,74 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
-// ---- Card Hedge API (sold listings) ----
-async function fetchViaCardHedge(keywords, limit = 20, source = 'unknown') {
-  trackApiCall('cardhedge', 'search', keywords, source);
+// ---- SerpApi (eBay sold/completed listings) ----
+async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
+  trackApiCall('serpapi', 'ebay-sold', keywords, source);
+  console.log(`[SerpApi] Searching sold: "${keywords}"`);
 
-  const res = await axios.post(
-    `${CARDHEDGE_BASE_URL}/v1/cards/search`,
-    { query: keywords, limit },
-    {
-      headers: {
-        'Authorization': `Bearer ${CARDHEDGE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 15000,
-    }
-  );
+  const res = await axios.get('https://serpapi.com/search', {
+    params: {
+      engine: 'ebay',
+      _nkw: keywords,
+      LH_Sold: '1',
+      LH_Complete: '1',
+      _ipg: Math.min(limit, 200),
+      api_key: SERPAPI_KEY,
+    },
+    timeout: 15000,
+  });
 
-  // Log the raw response shape on first call to verify field names
-  if (process.env.NODE_ENV !== 'production') {
-    const sample = Array.isArray(res.data) ? res.data[0] : (res.data?.results?.[0] || res.data?.data?.[0] || res.data);
-    console.log('[CardHedge] Response top-level keys:', Object.keys(res.data || {}));
-    if (sample && typeof sample === 'object') console.log('[CardHedge] First item keys:', Object.keys(sample));
-  }
+  const items = res.data?.organic_results || [];
+  console.log(`[SerpApi] ${items.length} sold results for "${keywords}"`);
 
-  // Normalise — map whichever shape the API returns to our standard format.
-  // Field names are best-guesses from docs; we'll tune after seeing a real response.
-  const items = Array.isArray(res.data)
-    ? res.data
-    : (res.data?.results || res.data?.data || res.data?.sales || res.data?.cards || []);
+  const results = items.map((item, i) => {
+    // Price can be an object {raw, extracted} or a plain number/string
+    const priceRaw = item.price?.extracted ?? item.price?.raw ?? item.price ?? 0;
+    const price = typeof priceRaw === 'string'
+      ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) || 0
+      : parseFloat(priceRaw) || 0;
 
-  const results = items.map((item, i) => ({
-    itemId:    item.id         || item.itemId      || item.listing_id || `ch-${i}`,
-    title:     item.title      || item.name        || item.card_name  || keywords,
-    price:     String(item.price?.value ?? item.sale_price ?? item.sold_price ?? item.amount ?? item.price ?? '0'),
-    currency:  item.price?.currency ?? item.currency ?? 'USD',
-    soldDate:  item.sold_date  || item.date        || item.end_date   || item.soldDate || '',
-    imageUrl:  item.image_url  || item.imageUrl    || item.image      || item.thumbnail || null,
-    itemUrl:   item.url        || item.itemUrl     || item.listing_url || item.link     || '',
-    condition: item.condition  || item.grade       || item.grading    || 'Unknown',
-  }));
+    // Sold date — may not always be present
+    const soldDate = item.date || item.sold_date || item.end_date || item.listing_date || '';
 
-  console.log(`[CardHedge] ${results.length} sold results for "${keywords}"`);
-  return { results, total: res.data?.total ?? res.data?.count ?? results.length };
+    return {
+      itemId:    item.product_id || item.item_id || item.link || `serp-${i}`,
+      title:     item.title || keywords,
+      price:     String(price),
+      currency:  'USD',
+      soldDate,
+      imageUrl:  item.thumbnail || item.image || null,
+      itemUrl:   item.link || '',
+      condition: item.condition || 'Unknown',
+    };
+  });
+
+  return { results: results.slice(0, limit), total: res.data?.search_information?.total_results || results.length };
 }
 
-// ---- Shared fetch function (routes to correct API + cache) ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (Card Hedge API)
+// ---- Shared fetch function ----
+// mode: 'forsale' (eBay Browse API) or 'sold' (SerpApi eBay completed)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  let response;
   if (mode === 'sold') {
-    if (CARDHEDGE_ENABLED) {
-      response = await fetchViaCardHedge(keywords, limit, source);
-    } else {
-      response = await fetchViaCardsights(keywords, limit, source);
+    if (!SERPAPI_ENABLED) {
+      console.log(`[Sold] SerpApi not configured — add SERPAPI_KEY to .env`);
+      return { results: [], total: 0, noProvider: true };
     }
-    if (response.results.length > 0) {
-      setCache(cacheKey, response);
-    }
+    const response = await fetchViaSerpApi(keywords, limit, source);
+    if (response.results.length > 0) setCache(cacheKey, response);
     return response;
   }
 
   // For sale mode — eBay Browse API
-  response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
+  const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
   if (response && !response.rateLimited) {
     setCache(cacheKey, response);
   }
   return response;
-}
-
-// Legacy alias for backward compatibility
-async function fetchEbaySoldItems(keywords, limit = 20) {
-  return fetchEbayItems(keywords, limit, 'sold');
 }
 
 // Extract print run serial like /4, /25, /99 from a query
@@ -579,7 +400,7 @@ app.get('/api/search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode — uses Cardsights API (catalog search + pricing)
+    // Sold mode
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search');
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
@@ -847,7 +668,7 @@ app.get('/api/direct-search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode — Cardsights API
+    // Sold mode
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
@@ -956,7 +777,7 @@ app.get('/api/variants', async (req, res) => {
 
     let rawResults;
 
-    // Sold mode — Cardsights API
+    // Sold mode
     if (mode === 'sold') {
       const result = await fetchEbayItems(query, 50, mode, 'variants');
       rawResults = result.results;
@@ -1044,27 +865,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ---- Debug endpoint: test Card Hedge + eBay Browse APIs ----
-app.get('/api/debug/sold-test', async (req, res) => {
+// ---- Debug endpoint: test eBay Browse API ----
+app.get('/api/debug/browse-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
 
   const results = { query: q };
-
-  // Test 1: Card Hedge API (sold data)
-  try {
-    const chResult = await fetchViaCardHedge(q, 3, 'debug');
-    results.cardHedgeAPI = {
-      status: 'OK',
-      resultCount: chResult.results.length,
-      total: chResult.total,
-      firstItem: chResult.results[0] || null,
-    };
-  } catch (err) {
-    results.cardHedgeAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null };
-  }
-
-  // Test 2: eBay Browse API (active listings)
   try {
     const token = await getOAuthToken();
     const browseRes = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
@@ -1079,120 +885,6 @@ app.get('/api/debug/sold-test', async (req, res) => {
   }
 
   res.json(results);
-});
-
-// ---- Verbose Cardsights diagnostic: raw catalog + pricing structure per query level ----
-app.get('/api/debug/cardsights-raw', async (req, res) => {
-  const q = req.query.q || 'mahomes prizm';
-  if (USE_MOCK) return res.json({ debug: 'MOCK MODE' });
-  const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
-  // Only test the first query level to avoid 429s
-  const firstQuery = buildCardsightsQueries(q)[0];
-  const report = { original: q, queryTested: firstQuery, pricingChecked: [] };
-  try {
-    const sr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { q: firstQuery }, headers, timeout: 15000,
-    });
-    const allItems = sr.data?.data || sr.data?.results || sr.data || [];
-    const cards = (Array.isArray(allItems) ? allItems : []).slice(0, 3);
-    report.catalogRawKeys = cards[0] ? Object.keys(cards[0]) : [];
-    report.catalogMatches = cards.map(c => ({
-      id: c.id || c.cardId, name: c.name, type: c.type, year: c.year,
-      setName: c.setName, parallelName: c.parallelName, releaseName: c.releaseName,
-    }));
-    for (const card of cards) {
-      const cardId = card.id || card.cardId;
-      if (!cardId) continue;
-      await new Promise(r => setTimeout(r, 400)); // avoid 429
-      try {
-        const pr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, { headers, timeout: 15000 });
-        const d = pr.data;
-        report.pricingChecked.push({
-          cardId,
-          cardName: d.card?.name || card.name,
-          topLevelKeys: Object.keys(d),
-          // raw section
-          rawPeriodDays: d.raw?.period_days,
-          rawCount: d.raw?.count,           // ← may differ from records.length if paginated
-          rawRecordsLength: d.raw?.records?.length ?? 0,
-          rawSampleRecord: d.raw?.records?.[0] || null,
-          // graded section
-          gradedType: Array.isArray(d.graded) ? 'array' : typeof d.graded,
-          gradedLength: Array.isArray(d.graded) ? d.graded.length : 'N/A',
-          gradedSample: Array.isArray(d.graded) && d.graded[0] ? {
-            company: d.graded[0].company, grade: d.graded[0].grade,
-            recordCount: d.graded[0].records?.length,
-            sampleRecord: d.graded[0].records?.[0] || null,
-          } : null,
-          // meta section - show actual values
-          metaTotalRecords: d.meta?.total_records,
-          metaLastSaleDate: d.meta?.last_sale_date,
-          metaSources: d.meta?.sources,
-        });
-      } catch (e) {
-        report.pricingChecked.push({ cardId, error: e.message, httpStatus: e.response?.status });
-      }
-    }
-  } catch (e) {
-    report.catalogError = e.message;
-    report.catalogHttpStatus = e.response?.status;
-  }
-  res.json(report);
-});
-
-// ---- Cardsights data availability scan: find any football card with actual pricing ----
-app.get('/api/debug/cardsights-scan', async (req, res) => {
-  if (USE_MOCK) return res.json({ debug: 'MOCK MODE' });
-  const headers = { 'x-api-key': CARDSIGHTS_API_KEY };
-  const probes = [
-    'Patrick Mahomes 2018 Prizm',
-    'Patrick Mahomes 2020 Prizm',
-    'Patrick Mahomes 2021 Prizm',
-    'Joe Burrow 2020 Prizm',
-    'Josh Allen 2020 Prizm',
-    'Justin Herbert 2020 Prizm',
-    'Lamar Jackson 2018 Prizm',
-    'Tom Brady 2019 Prizm',
-  ];
-  const report = { probesChecked: [] };
-  for (const probe of probes) {
-    await new Promise(r => setTimeout(r, 500));
-    try {
-      const sr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-        params: { q: probe }, headers, timeout: 15000,
-      });
-      const allItems = sr.data?.data || sr.data?.results || sr.data || [];
-      const cards = (Array.isArray(allItems) ? allItems : []).slice(0, 2);
-      const entry = { probe, catalogCount: cards.length, cards: [] };
-      for (const card of cards) {
-        const cardId = card.id || card.cardId;
-        if (!cardId) continue;
-        await new Promise(r => setTimeout(r, 400));
-        try {
-          const pr = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${cardId}`, { headers, timeout: 15000 });
-          const d = pr.data;
-          entry.cards.push({
-            cardId, name: card.name, year: card.year,
-            releaseName: card.releaseName, parallelName: card.parallelName,
-            totalRecords: d.meta?.total_records,
-            lastSaleDate: d.meta?.last_sale_date,
-            rawCount: d.raw?.count,
-            sources: d.meta?.sources,
-          });
-          if ((d.meta?.total_records || 0) > 0) entry.hasData = true;
-        } catch (e) {
-          entry.cards.push({ cardId, error: e.message, httpStatus: e.response?.status });
-        }
-      }
-      report.probesChecked.push(entry);
-    } catch (e) {
-      report.probesChecked.push({ probe, error: e.message, httpStatus: e.response?.status });
-    }
-  }
-  report.summary = report.probesChecked
-    .filter(p => p.hasData)
-    .map(p => `"${p.probe}" → ${p.cards.filter(c => (c.totalRecords || 0) > 0).map(c => `${c.releaseName} ${c.parallelName || ''} totalRecords=${c.totalRecords}`).join(', ')}`);
-  res.json(report);
 });
 
 // ---- API Call Stats (monitor eBay API usage) ----
@@ -1227,48 +919,7 @@ app.get('/api/stats/api-calls', (req, res) => {
 
 // ---- API connectivity test ----
 app.get('/api/test-ebay', async (req, res) => {
-  const results = { cardsightsConfigured: CARDSIGHTS_ENABLED, ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
-
-  const csHeaders = { 'x-api-key': CARDSIGHTS_API_KEY };
-
-  const q = req.query.q || 'Patrick Mahomes Prizm Silver';
-
-  // Test 1: Cardsights catalog search
-  let matchedCards = [];
-  try {
-    const start = Date.now();
-    const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/catalog/search`, {
-      params: { q },
-      headers: csHeaders,
-      timeout: 10000,
-    });
-    matchedCards = r.data?.data || r.data?.results || [];
-    results.cardsights_search = { status: 'OK', httpStatus: r.status, elapsedMs: Date.now() - start, itemCount: matchedCards.length, items: matchedCards.slice(0, 8).map(i => ({ id: i.id, name: i.name, year: i.year, set: i.setName })) };
-  } catch (err) {
-    results.cardsights_search = { status: 'FAILED', httpStatus: err.response?.status || null, errorBody: err.response?.data || err.message };
-  }
-
-  // Test 2: Check pricing for each matched card until we find one with records
-  results.cardsights_pricing = [];
-  for (const card of matchedCards.slice(0, 8)) {
-    try {
-      const r = await axios.get(`${CARDSIGHTS_BASE_URL}/v1/pricing/${card.id}`, {
-        headers: csHeaders, timeout: 10000,
-      });
-      const rawCount = r.data?.raw?.count || r.data?.raw?.records?.length || 0;
-      const gradedCount = Array.isArray(r.data?.graded) ? r.data.graded.reduce((s, e) => s + (e.records?.length || 0), 0) : 0;
-      results.cardsights_pricing.push({
-        cardId: card.id, name: card.name, year: card.year, set: card.setName,
-        rawCount, gradedCount, totalRecords: rawCount + gradedCount,
-        firstRawRecord: r.data?.raw?.records?.[0] || null,
-        firstGradedEntry: Array.isArray(r.data?.graded) ? r.data.graded.find(e => e.records?.length > 0) || null : null,
-      });
-    } catch (err) {
-      results.cardsights_pricing.push({ cardId: card.id, name: card.name, error: err.message });
-    }
-  }
-
-  // Test eBay Browse API connectivity
+  const results = { ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
   try {
     const start = Date.now();
     const token = await getOAuthToken();
@@ -1281,7 +932,6 @@ app.get('/api/test-ebay', async (req, res) => {
   } catch (err) {
     results.ebayBrowse = { status: 'unreachable', error: err.message, httpStatus: err.response?.status || null };
   }
-
   res.json(results);
 });
 
@@ -1826,84 +1476,6 @@ app.get('/api/stripe/subscription', (req, res) => {
   res.json({ subscription: userSub, stripeEnabled });
 });
 
-// ---- SportsCardsPro / PriceCharting API ----
-async function fetchSportsCardsProPrices(query) {
-  const cacheKey = `scp:${query.toLowerCase()}`;
-  const cached = getCached(cacheKey);
-  if (cached) return cached;
-
-  const token = SPORTSCARDSPRO_API_KEY;
-  // Search for the product by name
-  const searchRes = await axios.get('https://www.pricecharting.com/api/products', {
-    params: { t: token, q: query, type: 'prices', category: 'football-cards' },
-    timeout: 10000,
-  });
-
-  const products = searchRes.data?.products || [];
-  if (products.length === 0) return { products: [], source: 'sportscardspro' };
-
-  // Get detailed prices for first few results (limit to 5 to avoid rate limits)
-  const detailed = products.slice(0, 5).map(p => ({
-    id: p.id,
-    name: p['product-name'] || p.name || '',
-    consoleName: p['console-name'] || '',
-    ungraded: p['ungraded-price'] ? (p['ungraded-price'] / 100).toFixed(2) : null,
-    psa9: p['graded-price'] ? (p['graded-price'] / 100).toFixed(2) : null,
-    psa10: p['manual-only-price'] ? (p['manual-only-price'] / 100).toFixed(2) : null,
-    boxOnly: p['box-only-price'] ? (p['box-only-price'] / 100).toFixed(2) : null,
-  }));
-
-  const result = { products: detailed, source: 'sportscardspro' };
-  setCache(cacheKey, result);
-  return result;
-}
-
-function getMockSportsCardsProPrices(query) {
-  // Extract player name by removing years, known sets, and noise words
-  const playerName = extractPlayerName(query) || query.trim().split(/\s+/).slice(0, 2).join(' ') || 'Player';
-  const year = extractYear(query) || '2024';
-  let hash = 0;
-  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
-  const seed = Math.abs(hash);
-
-  const sets = ['Prizm Base', 'Prizm Silver', 'Select Concourse', 'Donruss Rated Rookie', 'Mosaic Base'];
-  const products = [];
-  const count = Math.min(3 + (seed % 3), 5);
-
-  for (let i = 0; i < count; i++) {
-    const basePrice = (5 + ((seed * (i + 1)) % 200));
-    products.push({
-      id: `mock-${seed}-${i}`,
-      name: `${year} ${sets[i % sets.length]} ${playerName}`,
-      consoleName: 'Football Cards',
-      ungraded: (basePrice * 0.6).toFixed(2),
-      psa9: (basePrice * 1.2).toFixed(2),
-      psa10: (basePrice * 3.5).toFixed(2),
-      boxOnly: null,
-    });
-  }
-
-  return { products, source: 'sportscardspro-mock' };
-}
-
-app.get('/api/card-prices', async (req, res) => {
-  const q = (req.query.q || '').trim();
-  if (!q || q.length < 2) return res.status(400).json({ error: 'Query required (min 2 chars)' });
-
-  if (!SPORTSCARDSPRO_ENABLED) {
-    // Return mock data when API key not configured
-    return res.json(getMockSportsCardsProPrices(q));
-  }
-
-  try {
-    const data = await withRetry(() => fetchSportsCardsProPrices(q), 1);
-    res.json(data);
-  } catch (err) {
-    console.error('SportsCardsPro API error:', err.message);
-    // Fall back to mock on error
-    res.json(getMockSportsCardsProPrices(q));
-  }
-});
 
 // ---- Feedback / Bug Reports ----
 const FEEDBACK_FILE = path.join(__dirname, 'data', 'feedback.json');
@@ -1954,9 +1526,8 @@ connectDB().then(() => {
     console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : 'LIVE API'}`);
     console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
     console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
-    console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
-    console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
-    console.log(`Cardsights: ${CARDSIGHTS_ENABLED ? 'ENABLED' : 'NOT CONFIGURED — add CARDSIGHTS_API_KEY to .env'}`);
+    console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);
+    console.log(`SerpApi: ${SERPAPI_ENABLED ? 'ENABLED (sold listings active)' : 'NOT CONFIGURED — add SERPAPI_KEY to .env'}`);
   });
 });
 
