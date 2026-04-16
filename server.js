@@ -419,6 +419,9 @@ app.get('/api/search', async (req, res) => {
   }
 
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+    if (mode === 'sold') {
+      return res.status(503).json({ error: 'Sold listings unavailable — SERPAPI_KEY not configured on this server.' });
+    }
     return res.json(getMockData(query, mode));
   }
 
@@ -687,6 +690,7 @@ app.get('/api/direct-search', async (req, res) => {
   }
 
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — SERPAPI_KEY not configured on this server.' });
     return res.json(getMockDirectSearch(query, mode));
   }
 
@@ -792,6 +796,7 @@ app.get('/api/variants', async (req, res) => {
   }
 
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — SERPAPI_KEY not configured on this server.' });
     return res.json(getMockVariants(query, mode));
   }
 

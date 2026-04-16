@@ -262,7 +262,7 @@ let priceChart = null;
 let cachedVariants = null;
 let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
-let currentMode = 'forsale'; // 'forsale' or 'sold'
+let currentMode = 'sold'; // 'forsale' or 'sold'
 let currentResults = []; // store results for sorting
 
 // ---- Recent Searches (localStorage) ----
@@ -859,6 +859,14 @@ async function performSearch(query) {
     const data = await response.json();
 
     if (response.status === 401) { showLogin(); return; }
+    if (response.status === 503 && currentMode === 'sold') {
+      setLoading(false);
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Data Unavailable</h3><p>' + (data.error || 'The sold listings service is not configured on this server.') + '</p>';
+      grid.appendChild(msg);
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
