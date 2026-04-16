@@ -343,16 +343,21 @@ async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
     if (items[0]) console.log(`[SerpApi] First item sample: ${JSON.stringify(items[0]).slice(0, 300)}`);
 
     const results = items.map((item, i) => {
-      const priceRaw = item.price?.extracted ?? item.price?.raw ?? item.price ?? 0;
-      const price = typeof priceRaw === 'string'
-        ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) || 0
-        : parseFloat(priceRaw) || 0;
+      // price.extracted is already a number e.g. 800
+      const price = item.price?.extracted
+        ?? (typeof item.price?.raw === 'string' ? parseFloat(item.price.raw.replace(/[^0-9.]/g, '')) : 0)
+        ?? 0;
 
-      const soldDate = item.date || item.sold_date || item.end_date
-        || item.listing_date || item.completed_date || '';
+      // sold_date comes as "Apr 16, 2026" — convert to ISO for consistent date parsing
+      const rawDate = item.sold_date || item.date || item.end_date || '';
+      let soldDate = '';
+      if (rawDate) {
+        const parsed = new Date(rawDate);
+        soldDate = isNaN(parsed.getTime()) ? rawDate : parsed.toISOString();
+      }
 
       return {
-        itemId:    item.product_id || item.item_id || item.link || `serp-${i}`,
+        itemId:    item.product_id || item.item_id || `serp-${i}`,
         title:     item.title || keywords,
         price:     String(price),
         currency:  'USD',
