@@ -127,6 +127,13 @@ app.use((req, res, next) => {
 
 app.use(compression());
 app.use(express.json());
+// Disable caching for JS/CSS so deploys take effect immediately
+app.use((req, res, next) => {
+  if (/\.(js|css)(\?.*)?$/.test(req.path)) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 
