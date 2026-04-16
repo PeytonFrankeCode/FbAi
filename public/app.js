@@ -262,7 +262,7 @@ let priceChart = null;
 let cachedVariants = null;
 let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
-let currentMode = 'forsale'; // 'forsale' or 'sold'
+let currentMode = 'sold'; // 'forsale' or 'sold'
 let currentResults = []; // store results for sorting
 
 // ---- Recent Searches (localStorage) ----
