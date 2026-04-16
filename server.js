@@ -15,11 +15,14 @@ const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (Browse API)
 
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
-const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
 // ---- SerpApi Setup ----
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 const SERPAPI_ENABLED = !!(SERPAPI_KEY && SERPAPI_KEY.length > 0);
+
+const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
+const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true' || !SERPAPI_ENABLED;
+const USE_MOCK = USE_MOCK_FORSALE && USE_MOCK_SOLD;
 
 // ---- Stripe Setup ----
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -400,14 +403,14 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  if (USE_MOCK) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     return res.json(getMockData(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
 
-    // Sold mode
+    // Sold mode — SerpApi
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search');
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
@@ -668,7 +671,7 @@ app.get('/api/direct-search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  if (USE_MOCK) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     return res.json(getMockDirectSearch(query, mode));
   }
 
@@ -773,7 +776,7 @@ app.get('/api/variants', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  if (USE_MOCK) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     return res.json(getMockVariants(query, mode));
   }
 
@@ -1530,7 +1533,8 @@ app.get('*', (req, res) => {
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : 'LIVE API'}`);
+    console.log(`For-sale mode: ${USE_MOCK_FORSALE ? 'MOCK' : 'LIVE (eBay Browse API)'}`);
+    console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (SerpApi)'}`);
     console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
     console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
     console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);
