@@ -3110,6 +3110,35 @@ footer::before {
   white-space: nowrap;
 }
 
+/* Checklist estimated value column */
+.cl-val-header {
+  min-width: 80px;
+  text-align: right;
+  white-space: nowrap;
+}
+.cl-value {
+  text-align: right;
+  white-space: nowrap;
+  min-width: 72px;
+}
+.cl-value-amt {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.cl-val-real  { color: #4ade80; }
+.cl-val-est   { color: #fbbf24; }
+.cl-val-low   { color: #94a3b8; }
+.cl-val-na    { color: #475569; font-size: 0.72rem; }
+.cl-val-loading {
+  color: #475569;
+  font-size: 0.75rem;
+  animation: cl-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cl-pulse {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 1; }
+}
+
 .cl-pr-header:hover {
   color: var(--accent);
 }

@@ -1181,7 +1181,7 @@ function buildCard(item) {
         <span class="card-condition">${escHtml(item.condition)}</span>
       </div>
       <a class="card-link"
-         href="${isSold ? `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1` : escHtml(item.itemUrl)}"
+         href="${isSold ? epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`) : epnUrl(item.itemUrl)}"
          target="_blank"
          rel="noopener noreferrer">
         ${isSold ? 'View sold listings &#8599;' : 'View on eBay &#8599;'}
@@ -1243,8 +1243,8 @@ function openCardModal(item) {
   // eBay link — sold items link to completed listings search, not the (possibly relisted) item page
   const isSoldModal = currentMode === 'sold';
   cardModalLink.href = isSoldModal
-    ? `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`
-    : (item.itemUrl || '#');
+    ? epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`)
+    : epnUrl(item.itemUrl || '#');
   cardModalLink.textContent = isSoldModal ? 'View sold listings on eBay ↗' : 'View on eBay ↗';
 
   // Show modal
@@ -1267,6 +1267,13 @@ document.addEventListener('keydown', (e) => {
     closeCardModal();
   }
 });
+
+// ---- eBay Partner Network Affiliate Tracking ----
+const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&toolid=10001&mkevt=1';
+function epnUrl(url) {
+  if (!url || typeof url !== 'string' || !url.includes('ebay.com')) return url || '#';
+  return url + (url.includes('?') ? '&' : '?') + EPN_PARAMS;
+}
 
 // ---- Helpers ----
 function escHtml(str) {
@@ -1996,7 +2003,7 @@ function renderChecklistSets() {
     const setId = set.id || '';
 
     setEl.innerHTML = `
-      <div class="checklist-set-header" onclick="this.parentElement.classList.toggle('expanded')">
+      <div class="checklist-set-header" onclick="toggleChecklistSet(this)">
         <div class="checklist-set-title-row">
           ${categoryBadge}
           <h3 class="checklist-set-name">${escHtml(set.name)}</h3>
@@ -2014,6 +2021,7 @@ function renderChecklistSets() {
               <th>Player</th>
               <th>Team</th>
               ${hasPrintRuns || activeVariant?.printRun ? `<th class="cl-pr-header" data-set-id="${escHtml(setId)}" onclick="sortChecklistByPrintRun(this)">Print Run <span class="cl-sort-arrow">&#9660;</span></th>` : ''}
+              <th class="cl-val-header">Est. Value</th>
               <th></th>
             </tr>
           </thead>
@@ -2039,6 +2047,7 @@ function renderChecklistSets() {
                 <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${variantPR || printRun}')">${escHtml(c.player)}</a></td>
                 <td class="cl-team">${escHtml(c.team)}</td>
                 ${hasPrintRuns || activeVariant?.printRun ? `<td class="cl-printrun ${displayPR && parseInt(displayPR) <= 25 ? 'cl-pr-rare' : displayPR && parseInt(displayPR) <= 99 ? 'cl-pr-low' : ''}">${displayPR ? '/' + displayPR : ''}</td>` : ''}
+                <td class="cl-value" data-cl-player="${escHtml(c.player)}" data-cl-year="${year}" data-cl-brand="${brand}" data-cl-setname="${escHtml(set.name)}" data-cl-variant="${variantLabel}" data-cl-print-run="${displayPR}"><span class="cl-val-loading">·</span></td>
                 <td class="cl-action">
                   <button class="cl-coll-btn" onclick="event.stopPropagation(); addToCollectionFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${variantLabel}', '${variantPR || printRun}', '${cardNum}', '${escHtml(c.team).replace(/'/g, "\\'")}', '${category}'); this.textContent='&#10003;'; this.classList.add('cl-coll-added')" title="Add to collection">+</button>
                   <button class="cl-alert-btn" onclick="event.stopPropagation(); addAlertForCard('${alertQuery}')" title="Track this card (Pro)">&#128276;</button>
@@ -2053,6 +2062,114 @@ function renderChecklistSets() {
 
     checklistSets.appendChild(setEl);
   });
+}
+
+// ---- Checklist Value Estimation ----
+const checklistValueCache = new Map();   // query → {value, confidence, count, ts}
+const checklistSetPriceData = new Map(); // setKey → [{printRun, price}] for cross-parallel interpolation
+const CL_CACHE_TTL = 30 * 60 * 1000;
+let clValueQueue = [];
+let clQueueRunning = false;
+
+function toggleChecklistSet(header) {
+  const setEl = header.parentElement;
+  setEl.classList.toggle('expanded');
+  if (setEl.classList.contains('expanded')) loadChecklistSetValues(setEl);
+}
+
+function loadChecklistSetValues(setEl) {
+  setEl.querySelectorAll('.cl-value[data-cl-player]').forEach(cell => {
+    if (cell.dataset.loaded) return;
+    cell.dataset.loaded = '1';
+    const { clPlayer, clYear, clBrand, clSetname, clVariant, clPrintRun } = cell.dataset;
+    const query = [clPlayer, clYear, clBrand, clSetname, clVariant].filter(Boolean).join(' ');
+    const setKey = `${clPlayer}|${clYear}|${clBrand}|${clSetname}`;
+    enqueueClValue(query, cell, setKey, clPrintRun ? parseInt(clPrintRun) : null);
+  });
+}
+
+function enqueueClValue(query, cell, setKey, printRun) {
+  clValueQueue.push(async () => {
+    const cached = checklistValueCache.get(query);
+    if (cached && Date.now() - cached.ts < CL_CACHE_TTL) {
+      applyClValue(cell, cached, setKey, printRun);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/search?${new URLSearchParams({ q: query, limit: '10', mode: 'sold' })}`);
+      if (!res.ok) { applyClValue(cell, null, setKey, printRun); return; }
+      const data = await res.json();
+      const prices = (data.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
+      if (prices.length) {
+        const value = clMedian(prices);
+        const result = { value, confidence: 'high', count: prices.length, ts: Date.now() };
+        checklistValueCache.set(query, result);
+        if (printRun) {
+          const arr = checklistSetPriceData.get(setKey) || [];
+          if (!arr.find(d => d.printRun === printRun)) arr.push({ printRun, price: value });
+          checklistSetPriceData.set(setKey, arr);
+        }
+        applyClValue(cell, result, setKey, printRun);
+      } else {
+        checklistValueCache.set(query, { value: null, ts: Date.now() });
+        applyClValue(cell, null, setKey, printRun);
+      }
+    } catch { applyClValue(cell, null, setKey, printRun); }
+  });
+  runClQueue();
+}
+
+async function runClQueue() {
+  if (clQueueRunning) return;
+  clQueueRunning = true;
+  while (clValueQueue.length) {
+    await clValueQueue.shift()();
+    await new Promise(r => setTimeout(r, 450));
+  }
+  clQueueRunning = false;
+}
+
+function clMedian(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function applyClValue(cell, result, setKey, printRun) {
+  if (!cell.isConnected) return;
+  if (result?.value) {
+    const cls = result.confidence === 'high' ? 'cl-val-real' : result.confidence === 'medium' ? 'cl-val-est' : 'cl-val-low';
+    cell.innerHTML = `<span class="cl-value-amt ${cls}" title="${result.count || ''} sales">$${result.value.toFixed(2)}</span>`;
+    return;
+  }
+  if (printRun) {
+    const known = checklistSetPriceData.get(setKey) || [];
+    const est = estimateByPrintRun(printRun, known);
+    if (est) {
+      const cls = est.confidence === 'medium' ? 'cl-val-est' : 'cl-val-low';
+      const tip = `Estimated from ${known.length} related parallel${known.length !== 1 ? 's' : ''}`;
+      cell.innerHTML = `<span class="cl-value-amt ${cls}" title="${tip}">~$${est.value.toFixed(2)}</span>`;
+      return;
+    }
+  }
+  cell.innerHTML = `<span class="cl-val-na">—</span>`;
+}
+
+// Log-linear regression on print run vs price (log-log space).
+// α ≈ 0.65 reflects empirical sports-card scarcity premium (scarcer prints
+// command a premium that scales as a power law, not linearly).
+function estimateByPrintRun(targetPR, known) {
+  const valid = known.filter(d => d.printRun > 0 && d.price > 0 && d.printRun !== targetPR);
+  if (!valid.length) return null;
+  if (valid.length === 1) {
+    const { printRun: bPR, price: bPrice } = valid[0];
+    return { value: bPrice * Math.pow(bPR / targetPR, 0.65), confidence: 'low' };
+  }
+  const xs = valid.map(d => Math.log(d.printRun));
+  const ys = valid.map(d => Math.log(d.price));
+  const n = valid.length, xm = xs.reduce((a, b) => a + b) / n, ym = ys.reduce((a, b) => a + b) / n;
+  const slope = xs.reduce((s, x, i) => s + (x - xm) * (ys[i] - ym), 0) / xs.reduce((s, x) => s + (x - xm) ** 2, 0);
+  return { value: Math.exp(slope * Math.log(targetPR) + (ym - slope * xm)), confidence: 'medium' };
 }
 
 // Toggle variant/parallel filter for a set
@@ -2302,7 +2419,7 @@ function buildClListingCard(item, mode) {
     ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
     : `<div class="cl-item-noimg">&#127944;</div>`;
   return `
-    <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+    <a class="cl-listing-item" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
       <div class="cl-item-img">${imgHtml}</div>
       <div class="cl-item-info">
         <span class="cl-item-price">${price}</span>
@@ -3953,7 +4070,7 @@ function renderPromotedCards() {
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span style="font-weight:600;color:var(--accent);">$${parseFloat(c.price).toFixed(2)}</span>
           <span style="font-size:0.75rem;opacity:0.7;">${escHtml(c.condition)}</span>
-          <a href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
+          <a href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
@@ -3995,7 +4112,7 @@ function buildPromotedCard(promo) {
         <span class="card-condition">${escHtml(promo.condition)}</span>
       </div>
       <a class="card-link"
-         href="${escHtml(promo.itemUrl)}"
+         href="${escHtml(epnUrl(promo.itemUrl))}"
          target="_blank"
          rel="noopener noreferrer">
         View on eBay &#8599;
@@ -4085,7 +4202,7 @@ async function searchMarketplace(loadMore) {
       const auction = item.buyingOptions?.includes('AUCTION');
       const badge = buyNow ? 'Buy It Now' : auction ? 'Auction' : '';
 
-      html += `<a class="marketplace-card" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+      html += `<a class="marketplace-card" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
         ${item.imageUrl ? `<img class="marketplace-card-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="marketplace-card-img marketplace-no-img">No Image</div>'}
         <div class="marketplace-card-body">
           <p class="marketplace-card-title">${escHtml(item.title)}</p>
