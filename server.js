@@ -316,51 +316,61 @@ async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
   trackApiCall('serpapi', 'ebay-sold', keywords, source);
   console.log(`[SerpApi] Searching sold: "${keywords}"`);
 
-  const res = await axios.get('https://serpapi.com/search', {
-    params: {
-      engine: 'ebay',
-      _nkw: keywords,
-      LH_Sold: 1,
-      LH_Complete: 1,
-      show_only: 'Sold',
-      _ipg: Math.min(limit, 200),
-      api_key: SERPAPI_KEY,
-    },
-    timeout: 15000,
-  });
+  try {
+    const res = await axios.get('https://serpapi.com/search', {
+      params: {
+        engine: 'ebay',
+        _nkw: keywords,
+        LH_Sold: 1,
+        LH_Complete: 1,
+        show_only: 'Sold',
+        _ipg: Math.min(limit, 200),
+        api_key: SERPAPI_KEY,
+      },
+      timeout: 15000,
+    });
 
-  // Log response shape on first call to help debug field names
-  const topKeys = Object.keys(res.data || {});
-  console.log(`[SerpApi] Response keys: ${topKeys.join(', ')}`);
-  const items = res.data?.organic_results
-    || res.data?.sold_results
-    || res.data?.shopping_results
-    || [];
-  console.log(`[SerpApi] ${items.length} results for "${keywords}"`);
-  if (items[0]) console.log(`[SerpApi] First item keys: ${Object.keys(items[0]).join(', ')}`);
+    const topKeys = Object.keys(res.data || {});
+    console.log(`[SerpApi] Response keys: ${topKeys.join(', ')}`);
 
-  const results = items.map((item, i) => {
-    const priceRaw = item.price?.extracted ?? item.price?.raw ?? item.price ?? 0;
-    const price = typeof priceRaw === 'string'
-      ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) || 0
-      : parseFloat(priceRaw) || 0;
+    const items = res.data?.organic_results
+      || res.data?.sold_results
+      || res.data?.shopping_results
+      || [];
 
-    const soldDate = item.date || item.sold_date || item.end_date
-      || item.listing_date || item.completed_date || '';
+    console.log(`[SerpApi] ${items.length} items found`);
+    if (items[0]) console.log(`[SerpApi] First item keys: ${Object.keys(items[0]).join(', ')}`);
+    if (items[0]) console.log(`[SerpApi] First item sample: ${JSON.stringify(items[0]).slice(0, 300)}`);
 
-    return {
-      itemId:    item.product_id || item.item_id || item.link || `serp-${i}`,
-      title:     item.title || keywords,
-      price:     String(price),
-      currency:  'USD',
-      soldDate,
-      imageUrl:  item.thumbnail || item.image || null,
-      itemUrl:   item.link || '',
-      condition: item.condition || 'Unknown',
-    };
-  });
+    const results = items.map((item, i) => {
+      const priceRaw = item.price?.extracted ?? item.price?.raw ?? item.price ?? 0;
+      const price = typeof priceRaw === 'string'
+        ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) || 0
+        : parseFloat(priceRaw) || 0;
 
-  return { results: results.slice(0, limit), total: res.data?.search_information?.total_results || results.length };
+      const soldDate = item.date || item.sold_date || item.end_date
+        || item.listing_date || item.completed_date || '';
+
+      return {
+        itemId:    item.product_id || item.item_id || item.link || `serp-${i}`,
+        title:     item.title || keywords,
+        price:     String(price),
+        currency:  'USD',
+        soldDate,
+        imageUrl:  item.thumbnail || item.image || null,
+        itemUrl:   item.link || '',
+        condition: item.condition || 'Unknown',
+      };
+    });
+
+    return { results: results.slice(0, limit), total: res.data?.search_information?.total_results || results.length };
+  } catch (err) {
+    console.error(`[SerpApi] Error: ${err.message}`);
+    if (err.response) {
+      console.error(`[SerpApi] HTTP ${err.response.status}:`, JSON.stringify(err.response.data).slice(0, 300));
+    }
+    return { results: [], total: 0, error: err.message };
+  }
 }
 
 // ---- Shared fetch function ----
@@ -867,6 +877,37 @@ app.get('/api/variants', async (req, res) => {
     const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
     const status = err.response?.status || 500;
     res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
+  }
+});
+
+// ---- SerpApi debug endpoint ----
+app.get('/api/debug/serpapi', async (req, res) => {
+  const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
+  if (!SERPAPI_ENABLED) return res.json({ error: 'SERPAPI_KEY not configured' });
+  try {
+    const response = await axios.get('https://serpapi.com/search', {
+      params: {
+        engine: 'ebay',
+        _nkw: q,
+        LH_Sold: 1,
+        LH_Complete: 1,
+        show_only: 'Sold',
+        _ipg: 5,
+        api_key: SERPAPI_KEY,
+      },
+      timeout: 15000,
+    });
+    const data = response.data;
+    res.json({
+      topLevelKeys: Object.keys(data),
+      searchMetadata: data.search_metadata,
+      searchParameters: data.search_parameters,
+      itemCount: (data.organic_results || data.sold_results || data.shopping_results || []).length,
+      firstItem: (data.organic_results || data.sold_results || data.shopping_results || [])[0] || null,
+      rawSnippet: JSON.stringify(data).slice(0, 2000),
+    });
+  } catch (err) {
+    res.json({ error: err.message, status: err.response?.status, body: err.response?.data });
   }
 });
 
