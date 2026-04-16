@@ -317,26 +317,33 @@ async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
     params: {
       engine: 'ebay',
       _nkw: keywords,
-      LH_Sold: '1',
-      LH_Complete: '1',
+      LH_Sold: 1,
+      LH_Complete: 1,
+      show_only: 'Sold',
       _ipg: Math.min(limit, 200),
       api_key: SERPAPI_KEY,
     },
     timeout: 15000,
   });
 
-  const items = res.data?.organic_results || [];
-  console.log(`[SerpApi] ${items.length} sold results for "${keywords}"`);
+  // Log response shape on first call to help debug field names
+  const topKeys = Object.keys(res.data || {});
+  console.log(`[SerpApi] Response keys: ${topKeys.join(', ')}`);
+  const items = res.data?.organic_results
+    || res.data?.sold_results
+    || res.data?.shopping_results
+    || [];
+  console.log(`[SerpApi] ${items.length} results for "${keywords}"`);
+  if (items[0]) console.log(`[SerpApi] First item keys: ${Object.keys(items[0]).join(', ')}`);
 
   const results = items.map((item, i) => {
-    // Price can be an object {raw, extracted} or a plain number/string
     const priceRaw = item.price?.extracted ?? item.price?.raw ?? item.price ?? 0;
     const price = typeof priceRaw === 'string'
       ? parseFloat(priceRaw.replace(/[^0-9.]/g, '')) || 0
       : parseFloat(priceRaw) || 0;
 
-    // Sold date — may not always be present
-    const soldDate = item.date || item.sold_date || item.end_date || item.listing_date || '';
+    const soldDate = item.date || item.sold_date || item.end_date
+      || item.listing_date || item.completed_date || '';
 
     return {
       itemId:    item.product_id || item.item_id || item.link || `serp-${i}`,
