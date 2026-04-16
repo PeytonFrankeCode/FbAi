@@ -1181,10 +1181,10 @@ function buildCard(item) {
         <span class="card-condition">${escHtml(item.condition)}</span>
       </div>
       <a class="card-link"
-         href="${escHtml(item.itemUrl)}"
+         href="${isSold ? `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1` : escHtml(item.itemUrl)}"
          target="_blank"
          rel="noopener noreferrer">
-        View on eBay &#8599;
+        ${isSold ? 'View sold listings &#8599;' : 'View on eBay &#8599;'}
       </a>
     </div>
   `;
@@ -1240,8 +1240,12 @@ function openCardModal(item) {
   if (item.condition) metaHtml += `<span class="modal-condition">${escHtml(item.condition)}</span>`;
   cardModalMeta.innerHTML = metaHtml;
 
-  // eBay link
-  cardModalLink.href = item.itemUrl || '#';
+  // eBay link — sold items link to completed listings search, not the (possibly relisted) item page
+  const isSoldModal = currentMode === 'sold';
+  cardModalLink.href = isSoldModal
+    ? `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`
+    : (item.itemUrl || '#');
+  cardModalLink.textContent = isSoldModal ? 'View sold listings on eBay ↗' : 'View on eBay ↗';
 
   // Show modal
   cardModal.classList.remove('hidden');
