@@ -1543,15 +1543,13 @@ function setPricingPeriod(period) {
   document.querySelectorAll('.pricing-period').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.period === period);
   });
+  const yearly = period === 'yearly';
   const priceEl = document.getElementById('pro-price');
   const freqEl = document.getElementById('pro-freq');
-  if (period === 'yearly') {
-    priceEl.textContent = '$39.99';
-    freqEl.textContent = '/yr';
-  } else {
-    priceEl.textContent = '$4.99';
-    freqEl.textContent = '/mo';
-  }
+  if (priceEl) { priceEl.textContent = yearly ? '$39.99' : '$4.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
+  const ppEl = document.getElementById('proplus-price');
+  const ppFreqEl = document.getElementById('proplus-freq');
+  if (ppEl) { ppEl.textContent = yearly ? '$199.99' : '$19.99'; ppFreqEl.textContent = yearly ? '/yr' : '/mo'; }
 }
 
 async function handleSubscribe(plan) {
@@ -1568,8 +1566,8 @@ async function handleSubscribe(plan) {
     const config = await configRes.json();
 
     if (config.enabled) {
-      // Redirect to Stripe Checkout
-      const res = await fetch('/api/stripe/create-checkout', {
+      const endpoint = plan === 'proplus' ? '/api/stripe/create-checkout-proplus' : '/api/stripe/create-checkout';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, period: pricingPeriod })
@@ -1601,9 +1599,18 @@ async function handleSubscribe(plan) {
 function getUserSubscription() {
   const user = getCurrentUser();
   if (!user) return null;
-  // Check localStorage first (includes server-synced data)
   const users = getUsers();
   return users[user.toLowerCase()]?.subscription || null;
+}
+
+function isProPlus() {
+  const sub = getUserSubscription();
+  return sub?.plan === 'proplus' && sub?.status === 'active';
+}
+
+function isProOrPlus() {
+  const sub = getUserSubscription();
+  return (sub?.plan === 'pro' || sub?.plan === 'proplus') && sub?.status === 'active';
 }
 
 // Sync subscription status from server (called on login and page load)
@@ -1702,12 +1709,14 @@ function switchView(view) {
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
   if (activeTab) activeTab.classList.add('active');
 
+  const proplusView = document.getElementById('proplus-view');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
   collectionView.classList.add('hidden');
   sellerView.classList.add('hidden');
   gradingView.classList.add('hidden');
+  if (proplusView) proplusView.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -1723,9 +1732,162 @@ function switchView(view) {
     renderMyListings();
   } else if (view === 'grading') {
     gradingView.classList.remove('hidden');
+  } else if (view === 'proplus') {
+    if (proplusView) { proplusView.classList.remove('hidden'); initProPlusView(); }
   } else {
     mainEl.classList.remove('hidden');
   }
+}
+
+// ---- Pro+ Tools ----
+function initProPlusView() {
+  const gate = document.getElementById('proplus-gate');
+  const content = document.getElementById('proplus-content');
+  if (!gate || !content) return;
+  if (isProPlus()) {
+    gate.classList.add('hidden');
+    content.classList.remove('hidden');
+  } else {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+  }
+}
+
+function switchProPlusTab(tab) {
+  document.querySelectorAll('.proplus-tab').forEach(t => t.classList.toggle('active', t.dataset.pptab === tab));
+  document.querySelectorAll('.pptab-panel').forEach(p => p.classList.toggle('hidden', p.id !== `pptab-${tab}`));
+}
+
+async function runFlipFinder() {
+  const q = document.getElementById('ff-input').value.trim();
+  const minDiscount = document.getElementById('ff-discount').value;
+  const minProfit = document.getElementById('ff-minprofit').value || 10;
+  const out = document.getElementById('ff-results');
+  if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to search.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading">&#128269; Scanning eBay for underpriced listings&hellip;</div>';
+  try {
+    const res = await fetch(`/api/flip-finder?${new URLSearchParams({ q, minDiscount, minProfit, limit: 20 })}`);
+    const data = await res.json();
+    if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    if (!data.results?.length) {
+      out.innerHTML = `<p class="pp-empty">No flip opportunities found. Try a broader search or lower your discount threshold.<br><small>Sold median: $${data.soldMedian || '—'} from ${data.soldSampleSize || 0} sales</small></p>`;
+      return;
+    }
+    out.innerHTML = `
+      <div class="pp-summary">Sold median: <strong>$${data.soldMedian}</strong> &nbsp;·&nbsp; ${data.soldSampleSize} recent sales &nbsp;·&nbsp; ${data.results.length} flip${data.results.length !== 1 ? 's' : ''} found</div>
+      <div class="ff-grid">
+        ${data.results.map(r => `
+          <a class="ff-card" href="${escHtml(epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(r.title)}`))}  " target="_blank" rel="noopener noreferrer">
+            ${r.imageUrl ? `<img class="ff-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />` : '<div class="ff-img ff-noimg">No Image</div>'}
+            <div class="ff-body">
+              <p class="ff-title">${escHtml(r.title)}</p>
+              <div class="ff-prices">
+                <span class="ff-listing-price">Listed: <strong>$${r.listingPrice.toFixed(2)}</strong></span>
+                <span class="ff-sold-median">Sold median: $${r.soldMedian.toFixed(2)}</span>
+              </div>
+              <div class="ff-profit-row">
+                <span class="ff-profit">+$${r.potentialProfit.toFixed(2)} potential</span>
+                <span class="ff-discount">${r.discountPct}% below median</span>
+              </div>
+            </div>
+          </a>`).join('')}
+      </div>`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
+
+async function runMarketMovers() {
+  const q = document.getElementById('mm-input').value.trim();
+  const out = document.getElementById('mm-results');
+  if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to analyse.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading">&#128200; Analysing price trend&hellip;</div>';
+  try {
+    const res = await fetch(`/api/market-movers?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error || data.message}</p>`; return; }
+    if (data.message) { out.innerHTML = `<p class="pp-empty">${data.message}</p>`; return; }
+    const arrow = data.trending === 'up' ? '&#8679;' : data.trending === 'down' ? '&#8681;' : '&#8680;';
+    const cls = data.trending === 'up' ? 'mm-up' : data.trending === 'down' ? 'mm-down' : 'mm-stable';
+    out.innerHTML = `
+      <div class="mm-summary ${cls}">
+        <span class="mm-arrow">${arrow}</span>
+        <span class="mm-change">${data.changePct > 0 ? '+' : ''}${data.changePct}%</span>
+        <span class="mm-label">in last 7 days</span>
+      </div>
+      <div class="mm-stats">
+        <div class="mm-stat"><div class="mm-stat-val">$${data.recentAvg}</div><div class="mm-stat-lbl">Avg last 7 days (${data.recentSales} sales)</div></div>
+        <div class="mm-stat"><div class="mm-stat-val">$${data.olderAvg}</div><div class="mm-stat-lbl">Prior avg (${data.olderSales} sales)</div></div>
+      </div>
+      ${data.recentItems?.length ? `<div class="mm-recent-label">Most recent sales</div><div class="mm-recent-list">${data.recentItems.map(i => `<div class="mm-recent-item">${i.imageUrl ? `<img src="${escHtml(i.imageUrl)}" class="mm-thumb" alt="" />` : ''}<span class="mm-recent-title">${escHtml(i.title)}</span><span class="mm-recent-price">$${i.price.toFixed(2)}</span><span class="mm-recent-date">${i.date}</span></div>`).join('')}</div>` : ''}`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
+
+async function runAutoPricer() {
+  const q = document.getElementById('ap-input').value.trim();
+  const out = document.getElementById('ap-results');
+  if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to price.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading">&#127991;&#65039; Analysing comps&hellip;</div>';
+  try {
+    const res = await fetch(`/api/auto-price?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    const recs = data.recommendations;
+    out.innerHTML = `
+      <div class="ap-context">
+        Based on <strong>${data.soldCount} sold</strong> in recent data &nbsp;·&nbsp;
+        Median <strong>$${data.soldMedian}</strong> &nbsp;·&nbsp;
+        Range $${data.soldLow} – $${data.soldHigh}
+        ${data.competitionLow ? ` &nbsp;·&nbsp; Lowest for-sale <strong>$${data.competitionLow}</strong> (${data.competitionCount} listings)` : ''}
+      </div>
+      <div class="ap-recs">
+        ${Object.values(recs).map(r => `
+          <div class="ap-rec">
+            <div class="ap-rec-label">${r.label}</div>
+            <div class="ap-rec-price">$${r.price.toFixed(2)}</div>
+            <div class="ap-rec-desc">${r.description}</div>
+            <button class="ap-use-btn" onclick="document.getElementById('seller-price-input')?.closest('.seller-view') && switchView('seller'); setTimeout(() => { const el = document.getElementById('seller-price-input'); if(el){ el.value='${r.price.toFixed(2)}'; el.dispatchEvent(new Event('input')); } }, 100)">Use this price</button>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
+
+let bulkPriceResults = [];
+async function runBulkPricer() {
+  const raw = document.getElementById('bulk-input').value.trim();
+  const out = document.getElementById('bulk-results');
+  if (!raw) { out.innerHTML = '<p class="pp-error">Enter at least one card.</p>'; return; }
+  const queries = raw.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 20);
+  out.innerHTML = `<div class="pp-loading">Pricing ${queries.length} card${queries.length !== 1 ? 's' : ''}&hellip;</div>`;
+  try {
+    const res = await fetch('/api/bulk-price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries }) });
+    const data = await res.json();
+    if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    bulkPriceResults = data.results;
+    out.innerHTML = `
+      <table class="bulk-table">
+        <thead><tr><th>Card</th><th>Median Sold</th><th>Low</th><th>High</th><th># Sales</th></tr></thead>
+        <tbody>
+          ${data.results.map(r => `
+            <tr class="${r.median ? '' : 'bulk-row-na'}">
+              <td class="bulk-query">${escHtml(r.query)}</td>
+              <td class="bulk-median">${r.median ? `$${r.median.toFixed(2)}` : '—'}</td>
+              <td>${r.low ? `$${r.low.toFixed(2)}` : '—'}</td>
+              <td>${r.high ? `$${r.high.toFixed(2)}` : '—'}</td>
+              <td>${r.count}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
+
+function exportBulkCSV() {
+  if (!bulkPriceResults.length) { alert('Run Bulk Pricer first.'); return; }
+  const header = 'Card,Median Sold,Low,High,Sales Count';
+  const rows = bulkPriceResults.map(r => [r.query, r.median ?? '', r.low ?? '', r.high ?? '', r.count].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const csv = [header, ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `card-prices-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
 }
 
 // ---- Grading Advisor ----

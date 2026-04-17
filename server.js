@@ -30,6 +30,7 @@ const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_PRODUCT_PRO = 'prod_UKcw8SMnNESbuE';
 const STRIPE_PRODUCT_SLOT = 'prod_UKczmqAaEo7wa9';
+const STRIPE_PRODUCT_PROPLUS = 'prod_ULtSajiX8Hszzy';
 const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
 let stripe = null;
 if (stripeEnabled) {
@@ -66,9 +67,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         subs[username].extraPromoteSlots = (subs[username].extraPromoteSlots || 0) + 1;
         subs[username].lastPayment = { type: 'extra_slot', amount: 299, date: new Date().toISOString(), sessionId: session.id };
       } else if (session.subscription) {
-        // Pro subscription started
+        // Pro or Pro+ subscription started
         if (!subs[username]) subs[username] = {};
-        subs[username].plan = 'pro';
+        subs[username].plan = session.metadata?.plan || 'pro';
         subs[username].period = session.metadata?.period || 'monthly';
         subs[username].stripeCustomerId = session.customer;
         subs[username].stripeSubscriptionId = session.subscription;
@@ -1490,6 +1491,208 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
     console.error('Stripe checkout error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Create checkout session for Pro+ subscription
+app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
+  const { username, period } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  try {
+    const priceData = period === 'yearly'
+      ? { unit_amount: 19999, recurring: { interval: 'year' } }
+      : { unit_amount: 1999, recurring: { interval: 'month' } };
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price_data: { currency: 'usd', product: STRIPE_PRODUCT_PROPLUS, ...priceData }, quantity: 1 }],
+      metadata: { username: username.toLowerCase(), period: period || 'monthly', plan: 'proplus' },
+      success_url: `${req.protocol}://${req.get('host')}/?payment=success&plan=proplus`,
+      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+    });
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('Stripe Pro+ checkout error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Flip Finder (Pro+) ----
+// Finds live eBay listings priced significantly below their recent sold median.
+app.get('/api/flip-finder', async (req, res) => {
+  const query = req.query.q;
+  const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
+  const minProfit = parseFloat(req.query.minProfit) || 10;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 40);
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+
+  try {
+    const [soldRes, forsaleRes] = await Promise.all([
+      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: 50, api_key: SERPAPI_KEY }, timeout: 15000 }),
+      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, _ipg: 50, api_key: SERPAPI_KEY }, timeout: 15000 })
+    ]);
+
+    const soldItems = soldRes.data?.organic_results || [];
+    const forsaleItems = forsaleRes.data?.organic_results || [];
+
+    const soldPrices = soldItems.map(i => i.price?.extracted).filter(p => p > 0);
+    if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough sold data for this query' });
+
+    const sorted = [...soldPrices].sort((a, b) => a - b);
+    const soldMedian = sorted.length % 2 ? sorted[Math.floor(sorted.length / 2)] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const threshold = soldMedian * (1 - minDiscount / 100);
+
+    const opportunities = forsaleItems
+      .map(item => {
+        const price = item.price?.extracted || 0;
+        if (!price || price >= threshold) return null;
+        const profit = soldMedian - price;
+        if (profit < minProfit) return null;
+        return {
+          title: item.title,
+          listingPrice: price,
+          soldMedian: Math.round(soldMedian * 100) / 100,
+          potentialProfit: Math.round(profit * 100) / 100,
+          discountPct: Math.round((1 - price / soldMedian) * 100),
+          itemUrl: item.link || '',
+          imageUrl: item.thumbnail || null,
+          condition: item.condition || 'Unknown',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.potentialProfit - a.potentialProfit)
+      .slice(0, limit);
+
+    res.json({ results: opportunities, soldMedian: Math.round(soldMedian * 100) / 100, soldSampleSize: soldPrices.length });
+  } catch (err) {
+    console.error('[FlipFinder]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Market Movers (Pro+) ----
+// Identifies cards with prices trending up significantly in recent sales.
+app.get('/api/market-movers', async (req, res) => {
+  const query = req.query.q;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 20);
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+
+  try {
+    const response = await axios.get('https://serpapi.com/search', {
+      params: { engine: 'ebay', _nkw: query, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: 50, api_key: SERPAPI_KEY },
+      timeout: 15000,
+    });
+    const items = (response.data?.organic_results || [])
+      .map(i => ({ price: i.price?.extracted, date: i.sold_date ? new Date(i.sold_date) : null, title: i.title, imageUrl: i.thumbnail }))
+      .filter(i => i.price > 0 && i.date && !isNaN(i.date));
+
+    if (items.length < 6) return res.json({ results: [], message: 'Not enough data' });
+
+    items.sort((a, b) => b.date - a.date);
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recent = items.filter(i => i.date >= cutoff).map(i => i.price);
+    const older = items.filter(i => i.date < cutoff).map(i => i.price);
+
+    if (recent.length < 2 || older.length < 2) return res.json({ results: [], message: 'Insufficient data to detect trend' });
+
+    const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const recentAvg = avg(recent);
+    const olderAvg = avg(older);
+    const changePct = ((recentAvg - olderAvg) / olderAvg) * 100;
+
+    res.json({
+      query,
+      recentAvg: Math.round(recentAvg * 100) / 100,
+      olderAvg: Math.round(olderAvg * 100) / 100,
+      changePct: Math.round(changePct * 10) / 10,
+      trending: changePct >= 10 ? 'up' : changePct <= -10 ? 'down' : 'stable',
+      recentSales: recent.length,
+      olderSales: older.length,
+      recentItems: items.filter(i => i.date >= cutoff).slice(0, 5).map(i => ({ price: i.price, date: i.date.toISOString().slice(0, 10), title: i.title, imageUrl: i.imageUrl })),
+    });
+  } catch (err) {
+    console.error('[MarketMovers]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Auto-Pricer (Pro+) ----
+// Recommends optimal listing prices based on sold comps and live competition.
+app.get('/api/auto-price', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+
+  try {
+    const [soldRes, forsaleRes] = await Promise.all([
+      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: 30, api_key: SERPAPI_KEY }, timeout: 15000 }),
+      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, _ipg: 20, api_key: SERPAPI_KEY }, timeout: 15000 })
+    ]);
+
+    const soldPrices = (soldRes.data?.organic_results || []).map(i => i.price?.extracted).filter(p => p > 0);
+    const forsalePrices = (forsaleRes.data?.organic_results || []).map(i => i.price?.extracted).filter(p => p > 0);
+
+    if (soldPrices.length < 2) return res.json({ error: 'Not enough sold data', soldCount: soldPrices.length });
+
+    soldPrices.sort((a, b) => a - b);
+    const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
+    const soldMedian = med(soldPrices);
+    const soldLow = soldPrices[0];
+    const soldHigh = soldPrices[soldPrices.length - 1];
+    const soldAvg = soldPrices.reduce((a, b) => a + b, 0) / soldPrices.length;
+
+    forsalePrices.sort((a, b) => a - b);
+    const competitionLow = forsalePrices[0] || null;
+    const competitionMedian = forsalePrices.length ? med(forsalePrices) : null;
+
+    const aggressive = competitionLow ? Math.max(soldLow, competitionLow * 0.95) : soldLow * 1.05;
+    const optimal = soldMedian * 0.95;
+    const premium = soldMedian * 1.10;
+
+    res.json({
+      soldMedian: Math.round(soldMedian * 100) / 100,
+      soldAvg: Math.round(soldAvg * 100) / 100,
+      soldLow: Math.round(soldLow * 100) / 100,
+      soldHigh: Math.round(soldHigh * 100) / 100,
+      soldCount: soldPrices.length,
+      competitionLow: competitionLow ? Math.round(competitionLow * 100) / 100 : null,
+      competitionCount: forsalePrices.length,
+      recommendations: {
+        aggressive: { price: Math.round(aggressive * 100) / 100, label: 'Fast Sale', description: 'Price to sell quickly — slightly below competition' },
+        optimal:    { price: Math.round(optimal * 100) / 100,    label: 'Optimal',   description: 'Best balance of speed and return — just below sold median' },
+        premium:    { price: Math.round(premium * 100) / 100,    label: 'Premium',   description: 'Max return — 10% above median for patient sellers' },
+      }
+    });
+  } catch (err) {
+    console.error('[AutoPrice]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Bulk Price (Pro+) ----
+// Prices up to 20 cards at once, returning median sold price for each.
+app.post('/api/bulk-price', async (req, res) => {
+  const { queries } = req.body;
+  if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
+  if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
+  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+
+  const results = [];
+  for (const q of queries) {
+    try {
+      const response = await fetchEbayItems(q.trim(), 10, 'sold', 'bulk-price');
+      const prices = response.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+      prices.sort((a, b) => a - b);
+      const median = prices.length ? (prices.length % 2 ? prices[Math.floor(prices.length / 2)] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
+      results.push({ query: q, median: median ? Math.round(median * 100) / 100 : null, count: prices.length, low: prices[0] || null, high: prices[prices.length - 1] || null });
+    } catch {
+      results.push({ query: q, median: null, count: 0, error: 'Failed' });
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  res.json({ results });
 });
 
 // Create checkout session for extra promote slot

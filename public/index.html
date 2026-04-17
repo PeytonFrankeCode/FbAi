@@ -39,7 +39,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=6" />
 
 
 </head>
@@ -95,6 +95,7 @@
         <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
         </button>
+        <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro+ Tools <span class="proplus-nav-badge">PRO+</span></button>
         <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
@@ -134,7 +135,7 @@
       <div class="pricing-toggle">
         <button class="pricing-period active" data-period="monthly" onclick="setPricingPeriod('monthly')">Monthly</button>
         <button class="pricing-period" data-period="yearly" onclick="setPricingPeriod('yearly')">Yearly</button>
-        <span class="pricing-save-badge">Save 33%</span>
+        <span class="pricing-save-badge">Save big yearly</span>
       </div>
 
       <div class="pricing-cards">
@@ -163,13 +164,34 @@
           <ul class="pricing-features">
             <li class="included">Unlimited card searches</li>
             <li class="included">For Sale &amp; Sold listings</li>
-            <li class="included">Price trend charts</li>
+            <li class="included">Full price history</li>
             <li class="included">Collection &amp; Portfolio</li>
-            <li class="included">Price alerts</li>
+            <li class="included">Price alerts (10 cards)</li>
             <li class="included">Market analytics</li>
             <li class="included">Ad-free experience</li>
           </ul>
           <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
+        </div>
+
+        <div class="pricing-card proplus-card">
+          <div class="pricing-badge proplus-badge">For Dealers</div>
+          <h3 class="pricing-tier">Pro+</h3>
+          <div class="pricing-price">
+            <span class="pricing-amount" id="proplus-price">$19.99</span>
+            <span class="pricing-freq" id="proplus-freq">/mo</span>
+          </div>
+          <ul class="pricing-features">
+            <li class="included">Everything in Pro</li>
+            <li class="included">Flip Finder — spot underpriced deals</li>
+            <li class="included">Market Movers — catch price surges</li>
+            <li class="included">Auto-Pricer — optimal listing prices</li>
+            <li class="included">Bulk CSV card pricing (20 at once)</li>
+            <li class="included">Inventory management</li>
+            <li class="included">Price alerts (50 cards)</li>
+            <li class="included">Branded market reports</li>
+            <li class="included">Priority support</li>
+          </ul>
+          <button class="pricing-cta proplus" onclick="handleSubscribe('proplus')">Get Pro+</button>
         </div>
       </div>
     </div>
@@ -816,6 +838,83 @@
     </div>
   </div>
 
+  <!-- Pro+ Tools View -->
+  <div id="proplus-view" class="proplus-view hidden">
+    <div class="proplus-container">
+
+      <!-- Gate for non-Pro+ users -->
+      <div id="proplus-gate" class="proplus-gate hidden">
+        <div class="proplus-gate-icon">&#9889;</div>
+        <h2>Pro+ Tools</h2>
+        <p>Flip Finder, Market Movers, Auto-Pricer, Bulk Pricing and more — built for serious dealers and resellers.</p>
+        <button class="proplus-upgrade-btn" onclick="showPricing()">Upgrade to Pro+ — $19.99/mo</button>
+      </div>
+
+      <!-- Pro+ Content -->
+      <div id="proplus-content" class="hidden">
+        <div class="proplus-header">
+          <h2 class="proplus-title">Pro+ Tools</h2>
+          <span class="proplus-badge-label">&#9889; PRO+</span>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="proplus-tabs">
+          <button class="proplus-tab active" data-pptab="flipfinder" onclick="switchProPlusTab('flipfinder')">&#128269; Flip Finder</button>
+          <button class="proplus-tab" data-pptab="movers" onclick="switchProPlusTab('movers')">&#128200; Market Movers</button>
+          <button class="proplus-tab" data-pptab="autoprices" onclick="switchProPlusTab('autoprices')">&#127991;&#65039; Auto-Pricer</button>
+          <button class="proplus-tab" data-pptab="bulkprice" onclick="switchProPlusTab('bulkprice')">&#128196; Bulk Pricer</button>
+        </div>
+
+        <!-- Flip Finder -->
+        <div id="pptab-flipfinder" class="pptab-panel">
+          <p class="pp-desc">Find eBay listings priced well below recent sold median — potential flips surfaced automatically.</p>
+          <div class="pp-search-row">
+            <input type="text" id="ff-input" class="pp-input" placeholder="e.g. Patrick Mahomes 2017 Prizm" />
+            <select id="ff-discount" class="pp-select">
+              <option value="20">20%+ below median</option>
+              <option value="30" selected>30%+ below median</option>
+              <option value="40">40%+ below median</option>
+            </select>
+            <input type="number" id="ff-minprofit" class="pp-input pp-input-sm" placeholder="Min profit $" min="1" value="10" />
+            <button class="pp-btn" onclick="runFlipFinder()">Find Flips</button>
+          </div>
+          <div id="ff-results"></div>
+        </div>
+
+        <!-- Market Movers -->
+        <div id="pptab-movers" class="pptab-panel hidden">
+          <p class="pp-desc">Detect cards with prices surging in the last 7 days vs. the prior period — get ahead of the market.</p>
+          <div class="pp-search-row">
+            <input type="text" id="mm-input" class="pp-input" placeholder="e.g. Josh Allen 2018 Prizm" />
+            <button class="pp-btn" onclick="runMarketMovers()">Check Trend</button>
+          </div>
+          <div id="mm-results"></div>
+        </div>
+
+        <!-- Auto-Pricer -->
+        <div id="pptab-autoprices" class="pptab-panel hidden">
+          <p class="pp-desc">Get three data-backed listing price recommendations — aggressive, optimal, and premium — based on sold comps and live competition.</p>
+          <div class="pp-search-row">
+            <input type="text" id="ap-input" class="pp-input" placeholder="e.g. Joe Burrow 2020 Prizm PSA 10" />
+            <button class="pp-btn" onclick="runAutoPricer()">Get Prices</button>
+          </div>
+          <div id="ap-results"></div>
+        </div>
+
+        <!-- Bulk Pricer -->
+        <div id="pptab-bulkprice" class="pptab-panel hidden">
+          <p class="pp-desc">Price up to 20 cards at once. Enter one card per line, click Price All, then export to CSV.</p>
+          <textarea id="bulk-input" class="pp-textarea" placeholder="Patrick Mahomes 2017 Prizm Base&#10;Josh Allen 2018 Prizm Silver&#10;Justin Jefferson 2020 Prizm PSA 10"></textarea>
+          <div class="pp-search-row" style="margin-top:0.5rem;">
+            <button class="pp-btn" onclick="runBulkPricer()">Price All</button>
+            <button class="pp-btn pp-btn-secondary" onclick="exportBulkCSV()">Export CSV</button>
+          </div>
+          <div id="bulk-results"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal -->
   <div id="settings-overlay" class="settings-overlay hidden" role="dialog" aria-label="Settings">
     <div class="settings-box">
@@ -900,6 +999,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
