@@ -2552,12 +2552,19 @@ footer::before {
   justify-content: center;
   gap: 0.5rem;
   margin-top: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px; /* prevent clipped focus rings */
 }
+.header-nav::-webkit-scrollbar { display: none; }
 
 .nav-tab {
   background: transparent;
   border: 1px solid var(--border-primary);
   color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
