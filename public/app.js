@@ -1472,7 +1472,7 @@ function updateLoginForm() {
   }
 }
 
-function handleAuth(e) {
+async function handleAuth(e) {
   e.preventDefault();
   const username = document.getElementById('auth-username').value.trim();
   const password = document.getElementById('auth-password').value;
