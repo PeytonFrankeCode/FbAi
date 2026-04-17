@@ -1310,6 +1310,12 @@ function getUsers() {
   catch { return {}; }
 }
 
+function getSessionToken() { return localStorage.getItem('cardHuddleToken') || null; }
+function setSessionToken(token) {
+  if (token) localStorage.setItem('cardHuddleToken', token);
+  else localStorage.removeItem('cardHuddleToken');
+}
+
 function getCurrentUser() {
   return localStorage.getItem('cardHuddleCurrentUser') || null;
 }
@@ -1472,40 +1478,78 @@ function handleAuth(e) {
   const password = document.getElementById('auth-password').value;
   loginError.classList.add('hidden');
 
-  if (authMode === 'signup') {
-    const confirm = authConfirm.value;
-    if (password !== confirm) {
-      loginError.textContent = 'Passwords do not match';
-      loginError.classList.remove('hidden');
-      return false;
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  if (authSubmitBtn) authSubmitBtn.disabled = true;
+
+  try {
+    if (authMode === 'signup') {
+      const confirm = authConfirm.value;
+      if (password !== confirm) {
+        loginError.textContent = 'Passwords do not match';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      const email = document.getElementById('auth-email').value.trim();
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, email })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        loginError.textContent = data.error || 'Registration failed';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      setSessionToken(data.token);
+      setCurrentUser(data.username);
+      closeLogin();
+      await syncSubscriptionStatus();
+    } else {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        // Fallback: check local accounts (for users created before server-side auth)
+        const users = getUsers();
+        const localUser = users[username.toLowerCase()];
+        if (localUser && localUser.password === password) {
+          setCurrentUser(localUser.username);
+          closeLogin();
+          await syncSubscriptionStatus();
+          return false;
+        }
+        loginError.textContent = data.error || 'Login failed';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      setSessionToken(data.token);
+      setCurrentUser(data.username);
+      // Persist email in local users store for display
+      if (data.email) {
+        const users = getUsers();
+        const key = data.username.toLowerCase();
+        if (!users[key]) users[key] = {};
+        users[key].email = data.email;
+        localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+      }
+      closeLogin();
+      await syncSubscriptionStatus();
     }
-    const users = getUsers();
-    if (users[username.toLowerCase()]) {
-      loginError.textContent = 'Username already taken';
-      loginError.classList.remove('hidden');
-      return false;
-    }
-    const email = document.getElementById('auth-email').value.trim();
-    users[username.toLowerCase()] = { username, password, email, createdAt: new Date().toISOString() };
-    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-    setCurrentUser(username);
-    closeLogin();
-  } else {
-    const users = getUsers();
-    const user = users[username.toLowerCase()];
-    if (!user || user.password !== password) {
-      loginError.textContent = 'Invalid username or password';
-      loginError.classList.remove('hidden');
-      return false;
-    }
-    setCurrentUser(user.username);
-    closeLogin();
+  } finally {
+    if (authSubmitBtn) authSubmitBtn.disabled = false;
   }
   return false;
 }
 
 function handleLogout() {
   closeAuthDropdown();
+  const token = getSessionToken();
+  if (token) fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  setSessionToken(null);
   setCurrentUser(null);
 }
 
@@ -1618,7 +1662,9 @@ async function syncSubscriptionStatus() {
   const user = getCurrentUser();
   if (!user) return;
   try {
-    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`);
+    const token = getSessionToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`, { headers });
     const data = await res.json();
     if (data.subscription && data.subscription.status === 'active') {
       const users = getUsers();
@@ -1643,7 +1689,8 @@ function checkPaymentReturn() {
     if (type === 'slot') {
       alert('Extra promote slot purchased successfully!');
     } else {
-      alert('Pro subscription activated! Welcome to Card Huddle Pro.');
+      const plan = params.get('plan');
+      alert(plan === 'proplus' ? 'Pro+ activated! Welcome to Card Huddle Pro+.' : 'Pro subscription activated! Welcome to Card Huddle Pro.');
     }
     // Sync from server and clean URL
     syncSubscriptionStatus();
