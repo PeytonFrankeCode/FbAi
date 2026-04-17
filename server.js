@@ -1448,6 +1448,107 @@ function saveSubscriptions(subs) {
   saveData('subscriptions', SUBS_FILE, subs);
 }
 
+// ---- Global User Accounts ----
+const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+const SESSIONS_FILE = path.join(__dirname, 'data', 'sessions.json');
+
+function loadServerUsers() { return loadData('users', USERS_FILE, {}); }
+function saveServerUsers(u) { saveData('users', USERS_FILE, u); }
+function loadSessions() { return loadData('sessions', SESSIONS_FILE, {}); }
+function saveSessions(s) { saveData('sessions', SESSIONS_FILE, s); }
+
+async function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const key = await new Promise((res, rej) =>
+    crypto.scrypt(password, salt, 64, (err, k) => err ? rej(err) : res(k)));
+  return `${salt}:${key.toString('hex')}`;
+}
+
+async function verifyPassword(password, stored) {
+  const [salt, key] = stored.split(':');
+  if (!salt || !key) return false;
+  const derived = await new Promise((res, rej) =>
+    crypto.scrypt(password, salt, 64, (err, k) => err ? rej(err) : res(k)));
+  return crypto.timingSafeEqual(Buffer.from(key, 'hex'), derived);
+}
+
+function generateToken() { return crypto.randomBytes(32).toString('hex'); }
+const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function getSessionUser(req) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : req.query._token;
+  if (!token) return null;
+  const sessions = loadSessions();
+  const s = sessions[token];
+  if (!s) return null;
+  if (Date.now() > s.expiresAt) { delete sessions[token]; saveSessions(sessions); return null; }
+  return s.username;
+}
+
+// POST /api/auth/register
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password, email } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  if (username.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  const key = username.toLowerCase();
+  const users = loadServerUsers();
+  if (users[key]) return res.status(409).json({ error: 'Username already taken' });
+  users[key] = { username, email: email || '', passwordHash: await hashPassword(password), createdAt: new Date().toISOString() };
+  saveServerUsers(users);
+  const token = generateToken();
+  const sessions = loadSessions();
+  sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+  saveSessions(sessions);
+  res.json({ token, username: key });
+});
+
+// POST /api/auth/login
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  const key = username.toLowerCase();
+  const users = loadServerUsers();
+  const user = users[key];
+  if (!user) return res.status(401).json({ error: 'Invalid username or password' });
+  const valid = await verifyPassword(password, user.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid username or password' });
+  const token = generateToken();
+  const sessions = loadSessions();
+  sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+  saveSessions(sessions);
+  res.json({ token, username: key, email: user.email || '' });
+});
+
+// POST /api/auth/logout
+app.post('/api/auth/logout', (req, res) => {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (token) { const s = loadSessions(); delete s[token]; saveSessions(s); }
+  res.json({ ok: true });
+});
+
+// GET /api/auth/me
+app.get('/api/auth/me', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const users = loadServerUsers();
+  const user = users[username] || {};
+  const subs = loadSubscriptions();
+  res.json({ username, email: user.email || '', subscription: subs[username] || null });
+});
+
+// PUT /api/auth/email
+app.put('/api/auth/email', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const { email } = req.body;
+  const users = loadServerUsers();
+  if (users[username]) { users[username].email = email || ''; saveServerUsers(users); }
+  res.json({ ok: true });
+});
+
 // ---- Stripe API Routes ----
 
 // Get Stripe publishable key
