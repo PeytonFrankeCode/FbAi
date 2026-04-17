@@ -16,12 +16,12 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (
 
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 
-// ---- SerpApi Setup ----
-const SERPAPI_KEY = process.env.SERPAPI_KEY;
-const SERPAPI_ENABLED = !!(SERPAPI_KEY && SERPAPI_KEY.length > 0);
+// ---- Apify Setup ----
+const APIFY_TOKEN = process.env.APIFY_TOKEN;
+const APIFY_ENABLED = !!(APIFY_TOKEN && APIFY_TOKEN.length > 0);
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
-const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true' || !SERPAPI_ENABLED;
+const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true' || !APIFY_ENABLED;
 const USE_MOCK = USE_MOCK_FORSALE && USE_MOCK_SOLD;
 
 // ---- Stripe Setup ----
@@ -319,45 +319,28 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
-// ---- SerpApi (eBay sold/completed listings) ----
-async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
-  trackApiCall('serpapi', 'ebay-sold', keywords, source);
-  console.log(`[SerpApi] Searching sold: "${keywords}"`);
+// ---- Apify (eBay sold/completed listings) ----
+async function fetchViaApify(keywords, limit = 20, source = 'unknown') {
+  trackApiCall('apify', 'ebay-sold', keywords, source);
+  console.log(`[Apify] Searching sold: "${keywords}"`);
 
   try {
-    const res = await axios.get('https://serpapi.com/search', {
-      params: {
-        engine: 'ebay',
-        _nkw: keywords,
-        LH_Sold: 1,
-        LH_Complete: 1,
-        show_only: 'Sold',
-        _ipg: Math.min(limit, 200),
-        api_key: SERPAPI_KEY,
-      },
-      timeout: 15000,
-    });
+    const res = await axios.post(
+      `https://api.apify.com/v2/acts/caffein.dev~ebay-sold-listings/run-sync-get-dataset-items?token=${APIFY_TOKEN}`,
+      { keyword: keywords, maxItems: Math.min(limit, 100), soldItems: true },
+      { timeout: 60000, headers: { 'Content-Type': 'application/json' } }
+    );
 
-    const topKeys = Object.keys(res.data || {});
-    console.log(`[SerpApi] Response keys: ${topKeys.join(', ')}`);
-
-    const items = res.data?.organic_results
-      || res.data?.sold_results
-      || res.data?.shopping_results
-      || [];
-
-    console.log(`[SerpApi] ${items.length} items found`);
-    if (items[0]) console.log(`[SerpApi] First item keys: ${Object.keys(items[0]).join(', ')}`);
-    if (items[0]) console.log(`[SerpApi] First item sample: ${JSON.stringify(items[0]).slice(0, 300)}`);
+    const items = Array.isArray(res.data) ? res.data : [];
+    console.log(`[Apify] ${items.length} items found`);
+    if (items[0]) console.log(`[Apify] First item keys: ${Object.keys(items[0]).join(', ')}`);
+    if (items[0]) console.log(`[Apify] First item sample: ${JSON.stringify(items[0]).slice(0, 300)}`);
 
     const results = items.map((item, i) => {
-      // price.extracted is already a number e.g. 800
-      const price = item.price?.extracted
-        ?? (typeof item.price?.raw === 'string' ? parseFloat(item.price.raw.replace(/[^0-9.]/g, '')) : 0)
-        ?? 0;
+      const rawPrice = item.price ?? item.soldPrice ?? item.finalPrice ?? 0;
+      const price = typeof rawPrice === 'string' ? parseFloat(rawPrice.replace(/[^0-9.]/g, '')) : Number(rawPrice);
 
-      // sold_date comes as "Apr 16, 2026" — convert to ISO for consistent date parsing
-      const rawDate = item.sold_date || item.date || item.end_date || '';
+      const rawDate = item.soldDate || item.dateSold || item.endDate || item.date || '';
       let soldDate = '';
       if (rawDate) {
         const parsed = new Date(rawDate);
@@ -365,40 +348,40 @@ async function fetchViaSerpApi(keywords, limit = 20, source = 'unknown') {
       }
 
       return {
-        itemId:    item.product_id || item.item_id || `serp-${i}`,
+        itemId:    item.id || item.itemId || `apify-${i}`,
         title:     item.title || keywords,
-        price:     String(price),
+        price:     String(price || 0),
         currency:  'USD',
         soldDate,
-        imageUrl:  item.thumbnail || item.image || null,
-        itemUrl:   item.link || '',
+        imageUrl:  item.image || item.thumbnail || null,
+        itemUrl:   item.url || item.link || '',
         condition: item.condition || 'Unknown',
       };
     });
 
-    return { results: results.slice(0, limit), total: res.data?.search_information?.total_results || results.length };
+    return { results: results.slice(0, limit), total: results.length };
   } catch (err) {
-    console.error(`[SerpApi] Error: ${err.message}`);
+    console.error(`[Apify] Error: ${err.message}`);
     if (err.response) {
-      console.error(`[SerpApi] HTTP ${err.response.status}:`, JSON.stringify(err.response.data).slice(0, 300));
+      console.error(`[Apify] HTTP ${err.response.status}:`, JSON.stringify(err.response.data).slice(0, 300));
     }
     return { results: [], total: 0, error: err.message };
   }
 }
 
 // ---- Shared fetch function ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (SerpApi eBay completed)
+// mode: 'forsale' (eBay Browse API) or 'sold' (Apify eBay completed)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   if (mode === 'sold') {
-    if (!SERPAPI_ENABLED) {
-      console.log(`[Sold] SerpApi not configured — add SERPAPI_KEY to .env`);
+    if (!APIFY_ENABLED) {
+      console.log(`[Sold] Apify not configured — add APIFY_TOKEN to .env`);
       return { results: [], total: 0, noProvider: true };
     }
-    const response = await fetchViaSerpApi(keywords, limit, source);
+    const response = await fetchViaApify(keywords, limit, source);
     if (response.results.length > 0) setCache(cacheKey, response);
     return response;
   }
@@ -428,7 +411,7 @@ app.get('/api/search', async (req, res) => {
 
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     if (mode === 'sold') {
-      return res.status(503).json({ error: 'Sold listings unavailable — SERPAPI_KEY not configured on this server.' });
+      return res.status(503).json({ error: 'Sold listings unavailable — APIFY_TOKEN not configured on this server.' });
     }
     return res.json(getMockData(query, mode));
   }
@@ -436,7 +419,7 @@ app.get('/api/search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode — SerpApi
+    // Sold mode — Apify
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search');
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
@@ -698,7 +681,7 @@ app.get('/api/direct-search', async (req, res) => {
   }
 
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — SERPAPI_KEY not configured on this server.' });
+    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — APIFY_TOKEN not configured on this server.' });
     return res.json(getMockDirectSearch(query, mode));
   }
 
@@ -804,7 +787,7 @@ app.get('/api/variants', async (req, res) => {
   }
 
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — SERPAPI_KEY not configured on this server.' });
+    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — APIFY_TOKEN not configured on this server.' });
     return res.json(getMockVariants(query, mode));
   }
 
@@ -898,34 +881,15 @@ app.get('/api/variants', async (req, res) => {
   }
 });
 
-// ---- SerpApi debug endpoint ----
-app.get('/api/debug/serpapi', async (req, res) => {
+// ---- Apify debug endpoint ----
+app.get('/api/debug/apify', async (req, res) => {
   const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
-  if (!SERPAPI_ENABLED) return res.json({ error: 'SERPAPI_KEY not configured' });
+  if (!APIFY_ENABLED) return res.json({ error: 'APIFY_TOKEN not configured' });
   try {
-    const response = await axios.get('https://serpapi.com/search', {
-      params: {
-        engine: 'ebay',
-        _nkw: q,
-        LH_Sold: 1,
-        LH_Complete: 1,
-        show_only: 'Sold',
-        _ipg: 5,
-        api_key: SERPAPI_KEY,
-      },
-      timeout: 15000,
-    });
-    const data = response.data;
-    res.json({
-      topLevelKeys: Object.keys(data),
-      searchMetadata: data.search_metadata,
-      searchParameters: data.search_parameters,
-      itemCount: (data.organic_results || data.sold_results || data.shopping_results || []).length,
-      firstItem: (data.organic_results || data.sold_results || data.shopping_results || [])[0] || null,
-      rawSnippet: JSON.stringify(data).slice(0, 2000),
-    });
+    const result = await fetchViaApify(q, 5, 'debug');
+    res.json({ query: q, itemCount: result.results.length, firstItem: result.results[0] || null, error: result.error || null });
   } catch (err) {
-    res.json({ error: err.message, status: err.response?.status, body: err.response?.data });
+    res.json({ error: err.message });
   }
 });
 
@@ -1626,27 +1590,24 @@ app.get('/api/flip-finder', async (req, res) => {
   const minProfit = parseFloat(req.query.minProfit) || 10;
   const limit = Math.min(parseInt(req.query.limit) || 20, 40);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+  if (!APIFY_ENABLED) return res.status(503).json({ error: 'Apify not configured' });
 
   try {
-    const [soldRes, forsaleRes] = await Promise.all([
-      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: 50, api_key: SERPAPI_KEY }, timeout: 15000 }),
-      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, _ipg: 50, api_key: SERPAPI_KEY }, timeout: 15000 })
+    const [soldData, forsaleData] = await Promise.all([
+      fetchViaApify(query, 50, 'flip-finder'),
+      fetchEbayItems(query, 50, 'forsale', 'flip-finder'),
     ]);
 
-    const soldItems = soldRes.data?.organic_results || [];
-    const forsaleItems = forsaleRes.data?.organic_results || [];
-
-    const soldPrices = soldItems.map(i => i.price?.extracted).filter(p => p > 0);
+    const soldPrices = soldData.results.map(i => parseFloat(i.price)).filter(p => p > 0);
     if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough sold data for this query' });
 
     const sorted = [...soldPrices].sort((a, b) => a - b);
     const soldMedian = sorted.length % 2 ? sorted[Math.floor(sorted.length / 2)] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
     const threshold = soldMedian * (1 - minDiscount / 100);
 
-    const opportunities = forsaleItems
+    const opportunities = (forsaleData.results || [])
       .map(item => {
-        const price = item.price?.extracted || 0;
+        const price = parseFloat(item.price) || 0;
         if (!price || price >= threshold) return null;
         const profit = soldMedian - price;
         if (profit < minProfit) return null;
@@ -1656,8 +1617,8 @@ app.get('/api/flip-finder', async (req, res) => {
           soldMedian: Math.round(soldMedian * 100) / 100,
           potentialProfit: Math.round(profit * 100) / 100,
           discountPct: Math.round((1 - price / soldMedian) * 100),
-          itemUrl: item.link || '',
-          imageUrl: item.thumbnail || null,
+          itemUrl: item.itemUrl || '',
+          imageUrl: item.imageUrl || null,
           condition: item.condition || 'Unknown',
         };
       })
@@ -1678,15 +1639,12 @@ app.get('/api/market-movers', async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 10, 20);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+  if (!APIFY_ENABLED) return res.status(503).json({ error: 'Apify not configured' });
 
   try {
-    const response = await axios.get('https://serpapi.com/search', {
-      params: { engine: 'ebay', _nkw: query, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: 50, api_key: SERPAPI_KEY },
-      timeout: 15000,
-    });
-    const items = (response.data?.organic_results || [])
-      .map(i => ({ price: i.price?.extracted, date: i.sold_date ? new Date(i.sold_date) : null, title: i.title, imageUrl: i.thumbnail }))
+    const soldData = await fetchViaApify(query, 50, 'market-movers');
+    const items = soldData.results
+      .map(i => ({ price: parseFloat(i.price), date: i.soldDate ? new Date(i.soldDate) : null, title: i.title, imageUrl: i.imageUrl }))
       .filter(i => i.price > 0 && i.date && !isNaN(i.date));
 
     if (items.length < 6) return res.json({ results: [], message: 'Not enough data' });
@@ -1724,16 +1682,16 @@ app.get('/api/market-movers', async (req, res) => {
 app.get('/api/auto-price', async (req, res) => {
   const query = req.query.q;
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+  if (!APIFY_ENABLED) return res.status(503).json({ error: 'Apify not configured' });
 
   try {
-    const [soldRes, forsaleRes] = await Promise.all([
-      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: 30, api_key: SERPAPI_KEY }, timeout: 15000 }),
-      axios.get('https://serpapi.com/search', { params: { engine: 'ebay', _nkw: query, _ipg: 20, api_key: SERPAPI_KEY }, timeout: 15000 })
+    const [soldData, forsaleData] = await Promise.all([
+      fetchViaApify(query, 30, 'auto-price'),
+      fetchEbayItems(query, 20, 'forsale', 'auto-price'),
     ]);
 
-    const soldPrices = (soldRes.data?.organic_results || []).map(i => i.price?.extracted).filter(p => p > 0);
-    const forsalePrices = (forsaleRes.data?.organic_results || []).map(i => i.price?.extracted).filter(p => p > 0);
+    const soldPrices = soldData.results.map(i => parseFloat(i.price)).filter(p => p > 0);
+    const forsalePrices = (forsaleData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0);
 
     if (soldPrices.length < 2) return res.json({ error: 'Not enough sold data', soldCount: soldPrices.length });
 
@@ -1778,7 +1736,7 @@ app.post('/api/bulk-price', async (req, res) => {
   const { queries } = req.body;
   if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
   if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
-  if (!SERPAPI_ENABLED) return res.status(503).json({ error: 'SerpApi not configured' });
+  if (!APIFY_ENABLED) return res.status(503).json({ error: 'Apify not configured' });
 
   const results = [];
   for (const q of queries) {
@@ -1896,11 +1854,11 @@ connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`For-sale mode: ${USE_MOCK_FORSALE ? 'MOCK' : 'LIVE (eBay Browse API)'}`);
-    console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (SerpApi)'}`);
+    console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (Apify)'}`);
     console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
     console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
     console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);
-    console.log(`SerpApi: ${SERPAPI_ENABLED ? 'ENABLED (sold listings active)' : 'NOT CONFIGURED — add SERPAPI_KEY to .env'}`);
+    console.log(`Apify: ${APIFY_ENABLED ? 'ENABLED (sold listings active)' : 'NOT CONFIGURED — add APIFY_TOKEN to .env'}`);
   });
 });
 
