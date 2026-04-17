@@ -369,14 +369,47 @@ async function fetchViaApify(keywords, limit = 20, source = 'unknown') {
   }
 }
 
+// ---- SerpApi via user-supplied key (free tier) ----
+async function fetchViaSerpApiKey(keywords, limit = 20, source = 'unknown', userKey) {
+  trackApiCall('serpapi-user', 'ebay-sold', keywords, source);
+  console.log(`[SerpApi-User] Searching sold: "${keywords}"`);
+  try {
+    const res = await axios.get('https://serpapi.com/search', {
+      params: { engine: 'ebay', _nkw: keywords, LH_Sold: 1, LH_Complete: 1, show_only: 'Sold', _ipg: Math.min(limit, 200), api_key: userKey },
+      timeout: 15000,
+    });
+    const items = res.data?.organic_results || res.data?.sold_results || res.data?.shopping_results || [];
+    console.log(`[SerpApi-User] ${items.length} items found`);
+    const results = items.map((item, i) => {
+      const price = item.price?.extracted ?? (typeof item.price?.raw === 'string' ? parseFloat(item.price.raw.replace(/[^0-9.]/g, '')) : 0) ?? 0;
+      const rawDate = item.sold_date || item.date || item.end_date || '';
+      let soldDate = '';
+      if (rawDate) { const p = new Date(rawDate); soldDate = isNaN(p.getTime()) ? rawDate : p.toISOString(); }
+      return { itemId: item.product_id || item.item_id || `serp-${i}`, title: item.title || keywords, price: String(price), currency: 'USD', soldDate, imageUrl: item.thumbnail || item.image || null, itemUrl: item.link || '', condition: item.condition || 'Unknown' };
+    });
+    return { results: results.slice(0, limit), total: res.data?.search_information?.total_results || results.length };
+  } catch (err) {
+    console.error(`[SerpApi-User] Error: ${err.message}`);
+    if (err.response?.status === 401 || err.response?.status === 403) return { results: [], total: 0, invalidKey: true };
+    return { results: [], total: 0, error: err.message };
+  }
+}
+
 // ---- Shared fetch function ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (Apify eBay completed)
-async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
+// mode: 'forsale' (eBay Browse API) or 'sold' (Apify for Pro/Pro+, user SerpApi key for free)
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', userSerpKey = null) {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   if (mode === 'sold') {
+    // Free users with their own SerpApi key
+    if (userSerpKey) {
+      const response = await fetchViaSerpApiKey(keywords, limit, source, userSerpKey);
+      if (response.results.length > 0) setCache(cacheKey, response);
+      return response;
+    }
+    // Pro/Pro+ users — centralized Apify
     if (!APIFY_ENABLED) {
       console.log(`[Sold] Apify not configured — add APIFY_TOKEN to .env`);
       return { results: [], total: 0, noProvider: true };
@@ -409,6 +442,17 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
+  // Resolve sold data provider for this user
+  const username = getSessionUser(req);
+  const users = loadServerUsers();
+  const userSub = loadSubscriptions()[username] || {};
+  const isPro = userSub.plan === 'pro' || userSub.plan === 'proplus';
+  const userSerpKey = (!isPro && username) ? (users[username]?.serpApiKey || null) : null;
+
+  if (mode === 'sold' && !isPro && !userSerpKey && !USE_MOCK_SOLD) {
+    return res.status(402).json({ error: 'no_key', message: 'Connect your free SerpApi key in Settings to search sold listings.' });
+  }
+
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     if (mode === 'sold') {
       return res.status(503).json({ error: 'Sold listings unavailable — APIFY_TOKEN not configured on this server.' });
@@ -419,9 +463,9 @@ app.get('/api/search', async (req, res) => {
   try {
     const serial = extractSerial(query);
 
-    // Sold mode — Apify
+    // Sold mode — Apify (Pro/Pro+) or user SerpApi key (free)
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      const searchData = await fetchEbayItems(query, limit, mode, 'search', userSerpKey);
       const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
       return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
     }
@@ -1511,6 +1555,37 @@ app.put('/api/auth/email', async (req, res) => {
   const users = loadServerUsers();
   if (users[username]) { users[username].email = email || ''; saveServerUsers(users); }
   res.json({ ok: true });
+});
+
+// PUT /api/settings/serpapi-key — store user's own SerpApi key
+app.put('/api/settings/serpapi-key', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const { key } = req.body;
+  if (!key || typeof key !== 'string' || key.trim().length < 10) return res.status(400).json({ error: 'Invalid key' });
+  const users = loadServerUsers();
+  if (!users[username]) return res.status(404).json({ error: 'User not found' });
+  users[username].serpApiKey = key.trim();
+  saveServerUsers(users);
+  res.json({ ok: true });
+});
+
+// DELETE /api/settings/serpapi-key — remove user's SerpApi key
+app.delete('/api/settings/serpapi-key', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const users = loadServerUsers();
+  if (users[username]) { delete users[username].serpApiKey; saveServerUsers(users); }
+  res.json({ ok: true });
+});
+
+// GET /api/settings — return non-sensitive user settings
+app.get('/api/settings', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const users = loadServerUsers();
+  const user = users[username] || {};
+  res.json({ hasSerpApiKey: !!user.serpApiKey });
 });
 
 // ---- Stripe API Routes ----

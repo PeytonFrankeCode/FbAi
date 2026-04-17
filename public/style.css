@@ -3867,6 +3867,63 @@ footer::before {
   font-weight: 700;
 }
 
+/* SerpApi key settings */
+.serpapi-connected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #22c55e;
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.serpapi-remove-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--error-border);
+  background: var(--error-bg);
+  color: var(--error);
+  cursor: pointer;
+}
+.serpapi-remove-btn:hover { background: var(--error); color: #fff; }
+.serpapi-save-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  margin-left: 6px;
+}
+.serpapi-save-btn:hover { opacity: 0.85; }
+.serpapi-key-error {
+  font-size: 12px;
+  color: var(--error);
+  margin-top: 4px;
+}
+#serpapi-key-form input {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--text);
+  font-size: 12px;
+}
+.serpapi-connect-btn {
+  margin-top: 10px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.serpapi-connect-btn:hover { opacity: 0.85; }
+
 /* ---- Shared Alert/Tracked Styles ---- */
 .pro-feature-badge {
   font-size: 0.6rem;
