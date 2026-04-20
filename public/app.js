@@ -19,7 +19,6 @@ function toggleTheme() {
 
 function showSettings() {
   updateSettingsSubscription();
-  loadSerpApiKeyStatus();
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
@@ -63,51 +62,6 @@ function cancelSubscription() {
 
 function closeSettings() {
   document.getElementById('settings-overlay').classList.add('hidden');
-}
-
-// ---- SerpApi Key Management (free users) ----
-async function loadSerpApiKeyStatus() {
-  const row = document.getElementById('serpapi-key-row');
-  if (!row) return;
-  const sub = getUserSubscription();
-  const isPro = sub?.plan === 'pro' || sub?.plan === 'proplus';
-  if (isPro) { row.classList.add('hidden'); return; }
-  row.classList.remove('hidden');
-
-  const token = getSessionToken();
-  if (!token) return;
-  try {
-    const res = await fetch('/api/settings', { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    document.getElementById('serpapi-key-connected').classList.toggle('hidden', !data.hasSerpApiKey);
-    document.getElementById('serpapi-key-form').classList.toggle('hidden', !!data.hasSerpApiKey);
-  } catch {}
-}
-
-async function saveSerpApiKey() {
-  const input = document.getElementById('serpapi-key-input');
-  const errEl = document.getElementById('serpapi-key-error');
-  const key = input?.value.trim();
-  errEl.classList.add('hidden');
-  if (!key) return;
-  const token = getSessionToken();
-  if (!token) { showLogin(); return; }
-  try {
-    const res = await fetch('/api/settings/serpapi-key', { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ key }) });
-    const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.error || 'Failed to save key'; errEl.classList.remove('hidden'); return; }
-    input.value = '';
-    loadSerpApiKeyStatus();
-  } catch { errEl.textContent = 'Network error'; errEl.classList.remove('hidden'); }
-}
-
-async function removeSerpApiKey() {
-  const token = getSessionToken();
-  if (!token) return;
-  try {
-    await fetch('/api/settings/serpapi-key', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    loadSerpApiKeyStatus();
-  } catch {}
 }
 
 // Close settings on overlay click
@@ -905,14 +859,6 @@ async function performSearch(query) {
     const data = await response.json();
 
     if (response.status === 401) { showLogin(); return; }
-    if (response.status === 402 && data.error === 'no_key') {
-      setLoading(false);
-      const msg = document.createElement('div');
-      msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#128273;</div><h3>Connect Your SerpApi Key</h3><p>Free users need a personal SerpApi key for sold listings — it\'s free at serpapi.com (250 searches/month).</p><button class="serpapi-connect-btn" onclick="showSettings()">Connect in Settings</button>';
-      grid.appendChild(msg);
-      return;
-    }
     if (response.status === 503 && currentMode === 'sold') {
       setLoading(false);
       const msg = document.createElement('div');
