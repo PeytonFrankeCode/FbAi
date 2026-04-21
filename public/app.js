@@ -691,6 +691,7 @@ function goBackToVariants() {
 
 // ---- Direct Card Search (Stage: direct) ----
 async function fetchDirectSearch(query) {
+  query = await resolveChecklistQuery(query);
   currentSearchMode = 'direct';
   currentResults = [];
 
@@ -838,8 +839,24 @@ function renderStatsBar(results, isSold) {
   grid.appendChild(statsEl);
 }
 
+// ---- Checklist-aware query resolver ----
+// If the query matches a card in any checklist (player + brand/year), build a precise query.
+// Falls back to the original query if no match found.
+async function resolveChecklistQuery(rawQuery) {
+  try {
+    const res = await fetch(`/api/checklists/search?q=${encodeURIComponent(rawQuery.toLowerCase())}`);
+    if (!res.ok) return rawQuery;
+    const data = await res.json();
+    if (!data.match) return rawQuery;
+    return buildChecklistQuery(data.match.player, data.match.year, data.match.brand, data.match.setName, data.match.category, data.match.printRun);
+  } catch {
+    return rawQuery;
+  }
+}
+
 // ---- Search (fetch individual sales for a specific variant) ----
 async function performSearch(query) {
+  query = await resolveChecklistQuery(query);
   setLoading(true);
   showSkeleton();
   grid.innerHTML = '';
