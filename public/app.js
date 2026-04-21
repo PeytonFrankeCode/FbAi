@@ -860,18 +860,50 @@ function displayChecklistVariants(sets, query) {
   const subtitle = document.getElementById('variants-subtitle');
   if (subtitle) subtitle.textContent = 'Select a card to view eBay prices';
 
+  const MAX_CARDS = 20;
   let cardIndex = 0;
+  const setImageMap = new Map(); // setKey → { baseQuery, cardEls[] }
+
   for (const set of sets) {
+    if (cardIndex >= MAX_CARDS) break;
     const parallels = set.parallels && set.parallels.length > 0 ? set.parallels : [{ name: 'Base', printRun: null }];
+    const setKey = `${set.year}|${set.brand}|${set.setName}`;
+    const baseQuery = buildChecklistQuery(set.player, set.year, set.brand, set.setName, set.category);
+    if (!setImageMap.has(setKey)) setImageMap.set(setKey, { baseQuery, cardEls: [] });
+
     for (const parallel of parallels) {
+      if (cardIndex >= MAX_CARDS) break;
       const card = buildChecklistVariantCard(set, parallel);
       card.style.animationDelay = `${cardIndex * 0.06}s`;
       variantsGrid.appendChild(card);
+      setImageMap.get(setKey).cardEls.push(card);
       cardIndex++;
     }
   }
 
   variantsSection.classList.remove('hidden');
+  loadChecklistImages(setImageMap);
+}
+
+async function loadChecklistImages(setImageMap) {
+  for (const { baseQuery, cardEls } of setImageMap.values()) {
+    if (!cardEls.length) continue;
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(baseQuery)}&limit=5&mode=sold`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const imageUrl = data.results?.find(r => r.imageUrl)?.imageUrl;
+      if (!imageUrl) continue;
+      cardEls.forEach(el => {
+        const placeholder = el.querySelector('.variant-no-image');
+        if (!placeholder) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'variant-card-image';
+        wrap.innerHTML = `<img src="${escHtml(imageUrl)}" loading="lazy" alt="Card image" />`;
+        placeholder.replaceWith(wrap);
+      });
+    } catch { /* non-fatal */ }
+  }
 }
 
 function buildChecklistVariantCard(set, parallel) {

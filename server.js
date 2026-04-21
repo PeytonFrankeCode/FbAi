@@ -1069,11 +1069,20 @@ app.get('/api/checklists/search', (req, res) => {
 
   const qTokens = new Set(q.split(/\s+/));
   const seen = new Set();
-  const sets = [];
+  const results = [];
 
   for (const product of checklistData.products) {
+    const brandMatch = q.includes(product.brand.toLowerCase());
+    const yearMatch = q.includes(String(product.year));
+
     for (const set of product.sets) {
       if (!set.cards) continue;
+
+      let score = 0;
+      if (brandMatch) score += 3;
+      if (yearMatch) score += 2;
+      if (set.category && q.includes(set.category)) score += 1;
+
       for (const card of set.cards) {
         const nameParts = card.player.toLowerCase().split(/\s+/);
         if (!nameParts.every(part => qTokens.has(part))) continue;
@@ -1082,7 +1091,8 @@ app.get('/api/checklists/search', (req, res) => {
         if (seen.has(key)) continue;
         seen.add(key);
 
-        sets.push({
+        results.push({
+          score,
           player: card.player,
           cardNumber: card.number,
           team: card.team,
@@ -1098,7 +1108,8 @@ app.get('/api/checklists/search', (req, res) => {
     }
   }
 
-  res.json({ sets });
+  results.sort((a, b) => b.score - a.score);
+  res.json({ sets: results.map(({ score, ...r }) => r) });
 });
 
 // GET /api/checklists/:productId — get full product with all sets
