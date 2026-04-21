@@ -1425,7 +1425,7 @@ function getSessionUser(req) {
   const s = sessions[token];
   if (!s) return null;
   if (Date.now() > s.expiresAt) { delete sessions[token]; saveSessions(sessions); return null; }
-  return s.username;
+  return s.username.toLowerCase();
 }
 
 // POST /api/auth/register
