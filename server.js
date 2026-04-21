@@ -360,8 +360,10 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
       return { results: [], total: 0, noProvider: true };
     }
     const response = await fetchViaEbayApiData(keywords, limit, source);
-    if (response.results.length > 0) setCache(cacheKey, response);
-    return response;
+    const filtered = { ...response, results: filterJunkListings(response.results) };
+    filtered.total = filtered.results.length;
+    if (filtered.results.length > 0) setCache(cacheKey, filtered);
+    return filtered;
   }
 
   // For sale mode — eBay Browse API
@@ -580,8 +582,31 @@ function buildBroadenedQueries(parsed) {
   return queries;
 }
 
+const JUNK_KEYWORDS = ['reprint', 'custom', 'proxy', 'read desc', 'read description', 'lot of', ' lot ', 'bundle', 'fake', 'reproduction'];
+
+function filterJunkListings(results) {
+  return results.filter(r => {
+    const title = (r.title || '').toLowerCase();
+    return !JUNK_KEYWORDS.some(kw => title.includes(kw));
+  });
+}
+
+function removeOutliers(prices) {
+  if (prices.length < 4) return prices;
+  const sorted = [...prices].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(sorted.length * 0.25)];
+  const q3 = sorted[Math.floor(sorted.length * 0.75)];
+  const iqr = q3 - q1;
+  const lower = q1 - 1.5 * iqr;
+  const upper = q3 + 1.5 * iqr;
+  return prices.filter(p => p >= lower && p <= upper);
+}
+
 function computeApproxValue(results, label) {
-  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
+  const rawPrices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
+  if (rawPrices.length === 0) return null;
+
+  const prices = removeOutliers(rawPrices);
   if (prices.length === 0) return null;
 
   prices.sort((a, b) => a - b);
