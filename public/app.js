@@ -856,86 +856,49 @@ function displayChecklistVariants(sets, query) {
   setLoading(false);
   hideSkeleton();
   variantsGrid.innerHTML = '';
-  variantsTitle.innerHTML = `Cards matching &ldquo;<strong>${escHtml(query)}</strong>&rdquo; in your checklists`;
+  variantsTitle.innerHTML = `Results for &ldquo;<strong>${escHtml(query)}</strong>&rdquo;`;
   const subtitle = document.getElementById('variants-subtitle');
-  if (subtitle) subtitle.textContent = 'Select a card or parallel to view eBay prices';
-  sets.forEach((set, i) => {
-    const card = buildChecklistVariantCard(set);
-    card.style.animationDelay = `${i * 0.06}s`;
-    variantsGrid.appendChild(card);
-  });
+  if (subtitle) subtitle.textContent = 'Select a card to view eBay prices';
+
+  let cardIndex = 0;
+  for (const set of sets) {
+    const parallels = set.parallels && set.parallels.length > 0 ? set.parallels : [{ name: 'Base', printRun: null }];
+    for (const parallel of parallels) {
+      const card = buildChecklistVariantCard(set, parallel);
+      card.style.animationDelay = `${cardIndex * 0.06}s`;
+      variantsGrid.appendChild(card);
+      cardIndex++;
+    }
+  }
+
   variantsSection.classList.remove('hidden');
 }
 
-function buildChecklistVariantCard(set) {
+function buildChecklistVariantCard(set, parallel) {
   const card = document.createElement('div');
-  card.className = 'variant-card cl-variant-card';
+  card.className = 'variant-card';
 
-  const catLabel = set.category === 'autograph' ? 'AUTO'
-    : set.category === 'memorabilia' ? 'MEMO'
-    : set.category === 'insert' ? 'INSERT'
-    : 'BASE';
+  const parallelName = parallel.name === 'Base' ? null : parallel.name;
+  const printRun = parallel.printRun || set.printRun || null;
+  const pr = printRun ? ` /${printRun}` : '';
+  const parallelLabel = parallel.name === 'Base' ? 'Base' : `${parallel.name}${pr}`;
 
-  const parallels = set.parallels || [];
-  const MAX_VIS = 9;
-  const visible = parallels.slice(0, MAX_VIS);
-  const rest = parallels.slice(MAX_VIS);
-
-  const visibleChipsHtml = visible.map(p => {
-    const pr = p.printRun ? ` /${p.printRun}` : '';
-    const pName = p.name === 'Base' ? null : p.name;
-    const q = buildChecklistVariantQuery(set.player, set.year, set.brand, set.setName, set.category, pName, p.printRun);
-    return `<button class="cl-par-chip" data-query="${escHtml(q)}">${escHtml(p.name)}${pr}</button>`;
-  }).join('');
-
-  const moreHtml = rest.length > 0 ? `<button class="cl-par-more">+${rest.length} more</button>` : '';
+  const displayName = `${set.year} ${set.brand} ${set.player} ${parallelLabel}`;
+  const numLabel = set.cardNumber ? ` #${set.cardNumber}` : '';
+  const searchQuery = buildChecklistVariantQuery(set.player, set.year, set.brand, set.setName, set.category, parallelName, printRun);
 
   card.innerHTML = `
-    <div class="cl-vc-header">
-      <span class="cl-vc-product">${escHtml(set.year + ' ' + set.brand)}</span>
-      <span class="checklist-badge ${escHtml(set.category)}">${catLabel}</span>
-    </div>
-    <div class="cl-vc-body">
-      <p class="cl-vc-player">${escHtml(set.player)}</p>
-      <div class="cl-vc-meta">
-        ${set.setName && set.setName !== 'Base Set' ? `<span class="cl-vc-set">${escHtml(set.setName)}</span>` : ''}
-        ${set.team ? `<span class="cl-vc-team">${escHtml(set.team)}</span>` : ''}
-        ${set.cardNumber ? `<span class="cl-vc-num">#${escHtml(set.cardNumber)}</span>` : ''}
+    <div class="variant-no-image"><span>&#127944;</span></div>
+    <div class="variant-card-body">
+      <p class="variant-name">${escHtml(displayName)}</p>
+      <p class="variant-avg-price" style="font-size:0.75rem;color:var(--text-secondary)">${escHtml(set.team || '')}${numLabel}</p>
+      <div class="variant-footer">
+        <span class="variant-sales-count">Tap to search eBay</span>
       </div>
     </div>
-    ${parallels.length > 0 ? `<div class="cl-vc-parallels">${visibleChipsHtml}${moreHtml}</div>` : ''}
   `;
 
-  card.querySelectorAll('.cl-par-chip').forEach(btn => {
-    btn.addEventListener('click', (e) => { e.stopPropagation(); selectChecklistVariant(btn.dataset.query); });
-  });
-
-  const moreBtn = card.querySelector('.cl-par-more');
-  if (moreBtn) {
-    moreBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const parallelsDiv = card.querySelector('.cl-vc-parallels');
-      moreBtn.remove();
-      rest.forEach(p => {
-        const pr = p.printRun ? ` /${p.printRun}` : '';
-        const pName = p.name === 'Base' ? null : p.name;
-        const q = buildChecklistVariantQuery(set.player, set.year, set.brand, set.setName, set.category, pName, p.printRun);
-        const chip = document.createElement('button');
-        chip.className = 'cl-par-chip';
-        chip.dataset.query = q;
-        chip.textContent = `${p.name}${pr}`;
-        chip.addEventListener('click', (e2) => { e2.stopPropagation(); selectChecklistVariant(q); });
-        parallelsDiv.appendChild(chip);
-      });
-    });
-  }
-
-  const baseQuery = buildChecklistQuery(set.player, set.year, set.brand, set.setName, set.category, set.printRun);
-  card.addEventListener('click', (e) => {
-    if (e.target.closest('.cl-par-chip, .cl-par-more')) return;
-    selectChecklistVariant(baseQuery);
-  });
-
+  card.addEventListener('click', () => selectChecklistVariant(searchQuery));
   return card;
 }
 
