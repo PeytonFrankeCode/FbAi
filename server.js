@@ -1062,43 +1062,43 @@ app.get('/api/checklists', (req, res) => {
   res.json({ products });
 });
 
-// GET /api/checklists/search?q= — search across all products for checklist-aware query resolution
+// GET /api/checklists/search?q= — find all checklist sets/parallels for a player
 app.get('/api/checklists/search', (req, res) => {
   const q = (req.query.q || '').toLowerCase().trim();
-  if (!q || q.length < 2) return res.json({ match: null });
+  if (!q || q.length < 2) return res.json({ sets: [] });
 
   const qTokens = new Set(q.split(/\s+/));
-  let bestMatch = null;
-  let bestScore = 0;
+  const seen = new Set();
+  const sets = [];
 
   for (const product of checklistData.products) {
-    const brandMatch = q.includes(product.brand.toLowerCase());
-    const yearMatch = q.includes(String(product.year));
-    if (!brandMatch && !yearMatch) continue; // must match brand or year to be relevant
-
     for (const set of product.sets) {
       if (!set.cards) continue;
       for (const card of set.cards) {
         const nameParts = card.player.toLowerCase().split(/\s+/);
         if (!nameParts.every(part => qTokens.has(part))) continue;
 
-        const score = (brandMatch ? 2 : 0) + (yearMatch ? 1 : 0) + 1;
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = {
-            player: card.player,
-            year: product.year,
-            brand: product.brand,
-            setName: set.name,
-            category: set.category || 'base',
-            printRun: card.printRun || null,
-          };
-        }
+        const key = `${card.player}|${product.year}|${product.brand}|${set.name}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        sets.push({
+          player: card.player,
+          cardNumber: card.number,
+          team: card.team,
+          year: product.year,
+          brand: product.brand,
+          productName: product.name,
+          setName: set.name,
+          category: set.category || 'base',
+          printRun: card.printRun || null,
+          parallels: set.parallels || [],
+        });
       }
     }
   }
 
-  res.json({ match: bestMatch });
+  res.json({ sets });
 });
 
 // GET /api/checklists/:productId — get full product with all sets
