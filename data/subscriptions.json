@@ -1,8 +1,9 @@
 {
   "tester12345": {
     "plan": "proplus",
-    "period": "monthly",
+    "period": "lifetime",
     "subscribedAt": "2026-04-15T00:00:00.000Z",
-    "status": "active"
+    "status": "active",
+    "permanent": true
   }
 }

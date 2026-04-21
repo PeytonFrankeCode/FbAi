@@ -82,9 +82,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     }
     case 'customer.subscription.deleted': {
       const sub = event.data.object;
-      // Find user by stripe customer ID
       for (const [user, data] of Object.entries(subs)) {
-        if (data.stripeCustomerId === sub.customer) {
+        if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = 'cancelled';
           data.cancelledAt = new Date().toISOString();
           break;
@@ -96,7 +95,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     case 'customer.subscription.updated': {
       const sub = event.data.object;
       for (const [user, data] of Object.entries(subs)) {
-        if (data.stripeCustomerId === sub.customer) {
+        if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = sub.status === 'active' ? 'active' : sub.status;
           break;
         }

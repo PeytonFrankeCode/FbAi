@@ -916,11 +916,11 @@ header {
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-primary);
   box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(94, 206, 153, 0.12);
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0 1.5rem 0.85rem;
+  padding: 0.75rem 1.5rem 0.85rem;
 }
 .nav-bar::-webkit-scrollbar { display: none; }
 
@@ -2675,7 +2675,7 @@ footer::before {
   }
 
   .nav-bar {
-    padding: 0 0.75rem 0.65rem;
+    padding: 0.5rem 0.75rem 0.65rem;
   }
 
   .header-nav {
@@ -2721,11 +2721,9 @@ footer::before {
 
 /* ---- Header Nav Tabs ---- */
 .header-nav {
-  display: flex;
-  justify-content: flex-start;
+  display: inline-flex;
   gap: 0.5rem;
   flex-wrap: nowrap;
-  width: max-content;
   min-width: 100%;
 }
 
@@ -4585,7 +4583,7 @@ tr:hover .cl-alert-btn {
 .mobile-layout .auth-btn, .mobile-layout .pro-btn { font-size: 0.7rem; padding: 0.3rem 0.6rem; }
 
 /* Nav tabs */
-.mobile-layout .nav-bar { padding: 0 0.5rem 0.6rem; }
+.mobile-layout .nav-bar { padding: 0.4rem 0.5rem 0.6rem; }
 .mobile-layout .header-nav { gap: 0.3rem; }
 .mobile-layout .nav-tab { font-size: 0.68rem; padding: 0.3rem 0.65rem; white-space: nowrap; flex-shrink: 0; }
 
