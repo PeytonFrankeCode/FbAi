@@ -557,19 +557,6 @@ async function fetchVariants(query) {
   showSkeleton();
 
   try {
-    // Check checklists first — if the player is in any checklist, show those cards with parallels
-    try {
-      const clRes = await fetch(`/api/checklists/search?q=${encodeURIComponent(query.toLowerCase())}`);
-      if (clRes.ok) {
-        const clData = await clRes.json();
-        if (clData.sets && clData.sets.length > 0) {
-          displayChecklistVariants(clData.sets, query);
-          return;
-        }
-      }
-    } catch { /* checklist lookup failure is non-fatal, fall through to eBay */ }
-
-    // Fall back to eBay-derived variants
     const params = new URLSearchParams({ q: query, mode: currentMode });
     const response = await fetch(`/api/variants?${params}`, {
       headers: {},
@@ -849,104 +836,6 @@ function renderStatsBar(results, isSold) {
     </div>
   `;
   grid.appendChild(statsEl);
-}
-
-// ---- Display Checklist Variants (Stage 1 checklist path) ----
-function displayChecklistVariants(sets, query) {
-  setLoading(false);
-  hideSkeleton();
-  variantsGrid.innerHTML = '';
-  variantsTitle.innerHTML = `Results for &ldquo;<strong>${escHtml(query)}</strong>&rdquo;`;
-  const subtitle = document.getElementById('variants-subtitle');
-  if (subtitle) subtitle.textContent = 'Select a card to view eBay prices';
-
-  const MAX_CARDS = 20;
-  let cardIndex = 0;
-  const setImageMap = new Map(); // setKey → { baseQuery, cardEls[] }
-
-  for (const set of sets) {
-    if (cardIndex >= MAX_CARDS) break;
-    const parallels = set.parallels && set.parallels.length > 0 ? set.parallels : [{ name: 'Base', printRun: null }];
-    const setKey = `${set.year}|${set.brand}|${set.setName}`;
-    const baseQuery = buildChecklistQuery(set.player, set.year, set.brand, set.setName, set.category);
-    if (!setImageMap.has(setKey)) setImageMap.set(setKey, { baseQuery, cardEls: [] });
-
-    for (const parallel of parallels) {
-      if (cardIndex >= MAX_CARDS) break;
-      const card = buildChecklistVariantCard(set, parallel);
-      card.style.animationDelay = `${cardIndex * 0.06}s`;
-      variantsGrid.appendChild(card);
-      setImageMap.get(setKey).cardEls.push(card);
-      cardIndex++;
-    }
-  }
-
-  variantsSection.classList.remove('hidden');
-  loadChecklistImages(setImageMap);
-}
-
-async function loadChecklistImages(setImageMap) {
-  for (const { baseQuery, cardEls } of setImageMap.values()) {
-    if (!cardEls.length) continue;
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(baseQuery)}&limit=5&mode=sold`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      const imageUrl = data.results?.find(r => r.imageUrl)?.imageUrl;
-      if (!imageUrl) continue;
-      cardEls.forEach(el => {
-        const placeholder = el.querySelector('.variant-no-image');
-        if (!placeholder) return;
-        const wrap = document.createElement('div');
-        wrap.className = 'variant-card-image';
-        wrap.innerHTML = `<img src="${escHtml(imageUrl)}" loading="lazy" alt="Card image" />`;
-        placeholder.replaceWith(wrap);
-      });
-    } catch { /* non-fatal */ }
-  }
-}
-
-function buildChecklistVariantCard(set, parallel) {
-  const card = document.createElement('div');
-  card.className = 'variant-card';
-
-  const parallelName = parallel.name === 'Base' ? null : parallel.name;
-  const printRun = parallel.printRun || set.printRun || null;
-  const pr = printRun ? ` /${printRun}` : '';
-  const parallelLabel = parallel.name === 'Base' ? 'Base' : `${parallel.name}${pr}`;
-
-  const displayName = `${set.year} ${set.brand} ${set.player} ${parallelLabel}`;
-  const numLabel = set.cardNumber ? ` #${set.cardNumber}` : '';
-  const searchQuery = buildChecklistVariantQuery(set.player, set.year, set.brand, set.setName, set.category, parallelName, printRun);
-
-  card.innerHTML = `
-    <div class="variant-no-image"><span>&#127944;</span></div>
-    <div class="variant-card-body">
-      <p class="variant-name">${escHtml(displayName)}</p>
-      <p class="variant-avg-price" style="font-size:0.75rem;color:var(--text-secondary)">${escHtml(set.team || '')}${numLabel}</p>
-      <div class="variant-footer">
-        <span class="variant-sales-count">Tap to search eBay</span>
-      </div>
-    </div>
-  `;
-
-  card.addEventListener('click', () => selectChecklistVariant(searchQuery));
-  return card;
-}
-
-function selectChecklistVariant(query) {
-  variantsSection.classList.add('hidden');
-  backBtn.classList.remove('hidden');
-  input.value = query;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  performSearch(query);
-}
-
-function buildChecklistVariantQuery(player, year, brand, setName, category, parallelName, printRun) {
-  const base = buildChecklistQuery(player, year, brand, setName, category);
-  if (!parallelName) return printRun ? `${base} /${printRun}` : base;
-  const pr = printRun ? ` /${printRun}` : '';
-  return `${base} ${parallelName}${pr}`;
 }
 
 // ---- Search (fetch individual sales for a specific variant) ----
