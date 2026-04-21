@@ -1062,6 +1062,45 @@ app.get('/api/checklists', (req, res) => {
   res.json({ products });
 });
 
+// GET /api/checklists/search?q= — find all checklist sets/parallels for a player
+app.get('/api/checklists/search', (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (!q || q.length < 2) return res.json({ sets: [] });
+
+  const qTokens = new Set(q.split(/\s+/));
+  const seen = new Set();
+  const sets = [];
+
+  for (const product of checklistData.products) {
+    for (const set of product.sets) {
+      if (!set.cards) continue;
+      for (const card of set.cards) {
+        const nameParts = card.player.toLowerCase().split(/\s+/);
+        if (!nameParts.every(part => qTokens.has(part))) continue;
+
+        const key = `${card.player}|${product.year}|${product.brand}|${set.name}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        sets.push({
+          player: card.player,
+          cardNumber: card.number,
+          team: card.team,
+          year: product.year,
+          brand: product.brand,
+          productName: product.name,
+          setName: set.name,
+          category: set.category || 'base',
+          printRun: card.printRun || null,
+          parallels: set.parallels || [],
+        });
+      }
+    }
+  }
+
+  res.json({ sets });
+});
+
 // GET /api/checklists/:productId — get full product with all sets
 app.get('/api/checklists/:productId', (req, res) => {
   const product = checklistData.products.find(p => p.id === req.params.productId);

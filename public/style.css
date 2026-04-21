@@ -2042,6 +2042,105 @@ main {
   color: var(--text-muted);
 }
 
+/* ---- Checklist Variant Cards ---- */
+.cl-variant-card {
+  cursor: pointer;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cl-vc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.cl-vc-product {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cl-vc-player {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cl-vc-meta {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.cl-vc-set {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.cl-vc-team,
+.cl-vc-num {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--border-primary);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}
+
+.cl-vc-parallels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+}
+
+.cl-par-chip {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-secondary);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.cl-par-chip:hover {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #fff;
+}
+
+.cl-par-more {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  border: 1px dashed var(--border-secondary);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.cl-par-more:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 /* ---- Approximate Value Section ---- */
 .approx-value-section {
   background: var(--surface-gradient);

@@ -557,6 +557,19 @@ async function fetchVariants(query) {
   showSkeleton();
 
   try {
+    // Check checklists first — if the player is in any checklist, show those cards with parallels
+    try {
+      const clRes = await fetch(`/api/checklists/search?q=${encodeURIComponent(query.toLowerCase())}`);
+      if (clRes.ok) {
+        const clData = await clRes.json();
+        if (clData.sets && clData.sets.length > 0) {
+          displayChecklistVariants(clData.sets, query);
+          return;
+        }
+      }
+    } catch { /* checklist lookup failure is non-fatal, fall through to eBay */ }
+
+    // Fall back to eBay-derived variants
     const params = new URLSearchParams({ q: query, mode: currentMode });
     const response = await fetch(`/api/variants?${params}`, {
       headers: {},
@@ -836,6 +849,109 @@ function renderStatsBar(results, isSold) {
     </div>
   `;
   grid.appendChild(statsEl);
+}
+
+// ---- Display Checklist Variants (Stage 1 checklist path) ----
+function displayChecklistVariants(sets, query) {
+  setLoading(false);
+  hideSkeleton();
+  variantsGrid.innerHTML = '';
+  variantsTitle.innerHTML = `Cards matching &ldquo;<strong>${escHtml(query)}</strong>&rdquo; in your checklists`;
+  const subtitle = document.getElementById('variants-subtitle');
+  if (subtitle) subtitle.textContent = 'Select a card or parallel to view eBay prices';
+  sets.forEach((set, i) => {
+    const card = buildChecklistVariantCard(set);
+    card.style.animationDelay = `${i * 0.06}s`;
+    variantsGrid.appendChild(card);
+  });
+  variantsSection.classList.remove('hidden');
+}
+
+function buildChecklistVariantCard(set) {
+  const card = document.createElement('div');
+  card.className = 'variant-card cl-variant-card';
+
+  const catLabel = set.category === 'autograph' ? 'AUTO'
+    : set.category === 'memorabilia' ? 'MEMO'
+    : set.category === 'insert' ? 'INSERT'
+    : 'BASE';
+
+  const parallels = set.parallels || [];
+  const MAX_VIS = 9;
+  const visible = parallels.slice(0, MAX_VIS);
+  const rest = parallels.slice(MAX_VIS);
+
+  const visibleChipsHtml = visible.map(p => {
+    const pr = p.printRun ? ` /${p.printRun}` : '';
+    const pName = p.name === 'Base' ? null : p.name;
+    const q = buildChecklistVariantQuery(set.player, set.year, set.brand, set.setName, set.category, pName, p.printRun);
+    return `<button class="cl-par-chip" data-query="${escHtml(q)}">${escHtml(p.name)}${pr}</button>`;
+  }).join('');
+
+  const moreHtml = rest.length > 0 ? `<button class="cl-par-more">+${rest.length} more</button>` : '';
+
+  card.innerHTML = `
+    <div class="cl-vc-header">
+      <span class="cl-vc-product">${escHtml(set.year + ' ' + set.brand)}</span>
+      <span class="checklist-badge ${escHtml(set.category)}">${catLabel}</span>
+    </div>
+    <div class="cl-vc-body">
+      <p class="cl-vc-player">${escHtml(set.player)}</p>
+      <div class="cl-vc-meta">
+        ${set.setName && set.setName !== 'Base Set' ? `<span class="cl-vc-set">${escHtml(set.setName)}</span>` : ''}
+        ${set.team ? `<span class="cl-vc-team">${escHtml(set.team)}</span>` : ''}
+        ${set.cardNumber ? `<span class="cl-vc-num">#${escHtml(set.cardNumber)}</span>` : ''}
+      </div>
+    </div>
+    ${parallels.length > 0 ? `<div class="cl-vc-parallels">${visibleChipsHtml}${moreHtml}</div>` : ''}
+  `;
+
+  card.querySelectorAll('.cl-par-chip').forEach(btn => {
+    btn.addEventListener('click', (e) => { e.stopPropagation(); selectChecklistVariant(btn.dataset.query); });
+  });
+
+  const moreBtn = card.querySelector('.cl-par-more');
+  if (moreBtn) {
+    moreBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const parallelsDiv = card.querySelector('.cl-vc-parallels');
+      moreBtn.remove();
+      rest.forEach(p => {
+        const pr = p.printRun ? ` /${p.printRun}` : '';
+        const pName = p.name === 'Base' ? null : p.name;
+        const q = buildChecklistVariantQuery(set.player, set.year, set.brand, set.setName, set.category, pName, p.printRun);
+        const chip = document.createElement('button');
+        chip.className = 'cl-par-chip';
+        chip.dataset.query = q;
+        chip.textContent = `${p.name}${pr}`;
+        chip.addEventListener('click', (e2) => { e2.stopPropagation(); selectChecklistVariant(q); });
+        parallelsDiv.appendChild(chip);
+      });
+    });
+  }
+
+  const baseQuery = buildChecklistQuery(set.player, set.year, set.brand, set.setName, set.category, set.printRun);
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.cl-par-chip, .cl-par-more')) return;
+    selectChecklistVariant(baseQuery);
+  });
+
+  return card;
+}
+
+function selectChecklistVariant(query) {
+  variantsSection.classList.add('hidden');
+  backBtn.classList.remove('hidden');
+  input.value = query;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  performSearch(query);
+}
+
+function buildChecklistVariantQuery(player, year, brand, setName, category, parallelName, printRun) {
+  const base = buildChecklistQuery(player, year, brand, setName, category);
+  if (!parallelName) return printRun ? `${base} /${printRun}` : base;
+  const pr = printRun ? ` /${printRun}` : '';
+  return `${base} ${parallelName}${pr}`;
 }
 
 // ---- Search (fetch individual sales for a specific variant) ----
@@ -1253,12 +1369,7 @@ function buildCard(item) {
         ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
       </div>
-      <a class="card-link"
-         href="${isSold ? epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`) : epnUrl(item.itemUrl)}"
-         target="_blank"
-         rel="noopener noreferrer">
-        ${isSold ? 'View sold listings &#8599;' : 'View on eBay &#8599;'}
-      </a>
+      ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
     </div>
   `;
 
