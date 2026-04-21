@@ -1670,7 +1670,7 @@ async function syncSubscriptionStatus() {
       const users = getUsers();
       const key = user.toLowerCase();
       if (!users[key]) users[key] = {};
-      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt };
+      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt, status: data.subscription.status || 'active' };
       if (data.subscription.extraPromoteSlots) {
         users[key].extraPromoteSlots = data.subscription.extraPromoteSlots;
       }
