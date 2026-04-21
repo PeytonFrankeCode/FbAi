@@ -1253,12 +1253,7 @@ function buildCard(item) {
         ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
       </div>
-      <a class="card-link"
-         href="${isSold ? epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`) : epnUrl(item.itemUrl)}"
-         target="_blank"
-         rel="noopener noreferrer">
-        ${isSold ? 'View sold listings &#8599;' : 'View on eBay &#8599;'}
-      </a>
+      ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
     </div>
   `;
 
