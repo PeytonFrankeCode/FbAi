@@ -903,13 +903,26 @@ body {
 /* ---- Header ---- */
 header {
   background: var(--header-bg);
-  border-bottom: 1px solid var(--border-primary);
-  padding: 2.8rem 1.5rem 2rem;
+  border-bottom: none;
+  padding: 2.8rem 1.5rem 1.5rem;
   text-align: center;
   position: relative;
-  overflow: clip;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(94, 206, 153, 0.12);
+  overflow: hidden;
+  box-shadow: none;
 }
+
+/* Nav bar sits below the header, outside its overflow:hidden boundary */
+.nav-bar {
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border-primary);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(94, 206, 153, 0.12);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0 1.5rem 0.85rem;
+}
+.nav-bar::-webkit-scrollbar { display: none; }
 
 header::before {
   content: '';
@@ -2661,15 +2674,13 @@ footer::before {
     padding: 2rem 1rem;
   }
 
+  .nav-bar {
+    padding: 0 0.75rem 0.65rem;
+  }
+
   .header-nav {
-    justify-content: flex-start;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 0 0.25rem 0.25rem;
     gap: 0.35rem;
   }
-  .header-nav::-webkit-scrollbar { display: none; }
 
   .nav-tab {
     font-size: 0.72rem;
@@ -2713,13 +2724,10 @@ footer::before {
   display: flex;
   justify-content: flex-start;
   gap: 0.5rem;
-  margin-top: 1rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px; /* prevent clipped focus rings */
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 100%;
 }
-.header-nav::-webkit-scrollbar { display: none; }
 
 .nav-tab {
   background: transparent;
@@ -4577,8 +4585,8 @@ tr:hover .cl-alert-btn {
 .mobile-layout .auth-btn, .mobile-layout .pro-btn { font-size: 0.7rem; padding: 0.3rem 0.6rem; }
 
 /* Nav tabs */
-.mobile-layout .header-nav { justify-content: flex-start; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 0.25rem 0.25rem; gap: 0.3rem; margin-top: 0.6rem; }
-.mobile-layout .header-nav::-webkit-scrollbar { display: none; }
+.mobile-layout .nav-bar { padding: 0 0.5rem 0.6rem; }
+.mobile-layout .header-nav { gap: 0.3rem; }
 .mobile-layout .nav-tab { font-size: 0.68rem; padding: 0.3rem 0.65rem; white-space: nowrap; flex-shrink: 0; }
 
 /* Search */
