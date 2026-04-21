@@ -1062,56 +1062,6 @@ app.get('/api/checklists', (req, res) => {
   res.json({ products });
 });
 
-// GET /api/checklists/search?q= — find all checklist sets/parallels for a player
-app.get('/api/checklists/search', (req, res) => {
-  const q = (req.query.q || '').toLowerCase().trim();
-  if (!q || q.length < 2) return res.json({ sets: [] });
-
-  const qTokens = new Set(q.split(/\s+/));
-  const seen = new Set();
-  const results = [];
-
-  for (const product of checklistData.products) {
-    const brandMatch = q.includes(product.brand.toLowerCase());
-    const yearMatch = q.includes(String(product.year));
-
-    for (const set of product.sets) {
-      if (!set.cards) continue;
-
-      let score = 0;
-      if (brandMatch) score += 3;
-      if (yearMatch) score += 2;
-      if (set.category && q.includes(set.category)) score += 1;
-
-      for (const card of set.cards) {
-        const nameParts = card.player.toLowerCase().split(/\s+/);
-        if (!nameParts.every(part => qTokens.has(part))) continue;
-
-        const key = `${card.player}|${product.year}|${product.brand}|${set.name}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-
-        results.push({
-          score,
-          player: card.player,
-          cardNumber: card.number,
-          team: card.team,
-          year: product.year,
-          brand: product.brand,
-          productName: product.name,
-          setName: set.name,
-          category: set.category || 'base',
-          printRun: card.printRun || null,
-          parallels: set.parallels || [],
-        });
-      }
-    }
-  }
-
-  results.sort((a, b) => b.score - a.score);
-  res.json({ sets: results.map(({ score, ...r }) => r) });
-});
-
 // GET /api/checklists/:productId — get full product with all sets
 app.get('/api/checklists/:productId', (req, res) => {
   const product = checklistData.products.find(p => p.id === req.params.productId);
