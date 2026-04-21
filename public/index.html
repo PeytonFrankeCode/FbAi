@@ -39,7 +39,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
 
 
 </head>
@@ -86,22 +86,24 @@
         <img src="logo.png" alt="The Card Huddle" class="header-logo" />
       </div>
       <p class="header-tagline">Find. Collect. Track.</p>
-      <nav class="header-nav">
-        <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
-        <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
-        <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
-        <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
-        <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
-        <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
-        </button>
-        <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro+ Tools <span class="proplus-nav-badge">PRO+</span></button>
-        <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-      </nav>
     </div>
   </header>
+  <div class="nav-bar">
+    <nav class="header-nav">
+      <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
+      <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
+      <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
+      <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
+      <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
+      <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
+      </button>
+      <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro+ Tools <span class="proplus-nav-badge">PRO+</span></button>
+      <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </nav>
+  </div>
 
   <!-- Login / Sign Up Modal -->
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-label="Login">
