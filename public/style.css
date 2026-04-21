@@ -1810,6 +1810,31 @@ main {
   color: var(--text-secondary);
 }
 
+/* ---- Grade Section Headers ---- */
+.grade-section-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  margin: 0.5rem 0 0.25rem;
+  background: var(--bg-secondary);
+  border-left: 4px solid var(--accent-green);
+  border-radius: 0 6px 6px 0;
+}
+
+.grade-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+}
+
+.grade-meta {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
 .card-condition {
   font-size: 0.75rem;
   color: var(--text-secondary);

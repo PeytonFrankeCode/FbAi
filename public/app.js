@@ -379,11 +379,15 @@ function applySortToResults(sortType) {
   const statsBar = grid.querySelector('.stats-bar');
   grid.innerHTML = '';
   if (statsBar) grid.appendChild(statsBar);
-  sorted.forEach((item, i) => {
-    const card = buildCard(item);
-    card.style.animationDelay = `${i * 0.05}s`;
-    grid.appendChild(card);
-  });
+  if (currentMode === 'sold' && sortType === 'default') {
+    renderGradeGroups(grid, sorted);
+  } else {
+    sorted.forEach((item, i) => {
+      const card = buildCard(item);
+      card.style.animationDelay = `${i * 0.05}s`;
+      grid.appendChild(card);
+    });
+  }
   injectPromotedCards(grid);
 }
 
@@ -763,11 +767,15 @@ async function fetchDirectSearch(query) {
       empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
-      results.forEach((item, i) => {
-        const card = buildCard(item);
-        card.style.animationDelay = `${i * 0.05}s`;
-        grid.appendChild(card);
-      });
+      if (isSold) {
+        renderGradeGroups(grid, results);
+      } else {
+        results.forEach((item, i) => {
+          const card = buildCard(item);
+          card.style.animationDelay = `${i * 0.05}s`;
+          grid.appendChild(card);
+        });
+      }
       injectPromotedCards(grid);
       if (isSold) updatePriceChart(results);
     }
@@ -923,11 +931,15 @@ async function performSearch(query) {
         similarSection.classList.remove('hidden');
       }
     } else {
-      results.forEach((item, i) => {
-        const card = buildCard(item);
-        card.style.animationDelay = `${i * 0.05}s`;
-        grid.appendChild(card);
-      });
+      if (isSold) {
+        renderGradeGroups(grid, results);
+      } else {
+        results.forEach((item, i) => {
+          const card = buildCard(item);
+          card.style.animationDelay = `${i * 0.05}s`;
+          grid.appendChild(card);
+        });
+      }
       injectPromotedCards(grid);
       if (isSold) {
         updatePriceChart(results);
@@ -1125,6 +1137,69 @@ function getTeamColor(title) {
   return '#52b788';
 }
 
+// ---- Date helpers ----
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const days = Math.floor((Date.now() - date.getTime()) / 86400000);
+  if (days === 0) return 'today';
+  if (days === 1) return '1 day ago';
+  if (days < 7) return `${days} days ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return '1 week ago';
+  if (weeks < 5) return `${weeks} weeks ago`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return '1 month ago';
+  return `${months} months ago`;
+}
+
+// ---- Grade helpers ----
+function detectGrade(title) {
+  const t = (title || '').toUpperCase();
+  if (/PSA\s*10/.test(t)) return 'PSA 10';
+  if (/PSA\s*9\.5/.test(t)) return 'PSA 9.5';
+  if (/PSA\s*9/.test(t)) return 'PSA 9';
+  if (/PSA\s*8/.test(t)) return 'PSA 8';
+  if (/PSA\s*[0-9]/.test(t)) return 'PSA Other';
+  if (/BGS\s*10|BGS\s*PRISTINE/.test(t)) return 'BGS 10';
+  if (/BGS\s*9\.5/.test(t)) return 'BGS 9.5';
+  if (/BGS/.test(t)) return 'BGS';
+  if (/SGC/.test(t)) return 'SGC';
+  if (/CGC/.test(t)) return 'CGC';
+  return 'Raw / Ungraded';
+}
+
+const GRADE_ORDER = ['PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC', 'Raw / Ungraded'];
+
+function groupByGrade(results) {
+  const groups = {};
+  for (const item of results) {
+    const grade = detectGrade(item.title);
+    if (!groups[grade]) groups[grade] = [];
+    groups[grade].push(item);
+  }
+  return GRADE_ORDER.filter(g => groups[g]?.length > 0).map(g => ({ grade: g, items: groups[g] }));
+}
+
+function renderGradeGroups(grid, results) {
+  const gradeGroups = groupByGrade(results);
+  let cardIndex = 0;
+  for (const group of gradeGroups) {
+    const avgPrice = group.items.map(i => parseFloat(i.price)).filter(p => p > 0).reduce((s, p, _, a) => s + p / a.length, 0);
+    const header = document.createElement('div');
+    header.className = 'grade-section-header';
+    header.innerHTML = `<span class="grade-label">${escHtml(group.grade)}</span><span class="grade-meta">${group.items.length} sale${group.items.length !== 1 ? 's' : ''}${avgPrice > 0 ? ` &middot; avg $${avgPrice.toFixed(2)}` : ''}</span>`;
+    grid.appendChild(header);
+    for (const item of group.items) {
+      const card = buildCard(item);
+      card.style.animationDelay = `${cardIndex * 0.05}s`;
+      grid.appendChild(card);
+      cardIndex++;
+    }
+  }
+}
+
 // ---- Build Sale Card ----
 function buildCard(item) {
   const card = document.createElement('div');
@@ -1139,14 +1214,12 @@ function buildCard(item) {
 
   const isSold = currentMode === 'sold';
 
-  const dateStr = item.soldDate
-    ? new Date(item.soldDate).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-      })
-    : '';
+  const dateStr = isSold
+    ? timeAgo(item.soldDate)
+    : (item.soldDate ? new Date(item.soldDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '');
 
   const dateHtml = isSold && dateStr
-    ? `<span class="card-date">Sold: ${dateStr}</span>`
+    ? `<span class="card-date">${dateStr}</span>`
     : !isSold && dateStr
     ? `<span class="card-date">Ends: ${dateStr}</span>`
     : '';
