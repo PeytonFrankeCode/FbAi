@@ -310,11 +310,7 @@ function renderRecentSearches() {
       input.value = query;
       suggestionsSection.classList.add('hidden');
       recentSection.classList.add('hidden');
-      if (isDirectCardSearch(query)) {
-        fetchDirectSearch(query);
-      } else {
-        fetchVariants(query);
-      }
+      fetchDirectSearch(query);
     });
     recentChips.appendChild(chip);
   });
@@ -335,16 +331,7 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
     cachedVariants = null; // clear cached variants since mode changed
     // Re-run current search if there's an active query
     const query = input.value.trim();
-    if (query) {
-      if (currentSearchMode === 'direct') {
-        fetchDirectSearch(query);
-      } else if (currentSearchMode === 'variants' && !backBtn.classList.contains('hidden')) {
-        // Viewing a variant's results — re-search with new mode
-        performSearch(query);
-      } else if (currentSearchMode === 'variants') {
-        fetchVariants(currentVariantQuery || query);
-      }
-    }
+    if (query) fetchDirectSearch(query);
   });
 });
 
@@ -511,11 +498,7 @@ form.addEventListener('submit', async (e) => {
   suggestionsSection.classList.add('hidden');
   recentSection.classList.add('hidden');
   addRecentSearch(query);
-  if (isDirectCardSearch(query)) {
-    await fetchDirectSearch(query);
-  } else {
-    await fetchVariants(query);
-  }
+  await fetchDirectSearch(query);
 });
 
 // ---- Suggestion chips ----
@@ -526,7 +509,7 @@ document.querySelectorAll('.chip').forEach(chip => {
     suggestionsSection.classList.add('hidden');
     recentSection.classList.add('hidden');
     addRecentSearch(query);
-    fetchVariants(query);
+    fetchDirectSearch(query);
   });
 });
 
@@ -682,11 +665,7 @@ function goBackToVariants() {
   }
 
   input.value = currentVariantQuery;
-  if (cachedVariants) {
-    displayVariants(cachedVariants, currentVariantQuery, false);
-  } else {
-    fetchVariants(currentVariantQuery);
-  }
+  fetchDirectSearch(currentVariantQuery);
 }
 
 // ---- Direct Card Search (Stage: direct) ----
@@ -2502,7 +2481,7 @@ function searchChecklistQuery() {
   input.value = query;
   switchView('search');
   addRecentSearch(query);
-  fetchVariants(query);
+  fetchDirectSearch(query);
 }
 
 function searchFromChecklist(player, year, brand, setName, category) {
@@ -2510,7 +2489,7 @@ function searchFromChecklist(player, year, brand, setName, category) {
   input.value = query;
   switchView('search');
   addRecentSearch(query);
-  fetchVariants(query);
+  fetchDirectSearch(query);
 }
 
 function buildChecklistQuery(player, year, brand, setName, category, printRun) {
