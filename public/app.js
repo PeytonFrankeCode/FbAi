@@ -2774,16 +2774,6 @@ function initCollectionView() {
     return;
   }
 
-  if (!sub) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Pro Feature';
-    gate.querySelector('p').textContent = 'Collection tracking, portfolio value, and set completion are exclusive Pro features. Upgrade to unlock.';
-    upgradeBtn.textContent = 'Upgrade to Pro';
-    upgradeBtn.onclick = () => showPricing();
-    return;
-  }
-
   gate.classList.add('hidden');
   content.classList.remove('hidden');
   renderPortfolio();
