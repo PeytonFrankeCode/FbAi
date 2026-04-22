@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — The Card Huddle</title>
+  <style>
+    :root {
+      --bg-primary: #0c0e14;
+      --bg-secondary: #161b28;
+      --bg-card: #1a2133;
+      --bg-input: #111624;
+      --border-primary: #232d42;
+      --text-primary: #edf0f7;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --accent: #5ece99;
+      --accent-hover: #42b883;
+      --accent-bg: rgba(94,206,153,0.1);
+      --accent-border: rgba(94,206,153,0.22);
+      --red: #f87171;
+      --red-bg: rgba(248,113,113,0.1);
+      --red-border: rgba(248,113,113,0.25);
+      --yellow: #fbbf24;
+      --yellow-bg: rgba(251,191,36,0.1);
+      --yellow-border: rgba(251,191,36,0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    header {
+      background: linear-gradient(135deg, #131827 0%, #151d33 50%, #141a2d 100%);
+      border-bottom: 1px solid var(--border-primary);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), #2d8f60);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .logo-text { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .logo-text span { color: var(--accent); }
+    .admin-badge {
+      margin-left: 0.5rem;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    /* ---- Login Screen ---- */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 2rem;
+    }
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .login-card p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.75rem; }
+    .login-card input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-primary);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .login-card input:focus { border-color: var(--accent); }
+    .login-card button {
+      width: 100%;
+      background: var(--accent);
+      color: #0c0e14;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-card button:hover { background: var(--accent-hover); }
+    .login-error {
+      color: var(--red);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    /* ---- Admin Dashboard ---- */
+    #admin-screen { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .page-subtitle { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; }
+    .stat-value.green { color: var(--accent); }
+    .stat-value.red { color: var(--red); }
+    .stat-value.yellow { color: var(--yellow); }
+
+    /* Filter tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-tab {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-tab:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-tab.active {
+      background: var(--accent-bg);
+      border-color: var(--accent-border);
+      color: var(--accent);
+    }
+
+    /* Search */
+    .search-wrap { margin-bottom: 1.5rem; position: relative; }
+    .search-wrap input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-primary);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      padding: 0.65rem 1rem 0.65rem 2.5rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+    }
+
+    /* Report cards */
+    #reports-list { display: flex; flex-direction: column; gap: 0.85rem; }
+
+    .report-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      border-left: 4px solid var(--border-primary);
+      animation: fadeIn 0.25s ease;
+    }
+    .report-card.bug { border-left-color: var(--red); }
+    .report-card.feedback { border-left-color: var(--accent); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .report-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .type-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 5px;
+    }
+    .type-badge.bug { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); }
+    .type-badge.feedback { background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent); }
+
+    .report-email {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .report-time {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+    .report-message {
+      font-size: 0.92rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state p { font-size: 0.95rem; }
+
+    .hidden { display: none !important; }
+
+    /* Refresh button */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .result-count { font-size: 0.85rem; color: var(--text-muted); }
+    .refresh-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo-icon">🏈</div>
+  <div class="logo-text">The Card <span>Huddle</span></div>
+  <div class="admin-badge">Admin</div>
+</header>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Admin Access</h2>
+    <p>Enter your admin password to view feedback and bug reports.</p>
+    <input type="password" id="admin-pass" placeholder="Admin password" />
+    <button onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div id="admin-screen">
+  <div class="page-title">Feedback &amp; Bug Reports</div>
+  <div class="page-subtitle" id="last-refreshed">Loading…</div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Reports</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Bug Reports</div>
+      <div class="stat-value red" id="stat-bugs">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Feedback</div>
+      <div class="stat-value green" id="stat-feedback">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">With Email</div>
+      <div class="stat-value yellow" id="stat-email">—</div>
+    </div>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">All</button>
+    <button class="filter-tab" data-filter="bug" onclick="setFilter('bug', this)">🐛 Bugs</button>
+    <button class="filter-tab" data-filter="feedback" onclick="setFilter('feedback', this)">💬 Feedback</button>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search reports…" oninput="renderList()" />
+  </div>
+
+  <div class="toolbar">
+    <div class="result-count" id="result-count"></div>
+    <button class="refresh-btn" onclick="loadReports()">↻ Refresh</button>
+  </div>
+
+  <div id="reports-list"></div>
+</div>
+
+<script>
+  let allReports = [];
+  let currentFilter = 'all';
+  let adminKey = '';
+
+  function doLogin() {
+    const pass = document.getElementById('admin-pass').value.trim();
+    if (!pass) return;
+    adminKey = pass;
+    loadReports();
+  }
+
+  document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function loadReports() {
+    try {
+      const resp = await fetch(`/api/feedback?key=${encodeURIComponent(adminKey)}`);
+      if (resp.status === 401) {
+        document.getElementById('login-error').style.display = 'block';
+        adminKey = '';
+        return;
+      }
+      const data = await resp.json();
+      allReports = data;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-screen').style.display = 'block';
+      updateStats();
+      renderList();
+      const now = new Date();
+      document.getElementById('last-refreshed').textContent =
+        `Last refreshed: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } catch (err) {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('login-error').textContent = 'Could not connect to server.';
+    }
+  }
+
+  function updateStats() {
+    const bugs = allReports.filter(r => r.type === 'bug').length;
+    const feedback = allReports.filter(r => r.type !== 'bug').length;
+    const withEmail = allReports.filter(r => r.email).length;
+    document.getElementById('stat-total').textContent = allReports.length;
+    document.getElementById('stat-bugs').textContent = bugs;
+    document.getElementById('stat-feedback').textContent = feedback;
+    document.getElementById('stat-email').textContent = withEmail;
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderList();
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const diff = (Date.now() - new Date(dateStr)) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function fullDate(dateStr) {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderList() {
+    const query = document.getElementById('search-input').value.trim().toLowerCase();
+    let filtered = allReports;
+
+    if (currentFilter !== 'all') {
+      filtered = filtered.filter(r => r.type === currentFilter);
+    }
+    if (query) {
+      filtered = filtered.filter(r =>
+        (r.message || '').toLowerCase().includes(query) ||
+        (r.email || '').toLowerCase().includes(query)
+      );
+    }
+
+    document.getElementById('result-count').textContent =
+      `${filtered.length} report${filtered.length !== 1 ? 's' : ''}`;
+
+    const list = document.getElementById('reports-list');
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>No reports found.</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(r => {
+      const isBug = r.type === 'bug';
+      const typeLabel = isBug ? 'Bug Report' : 'Feedback';
+      const typeClass = isBug ? 'bug' : 'feedback';
+      return `
+        <div class="report-card ${typeClass}">
+          <div class="report-header">
+            <span class="type-badge ${typeClass}">${typeLabel}</span>
+            ${r.email ? `<span class="report-email">✉ ${escHtml(r.email)}</span>` : ''}
+            <span class="report-time" title="${escHtml(fullDate(r.date))}">${timeAgo(r.date)}</span>
+          </div>
+          <div class="report-message">${escHtml(r.message)}</div>
+        </div>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

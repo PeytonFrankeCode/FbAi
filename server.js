@@ -1841,8 +1841,12 @@ app.post('/api/feedback', (req, res) => {
 });
 
 app.get('/api/feedback', (req, res) => {
+  const key = req.query.key || req.headers['x-admin-key'];
+  const adminPass = process.env.ADMIN_PASSWORD || 'cardhuddle-admin';
+  if (key !== adminPass) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    res.json(loadData('feedback', FEEDBACK_FILE, []));
+    const items = loadData('feedback', FEEDBACK_FILE, []);
+    res.json(items.slice().reverse()); // newest first
   } catch (err) {
     res.json([]);
   }
