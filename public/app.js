@@ -1149,7 +1149,7 @@ function detectGrade(title) {
   return 'Raw / Ungraded';
 }
 
-const GRADE_ORDER = ['PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC', 'Raw / Ungraded'];
+const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC'];
 
 function groupByGrade(results) {
   const groups = {};
@@ -1165,12 +1165,15 @@ function renderGradeGroups(grid, results) {
   const gradeGroups = groupByGrade(results);
   let cardIndex = 0;
   for (const group of gradeGroups) {
-    const avgPrice = group.items.map(i => parseFloat(i.price)).filter(p => p > 0).reduce((s, p, _, a) => s + p / a.length, 0);
+    const isRaw = group.grade === 'Raw / Ungraded';
+    const limit = isRaw ? 15 : 3;
+    const shown = group.items.slice(0, limit);
+    const avgPrice = shown.map(i => parseFloat(i.price)).filter(p => p > 0).reduce((s, p, _, a) => s + p / a.length, 0);
     const header = document.createElement('div');
     header.className = 'grade-section-header';
     header.innerHTML = `<span class="grade-label">${escHtml(group.grade)}</span><span class="grade-meta">${group.items.length} sale${group.items.length !== 1 ? 's' : ''}${avgPrice > 0 ? ` &middot; avg $${avgPrice.toFixed(2)}` : ''}</span>`;
     grid.appendChild(header);
-    for (const item of group.items) {
+    for (const item of shown) {
       const card = buildCard(item);
       card.style.animationDelay = `${cardIndex * 0.05}s`;
       grid.appendChild(card);
