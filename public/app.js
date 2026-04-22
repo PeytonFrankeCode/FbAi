@@ -1161,25 +1161,84 @@ function groupByGrade(results) {
   return GRADE_ORDER.filter(g => groups[g]?.length > 0).map(g => ({ grade: g, items: groups[g] }));
 }
 
+let _gradeGroups = [];
+let _gradeShown = {};
+let _gradeContainers = {};
+
 function renderGradeGroups(grid, results) {
-  const gradeGroups = groupByGrade(results);
+  _gradeGroups = groupByGrade(results);
+  _gradeShown = {};
+  _gradeContainers = {};
   let cardIndex = 0;
-  for (const group of gradeGroups) {
+
+  for (const group of _gradeGroups) {
     const isRaw = group.grade === 'Raw / Ungraded';
-    const limit = isRaw ? 15 : 3;
-    const shown = group.items.slice(0, limit);
-    const avgPrice = shown.map(i => parseFloat(i.price)).filter(p => p > 0).reduce((s, p, _, a) => s + p / a.length, 0);
+    const initialLimit = isRaw ? 15 : 3;
+
+    const avgPrice = group.items.map(i => parseFloat(i.price)).filter(p => p > 0).reduce((s, p, _, a) => s + p / a.length, 0);
     const header = document.createElement('div');
     header.className = 'grade-section-header';
     header.innerHTML = `<span class="grade-label">${escHtml(group.grade)}</span><span class="grade-meta">${group.items.length} sale${group.items.length !== 1 ? 's' : ''}${avgPrice > 0 ? ` &middot; avg $${avgPrice.toFixed(2)}` : ''}</span>`;
     grid.appendChild(header);
+
+    const container = document.createElement('div');
+    container.style.display = 'contents';
+    grid.appendChild(container);
+    _gradeContainers[group.grade] = container;
+
+    const shown = group.items.slice(0, initialLimit);
+    _gradeShown[group.grade] = shown.length;
     for (const item of shown) {
       const card = buildCard(item);
       card.style.animationDelay = `${cardIndex * 0.05}s`;
-      grid.appendChild(card);
+      container.appendChild(card);
       cardIndex++;
     }
   }
+
+  updateLoadMoreButton(grid);
+}
+
+function updateLoadMoreButton(grid) {
+  let wrap = grid.querySelector('.load-more-wrap');
+  const hasMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
+
+  if (!hasMore) { if (wrap) wrap.remove(); return; }
+
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'load-more-wrap';
+    const btn = document.createElement('button');
+    btn.className = 'load-more-btn';
+    btn.textContent = 'Load 20 More';
+    btn.addEventListener('click', () => loadMoreCards(grid));
+    wrap.appendChild(btn);
+    grid.appendChild(wrap);
+  }
+}
+
+function loadMoreCards(grid) {
+  let remaining = 20;
+  let cardIndex = grid.querySelectorAll('.card:not(.promoted-card)').length;
+
+  for (const group of _gradeGroups) {
+    if (remaining <= 0) break;
+    const currentShown = _gradeShown[group.grade] || 0;
+    if (currentShown >= group.items.length) continue;
+
+    const toShow = group.items.slice(currentShown, currentShown + remaining);
+    const container = _gradeContainers[group.grade];
+    for (const item of toShow) {
+      const card = buildCard(item);
+      card.style.animationDelay = `${cardIndex * 0.05}s`;
+      container.appendChild(card);
+      cardIndex++;
+    }
+    _gradeShown[group.grade] = currentShown + toShow.length;
+    remaining -= toShow.length;
+  }
+
+  updateLoadMoreButton(grid);
 }
 
 // ---- Build Sale Card ----
@@ -2712,16 +2771,6 @@ function initCollectionView() {
     gate.querySelector('p').textContent = 'Log in or sign up to access your collection and portfolio.';
     upgradeBtn.textContent = 'Log In';
     upgradeBtn.onclick = () => showLogin();
-    return;
-  }
-
-  if (!sub) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Pro Feature';
-    gate.querySelector('p').textContent = 'Collection tracking, portfolio value, and set completion are exclusive Pro features. Upgrade to unlock.';
-    upgradeBtn.textContent = 'Upgrade to Pro';
-    upgradeBtn.onclick = () => showPricing();
     return;
   }
 

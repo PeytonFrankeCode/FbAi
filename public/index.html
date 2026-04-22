@@ -48,7 +48,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="style.css?v=16" />
 
 
 </head>
@@ -154,13 +154,14 @@
           <h3 class="pricing-tier">Free</h3>
           <div class="pricing-price"><span class="pricing-amount">$0</span><span class="pricing-freq">/mo</span></div>
           <ul class="pricing-features">
-            <li class="included">Basic card search</li>
-            <li class="included">For Sale &amp; Sold listings</li>
-            <li class="included">Price trend charts</li>
-            <li class="excluded">Collection &amp; Portfolio</li>
+            <li class="included">Card search — sold &amp; for sale</li>
+            <li class="included">Price trend charts (30 days)</li>
+            <li class="included">Grade value breakdown</li>
+            <li class="included">Collection &amp; Portfolio</li>
+            <li class="included">NFL checklists</li>
+            <li class="excluded">Full price history (1 year)</li>
             <li class="excluded">Price alerts</li>
-            <li class="excluded">Market analytics</li>
-            <li class="excluded">Ad-free experience</li>
+            <li class="excluded">Pro+ tools</li>
           </ul>
           <button class="pricing-cta free" onclick="closePricing()">Current Plan</button>
         </div>
@@ -173,13 +174,13 @@
             <span class="pricing-freq" id="pro-freq">/mo</span>
           </div>
           <ul class="pricing-features">
-            <li class="included">Unlimited card searches</li>
-            <li class="included">For Sale &amp; Sold listings</li>
-            <li class="included">Full price history</li>
-            <li class="included">Collection &amp; Portfolio</li>
-            <li class="included">Price alerts (10 cards)</li>
-            <li class="included">Market analytics</li>
-            <li class="included">Ad-free experience</li>
+            <li class="included">Everything in Free</li>
+            <li class="included">Full price history (1 year)</li>
+            <li class="included">Price alerts (up to 10 cards)</li>
+            <li class="excluded">Flip Finder</li>
+            <li class="excluded">Market Movers</li>
+            <li class="excluded">Auto-Pricer</li>
+            <li class="excluded">Bulk CSV Pricer</li>
           </ul>
           <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
         </div>
@@ -196,11 +197,8 @@
             <li class="included">Flip Finder — spot underpriced deals</li>
             <li class="included">Market Movers — catch price surges</li>
             <li class="included">Auto-Pricer — optimal listing prices</li>
-            <li class="included">Bulk CSV card pricing (20 at once)</li>
-            <li class="included">Inventory management</li>
-            <li class="included">Price alerts (50 cards)</li>
-            <li class="included">Branded market reports</li>
-            <li class="included">Priority support</li>
+            <li class="included">Bulk CSV Pricer (20 cards at once)</li>
+            <li class="included">Price alerts (up to 50 cards)</li>
           </ul>
           <button class="pricing-cta proplus" onclick="handleSubscribe('proplus')">Get Pro+</button>
         </div>
@@ -1011,6 +1009,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>
