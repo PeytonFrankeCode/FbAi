@@ -1137,10 +1137,10 @@ main {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  background: rgba(251,191,36,0.08);
-  border: 1px solid rgba(251,191,36,0.28);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
   border-radius: 10px;
-  color: #fbbf24;
+  color: var(--accent);
   font-size: 0.85rem;
   font-weight: 500;
   padding: 0.65rem 1rem;
@@ -1154,7 +1154,7 @@ main {
 .sold-issue-dismiss {
   background: none;
   border: none;
-  color: #fbbf24;
+  color: var(--accent);
   opacity: 0.6;
   cursor: pointer;
   font-size: 0.85rem;
