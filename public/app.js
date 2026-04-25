@@ -1977,22 +1977,78 @@ async function runMarketMovers() {
   } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
 }
 
+let _apComps = [];
+
 async function runAutoPricer() {
   const q = document.getElementById('ap-input').value.trim();
   const out = document.getElementById('ap-results');
   if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to price.</p>'; return; }
-  out.innerHTML = '<div class="pp-loading">&#127991;&#65039; Analysing comps&hellip;</div>';
+  out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
   try {
-    const res = await fetch(`/api/auto-price?q=${encodeURIComponent(q)}`);
+    const res = await fetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found. Try a broader search.</p>'; return; }
+    _apComps = data.items;
+    renderApComps(out, data.items);
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
+
+function renderApComps(out, items) {
+  out.innerHTML = `
+    <div class="ap-pick-header">
+      <div class="ap-pick-title">Pick the closest match to your card</div>
+      <div class="ap-pick-sub">We'll calculate pricing recommendations based on your selection</div>
+    </div>
+    <div class="ap-comp-grid">
+      ${items.map((item, i) => `
+        <div class="ap-comp-card" onclick="selectApComp(${i})">
+          <div class="ap-comp-img-wrap">
+            <img class="ap-comp-img" src="${escHtml(item.image)}" onerror="this.parentElement.classList.add('no-img')" alt="" loading="lazy" />
+          </div>
+          <div class="ap-comp-info">
+            <div class="ap-comp-name">${escHtml(item.title)}</div>
+            <div class="ap-comp-bottom">
+              <span class="ap-comp-price">$${item.price.toFixed(2)}</span>
+              <span class="ap-comp-date">${timeAgo(item.soldDate)}</span>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+async function selectApComp(idx) {
+  const item = _apComps[idx];
+  if (!item) return;
+
+  document.querySelectorAll('.ap-comp-card').forEach((el, i) => el.classList.toggle('ap-comp-selected', i === idx));
+
+  const out = document.getElementById('ap-results');
+  let recSection = out.querySelector('.ap-rec-section');
+  if (recSection) recSection.remove();
+
+  recSection = document.createElement('div');
+  recSection.className = 'ap-rec-section';
+  recSection.innerHTML = '<div class="pp-loading">&#127991;&#65039; Calculating prices&hellip;</div>';
+  out.appendChild(recSection);
+  recSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const refinedQuery = item.title.split(' ').slice(0, 8).join(' ');
+  try {
+    const res = await fetch(`/api/auto-price?q=${encodeURIComponent(refinedQuery)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      recSection.innerHTML = `<p class="pp-error">${data.error || 'Not enough comps found for this card.'}</p>`;
+      return;
+    }
     const recs = data.recommendations;
-    out.innerHTML = `
+    recSection.innerHTML = `
+      <div class="ap-selected-label">&#10003; Priced from: <em>${escHtml(item.title)}</em></div>
       <div class="ap-context">
-        Based on <strong>${data.soldCount} sold</strong> in recent data &nbsp;·&nbsp;
-        Median <strong>$${data.soldMedian}</strong> &nbsp;·&nbsp;
-        Range $${data.soldLow} – $${data.soldHigh}
-        ${data.competitionLow ? ` &nbsp;·&nbsp; Lowest for-sale <strong>$${data.competitionLow}</strong> (${data.competitionCount} listings)` : ''}
+        Based on <strong>${data.soldCount} sold</strong> &nbsp;&middot;&nbsp;
+        Median <strong>$${data.soldMedian}</strong> &nbsp;&middot;&nbsp;
+        Range $${data.soldLow} &ndash; $${data.soldHigh}
+        ${data.competitionLow ? ` &nbsp;&middot;&nbsp; Lowest listed <strong>$${data.competitionLow}</strong>` : ''}
       </div>
       <div class="ap-recs">
         ${Object.values(recs).map(r => `
@@ -2000,10 +2056,12 @@ async function runAutoPricer() {
             <div class="ap-rec-label">${r.label}</div>
             <div class="ap-rec-price">$${r.price.toFixed(2)}</div>
             <div class="ap-rec-desc">${r.description}</div>
-            <button class="ap-use-btn" onclick="document.getElementById('seller-price-input')?.closest('.seller-view') && switchView('seller'); setTimeout(() => { const el = document.getElementById('seller-price-input'); if(el){ el.value='${r.price.toFixed(2)}'; el.dispatchEvent(new Event('input')); } }, 100)">Use this price</button>
           </div>`).join('')}
-      </div>`;
-  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+      </div>
+      <button class="ap-repick-btn" onclick="document.querySelectorAll('.ap-comp-card').forEach(el=>el.classList.remove('ap-comp-selected')); document.querySelector('.ap-rec-section').remove()">&#8592; Pick a different card</button>`;
+  } catch (e) {
+    recSection.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`;
+  }
 }
 
 let bulkPriceResults = [];
