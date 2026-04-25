@@ -850,8 +850,10 @@
 
 /* Rec section (appears below comp grid after selection) */
 .ap-rec-section { border-top: 1px solid var(--border-primary); padding-top: 1.25rem; margin-top: 0.5rem; }
-.ap-selected-label { font-size: 0.8rem; color: var(--accent); margin-bottom: 0.75rem; }
+.ap-selected-label { font-size: 0.8rem; color: var(--accent); margin-bottom: 0.5rem; }
 .ap-selected-label em { color: var(--text-secondary); font-style: normal; }
+.ap-fallback-note { font-size: 0.78rem; color: #fbbf24; background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: 6px; padding: 0.35rem 0.65rem; margin-bottom: 0.65rem; }
+.ap-confidence { font-size: 0.78rem; font-weight: 600; }
 
 .ap-context { font-size: 0.82rem; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 8px; padding: 0.65rem 1rem; margin-bottom: 1rem; }
 .ap-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }

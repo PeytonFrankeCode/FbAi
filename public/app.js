@@ -2042,10 +2042,14 @@ async function selectApComp(idx) {
       return;
     }
     const recs = data.recommendations;
+    const confidenceColors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+    const confidenceColor = confidenceColors[data.confidence] || '#94a3b8';
     recSection.innerHTML = `
       <div class="ap-selected-label">&#10003; Priced from: <em>${escHtml(item.title)}</em></div>
+      ${data.fallbackNote ? `<div class="ap-fallback-note">&#128270; ${escHtml(data.fallbackNote)}</div>` : ''}
       <div class="ap-context">
-        Based on <strong>${data.soldCount} sold</strong> &nbsp;&middot;&nbsp;
+        <span class="ap-confidence" style="color:${confidenceColor}">&#9679; ${data.confidence?.charAt(0).toUpperCase() + data.confidence?.slice(1)} confidence</span>
+        &nbsp;&middot;&nbsp; Based on <strong>${data.soldCount} sold</strong> &nbsp;&middot;&nbsp;
         Median <strong>$${data.soldMedian}</strong> &nbsp;&middot;&nbsp;
         Range $${data.soldLow} &ndash; $${data.soldHigh}
         ${data.competitionLow ? ` &nbsp;&middot;&nbsp; Lowest listed <strong>$${data.competitionLow}</strong>` : ''}
