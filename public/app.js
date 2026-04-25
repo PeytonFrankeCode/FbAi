@@ -1988,7 +1988,7 @@ async function runAutoPricer() {
     const res = await fetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
-    if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found. Try a broader search.</p>'; return; }
+    if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found for this card.</p>'; return; }
     _apComps = data.items;
     renderApComps(out, data.items);
   } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }

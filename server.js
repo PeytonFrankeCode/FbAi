@@ -1687,14 +1687,24 @@ app.get('/api/auto-price/search', async (req, res) => {
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
   if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
   try {
-    const soldData = await fetchViaEbayApiData(query, 24, 'ap-search');
-    const items = soldData.results
+    let soldData = await fetchViaEbayApiData(query, 24, 'ap-search');
+
+    // Progressively drop trailing words until we get results
+    if (!soldData.results || soldData.results.length === 0) {
+      const words = query.trim().split(/\s+/);
+      for (let len = words.length - 1; len >= 2; len--) {
+        soldData = await fetchViaEbayApiData(words.slice(0, len).join(' '), 24, 'ap-search-fallback');
+        if (soldData.results && soldData.results.length > 0) break;
+      }
+    }
+
+    const items = (soldData.results || [])
       .map(i => ({
         title: i.title,
         price: parseFloat(i.price),
-        image: i.image || '',
+        image: i.imageUrl || '',
         soldDate: i.soldDate,
-        url: i.url || '',
+        url: i.itemUrl || '',
       }))
       .filter(i => i.price > 0)
       .slice(0, 20);
