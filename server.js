@@ -616,10 +616,20 @@ const CARD_SET_NAMES = [
   'flawless', 'immaculate', 'score', 'national treasures'
 ];
 
+// Auto/memorabilia keywords — excluded from results unless user specifically searched for them
+const SPECIAL_CARD_KEYWORDS = ['autograph', 'patch', 'rpa', 'relic', 'jersey', 'memorabilia', 'logoman'];
+
+function titleHasSpecialCard(title) {
+  if (SPECIAL_CARD_KEYWORDS.some(kw => title.includes(kw))) return true;
+  if (/\bauto\b/.test(title)) return true; // 'auto' as a standalone word
+  return false;
+}
+
 const VARIANT_STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'card', 'cards', '&', 'rc', 'sp']);
 
 // Filters sold results to only those matching the searched variant.
 // - Requires ALL query tokens in title
+// - Auto/memorabilia exclusion: excluded unless the query asks for them
 // - Set exclusivity: if query has a set name, excludes other set names from results
 // - Color exclusivity: if query has a color, excludes other colors from results
 // - Base search: excludes all known parallel keywords
@@ -632,6 +642,7 @@ function filterByVariant(results, query) {
   const excludedSets = queriedSets.length > 0
     ? CARD_SET_NAMES.filter(s => !queriedSets.includes(s))
     : [];
+  const queryHasSpecial = titleHasSpecialCard(qLower);
 
   const qTokens = qLower.split(/\s+/).filter(t =>
     t.length > 1 && !VARIANT_STOP_WORDS.has(t) && !(isBaseSearch && t === 'base')
@@ -644,6 +655,9 @@ function filterByVariant(results, query) {
 
     // All meaningful search tokens must appear in title
     if (!qTokens.every(t => title.includes(t))) return false;
+
+    // Auto/memorabilia exclusion: if user didn't search for them, exclude them
+    if (!queryHasSpecial && titleHasSpecialCard(title)) return false;
 
     // Set exclusivity: if searching a specific set, exclude other sets
     if (excludedSets.some(s => title.includes(s))) return false;
