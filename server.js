@@ -402,8 +402,9 @@ app.get('/api/search', async (req, res) => {
     // Sold mode — EbayApiData
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search');
-      const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
-      return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
+      const variantFiltered = filterByVariant(searchData.results, query);
+      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
+      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
     }
 
     if (!serial) {
@@ -589,6 +590,43 @@ function filterJunkListings(results) {
     const title = (r.title || '').toLowerCase();
     return !JUNK_KEYWORDS.some(kw => title.includes(kw));
   });
+}
+
+// Known parallel/color keywords — used to enforce strict variant matching
+const PARALLEL_KEYWORDS = [
+  'silver', 'gold', 'orange', 'red', 'blue', 'green', 'pink', 'purple', 'teal',
+  'black', 'white', 'hyper', 'mojo', 'cosmic', 'disco', 'lava', 'ice', 'shimmer',
+  'neon', 'camo', 'wave', 'aqua', 'yellow', 'bronze', 'copper', 'holo', 'prizmatic',
+  'scope', 'galaxy', 'choice', 'power', 'fast break', 'pulsar', 'sparkle', 'tiger',
+  'snake', 'cracked ice', 'diamonds', 'lazer', 'laser', 'ruby', 'emerald', 'sapphire'
+];
+
+const VARIANT_STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'card', 'cards', '&', 'rc', 'sp']);
+
+// Filters sold results to only those matching the searched variant.
+// "base" searches exclude all parallel keywords; specific parallels require that word in the title.
+function filterByVariant(results, query) {
+  const qLower = query.toLowerCase().trim();
+  const isBaseSearch = qLower.includes('base');
+  const searchedParallel = PARALLEL_KEYWORDS.find(p => qLower.includes(p));
+
+  const qTokens = qLower.split(/\s+/).filter(t =>
+    t.length > 1 && !VARIANT_STOP_WORDS.has(t) && !(isBaseSearch && t === 'base')
+  );
+
+  if (qTokens.length === 0) return results;
+
+  const filtered = results.filter(r => {
+    const title = (r.title || '').toLowerCase();
+    if (!qTokens.every(t => title.includes(t))) return false;
+    if (isBaseSearch && !searchedParallel) {
+      return !PARALLEL_KEYWORDS.some(p => title.includes(p));
+    }
+    return true;
+  });
+
+  // If strict filter removed everything, return unfiltered so users still see results
+  return filtered.length > 0 ? filtered : results;
 }
 
 function removeOutliers(prices) {
@@ -1716,33 +1754,59 @@ app.get('/api/auto-price/search', async (req, res) => {
 });
 
 // ---- Auto-Pricer (Pro+) ----
-// Recommends optimal listing prices based on sold comps and live competition.
+// Smart pricing: tries exact query first, falls back to progressively broader queries.
+// Handles missing year/card# by using what's available. Returns confidence level.
 app.get('/api/auto-price', async (req, res) => {
   const query = req.query.q;
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
   if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
 
+  const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
+
   try {
-    const [soldData, forsaleData] = await Promise.all([
-      fetchViaEbayApiData(query, 30, 'auto-price'),
-      fetchEbayItems(query, 20, 'forsale', 'auto-price'),
-    ]);
+    // Build a list of queries to try: exact first, then drop one word at a time from the end
+    const words = query.trim().split(/\s+/);
+    const attempts = [query];
+    for (let len = words.length - 1; len >= 2; len--) {
+      attempts.push(words.slice(0, len).join(' '));
+    }
 
-    const soldPrices = soldData.results.map(i => parseFloat(i.price)).filter(p => p > 0);
-    const forsalePrices = (forsaleData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0);
+    let soldData, usedQuery = query, attemptIndex = 0;
+    for (let i = 0; i < attempts.length; i++) {
+      soldData = await fetchViaEbayApiData(attempts[i], 30, 'auto-price');
+      const prices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+      if (prices.length >= 3) { usedQuery = attempts[i]; attemptIndex = i; break; }
+      if (i === attempts.length - 1) { usedQuery = attempts[i]; attemptIndex = i; }
+    }
 
-    if (soldPrices.length < 2) return res.json({ error: 'Not enough sold data', soldCount: soldPrices.length });
+    const rawPrices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+    const cleanPrices = removeOutliers(rawPrices);
+    const finalPrices = (cleanPrices.length >= 2 ? cleanPrices : rawPrices).sort((a, b) => a - b);
 
-    soldPrices.sort((a, b) => a - b);
-    const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
-    const soldMedian = med(soldPrices);
-    const soldLow = soldPrices[0];
-    const soldHigh = soldPrices[soldPrices.length - 1];
-    const soldAvg = soldPrices.reduce((a, b) => a + b, 0) / soldPrices.length;
+    if (finalPrices.length < 2) {
+      return res.json({ error: 'Not enough sold data found. Try selecting a different comp card.', soldCount: rawPrices.length });
+    }
 
-    forsalePrices.sort((a, b) => a - b);
+    // Confidence: high = 5+ exact sales, medium = 3-4 or minor fallback, low = significant fallback
+    let confidence, fallbackNote = null;
+    if (attemptIndex === 0) {
+      confidence = finalPrices.length >= 5 ? 'high' : 'medium';
+    } else if (attemptIndex <= 2) {
+      confidence = 'medium';
+      fallbackNote = `Priced using similar cards: "${usedQuery}"`;
+    } else {
+      confidence = 'low';
+      fallbackNote = `Limited exact data — broadened to: "${usedQuery}"`;
+    }
+
+    const soldMedian = med(finalPrices);
+    const soldLow = finalPrices[0];
+    const soldHigh = finalPrices[finalPrices.length - 1];
+    const soldAvg = finalPrices.reduce((a, b) => a + b, 0) / finalPrices.length;
+
+    const forsaleData = await fetchEbayItems(usedQuery, 20, 'forsale', 'auto-price');
+    const forsalePrices = (forsaleData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0).sort((a, b) => a - b);
     const competitionLow = forsalePrices[0] || null;
-    const competitionMedian = forsalePrices.length ? med(forsalePrices) : null;
 
     const aggressive = competitionLow ? Math.max(soldLow, competitionLow * 0.95) : soldLow * 1.05;
     const optimal = soldMedian * 0.95;
@@ -1753,7 +1817,10 @@ app.get('/api/auto-price', async (req, res) => {
       soldAvg: Math.round(soldAvg * 100) / 100,
       soldLow: Math.round(soldLow * 100) / 100,
       soldHigh: Math.round(soldHigh * 100) / 100,
-      soldCount: soldPrices.length,
+      soldCount: finalPrices.length,
+      confidence,
+      fallbackNote,
+      usedQuery,
       competitionLow: competitionLow ? Math.round(competitionLow * 100) / 100 : null,
       competitionCount: forsalePrices.length,
       recommendations: {
