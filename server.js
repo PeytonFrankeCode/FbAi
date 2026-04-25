@@ -402,7 +402,7 @@ app.get('/api/search', async (req, res) => {
     // Sold mode — EbayApiData
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search');
-      const variantFiltered = filterByVariant(searchData.results, query);
+      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
     }
@@ -676,6 +676,21 @@ function removeOutliers(prices) {
   return prices.filter(p => p >= lower && p <= upper);
 }
 
+// Removes listings priced more than 5x the median — catches mis-listed cards
+function filterPriceOutliers(results) {
+  if (results.length < 3) return results;
+  const prices = results.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
+  if (prices.length < 3) return results;
+  const median = prices.length % 2 === 0
+    ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
+    : prices[Math.floor(prices.length / 2)];
+  const ceiling = median * 5;
+  return results.filter(r => {
+    const p = parseFloat(r.price);
+    return isNaN(p) || p <= ceiling;
+  });
+}
+
 function computeApproxValue(results, label) {
   const rawPrices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
   if (rawPrices.length === 0) return null;
@@ -768,7 +783,7 @@ app.get('/api/direct-search', async (req, res) => {
     // Sold mode
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
-      const variantFiltered = filterByVariant(searchData.results, query);
+      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
     }
