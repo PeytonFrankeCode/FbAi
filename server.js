@@ -1680,6 +1680,31 @@ app.get('/api/market-movers', async (req, res) => {
   }
 });
 
+// ---- Auto-Pricer: Comp Search (Pro+) ----
+// Returns raw sold listings for the user to pick the closest match before pricing.
+app.get('/api/auto-price/search', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+  try {
+    const soldData = await fetchViaEbayApiData(query, 24, 'ap-search');
+    const items = soldData.results
+      .map(i => ({
+        title: i.title,
+        price: parseFloat(i.price),
+        image: i.image || '',
+        soldDate: i.soldDate,
+        url: i.url || '',
+      }))
+      .filter(i => i.price > 0)
+      .slice(0, 20);
+    res.json({ items });
+  } catch (err) {
+    console.error('[APSearch]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Auto-Pricer (Pro+) ----
 // Recommends optimal listing prices based on sold comps and live competition.
 app.get('/api/auto-price', async (req, res) => {
