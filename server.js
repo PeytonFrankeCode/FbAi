@@ -592,23 +592,46 @@ function filterJunkListings(results) {
   });
 }
 
+// Known parallel colors — used for color exclusivity in variant filtering
+const PARALLEL_COLORS = [
+  'silver', 'gold', 'orange', 'red', 'blue', 'green', 'pink',
+  'purple', 'teal', 'black', 'white', 'aqua', 'yellow', 'bronze',
+  'copper', 'ruby', 'emerald', 'sapphire'
+];
+
 // Known parallel/color keywords — used to enforce strict variant matching
 const PARALLEL_KEYWORDS = [
-  'silver', 'gold', 'orange', 'red', 'blue', 'green', 'pink', 'purple', 'teal',
-  'black', 'white', 'hyper', 'mojo', 'cosmic', 'disco', 'lava', 'ice', 'shimmer',
-  'neon', 'camo', 'wave', 'aqua', 'yellow', 'bronze', 'copper', 'holo', 'prizmatic',
-  'scope', 'galaxy', 'choice', 'power', 'fast break', 'pulsar', 'sparkle', 'tiger',
-  'snake', 'cracked ice', 'diamonds', 'lazer', 'laser', 'ruby', 'emerald', 'sapphire'
+  ...PARALLEL_COLORS,
+  'hyper', 'mojo', 'cosmic', 'disco', 'lava', 'ice', 'shimmer',
+  'neon', 'camo', 'wave', 'tiger', 'snake', 'cracked ice', 'scope',
+  'galaxy', 'choice', 'power', 'fast break', 'pulsar', 'sparkle',
+  'holo', 'prizmatic', 'laser', 'lazer', 'diamonds'
+];
+
+// Card set/brand names — used for set exclusivity
+const CARD_SET_NAMES = [
+  'optic', 'prizm', 'donruss', 'select', 'mosaic', 'chronicles',
+  'prestige', 'certified', 'absolute', 'contenders', 'luminance',
+  'illusions', 'spectra', 'origins', 'majestic', 'phoenix', 'hoops',
+  'flawless', 'immaculate', 'score', 'national treasures'
 ];
 
 const VARIANT_STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'card', 'cards', '&', 'rc', 'sp']);
 
 // Filters sold results to only those matching the searched variant.
-// "base" searches exclude all parallel keywords; specific parallels require that word in the title.
+// - Requires ALL query tokens in title
+// - Set exclusivity: if query has a set name, excludes other set names from results
+// - Color exclusivity: if query has a color, excludes other colors from results
+// - Base search: excludes all known parallel keywords
 function filterByVariant(results, query) {
   const qLower = query.toLowerCase().trim();
   const isBaseSearch = qLower.includes('base');
   const searchedParallel = PARALLEL_KEYWORDS.find(p => qLower.includes(p));
+  const searchedColor = PARALLEL_COLORS.find(c => qLower.includes(c));
+  const queriedSets = CARD_SET_NAMES.filter(s => qLower.includes(s));
+  const excludedSets = queriedSets.length > 0
+    ? CARD_SET_NAMES.filter(s => !queriedSets.includes(s))
+    : [];
 
   const qTokens = qLower.split(/\s+/).filter(t =>
     t.length > 1 && !VARIANT_STOP_WORDS.has(t) && !(isBaseSearch && t === 'base')
@@ -618,14 +641,27 @@ function filterByVariant(results, query) {
 
   const filtered = results.filter(r => {
     const title = (r.title || '').toLowerCase();
+
+    // All meaningful search tokens must appear in title
     if (!qTokens.every(t => title.includes(t))) return false;
+
+    // Set exclusivity: if searching a specific set, exclude other sets
+    if (excludedSets.some(s => title.includes(s))) return false;
+
+    // Base search: exclude all parallel keywords
     if (isBaseSearch && !searchedParallel) {
       return !PARALLEL_KEYWORDS.some(p => title.includes(p));
     }
+
+    // Color exclusivity: if searching a specific color, exclude other colors
+    if (searchedColor) {
+      if (PARALLEL_COLORS.filter(c => c !== searchedColor).some(c => title.includes(c))) return false;
+    }
+
     return true;
   });
 
-  // If strict filter removed everything, return unfiltered so users still see results
+  // If strict filter removed everything, fall back to unfiltered
   return filtered.length > 0 ? filtered : results;
 }
 
@@ -732,8 +768,9 @@ app.get('/api/direct-search', async (req, res) => {
     // Sold mode
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
-      const approx = searchData.results.length > 0 ? computeApproxValue(searchData.results, query) : null;
-      return res.json({ results: searchData.results, total: searchData.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
+      const variantFiltered = filterByVariant(searchData.results, query);
+      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
+      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
     }
 
     if (serial) {
