@@ -1,0 +1,29 @@
+name = "the-card-huddle"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SITE_URL = "https://thecardhuddle.com"
+EBAY_APP_ID = "PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8"
+USE_MOCK_DATA = "false"
+
+# Secrets — set these via `wrangler secret put <KEY>` or the Cloudflare dashboard:
+#   MONGODB_URI
+#   EBAY_CERT_ID
+#   EBAY_API_DATA_KEY
+#   EBAY_VERIFICATION_TOKEN
+#   CARDSIGHTS_API_KEY
+#   CARDHEDGE_API_KEY
+#   STRIPE_PUBLISHABLE_KEY
+#   STRIPE_SECRET_KEY
+#   STRIPE_WEBHOOK_SECRET
+#   AUTH_CODE
+#   SMTP_HOST
+#   SMTP_PORT
+#   SMTP_USER
+#   SMTP_PASS
+#   SMTP_FROM
+
+[site]
+bucket = "./public"
