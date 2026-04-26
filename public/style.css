@@ -2564,6 +2564,16 @@ footer::before {
   color: var(--text-faint);
   font-size: 0.75rem;
 }
+.footer-verse {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
 
 /* ---- No Listings Message ---- */
 .no-listings-box {
