@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Card Huddle — Football Card Price Tracker | Real eBay Sold Prices</title>
-  <meta name="description" content="Check what your football cards are actually worth. The Card Huddle shows real eBay sold prices for Prizm, Select, Mosaic, Optic, Donruss and more — broken down by grade (Raw, PSA 10, PSA 9). Free card portfolio tracker included." />
-  <meta name="keywords" content="football card prices, trading card price tracker, eBay sold prices football cards, PSA 10 card value, Prizm football card price, Mosaic card prices, Select football cards, sports card market value, NFL card price guide, football card portfolio tracker, graded card prices, raw card value, the card huddle" />
+  <title>The Card Huddle — Trading Card Price Tracker | Real eBay Sold Prices</title>
+  <meta name="description" content="Check what your trading cards are actually worth. The Card Huddle shows real eBay sold prices for sports cards, Prizm, Select, Mosaic, Optic, Donruss, Pokemon and more — broken down by grade (Raw, PSA 10, PSA 9). Free card portfolio tracker included." />
+  <meta name="keywords" content="trading card prices, sports card price tracker, eBay sold prices cards, PSA 10 card value, Prizm card price, sports card market value, card price guide, card portfolio tracker, graded card prices, raw card value, the card huddle, pokemon card prices, basketball card prices, baseball card prices, football card prices" />
   <meta name="author" content="The Card Huddle" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#5ece99" />
@@ -20,8 +20,8 @@
   </script>
 
   <!-- Open Graph -->
-  <meta property="og:title" content="The Card Huddle — Football Card Price Tracker" />
-  <meta property="og:description" content="Check what your football cards are actually worth. Real eBay sold prices for Prizm, Select, Mosaic, Optic and more — broken down by grade. Free portfolio tracker included." />
+  <meta property="og:title" content="The Card Huddle — Trading Card Price Tracker" />
+  <meta property="og:description" content="Check what your trading cards are actually worth. Real eBay sold prices for sports cards, Prizm, Select, Mosaic, Optic, Pokemon and more — broken down by grade. Free portfolio tracker included." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://thecardhuddle.com" />
   <meta property="og:site_name" content="The Card Huddle" />
@@ -32,8 +32,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="The Card Huddle — Football Card Price Tracker" />
-  <meta name="twitter:description" content="Check what your football cards are actually worth. Real eBay sold prices broken down by grade. Free portfolio tracker included." />
+  <meta name="twitter:title" content="The Card Huddle — Trading Card Price Tracker" />
+  <meta name="twitter:description" content="Check what your trading cards are actually worth. Real eBay sold prices broken down by grade. Free portfolio tracker included." />
   <meta name="twitter:image" content="https://thecardhuddle.com/og-image.png" />
 
   <!-- Structured Data: WebApplication -->
@@ -43,7 +43,7 @@
     "@type": "WebApplication",
     "name": "The Card Huddle",
     "url": "https://thecardhuddle.com",
-    "description": "Football trading card price tracker powered by real eBay sold data. Search any card to see recent sale prices broken down by grade — Raw, PSA 10, PSA 9, and more.",
+    "description": "Trading card price tracker powered by real eBay sold data. Search any card — sports cards, Pokemon, and more — to see recent sale prices broken down by grade — Raw, PSA 10, PSA 9, and more.",
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "Web",
     "browserRequirements": "Any modern browser",
@@ -81,7 +81,7 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "How do I check what my football card is worth?",
+        "name": "How do I check what my trading card is worth?",
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Search any player name, set, or card on The Card Huddle and we'll show you recent eBay sold prices grouped by grade — Raw, PSA 10, PSA 9, and more — so you know exactly what collectors are paying right now."
@@ -89,10 +89,10 @@
       },
       {
         "@type": "Question",
-        "name": "What football card sets does The Card Huddle support?",
+        "name": "What card sets does The Card Huddle support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "The Card Huddle supports all major NFL sets including Panini Prizm, Select, Mosaic, Optic, Donruss, Contenders, Chronicles, Absolute, and many more. Search any set and player to see current market prices."
+          "text": "The Card Huddle supports all major trading card sets including Panini Prizm, Select, Mosaic, Optic, Donruss, Topps, Bowman, Pokemon, and many more. Search any set, player, or card to see current market prices."
         }
       },
       {
@@ -131,7 +131,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=21" />
 
 
 </head>
@@ -183,7 +183,6 @@
   <div class="nav-bar">
     <nav class="header-nav">
       <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
-      <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
       <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
       <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
@@ -201,7 +200,7 @@
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-label="Login">
     <div class="login-box">
       <button class="login-close" aria-label="Close" onclick="closeLogin()">&times;</button>
-      <div class="login-icon">&#127944;</div>
+      <div class="login-icon">&#127183;</div>
       <h2 id="login-heading">Log In</h2>
       <p id="login-subtext">Welcome back to The Card Huddle</p>
       <form id="login-form" onsubmit="return handleAuth(event)">
@@ -241,7 +240,6 @@
             <li class="included">Price trend charts (30 days)</li>
             <li class="included">Grade value breakdown</li>
             <li class="included">Collection &amp; Portfolio</li>
-            <li class="included">NFL checklists</li>
             <li class="excluded">Full price history (1 year)</li>
             <li class="excluded">Price alerts</li>
             <li class="excluded">Pro+ tools</li>
@@ -391,45 +389,6 @@
 
   </main>
 
-  <!-- Checklist View (hidden by default) -->
-  <div id="checklist-view" class="checklist-view hidden">
-    <div class="checklist-container">
-      <!-- Product selector -->
-      <div id="checklist-products" class="checklist-products">
-        <h2 class="checklist-page-title">Browse Checklists</h2>
-        <p class="checklist-page-subtitle">Explore complete card checklists with every parallel and print run</p>
-        <div id="checklist-product-grid" class="checklist-product-grid"></div>
-      </div>
-
-      <!-- Set browser (shown after selecting a product) -->
-      <div id="checklist-browser" class="checklist-browser hidden">
-        <button class="checklist-back-btn" onclick="checklistBack()">&larr; All Checklists</button>
-        <h2 id="checklist-product-name" class="checklist-product-name"></h2>
-
-        <!-- Search within checklist -->
-        <div class="checklist-search-wrap">
-          <input type="text" id="checklist-search" class="checklist-search-input" placeholder="Search player, team, or card number..." />
-          <button type="button" id="checklist-search-btn" class="checklist-search-btn" onclick="searchChecklistQuery()" title="Search eBay">Search</button>
-        </div>
-
-        <!-- Category filter tabs -->
-        <div class="checklist-category-tabs" id="checklist-category-tabs">
-          <button class="checklist-cat-tab active" data-cat="all">All</button>
-          <button class="checklist-cat-tab" data-cat="base">Base</button>
-          <button class="checklist-cat-tab" data-cat="autograph">Autographs</button>
-          <button class="checklist-cat-tab" data-cat="memorabilia">Memorabilia</button>
-          <button class="checklist-cat-tab" data-cat="insert">Inserts</button>
-          <select id="checklist-team-filter" class="checklist-team-select" onchange="filterChecklistByTeam(this.value)">
-            <option value="">All Teams</option>
-          </select>
-        </div>
-
-        <!-- Sets list -->
-        <div id="checklist-sets" class="checklist-sets"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- Collection View -->
   <div id="collection-view" class="collection-view hidden">
 
@@ -488,7 +447,7 @@
           <button class="portfolio-action-btn portfolio-action-btn--pro" onclick="generateMarketReport()">&#128196; Market Report <span class="pro-badge-inline">PRO</span></button>
         </div>
         <div id="portfolio-list" class="portfolio-list">
-          <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
+          <p class="portfolio-empty">No cards in your collection yet. Use the button above to add your first card.</p>
         </div>
       </div>
 
@@ -651,7 +610,7 @@
             <div class="seller-form-group seller-form-full">
               <label>Listing Title <span class="seller-char-count" id="listing-title-count">0/80</span></label>
               <div class="seller-title-row">
-                <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm Football" maxlength="80" required oninput="updateTitleCount()" />
+                <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm" maxlength="80" required oninput="updateTitleCount()" />
                 <button type="button" class="seller-autofill-btn" onclick="showTitleAutofill()">Auto-Fill</button>
               </div>
             </div>
@@ -904,7 +863,7 @@
         </form>
         <p id="tracked-error" class="alerts-error hidden"></p>
         <div id="tracked-list" class="tracked-list">
-          <p class="alerts-empty">No tracked cards yet. Add one above or use the bell icon in Checklists.</p>
+          <p class="alerts-empty">No tracked cards yet. Search for a card and use the bell icon to start tracking its price.</p>
         </div>
       </div>
     </div>
@@ -1093,6 +1052,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=26"></script>
+  <script src="app.js?v=27"></script>
 </body>
 </html>
