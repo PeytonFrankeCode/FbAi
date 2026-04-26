@@ -8,8 +8,11 @@
  */
 
 const { MongoClient } = require('mongodb');
-const fs = require('fs');
 const path = require('path');
+
+// Cloudflare Workers have no file system — load fs only when available.
+let fs = null;
+try { fs = require('fs'); } catch (_) { /* Workers environment */ }
 
 const MONGODB_URI = process.env.MONGODB_URI;
 let db = null;
@@ -57,15 +60,17 @@ function loadData(name, filePath, defaultValue) {
     return JSON.parse(JSON.stringify(cache[name])); // deep clone to prevent mutation
   }
 
-  // Fall back to file
-  try {
-    if (fs.existsSync(filePath)) {
-      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      cache[name] = data; // populate cache for next read
-      return data;
+  // Fall back to file (skipped in Cloudflare Workers where fs is unavailable)
+  if (fs) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        cache[name] = data; // populate cache for next read
+        return data;
+      }
+    } catch (e) {
+      console.error(`[DB] Error loading ${name} from file:`, e.message);
     }
-  } catch (e) {
-    console.error(`[DB] Error loading ${name} from file:`, e.message);
   }
 
   return typeof defaultValue === 'function' ? defaultValue() : JSON.parse(JSON.stringify(defaultValue));
@@ -78,13 +83,15 @@ function saveData(name, filePath, data) {
   // Update in-memory cache
   cache[name] = JSON.parse(JSON.stringify(data)); // deep clone
 
-  // Save to file (existing behavior, always works for local dev)
-  try {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-  } catch (e) {
-    console.error(`[DB] Error saving ${name} to file:`, e.message);
+  // Save to file (local dev only — skipped in Cloudflare Workers)
+  if (fs) {
+    try {
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    } catch (e) {
+      console.error(`[DB] Error saving ${name} to file:`, e.message);
+    }
   }
 
   // Save to MongoDB (async, fire-and-forget)
