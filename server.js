@@ -12,22 +12,26 @@ const { connectDB, loadData, saveData } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
-const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for OAuth (Marketplace Insights)
+const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (Browse API)
 
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
-const USE_MOCK = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 
-// Which eBay API to use: 'finding' (legacy) or 'insights' (Marketplace Insights)
-const EBAY_API_MODE = process.env.EBAY_API_MODE || 'finding';
+// ---- EbayApiData Setup ----
+const EBAY_API_DATA_KEY = process.env.EBAY_API_DATA_KEY;
+const EBAY_API_DATA_BASE = 'https://ebayapidata.onrender.com';
+const EBAY_API_DATA_ENABLED = !!(EBAY_API_DATA_KEY && EBAY_API_DATA_KEY.length > 0);
 
-// ---- SportsCardsPro / PriceCharting API Setup ----
-const SPORTSCARDSPRO_API_KEY = process.env.SPORTSCARDSPRO_API_KEY;
-const SPORTSCARDSPRO_ENABLED = SPORTSCARDSPRO_API_KEY && !SPORTSCARDSPRO_API_KEY.includes('your-api-key');
+const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
+const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true' || !EBAY_API_DATA_ENABLED;
+const USE_MOCK = USE_MOCK_FORSALE && USE_MOCK_SOLD;
 
 // ---- Stripe Setup ----
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const STRIPE_PRODUCT_PRO = 'prod_UKcw8SMnNESbuE';
+const STRIPE_PRODUCT_SLOT = 'prod_UKczmqAaEo7wa9';
+const STRIPE_PRODUCT_PROPLUS = 'prod_ULtSajiX8Hszzy';
 const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
 let stripe = null;
 if (stripeEnabled) {
@@ -64,9 +68,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         subs[username].extraPromoteSlots = (subs[username].extraPromoteSlots || 0) + 1;
         subs[username].lastPayment = { type: 'extra_slot', amount: 299, date: new Date().toISOString(), sessionId: session.id };
       } else if (session.subscription) {
-        // Pro subscription started
+        // Pro or Pro+ subscription started
         if (!subs[username]) subs[username] = {};
-        subs[username].plan = 'pro';
+        subs[username].plan = session.metadata?.plan || 'pro';
         subs[username].period = session.metadata?.period || 'monthly';
         subs[username].stripeCustomerId = session.customer;
         subs[username].stripeSubscriptionId = session.subscription;
@@ -78,9 +82,8 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     }
     case 'customer.subscription.deleted': {
       const sub = event.data.object;
-      // Find user by stripe customer ID
       for (const [user, data] of Object.entries(subs)) {
-        if (data.stripeCustomerId === sub.customer) {
+        if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = 'cancelled';
           data.cancelledAt = new Date().toISOString();
           break;
@@ -92,7 +95,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     case 'customer.subscription.updated': {
       const sub = event.data.object;
       for (const [user, data] of Object.entries(subs)) {
-        if (data.stripeCustomerId === sub.customer) {
+        if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = sub.status === 'active' ? 'active' : sub.status;
           break;
         }
@@ -125,25 +128,18 @@ app.use((req, res, next) => {
 
 app.use(compression());
 app.use(express.json());
+// Disable caching for JS/CSS so deploys take effect immediately
+app.use((req, res, next) => {
+  if (/\.(js|css)(\?.*)?$/.test(req.path)) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-// ---- Finding API throttle (serialize calls to avoid per-second rate limits) ----
-let lastFindingCallTime = 0;
-const FINDING_API_MIN_INTERVAL = 5000; // 5 seconds between Finding API calls (eBay is strict on findCompletedItems)
 
-async function throttleFindingAPI() {
-  const now = Date.now();
-  const elapsed = now - lastFindingCallTime;
-  if (elapsed < FINDING_API_MIN_INTERVAL) {
-    const wait = FINDING_API_MIN_INTERVAL - elapsed;
-    console.log(`[Finding API] Throttling: waiting ${wait}ms before next call`);
-    await new Promise(r => setTimeout(r, wait));
-  }
-  lastFindingCallTime = Date.now();
-}
-
-// ---- eBay Finding API Call Tracker ----
+// ---- API Call Tracker ----
 const API_CALLS_FILE = path.join(__dirname, 'data', 'api-call-log.json');
 
 function loadApiCallLog() {
@@ -211,8 +207,8 @@ function getApiCallStats() {
 
 // ---- In-memory cache to reduce eBay API calls ----
 const ebayCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000;         // 30 min for active listings
-const SOLD_CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours for sold data (Finding API is heavily rate limited)
+const CACHE_TTL = 30 * 60 * 1000;      // 30 min for active listings
+const SOLD_CACHE_TTL = 30 * 60 * 1000; // 30 min for sold data
 
 function getCached(key) {
   const entry = ebayCache.get(key);
@@ -233,14 +229,14 @@ function setCache(key, data) {
   }
 }
 
-// ---- OAuth token management for Marketplace Insights API ----
+// ---- OAuth token management for eBay Browse API ----
 let oauthToken = null;
 let oauthExpiry = 0;
 
 async function getOAuthToken() {
   if (oauthToken && Date.now() < oauthExpiry) return oauthToken;
   if (!EBAY_APP_ID || !EBAY_CERT_ID) {
-    throw new Error('EBAY_APP_ID and EBAY_CERT_ID required for Marketplace Insights API');
+    throw new Error('EBAY_APP_ID and EBAY_CERT_ID required for eBay OAuth');
   }
   const credentials = Buffer.from(`${EBAY_APP_ID}:${EBAY_CERT_ID}`).toString('base64');
   const res = await axios.post(
@@ -285,42 +281,6 @@ async function withRetry(fn, maxRetries = 1) {
   }
 }
 
-// ---- Marketplace Insights API (sold items via OAuth) ----
-async function fetchViaInsightsAPI(keywords, limit, source = 'unknown') {
-  trackApiCall('insights', 'marketplace_insights/search', keywords, source);
-  const token = await getOAuthToken();
-  const res = await axios.get(
-    'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
-    {
-      params: {
-        q: keywords,
-        category_ids: '261328',
-        limit,
-        sort: '-endDate',
-      },
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-      },
-      timeout: 15000,
-    }
-  );
-
-  const items = res.data?.itemSales || [];
-  const results = items.map(item => ({
-    itemId: item.itemId || '',
-    title: item.title || '',
-    price: item.lastSoldPrice?.value || '0',
-    currency: item.lastSoldPrice?.currency || 'USD',
-    soldDate: item.lastSoldDate || '',
-    imageUrl: item.image?.imageUrl || null,
-    itemUrl: item.itemWebUrl || '',
-    condition: item.condition || 'Unknown',
-  }));
-
-  return { results, total: res.data?.total || results.length };
-}
-
 // ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   trackApiCall('browse', 'browse/search', keywords, source);
@@ -359,121 +319,59 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
   return { results, total: res.data?.total || results.length };
 }
 
-// ---- Finding API (legacy, sold items) ----
-async function fetchViaFindingAPI(keywords, limit, source = 'unknown') {
-  await throttleFindingAPI();
-  trackApiCall('finding', 'findCompletedItems', keywords, source);
-  let ebayResponse;
+
+// ---- EbayApiData (sold listings) ----
+async function fetchViaEbayApiData(keywords, limit = 20, source = 'unknown') {
+  trackApiCall('ebayapidata', 'ebay-sold', keywords, source);
+  console.log(`[EbayApiData] Searching sold: "${keywords}"`);
   try {
-    ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findCompletedItems',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID,
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'REST-PAYLOAD': '',
-          'keywords': keywords,
-          'categoryId': '261328',
-          'itemFilter(0).name': 'SoldItemsOnly',
-          'itemFilter(0).value': 'true',
-          'sortOrder': 'EndTimeSoonest',
-          'paginationInput.entriesPerPage': limit,
-          'outputSelector(0)': 'PictureURLLarge',
-          'outputSelector(1)': 'GalleryInfo',
-        },
-        timeout: 15000,
-      }
-    );
-  } catch (axiosErr) {
-    const status = axiosErr.response?.status;
-    const respData = axiosErr.response?.data;
-    console.error(`[Finding API] HTTP error ${status || 'NETWORK'}:`, JSON.stringify(respData || axiosErr.message).slice(0, 500));
-
-    // If eBay returned an HTTP error with a JSON body, try to parse it
-    if (respData?.findCompletedItemsResponse) {
-      const ack = respData.findCompletedItemsResponse[0]?.ack?.[0];
-      const ebayErrors = respData.findCompletedItemsResponse[0]?.errorMessage?.[0]?.error || [];
-      const errorMsg = ebayErrors[0]?.message?.[0] || `eBay HTTP ${status}`;
-      console.error(`[Finding API] Error in HTTP ${status} body: ack=${ack}, msg=${errorMsg}`);
-      return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
-    }
-
-    // Network error or non-JSON response — return gracefully
-    return { results: [], total: 0, rateLimited: true, errorMessage: `eBay API unavailable (HTTP ${status || 'timeout'})` };
+    const res = await axios.get(`${EBAY_API_DATA_BASE}/scrape/search`, {
+      params: { query: keywords, max_pages: 1 },
+      headers: { Authorization: `Bearer ${EBAY_API_DATA_KEY}` },
+      timeout: 30000,
+    });
+    const items = Array.isArray(res.data) ? res.data : [];
+    console.log(`[EbayApiData] ${items.length} items found`);
+    const results = items.map((item, i) => {
+      const price = typeof item.sale_price === 'number' ? item.sale_price : parseFloat(String(item.sale_price).replace(/[^0-9.]/g, '')) || 0;
+      const rawDate = item.sale_date || '';
+      let soldDate = '';
+      if (rawDate) { const p = new Date(rawDate); soldDate = isNaN(p.getTime()) ? rawDate : p.toISOString(); }
+      return { itemId: item.item_id || `ead-${i}`, title: item.title || keywords, price: String(price), currency: 'USD', soldDate, imageUrl: item.image_url || null, itemUrl: item.listing_url || '', condition: item.condition || 'Unknown' };
+    });
+    return { results: results.slice(0, limit), total: results.length };
+  } catch (err) {
+    console.error(`[EbayApiData] Error: ${err.message}`);
+    if (err.response) console.error(`[EbayApiData] HTTP ${err.response.status}:`, JSON.stringify(err.response.data).slice(0, 200));
+    return { results: [], total: 0, error: err.message };
   }
-
-  const raw = ebayResponse.data;
-
-  // Safety check: eBay sometimes returns non-JSON or unexpected structure
-  if (!raw || !raw.findCompletedItemsResponse) {
-    console.error('[Finding API] Unexpected response structure:', JSON.stringify(raw).slice(0, 500));
-    return { results: [], total: 0, rateLimited: true, errorMessage: 'eBay returned an unexpected response' };
-  }
-
-  const ack = raw.findCompletedItemsResponse[0]?.ack?.[0];
-  const ebayErrors = raw.findCompletedItemsResponse[0]?.errorMessage?.[0]?.error || [];
-
-  if (ebayErrors.length > 0) {
-    const errorId = ebayErrors[0]?.errorId?.[0];
-    const errorMsg = ebayErrors[0]?.message?.[0] || 'Unknown eBay error';
-    console.error(`[Finding API] ack=${ack}, errorId=${errorId}, message: ${errorMsg}`);
-    console.error(`[Finding API] Full error response:`, JSON.stringify(ebayErrors).slice(0, 500));
-  }
-
-  if (ack === 'Failure') {
-    // Return gracefully for ALL failures — don't throw, let the caller decide
-    const errorId = ebayErrors[0]?.errorId?.[0];
-    const errorMsg = ebayErrors[0]?.message?.[0] || 'eBay API returned a failure response';
-    console.error(`[Finding API] FAILURE (errorId=${errorId}): ${errorMsg}`);
-    return { results: [], total: 0, rateLimited: true, errorMessage: errorMsg };
-  }
-
-  const searchResult = raw.findCompletedItemsResponse[0]?.searchResult?.[0];
-  const items = searchResult?.item || [];
-
-  const results = items.map(item => ({
-    itemId: item.itemId?.[0],
-    title: item.title?.[0],
-    price: item.sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'],
-    currency: item.sellingStatus?.[0]?.currentPrice?.[0]?.['@currencyId'] || 'USD',
-    soldDate: item.listingInfo?.[0]?.endTime?.[0],
-    imageUrl: item.pictureURLLarge?.[0] || item.galleryURL?.[0] || null,
-    itemUrl: item.viewItemURL?.[0],
-    condition: item.condition?.[0]?.conditionDisplayName?.[0] || 'Unknown',
-  }));
-
-  return { results, total: parseInt(searchResult?.['@count'] || '0') };
 }
 
-// ---- Shared fetch function (routes to correct API + cache + retry) ----
-// mode: 'forsale' (Browse API) or 'sold' (unavailable — Finding API decommissioned, Insights API requires approval)
+// ---- Shared fetch function ----
+// mode: 'forsale' (eBay Browse API) or 'sold' (EbayApiData)
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
   const cacheKey = `${mode}|${keywords}|${limit}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
   if (mode === 'sold') {
-    // Finding API was decommissioned by eBay in Feb 2025.
-    // Marketplace Insights API is the replacement but requires eBay Business approval.
-    // Return a clear message until Insights API access is granted.
-    return { results: [], total: 0, soldUnavailable: true };
+    if (!EBAY_API_DATA_ENABLED) {
+      console.log(`[Sold] EbayApiData not configured — add EBAY_API_DATA_KEY to .env`);
+      return { results: [], total: 0, noProvider: true };
+    }
+    const response = await fetchViaEbayApiData(keywords, limit, source);
+    const filtered = { ...response, results: filterJunkListings(response.results) };
+    filtered.total = filtered.results.length;
+    if (filtered.results.length > 0) setCache(cacheKey, filtered);
+    return filtered;
   }
 
-  let response;
-
-  // For sale mode — just use Browse API
-  response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
+  // For sale mode — eBay Browse API
+  const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
   if (response && !response.rateLimited) {
     setCache(cacheKey, response);
   }
   return response;
-}
-
-// Legacy alias for backward compatibility
-async function fetchEbaySoldItems(keywords, limit = 20) {
-  return fetchEbayItems(keywords, limit, 'sold');
 }
 
 // Extract print run serial like /4, /25, /99 from a query
@@ -491,16 +389,22 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  if (USE_MOCK) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+    if (mode === 'sold') {
+      return res.status(503).json({ error: 'Sold listings unavailable — EBAY_API_DATA_KEY not configured on this server.' });
+    }
     return res.json(getMockData(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
 
-    // Sold mode: currently unavailable (Finding API decommissioned, Insights API pending approval)
+    // Sold mode — EbayApiData
     if (mode === 'sold') {
-      return res.json({ results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, soldUnavailable: true, rateLimitMessage: 'Sold search is currently unavailable. eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Check back soon!' });
+      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
+      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
+      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
     }
 
     if (!serial) {
@@ -620,7 +524,7 @@ function extractParallel(title) {
 }
 
 // ---- Query parsing helpers for direct search ----
-const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl'];
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl', 'basketball', 'nba', 'baseball', 'mlb', 'hockey', 'nhl', 'soccer', 'mls', 'pokemon', 'tcg'];
 
 function extractPlayerName(query) {
   let name = query;
@@ -679,8 +583,133 @@ function buildBroadenedQueries(parsed) {
   return queries;
 }
 
+const JUNK_KEYWORDS = ['reprint', 'custom', 'proxy', 'read desc', 'read description', 'lot of', ' lot ', 'bundle', 'fake', 'reproduction'];
+
+function filterJunkListings(results) {
+  return results.filter(r => {
+    const title = (r.title || '').toLowerCase();
+    return !JUNK_KEYWORDS.some(kw => title.includes(kw));
+  });
+}
+
+// Known parallel colors — used for color exclusivity in variant filtering
+const PARALLEL_COLORS = [
+  'silver', 'gold', 'orange', 'red', 'blue', 'green', 'pink',
+  'purple', 'teal', 'black', 'white', 'aqua', 'yellow', 'bronze',
+  'copper', 'ruby', 'emerald', 'sapphire'
+];
+
+// Known parallel/color keywords — used to enforce strict variant matching
+const PARALLEL_KEYWORDS = [
+  ...PARALLEL_COLORS,
+  'hyper', 'mojo', 'cosmic', 'disco', 'lava', 'ice', 'shimmer',
+  'neon', 'camo', 'wave', 'tiger', 'snake', 'cracked ice', 'scope',
+  'galaxy', 'choice', 'power', 'fast break', 'pulsar', 'sparkle',
+  'holo', 'prizmatic', 'laser', 'lazer', 'diamonds'
+];
+
+// Card set/brand names — used for set exclusivity
+const CARD_SET_NAMES = [
+  'optic', 'prizm', 'donruss', 'select', 'mosaic', 'chronicles',
+  'prestige', 'certified', 'absolute', 'contenders', 'luminance',
+  'illusions', 'spectra', 'origins', 'majestic', 'phoenix', 'hoops',
+  'flawless', 'immaculate', 'score', 'national treasures'
+];
+
+// Auto/memorabilia keywords — excluded from results unless user specifically searched for them
+const SPECIAL_CARD_KEYWORDS = ['autograph', 'patch', 'rpa', 'relic', 'jersey', 'memorabilia', 'logoman'];
+
+function titleHasSpecialCard(title) {
+  if (SPECIAL_CARD_KEYWORDS.some(kw => title.includes(kw))) return true;
+  if (/\bauto\b/.test(title)) return true; // 'auto' as a standalone word
+  return false;
+}
+
+const VARIANT_STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'card', 'cards', '&', 'rc', 'sp']);
+
+// Filters sold results to only those matching the searched variant.
+// - Requires ALL query tokens in title
+// - Auto/memorabilia exclusion: excluded unless the query asks for them
+// - Set exclusivity: if query has a set name, excludes other set names from results
+// - Color exclusivity: if query has a color, excludes other colors from results
+// - Base search: excludes all known parallel keywords
+function filterByVariant(results, query) {
+  const qLower = query.toLowerCase().trim();
+  const isBaseSearch = qLower.includes('base');
+  const searchedParallel = PARALLEL_KEYWORDS.find(p => qLower.includes(p));
+  const searchedColor = PARALLEL_COLORS.find(c => qLower.includes(c));
+  const queriedSets = CARD_SET_NAMES.filter(s => qLower.includes(s));
+  const excludedSets = queriedSets.length > 0
+    ? CARD_SET_NAMES.filter(s => !queriedSets.includes(s))
+    : [];
+  const queryHasSpecial = titleHasSpecialCard(qLower);
+
+  const qTokens = qLower.split(/\s+/).filter(t =>
+    t.length > 1 && !VARIANT_STOP_WORDS.has(t) && !(isBaseSearch && t === 'base')
+  );
+
+  if (qTokens.length === 0) return results;
+
+  const filtered = results.filter(r => {
+    const title = (r.title || '').toLowerCase();
+
+    // All meaningful search tokens must appear in title
+    if (!qTokens.every(t => title.includes(t))) return false;
+
+    // Auto/memorabilia exclusion: if user didn't search for them, exclude them
+    if (!queryHasSpecial && titleHasSpecialCard(title)) return false;
+
+    // Set exclusivity: if searching a specific set, exclude other sets
+    if (excludedSets.some(s => title.includes(s))) return false;
+
+    // Base search: exclude all parallel keywords
+    if (isBaseSearch && !searchedParallel) {
+      return !PARALLEL_KEYWORDS.some(p => title.includes(p));
+    }
+
+    // Color exclusivity: if searching a specific color, exclude other colors
+    if (searchedColor) {
+      if (PARALLEL_COLORS.filter(c => c !== searchedColor).some(c => title.includes(c))) return false;
+    }
+
+    return true;
+  });
+
+  // If strict filter removed everything, fall back to unfiltered
+  return filtered.length > 0 ? filtered : results;
+}
+
+function removeOutliers(prices) {
+  if (prices.length < 4) return prices;
+  const sorted = [...prices].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(sorted.length * 0.25)];
+  const q3 = sorted[Math.floor(sorted.length * 0.75)];
+  const iqr = q3 - q1;
+  const lower = q1 - 1.5 * iqr;
+  const upper = q3 + 1.5 * iqr;
+  return prices.filter(p => p >= lower && p <= upper);
+}
+
+// Removes listings priced more than 5x the median — catches mis-listed cards
+function filterPriceOutliers(results) {
+  if (results.length < 3) return results;
+  const prices = results.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
+  if (prices.length < 3) return results;
+  const median = prices.length % 2 === 0
+    ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
+    : prices[Math.floor(prices.length / 2)];
+  const ceiling = median * 5;
+  return results.filter(r => {
+    const p = parseFloat(r.price);
+    return isNaN(p) || p <= ceiling;
+  });
+}
+
 function computeApproxValue(results, label) {
-  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
+  const rawPrices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
+  if (rawPrices.length === 0) return null;
+
+  const prices = removeOutliers(rawPrices);
   if (prices.length === 0) return null;
 
   prices.sort((a, b) => a - b);
@@ -698,6 +727,57 @@ function computeApproxValue(results, label) {
   };
 }
 
+// ---- /api/grading-advisor ----
+// Returns sold price stats for raw, PSA 8, PSA 9, PSA 10 for a given card query.
+app.get('/api/grading-advisor', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required' });
+  }
+
+  const GRADING_COST = { economy: 25, express: 50 };
+
+  try {
+    const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
+      fetchEbayItems(query.trim(), 20, 'sold', 'grading-raw'),
+      fetchEbayItems(`${query.trim()} PSA 8`, 20, 'sold', 'grading-psa8'),
+      fetchEbayItems(`${query.trim()} PSA 9`, 20, 'sold', 'grading-psa9'),
+      fetchEbayItems(`${query.trim()} PSA 10`, 20, 'sold', 'grading-psa10'),
+    ]);
+
+    const summarize = (data, label) => {
+      const v = computeApproxValue(data.results, label);
+      return v ? { avg: v.avgPrice, median: v.medianPrice, min: v.priceRange.min, max: v.priceRange.max, sales: v.sampleSize } : null;
+    };
+
+    const raw   = summarize(rawData,   'Raw');
+    const psa8  = summarize(psa8Data,  'PSA 8');
+    const psa9  = summarize(psa9Data,  'PSA 9');
+    const psa10 = summarize(psa10Data, 'PSA 10');
+
+    // Calculate grade premiums over raw median
+    const calcPremium = (graded, rawVal) => {
+      if (!graded || !rawVal) return null;
+      const net = graded.median - rawVal.median - GRADING_COST.economy;
+      return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
+    };
+
+    res.json({
+      query: query.trim(),
+      grades: { raw, psa8, psa9, psa10 },
+      premiums: {
+        psa8:  calcPremium(psa8,  raw),
+        psa9:  calcPremium(psa9,  raw),
+        psa10: calcPremium(psa10, raw),
+      },
+      gradingCost: GRADING_COST,
+    });
+  } catch (err) {
+    console.error('Grading advisor error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch grading data', detail: err.message });
+  }
+});
+
 // ---- /api/direct-search ----
 app.get('/api/direct-search', async (req, res) => {
   const query = req.query.q;
@@ -706,16 +786,20 @@ app.get('/api/direct-search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  if (USE_MOCK) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — EBAY_API_DATA_KEY not configured on this server.' });
     return res.json(getMockDirectSearch(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
 
-    // Sold mode: single API call only (Finding API is heavily rate limited by eBay)
+    // Sold mode
     if (mode === 'sold') {
-      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial: serial || null, similarResults: [], soldUnavailable: true, rateLimitMessage: 'Sold search is currently unavailable. eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Check back soon!' });
+      const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
+      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
+      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
+      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
     }
 
     if (serial) {
@@ -726,10 +810,6 @@ app.get('/api/direct-search', async (req, res) => {
         fetchEbayItems(query, 50, mode, 'variants-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'variants-serial-broad'),
       ]);
-
-      if (targetedResults.rateLimited || broadResults.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [], rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
 
       // Merge and dedup
       const seen = new Set();
@@ -771,9 +851,6 @@ app.get('/api/direct-search', async (req, res) => {
 
     // No serial — standard search: try exact first
     const exact = await fetchEbayItems(query, 20, mode, 'variants');
-    if (exact.rateLimited) {
-      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-    }
     if (exact.results.length > 0) {
       return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
@@ -816,7 +893,8 @@ app.get('/api/variants', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  if (USE_MOCK) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — EBAY_API_DATA_KEY not configured on this server.' });
     return res.json(getMockVariants(query, mode));
   }
 
@@ -827,12 +905,9 @@ app.get('/api/variants', async (req, res) => {
 
     let rawResults;
 
-    // Sold mode: single API call only (Finding API is heavily rate limited)
+    // Sold mode
     if (mode === 'sold') {
       const result = await fetchEbayItems(query, 50, mode, 'variants');
-      if (result.rateLimited) {
-        return res.json({ variants: [], mock: false, serial: serial || null, soldUnavailable: true, rateLimitMessage: 'Sold search is currently unavailable. eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Check back soon!' });
-      }
       rawResults = result.results;
     } else if (serial) {
       // Dual search when serial present: targeted + broad for better coverage
@@ -840,9 +915,6 @@ app.get('/api/variants', async (req, res) => {
         fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
       ]);
-      if (targeted.rateLimited || broad.rateLimited) {
-        return res.json({ variants: [], mock: false, serial, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       const seen = new Set();
       rawResults = [];
       for (const item of [...targeted.results, ...broad.results]) {
@@ -853,9 +925,6 @@ app.get('/api/variants', async (req, res) => {
       }
     } else {
       const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
-      if (result.rateLimited) {
-        return res.json({ variants: [], mock: false, serial: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
       rawResults = result.results;
     }
     const playerName = extractPlayerName(query);
@@ -919,53 +988,35 @@ app.get('/api/variants', async (req, res) => {
   }
 });
 
+// ---- EbayApiData debug endpoint ----
+app.get('/api/debug/ebayapidata', async (req, res) => {
+  const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
+  if (!EBAY_API_DATA_ENABLED) return res.json({ error: 'EBAY_API_DATA_KEY not configured' });
+  try {
+    const result = await fetchViaEbayApiData(q, 5, 'debug');
+    res.json({ query: q, itemCount: result.results.length, firstItem: result.results[0] || null, error: result.error || null });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
+
 // ---- Health check for Render ----
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ---- Debug endpoint: raw eBay Finding API response ----
-app.get('/api/debug/sold-test', async (req, res) => {
+// ---- Debug endpoint: test eBay Browse API ----
+app.get('/api/debug/browse-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
   if (USE_MOCK) return res.json({ debug: 'MOCK MODE — no real API call', query: q });
 
-  const results = { query: q, appId: EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET' };
-
-  // Test 1: Marketplace Insights API (OAuth)
-  try {
-    const token = await getOAuthToken();
-    const insightsRes = await axios.get(
-      'https://api.ebay.com/buy/marketplace_insights/v1_beta/item_sales/search',
-      { params: { q, category_ids: '261328', limit: 3 }, headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }, timeout: 15000 }
-    );
-    const items = insightsRes.data?.itemSales || [];
-    results.insightsAPI = { status: 'OK', httpStatus: insightsRes.status, itemCount: items.length, total: insightsRes.data?.total || 0, firstItem: items[0] ? { title: items[0].title, price: items[0].lastSoldPrice?.value } : null };
-  } catch (err) {
-    results.insightsAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null, responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 500) : null };
-  }
-
-  // Test 2: Finding API (legacy)
-  try {
-    await throttleFindingAPI();
-    const findingRes = await axios.get('https://svcs.ebay.com/services/search/FindingService/v1', {
-      params: { 'OPERATION-NAME': 'findCompletedItems', 'SERVICE-VERSION': '1.0.0', 'SECURITY-APPNAME': EBAY_APP_ID, 'RESPONSE-DATA-FORMAT': 'JSON', 'REST-PAYLOAD': '', 'keywords': q, 'categoryId': '261328', 'itemFilter(0).name': 'SoldItemsOnly', 'itemFilter(0).value': 'true', 'paginationInput.entriesPerPage': 3 },
-      timeout: 15000,
-    });
-    const raw = findingRes.data;
-    const ack = raw?.findCompletedItemsResponse?.[0]?.ack?.[0];
-    const errors = raw?.findCompletedItemsResponse?.[0]?.errorMessage?.[0]?.error || [];
-    const items = raw?.findCompletedItemsResponse?.[0]?.searchResult?.[0]?.item || [];
-    results.findingAPI = { status: ack === 'Success' ? 'OK' : ack, httpStatus: findingRes.status, ack, itemCount: items.length, errors: errors.map(e => ({ errorId: e.errorId?.[0], message: e.message?.[0] })), firstItem: items[0] ? { title: items[0].title?.[0], price: items[0].sellingStatus?.[0]?.currentPrice?.[0]?.['__value__'] } : null };
-  } catch (err) {
-    results.findingAPI = { status: 'FAILED', error: err.message, httpStatus: err.response?.status || null, responseData: err.response?.data ? JSON.stringify(err.response.data).slice(0, 500) : null };
-  }
-
-  // Test 3: Browse API (active listings, as reference)
+  const results = { query: q };
   try {
     const token = await getOAuthToken();
     const browseRes = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
       params: { q, category_ids: '261328', limit: 3 },
-      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' }, timeout: 15000,
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+      timeout: 15000,
     });
     const items = browseRes.data?.itemSummaries || [];
     results.browseAPI = { status: 'OK', httpStatus: browseRes.status, itemCount: items.length, total: browseRes.data?.total || 0, firstItem: items[0] ? { title: items[0].title, price: items[0].price?.value } : null };
@@ -1006,49 +1057,22 @@ app.get('/api/stats/api-calls', (req, res) => {
   }
 });
 
-// ---- eBay API connectivity test (no auth required) ----
+// ---- API connectivity test ----
 app.get('/api/test-ebay', async (req, res) => {
+  const results = { ebayConfigured: !!EBAY_APP_ID, useMock: USE_MOCK };
   try {
-    await throttleFindingAPI();
-    trackApiCall('finding', 'findItemsByKeywords', 'test', 'test-ebay');
     const start = Date.now();
-    const ebayResponse = await axios.get(
-      'https://svcs.ebay.com/services/search/FindingService/v1',
-      {
-        params: {
-          'OPERATION-NAME': 'findItemsByKeywords',
-          'SERVICE-VERSION': '1.0.0',
-          'SECURITY-APPNAME': EBAY_APP_ID || 'NOT_SET',
-          'RESPONSE-DATA-FORMAT': 'JSON',
-          'keywords': 'test',
-          'paginationInput.entriesPerPage': '1',
-        },
-        timeout: 15000,
-      }
-    );
-    const elapsed = Date.now() - start;
-    const raw = ebayResponse.data;
-    const ack = raw?.findItemsByKeywordsResponse?.[0]?.ack?.[0];
-    const errorMsg = raw?.findItemsByKeywordsResponse?.[0]?.errorMessage?.[0]?.error?.[0]?.message?.[0];
-    res.json({
-      status: 'reachable',
-      httpStatus: ebayResponse.status,
-      ack,
-      ebayError: errorMsg || null,
-      elapsedMs: elapsed,
-      appIdConfigured: !!EBAY_APP_ID,
-      useMock: USE_MOCK,
+    const token = await getOAuthToken();
+    await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+      params: { q: 'test', category_ids: '261328', limit: 1 },
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+      timeout: 10000,
     });
+    results.ebayBrowse = { status: 'reachable', elapsedMs: Date.now() - start };
   } catch (err) {
-    res.status(500).json({
-      status: 'unreachable',
-      error: err.message,
-      code: err.code,
-      httpStatus: err.response?.status || null,
-      appIdConfigured: !!EBAY_APP_ID,
-      useMock: USE_MOCK,
-    });
+    results.ebayBrowse = { status: 'unreachable', error: err.message, httpStatus: err.response?.status || null };
   }
+  res.json(results);
 });
 
 // ---- eBay Marketplace Account Deletion compliance ----
@@ -1123,55 +1147,6 @@ app.get('/api/ebay-listing-image', async (req, res) => {
   } catch (err) {
     res.json({ imageUrl: null });
   }
-});
-
-// ---- Checklist Data API ----
-const checklistData = JSON.parse(require('fs').readFileSync(path.join(__dirname, 'data', 'checklists.json'), 'utf8'));
-
-// GET /api/checklists — list all products
-app.get('/api/checklists', (req, res) => {
-  const products = checklistData.products.map(p => ({
-    id: p.id,
-    name: p.name,
-    year: p.year,
-    brand: p.brand,
-    sport: p.sport,
-    setCount: p.sets.length,
-    totalCards: p.sets.reduce((sum, s) => sum + s.totalCards, 0),
-  }));
-  res.json({ products });
-});
-
-// GET /api/checklists/:productId — get full product with all sets
-app.get('/api/checklists/:productId', (req, res) => {
-  const product = checklistData.products.find(p => p.id === req.params.productId);
-  if (!product) return res.status(404).json({ error: 'Product not found' });
-  res.json(product);
-});
-
-// GET /api/checklists/:productId/search?q=player — search cards within a product
-app.get('/api/checklists/:productId/search', (req, res) => {
-  const product = checklistData.products.find(p => p.id === req.params.productId);
-  if (!product) return res.status(404).json({ error: 'Product not found' });
-
-  const q = (req.query.q || '').toLowerCase().trim();
-  if (!q) return res.json({ results: [] });
-
-  const results = [];
-  for (const set of product.sets) {
-    for (const card of set.cards) {
-      if (card.player.toLowerCase().includes(q) || card.team.toLowerCase().includes(q) || card.number.toLowerCase().includes(q)) {
-        results.push({
-          ...card,
-          setId: set.id,
-          setName: set.name,
-          category: set.category,
-          parallels: set.parallels,
-        });
-      }
-    }
-  }
-  res.json({ results, query: q });
 });
 
 // ---- Card Alerts System (Pro Feature) ----
@@ -1285,10 +1260,8 @@ async function checkAlerts() {
       let searchResult;
       if (USE_MOCK) {
         searchResult = getMockData(alert.query, 'sold');
-      } else if (EBAY_API_MODE === 'browse') {
-        searchResult = await withRetry(() => fetchViaBrowseAPI(alert.query, 10, 'alerts'));
       } else {
-        searchResult = await withRetry(() => fetchViaFindingAPI(alert.query, 10, 'alerts'));
+        searchResult = await fetchEbayItems(alert.query, 10, 'sold', 'alerts');
       }
 
       const currentIds = searchResult.results.map(r => r.itemId);
@@ -1441,178 +1414,6 @@ app.get('/api/marketplace', async (req, res) => {
   }
 });
 
-// ---- Marketplace Insights (built from Finding API sold data) ----
-app.get('/api/marketplace-insights', async (req, res) => {
-  const q = (req.query.q || '').trim();
-  if (!q || q.length < 2) return res.status(400).json({ error: 'Query required (min 2 chars)' });
-
-  const cacheKey = `insights:${q}`;
-  const cached = getCached(cacheKey);
-  if (cached) return res.json(cached);
-
-  if (USE_MOCK) {
-    const mock = buildMockInsights(q);
-    setCache(cacheKey, mock);
-    return res.json(mock);
-  }
-
-  try {
-    // Fetch up to 50 sold items via Finding API
-    const { results } = await withRetry(() => fetchViaFindingAPI(q, 50, 'marketplace-insights'));
-
-    if (results.length === 0) {
-      return res.json({ query: q, totalSold: 0, insights: null });
-    }
-
-    const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p) && p > 0);
-    prices.sort((a, b) => a - b);
-
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const median = prices.length % 2 === 0
-      ? (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2
-      : prices[Math.floor(prices.length / 2)];
-
-    // Price distribution buckets
-    const buckets = {};
-    prices.forEach(p => {
-      let label;
-      if (p < 5) label = 'Under $5';
-      else if (p < 10) label = '$5-$10';
-      else if (p < 25) label = '$10-$25';
-      else if (p < 50) label = '$25-$50';
-      else if (p < 100) label = '$50-$100';
-      else if (p < 250) label = '$100-$250';
-      else if (p < 500) label = '$250-$500';
-      else label = '$500+';
-      buckets[label] = (buckets[label] || 0) + 1;
-    });
-
-    // Sales timeline (group by date)
-    const timeline = {};
-    results.forEach(r => {
-      if (!r.soldDate) return;
-      const date = r.soldDate.slice(0, 10);
-      if (!timeline[date]) timeline[date] = { count: 0, total: 0, prices: [] };
-      const p = parseFloat(r.price);
-      if (!isNaN(p) && p > 0) {
-        timeline[date].count++;
-        timeline[date].total += p;
-        timeline[date].prices.push(p);
-      }
-    });
-
-    const salesByDate = Object.entries(timeline)
-      .map(([date, d]) => ({
-        date,
-        count: d.count,
-        avgPrice: d.count > 0 ? d.total / d.count : 0,
-        totalVolume: d.total,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    // Condition breakdown
-    const conditionMap = {};
-    results.forEach(r => {
-      const cond = r.condition || 'Unknown';
-      if (!conditionMap[cond]) conditionMap[cond] = { count: 0, prices: [] };
-      conditionMap[cond].count++;
-      const p = parseFloat(r.price);
-      if (!isNaN(p) && p > 0) conditionMap[cond].prices.push(p);
-    });
-
-    const conditionBreakdown = Object.entries(conditionMap).map(([cond, d]) => ({
-      condition: cond,
-      count: d.count,
-      avgPrice: d.prices.length > 0 ? d.prices.reduce((a, b) => a + b, 0) / d.prices.length : 0,
-    })).sort((a, b) => b.count - a.count);
-
-    // Top sales
-    const topSales = [...results]
-      .filter(r => parseFloat(r.price) > 0)
-      .sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
-      .slice(0, 5)
-      .map(r => ({ title: r.title, price: parseFloat(r.price), date: r.soldDate?.slice(0, 10), url: r.itemUrl, imageUrl: r.imageUrl }));
-
-    // Price trend (compare first half vs second half of results by date)
-    let trend = 'stable';
-    if (salesByDate.length >= 2) {
-      const mid = Math.floor(salesByDate.length / 2);
-      const olderAvg = salesByDate.slice(0, mid).reduce((s, d) => s + d.avgPrice, 0) / mid;
-      const newerAvg = salesByDate.slice(mid).reduce((s, d) => s + d.avgPrice, 0) / (salesByDate.length - mid);
-      const pctChange = olderAvg > 0 ? ((newerAvg - olderAvg) / olderAvg) * 100 : 0;
-      if (pctChange > 10) trend = 'rising';
-      else if (pctChange < -10) trend = 'falling';
-    }
-
-    const result = {
-      query: q,
-      totalSold: results.length,
-      insights: {
-        avgPrice: Math.round(avg * 100) / 100,
-        medianPrice: Math.round(median * 100) / 100,
-        minPrice: prices[0],
-        maxPrice: prices[prices.length - 1],
-        priceSpread: Math.round((prices[prices.length - 1] - prices[0]) * 100) / 100,
-        trend,
-        salesByDate,
-        priceDistribution: buckets,
-        conditionBreakdown,
-        topSales,
-        sampleSize: prices.length,
-      },
-    };
-
-    setCache(cacheKey, result);
-    res.json(result);
-  } catch (err) {
-    console.error('Marketplace insights error:', err.message);
-    const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to generate insights', detail: err.message });
-  }
-});
-
-function buildMockInsights(query) {
-  const player = query.trim().split(/\s+/).slice(0, 2).join(' ');
-  let hash = 0;
-  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
-  const seed = Math.abs(hash);
-  const basePrice = 5 + (seed % 50);
-
-  const salesByDate = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const count = 1 + (seed + i) % 5;
-    const avg = basePrice + ((seed * (i + 1)) % 20) - 10;
-    salesByDate.push({ date: d.toISOString().slice(0, 10), count, avgPrice: Math.max(1, Math.round(avg * 100) / 100), totalVolume: Math.round(avg * count * 100) / 100 });
-  }
-
-  return {
-    query,
-    totalSold: 30 + (seed % 20),
-    mock: true,
-    insights: {
-      avgPrice: basePrice,
-      medianPrice: basePrice - 2,
-      minPrice: Math.max(1, basePrice - 15),
-      maxPrice: basePrice + 30,
-      priceSpread: 45,
-      trend: ['rising', 'falling', 'stable'][seed % 3],
-      salesByDate,
-      priceDistribution: { 'Under $5': 3, '$5-$10': 8, '$10-$25': 12, '$25-$50': 5, '$50-$100': 2 },
-      conditionBreakdown: [
-        { condition: 'Ungraded', count: 20, avgPrice: basePrice - 3 },
-        { condition: 'PSA 10', count: 5, avgPrice: basePrice + 25 },
-        { condition: 'PSA 9', count: 3, avgPrice: basePrice + 10 },
-      ],
-      topSales: [
-        { title: `${player} 2024 Prizm Silver`, price: basePrice + 30, date: salesByDate[0].date, url: '#', imageUrl: null },
-        { title: `${player} 2024 Prizm Gold /10`, price: basePrice + 50, date: salesByDate[1].date, url: '#', imageUrl: null },
-      ],
-      sampleSize: 30,
-    },
-  };
-}
-
 // ---- Price History Storage ----
 const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
 
@@ -1669,6 +1470,107 @@ function saveSubscriptions(subs) {
   saveData('subscriptions', SUBS_FILE, subs);
 }
 
+// ---- Global User Accounts ----
+const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+const SESSIONS_FILE = path.join(__dirname, 'data', 'sessions.json');
+
+function loadServerUsers() { return loadData('users', USERS_FILE, {}); }
+function saveServerUsers(u) { saveData('users', USERS_FILE, u); }
+function loadSessions() { return loadData('sessions', SESSIONS_FILE, {}); }
+function saveSessions(s) { saveData('sessions', SESSIONS_FILE, s); }
+
+async function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const key = await new Promise((res, rej) =>
+    crypto.scrypt(password, salt, 64, (err, k) => err ? rej(err) : res(k)));
+  return `${salt}:${key.toString('hex')}`;
+}
+
+async function verifyPassword(password, stored) {
+  const [salt, key] = stored.split(':');
+  if (!salt || !key) return false;
+  const derived = await new Promise((res, rej) =>
+    crypto.scrypt(password, salt, 64, (err, k) => err ? rej(err) : res(k)));
+  return crypto.timingSafeEqual(Buffer.from(key, 'hex'), derived);
+}
+
+function generateToken() { return crypto.randomBytes(32).toString('hex'); }
+const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function getSessionUser(req) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : req.query._token;
+  if (!token) return null;
+  const sessions = loadSessions();
+  const s = sessions[token];
+  if (!s) return null;
+  if (Date.now() > s.expiresAt) { delete sessions[token]; saveSessions(sessions); return null; }
+  return s.username.toLowerCase();
+}
+
+// POST /api/auth/register
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password, email } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  if (username.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  const key = username.toLowerCase();
+  const users = loadServerUsers();
+  if (users[key]) return res.status(409).json({ error: 'Username already taken' });
+  users[key] = { username, email: email || '', passwordHash: await hashPassword(password), createdAt: new Date().toISOString() };
+  saveServerUsers(users);
+  const token = generateToken();
+  const sessions = loadSessions();
+  sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+  saveSessions(sessions);
+  res.json({ token, username: key });
+});
+
+// POST /api/auth/login
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  const key = username.toLowerCase();
+  const users = loadServerUsers();
+  const user = users[key];
+  if (!user) return res.status(401).json({ error: 'Invalid username or password' });
+  const valid = await verifyPassword(password, user.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid username or password' });
+  const token = generateToken();
+  const sessions = loadSessions();
+  sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+  saveSessions(sessions);
+  res.json({ token, username: key, email: user.email || '' });
+});
+
+// POST /api/auth/logout
+app.post('/api/auth/logout', (req, res) => {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (token) { const s = loadSessions(); delete s[token]; saveSessions(s); }
+  res.json({ ok: true });
+});
+
+// GET /api/auth/me
+app.get('/api/auth/me', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const users = loadServerUsers();
+  const user = users[username] || {};
+  const subs = loadSubscriptions();
+  res.json({ username, email: user.email || '', subscription: subs[username] || null });
+});
+
+// PUT /api/auth/email
+app.put('/api/auth/email', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const { email } = req.body;
+  const users = loadServerUsers();
+  if (users[username]) { users[username].email = email || ''; saveServerUsers(users); }
+  res.json({ ok: true });
+});
+
 // ---- Stripe API Routes ----
 
 // Get Stripe publishable key
@@ -1697,7 +1599,7 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
       line_items: [{
         price_data: {
           currency: 'usd',
-          product_data: { name: `Card Huddle Pro (${period === 'yearly' ? 'Yearly' : 'Monthly'})` },
+          product: STRIPE_PRODUCT_PRO,
           ...priceData
         },
         quantity: 1
@@ -1712,6 +1614,266 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
     console.error('Stripe checkout error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Create checkout session for Pro+ subscription
+app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
+  const { username, period } = req.body;
+  if (!username) return res.status(400).json({ error: 'Username required' });
+  try {
+    const priceData = period === 'yearly'
+      ? { unit_amount: 19999, recurring: { interval: 'year' } }
+      : { unit_amount: 1999, recurring: { interval: 'month' } };
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price_data: { currency: 'usd', product: STRIPE_PRODUCT_PROPLUS, ...priceData }, quantity: 1 }],
+      metadata: { username: username.toLowerCase(), period: period || 'monthly', plan: 'proplus' },
+      success_url: `${req.protocol}://${req.get('host')}/?payment=success&plan=proplus`,
+      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+    });
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('Stripe Pro+ checkout error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Flip Finder (Pro+) ----
+// Finds live eBay listings priced significantly below their recent sold median.
+app.get('/api/flip-finder', async (req, res) => {
+  const query = req.query.q;
+  const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
+  const minProfit = parseFloat(req.query.minProfit) || 10;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 40);
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+
+  try {
+    const [soldData, forsaleData] = await Promise.all([
+      fetchViaEbayApiData(query, 50, 'flip-finder'),
+      fetchEbayItems(query, 50, 'forsale', 'flip-finder'),
+    ]);
+
+    const soldPrices = soldData.results.map(i => parseFloat(i.price)).filter(p => p > 0);
+    if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough sold data for this query' });
+
+    const sorted = [...soldPrices].sort((a, b) => a - b);
+    const soldMedian = sorted.length % 2 ? sorted[Math.floor(sorted.length / 2)] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const threshold = soldMedian * (1 - minDiscount / 100);
+
+    const opportunities = (forsaleData.results || [])
+      .map(item => {
+        const price = parseFloat(item.price) || 0;
+        if (!price || price >= threshold) return null;
+        const profit = soldMedian - price;
+        if (profit < minProfit) return null;
+        return {
+          title: item.title,
+          listingPrice: price,
+          soldMedian: Math.round(soldMedian * 100) / 100,
+          potentialProfit: Math.round(profit * 100) / 100,
+          discountPct: Math.round((1 - price / soldMedian) * 100),
+          itemUrl: item.itemUrl || '',
+          imageUrl: item.imageUrl || null,
+          condition: item.condition || 'Unknown',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.potentialProfit - a.potentialProfit)
+      .slice(0, limit);
+
+    res.json({ results: opportunities, soldMedian: Math.round(soldMedian * 100) / 100, soldSampleSize: soldPrices.length });
+  } catch (err) {
+    console.error('[FlipFinder]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Market Movers (Pro+) ----
+// Identifies cards with prices trending up significantly in recent sales.
+app.get('/api/market-movers', async (req, res) => {
+  const query = req.query.q;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 20);
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+
+  try {
+    const soldData = await fetchViaEbayApiData(query, 50, 'market-movers');
+    const items = soldData.results
+      .map(i => ({ price: parseFloat(i.price), date: i.soldDate ? new Date(i.soldDate) : null, title: i.title, imageUrl: i.imageUrl }))
+      .filter(i => i.price > 0 && i.date && !isNaN(i.date));
+
+    if (items.length < 6) return res.json({ results: [], message: 'Not enough data' });
+
+    items.sort((a, b) => b.date - a.date);
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recent = items.filter(i => i.date >= cutoff).map(i => i.price);
+    const older = items.filter(i => i.date < cutoff).map(i => i.price);
+
+    if (recent.length < 2 || older.length < 2) return res.json({ results: [], message: 'Insufficient data to detect trend' });
+
+    const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const recentAvg = avg(recent);
+    const olderAvg = avg(older);
+    const changePct = ((recentAvg - olderAvg) / olderAvg) * 100;
+
+    res.json({
+      query,
+      recentAvg: Math.round(recentAvg * 100) / 100,
+      olderAvg: Math.round(olderAvg * 100) / 100,
+      changePct: Math.round(changePct * 10) / 10,
+      trending: changePct >= 10 ? 'up' : changePct <= -10 ? 'down' : 'stable',
+      recentSales: recent.length,
+      olderSales: older.length,
+      recentItems: items.filter(i => i.date >= cutoff).slice(0, 5).map(i => ({ price: i.price, date: i.date.toISOString().slice(0, 10), title: i.title, imageUrl: i.imageUrl })),
+    });
+  } catch (err) {
+    console.error('[MarketMovers]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Auto-Pricer: Comp Search (Pro+) ----
+// Returns raw sold listings for the user to pick the closest match before pricing.
+app.get('/api/auto-price/search', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+  try {
+    let soldData = await fetchViaEbayApiData(query, 24, 'ap-search');
+
+    // Progressively drop trailing words until we get results
+    if (!soldData.results || soldData.results.length === 0) {
+      const words = query.trim().split(/\s+/);
+      for (let len = words.length - 1; len >= 2; len--) {
+        soldData = await fetchViaEbayApiData(words.slice(0, len).join(' '), 24, 'ap-search-fallback');
+        if (soldData.results && soldData.results.length > 0) break;
+      }
+    }
+
+    const items = (soldData.results || [])
+      .map(i => ({
+        title: i.title,
+        price: parseFloat(i.price),
+        image: i.imageUrl || '',
+        soldDate: i.soldDate,
+        url: i.itemUrl || '',
+      }))
+      .filter(i => i.price > 0)
+      .slice(0, 20);
+    res.json({ items });
+  } catch (err) {
+    console.error('[APSearch]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Auto-Pricer (Pro+) ----
+// Smart pricing: tries exact query first, falls back to progressively broader queries.
+// Handles missing year/card# by using what's available. Returns confidence level.
+app.get('/api/auto-price', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+
+  const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
+
+  try {
+    // Build a list of queries to try: exact first, then drop one word at a time from the end
+    const words = query.trim().split(/\s+/);
+    const attempts = [query];
+    for (let len = words.length - 1; len >= 2; len--) {
+      attempts.push(words.slice(0, len).join(' '));
+    }
+
+    let soldData, usedQuery = query, attemptIndex = 0;
+    for (let i = 0; i < attempts.length; i++) {
+      soldData = await fetchViaEbayApiData(attempts[i], 30, 'auto-price');
+      const prices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+      if (prices.length >= 3) { usedQuery = attempts[i]; attemptIndex = i; break; }
+      if (i === attempts.length - 1) { usedQuery = attempts[i]; attemptIndex = i; }
+    }
+
+    const rawPrices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+    const cleanPrices = removeOutliers(rawPrices);
+    const finalPrices = (cleanPrices.length >= 2 ? cleanPrices : rawPrices).sort((a, b) => a - b);
+
+    if (finalPrices.length < 2) {
+      return res.json({ error: 'Not enough sold data found. Try selecting a different comp card.', soldCount: rawPrices.length });
+    }
+
+    // Confidence: high = 5+ exact sales, medium = 3-4 or minor fallback, low = significant fallback
+    let confidence, fallbackNote = null;
+    if (attemptIndex === 0) {
+      confidence = finalPrices.length >= 5 ? 'high' : 'medium';
+    } else if (attemptIndex <= 2) {
+      confidence = 'medium';
+      fallbackNote = `Priced using similar cards: "${usedQuery}"`;
+    } else {
+      confidence = 'low';
+      fallbackNote = `Limited exact data — broadened to: "${usedQuery}"`;
+    }
+
+    const soldMedian = med(finalPrices);
+    const soldLow = finalPrices[0];
+    const soldHigh = finalPrices[finalPrices.length - 1];
+    const soldAvg = finalPrices.reduce((a, b) => a + b, 0) / finalPrices.length;
+
+    const forsaleData = await fetchEbayItems(usedQuery, 20, 'forsale', 'auto-price');
+    const forsalePrices = (forsaleData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0).sort((a, b) => a - b);
+    const competitionLow = forsalePrices[0] || null;
+
+    const aggressive = competitionLow ? Math.max(soldLow, competitionLow * 0.95) : soldLow * 1.05;
+    const optimal = soldMedian * 0.95;
+    const premium = soldMedian * 1.10;
+
+    res.json({
+      soldMedian: Math.round(soldMedian * 100) / 100,
+      soldAvg: Math.round(soldAvg * 100) / 100,
+      soldLow: Math.round(soldLow * 100) / 100,
+      soldHigh: Math.round(soldHigh * 100) / 100,
+      soldCount: finalPrices.length,
+      confidence,
+      fallbackNote,
+      usedQuery,
+      competitionLow: competitionLow ? Math.round(competitionLow * 100) / 100 : null,
+      competitionCount: forsalePrices.length,
+      recommendations: {
+        aggressive: { price: Math.round(aggressive * 100) / 100, label: 'Fast Sale', description: 'Price to sell quickly — slightly below competition' },
+        optimal:    { price: Math.round(optimal * 100) / 100,    label: 'Optimal',   description: 'Best balance of speed and return — just below sold median' },
+        premium:    { price: Math.round(premium * 100) / 100,    label: 'Premium',   description: 'Max return — 10% above median for patient sellers' },
+      }
+    });
+  } catch (err) {
+    console.error('[AutoPrice]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Bulk Price (Pro+) ----
+// Prices up to 20 cards at once, returning median sold price for each.
+app.post('/api/bulk-price', async (req, res) => {
+  const { queries } = req.body;
+  if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
+  if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
+  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+
+  const results = [];
+  for (const q of queries) {
+    try {
+      const response = await fetchEbayItems(q.trim(), 10, 'sold', 'bulk-price');
+      const prices = response.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+      prices.sort((a, b) => a - b);
+      const median = prices.length ? (prices.length % 2 ? prices[Math.floor(prices.length / 2)] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
+      results.push({ query: q, median: median ? Math.round(median * 100) / 100 : null, count: prices.length, low: prices[0] || null, high: prices[prices.length - 1] || null });
+    } catch {
+      results.push({ query: q, median: null, count: 0, error: 'Failed' });
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  res.json({ results });
 });
 
 // Create checkout session for extra promote slot
@@ -1739,7 +1901,7 @@ app.post('/api/stripe/buy-slot', async (req, res) => {
       line_items: [{
         price_data: {
           currency: 'usd',
-          product_data: { name: 'Extra Promote Slot' },
+          product: STRIPE_PRODUCT_SLOT,
           unit_amount: 299
         },
         quantity: 1
@@ -1766,84 +1928,6 @@ app.get('/api/stripe/subscription', (req, res) => {
   res.json({ subscription: userSub, stripeEnabled });
 });
 
-// ---- SportsCardsPro / PriceCharting API ----
-async function fetchSportsCardsProPrices(query) {
-  const cacheKey = `scp:${query.toLowerCase()}`;
-  const cached = getCached(cacheKey);
-  if (cached) return cached;
-
-  const token = SPORTSCARDSPRO_API_KEY;
-  // Search for the product by name
-  const searchRes = await axios.get('https://www.pricecharting.com/api/products', {
-    params: { t: token, q: query, type: 'prices', category: 'football-cards' },
-    timeout: 10000,
-  });
-
-  const products = searchRes.data?.products || [];
-  if (products.length === 0) return { products: [], source: 'sportscardspro' };
-
-  // Get detailed prices for first few results (limit to 5 to avoid rate limits)
-  const detailed = products.slice(0, 5).map(p => ({
-    id: p.id,
-    name: p['product-name'] || p.name || '',
-    consoleName: p['console-name'] || '',
-    ungraded: p['ungraded-price'] ? (p['ungraded-price'] / 100).toFixed(2) : null,
-    psa9: p['graded-price'] ? (p['graded-price'] / 100).toFixed(2) : null,
-    psa10: p['manual-only-price'] ? (p['manual-only-price'] / 100).toFixed(2) : null,
-    boxOnly: p['box-only-price'] ? (p['box-only-price'] / 100).toFixed(2) : null,
-  }));
-
-  const result = { products: detailed, source: 'sportscardspro' };
-  setCache(cacheKey, result);
-  return result;
-}
-
-function getMockSportsCardsProPrices(query) {
-  // Extract player name by removing years, known sets, and noise words
-  const playerName = extractPlayerName(query) || query.trim().split(/\s+/).slice(0, 2).join(' ') || 'Player';
-  const year = extractYear(query) || '2024';
-  let hash = 0;
-  for (let i = 0; i < query.length; i++) hash = ((hash << 5) - hash + query.charCodeAt(i)) | 0;
-  const seed = Math.abs(hash);
-
-  const sets = ['Prizm Base', 'Prizm Silver', 'Select Concourse', 'Donruss Rated Rookie', 'Mosaic Base'];
-  const products = [];
-  const count = Math.min(3 + (seed % 3), 5);
-
-  for (let i = 0; i < count; i++) {
-    const basePrice = (5 + ((seed * (i + 1)) % 200));
-    products.push({
-      id: `mock-${seed}-${i}`,
-      name: `${year} ${sets[i % sets.length]} ${playerName}`,
-      consoleName: 'Football Cards',
-      ungraded: (basePrice * 0.6).toFixed(2),
-      psa9: (basePrice * 1.2).toFixed(2),
-      psa10: (basePrice * 3.5).toFixed(2),
-      boxOnly: null,
-    });
-  }
-
-  return { products, source: 'sportscardspro-mock' };
-}
-
-app.get('/api/card-prices', async (req, res) => {
-  const q = (req.query.q || '').trim();
-  if (!q || q.length < 2) return res.status(400).json({ error: 'Query required (min 2 chars)' });
-
-  if (!SPORTSCARDSPRO_ENABLED) {
-    // Return mock data when API key not configured
-    return res.json(getMockSportsCardsProPrices(q));
-  }
-
-  try {
-    const data = await withRetry(() => fetchSportsCardsProPrices(q), 1);
-    res.json(data);
-  } catch (err) {
-    console.error('SportsCardsPro API error:', err.message);
-    // Fall back to mock on error
-    res.json(getMockSportsCardsProPrices(q));
-  }
-});
 
 // ---- Feedback / Bug Reports ----
 const FEEDBACK_FILE = path.join(__dirname, 'data', 'feedback.json');
@@ -1876,8 +1960,12 @@ app.post('/api/feedback', (req, res) => {
 });
 
 app.get('/api/feedback', (req, res) => {
+  const key = req.query.key || req.headers['x-admin-key'];
+  const adminPass = process.env.ADMIN_PASSWORD || 'cardhuddle-admin';
+  if (key !== adminPass) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    res.json(loadData('feedback', FEEDBACK_FILE, []));
+    const items = loadData('feedback', FEEDBACK_FILE, []);
+    res.json(items.slice().reverse()); // newest first
   } catch (err) {
     res.json([]);
   }
@@ -1891,14 +1979,12 @@ app.get('*', (req, res) => {
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`eBay mode: ${USE_MOCK ? 'MOCK DATA' : `LIVE API (${EBAY_API_MODE})`}`);
+    console.log(`For-sale mode: ${USE_MOCK_FORSALE ? 'MOCK' : 'LIVE (eBay Browse API)'}`);
+    console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (EbayApiData)'}`);
     console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
-    console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET'}`);
-    console.log(`Stripe: ${stripeEnabled ? 'ENABLED (test mode)' : 'NOT CONFIGURED — add keys to .env'}`);
-    console.log(`SportsCardsPro: ${SPORTSCARDSPRO_ENABLED ? 'ENABLED' : 'NOT CONFIGURED (using mock data) — add SPORTSCARDSPRO_API_KEY to .env'}`);
-    if ((EBAY_API_MODE === 'insights' || EBAY_API_MODE === 'browse') && !EBAY_CERT_ID) {
-      console.warn(`WARNING: EBAY_API_MODE is "${EBAY_API_MODE}" but EBAY_CERT_ID is not set. OAuth will fail.`);
-    }
+    console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
+    console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);
+    console.log(`EbayApiData: ${EBAY_API_DATA_ENABLED ? 'ENABLED (sold listings active)' : 'NOT CONFIGURED — add EBAY_API_DATA_KEY to .env'}`);
   });
 });
 

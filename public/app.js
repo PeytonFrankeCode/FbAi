@@ -118,11 +118,14 @@ async function loadTrackedCards() {
     }
     listEl.innerHTML = data.alerts.map(a => {
       const date = new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const thresholdBadge = a.priceThreshold && a.priceCondition
+        ? `<span class="tracked-threshold-badge">${a.priceCondition === 'below' ? '↓' : '↑'} $${parseFloat(a.priceThreshold).toFixed(2)}</span>`
+        : '';
       return `
         <div class="tracked-card-item" data-id="${a.id}">
           <div class="tracked-card-icon">&#128276;</div>
           <div class="tracked-card-info">
-            <div class="tracked-card-query">${escHtml(a.label)}</div>
+            <div class="tracked-card-query">${escHtml(a.label)}${thresholdBadge}</div>
             <div class="tracked-card-date">Tracking since ${date}</div>
           </div>
           <button class="tracked-card-search" onclick="switchView('search'); document.getElementById('search-input').value='${escHtml(a.query).replace(/'/g, "\\'")}'; document.getElementById('search-form').dispatchEvent(new Event('submit'))" title="Search eBay">&#128269;</button>
@@ -146,6 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = userData?.email;
       const input = document.getElementById('tracked-query-input');
       const query = input.value.trim();
+      const conditionEl = document.getElementById('tracked-condition');
+      const thresholdEl = document.getElementById('tracked-threshold');
+      const priceCondition = conditionEl ? conditionEl.value || null : null;
+      const priceThreshold = thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
       const errEl = document.getElementById('tracked-error');
       errEl.classList.add('hidden');
 
@@ -159,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch('/api/alerts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: user, email, query, label: query }),
+          body: JSON.stringify({ username: user, email, query, label: query, priceThreshold, priceCondition }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -168,6 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         input.value = '';
+        if (conditionEl) conditionEl.value = '';
+        if (thresholdEl) thresholdEl.value = '';
         loadTrackedCards();
       } catch (err) {
         errEl.textContent = 'Network error. Try again.';
@@ -253,7 +262,7 @@ let priceChart = null;
 let cachedVariants = null;
 let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
-let currentMode = 'forsale'; // 'forsale' or 'sold'
+let currentMode = 'sold'; // 'forsale' or 'sold'
 let currentResults = []; // store results for sorting
 
 // ---- Recent Searches (localStorage) ----
@@ -301,11 +310,7 @@ function renderRecentSearches() {
       input.value = query;
       suggestionsSection.classList.add('hidden');
       recentSection.classList.add('hidden');
-      if (isDirectCardSearch(query)) {
-        fetchDirectSearch(query);
-      } else {
-        fetchVariants(query);
-      }
+      fetchDirectSearch(query);
     });
     recentChips.appendChild(chip);
   });
@@ -326,16 +331,7 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
     cachedVariants = null; // clear cached variants since mode changed
     // Re-run current search if there's an active query
     const query = input.value.trim();
-    if (query) {
-      if (currentSearchMode === 'direct') {
-        fetchDirectSearch(query);
-      } else if (currentSearchMode === 'variants' && !backBtn.classList.contains('hidden')) {
-        // Viewing a variant's results — re-search with new mode
-        performSearch(query);
-      } else if (currentSearchMode === 'variants') {
-        fetchVariants(currentVariantQuery || query);
-      }
-    }
+    if (query) fetchDirectSearch(query);
   });
 });
 
@@ -370,11 +366,15 @@ function applySortToResults(sortType) {
   const statsBar = grid.querySelector('.stats-bar');
   grid.innerHTML = '';
   if (statsBar) grid.appendChild(statsBar);
-  sorted.forEach((item, i) => {
-    const card = buildCard(item);
-    card.style.animationDelay = `${i * 0.05}s`;
-    grid.appendChild(card);
-  });
+  if (currentMode === 'sold' && sortType === 'default') {
+    renderGradeGroups(grid, sorted);
+  } else {
+    sorted.forEach((item, i) => {
+      const card = buildCard(item);
+      card.style.animationDelay = `${i * 0.05}s`;
+      grid.appendChild(card);
+    });
+  }
   injectPromotedCards(grid);
 }
 
@@ -388,6 +388,7 @@ const CLIENT_KNOWN_PARALLELS = ['Silver', 'Gold', 'Blue', 'Green', 'Red', 'Purpl
 
 // ---- Parse card details from title ----
 const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl',
+  'basketball', 'nba', 'baseball', 'mlb', 'hockey', 'nhl', 'soccer', 'pokemon', 'tcg',
   'gem', 'mint', 'nm', 'mt', 'nm-mt', 'near', 'better', 'graded', 'raw', 'ungraded', 'auto', 'refractor'];
 
 function parseCardTitle(title) {
@@ -498,11 +499,7 @@ form.addEventListener('submit', async (e) => {
   suggestionsSection.classList.add('hidden');
   recentSection.classList.add('hidden');
   addRecentSearch(query);
-  if (isDirectCardSearch(query)) {
-    await fetchDirectSearch(query);
-  } else {
-    await fetchVariants(query);
-  }
+  await fetchDirectSearch(query);
 });
 
 // ---- Suggestion chips ----
@@ -513,7 +510,7 @@ document.querySelectorAll('.chip').forEach(chip => {
     suggestionsSection.classList.add('hidden');
     recentSection.classList.add('hidden');
     addRecentSearch(query);
-    fetchVariants(query);
+    fetchDirectSearch(query);
   });
 });
 
@@ -669,11 +666,7 @@ function goBackToVariants() {
   }
 
   input.value = currentVariantQuery;
-  if (cachedVariants) {
-    displayVariants(cachedVariants, currentVariantQuery, false);
-  } else {
-    fetchVariants(currentVariantQuery);
-  }
+  fetchDirectSearch(currentVariantQuery);
 }
 
 // ---- Direct Card Search (Stage: direct) ----
@@ -754,11 +747,15 @@ async function fetchDirectSearch(query) {
       empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
-      results.forEach((item, i) => {
-        const card = buildCard(item);
-        card.style.animationDelay = `${i * 0.05}s`;
-        grid.appendChild(card);
-      });
+      if (isSold) {
+        renderGradeGroups(grid, results);
+      } else {
+        results.forEach((item, i) => {
+          const card = buildCard(item);
+          card.style.animationDelay = `${i * 0.05}s`;
+          grid.appendChild(card);
+        });
+      }
       injectPromotedCards(grid);
       if (isSold) updatePriceChart(results);
     }
@@ -832,6 +829,7 @@ async function performSearch(query) {
   sortControls.classList.add('hidden');
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
+  document.getElementById('grade-panel').classList.add('hidden');
   currentResults = [];
   if (priceChart) {
     priceChart.destroy();
@@ -849,6 +847,14 @@ async function performSearch(query) {
     const data = await response.json();
 
     if (response.status === 401) { showLogin(); return; }
+    if (response.status === 503 && currentMode === 'sold') {
+      setLoading(false);
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Data Unavailable</h3><p>' + (data.error || 'The sold listings service is not configured on this server.') + '</p>';
+      grid.appendChild(msg);
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -905,13 +911,20 @@ async function performSearch(query) {
         similarSection.classList.remove('hidden');
       }
     } else {
-      results.forEach((item, i) => {
-        const card = buildCard(item);
-        card.style.animationDelay = `${i * 0.05}s`;
-        grid.appendChild(card);
-      });
+      if (isSold) {
+        renderGradeGroups(grid, results);
+      } else {
+        results.forEach((item, i) => {
+          const card = buildCard(item);
+          card.style.animationDelay = `${i * 0.05}s`;
+          grid.appendChild(card);
+        });
+      }
       injectPromotedCards(grid);
-      if (isSold) updatePriceChart(results);
+      if (isSold) {
+        updatePriceChart(results);
+        loadGradePanel(query);
+      }
 
       // Also show similar cards below if serial search returned both
       if (serial && similarResults && similarResults.length > 0) {
@@ -935,13 +948,78 @@ async function performSearch(query) {
   }
 }
 
+// ---- Grade Value Panel ----
+async function loadGradePanel(query) {
+  const panel   = document.getElementById('grade-panel');
+  const body    = document.getElementById('grade-panel-body');
+  const loading = document.getElementById('grade-panel-loading');
+
+  panel.classList.remove('hidden');
+  loading.classList.remove('hidden');
+  body.innerHTML = '';
+
+  try {
+    const res  = await fetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    const { grades } = data;
+    const fmt = v => v != null ? `$${v.toFixed(2)}` : '—';
+
+    const entries = [
+      { label: 'Raw',    stats: grades.raw,   color: 'var(--text-secondary)' },
+      { label: 'PSA 8',  stats: grades.psa8,  color: '#f59e0b' },
+      { label: 'PSA 9',  stats: grades.psa9,  color: '#3b82f6' },
+      { label: 'PSA 10', stats: grades.psa10, color: 'var(--accent)' },
+    ];
+
+    body.innerHTML = entries.map(({ label, stats, color }) => `
+      <div class="grade-chip">
+        <span class="grade-chip-label" style="color:${color}">${label}</span>
+        <span class="grade-chip-price">${stats ? fmt(stats.median) : '—'}</span>
+        ${stats ? `<span class="grade-chip-sales">${stats.sales} sales</span>` : '<span class="grade-chip-sales">no data</span>'}
+      </div>
+    `).join('');
+  } catch {
+    body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Could not load grade data</span>';
+  } finally {
+    loading.classList.add('hidden');
+  }
+}
+
 // ---- Price Chart ----
 function updatePriceChart(results) {
   if (typeof Chart === 'undefined') return;
 
-  const sorted = [...results]
+  const sub = getUserSubscription();
+  const isPro = !!sub;
+  const cutoffDays = isPro ? 365 : 30;
+  const cutoffDate = new Date(Date.now() - cutoffDays * 24 * 60 * 60 * 1000);
+
+  const allSorted = [...results]
     .filter(r => r.soldDate && r.price)
     .sort((a, b) => new Date(a.soldDate) - new Date(b.soldDate));
+
+  const sorted = allSorted.filter(r => new Date(r.soldDate) >= cutoffDate);
+  const hiddenCount = allSorted.length - sorted.length;
+
+  // Show depth notice
+  let depthEl = document.getElementById('chart-depth-notice');
+  if (!depthEl) {
+    depthEl = document.createElement('div');
+    depthEl.id = 'chart-depth-notice';
+    depthEl.className = 'chart-depth-notice';
+    chartSection.appendChild(depthEl);
+  }
+  if (!isPro && hiddenCount > 0) {
+    depthEl.innerHTML = `Last 30 days shown &middot; <a href="#" onclick="showPricing();return false;" class="chart-depth-upgrade">${hiddenCount} older sale${hiddenCount !== 1 ? 's' : ''} hidden — Upgrade to Pro for full history</a>`;
+    depthEl.classList.remove('hidden');
+  } else if (isPro && allSorted.length > 0) {
+    depthEl.textContent = `Showing up to 1 year of price history`;
+    depthEl.classList.remove('hidden');
+  } else {
+    depthEl.classList.add('hidden');
+  }
 
   if (sorted.length < 2) {
     chartSection.classList.add('hidden');
@@ -1039,6 +1117,131 @@ function getTeamColor(title) {
   return '#52b788';
 }
 
+// ---- Date helpers ----
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const days = Math.floor((Date.now() - date.getTime()) / 86400000);
+  if (days === 0) return 'today';
+  if (days === 1) return '1 day ago';
+  if (days < 7) return `${days} days ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks === 1) return '1 week ago';
+  if (weeks < 5) return `${weeks} weeks ago`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return '1 month ago';
+  return `${months} months ago`;
+}
+
+// ---- Grade helpers ----
+function detectGrade(title) {
+  const t = (title || '').toUpperCase();
+  if (/PSA\s*10/.test(t)) return 'PSA 10';
+  if (/PSA\s*9\.5/.test(t)) return 'PSA 9.5';
+  if (/PSA\s*9/.test(t)) return 'PSA 9';
+  if (/PSA\s*8/.test(t)) return 'PSA 8';
+  if (/PSA\s*[0-9]/.test(t)) return 'PSA Other';
+  if (/BGS\s*10|BGS\s*PRISTINE/.test(t)) return 'BGS 10';
+  if (/BGS\s*9\.5/.test(t)) return 'BGS 9.5';
+  if (/BGS/.test(t)) return 'BGS';
+  if (/SGC/.test(t)) return 'SGC';
+  if (/CGC/.test(t)) return 'CGC';
+  return 'Raw / Ungraded';
+}
+
+const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC'];
+
+function groupByGrade(results) {
+  const groups = {};
+  for (const item of results) {
+    const grade = detectGrade(item.title);
+    if (!groups[grade]) groups[grade] = [];
+    groups[grade].push(item);
+  }
+  return GRADE_ORDER.filter(g => groups[g]?.length > 0).map(g => ({ grade: g, items: groups[g] }));
+}
+
+let _gradeGroups = [];
+let _gradeShown = {};
+let _gradeContainers = {};
+
+function renderGradeGroups(grid, results) {
+  _gradeGroups = groupByGrade(results);
+  _gradeShown = {};
+  _gradeContainers = {};
+  let cardIndex = 0;
+
+  for (const group of _gradeGroups) {
+    const isRaw = group.grade === 'Raw / Ungraded';
+    const initialLimit = isRaw ? 15 : 3;
+
+    const avgPrice = group.items.map(i => parseFloat(i.price)).filter(p => p > 0).reduce((s, p, _, a) => s + p / a.length, 0);
+    const header = document.createElement('div');
+    header.className = 'grade-section-header';
+    header.innerHTML = `<span class="grade-label">${escHtml(group.grade)}</span><span class="grade-meta">${group.items.length} sale${group.items.length !== 1 ? 's' : ''}${avgPrice > 0 ? ` &middot; avg $${avgPrice.toFixed(2)}` : ''}</span>`;
+    grid.appendChild(header);
+
+    const container = document.createElement('div');
+    container.style.display = 'contents';
+    grid.appendChild(container);
+    _gradeContainers[group.grade] = container;
+
+    const shown = group.items.slice(0, initialLimit);
+    _gradeShown[group.grade] = shown.length;
+    for (const item of shown) {
+      const card = buildCard(item);
+      card.style.animationDelay = `${cardIndex * 0.05}s`;
+      container.appendChild(card);
+      cardIndex++;
+    }
+  }
+
+  updateLoadMoreButton(grid);
+}
+
+function updateLoadMoreButton(grid) {
+  let wrap = grid.querySelector('.load-more-wrap');
+  const hasMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
+
+  if (!hasMore) { if (wrap) wrap.remove(); return; }
+
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'load-more-wrap';
+    const btn = document.createElement('button');
+    btn.className = 'load-more-btn';
+    btn.textContent = 'Load 20 More';
+    btn.addEventListener('click', () => loadMoreCards(grid));
+    wrap.appendChild(btn);
+    grid.appendChild(wrap);
+  }
+}
+
+function loadMoreCards(grid) {
+  let remaining = 20;
+  let cardIndex = grid.querySelectorAll('.card:not(.promoted-card)').length;
+
+  for (const group of _gradeGroups) {
+    if (remaining <= 0) break;
+    const currentShown = _gradeShown[group.grade] || 0;
+    if (currentShown >= group.items.length) continue;
+
+    const toShow = group.items.slice(currentShown, currentShown + remaining);
+    const container = _gradeContainers[group.grade];
+    for (const item of toShow) {
+      const card = buildCard(item);
+      card.style.animationDelay = `${cardIndex * 0.05}s`;
+      container.appendChild(card);
+      cardIndex++;
+    }
+    _gradeShown[group.grade] = currentShown + toShow.length;
+    remaining -= toShow.length;
+  }
+
+  updateLoadMoreButton(grid);
+}
+
 // ---- Build Sale Card ----
 function buildCard(item) {
   const card = document.createElement('div');
@@ -1053,14 +1256,12 @@ function buildCard(item) {
 
   const isSold = currentMode === 'sold';
 
-  const dateStr = item.soldDate
-    ? new Date(item.soldDate).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-      })
-    : '';
+  const dateStr = isSold
+    ? timeAgo(item.soldDate)
+    : (item.soldDate ? new Date(item.soldDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '');
 
   const dateHtml = isSold && dateStr
-    ? `<span class="card-date">Sold: ${dateStr}</span>`
+    ? `<span class="card-date">${dateStr}</span>`
     : !isSold && dateStr
     ? `<span class="card-date">Ends: ${dateStr}</span>`
     : '';
@@ -1094,12 +1295,7 @@ function buildCard(item) {
         ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
       </div>
-      <a class="card-link"
-         href="${escHtml(item.itemUrl)}"
-         target="_blank"
-         rel="noopener noreferrer">
-        View on eBay &#8599;
-      </a>
+      ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
     </div>
   `;
 
@@ -1154,8 +1350,12 @@ function openCardModal(item) {
   if (item.condition) metaHtml += `<span class="modal-condition">${escHtml(item.condition)}</span>`;
   cardModalMeta.innerHTML = metaHtml;
 
-  // eBay link
-  cardModalLink.href = item.itemUrl || '#';
+  // eBay link — sold items link to completed listings search, not the (possibly relisted) item page
+  const isSoldModal = currentMode === 'sold';
+  cardModalLink.href = isSoldModal
+    ? epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`)
+    : epnUrl(item.itemUrl || '#');
+  cardModalLink.textContent = isSoldModal ? 'View sold listings on eBay ↗' : 'View on eBay ↗';
 
   // Show modal
   cardModal.classList.remove('hidden');
@@ -1177,6 +1377,13 @@ document.addEventListener('keydown', (e) => {
     closeCardModal();
   }
 });
+
+// ---- eBay Partner Network Affiliate Tracking ----
+const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&toolid=10001&mkevt=1';
+function epnUrl(url) {
+  if (!url || typeof url !== 'string' || !url.includes('ebay.com')) return url || '#';
+  return url + (url.includes('?') ? '&' : '?') + EPN_PARAMS;
+}
 
 // ---- Helpers ----
 function escHtml(str) {
@@ -1211,6 +1418,12 @@ let authMode = 'login'; // 'login' or 'signup'
 function getUsers() {
   try { return JSON.parse(localStorage.getItem('cardHuddleUsers') || '{}'); }
   catch { return {}; }
+}
+
+function getSessionToken() { return localStorage.getItem('cardHuddleToken') || null; }
+function setSessionToken(token) {
+  if (token) localStorage.setItem('cardHuddleToken', token);
+  else localStorage.removeItem('cardHuddleToken');
 }
 
 function getCurrentUser() {
@@ -1249,18 +1462,70 @@ function toggleAuthDropdown() {
     dropdown.remove();
     return;
   }
+
+  const user = getCurrentUser();
+  const users = getUsers();
+  const userData = users[user?.toLowerCase()] || {};
+  const email = userData.email || '';
+
   dropdown = document.createElement('div');
   dropdown.className = 'auth-dropdown';
   dropdown.innerHTML = `
-    <button onclick="closeAuthDropdown()">My Account</button>
-    <button onclick="handleLogout()">Log Out</button>
+    <div class="auth-dropdown-header">
+      <div class="auth-dropdown-avatar">${(user || '?')[0].toUpperCase()}</div>
+      <div class="auth-dropdown-info">
+        <div class="auth-dropdown-username">${user}</div>
+        <div class="auth-dropdown-email-display">${email || 'No email added'}</div>
+      </div>
+    </div>
+    <div class="auth-dropdown-email-section">
+      <input type="email" class="auth-dropdown-email-input" placeholder="${email ? 'Update email address' : 'Add email address'}" value="${email}" />
+      <button class="auth-dropdown-save-btn" onclick="saveDropdownEmail(this)">Save</button>
+    </div>
+    <div class="auth-dropdown-divider"></div>
+    <button onclick="closeAuthDropdown(); showSettings()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+    <button class="auth-dropdown-logout" onclick="handleLogout()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Log Out
+    </button>
   `;
-  authBtn.parentElement.appendChild(dropdown);
+
+  // Append to body and position using fixed coords to avoid header overflow:hidden clipping
+  document.body.appendChild(dropdown);
+  const btnRect = authBtn.getBoundingClientRect();
+  dropdown.style.position = 'fixed';
+  dropdown.style.top = (btnRect.bottom + 6) + 'px';
+  dropdown.style.left = btnRect.left + 'px';
 
   // Close on outside click
   setTimeout(() => {
     document.addEventListener('click', closeDropdownOutside, { once: true });
   }, 0);
+}
+
+function saveDropdownEmail(btn) {
+  const input = btn.previousElementSibling;
+  const email = input.value.trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    input.style.borderColor = 'var(--error)';
+    setTimeout(() => { input.style.borderColor = ''; }, 2000);
+    return;
+  }
+  const user = getCurrentUser();
+  if (!user) return;
+  const users = getUsers();
+  if (!users[user.toLowerCase()]) return;
+  users[user.toLowerCase()].email = email;
+  localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+  const displayEl = document.querySelector('.auth-dropdown-email-display');
+  if (displayEl) displayEl.textContent = email || 'No email added';
+  btn.textContent = 'Saved!';
+  btn.style.background = 'var(--accent)';
+  btn.style.color = '#0c0e14';
+  setTimeout(() => closeAuthDropdown(), 1200);
 }
 
 function closeDropdownOutside(e) {
@@ -1317,46 +1582,84 @@ function updateLoginForm() {
   }
 }
 
-function handleAuth(e) {
+async function handleAuth(e) {
   e.preventDefault();
   const username = document.getElementById('auth-username').value.trim();
   const password = document.getElementById('auth-password').value;
   loginError.classList.add('hidden');
 
-  if (authMode === 'signup') {
-    const confirm = authConfirm.value;
-    if (password !== confirm) {
-      loginError.textContent = 'Passwords do not match';
-      loginError.classList.remove('hidden');
-      return false;
+  const authSubmitBtn = document.getElementById('auth-submit-btn');
+  if (authSubmitBtn) authSubmitBtn.disabled = true;
+
+  try {
+    if (authMode === 'signup') {
+      const confirm = authConfirm.value;
+      if (password !== confirm) {
+        loginError.textContent = 'Passwords do not match';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      const email = document.getElementById('auth-email').value.trim();
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, email })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        loginError.textContent = data.error || 'Registration failed';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      setSessionToken(data.token);
+      setCurrentUser(data.username);
+      closeLogin();
+      await syncSubscriptionStatus();
+    } else {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        // Fallback: check local accounts (for users created before server-side auth)
+        const users = getUsers();
+        const localUser = users[username.toLowerCase()];
+        if (localUser && localUser.password === password) {
+          setCurrentUser(localUser.username);
+          closeLogin();
+          await syncSubscriptionStatus();
+          return false;
+        }
+        loginError.textContent = data.error || 'Login failed';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      setSessionToken(data.token);
+      setCurrentUser(data.username);
+      // Persist email in local users store for display
+      if (data.email) {
+        const users = getUsers();
+        const key = data.username.toLowerCase();
+        if (!users[key]) users[key] = {};
+        users[key].email = data.email;
+        localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+      }
+      closeLogin();
+      await syncSubscriptionStatus();
     }
-    const users = getUsers();
-    if (users[username.toLowerCase()]) {
-      loginError.textContent = 'Username already taken';
-      loginError.classList.remove('hidden');
-      return false;
-    }
-    const email = document.getElementById('auth-email').value.trim();
-    users[username.toLowerCase()] = { username, password, email, createdAt: new Date().toISOString() };
-    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-    setCurrentUser(username);
-    closeLogin();
-  } else {
-    const users = getUsers();
-    const user = users[username.toLowerCase()];
-    if (!user || user.password !== password) {
-      loginError.textContent = 'Invalid username or password';
-      loginError.classList.remove('hidden');
-      return false;
-    }
-    setCurrentUser(user.username);
-    closeLogin();
+  } finally {
+    if (authSubmitBtn) authSubmitBtn.disabled = false;
   }
   return false;
 }
 
 function handleLogout() {
   closeAuthDropdown();
+  const token = getSessionToken();
+  if (token) fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  setSessionToken(null);
   setCurrentUser(null);
 }
 
@@ -1394,15 +1697,13 @@ function setPricingPeriod(period) {
   document.querySelectorAll('.pricing-period').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.period === period);
   });
+  const yearly = period === 'yearly';
   const priceEl = document.getElementById('pro-price');
   const freqEl = document.getElementById('pro-freq');
-  if (period === 'yearly') {
-    priceEl.textContent = '$39.99';
-    freqEl.textContent = '/yr';
-  } else {
-    priceEl.textContent = '$4.99';
-    freqEl.textContent = '/mo';
-  }
+  if (priceEl) { priceEl.textContent = yearly ? '$39.99' : '$4.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
+  const ppEl = document.getElementById('proplus-price');
+  const ppFreqEl = document.getElementById('proplus-freq');
+  if (ppEl) { ppEl.textContent = yearly ? '$199.99' : '$19.99'; ppFreqEl.textContent = yearly ? '/yr' : '/mo'; }
 }
 
 async function handleSubscribe(plan) {
@@ -1419,8 +1720,8 @@ async function handleSubscribe(plan) {
     const config = await configRes.json();
 
     if (config.enabled) {
-      // Redirect to Stripe Checkout
-      const res = await fetch('/api/stripe/create-checkout', {
+      const endpoint = plan === 'proplus' ? '/api/stripe/create-checkout-proplus' : '/api/stripe/create-checkout';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, period: pricingPeriod })
@@ -1452,9 +1753,18 @@ async function handleSubscribe(plan) {
 function getUserSubscription() {
   const user = getCurrentUser();
   if (!user) return null;
-  // Check localStorage first (includes server-synced data)
   const users = getUsers();
   return users[user.toLowerCase()]?.subscription || null;
+}
+
+function isProPlus() {
+  const sub = getUserSubscription();
+  return sub?.plan === 'proplus' && sub?.status === 'active';
+}
+
+function isProOrPlus() {
+  const sub = getUserSubscription();
+  return (sub?.plan === 'pro' || sub?.plan === 'proplus') && sub?.status === 'active';
 }
 
 // Sync subscription status from server (called on login and page load)
@@ -1462,13 +1772,15 @@ async function syncSubscriptionStatus() {
   const user = getCurrentUser();
   if (!user) return;
   try {
-    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`);
+    const token = getSessionToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`, { headers });
     const data = await res.json();
     if (data.subscription && data.subscription.status === 'active') {
       const users = getUsers();
       const key = user.toLowerCase();
       if (!users[key]) users[key] = {};
-      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt };
+      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt, status: data.subscription.status || 'active' };
       if (data.subscription.extraPromoteSlots) {
         users[key].extraPromoteSlots = data.subscription.extraPromoteSlots;
       }
@@ -1487,7 +1799,8 @@ function checkPaymentReturn() {
     if (type === 'slot') {
       alert('Extra promote slot purchased successfully!');
     } else {
-      alert('Pro subscription activated! Welcome to Card Huddle Pro.');
+      const plan = params.get('plan');
+      alert(plan === 'proplus' ? 'Pro+ activated! Welcome to Card Huddle Pro+.' : 'Pro subscription activated! Welcome to Card Huddle Pro.');
     }
     // Sync from server and clean URL
     syncSubscriptionStatus();
@@ -1526,41 +1839,28 @@ updateProButton();
 syncSubscriptionStatus();
 checkPaymentReturn();
 
-// ---- Checklist Browse Feature ----
-const checklistView = document.getElementById('checklist-view');
-const checklistProducts = document.getElementById('checklist-products');
-const checklistProductGrid = document.getElementById('checklist-product-grid');
-const checklistBrowser = document.getElementById('checklist-browser');
-const checklistProductName = document.getElementById('checklist-product-name');
-const checklistSearch = document.getElementById('checklist-search');
-const checklistSets = document.getElementById('checklist-sets');
-const checklistCategoryTabs = document.getElementById('checklist-category-tabs');
 const mainEl = document.querySelector('main');
-
-let checklistData = null;
-let checklistFilter = 'all';
-let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 
 const trackedView = document.getElementById('tracked-view');
 
 const collectionView = document.getElementById('collection-view');
 const sellerView = document.getElementById('seller-view');
+const gradingView = document.getElementById('grading-view');
 
 function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
   if (activeTab) activeTab.classList.add('active');
 
+  const proplusView = document.getElementById('proplus-view');
   mainEl.classList.add('hidden');
-  checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
   collectionView.classList.add('hidden');
   sellerView.classList.add('hidden');
+  gradingView.classList.add('hidden');
+  if (proplusView) proplusView.classList.add('hidden');
 
-  if (view === 'checklist') {
-    checklistView.classList.remove('hidden');
-    if (!checklistData) loadChecklistProducts();
-  } else if (view === 'tracked') {
+  if (view === 'tracked') {
     trackedView.classList.remove('hidden');
     initTrackedView();
   } else if (view === 'collection') {
@@ -1569,496 +1869,314 @@ function switchView(view) {
   } else if (view === 'seller') {
     sellerView.classList.remove('hidden');
     renderMyListings();
+  } else if (view === 'grading') {
+    gradingView.classList.remove('hidden');
+  } else if (view === 'proplus') {
+    if (proplusView) { proplusView.classList.remove('hidden'); initProPlusView(); }
   } else {
     mainEl.classList.remove('hidden');
   }
 }
 
-async function loadChecklistProducts() {
-  checklistProductGrid.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading checklists...</span></div>';
+// ---- Pro+ Tools ----
+function initProPlusView() {
+  const gate = document.getElementById('proplus-gate');
+  const content = document.getElementById('proplus-content');
+  if (!gate || !content) return;
+  if (isProPlus()) {
+    gate.classList.add('hidden');
+    content.classList.remove('hidden');
+  } else {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+  }
+}
+
+function switchProPlusTab(tab) {
+  document.querySelectorAll('.proplus-tab').forEach(t => t.classList.toggle('active', t.dataset.pptab === tab));
+  document.querySelectorAll('.pptab-panel').forEach(p => p.classList.toggle('hidden', p.id !== `pptab-${tab}`));
+}
+
+async function runFlipFinder() {
+  const q = document.getElementById('ff-input').value.trim();
+  const minDiscount = document.getElementById('ff-discount').value;
+  const minProfit = document.getElementById('ff-minprofit').value || 10;
+  const out = document.getElementById('ff-results');
+  if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to search.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading">&#128269; Scanning eBay for underpriced listings&hellip;</div>';
   try {
-    const res = await fetch('/api/checklists');
-    if (!res.ok) throw new Error(`Server error (${res.status})`);
+    const res = await fetch(`/api/flip-finder?${new URLSearchParams({ q, minDiscount, minProfit, limit: 20 })}`);
     const data = await res.json();
-    checklistProductGrid.innerHTML = '';
+    if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    if (!data.results?.length) {
+      out.innerHTML = `<p class="pp-empty">No flip opportunities found. Try a broader search or lower your discount threshold.<br><small>Sold median: $${data.soldMedian || '—'} from ${data.soldSampleSize || 0} sales</small></p>`;
+      return;
+    }
+    out.innerHTML = `
+      <div class="pp-summary">Sold median: <strong>$${data.soldMedian}</strong> &nbsp;·&nbsp; ${data.soldSampleSize} recent sales &nbsp;·&nbsp; ${data.results.length} flip${data.results.length !== 1 ? 's' : ''} found</div>
+      <div class="ff-grid">
+        ${data.results.map(r => `
+          <a class="ff-card" href="${escHtml(epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(r.title)}`))}  " target="_blank" rel="noopener noreferrer">
+            ${r.imageUrl ? `<img class="ff-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />` : '<div class="ff-img ff-noimg">No Image</div>'}
+            <div class="ff-body">
+              <p class="ff-title">${escHtml(r.title)}</p>
+              <div class="ff-prices">
+                <span class="ff-listing-price">Listed: <strong>$${r.listingPrice.toFixed(2)}</strong></span>
+                <span class="ff-sold-median">Sold median: $${r.soldMedian.toFixed(2)}</span>
+              </div>
+              <div class="ff-profit-row">
+                <span class="ff-profit">+$${r.potentialProfit.toFixed(2)} potential</span>
+                <span class="ff-discount">${r.discountPct}% below median</span>
+              </div>
+            </div>
+          </a>`).join('')}
+      </div>`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
 
-    // Group products by year
-    const byYear = {};
-    data.products.forEach(p => {
-      const yr = p.year || 'Other';
-      if (!byYear[yr]) byYear[yr] = [];
-      byYear[yr].push(p);
-    });
+async function runMarketMovers() {
+  const q = document.getElementById('mm-input').value.trim();
+  const out = document.getElementById('mm-results');
+  if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to analyse.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading">&#128200; Analysing price trend&hellip;</div>';
+  try {
+    const res = await fetch(`/api/market-movers?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error || data.message}</p>`; return; }
+    if (data.message) { out.innerHTML = `<p class="pp-empty">${data.message}</p>`; return; }
+    const arrow = data.trending === 'up' ? '&#8679;' : data.trending === 'down' ? '&#8681;' : '&#8680;';
+    const cls = data.trending === 'up' ? 'mm-up' : data.trending === 'down' ? 'mm-down' : 'mm-stable';
+    out.innerHTML = `
+      <div class="mm-summary ${cls}">
+        <span class="mm-arrow">${arrow}</span>
+        <span class="mm-change">${data.changePct > 0 ? '+' : ''}${data.changePct}%</span>
+        <span class="mm-label">in last 7 days</span>
+      </div>
+      <div class="mm-stats">
+        <div class="mm-stat"><div class="mm-stat-val">$${data.recentAvg}</div><div class="mm-stat-lbl">Avg last 7 days (${data.recentSales} sales)</div></div>
+        <div class="mm-stat"><div class="mm-stat-val">$${data.olderAvg}</div><div class="mm-stat-lbl">Prior avg (${data.olderSales} sales)</div></div>
+      </div>
+      ${data.recentItems?.length ? `<div class="mm-recent-label">Most recent sales</div><div class="mm-recent-list">${data.recentItems.map(i => `<div class="mm-recent-item">${i.imageUrl ? `<img src="${escHtml(i.imageUrl)}" class="mm-thumb" alt="" />` : ''}<span class="mm-recent-title">${escHtml(i.title)}</span><span class="mm-recent-price">$${i.price.toFixed(2)}</span><span class="mm-recent-date">${i.date}</span></div>`).join('')}</div>` : ''}`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
 
-    // Sort years descending (newest first)
-    const years = Object.keys(byYear).sort((a, b) => b - a);
+let _apComps = [];
 
-    years.forEach((year, idx) => {
-      const section = document.createElement('div');
-      section.className = 'checklist-year-section';
+async function runAutoPricer() {
+  const q = document.getElementById('ap-input').value.trim();
+  const out = document.getElementById('ap-results');
+  if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to price.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
+  try {
+    const res = await fetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found for this card.</p>'; return; }
+    _apComps = data.items;
+    renderApComps(out, data.items);
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
 
-      const header = document.createElement('button');
-      header.className = 'checklist-year-header';
-      // First year expanded by default
-      if (idx === 0) header.classList.add('open');
-      header.innerHTML = `
-        <span class="checklist-year-label">${escHtml(String(year))}</span>
-        <span class="checklist-year-count">${byYear[year].length} product${byYear[year].length !== 1 ? 's' : ''}</span>
-        <span class="checklist-year-toggle">&#9662;</span>
-      `;
-
-      const body = document.createElement('div');
-      body.className = 'checklist-year-body';
-      if (idx === 0) body.classList.add('open');
-
-      const grid = document.createElement('div');
-      grid.className = 'checklist-year-grid';
-
-      byYear[year].forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'checklist-product-card';
-        card.innerHTML = `
-          <div class="checklist-product-info">
-            <h3>${escHtml(p.name)}</h3>
-            <div class="checklist-product-stats">
-              <span>${p.setCount} sets</span>
-              <span>${p.totalCards} cards</span>
+function renderApComps(out, items) {
+  out.innerHTML = `
+    <div class="ap-pick-header">
+      <div class="ap-pick-title">Pick the closest match to your card</div>
+      <div class="ap-pick-sub">We'll calculate pricing recommendations based on your selection</div>
+    </div>
+    <div class="ap-comp-grid">
+      ${items.map((item, i) => `
+        <div class="ap-comp-card" onclick="selectApComp(${i})">
+          <div class="ap-comp-img-wrap">
+            <img class="ap-comp-img" src="${escHtml(item.image)}" onerror="this.parentElement.classList.add('no-img')" alt="" loading="lazy" />
+          </div>
+          <div class="ap-comp-info">
+            <div class="ap-comp-name">${escHtml(item.title)}</div>
+            <div class="ap-comp-bottom">
+              <span class="ap-comp-price">$${item.price.toFixed(2)}</span>
+              <span class="ap-comp-date">${timeAgo(item.soldDate)}</span>
             </div>
           </div>
-          <span class="checklist-product-arrow">&rarr;</span>
-        `;
-        card.addEventListener('click', () => loadProduct(p.id));
-        grid.appendChild(card);
-      });
+        </div>`).join('')}
+    </div>`;
+}
 
-      body.appendChild(grid);
-      header.addEventListener('click', () => {
-        header.classList.toggle('open');
-        body.classList.toggle('open');
-      });
-      section.appendChild(header);
-      section.appendChild(body);
-      checklistProductGrid.appendChild(section);
-    });
-  } catch (err) {
-    checklistProductGrid.innerHTML = `<p class="checklist-error">Failed to load checklists: ${escHtml(err.message)}</p>`;
+async function selectApComp(idx) {
+  const item = _apComps[idx];
+  if (!item) return;
+
+  document.querySelectorAll('.ap-comp-card').forEach((el, i) => el.classList.toggle('ap-comp-selected', i === idx));
+
+  const out = document.getElementById('ap-results');
+  let recSection = out.querySelector('.ap-rec-section');
+  if (recSection) recSection.remove();
+
+  recSection = document.createElement('div');
+  recSection.className = 'ap-rec-section';
+  recSection.innerHTML = '<div class="pp-loading">&#127991;&#65039; Calculating prices&hellip;</div>';
+  out.appendChild(recSection);
+  recSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const refinedQuery = item.title.split(' ').slice(0, 8).join(' ');
+  try {
+    const res = await fetch(`/api/auto-price?q=${encodeURIComponent(refinedQuery)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      recSection.innerHTML = `<p class="pp-error">${data.error || 'Not enough comps found for this card.'}</p>`;
+      return;
+    }
+    const recs = data.recommendations;
+    const confidenceColors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+    const confidenceColor = confidenceColors[data.confidence] || '#94a3b8';
+    recSection.innerHTML = `
+      <div class="ap-selected-label">&#10003; Priced from: <em>${escHtml(item.title)}</em></div>
+      ${data.fallbackNote ? `<div class="ap-fallback-note">&#128270; ${escHtml(data.fallbackNote)}</div>` : ''}
+      <div class="ap-context">
+        <span class="ap-confidence" style="color:${confidenceColor}">&#9679; ${data.confidence?.charAt(0).toUpperCase() + data.confidence?.slice(1)} confidence</span>
+        &nbsp;&middot;&nbsp; Based on <strong>${data.soldCount} sold</strong> &nbsp;&middot;&nbsp;
+        Median <strong>$${data.soldMedian}</strong> &nbsp;&middot;&nbsp;
+        Range $${data.soldLow} &ndash; $${data.soldHigh}
+        ${data.competitionLow ? ` &nbsp;&middot;&nbsp; Lowest listed <strong>$${data.competitionLow}</strong>` : ''}
+      </div>
+      <div class="ap-recs">
+        ${Object.values(recs).map(r => `
+          <div class="ap-rec">
+            <div class="ap-rec-label">${r.label}</div>
+            <div class="ap-rec-price">$${r.price.toFixed(2)}</div>
+            <div class="ap-rec-desc">${r.description}</div>
+          </div>`).join('')}
+      </div>
+      <button class="ap-repick-btn" onclick="document.querySelectorAll('.ap-comp-card').forEach(el=>el.classList.remove('ap-comp-selected')); document.querySelector('.ap-rec-section').remove()">&#8592; Pick a different card</button>`;
+  } catch (e) {
+    recSection.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`;
   }
 }
 
-async function loadProduct(productId) {
-  checklistProducts.classList.add('hidden');
-  checklistBrowser.classList.remove('hidden');
-  checklistSets.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading...</span></div>';
+let bulkPriceResults = [];
+async function runBulkPricer() {
+  const raw = document.getElementById('bulk-input').value.trim();
+  const out = document.getElementById('bulk-results');
+  if (!raw) { out.innerHTML = '<p class="pp-error">Enter at least one card.</p>'; return; }
+  const queries = raw.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 20);
+  out.innerHTML = `<div class="pp-loading">Pricing ${queries.length} card${queries.length !== 1 ? 's' : ''}&hellip;</div>`;
+  try {
+    const res = await fetch('/api/bulk-price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries }) });
+    const data = await res.json();
+    if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    bulkPriceResults = data.results;
+    out.innerHTML = `
+      <table class="bulk-table">
+        <thead><tr><th>Card</th><th>Median Sold</th><th>Low</th><th>High</th><th># Sales</th></tr></thead>
+        <tbody>
+          ${data.results.map(r => `
+            <tr class="${r.median ? '' : 'bulk-row-na'}">
+              <td class="bulk-query">${escHtml(r.query)}</td>
+              <td class="bulk-median">${r.median ? `$${r.median.toFixed(2)}` : '—'}</td>
+              <td>${r.low ? `$${r.low.toFixed(2)}` : '—'}</td>
+              <td>${r.high ? `$${r.high.toFixed(2)}` : '—'}</td>
+              <td>${r.count}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+}
+
+function exportBulkCSV() {
+  if (!bulkPriceResults.length) { alert('Run Bulk Pricer first.'); return; }
+  const header = 'Card,Median Sold,Low,High,Sales Count';
+  const rows = bulkPriceResults.map(r => [r.query, r.median ?? '', r.low ?? '', r.high ?? '', r.count].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const csv = [header, ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `card-prices-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+}
+
+// ---- Grading Advisor ----
+async function runGradingAdvisor(e) {
+  e.preventDefault();
+  const query = document.getElementById('grading-input').value.trim();
+  if (!query) return false;
+
+  const loading  = document.getElementById('grading-loading');
+  const errorEl  = document.getElementById('grading-error');
+  const results  = document.getElementById('grading-results');
+  const btn      = document.getElementById('grading-btn');
+
+  loading.classList.remove('hidden');
+  errorEl.classList.add('hidden');
+  results.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
 
   try {
-    const res = await fetch(`/api/checklists/${encodeURIComponent(productId)}`);
-    if (!res.ok) throw new Error(`Server error (${res.status})`);
-    checklistData = await res.json();
-    checklistProductName.textContent = checklistData.name;
-    checklistFilter = 'all';
-    checklistVariantFilters = {};
-    checklistSearch.value = '';
-    document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
-    renderChecklistSets();
+    const res  = await fetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch data');
+    renderGradingResults(data);
   } catch (err) {
-    checklistSets.innerHTML = `<p class="checklist-error">Failed to load: ${escHtml(err.message)}</p>`;
+    errorEl.textContent = err.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    loading.classList.add('hidden');
+    btn.disabled = false;
+    btn.textContent = 'Analyze';
   }
+  return false;
 }
 
-function checklistBack() {
-  checklistBrowser.classList.add('hidden');
-  checklistProducts.classList.remove('hidden');
-  checklistData = null;
-}
+function renderGradingResults(data) {
+  const { grades, premiums, query } = data;
+  const tbody  = document.getElementById('grading-tbody');
+  const recBox = document.getElementById('grading-recommendation');
+  const results = document.getElementById('grading-results');
 
-// Category tabs
-checklistCategoryTabs.addEventListener('click', (e) => {
-  const tab = e.target.closest('.checklist-cat-tab');
-  if (!tab) return;
-  checklistFilter = tab.dataset.cat;
-  document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t === tab));
-  renderChecklistSets();
-});
+  const fmt = v => v != null ? `$${v.toFixed(2)}` : '—';
+  const fmtNet = net => {
+    if (net == null) return '—';
+    const cls = net > 0 ? 'grading-positive' : 'grading-negative';
+    return `<span class="${cls}">${net > 0 ? '+' : ''}$${net.toFixed(2)}</span>`;
+  };
 
-// Search
-checklistSearch.addEventListener('input', () => renderChecklistSets());
-checklistSearch.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); searchChecklistQuery(); }
-});
+  const rows = [
+    { label: 'Raw', stats: grades.raw,   premium: null },
+    { label: 'PSA 8',  stats: grades.psa8,  premium: premiums.psa8  },
+    { label: 'PSA 9',  stats: grades.psa9,  premium: premiums.psa9  },
+    { label: 'PSA 10', stats: grades.psa10, premium: premiums.psa10 },
+  ];
 
-function renderChecklistSets() {
-  if (!checklistData) return;
-  const q = checklistSearch.value.toLowerCase().trim();
-  checklistSets.innerHTML = '';
+  tbody.innerHTML = rows.map(({ label, stats, premium }) => {
+    if (!stats) return `<tr class="grading-no-data"><td>${label}</td><td colspan="6" style="color:var(--text-muted);font-style:italic">No recent sold data found</td></tr>`;
+    const gross = premium ? fmt(premium.gross) : '—';
+    const net   = premium ? fmtNet(premium.net) : '—';
+    const isRaw = label === 'Raw';
+    return `<tr class="${isRaw ? 'grading-raw-row' : ''}">
+      <td><strong>${label}</strong></td>
+      <td>${fmt(stats.avg)}</td>
+      <td>${fmt(stats.median)}</td>
+      <td>${fmt(stats.min)} – ${fmt(stats.max)}</td>
+      <td>${stats.sales}</td>
+      <td>${gross}</td>
+      <td>${net}</td>
+    </tr>`;
+  }).join('');
 
-  const filteredSets = checklistData.sets.filter(s => {
-    if (checklistFilter !== 'all' && s.category !== checklistFilter) return false;
-    if (!q) return true;
-    // If searching, filter to sets that have matching cards
-    return s.cards.some(c =>
-      c.player.toLowerCase().includes(q) ||
-      c.team.toLowerCase().includes(q) ||
-      c.number.toLowerCase().includes(q)
-    );
-  });
-
-  if (filteredSets.length === 0) {
-    checklistSets.innerHTML = '<p class="checklist-empty">No matching cards found.</p>';
-    return;
-  }
-
-  filteredSets.forEach(set => {
-    const setEl = document.createElement('div');
-    setEl.className = 'checklist-set';
-
-    // Filter cards if searching
-    let cards = set.cards;
-    if (q) {
-      cards = cards.filter(c =>
-        c.player.toLowerCase().includes(q) ||
-        c.team.toLowerCase().includes(q) ||
-        c.number.toLowerCase().includes(q)
-      );
-    }
-
-    const categoryBadge = set.category === 'autograph' ? '<span class="checklist-badge auto">AUTO</span>'
-      : set.category === 'memorabilia' ? '<span class="checklist-badge memo">MEMO</span>'
-      : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
-      : '<span class="checklist-badge base">BASE</span>';
-
-    // Parallels summary (clickable to filter)
-    const setIdx = checklistData.sets.indexOf(set);
-    const activeVariant = checklistVariantFilters[setIdx];
-    const parallelsList = set.parallels.map(p => {
-      const pr = p.printRun ? ` /${p.printRun}` : '';
-      const isActive = activeVariant && activeVariant.name === p.name;
-      const nameEsc = escHtml(p.name).replace(/'/g, "\\'");
-      const printRunVal = p.printRun || '';
-      return `<span class="checklist-parallel ${isActive ? 'checklist-parallel-active' : ''}" onclick="event.stopPropagation(); toggleVariantFilter(${setIdx}, '${nameEsc}', '${printRunVal}')">${escHtml(p.name)}${pr}</span>`;
-    }).join('');
-
-    // Detect if this set has per-card print runs
-    const hasPrintRuns = cards.some(c => c.printRun);
-    const setId = set.id || '';
-
-    setEl.innerHTML = `
-      <div class="checklist-set-header" onclick="this.parentElement.classList.toggle('expanded')">
-        <div class="checklist-set-title-row">
-          ${categoryBadge}
-          <h3 class="checklist-set-name">${escHtml(set.name)}</h3>
-          <span class="checklist-set-count">${cards.length}${q ? '/' + set.totalCards : ''} cards</span>
-          ${activeVariant ? `<span class="checklist-variant-label">${escHtml(activeVariant.name)}${activeVariant.printRun ? ' /' + activeVariant.printRun : ''}</span>` : ''}
-          <span class="checklist-set-toggle">&#9660;</span>
-        </div>
-        <div class="checklist-parallels-row">${parallelsList}</div>
-      </div>
-      <div class="checklist-set-body">
-        <table class="checklist-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Player</th>
-              <th>Team</th>
-              ${hasPrintRuns || activeVariant?.printRun ? `<th class="cl-pr-header" data-set-id="${escHtml(setId)}" onclick="sortChecklistByPrintRun(this)">Print Run <span class="cl-sort-arrow">&#9660;</span></th>` : ''}
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${cards.map(c => {
-              const playerEsc = escHtml(c.player).replace(/'/g, "\\'");
-              const year = checklistData.year || '2025';
-              const brand = escHtml(checklistData.brand || 'Bowman').replace(/'/g, "\\'");
-              const setName = escHtml(set.name).replace(/'/g, "\\'");
-              const category = set.category || 'base';
-              const cardNum = escHtml(c.number).replace(/'/g, "\\'");
-              const printRun = c.printRun ? String(c.printRun) : '';
-              const cardNote = c.note ? escHtml(c.note).replace(/'/g, "\\'") : '';
-              const variantLabel = activeVariant ? escHtml(activeVariant.name).replace(/'/g, "\\'") : '';
-              const variantPR = activeVariant ? (activeVariant.printRun || '') : '';
-              const alertVariant = activeVariant ? ` ${activeVariant.name}${activeVariant.printRun ? ' /' + activeVariant.printRun : ''}` : '';
-              const alertQuery = `${c.player} ${year} ${checklistData.brand || 'Bowman'} ${set.name}${alertVariant}`.replace(/'/g, "\\'");
-              // Show the variant's print run in the table when a variant filter is active
-              const displayPR = activeVariant && activeVariant.printRun ? activeVariant.printRun : printRun;
-              return `
-              <tr data-print-run="${c.printRun || ''}" data-card-num="${c.number}">
-                <td class="cl-num">${escHtml(c.number)}</td>
-                <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); togglePlayerListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${variantPR || printRun}')">${escHtml(c.player)}</a></td>
-                <td class="cl-team">${escHtml(c.team)}</td>
-                ${hasPrintRuns || activeVariant?.printRun ? `<td class="cl-printrun ${displayPR && parseInt(displayPR) <= 25 ? 'cl-pr-rare' : displayPR && parseInt(displayPR) <= 99 ? 'cl-pr-low' : ''}">${displayPR ? '/' + displayPR : ''}</td>` : ''}
-                <td class="cl-action">
-                  <button class="cl-coll-btn" onclick="event.stopPropagation(); addToCollectionFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}', '${variantLabel}', '${variantPR || printRun}', '${cardNum}', '${escHtml(c.team).replace(/'/g, "\\'")}', '${category}'); this.textContent='&#10003;'; this.classList.add('cl-coll-added')" title="Add to collection">+</button>
-                  <button class="cl-alert-btn" onclick="event.stopPropagation(); addAlertForCard('${alertQuery}')" title="Track this card (Pro)">&#128276;</button>
-                  <button class="cl-search-btn" onclick="searchFromChecklist('${playerEsc}', '${year}', '${brand}', '${setName}${variantLabel ? ' ' + variantLabel : ''}', '${category}')" title="Search eBay">&#128269;</button>
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    checklistSets.appendChild(setEl);
-  });
-}
-
-// Toggle variant/parallel filter for a set
-function toggleVariantFilter(setIdx, variantName, printRun) {
-  const current = checklistVariantFilters[setIdx];
-  if (current && current.name === variantName) {
-    // Clicking the same variant again clears the filter
-    delete checklistVariantFilters[setIdx];
+  // Recommendation banner
+  const bestGrade = ['psa10','psa9','psa8'].find(g => premiums[g]?.worthIt);
+  if (bestGrade) {
+    const label = bestGrade === 'psa10' ? 'PSA 10' : bestGrade === 'psa9' ? 'PSA 9' : 'PSA 8';
+    const net   = premiums[bestGrade].net;
+    recBox.className = 'grading-recommendation grading-rec-yes';
+    recBox.innerHTML = `<span class="grading-rec-icon">✅</span> <strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the $25 grading fee.`;
+  } else if (!grades.psa10 && !grades.psa9 && !grades.psa8) {
+    recBox.className = 'grading-recommendation grading-rec-unknown';
+    recBox.innerHTML = `<span class="grading-rec-icon">❓</span> <strong>Not enough data</strong> — no recent graded sales found for this card.`;
   } else {
-    checklistVariantFilters[setIdx] = { name: variantName, printRun: printRun || '' };
+    recBox.className = 'grading-recommendation grading-rec-no';
+    recBox.innerHTML = `<span class="grading-rec-icon">❌</span> <strong>Probably not worth grading</strong> — the grade premium doesn't cover the $25 fee based on recent sales.`;
   }
-  renderChecklistSets();
+
+  results.classList.remove('hidden');
 }
-
-// Sort checklist table by print run
-function sortChecklistByPrintRun(thEl) {
-  const table = thEl.closest('table');
-  const tbody = table.querySelector('tbody');
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  const arrow = thEl.querySelector('.cl-sort-arrow');
-
-  // Toggle sort direction
-  const currentDir = thEl.dataset.sortDir || 'none';
-  let newDir;
-  if (currentDir === 'none' || currentDir === 'desc') {
-    newDir = 'asc'; // Low print run first (most rare)
-  } else {
-    newDir = 'desc'; // High print run first
-  }
-  thEl.dataset.sortDir = newDir;
-  arrow.innerHTML = newDir === 'asc' ? '&#9650;' : '&#9660;';
-  arrow.classList.add('cl-sort-active');
-
-  rows.sort((a, b) => {
-    const prA = parseInt(a.dataset.printRun) || 99999;
-    const prB = parseInt(b.dataset.printRun) || 99999;
-    if (newDir === 'asc') return prA - prB;
-    return prB - prA;
-  });
-
-  rows.forEach(r => tbody.appendChild(r));
-}
-
-// Search eBay using whatever is typed in the checklist search bar
-function searchChecklistQuery() {
-  const q = checklistSearch.value.trim();
-  if (!q || q.length < 2) return;
-  // Prepend year + brand for context if not already present
-  const year = checklistData?.year || '2025';
-  const brand = checklistData?.brand || '';
-  const hasYear = /\b20\d{2}\b/.test(q);
-  const query = hasYear ? q : `${year} ${brand} ${q}`.trim();
-  input.value = query;
-  switchView('search');
-  addRecentSearch(query);
-  fetchVariants(query);
-}
-
-function searchFromChecklist(player, year, brand, setName, category) {
-  const query = buildChecklistQuery(player, year, brand, setName, category);
-  input.value = query;
-  switchView('search');
-  addRecentSearch(query);
-  fetchVariants(query);
-}
-
-function buildChecklistQuery(player, year, brand, setName, category, printRun) {
-  // For base/base-variant sets, just use year + brand + player
-  if (!category || category === 'base') {
-    // If card has individual print run (Season Stat Line, Jersey Number), include it
-    if (printRun) {
-      return `${year} ${brand} ${player} /${printRun}`;
-    }
-    return `${year} ${brand} ${player}`;
-  }
-  // For autographs, memorabilia, inserts — include the set name for specificity
-  // Clean up set name: remove redundant brand name, "Checklist" etc.
-  let setLabel = setName || '';
-  setLabel = setLabel.replace(/Checklist/gi, '').trim();
-  let q = `${year} ${brand} ${setLabel} ${player}`;
-  if (printRun) {
-    q += ` /${printRun}`;
-  }
-  return q;
-}
-
-// ---- Inline Player Listings in Checklist ----
-let activePlayerPanel = null;
-
-function togglePlayerListings(linkEl, player, year, brand, setName, category, cardNum, printRun) {
-  const row = linkEl.closest('tr');
-  const existingPanel = row.nextElementSibling;
-
-  // If already open for this player, close it
-  if (existingPanel && existingPanel.classList.contains('cl-listings-row')) {
-    existingPanel.remove();
-    linkEl.classList.remove('cl-player-active');
-    if (activePlayerPanel === existingPanel) activePlayerPanel = null;
-    return;
-  }
-
-  // Close any other open panel
-  if (activePlayerPanel) {
-    const prevLink = activePlayerPanel.previousElementSibling?.querySelector('.cl-player-active');
-    if (prevLink) prevLink.classList.remove('cl-player-active');
-    activePlayerPanel.remove();
-    activePlayerPanel = null;
-  }
-
-  linkEl.classList.add('cl-player-active');
-
-  // Create the expandable row
-  const panelRow = document.createElement('tr');
-  panelRow.className = 'cl-listings-row';
-  const td = document.createElement('td');
-  // Span all columns: #, Player, Team, (Print Run if present), Action
-  const headerCols = row.closest('table').querySelectorAll('thead th').length;
-  td.colSpan = headerCols;
-  td.className = 'cl-listings-cell';
-
-  const query = buildChecklistQuery(player, year, brand, setName, category, printRun);
-  const subtitle = (setName && category !== 'base') ? setName : (printRun ? setName : '');
-  const printRunLabel = printRun ? ` /${printRun}` : '';
-
-  const subtitleHtml = subtitle ? `<span class="cl-listings-subtitle">${escHtml(subtitle)}${printRunLabel ? ' <span class="cl-listings-printrun">' + escHtml(printRunLabel) + '</span>' : ''}</span>` : '';
-  td.innerHTML = `
-    <div class="cl-listings-panel">
-      <div class="cl-listings-header">
-        <div class="cl-listings-title-group">
-          <h4 class="cl-listings-title">${escHtml(player)}</h4>
-          ${subtitleHtml}
-        </div>
-        <div class="cl-listings-tabs">
-          <button class="cl-listings-tab active" data-lmode="forsale">For Sale</button>
-          <button class="cl-listings-tab" data-lmode="sold">Sold</button>
-        </div>
-        <button class="cl-listings-close" title="Close">&times;</button>
-      </div>
-      <div class="cl-listings-body">
-        <div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>
-      </div>
-    </div>
-  `;
-
-  panelRow.appendChild(td);
-  row.after(panelRow);
-  activePlayerPanel = panelRow;
-
-  // Tab switching
-  const tabs = td.querySelectorAll('.cl-listings-tab');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      fetchPlayerListings(td, query, tab.dataset.lmode);
-    });
-  });
-
-  // Close button
-  td.querySelector('.cl-listings-close').addEventListener('click', () => {
-    linkEl.classList.remove('cl-player-active');
-    panelRow.remove();
-    if (activePlayerPanel === panelRow) activePlayerPanel = null;
-  });
-
-  // Fetch for-sale by default
-  fetchPlayerListings(td, query, 'forsale');
-}
-
-// Generate reasoning text from listing results
-function generateListingReasoning(results, isSold, serial) {
-  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
-  if (prices.length === 0) return '';
-
-  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-  const low = Math.min(...prices);
-  const high = Math.max(...prices);
-  const spread = high - low;
-  const spreadPct = avg > 0 ? ((spread / avg) * 100) : 0;
-
-  const lines = [];
-
-  // Price range insight
-  if (prices.length >= 2) {
-    if (spreadPct < 20) {
-      lines.push(`Tight pricing — most listings clustered around $${avg.toFixed(2)}.`);
-    } else if (spreadPct < 50) {
-      lines.push(`Moderate spread ($${low.toFixed(2)}–$${high.toFixed(2)}).`);
-    } else {
-      lines.push(`Wide price range ($${low.toFixed(2)}–$${high.toFixed(2)}) — condition or variant differences likely.`);
-    }
-  }
-
-  // Market activity
-  if (isSold) {
-    if (results.length >= 8) {
-      lines.push('Active market with strong recent sales volume.');
-    } else if (results.length >= 3) {
-      lines.push('Moderate sales activity.');
-    } else {
-      lines.push('Limited recent sales — harder to pin down value.');
-    }
-  } else {
-    if (results.length >= 10) {
-      lines.push('Plenty of supply available — buyers have options.');
-    } else if (results.length <= 2) {
-      lines.push('Very low supply — could command a premium.');
-    }
-  }
-
-  // Print run context
-  if (serial) {
-    const pr = parseInt(serial, 10);
-    if (pr <= 10) {
-      lines.push(`Numbered /${pr} — extremely limited, expect premium pricing.`);
-    } else if (pr <= 25) {
-      lines.push(`Numbered /${pr} — low print run, scarce card.`);
-    } else if (pr <= 99) {
-      lines.push(`Numbered /${pr} — short print parallel.`);
-    } else if (pr <= 199) {
-      lines.push(`Numbered /${pr} — mid-tier numbered parallel.`);
-    }
-  }
-
-  // Value call
-  if (isSold && prices.length >= 3) {
-    const median = [...prices].sort((a, b) => a - b)[Math.floor(prices.length / 2)];
-    lines.push(`Fair market value is around $${median.toFixed(2)} (median sale).`);
-  } else if (!isSold && prices.length >= 2) {
-    lines.push(`Best available price is $${low.toFixed(2)}.`);
-  }
-
-  return lines.join(' ');
-}
-
-// Build a single listing card for checklist inline results
-function buildClListingCard(item, mode) {
-  const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
-  const dateStr = item.soldDate
-    ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : '';
-  const isSold = mode === 'sold';
-  const badge = isSold
-    ? '<span class="cl-item-badge sold">SOLD</span>'
-    : '<span class="cl-item-badge forsale">FOR SALE</span>';
-  const imgHtml = item.imageUrl
-    ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
-    : `<div class="cl-item-noimg">&#127944;</div>`;
-  return `
-    <a class="cl-listing-item" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
-      <div class="cl-item-img">${imgHtml}</div>
-      <div class="cl-item-info">
-        <span class="cl-item-price">${price}</span>
-        ${badge}
-        ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
-      </div>
-    </a>
-  `;
-}
-
 // ---- Collection & Portfolio (localStorage) ----
 function getCollection() {
   try { return JSON.parse(localStorage.getItem('cardHuddleCollection') || '[]'); }
@@ -2069,6 +2187,24 @@ function saveCollection(coll) {
 }
 
 function initCollectionView() {
+  const user = getCurrentUser();
+  const sub = user ? getUserSubscription() : null;
+  const gate = document.getElementById('collection-gate');
+  const content = document.getElementById('collection-content');
+  const upgradeBtn = document.getElementById('collection-upgrade-btn');
+
+  if (!user) {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+    gate.querySelector('h3').textContent = 'Log In Required';
+    gate.querySelector('p').textContent = 'Log in or sign up to access your collection and portfolio.';
+    upgradeBtn.textContent = 'Log In';
+    upgradeBtn.onclick = () => showLogin();
+    return;
+  }
+
+  gate.classList.add('hidden');
+  content.classList.remove('hidden');
   renderPortfolio();
   loadCompletionProducts();
 }
@@ -2080,6 +2216,7 @@ function switchCollectionTab(tab) {
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
   if (tab === 'completion') loadCompletionProducts();
+  if (tab === 'watchlist') renderWatchlist();
 }
 
 function renderPortfolio() {
@@ -2093,6 +2230,17 @@ function renderPortfolio() {
   const glEl = document.getElementById('portfolio-gain-loss');
   glEl.textContent = `${gainLoss >= 0 ? '+' : ''}$${gainLoss.toFixed(2)}`;
   glEl.className = `portfolio-stat-value ${gainLoss >= 0 ? 'gain' : 'loss'}`;
+  const roiEl = document.getElementById('portfolio-roi');
+  if (roiEl) {
+    if (totalCost > 0) {
+      const roi = ((totalValue - totalCost) / totalCost) * 100;
+      roiEl.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
+      roiEl.className = `portfolio-stat-value ${roi >= 0 ? 'gain' : 'loss'}`;
+    } else {
+      roiEl.textContent = '—';
+      roiEl.className = 'portfolio-stat-value';
+    }
+  }
 
   const listEl = document.getElementById('portfolio-list');
   if (coll.length === 0) {
@@ -2150,13 +2298,19 @@ function renderPortfolio() {
                 <th>Team</th>
                 <th>Details</th>
                 <th>Paid</th>
+                <th>Mkt Value</th>
+                <th>ROI</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               ${group.cards.map(c => {
-                const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+                const paid = c.purchasePrice || 0;
+                const mkt = c.estValue || 0;
+                const gl = mkt - paid;
+                const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
                 const glClass = gl >= 0 ? 'gain' : 'loss';
+                const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
                 const parallelTag = c.parallel ? `<span class="portfolio-parallel-tag">${escHtml(c.parallel)}</span>` : '';
                 const prTag = c.printRun ? `<span class="cl-printrun-inline ${parseInt(c.printRun) <= 25 ? 'cl-pr-rare' : parseInt(c.printRun) <= 99 ? 'cl-pr-low' : ''}">${'/' + c.printRun}</span>` : '';
                 const condTag = c.condition ? `<span class="portfolio-cond-tag">${escHtml(c.condition)}</span>` : '';
@@ -2165,9 +2319,12 @@ function renderPortfolio() {
                   <td class="cl-player">${escHtml(c.player)}</td>
                   <td class="cl-team">${escHtml(c.team || '')}</td>
                   <td class="portfolio-detail-cell">${parallelTag}${prTag}${condTag}</td>
+                  <td class="portfolio-price-cell"><span class="portfolio-card-cost">$${paid.toFixed(2)}</span></td>
                   <td class="portfolio-price-cell">
-                    <span class="portfolio-card-cost">$${(c.purchasePrice || 0).toFixed(2)}</span>
-                    ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
+                    ${mkt > 0 ? `<span class="portfolio-card-cost">$${mkt.toFixed(2)}</span>${gl !== 0 ? `<span class="portfolio-card-value ${glClass}"> ${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}` : '<span class="portfolio-no-value">—</span>'}
+                  </td>
+                  <td class="portfolio-roi-cell ${roiClass}">
+                    ${roi !== null ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}
                   </td>
                   <td class="cl-action"><button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button></td>
                 </tr>`;
@@ -2185,8 +2342,12 @@ function renderPortfolio() {
       html += '<div class="portfolio-manual-header">Manually Added</div>';
     }
     html += manualCards.map(c => {
-      const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+      const paid = c.purchasePrice || 0;
+      const mkt = c.estValue || 0;
+      const gl = mkt - paid;
+      const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
       const glClass = gl >= 0 ? 'gain' : 'loss';
+      const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
       return `
         <div class="portfolio-card-item">
           <div class="portfolio-card-info">
@@ -2194,8 +2355,10 @@ function renderPortfolio() {
             <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
           </div>
           <div class="portfolio-card-prices">
-            <span class="portfolio-card-cost">Paid: $${(c.purchasePrice || 0).toFixed(2)}</span>
-            <span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>
+            <span class="portfolio-card-cost">Paid: $${paid.toFixed(2)}</span>
+            ${mkt > 0 ? `<span class="portfolio-card-cost"> Mkt: $${mkt.toFixed(2)}</span>` : ''}
+            ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
+            ${roi !== null ? `<span class="portfolio-roi-inline ${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}% ROI</span>` : ''}
           </div>
           <button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button>
         </div>`;
@@ -2229,24 +2392,273 @@ function handleAddCard(e) {
   return false;
 }
 
-function addToCollectionFromChecklist(player, year, brand, setName, parallel, printRun, cardNumber, team, category) {
-  const name = `${player} ${year} ${brand} ${setName}${parallel ? ' ' + parallel : ''}`;
-  const coll = getCollection();
-  coll.push({
-    name, purchasePrice: 0, estValue: 0, condition: '', notes: printRun ? `/${printRun}` : '',
-    player: player || '', team: team || '', cardNumber: cardNumber || '', setName: setName || '',
-    year: year || '', brand: brand || '', parallel: parallel || '', printRun: printRun || '',
-    category: category || 'base',
-    addedAt: new Date().toISOString()
-  });
-  saveCollection(coll);
-}
 
 function removeFromCollection(idx) {
   const coll = getCollection();
   coll.splice(idx, 1);
   saveCollection(coll);
   renderPortfolio();
+}
+
+async function refreshPortfolioValues() {
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return; }
+
+  const btn = document.getElementById('refresh-market-btn');
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing… <span class="pro-badge-inline">PRO</span>'; }
+
+  const coll = getCollection();
+  const updates = [];
+  for (const c of coll) {
+    const query = c.player
+      ? `${c.player} ${c.year || ''} ${c.brand || ''} ${c.setName || ''} ${c.parallel || ''}`.replace(/\s+/g, ' ').trim()
+      : c.name || '';
+    if (!query) { updates.push(null); continue; }
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&mode=sold`);
+      const data = await res.json();
+      if (data.approximateValue && data.approximateValue.medianPrice) {
+        updates.push(data.approximateValue.medianPrice);
+      } else if (data.results && data.results.length > 0) {
+        const v = data.results.map(r => r.price).filter(p => p > 0).sort((a, b) => a - b);
+        if (v.length) {
+          const mid = Math.floor(v.length / 2);
+          updates.push(v.length % 2 === 0 ? (v[mid - 1] + v[mid]) / 2 : v[mid]);
+        } else updates.push(null);
+      } else updates.push(null);
+    } catch { updates.push(null); }
+  }
+
+  let refreshed = 0;
+  coll.forEach((c, i) => {
+    if (updates[i] !== null) { c.estValue = updates[i]; refreshed++; }
+  });
+  saveCollection(coll);
+  renderPortfolio();
+
+  if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  showPortfolioToast(refreshed > 0
+    ? `Updated market values for ${refreshed} card${refreshed !== 1 ? 's' : ''}.`
+    : 'No market data found. Try cards with more specific names.');
+}
+
+function showPortfolioToast(msg) {
+  let t = document.getElementById('portfolio-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'portfolio-toast';
+    t.className = 'portfolio-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('visible');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('visible'), 3500);
+}
+
+// ---- Monthly Market Report PDF ----
+function generateMarketReport() {
+  const sub = getUserSubscription();
+  if (!sub) { showPricing(); return; }
+
+  const coll = getCollection();
+  const user = getCurrentUser() || 'Collector';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const totalCost = coll.reduce((s, c) => s + (c.purchasePrice || 0), 0);
+  const totalValue = coll.reduce((s, c) => s + (c.estValue || c.purchasePrice || 0), 0);
+  const gainLoss = totalValue - totalCost;
+  const roi = totalCost > 0 ? ((totalValue - totalCost) / totalCost) * 100 : null;
+  const glSign = gainLoss >= 0 ? '+' : '';
+  const glColor = gainLoss >= 0 ? '#10b981' : '#ef4444';
+  const roiColor = roi === null ? '#888' : roi >= 0 ? '#10b981' : '#ef4444';
+
+  const cardRows = coll.map(c => {
+    const name = c.player ? `${c.player}${c.year ? ' ' + c.year : ''}${c.brand ? ' ' + c.brand : ''}${c.setName ? ' ' + c.setName : ''}${c.parallel ? ' ' + c.parallel : ''}` : c.name || '—';
+    const paid = c.purchasePrice || 0;
+    const mkt = c.estValue || 0;
+    const gl = mkt - paid;
+    const r = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
+    const glC = gl >= 0 ? '#10b981' : '#ef4444';
+    return `<tr>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;font-size:13px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(name)}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px">$${paid.toFixed(2)}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px">${mkt > 0 ? '$' + mkt.toFixed(2) : '—'}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px;color:${mkt > 0 ? glC : '#888'}">${mkt > 0 ? (gl >= 0 ? '+' : '') + '$' + gl.toFixed(2) : '—'}</td>
+      <td style="padding:6px 10px;border-bottom:1px solid #2a2a3a;text-align:right;font-size:13px;color:${r !== null ? glC : '#888'}">${r !== null ? (r >= 0 ? '+' : '') + r.toFixed(1) + '%' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>The Card Huddle — Market Report ${dateStr}</title>
+  <style>
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #0f1117; color: #e2e8f0; padding: 32px; }
+    .rpt-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #1db954; padding-bottom: 18px; margin-bottom: 24px; }
+    .rpt-title { font-size: 22px; font-weight: 800; background: linear-gradient(135deg,#52b788,#38a169); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .rpt-meta { font-size: 12px; color: #8d99ae; text-align: right; }
+    .rpt-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 28px; }
+    .rpt-stat { background: #1a1f2e; border: 1px solid #2a2a3a; border-radius: 10px; padding: 14px 16px; }
+    .rpt-stat-label { font-size: 11px; color: #8d99ae; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .rpt-stat-value { font-size: 20px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #1a1f2e; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #8d99ae; text-align: left; }
+    thead th:not(:first-child) { text-align: right; }
+    .rpt-footer { margin-top: 24px; font-size: 11px; color: #4a5568; text-align: center; border-top: 1px solid #2a2a3a; padding-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="rpt-header">
+    <div class="rpt-title">The Card Huddle</div>
+    <div class="rpt-meta">Monthly Market Report<br/>${escHtml(user)} &middot; ${dateStr}</div>
+  </div>
+  <div class="rpt-stats">
+    <div class="rpt-stat"><div class="rpt-stat-label">Total Cards</div><div class="rpt-stat-value">${coll.length}</div></div>
+    <div class="rpt-stat"><div class="rpt-stat-label">Total Invested</div><div class="rpt-stat-value">$${totalCost.toFixed(2)}</div></div>
+    <div class="rpt-stat"><div class="rpt-stat-label">Est. Value</div><div class="rpt-stat-value">$${totalValue.toFixed(2)}</div></div>
+    <div class="rpt-stat"><div class="rpt-stat-label">Gain / Loss</div><div class="rpt-stat-value" style="color:${glColor}">${glSign}$${gainLoss.toFixed(2)}</div></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Card</th><th style="text-align:right">Paid</th><th style="text-align:right">Mkt Value</th><th style="text-align:right">Gain/Loss</th><th style="text-align:right">ROI</th>
+    </tr></thead>
+    <tbody>${cardRows}</tbody>
+  </table>
+  <div class="rpt-footer">Generated by The Card Huddle &middot; thecardhuddle.com &middot; ${dateStr}</div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  } else {
+    showPortfolioToast('Allow popups to generate the report.');
+  }
+}
+
+// ---- Player Watchlist ----
+function getWatchlist() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleWatchlist') || '[]'); }
+  catch { return []; }
+}
+function saveWatchlist(list) {
+  localStorage.setItem('cardHuddleWatchlist', JSON.stringify(list));
+}
+
+function renderWatchlist() {
+  const list = getWatchlist();
+  const el = document.getElementById('watchlist-list');
+  if (!el) return;
+  if (list.length === 0) {
+    el.innerHTML = '<p class="watchlist-empty">No players on your watchlist yet. Add a card above to start tracking.</p>';
+    return;
+  }
+  el.innerHTML = list.map((item, idx) => {
+    const hasCurrent = item.currentPrice != null;
+    const hasPrev = item.prevPrice != null;
+    const change = hasCurrent && hasPrev ? item.currentPrice - item.prevPrice : null;
+    const changePct = hasCurrent && hasPrev && item.prevPrice > 0 ? ((item.currentPrice - item.prevPrice) / item.prevPrice) * 100 : null;
+    const changeClass = change === null ? '' : change >= 0 ? 'gain' : 'loss';
+    return `<div class="watchlist-card" data-idx="${idx}">
+      <div class="watchlist-card-info">
+        <div class="watchlist-card-query">${escHtml(item.query)}</div>
+        <div class="watchlist-card-meta">Added ${new Date(item.addedAt).toLocaleDateString()}${item.updatedAt ? ' · Updated ' + new Date(item.updatedAt).toLocaleDateString() : ''}</div>
+      </div>
+      <div class="watchlist-card-prices">
+        ${hasCurrent
+          ? `<span class="watchlist-price">$${item.currentPrice.toFixed(2)}</span>
+             ${change !== null ? `<span class="watchlist-change ${changeClass}">${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)} (${change >= 0 ? '+' : ''}${changePct.toFixed(1)}%)</span>` : ''}`
+          : '<span class="watchlist-no-price">No price data</span>'}
+      </div>
+      <div class="watchlist-card-actions">
+        <button class="watchlist-search-btn" onclick="searchFromWatchlist(${idx})" title="Search">&#128269;</button>
+        <button class="watchlist-remove-btn" onclick="removeFromWatchlist(${idx})" title="Remove">&times;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addToWatchlist() {
+  const input = document.getElementById('watchlist-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) return;
+  const list = getWatchlist();
+  if (list.some(item => item.query.toLowerCase() === query.toLowerCase())) {
+    showPortfolioToast('Already on your watchlist.');
+    return;
+  }
+  list.push({ query, addedAt: new Date().toISOString(), currentPrice: null, prevPrice: null, updatedAt: null });
+  saveWatchlist(list);
+  input.value = '';
+  renderWatchlist();
+}
+
+function removeFromWatchlist(idx) {
+  const list = getWatchlist();
+  list.splice(idx, 1);
+  saveWatchlist(list);
+  renderWatchlist();
+}
+
+function searchFromWatchlist(idx) {
+  const list = getWatchlist();
+  if (!list[idx]) return;
+  const q = list[idx].query;
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.value = q;
+    switchView('search');
+    performSearch();
+  }
+}
+
+async function refreshWatchlistPrices() {
+  const list = getWatchlist();
+  if (list.length === 0) { showPortfolioToast('Nothing on your watchlist yet.'); return; }
+
+  const btn = document.getElementById('watchlist-refresh-btn');
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing…'; }
+
+  let updated = 0;
+  for (const item of list) {
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(item.query)}&mode=sold`);
+      const data = await res.json();
+      let newPrice = null;
+      if (data.approximateValue && data.approximateValue.medianPrice) {
+        newPrice = data.approximateValue.medianPrice;
+      } else if (data.results && data.results.length > 0) {
+        const v = data.results.map(r => r.price).filter(p => p > 0).sort((a, b) => a - b);
+        if (v.length) {
+          const mid = Math.floor(v.length / 2);
+          newPrice = v.length % 2 === 0 ? (v[mid - 1] + v[mid]) / 2 : v[mid];
+        }
+      }
+      if (newPrice !== null) {
+        item.prevPrice = item.currentPrice;
+        item.currentPrice = newPrice;
+        item.updatedAt = new Date().toISOString();
+        updated++;
+      }
+    } catch { /* skip */ }
+  }
+
+  saveWatchlist(list);
+  renderWatchlist();
+  if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
+  showPortfolioToast(updated > 0
+    ? `Refreshed prices for ${updated} item${updated !== 1 ? 's' : ''}.`
+    : 'No price data found.');
 }
 
 // ---- Set Completion Tracker ----
@@ -2309,6 +2721,15 @@ async function loadCompletionProduct() {
 
 function toggleRainbowMode() {
   rainbowMode = document.getElementById('rainbow-mode').checked;
+  // Pop animation on the toggle label
+  const label = document.querySelector('.rainbow-toggle');
+  if (label) {
+    label.classList.remove('rainbow-pop');
+    // Force reflow so re-adding the class triggers the animation fresh
+    void label.offsetWidth;
+    label.classList.add('rainbow-pop');
+    label.addEventListener('animationend', () => label.classList.remove('rainbow-pop'), { once: true });
+  }
   if (completionData) renderCompletionSets();
 }
 
@@ -3374,7 +3795,7 @@ function renderPromotedCards() {
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span style="font-weight:600;color:var(--accent);">$${parseFloat(c.price).toFixed(2)}</span>
           <span style="font-size:0.75rem;opacity:0.7;">${escHtml(c.condition)}</span>
-          <a href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
+          <a href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
@@ -3416,7 +3837,7 @@ function buildPromotedCard(promo) {
         <span class="card-condition">${escHtml(promo.condition)}</span>
       </div>
       <a class="card-link"
-         href="${escHtml(promo.itemUrl)}"
+         href="${escHtml(epnUrl(promo.itemUrl))}"
          target="_blank"
          rel="noopener noreferrer">
         View on eBay &#8599;
@@ -3456,199 +3877,6 @@ function injectPromotedCards(grid) {
     }
   });
 }
-
-// ---- Market Insights ----
-async function searchInsights() {
-  const input = document.getElementById('insights-input');
-  const resultsEl = document.getElementById('insights-results');
-  const query = input.value.trim();
-  if (!query || query.length < 2) return;
-
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Analyzing market data...</span></div>';
-
-  // Fetch SportsCardsPro price guide in parallel
-  fetchCardPrices(query);
-
-  try {
-    const res = await fetch(`/api/marketplace-insights?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
-
-    if (data.error) {
-      resultsEl.innerHTML = `<p class="insights-empty">Error: ${escHtml(data.detail || data.error)}</p>`;
-      return;
-    }
-
-    if (!data.insights || data.totalSold === 0) {
-      resultsEl.innerHTML = '<p class="insights-empty">No sold data found. Try a different search.</p>';
-      return;
-    }
-
-    const ins = data.insights;
-    const trendIcon = ins.trend === 'rising' ? '&#9650;' : ins.trend === 'falling' ? '&#9660;' : '&#9679;';
-    const trendClass = ins.trend === 'rising' ? 'insights-trend-up' : ins.trend === 'falling' ? 'insights-trend-down' : 'insights-trend-flat';
-
-    let html = `<div class="insights-dashboard">`;
-
-    // Summary stats
-    html += `<div class="insights-stats">
-      <div class="insights-stat">
-        <span class="insights-stat-label">Avg Price</span>
-        <span class="insights-stat-value">$${ins.avgPrice.toFixed(2)}</span>
-      </div>
-      <div class="insights-stat">
-        <span class="insights-stat-label">Median Price</span>
-        <span class="insights-stat-value">$${ins.medianPrice.toFixed(2)}</span>
-      </div>
-      <div class="insights-stat">
-        <span class="insights-stat-label">Range</span>
-        <span class="insights-stat-value">$${ins.minPrice.toFixed(2)} - $${ins.maxPrice.toFixed(2)}</span>
-      </div>
-      <div class="insights-stat">
-        <span class="insights-stat-label">Trend</span>
-        <span class="insights-stat-value ${trendClass}">${trendIcon} ${ins.trend.charAt(0).toUpperCase() + ins.trend.slice(1)}</span>
-      </div>
-      <div class="insights-stat">
-        <span class="insights-stat-label">Sold</span>
-        <span class="insights-stat-value">${data.totalSold} cards</span>
-      </div>
-    </div>`;
-
-    // Sales timeline chart (ASCII bar chart)
-    if (ins.salesByDate && ins.salesByDate.length > 0) {
-      const maxVol = Math.max(...ins.salesByDate.map(d => d.totalVolume));
-      html += `<div class="insights-section">
-        <h4 class="insights-section-title">Sales Timeline</h4>
-        <div class="insights-timeline">`;
-      ins.salesByDate.forEach(d => {
-        const pct = maxVol > 0 ? (d.totalVolume / maxVol) * 100 : 0;
-        const dateLabel = d.date.slice(5); // MM-DD
-        html += `<div class="insights-timeline-row">
-          <span class="insights-timeline-date">${dateLabel}</span>
-          <div class="insights-timeline-bar-wrap">
-            <div class="insights-timeline-bar" style="width:${pct}%"></div>
-          </div>
-          <span class="insights-timeline-val">${d.count} sold &middot; avg $${d.avgPrice.toFixed(2)}</span>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // Price distribution
-    if (ins.priceDistribution) {
-      const distEntries = Object.entries(ins.priceDistribution);
-      const maxCount = Math.max(...distEntries.map(([, c]) => c));
-      html += `<div class="insights-section">
-        <h4 class="insights-section-title">Price Distribution</h4>
-        <div class="insights-distribution">`;
-      distEntries.forEach(([bucket, count]) => {
-        const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-        html += `<div class="insights-dist-row">
-          <span class="insights-dist-label">${escHtml(bucket)}</span>
-          <div class="insights-dist-bar-wrap">
-            <div class="insights-dist-bar" style="width:${pct}%"></div>
-          </div>
-          <span class="insights-dist-count">${count}</span>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // Condition breakdown
-    if (ins.conditionBreakdown && ins.conditionBreakdown.length > 0) {
-      html += `<div class="insights-section">
-        <h4 class="insights-section-title">By Condition</h4>
-        <div class="insights-conditions">`;
-      ins.conditionBreakdown.forEach(c => {
-        html += `<div class="insights-condition-row">
-          <span class="insights-condition-name">${escHtml(c.condition)}</span>
-          <span class="insights-condition-count">${c.count} sold</span>
-          <span class="insights-condition-price">avg $${c.avgPrice.toFixed(2)}</span>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // Top sales
-    if (ins.topSales && ins.topSales.length > 0) {
-      html += `<div class="insights-section">
-        <h4 class="insights-section-title">Top Sales</h4>
-        <div class="insights-top-sales">`;
-      ins.topSales.forEach(s => {
-        html += `<a class="insights-top-sale" href="${escHtml(s.url)}" target="_blank" rel="noopener noreferrer">
-          ${s.imageUrl ? `<img class="insights-sale-img" src="${escHtml(s.imageUrl)}" alt="" loading="lazy" />` : '<div class="insights-sale-img insights-no-img">No Img</div>'}
-          <div class="insights-sale-info">
-            <span class="insights-sale-title">${escHtml(s.title)}</span>
-            <span class="insights-sale-meta">$${s.price.toFixed(2)}${s.date ? ` &middot; ${s.date}` : ''}</span>
-          </div>
-        </a>`;
-      });
-      html += `</div></div>`;
-    }
-
-    html += `</div>`;
-    resultsEl.innerHTML = html;
-  } catch (err) {
-    resultsEl.innerHTML = `<p class="insights-empty">Error: ${escHtml(err.message)}</p>`;
-  }
-}
-
-// ---- SportsCardsPro Price Guide ----
-async function fetchCardPrices(query) {
-  const guideEl = document.getElementById('scp-price-guide');
-  const resultsEl = document.getElementById('scp-results');
-  if (!guideEl || !resultsEl) return;
-
-  guideEl.classList.remove('hidden');
-  resultsEl.innerHTML = '<div class="scp-loading">Loading price guide data...</div>';
-
-  try {
-    const res = await fetch(`/api/card-prices?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
-
-    if (data.error || !data.products || data.products.length === 0) {
-      resultsEl.innerHTML = '<p class="scp-empty">No price guide data found for this card.</p>';
-      return;
-    }
-
-    const sourceLabel = data.source === 'sportscardspro-mock' ? 'Sample Data' : 'SportsCardsPro';
-    const titleSource = guideEl.querySelector('.scp-source');
-    if (titleSource) titleSource.textContent = `via ${sourceLabel}`;
-
-    let html = '';
-    data.products.forEach(p => {
-      html += `<div class="scp-card">
-        <div>
-          <div class="scp-card-name">${escHtml(p.name)}</div>
-          ${p.consoleName ? `<div class="scp-card-set">${escHtml(p.consoleName)}</div>` : ''}
-        </div>
-        <div class="scp-prices">
-          <div class="scp-price-col">
-            <div class="scp-price-label">Ungraded</div>
-            <div class="scp-price-value${p.ungraded ? '' : ' scp-na'}">${p.ungraded ? '$' + p.ungraded : 'N/A'}</div>
-          </div>
-          <div class="scp-price-col">
-            <div class="scp-price-label">PSA 9</div>
-            <div class="scp-price-value${p.psa9 ? '' : ' scp-na'}">${p.psa9 ? '$' + p.psa9 : 'N/A'}</div>
-          </div>
-          <div class="scp-price-col">
-            <div class="scp-price-label">PSA 10</div>
-            <div class="scp-price-value${p.psa10 ? '' : ' scp-na'}">${p.psa10 ? '$' + p.psa10 : 'N/A'}</div>
-          </div>
-        </div>
-      </div>`;
-    });
-
-    resultsEl.innerHTML = html;
-  } catch (err) {
-    resultsEl.innerHTML = `<p class="scp-empty">Price guide unavailable: ${escHtml(err.message)}</p>`;
-  }
-}
-
-// Enter key for insights search
-document.addEventListener('DOMContentLoaded', () => {
-  const insInput = document.getElementById('insights-input');
-  if (insInput) insInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchInsights(); });
-});
 
 // ---- Marketplace (eBay Browse) ----
 let marketplaceOffset = 0;
@@ -3699,7 +3927,7 @@ async function searchMarketplace(loadMore) {
       const auction = item.buyingOptions?.includes('AUCTION');
       const badge = buyNow ? 'Buy It Now' : auction ? 'Auction' : '';
 
-      html += `<a class="marketplace-card" href="${escHtml(item.itemUrl)}" target="_blank" rel="noopener noreferrer">
+      html += `<a class="marketplace-card" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
         ${item.imageUrl ? `<img class="marketplace-card-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="marketplace-card-img marketplace-no-img">No Image</div>'}
         <div class="marketplace-card-body">
           <p class="marketplace-card-title">${escHtml(item.title)}</p>
@@ -3820,17 +4048,15 @@ document.addEventListener('click', function(e) {
   });
 });
 
-// ---- Layout Mode (Computer vs Mobile) ----
+// ---- Layout Mode (auto-detect screen size, allow manual override) ----
 (function initLayoutPicker() {
   const saved = localStorage.getItem('cardHuddleLayout');
-  if (saved) {
-    // Already chosen — apply immediately, hide picker
-    document.documentElement.classList.toggle('mobile-layout', saved === 'mobile');
-    const picker = document.getElementById('layout-picker');
-    if (picker) picker.classList.add('hidden');
-    updateLayoutButtons(saved);
-  }
-  // If no saved preference, the picker popup will show (it's visible by default)
+  const mode = saved || (window.innerWidth <= 768 ? 'mobile' : 'desktop');
+  document.documentElement.classList.toggle('mobile-layout', mode === 'mobile');
+  const picker = document.getElementById('layout-picker');
+  if (picker) picker.classList.add('hidden');
+  updateLayoutButtons(mode);
+  if (!saved) localStorage.setItem('cardHuddleLayout', mode);
 })();
 
 function setLayoutMode(mode) {
@@ -3854,113 +4080,6 @@ function updateLayoutButtons(mode) {
   if (mBtn) mBtn.classList.toggle('active', mode === 'mobile');
 }
 
-async function fetchPlayerListings(container, query, mode) {
-  const body = container.querySelector('.cl-listings-body');
-  body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
-
-  try {
-    const params = new URLSearchParams({ q: query, mode: mode, limit: '12' });
-    const response = await fetch(`/api/search?${params}`);
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || `Server error ${response.status}`);
-    }
-
-    if (data.rateLimited || data.soldUnavailable) {
-      listingsContainer.innerHTML = '<div class="cl-listings-empty" style="text-align:center;padding:1.5rem;"><strong>Sold Search Currently Unavailable</strong><br>eBay retired the Finding API. We are awaiting approval for the Marketplace Insights API. Use For Sale mode in the meantime.</div>';
-      return;
-    }
-
-    const results = data.results || [];
-    const serial = data.serial || null;
-    const similarResults = data.similarResults || [];
-    const searchType = data.searchType || 'exact';
-    const broadenedQuery = data.broadenedQuery || null;
-    const approximateValue = data.approximateValue || null;
-
-    if (results.length === 0) {
-      // No results at all — show similar numbered cards if available, otherwise empty message
-      let emptyHtml = `<div class="cl-listings-empty">No ${mode === 'sold' ? 'sold listings' : 'listings'} found${serial ? ` numbered /${serial}` : ''}.</div>`;
-
-      if (similarResults.length > 0) {
-        emptyHtml += `<div class="cl-similar-section">`;
-        emptyHtml += `<div class="cl-similar-header">Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}</div>`;
-        emptyHtml += `<div class="cl-listings-grid">`;
-        similarResults.slice(0, 8).forEach(item => {
-          emptyHtml += buildClListingCard(item, mode);
-        });
-        emptyHtml += '</div></div>';
-      }
-
-      body.innerHTML = emptyHtml;
-      return;
-    }
-
-    // Stats
-    const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
-    const avg = prices.length ? (prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
-    const low = prices.length ? Math.min(...prices) : 0;
-    const high = prices.length ? Math.max(...prices) : 0;
-
-    const isSold = mode === 'sold';
-    const mockBadge = data.mock ? '<span class="mock-badge" style="font-size:0.65rem;">DEMO</span>' : '';
-
-    // Generate reasoning
-    const reasoning = generateListingReasoning(results, isSold, serial);
-
-    let html = '';
-
-    // If broadened, show a notice about similar items being displayed
-    if (searchType === 'broadened') {
-      html += `<div class="cl-broadened-notice">`;
-      html += `<span class="cl-broadened-icon">&#128270;</span> `;
-      html += `No exact match found. Showing similar items`;
-      if (approximateValue) {
-        html += ` &mdash; estimated value <strong>~$${approximateValue.medianPrice.toFixed(2)}</strong>`;
-        html += ` <span class="cl-broadened-detail">(based on ${approximateValue.sampleSize} ${approximateValue.sampleSize === 1 ? 'sale' : 'sales'} of ${escHtml(approximateValue.basedOn)})</span>`;
-      }
-      html += `</div>`;
-    }
-
-    html += `
-      <div class="cl-listings-stats">
-        <span>${results.length} ${isSold ? 'sold' : 'listings'}${searchType === 'broadened' ? ' (similar)' : ''} ${mockBadge}</span>
-        <span>Avg: $${avg.toFixed(2)}</span>
-        <span>Low: $${low.toFixed(2)}</span>
-        <span>High: $${high.toFixed(2)}</span>
-      </div>
-    `;
-
-    if (reasoning) {
-      html += `<div class="cl-reasoning">${escHtml(reasoning)}</div>`;
-    }
-
-    html += '<div class="cl-listings-grid">';
-
-    results.forEach(item => {
-      html += buildClListingCard(item, mode);
-    });
-
-    html += '</div>';
-
-    // Show similar numbered cards below exact results if serial search
-    if (serial && similarResults.length > 0) {
-      html += `<div class="cl-similar-section">`;
-      html += `<div class="cl-similar-header">Other Numbered Cards</div>`;
-      html += `<div class="cl-listings-grid">`;
-      similarResults.slice(0, 6).forEach(item => {
-        html += buildClListingCard(item, mode);
-      });
-      html += '</div></div>';
-    }
-
-    body.innerHTML = html;
-
-  } catch (err) {
-    body.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
-  }
-}
 
 // ---- Feedback / Report Bug ----
 function openFeedbackModal(type) {

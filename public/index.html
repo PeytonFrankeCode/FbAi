@@ -3,31 +3,123 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Card Huddle — Football Card Prices from Real eBay Sales</title>
-  <meta name="description" content="The Card Huddle tracks football trading card prices with real eBay sold data. Research fair market values for Prizm, Select, Mosaic, Optic and more. Make informed buying and selling decisions." />
-  <meta name="keywords" content="football cards, trading card prices, eBay sold prices, Prizm, card values, sports cards tracker, the card huddle" />
+  <title>The Card Huddle — Trading Card Price Tracker | Real eBay Sold Prices</title>
+  <meta name="description" content="Check what your trading cards are actually worth. The Card Huddle shows real eBay sold prices for sports cards, Prizm, Select, Mosaic, Optic, Donruss, Pokemon and more — broken down by grade (Raw, PSA 10, PSA 9). Free card portfolio tracker included." />
+  <meta name="keywords" content="trading card prices, sports card price tracker, eBay sold prices cards, PSA 10 card value, Prizm card price, sports card market value, card price guide, card portfolio tracker, graded card prices, raw card value, the card huddle, pokemon card prices, basketball card prices, baseball card prices, football card prices" />
+  <meta name="author" content="The Card Huddle" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#5ece99" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-37RKDTRBCH');
+  </script>
 
   <!-- Open Graph -->
-  <meta property="og:title" content="The Card Huddle" />
-  <meta property="og:description" content="Real eBay sold data for football trading cards. Research fair market values and make smarter buying and selling decisions." />
+  <meta property="og:title" content="The Card Huddle — Trading Card Price Tracker" />
+  <meta property="og:description" content="Check what your trading cards are actually worth. Real eBay sold prices for sports cards, Prizm, Select, Mosaic, Optic, Pokemon and more — broken down by grade. Free portfolio tracker included." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://thecardhuddle.com" />
+  <meta property="og:site_name" content="The Card Huddle" />
+  <meta property="og:image" content="https://thecardhuddle.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="The Card Huddle" />
-  <meta name="twitter:description" content="Research fair market values for football trading cards based on real eBay sold data." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The Card Huddle — Trading Card Price Tracker" />
+  <meta name="twitter:description" content="Check what your trading cards are actually worth. Real eBay sold prices broken down by grade. Free portfolio tracker included." />
+  <meta name="twitter:image" content="https://thecardhuddle.com/og-image.png" />
 
-  <!-- Structured Data -->
+  <!-- Structured Data: WebApplication -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "The Card Huddle",
-    "description": "A web-based football trading card price tracker that aggregates recent eBay sold listings to help collectors research fair market values.",
     "url": "https://thecardhuddle.com",
+    "description": "Trading card price tracker powered by real eBay sold data. Search any card — sports cards, Pokemon, and more — to see recent sale prices broken down by grade — Raw, PSA 10, PSA 9, and more.",
     "applicationCategory": "UtilitiesApplication",
-    "operatingSystem": "Web"
+    "operatingSystem": "Web",
+    "browserRequirements": "Any modern browser",
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Free",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Card search, 30-day price charts, grade breakdown, collection & portfolio tracker"
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro",
+        "price": "4.99",
+        "priceCurrency": "USD",
+        "description": "Full 1-year price history and price alerts for up to 10 cards"
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro+",
+        "price": "19.99",
+        "priceCurrency": "USD",
+        "description": "Flip Finder, Market Movers, Auto-Pricer, Bulk CSV Pricer, and 50 price alerts"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Structured Data: FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I check what my trading card is worth?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Search any player name, set, or card on The Card Huddle and we'll show you recent eBay sold prices grouped by grade — Raw, PSA 10, PSA 9, and more — so you know exactly what collectors are paying right now."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What card sets does The Card Huddle support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The Card Huddle supports all major trading card sets including Panini Prizm, Select, Mosaic, Optic, Donruss, Topps, Bowman, Pokemon, and many more. Search any set, player, or card to see current market prices."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is The Card Huddle free to use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! The Card Huddle is free to use. The free plan includes card price search, 30-day price trend charts, grade-by-grade value breakdowns, and a personal card collection and portfolio tracker. Pro plans add full price history and advanced tools."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does The Card Huddle show PSA graded card prices?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Search results are grouped by grade — Raw, PSA 10, PSA 9.5, PSA 9, PSA 8, BGS, SGC, and more — so you can instantly compare graded versus raw values and decide whether grading a card is worth it."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where does The Card Huddle get its price data?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "All prices come from real eBay sold listings — not estimated values or dealer asking prices. You see what collectors actually paid, giving you the most accurate picture of true market value."
+        }
+      }
+    ]
   }
   </script>
 
@@ -39,12 +131,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=21" />
 
-  <!-- Google AdSense (replace ca-pub-XXXXX with your publisher ID) -->
-  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXX" crossorigin="anonymous"></script> -->
+
 </head>
 <body>
+<!-- Construction Banner -->
+<div style="background:#f59e0b;color:#1a1a1a;text-align:center;padding:10px 16px;font-size:14px;font-weight:600;letter-spacing:0.01em;position:relative;z-index:9999;">
+  ⚠️ Please Note: This application is currently under construction. You may encounter incomplete features or occasional issues — we appreciate your patience!
+</div>
 <!-- Layout Picker Popup (shown on first visit) -->
 <div id="layout-picker" class="layout-picker" role="dialog" aria-label="Choose your layout">
   <div class="layout-picker-box">
@@ -79,28 +174,33 @@
           <span id="pro-btn-text">Go Pro</span>
         </button>
       </div>
-      <h1>&#127944; The Card Huddle</h1>
-      <p class="header-tagline">Real sold data. Fair market prices. Smarter decisions.</p>
-      <nav class="header-nav">
-        <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
-        <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
-        <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection</button>
-        <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
-        <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
-        </button>
-        <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-      </nav>
+      <div class="header-brand">
+        <img src="logo.png" alt="The Card Huddle" class="header-logo" />
+      </div>
+      <p class="header-tagline">Find. Collect. Track.</p>
     </div>
   </header>
+  <div class="nav-bar">
+    <nav class="header-nav">
+      <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
+      <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
+      <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
+      <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
+      <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
+      </button>
+      <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro+ Tools <span class="proplus-nav-badge">PRO+</span></button>
+      <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </nav>
+  </div>
 
   <!-- Login / Sign Up Modal -->
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-label="Login">
     <div class="login-box">
       <button class="login-close" aria-label="Close" onclick="closeLogin()">&times;</button>
-      <div class="login-icon">&#127944;</div>
+      <div class="login-icon">&#127183;</div>
       <h2 id="login-heading">Log In</h2>
       <p id="login-subtext">Welcome back to The Card Huddle</p>
       <form id="login-form" onsubmit="return handleAuth(event)">
@@ -128,7 +228,7 @@
       <div class="pricing-toggle">
         <button class="pricing-period active" data-period="monthly" onclick="setPricingPeriod('monthly')">Monthly</button>
         <button class="pricing-period" data-period="yearly" onclick="setPricingPeriod('yearly')">Yearly</button>
-        <span class="pricing-save-badge">Save 33%</span>
+        <span class="pricing-save-badge">Save big yearly</span>
       </div>
 
       <div class="pricing-cards">
@@ -136,13 +236,13 @@
           <h3 class="pricing-tier">Free</h3>
           <div class="pricing-price"><span class="pricing-amount">$0</span><span class="pricing-freq">/mo</span></div>
           <ul class="pricing-features">
-            <li class="included">Basic card search</li>
-            <li class="included">For Sale &amp; Sold listings</li>
-            <li class="included">Price trend charts</li>
-            <li class="excluded">Portfolio tracking</li>
+            <li class="included">Card search — sold &amp; for sale</li>
+            <li class="included">Price trend charts (30 days)</li>
+            <li class="included">Grade value breakdown</li>
+            <li class="included">Collection &amp; Portfolio</li>
+            <li class="excluded">Full price history (1 year)</li>
             <li class="excluded">Price alerts</li>
-            <li class="excluded">Market analytics</li>
-            <li class="excluded">Ad-free experience</li>
+            <li class="excluded">Pro+ tools</li>
           </ul>
           <button class="pricing-cta free" onclick="closePricing()">Current Plan</button>
         </div>
@@ -155,15 +255,33 @@
             <span class="pricing-freq" id="pro-freq">/mo</span>
           </div>
           <ul class="pricing-features">
-            <li class="included">Unlimited card searches</li>
-            <li class="included">For Sale &amp; Sold listings</li>
-            <li class="included">Price trend charts</li>
-            <li class="included">Portfolio tracking</li>
-            <li class="included">Price alerts</li>
-            <li class="included">Market analytics</li>
-            <li class="included">Ad-free experience</li>
+            <li class="included">Everything in Free</li>
+            <li class="included">Full price history (1 year)</li>
+            <li class="included">Price alerts (up to 10 cards)</li>
+            <li class="excluded">Flip Finder</li>
+            <li class="excluded">Market Movers</li>
+            <li class="excluded">Auto-Pricer</li>
+            <li class="excluded">Bulk CSV Pricer</li>
           </ul>
           <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
+        </div>
+
+        <div class="pricing-card proplus-card">
+          <div class="pricing-badge proplus-badge">For Dealers</div>
+          <h3 class="pricing-tier">Pro+</h3>
+          <div class="pricing-price">
+            <span class="pricing-amount" id="proplus-price">$19.99</span>
+            <span class="pricing-freq" id="proplus-freq">/mo</span>
+          </div>
+          <ul class="pricing-features">
+            <li class="included">Everything in Pro</li>
+            <li class="included">Flip Finder — spot underpriced deals</li>
+            <li class="included">Market Movers — catch price surges</li>
+            <li class="included">Auto-Pricer — optimal listing prices</li>
+            <li class="included">Bulk CSV Pricer (20 cards at once)</li>
+            <li class="included">Price alerts (up to 50 cards)</li>
+          </ul>
+          <button class="pricing-cta proplus" onclick="handleSubscribe('proplus')">Get Pro+</button>
         </div>
       </div>
     </div>
@@ -185,8 +303,8 @@
         <button type="submit" id="search-btn">Search</button>
       </form>
       <div id="mode-tabs" class="mode-tabs">
-        <button class="mode-tab active" data-mode="forsale">For Sale</button>
-        <button class="mode-tab" data-mode="sold">Sold</button>
+        <button class="mode-tab" data-mode="forsale">For Sale</button>
+        <button class="mode-tab active" data-mode="sold">Sold</button>
       </div>
       <div id="search-meta" class="search-meta hidden"></div>
     </section>
@@ -203,22 +321,11 @@
         <button class="chip" data-query="Patrick Mahomes 2017 Prizm Base">Mahomes Prizm Base</button>
         <button class="chip" data-query="Patrick Mahomes 2017 Prizm Silver">Mahomes Prizm Silver</button>
         <button class="chip" data-query="Joe Burrow 2020 Prizm Base">Burrow Prizm Base</button>
-        <button class="chip" data-query="Joe Burrow 2020 Chronicles Base">Burrow Chronicles Base</button>
         <button class="chip" data-query="Justin Jefferson 2020 Prizm Silver PSA 10">Jefferson Prizm Silver PSA 10</button>
         <button class="chip" data-query="Josh Allen 2018 Prizm Base">Allen Prizm Base</button>
         <button class="chip" data-query="Ja'Marr Chase 2021 Prizm Base">Chase Prizm Base</button>
-        <button class="chip" data-query="CeeDee Lamb 2020 Select Base">Lamb Select Base</button>
-        <button class="chip" data-query="Lamar Jackson 2018 Prizm Silver">Lamar Prizm Silver</button>
-        <button class="chip" data-query="Tom Brady 2000 Bowman Rookie">Brady Bowman RC</button>
       </div>
     </section>
-
-    <!-- Ad Banner (top) -->
-    <div class="ad-slot ad-slot-top" aria-hidden="true">
-      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="YYYYYYY" data-ad-format="auto" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
-      <div class="ad-placeholder">Ad Space</div>
-    </div>
 
     <!-- Variant selection view -->
     <section id="variants-section" class="variants-section hidden" aria-label="Card variants">
@@ -243,6 +350,16 @@
 
     <!-- Approximate value section (shown when no exact sales found) -->
     <div id="approx-section" class="approx-value-section hidden"></div>
+
+    <!-- Grade Value Panel (shown after a sold search) -->
+    <div id="grade-panel" class="grade-panel hidden">
+      <div class="grade-panel-header">
+        <span class="grade-panel-title">Grade Value Breakdown</span>
+        <span class="grade-panel-subtitle">How graded copies of this card sell vs. raw</span>
+        <div id="grade-panel-loading" class="grade-panel-loading hidden"><div class="spinner" style="width:16px;height:16px;border-width:2px"></div> Loading...</div>
+      </div>
+      <div id="grade-panel-body" class="grade-panel-body"></div>
+    </div>
 
     <section id="results-section" aria-label="Results">
       <div id="chart-section" class="chart-section hidden">
@@ -270,52 +387,21 @@
       <div id="similar-grid" class="results-grid"></div>
     </section>
 
-    <!-- Ad Banner (bottom) -->
-    <div class="ad-slot ad-slot-bottom" aria-hidden="true">
-      <!-- <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="ZZZZZZZ" data-ad-format="auto" data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script> -->
-      <div class="ad-placeholder">Ad Space</div>
-    </div>
   </main>
-
-  <!-- Checklist View (hidden by default) -->
-  <div id="checklist-view" class="checklist-view hidden">
-    <div class="checklist-container">
-      <!-- Product selector -->
-      <div id="checklist-products" class="checklist-products">
-        <h2 class="checklist-page-title">Browse Checklists</h2>
-        <p class="checklist-page-subtitle">Explore complete card checklists with every parallel and print run</p>
-        <div id="checklist-product-grid" class="checklist-product-grid"></div>
-      </div>
-
-      <!-- Set browser (shown after selecting a product) -->
-      <div id="checklist-browser" class="checklist-browser hidden">
-        <button class="checklist-back-btn" onclick="checklistBack()">&larr; All Checklists</button>
-        <h2 id="checklist-product-name" class="checklist-product-name"></h2>
-
-        <!-- Search within checklist -->
-        <div class="checklist-search-wrap">
-          <input type="text" id="checklist-search" class="checklist-search-input" placeholder="Search player, team, or card number..." />
-          <button type="button" id="checklist-search-btn" class="checklist-search-btn" onclick="searchChecklistQuery()" title="Search eBay">Search</button>
-        </div>
-
-        <!-- Category filter tabs -->
-        <div class="checklist-category-tabs" id="checklist-category-tabs">
-          <button class="checklist-cat-tab active" data-cat="all">All</button>
-          <button class="checklist-cat-tab" data-cat="base">Base</button>
-          <button class="checklist-cat-tab" data-cat="autograph">Autographs</button>
-          <button class="checklist-cat-tab" data-cat="memorabilia">Memorabilia</button>
-          <button class="checklist-cat-tab" data-cat="insert">Inserts</button>
-        </div>
-
-        <!-- Sets list -->
-        <div id="checklist-sets" class="checklist-sets"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- Collection View -->
   <div id="collection-view" class="collection-view hidden">
+
+    <!-- Not logged in / Not Pro gate -->
+    <div id="collection-gate" class="tracked-gate hidden">
+      <div class="tracked-gate-icon">&#127915;</div>
+      <h3>Pro Feature</h3>
+      <p>Collection tracking, portfolio value, and set completion are exclusive Pro features.</p>
+      <button class="settings-sub-btn settings-sub-upgrade" id="collection-upgrade-btn">Upgrade to Pro</button>
+    </div>
+
+    <!-- Pro content -->
+    <div id="collection-content">
     <div class="collection-container">
       <div class="collection-header">
         <h2 class="collection-title">My Collection</h2>
@@ -323,9 +409,10 @@
         <div class="collection-tabs">
           <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
           <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
+          <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist <span class="tab-pro-badge">PRO</span></button>
           <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
           <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
-          <button class="coll-tab" data-coll="insights" onclick="switchCollectionTab('insights')">Insights</button>
+
         </div>
       </div>
 
@@ -348,13 +435,19 @@
             <span class="portfolio-stat-label">Gain/Loss</span>
             <span class="portfolio-stat-value" id="portfolio-gain-loss">$0.00</span>
           </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">ROI</span>
+            <span class="portfolio-stat-value" id="portfolio-roi">—</span>
+          </div>
         </div>
         <div class="portfolio-actions">
           <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
           <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
+          <button class="portfolio-action-btn portfolio-action-btn--pro" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Market Values <span class="pro-badge-inline">PRO</span></button>
+          <button class="portfolio-action-btn portfolio-action-btn--pro" onclick="generateMarketReport()">&#128196; Market Report <span class="pro-badge-inline">PRO</span></button>
         </div>
         <div id="portfolio-list" class="portfolio-list">
-          <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
+          <p class="portfolio-empty">No cards in your collection yet. Use the button above to add your first card.</p>
         </div>
       </div>
 
@@ -398,6 +491,21 @@
         </div>
       </div>
 
+      <!-- Watchlist Tab -->
+      <div id="coll-watchlist" class="coll-panel hidden">
+        <div class="watchlist-header">
+          <p class="watchlist-desc">Follow players and cards to monitor price trends over time.</p>
+          <div class="watchlist-add-row">
+            <input type="text" id="watchlist-input" class="watchlist-input" placeholder="e.g. Patrick Mahomes 2017 Prizm" />
+            <button class="watchlist-add-btn" onclick="addToWatchlist()">+ Add</button>
+            <button class="watchlist-refresh-btn" onclick="refreshWatchlistPrices()" id="watchlist-refresh-btn">&#8635; Refresh Prices</button>
+          </div>
+        </div>
+        <div id="watchlist-list" class="watchlist-list">
+          <p class="watchlist-empty">No players on your watchlist yet. Add a card above to start tracking.</p>
+        </div>
+      </div>
+
       <!-- Hot/Cold Tab -->
       <div id="coll-hotcold" class="coll-panel hidden">
         <p class="hotcold-desc">Biggest price movers based on your tracked searches.</p>
@@ -407,23 +515,6 @@
         </div>
         <div id="hotcold-list" class="hotcold-list">
           <p class="hotcold-empty">Track cards via search to see price movements here.</p>
-        </div>
-      </div>
-
-      <!-- Insights Tab -->
-      <div id="coll-insights" class="coll-panel hidden">
-        <p class="insights-desc">Market analytics powered by real sold data. Search any card to see pricing trends, volume, and distribution.</p>
-        <div class="insights-search">
-          <input type="text" id="insights-input" placeholder="Search cards (e.g. 2024 Prizm Justin Jefferson Silver)..." />
-          <button onclick="searchInsights()">Analyze</button>
-        </div>
-        <div id="insights-results" class="insights-results">
-          <p class="insights-empty">Search for a card to view market insights.</p>
-        </div>
-        <!-- SportsCardsPro Price Guide -->
-        <div id="scp-price-guide" class="scp-price-guide hidden">
-          <h3 class="scp-title">Price Guide <span class="scp-source">via SportsCardsPro</span></h3>
-          <div id="scp-results" class="scp-results"></div>
         </div>
       </div>
 
@@ -445,6 +536,56 @@
         </div>
       </div>
 
+    </div>
+    </div><!-- /collection-content -->
+  </div>
+
+  <!-- Grading Advisor View -->
+  <div id="grading-view" class="collection-view hidden">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">Grading Advisor</h2>
+        <p class="collection-subtitle">Find out if grading your card is worth the cost based on real sold data</p>
+      </div>
+
+      <div class="grading-form-wrap">
+        <form id="grading-form" onsubmit="return runGradingAdvisor(event)">
+          <div class="grading-input-row">
+            <div class="search-input-wrap" style="flex:1">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="grading-input" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" autocomplete="off" required />
+            </div>
+            <button type="submit" id="grading-btn" class="grading-submit-btn">Analyze</button>
+          </div>
+        </form>
+        <p class="grading-hint">Enter a card name — we'll pull recent sold prices for raw and every PSA grade to show you the grading premium.</p>
+      </div>
+
+      <div id="grading-loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Fetching sold prices for each grade...</span>
+      </div>
+      <div id="grading-error" class="error-message hidden"></div>
+      <div id="grading-results" class="hidden">
+        <div id="grading-recommendation" class="grading-recommendation"></div>
+        <div class="grading-table-wrap">
+          <table class="grading-table">
+            <thead>
+              <tr>
+                <th>Grade</th>
+                <th>Avg Sale</th>
+                <th>Median</th>
+                <th>Range</th>
+                <th># Sales</th>
+                <th>Premium over Raw</th>
+                <th>Net after $25 grade fee</th>
+              </tr>
+            </thead>
+            <tbody id="grading-tbody"></tbody>
+          </table>
+        </div>
+        <p class="grading-disclaimer">Based on recent eBay sold listings. Grading costs vary — PSA Economy ~$25, Express ~$50. Results are estimates only.</p>
+      </div>
     </div>
   </div>
 
@@ -469,7 +610,7 @@
             <div class="seller-form-group seller-form-full">
               <label>Listing Title <span class="seller-char-count" id="listing-title-count">0/80</span></label>
               <div class="seller-title-row">
-                <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm Football" maxlength="80" required oninput="updateTitleCount()" />
+                <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm" maxlength="80" required oninput="updateTitleCount()" />
                 <button type="button" class="seller-autofill-btn" onclick="showTitleAutofill()">Auto-Fill</button>
               </div>
             </div>
@@ -709,11 +850,20 @@
       <div id="tracked-content" class="tracked-content hidden">
         <form class="alerts-add-form" id="tracked-add-form">
           <input type="text" id="tracked-query-input" class="alerts-input" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" required minlength="3" />
+          <div class="alerts-threshold-row">
+            <select id="tracked-condition" class="alerts-threshold-select">
+              <option value="">Any price</option>
+              <option value="below">Below $</option>
+              <option value="above">Above $</option>
+            </select>
+            <input type="number" id="tracked-threshold" class="alerts-threshold-input" placeholder="0.00" min="0" step="0.01" />
+            <span class="alerts-threshold-pro-badge">PRO</span>
+          </div>
           <button type="submit" class="alerts-add-btn">Track Card</button>
         </form>
         <p id="tracked-error" class="alerts-error hidden"></p>
         <div id="tracked-list" class="tracked-list">
-          <p class="alerts-empty">No tracked cards yet. Add one above or use the bell icon in Checklists.</p>
+          <p class="alerts-empty">No tracked cards yet. Search for a card and use the bell icon to start tracking its price.</p>
         </div>
       </div>
     </div>
@@ -734,6 +884,83 @@
           <a id="card-modal-link" class="card-modal-ebay-link" href="#" target="_blank" rel="noopener noreferrer">
             View on eBay &#8599;
           </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pro+ Tools View -->
+  <div id="proplus-view" class="proplus-view hidden">
+    <div class="proplus-container">
+
+      <!-- Gate for non-Pro+ users -->
+      <div id="proplus-gate" class="proplus-gate hidden">
+        <div class="proplus-gate-icon">&#9889;</div>
+        <h2>Pro+ Tools</h2>
+        <p>Flip Finder, Market Movers, Auto-Pricer, Bulk Pricing and more — built for serious dealers and resellers.</p>
+        <button class="proplus-upgrade-btn" onclick="showPricing()">Upgrade to Pro+ — $19.99/mo</button>
+      </div>
+
+      <!-- Pro+ Content -->
+      <div id="proplus-content" class="hidden">
+        <div class="proplus-header">
+          <h2 class="proplus-title">Pro+ Tools</h2>
+          <span class="proplus-badge-label">&#9889; PRO+</span>
+        </div>
+
+        <!-- Sub-tabs -->
+        <div class="proplus-tabs">
+          <button class="proplus-tab active" data-pptab="flipfinder" onclick="switchProPlusTab('flipfinder')">&#128269; Flip Finder</button>
+          <button class="proplus-tab" data-pptab="movers" onclick="switchProPlusTab('movers')">&#128200; Market Movers</button>
+          <button class="proplus-tab" data-pptab="autoprices" onclick="switchProPlusTab('autoprices')">&#127991;&#65039; Auto-Pricer</button>
+          <button class="proplus-tab" data-pptab="bulkprice" onclick="switchProPlusTab('bulkprice')">&#128196; Bulk Pricer</button>
+        </div>
+
+        <!-- Flip Finder -->
+        <div id="pptab-flipfinder" class="pptab-panel">
+          <p class="pp-desc">Find eBay listings priced well below recent sold median — potential flips surfaced automatically.</p>
+          <div class="pp-search-row">
+            <input type="text" id="ff-input" class="pp-input" placeholder="e.g. Patrick Mahomes 2017 Prizm" />
+            <select id="ff-discount" class="pp-select">
+              <option value="20">20%+ below median</option>
+              <option value="30" selected>30%+ below median</option>
+              <option value="40">40%+ below median</option>
+            </select>
+            <input type="number" id="ff-minprofit" class="pp-input pp-input-sm" placeholder="Min profit $" min="1" value="10" />
+            <button class="pp-btn" onclick="runFlipFinder()">Find Flips</button>
+          </div>
+          <div id="ff-results"></div>
+        </div>
+
+        <!-- Market Movers -->
+        <div id="pptab-movers" class="pptab-panel hidden">
+          <p class="pp-desc">Detect cards with prices surging in the last 7 days vs. the prior period — get ahead of the market.</p>
+          <div class="pp-search-row">
+            <input type="text" id="mm-input" class="pp-input" placeholder="e.g. Josh Allen 2018 Prizm" />
+            <button class="pp-btn" onclick="runMarketMovers()">Check Trend</button>
+          </div>
+          <div id="mm-results"></div>
+        </div>
+
+        <!-- Auto-Pricer -->
+        <div id="pptab-autoprices" class="pptab-panel hidden">
+          <p class="pp-desc">Get three data-backed listing price recommendations — aggressive, optimal, and premium — based on sold comps and live competition.</p>
+          <div class="pp-search-row">
+            <input type="text" id="ap-input" class="pp-input" placeholder="e.g. Joe Burrow 2020 Prizm PSA 10" />
+            <button class="pp-btn" onclick="runAutoPricer()">Get Prices</button>
+          </div>
+          <div id="ap-results"></div>
+        </div>
+
+        <!-- Bulk Pricer -->
+        <div id="pptab-bulkprice" class="pptab-panel hidden">
+          <p class="pp-desc">Price up to 20 cards at once. Enter one card per line, click Price All, then export to CSV.</p>
+          <textarea id="bulk-input" class="pp-textarea" placeholder="Patrick Mahomes 2017 Prizm Base&#10;Josh Allen 2018 Prizm Silver&#10;Justin Jefferson 2020 Prizm PSA 10"></textarea>
+          <div class="pp-search-row" style="margin-top:0.5rem;">
+            <button class="pp-btn" onclick="runBulkPricer()">Price All</button>
+            <button class="pp-btn pp-btn-secondary" onclick="exportBulkCSV()">Export CSV</button>
+          </div>
+          <div id="bulk-results"></div>
         </div>
       </div>
     </div>
@@ -777,6 +1004,7 @@
           </div>
           <div id="settings-sub-action"></div>
         </div>
+
       </div>
 
     </div>
@@ -785,8 +1013,7 @@
   <footer>
     <div class="footer-inner">
       <div class="footer-brand">
-        <span class="footer-logo">&#127944;</span>
-        <span>The Card Huddle</span>
+        <img src="logo.png" alt="The Card Huddle" class="footer-logo-img" />
       </div>
       <p class="footer-description">Helping collectors research fair market values with real eBay sold data. Transparent pricing for smarter buying and selling.</p>
       <div class="footer-actions">
@@ -799,6 +1026,7 @@
         <span>Prices in USD</span>
       </div>
       <p class="footer-copy">&copy; 2025 The Card Huddle. Not affiliated with eBay Inc.</p>
+      <p class="footer-verse">&ldquo;For all have sinned and fall short of the glory of God, and all are justified freely by his grace through the redemption that came by Christ Jesus.&rdquo; &mdash; Romans 3:23&ndash;24</p>
     </div>
   </footer>
 
@@ -824,6 +1052,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=27"></script>
 </body>
 </html>

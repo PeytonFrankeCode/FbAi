@@ -14,8 +14,16 @@ services:
         value: PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8
       - key: EBAY_CERT_ID
         sync: false
-      - key: EBAY_API_MODE
-        value: browse
+      - key: CARDSIGHTS_API_KEY
+        sync: false
+      - key: CARDHEDGE_API_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: USE_MOCK_DATA
         value: false
       - key: AUTH_CODE
