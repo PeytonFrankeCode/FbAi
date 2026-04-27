@@ -1,11 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const compression = require('compression');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const { connectDB, loadData, saveData } = require('./db');
 
 const app = express();
@@ -125,7 +123,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(compression());
+// Cloudflare's edge handles compression automatically; only use locally
+if (!process.env.CF_WORKER) {
+  const compression = require('compression');
+  app.use(compression());
+}
 app.use(express.json());
 // Disable caching for JS/CSS so deploys take effect immediately
 app.use((req, res, next) => {
@@ -1168,6 +1170,7 @@ const SMTP_FROM = process.env.SMTP_FROM || 'alerts@thecardhuddle.com';
 
 let emailTransporter = null;
 if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  const nodemailer = require('nodemailer');
   emailTransporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: Number(SMTP_PORT),
