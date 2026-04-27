@@ -964,6 +964,61 @@ header {
 }
 .nav-bar::-webkit-scrollbar { display: none; }
 
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.nav-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.nav-tab.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  font-weight: 600;
+}
+
+.settings-tab {
+  margin-left: auto;
+  padding: 0.45rem 0.6rem;
+  flex-shrink: 0;
+}
+
+.pro-feature-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--gold), #e6a800);
+  color: #0a0a0a;
+  font-size: 0.45rem;
+  font-weight: 800;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  vertical-align: middle;
+  letter-spacing: 0.03em;
+}
+
 header::before {
   content: '';
   position: absolute;
