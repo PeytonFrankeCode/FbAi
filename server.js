@@ -136,7 +136,10 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use(express.static(path.join(__dirname, 'public')));
+// In Cloudflare Workers, static files are served via the ASSETS binding
+if (!process.env.CF_WORKER) {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
 
 
 
@@ -1973,9 +1976,12 @@ app.get('/api/feedback', (req, res) => {
   }
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// In Cloudflare Workers the ASSETS binding handles the SPA fallback
+if (!process.env.CF_WORKER) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+}
 
 // Cloudflare Workers: export app so worker.js can wrap it with a fetch handler.
 // Node.js (local / Render): connect to DB then bind to a port as usual.
