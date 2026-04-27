@@ -25,5 +25,3 @@ USE_MOCK_DATA = "false"
 #   SMTP_PASS
 #   SMTP_FROM
 
-[site]
-bucket = "./public"
