@@ -3,6 +3,10 @@ main = "worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+[assets]
+directory = "./public"
+not_found_handling = "single-page-application"
+
 [vars]
 SITE_URL = "https://thecardhuddle.com"
 EBAY_APP_ID = "PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8"
