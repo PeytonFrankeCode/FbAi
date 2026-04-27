@@ -1,2 +1,1 @@
-# Redirect www to apex domain
-https://www.thecardhuddle.com/* https://thecardhuddle.com/:splat 301
+# www → apex redirect is handled via Cloudflare Redirect Rules in the dashboard
