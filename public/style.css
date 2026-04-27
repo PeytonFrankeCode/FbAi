@@ -1355,6 +1355,141 @@ main {
   transform: scale(0.95);
 }
 
+/* ---- Collection Sub-Tabs ---- */
+.collection-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.coll-tab {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  font-family: inherit;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.coll-tab:hover {
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--accent-border);
+}
+
+.coll-tab.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  font-weight: 600;
+}
+
+.seller-subtab {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  font-family: inherit;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.seller-subtab:hover {
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--accent-border);
+}
+
+.seller-subtab.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  font-weight: 600;
+}
+
+.tab-pro-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--gold), #e6a800);
+  color: #0a0a0a;
+  font-size: 0.5rem;
+  font-weight: 800;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  vertical-align: middle;
+  letter-spacing: 0.03em;
+}
+
+.portfolio-action-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  font-family: inherit;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.portfolio-action-btn:hover {
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--accent-border);
+}
+
+.portfolio-action-btn--pro {
+  color: var(--gold);
+  border-color: rgba(255, 196, 0, 0.3);
+}
+
+.portfolio-action-btn--pro:hover {
+  background: rgba(255, 196, 0, 0.08);
+  border-color: var(--gold);
+}
+
+.watchlist-add-btn,
+.watchlist-refresh-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+  font-family: inherit;
+}
+
+.watchlist-add-btn:hover,
+.watchlist-refresh-btn:hover {
+  color: var(--accent);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
 /* ---- Sort Controls ---- */
 .sort-controls {
   display: flex;
