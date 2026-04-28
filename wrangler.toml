@@ -1,11 +1,15 @@
 name = "the-card-huddle"
 main = "worker.js"
 # Bumped from 2024-09-23 to pick up the latest nodejs_compat improvements.
-# Cloudflare ships fixes to the Node compatibility layer continuously and they
-# only activate at compatibility_date >= the fix date. Newer date == more APIs
-# available without changing any code.
 compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
+
+# Replace iconv-lite (pulled in transitively by body-parser → express) with
+# a UTF-8-only stub. The real package's streams.js loads at module-init and
+# was the actual source of `require_streams(...) is not a function` — body-parser
+# uses iconv-lite for charset detection on request bodies, which we don't need.
+[alias]
+"iconv-lite" = "./stubs/iconv-lite-stub.js"
 
 [assets]
 directory = "./public"
