@@ -141,6 +141,38 @@ if (!process.env.CF_WORKER) {
   app.use(express.static(path.join(__dirname, 'public')));
 }
 
+// ---- Diagnostic: which integrations are configured ----
+// Reports presence (not values) of secrets so you can spot what's missing
+// in production. Safe to expose: returns booleans only.
+app.get('/api/health', (req, res) => {
+  res.json({
+    runtime: process.env.CF_WORKER ? 'cloudflare-worker' : 'node',
+    integrations: {
+      ebayBrowse: {
+        configured: !!EBAY_APP_ID && !!process.env.EBAY_CERT_ID,
+        hasAppId: !!EBAY_APP_ID,
+        hasCertId: !!process.env.EBAY_CERT_ID,
+      },
+      ebaySold: {
+        configured: EBAY_API_DATA_ENABLED,
+        provider: 'ebayapidata',
+      },
+      stripe: {
+        configured: !!stripeEnabled,
+        hasSecretKey: !!STRIPE_SECRET_KEY,
+        hasPublishableKey: !!STRIPE_PUBLISHABLE_KEY,
+        hasWebhookSecret: !!STRIPE_WEBHOOK_SECRET && !STRIPE_WEBHOOK_SECRET.includes('REPLACE'),
+      },
+      mongo: { configured: !!process.env.MONGODB_URI },
+      smtp: { configured: !!process.env.SMTP_HOST && !!process.env.SMTP_USER },
+    },
+    forceMock: {
+      forSale: USE_MOCK_FORSALE,
+      sold: USE_MOCK_SOLD,
+    },
+  });
+});
+
 
 
 // ---- API Call Tracker ----

@@ -12,20 +12,27 @@ SITE_URL = "https://thecardhuddle.com"
 EBAY_APP_ID = "PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8"
 USE_MOCK_DATA = "false"
 
-# Secrets — set these via `wrangler secret put <KEY>` or the Cloudflare dashboard:
-#   MONGODB_URI
-#   EBAY_CERT_ID
-#   EBAY_API_DATA_KEY
-#   EBAY_VERIFICATION_TOKEN
-#   CARDSIGHTS_API_KEY
-#   CARDHEDGE_API_KEY
-#   STRIPE_PUBLISHABLE_KEY
-#   STRIPE_SECRET_KEY
-#   STRIPE_WEBHOOK_SECRET
-#   AUTH_CODE
-#   SMTP_HOST
-#   SMTP_PORT
-#   SMTP_USER
-#   SMTP_PASS
-#   SMTP_FROM
+# Secrets — set these via `wrangler secret put <KEY>` or the Cloudflare dashboard.
+# Cloudflare [vars] above are public; secrets are encrypted and only visible to the worker.
+#
+# After deploying, hit GET /api/health to confirm what's actually loaded. Run:
+#
+#   wrangler secret put EBAY_CERT_ID            # eBay OAuth client secret (For Sale search)
+#   wrangler secret put EBAY_API_DATA_KEY       # ebayapidata.onrender.com bearer (Sold search)
+#   wrangler secret put EBAY_VERIFICATION_TOKEN # eBay marketplace deletion notifications
+#   wrangler secret put STRIPE_PUBLISHABLE_KEY  # pk_live_... or pk_test_...
+#   wrangler secret put STRIPE_SECRET_KEY       # sk_live_... or sk_test_...
+#   wrangler secret put STRIPE_WEBHOOK_SECRET   # whsec_... from the Stripe dashboard webhook
+#   wrangler secret put MONGODB_URI             # mongodb+srv://...
+#   wrangler secret put AUTH_CODE               # admin login code
+#   wrangler secret put CARDSIGHTS_API_KEY
+#   wrangler secret put CARDHEDGE_API_KEY
+#   wrangler secret put SMTP_HOST
+#   wrangler secret put SMTP_PORT
+#   wrangler secret put SMTP_USER
+#   wrangler secret put SMTP_PASS
+#   wrangler secret put SMTP_FROM
+#
+# After setting Stripe secrets, also register the webhook endpoint in the
+# Stripe dashboard pointing at: https://thecardhuddle.com/api/stripe/webhook
 

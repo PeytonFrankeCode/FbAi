@@ -3671,6 +3671,71 @@ async function autoFillFromEbayUrl() {
   }
 }
 
+// Read a File and downscale via canvas to keep localStorage payload small.
+// Returns a JPEG data URL (~50–120KB at default quality).
+function readImageFileAsDataUrl(file, maxDim = 800, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) {
+      reject(new Error('File is not an image'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode image'));
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handlePromoteImageFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('promote-image-status');
+  status.textContent = 'Processing…';
+  try {
+    if (file.size > 8 * 1024 * 1024) throw new Error('Image is too large (max 8MB)');
+    const dataUrl = await readImageFileAsDataUrl(file);
+    document.getElementById('promote-image').value = dataUrl;
+    const previewWrap = document.getElementById('promote-image-preview-wrap');
+    const preview = document.getElementById('promote-image-preview');
+    preview.src = dataUrl;
+    previewWrap.classList.remove('hidden');
+    const kb = Math.round(dataUrl.length * 0.75 / 1024);
+    status.textContent = `${file.name} — ${kb}KB ready`;
+  } catch (err) {
+    status.textContent = err.message || 'Could not load image';
+    e.target.value = '';
+  }
+}
+
+function clearPromoteImage() {
+  document.getElementById('promote-image').value = '';
+  document.getElementById('promote-image-file').value = '';
+  document.getElementById('promote-image-status').textContent = '';
+  const wrap = document.getElementById('promote-image-preview-wrap');
+  const preview = document.getElementById('promote-image-preview');
+  preview.removeAttribute('src');
+  wrap.classList.add('hidden');
+}
+
 async function handleAddPromotedCard(e) {
   e.preventDefault();
   const sub = getUserSubscription();
@@ -3721,6 +3786,7 @@ async function handleAddPromotedCard(e) {
 
   // Reset form
   document.getElementById('promote-card-form').reset();
+  clearPromoteImage();
   return false;
 }
 
