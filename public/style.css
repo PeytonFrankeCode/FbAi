@@ -880,18 +880,14 @@
   .pricing-box {
     padding: 1.5rem 1rem;
   }
-  .header-pro {
-    position: static;
-    margin-top: 0.5rem;
-  }
-  .header-auth {
-    position: static;
-    margin-bottom: 0.5rem;
-  }
   .header-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: auto 1fr auto;
+  }
+  .header-inner .header-brand {
+    grid-column: 2;
+  }
+  .header-logo {
+    height: 56px;
   }
 }
 
@@ -1017,7 +1013,7 @@ select {
 header {
   background: var(--header-bg);
   border-bottom: none;
-  padding: 2.8rem 1.5rem 1.5rem;
+  padding: 1.2rem 1.5rem 1.2rem;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -1033,8 +1029,9 @@ header {
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0.75rem 1.5rem 0.85rem;
+  padding: 0.6rem 1.5rem 0.65rem;
 }
+
 .nav-bar::-webkit-scrollbar { display: none; }
 
 .header-nav {
@@ -1042,6 +1039,8 @@ header {
   align-items: center;
   gap: 0.25rem;
   white-space: nowrap;
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .nav-tab {
@@ -1117,9 +1116,45 @@ header::after {
 }
 
 .header-inner {
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+/* Auth button — left side */
+.header-inner .header-auth {
+  position: static;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+/* Pro button — right side */
+.header-inner .header-pro {
+  position: static;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* Brand logo — center */
+.header-inner .header-brand {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+}
+
+/* Tagline — full width below */
+.header-inner .header-tagline {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  text-align: center;
+  margin-top: 0;
 }
 
 header h1 {
@@ -1143,7 +1178,7 @@ header h1 {
 }
 
 .header-logo {
-  height: 130px;
+  height: 80px;
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
@@ -1177,10 +1212,10 @@ header h1 {
 /* ---- Main ---- */
 main {
   flex: 1;
-  max-width: 1300px;
+  max-width: 860px;
   margin: 0 auto;
   width: 100%;
-  padding: 2.5rem 1.5rem;
+  padding: 2rem 1.5rem;
 }
 
 /* ---- Search ---- */
@@ -2383,7 +2418,8 @@ main {
 }
 
 .collection-container {
-  max-width: 900px;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 /* ---- Section Page Header ---- */
@@ -2415,7 +2451,7 @@ main {
 /* ---- Portfolio Stats ---- */
 .portfolio-stats {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
@@ -2639,7 +2675,7 @@ main {
 /* ---- Seller Form ---- */
 .seller-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
 }
@@ -2978,14 +3014,6 @@ textarea:focus {
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-/* ---- Modern main section headers (section-title pattern) ---- */
-h2:not(.login-box h2):not(.pricing-heading):not(.chart-title):not(.variants-title):not(.card-modal-title) {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.3px;
-  line-height: 1.25;
-}
 
 /* Collection view */
 .mobile-layout .collection-view { padding: 1.25rem 0.75rem; }
