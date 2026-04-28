@@ -108,19 +108,48 @@ function expressToFetch(app, request, bodyBuffer) {
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
+    try {
+      const url = new URL(request.url);
 
-    // Static files and SPA fallback — served by Cloudflare ASSETS binding
-    if (!url.pathname.startsWith('/api/')) {
-      if (env.ASSETS) return env.ASSETS.fetch(request);
+      // Static files and SPA fallback — served by Cloudflare ASSETS binding.
+      // ANY non-/api request goes here, including bot scans like /wp-admin/*,
+      // so we never let the Express init path run for them.
+      if (!url.pathname.startsWith('/api/')) {
+        if (env.ASSETS) {
+          try {
+            return await env.ASSETS.fetch(request);
+          } catch (assetErr) {
+            console.error('ASSETS.fetch failed:', assetErr && assetErr.stack || assetErr);
+            return new Response('Static asset fetch failed', { status: 502 });
+          }
+        }
+        // No ASSETS binding — return a clean 404 instead of crashing the worker
+        return new Response('Not Found', { status: 404 });
+      }
+
+      // API routes — handled by Express
+      let app;
+      try {
+        ({ app } = await init(env));
+      } catch (initErr) {
+        console.error('Worker init failed:', initErr && initErr.stack || initErr);
+        return new Response(
+          JSON.stringify({ error: 'Server initialization failed', detail: String(initErr && initErr.message || initErr) }),
+          { status: 500, headers: { 'content-type': 'application/json' } }
+        );
+      }
+
+      const bodyBuffer = ['GET', 'HEAD'].includes(request.method)
+        ? null
+        : Buffer.from(await request.arrayBuffer());
+
+      return expressToFetch(app, request, bodyBuffer);
+    } catch (outerErr) {
+      console.error('Worker fetch crashed:', outerErr && outerErr.stack || outerErr);
+      return new Response(
+        JSON.stringify({ error: 'Worker exception', detail: String(outerErr && outerErr.message || outerErr) }),
+        { status: 500, headers: { 'content-type': 'application/json' } }
+      );
     }
-
-    // API routes — handled by Express
-    const { app } = await init(env);
-    const bodyBuffer = ['GET', 'HEAD'].includes(request.method)
-      ? null
-      : Buffer.from(await request.arrayBuffer());
-
-    return expressToFetch(app, request, bodyBuffer);
   },
 };
