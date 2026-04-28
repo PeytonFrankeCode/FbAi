@@ -10,6 +10,10 @@ compatibility_flags = ["nodejs_compat"]
 [assets]
 directory = "./public"
 not_found_handling = "single-page-application"
+# Worker runs first on every request and delegates static paths to ASSETS via
+# env.ASSETS.fetch(). Without this, Cloudflare's SPA fallback intercepts every
+# /api/* request and returns index.html, so the worker is never invoked.
+run_worker_first = true
 
 [vars]
 SITE_URL = "https://thecardhuddle.com"
