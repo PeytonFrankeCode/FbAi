@@ -131,7 +131,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=28" />
+  <link rel="stylesheet" href="style.css?v=29" />
 
 
 </head>
@@ -772,6 +772,18 @@
               <div class="seller-form-group">
                 <label>Image URL (optional)</label>
                 <input type="url" id="promote-image" placeholder="https://i.ebayimg.com/..." />
+                <div class="promote-upload-row">
+                  <label for="promote-image-file" class="promote-upload-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload from device
+                  </label>
+                  <input type="file" id="promote-image-file" accept="image/*" onchange="handlePromoteImageFile(event)" hidden />
+                  <span id="promote-image-status" class="promote-upload-status"></span>
+                </div>
+                <div id="promote-image-preview-wrap" class="promote-image-preview-wrap hidden">
+                  <img id="promote-image-preview" alt="Preview" />
+                  <button type="button" class="promote-image-clear" onclick="clearPromoteImage()" aria-label="Remove image">&times;</button>
+                </div>
               </div>
               <div class="seller-form-group">
                 <label>Condition</label>
@@ -1052,6 +1064,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=27"></script>
+  <script src="app.js?v=28"></script>
 </body>
 </html>
