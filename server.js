@@ -2015,11 +2015,15 @@ if (!process.env.CF_WORKER) {
   });
 }
 
-// Cloudflare Workers: export app so worker.js can wrap it with a fetch handler.
+// Always export at module top-level so wrangler's bundler can statically
+// detect named exports when worker.js does `await import('./server.js')`.
+// Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
+// and surfaced as "connectDB is not a function" at runtime.
+module.exports = { app, connectDB };
+
 // Node.js (local / Render): connect to DB then bind to a port as usual.
-if (process.env.CF_WORKER) {
-  module.exports = { app, connectDB };
-} else {
+// In Cloudflare Workers, worker.js handles startup via the fetch adapter.
+if (!process.env.CF_WORKER) {
   connectDB().then(() => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
