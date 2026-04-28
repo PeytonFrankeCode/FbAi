@@ -1669,6 +1669,77 @@ main {
   font-size: 1rem;
 }
 
+/* ---- Empty States ----
+   Every place that used to be plain paragraph text ("No cards yet…",
+   "Search for cards…", etc.) becomes a card-style block matching the
+   rest of the site. The selectors target every existing class without
+   needing HTML changes.
+*/
+.portfolio-empty,
+.watchlist-empty,
+.hotcold-empty,
+.marketplace-empty,
+.seller-empty,
+.no-listings-box,
+.search-prompt {
+  display: block;
+  margin: 1.25rem auto;
+  padding: 2rem 1.5rem;
+  max-width: 520px;
+  text-align: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  position: relative;
+}
+
+/* Subtle accent dot to break up the plainness without being loud */
+.portfolio-empty::before,
+.watchlist-empty::before,
+.hotcold-empty::before,
+.marketplace-empty::before,
+.seller-empty::before,
+.search-prompt::before {
+  content: '';
+  display: block;
+  width: 38px;
+  height: 38px;
+  margin: 0 auto 0.85rem;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235ece99' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* no-listings-box is built by JS with its own inner content — strip the
+   ::before icon since the JS injects its own. */
+.no-listings-box::before { display: none; }
+
+.no-listings-box .no-listings-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.no-listings-box h3 {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.no-listings-box p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 /* ---- Results Grid ---- */
 .results-grid {
   display: grid;
