@@ -1,6 +1,10 @@
 name = "the-card-huddle"
 main = "worker.js"
-compatibility_date = "2024-09-23"
+# Bumped from 2024-09-23 to pick up the latest nodejs_compat improvements.
+# Cloudflare ships fixes to the Node compatibility layer continuously and they
+# only activate at compatibility_date >= the fix date. Newer date == more APIs
+# available without changing any code.
+compatibility_date = "2025-04-01"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
