@@ -8,7 +8,14 @@ async function init(env) {
   }
   process.env.CF_WORKER = '1';
 
-  const { app, connectDB } = await import('./server.js');
+  // server.js is CommonJS. When dynamically imported, esbuild/wrangler may
+  // wrap module.exports under `.default`, so reach through both shapes.
+  const mod = await import('./server.js');
+  const exports = (mod && mod.default) ? mod.default : mod;
+  const { app, connectDB } = exports;
+  if (typeof connectDB !== 'function' || !app) {
+    throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
+  }
   await connectDB();
   serverInit = { app };
   return serverInit;
