@@ -120,11 +120,17 @@ export default {
             return await env.ASSETS.fetch(request);
           } catch (assetErr) {
             console.error('ASSETS.fetch failed:', assetErr && assetErr.stack || assetErr);
-            return new Response('Static asset fetch failed', { status: 502 });
+            return new Response('Static asset fetch failed: ' + String(assetErr && assetErr.message || assetErr), { status: 502 });
           }
         }
-        // No ASSETS binding — return a clean 404 instead of crashing the worker
-        return new Response('Not Found', { status: 404 });
+        // No ASSETS binding — diagnostic 500 with what env DID have, so we
+        // don't ship a silent "Not Found" that looks like a routing bug.
+        const envKeys = Object.keys(env || {}).join(', ') || '(none)';
+        return new Response(
+          'ASSETS binding missing on this worker. Available env keys: ' + envKeys +
+          '. Check that wrangler.toml [assets] block deployed correctly.',
+          { status: 500, headers: { 'content-type': 'text/plain' } }
+        );
       }
 
       // API routes — handled by Express
