@@ -6,6 +6,13 @@ const path = require('path');
 const crypto = require('crypto');
 const { connectDB, loadData, saveData } = require('./db');
 
+// __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
+// Workers' bundled-CJS shim. Bare references would throw ReferenceError at
+// module init in strict mode. typeof never throws on undeclared identifiers,
+// so this is the safe way to capture it. APP_ROOT is only consumed by the
+// file-backed code paths in db.js, which are no-ops on Workers anyway.
+const APP_ROOT = (typeof __dirname !== 'undefined') ? __dirname : '/';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const EBAY_APP_ID = process.env.EBAY_APP_ID;
@@ -143,7 +150,7 @@ app.use((req, res, next) => {
 });
 // In Cloudflare Workers, static files are served via the ASSETS binding
 if (!process.env.CF_WORKER) {
-  app.use(express.static(path.join(__dirname, 'public')));
+  app.use(express.static(path.join(APP_ROOT, 'public')));
 }
 
 // ---- Diagnostic: which integrations are configured ----
@@ -181,7 +188,7 @@ app.get('/api/health', (req, res) => {
 
 
 // ---- API Call Tracker ----
-const API_CALLS_FILE = path.join(__dirname, 'data', 'api-call-log.json');
+const API_CALLS_FILE = path.join(APP_ROOT, 'data', 'api-call-log.json');
 
 function loadApiCallLog() {
   return loadData('apiCallLog', API_CALLS_FILE, { daily: {}, calls: [] });
@@ -1191,7 +1198,7 @@ app.get('/api/ebay-listing-image', async (req, res) => {
 });
 
 // ---- Card Alerts System (Pro Feature) ----
-const ALERTS_FILE = path.join(__dirname, 'data', 'alerts.json');
+const ALERTS_FILE = path.join(APP_ROOT, 'data', 'alerts.json');
 
 function loadAlerts() {
   return loadData('alerts', ALERTS_FILE, { alerts: [] });
@@ -1464,7 +1471,7 @@ app.get('/api/marketplace', async (req, res) => {
 });
 
 // ---- Price History Storage ----
-const PRICE_HISTORY_FILE = path.join(__dirname, 'data', 'price-history.json');
+const PRICE_HISTORY_FILE = path.join(APP_ROOT, 'data', 'price-history.json');
 
 function loadPriceHistory() {
   return loadData('priceHistory', PRICE_HISTORY_FILE, {});
@@ -1509,7 +1516,7 @@ app.get('/api/price-history', (req, res) => {
 });
 
 // ---- Stripe Subscription Storage ----
-const SUBS_FILE = path.join(__dirname, 'data', 'subscriptions.json');
+const SUBS_FILE = path.join(APP_ROOT, 'data', 'subscriptions.json');
 
 function loadSubscriptions() {
   return loadData('subscriptions', SUBS_FILE, {});
@@ -1520,8 +1527,8 @@ function saveSubscriptions(subs) {
 }
 
 // ---- Global User Accounts ----
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
-const SESSIONS_FILE = path.join(__dirname, 'data', 'sessions.json');
+const USERS_FILE = path.join(APP_ROOT, 'data', 'users.json');
+const SESSIONS_FILE = path.join(APP_ROOT, 'data', 'sessions.json');
 
 function loadServerUsers() { return loadData('users', USERS_FILE, {}); }
 function saveServerUsers(u) { saveData('users', USERS_FILE, u); }
@@ -1979,7 +1986,7 @@ app.get('/api/stripe/subscription', (req, res) => {
 
 
 // ---- Feedback / Bug Reports ----
-const FEEDBACK_FILE = path.join(__dirname, 'data', 'feedback.json');
+const FEEDBACK_FILE = path.join(APP_ROOT, 'data', 'feedback.json');
 
 app.post('/api/feedback', (req, res) => {
   const { type, email, message, timestamp, userAgent } = req.body;
@@ -2023,7 +2030,7 @@ app.get('/api/feedback', (req, res) => {
 // In Cloudflare Workers the ASSETS binding handles the SPA fallback
 if (!process.env.CF_WORKER) {
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(APP_ROOT, 'public', 'index.html'));
   });
 }
 
