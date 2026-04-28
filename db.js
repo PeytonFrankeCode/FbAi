@@ -28,10 +28,16 @@ async function connectDB() {
     return null;
   }
 
+  // Quick URI sanity check before we try to connect
+  if (!/^mongodb(\+srv)?:\/\//.test(MONGODB_URI)) {
+    console.error('[DB] MONGODB_URI is malformed. Expected it to start with "mongodb://" or "mongodb+srv://".');
+    return null;
+  }
+
   try {
     const client = new MongoClient(MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 15000,
+      connectTimeoutMS: 15000,
     });
     await client.connect();
     db = client.db('cardhuddle');
@@ -44,8 +50,23 @@ async function connectDB() {
     console.log(`[DB] Connected to MongoDB — loaded ${docs.length} collections. Data will persist across deploys.`);
     return db;
   } catch (err) {
-    console.error('[DB] MongoDB connection failed, falling back to file storage:', err.message);
     db = null;
+    const msg = String(err && err.message || err);
+    console.error('[DB] MongoDB connection failed, falling back to file storage.');
+    console.error(`[DB] Error: ${msg}`);
+
+    // Surface the most common root causes so the user knows what to fix
+    if (/Authentication failed|bad auth|SCRAM/i.test(msg)) {
+      console.error('[DB] Hint: username/password is wrong, or special characters in the password were not URL-encoded.');
+      console.error('[DB] Try percent-encoding the password (e.g. "@" -> "%40", "/" -> "%2F", ":" -> "%3A").');
+    } else if (/IP that isn't whitelisted|not authorized|whitelist|connection .* closed|ECONNRESET|ETIMEDOUT|server selection|connection timed out/i.test(msg)) {
+      console.error('[DB] Hint: this almost always means the deploy host\'s IP is not in the MongoDB Atlas Network Access list.');
+      console.error('[DB] Render uses dynamic egress IPs — in Atlas, add "0.0.0.0/0" to Network Access (or the specific Render egress IPs if you have a paid plan).');
+    } else if (/ENOTFOUND|querySrv|getaddrinfo|DNS|EAI_AGAIN/i.test(msg)) {
+      console.error('[DB] Hint: DNS lookup failed. The cluster hostname in MONGODB_URI is wrong, the cluster was deleted, or the host has no DNS access.');
+    } else if (/MongoParseError|Invalid scheme|invalid connection string/i.test(msg)) {
+      console.error('[DB] Hint: MONGODB_URI is malformed. Copy a fresh connection string from Atlas → Connect → Drivers.');
+    }
     return null;
   }
 }
