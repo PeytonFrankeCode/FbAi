@@ -123,10 +123,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Cloudflare's edge handles compression automatically; only use locally
+// Cloudflare's edge handles compression automatically; only use locally.
+// Dynamic require keeps the package out of the Workers bundle (it pulls in
+// Node streams which the Workers polyfill doesn't fully implement).
 if (!process.env.CF_WORKER) {
-  const compression = require('compression');
-  app.use(compression());
+  try {
+    const _compMod = 'compression';
+    const compression = require(_compMod);
+    app.use(compression());
+  } catch (_) { /* compression not bundled — that's fine */ }
 }
 app.use(express.json());
 // Disable caching for JS/CSS so deploys take effect immediately
@@ -1205,13 +1210,20 @@ const SMTP_FROM = process.env.SMTP_FROM || 'alerts@thecardhuddle.com';
 
 let emailTransporter = null;
 if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-  const nodemailer = require('nodemailer');
-  emailTransporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: Number(SMTP_PORT),
-    secure: Number(SMTP_PORT) === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
+  // Dynamic require — see comment on mongodb in db.js for why.
+  // nodemailer pulls in Node streams; bundling it would crash the worker.
+  try {
+    const _nmMod = 'nodemailer';
+    const nodemailer = require(_nmMod);
+    emailTransporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: Number(SMTP_PORT),
+      secure: Number(SMTP_PORT) === 465,
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+    });
+  } catch (err) {
+    console.error('[Email] nodemailer unavailable:', err.message);
+  }
   console.log(`Email configured: ${SMTP_HOST}:${SMTP_PORT}`);
 } else {
   console.log('Email not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS to enable)');

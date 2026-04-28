@@ -7,8 +7,21 @@
  * configured, everything works exactly as before with JSON files.
  */
 
-const { MongoClient } = require('mongodb');
 const path = require('path');
+
+// `mongodb` is a pure-Node package that pulls in `streams` deep in its tree.
+// Cloudflare Workers' nodejs_compat polyfill doesn't fully implement `streams`,
+// so just *bundling* mongodb breaks the worker with `require_streams is not a
+// function` — even when MONGODB_URI isn't set and we never connect.
+//
+// Loading via a runtime-computed string keeps esbuild from statically
+// resolving and bundling it. In Node, this works the same as `require('mongodb')`.
+// In Workers, it throws and we silently fall through to cache-only mode.
+let MongoClient = null;
+try {
+  const _mongoMod = 'mongodb';
+  ({ MongoClient } = require(_mongoMod));
+} catch (_) { /* Workers environment — mongodb intentionally not bundled */ }
 
 // Cloudflare Workers have no file system — load fs only when available.
 let fs = null;
@@ -23,6 +36,10 @@ const cache = {};
  * Returns the db instance or null if unavailable.
  */
 async function connectDB() {
+  if (!MongoClient) {
+    console.log('[DB] mongodb driver not available in this runtime — using in-memory cache (data will NOT persist across cold starts)');
+    return null;
+  }
   if (!MONGODB_URI) {
     console.log('[DB] No MONGODB_URI set — using file-based storage (data will NOT persist across deploys)');
     return null;
