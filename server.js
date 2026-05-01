@@ -952,11 +952,16 @@ app.get('/api/variants', async (req, res) => {
     const baseQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
 
     let rawResults;
+    let upstreamError = null;
 
     // Sold mode
     if (mode === 'sold') {
       const result = await fetchEbayItems(query, 50, mode, 'variants');
       rawResults = result.results;
+      // Propagate upstream errors (e.g. invalid key, scraper down) so the
+      // frontend can show 'why' instead of a silent empty state.
+      if (result.error) upstreamError = result.error;
+      if (result.noProvider) upstreamError = 'EBAY_API_DATA_KEY is not configured on this server.';
     } else if (serial) {
       // Dual search when serial present: targeted + broad for better coverage
       const [targeted, broad] = await Promise.all([
@@ -1022,6 +1027,14 @@ app.get('/api/variants', async (req, res) => {
       .sort((a, b) => b.salesCount - a.salesCount)
       .slice(0, 12);
 
+    // If sold's upstream errored AND we got nothing, return 502 with detail
+    // so the frontend renders a real message instead of "no results".
+    if (upstreamError && variants.length === 0) {
+      return res.status(502).json({
+        error: 'Sold listings provider returned no data',
+        detail: upstreamError,
+      });
+    }
     res.json({ variants, mock: false, mode, serial: serial || null });
 
   } catch (err) {
