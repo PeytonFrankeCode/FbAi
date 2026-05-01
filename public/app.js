@@ -6,6 +6,23 @@
   }
 })();
 
+// Read a fetch Response as JSON, tolerating empty bodies and HTML error pages.
+// Throws an informative Error if the body isn't parseable so the caller's
+// catch block can render a useful message instead of a cryptic engine error.
+async function safeJson(response) {
+  const text = await response.text();
+  if (!text) {
+    if (response.ok) return {};
+    throw new Error(`Server returned an empty response (HTTP ${response.status})`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    const snippet = text.slice(0, 160).replace(/\s+/g, ' ').trim();
+    throw new Error(`Server returned non-JSON (HTTP ${response.status}): ${snippet}`);
+  }
+}
+
 function toggleTheme() {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   if (isLight) {
@@ -545,7 +562,7 @@ async function fetchVariants(query) {
     const response = await fetch(`/api/variants?${params}`, {
       headers: {},
     });
-    const data = await response.json();
+    const data = await safeJson(response);
 
     if (response.status === 401) { showLogin(); return; }
     if (!response.ok) {
@@ -564,8 +581,8 @@ async function fetchVariants(query) {
       return;
     }
 
-    cachedVariants = data.variants;
-    displayVariants(data.variants, query, data.mock, data.serial);
+    cachedVariants = data.variants || [];
+    displayVariants(cachedVariants, query, data.mock, data.serial);
 
   } catch (err) {
     errorMsg.textContent = `Error: ${err.message}`;
@@ -580,6 +597,7 @@ async function fetchVariants(query) {
 // ---- Display Variants ----
 function displayVariants(variants, query, mock, serial) {
   variantsGrid.innerHTML = '';
+  variants = Array.isArray(variants) ? variants : [];
 
   const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
   variantsTitle.innerHTML = `Results for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
@@ -697,7 +715,7 @@ async function fetchDirectSearch(query) {
     const response = await fetch(`/api/direct-search?${params}`, {
       headers: {},
     });
-    const data = await response.json();
+    const data = await safeJson(response);
 
     if (response.status === 401) { showLogin(); return; }
     if (!response.ok) {
@@ -705,7 +723,8 @@ async function fetchDirectSearch(query) {
       throw new Error(msg);
     }
 
-    const { results, mock, searchType, approximateValue } = data;
+    const { mock, searchType, approximateValue } = data;
+    const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
     recordPriceHistory(query, results);
 
@@ -844,7 +863,7 @@ async function performSearch(query) {
     const response = await fetch(`/api/search?${params}`, {
       headers: {},
     });
-    const data = await response.json();
+    const data = await safeJson(response);
 
     if (response.status === 401) { showLogin(); return; }
     if (response.status === 503 && currentMode === 'sold') {
@@ -860,7 +879,8 @@ async function performSearch(query) {
       throw new Error(msg);
     }
 
-    const { results, mock, serial, similarResults } = data;
+    const { mock, serial, similarResults } = data;
+    const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
     recordPriceHistory(query, results);
 
