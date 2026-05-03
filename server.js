@@ -22,7 +22,9 @@ const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 
 // ---- EbayApiData Setup ----
 const EBAY_API_DATA_KEY = process.env.EBAY_API_DATA_KEY;
-const EBAY_API_DATA_BASE = 'https://ebayapidata.onrender.com';
+// Base URL is overridable via EBAY_API_DATA_BASE env var so the scraper can move
+// without code changes. Defaults to the production scraper at api.thecardhuddle.com.
+const EBAY_API_DATA_BASE = (process.env.EBAY_API_DATA_BASE || 'https://api.thecardhuddle.com').replace(/\/+$/, '');
 const EBAY_API_DATA_ENABLED = !!(EBAY_API_DATA_KEY && EBAY_API_DATA_KEY.length > 0);
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
@@ -1053,11 +1055,12 @@ app.get('/api/variants', async (req, res) => {
 app.get('/api/debug/ebayapidata', async (req, res) => {
   const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
   if (!EBAY_API_DATA_ENABLED) return res.json({ error: 'EBAY_API_DATA_KEY not configured' });
+  const fullUrl = `${EBAY_API_DATA_BASE}/scrape/search`;
   try {
     const result = await fetchViaEbayApiData(q, 5, 'debug');
-    res.json({ query: q, itemCount: result.results.length, firstItem: result.results[0] || null, error: result.error || null });
+    res.json({ baseUrl: EBAY_API_DATA_BASE, fullUrl, query: q, itemCount: result.results.length, firstItem: result.results[0] || null, error: result.error || null });
   } catch (err) {
-    res.json({ error: err.message });
+    res.json({ baseUrl: EBAY_API_DATA_BASE, fullUrl, error: err.message });
   }
 });
 
