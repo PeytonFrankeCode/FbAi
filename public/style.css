@@ -903,6 +903,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  /* Disable browser scroll anchoring. With async card thumbnails loading
+     above the user's viewport, the browser was "snapping" scroll back to
+     keep visible content stable — felt like scroll getting stuck after a
+     small increment. Letting the user's scroll win is the right call. */
+  overflow-anchor: none;
 }
 
 /* ---- Global Element Defaults ---- */
@@ -1021,6 +1026,10 @@ header {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding: 0.6rem 1.5rem 0.65rem;
+  /* Keep horizontal nav scroll from intercepting page-level vertical scroll
+     on touch devices (was contributing to "stuck scroll" feeling). */
+  overscroll-behavior: contain;
+  touch-action: pan-x;
 }
 
 .nav-bar::-webkit-scrollbar { display: none; }
