@@ -1846,6 +1846,17 @@ main {
   border-color: var(--accent-border);
 }
 
+/* On touch-only devices (iPad, phones), :hover sticks after a tap and was
+   making cards lift mid-scroll — felt like getting "stuck between two cards".
+   Cancel the hover state when there's no real hover capability. */
+@media (hover: none) {
+  .card:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-color: var(--border-primary);
+  }
+}
+
 .card-accent {
   height: 4px;
   width: 100%;
@@ -2359,6 +2370,18 @@ main {
   transform: translateY(-3px);
   border-color: var(--accent-border);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+@media (hover: none) {
+  .variant-card:hover {
+    transform: none;
+    border-color: var(--border-primary);
+    box-shadow: none;
+  }
+  .card:hover .card-image-wrap img,
+  .variant-card:hover .variant-card-image img {
+    transform: none;
+  }
 }
 
 .variant-card-image {
