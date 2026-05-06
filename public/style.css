@@ -695,6 +695,9 @@
 
 /* Pro+ view */
 .proplus-view { padding: 2rem 1.5rem; max-width: 960px; margin: 0 auto; }
+/* All top-level view containers share the same horizontal frame so that
+   navigating between Search / Collection / Checklists / Pro+ / Tracked
+   doesn't shift content left/right on wide screens. */
 .proplus-container { }
 .proplus-gate {
   text-align: center;
@@ -1039,7 +1042,7 @@ header {
   align-items: center;
   gap: 0.25rem;
   white-space: nowrap;
-  max-width: 860px;
+  max-width: 960px;
   margin: 0 auto;
 }
 
@@ -1104,7 +1107,7 @@ header::before {
 }
 
 .header-inner {
-  max-width: 860px;
+  max-width: 960px;
   margin: 0 auto;
   position: relative;
   display: grid;
@@ -1194,7 +1197,7 @@ header h1 {
 /* ---- Main ---- */
 main {
   flex: 1;
-  max-width: 860px;
+  max-width: 960px;
   margin: 0 auto;
   width: 100%;
   padding: 2rem 1.5rem;
@@ -3303,7 +3306,7 @@ footer::before {
 
 /* ---- Checklist View ---- */
 .checklist-view {
-  max-width: 1300px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
   min-height: 60vh;
@@ -4535,7 +4538,7 @@ tr:hover .cl-alert-btn {
 
 /* ---- Tracked Cards View ---- */
 .tracked-view {
-  max-width: 700px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 2rem 1.25rem;
 }
@@ -4678,7 +4681,7 @@ tr:hover .cl-alert-btn {
 }
 
 /* ---- Collection View ---- */
-.collection-view { padding: 2rem 1rem; max-width: 900px; margin: 0 auto; }
+.collection-view { padding: 2rem 1rem; max-width: 960px; margin: 0 auto; }
 .collection-container { }
 .collection-header { margin-bottom: 1.5rem; }
 .collection-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
