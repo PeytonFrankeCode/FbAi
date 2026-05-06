@@ -13,9 +13,27 @@
 let _checklistsCache = null;
 async function getChecklists() {
   if (_checklistsCache) return _checklistsCache;
-  const res = await fetch('/data/checklists.json');
-  if (!res.ok) throw new Error(`Failed to load checklists (HTTP ${res.status})`);
-  _checklistsCache = await res.json();
+  let res;
+  try {
+    res = await fetch('/data/checklists.json');
+  } catch (err) {
+    throw new Error(`Network error loading checklists: ${err.message}`);
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to load checklists (HTTP ${res.status} ${res.statusText || ''}). Check that public/data/checklists.json is deployed.`);
+  }
+  let text;
+  try {
+    text = await res.text();
+  } catch (err) {
+    throw new Error(`Reading checklist body failed: ${err.message}`);
+  }
+  if (!text) throw new Error('Checklists response was empty');
+  try {
+    _checklistsCache = JSON.parse(text);
+  } catch (err) {
+    throw new Error(`Checklists response was not valid JSON (got ${text.length} chars, starts with: ${text.slice(0, 80)})`);
+  }
   return _checklistsCache;
 }
 
