@@ -574,7 +574,7 @@ function extractParallel(title) {
 }
 
 // ---- Query parsing helpers for direct search ----
-const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl', 'basketball', 'nba', 'baseball', 'mlb', 'hockey', 'nhl', 'soccer', 'mls', 'pokemon', 'tcg'];
+const NOISE_WORDS = ['panini', 'psa', 'bgs', 'sgc', 'rc', 'rookie', 'card', 'football', 'nfl'];
 
 function extractPlayerName(query) {
   let name = query;
@@ -1212,6 +1212,13 @@ app.get('/api/ebay-listing-image', async (req, res) => {
     res.json({ imageUrl: null });
   }
 });
+
+// ---- Checklist Data ----
+// The 12MB checklists.json now lives in public/data/ so Cloudflare's ASSETS
+// binding serves it. The frontend fetches it directly (cacheable, edge-served)
+// and filters client-side. The server-side /api/checklists* endpoints were
+// removed because they required reading the JSON at module init via fs, which
+// (a) doesn't work on Workers and (b) would blow the 1MB bundle limit.
 
 // ---- Card Alerts System (Pro Feature) ----
 const ALERTS_FILE = path.join(APP_ROOT, 'data', 'alerts.json');
