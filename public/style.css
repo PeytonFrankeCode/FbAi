@@ -54,33 +54,36 @@
 }
 
 [data-theme="light"] {
-  --bg-primary: #f0ece6;
-  --bg-secondary: #faf8f5;
-  --bg-tertiary: #e8e3db;
-  --bg-card: #faf8f5;
-  --bg-card-end: #f3efe9;
-  --bg-footer: #e2ddd6;
-  --bg-input: #faf8f5;
-  --bg-hover: rgba(5, 150, 105, 0.07);
+  /* Modernized light mode — neutral cool grays (slate scale) instead of the
+     warm beige/parchment palette, which read as dated. Accent green stays
+     for brand continuity. Backgrounds are flat (no decorative gradients). */
+  --bg-primary: #f8fafc;       /* slate-50 — page bg */
+  --bg-secondary: #ffffff;     /* card surfaces */
+  --bg-tertiary: #f1f5f9;      /* slate-100 — subtle differentiation */
+  --bg-card: #ffffff;
+  --bg-card-end: #ffffff;
+  --bg-footer: #f1f5f9;
+  --bg-input: #ffffff;
+  --bg-hover: rgba(5, 150, 105, 0.06);
 
-  --border-primary: #c8bfb0;
-  --border-accent: #34d399;
+  --border-primary: #e2e8f0;   /* slate-200 — clean, subtle */
+  --border-accent: #10b981;
 
-  --text-primary: #1c1917;
-  --text-secondary: #44403c;
-  --text-muted: #78716c;
-  --text-faint: #a8a29e;
+  --text-primary: #0f172a;     /* slate-900 — near-black, not pure */
+  --text-secondary: #475569;   /* slate-600 */
+  --text-muted: #64748b;       /* slate-500 */
+  --text-faint: #94a3b8;       /* slate-400 */
 
   --accent: #059669;
   --accent-hover: #047857;
   --accent-light: #10b981;
-  --accent-lighter: #047857;
-  --accent-bg: rgba(5, 150, 105, 0.1);
-  --accent-border: rgba(5, 150, 105, 0.3);
+  --accent-lighter: #34d399;
+  --accent-bg: rgba(5, 150, 105, 0.08);
+  --accent-border: rgba(5, 150, 105, 0.22);
 
   --gold: #b45309;
   --gold-bg: rgba(180, 83, 9, 0.08);
-  --gold-border: rgba(180, 83, 9, 0.3);
+  --gold-border: rgba(180, 83, 9, 0.25);
 
   --error: #dc2626;
   --error-bg: #fef2f2;
@@ -89,14 +92,16 @@
   --sold-bg: #dc2626;
   --sold-ribbon: #991b1b;
 
-  --shadow-card: rgba(0, 0, 0, 0.08);
-  --shadow-modal: rgba(0, 0, 0, 0.18);
-  --overlay-bg: rgba(15, 10, 5, 0.45);
+  --shadow-card: rgba(15, 23, 42, 0.06);
+  --shadow-modal: rgba(15, 23, 42, 0.12);
+  --overlay-bg: rgba(15, 23, 42, 0.4);
 
-  --header-bg: linear-gradient(135deg, #e8f5f0 0%, #f0faf6 50%, #e8f5f0 100%);
-  --header-glow: rgba(5, 150, 105, 0.06);
-  --card-gradient: linear-gradient(160deg, var(--bg-card) 0%, var(--bg-card-end) 100%);
-  --surface-gradient: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
+  /* Solid header — was a mint gradient that read as 2010s.
+     Solid neutral surface lines up with the rest of the page. */
+  --header-bg: #ffffff;
+  --header-glow: transparent;
+  --card-gradient: #ffffff;
+  --surface-gradient: var(--bg-secondary);
 }
 
 /* ---- Login Overlay ---- */
@@ -911,6 +916,36 @@ body {
      keep visible content stable — felt like scroll getting stuck after a
      small increment. Letting the user's scroll win is the right call. */
   overflow-anchor: none;
+}
+
+/* Light-mode body overrides — the radial green tints above were designed for
+   the dark theme and read as dingy on white. Strip them, add a single hairline
+   bottom border to the header for definition. */
+[data-theme="light"] body {
+  background-image: none;
+}
+[data-theme="light"] header {
+  border-bottom: 1px solid var(--border-primary);
+}
+[data-theme="light"] .nav-bar {
+  background: var(--bg-secondary);
+}
+[data-theme="light"] header::before {
+  display: none;
+}
+/* Dark-mode-tuned shadows are too heavy on light backgrounds — they make
+   cards look like cutouts instead of subtly elevated surfaces. */
+[data-theme="light"] .card {
+  box-shadow: 0 1px 3px var(--shadow-card);
+}
+[data-theme="light"] .card:hover {
+  box-shadow: 0 4px 12px var(--shadow-card);
+}
+[data-theme="light"] .auth-dropdown,
+[data-theme="light"] .login-box,
+[data-theme="light"] .pricing-box,
+[data-theme="light"] .modal-box {
+  box-shadow: 0 8px 24px var(--shadow-modal);
 }
 
 /* ---- Global Element Defaults ---- */
