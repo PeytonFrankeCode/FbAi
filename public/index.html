@@ -131,34 +131,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=35" />
+  <link rel="stylesheet" href="style.css?v=36" />
 
 
 </head>
 <body>
-<!-- Construction Banner -->
-<div style="background:rgba(245,158,11,0.12);color:#f59e0b;border-bottom:1px solid rgba(245,158,11,0.25);text-align:center;padding:8px 16px;font-size:13px;font-weight:500;letter-spacing:0.01em;position:relative;z-index:9999;">
-  Heads up — this app is under active development. You may run into incomplete features. Thanks for your patience!
-</div>
-<!-- Layout Picker Popup (shown on first visit) -->
-<div id="layout-picker" class="layout-picker" role="dialog" aria-label="Choose your layout">
-  <div class="layout-picker-box">
-    <h2 class="layout-picker-title">Welcome to The Card Huddle</h2>
-    <p class="layout-picker-subtitle">Choose your device for the best experience</p>
-    <div class="layout-picker-options">
-      <button class="layout-pick-btn" onclick="setLayoutMode('desktop')">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        <span class="layout-pick-label">Computer</span>
-        <span class="layout-pick-desc">Full-size layout</span>
-      </button>
-      <button class="layout-pick-btn" onclick="setLayoutMode('mobile')">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-        <span class="layout-pick-label">Mobile</span>
-        <span class="layout-pick-desc">Optimized for phones</span>
-      </button>
-    </div>
-  </div>
-</div>
+<!-- Layout: auto-detected via window width on first visit; user can switch
+     manually from Settings → Layout. (Was a first-visit modal popup.) -->
 
 <header>
     <div class="header-inner">
@@ -1105,6 +1084,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=31"></script>
+  <script src="app.js?v=32"></script>
 </body>
 </html>

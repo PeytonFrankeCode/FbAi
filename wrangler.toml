@@ -25,6 +25,20 @@ SITE_URL = "https://thecardhuddle.com"
 EBAY_APP_ID = "PeytonFr-Pfranke-PRD-6bf52af21-03e44ad8"
 USE_MOCK_DATA = "false"
 
+# Cloudflare KV namespace for persistent storage (user accounts, subscriptions,
+# watchlists, etc.). Without this, data resets on every cold start.
+#
+# To enable:
+#   1. dash.cloudflare.com → Workers & Pages → KV → Create a namespace named
+#      "card_huddle_storage" (or anything — just match the id below).
+#   2. Copy the namespace ID and paste it here.
+#   3. Push to redeploy. The /api/health response will go from "mongo:false"
+#      to confirming KV is active in the worker logs ("Loaded N/7 keys from KV").
+#
+# [[kv_namespaces]]
+# binding = "KV"
+# id = "PASTE_YOUR_NAMESPACE_ID_HERE"
+
 # Secrets — set these via `wrangler secret put <KEY>` or the Cloudflare dashboard.
 # Cloudflare [vars] above are public; secrets are encrypted and only visible to the worker.
 #

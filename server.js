@@ -156,9 +156,15 @@ if (!process.env.CF_WORKER) {
 }
 
 // ---- Diagnostic: which integrations are configured ----
-// Reports presence (not values) of secrets so you can spot what's missing
-// in production. Safe to expose: returns booleans only.
+// Reports presence (not values) of secrets so you can spot what's missing.
+// Returns booleans only (no secret values), but we still gate it behind a
+// shared secret so the diagnostic surface isn't public on a marketing site.
+// Set HEALTH_KEY in Cloudflare and hit /api/health?key=<value>.
 app.get('/api/health', (req, res) => {
+  const expected = process.env.HEALTH_KEY;
+  if (expected && req.query.key !== expected) {
+    return res.status(404).json({ error: 'Not found' });
+  }
   res.json({
     runtime: process.env.CF_WORKER ? 'cloudflare-worker' : 'node',
     integrations: {
@@ -178,7 +184,11 @@ app.get('/api/health', (req, res) => {
         hasWebhookSecret: !!STRIPE_WEBHOOK_SECRET && !STRIPE_WEBHOOK_SECRET.includes('REPLACE'),
       },
       mongo: { configured: !!process.env.MONGODB_URI },
-      smtp: { configured: !!process.env.SMTP_HOST && !!process.env.SMTP_USER },
+      kv: { configured: globalThis.__KV_BOUND === true },
+      email: {
+        configured: !!process.env.RESEND_API_KEY || (!!process.env.SMTP_HOST && !!process.env.SMTP_USER),
+        provider: process.env.RESEND_API_KEY ? 'resend' : (process.env.SMTP_HOST ? 'smtp' : null),
+      },
     },
     forceMock: {
       forSale: USE_MOCK_FORSALE,
@@ -1238,10 +1248,17 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM = process.env.SMTP_FROM || 'alerts@thecardhuddle.com';
 
+// Two email backends:
+//   - RESEND_API_KEY set → Resend (HTTP API, works on Cloudflare Workers)
+//   - SMTP_* set         → nodemailer (Node-only fallback, doesn't bundle on Workers)
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM = process.env.RESEND_FROM || SMTP_FROM;
+
 let emailTransporter = null;
-if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-  // Dynamic require — see comment on mongodb in db.js for why.
-  // nodemailer pulls in Node streams; bundling it would crash the worker.
+const useResend = !!RESEND_API_KEY;
+
+if (!useResend && SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  // Dynamic require — nodemailer is Node-only; bundling it crashes the worker.
   try {
     const _nmMod = 'nodemailer';
     const nodemailer = require(_nmMod);
@@ -1254,9 +1271,43 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
   } catch (err) {
     console.error('[Email] nodemailer unavailable:', err.message);
   }
-  console.log(`Email configured: ${SMTP_HOST}:${SMTP_PORT}`);
+  console.log(`Email configured (SMTP): ${SMTP_HOST}:${SMTP_PORT}`);
+} else if (useResend) {
+  console.log('Email configured (Resend HTTP API)');
 } else {
-  console.log('Email not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS to enable)');
+  console.log('Email not configured (set RESEND_API_KEY for Workers, or SMTP_* for Node)');
+}
+
+// Send an email via whichever backend is configured. Returns true on success.
+async function sendEmail({ to, subject, html, from }) {
+  if (useResend) {
+    try {
+      const res = await axios.post('https://api.resend.com/emails', {
+        from: from || RESEND_FROM,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      }, {
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        timeout: 10000,
+      });
+      return !!res.data?.id;
+    } catch (err) {
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
+      console.error('[Email] Resend send failed:', detail);
+      return false;
+    }
+  }
+  if (emailTransporter) {
+    try {
+      await emailTransporter.sendMail({ from: from || SMTP_FROM, to, subject, html });
+      return true;
+    } catch (err) {
+      console.error('[Email] SMTP send failed:', err.message);
+      return false;
+    }
+  }
+  return false;
 }
 
 // Create alert
@@ -1376,7 +1427,7 @@ async function checkAlerts() {
 }
 
 async function sendAlertEmail(alert, newListings) {
-  if (!emailTransporter) {
+  if (!useResend && !emailTransporter) {
     console.log(`[Alerts] Email not configured, would notify ${alert.email} about ${newListings.length} new listing(s) for "${alert.query}"`);
     return;
   }
@@ -1413,16 +1464,11 @@ async function sendAlertEmail(alert, newListings) {
     </div>
   `;
 
-  try {
-    await emailTransporter.sendMail({
-      from: SMTP_FROM,
-      to: alert.email,
-      subject: `New listing: ${alert.label}`,
-      html,
-    });
-  } catch (err) {
-    console.error(`[Alerts] Failed to send email to ${alert.email}:`, err.message);
-  }
+  await sendEmail({
+    to: alert.email,
+    subject: `New listing: ${alert.label}`,
+    html,
+  });
 }
 
 // Start alert checker loop
@@ -1587,6 +1633,25 @@ function getSessionUser(req) {
   return s.username.toLowerCase();
 }
 
+// Middleware factory: gate a route on server-side subscription status.
+// requirePlan('pro') allows pro OR proplus. requirePlan('proplus') is exclusive.
+// Defends against localStorage spoofing — the user can edit their browser
+// cache to claim any plan, but this checks the server's record.
+function requirePlan(minPlan) {
+  return (req, res, next) => {
+    const user = getSessionUser(req);
+    if (!user) return res.status(401).json({ error: 'Sign in required' });
+    const subs = loadData('subscriptions', SUBS_FILE, {});
+    const sub = subs[user];
+    const active = sub && sub.status === 'active';
+    const plan = active ? sub.plan : null;
+    const ok = minPlan === 'proplus' ? plan === 'proplus' : (plan === 'pro' || plan === 'proplus');
+    if (!ok) return res.status(402).json({ error: 'Subscription required', detail: `This endpoint requires ${minPlan === 'proplus' ? 'Pro+' : 'Pro or Pro+'}.` });
+    req.user = user;
+    next();
+  };
+}
+
 // POST /api/auth/register
 app.post('/api/auth/register', async (req, res) => {
   const { username, password, email } = req.body;
@@ -1721,7 +1786,7 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
 
 // ---- Flip Finder (Pro+) ----
 // Finds live eBay listings priced significantly below their recent sold median.
-app.get('/api/flip-finder', async (req, res) => {
+app.get('/api/flip-finder', requirePlan('proplus'), async (req, res) => {
   const query = req.query.q;
   const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
   const minProfit = parseFloat(req.query.minProfit) || 10;
@@ -1772,7 +1837,7 @@ app.get('/api/flip-finder', async (req, res) => {
 
 // ---- Market Movers (Pro+) ----
 // Identifies cards with prices trending up significantly in recent sales.
-app.get('/api/market-movers', async (req, res) => {
+app.get('/api/market-movers', requirePlan('proplus'), async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 10, 20);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
