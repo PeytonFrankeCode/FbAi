@@ -6,54 +6,40 @@
   }
 })();
 
-// Checklist data lives at /data/checklists.json (a static asset served by
-// Cloudflare's ASSETS binding). Fetched once, cached for the lifetime of the
-// page, then filtered client-side. Replaces the old /api/checklists* server
-// endpoints which can't run on Workers (12MB JSON, no fs).
-let _checklistsCache = null;
-async function getChecklists() {
-  if (_checklistsCache) return _checklistsCache;
+// Checklist data is split: a tiny index lists all products, and each product
+// lives in its own file fetched on demand. First-checklist-load is ~8KB
+// instead of 12MB. Files are static assets served by Cloudflare's ASSETS
+// binding and cached at the edge.
+let _checklistsIndexCache = null;
+const _checklistProductCache = {};
+
+async function _fetchJson(url, label) {
   let res;
-  try {
-    res = await fetch('/data/checklists.json');
-  } catch (err) {
-    throw new Error(`Network error loading checklists: ${err.message}`);
-  }
+  try { res = await fetch(url); }
+  catch (err) { throw new Error(`Network error loading ${label}: ${err.message}`); }
   if (!res.ok) {
-    throw new Error(`Failed to load checklists (HTTP ${res.status} ${res.statusText || ''}). Check that public/data/checklists.json is deployed.`);
+    throw new Error(`Failed to load ${label} (HTTP ${res.status} ${res.statusText || ''})`);
   }
-  let text;
-  try {
-    text = await res.text();
-  } catch (err) {
-    throw new Error(`Reading checklist body failed: ${err.message}`);
+  const text = await res.text();
+  if (!text) throw new Error(`${label} response was empty`);
+  try { return JSON.parse(text); }
+  catch (err) {
+    throw new Error(`${label} was not valid JSON (got ${text.length} chars, starts with: ${text.slice(0, 80)})`);
   }
-  if (!text) throw new Error('Checklists response was empty');
-  try {
-    _checklistsCache = JSON.parse(text);
-  } catch (err) {
-    throw new Error(`Checklists response was not valid JSON (got ${text.length} chars, starts with: ${text.slice(0, 80)})`);
-  }
-  return _checklistsCache;
 }
 
 // Mimics the old GET /api/checklists shape: { products: [...] }
 async function fetchChecklistsList() {
-  const data = await getChecklists();
-  return {
-    products: (data.products || []).map(p => ({
-      id: p.id, name: p.name, year: p.year, brand: p.brand, sport: p.sport,
-      setCount: p.sets.length,
-      totalCards: p.sets.reduce((sum, s) => sum + (s.totalCards || 0), 0),
-    })),
-  };
+  if (_checklistsIndexCache) return _checklistsIndexCache;
+  _checklistsIndexCache = await _fetchJson('/data/checklists/index.json', 'checklist index');
+  return _checklistsIndexCache;
 }
 
-// Mimics GET /api/checklists/:productId
+// Mimics GET /api/checklists/:productId — fetches the per-product file.
 async function fetchChecklistProduct(productId) {
-  const data = await getChecklists();
-  const product = (data.products || []).find(p => p.id === productId);
-  if (!product) throw new Error('Product not found');
+  if (_checklistProductCache[productId]) return _checklistProductCache[productId];
+  const product = await _fetchJson(`/data/checklists/${encodeURIComponent(productId)}.json`, `checklist product "${productId}"`);
+  _checklistProductCache[productId] = product;
   return product;
 }
 
