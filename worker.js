@@ -16,7 +16,11 @@ async function init(env) {
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
-  await connectDB();
+  // Pass the Cloudflare env in so connectDB can grab the KV binding for
+  // persistent storage. KV is request-scoped, so this only works on the
+  // first request — preload happens once, subsequent saves use the cached
+  // binding stored inside db.js.
+  await connectDB(env);
   serverInit = { app };
   return serverInit;
 }
