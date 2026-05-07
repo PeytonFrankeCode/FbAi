@@ -178,6 +178,7 @@ app.get('/api/health', (req, res) => {
         hasWebhookSecret: !!STRIPE_WEBHOOK_SECRET && !STRIPE_WEBHOOK_SECRET.includes('REPLACE'),
       },
       mongo: { configured: !!process.env.MONGODB_URI },
+      kv: { configured: globalThis.__KV_BOUND === true },
       smtp: { configured: !!process.env.SMTP_HOST && !!process.env.SMTP_USER },
     },
     forceMock: {
