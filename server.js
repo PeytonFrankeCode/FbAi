@@ -185,7 +185,10 @@ app.get('/api/health', (req, res) => {
       },
       mongo: { configured: !!process.env.MONGODB_URI },
       kv: { configured: globalThis.__KV_BOUND === true },
-      smtp: { configured: !!process.env.SMTP_HOST && !!process.env.SMTP_USER },
+      email: {
+        configured: !!process.env.RESEND_API_KEY || (!!process.env.SMTP_HOST && !!process.env.SMTP_USER),
+        provider: process.env.RESEND_API_KEY ? 'resend' : (process.env.SMTP_HOST ? 'smtp' : null),
+      },
     },
     forceMock: {
       forSale: USE_MOCK_FORSALE,
@@ -1245,10 +1248,17 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM = process.env.SMTP_FROM || 'alerts@thecardhuddle.com';
 
+// Two email backends:
+//   - RESEND_API_KEY set → Resend (HTTP API, works on Cloudflare Workers)
+//   - SMTP_* set         → nodemailer (Node-only fallback, doesn't bundle on Workers)
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const RESEND_FROM = process.env.RESEND_FROM || SMTP_FROM;
+
 let emailTransporter = null;
-if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-  // Dynamic require — see comment on mongodb in db.js for why.
-  // nodemailer pulls in Node streams; bundling it would crash the worker.
+const useResend = !!RESEND_API_KEY;
+
+if (!useResend && SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  // Dynamic require — nodemailer is Node-only; bundling it crashes the worker.
   try {
     const _nmMod = 'nodemailer';
     const nodemailer = require(_nmMod);
@@ -1261,9 +1271,43 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
   } catch (err) {
     console.error('[Email] nodemailer unavailable:', err.message);
   }
-  console.log(`Email configured: ${SMTP_HOST}:${SMTP_PORT}`);
+  console.log(`Email configured (SMTP): ${SMTP_HOST}:${SMTP_PORT}`);
+} else if (useResend) {
+  console.log('Email configured (Resend HTTP API)');
 } else {
-  console.log('Email not configured (set SMTP_HOST, SMTP_USER, SMTP_PASS to enable)');
+  console.log('Email not configured (set RESEND_API_KEY for Workers, or SMTP_* for Node)');
+}
+
+// Send an email via whichever backend is configured. Returns true on success.
+async function sendEmail({ to, subject, html, from }) {
+  if (useResend) {
+    try {
+      const res = await axios.post('https://api.resend.com/emails', {
+        from: from || RESEND_FROM,
+        to: Array.isArray(to) ? to : [to],
+        subject,
+        html,
+      }, {
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        timeout: 10000,
+      });
+      return !!res.data?.id;
+    } catch (err) {
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
+      console.error('[Email] Resend send failed:', detail);
+      return false;
+    }
+  }
+  if (emailTransporter) {
+    try {
+      await emailTransporter.sendMail({ from: from || SMTP_FROM, to, subject, html });
+      return true;
+    } catch (err) {
+      console.error('[Email] SMTP send failed:', err.message);
+      return false;
+    }
+  }
+  return false;
 }
 
 // Create alert
@@ -1383,7 +1427,7 @@ async function checkAlerts() {
 }
 
 async function sendAlertEmail(alert, newListings) {
-  if (!emailTransporter) {
+  if (!useResend && !emailTransporter) {
     console.log(`[Alerts] Email not configured, would notify ${alert.email} about ${newListings.length} new listing(s) for "${alert.query}"`);
     return;
   }
@@ -1420,16 +1464,11 @@ async function sendAlertEmail(alert, newListings) {
     </div>
   `;
 
-  try {
-    await emailTransporter.sendMail({
-      from: SMTP_FROM,
-      to: alert.email,
-      subject: `New listing: ${alert.label}`,
-      html,
-    });
-  } catch (err) {
-    console.error(`[Alerts] Failed to send email to ${alert.email}:`, err.message);
-  }
+  await sendEmail({
+    to: alert.email,
+    subject: `New listing: ${alert.label}`,
+    html,
+  });
 }
 
 // Start alert checker loop
