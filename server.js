@@ -156,9 +156,15 @@ if (!process.env.CF_WORKER) {
 }
 
 // ---- Diagnostic: which integrations are configured ----
-// Reports presence (not values) of secrets so you can spot what's missing
-// in production. Safe to expose: returns booleans only.
+// Reports presence (not values) of secrets so you can spot what's missing.
+// Returns booleans only (no secret values), but we still gate it behind a
+// shared secret so the diagnostic surface isn't public on a marketing site.
+// Set HEALTH_KEY in Cloudflare and hit /api/health?key=<value>.
 app.get('/api/health', (req, res) => {
+  const expected = process.env.HEALTH_KEY;
+  if (expected && req.query.key !== expected) {
+    return res.status(404).json({ error: 'Not found' });
+  }
   res.json({
     runtime: process.env.CF_WORKER ? 'cloudflare-worker' : 'node',
     integrations: {
