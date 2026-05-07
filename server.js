@@ -1633,6 +1633,25 @@ function getSessionUser(req) {
   return s.username.toLowerCase();
 }
 
+// Middleware factory: gate a route on server-side subscription status.
+// requirePlan('pro') allows pro OR proplus. requirePlan('proplus') is exclusive.
+// Defends against localStorage spoofing — the user can edit their browser
+// cache to claim any plan, but this checks the server's record.
+function requirePlan(minPlan) {
+  return (req, res, next) => {
+    const user = getSessionUser(req);
+    if (!user) return res.status(401).json({ error: 'Sign in required' });
+    const subs = loadData('subscriptions', SUBS_FILE, {});
+    const sub = subs[user];
+    const active = sub && sub.status === 'active';
+    const plan = active ? sub.plan : null;
+    const ok = minPlan === 'proplus' ? plan === 'proplus' : (plan === 'pro' || plan === 'proplus');
+    if (!ok) return res.status(402).json({ error: 'Subscription required', detail: `This endpoint requires ${minPlan === 'proplus' ? 'Pro+' : 'Pro or Pro+'}.` });
+    req.user = user;
+    next();
+  };
+}
+
 // POST /api/auth/register
 app.post('/api/auth/register', async (req, res) => {
   const { username, password, email } = req.body;
@@ -1767,7 +1786,7 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
 
 // ---- Flip Finder (Pro+) ----
 // Finds live eBay listings priced significantly below their recent sold median.
-app.get('/api/flip-finder', async (req, res) => {
+app.get('/api/flip-finder', requirePlan('proplus'), async (req, res) => {
   const query = req.query.q;
   const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
   const minProfit = parseFloat(req.query.minProfit) || 10;
@@ -1818,7 +1837,7 @@ app.get('/api/flip-finder', async (req, res) => {
 
 // ---- Market Movers (Pro+) ----
 // Identifies cards with prices trending up significantly in recent sales.
-app.get('/api/market-movers', async (req, res) => {
+app.get('/api/market-movers', requirePlan('proplus'), async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 10, 20);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });

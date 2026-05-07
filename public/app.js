@@ -28,6 +28,15 @@ async function _fetchJson(url, label) {
   }
 }
 
+// Wrapper around fetch that automatically attaches the session token if present.
+// Use for any endpoint that requires a logged-in user (e.g. Pro+ tools).
+async function authFetch(url, options = {}) {
+  const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
+  const headers = { ...(options.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers });
+}
+
 // Mimics the old GET /api/checklists shape: { products: [...] }
 async function fetchChecklistsList() {
   if (_checklistsIndexCache) return _checklistsIndexCache;
@@ -1979,7 +1988,7 @@ async function runFlipFinder() {
   if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to search.</p>'; return; }
   out.innerHTML = '<div class="pp-loading">&#128269; Scanning eBay for underpriced listings&hellip;</div>';
   try {
-    const res = await fetch(`/api/flip-finder?${new URLSearchParams({ q, minDiscount, minProfit, limit: 20 })}`);
+    const res = await authFetch(`/api/flip-finder?${new URLSearchParams({ q, minDiscount, minProfit, limit: 20 })}`);
     const data = await res.json();
     if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
     if (!data.results?.length) {
@@ -2014,7 +2023,7 @@ async function runMarketMovers() {
   if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to analyse.</p>'; return; }
   out.innerHTML = '<div class="pp-loading">&#128200; Analysing price trend&hellip;</div>';
   try {
-    const res = await fetch(`/api/market-movers?q=${encodeURIComponent(q)}`);
+    const res = await authFetch(`/api/market-movers?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error || data.message}</p>`; return; }
     if (data.message) { out.innerHTML = `<p class="pp-empty">${data.message}</p>`; return; }
