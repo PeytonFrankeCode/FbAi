@@ -3577,7 +3577,11 @@ function renderCompletionSets() {
 
 function toggleCompletionSet(idx) {
   const el = document.getElementById(`completion-cards-${idx}`);
-  if (el) el.classList.toggle('hidden');
+  if (!el) return;
+  const isHidden = el.classList.toggle('hidden');
+  // Mirror open/closed state on the parent set so the chevron CSS can rotate.
+  const setEl = el.closest('.completion-set');
+  if (setEl) setEl.classList.toggle('expanded', !isHidden);
 }
 
 function toggleCompletionCard(productKey, cardKey, checkbox) {
@@ -3845,7 +3849,10 @@ function loadPlayerCompletion() {
 
 function togglePlayerCompletionSet(idx) {
   const el = document.getElementById(`player-completion-cards-${idx}`);
-  if (el) el.classList.toggle('hidden');
+  if (!el) return;
+  const isHidden = el.classList.toggle('hidden');
+  const setEl = el.closest('.completion-set');
+  if (setEl) setEl.classList.toggle('expanded', !isHidden);
 }
 
 function togglePlayerCompletionCard(productKey, cardKey, checkbox) {
