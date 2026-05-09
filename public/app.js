@@ -133,37 +133,13 @@ document.addEventListener('click', function(e) {
   if (e.target === overlay) closeSettings();
 });
 
-// ---- Tracked Cards / Card Alerts (Pro Feature) ----
+// ---- Tracked Cards / Card Alerts ----
 
 function initTrackedView() {
-  const user = getCurrentUser();
-  const sub = user ? getUserSubscription() : null;
   const gate = document.getElementById('tracked-gate');
   const content = document.getElementById('tracked-content');
-  const upgradeBtn = document.getElementById('tracked-upgrade-btn');
-
-  if (!user) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Log in Required';
-    gate.querySelector('p').textContent = 'Log in or sign up to track cards and receive email alerts.';
-    upgradeBtn.textContent = 'Log In';
-    upgradeBtn.onclick = () => showLogin();
-    return;
-  }
-
-  if (!sub) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Pro Feature';
-    gate.querySelector('p').textContent = 'Card tracking with email alerts is an exclusive Pro feature. Upgrade to never miss a listing.';
-    upgradeBtn.textContent = 'Upgrade to Pro';
-    upgradeBtn.onclick = () => showPricing();
-    return;
-  }
-
-  gate.classList.add('hidden');
-  content.classList.remove('hidden');
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
   loadTrackedCards();
 }
 
@@ -904,7 +880,7 @@ async function performSearch(query) {
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
 
   try {
-    const params = new URLSearchParams({ q: query, limit: '20', mode: currentMode });
+    const params = new URLSearchParams({ q: query, limit: '50', mode: currentMode });
     const response = await fetch(`/api/search?${params}`, {
       headers: {},
     });
@@ -928,6 +904,15 @@ async function performSearch(query) {
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
     recordPriceHistory(query, results);
+
+    // Reset pagination state for the new search
+    _searchPaging = {
+      query,
+      mode: currentMode,
+      offset: data.offset || 0,
+      hasMore: !!data.hasMore,
+      fetching: false,
+    };
 
     // Check for rate limiting
     if (data.rateLimited || data.soldUnavailable) {
@@ -1230,6 +1215,8 @@ function groupByGrade(results) {
 let _gradeGroups = [];
 let _gradeShown = {};
 let _gradeContainers = {};
+// Pagination state for "Show more from eBay" — populated by performSearch.
+let _searchPaging = { query: '', mode: '', offset: 0, hasMore: false, fetching: false };
 
 function renderGradeGroups(grid, results) {
   _gradeGroups = groupByGrade(results);
@@ -1267,19 +1254,63 @@ function renderGradeGroups(grid, results) {
 
 function updateLoadMoreButton(grid) {
   let wrap = grid.querySelector('.load-more-wrap');
-  const hasMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
+  const hasCachedMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
+  const hasServerMore = _searchPaging.hasMore;
 
-  if (!hasMore) { if (wrap) wrap.remove(); return; }
+  if (!hasCachedMore && !hasServerMore) { if (wrap) wrap.remove(); return; }
 
   if (!wrap) {
     wrap = document.createElement('div');
     wrap.className = 'load-more-wrap';
-    const btn = document.createElement('button');
-    btn.className = 'load-more-btn';
-    btn.textContent = 'Load 20 More';
-    btn.addEventListener('click', () => loadMoreCards(grid));
-    wrap.appendChild(btn);
     grid.appendChild(wrap);
+  }
+  wrap.innerHTML = '';
+
+  const btn = document.createElement('button');
+  btn.className = 'load-more-btn';
+  if (hasCachedMore) {
+    btn.textContent = 'Show 20 More';
+    btn.addEventListener('click', () => loadMoreCards(grid));
+  } else {
+    btn.textContent = _searchPaging.fetching ? 'Loading…' : 'Load more from eBay';
+    btn.disabled = !!_searchPaging.fetching;
+    btn.addEventListener('click', () => fetchMoreFromServer(grid));
+  }
+  wrap.appendChild(btn);
+}
+
+async function fetchMoreFromServer(grid) {
+  if (_searchPaging.fetching || !_searchPaging.hasMore) return;
+  _searchPaging.fetching = true;
+  updateLoadMoreButton(grid);
+  try {
+    const nextOffset = _searchPaging.offset + 50;
+    const params = new URLSearchParams({ q: _searchPaging.query, limit: '50', offset: String(nextOffset), mode: _searchPaging.mode });
+    const response = await fetch(`/api/search?${params}`);
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
+    const more = Array.isArray(data.results) ? data.results : [];
+    if (more.length === 0) {
+      _searchPaging.hasMore = false;
+    } else {
+      _searchPaging.offset = nextOffset;
+      _searchPaging.hasMore = !!data.hasMore;
+      // Merge new results into existing grade groups so Show 20 More keeps working
+      const newGroups = groupByGrade(more);
+      for (const ng of newGroups) {
+        const existing = _gradeGroups.find(g => g.grade === ng.grade);
+        if (existing) existing.items.push(...ng.items);
+        else _gradeGroups.push(ng);
+      }
+      // Render the next 20 immediately
+      loadMoreCards(grid);
+    }
+  } catch (err) {
+    const wrap = grid.querySelector('.load-more-wrap');
+    if (wrap) wrap.innerHTML = `<span class="no-results">Could not load more — ${escHtml(err.message)}</span>`;
+  } finally {
+    _searchPaging.fetching = false;
+    updateLoadMoreButton(grid);
   }
 }
 
@@ -1749,12 +1780,11 @@ const proBtn = document.getElementById('pro-btn');
 const proBtnText = document.getElementById('pro-btn-text');
 let pricingPeriod = 'monthly';
 
-function showPricing() {
-  pricingOverlay.classList.remove('hidden');
-}
-
+// Memberships removed — pricing modal stays in DOM in case Stripe-related
+// code still references it, but never shows.
+function showPricing() { /* no-op: memberships removed */ }
 function closePricing() {
-  pricingOverlay.classList.add('hidden');
+  if (pricingOverlay) pricingOverlay.classList.add('hidden');
 }
 
 function setPricingPeriod(period) {
@@ -1815,21 +1845,15 @@ async function handleSubscribe(plan) {
   closePricing();
 }
 
+// Memberships removed — every feature is open. These helpers stay for any
+// code that still calls them, but they always say "you have access".
 function getUserSubscription() {
-  const user = getCurrentUser();
-  if (!user) return null;
-  const users = getUsers();
-  return users[user.toLowerCase()]?.subscription || null;
+  return { plan: 'free', status: 'active' };
 }
 
-function isProPlus() {
-  const sub = getUserSubscription();
-  return sub?.plan === 'proplus' && sub?.status === 'active';
-}
+function isProPlus() { return true; }
 
-function isProOrPlus() {
-  const sub = getUserSubscription();
-  return (sub?.plan === 'pro' || sub?.plan === 'proplus') && sub?.status === 'active';
+function isProOrPlus() { return true;
 }
 
 // Sync subscription status from server (called on login and page load)
@@ -1965,14 +1989,8 @@ function switchView(view) {
 function initProPlusView() {
   const gate = document.getElementById('proplus-gate');
   const content = document.getElementById('proplus-content');
-  if (!gate || !content) return;
-  if (isProPlus()) {
-    gate.classList.add('hidden');
-    content.classList.remove('hidden');
-  } else {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-  }
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
 }
 
 function switchProPlusTab(tab) {
@@ -2882,24 +2900,10 @@ function saveCollection(coll) {
 }
 
 function initCollectionView() {
-  const user = getCurrentUser();
-  const sub = user ? getUserSubscription() : null;
   const gate = document.getElementById('collection-gate');
   const content = document.getElementById('collection-content');
-  const upgradeBtn = document.getElementById('collection-upgrade-btn');
-
-  if (!user) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Log In Required';
-    gate.querySelector('p').textContent = 'Log in or sign up to access your collection and portfolio.';
-    upgradeBtn.textContent = 'Log In';
-    upgradeBtn.onclick = () => showLogin();
-    return;
-  }
-
-  gate.classList.add('hidden');
-  content.classList.remove('hidden');
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
   renderPortfolio();
   loadCompletionProducts();
 }
