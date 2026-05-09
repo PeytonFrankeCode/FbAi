@@ -1117,17 +1117,17 @@ header {
   flex-shrink: 0;
 }
 
-.pro-feature-badge {
-  display: inline-block;
-  background: var(--gold-bg);
-  color: var(--gold);
-  font-size: 0.55rem;
-  font-weight: 700;
-  padding: 0.12rem 0.38rem;
-  border-radius: 4px;
-  vertical-align: middle;
-  letter-spacing: 0.02em;
-  border: 1px solid var(--gold-border);
+/* Memberships removed — hide all paid-tier UI surfaces. */
+.pro-feature-badge,
+.proplus-nav-badge,
+.header-pro,
+.pricing-overlay,
+.collection-gate,
+.tracked-gate,
+.proplus-gate,
+.promote-gate,
+.chart-depth-upgrade {
+  display: none !important;
 }
 
 header::before {

@@ -133,37 +133,13 @@ document.addEventListener('click', function(e) {
   if (e.target === overlay) closeSettings();
 });
 
-// ---- Tracked Cards / Card Alerts (Pro Feature) ----
+// ---- Tracked Cards / Card Alerts ----
 
 function initTrackedView() {
-  const user = getCurrentUser();
-  const sub = user ? getUserSubscription() : null;
   const gate = document.getElementById('tracked-gate');
   const content = document.getElementById('tracked-content');
-  const upgradeBtn = document.getElementById('tracked-upgrade-btn');
-
-  if (!user) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Log in Required';
-    gate.querySelector('p').textContent = 'Log in or sign up to track cards and receive email alerts.';
-    upgradeBtn.textContent = 'Log In';
-    upgradeBtn.onclick = () => showLogin();
-    return;
-  }
-
-  if (!sub) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Pro Feature';
-    gate.querySelector('p').textContent = 'Card tracking with email alerts is an exclusive Pro feature. Upgrade to never miss a listing.';
-    upgradeBtn.textContent = 'Upgrade to Pro';
-    upgradeBtn.onclick = () => showPricing();
-    return;
-  }
-
-  gate.classList.add('hidden');
-  content.classList.remove('hidden');
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
   loadTrackedCards();
 }
 
@@ -1749,12 +1725,11 @@ const proBtn = document.getElementById('pro-btn');
 const proBtnText = document.getElementById('pro-btn-text');
 let pricingPeriod = 'monthly';
 
-function showPricing() {
-  pricingOverlay.classList.remove('hidden');
-}
-
+// Memberships removed — pricing modal stays in DOM in case Stripe-related
+// code still references it, but never shows.
+function showPricing() { /* no-op: memberships removed */ }
 function closePricing() {
-  pricingOverlay.classList.add('hidden');
+  if (pricingOverlay) pricingOverlay.classList.add('hidden');
 }
 
 function setPricingPeriod(period) {
@@ -1815,21 +1790,15 @@ async function handleSubscribe(plan) {
   closePricing();
 }
 
+// Memberships removed — every feature is open. These helpers stay for any
+// code that still calls them, but they always say "you have access".
 function getUserSubscription() {
-  const user = getCurrentUser();
-  if (!user) return null;
-  const users = getUsers();
-  return users[user.toLowerCase()]?.subscription || null;
+  return { plan: 'free', status: 'active' };
 }
 
-function isProPlus() {
-  const sub = getUserSubscription();
-  return sub?.plan === 'proplus' && sub?.status === 'active';
-}
+function isProPlus() { return true; }
 
-function isProOrPlus() {
-  const sub = getUserSubscription();
-  return (sub?.plan === 'pro' || sub?.plan === 'proplus') && sub?.status === 'active';
+function isProOrPlus() { return true;
 }
 
 // Sync subscription status from server (called on login and page load)
@@ -1965,14 +1934,8 @@ function switchView(view) {
 function initProPlusView() {
   const gate = document.getElementById('proplus-gate');
   const content = document.getElementById('proplus-content');
-  if (!gate || !content) return;
-  if (isProPlus()) {
-    gate.classList.add('hidden');
-    content.classList.remove('hidden');
-  } else {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-  }
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
 }
 
 function switchProPlusTab(tab) {
@@ -2882,24 +2845,10 @@ function saveCollection(coll) {
 }
 
 function initCollectionView() {
-  const user = getCurrentUser();
-  const sub = user ? getUserSubscription() : null;
   const gate = document.getElementById('collection-gate');
   const content = document.getElementById('collection-content');
-  const upgradeBtn = document.getElementById('collection-upgrade-btn');
-
-  if (!user) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-    gate.querySelector('h3').textContent = 'Log In Required';
-    gate.querySelector('p').textContent = 'Log in or sign up to access your collection and portfolio.';
-    upgradeBtn.textContent = 'Log In';
-    upgradeBtn.onclick = () => showLogin();
-    return;
-  }
-
-  gate.classList.add('hidden');
-  content.classList.remove('hidden');
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
   renderPortfolio();
   loadCompletionProducts();
 }

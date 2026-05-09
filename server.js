@@ -1604,19 +1604,47 @@ function saveServerUsers(u) { saveData('users', USERS_FILE, u); }
 function loadSessions() { return loadData('sessions', SESSIONS_FILE, {}); }
 function saveSessions(s) { saveData('sessions', SESSIONS_FILE, s); }
 
+// Password hashing via Web Crypto PBKDF2 — works on both Node 16+ and
+// Cloudflare Workers. The previous scrypt-based impl crashed every login on
+// Workers because nodejs_compat doesn't polyfill crypto.scrypt.
+const PBKDF2_ITERATIONS = 100000;
+
 async function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const key = await new Promise((res, rej) =>
-    crypto.scrypt(password, salt, 64, (err, k) => err ? rej(err) : res(k)));
-  return `${salt}:${key.toString('hex')}`;
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyBits = await deriveBits(password, salt);
+  return `pbkdf2:${PBKDF2_ITERATIONS}:${bufToHex(salt)}:${bufToHex(keyBits)}`;
 }
 
 async function verifyPassword(password, stored) {
-  const [salt, key] = stored.split(':');
-  if (!salt || !key) return false;
-  const derived = await new Promise((res, rej) =>
-    crypto.scrypt(password, salt, 64, (err, k) => err ? rej(err) : res(k)));
-  return crypto.timingSafeEqual(Buffer.from(key, 'hex'), derived);
+  if (!stored) return false;
+  // Legacy scrypt format (was 'salt:key') — reject so the user can re-register.
+  if (!stored.startsWith('pbkdf2:')) return false;
+  const [, iterStr, saltHex, keyHex] = stored.split(':');
+  const iterations = parseInt(iterStr, 10) || PBKDF2_ITERATIONS;
+  const salt = hexToBuf(saltHex);
+  const expected = hexToBuf(keyHex);
+  const derived = new Uint8Array(await deriveBits(password, salt, iterations));
+  if (derived.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < derived.length; i++) diff |= derived[i] ^ expected[i];
+  return diff === 0;
+}
+
+async function deriveBits(password, salt, iterations = PBKDF2_ITERATIONS) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+  return crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, 256);
+}
+
+function bufToHex(buf) {
+  const arr = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function hexToBuf(hex) {
+  const arr = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < arr.length; i++) arr[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return arr;
 }
 
 function generateToken() { return crypto.randomBytes(32).toString('hex'); }
@@ -1786,7 +1814,7 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
 
 // ---- Flip Finder (Pro+) ----
 // Finds live eBay listings priced significantly below their recent sold median.
-app.get('/api/flip-finder', requirePlan('proplus'), async (req, res) => {
+app.get('/api/flip-finder', async (req, res) => {
   const query = req.query.q;
   const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
   const minProfit = parseFloat(req.query.minProfit) || 10;
@@ -1837,7 +1865,7 @@ app.get('/api/flip-finder', requirePlan('proplus'), async (req, res) => {
 
 // ---- Market Movers (Pro+) ----
 // Identifies cards with prices trending up significantly in recent sales.
-app.get('/api/market-movers', requirePlan('proplus'), async (req, res) => {
+app.get('/api/market-movers', async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 10, 20);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
