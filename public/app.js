@@ -880,7 +880,7 @@ async function performSearch(query) {
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
 
   try {
-    const params = new URLSearchParams({ q: query, limit: '20', mode: currentMode });
+    const params = new URLSearchParams({ q: query, limit: '50', mode: currentMode });
     const response = await fetch(`/api/search?${params}`, {
       headers: {},
     });
@@ -904,6 +904,15 @@ async function performSearch(query) {
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
     recordPriceHistory(query, results);
+
+    // Reset pagination state for the new search
+    _searchPaging = {
+      query,
+      mode: currentMode,
+      offset: data.offset || 0,
+      hasMore: !!data.hasMore,
+      fetching: false,
+    };
 
     // Check for rate limiting
     if (data.rateLimited || data.soldUnavailable) {
@@ -1206,6 +1215,8 @@ function groupByGrade(results) {
 let _gradeGroups = [];
 let _gradeShown = {};
 let _gradeContainers = {};
+// Pagination state for "Show more from eBay" — populated by performSearch.
+let _searchPaging = { query: '', mode: '', offset: 0, hasMore: false, fetching: false };
 
 function renderGradeGroups(grid, results) {
   _gradeGroups = groupByGrade(results);
@@ -1243,19 +1254,63 @@ function renderGradeGroups(grid, results) {
 
 function updateLoadMoreButton(grid) {
   let wrap = grid.querySelector('.load-more-wrap');
-  const hasMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
+  const hasCachedMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
+  const hasServerMore = _searchPaging.hasMore;
 
-  if (!hasMore) { if (wrap) wrap.remove(); return; }
+  if (!hasCachedMore && !hasServerMore) { if (wrap) wrap.remove(); return; }
 
   if (!wrap) {
     wrap = document.createElement('div');
     wrap.className = 'load-more-wrap';
-    const btn = document.createElement('button');
-    btn.className = 'load-more-btn';
-    btn.textContent = 'Load 20 More';
-    btn.addEventListener('click', () => loadMoreCards(grid));
-    wrap.appendChild(btn);
     grid.appendChild(wrap);
+  }
+  wrap.innerHTML = '';
+
+  const btn = document.createElement('button');
+  btn.className = 'load-more-btn';
+  if (hasCachedMore) {
+    btn.textContent = 'Show 20 More';
+    btn.addEventListener('click', () => loadMoreCards(grid));
+  } else {
+    btn.textContent = _searchPaging.fetching ? 'Loading…' : 'Load more from eBay';
+    btn.disabled = !!_searchPaging.fetching;
+    btn.addEventListener('click', () => fetchMoreFromServer(grid));
+  }
+  wrap.appendChild(btn);
+}
+
+async function fetchMoreFromServer(grid) {
+  if (_searchPaging.fetching || !_searchPaging.hasMore) return;
+  _searchPaging.fetching = true;
+  updateLoadMoreButton(grid);
+  try {
+    const nextOffset = _searchPaging.offset + 50;
+    const params = new URLSearchParams({ q: _searchPaging.query, limit: '50', offset: String(nextOffset), mode: _searchPaging.mode });
+    const response = await fetch(`/api/search?${params}`);
+    const data = await safeJson(response);
+    if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
+    const more = Array.isArray(data.results) ? data.results : [];
+    if (more.length === 0) {
+      _searchPaging.hasMore = false;
+    } else {
+      _searchPaging.offset = nextOffset;
+      _searchPaging.hasMore = !!data.hasMore;
+      // Merge new results into existing grade groups so Show 20 More keeps working
+      const newGroups = groupByGrade(more);
+      for (const ng of newGroups) {
+        const existing = _gradeGroups.find(g => g.grade === ng.grade);
+        if (existing) existing.items.push(...ng.items);
+        else _gradeGroups.push(ng);
+      }
+      // Render the next 20 immediately
+      loadMoreCards(grid);
+    }
+  } catch (err) {
+    const wrap = grid.querySelector('.load-more-wrap');
+    if (wrap) wrap.innerHTML = `<span class="no-results">Could not load more — ${escHtml(err.message)}</span>`;
+  } finally {
+    _searchPaging.fetching = false;
+    updateLoadMoreButton(grid);
   }
 }
 

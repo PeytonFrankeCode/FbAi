@@ -342,9 +342,9 @@ async function withRetry(fn, maxRetries = 1) {
 }
 
 // ---- Browse API (active listings) ----
-async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
+async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0) {
   trackApiCall('browse', 'browse/search', keywords, source);
-  console.log(`[Browse API] Searching for: "${keywords}", limit: ${limit}`);
+  console.log(`[Browse API] Searching for: "${keywords}", limit: ${limit}, offset: ${offset}`);
   const token = await getOAuthToken();
   console.log('[Browse API] Got OAuth token, making search request...');
   const res = await axios.get(
@@ -354,6 +354,7 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown') {
         q: keywords,
         category_ids: '261328',
         limit,
+        offset,
       },
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -409,8 +410,8 @@ async function fetchViaEbayApiData(keywords, limit = 20, source = 'unknown') {
 
 // ---- Shared fetch function ----
 // mode: 'forsale' (eBay Browse API) or 'sold' (EbayApiData)
-async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search') {
-  const cacheKey = `${mode}|${keywords}|${limit}`;
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0) {
+  const cacheKey = `${mode}|${keywords}|${limit}|${offset}`;
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
@@ -427,7 +428,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
   }
 
   // For sale mode — eBay Browse API
-  const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source));
+  const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source, offset));
   if (response && !response.rateLimited) {
     setCache(cacheKey, response);
   }
@@ -442,7 +443,8 @@ function extractSerial(text) {
 
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
-  const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const offset = Math.max(0, Math.min(parseInt(req.query.offset) || 0, 500));
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
 
   if (!query || query.trim().length < 2) {
@@ -468,13 +470,13 @@ app.get('/api/search', async (req, res) => {
     }
 
     if (!serial) {
-      // No serial number in query — standard search
-      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      // No serial number in query — standard search (supports offset for pagination)
+      const searchData = await fetchEbayItems(query, limit, mode, 'search', offset);
       if (searchData.rateLimited) {
         return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
       }
       if (searchData.results.length > 0) {
-        return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null });
+        return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, hasMore: searchData.results.length >= limit });
       }
 
       // No results — try broadened search (same as main search)
