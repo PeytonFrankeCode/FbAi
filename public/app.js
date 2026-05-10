@@ -3525,8 +3525,7 @@ function renderCompletionSets() {
               <th>#</th>
               <th>Player</th>
               <th>Team</th>
-              ${!activeFilter ? '<th>Variant</th>' : ''}
-              <th class="completion-check-col">Owned</th>
+              <th>Variants</th>
             </tr>
           </thead>
           <tbody>`;
@@ -3542,25 +3541,28 @@ function renderCompletionSets() {
 
       const variantsToRender = activeFilter ? [{ v: displayVariants[0], vi: activeVi }] : allVariants.map((v, vi) => ({ v, vi }));
 
-      variantsToRender.forEach(({ v, vi }, idx) => {
+      // One row per card. All variants for that card render as inline chips.
+      const chipsHtml = variantsToRender.map(({ v, vi }) => {
         const key = `${setKey}_c${ci}_v${vi}`;
         const checked = owned[key] ? 'checked' : '';
         const isOwned = owned[key];
         const prDisplay = v.printRun ? ' /' + v.printRun : '';
-        const showPlayer = idx === 0; // Only show player name on first variant row
+        return `<label class="completion-variant-check ${isOwned ? 'owned' : ''}">
+          <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
+          <span>${escHtml(v.name)}${prDisplay}</span>
+        </label>`;
+      }).join('');
 
-        html += `<tr class="${isOwned ? 'completion-row-owned' : ''}">
-          <td class="cl-num">${showPlayer ? escHtml(c.number) : ''}</td>
-          <td class="cl-player">${showPlayer ? `<a href="#" class="cl-player-link" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${v.printRun || printRun}')">${escHtml(c.player || 'Unknown')}</a>` : ''}</td>
-          <td class="cl-team">${showPlayer ? escHtml(c.team || '') : ''}</td>
-          ${!activeFilter ? `<td class="completion-variant-name">${escHtml(v.name)}${prDisplay}</td>` : ''}
-          <td class="completion-check-cell">
-            <label class="completion-variant-check ${isOwned ? 'owned' : ''}">
-              <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
-            </label>
-          </td>
-        </tr>`;
-      });
+      // A row is "owned" only when every visible variant on it is checked.
+      const allOwned = variantsToRender.length > 0 && variantsToRender.every(({ vi }) => owned[`${setKey}_c${ci}_v${vi}`]);
+      const firstVariant = variantsToRender[0]?.v || allVariants[0];
+
+      html += `<tr class="${allOwned ? 'completion-row-owned' : ''}">
+        <td class="cl-num">${escHtml(c.number)}</td>
+        <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${(firstVariant && firstVariant.printRun) || printRun}')">${escHtml(c.player || 'Unknown')}</a></td>
+        <td class="cl-team">${escHtml(c.team || '')}</td>
+        <td class="completion-variant-cell"><div class="completion-variants">${chipsHtml}</div></td>
+      </tr>`;
     });
 
     html += `</tbody></table>
