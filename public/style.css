@@ -5236,6 +5236,88 @@ tr:hover .cl-alert-btn {
   font-size: 0.78rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.rainbow-cost-result:hover {
+  background: rgba(94, 206, 153, 0.16);
+  border-color: var(--accent);
+}
+.rainbow-cost-result.rainbow-cost-active {
+  background: var(--accent);
+  color: #0a1a12;
+  border-color: var(--accent);
+}
+
+/* Rainbow breakdown panel — vertical list of variant → cheapest listing */
+.rainbow-breakdown-panel { background: var(--bg-secondary); }
+.rainbow-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  max-height: 380px;
+  overflow-y: auto;
+}
+.rainbow-breakdown-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.rainbow-breakdown-row:hover {
+  border-color: var(--accent-border);
+  background: var(--bg-hover);
+}
+.rainbow-breakdown-row.missing {
+  opacity: 0.55;
+  grid-template-columns: 1fr auto;
+}
+.rainbow-breakdown-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+}
+.rainbow-breakdown-noimg {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+.rainbow-breakdown-meta { min-width: 0; }
+.rainbow-breakdown-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.rainbow-breakdown-title {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.15rem;
+}
+.rainbow-breakdown-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 /* Old duplicate completion styles removed — the modernized definitions
    above now cover this surface. */
