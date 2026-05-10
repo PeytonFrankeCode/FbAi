@@ -1609,17 +1609,22 @@ function saveSessions(s) { saveData('sessions', SESSIONS_FILE, s); }
 // Password hashing via Web Crypto PBKDF2 — works on both Node 16+ and
 // Cloudflare Workers. The previous scrypt-based impl crashed every login on
 // Workers because nodejs_compat doesn't polyfill crypto.scrypt.
+//
+// Important: use globalThis.crypto, not the local `const crypto = require('crypto')`.
+// The Node module shadows the global; on Workers its polyfill doesn't expose
+// `subtle` or `getRandomValues`, so the request crashed silently. The Web Crypto
+// global exists in both Node 16+ and Workers.
 const PBKDF2_ITERATIONS = 100000;
+const webCrypto = globalThis.crypto;
 
 async function hashPassword(password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const salt = webCrypto.getRandomValues(new Uint8Array(16));
   const keyBits = await deriveBits(password, salt);
   return `pbkdf2:${PBKDF2_ITERATIONS}:${bufToHex(salt)}:${bufToHex(keyBits)}`;
 }
 
 async function verifyPassword(password, stored) {
   if (!stored) return false;
-  // Legacy scrypt format (was 'salt:key') — reject so the user can re-register.
   if (!stored.startsWith('pbkdf2:')) return false;
   const [, iterStr, saltHex, keyHex] = stored.split(':');
   const iterations = parseInt(iterStr, 10) || PBKDF2_ITERATIONS;
@@ -1634,8 +1639,8 @@ async function verifyPassword(password, stored) {
 
 async function deriveBits(password, salt, iterations = PBKDF2_ITERATIONS) {
   const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
-  return crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, 256);
+  const key = await webCrypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+  return webCrypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, key, 256);
 }
 
 function bufToHex(buf) {
