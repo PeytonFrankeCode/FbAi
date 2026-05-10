@@ -2157,6 +2157,24 @@ if (!process.env.CF_WORKER) {
   });
 }
 
+// Global error handler — runs when any route throws or calls next(err).
+// Without this, Express's default handler returns an HTML stack trace page,
+// which the frontend then tries to JSON.parse and reports as
+// "Unexpected token '<', '<!DOCTYPE'" — that's how the auth crash surfaced
+// to the user before. For API paths we always return JSON.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(`[Express error] ${req.method} ${req.path}:`, err && err.stack || err);
+  if (res.headersSent) return next(err);
+  if (req.path && req.path.startsWith('/api/')) {
+    return res.status(500).json({
+      error: 'Server error',
+      detail: String(err && err.message || err),
+    });
+  }
+  res.status(500).type('text/plain').send('Server error');
+});
+
 // Always export at module top-level so wrangler's bundler can statically
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
