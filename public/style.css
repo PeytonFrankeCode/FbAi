@@ -5178,6 +5178,61 @@ tr:hover .cl-alert-btn {
 .completion-variant-check:has(span) span {
   font-variant-numeric: tabular-nums;
 }
+
+/* Variant text inside chip — clicking it opens For Sale listings.
+   Hover hint distinguishes it from the static checkbox affordance. */
+.completion-variant-text {
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.05rem 0.15rem;
+  margin: -0.05rem -0.15rem;
+  transition: text-decoration-color var(--transition-fast);
+  text-decoration: underline transparent;
+  text-underline-offset: 3px;
+}
+.completion-variant-text:hover {
+  text-decoration-color: var(--accent);
+}
+.completion-variant-text.completion-variant-active {
+  text-decoration-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Rainbow cost button — inline pill at the end of the chip row in Rainbow Mode */
+.rainbow-cost-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    rgba(239, 68, 68, 0.12),
+    rgba(245, 158, 11, 0.12),
+    rgba(16, 185, 129, 0.12),
+    rgba(59, 130, 246, 0.12),
+    rgba(139, 92, 246, 0.12));
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+  font-variant-numeric: tabular-nums;
+}
+.rainbow-cost-btn:hover { border-color: var(--accent-border); }
+.rainbow-cost-btn:disabled { cursor: progress; opacity: 0.7; }
+
+.rainbow-cost-result {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.85rem;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 /* Old duplicate completion styles removed — the modernized definitions
    above now cover this surface. */
 
