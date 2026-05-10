@@ -1745,6 +1745,12 @@ async function handleAuth(e) {
       closeLogin();
       await syncSubscriptionStatus();
     }
+  } catch (err) {
+    // Without this, any crash inside the try (e.g. JSON parse on an empty
+    // response body when the server 500'd) made the button look dead — no
+    // error shown, click just did nothing.
+    loginError.textContent = `Couldn't reach the server: ${err && err.message || err}`;
+    loginError.classList.remove('hidden');
   } finally {
     if (authSubmitBtn) authSubmitBtn.disabled = false;
   }
