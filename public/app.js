@@ -3853,6 +3853,10 @@ function filterStrictVariant(items, variantName, printRun) {
 // Rainbow cost — for the card's row, compute cheapest For Sale price for
 // each variant, sum them, and render the result in place of the button.
 // cardKey looks like 's<si>_c<ci>' so we can read both indices off it.
+// Per-rainbow-result store, keyed by an id we put on the result span.
+// Lets the user click the green pill to see all the cheapest listings used.
+const _rainbowBreakdowns = {};
+
 async function calculateRainbowCost(btn, productKey, cardKey, player, year, brand, setName, category, cardNum, ci) {
   if (!completionData) { btn.textContent = 'Rainbow: data missing'; return; }
   const m = String(cardKey).match(/^s(\d+)_c(\d+)$/);
@@ -3869,13 +3873,14 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
   btn.disabled = true;
   btn.textContent = `Pricing 0/${variants.length}…`;
 
-  let total = 0;
+  // Pre-size an array so writers from concurrent workers don't collide
+  const perVariant = new Array(variants.length);
   let priced = 0;
   let unknown = 0;
 
-  // Run with a small concurrency cap so we don't slam the API.
   const CONCURRENCY = 3;
   let idx = 0;
+  let done = 0;
   async function worker() {
     while (idx < variants.length) {
       const myIdx = idx++;
@@ -3886,19 +3891,110 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
         const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '20' })}`);
         const data = await safeJson(res);
         const filtered = filterStrictVariant(data.results || [], v.name, v.printRun || '');
-        const prices = filtered.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
-        if (prices.length > 0) { total += prices[0]; priced++; }
-        else { unknown++; }
-      } catch (_) { unknown++; }
-      btn.textContent = `Pricing ${myIdx + 1}/${variants.length}…`;
+        const sorted = filtered.filter(r => parseFloat(r.price) > 0).sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        if (sorted.length > 0) {
+          const cheapest = sorted[0];
+          perVariant[myIdx] = { variant: v, listing: cheapest };
+          priced++;
+        } else {
+          perVariant[myIdx] = { variant: v, listing: null };
+          unknown++;
+        }
+      } catch (_) {
+        perVariant[myIdx] = { variant: v, listing: null };
+        unknown++;
+      }
+      done++;
+      btn.textContent = `Pricing ${done}/${variants.length}…`;
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
-  btn.disabled = false;
-  btn.classList.add('rainbow-cost-done');
-  const tooltip = unknown > 0 ? ` title="${unknown} variant${unknown !== 1 ? 's' : ''} had no listings"` : '';
-  btn.outerHTML = `<span class="rainbow-cost-result"${tooltip}>Rainbow: $${total.toFixed(2)}${unknown > 0 ? ` (${priced}/${variants.length})` : ''}</span>`;
+  const total = perVariant.reduce((sum, x) => sum + (x && x.listing ? parseFloat(x.listing.price) : 0), 0);
+
+  // Stash so the click handler can read back what we found
+  const breakdownId = `rb_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+  _rainbowBreakdowns[breakdownId] = {
+    cardLabel: `${player} #${card.number}`,
+    perVariant,
+    priced,
+    unknown,
+    total,
+  };
+
+  const tooltip = unknown > 0
+    ? ` title="${unknown} variant${unknown !== 1 ? 's' : ''} had no listings — click for breakdown"`
+    : ' title="Click to see the cheapest listing for each variant"';
+  btn.outerHTML = `<button class="rainbow-cost-result" data-rb="${breakdownId}" onclick="showRainbowBreakdown(this)"${tooltip}>Rainbow: $${total.toFixed(2)}${unknown > 0 ? ` (${priced}/${variants.length})` : ''}</button>`;
+}
+
+// Click handler for the rainbow result pill — opens an inline panel that
+// shows every variant and the cheapest listing the calculator picked.
+function showRainbowBreakdown(btn) {
+  const id = btn.dataset.rb;
+  const data = _rainbowBreakdowns[id];
+  if (!data) return;
+
+  // Toggle: if a panel already sits right after the row/group, close it
+  const inTable = !!btn.closest('tr');
+  const anchor = inTable ? btn.closest('tr') : btn.closest('.completion-variants');
+  if (!anchor) return;
+  const existing = anchor.nextElementSibling;
+  if (existing && (existing.classList.contains('cl-listings-row') || existing.classList.contains('cl-listings-block')) && existing.dataset.rbPanel === id) {
+    existing.remove();
+    btn.classList.remove('rainbow-cost-active');
+    return;
+  }
+
+  btn.classList.add('rainbow-cost-active');
+
+  const rows = data.perVariant.map(entry => {
+    if (!entry) return '';
+    const v = entry.variant;
+    const pr = v.printRun ? ' /' + escHtml(v.printRun) : '';
+    if (!entry.listing) {
+      return `<div class="rainbow-breakdown-row missing">
+        <span class="rainbow-breakdown-name">${escHtml(v.name)}${pr}</span>
+        <span class="rainbow-breakdown-price">—</span>
+      </div>`;
+    }
+    const item = entry.listing;
+    return `<a class="rainbow-breakdown-row" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
+      ${item.imageUrl ? `<img class="rainbow-breakdown-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="rainbow-breakdown-noimg">&#127183;</div>'}
+      <div class="rainbow-breakdown-meta">
+        <div class="rainbow-breakdown-name">${escHtml(v.name)}${pr}</div>
+        <div class="rainbow-breakdown-title">${escHtml(item.title)}</div>
+      </div>
+      <div class="rainbow-breakdown-price">$${parseFloat(item.price).toFixed(2)}</div>
+    </a>`;
+  }).join('');
+
+  const innerHtml = `
+    <div class="cl-listings-panel rainbow-breakdown-panel">
+      <div class="cl-listings-header">
+        <span class="cl-listings-title">${escHtml(data.cardLabel)} — Rainbow breakdown · $${data.total.toFixed(2)}${data.unknown > 0 ? ` (${data.priced}/${data.perVariant.length})` : ''}</span>
+        <button class="cl-listings-close" title="Close">&times;</button>
+      </div>
+      <div class="rainbow-breakdown-list">${rows}</div>
+    </div>`;
+
+  let panel;
+  if (inTable) {
+    panel = document.createElement('tr');
+    panel.className = 'cl-listings-row';
+    const colCount = anchor.cells.length || 4;
+    panel.innerHTML = `<td colspan="${colCount}">${innerHtml}</td>`;
+  } else {
+    panel = document.createElement('div');
+    panel.className = 'cl-listings-block';
+    panel.innerHTML = innerHtml;
+  }
+  panel.dataset.rbPanel = id;
+  anchor.parentNode.insertBefore(panel, anchor.nextSibling);
+  panel.querySelector('.cl-listings-close').addEventListener('click', () => {
+    panel.remove();
+    btn.classList.remove('rainbow-cost-active');
+  });
 }
 
 // ---- Completion Sub-tabs & Player Completion ----
