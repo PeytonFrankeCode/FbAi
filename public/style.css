@@ -4895,29 +4895,196 @@ tr:hover .cl-alert-btn {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.4); opacity: 0.6; }
 }
-.completion-progress { margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; }
-.completion-progress-bar-wrap { flex: 1; height: 8px; background: var(--bg-card); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
-.completion-progress-bar { height: 100%; background: var(--accent, #10b981); border-radius: 4px; transition: width 0.3s; }
-.completion-progress-text { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-.completion-sets { display: flex; flex-direction: column; gap: 0.5rem; }
-.completion-set { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.completion-set.complete { border-color: var(--accent, #10b981); }
-.completion-set-header { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.75rem 1rem; cursor: pointer; transition: background 0.15s; }
-.completion-set-header:hover { background: var(--bg-hover, rgba(255,255,255,0.04)); }
-.completion-set-title-row { display: flex; align-items: center; gap: 0.75rem; }
-.completion-set-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
-.completion-set-count { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
-.completion-mini-bar { width: 60px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
-.completion-mini-fill { height: 100%; background: var(--accent, #10b981); border-radius: 2px; transition: width 0.3s; }
-.completion-set-cards { padding: 0.5rem 1rem 1rem; border-top: 1px solid var(--border); }
-.completion-card-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.8rem; flex-wrap: wrap; }
-.completion-check-row { cursor: pointer; border-radius: 4px; padding: 0.3rem 0.5rem; transition: background 0.15s; }
-.completion-check-row:hover { background: var(--bg-hover, rgba(255,255,255,0.04)); }
-.completion-check-row.owned { color: var(--accent, #10b981); }
-.completion-card-player { font-weight: 500; flex: 1; }
-.completion-variants { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-/* Custom checklist checkbox — replaces the small native checkbox with a
-   roomy rounded square that visibly reads as "owned" when checked. */
+/* ---- Set Completion / Checklist ---- */
+.completion-progress {
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+}
+.completion-progress-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.completion-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.completion-progress-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.completion-sets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Each set is a self-contained card with a clear, tappable header */
+.completion-set {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+.completion-set.complete {
+  border-color: var(--accent-border);
+  background: linear-gradient(180deg, var(--accent-bg), var(--bg-secondary) 50%);
+}
+
+.completion-set-header {
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  position: relative;
+}
+.completion-set-header:hover {
+  background: var(--bg-hover);
+}
+/* Chevron — rotates open when expanded */
+.completion-set-header::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 1.05rem;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease, top 0.2s ease;
+}
+.completion-set.expanded .completion-set-header::after {
+  transform: rotate(-135deg);
+  top: 1.15rem;
+}
+
+.completion-set-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding-right: 1.5rem;
+}
+.completion-set-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.completion-set-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  background: var(--bg-tertiary);
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+}
+.completion-set.complete .completion-set-count {
+  background: var(--accent);
+  color: #0a1a12;
+}
+
+/* Slim per-set progress bar tracks the count text */
+.completion-mini-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.completion-mini-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.checklist-parallels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.completion-set-cards {
+  padding: 0.5rem 0 0.6rem;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+}
+
+/* The actual checklist table — roomy rows, clear hover, owned-row highlight */
+.completion-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.completion-table th {
+  text-align: left;
+  padding: 0.55rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-primary);
+}
+.completion-table td {
+  padding: 0.55rem 1rem;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+  vertical-align: middle;
+}
+.completion-table tr:last-child td { border-bottom: none; }
+.completion-table tbody tr {
+  transition: background var(--transition-fast);
+}
+.completion-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+.completion-row-owned {
+  background: var(--accent-bg);
+}
+.completion-row-owned:hover {
+  background: rgba(94, 206, 153, 0.16);
+}
+.completion-row-owned td {
+  color: var(--text-primary);
+}
+.completion-row-owned .cl-player-link {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.completion-check-col,
+.completion-check-cell {
+  text-align: center;
+  width: 56px;
+}
+.completion-variant-name {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* Custom checklist checkbox — clear "filled green" state when owned */
 .completion-variant-check {
   display: inline-flex;
   align-items: center;
@@ -4960,13 +5127,8 @@ tr:hover .cl-alert-btn {
 }
 .completion-variant-check input:active { transform: scale(0.92); }
 .completion-variant-check.owned { color: var(--accent); }
-.completion-table { width: 100%; }
-.completion-table th { text-align: left; }
-.completion-check-col { text-align: center; width: 60px; }
-.completion-check-cell { text-align: center; }
-.completion-variant-name { font-size: 0.78rem; color: var(--text-secondary); }
-.completion-row-owned { opacity: 0.5; }
-.completion-row-owned .cl-player-link { color: var(--accent, #10b981); }
+/* Old duplicate completion styles removed — the modernized definitions
+   above now cover this surface. */
 
 /* Completion Player Groups */
 .completion-player-group { padding: 0.6rem 0; border-bottom: 1px solid rgba(45, 55, 72, 0.3); }
