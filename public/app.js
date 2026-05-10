@@ -3548,26 +3548,37 @@ function renderCompletionSets() {
       const variantsToRender = activeFilter ? [{ v: displayVariants[0], vi: activeVi }] : allVariants.map((v, vi) => ({ v, vi }));
 
       // One row per card. All variants for that card render as inline chips.
+      // Clicking the chip's LABEL TEXT opens an inline For Sale listings panel
+      // for that exact variant; the checkbox still toggles owned state.
       const chipsHtml = variantsToRender.map(({ v, vi }) => {
         const key = `${setKey}_c${ci}_v${vi}`;
         const checked = owned[key] ? 'checked' : '';
         const isOwned = owned[key];
         const prDisplay = v.printRun ? ' /' + v.printRun : '';
+        const variantName = (v.name || '').replace(/'/g, "\\'");
+        const variantPr = v.printRun ? String(v.printRun) : '';
         return `<label class="completion-variant-check ${isOwned ? 'owned' : ''}">
           <input type="checkbox" ${checked} onchange="toggleCompletionCard('${productKey}','${key}',this)" />
-          <span>${escHtml(v.name)}${prDisplay}</span>
+          <span class="completion-variant-text" onclick="event.preventDefault(); event.stopPropagation(); openVariantListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${variantName}', '${variantPr}')">${escHtml(v.name)}${prDisplay}</span>
         </label>`;
       }).join('');
 
       // A row is "owned" only when every visible variant on it is checked.
       const allOwned = variantsToRender.length > 0 && variantsToRender.every(({ vi }) => owned[`${setKey}_c${ci}_v${vi}`]);
       const firstVariant = variantsToRender[0]?.v || allVariants[0];
+      // Rainbow-cost button — only meaningful when rainbow mode is on AND
+      // there's more than one variant on the card. Stores enough data on
+      // the button itself so calculateRainbowCost can read it without
+      // re-deriving from the table.
+      const rainbowBtn = (rainbowMode && variantsToRender.length > 1)
+        ? `<button class="rainbow-cost-btn" onclick="calculateRainbowCost(this, '${productKey}','${setKey}_c${ci}','${playerEsc}','${year}','${brand}','${setName}','${category}','${cardNum}', ${ci})">Rainbow $?</button>`
+        : '';
 
-      html += `<tr class="${allOwned ? 'completion-row-owned' : ''}">
+      html += `<tr class="${allOwned ? 'completion-row-owned' : ''}" data-card-idx="${ci}">
         <td class="cl-num">${escHtml(c.number)}</td>
         <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${(firstVariant && firstVariant.printRun) || printRun}')">${escHtml(c.player || 'Unknown')}</a></td>
         <td class="cl-team">${escHtml(c.team || '')}</td>
-        <td class="completion-variant-cell"><div class="completion-variants">${chipsHtml}</div></td>
+        <td class="completion-variant-cell"><div class="completion-variants">${chipsHtml}${rainbowBtn}</div></td>
       </tr>`;
     });
 
@@ -3731,6 +3742,153 @@ function toggleCompletionListings(linkEl, player, year, brand, setName, category
   });
 
   fetchPlayerListings(slot, query, 'forsale');
+}
+
+// Open an inline For Sale listings panel for one specific variant
+// (e.g. clicking a "Mirror Purple /299" chip on Sauce Gardner's row).
+// The query is the standard checklist query plus the variant name, and
+// results are filtered "extra strict" — title must include the variant
+// name and (if present) the print run, so we don't show off-target hits.
+function openVariantListings(spanEl, player, year, brand, setName, category, cardNum, variantName, printRun) {
+  const row = spanEl.closest('tr');
+  if (!row) return;
+
+  // Close any panel on this row that's already open
+  const existing = row.nextElementSibling;
+  if (existing && existing.classList.contains('cl-listings-row')) {
+    existing.remove();
+    row.querySelectorAll('.completion-variant-active').forEach(s => s.classList.remove('completion-variant-active'));
+    return;
+  }
+
+  spanEl.classList.add('completion-variant-active');
+
+  // Inline panel row spanning all columns
+  const panel = document.createElement('tr');
+  panel.className = 'cl-listings-row';
+  const colCount = row.cells.length || 4;
+  panel.innerHTML = `<td colspan="${colCount}">
+    <div class="cl-listings-panel completion-listings-panel">
+      <div class="cl-listings-header">
+        <span class="cl-listings-title">${escHtml(variantName || 'Variant')}${printRun ? ' /' + escHtml(printRun) : ''} — For Sale</span>
+        <button class="cl-listings-close" title="Close">&times;</button>
+      </div>
+      <div class="cl-listings-body">
+        <div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>
+      </div>
+    </div>
+  </td>`;
+  row.parentNode.insertBefore(panel, row.nextSibling);
+  panel.querySelector('.cl-listings-close').addEventListener('click', () => {
+    panel.remove();
+    spanEl.classList.remove('completion-variant-active');
+  });
+
+  // Build a strict query: standard checklist query + variant name
+  const baseQuery = buildChecklistQuery(player, year, brand, setName, category, printRun);
+  const query = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+  fetchVariantListings(panel.querySelector('.cl-listings-body'), query, variantName, printRun);
+}
+
+async function fetchVariantListings(container, query, variantName, printRun) {
+  try {
+    const res = await fetch(`/api/search?${new URLSearchParams({ q: query, mode: 'forsale', limit: '40' })}`);
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+    const results = filterStrictVariant(data.results || [], variantName, printRun);
+    if (results.length === 0) {
+      container.innerHTML = '<div class="cl-listings-empty">No matching For Sale listings.</div>';
+      return;
+    }
+    results.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    container.innerHTML = '<div class="cl-listings-grid">' + results.slice(0, 12).map(item => `
+      <a class="cl-listing-item" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
+        ${item.imageUrl ? `<img class="cl-listing-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="cl-listing-noimg">&#127183;</div>'}
+        <div class="cl-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
+        <div class="cl-listing-title">${escHtml(item.title)}</div>
+      </a>
+    `).join('') + '</div>';
+  } catch (err) {
+    container.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+  }
+}
+
+// Strict filter: title must contain the variant name (case-insensitive) AND,
+// if a print run is given, the literal "/<n>" must appear. Drops auto/relic
+// hits when the variant isn't itself an auto/relic, and drops obviously
+// wrong color parallels.
+function filterStrictVariant(items, variantName, printRun) {
+  const v = (variantName || '').toLowerCase().trim();
+  const wantsAuto = /\bauto/.test(v);
+  const wantsRelic = /\b(patch|relic|jersey|memorabilia)\b/.test(v);
+  return items.filter(item => {
+    const title = String(item.title || '').toLowerCase();
+    if (printRun && !title.includes('/' + printRun)) return false;
+    if (v) {
+      // Every non-trivial word of the variant name must appear in the title
+      const words = v.split(/\s+/).filter(w => w.length > 2);
+      for (const w of words) if (!title.includes(w)) return false;
+    }
+    if (!wantsAuto && /\bauto(graph)?\b/.test(title)) return false;
+    if (!wantsRelic && /\b(patch|relic|jersey number|memorabilia|logoman)\b/.test(title)) return false;
+    return true;
+  });
+}
+
+// Rainbow cost — for the card's row, compute cheapest For Sale price for
+// each variant, sum them, and render the result in place of the button.
+async function calculateRainbowCost(btn, productKey, cardKey, player, year, brand, setName, category, cardNum, ci) {
+  if (!completionData) return;
+  // Find the set + card so we can iterate variants
+  const set = completionData.sets.find(s => s.cards && s.cards[ci]);
+  // Fallback: search by setKey prefix in cardKey ("setKey_cN")
+  let foundSet = null;
+  for (const s of completionData.sets) {
+    const sk = `${completionData.year || '2025'}-${(completionData.brand || 'Bowman').toLowerCase()}-${s.name.toLowerCase().replace(/\s+/g, '-')}`;
+    if (cardKey.startsWith(sk)) { foundSet = s; break; }
+  }
+  const targetSet = foundSet || set;
+  if (!targetSet) { btn.textContent = 'Rainbow: data missing'; return; }
+  const card = targetSet.cards[ci];
+  if (!card) { btn.textContent = 'Rainbow: card missing'; return; }
+
+  const variants = (targetSet.parallels && targetSet.parallels.length)
+    ? [{ name: 'Base', printRun: card.printRun || '' }, ...targetSet.parallels]
+    : [{ name: 'Base', printRun: card.printRun || '' }];
+
+  btn.disabled = true;
+  btn.textContent = `Pricing 0/${variants.length}…`;
+
+  let total = 0;
+  let priced = 0;
+  let unknown = 0;
+
+  // Run with a small concurrency cap so we don't slam the API.
+  const CONCURRENCY = 3;
+  let idx = 0;
+  async function worker() {
+    while (idx < variants.length) {
+      const myIdx = idx++;
+      const v = variants[myIdx];
+      const baseQuery = buildChecklistQuery(player, year, brand, setName, category, v.printRun || '');
+      const q = `${baseQuery} ${v.name}`.trim();
+      try {
+        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '20' })}`);
+        const data = await safeJson(res);
+        const filtered = filterStrictVariant(data.results || [], v.name, v.printRun || '');
+        const prices = filtered.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
+        if (prices.length > 0) { total += prices[0]; priced++; }
+        else { unknown++; }
+      } catch (_) { unknown++; }
+      btn.textContent = `Pricing ${myIdx + 1}/${variants.length}…`;
+    }
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+
+  btn.disabled = false;
+  btn.classList.add('rainbow-cost-done');
+  const tooltip = unknown > 0 ? ` title="${unknown} variant${unknown !== 1 ? 's' : ''} had no listings"` : '';
+  btn.outerHTML = `<span class="rainbow-cost-result"${tooltip}>Rainbow: $${total.toFixed(2)}${unknown > 0 ? ` (${priced}/${variants.length})` : ''}</span>`;
 }
 
 // ---- Completion Sub-tabs & Player Completion ----
