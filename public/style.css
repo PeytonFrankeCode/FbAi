@@ -5127,6 +5127,57 @@ tr:hover .cl-alert-btn {
 }
 .completion-variant-check input:active { transform: scale(0.92); }
 .completion-variant-check.owned { color: var(--accent); }
+
+/* Player view: variant checkbox + name = green pill chip, matching the
+   look of the .chip pills used elsewhere on the site. The set-view
+   checkbox (no label inside) keeps the square form above. */
+.completion-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.completion-variant-check:has(span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.completion-variant-check:has(span):hover {
+  border-color: var(--accent-border);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+.completion-variant-check:has(input:checked):has(span) {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+  font-weight: 600;
+}
+/* Smaller checkbox inside the chip — keep visible as the toggle affordance */
+.completion-variant-check:has(span) input {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+}
+.completion-variant-check:has(span) input:checked::after {
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border-width: 0 2px 2px 0;
+}
+.completion-variant-check:has(span) span {
+  font-variant-numeric: tabular-nums;
+}
 /* Old duplicate completion styles removed — the modernized definitions
    above now cover this surface. */
 
