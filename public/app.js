@@ -3402,6 +3402,7 @@ async function loadCompletionProducts() {
       opt.textContent = `${p.year} ${p.name}`;
       select.appendChild(opt);
     });
+    syncComboboxFromSelect(document.getElementById('cl-combo-product'));
   } catch (err) { console.error('Failed to load products for completion:', err); }
 }
 
@@ -4024,7 +4025,82 @@ function populatePlayerSelect() {
     opt.textContent = p;
     select.appendChild(opt);
   });
+  syncComboboxFromSelect(document.getElementById('cl-combo-player'));
 }
+
+// ---- Searchable Combobox ----
+// Backs a hidden <select> so existing onchange handlers still fire.
+// Used for both the product selector and the player selector under
+// Set Completion.
+function setupCombobox(comboEl) {
+  if (!comboEl || comboEl._wired) return;
+  comboEl._wired = true;
+  const toggle = comboEl.querySelector('.cl-combo-toggle');
+  const panel = comboEl.querySelector('.cl-combo-panel');
+  const search = comboEl.querySelector('.cl-combo-search');
+  const list = comboEl.querySelector('.cl-combo-list');
+  const select = document.getElementById(comboEl.dataset.target);
+  if (!select) return;
+
+  function close() { panel.classList.add('hidden'); search.value = ''; renderList(''); }
+  function open() {
+    panel.classList.remove('hidden');
+    renderList('');
+    setTimeout(() => search.focus(), 0);
+  }
+  function renderList(filter) {
+    const f = filter.toLowerCase().trim();
+    const items = Array.from(select.options).filter(o => o.textContent.toLowerCase().includes(f));
+    if (items.length === 0) {
+      list.innerHTML = '<div class="cl-combo-empty">No matches</div>';
+      return;
+    }
+    list.innerHTML = items.map(o =>
+      `<button type="button" class="cl-combo-item${o.value === select.value ? ' active' : ''}" data-value="${escHtml(o.value)}">${escHtml(o.textContent)}</button>`
+    ).join('');
+    list.querySelectorAll('.cl-combo-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        select.value = btn.dataset.value;
+        comboEl.querySelector('.cl-combo-value').textContent = btn.textContent;
+        select.dispatchEvent(new Event('change'));
+        close();
+      });
+    });
+  }
+
+  toggle.addEventListener('click', () => {
+    if (panel.classList.contains('hidden')) open();
+    else close();
+  });
+  search.addEventListener('input', () => renderList(search.value));
+  search.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { close(); toggle.focus(); }
+    if (e.key === 'Enter') {
+      const first = list.querySelector('.cl-combo-item');
+      if (first) first.click();
+    }
+  });
+  // Click outside closes
+  document.addEventListener('click', (e) => {
+    if (!comboEl.contains(e.target)) close();
+  });
+}
+
+function syncComboboxFromSelect(comboEl) {
+  if (!comboEl) return;
+  setupCombobox(comboEl);
+  const select = document.getElementById(comboEl.dataset.target);
+  if (!select) return;
+  const sel = select.options[select.selectedIndex];
+  const label = comboEl.querySelector('.cl-combo-value');
+  if (label) label.textContent = sel ? sel.textContent : (comboEl.dataset.placeholder || 'Select…');
+}
+
+// Wire both comboboxes once on load
+document.addEventListener('DOMContentLoaded', () => {
+  setupCombobox(document.getElementById('cl-combo-product'));
+  setupCombobox(document.getElementById('cl-combo-player'));
+});
 
 function loadPlayerCompletion() {
   const selected = document.getElementById('completion-player-select').value;
