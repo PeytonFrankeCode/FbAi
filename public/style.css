@@ -3949,8 +3949,12 @@ footer::before {
   color: var(--accent-light);
 }
 
-.cl-listings-row {
+.cl-listings-row,
+.cl-listings-block {
   animation: clPanelSlide 0.2s ease-out;
+}
+.cl-listings-block {
+  margin: 0.5rem 0 0.25rem;
 }
 
 @keyframes clPanelSlide {

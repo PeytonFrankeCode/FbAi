@@ -3746,28 +3746,31 @@ function toggleCompletionListings(linkEl, player, year, brand, setName, category
 
 // Open an inline For Sale listings panel for one specific variant
 // (e.g. clicking a "Mirror Purple /299" chip on Sauce Gardner's row).
-// The query is the standard checklist query plus the variant name, and
-// results are filtered "extra strict" — title must include the variant
+// Works in both views:
+//   - Set view: chips live inside a <table>, panel inserted as a new <tr>
+//   - Player view: chips live in a div, panel inserted as a sibling div
+// Results are filtered "extra strict" — title must include the variant
 // name and (if present) the print run, so we don't show off-target hits.
 function openVariantListings(spanEl, player, year, brand, setName, category, cardNum, variantName, printRun) {
-  const row = spanEl.closest('tr');
-  if (!row) return;
+  const inTable = !!spanEl.closest('tr');
+  const variantsWrap = spanEl.closest('.completion-variants');
+  const anchor = inTable ? spanEl.closest('tr') : variantsWrap;
+  if (!anchor) return;
 
-  // Close any panel on this row that's already open
-  const existing = row.nextElementSibling;
-  if (existing && existing.classList.contains('cl-listings-row')) {
+  // Close any panel currently open right after this anchor
+  const existing = anchor.nextElementSibling;
+  if (existing && (existing.classList.contains('cl-listings-row') || existing.classList.contains('cl-listings-block'))) {
     existing.remove();
-    row.querySelectorAll('.completion-variant-active').forEach(s => s.classList.remove('completion-variant-active'));
-    return;
+    (variantsWrap || anchor).querySelectorAll('.completion-variant-active').forEach(s => s.classList.remove('completion-variant-active'));
+    if (existing.dataset.variantKey === spanEl.dataset.variantKey) return;
   }
 
+  // Mark this chip as active so we know which one is open
   spanEl.classList.add('completion-variant-active');
+  const variantKey = `${cardNum}_${variantName}_${printRun}`;
+  spanEl.dataset.variantKey = variantKey;
 
-  // Inline panel row spanning all columns
-  const panel = document.createElement('tr');
-  panel.className = 'cl-listings-row';
-  const colCount = row.cells.length || 4;
-  panel.innerHTML = `<td colspan="${colCount}">
+  const innerHtml = `
     <div class="cl-listings-panel completion-listings-panel">
       <div class="cl-listings-header">
         <span class="cl-listings-title">${escHtml(variantName || 'Variant')}${printRun ? ' /' + escHtml(printRun) : ''} — For Sale</span>
@@ -3776,9 +3779,21 @@ function openVariantListings(spanEl, player, year, brand, setName, category, car
       <div class="cl-listings-body">
         <div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>
       </div>
-    </div>
-  </td>`;
-  row.parentNode.insertBefore(panel, row.nextSibling);
+    </div>`;
+
+  let panel;
+  if (inTable) {
+    panel = document.createElement('tr');
+    panel.className = 'cl-listings-row';
+    const colCount = anchor.cells.length || 4;
+    panel.innerHTML = `<td colspan="${colCount}">${innerHtml}</td>`;
+  } else {
+    panel = document.createElement('div');
+    panel.className = 'cl-listings-block';
+    panel.innerHTML = innerHtml;
+  }
+  panel.dataset.variantKey = variantKey;
+  anchor.parentNode.insertBefore(panel, anchor.nextSibling);
   panel.querySelector('.cl-listings-close').addEventListener('click', () => {
     panel.remove();
     spanEl.classList.remove('completion-variant-active');
@@ -3837,19 +3852,14 @@ function filterStrictVariant(items, variantName, printRun) {
 
 // Rainbow cost — for the card's row, compute cheapest For Sale price for
 // each variant, sum them, and render the result in place of the button.
+// cardKey looks like 's<si>_c<ci>' so we can read both indices off it.
 async function calculateRainbowCost(btn, productKey, cardKey, player, year, brand, setName, category, cardNum, ci) {
-  if (!completionData) return;
-  // Find the set + card so we can iterate variants
-  const set = completionData.sets.find(s => s.cards && s.cards[ci]);
-  // Fallback: search by setKey prefix in cardKey ("setKey_cN")
-  let foundSet = null;
-  for (const s of completionData.sets) {
-    const sk = `${completionData.year || '2025'}-${(completionData.brand || 'Bowman').toLowerCase()}-${s.name.toLowerCase().replace(/\s+/g, '-')}`;
-    if (cardKey.startsWith(sk)) { foundSet = s; break; }
-  }
-  const targetSet = foundSet || set;
-  if (!targetSet) { btn.textContent = 'Rainbow: data missing'; return; }
-  const card = targetSet.cards[ci];
+  if (!completionData) { btn.textContent = 'Rainbow: data missing'; return; }
+  const m = String(cardKey).match(/^s(\d+)_c(\d+)$/);
+  const si = m ? parseInt(m[1], 10) : -1;
+  const targetSet = completionData.sets[si];
+  if (!targetSet) { btn.textContent = 'Rainbow: set missing'; return; }
+  const card = (targetSet.cards || [])[ci];
   if (!card) { btn.textContent = 'Rainbow: card missing'; return; }
 
   const variants = (targetSet.parallels && targetSet.parallels.length)
@@ -3901,7 +3911,10 @@ function switchCompletionSubtab(tab) {
 
 function populatePlayerSelect() {
   const select = document.getElementById('completion-player-select');
-  select.innerHTML = '<option value="">Select a player...</option>';
+  // "All players" is the default — shows every player's chips across every set
+  // in one scroll, so the click-to-listings + Rainbow cost features work for
+  // anyone without re-selecting.
+  select.innerHTML = '<option value="__ALL__">All players</option>';
   if (!completionData) return;
 
   const players = new Set();
@@ -3918,30 +3931,44 @@ function populatePlayerSelect() {
 }
 
 function loadPlayerCompletion() {
-  const player = document.getElementById('completion-player-select').value;
+  const selected = document.getElementById('completion-player-select').value;
   const setsEl = document.getElementById('player-completion-sets');
   const progressEl = document.getElementById('player-completion-progress');
-  if (!player || !completionData) { setsEl.innerHTML = ''; progressEl.classList.add('hidden'); return; }
+  if (!selected || !completionData) { setsEl.innerHTML = ''; progressEl.classList.add('hidden'); return; }
 
+  const allMode = selected === '__ALL__';
   const state = getCompletionState();
   const productKey = completionData.id || completionData.name;
   const owned = state[productKey] || {};
+  const year = completionData.year || '2025';
+  const brand = (completionData.brand || 'Bowman').replace(/'/g, "\\'");
 
   let totalCards = 0, ownedCount = 0;
   let html = '';
 
   completionData.sets.forEach((set, si) => {
     const setKey = `s${si}`;
-    const playerCards = (set.cards || []).map((c, ci) => ({ ...c, ci })).filter(c => c.player === player);
-    if (playerCards.length === 0) return;
+    const allCards = (set.cards || []).map((c, ci) => ({ ...c, ci }));
+    // In single-player mode, narrow to that player. In All mode, keep all.
+    const cardsHere = allMode ? allCards : allCards.filter(c => c.player === selected);
+    if (cardsHere.length === 0) return;
 
     // Always show all variants (rainbow) for player completion
     const variants = (set.parallels && set.parallels.length > 0)
       ? [{ name: 'Base', printRun: '' }, ...set.parallels]
       : [{ name: 'Base', printRun: '' }];
 
+    // Group this set's visible cards by player so each player gets their own
+    // chip row inside the set's expandable body.
+    const byPlayer = new Map();
+    for (const c of cardsHere) {
+      const p = c.player || 'Unknown';
+      if (!byPlayer.has(p)) byPlayer.set(p, []);
+      byPlayer.get(p).push(c);
+    }
+
     let setTotal = 0, setOwned = 0;
-    playerCards.forEach(c => {
+    cardsHere.forEach(c => {
       variants.forEach((v, vi) => {
         setTotal++;
         const key = `${setKey}_c${c.ci}_v${vi}`;
@@ -3959,14 +3986,8 @@ function loadPlayerCompletion() {
       : set.category === 'insert' ? '<span class="checklist-badge insert">INSERT</span>'
       : '<span class="checklist-badge base">BASE</span>';
 
-    const year = completionData.year || '2025';
-    const brand = (completionData.brand || 'Bowman').replace(/'/g, "\\'");
     const setNameEsc = set.name.replace(/'/g, "\\'");
     const category = set.category || 'base';
-    const playerEsc = escHtml(player).replace(/'/g, "\\'");
-    const firstCard = playerCards[0];
-    const cardNum = escHtml(firstCard.number).replace(/'/g, "\\'");
-    const printRun = firstCard.printRun ? String(firstCard.printRun) : '';
 
     html += `<div class="completion-set ${isComplete ? 'complete' : ''}">
       <div class="completion-set-header" onclick="togglePlayerCompletionSet(${si})">
@@ -3975,36 +3996,59 @@ function loadPlayerCompletion() {
         <span class="completion-set-count">${setOwned}/${setTotal} (${pct}%)</span>
         <div class="completion-mini-bar"><div class="completion-mini-fill" style="width:${pct}%"></div></div>
       </div>
-      <div class="completion-set-cards hidden" id="player-completion-cards-${si}">
-        <div class="completion-player-group">
-          <div class="completion-player-header">
-            <span class="completion-player-num">${playerCards.map(c => '#' + escHtml(c.number)).join(', ')}</span>
-            <a href="#" class="completion-player-name" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setNameEsc}', '${category}', '${cardNum}', '${printRun}')">${escHtml(player)}</a>
-            <span class="completion-player-team">${escHtml(firstCard.team || '')}</span>
-            <span class="completion-player-pct ${pct === 100 ? 'complete' : ''}">${setOwned}/${setTotal}</span>
-          </div>
-          <div class="completion-variants">`;
+      <div class="completion-set-cards hidden" id="player-completion-cards-${si}">`;
 
-    playerCards.forEach(c => {
-      variants.forEach((v, vi) => {
-        const key = `${setKey}_c${c.ci}_v${vi}`;
-        const checked = owned[key] ? 'checked' : '';
-        const prDisplay = v.printRun ? ' /' + v.printRun : (c.printRun ? ' /' + c.printRun : '');
-        html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
-          <input type="checkbox" ${checked} onchange="togglePlayerCompletionCard('${productKey}','${key}',this)" />
-          <span>${escHtml(v.name)}${prDisplay}</span>
-        </label>`;
-      });
-    });
+    // One player-group per player in this set
+    for (const [playerName, playerCards] of byPlayer.entries()) {
+      const playerEsc = escHtml(playerName).replace(/'/g, "\\'");
+      const firstCard = playerCards[0];
+      const cardNum = escHtml(firstCard.number).replace(/'/g, "\\'");
+      const printRun = firstCard.printRun ? String(firstCard.printRun) : '';
 
-    html += `</div>
-          <div class="completion-player-listings-slot" id="player-completion-listings-${si}"></div>
+      let pTotal = 0, pOwned = 0;
+      playerCards.forEach(c => variants.forEach((v, vi) => {
+        pTotal++;
+        if (owned[`${setKey}_c${c.ci}_v${vi}`]) pOwned++;
+      }));
+      const pPct = pTotal > 0 ? Math.round((pOwned / pTotal) * 100) : 0;
+
+      html += `<div class="completion-player-group">
+        <div class="completion-player-header">
+          <span class="completion-player-num">${playerCards.map(c => '#' + escHtml(c.number)).join(', ')}</span>
+          <a href="#" class="completion-player-name" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setNameEsc}', '${category}', '${cardNum}', '${printRun}')">${escHtml(playerName)}</a>
+          <span class="completion-player-team">${escHtml(firstCard.team || '')}</span>
+          <span class="completion-player-pct ${pPct === 100 ? 'complete' : ''}">${pOwned}/${pTotal}</span>
         </div>
-      </div>
-    </div>`;
+        <div class="completion-variants">`;
+
+      playerCards.forEach(c => {
+        const cardNumEsc = escHtml(c.number).replace(/'/g, "\\'");
+        variants.forEach((v, vi) => {
+          const key = `${setKey}_c${c.ci}_v${vi}`;
+          const checked = owned[key] ? 'checked' : '';
+          const prDisplay = v.printRun ? ' /' + v.printRun : (c.printRun ? ' /' + c.printRun : '');
+          const variantNameEsc = (v.name || '').replace(/'/g, "\\'");
+          const variantPr = v.printRun ? String(v.printRun) : (c.printRun ? String(c.printRun) : '');
+          html += `<label class="completion-variant-check ${owned[key] ? 'owned' : ''}">
+            <input type="checkbox" ${checked} onchange="togglePlayerCompletionCard('${productKey}','${key}',this)" />
+            <span class="completion-variant-text" onclick="event.preventDefault(); event.stopPropagation(); openVariantListings(this, '${playerEsc}', '${year}', '${brand}', '${setNameEsc}', '${category}', '${cardNumEsc}', '${variantNameEsc}', '${variantPr}')">${escHtml(v.name)}${prDisplay}</span>
+          </label>`;
+        });
+        // Rainbow cost button per card row when Rainbow Mode is on
+        if (rainbowMode && variants.length > 1) {
+          html += `<button class="rainbow-cost-btn" onclick="calculateRainbowCost(this, '${productKey}','${setKey}_c${c.ci}','${playerEsc}','${year}','${brand}','${setNameEsc}','${category}','${cardNumEsc}', ${c.ci})">Rainbow $?</button>`;
+        }
+      });
+
+      html += `</div>
+        <div class="completion-player-listings-slot"></div>
+      </div>`;
+    }
+
+    html += `</div></div>`;
   });
 
-  if (!html) html = '<p style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:2rem;">No cards found for this player in this product.</p>';
+  if (!html) html = '<p style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:2rem;">No cards found for this selection.</p>';
   setsEl.innerHTML = html;
   progressEl.classList.remove('hidden');
 
@@ -4030,9 +4074,16 @@ function togglePlayerCompletionCard(productKey, cardKey, checkbox) {
     delete state[productKey][cardKey];
   }
   saveCompletionState(state);
-  loadPlayerCompletion();
-  // Also refresh set view so counts stay in sync
-  renderCompletionSets();
+
+  // Update label styling in-place — full re-render on every check was both
+  // collapsing the expanded set the user was working in (terrible UX) and
+  // making every click feel laggy (rebuilding 50+ player groups + the set
+  // view from scratch).
+  const label = checkbox.closest('.completion-variant-check');
+  if (label) label.classList.toggle('owned', checkbox.checked);
+
+  // Counts stay accurate without a re-render.
+  updateCompletionCounts();
 }
 
 // ---- Hot/Cold Cards ----
