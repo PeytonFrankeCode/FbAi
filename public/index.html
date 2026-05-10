@@ -131,7 +131,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=42" />
+  <link rel="stylesheet" href="style.css?v=43" />
 
 
 </head>
@@ -474,7 +474,14 @@
       <!-- Set Completion Tab -->
       <div id="coll-completion" class="coll-panel hidden">
         <div class="completion-controls">
-          <select id="completion-product-select" class="completion-select" onchange="loadCompletionProduct()">
+          <div class="cl-combo" id="cl-combo-product" data-target="completion-product-select" data-placeholder="Search a product…">
+            <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Select a product…</span><span class="cl-combo-caret"></span></button>
+            <div class="cl-combo-panel hidden">
+              <input type="text" class="cl-combo-search" placeholder="Type to filter…" autocomplete="off" />
+              <div class="cl-combo-list"></div>
+            </div>
+          </div>
+          <select id="completion-product-select" class="completion-select cl-hidden-select" onchange="loadCompletionProduct()">
             <option value="">Select a product...</option>
           </select>
           <label class="rainbow-toggle">
@@ -497,8 +504,15 @@
         </div>
         <div id="completion-player-panel" style="display:none">
           <div class="completion-player-picker">
-            <select id="completion-player-select" class="completion-select" onchange="loadPlayerCompletion()">
-              <option value="">Select a player...</option>
+            <div class="cl-combo" id="cl-combo-player" data-target="completion-player-select" data-placeholder="Search a player…">
+              <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">All players</span><span class="cl-combo-caret"></span></button>
+              <div class="cl-combo-panel hidden">
+                <input type="text" class="cl-combo-search" placeholder="Type a player name…" autocomplete="off" />
+                <div class="cl-combo-list"></div>
+              </div>
+            </div>
+            <select id="completion-player-select" class="completion-select cl-hidden-select" onchange="loadPlayerCompletion()">
+              <option value="__ALL__">All players</option>
             </select>
           </div>
           <div id="player-completion-progress" class="completion-progress hidden">
@@ -1084,6 +1098,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=41"></script>
 </body>
 </html>

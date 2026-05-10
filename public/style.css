@@ -4819,7 +4819,115 @@ tr:hover .cl-alert-btn {
 .completion-subtab:not(.active):hover { color: var(--text-primary); background: var(--bg-hover, rgba(255,255,255,0.04)); }
 .completion-player-picker { margin-bottom: 1rem; }
 .completion-controls { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
-.completion-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.85rem; color: var(--text-primary); min-width: 200px; flex: 1; }
+/* The native <select> is now a hidden mirror of the visible combobox below.
+   Keep it in the DOM so existing onchange handlers + populate functions
+   continue to work; hide it visually. */
+.cl-hidden-select { display: none !important; }
+
+/* Searchable combobox — replaces the plain <select> for Set Completion's
+   product + player pickers. Matches the rest of the site's modern look:
+   pill-rounded surface, accent focus state, in-panel filter. */
+.cl-combo {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+.cl-combo-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.95rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.cl-combo-toggle:hover { border-color: var(--accent-border); }
+.cl-combo-value {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cl-combo-caret {
+  width: 8px;
+  height: 8px;
+  margin-left: 0.5rem;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+.cl-combo-panel:not(.hidden) ~ .cl-combo-toggle .cl-combo-caret,
+.cl-combo:has(.cl-combo-panel:not(.hidden)) .cl-combo-caret {
+  transform: rotate(-135deg);
+}
+.cl-combo-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px var(--shadow-modal);
+  z-index: 50;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.cl-combo-search {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  background: var(--bg-input);
+  border: none;
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+}
+.cl-combo-search:focus {
+  background: var(--bg-input);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.cl-combo-list {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.cl-combo-item {
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transition-fast);
+}
+.cl-combo-item:hover { background: var(--bg-hover); }
+.cl-combo-item.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+}
+.cl-combo-empty {
+  padding: 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
 /* Register --rainbow-angle so it can interpolate smoothly in animations.
    Without @property, custom-property animations jump between keyframes
    instead of tweening — that's why the previous border looked choppy. */
