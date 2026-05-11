@@ -3399,7 +3399,8 @@ async function loadCompletionProducts() {
     data.products.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = `${p.year} ${p.name}`;
+      // name already contains the year (e.g. "2025 Bowman Football") — don't prepend it again
+      opt.textContent = p.name;
       select.appendChild(opt);
     });
     syncComboboxFromSelect(document.getElementById('cl-combo-product'));
