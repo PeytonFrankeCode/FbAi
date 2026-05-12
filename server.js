@@ -446,6 +446,13 @@ app.get('/api/search', async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   const offset = Math.max(0, Math.min(parseInt(req.query.offset) || 0, 500));
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
+  // Price range filter — only applied in forsale mode (the UI only shows it
+  // there). Bounds are inclusive; anything outside the range is dropped.
+  const minPrice = parseFloat(req.query.minPrice);
+  const maxPrice = parseFloat(req.query.maxPrice);
+  const applyPriceFilter = (items) => mode === 'forsale'
+    ? filterByPriceRange(items, minPrice, maxPrice)
+    : items;
 
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
@@ -476,7 +483,8 @@ app.get('/api/search', async (req, res) => {
         return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
       }
       if (searchData.results.length > 0) {
-        return res.json({ results: searchData.results, total: searchData.total, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, hasMore: searchData.results.length >= limit });
+        const filtered = applyPriceFilter(searchData.results);
+        return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, hasMore: searchData.results.length >= limit });
       }
 
       // No results — try broadened search (same as main search)
@@ -489,8 +497,9 @@ app.get('/api/search', async (req, res) => {
           return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
         }
         if (broadened.results.length > 0) {
-          const approx = computeApproxValue(broadened.results, level.label);
-          return res.json({ results: broadened.results, total: broadened.total, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
+          const filtered = applyPriceFilter(broadened.results);
+          const approx = computeApproxValue(filtered, level.label);
+          return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
         }
       }
 
@@ -646,6 +655,22 @@ function buildBroadenedQueries(parsed) {
 }
 
 const JUNK_KEYWORDS = ['reprint', 'custom', 'proxy', 'read desc', 'read description', 'lot of', ' lot ', 'bundle', 'fake', 'reproduction'];
+
+// Filter results to a [min, max] price range. Both bounds are optional;
+// pass NaN/undefined to skip either side. Items with no parseable price
+// are dropped when either bound is provided so they don't sneak through.
+function filterByPriceRange(results, minPrice, maxPrice) {
+  const hasMin = Number.isFinite(minPrice) && minPrice > 0;
+  const hasMax = Number.isFinite(maxPrice) && maxPrice > 0;
+  if (!hasMin && !hasMax) return results;
+  return results.filter(r => {
+    const p = parseFloat(r.price);
+    if (!Number.isFinite(p) || p <= 0) return false;
+    if (hasMin && p < minPrice) return false;
+    if (hasMax && p > maxPrice) return false;
+    return true;
+  });
+}
 
 function filterJunkListings(results) {
   return results.filter(r => {
@@ -844,6 +869,11 @@ app.get('/api/grading-advisor', async (req, res) => {
 app.get('/api/direct-search', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
+  const minPrice = parseFloat(req.query.minPrice);
+  const maxPrice = parseFloat(req.query.maxPrice);
+  const applyPriceFilter = (items) => mode === 'forsale'
+    ? filterByPriceRange(items, minPrice, maxPrice)
+    : items;
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
@@ -901,11 +931,11 @@ app.get('/api/direct-search', async (req, res) => {
           return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
         });
 
-      // Return exact matches first, then similar
-      const combined = [...exactMatches, ...similarMatches];
+      // Return exact matches first, then similar (price filter applied in forsale)
+      const combined = applyPriceFilter([...exactMatches, ...similarMatches]);
       if (combined.length > 0) {
         const approx = computeApproxValue(exactMatches.length > 0 ? exactMatches : combined.slice(0, 10), 'serial');
-        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: similarMatches.slice(0, 20) });
+        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: applyPriceFilter(similarMatches).slice(0, 20) });
       }
 
       return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [] });
@@ -914,7 +944,8 @@ app.get('/api/direct-search', async (req, res) => {
     // No serial — standard search: try exact first
     const exact = await fetchEbayItems(query, 20, mode, 'variants');
     if (exact.results.length > 0) {
-      return res.json({ results: exact.results, total: exact.total, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
+      const filtered = applyPriceFilter(exact.results);
+      return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
 
     // No exact results — try broadening
@@ -927,8 +958,9 @@ app.get('/api/direct-search', async (req, res) => {
         return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
       }
       if (broadResult.results.length > 0) {
-        const approx = computeApproxValue(broadResult.results, level.label);
-        return res.json({ results: broadResult.results, total: broadResult.total, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
+        const filtered = applyPriceFilter(broadResult.results);
+        const approx = computeApproxValue(filtered, level.label);
+        return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
       }
     }
 
@@ -951,6 +983,8 @@ app.get('/api/direct-search', async (req, res) => {
 app.get('/api/variants', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
+  const minPrice = parseFloat(req.query.minPrice);
+  const maxPrice = parseFloat(req.query.maxPrice);
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
@@ -993,6 +1027,10 @@ app.get('/api/variants', async (req, res) => {
     } else {
       const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
       rawResults = result.results;
+    }
+    // Drop listings outside the user's price range before grouping into variants
+    if (mode === 'forsale') {
+      rawResults = filterByPriceRange(rawResults, minPrice, maxPrice);
     }
     const playerName = extractPlayerName(query);
 
