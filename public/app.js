@@ -1828,7 +1828,7 @@ function setPricingPeriod(period) {
   const yearly = period === 'yearly';
   const priceEl = document.getElementById('pro-price');
   const freqEl = document.getElementById('pro-freq');
-  if (priceEl) { priceEl.textContent = yearly ? '$89.99' : '$9.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
+  if (priceEl) { priceEl.textContent = yearly ? '$39.99' : '$4.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
 }
 
 async function handleSubscribe(plan) {
