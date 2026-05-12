@@ -141,6 +141,14 @@ function parseProduct(lines, header) {
 function isSetHeader(line, lines, idx, useDash) {
   if (!line || line.length === 0 || line.length > 120) return false;
 
+  // Lines that describe a parallel printing — print run, 1/1, or odds
+  // info after a dash — are not set headers. Without this guard, multi-
+  // tier sets like Topps Finest's Common/Uncommon/Rare layout would treat
+  // each parallel sub-line ("Superfractors – 1/1 (1:3,041 hobby, …)") as
+  // its own set, and the actual base-set cards listed below would get
+  // attributed to the last parallel instead of the parent set.
+  if (line.match(/[–\-]\s*(?:1\/1|\/\d+|\()/)) return false;
+
   // Skip known non-headers
   if (line.match(/^(Here'?s|Next Article|Cheap Wax|Ryan Cracknell|THE BECKETT|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|2023|2022|2021|2020|1 COMMENT|Collecting|What does|Copyright|SUBJECT|Please reach|Check out|View |Buy on|Refer to|Highest print|Versions:|Parallels:)/i)) return false;
   if (line.match(/^(Black and|Blue |Choice |Disco|Green |Lazer|Neon|No Huddle|Orange|Pink|Press |Purple|Red |Silver|Snakeskin|Wave|White|Hyper|Navy|Gold |Forest|Stars Black|Pandora|Aqueous|Canvas|Yellow|Color Blast|Kaboom|Mojo|Camo|Fluorescent|Galactic|Genesis|Stained Glass|National Pride|Reactive|Mosaic|Nebula|Peacock|Snow|Tiger|Burst|Shimmer|Cracked Ice|Vinyl|Finite|Sparkle|Scope|Knight|Power|Cherry|Die-Cut|Mirror |Brand Logo|Heel Logo|Interstellar|Meta |Universal|Splatter|Psychedelic|Spectris|Supernova)/i) && !line.match(/Checklist/i)) return false;
@@ -335,10 +343,11 @@ function isCardDataLine(line, useDash) {
   if (line.match(/^\d+\s+[A-Z][a-z].*,\s*[A-Z]/)) return true;
   // Numbered cards with dash: "1 Player Name - Team"
   if (useDash && line.match(/^\d+\s+[A-Z][a-z].*\s-\s[A-Z]/)) return true;
-  // Prefixed cards: "ABC-1 Player Name, Team"
-  if (line.match(/^[A-Z]{1,6}-[A-Z0-9]+\s+[A-Z][a-z].*,\s*[A-Z]/)) return true;
-  // Prefixed cards with dash separator: "ABC-1 Player Name - Team"
-  if (line.match(/^[A-Z]{1,6}-[A-Z0-9]+\s+[A-Z][a-z].*\s-\s[A-Z]/)) return true;
+  // Prefixed cards: "ABC-1 Player, Team" — prefix may start with digits
+  // (e.g. 74TF-1 for 1974 Topps Football), as long as it contains a letter.
+  if (line.match(/^\d*[A-Z][A-Z0-9]{0,5}-[A-Z0-9]+\s+[A-Z][a-z].*,\s*[A-Z]/)) return true;
+  // Prefixed cards with dash separator
+  if (line.match(/^\d*[A-Z][A-Z0-9]{0,5}-[A-Z0-9]+\s+[A-Z][a-z].*\s-\s[A-Z]/)) return true;
   // Cards starting with "Rookies 101 Caleb..." (inline sub-header)
   if (line.match(/^(?:Rookies|Legends|Veterans)\s+\d+\s+[A-Z]/i)) return true;
   return false;
@@ -350,9 +359,10 @@ function parseCardLine(line, useDash) {
   // Strip inline sub-headers like "Rookies " or "Legends "
   let cleanLine = line.replace(/^(?:Rookies|Legends|Veterans)\s+(?=\d)/i, '');
 
-  // Prefixed cards
-  if (cleanLine.match(/^[A-Z]{1,6}-[A-Z0-9]/)) {
-    const entries = cleanLine.split(/(?=(?:[A-Z]{1,6}-[A-Za-z0-9]+\s))/);
+  // Prefixed cards — accept prefixes that start with digits (e.g. 74TF-1)
+  // as long as they contain at least one letter before the dash.
+  if (cleanLine.match(/^\d*[A-Z][A-Z0-9]{0,5}-[A-Z0-9]/)) {
+    const entries = cleanLine.split(/(?=(?:\d*[A-Z][A-Z0-9]{0,5}-[A-Za-z0-9]+\s))/);
     for (const entry of entries) {
       const parsed = parseSingleCard(entry.trim(), true, useDash);
       if (parsed) cards.push(parsed);
