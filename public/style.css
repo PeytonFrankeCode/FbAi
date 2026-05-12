@@ -1117,17 +1117,21 @@ header {
   flex-shrink: 0;
 }
 
-/* Memberships removed — hide all paid-tier UI surfaces. */
-.pro-feature-badge,
-.proplus-nav-badge,
-.header-pro,
-.pricing-overlay,
+/* Pro membership active for two features: Tracked Cards + Pro Tools.
+   Collection / Watchlist / Promote are free now — their gates are no longer
+   shown. The pricing-overlay, tracked-gate, and proplus-gate are NOT in this
+   list because they need to be visible when their JS unhides them. */
 .collection-gate,
-.tracked-gate,
-.proplus-gate,
 .promote-gate,
 .chart-depth-upgrade {
   display: none !important;
+}
+
+/* Pricing modal: shorter two-tier grid (was three-tier) */
+.pricing-cards.pricing-cards--two {
+  grid-template-columns: 1fr 1fr;
+  max-width: 560px;
+  margin: 0 auto;
 }
 
 header::before {

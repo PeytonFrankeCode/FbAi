@@ -58,16 +58,9 @@
       {
         "@type": "Offer",
         "name": "Pro",
-        "price": "4.99",
+        "price": "9.99",
         "priceCurrency": "USD",
-        "description": "Full 1-year price history and price alerts for up to 10 cards"
-      },
-      {
-        "@type": "Offer",
-        "name": "Pro+",
-        "price": "19.99",
-        "priceCurrency": "USD",
-        "description": "Flip Finder, Market Movers, Auto-Pricer, Bulk CSV Pricer, and 50 price alerts"
+        "description": "Tracked Cards with price alerts, Flip Finder, Market Movers, Auto-Pricer, Bulk CSV Pricer"
       }
     ]
   }
@@ -131,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=43" />
+  <link rel="stylesheet" href="style.css?v=44" />
 
 
 </head>
@@ -163,13 +156,13 @@
     <nav class="header-nav">
       <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
       <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
-      <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
+      <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection</button>
       <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
       <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
       </button>
-      <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro+ Tools <span class="proplus-nav-badge">PRO+</span></button>
+      <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro Tools <span class="proplus-nav-badge">PRO</span></button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -211,7 +204,7 @@
         <span class="pricing-save-badge">Save big yearly</span>
       </div>
 
-      <div class="pricing-cards">
+      <div class="pricing-cards pricing-cards--two">
         <div class="pricing-card">
           <h3 class="pricing-tier">Free</h3>
           <div class="pricing-price"><span class="pricing-amount">$0</span><span class="pricing-freq">/mo</span></div>
@@ -221,48 +214,28 @@
             <li class="included">Grade value breakdown</li>
             <li class="included">Collection &amp; Portfolio</li>
             <li class="included">NFL checklists</li>
-            <li class="excluded">Full price history (1 year)</li>
-            <li class="excluded">Price alerts</li>
-            <li class="excluded">Pro+ tools</li>
+            <li class="excluded">Tracked Cards (price alerts)</li>
+            <li class="excluded">Pro Tools (Flip Finder, Market Movers, Auto-Pricer, Bulk Pricer)</li>
           </ul>
           <button class="pricing-cta free" onclick="closePricing()">Current Plan</button>
         </div>
 
         <div class="pricing-card featured">
-          <div class="pricing-badge">Most Popular</div>
+          <div class="pricing-badge">Unlock everything</div>
           <h3 class="pricing-tier">Pro</h3>
           <div class="pricing-price">
-            <span class="pricing-amount" id="pro-price">$4.99</span>
+            <span class="pricing-amount" id="pro-price">$9.99</span>
             <span class="pricing-freq" id="pro-freq">/mo</span>
           </div>
           <ul class="pricing-features">
             <li class="included">Everything in Free</li>
-            <li class="included">Full price history (1 year)</li>
-            <li class="included">Price alerts (up to 10 cards)</li>
-            <li class="excluded">Flip Finder</li>
-            <li class="excluded">Market Movers</li>
-            <li class="excluded">Auto-Pricer</li>
-            <li class="excluded">Bulk CSV Pricer</li>
-          </ul>
-          <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
-        </div>
-
-        <div class="pricing-card proplus-card">
-          <div class="pricing-badge proplus-badge">For Dealers</div>
-          <h3 class="pricing-tier">Pro+</h3>
-          <div class="pricing-price">
-            <span class="pricing-amount" id="proplus-price">$19.99</span>
-            <span class="pricing-freq" id="proplus-freq">/mo</span>
-          </div>
-          <ul class="pricing-features">
-            <li class="included">Everything in Pro</li>
+            <li class="included">Tracked Cards — price alerts via email</li>
             <li class="included">Flip Finder — spot underpriced deals</li>
             <li class="included">Market Movers — catch price surges</li>
             <li class="included">Auto-Pricer — optimal listing prices</li>
             <li class="included">Bulk CSV Pricer (20 cards at once)</li>
-            <li class="included">Price alerts (up to 50 cards)</li>
           </ul>
-          <button class="pricing-cta proplus" onclick="handleSubscribe('proplus')">Get Pro+</button>
+          <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
         </div>
       </div>
     </div>
@@ -429,7 +402,7 @@
         <div class="collection-tabs">
           <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
           <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
-          <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist <span class="tab-pro-badge">PRO</span></button>
+          <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist</button>
           <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
           <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
 
@@ -463,8 +436,8 @@
         <div class="portfolio-actions">
           <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
           <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
-          <button class="portfolio-action-btn portfolio-action-btn--pro" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Market Values <span class="pro-badge-inline">PRO</span></button>
-          <button class="portfolio-action-btn portfolio-action-btn--pro" onclick="generateMarketReport()">&#128196; Market Report <span class="pro-badge-inline">PRO</span></button>
+          <button class="portfolio-action-btn" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Market Values</button>
+          <button class="portfolio-action-btn" onclick="generateMarketReport()">&#128196; Market Report</button>
         </div>
         <div id="portfolio-list" class="portfolio-list">
           <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
@@ -633,7 +606,7 @@
           <button class="seller-subtab active" data-seller="create" onclick="switchSellerTab('create')">Create Listing</button>
           <button class="seller-subtab" data-seller="mylistings" onclick="switchSellerTab('mylistings')">My Listings</button>
           <button class="seller-subtab" data-seller="titlegenerator" onclick="switchSellerTab('titlegenerator')">Title Generator</button>
-          <button class="seller-subtab" data-seller="promote" onclick="switchSellerTab('promote')">Promote Cards <span class="pro-feature-badge" style="font-size:0.5rem;margin-left:4px;">PRO</span></button>
+          <button class="seller-subtab" data-seller="promote" onclick="switchSellerTab('promote')">Promote Cards</button>
         </div>
       </div>
 
@@ -935,23 +908,23 @@
     </div>
   </div>
 
-  <!-- Pro+ Tools View -->
+  <!-- Pro Tools View -->
   <div id="proplus-view" class="proplus-view hidden">
     <div class="proplus-container">
 
-      <!-- Gate for non-Pro+ users -->
+      <!-- Gate for non-Pro users -->
       <div id="proplus-gate" class="proplus-gate hidden">
         <div class="proplus-gate-icon">&#9889;</div>
-        <h2>Pro+ Tools</h2>
+        <h2>Pro Tools</h2>
         <p>Flip Finder, Market Movers, Auto-Pricer, Bulk Pricing and more — built for serious dealers and resellers.</p>
-        <button class="proplus-upgrade-btn" onclick="showPricing()">Upgrade to Pro+ — $19.99/mo</button>
+        <button class="proplus-upgrade-btn" onclick="showPricing()">Upgrade to Pro — $9.99/mo</button>
       </div>
 
-      <!-- Pro+ Content -->
+      <!-- Pro Content -->
       <div id="proplus-content" class="hidden">
         <div class="proplus-header">
-          <h2 class="proplus-title">Pro+ Tools</h2>
-          <span class="proplus-badge-label">&#9889; PRO+</span>
+          <h2 class="proplus-title">Pro Tools</h2>
+          <span class="proplus-badge-label">&#9889; PRO</span>
         </div>
 
         <!-- Sub-tabs -->
@@ -1098,6 +1071,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=42"></script>
+  <script src="app.js?v=43"></script>
 </body>
 </html>

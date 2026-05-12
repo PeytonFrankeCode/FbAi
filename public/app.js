@@ -133,11 +133,38 @@ document.addEventListener('click', function(e) {
   if (e.target === overlay) closeSettings();
 });
 
-// ---- Tracked Cards / Card Alerts ----
+// ---- Tracked Cards / Card Alerts (Pro feature) ----
 
 function initTrackedView() {
   const gate = document.getElementById('tracked-gate');
   const content = document.getElementById('tracked-content');
+  const upgradeBtn = document.getElementById('tracked-upgrade-btn');
+  const user = getCurrentUser();
+
+  // Logged-out users: prompt to sign in
+  if (!user) {
+    if (gate) {
+      gate.classList.remove('hidden');
+      gate.querySelector('h3').textContent = 'Sign in to track cards';
+      gate.querySelector('p').textContent = 'Tracked Cards is a Pro feature. Log in or create an account to get started.';
+      if (upgradeBtn) { upgradeBtn.textContent = 'Log In'; upgradeBtn.onclick = () => showLogin(); }
+    }
+    if (content) content.classList.add('hidden');
+    return;
+  }
+
+  // Logged in without Pro: prompt to upgrade
+  if (!hasPro()) {
+    if (gate) {
+      gate.classList.remove('hidden');
+      gate.querySelector('h3').textContent = 'Pro Feature';
+      gate.querySelector('p').textContent = 'Tracked Cards with price alerts is part of the Pro plan.';
+      if (upgradeBtn) { upgradeBtn.textContent = 'Upgrade to Pro'; upgradeBtn.onclick = () => showPricing(); }
+    }
+    if (content) content.classList.add('hidden');
+    return;
+  }
+
   if (gate) gate.classList.add('hidden');
   if (content) content.classList.remove('hidden');
   loadTrackedCards();
@@ -1786,9 +1813,9 @@ const proBtn = document.getElementById('pro-btn');
 const proBtnText = document.getElementById('pro-btn-text');
 let pricingPeriod = 'monthly';
 
-// Memberships removed — pricing modal stays in DOM in case Stripe-related
-// code still references it, but never shows.
-function showPricing() { /* no-op: memberships removed */ }
+function showPricing() {
+  if (pricingOverlay) pricingOverlay.classList.remove('hidden');
+}
 function closePricing() {
   if (pricingOverlay) pricingOverlay.classList.add('hidden');
 }
@@ -1801,10 +1828,7 @@ function setPricingPeriod(period) {
   const yearly = period === 'yearly';
   const priceEl = document.getElementById('pro-price');
   const freqEl = document.getElementById('pro-freq');
-  if (priceEl) { priceEl.textContent = yearly ? '$39.99' : '$4.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
-  const ppEl = document.getElementById('proplus-price');
-  const ppFreqEl = document.getElementById('proplus-freq');
-  if (ppEl) { ppEl.textContent = yearly ? '$199.99' : '$19.99'; ppFreqEl.textContent = yearly ? '/yr' : '/mo'; }
+  if (priceEl) { priceEl.textContent = yearly ? '$89.99' : '$9.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
 }
 
 async function handleSubscribe(plan) {
@@ -1851,16 +1875,25 @@ async function handleSubscribe(plan) {
   closePricing();
 }
 
-// Memberships removed — every feature is open. These helpers stay for any
-// code that still calls them, but they always say "you have access".
+// One paid tier called 'pro'. Reads from localStorage, server-synced via
+// syncSubscriptionStatus on login. Pro unlocks Tracked Cards and Pro Tools.
 function getUserSubscription() {
-  return { plan: 'free', status: 'active' };
+  const user = getCurrentUser();
+  if (!user) return null;
+  const users = getUsers();
+  return users[user.toLowerCase()]?.subscription || null;
 }
 
-function isProPlus() { return true; }
-
-function isProOrPlus() { return true;
+function hasPro() {
+  const sub = getUserSubscription();
+  return sub?.plan === 'pro' && sub?.status === 'active';
 }
+
+// Back-compat: isProPlus is the strict Pro-tier check used by Tracked Cards
+// and Pro Tools gates. isProOrPlus is sprinkled in many features that the
+// user wants to remain free, so it always returns true now.
+function isProPlus() { return hasPro(); }
+function isProOrPlus() { return true; }
 
 // Sync subscription status from server (called on login and page load)
 async function syncSubscriptionStatus() {
@@ -1995,8 +2028,14 @@ function switchView(view) {
 function initProPlusView() {
   const gate = document.getElementById('proplus-gate');
   const content = document.getElementById('proplus-content');
-  if (gate) gate.classList.add('hidden');
-  if (content) content.classList.remove('hidden');
+  if (!gate || !content) return;
+  if (hasPro()) {
+    gate.classList.add('hidden');
+    content.classList.remove('hidden');
+  } else {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+  }
 }
 
 function switchProPlusTab(tab) {
