@@ -588,7 +588,14 @@ function consolidateSets(sets) {
   return result;
 }
 
-main().catch(err => {
-  console.error('Error:', err);
-  process.exit(1);
-});
+main.parseProduct = parseProduct;
+main.consolidateSets = consolidateSets;
+module.exports = { parseProduct, consolidateSets };
+
+// Only run main when invoked directly, not when imported
+if (require.main === module) {
+  main().catch(err => {
+    console.error('Error:', err);
+    process.exit(1);
+  });
+}
