@@ -14,19 +14,48 @@ const fs = require('fs');
 const path = require('path');
 const { parseProduct, consolidateSets } = require('../parse-2024-checklist.js');
 
+// Escape a string for use inside a RegExp
+function escapeReg(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
 const DOCX_PATH = path.join(__dirname, '..', 'Peyton Code - Panini+Topps - Checklist 2024.docx');
 const OUT_DIR = path.join(__dirname, '..', 'public', 'data', 'checklists');
 const INDEX_PATH = path.join(OUT_DIR, 'index.json');
 
-// Short brand label for each product (shown in some UI bits).
+// Short brand label for each product (shown in some UI bits). Covers all
+// 42 detected 2024 products so this script can re-parse the whole 2024
+// catalog with the fixed parser, not just newly-missing ones.
 const BRAND_BY_PRODUCT = new Map([
+  // Donruss family
+  ['2024 Donruss Football', 'Donruss'],
   ['2024 Donruss Optic Football', 'Donruss Optic'],
+  ['2024 Donruss Optic Draft Picks Football', 'Donruss Optic Draft Picks'],
   ['2024 Donruss Elite Football', 'Donruss Elite'],
   ['2024 Clearly Donruss Football', 'Clearly Donruss'],
   ['2024 Score Football', 'Score'],
+  // Panini mid-tier
+  ['2024 Panini Prizm Football', 'Prizm'],
+  ['2024 Panini Prizm Deca Football', 'Prizm Deca'],
+  ['2024 Panini Prizm Draft Picks Football', 'Prizm Draft Picks'],
+  ['2024 Panini Mosaic Football', 'Mosaic'],
+  ['2024 Panini Phoenix Football', 'Phoenix'],
+  ['2024 Panini Prestige Football', 'Prestige'],
+  ['2024 Panini Contenders Football', 'Contenders'],
+  ['2024 Panini Contenders Optic Football', 'Contenders Optic'],
+  ['2024 Panini Certified Football', 'Certified'],
+  ['2024 Panini Totally Certified Football', 'Totally Certified'],
+  ['2024 Panini Absolute Football', 'Absolute'],
+  ['2024 Panini Illusions Football', 'Illusions'],
+  ['2024 Panini Rookies & Stars Football', 'Rookies & Stars'],
+  ['2024 Panini Luminance Football', 'Luminance'],
+  ['2024 Panini Zenith Football', 'Zenith'],
+  ['2024 Panini Encore Football', 'Encore'],
+  ['2024 Panini Obsidian Football', 'Obsidian'],
+  ['2024 Panini Origins Football', 'Origins'],
+  ['2024 Panini Photogenic Football', 'Photogenic'],
   ['2024 Panini Select Football', 'Select'],
   ['2024 Panini Spectra Football', 'Spectra'],
   ['2024 Panini Black Football', 'Black'],
+  // Panini high-end
   ['2024 Panini Gold Standard Football', 'Gold Standard'],
   ['2024 Panini Immaculate Football', 'Immaculate'],
   ['2024 Panini Impeccable Football', 'Impeccable'],
@@ -35,12 +64,17 @@ const BRAND_BY_PRODUCT = new Map([
   ['2024 Panini Eminence Football', 'Eminence'],
   ['2024 Panini Flawless Football', 'Flawless'],
   ['2024 Panini National Treasures Collegiate Football', 'National Treasures Collegiate'],
+  // Topps
+  ['2024 Topps Midnight Football', 'Topps Midnight'],
   ['2024 Topps Finest Football', 'Topps Finest'],
   ['2024 Topps Chrome Football', 'Topps Chrome'],
   ['2024 Topps Cosmic Chrome Football', 'Topps Cosmic Chrome'],
   ['2024 Topps Resurgence Football', 'Topps Resurgence'],
   ['2024 Topps Signature Class Football', 'Topps Signature Class'],
 ]);
+
+// Totally Certified uses dash separators between number and player name
+const DASH_SEP_PRODUCTS = new Set(['2024 Panini Totally Certified Football']);
 
 async function main() {
   const result = await mammoth.extractRawText({ path: DOCX_PATH });
@@ -74,10 +108,22 @@ async function main() {
   for (const target of targets) {
     const next = detected.find(d => d.line > target.line);
     const endLine = next ? next.line : allLines.length;
-    const lines = allLines.slice(target.line, endLine);
-    const header = { name: target.name, brand: BRAND_BY_PRODUCT.get(target.name) };
-    console.log(`\nParsing ${target.name} (lines ${target.line}-${endLine}, ${lines.length} lines)`);
-    const product = parseProduct(lines, header);
+    // Build the line slice. Include the next product's start line BUT
+    // trimmed at the point where this product's content ends and the next
+    // product's header begins — mammoth glues them onto the same line.
+    const slice = allLines.slice(target.line, endLine + (next ? 1 : 0));
+    if (next) {
+      const last = slice[slice.length - 1] || '';
+      const headerStart = last.search(new RegExp(`${escapeReg(next.name)}\\s+Checklist`, 'i'));
+      slice[slice.length - 1] = headerStart >= 0 ? last.slice(0, headerStart) : '';
+    }
+    const header = {
+      name: target.name,
+      brand: BRAND_BY_PRODUCT.get(target.name),
+      dashSep: DASH_SEP_PRODUCTS.has(target.name),
+    };
+    console.log(`\nParsing ${target.name} (lines ${target.line}-${endLine}, ${slice.length} lines)`);
+    const product = parseProduct(slice, header);
     if (!product || !product.sets || product.sets.length === 0) {
       console.log('  -> no sets found, skipping');
       continue;
