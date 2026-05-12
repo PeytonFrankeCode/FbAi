@@ -410,11 +410,11 @@ async function fetchViaEbayApiData(keywords, limit = 20, source = 'unknown') {
 
 // ---- Shared fetch function ----
 // mode: 'forsale' (eBay Browse API) or 'sold' (EbayApiData)
+// Cache disabled for both modes per user request — every search hits the
+// upstream APIs fresh so users always see current listings/prices. The
+// in-memory ebayCache + getCached/setCache helpers stay in the file for
+// the unrelated marketplace endpoint to use.
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0) {
-  const cacheKey = `${mode}|${keywords}|${limit}|${offset}`;
-  const cached = getCached(cacheKey);
-  if (cached) return cached;
-
   if (mode === 'sold') {
     if (!EBAY_API_DATA_ENABLED) {
       console.log(`[Sold] EbayApiData not configured — add EBAY_API_DATA_KEY to .env`);
@@ -423,15 +423,11 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     const response = await fetchViaEbayApiData(keywords, limit, source);
     const filtered = { ...response, results: filterJunkListings(response.results) };
     filtered.total = filtered.results.length;
-    if (filtered.results.length > 0) setCache(cacheKey, filtered);
     return filtered;
   }
 
   // For sale mode — eBay Browse API
   const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source, offset));
-  if (response && !response.rateLimited) {
-    setCache(cacheKey, response);
-  }
   return response;
 }
 
