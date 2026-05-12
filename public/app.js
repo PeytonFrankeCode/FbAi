@@ -387,6 +387,12 @@ function renderRecentSearches() {
 renderRecentSearches();
 
 // ---- Mode Tabs ----
+function updatePriceFilterVisibility() {
+  const wrap = document.getElementById('price-filter');
+  if (!wrap) return;
+  wrap.classList.toggle('hidden', currentMode !== 'forsale');
+}
+
 document.querySelectorAll('.mode-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     const newMode = tab.dataset.mode;
@@ -395,11 +401,45 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
     document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     cachedVariants = null; // clear cached variants since mode changed
+    updatePriceFilterVisibility();
     // Re-run current search if there's an active query
     const query = input.value.trim();
     if (query) fetchDirectSearch(query);
   });
 });
+
+// Initial visibility + clear button wiring
+updatePriceFilterVisibility();
+document.getElementById('price-filter-clear')?.addEventListener('click', () => {
+  document.getElementById('min-price').value = '';
+  document.getElementById('max-price').value = '';
+  const query = input.value.trim();
+  if (query && currentMode === 'forsale') fetchDirectSearch(query);
+});
+// Re-run search on Enter in the price fields
+['min-price', 'max-price'].forEach(id => {
+  document.getElementById(id)?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const query = input.value.trim();
+      if (query && currentMode === 'forsale') fetchDirectSearch(query);
+    }
+  });
+});
+
+// Reads current price filter values; returns { min, max } with non-finite
+// values omitted. Used by every search call site so a user-set range
+// propagates through variants → search → load-more.
+function getPriceFilter() {
+  const minRaw = document.getElementById('min-price')?.value;
+  const maxRaw = document.getElementById('max-price')?.value;
+  const out = {};
+  const min = parseFloat(minRaw);
+  const max = parseFloat(maxRaw);
+  if (Number.isFinite(min) && min > 0) out.min = min;
+  if (Number.isFinite(max) && max > 0) out.max = max;
+  return out;
+}
 
 // ---- Sort Controls ----
 document.querySelectorAll('.sort-btn').forEach(sortBtn => {
@@ -607,6 +647,11 @@ async function fetchVariants(query) {
 
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
+    if (currentMode === 'forsale') {
+      const f = getPriceFilter();
+      if (f.min != null) params.set('minPrice', String(f.min));
+      if (f.max != null) params.set('maxPrice', String(f.max));
+    }
     const response = await fetch(`/api/variants?${params}`, {
       headers: {},
     });
@@ -760,6 +805,11 @@ async function fetchDirectSearch(query) {
 
   try {
     const params = new URLSearchParams({ q: query, mode: currentMode });
+    if (currentMode === 'forsale') {
+      const f = getPriceFilter();
+      if (f.min != null) params.set('minPrice', String(f.min));
+      if (f.max != null) params.set('maxPrice', String(f.max));
+    }
     const response = await fetch(`/api/direct-search?${params}`, {
       headers: {},
     });
@@ -908,6 +958,11 @@ async function performSearch(query) {
 
   try {
     const params = new URLSearchParams({ q: query, limit: '50', mode: currentMode });
+    if (currentMode === 'forsale') {
+      const f = getPriceFilter();
+      if (f.min != null) params.set('minPrice', String(f.min));
+      if (f.max != null) params.set('maxPrice', String(f.max));
+    }
     const response = await fetch(`/api/search?${params}`, {
       headers: {},
     });
@@ -1313,6 +1368,11 @@ async function fetchMoreFromServer(grid) {
   try {
     const nextOffset = _searchPaging.offset + 50;
     const params = new URLSearchParams({ q: _searchPaging.query, limit: '50', offset: String(nextOffset), mode: _searchPaging.mode });
+    if (_searchPaging.mode === 'forsale') {
+      const f = getPriceFilter();
+      if (f.min != null) params.set('minPrice', String(f.min));
+      if (f.max != null) params.set('maxPrice', String(f.max));
+    }
     const response = await fetch(`/api/search?${params}`);
     const data = await safeJson(response);
     if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);

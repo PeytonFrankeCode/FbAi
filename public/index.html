@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=45" />
+  <link rel="stylesheet" href="style.css?v=46" />
 
 
 </head>
@@ -259,6 +259,22 @@
       <div id="mode-tabs" class="mode-tabs">
         <button class="mode-tab" data-mode="forsale">For Sale</button>
         <button class="mode-tab active" data-mode="sold">Sold</button>
+      </div>
+      <!-- Price range filter — visible only in For Sale mode. The eBay
+           Browse API gets fed minPrice/maxPrice and we also drop anything
+           outside the range client-side as a safety net. -->
+      <div id="price-filter" class="price-filter hidden">
+        <span class="price-filter-label">Price range</span>
+        <div class="price-filter-input-wrap">
+          <span class="price-filter-prefix">$</span>
+          <input type="number" id="min-price" placeholder="Min" min="0" step="1" inputmode="decimal" />
+        </div>
+        <span class="price-filter-dash">–</span>
+        <div class="price-filter-input-wrap">
+          <span class="price-filter-prefix">$</span>
+          <input type="number" id="max-price" placeholder="Max" min="0" step="1" inputmode="decimal" />
+        </div>
+        <button type="button" id="price-filter-clear" class="price-filter-clear" title="Clear price filter">&times;</button>
       </div>
       <div id="search-meta" class="search-meta hidden"></div>
     </section>
@@ -1071,6 +1087,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=44"></script>
+  <script src="app.js?v=45"></script>
 </body>
 </html>
