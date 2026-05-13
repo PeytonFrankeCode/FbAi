@@ -52,6 +52,19 @@ async function fetchChecklistProduct(productId) {
   return product;
 }
 
+// Build the variant list for one checklist set. The parser sometimes
+// returns parallels:[{name:'Base'}] when no real parallels were detected;
+// without this helper, every chip-rendering call site was prepending its
+// own 'Base' on top of that one, producing two duplicate Base chips.
+// Filters out any parallel that's just 'Base' (case-insensitive) so the
+// prepended Base is the only one.
+function buildVariants(set, baseExtras = {}) {
+  const real = (set && Array.isArray(set.parallels))
+    ? set.parallels.filter(p => p && String(p.name).trim().toLowerCase() !== 'base')
+    : [];
+  return [{ name: 'Base', printRun: '', ...baseExtras }, ...real];
+}
+
 // Read a fetch Response as JSON, tolerating empty bodies and HTML error pages.
 // Throws an informative Error if the body isn't parseable so the caller's
 // catch block can render a useful message instead of a cryptic engine error.
@@ -3570,9 +3583,7 @@ function renderCompletionSets() {
   completionData.sets.forEach((set, si) => {
     const setKey = `s${si}`;
     const cards = set.cards || [];
-    const allVariants = (set.parallels && set.parallels.length > 0)
-      ? [{ name: 'Base', printRun: '' }, ...set.parallels]
-      : [{ name: 'Base', printRun: '' }];
+    const allVariants = buildVariants(set);
 
     // Determine which variants to show based on filter
     const activeFilter = completionVariantFilters[si];
@@ -3733,9 +3744,7 @@ function updateCompletionCounts() {
   completionData.sets.forEach((set, si) => {
     const setKey = `s${si}`;
     const cards = set.cards || [];
-    const variants = (set.parallels && set.parallels.length > 0)
-      ? [{ name: 'Base', printRun: '' }, ...set.parallels]
-      : [{ name: 'Base', printRun: '' }];
+    const variants = buildVariants(set);
     let setTotal = 0, setOwned = 0;
 
     cards.forEach((c, ci) => {
@@ -3967,9 +3976,7 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
   const card = (targetSet.cards || [])[ci];
   if (!card) { btn.textContent = 'Rainbow: card missing'; return; }
 
-  const variants = (targetSet.parallels && targetSet.parallels.length)
-    ? [{ name: 'Base', printRun: card.printRun || '' }, ...targetSet.parallels]
-    : [{ name: 'Base', printRun: card.printRun || '' }];
+  const variants = buildVariants(targetSet, { printRun: card.printRun || '' });
 
   btn.disabled = true;
   btn.textContent = `Pricing 0/${variants.length}…`;
@@ -4226,9 +4233,7 @@ function loadPlayerCompletion() {
     if (cardsHere.length === 0) return;
 
     // Always show all variants (rainbow) for player completion
-    const variants = (set.parallels && set.parallels.length > 0)
-      ? [{ name: 'Base', printRun: '' }, ...set.parallels]
-      : [{ name: 'Base', printRun: '' }];
+    const variants = buildVariants(set);
 
     // Group this set's visible cards by player so each player gets their own
     // chip row inside the set's expandable body.
