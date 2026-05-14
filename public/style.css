@@ -4919,6 +4919,11 @@ tr:hover .cl-alert-btn {
 .completion-subtab { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
 .completion-subtab.active { background: var(--accent, #10b981); color: #fff; }
 .completion-subtab:not(.active):hover { color: var(--text-primary); background: var(--bg-hover, rgba(255,255,255,0.04)); }
+.checklist-subtabs { display: flex; gap: 0.25rem; margin: 0 0 1.25rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem; width: fit-content; }
+.checklist-subtab { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding: 0.45rem 1.1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+.checklist-subtab.active { background: var(--accent, #10b981); color: #fff; }
+.checklist-subtab:not(.active):hover { color: var(--text-primary); background: var(--bg-hover, rgba(255,255,255,0.04)); }
+.checklist-pane.hidden { display: none; }
 .completion-player-picker { margin-bottom: 1rem; }
 .completion-controls { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
 /* The native <select> is now a hidden mirror of the visible combobox below.

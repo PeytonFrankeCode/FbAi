@@ -3023,7 +3023,6 @@ function initCollectionView() {
   if (gate) gate.classList.add('hidden');
   if (content) content.classList.remove('hidden');
   renderPortfolio();
-  loadCompletionProducts();
 }
 
 function switchCollectionTab(tab) {
@@ -3032,8 +3031,14 @@ function switchCollectionTab(tab) {
   const panel = document.getElementById(`coll-${tab}`);
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
-  if (tab === 'completion') loadCompletionProducts();
   if (tab === 'watchlist') renderWatchlist();
+}
+
+function switchChecklistSubtab(tab) {
+  document.querySelectorAll('.checklist-subtab').forEach(b => b.classList.toggle('active', b.dataset.cltab === tab));
+  document.getElementById('checklist-pane-browse').classList.toggle('hidden', tab !== 'browse');
+  document.getElementById('checklist-pane-completion').classList.toggle('hidden', tab !== 'completion');
+  if (tab === 'completion') loadCompletionProducts();
 }
 
 function renderPortfolio() {
@@ -3921,7 +3926,7 @@ function openVariantListings(spanEl, player, year, brand, setName, category, car
 
 async function fetchVariantListings(container, query, variantName, printRun) {
   try {
-    const res = await fetch(`/api/search?${new URLSearchParams({ q: query, mode: 'forsale', limit: '40' })}`);
+    const res = await fetch(`/api/search?${new URLSearchParams({ q: query, mode: 'forsale', limit: '100' })}`);
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
     const results = filterStrictVariant(data.results || [], variantName, printRun);
@@ -3930,7 +3935,7 @@ async function fetchVariantListings(container, query, variantName, printRun) {
       return;
     }
     results.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-    container.innerHTML = '<div class="cl-listings-grid">' + results.slice(0, 12).map(item => `
+    container.innerHTML = '<div class="cl-listings-grid">' + results.map(item => `
       <a class="cl-listing-item" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
         ${item.imageUrl ? `<img class="cl-listing-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="cl-listing-noimg">&#127183;</div>'}
         <div class="cl-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
@@ -5363,7 +5368,7 @@ async function fetchPlayerListings(container, query, mode) {
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
 
   try {
-    const params = new URLSearchParams({ q: query, mode: mode, limit: '12' });
+    const params = new URLSearchParams({ q: query, mode: mode, limit: mode === 'forsale' ? '100' : '50' });
     const response = await fetch(`/api/search?${params}`);
     const data = await response.json();
 

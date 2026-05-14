@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=48" />
+  <link rel="stylesheet" href="style.css?v=49" />
 
 
 </head>
@@ -362,6 +362,12 @@
   <!-- Checklist View (hidden by default) -->
   <div id="checklist-view" class="checklist-view hidden">
     <div class="checklist-container">
+      <div class="checklist-subtabs">
+        <button class="checklist-subtab active" data-cltab="browse" onclick="switchChecklistSubtab('browse')">Browse</button>
+        <button class="checklist-subtab" data-cltab="completion" onclick="switchChecklistSubtab('completion')">Set Completion</button>
+      </div>
+
+      <div id="checklist-pane-browse" class="checklist-pane">
       <!-- Product selector -->
       <div id="checklist-products" class="checklist-products">
         <h2 class="checklist-page-title">Browse Checklists</h2>
@@ -395,73 +401,9 @@
         <!-- Sets list -->
         <div id="checklist-sets" class="checklist-sets"></div>
       </div>
-    </div>
-  </div>
+      </div><!-- /#checklist-pane-browse -->
 
-  <!-- Collection View -->
-  <div id="collection-view" class="collection-view hidden">
-
-    <!-- Not logged in / Not Pro gate -->
-    <div id="collection-gate" class="tracked-gate hidden">
-      <div class="tracked-gate-icon">&#127915;</div>
-      <h3>Pro Feature</h3>
-      <p>Collection tracking, portfolio value, and set completion are exclusive Pro features.</p>
-      <button class="settings-sub-btn settings-sub-upgrade" id="collection-upgrade-btn">Upgrade to Pro</button>
-    </div>
-
-    <!-- Pro content -->
-    <div id="collection-content">
-    <div class="collection-container">
-      <div class="collection-header">
-        <h2 class="collection-title">My Collection</h2>
-        <p class="collection-subtitle">Track your cards, monitor portfolio value, and complete sets</p>
-        <div class="collection-tabs">
-          <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
-          <button class="coll-tab" data-coll="completion" onclick="switchCollectionTab('completion')">Set Completion</button>
-          <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist</button>
-          <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
-          <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
-
-        </div>
-      </div>
-
-      <!-- Portfolio Tab -->
-      <div id="coll-portfolio" class="coll-panel">
-        <div class="portfolio-stats">
-          <div class="portfolio-stat-card">
-            <span class="portfolio-stat-label">Total Cards</span>
-            <span class="portfolio-stat-value" id="portfolio-total-cards">0</span>
-          </div>
-          <div class="portfolio-stat-card">
-            <span class="portfolio-stat-label">Total Invested</span>
-            <span class="portfolio-stat-value" id="portfolio-total-cost">$0.00</span>
-          </div>
-          <div class="portfolio-stat-card">
-            <span class="portfolio-stat-label">Est. Value</span>
-            <span class="portfolio-stat-value" id="portfolio-total-value">$0.00</span>
-          </div>
-          <div class="portfolio-stat-card">
-            <span class="portfolio-stat-label">Gain/Loss</span>
-            <span class="portfolio-stat-value" id="portfolio-gain-loss">$0.00</span>
-          </div>
-          <div class="portfolio-stat-card">
-            <span class="portfolio-stat-label">ROI</span>
-            <span class="portfolio-stat-value" id="portfolio-roi">—</span>
-          </div>
-        </div>
-        <div class="portfolio-actions">
-          <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
-          <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
-          <button class="portfolio-action-btn" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Market Values</button>
-          <button class="portfolio-action-btn" onclick="generateMarketReport()">&#128196; Market Report</button>
-        </div>
-        <div id="portfolio-list" class="portfolio-list">
-          <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
-        </div>
-      </div>
-
-      <!-- Set Completion Tab -->
-      <div id="coll-completion" class="coll-panel hidden">
+      <div id="checklist-pane-completion" class="checklist-pane hidden">
         <div class="completion-controls">
           <div class="cl-combo" id="cl-combo-product" data-target="completion-product-select" data-placeholder="Search a product…">
             <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Select a product…</span><span class="cl-combo-caret"></span></button>
@@ -514,6 +456,69 @@
             <span class="completion-progress-text" id="player-completion-text">0 / 0 cards</span>
           </div>
           <div id="player-completion-sets" class="completion-sets"></div>
+        </div>
+      </div><!-- /#checklist-pane-completion -->
+    </div>
+  </div>
+
+  <!-- Collection View -->
+  <div id="collection-view" class="collection-view hidden">
+
+    <!-- Not logged in / Not Pro gate -->
+    <div id="collection-gate" class="tracked-gate hidden">
+      <div class="tracked-gate-icon">&#127915;</div>
+      <h3>Pro Feature</h3>
+      <p>Collection tracking, portfolio value, and set completion are exclusive Pro features.</p>
+      <button class="settings-sub-btn settings-sub-upgrade" id="collection-upgrade-btn">Upgrade to Pro</button>
+    </div>
+
+    <!-- Pro content -->
+    <div id="collection-content">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">My Collection</h2>
+        <p class="collection-subtitle">Track your cards, monitor portfolio value, and complete sets</p>
+        <div class="collection-tabs">
+          <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
+          <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist</button>
+          <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
+          <button class="coll-tab" data-coll="marketplace" onclick="switchCollectionTab('marketplace')">Marketplace</button>
+
+        </div>
+      </div>
+
+      <!-- Portfolio Tab -->
+      <div id="coll-portfolio" class="coll-panel">
+        <div class="portfolio-stats">
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Total Cards</span>
+            <span class="portfolio-stat-value" id="portfolio-total-cards">0</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Total Invested</span>
+            <span class="portfolio-stat-value" id="portfolio-total-cost">$0.00</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Est. Value</span>
+            <span class="portfolio-stat-value" id="portfolio-total-value">$0.00</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">Gain/Loss</span>
+            <span class="portfolio-stat-value" id="portfolio-gain-loss">$0.00</span>
+          </div>
+          <div class="portfolio-stat-card">
+            <span class="portfolio-stat-label">ROI</span>
+            <span class="portfolio-stat-value" id="portfolio-roi">—</span>
+          </div>
+        </div>
+        <div class="portfolio-actions">
+          <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
+          <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
+          <button class="portfolio-action-btn" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Market Values</button>
+          <button class="portfolio-action-btn" onclick="generateMarketReport()">&#128196; Market Report</button>
+        </div>
+        <div id="portfolio-list" class="portfolio-list">
+          <p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>
         </div>
       </div>
 
@@ -1090,6 +1095,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=48"></script>
+  <script src="app.js?v=49"></script>
 </body>
 </html>
