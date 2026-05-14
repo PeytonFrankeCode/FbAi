@@ -1885,7 +1885,7 @@ async function handleAuth(e) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, email })
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         loginError.textContent = data.error || 'Registration failed';
         loginError.classList.remove('hidden');
@@ -1902,7 +1902,7 @@ async function handleAuth(e) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) {
         // Fallback: check local accounts (for users created before server-side auth)
         const users = getUsers();
