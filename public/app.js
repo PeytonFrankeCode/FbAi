@@ -3942,7 +3942,7 @@ function buyingOptionBadgeHtml(item) {
   if (kind === 'AUCTION')    return '<span class="cl-buyopt cl-buyopt-auction">Auction</span>';
   if (kind === 'BUY_IT_NOW') return '<span class="cl-buyopt cl-buyopt-bin">Buy It Now</span>';
   if (kind === 'BOTH')       return '<span class="cl-buyopt cl-buyopt-both">Auction + BIN</span>';
-  return '';
+  return '<span class="cl-buyopt cl-buyopt-bin">Buy It Now</span>';
 }
 
 function listingCardHtml(item) {
