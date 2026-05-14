@@ -5079,26 +5079,28 @@ tr:hover .cl-alert-btn {
 }
 
 .rainbow-help-btn {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid var(--border-primary);
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  font-size: 0.7rem;
-  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
   line-height: 1;
-  cursor: pointer;
+  cursor: help;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+  opacity: 0.55;
+  transition: opacity var(--transition-fast), color var(--transition-fast);
 }
-.rainbow-help-btn:hover {
-  background: var(--bg-hover);
+.rainbow-help-btn:hover,
+.rainbow-help-btn:focus-visible {
+  opacity: 1;
   color: var(--text-primary);
-  border-color: var(--accent-border);
+  outline: none;
 }
 
 .rainbow-help-popover {
@@ -5122,11 +5124,16 @@ tr:hover .cl-alert-btn {
   transform: translateY(-4px);
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
   white-space: normal;
+  pointer-events: none;
 }
+.rainbow-help-btn:hover + .rainbow-help-popover,
+.rainbow-help-btn:focus-visible + .rainbow-help-popover,
+.rainbow-help-popover:hover,
 .rainbow-help-popover.open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  pointer-events: auto;
 }
 
 @keyframes rainbowSpin {
