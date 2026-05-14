@@ -473,10 +473,13 @@
           <select id="completion-product-select" class="completion-select cl-hidden-select" onchange="loadCompletionProduct()">
             <option value="">Select a product...</option>
           </select>
-          <label class="rainbow-toggle">
-            <input type="checkbox" id="rainbow-mode" onchange="toggleRainbowMode()" />
+          <div class="rainbow-status">
             <span class="rainbow-label">Rainbow Mode</span>
-          </label>
+            <button type="button" class="rainbow-help-btn" aria-label="What is Rainbow Mode?" aria-expanded="false" onclick="toggleRainbowHelp(event)">?</button>
+            <div class="rainbow-help-popover" id="rainbow-help-popover" role="tooltip">
+              Prices every parallel of a card. Click <strong>Rainbow $?</strong> on a row to fetch the cheapest For Sale listing for each variant and total them up.
+            </div>
+          </div>
         </div>
         <div class="completion-subtabs" id="completion-subtabs" style="display:none">
           <button class="completion-subtab active" data-subtab="set" onclick="switchCompletionSubtab('set')">Set</button>
