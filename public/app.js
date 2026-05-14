@@ -3492,7 +3492,7 @@ async function refreshWatchlistPrices() {
 
 // ---- Set Completion Tracker ----
 let completionData = null;
-let rainbowMode = false;
+const rainbowMode = true;
 let completionVariantFilters = {}; // { setIndex: { name, printRun } }
 
 function getCompletionState() {
@@ -3546,18 +3546,22 @@ async function loadCompletionProduct() {
   }
 }
 
-function toggleRainbowMode() {
-  rainbowMode = document.getElementById('rainbow-mode').checked;
-  // Pop animation on the toggle label
-  const label = document.querySelector('.rainbow-toggle');
-  if (label) {
-    label.classList.remove('rainbow-pop');
-    // Force reflow so re-adding the class triggers the animation fresh
-    void label.offsetWidth;
-    label.classList.add('rainbow-pop');
-    label.addEventListener('animationend', () => label.classList.remove('rainbow-pop'), { once: true });
+function toggleRainbowHelp(e) {
+  if (e) e.stopPropagation();
+  const pop = document.getElementById('rainbow-help-popover');
+  const btn = document.querySelector('.rainbow-help-btn');
+  if (!pop || !btn) return;
+  const open = pop.classList.toggle('open');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    const dismiss = (ev) => {
+      if (pop.contains(ev.target) || btn.contains(ev.target)) return;
+      pop.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', dismiss);
+    };
+    setTimeout(() => document.addEventListener('click', dismiss), 0);
   }
-  if (completionData) renderCompletionSets();
 }
 
 function toggleCompletionVariantFilter(si, variantName, printRun) {
