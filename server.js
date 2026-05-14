@@ -472,8 +472,11 @@ app.get('/api/search', async (req, res) => {
       return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
     }
 
-    if (!serial) {
-      // No serial number in query — standard search (supports offset for pagination)
+    if (!serial || offset > 0) {
+      // No serial, OR a paginated request — standard search.
+      // Paginated requests skip the serial-aware exact/similar split since
+      // that path doesn't support offset. The client still filters by print
+      // run, so subsequent pages stay relevant.
       const searchData = await fetchEbayItems(query, limit, mode, 'search', offset);
       if (searchData.rateLimited) {
         return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
