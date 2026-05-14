@@ -6442,8 +6442,8 @@ tr:hover .cl-alert-btn {
 /* ---- Pro+ nav badge ---- */
 .proplus-nav-badge {
   display: inline-block;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: #0a0a0a;
+  background: var(--pro);
+  color: var(--pro-on);
   font-size: 0.42rem;
   font-weight: 800;
   padding: 0.1rem 0.3rem;
