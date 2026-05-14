@@ -3686,7 +3686,7 @@ function renderCompletionSets() {
       // there's more than one variant on the card. Stores enough data on
       // the button itself so calculateRainbowCost can read it without
       // re-deriving from the table.
-      const rainbowBtn = (rainbowMode && variantsToRender.length > 1)
+      const rainbowBtn = (rainbowMode && allVariants.length > 1)
         ? `<button class="rainbow-cost-btn" onclick="calculateRainbowCost(this, '${productKey}','${setKey}_c${ci}','${playerEsc}','${year}','${brand}','${setName}','${category}','${cardNum}', ${ci})">Rainbow $?</button>`
         : '';
 
