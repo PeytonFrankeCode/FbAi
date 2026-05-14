@@ -104,7 +104,12 @@ function saveData(name, filePath, data) {
 // don't preload these on startup (could be thousands of users); each request
 // hits KV directly. For local file mode each user gets their own JSON file
 // under data/userdata/<username>.json so the on-disk layout stays sane.
-const USER_DATA_DIR = path.join(__dirname, 'data', 'userdata');
+// `__dirname` is undefined in Cloudflare Workers, so resolve lazily and only
+// when a filesystem-backed code path actually runs (it never does on CF).
+function _userDataDir() {
+  const base = (typeof __dirname !== 'undefined') ? __dirname : '.';
+  return path.join(base, 'data', 'userdata');
+}
 
 async function loadUserData(username) {
   if (!username) return {};
@@ -121,7 +126,8 @@ async function loadUserData(username) {
     }
   }
   if (fs) {
-    const filePath = path.join(USER_DATA_DIR, `${safe}.json`);
+    const dir = _userDataDir();
+    const filePath = path.join(dir, `${safe}.json`);
     try {
       if (fs.existsSync(filePath)) {
         return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -146,9 +152,10 @@ async function saveUserData(username, data) {
     }
   }
   if (fs) {
-    const filePath = path.join(USER_DATA_DIR, `${safe}.json`);
+    const dir = _userDataDir();
+    const filePath = path.join(dir, `${safe}.json`);
     try {
-      if (!fs.existsSync(USER_DATA_DIR)) fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
     } catch (e) {
       console.error(`[DB] Error saving ${key} to file:`, e.message);
