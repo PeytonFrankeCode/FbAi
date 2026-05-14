@@ -375,6 +375,7 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
     imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
     itemUrl: item.itemWebUrl || '',
     condition: item.condition || 'Unknown',
+    buyingOptions: Array.isArray(item.buyingOptions) ? item.buyingOptions : [],
   }));
 
   return { results, total: res.data?.total || results.length };
