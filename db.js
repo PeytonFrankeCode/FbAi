@@ -100,4 +100,60 @@ function saveData(name, filePath, data) {
   }
 }
 
-module.exports = { connectDB, loadData, saveData };
+// Per-user data blobs. Keyed `userdata:<username>` in KV. Async because we
+// don't preload these on startup (could be thousands of users); each request
+// hits KV directly. For local file mode each user gets their own JSON file
+// under data/userdata/<username>.json so the on-disk layout stays sane.
+const USER_DATA_DIR = path.join(__dirname, 'data', 'userdata');
+
+async function loadUserData(username) {
+  if (!username) return {};
+  const safe = String(username).toLowerCase();
+  if (!/^[a-z0-9_.-]+$/.test(safe)) return {};
+  const key = `userdata:${safe}`;
+  if (kv) {
+    try {
+      const value = await kv.get(key, 'json');
+      return value || {};
+    } catch (err) {
+      console.error(`[DB] KV get ${key} failed:`, err && err.message);
+      return {};
+    }
+  }
+  if (fs) {
+    const filePath = path.join(USER_DATA_DIR, `${safe}.json`);
+    try {
+      if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      }
+    } catch (e) {
+      console.error(`[DB] Error loading ${key} from file:`, e.message);
+    }
+  }
+  return {};
+}
+
+async function saveUserData(username, data) {
+  if (!username) return;
+  const safe = String(username).toLowerCase();
+  if (!/^[a-z0-9_.-]+$/.test(safe)) return;
+  const key = `userdata:${safe}`;
+  if (kv) {
+    try {
+      await kv.put(key, JSON.stringify(data));
+    } catch (err) {
+      console.error(`[DB] KV put ${key} failed:`, err && err.message);
+    }
+  }
+  if (fs) {
+    const filePath = path.join(USER_DATA_DIR, `${safe}.json`);
+    try {
+      if (!fs.existsSync(USER_DATA_DIR)) fs.mkdirSync(USER_DATA_DIR, { recursive: true });
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    } catch (e) {
+      console.error(`[DB] Error saving ${key} to file:`, e.message);
+    }
+  }
+}
+
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData };

@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData } = require('./db');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
 // Workers' bundled-CJS shim. Bare references would throw ReferenceError at
@@ -1788,6 +1788,46 @@ app.put('/api/auth/email', async (req, res) => {
   const users = loadServerUsers();
   if (users[username]) { users[username].email = email || ''; saveServerUsers(users); }
   res.json({ ok: true });
+});
+
+// Per-user data sync — single JSON blob per user containing the things that
+// used to live in localStorage only (collection, watchlist, completion,
+// seller listings, promoted cards). Client pulls on login and pushes
+// (debounced) on every change so the account is portable across devices.
+const USER_DATA_MAX_BYTES = 1024 * 1024; // 1MB — generous; rejects runaway payloads.
+
+// GET /api/user/data
+app.get('/api/user/data', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  try {
+    const data = await loadUserData(username);
+    res.json({ data: data || {} });
+  } catch (err) {
+    console.error('[user/data GET]', err && err.message);
+    res.status(500).json({ error: 'Failed to load user data' });
+  }
+});
+
+// PUT /api/user/data
+app.put('/api/user/data', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const { data } = req.body || {};
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return res.status(400).json({ error: 'Expected { data: {...} }' });
+  }
+  const json = JSON.stringify(data);
+  if (json.length > USER_DATA_MAX_BYTES) {
+    return res.status(413).json({ error: `Payload exceeds ${USER_DATA_MAX_BYTES} bytes` });
+  }
+  try {
+    await saveUserData(username, data);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[user/data PUT]', err && err.message);
+    res.status(500).json({ error: 'Failed to save user data' });
+  }
 });
 
 // ---- Stripe API Routes ----

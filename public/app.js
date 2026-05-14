@@ -1895,6 +1895,7 @@ async function handleAuth(e) {
       setCurrentUser(data.username);
       closeLogin();
       await syncSubscriptionStatus();
+      await enableUserSync();
     } else {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -1928,6 +1929,7 @@ async function handleAuth(e) {
       }
       closeLogin();
       await syncSubscriptionStatus();
+      await enableUserSync();
     }
   } catch (err) {
     // Without this, any crash inside the try (e.g. JSON parse on an empty
@@ -1945,6 +1947,7 @@ function handleLogout() {
   closeAuthDropdown();
   const token = getSessionToken();
   if (token) fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  disableUserSync();
   setSessionToken(null);
   setCurrentUser(null);
 }
@@ -2122,6 +2125,10 @@ document.addEventListener('keydown', (e) => {
 updateProButton();
 // Sync Stripe subscription status and check for payment return
 syncSubscriptionStatus();
+// Pull this account's collection/watchlist/etc. from the server so they show
+// up here even if the user signed in on a different device. No-op if not
+// logged in (no session token).
+enableUserSync();
 checkPaymentReturn();
 
 // ---- Checklist Browse Feature ----
@@ -3094,6 +3101,126 @@ function buildClListingCard(item, mode) {
   `;
 }
 
+// ---- Global Account Sync ----
+// Mirrors the per-user portfolio/watchlist/etc. blobs into KV via
+// /api/user/data so accounts are portable across devices. The data still
+// lives in localStorage as the source of truth on each device — sync just
+// pushes changes up (debounced) and pulls on login. Anonymous users are
+// untouched: with no session token, every helper here exits silently.
+const USER_SYNC_KEYS = [
+  'cardHuddleCollection',
+  'cardHuddleWatchlist',
+  'cardHuddleCompletion',
+  'cardHuddleSellerListings',
+  'cardHuddlePromotedCards',
+];
+const USER_SYNC_DEBOUNCE_MS = 800;
+let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
+let _userSyncTimer = null;
+let _userSyncing = false;
+
+function _userSyncPayload() {
+  const data = {};
+  for (const key of USER_SYNC_KEYS) {
+    const raw = localStorage.getItem(key);
+    if (raw == null) continue;
+    try { data[key] = JSON.parse(raw); }
+    catch (_) { /* skip malformed */ }
+  }
+  return data;
+}
+
+function _userSyncApply(data) {
+  if (!data || typeof data !== 'object') return;
+  for (const key of USER_SYNC_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      localStorage.setItem(key, JSON.stringify(data[key]));
+    }
+  }
+}
+
+function _userSyncHasContent(data) {
+  if (!data || typeof data !== 'object') return false;
+  for (const key of USER_SYNC_KEYS) {
+    const v = data[key];
+    if (Array.isArray(v)) { if (v.length > 0) return true; }
+    else if (v && typeof v === 'object') { if (Object.keys(v).length > 0) return true; }
+    else if (v) return true;
+  }
+  return false;
+}
+
+async function pushUserDataNow() {
+  if (_userSyncing) return;
+  const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
+  if (!token) return;
+  _userSyncing = true;
+  try {
+    await fetch('/api/user/data', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ data: _userSyncPayload() }),
+    });
+  } catch (err) {
+    console.warn('[sync] push failed:', err && err.message);
+  } finally {
+    _userSyncing = false;
+  }
+}
+
+// Save-paths call this on every mutation. Coalesces a burst of writes
+// (e.g. bulk-toggling 30 checkboxes in Set Completion) into one PUT.
+function schedulePushUserData() {
+  if (!_userSyncEnabled) return;
+  if (_userSyncTimer) clearTimeout(_userSyncTimer);
+  _userSyncTimer = setTimeout(() => { _userSyncTimer = null; pushUserDataNow(); }, USER_SYNC_DEBOUNCE_MS);
+}
+
+function _userSyncRerender() {
+  // Re-render anything that reads from the synced keys, so a fresh device
+  // immediately shows the pulled-down data instead of stale empty state.
+  try { if (typeof renderPortfolio === 'function') renderPortfolio(); } catch (_) {}
+  try { if (typeof renderWatchlist === 'function') renderWatchlist(); } catch (_) {}
+  try { if (typeof renderMyListings === 'function') renderMyListings(); } catch (_) {}
+  try { if (typeof renderPromotedCards === 'function') renderPromotedCards(); } catch (_) {}
+  try { if (typeof renderCompletionSets === 'function' && typeof completionData !== 'undefined' && completionData) renderCompletionSets(); } catch (_) {}
+}
+
+async function enableUserSync() {
+  const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
+  if (!token) return;
+  _userSyncEnabled = false; // hold ongoing push off until pull resolves
+  try {
+    const res = await fetch('/api/user/data', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const result = await res.json();
+      const server = result && result.data;
+      if (_userSyncHasContent(server)) {
+        // Server wins on a device with no local data, or whenever the server
+        // already has something for this account. Last-write-wins per key.
+        _userSyncApply(server);
+        _userSyncRerender();
+      } else if (_userSyncHasContent(_userSyncPayload())) {
+        // Fresh account on the server but the user already has local data
+        // (e.g. logged in for the first time after using anon on this device).
+        // Push it up so they don't lose it switching devices.
+        _userSyncEnabled = true;
+        await pushUserDataNow();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('[sync] pull failed:', err && err.message);
+  } finally {
+    _userSyncEnabled = true;
+  }
+}
+
+function disableUserSync() {
+  _userSyncEnabled = false;
+  if (_userSyncTimer) { clearTimeout(_userSyncTimer); _userSyncTimer = null; }
+}
+
 // ---- Collection & Portfolio (localStorage) ----
 function getCollection() {
   try { return JSON.parse(localStorage.getItem('cardHuddleCollection') || '[]'); }
@@ -3101,6 +3228,7 @@ function getCollection() {
 }
 function saveCollection(coll) {
   localStorage.setItem('cardHuddleCollection', JSON.stringify(coll));
+  schedulePushUserData();
 }
 
 function initCollectionView() {
@@ -3471,6 +3599,7 @@ function getWatchlist() {
 }
 function saveWatchlist(list) {
   localStorage.setItem('cardHuddleWatchlist', JSON.stringify(list));
+  schedulePushUserData();
 }
 
 function renderWatchlist() {
@@ -3592,6 +3721,7 @@ function getCompletionState() {
 }
 function saveCompletionState(state) {
   localStorage.setItem('cardHuddleCompletion', JSON.stringify(state));
+  schedulePushUserData();
 }
 
 async function loadCompletionProducts() {
@@ -4636,6 +4766,7 @@ function getSellerListings() {
 }
 function saveSellerListings(listings) {
   localStorage.setItem('cardHuddleSellerListings', JSON.stringify(listings));
+  schedulePushUserData();
 }
 
 // Create listing handler
@@ -4911,6 +5042,7 @@ function getPromotedCards() {
 
 function savePromotedCards(cards) {
   localStorage.setItem('cardHuddlePromotedCards', JSON.stringify(cards));
+  schedulePushUserData();
 }
 
 // Extra promotion slots — default 5 + purchased extras
