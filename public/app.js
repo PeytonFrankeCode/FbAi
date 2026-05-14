@@ -2993,6 +2993,7 @@ function buildClListingCard(item, mode) {
   const badge = isSold
     ? '<span class="cl-item-badge sold">SOLD</span>'
     : '<span class="cl-item-badge forsale">FOR SALE</span>';
+  const buyOptBadge = isSold ? '' : buyingOptionBadgeHtml(item);
   const imgHtml = item.imageUrl
     ? `<img src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />`
     : `<div class="cl-item-noimg">&#127944;</div>`;
@@ -3002,6 +3003,7 @@ function buildClListingCard(item, mode) {
       <div class="cl-item-info">
         <span class="cl-item-price">${price}</span>
         ${badge}
+        ${buyOptBadge}
         ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
       </div>
     </a>
@@ -3924,11 +3926,31 @@ function openVariantListings(spanEl, player, year, brand, setName, category, car
   fetchVariantListings(panel.querySelector('.cl-listings-body'), query, variantName, printRun);
 }
 
+// AUCTION | BUY_IT_NOW | BOTH (auction with BIN) | UNKNOWN
+function classifyBuyingOption(item) {
+  const opts = Array.isArray(item.buyingOptions) ? item.buyingOptions : [];
+  const hasAuction = opts.includes('AUCTION');
+  const hasFixed = opts.includes('FIXED_PRICE');
+  if (hasAuction && hasFixed) return 'BOTH';
+  if (hasAuction) return 'AUCTION';
+  if (hasFixed) return 'BUY_IT_NOW';
+  return 'UNKNOWN';
+}
+
+function buyingOptionBadgeHtml(item) {
+  const kind = classifyBuyingOption(item);
+  if (kind === 'AUCTION')    return '<span class="cl-buyopt cl-buyopt-auction">Auction</span>';
+  if (kind === 'BUY_IT_NOW') return '<span class="cl-buyopt cl-buyopt-bin">Buy It Now</span>';
+  if (kind === 'BOTH')       return '<span class="cl-buyopt cl-buyopt-both">Auction + BIN</span>';
+  return '';
+}
+
 function listingCardHtml(item) {
   return `
     <a class="cl-listing-item" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
       ${item.imageUrl ? `<img class="cl-listing-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="cl-listing-noimg">&#127183;</div>'}
       <div class="cl-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
+      ${buyingOptionBadgeHtml(item)}
       <div class="cl-listing-title">${escHtml(item.title)}</div>
     </a>`;
 }
@@ -3955,7 +3977,10 @@ async function loadVariantPage(container) {
   const s = container._scrollState;
   if (!s || s.loading || !s.hasMore) return;
   s.loading = true;
-  if (s.sentinel) s.sentinel.innerHTML = '<div class="cl-loading-more"><div class="spinner"></div></div>';
+  if (s.loadMoreBtn) {
+    s.loadMoreBtn.disabled = true;
+    s.loadMoreBtn.textContent = 'Loading…';
+  }
   try {
     const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
     const res = await fetch(`/api/search?${params}`);
@@ -3965,7 +3990,6 @@ async function loadVariantPage(container) {
     let items = (s.mode === 'strict' && s.variantName)
       ? filterStrictVariant(raw, s.variantName, s.printRun)
       : raw;
-    // First-page fallback: strict filter killed everything, show similar
     if (s.offset === 0 && items.length === 0 && raw.length > 0 && s.mode === 'strict') {
       s.mode = 'similar';
       items = raw;
@@ -3979,7 +4003,10 @@ async function loadVariantPage(container) {
     }
   } finally {
     s.loading = false;
-    if (s.sentinel) s.sentinel.innerHTML = '';
+    if (s.loadMoreBtn && s.hasMore) {
+      s.loadMoreBtn.disabled = false;
+      s.loadMoreBtn.textContent = 'Load 40 more listings';
+    }
   }
 }
 
@@ -3993,24 +4020,23 @@ function renderVariantPage(container, items) {
     const header = s.mode === 'similar'
       ? '<div class="cl-similar-header">No exact matches — showing similar listings</div>'
       : '';
-    container.innerHTML = `${header}<div class="cl-listings-grid"></div>`;
+    container.innerHTML = `${header}<div class="cl-listings-grid"></div><div class="cl-load-more-wrap"></div>`;
     s.grid = container.querySelector('.cl-listings-grid');
-    s.sentinel = document.createElement('div');
-    s.sentinel.className = 'cl-listings-sentinel';
-    s.grid.appendChild(s.sentinel);
-    s.observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) loadVariantPage(container);
-    }, { root: s.grid, rootMargin: '200px' });
-    s.observer.observe(s.sentinel);
+    s.loadMoreWrap = container.querySelector('.cl-load-more-wrap');
+    s.loadMoreBtn = document.createElement('button');
+    s.loadMoreBtn.type = 'button';
+    s.loadMoreBtn.className = 'cl-load-more-btn';
+    s.loadMoreBtn.textContent = 'Load 40 more listings';
+    s.loadMoreBtn.addEventListener('click', () => loadVariantPage(container));
+    s.loadMoreWrap.appendChild(s.loadMoreBtn);
   }
   if (items.length > 0) {
-    s.sentinel.insertAdjacentHTML('beforebegin', items.map(listingCardHtml).join(''));
+    s.grid.insertAdjacentHTML('beforeend', items.map(listingCardHtml).join(''));
     s.totalShown += items.length;
   }
   if (!s.hasMore) {
-    if (s.observer) { s.observer.disconnect(); s.observer = null; }
     if (s.totalShown > 0) {
-      s.sentinel.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
+      s.loadMoreWrap.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
     } else {
       container.innerHTML = '<div class="cl-listings-empty">No matching For Sale listings.</div>';
     }
@@ -5519,7 +5545,10 @@ async function loadPlayerPage(body) {
   const s = body._playerState;
   if (!s || s.loading || !s.hasMore) return;
   s.loading = true;
-  if (s.sentinel) s.sentinel.innerHTML = '<div class="cl-loading-more"><div class="spinner"></div></div>';
+  if (s.loadMoreBtn) {
+    s.loadMoreBtn.disabled = true;
+    s.loadMoreBtn.textContent = 'Loading…';
+  }
   try {
     const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
     const response = await fetch(`/api/search?${params}`);
@@ -5537,7 +5566,10 @@ async function loadPlayerPage(body) {
     }
   } finally {
     s.loading = false;
-    if (s.sentinel) s.sentinel.innerHTML = '';
+    if (s.loadMoreBtn && s.hasMore) {
+      s.loadMoreBtn.disabled = false;
+      s.loadMoreBtn.textContent = 'Load 40 more listings';
+    }
   }
 }
 
@@ -5552,19 +5584,19 @@ function renderPlayerPage(body, items, data) {
     if (s.isSimilar) {
       header = `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No exact match found. Showing similar listings.</div>`;
     }
-    body.innerHTML = `${header}<div class="cl-listings-stats" data-stats></div><div class="cl-listings-grid"></div>`;
+    body.innerHTML = `${header}<div class="cl-listings-stats" data-stats></div><div class="cl-listings-grid"></div><div class="cl-load-more-wrap"></div>`;
     s.statsEl = body.querySelector('[data-stats]');
     s.grid = body.querySelector('.cl-listings-grid');
-    s.sentinel = document.createElement('div');
-    s.sentinel.className = 'cl-listings-sentinel';
-    s.grid.appendChild(s.sentinel);
-    s.observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) loadPlayerPage(body);
-    }, { root: s.grid, rootMargin: '200px' });
-    s.observer.observe(s.sentinel);
+    s.loadMoreWrap = body.querySelector('.cl-load-more-wrap');
+    s.loadMoreBtn = document.createElement('button');
+    s.loadMoreBtn.type = 'button';
+    s.loadMoreBtn.className = 'cl-load-more-btn';
+    s.loadMoreBtn.textContent = 'Load 40 more listings';
+    s.loadMoreBtn.addEventListener('click', () => loadPlayerPage(body));
+    s.loadMoreWrap.appendChild(s.loadMoreBtn);
   }
   if (items.length > 0) {
-    s.sentinel.insertAdjacentHTML('beforebegin', items.map(item => buildClListingCard(item, 'forsale')).join(''));
+    s.grid.insertAdjacentHTML('beforeend', items.map(item => buildClListingCard(item, 'forsale')).join(''));
     s.totalShown += items.length;
     items.forEach(it => {
       const p = parseFloat(it.price);
@@ -5573,9 +5605,8 @@ function renderPlayerPage(body, items, data) {
     updatePlayerStats(s);
   }
   if (!s.hasMore) {
-    if (s.observer) { s.observer.disconnect(); s.observer = null; }
     if (s.totalShown > 0) {
-      s.sentinel.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
+      s.loadMoreWrap.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
     } else {
       body.innerHTML = '<div class="cl-listings-empty">No For Sale listings found.</div>';
     }
