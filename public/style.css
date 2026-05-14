@@ -5104,11 +5104,13 @@ tr:hover .cl-alert-btn {
 }
 
 .rainbow-help-popover {
+  display: none;
   position: absolute;
-  bottom: calc(100% + 0.4rem);
-  right: 0;
+  bottom: calc(100% + 0.35rem);
+  left: calc(100% - 0.5rem);
   max-width: 240px;
   min-width: 180px;
+  width: max-content;
   padding: 0.5rem 0.65rem;
   font-size: 0.72rem;
   font-weight: 500;
@@ -5117,20 +5119,12 @@ tr:hover .cl-alert-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
-  z-index: 50;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
+  z-index: 100;
   white-space: normal;
-  pointer-events: none;
 }
 .rainbow-help-popover.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-  pointer-events: auto;
+  display: block;
 }
 
 @keyframes rainbowSpin {
