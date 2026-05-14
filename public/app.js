@@ -3924,26 +3924,96 @@ function openVariantListings(spanEl, player, year, brand, setName, category, car
   fetchVariantListings(panel.querySelector('.cl-listings-body'), query, variantName, printRun);
 }
 
+function listingCardHtml(item) {
+  return `
+    <a class="cl-listing-item" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
+      ${item.imageUrl ? `<img class="cl-listing-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="cl-listing-noimg">&#127183;</div>'}
+      <div class="cl-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
+      <div class="cl-listing-title">${escHtml(item.title)}</div>
+    </a>`;
+}
+
+// Paginated variant listings — fetches 40 at a time, loads more when the
+// sentinel at the bottom of the scrollable grid comes into view. If the
+// strict filter wipes the first page, falls back to showing the unfiltered
+// API results under a "Similar listings" header.
 async function fetchVariantListings(container, query, variantName, printRun) {
+  const state = {
+    query, variantName, printRun,
+    offset: 0, pageSize: 40,
+    loading: false, hasMore: true,
+    mode: 'strict',
+    totalShown: 0,
+    grid: null, sentinel: null, observer: null,
+  };
+  container._scrollState = state;
+  container.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
+  await loadVariantPage(container);
+}
+
+async function loadVariantPage(container) {
+  const s = container._scrollState;
+  if (!s || s.loading || !s.hasMore) return;
+  s.loading = true;
+  if (s.sentinel) s.sentinel.innerHTML = '<div class="cl-loading-more"><div class="spinner"></div></div>';
   try {
-    const res = await fetch(`/api/search?${new URLSearchParams({ q: query, mode: 'forsale', limit: '100' })}`);
+    const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
+    const res = await fetch(`/api/search?${params}`);
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
-    const results = filterStrictVariant(data.results || [], variantName, printRun);
-    if (results.length === 0) {
+    const raw = data.results || [];
+    let items = (s.mode === 'strict' && s.variantName)
+      ? filterStrictVariant(raw, s.variantName, s.printRun)
+      : raw;
+    // First-page fallback: strict filter killed everything, show similar
+    if (s.offset === 0 && items.length === 0 && raw.length > 0 && s.mode === 'strict') {
+      s.mode = 'similar';
+      items = raw;
+    }
+    s.offset += s.pageSize;
+    if (raw.length < s.pageSize) s.hasMore = false;
+    renderVariantPage(container, items);
+  } catch (err) {
+    if (s.totalShown === 0) {
+      container.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+    }
+  } finally {
+    s.loading = false;
+    if (s.sentinel) s.sentinel.innerHTML = '';
+  }
+}
+
+function renderVariantPage(container, items) {
+  const s = container._scrollState;
+  if (!s.grid) {
+    if (items.length === 0) {
       container.innerHTML = '<div class="cl-listings-empty">No matching For Sale listings.</div>';
       return;
     }
-    results.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-    container.innerHTML = '<div class="cl-listings-grid">' + results.map(item => `
-      <a class="cl-listing-item" href="${escHtml(epnUrl(item.itemUrl))}" target="_blank" rel="noopener noreferrer">
-        ${item.imageUrl ? `<img class="cl-listing-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="cl-listing-noimg">&#127183;</div>'}
-        <div class="cl-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
-        <div class="cl-listing-title">${escHtml(item.title)}</div>
-      </a>
-    `).join('') + '</div>';
-  } catch (err) {
-    container.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+    const header = s.mode === 'similar'
+      ? '<div class="cl-similar-header">No exact matches — showing similar listings</div>'
+      : '';
+    container.innerHTML = `${header}<div class="cl-listings-grid"></div>`;
+    s.grid = container.querySelector('.cl-listings-grid');
+    s.sentinel = document.createElement('div');
+    s.sentinel.className = 'cl-listings-sentinel';
+    s.grid.appendChild(s.sentinel);
+    s.observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) loadVariantPage(container);
+    }, { root: s.grid, rootMargin: '200px' });
+    s.observer.observe(s.sentinel);
+  }
+  if (items.length > 0) {
+    s.sentinel.insertAdjacentHTML('beforebegin', items.map(listingCardHtml).join(''));
+    s.totalShown += items.length;
+  }
+  if (!s.hasMore) {
+    if (s.observer) { s.observer.disconnect(); s.observer = null; }
+    if (s.totalShown > 0) {
+      s.sentinel.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
+    } else {
+      container.innerHTML = '<div class="cl-listings-empty">No matching For Sale listings.</div>';
+    }
   }
 }
 
@@ -5367,103 +5437,163 @@ async function fetchPlayerListings(container, query, mode) {
   const body = container.querySelector('.cl-listings-body');
   body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
 
+  // For Sale uses infinite scroll; Sold keeps a single fetch with stats.
+  if (mode === 'forsale') {
+    body._playerState = {
+      query, mode,
+      offset: 0, pageSize: 40,
+      loading: false, hasMore: true,
+      totalShown: 0, allPrices: [],
+      statsEl: null, grid: null, sentinel: null, observer: null,
+      isSimilar: false,
+    };
+    await loadPlayerPage(body);
+    return;
+  }
+
   try {
-    const params = new URLSearchParams({ q: query, mode: mode, limit: mode === 'forsale' ? '100' : '50' });
+    const params = new URLSearchParams({ q: query, mode, limit: '50' });
     const response = await fetch(`/api/search?${params}`);
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || `Server error ${response.status}`);
-    }
+    if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
 
     const results = data.results || [];
     const serial = data.serial || null;
     const similarResults = data.similarResults || [];
     const searchType = data.searchType || 'exact';
-    const broadenedQuery = data.broadenedQuery || null;
     const approximateValue = data.approximateValue || null;
 
     if (results.length === 0) {
-      // No results at all — show similar numbered cards if available, otherwise empty message
-      let emptyHtml = `<div class="cl-listings-empty">No ${mode === 'sold' ? 'sold listings' : 'listings'} found${serial ? ` numbered /${serial}` : ''}.</div>`;
-
+      let emptyHtml = `<div class="cl-listings-empty">No sold listings found${serial ? ` numbered /${serial}` : ''}.</div>`;
       if (similarResults.length > 0) {
         emptyHtml += `<div class="cl-similar-section">`;
         emptyHtml += `<div class="cl-similar-header">Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}</div>`;
         emptyHtml += `<div class="cl-listings-grid">`;
-        similarResults.slice(0, 8).forEach(item => {
-          emptyHtml += buildClListingCard(item, mode);
-        });
+        similarResults.slice(0, 8).forEach(item => { emptyHtml += buildClListingCard(item, mode); });
         emptyHtml += '</div></div>';
       }
-
       body.innerHTML = emptyHtml;
       return;
     }
 
-    // Stats
     const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
     const avg = prices.length ? (prices.reduce((a, b) => a + b, 0) / prices.length) : 0;
     const low = prices.length ? Math.min(...prices) : 0;
     const high = prices.length ? Math.max(...prices) : 0;
-
-    const isSold = mode === 'sold';
     const mockBadge = data.mock ? '<span class="mock-badge" style="font-size:0.65rem;">DEMO</span>' : '';
-
-    // Generate reasoning
-    const reasoning = generateListingReasoning(results, isSold, serial);
+    const reasoning = generateListingReasoning(results, true, serial);
 
     let html = '';
-
-    // If broadened, show a notice about similar items being displayed
     if (searchType === 'broadened') {
-      html += `<div class="cl-broadened-notice">`;
-      html += `<span class="cl-broadened-icon">&#128270;</span> `;
-      html += `No exact match found. Showing similar items`;
+      html += `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No exact match found. Showing similar items`;
       if (approximateValue) {
         html += ` &mdash; estimated value <strong>~$${approximateValue.medianPrice.toFixed(2)}</strong>`;
         html += ` <span class="cl-broadened-detail">(based on ${approximateValue.sampleSize} ${approximateValue.sampleSize === 1 ? 'sale' : 'sales'} of ${escHtml(approximateValue.basedOn)})</span>`;
       }
       html += `</div>`;
     }
-
-    html += `
-      <div class="cl-listings-stats">
-        <span>${results.length} ${isSold ? 'sold' : 'listings'}${searchType === 'broadened' ? ' (similar)' : ''} ${mockBadge}</span>
+    html += `<div class="cl-listings-stats">
+        <span>${results.length} sold${searchType === 'broadened' ? ' (similar)' : ''} ${mockBadge}</span>
         <span>Avg: $${avg.toFixed(2)}</span>
         <span>Low: $${low.toFixed(2)}</span>
         <span>High: $${high.toFixed(2)}</span>
-      </div>
-    `;
-
-    if (reasoning) {
-      html += `<div class="cl-reasoning">${escHtml(reasoning)}</div>`;
-    }
-
+      </div>`;
+    if (reasoning) html += `<div class="cl-reasoning">${escHtml(reasoning)}</div>`;
     html += '<div class="cl-listings-grid">';
-
-    results.forEach(item => {
-      html += buildClListingCard(item, mode);
-    });
-
+    results.forEach(item => { html += buildClListingCard(item, mode); });
     html += '</div>';
-
-    // Show similar numbered cards below exact results if serial search
     if (serial && similarResults.length > 0) {
       html += `<div class="cl-similar-section">`;
       html += `<div class="cl-similar-header">Other Numbered Cards</div>`;
       html += `<div class="cl-listings-grid">`;
-      similarResults.slice(0, 6).forEach(item => {
-        html += buildClListingCard(item, mode);
-      });
+      similarResults.slice(0, 6).forEach(item => { html += buildClListingCard(item, mode); });
       html += '</div></div>';
     }
-
     body.innerHTML = html;
-
   } catch (err) {
     body.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
   }
+}
+
+async function loadPlayerPage(body) {
+  const s = body._playerState;
+  if (!s || s.loading || !s.hasMore) return;
+  s.loading = true;
+  if (s.sentinel) s.sentinel.innerHTML = '<div class="cl-loading-more"><div class="spinner"></div></div>';
+  try {
+    const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
+    const response = await fetch(`/api/search?${params}`);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
+
+    const raw = data.results || [];
+    if (s.offset === 0 && data.searchType === 'broadened') s.isSimilar = true;
+    s.offset += s.pageSize;
+    if (raw.length < s.pageSize) s.hasMore = false;
+    renderPlayerPage(body, raw, data);
+  } catch (err) {
+    if (s.totalShown === 0) {
+      body.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+    }
+  } finally {
+    s.loading = false;
+    if (s.sentinel) s.sentinel.innerHTML = '';
+  }
+}
+
+function renderPlayerPage(body, items, data) {
+  const s = body._playerState;
+  if (!s.grid) {
+    if (items.length === 0) {
+      body.innerHTML = '<div class="cl-listings-empty">No For Sale listings found.</div>';
+      return;
+    }
+    let header = '';
+    if (s.isSimilar) {
+      header = `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No exact match found. Showing similar listings.</div>`;
+    }
+    body.innerHTML = `${header}<div class="cl-listings-stats" data-stats></div><div class="cl-listings-grid"></div>`;
+    s.statsEl = body.querySelector('[data-stats]');
+    s.grid = body.querySelector('.cl-listings-grid');
+    s.sentinel = document.createElement('div');
+    s.sentinel.className = 'cl-listings-sentinel';
+    s.grid.appendChild(s.sentinel);
+    s.observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) loadPlayerPage(body);
+    }, { root: s.grid, rootMargin: '200px' });
+    s.observer.observe(s.sentinel);
+  }
+  if (items.length > 0) {
+    s.sentinel.insertAdjacentHTML('beforebegin', items.map(item => buildClListingCard(item, 'forsale')).join(''));
+    s.totalShown += items.length;
+    items.forEach(it => {
+      const p = parseFloat(it.price);
+      if (!isNaN(p)) s.allPrices.push(p);
+    });
+    updatePlayerStats(s);
+  }
+  if (!s.hasMore) {
+    if (s.observer) { s.observer.disconnect(); s.observer = null; }
+    if (s.totalShown > 0) {
+      s.sentinel.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
+    } else {
+      body.innerHTML = '<div class="cl-listings-empty">No For Sale listings found.</div>';
+    }
+  }
+}
+
+function updatePlayerStats(s) {
+  if (!s.statsEl) return;
+  const prices = s.allPrices;
+  if (prices.length === 0) { s.statsEl.innerHTML = ''; return; }
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  s.statsEl.innerHTML = `
+    <span>${s.totalShown} listings${s.isSimilar ? ' (similar)' : ''}</span>
+    <span>Avg: $${avg.toFixed(2)}</span>
+    <span>Low: $${low.toFixed(2)}</span>
+    <span>High: $${high.toFixed(2)}</span>`;
 }
 
 // ---- Feedback / Report Bug ----
