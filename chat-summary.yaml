@@ -1,0 +1,48 @@
+session:
+  date: 2026-05-14
+  branch: claude/cleanup-website-ui-HKlmz
+  repo: peytonfrankecode/fbai
+
+tasks:
+  - id: 1
+    title: Rewrite 2024 Panini National Treasures checklist
+    request: >
+      User pasted a hand-curated checklist for 2024 Panini National Treasures
+      and asked for a dedicated rewrite, since the auto-parser was concatenating
+      player lines and missing parallels for this product.
+    changes:
+      - scripts/2024-national-treasures.txt        # new, raw checklist text
+      - scripts/rewrite-2024-national-treasures.js # new, dedicated parser
+      - public/data/checklists/2024-panini-national-treasures-football.json
+      - public/data/checklists/index.json
+    result:
+      sets: 48
+      cards: 1328
+      empty_sets: 0
+    commit: 483f5be
+
+  - id: 2
+    title: Always-on Rainbow Mode + inline help popover
+    request: >
+      Remove the Rainbow Mode toggle and have rainbow features on at all times.
+      Add a small "?" button next to it that shows a brief explanation when
+      clicked.
+    changes:
+      - public/index.html  # replaced <label.rainbow-toggle> with <div.rainbow-status>
+      - public/app.js      # rainbowMode = true; added toggleRainbowHelp()
+      - public/style.css   # static rainbow badge, help button + popover
+    commit: 03b1d81
+
+  - id: 3
+    title: Subtle "?" + hover-triggered tooltip
+    request: >
+      The "?" should be more subtle and the help text should appear on hover
+      instead of being persistent or only on click.
+    changes:
+      - public/style.css   # faint transparent "?", hover/focus shows popover
+    notes: Click handler kept as a fallback for touch devices that can't hover.
+    commit: 6b5c2b4
+
+pushes:
+  - branch: claude/cleanup-website-ui-HKlmz
+    commits: [483f5be, 03b1d81, 6b5c2b4]
