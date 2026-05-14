@@ -885,6 +885,13 @@ async function fetchDirectSearch(query) {
           card.style.animationDelay = `${i * 0.05}s`;
           grid.appendChild(card);
         });
+        // Paginated Load More for For Sale results. Skip when the server
+        // had to broaden the query — pagination of a broadened search
+        // would pull unrelated items.
+        if (searchType !== 'broadened') {
+          _forsalePaging = { query, offset: results.length, hasMore: true, fetching: false };
+          addForsaleLoadMore(grid);
+        }
       }
       injectPromotedCards(grid);
       if (isSold) updatePriceChart(results);
@@ -898,6 +905,73 @@ async function fetchDirectSearch(query) {
   } finally {
     setLoading(false);
     hideSkeleton();
+  }
+}
+
+// Paginated Load More for the main Search page in For Sale mode. Each click
+// fetches the next 40 listings from /api/search via offset and appends them
+// before the button. Tracks query and offset so successive clicks stay in
+// sync with eBay's ordering.
+let _forsalePaging = { query: '', offset: 0, hasMore: false, fetching: false };
+
+function addForsaleLoadMore(grid) {
+  let wrap = grid.querySelector('.load-more-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.className = 'load-more-wrap';
+    grid.appendChild(wrap);
+  }
+  wrap.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'load-more-btn';
+  btn.textContent = _forsalePaging.fetching ? 'Loading…' : 'Load 40 more listings';
+  btn.disabled = !!_forsalePaging.fetching;
+  btn.addEventListener('click', () => loadMoreForsaleResults(grid));
+  wrap.appendChild(btn);
+}
+
+async function loadMoreForsaleResults(grid) {
+  if (_forsalePaging.fetching || !_forsalePaging.hasMore) return;
+  _forsalePaging.fetching = true;
+  addForsaleLoadMore(grid);
+  try {
+    const params = new URLSearchParams({ q: _forsalePaging.query, mode: 'forsale', limit: '40', offset: String(_forsalePaging.offset) });
+    const f = getPriceFilter();
+    if (f.min != null) params.set('minPrice', String(f.min));
+    if (f.max != null) params.set('maxPrice', String(f.max));
+    const res = await fetch(`/api/search?${params}`);
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+    const items = data.results || [];
+    if (items.length === 0) {
+      _forsalePaging.hasMore = false;
+    } else {
+      _forsalePaging.offset += items.length;
+      _forsalePaging.hasMore = items.length >= 40;
+      const wrap = grid.querySelector('.load-more-wrap');
+      let baseIdx = grid.querySelectorAll('.card:not(.promoted-card)').length;
+      items.forEach(item => {
+        const card = buildCard(item);
+        card.style.animationDelay = `${baseIdx * 0.05}s`;
+        if (wrap) wrap.before(card); else grid.appendChild(card);
+        baseIdx++;
+      });
+      currentResults.push(...items);
+    }
+  } catch (err) {
+    const wrap = grid.querySelector('.load-more-wrap');
+    if (wrap) wrap.innerHTML = `<span class="no-results">Could not load more — ${escHtml(err.message)}</span>`;
+    _forsalePaging.hasMore = false;
+    _forsalePaging.fetching = false;
+    return;
+  }
+  _forsalePaging.fetching = false;
+  if (!_forsalePaging.hasMore) {
+    const wrap = grid.querySelector('.load-more-wrap');
+    if (wrap) wrap.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
+  } else {
+    addForsaleLoadMore(grid);
   }
 }
 
@@ -1064,6 +1138,15 @@ async function performSearch(query) {
           card.style.animationDelay = `${i * 0.05}s`;
           grid.appendChild(card);
         });
+        // Forsale Load More — uses /api/search offset that the initial
+        // performSearch already consumed, so we pick up where it left off.
+        _forsalePaging = {
+          query,
+          offset: (_searchPaging.offset || 0) + results.length,
+          hasMore: !!_searchPaging.hasMore,
+          fetching: false,
+        };
+        if (_forsalePaging.hasMore) addForsaleLoadMore(grid);
       }
       injectPromotedCards(grid);
       if (isSold) {
@@ -1490,6 +1573,7 @@ function buildCard(item) {
       <div class="card-meta">
         ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
+        ${!isSold ? buyingOptionBadgeHtml(item) : ''}
       </div>
       ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
     </div>
@@ -3942,7 +4026,7 @@ function buyingOptionBadgeHtml(item) {
   if (kind === 'AUCTION')    return '<span class="cl-buyopt cl-buyopt-auction">Auction</span>';
   if (kind === 'BUY_IT_NOW') return '<span class="cl-buyopt cl-buyopt-bin">Buy It Now</span>';
   if (kind === 'BOTH')       return '<span class="cl-buyopt cl-buyopt-both">Auction + BIN</span>';
-  return '';
+  return '<span class="cl-buyopt cl-buyopt-bin">Buy It Now</span>';
 }
 
 function listingCardHtml(item) {
