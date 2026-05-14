@@ -5079,21 +5079,21 @@ tr:hover .cl-alert-btn {
 }
 
 .rainbow-help-btn {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   padding: 0;
   border-radius: 50%;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   font-weight: 600;
   line-height: 1;
-  cursor: help;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.55;
+  opacity: 0.5;
   transition: opacity var(--transition-fast), color var(--transition-fast);
 }
 .rainbow-help-btn:hover,
@@ -5105,30 +5105,27 @@ tr:hover .cl-alert-btn {
 
 .rainbow-help-popover {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  bottom: calc(100% + 0.4rem);
   right: 0;
-  max-width: 280px;
-  min-width: 220px;
-  padding: 0.7rem 0.85rem;
-  font-size: 0.78rem;
+  max-width: 240px;
+  min-width: 180px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
   color: var(--text-primary);
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
   z-index: 50;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-4px);
+  transform: translateY(4px);
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
   white-space: normal;
   pointer-events: none;
 }
-.rainbow-help-btn:hover + .rainbow-help-popover,
-.rainbow-help-btn:focus-visible + .rainbow-help-popover,
-.rainbow-help-popover:hover,
 .rainbow-help-popover.open {
   opacity: 1;
   visibility: visible;
