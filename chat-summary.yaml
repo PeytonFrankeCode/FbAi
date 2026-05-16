@@ -1,48 +1,198 @@
 session:
   date: 2026-05-14
-  branch: claude/cleanup-website-ui-HKlmz
+  branch: claude/fix-button-text-display-5ujlv
   repo: peytonfrankecode/fbai
 
 tasks:
   - id: 1
-    title: Rewrite 2024 Panini National Treasures checklist
+    title: Re-style the Rainbow Mode help popover
     request: >
-      User pasted a hand-curated checklist for 2024 Panini National Treasures
-      and asked for a dedicated rewrite, since the auto-parser was concatenating
-      player lines and missing parallels for this product.
+      Remove the persistent white explanation text under the Rainbow Mode
+      badge, shrink the "?" button, and only show the help text in a small
+      box NE of the "?" on click.
     changes:
-      - scripts/2024-national-treasures.txt        # new, raw checklist text
-      - scripts/rewrite-2024-national-treasures.js # new, dedicated parser
-      - public/data/checklists/2024-panini-national-treasures-football.json
-      - public/data/checklists/index.json
-    result:
-      sets: 48
-      cards: 1328
-      empty_sets: 0
-    commit: 483f5be
+      - public/style.css   # smaller "?"; popover positioned bottom: 100% / left: 100%
+      - public/style.css   # display:block on .open instead of opacity/visibility
+      - public/index.html  # ?v=46 -> ?v=48 cache buster
+    commits: [dc9b9d1, 58b175d, 2b846bd]
 
   - id: 2
-    title: Always-on Rainbow Mode + inline help popover
+    title: Rainbow $? button on every card row with multiple parallels
     request: >
-      Remove the Rainbow Mode toggle and have rainbow features on at all times.
-      Add a small "?" button next to it that shows a brief explanation when
-      clicked.
+      The Rainbow $? button disappeared when a parallel filter was active.
+      It should show on every card row whenever the set has more than one
+      parallel, regardless of filter state.
     changes:
-      - public/index.html  # replaced <label.rainbow-toggle> with <div.rainbow-status>
-      - public/app.js      # rainbowMode = true; added toggleRainbowHelp()
-      - public/style.css   # static rainbow badge, help button + popover
-    commit: 03b1d81
+      - public/app.js  # rainbowMode && variantsToRender.length > 1
+                       # -> rainbowMode && allVariants.length > 1
+    commit: 2b846bd
 
   - id: 3
-    title: Subtle "?" + hover-triggered tooltip
+    title: HTML no-cache header
     request: >
-      The "?" should be more subtle and the help text should appear on hover
-      instead of being persistent or only on click.
+      Bumped asset version strings in index.html had no effect because
+      browsers were heuristically caching the HTML itself. Add explicit
+      Cache-Control: no-cache for HTML so future asset bumps land
+      immediately on reload.
     changes:
-      - public/style.css   # faint transparent "?", hover/focus shows popover
-    notes: Click handler kept as a fallback for touch devices that can't hover.
-    commit: 6b5c2b4
+      - public/_headers  # /*.html and / -> Cache-Control: no-cache
+    commit: 52f82e6
+
+  - id: 4
+    title: Move Set Completion into the Checklists tab
+    request: >
+      Consolidate the Set Completion feature out of Collection and under
+      Checklists, with a Browse / Set Completion sub-tab strip. Also bump
+      the API limit for For Sale listings so users see more results.
+    changes:
+      - public/index.html  # checklist-subtabs strip; coll-completion panel relocated
+      - public/app.js      # switchChecklistSubtab(); initCollectionView lost completion
+      - public/app.js      # variant/player For Sale limit 12/40 -> 100, no slice
+      - public/style.css   # .checklist-subtabs / .checklist-subtab styles
+    commit: 6731543
+
+  - id: 5
+    title: Infinite-scroll For Sale + similar-listings fallback
+    request: >
+      Pull more eBay listings on scroll. When the strict filter wipes the
+      first page, fall back to unfiltered results under a "similar
+      listings" header instead of going empty.
+    changes:
+      - public/app.js   # fetchVariantListings paginated, IntersectionObserver
+      - public/app.js   # fetchPlayerListings paginated for For Sale mode
+      - public/app.js   # listingCardHtml/buildClListingCard show similar fallback
+      - public/style.css # .cl-listings-sentinel + loading indicators
+      - server.js       # /api/search honors offset on serial-numbered queries
+    commit: 822d61d
+    notes: Superseded by task 6 — user preferred a button to auto-scroll.
+
+  - id: 6
+    title: Load More button + Auction/Buy-It-Now labels
+    request: >
+      Replace the IntersectionObserver pager with an explicit "Load 40
+      more listings" button. Label every For Sale listing as Auction,
+      Buy It Now, or both.
+    changes:
+      - server.js        # fetchViaBrowseAPI forwards buyingOptions
+      - public/app.js    # classifyBuyingOption / buyingOptionBadgeHtml
+      - public/app.js    # renderVariantPage/renderPlayerPage: Load More button
+      - public/style.css # .cl-load-more-btn, .cl-buyopt-{auction,bin,both}
+    commits: [c946a5d, 7a41f5f]
+    notes: >
+      buyingOptionBadgeHtml defaults to "Buy It Now" when the eBay API
+      response omits buyingOptions (otherwise the badge rendered empty
+      and looked missing).
+
+  - id: 7
+    title: Front-page Search gets Load More + Auction/BIN labels too
+    request: >
+      Apply the same Load More + buying-option badges to the main /search
+      For Sale results, not just the Checklist inline panels.
+    changes:
+      - public/app.js  # buildCard renders buyingOptionBadgeHtml for forsale
+      - public/app.js  # _forsalePaging state + addForsaleLoadMore + loadMoreForsaleResults
+      - public/app.js  # wired into fetchDirectSearch and performSearch
+    commit: 8b494c8
+
+  - id: 8
+    title: Pro Tools nav-badge color
+    request: >
+      The "PRO" pill on the Pro Tools tab was green; should be the orange
+      used by every other PRO badge.
+    changes:
+      - public/style.css  # second .proplus-nav-badge override now uses --pro / --pro-on
+    commit: 26f3398
+    notes: Duplicate rule lower in the file was overriding the orange original.
+
+  - id: 9
+    title: GitHub Actions Node 24 opt-in
+    request: >
+      Silence the "Node.js 20 actions are deprecated" warning on the
+      Cloudflare deploy workflow.
+    changes:
+      - .github/workflows/deploy.yml  # env FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true
+    commit: 827bfe0
+
+  - id: 10
+    title: Cloudflare KV-backed global accounts
+    request: >
+      Make accounts portable — let users log in from any device and have
+      their collection, watchlist, set completion, seller drafts and
+      promoted cards follow them.
+    changes:
+      - wrangler.toml  # bind KV namespace 5cc96b5126ec4e57960b945fb810481f
+      - db.js          # loadUserData / saveUserData helpers (KV + file modes)
+      - server.js      # GET/PUT /api/user/data (auth gated, 1MB cap)
+      - public/app.js  # USER_SYNC_KEYS, debounced pushUserDataNow, enableUserSync
+      - public/app.js  # save helpers (collection / watchlist / completion / etc.)
+                       # now call schedulePushUserData()
+    commits: [e7e1281, d1cdc9a]
+    notes: >
+      Server wins on a device with no local data, but if the server is
+      empty and the user has local data (anon session that just signed
+      in), local gets pushed up so nothing's lost.
+
+  - id: 11
+    title: db.js __dirname hotfix
+    request: >
+      After the KV deploy, every /api/* request returned
+      "Server initialization failed... got keys: ". Root cause:
+      path.join(__dirname, ...) at module init in db.js threw
+      ReferenceError on Cloudflare Workers (no __dirname).
+    changes:
+      - db.js  # _userDataDir() lazy, guarded by typeof __dirname
+    commit: ec61bfe
+
+  - id: 12
+    title: Auth error surfacing + Create Account unfreeze
+    request: >
+      Create Account failed with Safari's cryptic "The string did not
+      match the expected pattern" and the button stayed disabled.
+    changes:
+      - public/app.js  # /api/auth/register and /api/auth/login use safeJson()
+      - public/app.js  # post-login enableUserSync() is fire-and-forget
+      - public/app.js  # 15s AbortController timeout on register/login fetches
+    commits: [6291771, f7abb2b]
+    notes: >
+      The first commit makes a non-JSON server response render as
+      "Server returned non-JSON (HTTP 500): <snippet>" instead of the
+      Safari JSON.parse wording. The second commit prevents the submit
+      button from hanging even if enableUserSync stalls or the worker
+      doesn't respond.
+
+  - id: 13
+    title: Add 2024 Topps Inception Football checklist
+    request: >
+      Wire up the Beckett-published 2024 Topps Inception Football
+      checklist as a new product in the Checklists / Set Completion
+      picker.
+    changes:
+      - scripts/build-2024-topps-inception-football.js  # idempotent generator
+      - public/data/checklists/2024-topps-inception-football.json
+      - public/data/checklists/index.json
+    result:
+      sets: 15
+      cards: 483
+      parallels: "Base / Green / Purple 125 / Magenta 99 / Red 75 / Orange 50 / Gold 25 / Blue 10 / Inception 1"
+    commit: f05b5ff
+
+  - id: 14
+    title: Product Hunt launch copy
+    request: >
+      Draft tagline, description, launch tags, and first comment for
+      the upcoming Product Hunt launch of The Card Huddle.
+    changes: []
+    notes: >
+      Chat-only deliverable. Suggested name, three tagline options,
+      ~500 char description, tags (Sports / Productivity / eCommerce),
+      and a first-comment template emphasising Set Completion +
+      Rainbow pricing, Flip Finder, Grading Advisor and the brand-new
+      cross-device accounts.
 
 pushes:
-  - branch: claude/cleanup-website-ui-HKlmz
-    commits: [483f5be, 03b1d81, 6b5c2b4]
+  - branch: claude/fix-button-text-display-5ujlv
+    commits: [
+      dc9b9d1, 58b175d, 2b846bd, 6731543, 822d61d, c946a5d, 7a41f5f,
+      8b494c8, 26f3398, 827bfe0, 52f82e6, e7e1281, d1cdc9a, ec61bfe,
+      6291771, f05b5ff, f7abb2b,
+    ]
