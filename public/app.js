@@ -1880,11 +1880,22 @@ async function handleAuth(e) {
         return false;
       }
       const email = document.getElementById('auth-email').value.trim();
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, email })
-      });
+      // Cap the request at 15s so a stalled worker can't leave the submit
+      // button disabled indefinitely. AbortController + setTimeout makes
+      // fetch reject with AbortError which the outer catch already renders.
+      const authAbort = new AbortController();
+      const authTimer = setTimeout(() => authAbort.abort(), 15000);
+      let res;
+      try {
+        res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, email }),
+          signal: authAbort.signal,
+        });
+      } finally {
+        clearTimeout(authTimer);
+      }
       const data = await safeJson(res);
       if (!res.ok) {
         loginError.textContent = data.error || 'Registration failed';
@@ -1895,13 +1906,24 @@ async function handleAuth(e) {
       setCurrentUser(data.username);
       closeLogin();
       await syncSubscriptionStatus();
-      await enableUserSync();
+      // Fire-and-forget so a slow /api/user/data doesn't keep the submit
+      // button disabled. The user is already logged in by this point —
+      // sync can complete in the background and re-render when it lands.
+      enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
     } else {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+      const loginAbort = new AbortController();
+      const loginTimer = setTimeout(() => loginAbort.abort(), 15000);
+      let res;
+      try {
+        res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+          signal: loginAbort.signal,
+        });
+      } finally {
+        clearTimeout(loginTimer);
+      }
       const data = await safeJson(res);
       if (!res.ok) {
         // Fallback: check local accounts (for users created before server-side auth)
@@ -1929,7 +1951,7 @@ async function handleAuth(e) {
       }
       closeLogin();
       await syncSubscriptionStatus();
-      await enableUserSync();
+      enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
     }
   } catch (err) {
     // Without this, any crash inside the try (e.g. JSON parse on an empty
