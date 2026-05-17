@@ -41,7 +41,14 @@ const STRIPE_PRODUCT_PROPLUS = 'prod_ULtSajiX8Hszzy';
 const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
 let stripe = null;
 if (stripeEnabled) {
-  stripe = require('stripe')(STRIPE_SECRET_KEY);
+  const Stripe = require('stripe');
+  // Cloudflare Workers can't use the default node:http transport. When running
+  // on a Worker, swap to Stripe's fetch-based client so checkout requests
+  // actually leave the worker. CF_WORKER is set by worker.js on cold start.
+  const stripeOpts = process.env.CF_WORKER
+    ? { httpClient: Stripe.createFetchHttpClient() }
+    : {};
+  stripe = Stripe(STRIPE_SECRET_KEY, stripeOpts);
 }
 
 // Stripe webhook needs raw body — must be before express.json()
@@ -450,6 +457,12 @@ app.get('/api/search', async (req, res) => {
   const applyPriceFilter = (items) => mode === 'forsale'
     ? filterByPriceRange(items, minPrice, maxPrice)
     : items;
+  // For Sale mode applies the same strict variant filter as Sold, but without
+  // the silent fallback — users want listings that actually match their query,
+  // not "similar" junk. Sold-mode keeps the fallback so the chart isn't blank.
+  const applyVariantFilter = (items) => mode === 'forsale'
+    ? filterByVariant(items, query, { strict: true })
+    : items;
 
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
@@ -483,7 +496,7 @@ app.get('/api/search', async (req, res) => {
         return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
       }
       if (searchData.results.length > 0) {
-        const filtered = applyPriceFilter(searchData.results);
+        const filtered = applyVariantFilter(applyPriceFilter(searchData.results));
         return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, hasMore: searchData.results.length >= limit });
       }
 
@@ -497,6 +510,8 @@ app.get('/api/search', async (req, res) => {
           return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
         }
         if (broadened.results.length > 0) {
+          // Broadened queries are intentionally looser — skip strict variant
+          // filter and just keep the price range applied.
           const filtered = applyPriceFilter(broadened.results);
           const approx = computeApproxValue(filtered, level.label);
           return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx });
@@ -547,13 +562,17 @@ app.get('/api/search', async (req, res) => {
         return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
       });
 
+    // Forsale results get the same strict variant filter as the non-serial path
+    const exactOut = mode === 'forsale' ? applyVariantFilter(exact) : exact;
+    const similarOut = mode === 'forsale' ? applyVariantFilter(similar) : similar;
+
     res.json({
-      results: exact,
-      total: exact.length,
+      results: exactOut,
+      total: exactOut.length,
       mock: false,
       mode,
       serial,
-      similarResults: similar.slice(0, 20),
+      similarResults: similarOut.slice(0, 20),
     });
   } catch (err) {
     if (err.isEbayError) {
@@ -714,13 +733,16 @@ function titleHasSpecialCard(title) {
 
 const VARIANT_STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'card', 'cards', '&', 'rc', 'sp']);
 
-// Filters sold results to only those matching the searched variant.
+// Filters results to only those matching the searched variant.
 // - Requires ALL query tokens in title
 // - Auto/memorabilia exclusion: excluded unless the query asks for them
 // - Set exclusivity: if query has a set name, excludes other set names from results
 // - Color exclusivity: if query has a color, excludes other colors from results
 // - Base search: excludes all known parallel keywords
-function filterByVariant(results, query) {
+// Pass { strict: true } to disable the "no matches -> fall back to unfiltered"
+// behavior — used for For Sale results where the user wants only real matches.
+function filterByVariant(results, query, opts) {
+  const strict = !!(opts && opts.strict);
   const qLower = query.toLowerCase().trim();
   const isBaseSearch = qLower.includes('base');
   const searchedParallel = PARALLEL_KEYWORDS.find(p => qLower.includes(p));
@@ -762,7 +784,8 @@ function filterByVariant(results, query) {
     return true;
   });
 
-  // If strict filter removed everything, fall back to unfiltered
+  if (strict) return filtered;
+  // Non-strict: fall back to unfiltered when the strict pass removed everything.
   return filtered.length > 0 ? filtered : results;
 }
 
@@ -825,22 +848,32 @@ app.get('/api/grading-advisor', async (req, res) => {
   const GRADING_COST = { economy: 25, express: 50 };
 
   try {
+    const baseQ = query.trim();
     const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
-      fetchEbayItems(query.trim(), 20, 'sold', 'grading-raw'),
-      fetchEbayItems(`${query.trim()} PSA 8`, 20, 'sold', 'grading-psa8'),
-      fetchEbayItems(`${query.trim()} PSA 9`, 20, 'sold', 'grading-psa9'),
-      fetchEbayItems(`${query.trim()} PSA 10`, 20, 'sold', 'grading-psa10'),
+      fetchEbayItems(baseQ, 20, 'sold', 'grading-raw'),
+      fetchEbayItems(`${baseQ} PSA 8`, 20, 'sold', 'grading-psa8'),
+      fetchEbayItems(`${baseQ} PSA 9`, 20, 'sold', 'grading-psa9'),
+      fetchEbayItems(`${baseQ} PSA 10`, 20, 'sold', 'grading-psa10'),
     ]);
 
-    const summarize = (data, label) => {
-      const v = computeApproxValue(data.results, label);
+    // Apply the same variant-strict filter used elsewhere so each grade's
+    // sold comps reflect the actual card searched (excludes wrong colors,
+    // wrong sets, auto/relic when the user didn't ask for one).
+    const filterFor = (items, q) => filterPriceOutliers(filterByVariant(items, q));
+    const rawItems   = filterFor(rawData.results,   baseQ);
+    const psa8Items  = filterFor(psa8Data.results,  `${baseQ} PSA 8`);
+    const psa9Items  = filterFor(psa9Data.results,  `${baseQ} PSA 9`);
+    const psa10Items = filterFor(psa10Data.results, `${baseQ} PSA 10`);
+
+    const summarize = (items, label) => {
+      const v = computeApproxValue(items, label);
       return v ? { avg: v.avgPrice, median: v.medianPrice, min: v.priceRange.min, max: v.priceRange.max, sales: v.sampleSize } : null;
     };
 
-    const raw   = summarize(rawData,   'Raw');
-    const psa8  = summarize(psa8Data,  'PSA 8');
-    const psa9  = summarize(psa9Data,  'PSA 9');
-    const psa10 = summarize(psa10Data, 'PSA 10');
+    const raw   = summarize(rawItems,   'Raw');
+    const psa8  = summarize(psa8Items,  'PSA 8');
+    const psa9  = summarize(psa9Items,  'PSA 9');
+    const psa10 = summarize(psa10Items, 'PSA 10');
 
     // Calculate grade premiums over raw median
     const calcPremium = (graded, rawVal) => {
@@ -873,6 +906,11 @@ app.get('/api/direct-search', async (req, res) => {
   const maxPrice = parseFloat(req.query.maxPrice);
   const applyPriceFilter = (items) => mode === 'forsale'
     ? filterByPriceRange(items, minPrice, maxPrice)
+    : items;
+  // Mirror /api/search: For Sale results get the strict variant filter so the
+  // user only sees listings that actually match the searched card.
+  const applyVariantFilter = (items) => mode === 'forsale'
+    ? filterByVariant(items, query, { strict: true })
     : items;
   if (!query || query.trim().length < 2) {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
@@ -931,11 +969,11 @@ app.get('/api/direct-search', async (req, res) => {
           return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
         });
 
-      // Return exact matches first, then similar (price filter applied in forsale)
-      const combined = applyPriceFilter([...exactMatches, ...similarMatches]);
+      // Return exact matches first, then similar (price + strict variant filter applied in forsale)
+      const combined = applyVariantFilter(applyPriceFilter([...exactMatches, ...similarMatches]));
       if (combined.length > 0) {
         const approx = computeApproxValue(exactMatches.length > 0 ? exactMatches : combined.slice(0, 10), 'serial');
-        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: applyPriceFilter(similarMatches).slice(0, 20) });
+        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: applyVariantFilter(applyPriceFilter(similarMatches)).slice(0, 20) });
       }
 
       return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [] });
@@ -944,7 +982,7 @@ app.get('/api/direct-search', async (req, res) => {
     // No serial — standard search: try exact first
     const exact = await fetchEbayItems(query, 20, mode, 'variants');
     if (exact.results.length > 0) {
-      const filtered = applyPriceFilter(exact.results);
+      const filtered = applyVariantFilter(applyPriceFilter(exact.results));
       return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
     }
 
@@ -1706,22 +1744,14 @@ function getSessionUser(req) {
   return s.username.toLowerCase();
 }
 
-// Middleware factory: gate a route on server-side subscription status.
-// requirePlan('pro') allows pro OR proplus. requirePlan('proplus') is exclusive.
-// Defends against localStorage spoofing — the user can edit their browser
-// cache to claim any plan, but this checks the server's record.
-// Single Pro tier. Accepts legacy 'proplus' plan values from the DB as
-// equivalent to 'pro' since they're the same subscription now.
+// Middleware factory: previously gated routes on a Pro subscription. Pro Tools
+// are open access now, so this just requires a logged-in user. The plan name
+// is still accepted so callers don't have to change; flip the body back to a
+// subscription check when Pro is re-gated.
 function requirePlan(_minPlan) {
   return (req, res, next) => {
     const user = getSessionUser(req);
     if (!user) return res.status(401).json({ error: 'Sign in required' });
-    const subs = loadData('subscriptions', SUBS_FILE, {});
-    const sub = subs[user];
-    const active = sub && sub.status === 'active';
-    const plan = active ? sub.plan : null;
-    const ok = plan === 'pro' || plan === 'proplus';
-    if (!ok) return res.status(402).json({ error: 'Subscription required', detail: 'This endpoint requires Pro.' });
     req.user = user;
     next();
   };
@@ -1823,6 +1853,10 @@ app.put('/api/user/data', async (req, res) => {
   }
   try {
     await saveUserData(username, data);
+    // Mirror this user's promoted cards into the global index so the
+    // Browse Cards page and search injection can show cards from everyone.
+    const promos = Array.isArray(data.cardHuddlePromotedCards) ? data.cardHuddlePromotedCards : [];
+    updateGlobalPromotedIndex(username, promos);
     res.json({ ok: true });
   } catch (err) {
     console.error('[user/data PUT]', err && err.message);
@@ -1830,7 +1864,68 @@ app.put('/api/user/data', async (req, res) => {
   }
 });
 
+// ---- Global Promoted Cards Index ----
+// Single KV-backed map { username: [card, ...] }. Read by /api/promoted-cards/all
+// and updated whenever a user PUTs their data blob. Stored under the existing
+// loadData/saveData pipeline so it persists on Cloudflare KV the same way
+// subscriptions/users/etc. do.
+const PROMOTED_INDEX_FILE = path.join(APP_ROOT, 'data', 'promoted-index.json');
+
+function loadGlobalPromotedIndex() {
+  return loadData('promotedIndex', PROMOTED_INDEX_FILE, {});
+}
+
+function updateGlobalPromotedIndex(username, cards) {
+  if (!username) return;
+  const key = String(username).toLowerCase();
+  const index = loadGlobalPromotedIndex();
+  if (!Array.isArray(cards) || cards.length === 0) {
+    if (index[key]) {
+      delete index[key];
+      saveData('promotedIndex', PROMOTED_INDEX_FILE, index);
+    }
+    return;
+  }
+  // Strip any local-only fields so the public feed never leaks raw IDs etc.
+  index[key] = cards.map(c => ({
+    id: String(c.id || ''),
+    title: String(c.title || ''),
+    itemUrl: String(c.itemUrl || ''),
+    price: parseFloat(c.price) || 0,
+    imageUrl: String(c.imageUrl || ''),
+    condition: String(c.condition || 'Used'),
+    promotedBy: key,
+    createdAt: c.createdAt || new Date().toISOString(),
+  })).filter(c => c.title && c.itemUrl);
+  saveData('promotedIndex', PROMOTED_INDEX_FILE, index);
+}
+
+// Public endpoint — anyone can fetch the global promoted card feed.
+app.get('/api/promoted-cards/all', (req, res) => {
+  const index = loadGlobalPromotedIndex();
+  const all = [];
+  for (const [user, cards] of Object.entries(index)) {
+    if (!Array.isArray(cards)) continue;
+    for (const c of cards) all.push({ ...c, promotedBy: user });
+  }
+  // Newest first; harmless if createdAt is missing.
+  all.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  res.json({ cards: all, total: all.length });
+});
+
 // ---- Stripe API Routes ----
+
+// Build a usable origin (scheme + host) for Stripe success/cancel URLs.
+// req.protocol relies on req.connection.encrypted, which the Worker shim
+// doesn't set, so it returns "http" on Cloudflare. SITE_URL in wrangler.toml
+// is the canonical fallback; the Host header is the runtime fallback.
+function siteOrigin(req) {
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/+$/, '');
+  const host = req.get('host');
+  if (!host) return '';
+  const proto = (req.get('x-forwarded-proto') || req.protocol || 'https').split(',')[0].trim();
+  return `${proto || 'https'}://${host}`;
+}
 
 // Get Stripe publishable key
 app.get('/api/stripe/config', (req, res) => {
@@ -1863,9 +1958,9 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
         },
         quantity: 1
       }],
-      metadata: { username: username.toLowerCase(), period: period || 'monthly' },
-      success_url: `${req.protocol}://${req.get('host')}/?payment=success&plan=pro`,
-      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+      metadata: { username: username.toLowerCase(), period: period || 'monthly', plan: 'pro' },
+      success_url: `${siteOrigin(req)}/?payment=success&plan=pro`,
+      cancel_url: `${siteOrigin(req)}/?payment=cancelled`
     });
 
     res.json({ url: session.url, sessionId: session.id });
@@ -1889,8 +1984,8 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
       payment_method_types: ['card'],
       line_items: [{ price_data: { currency: 'usd', product: STRIPE_PRODUCT_PROPLUS, ...priceData }, quantity: 1 }],
       metadata: { username: username.toLowerCase(), period: period || 'monthly', plan: 'proplus' },
-      success_url: `${req.protocol}://${req.get('host')}/?payment=success&plan=proplus`,
-      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+      success_url: `${siteOrigin(req)}/?payment=success&plan=proplus`,
+      cancel_url: `${siteOrigin(req)}/?payment=cancelled`
     });
     res.json({ url: session.url, sessionId: session.id });
   } catch (err) {
@@ -2166,8 +2261,8 @@ app.post('/api/stripe/buy-slot', async (req, res) => {
         quantity: 1
       }],
       metadata: { username: username.toLowerCase(), type: 'extra_slot' },
-      success_url: `${req.protocol}://${req.get('host')}/?payment=success&type=slot`,
-      cancel_url: `${req.protocol}://${req.get('host')}/?payment=cancelled`
+      success_url: `${siteOrigin(req)}/?payment=success&type=slot`,
+      cancel_url: `${siteOrigin(req)}/?payment=cancelled`
     });
 
     res.json({ url: session.url, sessionId: session.id });

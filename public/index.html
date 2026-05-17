@@ -156,6 +156,7 @@
     <nav class="header-nav">
       <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
       <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
+      <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
       <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection</button>
       <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
@@ -932,6 +933,29 @@
     </div>
   </div>
 
+  <!-- Browse Cards View -->
+  <div id="browse-view" class="browse-view hidden">
+    <div class="browse-container">
+      <div class="browse-header">
+        <h2 class="browse-title">Browse Cards</h2>
+        <p class="browse-subtitle">Every promoted listing on The Card Huddle, in one place.</p>
+        <div class="browse-controls">
+          <div class="browse-search-wrap">
+            <input type="text" id="browse-search" class="browse-search" placeholder="Filter by player, set, year…" />
+          </div>
+          <select id="browse-sort" class="browse-sort">
+            <option value="newest">Newest first</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
+          <button class="browse-refresh-btn" onclick="loadBrowseCards(true)">&#8635; Refresh</button>
+        </div>
+      </div>
+      <p id="browse-meta" class="browse-meta"></p>
+      <div id="browse-grid" class="results-grid"></div>
+    </div>
+  </div>
+
   <!-- Pro Tools View -->
   <div id="proplus-view" class="proplus-view hidden">
     <div class="proplus-container">
@@ -1095,6 +1119,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=57"></script>
+  <script src="app.js?v=58"></script>
 </body>
 </html>

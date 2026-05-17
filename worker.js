@@ -41,7 +41,9 @@ function expressToFetch(app, request, bodyBuffer) {
       headers: reqHeaders,
       body: undefined,
       socket: { remoteAddress: reqHeaders['cf-connecting-ip'] || '127.0.0.1', encrypted: true },
-      connection: { remoteAddress: reqHeaders['cf-connecting-ip'] || '127.0.0.1' },
+      // Express's req.protocol getter reads connection.encrypted, not socket.
+      // Marking it true here ensures Stripe success_url etc. resolve to https.
+      connection: { remoteAddress: reqHeaders['cf-connecting-ip'] || '127.0.0.1', encrypted: true },
       httpVersion: '1.1',
       on(event, handler) {
         if (event === 'data' && bodyBuffer) handler(bodyBuffer);

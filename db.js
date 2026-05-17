@@ -18,7 +18,7 @@ try { fs = require('fs'); } catch (_) { /* Workers environment */ }
 
 // Every storage key the server uses. connectDB preloads all of these from KV
 // in parallel on first request so subsequent loadData calls are synchronous.
-const KNOWN_KEYS = ['users', 'sessions', 'subscriptions', 'alerts', 'priceHistory', 'apiCallLog', 'feedback'];
+const KNOWN_KEYS = ['users', 'sessions', 'subscriptions', 'alerts', 'priceHistory', 'apiCallLog', 'feedback', 'promotedIndex'];
 
 const cache = {};
 let kv = null;          // Cloudflare KV namespace binding (set by connectDB)
