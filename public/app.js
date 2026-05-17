@@ -154,25 +154,13 @@ function initTrackedView() {
   const upgradeBtn = document.getElementById('tracked-upgrade-btn');
   const user = getCurrentUser();
 
-  // Logged-out users: prompt to sign in
+  // Logged-out users still need a sign-in nudge — every other gate is open.
   if (!user) {
     if (gate) {
       gate.classList.remove('hidden');
       gate.querySelector('h3').textContent = 'Sign in to track cards';
-      gate.querySelector('p').textContent = 'Tracked Cards is a Pro feature. Log in or create an account to get started.';
+      gate.querySelector('p').textContent = 'Log in or create an account to start tracking cards.';
       if (upgradeBtn) { upgradeBtn.textContent = 'Log In'; upgradeBtn.onclick = () => showLogin(); }
-    }
-    if (content) content.classList.add('hidden');
-    return;
-  }
-
-  // Logged in without Pro: prompt to upgrade
-  if (!hasPro()) {
-    if (gate) {
-      gate.classList.remove('hidden');
-      gate.querySelector('h3').textContent = 'Pro Feature';
-      gate.querySelector('p').textContent = 'Tracked Cards with price alerts is part of the Pro plan.';
-      if (upgradeBtn) { upgradeBtn.textContent = 'Upgrade to Pro'; upgradeBtn.onclick = () => showPricing(); }
     }
     if (content) content.classList.add('hidden');
     return;
@@ -2181,6 +2169,7 @@ function switchView(view) {
   if (activeTab) activeTab.classList.add('active');
 
   const proplusView = document.getElementById('proplus-view');
+  const browseView = document.getElementById('browse-view');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
@@ -2188,10 +2177,13 @@ function switchView(view) {
   sellerView.classList.add('hidden');
   gradingView.classList.add('hidden');
   if (proplusView) proplusView.classList.add('hidden');
+  if (browseView) browseView.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
     if (!checklistData) loadChecklistProducts();
+  } else if (view === 'browse') {
+    if (browseView) { browseView.classList.remove('hidden'); initBrowseView(); }
   } else if (view === 'tracked') {
     trackedView.classList.remove('hidden');
     initTrackedView();
@@ -2215,13 +2207,10 @@ function initProPlusView() {
   const gate = document.getElementById('proplus-gate');
   const content = document.getElementById('proplus-content');
   if (!gate || !content) return;
-  if (hasPro()) {
-    gate.classList.add('hidden');
-    content.classList.remove('hidden');
-  } else {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-  }
+  // Pro Tools are open access — the gate is kept in the DOM so the upgrade
+  // CTA can be re-enabled later by flipping this back to hasPro().
+  gate.classList.add('hidden');
+  content.classList.remove('hidden');
 }
 
 function switchProPlusTab(tab) {
@@ -5055,12 +5044,48 @@ document.addEventListener('DOMContentLoaded', () => {
   if (afInput) afInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchAutofillTitles(); });
 });
 
-// ---- Promoted Cards (Pro Feature) ----
+// ---- Promoted Cards ----
 
 function getPromotedCards() {
   try { return JSON.parse(localStorage.getItem('cardHuddlePromotedCards') || '[]'); }
   catch { return []; }
 }
+
+// Promoted cards from every seller across The Card Huddle. Cached in memory
+// after the first GET so the Browse page and search injection can use it
+// synchronously. Falls back to the local user's cards when the global feed
+// hasn't loaded yet (first paint).
+let _globalPromotedCache = null;
+let _globalPromotedLoading = null;
+
+function getGlobalPromotedCards() {
+  if (Array.isArray(_globalPromotedCache)) return _globalPromotedCache;
+  // Fire-and-forget warm-up so future calls have the global feed ready.
+  fetchGlobalPromotedCards().catch(() => {});
+  return getPromotedCards();
+}
+
+async function fetchGlobalPromotedCards(force) {
+  if (!force && Array.isArray(_globalPromotedCache)) return _globalPromotedCache;
+  if (_globalPromotedLoading) return _globalPromotedLoading;
+  _globalPromotedLoading = (async () => {
+    try {
+      const res = await fetch('/api/promoted-cards/all');
+      const data = await safeJson(res);
+      _globalPromotedCache = Array.isArray(data && data.cards) ? data.cards : [];
+    } catch (_) {
+      _globalPromotedCache = _globalPromotedCache || [];
+    } finally {
+      _globalPromotedLoading = null;
+    }
+    return _globalPromotedCache;
+  })();
+  return _globalPromotedLoading;
+}
+
+// Warm the cache once the page is ready so the first search shows promoted
+// cards from across the platform, not just this user's.
+fetchGlobalPromotedCards().catch(() => {});
 
 function savePromotedCards(cards) {
   localStorage.setItem('cardHuddlePromotedCards', JSON.stringify(cards));
@@ -5127,18 +5152,12 @@ async function handleBuyExtraSlot() {
 }
 
 function initPromoteTab() {
-  const sub = getUserSubscription();
   const gate = document.getElementById('promote-pro-gate');
   const content = document.getElementById('promote-content');
-  if (!sub) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-  } else {
-    gate.classList.add('hidden');
-    content.classList.remove('hidden');
-    populatePromoteAutofill();
-    renderPromotedCards();
-  }
+  if (gate) gate.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
+  populatePromoteAutofill();
+  renderPromotedCards();
 }
 
 // Populate the autofill dropdown with current seller listings
@@ -5289,8 +5308,7 @@ function clearPromoteImage() {
 
 async function handleAddPromotedCard(e) {
   e.preventDefault();
-  const sub = getUserSubscription();
-  if (!sub) { showPricing(); return false; }
+  if (!getCurrentUser()) { showLogin(); return false; }
 
   const cards = getPromotedCards();
   const maxSlots = getPromoteSlotCount();
@@ -5465,33 +5483,106 @@ function buildPromotedCard(promo) {
   return card;
 }
 
-// Inject promoted cards into a results grid at evenly spaced positions
+// Inject promoted cards into a results grid every ~10 cards. If a promoted
+// slot falls past the last result we drop it — promoted cards aren't allowed
+// to stack at the bottom of the grid when the search runs out.
 function injectPromotedCards(grid) {
-  const promos = getPromotedCards();
+  const promos = getGlobalPromotedCards();
   if (promos.length === 0) return;
 
-  // Shuffle so it's not always the same order
   const shuffled = [...promos].sort(() => Math.random() - 0.5);
 
   const existingCards = grid.querySelectorAll('.card:not(.promoted-card)');
   const count = existingCards.length;
-  if (count < 2) return; // Don't inject if too few results
+  if (count < 2) return; // too few results to interleave
 
-  // Show a promoted card every 10 results
   const spacing = 10;
 
   shuffled.forEach((promo, i) => {
     const insertIndex = spacing * (i + 1);
     const refCards = grid.querySelectorAll('.card:not(.promoted-card)');
-    if (insertIndex < refCards.length) {
-      const promoCard = buildPromotedCard(promo);
-      promoCard.style.animationDelay = `${insertIndex * 0.05}s`;
-      refCards[insertIndex].before(promoCard);
+    if (insertIndex >= refCards.length) return; // results ran out; skip the rest
+    const promoCard = buildPromotedCard(promo);
+    promoCard.style.animationDelay = `${insertIndex * 0.05}s`;
+    refCards[insertIndex].before(promoCard);
+  });
+}
+
+// ---- Browse Cards View ----
+// Public page that lists every promoted card on The Card Huddle. Pulls the
+// aggregated feed from /api/promoted-cards/all and supports a quick text
+// filter + price sort. No login required.
+let _browseSearchWired = false;
+
+function initBrowseView() {
+  const grid = document.getElementById('browse-grid');
+  const meta = document.getElementById('browse-meta');
+  if (!grid) return;
+  if (!_browseSearchWired) {
+    const search = document.getElementById('browse-search');
+    const sort = document.getElementById('browse-sort');
+    if (search) search.addEventListener('input', () => renderBrowseCards());
+    if (sort) sort.addEventListener('change', () => renderBrowseCards());
+    _browseSearchWired = true;
+  }
+  if (!Array.isArray(_globalPromotedCache)) {
+    grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">Loading promoted cards…</p>';
+    if (meta) meta.textContent = '';
+  }
+  loadBrowseCards(false);
+}
+
+async function loadBrowseCards(force) {
+  await fetchGlobalPromotedCards(!!force);
+  renderBrowseCards();
+}
+
+function renderBrowseCards() {
+  const grid = document.getElementById('browse-grid');
+  const meta = document.getElementById('browse-meta');
+  if (!grid) return;
+  const cards = Array.isArray(_globalPromotedCache) ? _globalPromotedCache : [];
+  const search = (document.getElementById('browse-search')?.value || '').toLowerCase().trim();
+  const sort = document.getElementById('browse-sort')?.value || 'newest';
+
+  let filtered = cards;
+  if (search) {
+    filtered = cards.filter(c => (c.title || '').toLowerCase().includes(search));
+  }
+  if (sort === 'price-low') {
+    filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
+  } else if (sort === 'price-high') {
+    filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
+  } else {
+    filtered = [...filtered].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  }
+
+  if (meta) {
+    if (cards.length === 0) {
+      meta.textContent = 'No promoted cards yet — be the first! Add cards on the eBay Seller page.';
     } else {
-      // Append at end
-      const promoCard = buildPromotedCard(promo);
-      grid.appendChild(promoCard);
+      meta.textContent = `${filtered.length} of ${cards.length} card${cards.length !== 1 ? 's' : ''}${search ? ` matching “${search}”` : ''}`;
     }
+  }
+
+  grid.innerHTML = '';
+  if (filtered.length === 0) {
+    if (cards.length === 0) {
+      grid.innerHTML = `
+        <div class="browse-empty" style="grid-column:1/-1">
+          <div class="browse-empty-icon">&#11088;</div>
+          <h3>No promoted cards yet</h3>
+          <p>Promoted cards added by sellers will appear here. Head to <a href="#" onclick="switchView('seller');return false;">eBay Seller → Promote Cards</a> to add your own.</p>
+        </div>`;
+    } else {
+      grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">No promoted cards match that filter.</p>';
+    }
+    return;
+  }
+  filtered.forEach((promo, i) => {
+    const card = buildPromotedCard(promo);
+    card.style.animationDelay = `${Math.min(i, 20) * 0.04}s`;
+    grid.appendChild(card);
   });
 }
 
