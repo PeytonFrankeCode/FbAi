@@ -1850,6 +1850,36 @@ function updateLoginForm() {
   }
 }
 
+// Translate a fetch failure into a message that tells the user what to do,
+// not a stack trace. AbortError = our own timeout, TypeError = browser
+// couldn't open the connection at all.
+function describeAuthError(err) {
+  const name = err && err.name;
+  const msg = (err && err.message) || String(err);
+  if (name === 'AbortError') return 'The server took too long to respond. Try again — first sign-up after a quiet period can be slow.';
+  if (name === 'TypeError') return 'Could not reach the server. Check your connection and try again.';
+  return msg || 'Something went wrong. Try again.';
+}
+
+// Cold-start tolerant fetch wrapper. The first hit on a fresh worker has to
+// preload KV and import server.js, which on a slow link can push past 15s.
+// Bumped to 30s so the timeout doesn't fire mid-handshake.
+async function authFetchJson(url, body) {
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), 30000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: abort.signal,
+    });
+    return { res, data: await safeJson(res) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function handleAuth(e) {
   e.preventDefault();
   const username = document.getElementById('auth-username').value.trim();
@@ -1868,23 +1898,7 @@ async function handleAuth(e) {
         return false;
       }
       const email = document.getElementById('auth-email').value.trim();
-      // Cap the request at 15s so a stalled worker can't leave the submit
-      // button disabled indefinitely. AbortController + setTimeout makes
-      // fetch reject with AbortError which the outer catch already renders.
-      const authAbort = new AbortController();
-      const authTimer = setTimeout(() => authAbort.abort(), 15000);
-      let res;
-      try {
-        res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, email }),
-          signal: authAbort.signal,
-        });
-      } finally {
-        clearTimeout(authTimer);
-      }
-      const data = await safeJson(res);
+      const { res, data } = await authFetchJson('/api/auth/register', { username, password, email });
       if (!res.ok) {
         loginError.textContent = data.error || 'Registration failed';
         loginError.classList.remove('hidden');
@@ -1893,26 +1907,14 @@ async function handleAuth(e) {
       setSessionToken(data.token);
       setCurrentUser(data.username);
       closeLogin();
-      await syncSubscriptionStatus();
-      // Fire-and-forget so a slow /api/user/data doesn't keep the submit
-      // button disabled. The user is already logged in by this point —
-      // sync can complete in the background and re-render when it lands.
+      // Everything below is fire-and-forget: the user is already signed in,
+      // so a slow subscription/sync fetch must not block the modal closing
+      // or the submit button re-enabling. Any earlier `await` here is what
+      // made the screen feel "frozen" after a cold-start register.
+      syncSubscriptionStatus().catch(err => console.warn('[auth] sub sync failed:', err && err.message || err));
       enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
     } else {
-      const loginAbort = new AbortController();
-      const loginTimer = setTimeout(() => loginAbort.abort(), 15000);
-      let res;
-      try {
-        res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-          signal: loginAbort.signal,
-        });
-      } finally {
-        clearTimeout(loginTimer);
-      }
-      const data = await safeJson(res);
+      const { res, data } = await authFetchJson('/api/auth/login', { username, password });
       if (!res.ok) {
         // Fallback: check local accounts (for users created before server-side auth)
         const users = getUsers();
@@ -1920,7 +1922,7 @@ async function handleAuth(e) {
         if (localUser && localUser.password === password) {
           setCurrentUser(localUser.username);
           closeLogin();
-          await syncSubscriptionStatus();
+          syncSubscriptionStatus().catch(() => {});
           return false;
         }
         loginError.textContent = data.error || 'Login failed';
@@ -1929,7 +1931,6 @@ async function handleAuth(e) {
       }
       setSessionToken(data.token);
       setCurrentUser(data.username);
-      // Persist email in local users store for display
       if (data.email) {
         const users = getUsers();
         const key = data.username.toLowerCase();
@@ -1938,14 +1939,11 @@ async function handleAuth(e) {
         localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
       }
       closeLogin();
-      await syncSubscriptionStatus();
+      syncSubscriptionStatus().catch(err => console.warn('[auth] sub sync failed:', err && err.message || err));
       enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
     }
   } catch (err) {
-    // Without this, any crash inside the try (e.g. JSON parse on an empty
-    // response body when the server 500'd) made the button look dead — no
-    // error shown, click just did nothing.
-    loginError.textContent = `Couldn't reach the server: ${err && err.message || err}`;
+    loginError.textContent = describeAuthError(err);
     loginError.classList.remove('hidden');
   } finally {
     if (authSubmitBtn) authSubmitBtn.disabled = false;
@@ -2140,6 +2138,10 @@ syncSubscriptionStatus();
 // logged in (no session token).
 enableUserSync();
 checkPaymentReturn();
+
+// Warm the worker so the first Create Account submit doesn't time out on a
+// cold start. Cheap, cacheable, doesn't depend on auth.
+fetch('/api/stripe/config').catch(() => {});
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
@@ -5526,8 +5528,13 @@ function initBrowseView() {
     _browseSearchWired = true;
   }
   if (!Array.isArray(_globalPromotedCache)) {
-    grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">Loading promoted cards…</p>';
-    if (meta) meta.textContent = '';
+    grid.innerHTML = `
+      <div class="browse-empty" style="grid-column:1/-1">
+        <div class="browse-empty-icon">&#9203;</div>
+        <h3>Loading promoted cards…</h3>
+        <p>Pulling listings from sellers across The Card Huddle.</p>
+      </div>`;
+    if (meta) { meta.textContent = ''; meta.classList.add('hidden'); }
   }
   loadBrowseCards(false);
 }
@@ -5557,10 +5564,14 @@ function renderBrowseCards() {
     filtered = [...filtered].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
   }
 
+  // The empty-state card carries its own messaging; suppress the meta line so
+  // it doesn't double up on "No promoted cards yet" copy.
   if (meta) {
     if (cards.length === 0) {
-      meta.textContent = 'No promoted cards yet — be the first! Add cards on the eBay Seller page.';
+      meta.textContent = '';
+      meta.classList.add('hidden');
     } else {
+      meta.classList.remove('hidden');
       meta.textContent = `${filtered.length} of ${cards.length} card${cards.length !== 1 ? 's' : ''}${search ? ` matching “${search}”` : ''}`;
     }
   }
@@ -5572,10 +5583,15 @@ function renderBrowseCards() {
         <div class="browse-empty" style="grid-column:1/-1">
           <div class="browse-empty-icon">&#11088;</div>
           <h3>No promoted cards yet</h3>
-          <p>Promoted cards added by sellers will appear here. Head to <a href="#" onclick="switchView('seller');return false;">eBay Seller → Promote Cards</a> to add your own.</p>
+          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('seller');return false;">eBay Seller &rarr; Promote Cards</a>.</p>
         </div>`;
     } else {
-      grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">No promoted cards match that filter.</p>';
+      grid.innerHTML = `
+        <div class="browse-empty" style="grid-column:1/-1">
+          <div class="browse-empty-icon">&#128269;</div>
+          <h3>No matches</h3>
+          <p>Try a different player, set, or year.</p>
+        </div>`;
     }
     return;
   }
