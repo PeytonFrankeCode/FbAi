@@ -5526,8 +5526,13 @@ function initBrowseView() {
     _browseSearchWired = true;
   }
   if (!Array.isArray(_globalPromotedCache)) {
-    grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">Loading promoted cards…</p>';
-    if (meta) meta.textContent = '';
+    grid.innerHTML = `
+      <div class="browse-empty" style="grid-column:1/-1">
+        <div class="browse-empty-icon">&#9203;</div>
+        <h3>Loading promoted cards…</h3>
+        <p>Pulling listings from sellers across The Card Huddle.</p>
+      </div>`;
+    if (meta) { meta.textContent = ''; meta.classList.add('hidden'); }
   }
   loadBrowseCards(false);
 }
@@ -5557,10 +5562,14 @@ function renderBrowseCards() {
     filtered = [...filtered].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
   }
 
+  // The empty-state card carries its own messaging; suppress the meta line so
+  // it doesn't double up on "No promoted cards yet" copy.
   if (meta) {
     if (cards.length === 0) {
-      meta.textContent = 'No promoted cards yet — be the first! Add cards on the eBay Seller page.';
+      meta.textContent = '';
+      meta.classList.add('hidden');
     } else {
+      meta.classList.remove('hidden');
       meta.textContent = `${filtered.length} of ${cards.length} card${cards.length !== 1 ? 's' : ''}${search ? ` matching “${search}”` : ''}`;
     }
   }
@@ -5572,10 +5581,15 @@ function renderBrowseCards() {
         <div class="browse-empty" style="grid-column:1/-1">
           <div class="browse-empty-icon">&#11088;</div>
           <h3>No promoted cards yet</h3>
-          <p>Promoted cards added by sellers will appear here. Head to <a href="#" onclick="switchView('seller');return false;">eBay Seller → Promote Cards</a> to add your own.</p>
+          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('seller');return false;">eBay Seller &rarr; Promote Cards</a>.</p>
         </div>`;
     } else {
-      grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">No promoted cards match that filter.</p>';
+      grid.innerHTML = `
+        <div class="browse-empty" style="grid-column:1/-1">
+          <div class="browse-empty-icon">&#128269;</div>
+          <h3>No matches</h3>
+          <p>Try a different player, set, or year.</p>
+        </div>`;
     }
     return;
   }
