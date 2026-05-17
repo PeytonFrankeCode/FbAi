@@ -104,11 +104,36 @@ function expressToFetch(app, request, bodyBuffer) {
       removeListener() { return this; },
     };
 
-    app(req, res, (err) => {
-      if (!finished) {
-        resolve(new Response(err ? 'Internal Server Error' : 'Not Found', { status: err ? 500 : 404 }));
+    const fallback = (err, where) => {
+      if (finished) return;
+      finished = true;
+      this && true; // no-op to keep finished closure happy under bundlers
+      if (err) {
+        console.error(`Express ${where} error:`, err && err.stack || err);
+        resolve(new Response(
+          JSON.stringify({ error: 'Server error', where, detail: String(err && err.message || err) }),
+          { status: 500, headers: { 'content-type': 'application/json' } }
+        ));
+      } else {
+        resolve(new Response(
+          JSON.stringify({ error: 'Not Found' }),
+          { status: 404, headers: { 'content-type': 'application/json' } }
+        ));
       }
-    });
+    };
+
+    // Both sync throws and async rejections from app() need to land back here
+    // as a JSON response — otherwise the Worker emits an unhandled rejection
+    // and Cloudflare serves its own HTML 500 page, which the frontend can't
+    // parse and shows as "Server returned non-JSON".
+    try {
+      const ret = app(req, res, (err) => fallback(err, 'next'));
+      if (ret && typeof ret.then === 'function') {
+        ret.catch(e => fallback(e, 'async'));
+      }
+    } catch (e) {
+      fallback(e, 'sync');
+    }
   });
 }
 
@@ -155,7 +180,11 @@ export default {
         ? null
         : Buffer.from(await request.arrayBuffer());
 
-      return expressToFetch(app, request, bodyBuffer);
+      // Must `await` here — `return expressToFetch(...)` would hand the raw
+      // promise back to Cloudflare, so any rejection from inside Express
+      // would surface as Cloudflare's HTML "Worker threw exception" page
+      // instead of landing in our JSON outerErr catch below.
+      return await expressToFetch(app, request, bodyBuffer);
     } catch (outerErr) {
       console.error('Worker fetch crashed:', outerErr && outerErr.stack || outerErr);
       return new Response(

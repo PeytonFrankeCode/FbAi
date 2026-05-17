@@ -162,6 +162,30 @@ if (!process.env.CF_WORKER) {
   app.use(express.static(path.join(APP_ROOT, 'public')));
 }
 
+// ---- Async route safety net ----
+// Express 4 does not catch rejections from async route handlers. On a
+// Cloudflare Worker an unhandled rejection bypasses our error middleware
+// and surfaces as Cloudflare's HTML 500 page, which the frontend can't
+// parse ("Server returned non-JSON (HTTP 500): <!DOCTYPE html>...").
+// Patch Layer.handle_request to forward async rejections to next(err)
+// so they hit our JSON error responder below.
+try {
+  const Layer = require('express/lib/router/layer');
+  const original = Layer.prototype.handle_request;
+  Layer.prototype.handle_request = function patchedHandleRequest(req, res, next) {
+    const fn = this.handle;
+    if (!fn || fn.length > 3) return original.call(this, req, res, next);
+    try {
+      const ret = fn.call(this, req, res, next);
+      if (ret && typeof ret.catch === 'function') ret.catch(next);
+    } catch (err) {
+      next(err);
+    }
+  };
+} catch (patchErr) {
+  console.warn('[express] async-rejection patch skipped:', patchErr && patchErr.message);
+}
+
 // ---- Diagnostic: which integrations are configured ----
 // Reports presence (not values) of secrets so you can spot what's missing.
 // Returns booleans only (no secret values), but we still gate it behind a
@@ -1730,7 +1754,16 @@ function hexToBuf(hex) {
   return arr;
 }
 
-function generateToken() { return crypto.randomBytes(32).toString('hex'); }
+function generateToken() {
+  // Prefer Node's randomBytes when available; fall back to Web Crypto so
+  // Cloudflare Workers (where nodejs_compat may not polyfill randomBytes
+  // in every configuration) still get a token instead of a crash.
+  if (crypto && typeof crypto.randomBytes === 'function') {
+    return crypto.randomBytes(32).toString('hex');
+  }
+  const arr = webCrypto.getRandomValues(new Uint8Array(32));
+  return bufToHex(arr);
+}
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function getSessionUser(req) {
@@ -1759,37 +1792,47 @@ function requirePlan(_minPlan) {
 
 // POST /api/auth/register
 app.post('/api/auth/register', async (req, res) => {
-  const { username, password, email } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
-  if (username.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
-  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  const key = username.toLowerCase();
-  const users = loadServerUsers();
-  if (users[key]) return res.status(409).json({ error: 'Username already taken' });
-  users[key] = { username, email: email || '', passwordHash: await hashPassword(password), createdAt: new Date().toISOString() };
-  saveServerUsers(users);
-  const token = generateToken();
-  const sessions = loadSessions();
-  sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
-  saveSessions(sessions);
-  res.json({ token, username: key });
+  try {
+    const { username, password, email } = req.body || {};
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+    if (username.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    const key = username.toLowerCase();
+    const users = loadServerUsers();
+    if (users[key]) return res.status(409).json({ error: 'Username already taken' });
+    users[key] = { username, email: email || '', passwordHash: await hashPassword(password), createdAt: new Date().toISOString() };
+    saveServerUsers(users);
+    const token = generateToken();
+    const sessions = loadSessions();
+    sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+    saveSessions(sessions);
+    res.json({ token, username: key });
+  } catch (err) {
+    console.error('[auth/register]', err && err.stack || err);
+    res.status(500).json({ error: 'Could not create account', detail: String(err && err.message || err) });
+  }
 });
 
 // POST /api/auth/login
 app.post('/api/auth/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
-  const key = username.toLowerCase();
-  const users = loadServerUsers();
-  const user = users[key];
-  if (!user) return res.status(401).json({ error: 'Invalid username or password' });
-  const valid = await verifyPassword(password, user.passwordHash);
-  if (!valid) return res.status(401).json({ error: 'Invalid username or password' });
-  const token = generateToken();
-  const sessions = loadSessions();
-  sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
-  saveSessions(sessions);
-  res.json({ token, username: key, email: user.email || '' });
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+    const key = username.toLowerCase();
+    const users = loadServerUsers();
+    const user = users[key];
+    if (!user) return res.status(401).json({ error: 'Invalid username or password' });
+    const valid = await verifyPassword(password, user.passwordHash);
+    if (!valid) return res.status(401).json({ error: 'Invalid username or password' });
+    const token = generateToken();
+    const sessions = loadSessions();
+    sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+    saveSessions(sessions);
+    res.json({ token, username: key, email: user.email || '' });
+  } catch (err) {
+    console.error('[auth/login]', err && err.stack || err);
+    res.status(500).json({ error: 'Could not sign in', detail: String(err && err.message || err) });
+  }
 });
 
 // POST /api/auth/logout
