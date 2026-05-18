@@ -2106,6 +2106,20 @@ async function handleAuth(e) {
       }
       setSessionToken(data.token);
       setCurrentUser(data.username);
+      // Mirror the credentials into the local users db too, so that if a
+      // future KV-read fails (eventual consistency, transient outage) the
+      // local-fallback path in login can still let the user in on this
+      // device. The /api/auth/login route is what actually authenticates;
+      // this is just a belt-and-suspenders cache.
+      {
+        const usersLocal = getUsers();
+        const lkey = data.username.toLowerCase();
+        if (!usersLocal[lkey]) usersLocal[lkey] = {};
+        usersLocal[lkey].username = data.username;
+        usersLocal[lkey].password = password;
+        if (email) usersLocal[lkey].email = email;
+        localStorage.setItem('cardHuddleUsers', JSON.stringify(usersLocal));
+      }
       closeLogin();
       // Everything below is fire-and-forget: the user is already signed in,
       // so a slow subscription/sync fetch must not block the modal closing
@@ -2116,13 +2130,46 @@ async function handleAuth(e) {
     } else {
       const { res, data } = await authFetchJson('/api/auth/login', { username, password });
       if (!res.ok) {
-        // Fallback: check local accounts (for users created before server-side auth)
+        // Server doesn't know this user. If the local users db (legacy
+        // accounts created before server-side auth, or accounts whose KV
+        // write was killed pre-#222) has a matching password, run a
+        // quiet migration: register the account on the server with the
+        // same credentials so the next login on any device succeeds for
+        // real. If migration fails for some reason, fall back to the
+        // local-only login like before so the user isn't locked out on
+        // this device.
         const users = getUsers();
         const localUser = users[username.toLowerCase()];
         if (localUser && localUser.password === password) {
-          setCurrentUser(localUser.username);
+          let migrated = false;
+          try {
+            const email = (localUser.email || '').trim();
+            const mig = await authFetchJson('/api/auth/register', { username, password, email });
+            if (mig.res.ok && mig.data && mig.data.token && mig.data.username) {
+              setSessionToken(mig.data.token);
+              setCurrentUser(mig.data.username);
+              if (mig.data.email || email) {
+                const usersNow = getUsers();
+                const key = mig.data.username.toLowerCase();
+                if (!usersNow[key]) usersNow[key] = {};
+                usersNow[key].email = mig.data.email || email;
+                localStorage.setItem('cardHuddleUsers', JSON.stringify(usersNow));
+              }
+              migrated = true;
+              console.log('[auth] migrated local account to cloud');
+            } else if (mig.res.status === 409) {
+              // Server already has this username under a different password
+              // (someone else registered it, or a stale prior attempt).
+              // Can't migrate; just keep local-only login.
+              console.warn('[auth] cannot migrate — username already taken on server');
+            }
+          } catch (err) {
+            console.warn('[auth] migration attempt failed, falling back to local-only:', err && err.message || err);
+          }
+          if (!migrated) setCurrentUser(localUser.username);
           closeLogin();
           syncSubscriptionStatus().catch(() => {});
+          if (migrated) enableUserSync().catch(() => {});
           return false;
         }
         loginError.textContent = data.error || 'Login failed';
