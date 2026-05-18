@@ -24,12 +24,13 @@
   <button onclick="run('GET', '/api/ping')">GET /api/ping (build marker)</button>
   <button onclick="run('POST', '/api/ping', '{}')">POST /api/ping (body-parser test)</button>
 
-  <label>Username (any value, won't be saved):</label>
+  <label>Username (your real account is fine to test):</label>
   <input id="u" value="diagtest" />
   <label>Password:</label>
   <input id="p" type="text" value="diagpass123" />
-  <button onclick="runRegisterDiag()">POST /api/auth/diag (full register flow)</button>
-  <button onclick="runRealRegister()">POST /api/auth/register (the actual failing route)</button>
+  <button onclick="runRegisterDiag()">POST /api/auth/diag (full register flow, throwaway user)</button>
+  <button onclick="runRealRegister()">POST /api/auth/register (new throwaway user)</button>
+  <button onclick="runRealLogin()">POST /api/auth/login (with values above)</button>
 
   <div id="status"></div>
   <pre id="out">Waiting...</pre>
@@ -69,6 +70,11 @@
       const u = document.getElementById('u').value + '_' + Date.now();
       const p = document.getElementById('p').value;
       run('POST', '/api/auth/register', JSON.stringify({ username: u, password: p, email: '' }));
+    }
+    function runRealLogin() {
+      const u = document.getElementById('u').value;
+      const p = document.getElementById('p').value;
+      run('POST', '/api/auth/login', JSON.stringify({ username: u, password: p }));
     }
   </script>
 </body>

@@ -206,7 +206,7 @@ app.get('/api/ping', (req, res) => {
     // latest commit, the deploy didn't land. pbkdf2Iterations should be
     // 25000 after PR #214; build is bumped on every diagnostic change.
     pbkdf2Iterations: PBKDF2_ITERATIONS,
-    build: 'ping-v9',
+    build: 'ping-v10',
     waitUntilBound: typeof globalThis.__kvWaitUntil === 'function',
     socialAuth: {
       google: !!process.env.GOOGLE_CLIENT_ID,
