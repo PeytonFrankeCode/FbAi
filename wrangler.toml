@@ -54,4 +54,21 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 #
 # After setting Stripe secrets, also register the webhook endpoint in the
 # Stripe dashboard pointing at: https://thecardhuddle.com/api/stripe/webhook
+#
+# Social sign-in (optional, but recommended for cross-device accounts):
+#   wrangler secret put GOOGLE_CLIENT_ID         # OAuth web client id from Google Cloud Console
+#   wrangler secret put APPLE_CLIENT_ID          # Services ID from Apple Developer (e.g. com.thecardhuddle.web)
+#
+# Setup notes:
+# - Google: https://console.cloud.google.com -> APIs & Services -> Credentials
+#     1. Create an OAuth 2.0 Web client.
+#     2. Add https://thecardhuddle.com and https://www.thecardhuddle.com as
+#        "Authorized JavaScript origins".
+#     3. Copy the Client ID and store it as GOOGLE_CLIENT_ID.
+# - Apple: requires an Apple Developer account ($99/yr).
+#     1. Apple Developer -> Identifiers -> create a Services ID
+#        (e.g. com.thecardhuddle.web).
+#     2. Enable "Sign In with Apple" on the Services ID and configure
+#        the return URL to https://thecardhuddle.com/.
+#     3. Store the Services ID (not the Bundle ID) as APPLE_CLIENT_ID.
 

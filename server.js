@@ -206,7 +206,11 @@ app.get('/api/ping', (req, res) => {
     // latest commit, the deploy didn't land. pbkdf2Iterations should be
     // 25000 after PR #214; build is bumped on every diagnostic change.
     pbkdf2Iterations: PBKDF2_ITERATIONS,
-    build: 'ping-v7',
+    build: 'ping-v8',
+    socialAuth: {
+      google: !!process.env.GOOGLE_CLIENT_ID,
+      apple: !!process.env.APPLE_CLIENT_ID,
+    },
     now: new Date().toISOString(),
   });
 });
@@ -1998,6 +2002,161 @@ app.post('/api/auth/logout', (req, res) => {
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   if (token) { const s = loadSessions(); delete s[token]; saveSessions(s); }
   res.json({ ok: true });
+});
+
+// ---- Social Login ----
+// Sign-In with Google / Apple. The frontend uses the provider's JS SDK
+// to get a signed ID token (a JWT), then POSTs it here. We verify the
+// JWT, find or create a user keyed off the provider + provider's user id,
+// and hand back our own session token. Existing email-based accounts get
+// linked automatically if the OAuth email matches.
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID || '';
+
+// Verify a Google ID token via Google's tokeninfo endpoint. Returns the
+// decoded claims on success or null. Using the endpoint (vs verifying
+// the JWT signature locally) keeps the worker lightweight — no need to
+// pull in a JOSE library or fetch JWKs ourselves.
+async function verifyGoogleIdToken(idToken) {
+  if (!idToken || !GOOGLE_CLIENT_ID) return null;
+  try {
+    const resp = await axios.get('https://oauth2.googleapis.com/tokeninfo', {
+      params: { id_token: idToken },
+      timeout: 8000,
+    });
+    const claims = resp.data || {};
+    if (claims.aud !== GOOGLE_CLIENT_ID) return null;
+    if (!claims.sub) return null;
+    return {
+      sub: claims.sub,
+      email: (claims.email || '').toLowerCase(),
+      emailVerified: claims.email_verified === 'true' || claims.email_verified === true,
+      name: claims.name || claims.given_name || '',
+    };
+  } catch (err) {
+    console.error('[auth/google] verify failed:', err && err.message);
+    return null;
+  }
+}
+
+// Verify an Apple ID token. Apple signs JWTs with RS256 and publishes
+// public keys at https://appleid.apple.com/auth/keys. We fetch the JWKS,
+// pick the key matching the token's kid, and verify the signature.
+async function verifyAppleIdToken(idToken) {
+  if (!idToken || !APPLE_CLIENT_ID) return null;
+  try {
+    const parts = String(idToken).split('.');
+    if (parts.length !== 3) return null;
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    if (payload.iss !== 'https://appleid.apple.com') return null;
+    if (payload.aud !== APPLE_CLIENT_ID) return null;
+    if (typeof payload.exp === 'number' && payload.exp * 1000 < Date.now()) return null;
+    const jwks = (await axios.get('https://appleid.apple.com/auth/keys', { timeout: 8000 })).data;
+    const jwk = (jwks.keys || []).find(k => k.kid === header.kid);
+    if (!jwk) return null;
+    const key = await webCrypto.subtle.importKey(
+      'jwk', jwk,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false, ['verify']
+    );
+    const sig = new Uint8Array(Buffer.from(parts[2], 'base64url'));
+    const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+    const valid = await webCrypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, data);
+    if (!valid) return null;
+    return {
+      sub: payload.sub,
+      email: (payload.email || '').toLowerCase(),
+      emailVerified: payload.email_verified === 'true' || payload.email_verified === true,
+    };
+  } catch (err) {
+    console.error('[auth/apple] verify failed:', err && err.message);
+    return null;
+  }
+}
+
+// Build/find an account for a verified social-login identity.
+// - If a user already exists with the OAuth email, link the provider id to it.
+// - Otherwise create a fresh account using a username derived from email/sub.
+function loginOrCreateOAuthUser(provider, identity) {
+  const users = loadServerUsers();
+  // Look for an existing link first
+  const linkKey = `${provider}:${identity.sub}`;
+  let key = Object.keys(users).find(k => users[k]?.oauth && users[k].oauth[provider] === identity.sub);
+  if (!key && identity.email) {
+    key = Object.keys(users).find(k => (users[k]?.email || '').toLowerCase() === identity.email);
+  }
+  if (!key) {
+    const base = (identity.email ? identity.email.split('@')[0] : provider + identity.sub.slice(0, 8))
+      .replace(/[^a-z0-9_.-]/gi, '').toLowerCase() || (provider + identity.sub.slice(0, 8));
+    key = base;
+    let i = 1;
+    while (users[key]) { key = `${base}${i++}`; }
+    users[key] = {
+      username: key,
+      email: identity.email || '',
+      passwordHash: null,
+      createdAt: new Date().toISOString(),
+      oauth: {},
+    };
+  }
+  if (!users[key].oauth) users[key].oauth = {};
+  users[key].oauth[provider] = identity.sub;
+  if (identity.email && !users[key].email) users[key].email = identity.email;
+  saveServerUsers(users);
+  return key;
+}
+
+function issueSession(username) {
+  const token = generateToken();
+  const sessions = loadSessions();
+  sessions[token] = { username, expiresAt: Date.now() + SESSION_TTL };
+  saveSessions(sessions);
+  return token;
+}
+
+// POST /api/auth/google { credential: '<google-id-token>' }
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    if (!GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Google Sign-In not configured. Set GOOGLE_CLIENT_ID.' });
+    const credential = req.body && req.body.credential;
+    if (!credential) return res.status(400).json({ error: 'Missing credential' });
+    const identity = await verifyGoogleIdToken(credential);
+    if (!identity) return res.status(401).json({ error: 'Invalid Google token' });
+    const username = loginOrCreateOAuthUser('google', identity);
+    const token = issueSession(username);
+    const users = loadServerUsers();
+    res.json({ token, username, email: users[username]?.email || '' });
+  } catch (err) {
+    console.error('[auth/google]', err && err.stack || err);
+    res.status(500).json({ error: 'Google sign-in failed', detail: String(err && err.message || err) });
+  }
+});
+
+// POST /api/auth/apple { id_token: '<apple-id-token>', user: {...} }
+app.post('/api/auth/apple', async (req, res) => {
+  try {
+    if (!APPLE_CLIENT_ID) return res.status(503).json({ error: 'Apple Sign-In not configured. Set APPLE_CLIENT_ID (your Service ID).' });
+    const idToken = req.body && (req.body.id_token || req.body.idToken || req.body.credential);
+    if (!idToken) return res.status(400).json({ error: 'Missing id_token' });
+    const identity = await verifyAppleIdToken(idToken);
+    if (!identity) return res.status(401).json({ error: 'Invalid Apple token' });
+    const username = loginOrCreateOAuthUser('apple', identity);
+    const token = issueSession(username);
+    const users = loadServerUsers();
+    res.json({ token, username, email: users[username]?.email || '' });
+  } catch (err) {
+    console.error('[auth/apple]', err && err.stack || err);
+    res.status(500).json({ error: 'Apple sign-in failed', detail: String(err && err.message || err) });
+  }
+});
+
+// GET /api/auth/providers — which social providers are configured server-side
+app.get('/api/auth/providers', (req, res) => {
+  res.json({
+    google: { enabled: !!GOOGLE_CLIENT_ID, clientId: GOOGLE_CLIENT_ID || null },
+    apple:  { enabled: !!APPLE_CLIENT_ID,  clientId: APPLE_CLIENT_ID  || null },
+  });
 });
 
 // GET /api/auth/me

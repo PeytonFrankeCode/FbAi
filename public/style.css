@@ -245,6 +245,60 @@
   position: relative;
 }
 
+/* Social sign-in (Google / Apple) */
+.social-auth {
+  margin: 0.75rem 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+.social-auth-btn-wrap {
+  display: flex;
+  justify-content: center;
+}
+.social-auth-btn-wrap > div {
+  margin: 0 auto;
+}
+.social-auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  background: #000;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+.social-auth-btn:hover { opacity: 0.85; }
+.social-auth-apple { background: #000; color: #fff; border-color: #000; }
+[data-theme="light"] .social-auth-apple { background: #000; color: #fff; }
+.social-auth-divider {
+  position: relative;
+  text-align: center;
+  margin: 0.35rem 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.social-auth-divider::before,
+.social-auth-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 1.5rem);
+  height: 1px;
+  background: var(--border-primary);
+}
+.social-auth-divider::before { left: 0; }
+.social-auth-divider::after { right: 0; }
+.social-auth-divider span { background: var(--bg-secondary); padding: 0 0.55rem; }
+
 .login-toggle {
   color: var(--text-secondary);
   font-size: 0.9rem;
