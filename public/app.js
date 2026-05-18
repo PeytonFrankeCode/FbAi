@@ -1910,6 +1910,15 @@ async function handleAuth(e) {
         loginError.classList.remove('hidden');
         return false;
       }
+      // Server must return { token, username }. If either is missing the
+      // user appears "still logged out" after the modal closes, so flag
+      // it rather than silently storing undefined.
+      if (!data || !data.token || !data.username) {
+        console.error('[auth/register] unexpected response shape:', data);
+        loginError.textContent = 'Sign-up succeeded but the server response was malformed. Try logging in.';
+        loginError.classList.remove('hidden');
+        return false;
+      }
       setSessionToken(data.token);
       setCurrentUser(data.username);
       closeLogin();
@@ -1932,6 +1941,12 @@ async function handleAuth(e) {
           return false;
         }
         loginError.textContent = data.error || 'Login failed';
+        loginError.classList.remove('hidden');
+        return false;
+      }
+      if (!data || !data.token || !data.username) {
+        console.error('[auth/login] unexpected response shape:', data);
+        loginError.textContent = 'Login succeeded but the server response was malformed. Refresh and try again.';
         loginError.classList.remove('hidden');
         return false;
       }
