@@ -1,16 +1,21 @@
 let serverInit = null;
 
-// Last-line-of-defense rejection trap. If anything inside the Worker
-// (express handler, KV operation, anywhere) rejects without being
-// caught, Cloudflare otherwise serves its own HTML "Worker threw
-// exception" error page — which the frontend can't parse and shows as
-// "Server returned non-JSON (HTTP 500): <!DOCTYPE html>...". Logging the
-// reason and calling preventDefault keeps the worker alive long enough
-// to respond with our JSON 500 from the outer fetch handler.
+// Last-line-of-defense traps. If anything inside the Worker rejects or
+// throws asynchronously without being caught, Cloudflare otherwise serves
+// its own HTML "Worker threw exception" error page — which the frontend
+// can't parse and shows as "Server returned non-JSON (HTTP 500): <!DOCTYPE
+// html>...". Both 'error' (sync throw in a microtask / setTimeout) and
+// 'unhandledrejection' (rejected promise) need preventDefault() to keep
+// Cloudflare from hijacking the response.
 try {
   if (typeof addEventListener === 'function') {
     addEventListener('unhandledrejection', (event) => {
       console.error('[worker] unhandledrejection:', event.reason && event.reason.stack || event.reason);
+      if (event && typeof event.preventDefault === 'function') event.preventDefault();
+    });
+    addEventListener('error', (event) => {
+      const err = event && (event.error || event.message);
+      console.error('[worker] error event:', err && err.stack || err);
       if (event && typeof event.preventDefault === 'function') event.preventDefault();
     });
   }
