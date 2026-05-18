@@ -72,11 +72,17 @@ async function safeJson(response) {
   const text = await response.text();
   if (!text) {
     if (response.ok) return {};
-    throw new Error(`Server returned an empty response (HTTP ${response.status})`);
+    throw new Error(`The server returned an empty ${response.status} response. Please try again in a moment.`);
   }
   try {
     return JSON.parse(text);
   } catch (_) {
+    // HTML body on an API endpoint = upstream (Cloudflare/Workers) error page.
+    // Show something the user can act on instead of pasting the raw HTML.
+    const head = text.slice(0, 64).toLowerCase();
+    if (head.includes('<!doctype html') || head.includes('<html')) {
+      throw new Error(`The server is having trouble (HTTP ${response.status}). Try again in a minute — if it keeps failing, the worker may need to be redeployed.`);
+    }
     const snippet = text.slice(0, 160).replace(/\s+/g, ' ').trim();
     throw new Error(`Server returned non-JSON (HTTP ${response.status}): ${snippet}`);
   }
