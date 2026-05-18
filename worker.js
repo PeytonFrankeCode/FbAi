@@ -64,6 +64,17 @@ function expressToFetch(app, request, bodyBuffer) {
       path: url.pathname,
       headers: reqHeaders,
       body: undefined,
+      // raw-body (used by express.json) bails with "stream is not readable"
+      // when `stream.readable` is defined and falsy. Without these flags our
+      // shim inherits a falsy `readable` from the IncomingMessage prototype
+      // that nodejs_compat layers on, so every POST body throws before
+      // raw-body even tries to read it. Spelling out the stream-state flags
+      // here keeps the shim looking like a fresh, readable request.
+      readable: true,
+      complete: false,
+      readableEnded: false,
+      destroyed: false,
+      aborted: false,
       socket: { remoteAddress: reqHeaders['cf-connecting-ip'] || '127.0.0.1', encrypted: true },
       // Express's req.protocol getter reads connection.encrypted, not socket.
       // Marking it true here ensures Stripe success_url etc. resolve to https.
