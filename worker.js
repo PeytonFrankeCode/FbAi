@@ -55,6 +55,9 @@ function expressToFetch(app, request, bodyBuffer) {
   request.headers.forEach((v, k) => { reqHeaders[k] = v; });
 
   return new Promise((resolve) => {
+    // Forward declarations so the req.on shim can call into `fallback`
+    // when body-parser's setTimeout-queued end callback throws.
+    let fallbackRef = null;
     const req = {
       method: request.method,
       url: url.pathname + url.search,
@@ -67,8 +70,21 @@ function expressToFetch(app, request, bodyBuffer) {
       connection: { remoteAddress: reqHeaders['cf-connecting-ip'] || '127.0.0.1', encrypted: true },
       httpVersion: '1.1',
       on(event, handler) {
-        if (event === 'data' && bodyBuffer) handler(bodyBuffer);
-        if (event === 'end') setTimeout(() => handler(), 0);
+        if (event === 'data' && bodyBuffer) {
+          try { handler(bodyBuffer); }
+          catch (e) { if (fallbackRef) fallbackRef(e, 'req.on data'); else throw e; }
+        }
+        if (event === 'end') {
+          setTimeout(() => {
+            // body-parser's end handler parses the body and calls next().
+            // If JSON.parse / iconv decode / etc. throws synchronously
+            // here, the error is outside any Express Layer call, so the
+            // async-rejection patch in server.js can't catch it. Route
+            // it through our fallback so we still respond with JSON.
+            try { handler(); }
+            catch (e) { if (fallbackRef) fallbackRef(e, 'req.on end'); else throw e; }
+          }, 0);
+        }
         return this;
       },
       resume() { return this; },
@@ -142,6 +158,9 @@ function expressToFetch(app, request, bodyBuffer) {
         ));
       }
     };
+    // Now that fallback is defined, hand its reference to req.on so the
+    // setTimeout-queued end callback can route errors back here.
+    fallbackRef = fallback;
 
     // Both sync throws and async rejections from app() need to land back here
     // as a JSON response — otherwise the Worker emits an unhandled rejection
