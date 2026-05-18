@@ -206,7 +206,7 @@ app.get('/api/ping', (req, res) => {
     // latest commit, the deploy didn't land. pbkdf2Iterations should be
     // 25000 after PR #214; build is bumped on every diagnostic change.
     pbkdf2Iterations: PBKDF2_ITERATIONS,
-    build: 'ping-v4',
+    build: 'ping-v5',
     now: new Date().toISOString(),
   });
 });
@@ -289,6 +289,57 @@ app.get('/api/auth/diag', async (req, res) => {
       failedAt: trace.length + 1,
       error: String(err && err.message || err),
       stack: String(err && err.stack || '').split('\n').slice(0, 5),
+    });
+  }
+});
+
+// POST mirror of /api/auth/diag that runs the FULL register pipeline
+// (body-parser -> CORS -> auth route) with a throwaway username so we
+// can pinpoint the failure on a POST request specifically. Body should
+// be {"username":"...","password":"..."}; no email needed.
+app.post('/api/auth/diag', async (req, res) => {
+  const trace = [];
+  const log = (label, value) => { trace.push({ step: trace.length + 1, label, value }); };
+  try {
+    log('body-received', { hasBody: !!req.body, keys: req.body ? Object.keys(req.body) : [] });
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ ok: false, trace, error: 'username and password required in JSON body' });
+    }
+    log('extract', { usernameLen: username.length, passwordLen: password.length });
+    const key = String(username).toLowerCase() + '_diag_' + Date.now();
+    log('lowercase', { key });
+    const users = loadServerUsers();
+    log('loadServerUsers', { existing: !!users[key] });
+    const hashStart = Date.now();
+    const passwordHash = await hashPassword(password);
+    log('hashPassword', { ms: Date.now() - hashStart, prefix: passwordHash.slice(0, 14) });
+    users[key] = { username, email: '', passwordHash, createdAt: new Date().toISOString() };
+    log('assign-user', 'ok');
+    saveServerUsers(users);
+    log('saveServerUsers', 'ok');
+    const token = generateToken();
+    log('generateToken', { length: token.length });
+    const sessions = loadSessions();
+    log('loadSessions', 'ok');
+    sessions[token] = { username: key, expiresAt: Date.now() + SESSION_TTL };
+    log('assign-session', 'ok');
+    saveSessions(sessions);
+    log('saveSessions', 'ok');
+    // Clean up so we don't pollute real KV with diag users
+    delete users[key];
+    saveServerUsers(users);
+    delete sessions[token];
+    saveSessions(sessions);
+    log('cleanup', 'ok');
+    res.json({ ok: true, trace });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      trace,
+      failedAt: trace.length + 1,
+      error: String(err && err.message || err),
+      stack: String(err && err.stack || '').split('\n').slice(0, 6),
     });
   }
 });
