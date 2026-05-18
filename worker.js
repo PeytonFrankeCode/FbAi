@@ -208,6 +208,16 @@ function expressToFetch(app, request, bodyBuffer) {
 
 export default {
   async fetch(request, env, ctx) {
+    // Expose ctx.waitUntil to the DB layer so KV writes can extend the
+    // request's lifetime past the response — Cloudflare Workers terminate
+    // unawaited I/O when the response is sent, which was silently
+    // dropping every register/saveData call and making accounts vanish
+    // on the next cold start (or every deploy).
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      globalThis.__kvWaitUntil = (promise) => {
+        try { ctx.waitUntil(promise); } catch (_) { /* already finalized */ }
+      };
+    }
     try {
       const url = new URL(request.url);
 

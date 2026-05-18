@@ -91,12 +91,18 @@ function saveData(name, filePath, data) {
     }
   }
 
-  // Async-write to KV; we don't await — saves are fire-and-forget so route
-  // handlers don't block. Failures are logged.
+  // Async-write to KV. Route handlers still don't block, but we hand the
+  // promise to ctx.waitUntil so Cloudflare doesn't kill the write when the
+  // response is sent. Without this, every register/saveData "succeeded"
+  // but the data never actually persisted, so accounts disappeared on
+  // every cold start / deploy.
   if (kv) {
-    kv.put(name, JSON.stringify(data)).catch(err =>
+    const promise = kv.put(name, JSON.stringify(data)).catch(err =>
       console.error(`[DB] KV put ${name} failed:`, err && err.message)
     );
+    if (typeof globalThis.__kvWaitUntil === 'function') {
+      globalThis.__kvWaitUntil(promise);
+    }
   }
 }
 
