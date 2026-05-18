@@ -206,6 +206,21 @@ app.get('/api/ping', (req, res) => {
   });
 });
 
+// POST mirror of /api/ping — same JSON pipeline as auth, but with no
+// route logic. If this returns JSON, body-parser is fine and the bug is
+// inside the auth route. If it returns Cloudflare's HTML page, body
+// parsing or the JSON middleware itself is the culprit.
+app.post('/api/ping', (req, res) => {
+  res.json({
+    ok: true,
+    method: 'POST',
+    hasBody: !!req.body,
+    bodyKeys: req.body ? Object.keys(req.body) : [],
+    contentType: req.get('content-type') || null,
+    now: new Date().toISOString(),
+  });
+});
+
 app.get('/api/health', (req, res) => {
   const expected = process.env.HEALTH_KEY;
   if (expected && req.query.key !== expected) {
@@ -1729,7 +1744,11 @@ function saveSessions(s) { saveData('sessions', SESSIONS_FILE, s); }
 // The Node module shadows the global; on Workers its polyfill doesn't expose
 // `subtle` or `getRandomValues`, so the request crashed silently. The Web Crypto
 // global exists in both Node 16+ and Workers.
-const PBKDF2_ITERATIONS = 100000;
+// Reduced from 100000 -> 25000 so registration fits inside Cloudflare
+// Workers' Free-plan 10ms CPU budget. Existing passwords stored at higher
+// iteration counts still verify — verifyPassword parses the count out of
+// the stored `pbkdf2:<iters>:<salt>:<hash>` prefix.
+const PBKDF2_ITERATIONS = 25000;
 const webCrypto = globalThis.crypto;
 
 async function hashPassword(password) {
