@@ -191,6 +191,21 @@ try {
 // Returns booleans only (no secret values), but we still gate it behind a
 // shared secret so the diagnostic surface isn't public on a marketing site.
 // Set HEALTH_KEY in Cloudflare and hit /api/health?key=<value>.
+// Cheap, always-on, no-auth ping. If this returns JSON, the worker is
+// up. If it returns HTML, Cloudflare is serving its own error page —
+// meaning the worker isn't deployed (or failed to init) and every
+// other /api/* route is doomed too. Hit /api/ping directly in the
+// browser to confirm a deploy worked.
+app.get('/api/ping', (req, res) => {
+  res.json({
+    ok: true,
+    runtime: process.env.CF_WORKER ? 'cloudflare-worker' : 'node',
+    kvBound: globalThis.__KV_BOUND === true,
+    stripeEnabled: !!stripeEnabled,
+    now: new Date().toISOString(),
+  });
+});
+
 app.get('/api/health', (req, res) => {
   const expected = process.env.HEALTH_KEY;
   if (expected && req.query.key !== expected) {
