@@ -1819,6 +1819,191 @@ function showLogin() {
   updateLoginForm();
   loginOverlay.classList.remove('hidden');
   document.getElementById('auth-username').focus();
+  ensureSocialAuthMounted();
+}
+
+// ---- Social Sign-In (Google / Apple) ----
+// Providers are mounted lazily: ask the server which are configured,
+// then load the relevant identity SDKs on demand. If neither is enabled
+// the whole social-auth row stays hidden and we look exactly like before.
+let _socialAuthState = null;
+
+async function ensureSocialAuthMounted() {
+  if (_socialAuthState) return _socialAuthState;
+  const wrap = document.getElementById('social-auth');
+  const googleSlot = document.getElementById('google-signin');
+  const appleBtn = document.getElementById('apple-signin');
+  if (!wrap) return null;
+  _socialAuthState = { google: false, apple: false };
+  try {
+    const res = await fetch('/api/auth/providers');
+    if (!res.ok) return _socialAuthState;
+    const data = await res.json();
+    if (data.google && data.google.enabled) {
+      _socialAuthState.google = true;
+      _socialAuthState.googleClientId = data.google.clientId;
+      mountGoogleSignIn(data.google.clientId, googleSlot);
+    }
+    if (data.apple && data.apple.enabled) {
+      _socialAuthState.apple = true;
+      _socialAuthState.appleClientId = data.apple.clientId;
+      mountAppleSignIn(data.apple.clientId, appleBtn);
+    }
+    if (_socialAuthState.google || _socialAuthState.apple) {
+      wrap.classList.remove('hidden');
+    }
+  } catch (err) {
+    console.warn('[auth] providers fetch failed:', err && err.message);
+  }
+  return _socialAuthState;
+}
+
+function mountGoogleSignIn(clientId, slot) {
+  if (!clientId || !slot) return;
+  slot.classList.remove('hidden');
+  const render = () => {
+    try {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleCredential,
+        ux_mode: 'popup',
+        auto_select: false,
+      });
+      slot.innerHTML = '';
+      window.google.accounts.id.renderButton(slot, {
+        theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'outline' : 'filled_black',
+        size: 'large',
+        shape: 'rectangular',
+        text: 'continue_with',
+        width: 280,
+      });
+    } catch (err) {
+      console.warn('[auth] Google SDK init failed:', err && err.message);
+    }
+  };
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    render();
+    return;
+  }
+  if (document.getElementById('google-id-script')) {
+    document.getElementById('google-id-script').addEventListener('load', render);
+    return;
+  }
+  const script = document.createElement('script');
+  script.id = 'google-id-script';
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.async = true;
+  script.defer = true;
+  script.onload = render;
+  script.onerror = () => console.warn('[auth] failed to load Google Identity script');
+  document.head.appendChild(script);
+}
+
+async function handleGoogleCredential(response) {
+  const credential = response && response.credential;
+  if (!credential) return;
+  loginError.classList.add('hidden');
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok || !data.token || !data.username) {
+      loginError.textContent = (data && data.error) || 'Google sign-in failed.';
+      loginError.classList.remove('hidden');
+      return;
+    }
+    setSessionToken(data.token);
+    setCurrentUser(data.username);
+    if (data.email) {
+      const users = getUsers();
+      const key = data.username.toLowerCase();
+      if (!users[key]) users[key] = {};
+      users[key].email = data.email;
+      localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+    }
+    closeLogin();
+    syncSubscriptionStatus().catch(() => {});
+    enableUserSync().catch(() => {});
+  } catch (err) {
+    loginError.textContent = describeAuthError(err);
+    loginError.classList.remove('hidden');
+  }
+}
+
+function mountAppleSignIn(clientId, btn) {
+  if (!clientId || !btn) return;
+  btn.classList.remove('hidden');
+  _socialAuthState.appleClientId = clientId;
+  // Apple's JS SDK is optional — we use it for the popup flow when
+  // available, otherwise fall back to a manual redirect.
+  if (document.getElementById('apple-id-script')) return;
+  const script = document.createElement('script');
+  script.id = 'apple-id-script';
+  script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
+  script.async = true;
+  script.defer = true;
+  script.onload = () => {
+    try {
+      window.AppleID.auth.init({
+        clientId,
+        scope: 'name email',
+        redirectURI: window.location.origin + '/',
+        usePopup: true,
+      });
+    } catch (err) {
+      console.warn('[auth] Apple init failed:', err && err.message);
+    }
+  };
+  document.head.appendChild(script);
+}
+
+async function handleAppleSignIn() {
+  loginError.classList.add('hidden');
+  if (!window.AppleID || !window.AppleID.auth) {
+    loginError.textContent = 'Apple Sign-In is loading — try again in a moment.';
+    loginError.classList.remove('hidden');
+    return;
+  }
+  try {
+    const result = await window.AppleID.auth.signIn();
+    const idToken = result && result.authorization && result.authorization.id_token;
+    if (!idToken) {
+      loginError.textContent = 'Apple Sign-In did not return a token.';
+      loginError.classList.remove('hidden');
+      return;
+    }
+    const res = await fetch('/api/auth/apple', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_token: idToken }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok || !data.token || !data.username) {
+      loginError.textContent = (data && data.error) || 'Apple sign-in failed.';
+      loginError.classList.remove('hidden');
+      return;
+    }
+    setSessionToken(data.token);
+    setCurrentUser(data.username);
+    if (data.email) {
+      const users = getUsers();
+      const key = data.username.toLowerCase();
+      if (!users[key]) users[key] = {};
+      users[key].email = data.email;
+      localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+    }
+    closeLogin();
+    syncSubscriptionStatus().catch(() => {});
+    enableUserSync().catch(() => {});
+  } catch (err) {
+    // popup_closed_by_user is a normal cancellation — don't show as an error
+    if (err && /popup_closed|user_cancelled|cancelled/i.test(String(err.error || err.message || err))) return;
+    loginError.textContent = describeAuthError(err);
+    loginError.classList.remove('hidden');
+  }
 }
 
 function closeLogin() {
