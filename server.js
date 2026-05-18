@@ -202,6 +202,11 @@ app.get('/api/ping', (req, res) => {
     runtime: process.env.CF_WORKER ? 'cloudflare-worker' : 'node',
     kvBound: globalThis.__KV_BOUND === true,
     stripeEnabled: !!stripeEnabled,
+    // Version markers — if these don't match what we shipped in the
+    // latest commit, the deploy didn't land. pbkdf2Iterations should be
+    // 25000 after PR #214; build is bumped on every diagnostic change.
+    pbkdf2Iterations: PBKDF2_ITERATIONS,
+    build: 'ping-v3',
     now: new Date().toISOString(),
   });
 });
