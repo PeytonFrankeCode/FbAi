@@ -88,9 +88,27 @@ function expressToFetch(app, request, bodyBuffer) {
         return this;
       },
       resume() { return this; },
+      pause() { return this; },
       pipe() { return this; },
       unpipe() { return this; },
       read() { return bodyBuffer || null; },
+      // EventEmitter-shape methods. raw-body (used by express.json) calls
+      // `stream.removeListener(...)` five times during cleanup. Without
+      // these, that synchronously throws TypeError on every POST with a
+      // body, and Cloudflare serves its own HTML 1101 page before any
+      // user-land catch can fire. The shim discards all events anyway
+      // since the only ones we synthesize are 'data' and 'end' above —
+      // these methods just need to exist and not throw.
+      removeListener() { return this; },
+      removeAllListeners() { return this; },
+      off() { return this; },
+      once(event, handler) { return this.on(event, handler); },
+      emit() { return true; },
+      addListener(event, handler) { return this.on(event, handler); },
+      listeners() { return []; },
+      listenerCount() { return 0; },
+      setMaxListeners() { return this; },
+      eventNames() { return []; },
     };
 
     const resChunks = [];

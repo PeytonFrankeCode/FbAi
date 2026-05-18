@@ -206,7 +206,7 @@ app.get('/api/ping', (req, res) => {
     // latest commit, the deploy didn't land. pbkdf2Iterations should be
     // 25000 after PR #214; build is bumped on every diagnostic change.
     pbkdf2Iterations: PBKDF2_ITERATIONS,
-    build: 'ping-v5',
+    build: 'ping-v6',
     now: new Date().toISOString(),
   });
 });
