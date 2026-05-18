@@ -2260,32 +2260,48 @@ async function handleSubscribe(plan) {
     return;
   }
 
-  // Check if Stripe is enabled
+  // Check whether Stripe is wired up. If so, this is the ONLY path —
+  // surface any failure instead of falling through to a fake local
+  // subscription. The local-only fallback below is reserved for
+  // environments without Stripe keys (dev / preview), which we detect
+  // via /api/stripe/config returning enabled:false.
+  let stripeConfig = null;
   try {
     const configRes = await fetch('/api/stripe/config');
-    const config = await configRes.json();
+    stripeConfig = await safeJson(configRes);
+  } catch (err) {
+    console.warn('[stripe] config fetch failed:', err && err.message || err);
+  }
 
-    if (config.enabled) {
+  if (stripeConfig && stripeConfig.enabled) {
+    try {
       const endpoint = plan === 'proplus' ? '/api/stripe/create-checkout-proplus' : '/api/stripe/create-checkout';
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, period: pricingPeriod })
       });
-      const data = await res.json();
-      if (data.url) {
+      const data = await safeJson(res);
+      if (res.ok && data.url) {
         window.location.href = data.url;
         return;
-      } else {
-        alert(data.error || 'Failed to start checkout');
-        return;
       }
+      // Surface the actual reason so we know if it's a misconfigured
+      // product id, a bad key, the wrong CF env var, etc.
+      const detail = (data && (data.detail || data.error)) || `Server returned HTTP ${res.status}`;
+      alert(`Couldn't start Stripe checkout:\n\n${detail}\n\nIf this keeps failing, please report it.`);
+      console.error('[stripe] create-checkout failed:', res.status, data);
+    } catch (err) {
+      const msg = (err && err.message) || String(err);
+      alert(`Couldn't reach Stripe:\n\n${msg}\n\nCheck your connection and try again.`);
+      console.error('[stripe] create-checkout threw:', err);
     }
-  } catch (err) {
-    console.log('Stripe not available, using local subscription:', err);
+    return; // never fall through to local sub when Stripe is configured
   }
 
-  // Fallback: local subscription (when Stripe not configured)
+  // Fallback: no Stripe keys on this environment — give a local "trial"
+  // subscription so dev/preview branches still work. Anything pretending
+  // to be Pro from this path is honor-system only.
   const users = getUsers();
   const key = user.toLowerCase();
   if (users[key]) {
