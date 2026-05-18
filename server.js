@@ -206,7 +206,7 @@ app.get('/api/ping', (req, res) => {
     // latest commit, the deploy didn't land. pbkdf2Iterations should be
     // 25000 after PR #214; build is bumped on every diagnostic change.
     pbkdf2Iterations: PBKDF2_ITERATIONS,
-    build: 'ping-v3',
+    build: 'ping-v4',
     now: new Date().toISOString(),
   });
 });
@@ -224,6 +224,73 @@ app.post('/api/ping', (req, res) => {
     contentType: req.get('content-type') || null,
     now: new Date().toISOString(),
   });
+});
+
+// Step-by-step isolation of /api/auth/register. Each ?step= runs one
+// more piece of the registration flow and reports which step passed.
+// If step=N returns ok but step=N+1 returns HTML, the bug is in step N+1.
+// All routes are GET so they can be tested from a browser address bar.
+app.get('/api/auth/diag', async (req, res) => {
+  const step = parseInt(req.query.step, 10) || 0;
+  const trace = [];
+  const log = (label, value) => { trace.push({ step: trace.length + 1, label, value }); };
+  try {
+    log('start', { step, now: new Date().toISOString() });
+
+    if (step >= 1) {
+      log('crypto.randomBytes', typeof crypto.randomBytes);
+    }
+    if (step >= 2) {
+      const t = generateToken();
+      log('generateToken', { length: t.length, prefix: t.slice(0, 8) });
+    }
+    if (step >= 3) {
+      log('webCrypto.subtle', !!(globalThis.crypto && globalThis.crypto.subtle));
+    }
+    if (step >= 4) {
+      const start = Date.now();
+      const hash = await hashPassword('diagtestpass');
+      log('hashPassword', { ms: Date.now() - start, prefix: hash.slice(0, 16) });
+    }
+    if (step >= 5) {
+      const users = loadServerUsers();
+      log('loadServerUsers', { count: Object.keys(users).length });
+    }
+    if (step >= 6) {
+      // Test write — uses a sentinel key so we don't pollute real users.
+      const users = loadServerUsers();
+      const k = '__diag_' + Date.now();
+      users[k] = { test: true };
+      saveServerUsers(users);
+      delete users[k];
+      saveServerUsers(users);
+      log('saveServerUsers', 'ok');
+    }
+    if (step >= 7) {
+      const sessions = loadSessions();
+      log('loadSessions', { count: Object.keys(sessions).length });
+    }
+    if (step >= 8) {
+      const sessions = loadSessions();
+      const k = '__diag_' + Date.now();
+      sessions[k] = { test: true };
+      saveSessions(sessions);
+      delete sessions[k];
+      saveSessions(sessions);
+      log('saveSessions', 'ok');
+    }
+
+    res.json({ ok: true, step, trace });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      step,
+      trace,
+      failedAt: trace.length + 1,
+      error: String(err && err.message || err),
+      stack: String(err && err.stack || '').split('\n').slice(0, 5),
+    });
+  }
 });
 
 app.get('/api/health', (req, res) => {
