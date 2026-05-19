@@ -221,6 +221,20 @@ async function initTrackedChecklistPicker() {
     productSel.innerHTML = '<option value="">(failed to load checklists)</option>';
     console.warn('[tracked] checklist list load failed:', err && err.message || err);
   }
+  // Wire all four comboboxes once the underlying selects exist.
+  ['tracked-cl-product-combo', 'tracked-cl-set-combo', 'tracked-cl-card-combo', 'tracked-cl-variant-combo']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { setupCombobox(el); syncComboboxFromSelect(el); }
+    });
+}
+
+// Resync each combobox's visible label after we mutate its underlying
+// <select>. setupCombobox handles user-driven changes via its own click
+// path, but cascading dropdowns mutate the select programmatically and
+// need this nudge to repaint the button text.
+function syncTrackedCombo(id) {
+  syncComboboxFromSelect(document.getElementById(id));
 }
 
 async function onTrackedChecklistProduct() {
@@ -235,6 +249,11 @@ async function onTrackedChecklistProduct() {
   cardSel.disabled = true;
   variantSel.disabled = true;
   _trackedCl.productCache = null;
+  syncTrackedCombo('tracked-cl-product-combo');
+  syncTrackedCombo('tracked-cl-set-combo');
+  syncTrackedCombo('tracked-cl-card-combo');
+  syncTrackedCombo('tracked-cl-variant-combo');
+  applyTrackedComboDisabled();
   trackedClUpdateQuery();
   if (!productId) return;
   try {
@@ -245,6 +264,8 @@ async function onTrackedChecklistProduct() {
       .map((s, i) => `<option value="${i}">${escHtml(s.name || `Set ${i + 1}`)}</option>`)
       .join('');
     setSel.disabled = sets.length === 0;
+    syncTrackedCombo('tracked-cl-set-combo');
+    applyTrackedComboDisabled();
   } catch (err) {
     resetTrackedSelect(setSel, '(failed to load product)');
     console.warn('[tracked] product load failed:', err && err.message || err);
@@ -259,6 +280,10 @@ function onTrackedChecklistSet() {
   resetTrackedSelect(variantSel, 'Parallel…');
   cardSel.disabled = true;
   variantSel.disabled = true;
+  syncTrackedCombo('tracked-cl-set-combo');
+  syncTrackedCombo('tracked-cl-card-combo');
+  syncTrackedCombo('tracked-cl-variant-combo');
+  applyTrackedComboDisabled();
   trackedClUpdateQuery();
   if (!Number.isFinite(setIdx) || !_trackedCl.productCache) return;
   const set = _trackedCl.productCache.sets[setIdx];
@@ -271,6 +296,8 @@ function onTrackedChecklistSet() {
     })
     .join('');
   cardSel.disabled = cards.length === 0;
+  syncTrackedCombo('tracked-cl-card-combo');
+  applyTrackedComboDisabled();
 }
 
 function onTrackedChecklistCard() {
@@ -279,6 +306,9 @@ function onTrackedChecklistCard() {
   const variantSel = document.getElementById('tracked-cl-variant');
   resetTrackedSelect(variantSel, 'Parallel…');
   variantSel.disabled = true;
+  syncTrackedCombo('tracked-cl-card-combo');
+  syncTrackedCombo('tracked-cl-variant-combo');
+  applyTrackedComboDisabled();
   trackedClUpdateQuery();
   if (!_trackedCl.productCache || !Number.isFinite(setIdx) || !Number.isFinite(cardIdx)) return;
   const set = _trackedCl.productCache.sets[setIdx];
@@ -287,19 +317,39 @@ function onTrackedChecklistCard() {
   const variants = buildVariants(set, { printRun: card.printRun || '' });
   if (!variants.length) {
     variantSel.innerHTML = '<option value="">(no variants)</option>';
+    syncTrackedCombo('tracked-cl-variant-combo');
     return;
   }
   variantSel.innerHTML = variants
     .map((v, i) => `<option value="${i}">${escHtml(v.name)}${v.printRun ? ` /${escHtml(v.printRun)}` : ''}</option>`)
     .join('');
   variantSel.disabled = false;
-  // Auto-select first variant so a single click on a card already
-  // produces a usable query.
+  // Auto-select first variant so a single card pick already produces a
+  // usable query.
   variantSel.selectedIndex = 0;
+  syncTrackedCombo('tracked-cl-variant-combo');
+  applyTrackedComboDisabled();
   trackedClUpdateQuery();
 }
 
-function onTrackedChecklistVariant() { trackedClUpdateQuery(); }
+function onTrackedChecklistVariant() {
+  syncTrackedCombo('tracked-cl-variant-combo');
+  trackedClUpdateQuery();
+}
+
+// Combobox toggles are buttons that don't know about the hidden
+// <select>'s disabled state, so we mirror it ourselves whenever the
+// cascade changes.
+function applyTrackedComboDisabled() {
+  ['set', 'card', 'variant'].forEach(suffix => {
+    const sel = document.getElementById(`tracked-cl-${suffix}`);
+    const combo = document.getElementById(`tracked-cl-${suffix}-combo`);
+    if (!sel || !combo) return;
+    combo.classList.toggle('cl-combo-disabled', !!sel.disabled);
+    const toggle = combo.querySelector('.cl-combo-toggle');
+    if (toggle) toggle.disabled = !!sel.disabled;
+  });
+}
 
 function trackedClUpdateQuery() {
   const q = document.getElementById('tracked-query-input');
