@@ -1153,6 +1153,69 @@
     </div>
   </footer>
 
+  <!-- Reusable "Pick from checklist" modal — opened by any feature
+       (Auto Pricer, Market Movers, Grading Advisor, eBay Seller,
+       Title Generator) via openChecklistPicker({ onPick }). Reuses the
+       same combobox component as the Tracked Cards picker. -->
+  <div id="cl-picker-modal" class="cl-picker-modal hidden" role="dialog" aria-label="Pick from checklist">
+    <div class="cl-picker-overlay" onclick="closeChecklistPicker()"></div>
+    <div class="cl-picker-box">
+      <button class="cl-picker-close" aria-label="Close" onclick="closeChecklistPicker()">&times;</button>
+      <h3 class="cl-picker-title">Pick a card</h3>
+      <p class="cl-picker-subtitle" id="cl-picker-subtitle">Filter your way down to a specific card and parallel.</p>
+      <div class="tracked-checklist-grid">
+        <div class="cl-combo tracked-cl-combo" id="cl-picker-product-combo" data-target="cl-picker-product" data-placeholder="Search a product…">
+          <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Select a product…</span><span class="cl-combo-caret"></span></button>
+          <div class="cl-combo-panel hidden">
+            <input type="text" class="cl-combo-search" placeholder="Type to filter…" autocomplete="off" />
+            <div class="cl-combo-list"></div>
+          </div>
+        </div>
+        <select id="cl-picker-product" class="cl-hidden-select" onchange="onClPickerProduct()">
+          <option value="">Select a product…</option>
+        </select>
+
+        <div class="cl-combo tracked-cl-combo" id="cl-picker-set-combo" data-target="cl-picker-set" data-placeholder="Pick a set…">
+          <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Set…</span><span class="cl-combo-caret"></span></button>
+          <div class="cl-combo-panel hidden">
+            <input type="text" class="cl-combo-search" placeholder="Filter sets…" autocomplete="off" />
+            <div class="cl-combo-list"></div>
+          </div>
+        </div>
+        <select id="cl-picker-set" class="cl-hidden-select" onchange="onClPickerSet()" disabled>
+          <option value="">Set…</option>
+        </select>
+
+        <div class="cl-combo tracked-cl-combo" id="cl-picker-card-combo" data-target="cl-picker-card" data-placeholder="Search a player or card #…">
+          <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Player / card…</span><span class="cl-combo-caret"></span></button>
+          <div class="cl-combo-panel hidden">
+            <input type="text" class="cl-combo-search" placeholder="Search a player or card #…" autocomplete="off" />
+            <div class="cl-combo-list"></div>
+          </div>
+        </div>
+        <select id="cl-picker-card" class="cl-hidden-select" onchange="onClPickerCard()" disabled>
+          <option value="">Player / card…</option>
+        </select>
+
+        <div class="cl-combo tracked-cl-combo" id="cl-picker-variant-combo" data-target="cl-picker-variant" data-placeholder="Pick a parallel…">
+          <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Parallel…</span><span class="cl-combo-caret"></span></button>
+          <div class="cl-combo-panel hidden">
+            <input type="text" class="cl-combo-search" placeholder="Filter parallels…" autocomplete="off" />
+            <div class="cl-combo-list"></div>
+          </div>
+        </div>
+        <select id="cl-picker-variant" class="cl-hidden-select" onchange="onClPickerVariant()" disabled>
+          <option value="">Parallel…</option>
+        </select>
+      </div>
+      <p class="tracked-checklist-preview" id="cl-picker-preview"></p>
+      <div class="cl-picker-actions">
+        <button type="button" class="cl-picker-cancel-btn" onclick="closeChecklistPicker()">Cancel</button>
+        <button type="button" class="cl-picker-pick-btn" id="cl-picker-pick" onclick="confirmChecklistPicker()" disabled>Use this card</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Feedback / Report Bug Modal -->
   <div id="feedback-modal" class="feedback-modal hidden" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="feedback-modal-box">
@@ -1175,6 +1238,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=70"></script>
+  <script src="app.js?v=71"></script>
 </body>
 </html>

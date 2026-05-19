@@ -381,6 +381,249 @@ function resetTrackedSelect(el, placeholder) {
   el.innerHTML = `<option value="">${escHtml(placeholder)}</option>`;
 }
 
+// ---- Reusable "Pick from checklist" modal ----
+// Any feature can call openChecklistPicker({ onPick: ctx => ... }) to
+// drop a modal in front of the user. ctx contains:
+//   { query: 'full search string',
+//     player, year, brand, setName, parallel, printRun, cardNumber }
+// onPick is called when the user clicks "Use this card".
+
+let _clPicker = { callback: null, productCache: null, ready: false };
+
+async function openChecklistPicker(opts) {
+  opts = opts || {};
+  _clPicker.callback = typeof opts.onPick === 'function' ? opts.onPick : null;
+  const subtitle = document.getElementById('cl-picker-subtitle');
+  if (subtitle && opts.subtitle) subtitle.textContent = opts.subtitle;
+  // Reset state on each open so we don't bleed selections from the last
+  // feature into this one.
+  resetClPicker();
+  document.getElementById('cl-picker-modal').classList.remove('hidden');
+  if (!_clPicker.ready) await initClPicker();
+}
+
+function closeChecklistPicker() {
+  document.getElementById('cl-picker-modal').classList.add('hidden');
+  _clPicker.callback = null;
+}
+
+function confirmChecklistPicker() {
+  const ctx = clPickerContext();
+  if (!ctx || !ctx.query) return;
+  const cb = _clPicker.callback;
+  closeChecklistPicker();
+  if (cb) cb(ctx);
+}
+
+async function initClPicker() {
+  const productSel = document.getElementById('cl-picker-product');
+  if (!productSel) return;
+  try {
+    const idx = await fetchChecklistsList();
+    const products = (idx && idx.products) || [];
+    productSel.innerHTML = '<option value="">Select a product…</option>' + products
+      .map(p => `<option value="${escHtml(p.id)}">${escHtml(p.name || p.id)}</option>`)
+      .join('');
+    _clPicker.ready = true;
+  } catch (err) {
+    productSel.innerHTML = '<option value="">(failed to load checklists)</option>';
+    console.warn('[clpicker] checklist list load failed:', err && err.message || err);
+  }
+  ['cl-picker-product-combo', 'cl-picker-set-combo', 'cl-picker-card-combo', 'cl-picker-variant-combo']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { setupCombobox(el); syncComboboxFromSelect(el); }
+    });
+}
+
+function resetClPicker() {
+  const setSel = document.getElementById('cl-picker-set');
+  const cardSel = document.getElementById('cl-picker-card');
+  const variantSel = document.getElementById('cl-picker-variant');
+  const productSel = document.getElementById('cl-picker-product');
+  if (productSel) productSel.value = '';
+  resetTrackedSelect(setSel, 'Set…');
+  resetTrackedSelect(cardSel, 'Player / card…');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  if (setSel) setSel.disabled = true;
+  if (cardSel) cardSel.disabled = true;
+  if (variantSel) variantSel.disabled = true;
+  _clPicker.productCache = null;
+  ['product', 'set', 'card', 'variant'].forEach(s => syncComboboxFromSelect(document.getElementById(`cl-picker-${s}-combo`)));
+  applyClPickerDisabled();
+  clPickerUpdatePreview();
+}
+
+async function onClPickerProduct() {
+  const productId = document.getElementById('cl-picker-product').value;
+  const setSel = document.getElementById('cl-picker-set');
+  const cardSel = document.getElementById('cl-picker-card');
+  const variantSel = document.getElementById('cl-picker-variant');
+  resetTrackedSelect(setSel, 'Set…');
+  resetTrackedSelect(cardSel, 'Player / card…');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  setSel.disabled = true;
+  cardSel.disabled = true;
+  variantSel.disabled = true;
+  _clPicker.productCache = null;
+  ['set', 'card', 'variant'].forEach(s => syncComboboxFromSelect(document.getElementById(`cl-picker-${s}-combo`)));
+  applyClPickerDisabled();
+  clPickerUpdatePreview();
+  if (!productId) return;
+  try {
+    const product = await fetchChecklistProduct(productId);
+    _clPicker.productCache = product;
+    const sets = (product && product.sets) || [];
+    setSel.innerHTML = '<option value="">Set…</option>' + sets
+      .map((s, i) => `<option value="${i}">${escHtml(s.name || `Set ${i + 1}`)}</option>`)
+      .join('');
+    setSel.disabled = sets.length === 0;
+    syncComboboxFromSelect(document.getElementById('cl-picker-set-combo'));
+    applyClPickerDisabled();
+  } catch (err) {
+    resetTrackedSelect(setSel, '(failed to load product)');
+    console.warn('[clpicker] product load failed:', err && err.message || err);
+  }
+}
+
+function onClPickerSet() {
+  const setIdx = parseInt(document.getElementById('cl-picker-set').value, 10);
+  const cardSel = document.getElementById('cl-picker-card');
+  const variantSel = document.getElementById('cl-picker-variant');
+  resetTrackedSelect(cardSel, 'Player / card…');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  cardSel.disabled = true;
+  variantSel.disabled = true;
+  syncComboboxFromSelect(document.getElementById('cl-picker-card-combo'));
+  syncComboboxFromSelect(document.getElementById('cl-picker-variant-combo'));
+  applyClPickerDisabled();
+  clPickerUpdatePreview();
+  if (!Number.isFinite(setIdx) || !_clPicker.productCache) return;
+  const set = _clPicker.productCache.sets[setIdx];
+  if (!set) return;
+  const cards = set.cards || [];
+  cardSel.innerHTML = '<option value="">Player / card…</option>' + cards
+    .map((c, i) => {
+      const label = [c.number && `#${c.number}`, c.player].filter(Boolean).join(' ');
+      return `<option value="${i}">${escHtml(label || `Card ${i + 1}`)}</option>`;
+    })
+    .join('');
+  cardSel.disabled = cards.length === 0;
+  syncComboboxFromSelect(document.getElementById('cl-picker-card-combo'));
+  applyClPickerDisabled();
+}
+
+function onClPickerCard() {
+  const setIdx = parseInt(document.getElementById('cl-picker-set').value, 10);
+  const cardIdx = parseInt(document.getElementById('cl-picker-card').value, 10);
+  const variantSel = document.getElementById('cl-picker-variant');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  variantSel.disabled = true;
+  syncComboboxFromSelect(document.getElementById('cl-picker-variant-combo'));
+  applyClPickerDisabled();
+  clPickerUpdatePreview();
+  if (!_clPicker.productCache || !Number.isFinite(setIdx) || !Number.isFinite(cardIdx)) return;
+  const set = _clPicker.productCache.sets[setIdx];
+  const card = set && set.cards && set.cards[cardIdx];
+  if (!card) return;
+  const variants = buildVariants(set, { printRun: card.printRun || '' });
+  if (!variants.length) {
+    variantSel.innerHTML = '<option value="">(no variants)</option>';
+    syncComboboxFromSelect(document.getElementById('cl-picker-variant-combo'));
+    return;
+  }
+  variantSel.innerHTML = variants
+    .map((v, i) => `<option value="${i}">${escHtml(v.name)}${v.printRun ? ` /${escHtml(v.printRun)}` : ''}</option>`)
+    .join('');
+  variantSel.disabled = false;
+  variantSel.selectedIndex = 0; // auto-pick first parallel so one card pick = usable query
+  syncComboboxFromSelect(document.getElementById('cl-picker-variant-combo'));
+  applyClPickerDisabled();
+  clPickerUpdatePreview();
+}
+
+function onClPickerVariant() {
+  syncComboboxFromSelect(document.getElementById('cl-picker-variant-combo'));
+  clPickerUpdatePreview();
+}
+
+function applyClPickerDisabled() {
+  ['set', 'card', 'variant'].forEach(suffix => {
+    const sel = document.getElementById(`cl-picker-${suffix}`);
+    const combo = document.getElementById(`cl-picker-${suffix}-combo`);
+    if (!sel || !combo) return;
+    combo.classList.toggle('cl-combo-disabled', !!sel.disabled);
+    const toggle = combo.querySelector('.cl-combo-toggle');
+    if (toggle) toggle.disabled = !!sel.disabled;
+  });
+}
+
+function clPickerContext() {
+  const product = _clPicker.productCache;
+  const setIdx = parseInt(document.getElementById('cl-picker-set').value, 10);
+  const cardIdx = parseInt(document.getElementById('cl-picker-card').value, 10);
+  const variantIdx = parseInt(document.getElementById('cl-picker-variant').value, 10);
+  if (!product || !Number.isFinite(setIdx) || !Number.isFinite(cardIdx)) return null;
+  const set = product.sets[setIdx];
+  const card = set && set.cards && set.cards[cardIdx];
+  if (!set || !card) return null;
+  const variants = buildVariants(set, { printRun: card.printRun || '' });
+  const variant = Number.isFinite(variantIdx) ? variants[variantIdx] : variants[0];
+  const baseQuery = buildChecklistQuery(card.player, product.year, product.brand, set.name, set.category, (variant && variant.printRun) || card.printRun || '');
+  const variantName = (variant && variant.name && variant.name.toLowerCase() !== 'base') ? variant.name : '';
+  const fullQuery = variantName ? `${baseQuery} ${variantName}`.trim() : baseQuery;
+  return {
+    query: fullQuery,
+    player: card.player,
+    year: product.year,
+    brand: product.brand,
+    productName: product.name || product.id,
+    setName: set.name || '',
+    setCategory: set.category || '',
+    parallel: variantName,
+    printRun: (variant && variant.printRun) || card.printRun || '',
+    cardNumber: card.number || '',
+  };
+}
+
+function clPickerUpdatePreview() {
+  const preview = document.getElementById('cl-picker-preview');
+  const pickBtn = document.getElementById('cl-picker-pick');
+  const ctx = clPickerContext();
+  if (preview) preview.textContent = ctx ? `Will use: ${ctx.query}` : '';
+  if (pickBtn) pickBtn.disabled = !ctx;
+}
+
+// Convenience: drop a "Pick from checklist" button right before the
+// given input. The button opens the picker and fills the input on
+// confirm. Used by the simple single-input features (Auto Pricer,
+// Market Movers, Grading Advisor, Title Generator).
+function attachChecklistPickerButton(inputId, opts) {
+  opts = opts || {};
+  const input = document.getElementById(inputId);
+  if (!input || input._clPickerWired) return;
+  input._clPickerWired = true;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'cl-pick-trigger';
+  btn.textContent = opts.label || 'Pick from checklist';
+  btn.addEventListener('click', () => {
+    openChecklistPicker({
+      subtitle: opts.subtitle || 'Pick a card to fill in the search.',
+      onPick: (ctx) => {
+        input.value = ctx.query;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        if (opts.afterPick) opts.afterPick(ctx);
+      },
+    });
+  });
+  // Place the button immediately after the input (or its wrapper if
+  // any). Falls back to the input's parent.
+  const target = input.closest('.pp-search-row') || input.parentElement;
+  if (target) target.appendChild(btn);
+}
+
 async function loadTrackedCards() {
   const user = getCurrentUser();
   if (!user) return;
@@ -6161,6 +6404,61 @@ async function searchMarketplace(loadMore) {
 document.addEventListener('DOMContentLoaded', () => {
   const mpInput = document.getElementById('marketplace-input');
   if (mpInput) mpInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchMarketplace(); });
+});
+
+// Attach the shared "Pick from checklist" button to every feature that
+// takes a single search input. Each call drops a styled button after
+// the input and wires it to openChecklistPicker.
+document.addEventListener('DOMContentLoaded', () => {
+  // Pro Tools — Auto Pricer
+  attachChecklistPickerButton('ap-input', {
+    subtitle: 'Pick a card to auto-price.',
+  });
+  // Pro Tools — Market Movers
+  attachChecklistPickerButton('mm-input', {
+    subtitle: 'Pick a card to check the trend.',
+  });
+  // Pro Tools — Flip Finder (bonus while we're here)
+  attachChecklistPickerButton('ff-input', {
+    subtitle: 'Pick a card to scan for flips.',
+  });
+  // Grading Advisor
+  attachChecklistPickerButton('grading-input', {
+    subtitle: 'Pick a card to compare grade premiums.',
+  });
+  // Title Generator
+  attachChecklistPickerButton('listing-helper-input', {
+    subtitle: 'Pick a card to generate listing titles for.',
+    label: 'From checklist',
+  });
+  // eBay Seller — Create Listing title field. Picker fills the title
+  // and also a few related fields if they're empty.
+  const titleInput = document.getElementById('seller-listing-title');
+  if (titleInput && !titleInput._clPickerWired) {
+    titleInput._clPickerWired = true;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'seller-autofill-btn cl-pick-trigger';
+    btn.textContent = 'From checklist';
+    btn.addEventListener('click', () => {
+      openChecklistPicker({
+        subtitle: 'Pick a card to fill the listing title.',
+        onPick: (ctx) => {
+          // Build a typical eBay title: "<year> <brand> <player> #<num> <parallel> Football"
+          const parts = [ctx.year, ctx.brand, ctx.player];
+          if (ctx.cardNumber) parts.push(`#${ctx.cardNumber}`);
+          if (ctx.parallel) parts.push(ctx.parallel);
+          parts.push('Football');
+          let title = parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+          if (title.length > 80) title = title.slice(0, 80).trim();
+          titleInput.value = title;
+          titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+      });
+    });
+    const row = titleInput.closest('.seller-title-row');
+    if (row) row.appendChild(btn);
+  }
 });
 
 // ---- CSV Export ----

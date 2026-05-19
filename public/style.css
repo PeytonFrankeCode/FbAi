@@ -4858,6 +4858,100 @@ footer::before {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.5rem;
 }
+
+/* Reusable "Pick from checklist" modal */
+.cl-picker-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.cl-picker-modal.hidden { display: none; }
+.cl-picker-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-bg);
+}
+.cl-picker-box {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 24px 60px var(--shadow-modal);
+}
+.cl-picker-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.75rem;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+.cl-picker-close:hover { color: var(--text-primary); }
+.cl-picker-title { margin: 0 0 0.25rem; font-size: 1.15rem; color: var(--text-primary); }
+.cl-picker-subtitle { margin: 0 0 1rem; color: var(--text-muted); font-size: 0.85rem; }
+.cl-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.cl-picker-cancel-btn,
+.cl-picker-pick-btn {
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.cl-picker-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+}
+.cl-picker-cancel-btn:hover { color: var(--text-primary); }
+.cl-picker-pick-btn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--bg-primary);
+}
+.cl-picker-pick-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.cl-picker-pick-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* "Pick from checklist" trigger button — used inline next to inputs */
+.cl-pick-trigger {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: 0.4rem;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.cl-pick-trigger:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
 .tracked-cl-combo { width: 100%; }
 .tracked-cl-combo .cl-combo-toggle { width: 100%; }
 .tracked-cl-combo.cl-combo-disabled .cl-combo-toggle {
