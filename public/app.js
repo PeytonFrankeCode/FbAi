@@ -175,6 +175,160 @@ function initTrackedView() {
   if (gate) gate.classList.add('hidden');
   if (content) content.classList.remove('hidden');
   loadTrackedCards();
+  initTrackedChecklistPicker();
+}
+
+// ---- Tracked Cards: "Pick from checklist" picker ----
+// Mirrors the data layout of the Checklists/Set-Completion picker but
+// stays self-contained inside the Tracked Cards tab. Fills the same
+// `#tracked-query-input` that the free-text mode uses, so the form's
+// submit handler doesn't need to know which mode generated the value.
+
+let _trackedCl = {
+  ready: false,
+  productCache: null, // resolved fetchChecklistProduct() data for the current product
+};
+
+function switchTrackedMode(mode) {
+  document.querySelectorAll('.tracked-mode-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  const typePanel = document.getElementById('tracked-mode-type');
+  const clPanel = document.getElementById('tracked-mode-checklist');
+  if (!typePanel || !clPanel) return;
+  typePanel.classList.toggle('hidden', mode !== 'type');
+  clPanel.classList.toggle('hidden', mode !== 'checklist');
+  // Clear the query input on mode-switch so a stale value from the
+  // previous mode doesn't accidentally get submitted.
+  const q = document.getElementById('tracked-query-input');
+  if (q) q.value = '';
+  const prev = document.getElementById('tracked-cl-preview');
+  if (prev) prev.textContent = '';
+}
+
+async function initTrackedChecklistPicker() {
+  if (_trackedCl.ready) return;
+  const productSel = document.getElementById('tracked-cl-product');
+  if (!productSel) return;
+  try {
+    const idx = await fetchChecklistsList();
+    const products = (idx && idx.products) || [];
+    productSel.innerHTML = '<option value="">Select a product…</option>' + products
+      .map(p => `<option value="${escHtml(p.id)}">${escHtml(p.name || p.id)}</option>`)
+      .join('');
+    _trackedCl.ready = true;
+  } catch (err) {
+    productSel.innerHTML = '<option value="">(failed to load checklists)</option>';
+    console.warn('[tracked] checklist list load failed:', err && err.message || err);
+  }
+}
+
+async function onTrackedChecklistProduct() {
+  const productId = document.getElementById('tracked-cl-product').value;
+  const setSel = document.getElementById('tracked-cl-set');
+  const cardSel = document.getElementById('tracked-cl-card');
+  const variantSel = document.getElementById('tracked-cl-variant');
+  resetTrackedSelect(setSel, 'Set…');
+  resetTrackedSelect(cardSel, 'Player / card…');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  setSel.disabled = true;
+  cardSel.disabled = true;
+  variantSel.disabled = true;
+  _trackedCl.productCache = null;
+  trackedClUpdateQuery();
+  if (!productId) return;
+  try {
+    const product = await fetchChecklistProduct(productId);
+    _trackedCl.productCache = product;
+    const sets = (product && product.sets) || [];
+    setSel.innerHTML = '<option value="">Set…</option>' + sets
+      .map((s, i) => `<option value="${i}">${escHtml(s.name || `Set ${i + 1}`)}</option>`)
+      .join('');
+    setSel.disabled = sets.length === 0;
+  } catch (err) {
+    resetTrackedSelect(setSel, '(failed to load product)');
+    console.warn('[tracked] product load failed:', err && err.message || err);
+  }
+}
+
+function onTrackedChecklistSet() {
+  const setIdx = parseInt(document.getElementById('tracked-cl-set').value, 10);
+  const cardSel = document.getElementById('tracked-cl-card');
+  const variantSel = document.getElementById('tracked-cl-variant');
+  resetTrackedSelect(cardSel, 'Player / card…');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  cardSel.disabled = true;
+  variantSel.disabled = true;
+  trackedClUpdateQuery();
+  if (!Number.isFinite(setIdx) || !_trackedCl.productCache) return;
+  const set = _trackedCl.productCache.sets[setIdx];
+  if (!set) return;
+  const cards = set.cards || [];
+  cardSel.innerHTML = '<option value="">Player / card…</option>' + cards
+    .map((c, i) => {
+      const label = [c.number && `#${c.number}`, c.player].filter(Boolean).join(' ');
+      return `<option value="${i}">${escHtml(label || `Card ${i + 1}`)}</option>`;
+    })
+    .join('');
+  cardSel.disabled = cards.length === 0;
+}
+
+function onTrackedChecklistCard() {
+  const setIdx = parseInt(document.getElementById('tracked-cl-set').value, 10);
+  const cardIdx = parseInt(document.getElementById('tracked-cl-card').value, 10);
+  const variantSel = document.getElementById('tracked-cl-variant');
+  resetTrackedSelect(variantSel, 'Parallel…');
+  variantSel.disabled = true;
+  trackedClUpdateQuery();
+  if (!_trackedCl.productCache || !Number.isFinite(setIdx) || !Number.isFinite(cardIdx)) return;
+  const set = _trackedCl.productCache.sets[setIdx];
+  const card = set && set.cards && set.cards[cardIdx];
+  if (!card) return;
+  const variants = buildVariants(set, { printRun: card.printRun || '' });
+  if (!variants.length) {
+    variantSel.innerHTML = '<option value="">(no variants)</option>';
+    return;
+  }
+  variantSel.innerHTML = variants
+    .map((v, i) => `<option value="${i}">${escHtml(v.name)}${v.printRun ? ` /${escHtml(v.printRun)}` : ''}</option>`)
+    .join('');
+  variantSel.disabled = false;
+  // Auto-select first variant so a single click on a card already
+  // produces a usable query.
+  variantSel.selectedIndex = 0;
+  trackedClUpdateQuery();
+}
+
+function onTrackedChecklistVariant() { trackedClUpdateQuery(); }
+
+function trackedClUpdateQuery() {
+  const q = document.getElementById('tracked-query-input');
+  const preview = document.getElementById('tracked-cl-preview');
+  if (!q) return;
+  const product = _trackedCl.productCache;
+  const setIdx = parseInt(document.getElementById('tracked-cl-set').value, 10);
+  const cardIdx = parseInt(document.getElementById('tracked-cl-card').value, 10);
+  const variantIdx = parseInt(document.getElementById('tracked-cl-variant').value, 10);
+  if (!product || !Number.isFinite(setIdx) || !Number.isFinite(cardIdx)) {
+    q.value = '';
+    if (preview) preview.textContent = '';
+    return;
+  }
+  const set = product.sets[setIdx];
+  const card = set && set.cards && set.cards[cardIdx];
+  if (!set || !card) return;
+  const variants = buildVariants(set, { printRun: card.printRun || '' });
+  const variant = Number.isFinite(variantIdx) ? variants[variantIdx] : variants[0];
+  const baseQuery = buildChecklistQuery(card.player, product.year, product.brand, set.name, set.category, (variant && variant.printRun) || card.printRun || '');
+  const variantName = (variant && variant.name && variant.name.toLowerCase() !== 'base') ? variant.name : '';
+  const fullQuery = variantName ? `${baseQuery} ${variantName}`.trim() : baseQuery;
+  q.value = fullQuery;
+  if (preview) preview.textContent = fullQuery ? `Will track: ${fullQuery}` : '';
+}
+
+function resetTrackedSelect(el, placeholder) {
+  if (!el) return;
+  el.innerHTML = `<option value="">${escHtml(placeholder)}</option>`;
 }
 
 async function loadTrackedCards() {

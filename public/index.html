@@ -886,8 +886,35 @@
 
       <!-- Pro content -->
       <div id="tracked-content" class="tracked-content hidden">
+        <!-- Two ways to pick a card to track: free-text input or
+             pick-from-checklist. The picker fills the same hidden
+             query field that the free-text mode uses, so submit
+             logic doesn't have to know which mode was used. -->
+        <div class="tracked-mode-tabs">
+          <button type="button" class="tracked-mode-tab active" data-mode="type" onclick="switchTrackedMode('type')">Type it in</button>
+          <button type="button" class="tracked-mode-tab" data-mode="checklist" onclick="switchTrackedMode('checklist')">Pick from checklist</button>
+        </div>
         <form class="alerts-add-form" id="tracked-add-form">
-          <input type="text" id="tracked-query-input" class="alerts-input" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" required minlength="3" />
+          <div id="tracked-mode-type" class="tracked-mode-panel">
+            <input type="text" id="tracked-query-input" class="alerts-input" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" required minlength="3" />
+          </div>
+          <div id="tracked-mode-checklist" class="tracked-mode-panel hidden">
+            <div class="tracked-checklist-grid">
+              <select id="tracked-cl-product" class="tracked-cl-select" onchange="onTrackedChecklistProduct()">
+                <option value="">Select a product…</option>
+              </select>
+              <select id="tracked-cl-set" class="tracked-cl-select" onchange="onTrackedChecklistSet()" disabled>
+                <option value="">Set…</option>
+              </select>
+              <select id="tracked-cl-card" class="tracked-cl-select" onchange="onTrackedChecklistCard()" disabled>
+                <option value="">Player / card…</option>
+              </select>
+              <select id="tracked-cl-variant" class="tracked-cl-select" onchange="onTrackedChecklistVariant()" disabled>
+                <option value="">Parallel…</option>
+              </select>
+            </div>
+            <p class="tracked-checklist-preview" id="tracked-cl-preview"></p>
+          </div>
           <div class="alerts-threshold-row">
             <select id="tracked-condition" class="alerts-threshold-select">
               <option value="">Any price</option>
@@ -1113,6 +1140,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=68"></script>
+  <script src="app.js?v=69"></script>
 </body>
 </html>
