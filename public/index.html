@@ -900,16 +900,51 @@
           </div>
           <div id="tracked-mode-checklist" class="tracked-mode-panel hidden">
             <div class="tracked-checklist-grid">
-              <select id="tracked-cl-product" class="tracked-cl-select" onchange="onTrackedChecklistProduct()">
+              <!-- Each combo mirrors a hidden <select>. The select is what
+                   holds the actual value + fires change events; the combo
+                   gives us the searchable popover styled to match the
+                   Checklist page's product/player pickers. -->
+              <div class="cl-combo tracked-cl-combo" id="tracked-cl-product-combo" data-target="tracked-cl-product" data-placeholder="Search a product…">
+                <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Select a product…</span><span class="cl-combo-caret"></span></button>
+                <div class="cl-combo-panel hidden">
+                  <input type="text" class="cl-combo-search" placeholder="Type to filter…" autocomplete="off" />
+                  <div class="cl-combo-list"></div>
+                </div>
+              </div>
+              <select id="tracked-cl-product" class="cl-hidden-select" onchange="onTrackedChecklistProduct()">
                 <option value="">Select a product…</option>
               </select>
-              <select id="tracked-cl-set" class="tracked-cl-select" onchange="onTrackedChecklistSet()" disabled>
+
+              <div class="cl-combo tracked-cl-combo" id="tracked-cl-set-combo" data-target="tracked-cl-set" data-placeholder="Pick a set…">
+                <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Set…</span><span class="cl-combo-caret"></span></button>
+                <div class="cl-combo-panel hidden">
+                  <input type="text" class="cl-combo-search" placeholder="Filter sets…" autocomplete="off" />
+                  <div class="cl-combo-list"></div>
+                </div>
+              </div>
+              <select id="tracked-cl-set" class="cl-hidden-select" onchange="onTrackedChecklistSet()" disabled>
                 <option value="">Set…</option>
               </select>
-              <select id="tracked-cl-card" class="tracked-cl-select" onchange="onTrackedChecklistCard()" disabled>
+
+              <div class="cl-combo tracked-cl-combo" id="tracked-cl-card-combo" data-target="tracked-cl-card" data-placeholder="Search a player or card #…">
+                <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Player / card…</span><span class="cl-combo-caret"></span></button>
+                <div class="cl-combo-panel hidden">
+                  <input type="text" class="cl-combo-search" placeholder="Search a player or card #…" autocomplete="off" />
+                  <div class="cl-combo-list"></div>
+                </div>
+              </div>
+              <select id="tracked-cl-card" class="cl-hidden-select" onchange="onTrackedChecklistCard()" disabled>
                 <option value="">Player / card…</option>
               </select>
-              <select id="tracked-cl-variant" class="tracked-cl-select" onchange="onTrackedChecklistVariant()" disabled>
+
+              <div class="cl-combo tracked-cl-combo" id="tracked-cl-variant-combo" data-target="tracked-cl-variant" data-placeholder="Pick a parallel…">
+                <button type="button" class="cl-combo-toggle"><span class="cl-combo-value">Parallel…</span><span class="cl-combo-caret"></span></button>
+                <div class="cl-combo-panel hidden">
+                  <input type="text" class="cl-combo-search" placeholder="Filter parallels…" autocomplete="off" />
+                  <div class="cl-combo-list"></div>
+                </div>
+              </div>
+              <select id="tracked-cl-variant" class="cl-hidden-select" onchange="onTrackedChecklistVariant()" disabled>
                 <option value="">Parallel…</option>
               </select>
             </div>
@@ -1140,6 +1175,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=69"></script>
+  <script src="app.js?v=70"></script>
 </body>
 </html>
