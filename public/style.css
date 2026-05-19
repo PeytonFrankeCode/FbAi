@@ -4823,6 +4823,69 @@ footer::before {
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
+
+/* Tracked Cards: Type / Checklist mode tabs */
+.tracked-mode-tabs {
+  display: inline-flex;
+  gap: 0;
+  margin: 0 0 0.6rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 999px;
+  padding: 3px;
+}
+.tracked-mode-tab {
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.tracked-mode-tab:hover { color: var(--text-primary); }
+.tracked-mode-tab.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+.tracked-mode-panel { display: block; }
+.tracked-mode-panel.hidden { display: none; }
+.tracked-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem;
+}
+.tracked-cl-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.tracked-cl-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.tracked-cl-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.tracked-checklist-preview {
+  margin: 0.55rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  min-height: 1.1em;
+}
+@media (max-width: 600px) {
+  .tracked-checklist-grid { grid-template-columns: 1fr; }
+}
 .alerts-threshold-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .alerts-threshold-select { background: var(--bg-tertiary); border: 1px solid var(--border-primary); border-radius: 8px; color: var(--text-primary); font-size: 0.8rem; padding: 0.5rem 0.6rem; cursor: pointer; outline: none; transition: border-color 0.15s; }
 .alerts-threshold-select:focus { border-color: var(--accent); }
