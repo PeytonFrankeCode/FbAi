@@ -4634,12 +4634,15 @@ function renderCompletionSets() {
       const rainbowBtn = (rainbowMode && allVariants.length > 1)
         ? `<button class="rainbow-cost-btn" onclick="calculateRainbowCost(this, '${productKey}','${setKey}_c${ci}','${playerEsc}','${year}','${brand}','${setName}','${category}','${cardNum}', ${ci})">Rainbow $?</button>`
         : '';
+      const rainbowViewBtn = (allVariants.length > 1)
+        ? `<button class="rainbow-view-btn" onclick="openRainbowGridForCard(${si}, ${ci})" title="Open rainbow grid">View Rainbow</button>`
+        : '';
 
       html += `<tr class="${allOwned ? 'completion-row-owned' : ''}" data-card-idx="${ci}">
         <td class="cl-num">${escHtml(c.number)}</td>
         <td class="cl-player"><a href="#" class="cl-player-link" onclick="event.preventDefault(); toggleCompletionListings(this, '${playerEsc}', '${year}', '${brand}', '${setName}', '${category}', '${cardNum}', '${(firstVariant && firstVariant.printRun) || printRun}')">${escHtml(c.player || 'Unknown')}</a></td>
         <td class="cl-team">${escHtml(c.team || '')}</td>
-        <td class="completion-variant-cell"><div class="completion-variants">${chipsHtml}${rainbowBtn}</div></td>
+        <td class="completion-variant-cell"><div class="completion-variants">${chipsHtml}${rainbowBtn}${rainbowViewBtn}</div></td>
       </tr>`;
     });
 
@@ -5153,7 +5156,10 @@ function switchCompletionSubtab(tab) {
   document.querySelectorAll('.completion-subtab').forEach(b => b.classList.toggle('active', b.dataset.subtab === tab));
   document.getElementById('completion-set-panel').style.display = tab === 'set' ? '' : 'none';
   document.getElementById('completion-player-panel').style.display = tab === 'player' ? '' : 'none';
+  const rb = document.getElementById('completion-rainbow-panel');
+  if (rb) rb.style.display = tab === 'rainbow' ? '' : 'none';
   if (tab === 'player' && completionData) loadPlayerCompletion();
+  if (tab === 'rainbow') renderRainbowView();
 }
 
 function populatePlayerSelect() {
@@ -6790,4 +6796,316 @@ async function submitFeedback(e) {
     statusEl.className = 'feedback-status error';
     statusEl.classList.remove('hidden');
   }
+}
+
+// ---- Rainbow Grid View ----
+// State for the currently-open rainbow grid. _rainbowState.target is the
+// {si, ci} of the card whose parallels are being shown. The grid renders
+// every parallel as a card-shaped tile; single tap toggles owned, double
+// tap (desktop) / long press (touch) opens recent sales for that parallel.
+let _rainbowState = { target: null };
+
+function openRainbowGridForCard(si, ci) {
+  _rainbowState.target = { si, ci };
+  switchCompletionSubtab('rainbow');
+}
+
+function closeRainbowView() {
+  _rainbowState.target = null;
+  switchCompletionSubtab('set');
+}
+
+// Order: non-numbered parallels first (preserving the data's order),
+// then numbered parallels by print run descending (/199 -> /1).
+function sortVariantsForRainbow(variants) {
+  const nonNumbered = [];
+  const numbered = [];
+  variants.forEach((v, originalIdx) => {
+    const pr = parseInt(v.printRun, 10);
+    if (Number.isFinite(pr) && pr > 0) numbered.push({ v, vi: originalIdx, pr });
+    else nonNumbered.push({ v, vi: originalIdx });
+  });
+  numbered.sort((a, b) => b.pr - a.pr);
+  return [...nonNumbered, ...numbered];
+}
+
+function renderRainbowView() {
+  const empty = document.getElementById('rainbow-empty');
+  const view = document.getElementById('rainbow-view');
+  if (!empty || !view) return;
+  if (!completionData || !_rainbowState.target) {
+    empty.classList.remove('hidden');
+    view.classList.add('hidden');
+    return;
+  }
+  const { si, ci } = _rainbowState.target;
+  const set = completionData.sets[si];
+  const card = set && set.cards && set.cards[ci];
+  if (!set || !card) {
+    empty.classList.remove('hidden');
+    view.classList.add('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  view.classList.remove('hidden');
+
+  const allVariants = buildVariants(set, { printRun: card.printRun || '' });
+  const ordered = sortVariantsForRainbow(allVariants);
+  const productKey = completionData.id || completionData.name;
+  const state = getCompletionState();
+  const owned = state[productKey] || {};
+  const setKey = `s${si}`;
+
+  const ownedCount = ordered.reduce((n, { vi }) => n + (owned[`${setKey}_c${ci}_v${vi}`] ? 1 : 0), 0);
+  document.getElementById('rainbow-card-player').textContent = card.player || 'Unknown';
+  const cardNum = card.number ? `#${card.number}` : '';
+  document.getElementById('rainbow-card-meta').textContent = [completionData.name, set.name, cardNum].filter(Boolean).join(' · ');
+  document.getElementById('rainbow-progress-text').textContent = `${ownedCount} / ${ordered.length} owned`;
+
+  const tilesHtml = ordered.map(({ v, vi }) => {
+    const key = `${setKey}_c${ci}_v${vi}`;
+    const isOwned = !!owned[key];
+    const prDisplay = v.printRun ? ` /${escHtml(String(v.printRun))}` : '';
+    const variantName = (v.name || '').replace(/'/g, "\\'");
+    const printRun = v.printRun ? String(v.printRun) : '';
+    return `<div class="rainbow-tile ${isOwned ? 'owned' : ''}" data-variant-idx="${vi}" data-variant-name="${escHtml(variantName)}" data-variant-pr="${escHtml(printRun)}" data-key="${escHtml(key)}">
+      <div class="rainbow-tile-img-wrap" aria-hidden="true">
+        <div class="rainbow-tile-img-placeholder"></div>
+      </div>
+      <div class="rainbow-check-badge" aria-hidden="true">&#10003;</div>
+      <div class="rainbow-tile-name">${escHtml(v.name)}${prDisplay}</div>
+    </div>`;
+  }).join('');
+
+  const grid = document.getElementById('rainbow-grid');
+  grid.innerHTML = tilesHtml;
+  document.getElementById('rainbow-listings-slot').innerHTML = '';
+
+  grid.querySelectorAll('.rainbow-tile').forEach(tile => attachRainbowTileHandlers(tile, productKey, si, ci, card, set));
+  loadRainbowTileImages(grid, productKey, si, ci, card, set);
+}
+
+function attachRainbowTileHandlers(tile, productKey, si, ci, card, set) {
+  const vi = parseInt(tile.dataset.variantIdx, 10);
+  const variantName = tile.dataset.variantName || '';
+  const printRun = tile.dataset.variantPr || '';
+  const key = tile.dataset.key;
+  const setKey = `s${si}`;
+
+  // Toggle helper — keeps localStorage + UI in sync. Returns the new state.
+  const toggleOwned = (next) => {
+    const state = getCompletionState();
+    if (!state[productKey]) state[productKey] = {};
+    const desired = (typeof next === 'boolean') ? next : !state[productKey][key];
+    if (desired) state[productKey][key] = true;
+    else delete state[productKey][key];
+    saveCompletionState(state);
+    tile.classList.toggle('owned', desired);
+    refreshRainbowProgress(productKey, si, ci, set);
+    return desired;
+  };
+
+  // Long-press handling for touch. We start a 500ms timer on pointerdown;
+  // if it fires before pointerup, the upcoming click is interpreted as a
+  // "show recent sales" gesture rather than a toggle.
+  let longPressTimer = null;
+  let longPressFired = false;
+  let pointerStart = null;
+
+  tile.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch') return;
+    longPressFired = false;
+    pointerStart = { x: e.clientX, y: e.clientY };
+    longPressTimer = setTimeout(() => {
+      longPressFired = true;
+      longPressTimer = null;
+      if (navigator.vibrate) try { navigator.vibrate(15); } catch {}
+    }, 500);
+  });
+  const cancelLongPress = () => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+  };
+  tile.addEventListener('pointerup', cancelLongPress);
+  tile.addEventListener('pointercancel', () => { cancelLongPress(); longPressFired = false; });
+  tile.addEventListener('pointermove', (e) => {
+    if (!pointerStart) return;
+    const dx = e.clientX - pointerStart.x, dy = e.clientY - pointerStart.y;
+    if (dx * dx + dy * dy > 100) cancelLongPress();
+  });
+
+  // Double-click detection for desktop: we toggle on each click immediately,
+  // and on dblclick we DON'T undo (the two clicks already netted to no
+  // change). We just open the listings drawer.
+  let clickTimer = null;
+  let suppressNextClick = false;
+  tile.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (suppressNextClick) { suppressNextClick = false; return; }
+    if (longPressFired) {
+      longPressFired = false;
+      openRainbowListings(tile, card, set, variantName, printRun);
+      return;
+    }
+    toggleOwned();
+  });
+  tile.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    openRainbowListings(tile, card, set, variantName, printRun);
+  });
+}
+
+function refreshRainbowProgress(productKey, si, ci, set) {
+  const state = getCompletionState();
+  const owned = state[productKey] || {};
+  const card = set.cards[ci];
+  const variants = buildVariants(set, { printRun: card.printRun || '' });
+  const setKey = `s${si}`;
+  const ownedCount = variants.reduce((n, _, vi) => n + (owned[`${setKey}_c${ci}_v${vi}`] ? 1 : 0), 0);
+  const el = document.getElementById('rainbow-progress-text');
+  if (el) el.textContent = `${ownedCount} / ${variants.length} owned`;
+}
+
+function openRainbowListings(tile, card, set, variantName, printRun) {
+  const slot = document.getElementById('rainbow-listings-slot');
+  if (!slot) return;
+  document.querySelectorAll('.rainbow-tile.active').forEach(t => t.classList.remove('active'));
+
+  // Clicking the same tile twice closes the drawer.
+  if (slot.dataset.openKey === tile.dataset.key) {
+    slot.innerHTML = '';
+    slot.dataset.openKey = '';
+    return;
+  }
+  slot.dataset.openKey = tile.dataset.key;
+  tile.classList.add('active');
+
+  const product = completionData;
+  const player = card.player || '';
+  const year = product.year || '';
+  const brand = product.brand || '';
+  const setName = set.name || '';
+  const category = set.category || '';
+  const baseQuery = buildChecklistQuery(player, year, brand, setName, category, printRun);
+
+  const variantLabel = variantName + (printRun ? ' /' + printRun : '');
+  slot.innerHTML = `
+    <div class="cl-listings-panel rainbow-listings-panel">
+      <div class="cl-listings-header">
+        <div class="cl-listings-tabs">
+          <button class="cl-listings-tab active" data-lmode="forsale">For Sale</button>
+          <button class="cl-listings-tab" data-lmode="sold">Sold</button>
+        </div>
+        <span class="cl-listings-title">${escHtml(variantLabel)}</span>
+        <button class="cl-listings-close" title="Close">&times;</button>
+      </div>
+      <div class="cl-listings-body">
+        <div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>
+      </div>
+    </div>`;
+
+  const tabs = slot.querySelectorAll('.cl-listings-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const mode = tab.dataset.lmode;
+      const body = slot.querySelector('.cl-listings-body');
+      body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
+      if (mode === 'sold') {
+        fetchRainbowSoldListings(body, baseQuery, variantName, printRun);
+      } else {
+        const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+        fetchVariantListings(body, q, variantName, printRun);
+      }
+    });
+  });
+
+  slot.querySelector('.cl-listings-close').addEventListener('click', () => {
+    slot.innerHTML = '';
+    slot.dataset.openKey = '';
+    tile.classList.remove('active');
+  });
+
+  const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+  fetchVariantListings(slot.querySelector('.cl-listings-body'), q, variantName, printRun);
+
+  slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function fetchRainbowSoldListings(container, baseQuery, variantName, printRun) {
+  const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+  try {
+    const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'sold', limit: '40' })}`);
+    const data = await safeJson(res);
+    const raw = data.results || [];
+    let items = variantName ? filterStrictVariant(raw, variantName, printRun) : raw;
+    if (items.length === 0 && raw.length > 0) items = raw;
+    if (items.length === 0) {
+      container.innerHTML = '<div class="cl-listings-empty">No sold listings found for this parallel.</div>';
+      return;
+    }
+    container.innerHTML = `<div class="cl-listings-grid">${items.map(listingCardHtml).join('')}</div>`;
+  } catch (err) {
+    container.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
+  }
+}
+
+// For each tile, fetch the cheapest live listing for that parallel and use
+// its thumbnail as the tile image — but ONLY if the listing title actually
+// contains the parallel name (case-insensitive). This stops eBay's
+// fuzzy-match from putting a Genesis card on the Blue Reactive tile.
+async function loadRainbowTileImages(grid, productKey, si, ci, card, set) {
+  const tiles = Array.from(grid.querySelectorAll('.rainbow-tile'));
+  const player = card.player || '';
+  const year = completionData.year || '';
+  const brand = completionData.brand || '';
+  const setName = set.name || '';
+  const category = set.category || '';
+
+  const CONCURRENCY = 3;
+  let idx = 0;
+  async function worker() {
+    while (idx < tiles.length) {
+      const myIdx = idx++;
+      const tile = tiles[myIdx];
+      const variantName = tile.dataset.variantName || '';
+      const printRun = tile.dataset.variantPr || '';
+      const baseQuery = buildChecklistQuery(player, year, brand, setName, category, printRun);
+      const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+      try {
+        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '12' })}`);
+        const data = await safeJson(res);
+        const raw = data.results || [];
+        const strict = filterStrictVariant(raw, variantName, printRun);
+        const verified = strict
+          .filter(r => parseFloat(r.price) > 0 && r.imageUrl && titleContainsParallel(r.title, variantName))
+          .sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        if (verified.length > 0) {
+          applyTileImage(tile, verified[0].imageUrl);
+        } else {
+          tile.classList.add('no-image');
+        }
+      } catch (_) {
+        tile.classList.add('no-image');
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+}
+
+function titleContainsParallel(title, variantName) {
+  if (!title || !variantName) return false;
+  const t = String(title).toLowerCase();
+  const v = String(variantName).toLowerCase().trim();
+  if (!v || v === 'base') return true;
+  // Strip the set name suffix from parallel names ("Camo Pink Mosaic" -> "Camo Pink")
+  // so we look for the distinguishing token rather than the redundant set word.
+  return t.includes(v);
+}
+
+function applyTileImage(tile, imageUrl) {
+  const wrap = tile.querySelector('.rainbow-tile-img-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = `<img class="rainbow-tile-img" src="${escHtml(imageUrl)}" alt="" loading="lazy" />`;
+  tile.classList.add('has-image');
 }

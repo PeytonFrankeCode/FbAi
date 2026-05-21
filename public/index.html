@@ -440,6 +440,7 @@
         <div class="completion-subtabs" id="completion-subtabs" style="display:none">
           <button class="completion-subtab active" data-subtab="set" onclick="switchCompletionSubtab('set')">Set</button>
           <button class="completion-subtab" data-subtab="player" onclick="switchCompletionSubtab('player')">Player</button>
+          <button class="completion-subtab" data-subtab="rainbow" onclick="switchCompletionSubtab('rainbow')">Rainbow</button>
         </div>
         <div id="completion-set-panel">
           <div id="completion-progress" class="completion-progress hidden">
@@ -470,6 +471,26 @@
             <span class="completion-progress-text" id="player-completion-text">0 / 0 cards</span>
           </div>
           <div id="player-completion-sets" class="completion-sets"></div>
+        </div>
+        <div id="completion-rainbow-panel" style="display:none">
+          <div id="rainbow-empty" class="rainbow-empty">
+            <p>Pick a card from the <strong>Set</strong> tab to view its rainbow.</p>
+            <p class="rainbow-empty-hint">Each card row has a <strong>View Rainbow</strong> button next to <em>Rainbow $?</em>.</p>
+          </div>
+          <div id="rainbow-view" class="rainbow-view hidden">
+            <div class="rainbow-header">
+              <button class="rainbow-back-btn" onclick="closeRainbowView()" type="button">&larr; Pick a different card</button>
+              <div class="rainbow-card-label">
+                <div class="rainbow-card-player" id="rainbow-card-player"></div>
+                <div class="rainbow-card-meta" id="rainbow-card-meta"></div>
+              </div>
+              <div class="rainbow-progress">
+                <span id="rainbow-progress-text">0 / 0 owned</span>
+              </div>
+            </div>
+            <div class="rainbow-grid" id="rainbow-grid"></div>
+            <div class="rainbow-listings-slot" id="rainbow-listings-slot"></div>
+          </div>
         </div>
       </div><!-- /#checklist-pane-completion -->
     </div>
