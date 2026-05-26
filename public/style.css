@@ -4859,6 +4859,41 @@ footer::before {
   gap: 0.5rem;
 }
 
+/* Page-level subtab strip (used at the top of Search to swap between
+   the search view and Grading Advisor). Matches the look of the
+   Collection / Seller subtab strips so it feels native. */
+.page-subtabs {
+  max-width: 1200px;
+  margin: 0.5rem auto 0;
+  padding: 0 1rem;
+}
+.page-subtabs.hidden { display: none; }
+.page-subtabs-inner {
+  display: inline-flex;
+  gap: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 999px;
+  padding: 3px;
+}
+.page-subtab {
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.page-subtab:hover { color: var(--text-primary); }
+.page-subtab.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+
 /* Reusable "Pick from checklist" modal */
 .cl-picker-modal {
   position: fixed;

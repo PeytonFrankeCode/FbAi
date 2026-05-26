@@ -2966,12 +2966,24 @@ const sellerView = document.getElementById('seller-view');
 const gradingView = document.getElementById('grading-view');
 
 function switchView(view) {
+  // Map legacy top-level view names onto the new 5-tab structure so
+  // any deep links / older code paths still route somewhere sensible.
+  // grading -> Search subtab, tracked -> My Cards subtab,
+  // proplus -> Sell -> Auto-Pricer subtab.
+  let searchSub = null;
+  let collSub = null;
+  let sellerSub = null;
+  if (view === 'grading') { view = 'search'; searchSub = 'grading'; }
+  else if (view === 'tracked') { view = 'collection'; collSub = 'tracked'; }
+  else if (view === 'proplus') { view = 'seller'; sellerSub = 'autopricer'; }
+
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
   if (activeTab) activeTab.classList.add('active');
 
   const proplusView = document.getElementById('proplus-view');
   const browseView = document.getElementById('browse-view');
+  const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
   trackedView.classList.add('hidden');
@@ -2980,26 +2992,41 @@ function switchView(view) {
   gradingView.classList.add('hidden');
   if (proplusView) proplusView.classList.add('hidden');
   if (browseView) browseView.classList.add('hidden');
+  if (searchSubtabs) searchSubtabs.classList.add('hidden');
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
     if (!checklistData) loadChecklistProducts();
   } else if (view === 'browse') {
     if (browseView) { browseView.classList.remove('hidden'); initBrowseView(); }
-  } else if (view === 'tracked') {
-    trackedView.classList.remove('hidden');
-    initTrackedView();
   } else if (view === 'collection') {
     collectionView.classList.remove('hidden');
     initCollectionView();
+    if (collSub) switchCollectionTab(collSub);
   } else if (view === 'seller') {
     sellerView.classList.remove('hidden');
     renderMyListings();
-  } else if (view === 'grading') {
-    gradingView.classList.remove('hidden');
-  } else if (view === 'proplus') {
-    if (proplusView) { proplusView.classList.remove('hidden'); initProPlusView(); }
+    if (sellerSub) switchSellerTab(sellerSub);
   } else {
+    // Search top-tab. Show the subtab strip and either the main search
+    // panel or the Grading Advisor panel based on the (optional) sub.
+    if (searchSubtabs) searchSubtabs.classList.remove('hidden');
+    switchSearchSub(searchSub || 'search');
+  }
+}
+
+// ---- Search top-tab subtabs ----
+// Toggles between the main search panel (mainEl) and the Grading
+// Advisor panel (gradingView). Both are siblings in the DOM, so we
+// just flip visibility here instead of moving markup around.
+function switchSearchSub(sub) {
+  const tabs = document.querySelectorAll('.page-subtab[data-search-sub]');
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.searchSub === sub));
+  if (sub === 'grading') {
+    mainEl.classList.add('hidden');
+    gradingView.classList.remove('hidden');
+  } else {
+    gradingView.classList.add('hidden');
     mainEl.classList.remove('hidden');
   }
 }
@@ -4061,6 +4088,19 @@ function initCollectionView() {
 function switchCollectionTab(tab) {
   document.querySelectorAll('.coll-tab').forEach(t => t.classList.toggle('active', t.dataset.coll === tab));
   document.querySelectorAll('.coll-panel').forEach(p => p.classList.add('hidden'));
+
+  // The Tracked Cards UI still lives in its standalone #tracked-view
+  // div for layout reasons; from the user's perspective it's a tab
+  // inside My Cards, so swap which top-level container is visible.
+  if (tab === 'tracked') {
+    collectionView.classList.add('hidden');
+    trackedView.classList.remove('hidden');
+    initTrackedView();
+    return;
+  }
+  // Anything else means we're back inside the collection container.
+  trackedView.classList.add('hidden');
+  collectionView.classList.remove('hidden');
   const panel = document.getElementById(`coll-${tab}`);
   if (panel) panel.classList.remove('hidden');
   if (tab === 'portfolio') renderPortfolio();
@@ -5556,6 +5596,23 @@ function loadHotCold(days) {
 function switchSellerTab(tab) {
   document.querySelectorAll('.seller-subtab').forEach(b => b.classList.toggle('active', b.dataset.seller === tab));
   document.querySelectorAll('.seller-panel').forEach(p => p.classList.add('hidden'));
+
+  // Auto-Pricer and Bulk Pricer still live in the #proplus-view div for
+  // layout reasons. Treat them as Sell subtabs by swapping which
+  // top-level container is visible and pre-selecting the proplus tab.
+  const proplusView = document.getElementById('proplus-view');
+  if (tab === 'autopricer' || tab === 'bulkpricer') {
+    sellerView.classList.add('hidden');
+    if (proplusView) {
+      proplusView.classList.remove('hidden');
+      initProPlusView();
+      switchProPlusTab(tab === 'bulkpricer' ? 'bulkprice' : 'autoprices');
+    }
+    return;
+  }
+  // Default: a regular Sell sub-panel inside seller-view.
+  if (proplusView) proplusView.classList.add('hidden');
+  sellerView.classList.remove('hidden');
   const panel = document.getElementById(`seller-${tab}`);
   if (panel) panel.classList.remove('hidden');
   if (tab === 'mylistings') renderMyListings();
