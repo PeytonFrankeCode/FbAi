@@ -1,0 +1,339 @@
+session:
+  date: 2026-05-18
+  branch: claude/fix-website-issues-YKnBS
+  repo: peytonfrankecode/fbai
+  prs: [225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208]
+  notes: >
+    Original 6-item punch list bloomed into a long debug session on the
+    Cloudflare Worker auth path (HTML 1101 errors from raw-body), then
+    into pricing/IA restructuring. End-state: site is on a 5-tab nav with
+    a soft-limit Free/Pro split and KV-backed cross-device accounts.
+
+tasks:
+  - id: 1
+    title: Strict For Sale results, consistent across all surfaces
+    request: >
+      Make For Sale results more strict when they come in, and make sure
+      that strictness is consistent everywhere (grading advisor,
+      checklists, etc.).
+    changes:
+      - server.js  # filterByVariant accepts { strict } option to disable
+                   #   the silent "fall back to unfiltered" behavior
+      - server.js  # /api/search forsale paths (serial + non-serial) now
+                   #   apply strict variant filter
+      - server.js  # /api/direct-search forsale paths likewise
+      - server.js  # /api/grading-advisor applies filterByVariant per
+                   #   grade so PSA10 comps don't include non-PSA10 sales
+    commit: c77e66c
+
+  - id: 2
+    title: Remove Pro walls but keep Pro the product
+    request: >
+      Remove the walls that say "Pro required" on the Pro tools — don't
+      remove Pro, just the gates blocking access.
+    changes:
+      - public/app.js  # initProPlusView always shows content
+      - public/app.js  # initTrackedView gate is login-only
+      - public/app.js  # initPromoteTab + handleAddPromotedCard drop sub check
+      - server.js      # requirePlan middleware reduced to login check
+    commit: c77e66c
+
+  - id: 3
+    title: Fix Stripe checkout routing on Cloudflare Workers
+    request: The Stripe key is active but Get Pro doesn't route to checkout.
+    changes:
+      - server.js  # Stripe.createFetchHttpClient() under CF_WORKER
+      - server.js  # siteOrigin(req) helper for success/cancel URLs
+                   #   using SITE_URL with Host fallback
+      - worker.js  # connection.encrypted = true so req.protocol resolves https
+    commits: [c77e66c]
+    follow_ups:
+      - 348feaa  # handleSubscribe surfaces server detail instead of silent close
+      - 1900439  # every branch alerts — no silent close anywhere
+      - notes: "Stripe still 'not configured' on live worker. User needs
+              to set STRIPE_SECRET_KEY as a Cloudflare secret (decided
+              to come back to it later)."
+
+  - id: 4
+    title: Promoted cards don't pile up at the bottom of search results
+    request: >
+      Every 10 cards a promoted card pops up — but at the bottom of
+      search results all the remaining promoted listings dump in. Drop
+      the extras when results end instead.
+    changes:
+      - public/app.js  # injectPromotedCards skips slots past last result
+    commit: c77e66c
+
+  - id: 5
+    title: Browse Cards section — global promoted-cards aggregation
+    request: Add a Browse Cards section listing all promoted cards.
+    changes:
+      - server.js  # /api/promoted-cards/all + updateGlobalPromotedIndex
+                   #   updated on every PUT /api/user/data
+      - db.js      # 'promotedIndex' added to KNOWN_KEYS preload
+      - public/index.html  # Browse Cards nav tab + #browse-view section
+      - public/app.js      # getGlobalPromotedCards cache + initBrowseView
+                           #   + loadBrowseCards + renderBrowseCards
+      - public/style.css   # browse-view + browse-controls + browse-empty
+    commit: c77e66c
+    follow_up: 282bd2b  # card-style controls bar + centered empty state
+
+  - id: 6
+    title: Create Account froze / "could not connect to server"
+    request: >
+      Whenever I try to create an account it gives me "could not connect
+      to server" and freezes the screen.
+    changes:
+      - public/app.js  # syncSubscriptionStatus + enableUserSync after
+                       #   register are now fire-and-forget so modal
+                       #   closes immediately
+      - public/app.js  # authFetchJson timeout bumped 15s -> 30s, shared
+                       #   between login + register, describeAuthError
+                       #   distinguishes AbortError vs TypeError
+      - public/app.js  # fetch('/api/stripe/config') on page load to
+                       #   warm the worker for first-time visitors
+    commit: 068a6dd
+
+  - id: 7
+    title: HTML 500 page chase ("Server returned non-JSON ie6 oldie")
+    request: >
+      Still getting Cloudflare's HTML error page on POST /api/auth/register.
+    debug_journey:
+      - 3e972eb  # Monkey-patch Layer.handle_request to forward async
+                 #   route rejections to next(err); try/catch on auth routes;
+                 #   await expressToFetch so outer try catches everything;
+                 #   generateToken falls back to webCrypto if randomBytes missing.
+      - 097e847  # Top-level addEventListener('unhandledrejection') and
+                 #   safeJson detects HTML body and shows actionable msg
+                 #   ("server is having trouble, may need redeploy").
+      - d1a56c8  # Added unguarded /api/ping endpoint + 'error' event
+                 #   trap on top of 'unhandledrejection'.
+      - 7aa7311  # Wrapped body-parser end-handler invocation in
+                 #   try/catch inside req.on setTimeout (errors there
+                 #   are outside any Express Layer).
+      - 836d7d6  # PBKDF2 100k -> 25k iterations (Workers Free 10ms CPU);
+                 #   POST /api/ping mirror diag.
+      - 93523a1  # /api/ping reports build:'ping-vN' + pbkdf2Iterations.
+      - 997bb6a  # /api/auth/diag?step=N walks register flow GET-style.
+      - 6731e4f  # /diag.html tester page so user can test from a phone
+                 #   without curl; auto-extracts Ray ID from HTML errors.
+      - notes: >
+          /diag.html test isolated the bug: POST /api/ping (a 6-line
+          route doing nothing) returned Cloudflare's 1101 HTML page.
+          That ruled out everything except body-parser.
+      - 4862c27  # ROOT CAUSE: raw-body's cleanup() calls
+                 #   stream.removeListener five times. Worker req shim
+                 #   only had on/resume/pipe/unpipe/read — no
+                 #   removeListener -> TypeError on every POST with a
+                 #   body, escapes every catch, Cloudflare serves 1101.
+                 #   Added full EventEmitter-shaped surface
+                 #   (removeListener, off, once, emit, addListener,
+                 #   listeners, listenerCount, setMaxListeners,
+                 #   eventNames, plus pause).
+    commit_final: 4862c27
+
+  - id: 8
+    title: "Sign-up succeeded but server response was malformed"
+    request: >
+      After fix #7 lands, register/login modal closes silently without
+      logging in.
+    debug_journey:
+      - 21421ec  # Surface malformed responses in handleAuth instead of
+                 #   silently storing undefined; bump cache to v=63.
+      - 8a2dfd2  # ROOT CAUSE: raw-body bails with "stream is not
+                 #   readable" when stream.readable is defined and falsy.
+                 #   Adding EventEmitter methods in #4862c27 made the
+                 #   shim look enough like an IncomingMessage that
+                 #   nodejs_compat contributed a falsy `readable` getter
+                 #   from the prototype chain. Self-inflicted regression.
+                 #   Spelled out readable:true, complete:false,
+                 #   readableEnded:false, destroyed:false, aborted:false
+                 #   directly on the shim — own property beats inherited.
+    commit_final: 8a2dfd2
+
+  - id: 9
+    title: Cross-device global accounts
+    request: Make accounts global (cross-device sign-in + social login).
+    changes:
+      - server.js  # /api/auth/google verifies via tokeninfo endpoint
+      - server.js  # /api/auth/apple verifies JWKS via WebCrypto
+      - server.js  # /api/auth/providers reports which are configured;
+                   #   loginOrCreateOAuthUser links by email or creates
+                   #   keyed off provider sub
+      - public/index.html  # social-auth row in login modal, lazy-loads
+                           #   Google Identity Services + Apple JS SDK
+      - public/app.js      # handleGoogleCredential + handleAppleSignIn
+      - public/style.css   # social-auth-btn styling
+      - wrangler.toml      # GOOGLE_CLIENT_ID + APPLE_CLIENT_ID docs
+    commit: 7c41f4c
+    notes: >
+      Cross-device sign-in already worked via existing KV-backed
+      users/sessions + USER_SYNC_KEYS. This adds the social login
+      surface. User needs to set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID
+      secrets to enable each button.
+
+  - id: 10
+    title: Accounts reset on every deploy, cross-device login fails
+    request: Global accounts aren't working and accounts get wiped each push.
+    changes:
+      - worker.js  # expose ctx.waitUntil via globalThis.__kvWaitUntil
+      - db.js      # saveData hands kv.put promise to __kvWaitUntil so
+                   #   Cloudflare doesn't kill the write when the
+                   #   response is sent
+      - server.js  # /api/ping reports waitUntilBound flag
+    commit: 1248bdc
+    root_cause: >
+      Fire-and-forget kv.put in saveData was being terminated when the
+      response left the worker. Register returned 200 + token but the
+      user never actually persisted, so cross-device login failed and
+      every cold start looked empty.
+
+  - id: 11
+    title: Auto-migrate legacy local-only accounts to KV
+    request: >
+      Login still gives "Invalid username or password" on a different
+      device even though it "works" on the main one.
+    changes:
+      - public/app.js  # When login returns 401 and local users db has a
+                       #   matching password, silently POST to
+                       #   /api/auth/register; on success switch to the
+                       #   new server-issued session token. Existing
+                       #   pre-#222 accounts repair themselves on the
+                       #   next login on their original device.
+      - public/app.js  # Signup mirrors password into local users db so
+                       #   self-healing fallback also works for transient
+                       #   future KV outages
+    commit: c416cc1
+    diagnosis: >
+      Pre-#222 accounts never made it into KV. Modal-login appeared to
+      work because handleAuth has a localStorage fallback that closes
+      the modal silently when the local password matches.
+
+  - id: 12
+    title: Remove Marketplace tab from Collection
+    request: Remove the (Marketplace) browse under Collection.
+    changes:
+      - public/index.html  # drop coll-marketplace tab + panel; kept
+                           #   searchMarketplace JS as harmless dead code
+    commit: b9202f8
+
+  - id: 13
+    title: Two ways to add a Tracked Card — type or pick from checklist
+    request: >
+      Two options for adding a tracked card: 1) type it in 2) select
+      from checklist.
+    changes:
+      - public/index.html  # tracked-mode-tabs pill + checklist picker
+                           #   panel with 4 cascading <select>s
+      - public/app.js      # initTrackedChecklistPicker +
+                           #   onTrackedChecklistProduct/Set/Card/Variant
+                           #   + trackedClUpdateQuery — fills the same
+                           #   hidden query input that the type-it-in mode
+                           #   uses so submit handler is unchanged
+      - public/style.css   # tracked-mode-tabs pill + checklist grid
+    commit: ddc82f2
+    follow_up: 5203fb6  # Swapped the 4 plain <select>s for the
+                        # .cl-combo searchable combobox the Checklists
+                        # page already uses; matches site UI.
+
+  - id: 14
+    title: Reusable "Pick from checklist" picker across the site
+    request: >
+      Add checklist search to Auto-Pricer, Market Movers, Grading
+      Advisor, eBay Seller (auto-fill via checklist), Title Generator.
+    changes:
+      - public/index.html  # shared #cl-picker-modal with the same 4
+                           #   combobox layout as Tracked Cards
+      - public/app.js      # openChecklistPicker({ onPick }) modal API +
+                           #   clPickerContext returning structured ctx
+                           #   { query, player, year, brand, setName,
+                           #     parallel, printRun, cardNumber }
+      - public/app.js      # attachChecklistPickerButton helper that
+                           #   drops an accent-styled trigger after any
+                           #   input and fills it on confirm
+      - public/app.js      # wired into ap-input, mm-input, ff-input,
+                           #   grading-input, listing-helper-input, and
+                           #   seller-listing-title (bespoke title
+                           #   builder, trimmed to 80 chars)
+      - public/style.css   # .cl-picker-modal + .cl-pick-trigger styles
+    commit: 899dd67
+
+  - id: 15
+    title: Free / Pro soft-limit split + remove low-engagement features
+    request: >
+      Balance Pro vs Free — entice upgrades without making free useless.
+      Implement the agreed table and remove Flip Finder, Market Movers,
+      and Hot/Cold while we're there.
+    changes:
+      - public/index.html  # remove Flip Finder + Market Movers tabs from
+                           #   Pro Tools; remove Hot/Cold tab from
+                           #   Collection; auto-pricer becomes default
+                           #   Pro Tools sub-tab; pricing modal copy
+                           #   rewritten with specific Free quotas and
+                           #   value-framed Pro unlocks
+      - public/app.js      # FREE_LIMITS + _dailyUseGet/_dailyUseInc +
+                           #   checkDailyLimit/checkCapLimit/proGate
+                           #   helpers; proPrompt(reason) sets pricing
+                           #   modal subtitle for contextual upsell
+      - public/app.js      # Wired: runAutoPricer (1/day),
+                           #   runGradingAdvisor (3/day), runBulkPricer
+                           #   (Pro only), exportCollectionCSV (Pro only),
+                           #   addToWatchlist (cap 5),
+                           #   handleAddCard / addToCollectionFromChecklist
+                           #   (cap 50), getPromoteSlotCount
+                           #   (1 free / 5 Pro), Tracked Cards email
+                           #   threshold (Pro only).
+    commit: 2b6db9f
+    marketing_principle: >
+      Free should answer 'what's my card worth?'. Pro should answer it
+      automatically, in bulk, and ahead of the market. Soft limits beat
+      hard walls — letting users feel the value before they pay.
+
+  - id: 16
+    title: Collapse top nav from 8 tabs to 5 intent-grouped tabs
+    request: >
+      Pro Tools as a subsection isn't a good idea. Reorganize into 5
+      tabs (keeping Browse Cards as its own tab).
+    final_nav: ["Search", "Checklists", "Browse Cards", "My Cards", "Sell"]
+    changes:
+      - public/index.html  # remove Grading Advisor / Tracked Cards /
+                           #   Pro Tools nav tabs; rename Collection ->
+                           #   My Cards, eBay Seller -> Sell; add
+                           #   .page-subtabs strip for Search; add
+                           #   Tracked Cards subtab to Collection; add
+                           #   Auto-Pricer + Bulk Pricer subtabs to Sell.
+      - public/app.js      # switchView routes legacy view names
+                           #   (grading/tracked/proplus) to new top-tab
+                           #   + subtab; switchSearchSub flips between
+                           #   mainEl and gradingView; switchCollectionTab
+                           #   handles 'tracked' by swapping to trackedView;
+                           #   switchSellerTab handles autopricer/bulkpricer
+                           #   by swapping to proplusView with the right
+                           #   inner pptab pre-selected.
+      - public/style.css   # .page-subtabs styled to match coll-tabs.
+    commit: 36d024b
+    rationale: >
+      Top nav now organized by user intent, not by paywall. PRO badges
+      live on individual subtabs (Tracked Cards subtab, Bulk Pricer
+      subtab) so the Pro upsell feels like buying convenience for an
+      existing workflow, not buying access to a separate paid bucket.
+
+cache_busts:
+  - app.js?v=57 -> v=73
+  - server.js  build: ping-v3 -> v11
+
+still_open:
+  - title: Set STRIPE_SECRET_KEY as a Cloudflare secret
+    why: >
+      Live worker reports stripeEnabled:false. Get Pro -> "Stripe
+      isn't configured" alert from the new handleSubscribe error path.
+      User said they'd come back to it. Run:
+        wrangler secret put STRIPE_SECRET_KEY
+  - title: Set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID secrets
+    why: >
+      Social login buttons stay hidden until /api/auth/providers
+      reports them enabled. Optional but recommended.
+  - title: Remove /diag.html + /api/auth/diag + /api/ping build marker
+    why: >
+      Debug-only surface from the body-parser chase. Safe to delete;
+      /api/ping itself is fine to keep for health checks.
