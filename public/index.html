@@ -223,13 +223,18 @@
           <h3 class="pricing-tier">Free</h3>
           <div class="pricing-price"><span class="pricing-amount">$0</span><span class="pricing-freq">/mo</span></div>
           <ul class="pricing-features">
-            <li class="included">Card search — sold &amp; for sale</li>
-            <li class="included">Price trend charts (30 days)</li>
-            <li class="included">Grade value breakdown</li>
-            <li class="included">Collection &amp; Portfolio</li>
-            <li class="included">NFL checklists</li>
-            <li class="excluded">Tracked Cards (price alerts)</li>
-            <li class="excluded">Pro Tools (Flip Finder, Market Movers, Auto-Pricer, Bulk Pricer)</li>
+            <li class="included">Unlimited card search — sold &amp; for sale</li>
+            <li class="included">Grade-by-grade breakdown</li>
+            <li class="included">Price trend chart (30 days)</li>
+            <li class="included">Collection &amp; Portfolio (up to 50 cards)</li>
+            <li class="included">Watchlist (up to 5 cards)</li>
+            <li class="included">NFL checklists + Rainbow pricing</li>
+            <li class="included">Grading Advisor (3 / day)</li>
+            <li class="included">Auto-Pricer (1 / day)</li>
+            <li class="included">1 promoted listing slot</li>
+            <li class="excluded">Tracked Card email alerts</li>
+            <li class="excluded">Bulk CSV Pricer (20 at once)</li>
+            <li class="excluded">CSV export of your collection</li>
           </ul>
           <button class="pricing-cta free" onclick="closePricing()">Current Plan</button>
         </div>
@@ -242,12 +247,14 @@
             <span class="pricing-freq" id="pro-freq">/mo</span>
           </div>
           <ul class="pricing-features">
-            <li class="included">Everything in Free</li>
-            <li class="included">Tracked Cards — price alerts via email</li>
-            <li class="included">Flip Finder — spot underpriced deals</li>
-            <li class="included">Market Movers — catch price surges</li>
-            <li class="included">Auto-Pricer — optimal listing prices</li>
-            <li class="included">Bulk CSV Pricer (20 cards at once)</li>
+            <li class="included">Everything in Free, with the limits removed</li>
+            <li class="included">Email alerts when a tracked card hits your price</li>
+            <li class="included">Full price history (not just last 30 days)</li>
+            <li class="included">Unlimited Collection &amp; Watchlist</li>
+            <li class="included">Unlimited Grading Advisor + Auto-Pricer runs</li>
+            <li class="included">Bulk CSV Pricer — price 20 cards at once</li>
+            <li class="included">5 promoted listing slots</li>
+            <li class="included">CSV export of your collection</li>
           </ul>
           <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
         </div>
@@ -516,7 +523,6 @@
         <div class="collection-tabs">
           <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
           <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist</button>
-          <button class="coll-tab" data-coll="hotcold" onclick="switchCollectionTab('hotcold')">Hot/Cold</button>
 
         </div>
       </div>
@@ -568,18 +574,6 @@
         </div>
         <div id="watchlist-list" class="watchlist-list">
           <p class="watchlist-empty">No players on your watchlist yet. Add a card above to start tracking.</p>
-        </div>
-      </div>
-
-      <!-- Hot/Cold Tab -->
-      <div id="coll-hotcold" class="coll-panel hidden">
-        <p class="hotcold-desc">Biggest price movers based on your tracked searches.</p>
-        <div class="hotcold-period">
-          <button class="hotcold-period-btn active" data-days="7" onclick="loadHotCold(7)">7 Days</button>
-          <button class="hotcold-period-btn" data-days="30" onclick="loadHotCold(30)">30 Days</button>
-        </div>
-        <div id="hotcold-list" class="hotcold-list">
-          <p class="hotcold-empty">Track cards via search to see price movements here.</p>
         </div>
       </div>
 
@@ -1054,40 +1048,12 @@
 
         <!-- Sub-tabs -->
         <div class="proplus-tabs">
-          <button class="proplus-tab active" data-pptab="flipfinder" onclick="switchProPlusTab('flipfinder')">&#128269; Flip Finder</button>
-          <button class="proplus-tab" data-pptab="movers" onclick="switchProPlusTab('movers')">&#128200; Market Movers</button>
-          <button class="proplus-tab" data-pptab="autoprices" onclick="switchProPlusTab('autoprices')">&#127991;&#65039; Auto-Pricer</button>
+          <button class="proplus-tab active" data-pptab="autoprices" onclick="switchProPlusTab('autoprices')">&#127991;&#65039; Auto-Pricer</button>
           <button class="proplus-tab" data-pptab="bulkprice" onclick="switchProPlusTab('bulkprice')">&#128196; Bulk Pricer</button>
         </div>
 
-        <!-- Flip Finder -->
-        <div id="pptab-flipfinder" class="pptab-panel">
-          <p class="pp-desc">Find eBay listings priced well below recent sold median — potential flips surfaced automatically.</p>
-          <div class="pp-search-row">
-            <input type="text" id="ff-input" class="pp-input" placeholder="e.g. Patrick Mahomes 2017 Prizm" />
-            <select id="ff-discount" class="pp-select">
-              <option value="20">20%+ below median</option>
-              <option value="30" selected>30%+ below median</option>
-              <option value="40">40%+ below median</option>
-            </select>
-            <input type="number" id="ff-minprofit" class="pp-input pp-input-sm" placeholder="Min profit $" min="1" value="10" />
-            <button class="pp-btn" onclick="runFlipFinder()">Find Flips</button>
-          </div>
-          <div id="ff-results"></div>
-        </div>
-
-        <!-- Market Movers -->
-        <div id="pptab-movers" class="pptab-panel hidden">
-          <p class="pp-desc">Detect cards with prices surging in the last 7 days vs. the prior period — get ahead of the market.</p>
-          <div class="pp-search-row">
-            <input type="text" id="mm-input" class="pp-input" placeholder="e.g. Josh Allen 2018 Prizm" />
-            <button class="pp-btn" onclick="runMarketMovers()">Check Trend</button>
-          </div>
-          <div id="mm-results"></div>
-        </div>
-
         <!-- Auto-Pricer -->
-        <div id="pptab-autoprices" class="pptab-panel hidden">
+        <div id="pptab-autoprices" class="pptab-panel">
           <p class="pp-desc">Get three data-backed listing price recommendations — aggressive, optimal, and premium — based on sold comps and live competition.</p>
           <div class="pp-search-row">
             <input type="text" id="ap-input" class="pp-input" placeholder="e.g. Joe Burrow 2020 Prizm PSA 10" />
@@ -1259,6 +1225,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=71"></script>
+  <script src="app.js?v=72"></script>
 </body>
 </html>
