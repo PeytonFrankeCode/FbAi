@@ -671,12 +671,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const query = input.value.trim();
       const conditionEl = document.getElementById('tracked-condition');
       const thresholdEl = document.getElementById('tracked-threshold');
-      const priceCondition = conditionEl ? conditionEl.value || null : null;
-      const priceThreshold = thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
+      // Free tier can save tracked cards locally but doesn't get
+      // email alerts — those are the Pro upsell here.
+      const priceCondition = hasPro() && conditionEl ? conditionEl.value || null : null;
+      const priceThreshold = hasPro() && thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
       const errEl = document.getElementById('tracked-error');
       errEl.classList.add('hidden');
 
-      if (!email) {
+      if (!hasPro() && (conditionEl?.value || thresholdEl?.value)) {
+        // User filled in a threshold but isn't on Pro — show the
+        // upsell instead of silently dropping their threshold.
+        proPrompt('Email alerts on a price threshold are a Pro feature. Upgrade to enable them.');
+        return;
+      }
+
+      if (!email && hasPro()) {
         errEl.textContent = 'Add an email to your account to receive alerts (sign up again with email).';
         errEl.classList.remove('hidden');
         return;
@@ -2768,11 +2777,91 @@ function hasPro() {
   return sub?.plan === 'pro' && sub?.status === 'active';
 }
 
-// Back-compat: isProPlus is the strict Pro-tier check used by Tracked Cards
-// and Pro Tools gates. isProOrPlus is sprinkled in many features that the
-// user wants to remain free, so it always returns true now.
+// Back-compat: isProPlus is the strict Pro-tier check. isProOrPlus
+// remains permissive — features that always return true are gated
+// instead via the explicit soft-limit helpers below.
 function isProPlus() { return hasPro(); }
 function isProOrPlus() { return true; }
+
+// ---- Soft Limits (Free tier) ----
+// Free users get a generous but capped slice of every feature. Pro
+// removes the caps. Each gate is a single function so the call site
+// stays a one-liner: `if (!checkLimitFoo()) return;`
+//
+// Daily counters live in localStorage and reset on date change. Cap
+// limits (collection size, watchlist size) compare against the
+// existing local arrays. proPrompt() shows the pricing modal with a
+// short reason in the title bar so the user knows why they're seeing
+// it — much higher conversion than a generic "upgrade now".
+
+const FREE_LIMITS = {
+  collection: 50,
+  watchlist: 5,
+  promotedSlots: 1,        // Pro gets 5 (or +extra via Stripe)
+  dailyGrading: 3,
+  dailyAutoPricer: 1,
+};
+
+function _todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function _dailyUseGet(name) {
+  try {
+    const raw = JSON.parse(localStorage.getItem('cardHuddleDailyUse') || '{}');
+    if (raw.day !== _todayKey()) return 0;
+    return raw.counts && raw.counts[name] ? raw.counts[name] : 0;
+  } catch { return 0; }
+}
+function _dailyUseInc(name) {
+  let raw = {};
+  try { raw = JSON.parse(localStorage.getItem('cardHuddleDailyUse') || '{}'); } catch {}
+  if (raw.day !== _todayKey()) raw = { day: _todayKey(), counts: {} };
+  raw.counts = raw.counts || {};
+  raw.counts[name] = (raw.counts[name] || 0) + 1;
+  localStorage.setItem('cardHuddleDailyUse', JSON.stringify(raw));
+}
+
+function dailyUsesLeft(name, limit) {
+  if (hasPro()) return Infinity;
+  return Math.max(0, limit - _dailyUseGet(name));
+}
+
+// Shows the pricing modal with a contextual reason. Returns false so
+// the call site can `return proPrompt(...)` in one line.
+function proPrompt(reason) {
+  try {
+    const subtext = document.querySelector('.pricing-subtext');
+    if (subtext && reason) subtext.textContent = reason;
+  } catch {}
+  showPricing();
+  return false;
+}
+
+// Returns true if the action is allowed. Pass `{ silent: true }` to
+// suppress the upgrade prompt (useful when you only want to check).
+function checkDailyLimit(name, limit, label, opts) {
+  if (hasPro()) return true;
+  const used = _dailyUseGet(name);
+  if (used < limit) { _dailyUseInc(name); return true; }
+  if (!opts || !opts.silent) {
+    proPrompt(`${label} hits ${limit}/day on Free. Upgrade for unlimited.`);
+  }
+  return false;
+}
+
+function checkCapLimit(currentCount, max, label) {
+  if (hasPro()) return true;
+  if (currentCount < max) return true;
+  proPrompt(`Free is capped at ${max} ${label}. Upgrade for unlimited.`);
+  return false;
+}
+
+function proGate(label) {
+  if (hasPro()) return true;
+  proPrompt(`${label} is a Pro feature. Upgrade to unlock.`);
+  return false;
+}
 
 // Sync subscription status from server (called on login and page load)
 async function syncSubscriptionStatus() {
@@ -3000,6 +3089,10 @@ async function runAutoPricer() {
   const q = document.getElementById('ap-input').value.trim();
   const out = document.getElementById('ap-results');
   if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to price.</p>'; return; }
+  if (!checkDailyLimit('autoPricer', FREE_LIMITS.dailyAutoPricer, 'Auto-Pricer')) {
+    out.innerHTML = '<p class="pp-error">Free plan is limited to 1 auto-price per day. Upgrade to Pro for unlimited.</p>';
+    return;
+  }
   out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
   try {
     const res = await fetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
@@ -3087,6 +3180,7 @@ async function selectApComp(idx) {
 
 let bulkPriceResults = [];
 async function runBulkPricer() {
+  if (!proGate('Bulk CSV Pricer')) return;
   const raw = document.getElementById('bulk-input').value.trim();
   const out = document.getElementById('bulk-results');
   if (!raw) { out.innerHTML = '<p class="pp-error">Enter at least one card.</p>'; return; }
@@ -3130,6 +3224,7 @@ async function runGradingAdvisor(e) {
   e.preventDefault();
   const query = document.getElementById('grading-input').value.trim();
   if (!query) return false;
+  if (!checkDailyLimit('grading', FREE_LIMITS.dailyGrading, 'Grading Advisor')) return false;
 
   const loading  = document.getElementById('grading-loading');
   const errorEl  = document.getElementById('grading-error');
@@ -4144,6 +4239,7 @@ function handleAddCard(e) {
   if (!name) return false;
 
   const coll = getCollection();
+  if (!checkCapLimit(coll.length, FREE_LIMITS.collection, 'cards in your collection')) return false;
   coll.push({ name, purchasePrice: price, estValue: price, condition, notes, addedAt: new Date().toISOString() });
   saveCollection(coll);
   closeAddCardModal();
@@ -4153,8 +4249,9 @@ function handleAddCard(e) {
 }
 
 function addToCollectionFromChecklist(player, year, brand, setName, parallel, printRun, cardNumber, team, category) {
-  const name = `${player} ${year} ${brand} ${setName}${parallel ? ' ' + parallel : ''}`;
   const coll = getCollection();
+  if (!checkCapLimit(coll.length, FREE_LIMITS.collection, 'cards in your collection')) return false;
+  const name = `${player} ${year} ${brand} ${setName}${parallel ? ' ' + parallel : ''}`;
   coll.push({
     name, purchasePrice: 0, estValue: 0, condition: '', notes: printRun ? `/${printRun}` : '',
     player: player || '', team: team || '', cardNumber: cardNumber || '', setName: setName || '',
@@ -4163,6 +4260,7 @@ function addToCollectionFromChecklist(player, year, brand, setName, parallel, pr
     addedAt: new Date().toISOString()
   });
   saveCollection(coll);
+  return true;
 }
 
 function removeFromCollection(idx) {
@@ -4369,6 +4467,7 @@ function addToWatchlist() {
     showPortfolioToast('Already on your watchlist.');
     return;
   }
+  if (!checkCapLimit(list.length, FREE_LIMITS.watchlist, 'watchlist entries')) return;
   list.push({ query, addedAt: new Date().toISOString(), currentPrice: null, prevPrice: null, updatedAt: null });
   saveWatchlist(list);
   input.value = '';
@@ -5808,10 +5907,13 @@ function savePromotedCards(cards) {
 // Extra promotion slots — default 5 + purchased extras
 function getPromoteSlotCount() {
   const user = getCurrentUser();
-  if (!user) return 5;
+  // Free tier gets a single slot as a sample; Pro unlocks 5 + any
+  // extras the user has bought via Stripe.
+  const base = hasPro() ? 5 : FREE_LIMITS.promotedSlots;
+  if (!user) return base;
   const users = getUsers();
   const extra = users[user.toLowerCase()]?.extraPromoteSlots || 0;
-  return 5 + extra;
+  return base + extra;
 }
 
 async function handleBuyExtraSlot() {
@@ -6414,14 +6516,6 @@ document.addEventListener('DOMContentLoaded', () => {
   attachChecklistPickerButton('ap-input', {
     subtitle: 'Pick a card to auto-price.',
   });
-  // Pro Tools — Market Movers
-  attachChecklistPickerButton('mm-input', {
-    subtitle: 'Pick a card to check the trend.',
-  });
-  // Pro Tools — Flip Finder (bonus while we're here)
-  attachChecklistPickerButton('ff-input', {
-    subtitle: 'Pick a card to scan for flips.',
-  });
   // Grading Advisor
   attachChecklistPickerButton('grading-input', {
     subtitle: 'Pick a card to compare grade premiums.',
@@ -6463,6 +6557,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---- CSV Export ----
 function exportCollectionCSV() {
+  if (!proGate('CSV export of your collection')) return;
   const coll = getCollection();
   if (coll.length === 0) { alert('No cards in your collection to export.'); return; }
 
