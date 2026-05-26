@@ -157,13 +157,8 @@
       <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
       <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
       <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
-      <button class="nav-tab" data-view="collection" onclick="switchView('collection')">Collection</button>
-      <button class="nav-tab" data-view="grading" onclick="switchView('grading')">Grading Advisor</button>
-      <button class="nav-tab" data-view="seller" onclick="switchView('seller')">eBay Seller</button>
-      <button class="nav-tab" data-view="tracked" onclick="switchView('tracked')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span>
-      </button>
-      <button class="nav-tab proplus-nav-tab" data-view="proplus" onclick="switchView('proplus')">Pro Tools <span class="proplus-nav-badge">PRO</span></button>
+      <button class="nav-tab" data-view="collection" onclick="switchView('collection')">My Cards</button>
+      <button class="nav-tab" data-view="seller" onclick="switchView('seller')">Sell</button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -259,6 +254,16 @@
           <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Search top-tab subtab strip — visible only when switchView('search')
+       is active. Default subtab shows the main search; the second swaps
+       mainEl out for #grading-view (which lives further down the DOM). -->
+  <div id="search-subtabs" class="page-subtabs hidden">
+    <div class="page-subtabs-inner">
+      <button class="page-subtab active" data-search-sub="search" onclick="switchSearchSub('search')">Search</button>
+      <button class="page-subtab" data-search-sub="grading" onclick="switchSearchSub('grading')">Grading Advisor</button>
     </div>
   </div>
 
@@ -502,6 +507,7 @@
         <div class="collection-tabs">
           <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
           <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist</button>
+          <button class="coll-tab" data-coll="tracked" onclick="switchCollectionTab('tracked')">Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
 
         </div>
       </div>
@@ -613,13 +619,15 @@
   <div id="seller-view" class="collection-view hidden">
     <div class="collection-container">
       <div class="collection-header">
-        <h2 class="collection-title">eBay Seller Tools</h2>
-        <p class="collection-subtitle">Create, manage, and optimize your eBay card listings</p>
+        <h2 class="collection-title">Sell</h2>
+        <p class="collection-subtitle">Create, price, and promote your eBay card listings</p>
         <div class="collection-tabs">
           <button class="seller-subtab active" data-seller="create" onclick="switchSellerTab('create')">Create Listing</button>
           <button class="seller-subtab" data-seller="mylistings" onclick="switchSellerTab('mylistings')">My Listings</button>
           <button class="seller-subtab" data-seller="titlegenerator" onclick="switchSellerTab('titlegenerator')">Title Generator</button>
           <button class="seller-subtab" data-seller="promote" onclick="switchSellerTab('promote')">Promote Cards</button>
+          <button class="seller-subtab" data-seller="autopricer" onclick="switchSellerTab('autopricer')">Auto-Pricer</button>
+          <button class="seller-subtab" data-seller="bulkpricer" onclick="switchSellerTab('bulkpricer')">Bulk Pricer <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
         </div>
       </div>
 
@@ -1204,6 +1212,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=72"></script>
+  <script src="app.js?v=73"></script>
 </body>
 </html>
