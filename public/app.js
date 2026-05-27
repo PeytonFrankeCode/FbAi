@@ -4311,12 +4311,9 @@ function removeFromCollection(idx) {
 }
 
 async function refreshPortfolioValues() {
-  const sub = getUserSubscription();
-  if (!sub) { showPricing(); return; }
-
   const btn = document.getElementById('refresh-market-btn');
   const origHTML = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing… <span class="pro-badge-inline">PRO</span>'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing…'; }
 
   const coll = getCollection();
   const updates = [];
