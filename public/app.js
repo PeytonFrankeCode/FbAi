@@ -2720,7 +2720,9 @@ async function handleSubscribe(plan) {
   let stripeConfig = null;
   let configErr = null;
   try {
-    const configRes = await fetch('/api/stripe/config');
+    // Cache-bust the request so a stale `enabled:false` answer cached
+    // before secrets were set in Cloudflare can't keep the user locked out.
+    const configRes = await fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' });
     stripeConfig = await safeJson(configRes);
   } catch (err) {
     configErr = err;
@@ -2941,7 +2943,7 @@ checkPaymentReturn();
 
 // Warm the worker so the first Create Account submit doesn't time out on a
 // cold start. Cheap, cacheable, doesn't depend on auth.
-fetch('/api/stripe/config').catch(() => {});
+fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' }).catch(() => {});
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
@@ -5996,7 +5998,7 @@ async function handleBuyExtraSlot() {
 
   // Try Stripe checkout
   try {
-    const configRes = await fetch('/api/stripe/config');
+    const configRes = await fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' });
     const config = await configRes.json();
 
     if (config.enabled) {
