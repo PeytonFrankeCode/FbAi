@@ -150,9 +150,11 @@ if (!process.env.CF_WORKER) {
   } catch (_) { /* compression not bundled — that's fine */ }
 }
 app.use(express.json());
-// Disable caching for JS/CSS so deploys take effect immediately
+// Disable caching for JS/CSS so deploys take effect immediately, and for
+// every /api/* response so a stale answer (e.g. `enabled:false` cached
+// from before secrets were set) can never linger in a browser.
 app.use((req, res, next) => {
-  if (/\.(js|css)(\?.*)?$/.test(req.path)) {
+  if (/\.(js|css)(\?.*)?$/.test(req.path) || req.path.startsWith('/api/')) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   }
   next();
