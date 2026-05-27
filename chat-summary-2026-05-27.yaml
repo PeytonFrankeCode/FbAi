@@ -1,0 +1,143 @@
+session:
+  date: 2026-05-27
+  branch: claude/project-codebase-review-ur2AR
+  repo: peytonfrankecode/fbai
+
+# ============================================================
+# IMPORTANT — USER CONSTRAINTS (read me first)
+# ============================================================
+user_constraints:
+  no_dev_tools:
+    summary: >
+      The user does NOT have access to web developer tools. That means:
+      no terminal / shell, no curl, no wrangler CLI, no node, no
+      browser DevTools, no SSH, no local checkout. They interact with
+      the site through the UI only, and with the codebase through
+      Claude Code sessions.
+    do_not_do:
+      - Tell the user to "run wrangler secret put X" themselves.
+      - Tell the user to curl an endpoint or inspect Network in DevTools.
+      - Tell the user to open a terminal or paste a shell command.
+      - Tell the user to "check the console" — they have no console.
+      - Send commands like `git`, `npm`, `node`, `wrangler` for them
+        to execute. Anything that needs running, Claude runs.
+    do_instead:
+      - For Cloudflare secrets (Stripe, OAuth, eBay): tell the user
+        exactly where to click in the Cloudflare dashboard
+        (Workers & Pages → the-card-huddle → Settings → Variables and
+        Secrets → "Add" → set type to "Secret"), and explain what to
+        paste. They can do that in a browser, not a terminal.
+      - For Stripe webhook setup: walk them through the Stripe
+        Dashboard UI (Developers → Webhooks → Add endpoint).
+      - For verifying a config landed: give them a URL they can paste
+        in the browser address bar (e.g. /api/stripe/config returning
+        enabled:true), not a curl command.
+      - For testing changes: if it can be tested by clicking around
+        the live site, describe what to click. Otherwise verify in the
+        Claude Code sandbox before pushing.
+
+# ============================================================
+# Work in this session
+# ============================================================
+tasks:
+  - id: 1
+    title: Codebase read-through
+    request: >
+      Read all the code so you fully understand the project.
+    notes: >
+      Mapped server.js route groups, frontend SPA structure, KV
+      storage layout, Worker shim, /docs and /godaddy mirror surfaces,
+      checklist parser scripts, and the body-parser / readable-shim
+      debugging history from the 2026-05-18 session.
+
+  - id: 2
+    title: Feature-tour PowerPoint deck
+    request: >
+      Create a PowerPoint that showcases all the website features.
+    changes:
+      - the-card-huddle-feature-tour.pptx  # 15-slide deck
+    commit: 15c29f4  # initial deck, generic palette
+    follow_up: cfe212f  # re-skinned to brand colors and replaced mock
+                        # visuals with dashed-green photo placeholders
+                        # so the user can drop in their own screenshots.
+    palette_source: public/style.css
+    colors:
+      bg: "#0c0e14"
+      card: "#1a2133"
+      accent: "#5ece99"   # brand green — primary
+      pro:    "#f59e0b"   # orange, reserved for PRO chips
+      text:   "#edf0f7"
+      muted:  "#94a3b8"
+
+  - id: 3
+    title: Seed Browse Cards with live for-sale demo listings
+    request: >
+      Add some demo cards to Browse Cards by pulling them from for sale.
+    changes:
+      - server.js  # PROMOTED_DEMO_QUERIES (12 curated player queries),
+                   #   getDemoPromotedCards() with KV cache + in-flight
+                   #   lock, /api/promoted-cards/all now async and tops
+                   #   up the feed when real count < 12.
+      - db.js      # 'promotedDemo' added to KNOWN_KEYS preload.
+    commit: 21fbc27
+    notes: >
+      Demo cards carry promotedBy:'demo' and isDemo:true so they can
+      be filtered later. Cache TTL is 12h. Falls back to empty (no
+      crash) when EBAY_APP_ID / EBAY_CERT_ID secrets are missing.
+      Real promoted cards always rank first; demo de-dupes by itemUrl.
+
+  - id: 4
+    title: Drop Pro wall on Refresh Market Values
+    request: >
+      Remove the Pro paywall on refresh market values in collection.
+    changes:
+      - public/app.js     # refreshPortfolioValues no longer returns
+                          #   into showPricing(); inline PRO chip
+                          #   removed from the refreshing-state label.
+      - public/index.html # cache-bust app.js?v=73 -> v=74.
+    commit: cb3740e
+
+# ============================================================
+# Live ops issue raised by user (not a code bug)
+# ============================================================
+ops:
+  - title: "Stripe checkout: 'Stripe isn't configured on this environment'"
+    diagnosis: >
+      The error message at public/app.js:2739 is honest — the live
+      worker is reporting stripeEnabled:false because the
+      STRIPE_SECRET_KEY (and likely STRIPE_PUBLISHABLE_KEY +
+      STRIPE_WEBHOOK_SECRET) are not set as Cloudflare Worker secrets.
+      Same "still_open" item from the 2026-05-18 chat summary.
+    user_action_required:
+      where: Cloudflare dashboard (NOT wrangler CLI — user has no terminal).
+      path: >
+        Workers & Pages → the-card-huddle → Settings →
+        Variables and Secrets → Add → Type: Secret.
+      keys_to_add:
+        - STRIPE_SECRET_KEY        # sk_live_… (or sk_test_… while testing)
+        - STRIPE_PUBLISHABLE_KEY   # pk_live_…
+        - STRIPE_WEBHOOK_SECRET    # whsec_… from Stripe Dashboard → Webhooks
+      stripe_webhook_endpoint: https://thecardhuddle.com/api/stripe/webhook
+      stripe_webhook_events:
+        - checkout.session.completed
+        - customer.subscription.updated
+        - customer.subscription.deleted
+    verify_no_terminal_needed:
+      url: https://thecardhuddle.com/api/stripe/config
+      expected: '{ "publishableKey": "pk_...", "enabled": true }'
+    notes: >
+      User hit https://thecardhuddle.com/api/stripe/webhook in a
+      browser and got 404. That's correct — the route is app.post
+      only; a browser GET will 404. Stripe itself will POST with a
+      valid signature, which is what the handler verifies.
+
+# ============================================================
+# Still open after this session
+# ============================================================
+still_open:
+  - Stripe secrets must be set in the Cloudflare dashboard before
+    Pro checkout will work. See ops[0] above for the exact path.
+  - GOOGLE_CLIENT_ID / APPLE_CLIENT_ID secrets (optional) for the
+    social-login buttons to appear.
+  - /diag.html + /api/auth/diag debug surface from the body-parser
+    chase is still present. Safe to delete when convenient.
