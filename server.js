@@ -2260,17 +2260,100 @@ function updateGlobalPromotedIndex(username, cards) {
   saveData('promotedIndex', PROMOTED_INDEX_FILE, index);
 }
 
+// ---- Demo seed for Browse Cards ----
+// While the global promoted feed is still small, top it up with curated
+// for-sale listings pulled live from the eBay Browse API. Keeps the Browse
+// Cards page populated so the empty state never greets a first-time visitor.
+// Cached in KV under 'promotedDemo' with a TTL so we don't hit eBay every
+// request. Real promoted cards always rank first; demo is filler.
+const PROMOTED_DEMO_FILE = path.join(APP_ROOT, 'data', 'promoted-demo.json');
+const PROMOTED_DEMO_TTL_MS = 12 * 60 * 60 * 1000;   // 12h
+const PROMOTED_DEMO_MIN_FEED = 12;                  // top up below this size
+const PROMOTED_DEMO_QUERIES = [
+  'Patrick Mahomes Prizm',
+  'Caleb Williams Prizm Rookie',
+  'Jayden Daniels Prizm Rookie',
+  'Joe Burrow Prizm',
+  'Josh Allen Optic',
+  'Bijan Robinson Mosaic',
+  'Marvin Harrison Jr Prizm Rookie',
+  'CJ Stroud Prizm Rookie',
+  'Justin Jefferson Prizm',
+  'Lamar Jackson Select',
+  'Drake Maye Prizm Rookie',
+  'Brock Bowers Prizm Rookie',
+];
+let _demoPromotedInFlight = null;
+
+async function getDemoPromotedCards() {
+  // KV-cached: return immediately while fresh.
+  const cached = loadData('promotedDemo', PROMOTED_DEMO_FILE, null);
+  const fresh = cached && cached.cachedAt && (Date.now() - cached.cachedAt) < PROMOTED_DEMO_TTL_MS;
+  if (fresh && Array.isArray(cached.cards) && cached.cards.length > 0) {
+    return cached.cards;
+  }
+  // No upstream available — return whatever we last had (possibly nothing).
+  if (USE_MOCK_FORSALE || !EBAY_APP_ID) {
+    return (cached && Array.isArray(cached.cards)) ? cached.cards : [];
+  }
+  // Coalesce concurrent first-request refreshes so we don't fire the eBay
+  // Browse API a dozen times in parallel from cold start.
+  if (_demoPromotedInFlight) return _demoPromotedInFlight;
+
+  _demoPromotedInFlight = (async () => {
+    const settled = await Promise.allSettled(
+      PROMOTED_DEMO_QUERIES.map(q => fetchViaBrowseAPI(q, 2, 'promoted-demo'))
+    );
+    const out = [];
+    settled.forEach((s, qi) => {
+      if (s.status !== 'fulfilled') return;
+      const results = (s.value && s.value.results) || [];
+      for (const r of results.slice(0, 2)) {
+        if (!r.title || !r.itemUrl || !r.imageUrl) continue;
+        out.push({
+          id: 'demo-' + (r.itemId || `${qi}-${out.length}`),
+          title: r.title,
+          itemUrl: r.itemUrl,
+          price: parseFloat(r.price) || 0,
+          imageUrl: r.imageUrl,
+          condition: r.condition || 'Used',
+          promotedBy: 'demo',
+          isDemo: true,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    });
+    if (out.length > 0) {
+      saveData('promotedDemo', PROMOTED_DEMO_FILE, { cachedAt: Date.now(), cards: out });
+      return out;
+    }
+    return (cached && Array.isArray(cached.cards)) ? cached.cards : [];
+  })().finally(() => { _demoPromotedInFlight = null; });
+
+  return _demoPromotedInFlight;
+}
+
 // Public endpoint — anyone can fetch the global promoted card feed.
-app.get('/api/promoted-cards/all', (req, res) => {
+app.get('/api/promoted-cards/all', async (req, res) => {
   const index = loadGlobalPromotedIndex();
-  const all = [];
+  const real = [];
   for (const [user, cards] of Object.entries(index)) {
     if (!Array.isArray(cards)) continue;
-    for (const c of cards) all.push({ ...c, promotedBy: user });
+    for (const c of cards) real.push({ ...c, promotedBy: user });
   }
-  // Newest first; harmless if createdAt is missing.
-  all.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-  res.json({ cards: all, total: all.length });
+  real.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+  let demo = [];
+  if (real.length < PROMOTED_DEMO_MIN_FEED) {
+    try { demo = await getDemoPromotedCards(); }
+    catch (err) { console.error('[promoted-cards] demo top-up failed:', err && err.message); }
+  }
+  // De-dupe by itemUrl in case a real seller already listed something we pulled
+  // for the demo seed — real listings always win.
+  const seen = new Set(real.map(c => c.itemUrl));
+  const filler = demo.filter(c => !seen.has(c.itemUrl));
+  const all = real.concat(filler);
+  res.json({ cards: all, total: all.length, real: real.length, demo: filler.length });
 });
 
 // ---- Stripe API Routes ----
