@@ -124,8 +124,39 @@ function updateSettingsSubscription() {
     const period = sub.period === 'yearly' ? 'Yearly' : 'Monthly';
     const date = new Date(sub.subscribedAt);
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    desc.innerHTML = `<strong>Pro</strong> &middot; ${period} &middot; Since ${dateStr}`;
+    desc.innerHTML = `<strong>Pro</strong> &middot; ${period} &middot; Since ${dateStr}<br><span class="settings-sub-billing" id="settings-sub-billing">Loading billing details…</span>`;
     action.innerHTML = `<button class="settings-sub-btn settings-sub-cancel" id="manage-sub-btn" onclick="openBillingPortal()">Manage Subscription</button>`;
+    loadBillingDetails();
+  }
+}
+
+// Pull next-bill / cancel-at-period-end details from Stripe via our server
+// and render them in the Settings panel. Anything that can fail (no Stripe
+// customer linked, network drop, subscription deleted upstream) silently
+// hides the line — the basic plan info above still renders fine.
+async function loadBillingDetails() {
+  const el = document.getElementById('settings-sub-billing');
+  if (!el) return;
+  const user = getCurrentUser();
+  if (!user) { el.remove(); return; }
+  try {
+    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}&_=${Date.now()}`, { cache: 'no-store' });
+    const data = await safeJson(res);
+    const b = data && data.billing;
+    if (!b || !b.currentPeriodEnd) { el.remove(); return; }
+    const when = new Date(b.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (b.cancelAtPeriodEnd) {
+      el.innerHTML = `<strong>Cancels on ${when}</strong> &middot; you'll keep Pro access until then`;
+      el.classList.add('settings-sub-billing--cancelling');
+    } else if (typeof b.unitAmount === 'number') {
+      const amount = `$${(b.unitAmount / 100).toFixed(2)}`;
+      const cur = (b.currency || 'usd').toUpperCase();
+      el.textContent = `Next bill: ${amount} ${cur === 'USD' ? '' : cur + ' '}on ${when}`;
+    } else {
+      el.textContent = `Renews on ${when}`;
+    }
+  } catch (_) {
+    el.remove();
   }
 }
 
