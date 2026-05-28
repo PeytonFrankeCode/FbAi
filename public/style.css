@@ -569,6 +569,28 @@
   margin-bottom: 1.5rem;
 }
 
+.pricing-promo-hint {
+  margin-top: 1.25rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.pricing-promo-code {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  margin: 0 0.15rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
 .pricing-toggle {
   display: flex;
   align-items: center;

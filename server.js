@@ -2403,6 +2403,11 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
         },
         quantity: 1
       }],
+      // Surfaces Stripe's built-in "Add promotion code" field on Checkout so
+      // codes like PRODUCTHUNTLAUNCH (created in Stripe Dashboard -> Coupons)
+      // can be redeemed. Coupon definitions live entirely in Stripe so we
+      // never need a code deploy to change them.
+      allow_promotion_codes: true,
       metadata: { username: username.toLowerCase(), period: period || 'monthly', plan: 'pro' },
       success_url: `${siteOrigin(req)}/?payment=success&plan=pro`,
       cancel_url: `${siteOrigin(req)}/?payment=cancelled`
@@ -2428,6 +2433,7 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price_data: { currency: 'usd', product: STRIPE_PRODUCT_PROPLUS, ...priceData }, quantity: 1 }],
+      allow_promotion_codes: true,
       metadata: { username: username.toLowerCase(), period: period || 'monthly', plan: 'proplus' },
       success_url: `${siteOrigin(req)}/?payment=success&plan=proplus`,
       cancel_url: `${siteOrigin(req)}/?payment=cancelled`
