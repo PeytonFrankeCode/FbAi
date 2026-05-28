@@ -2727,6 +2727,38 @@ app.get('/api/stripe/subscription', (req, res) => {
   res.json({ subscription: userSub, stripeEnabled });
 });
 
+// Open a Stripe-hosted Billing Portal session so the user can cancel, switch
+// plans, update payment method, or download invoices. Cancellation events
+// flow back to us via the existing customer.subscription.deleted /
+// customer.subscription.updated webhook handlers, so the KV-backed
+// subscription record stays in sync automatically.
+app.post('/api/stripe/create-portal-session', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
+
+  const { username } = req.body || {};
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  const subs = loadSubscriptions();
+  const userSub = subs[String(username).toLowerCase()];
+  if (!userSub || !userSub.stripeCustomerId) {
+    // Legacy/manual subscription (e.g. 'permanent: true' lifetime grants and
+    // anything created before Stripe was wired in) has no Stripe customer to
+    // link to — surface that distinctly so the UI can show a useful message.
+    return res.status(404).json({ error: 'No Stripe customer on file for this account. Contact support to make changes.' });
+  }
+
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: userSub.stripeCustomerId,
+      return_url: `${siteOrigin(req)}/?billing=managed`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe portal error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // ---- Feedback / Bug Reports ----
 const FEEDBACK_FILE = path.join(APP_ROOT, 'data', 'feedback.json');

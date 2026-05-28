@@ -125,20 +125,38 @@ function updateSettingsSubscription() {
     const date = new Date(sub.subscribedAt);
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     desc.innerHTML = `<strong>Pro</strong> &middot; ${period} &middot; Since ${dateStr}`;
-    action.innerHTML = `<button class="settings-sub-btn settings-sub-cancel" onclick="cancelSubscription()">Cancel</button>`;
+    action.innerHTML = `<button class="settings-sub-btn settings-sub-cancel" id="manage-sub-btn" onclick="openBillingPortal()">Manage Subscription</button>`;
   }
 }
 
-function cancelSubscription() {
+// Send the user to Stripe's hosted Billing Portal where they can cancel,
+// switch plans, update payment method, or download invoices. Cancellation
+// flows back to us via the subscription.deleted / subscription.updated
+// webhook, which marks the KV-backed subscription record cancelled.
+async function openBillingPortal() {
   const user = getCurrentUser();
   if (!user) return;
-  const users = getUsers();
-  const key = user.toLowerCase();
-  if (users[key] && users[key].subscription) {
-    delete users[key].subscription;
-    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-    updateProButton();
-    updateSettingsSubscription();
+  const btn = document.getElementById('manage-sub-btn');
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
+  try {
+    const res = await fetch(`/api/stripe/create-portal-session?_=${Date.now()}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+      body: JSON.stringify({ username: user }),
+    });
+    const data = await safeJson(res);
+    if (res.ok && data && data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    const detail = (data && (data.detail || data.error)) || `Server returned HTTP ${res.status}`;
+    alert(`Couldn't open the billing portal:\n\n${detail}`);
+  } catch (err) {
+    alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
   }
 }
 
