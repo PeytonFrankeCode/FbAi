@@ -3606,10 +3606,20 @@ footer::before {
 
 /* ---- Header Nav Tabs ---- */
 .header-nav {
-  display: inline-flex;
+  display: flex;
   gap: 0.5rem;
   flex-wrap: nowrap;
   min-width: 100%;
+  align-items: center;
+}
+
+/* Center the tab group horizontally. The settings-tab already pulls
+   itself to the right with margin-left:auto (rule above); giving the
+   first tab a matching margin-left:auto creates a flex auto-margin
+   sandwich that splits the leftover space evenly on either side of
+   the tabs, so they sit centered between the left edge and the gear. */
+.header-nav > .nav-tab:first-child {
+  margin-left: auto;
 }
 
 .nav-tab {
