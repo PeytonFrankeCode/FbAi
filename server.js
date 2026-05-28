@@ -38,6 +38,15 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_PRODUCT_PRO = 'prod_UKcw8SMnNESbuE';
 const STRIPE_PRODUCT_SLOT = 'prod_UKczmqAaEo7wa9';
 const STRIPE_PRODUCT_PROPLUS = 'prod_ULtSajiX8Hszzy';
+
+// TEMPORARY KILL SWITCH — all paid checkout is paused while we finalize tax
+// setup. While false, every checkout/buy endpoint returns 503 and the
+// frontend hides the Go Pro CTA. Flip back to true (or set env
+// CHECKOUT_ENABLED=true) to re-open sales. Cancellation via the billing
+// portal stays available so existing subscribers aren't trapped.
+const CHECKOUT_ENABLED = process.env.CHECKOUT_ENABLED === 'true' ? true : false;
+const CHECKOUT_PAUSED_MSG = 'Subscriptions are temporarily paused while we finalize tax setup. Please check back soon.';
+
 const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
 let stripe = null;
 if (stripeEnabled) {
@@ -2376,12 +2385,16 @@ function siteOrigin(req) {
 app.get('/api/stripe/config', (req, res) => {
   res.json({
     publishableKey: stripeEnabled ? STRIPE_PUBLISHABLE_KEY : null,
-    enabled: stripeEnabled
+    enabled: stripeEnabled,
+    // Paid checkout temporarily paused (tax setup). Frontend hides the
+    // Go Pro CTA and short-circuits handleSubscribe when this is false.
+    checkoutEnabled: !!CHECKOUT_ENABLED,
   });
 });
 
 // Create checkout session for Pro subscription
 app.post('/api/stripe/create-checkout', async (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
 
   const { username, period } = req.body;
@@ -2422,6 +2435,7 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
 
 // Create checkout session for Pro+ subscription
 app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
   const { username, period } = req.body;
   if (!username) return res.status(400).json({ error: 'Username required' });
@@ -2683,6 +2697,7 @@ app.post('/api/bulk-price', async (req, res) => {
 
 // Create checkout session for extra promote slot
 app.post('/api/stripe/buy-slot', async (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
 
   const { username } = req.body;

@@ -2784,6 +2784,13 @@ async function handleSubscribe(plan) {
     return;
   }
 
+  // 2b) Paid checkout temporarily paused (tax setup). Tell the user and stop.
+  if (stripeConfig.checkoutEnabled === false) {
+    applyCheckoutState(false);
+    alert(`Subscriptions are temporarily paused while we finalize tax setup.\n\nPlease check back soon — thanks for your patience!`);
+    return;
+  }
+
   // 3) Stripe explicitly off on this environment (no STRIPE_SECRET_KEY).
   //    Tell the user clearly instead of pretending they bought Pro.
   if (!stripeConfig.enabled) {
@@ -2992,7 +2999,37 @@ checkPaymentReturn();
 
 // Warm the worker so the first Create Account submit doesn't time out on a
 // cold start. Cheap, cacheable, doesn't depend on auth.
-fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' }).catch(() => {});
+// Warm the worker AND learn whether paid checkout is currently open. When
+// the server reports checkoutEnabled:false (tax-setup pause), hide the
+// Go Pro CTA and switch the pricing modal into a "paused" state.
+fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' })
+  .then(r => r.json())
+  .then(cfg => { if (cfg && typeof cfg.checkoutEnabled === 'boolean') applyCheckoutState(cfg.checkoutEnabled); })
+  .catch(() => {});
+
+// Toggle every paid-checkout entry point. Reversible: when the server flips
+// CHECKOUT_ENABLED back to true this restores the normal Go Pro UI.
+let _checkoutEnabled = true;
+function applyCheckoutState(enabled) {
+  _checkoutEnabled = !!enabled;
+  // Header Go Pro button
+  const pb = document.getElementById('pro-btn');
+  if (pb) pb.style.display = enabled ? '' : 'none';
+  // Pricing modal: pause notice + disable the Get Pro CTA
+  const notice = document.getElementById('pricing-paused-notice');
+  if (notice) notice.style.display = enabled ? 'none' : 'block';
+  const promoHint = document.querySelector('.pricing-promo-hint');
+  if (promoHint) promoHint.style.display = enabled ? '' : 'none';
+  document.querySelectorAll('.pricing-cta.pro').forEach(btn => {
+    btn.disabled = !enabled;
+    if (!enabled) {
+      btn.dataset.origText = btn.dataset.origText || btn.textContent;
+      btn.textContent = 'Temporarily Unavailable';
+    } else if (btn.dataset.origText) {
+      btn.textContent = btn.dataset.origText;
+    }
+  });
+}
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');

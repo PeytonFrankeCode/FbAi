@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=58" />
+  <link rel="stylesheet" href="style.css?v=59" />
 
 
 </head>
@@ -206,6 +206,11 @@
       <button class="login-close" aria-label="Close" onclick="closePricing()">&times;</button>
       <h2 class="pricing-heading">Choose Your Plan</h2>
       <p class="pricing-subtext">Unlock premium features for smarter card collecting</p>
+
+      <div id="pricing-paused-notice" class="pricing-paused-notice" style="display:none">
+        Pro subscriptions are temporarily paused while we finalize tax setup.
+        You can still use every Free feature — check back soon!
+      </div>
 
       <div class="pricing-toggle">
         <button class="pricing-period active" data-period="monthly" onclick="setPricingPeriod('monthly')">Monthly</button>
@@ -1239,6 +1244,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=77"></script>
+  <script src="app.js?v=78"></script>
 </body>
 </html>

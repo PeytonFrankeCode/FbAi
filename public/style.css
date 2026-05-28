@@ -569,6 +569,20 @@
   margin-bottom: 1.5rem;
 }
 
+.pricing-paused-notice {
+  margin: 0 auto 1.25rem;
+  max-width: 520px;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--pro-bg);
+  border: 1px solid var(--pro-border);
+  color: var(--pro);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .pricing-promo-hint {
   margin-top: 1.25rem;
   text-align: center;
