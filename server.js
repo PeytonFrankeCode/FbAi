@@ -2717,14 +2717,71 @@ app.post('/api/stripe/buy-slot', async (req, res) => {
   }
 });
 
-// Get subscription status for a user
-app.get('/api/stripe/subscription', (req, res) => {
+// Get subscription status for a user. Also pulls live billing details from
+// Stripe (next-bill date, amount, cancel-at-period-end) when the user has a
+// real Stripe-backed subscription, so Settings can render a "Next bill" line
+// without needing the Customer Portal round-trip. Falls back gracefully if
+// Stripe is unreachable or the subscription is legacy/permanent.
+app.get('/api/stripe/subscription', async (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: 'Username required' });
 
   const subs = loadSubscriptions();
   const userSub = subs[username.toLowerCase()] || null;
-  res.json({ subscription: userSub, stripeEnabled });
+
+  let billing = null;
+  if (userSub && userSub.stripeSubscriptionId && stripeEnabled) {
+    try {
+      const s = await stripe.subscriptions.retrieve(userSub.stripeSubscriptionId);
+      const item = s.items && s.items.data && s.items.data[0];
+      const price = item && item.price;
+      billing = {
+        status: s.status,
+        cancelAtPeriodEnd: !!s.cancel_at_period_end,
+        currentPeriodEnd: s.current_period_end ? s.current_period_end * 1000 : null,
+        cancelAt: s.cancel_at ? s.cancel_at * 1000 : null,
+        unitAmount: price && typeof price.unit_amount === 'number' ? price.unit_amount : null,
+        currency: price && price.currency ? price.currency.toLowerCase() : 'usd',
+        interval: price && price.recurring && price.recurring.interval ? price.recurring.interval : null,
+      };
+    } catch (err) {
+      console.warn('[stripe] subscription retrieve failed:', err && err.message);
+    }
+  }
+
+  res.json({ subscription: userSub, billing, stripeEnabled });
+});
+
+// Open a Stripe-hosted Billing Portal session so the user can cancel, switch
+// plans, update payment method, or download invoices. Cancellation events
+// flow back to us via the existing customer.subscription.deleted /
+// customer.subscription.updated webhook handlers, so the KV-backed
+// subscription record stays in sync automatically.
+app.post('/api/stripe/create-portal-session', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
+
+  const { username } = req.body || {};
+  if (!username) return res.status(400).json({ error: 'Username required' });
+
+  const subs = loadSubscriptions();
+  const userSub = subs[String(username).toLowerCase()];
+  if (!userSub || !userSub.stripeCustomerId) {
+    // Legacy/manual subscription (e.g. 'permanent: true' lifetime grants and
+    // anything created before Stripe was wired in) has no Stripe customer to
+    // link to — surface that distinctly so the UI can show a useful message.
+    return res.status(404).json({ error: 'No Stripe customer on file for this account. Contact support to make changes.' });
+  }
+
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: userSub.stripeCustomerId,
+      return_url: `${siteOrigin(req)}/?billing=managed`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe portal error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 

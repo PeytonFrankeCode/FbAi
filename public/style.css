@@ -4701,6 +4701,17 @@ footer::before {
   color: var(--text-secondary);
 }
 
+.settings-sub-billing {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.settings-sub-billing--cancelling {
+  color: var(--pro);
+}
+
 /* ---- Theme Toggle Switch ---- */
 .theme-toggle {
   position: relative;
