@@ -3015,6 +3015,7 @@ const trackedView = document.getElementById('tracked-view');
 const collectionView = document.getElementById('collection-view');
 const sellerView = document.getElementById('seller-view');
 const gradingView = document.getElementById('grading-view');
+const rainbowPage = document.getElementById('rainbow-page');
 
 function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
@@ -3041,6 +3042,7 @@ function switchView(view) {
   collectionView.classList.add('hidden');
   sellerView.classList.add('hidden');
   gradingView.classList.add('hidden');
+  if (rainbowPage) rainbowPage.classList.add('hidden');
   if (proplusView) proplusView.classList.add('hidden');
   if (browseView) browseView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
@@ -3048,6 +3050,8 @@ function switchView(view) {
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
     if (!checklistData) loadChecklistProducts();
+  } else if (view === 'rainbow') {
+    if (rainbowPage) { rainbowPage.classList.remove('hidden'); initRainbowPage(); }
   } else if (view === 'browse') {
     if (browseView) { browseView.classList.remove('hidden'); initBrowseView(); }
   } else if (view === 'collection') {
@@ -4080,7 +4084,7 @@ function _userSyncRerender() {
   try { if (typeof renderWatchlist === 'function') renderWatchlist(); } catch (_) {}
   try { if (typeof renderMyListings === 'function') renderMyListings(); } catch (_) {}
   try { if (typeof renderPromotedCards === 'function') renderPromotedCards(); } catch (_) {}
-  try { if (typeof renderCompletionSets === 'function' && typeof completionData !== 'undefined' && completionData) renderCompletionSets(); } catch (_) {}
+  try { if (typeof refreshRainbowPageFromSync === 'function') refreshRainbowPageFromSync(); } catch (_) {}
 }
 
 async function enableUserSync() {
@@ -7101,7 +7105,7 @@ function attachRainbowTileHandlers(tile, productKey, si, ci, card, set) {
     else delete state[productKey][key];
     saveCompletionState(state);
     tile.classList.toggle('owned', desired);
-    refreshRainbowProgress(productKey, si, ci, set);
+    refreshRainbowProgress(tile, productKey, si, ci, set);
     return desired;
   };
 
@@ -7154,21 +7158,29 @@ function attachRainbowTileHandlers(tile, productKey, si, ci, card, set) {
   });
 }
 
-function refreshRainbowProgress(productKey, si, ci, set) {
+function refreshRainbowProgress(tile, productKey, si, ci, set) {
   const state = getCompletionState();
   const owned = state[productKey] || {};
   const card = set.cards[ci];
   const variants = buildVariants(set, { printRun: card.printRun || '' });
   const setKey = `s${si}`;
   const ownedCount = variants.reduce((n, _, vi) => n + (owned[`${setKey}_c${ci}_v${vi}`] ? 1 : 0), 0);
-  const el = document.getElementById('rainbow-progress-text');
+  // Update the progress text scoped to this card's section so multiple
+  // rainbows on the page each track their own count.
+  const section = tile && tile.closest ? tile.closest('.rainbow-card-section') : null;
+  const el = (section && section.querySelector('.rainbow-progress-text'))
+    || document.getElementById('rainbow-progress-text');
   if (el) el.textContent = `${ownedCount} / ${variants.length} owned`;
 }
 
 function openRainbowListings(tile, card, set, variantName, printRun) {
-  const slot = document.getElementById('rainbow-listings-slot');
+  // Each card section has its own listings slot; fall back to the legacy
+  // global slot id if we're not inside a section.
+  const section = tile && tile.closest ? tile.closest('.rainbow-card-section') : null;
+  const slot = (section && section.querySelector('.rainbow-listings-slot'))
+    || document.getElementById('rainbow-listings-slot');
   if (!slot) return;
-  document.querySelectorAll('.rainbow-tile.active').forEach(t => t.classList.remove('active'));
+  (section || document).querySelectorAll('.rainbow-tile.active').forEach(t => t.classList.remove('active'));
 
   // Clicking the same tile twice closes the drawer.
   if (slot.dataset.openKey === tile.dataset.key) {
@@ -7308,4 +7320,213 @@ function applyTileImage(tile, imageUrl) {
   if (!wrap) return;
   wrap.innerHTML = `<img class="rainbow-tile-img" src="${escHtml(imageUrl)}" alt="" loading="lazy" />`;
   tile.classList.add('has-image');
+}
+
+// ===== Standalone Rainbow tab =====
+// Its own top-level tab: pick a product, then a player, and we render one
+// rainbow block per card that player has in the product — the corresponding
+// (base) card image alongside a grid of every parallel. Reuses the loaded
+// product (the shared `completionData`) plus the same tile/listing/pricing
+// helpers the old in-checklist rainbow used.
+let _rainbowProductsLoaded = false;
+
+function initRainbowPage() {
+  setupCombobox(document.getElementById('rb-combo-product'));
+  setupCombobox(document.getElementById('rb-combo-player'));
+  loadRainbowProducts();
+}
+
+async function loadRainbowProducts() {
+  const select = document.getElementById('rainbow-product-select');
+  if (!select || _rainbowProductsLoaded) return;
+  try {
+    const data = await fetchChecklistsList();
+    data.products.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      // name already contains the year (e.g. "2025 Bowman Football")
+      opt.textContent = p.name;
+      select.appendChild(opt);
+    });
+    _rainbowProductsLoaded = true;
+    syncComboboxFromSelect(document.getElementById('rb-combo-product'));
+  } catch (err) { console.error('Failed to load products for rainbow:', err); }
+}
+
+async function loadRainbowProduct() {
+  const productId = document.getElementById('rainbow-product-select').value;
+  const playerSelect = document.getElementById('rainbow-player-select');
+  const cardsEl = document.getElementById('rainbow-page-cards');
+  const empty = document.getElementById('rainbow-page-empty');
+  cardsEl.innerHTML = '';
+  playerSelect.innerHTML = '<option value="">Select a player...</option>';
+  if (!productId) {
+    completionData = null;
+    syncComboboxFromSelect(document.getElementById('rb-combo-player'));
+    empty.classList.remove('hidden');
+    empty.innerHTML = '<p>Pick a <strong>product</strong>, then a <strong>player</strong> to see their rainbow.</p>';
+    return;
+  }
+  empty.classList.remove('hidden');
+  empty.innerHTML = '<p>Loading product…</p>';
+  try {
+    completionData = await fetchChecklistProduct(productId);
+    populateRainbowPlayerSelect();
+    empty.innerHTML = '<p>Now pick a <strong>player</strong> to see their rainbow.</p>';
+  } catch (err) {
+    empty.innerHTML = '<p>Error loading product.</p>';
+  }
+}
+
+function populateRainbowPlayerSelect() {
+  const select = document.getElementById('rainbow-player-select');
+  select.innerHTML = '<option value="">Select a player...</option>';
+  if (!completionData) return;
+  const players = new Set();
+  (completionData.sets || []).forEach(set => {
+    (set.cards || []).forEach(c => { if (c.player) players.add(c.player); });
+  });
+  [...players].sort().forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    select.appendChild(opt);
+  });
+  syncComboboxFromSelect(document.getElementById('rb-combo-player'));
+}
+
+function loadRainbowPlayer() {
+  const player = document.getElementById('rainbow-player-select').value;
+  const cardsEl = document.getElementById('rainbow-page-cards');
+  const empty = document.getElementById('rainbow-page-empty');
+  cardsEl.innerHTML = '';
+  if (!player || !completionData) {
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  renderRainbowPlayerCards(player);
+}
+
+function renderRainbowPlayerCards(player) {
+  const cardsEl = document.getElementById('rainbow-page-cards');
+  if (!completionData) return;
+  const productKey = completionData.id || completionData.name;
+  const state = getCompletionState();
+  const owned = state[productKey] || {};
+  const year = completionData.year || '';
+  const brand = completionData.brand || '';
+
+  // Every card this player appears on, across every set in the product.
+  const matches = [];
+  (completionData.sets || []).forEach((set, si) => {
+    (set.cards || []).forEach((card, ci) => {
+      if (card.player === player) matches.push({ set, si, card, ci });
+    });
+  });
+
+  if (matches.length === 0) {
+    cardsEl.innerHTML = '<div class="rainbow-empty"><p>No cards found for that player in this product.</p></div>';
+    return;
+  }
+
+  cardsEl.innerHTML = matches.map(({ set, si, card, ci }) => {
+    const setKey = `s${si}`;
+    const allVariants = buildVariants(set, { printRun: card.printRun || '' });
+    const ordered = sortVariantsForRainbow(allVariants);
+    const ownedCount = ordered.reduce((n, { vi }) => n + (owned[`${setKey}_c${ci}_v${vi}`] ? 1 : 0), 0);
+    const cardNumDisplay = card.number ? `#${String(card.number)}` : '';
+    const meta = [completionData.name, set.name, cardNumDisplay].filter(Boolean).join(' · ');
+
+    // onclick args follow the same escaping convention as renderCompletionSets:
+    // escHtml (no quote escaping) then backslash-escape single quotes.
+    const productKeyArg = escHtml(productKey).replace(/'/g, "\\'");
+    const playerArg = escHtml(card.player || 'Unknown').replace(/'/g, "\\'");
+    const yearArg = escHtml(String(year)).replace(/'/g, "\\'");
+    const brandArg = escHtml(String(brand)).replace(/'/g, "\\'");
+    const setNameArg = escHtml(String(set.name || '')).replace(/'/g, "\\'");
+    const categoryArg = escHtml(String(set.category || 'base')).replace(/'/g, "\\'");
+    const cardNumArg = escHtml(String(card.number || '')).replace(/'/g, "\\'");
+    const cardKey = `${setKey}_c${ci}`;
+
+    const tilesHtml = ordered.map(({ v, vi }) => {
+      const key = `${setKey}_c${ci}_v${vi}`;
+      const isOwned = !!owned[key];
+      const prDisplay = v.printRun ? ` /${escHtml(String(v.printRun))}` : '';
+      const variantName = (v.name || '').replace(/'/g, "\\'");
+      const printRun = v.printRun ? String(v.printRun) : '';
+      return `<div class="rainbow-tile ${isOwned ? 'owned' : ''}" data-variant-idx="${vi}" data-variant-name="${escHtml(variantName)}" data-variant-pr="${escHtml(printRun)}" data-key="${escHtml(key)}">
+        <div class="rainbow-tile-img-wrap" aria-hidden="true"><div class="rainbow-tile-img-placeholder"></div></div>
+        <div class="rainbow-check-badge" aria-hidden="true">&#10003;</div>
+        <div class="rainbow-tile-name">${escHtml(v.name)}${prDisplay}</div>
+      </div>`;
+    }).join('');
+
+    const rainbowBtn = allVariants.length > 1
+      ? `<button class="rainbow-cost-btn" onclick="calculateRainbowCost(this, '${productKeyArg}','${cardKey}','${playerArg}','${yearArg}','${brandArg}','${setNameArg}','${categoryArg}','${cardNumArg}', ${ci})">Rainbow $?</button>`
+      : '';
+
+    return `<div class="rainbow-card-section" data-si="${si}" data-ci="${ci}">
+      <div class="rainbow-card-top">
+        <div class="rainbow-base-card">
+          <div class="rainbow-base-img-wrap"><div class="rainbow-tile-img-placeholder"></div></div>
+        </div>
+        <div class="rainbow-card-info">
+          <div class="rainbow-card-player">${escHtml(card.player || 'Unknown')}</div>
+          <div class="rainbow-card-meta">${escHtml(meta)}</div>
+          <div class="rainbow-progress"><span class="rainbow-progress-text">${ownedCount} / ${ordered.length} owned</span></div>
+          <div class="completion-variants rainbow-cost-wrap">${rainbowBtn}</div>
+        </div>
+      </div>
+      <div class="rainbow-grid">${tilesHtml}</div>
+      <div class="rainbow-listings-slot"></div>
+    </div>`;
+  }).join('');
+
+  // Wire tile handlers + lazy-load images for each section.
+  matches.forEach(({ set, si, card, ci }) => {
+    const section = cardsEl.querySelector(`.rainbow-card-section[data-si="${si}"][data-ci="${ci}"]`);
+    if (!section) return;
+    const grid = section.querySelector('.rainbow-grid');
+    grid.querySelectorAll('.rainbow-tile').forEach(tile => attachRainbowTileHandlers(tile, productKey, si, ci, card, set));
+    loadRainbowTileImages(grid, productKey, si, ci, card, set);
+    const baseWrap = section.querySelector('.rainbow-base-img-wrap');
+    if (baseWrap) loadRainbowBaseImage(baseWrap, card, set);
+  });
+}
+
+// Fetch a representative image for the corresponding (base) card and show it
+// next to the parallel grid. Uses the cheapest live listing that has an image.
+async function loadRainbowBaseImage(wrap, card, set) {
+  if (!completionData) return;
+  const player = card.player || '';
+  const year = completionData.year || '';
+  const brand = completionData.brand || '';
+  const setName = set.name || '';
+  const category = set.category || '';
+  const q = buildChecklistQuery(player, year, brand, setName, category, card.printRun || '');
+  try {
+    const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '12' })}`);
+    const data = await safeJson(res);
+    const raw = data.results || [];
+    const verified = raw
+      .filter(r => r.imageUrl && parseFloat(r.price) > 0)
+      .sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    if (verified.length > 0) {
+      wrap.innerHTML = `<img class="rainbow-base-img" src="${escHtml(verified[0].imageUrl)}" alt="" loading="lazy" />`;
+      wrap.classList.add('has-image');
+    } else {
+      wrap.classList.add('no-image');
+    }
+  } catch (_) {
+    wrap.classList.add('no-image');
+  }
+}
+
+// Re-render the open rainbow after a cross-device data sync so freshly pulled
+// owned-state is reflected without a manual reselect.
+function refreshRainbowPageFromSync() {
+  if (!rainbowPage || rainbowPage.classList.contains('hidden')) return;
+  const player = document.getElementById('rainbow-player-select');
+  if (player && player.value && completionData) loadRainbowPlayer();
 }
