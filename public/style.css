@@ -7307,3 +7307,67 @@ footer {
   .rainbow-tile-name { font-size: 0.66rem; }
   .rainbow-check-badge { width: 18px; height: 18px; font-size: 0.7rem; top: 6px; right: 6px; }
 }
+
+/* ===== Standalone Rainbow tab ===== */
+.rainbow-page-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.rainbow-card-section {
+  background: #0b0d12;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 1rem;
+  color: #edf0f7;
+}
+.rainbow-card-top {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.95rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.rainbow-base-card {
+  flex: 0 0 auto;
+  width: 130px;
+}
+.rainbow-base-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #1a1f2a;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 2px 10px rgba(0,0,0,0.35);
+}
+.rainbow-base-img-wrap .rainbow-tile-img-placeholder { width: 100%; height: 100%; }
+.rainbow-base-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rainbow-base-img-wrap.has-image { background: #000; }
+.rainbow-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rainbow-card-info .rainbow-progress {
+  align-self: flex-start;
+}
+.rainbow-cost-wrap {
+  margin-top: 0.15rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .rainbow-base-card { width: 96px; }
+  .rainbow-card-top { gap: 0.75rem; }
+}
