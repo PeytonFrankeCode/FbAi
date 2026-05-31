@@ -32,7 +32,9 @@ const DOCX_PATH = path.join(__dirname, 'Document (13).docx');
 const CHECKLISTS_DIR = path.join(__dirname, 'public', 'data', 'checklists');
 const INDEX_PATH = path.join(CHECKLISTS_DIR, 'index.json');
 
-// Product names that aren't NFL — skip them.
+// Collegiate / university products are included alongside NFL ones — set
+// this true to filter them out instead.
+const SKIP_COLLEGIATE = false;
 const NON_NFL = /(Collegiate|University|Alabama)/i;
 
 // Source typos that should canonicalize to the correct spelling so
@@ -80,7 +82,7 @@ async function main() {
   const productBlocks = new Map(); // productName -> [{ start, end, suffix }]
   for (let h = 0; h < headers.length; h++) {
     const head = headers[h];
-    if (NON_NFL.test(head.product)) continue;
+    if (SKIP_COLLEGIATE && NON_NFL.test(head.product)) continue;
     const end = (h + 1 < headers.length) ? headers[h + 1].lineIdx : lines.length;
     if (!productBlocks.has(head.product)) {
       productBlocks.set(head.product, []);
