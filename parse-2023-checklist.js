@@ -41,7 +41,13 @@ const PRODUCT_TYPO_FIXES = [
   [/\bLeaf\s+Trintiy\b/g, 'Leaf Trinity'],
 ];
 
-const PRODUCT_HEADER_RE = /^(2023\s+[A-Za-z][A-Za-z0-9 .'’&-]+?\s+Football)\s+Checklist(?:\s*[–-]\s*(.*))?$/;
+// Match a header either at the start of a line OR embedded in the middle of
+// a line (the source frequently concatenates the previous product's last
+// card row with the next product's header — e.g.
+// "... Chris Rodriguez Jr. /1492023 Clearly Donruss Football Checklist –
+// Master Card List"). We scan with /g so every header on every line lands
+// in the headers list.
+const PRODUCT_HEADER_RE = /(2023\s+[A-Za-z][A-Za-z0-9 .'’&-]+?\s+Football)\s+Checklist(?:\s*[–-]\s*([^\r\n]{0,200}?))?(?=\s*$|2023\s|Here)/g;
 
 function canonicalizeProductName(name) {
   let s = name;
@@ -54,18 +60,20 @@ async function main() {
   const lines = result.value.split('\n');
   console.log(`Loaded ${lines.length} lines from ${path.basename(DOCX_PATH)}`);
 
-  // ---- Pass 1: collect every header occurrence ----
+  // ---- Pass 1: collect every header occurrence (including embedded ones) ----
   const headers = []; // { lineIdx, product, suffix }
   for (let i = 0; i < lines.length; i++) {
-    const t = lines[i].trim();
-    if (!t || t.length > 200) continue;
-    const m = t.match(PRODUCT_HEADER_RE);
-    if (!m) continue;
-    const product = canonicalizeProductName(m[1].trim());
-    const suffix = (m[2] || '').trim();
-    headers.push({ lineIdx: i, product, suffix });
+    const t = lines[i];
+    if (!t) continue;
+    PRODUCT_HEADER_RE.lastIndex = 0;
+    let m;
+    while ((m = PRODUCT_HEADER_RE.exec(t)) !== null) {
+      const product = canonicalizeProductName(m[1].trim());
+      const suffix = (m[2] || '').trim();
+      headers.push({ lineIdx: i, product, suffix });
+    }
   }
-  console.log(`Found ${headers.length} header lines across the doc`);
+  console.log(`Found ${headers.length} header occurrences across the doc`);
 
   // ---- Pass 2: group by product, preserving order of first appearance ----
   const productOrder = [];
