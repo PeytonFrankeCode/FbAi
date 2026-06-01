@@ -56,8 +56,15 @@ for (const f of files) {
       }
       // team issues
       if (team) {
-        if (team.length > 80) flag(f, 'medium', `set "${sn}" #${c.number} long team (${team.length}): "${team.slice(0,80)}…"`);
-        if (/\d+\s+[A-Z][a-z]/.test(team)) flag(f, 'high', `set "${sn}" #${c.number} team contains an unsplit next card: "${team.slice(0,80)}"`);
+        // Only flag a long team if it actually looks broken (contains an
+        // unsplit next-card boundary or other noise). Purely multi-team
+        // chase-card strings — every player on the front with their own
+        // team — are correct data even when very long.
+        const hasUnsplit = /\d+\s+[A-Z][A-Za-z'’.\-]/.test(team);
+        if (team.length > 80 && hasUnsplit) {
+          flag(f, 'medium', `set "${sn}" #${c.number} long team (${team.length}): "${team.slice(0,80)}…"`);
+        }
+        if (hasUnsplit) flag(f, 'high', `set "${sn}" #${c.number} team contains an unsplit next card: "${team.slice(0,80)}"`);
         if (/^[a-z]/.test(team)) flag(f, 'medium', `set "${sn}" #${c.number} team starts lowercase: "${team.slice(0,40)}"`);
       }
       const key = `${c.number}|${player}`;

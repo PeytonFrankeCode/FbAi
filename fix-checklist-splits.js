@@ -1,16 +1,29 @@
 #!/usr/bin/env node
 /**
- * Repair cards in already-generated per-product JSONs whose `team` field
- * actually contains an unsplit chain of follow-on cards. Root cause: the
- * upstream parsers' print-run-glued-to-next-card preprocess required 2+
- * digits for the print run, so single-digit runs ("/5") concatenated to
- * the next card number ("/53") were never split. Audit flagged ~150 of
- * these. We can repair in place by re-parsing the offending team string.
+ * Comprehensive post-processor for already-generated per-product JSONs.
  *
- * For each card with team matching /(\/\d+\s+|,\s*)[A-Z][a-z]/ patterns,
- * reconstruct "{number} {player}, {team_text}" and re-run a careful
- * splitter that uses the relaxed 1-3 digit print-run preprocess. Replace
- * the broken card with the resulting cards, preserving set position.
+ * Fixes:
+ *   1. Cards whose `team` chains the next card ("Cowboys3 DK Metcalf...").
+ *      The original parsers' splitter only recognized "<digit> <Cap><low>"
+ *      boundaries, so player names starting with two capitals (DK, CJ,
+ *      JT, JL, C.J.) or with a dot were never split. Relax the boundary
+ *      regex to "<digit> <Cap>[A-Za-z'’.\-]" and rerun the splitter.
+ *   2. Cards whose `team` or `player` has an embedded next-product header
+ *      ("Miami Dolphins2024 Topps Cosmic Chrome Football Checklist ...").
+ *      Trim the YYYY-product-header tail.
+ *   3. Fake-card rows where the player field is a single generic section
+ *      word (Autographs / Variations / Inserts / Stars / Memorabilia /
+ *      Versions). These come from misparsed sub-section headers — drop
+ *      them entirely.
+ *   4. Bloated set names like "Superfractors – 1/1 (1:17,045 hobby, ...)".
+ *      Truncate at the "(odds)" suffix so identical Superfractor parallel
+ *      sets dedupe and read cleanly.
+ *   5. Duplicate (number, player) rows within a single set. Merge the
+ *      `team` values of every duplicate so the surviving card shows every
+ *      team that contributed (multi-player chase cards naturally appear
+ *      under each contributing team's page).
+ *   6. Cards whose `player` starts with a digit (sub-section title that
+ *      slipped past upstream).
  */
 const fs = require('fs');
 const path = require('path');
@@ -18,15 +31,34 @@ const path = require('path');
 const DIR = path.join(__dirname, 'public', 'data', 'checklists');
 const files = fs.readdirSync(DIR).filter(f => /^\d{4}-.+\.json$/.test(f));
 
-// Same splitter logic as parse-2023, with the relaxed PR regex.
+// Embedded "{Team}YYYY X Football Checklist – Master Card List" trim target.
+const EMBEDDED_HEADER = /(20\d{2})\s+[A-Za-z][A-Za-z0-9 .'’&-]+?\s+Football\s+Checklist(?:\s*[–-].*)?$/;
+
+// Sub-section header words that get misparsed as player names when stuck
+// to a four-digit "card number" (the year of the sub-product).
+const FAKE_PLAYER_WORDS = new Set([
+  'Autographs', 'Variations', 'Inserts', 'Stars', 'Memorabilia',
+  'Versions', 'Materials', 'Signatures', 'Parallels', 'Patches',
+  'Jerseys', 'Patch', 'Insert',
+]);
+
+// Relaxed: accept names that start with one OR two capitals, with an
+// optional dot/apostrophe/dash after the first letter. Covers "DK Metcalf",
+// "C.J. Stroud", "L'Jarius Sneed", "JaMarcus" — but not pure all-caps team
+// abbreviations because those wouldn't be at a "<digit> " boundary in the
+// source layout.
+const CARD_BOUNDARY_RE = /(\d+)\s+([A-Z][A-Za-z'’.\-])/g;
+const NAME_HEAD_RE = /^[A-Z][A-Za-z'’.\-]/;
+
 function splitNumberedCards(line) {
   let s = line;
-  s = s.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
-  s = s.replace(/(\d+)\/(\d+?)(\d+\s+[A-Z][a-z])/g, (_, n, d, rest) => `${n}/${d} ${rest}`);
+  // Non-greedy 1-3 digit print run lets "/5N" unstick the next card number.
+  s = s.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][A-Za-z'’.\-])/g, (_, pr, rest) => `/${pr} ${rest}`);
+  s = s.replace(/(\d+)\/(\d+?)(\d+\s+[A-Z][A-Za-z'’.\-])/g, (_, n, d, rest) => `${n}/${d} ${rest}`);
   const starts = [];
-  const re = /(\d+)\s+([A-Z][a-z])/g;
+  CARD_BOUNDARY_RE.lastIndex = 0;
   let m;
-  while ((m = re.exec(s)) !== null) {
+  while ((m = CARD_BOUNDARY_RE.exec(s)) !== null) {
     if (m.index > 0 && s[m.index - 1] === '/') continue;
     starts.push(m.index);
   }
@@ -43,88 +75,167 @@ function splitNumberedCards(line) {
       .replace(/\s*\(eBay\)\s*$/i, '')
       .replace(/\s+RC\s*$/i, '');
     let cm = clean.match(/^(\d+)\s+(.+?),\s*(.+?)$/);
-    if (!cm) {
-      // Totally Certified et al. use " - " between player and team instead
-      // of a comma — try that as a fallback.
-      cm = clean.match(/^(\d+)\s+(.+?)\s+-\s+(.+?)$/);
-    }
+    if (!cm) cm = clean.match(/^(\d+)\s+(.+?)\s+-\s+(.+?)$/);
     if (cm) {
       const card = { number: cm[1], player: cm[2].trim(), team: cm[3].trim() };
       if (printRun) card.printRun = printRun;
       out.push(card);
+    } else {
+      // Team-less fallback for collegiate / draft picks formats.
+      const tm = clean.match(/^(\d+)\s+(.+?)\s*$/);
+      if (tm && /[A-Z][A-Za-z'’.\-]/.test(tm[2])) {
+        const card = { number: tm[1], player: tm[2].trim() };
+        if (printRun) card.printRun = printRun;
+        out.push(card);
+      }
     }
   }
   return out;
 }
 
-// Embedded "{Team}YYYY X Football Checklist – Master Card List" — the
-// next product's header got concatenated onto the last team string in
-// the previous product, so we trim the trailing junk off the team.
-const EMBEDDED_HEADER = /(20\d{2})\s+[A-Za-z][A-Za-z0-9 .'’&-]+?\s+Football\s+Checklist(?:\s*[–-].*)?$/;
+function trimEmbeddedHeader(s) {
+  if (!s) return s;
+  const m = String(s).match(EMBEDDED_HEADER);
+  if (!m) return s;
+  return s.slice(0, m.index).trim();
+}
 
-let totalRepairs = 0;
-let totalCardsAdded = 0;
-let totalTeamsTrimmed = 0;
+function normalizeSetName(name) {
+  if (!name) return name;
+  // "Superfractors – 1/1 (1:17,045 hobby, ...)" → "Superfractors – 1/1"
+  return String(name).replace(/(\s*–\s*1\/1)\s*\(.*\)\s*$/, '$1').trim();
+}
+
+let touched = 0;
+let cardsAdded = 0;
+let teamsTrimmed = 0;
+let playersTrimmed = 0;
+let fakeCardsDropped = 0;
+let setNamesTruncated = 0;
+let dupesMerged = 0;
 const fileChanges = [];
 
 for (const f of files) {
   const p = path.join(DIR, f);
   const d = JSON.parse(fs.readFileSync(p, 'utf8'));
   let changed = false;
-  let setsTouched = 0;
-  let cardsAdded = 0;
-  let teamsTrimmed = 0;
+  const stats = { setsTouched: 0, cardsAdded: 0, teamsTrimmed: 0, playersTrimmed: 0, dropped: 0, renamed: 0, deduped: 0 };
+
   for (const s of (d.sets || [])) {
+    // (4) set name truncation
+    const newName = normalizeSetName(s.name);
+    if (newName !== s.name) {
+      s.name = newName;
+      stats.renamed++;
+      changed = true;
+    }
+
     const cards = s.cards || [];
-    const out = [];
+    const reworked = [];
     let setChanged = false;
     for (const c of cards) {
       let team = String(c.team || '');
+      let player = String(c.player || '');
 
-      // Strip an embedded next-product header from the team field, e.g.
-      // "Miami Dolphins2024 Topps Cosmic Chrome Football Checklist – Master
-      //  Card List" → "Miami Dolphins".
-      const headerMatch = team.match(EMBEDDED_HEADER);
-      if (headerMatch) {
-        team = team.slice(0, headerMatch.index).trim();
-        c.team = team;
-        teamsTrimmed++;
+      // (2) trim embedded next-product headers off both fields
+      const newTeam = trimEmbeddedHeader(team);
+      if (newTeam !== team) { team = newTeam; c.team = team; stats.teamsTrimmed++; setChanged = true; }
+      const newPlayer = trimEmbeddedHeader(player);
+      if (newPlayer !== player) { player = newPlayer; c.player = player; stats.playersTrimmed++; setChanged = true; }
+
+      // (3) drop fake-card rows where player is a single section-header word
+      if (FAKE_PLAYER_WORDS.has(player.trim())) {
+        stats.dropped++;
         setChanged = true;
+        continue;
       }
 
-      // Pattern: team field contains an unsplit next card boundary
-      // — "Team /Nm Player" or "Team, NextTeam /Nm Player".
-      if (/(?:\/\d+\s+|,\s*)[A-Z][a-z]/.test(team) && /\d+\s+[A-Z][a-z]/.test(team)) {
+      // (6) drop cards whose player starts with a digit (junk header)
+      if (/^\d/.test(player)) {
+        stats.dropped++;
+        setChanged = true;
+        continue;
+      }
+
+      // (1) team field still chains the next card — re-split. Three trigger
+      //     shapes: "/N Player" (print-run-glued), ", Player" (comma chain),
+      //     and "Team{digit}Player" / "TeamRC{digit}Player" (no space between
+      //     team and next card number). All three usually mean the team value
+      //     has absorbed the next card's number+name pair.
+      const triggers =
+        /(?:\/\d+\s+|,\s*)[A-Z][A-Za-z'’.\-]/.test(team) ||
+        /[A-Za-z]\d+\s+[A-Z][A-Za-z'’.\-]/.test(team);
+      if (triggers && /\d+\s+[A-Z][A-Za-z'’.\-]/.test(team)) {
+        // Insert a space between letter and glued digit so the splitter's
+        // `(\d+)\s+([A-Z]...)` regex finds the boundary cleanly.
         const printRunSuffix = (typeof c.printRun === 'number') ? ` /${c.printRun}` : '';
-        const reconstructed = `${c.number} ${c.player}, ${team}${printRunSuffix}`;
+        const spaced = team.replace(/([A-Za-z])(\d+\s+[A-Z][A-Za-z'’.\-])/g, '$1 $2');
+        const reconstructed = `${c.number} ${player}, ${spaced}${printRunSuffix}`;
         const split = splitNumberedCards(reconstructed);
         if (split.length > 1) {
-          out.push(...split);
-          cardsAdded += split.length - 1;
+          reworked.push(...split);
+          stats.cardsAdded += split.length - 1;
           setChanged = true;
           continue;
         }
       }
-      out.push(c);
+      reworked.push(c);
     }
+
+    // (5) deduplicate by (number, player) — merge unique team values
+    const byKey = new Map();
+    const dedupedOut = [];
+    for (const c of reworked) {
+      const key = `${c.number}|${c.player}`;
+      const existing = byKey.get(key);
+      if (existing) {
+        const existingTeams = new Set(String(existing.team || '').split(/\s*\/\s*|,\s*/).filter(Boolean));
+        for (const t of String(c.team || '').split(/\s*\/\s*|,\s*/).filter(Boolean)) {
+          existingTeams.add(t);
+        }
+        existing.team = [...existingTeams].join(' / ');
+        // Carry over printRun if previously missing.
+        if (existing.printRun == null && c.printRun != null) existing.printRun = c.printRun;
+        stats.deduped++;
+        setChanged = true;
+      } else {
+        byKey.set(key, c);
+        dedupedOut.push(c);
+      }
+    }
+
     if (setChanged) {
-      s.cards = out;
-      s.totalCards = out.length;
-      setsTouched++;
+      s.cards = dedupedOut;
+      s.totalCards = dedupedOut.length;
+      stats.setsTouched++;
       changed = true;
     }
   }
+
   if (changed) {
     fs.writeFileSync(p, JSON.stringify(d));
-    totalRepairs++;
-    totalCardsAdded += cardsAdded;
-    totalTeamsTrimmed += teamsTrimmed;
-    fileChanges.push({ f, sets: setsTouched, added: cardsAdded, trimmed: teamsTrimmed });
+    touched++;
+    cardsAdded += stats.cardsAdded;
+    teamsTrimmed += stats.teamsTrimmed;
+    playersTrimmed += stats.playersTrimmed;
+    fakeCardsDropped += stats.dropped;
+    setNamesTruncated += stats.renamed;
+    dupesMerged += stats.deduped;
+    fileChanges.push({ f, ...stats });
   }
 }
 
-console.log(`Repaired ${totalRepairs} files, recovered ${totalCardsAdded} previously-merged cards, trimmed ${totalTeamsTrimmed} embedded-header teams.`);
-console.log('\nPer-file:');
-for (const fc of fileChanges.sort((a, b) => (b.added + b.trimmed) - (a.added + a.trimmed))) {
-  console.log(`  +${String(fc.added).padStart(3)} cards / ${String(fc.trimmed).padStart(2)} team trims across ${fc.sets} sets — ${fc.f}`);
+console.log(`Touched ${touched} files.`);
+console.log(`  +${cardsAdded} cards from re-splits`);
+console.log(`  ${teamsTrimmed} team fields trimmed of embedded headers`);
+console.log(`  ${playersTrimmed} player fields trimmed of embedded headers`);
+console.log(`  ${fakeCardsDropped} fake-card rows dropped`);
+console.log(`  ${setNamesTruncated} set names truncated`);
+console.log(`  ${dupesMerged} duplicate cards merged`);
+
+console.log('\nTop 15 touched files:');
+for (const fc of fileChanges.sort((a, b) =>
+    (b.cardsAdded + b.dropped + b.deduped + b.teamsTrimmed + b.playersTrimmed + b.renamed) -
+    (a.cardsAdded + a.dropped + a.deduped + a.teamsTrimmed + a.playersTrimmed + a.renamed)).slice(0, 15)) {
+  console.log(`  +${fc.cardsAdded} cards, -${fc.dropped} fakes, ~${fc.deduped} dupes, ${fc.teamsTrimmed}+${fc.playersTrimmed} trims, ${fc.renamed} renames — ${fc.f}`);
 }
