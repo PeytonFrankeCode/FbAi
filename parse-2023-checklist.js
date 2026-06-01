@@ -186,6 +186,10 @@ function parseTeamSplitProduct(productName, blocks, lines) {
       if (!startMatch) continue;
       const setName = cleanSetName(startMatch[1]);
       if (!setName) continue;
+      // Drop author bylines and Beckett editorial chrome that occasionally
+      // get caught in team-page blocks (Cheap Wax Wednesday, Ryan Cracknell,
+      // Subscribe, etc.) so they don't become bogus set names.
+      if (/^(Here'?s|Cheap Wax|Ryan Cracknell|THE BECKETT|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|1 COMMENT|Collecting|What does|Copyright|SUBJECT|Please reach|Please note|You can|Check out|View |Buy on|Refer to|Highest print|Updates to previous|Next Article)/i.test(setName)) continue;
       const cardsText = line.slice(startMatch[1].length);
       const cards = parseTeamSplitCards(cardsText, team);
       if (cards.length === 0) continue;
@@ -221,7 +225,10 @@ function parseTeamSplitCards(text, team) {
   if (!text) return [];
   // Pre-split print runs glued to next card numbers, mirroring 2024 logic.
   let s = text;
-  s = s.replace(/\/(\d{2,})(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
+  // Print-run glued to next card number — e.g. "/53 Brock" is actually
+  // print run /5 + card #3 "Brock". Non-greedy 1-3 digits for PR so the
+  // common /5N pattern unblocks the next-card boundary detection below.
+  s = s.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
   s = s.replace(/(\d+)\/(\d+?)(\d+\s+[A-Z][a-z])/g, (_, n, d, rest) => `${n}/${d} ${rest}`);
 
   // Split positions: digits followed by a single space and a capital letter
@@ -303,7 +310,18 @@ function isMasterCardLine(line) {
   if (!line || line.length < 10) return false;
   if (/^\d+\s+[A-Z][a-z].*,\s*[A-Z]/.test(line)) return true;
   if (/^\d*[A-Z][A-Z0-9]{0,5}-[A-Z0-9]+\s+[A-Z][a-z].*,\s*[A-Z]/.test(line)) return true;
+  // Leaf-style prefix-coded, team-less: "BA-AG1 Sauce GardnerBA-AH1 Aidan
+  // HutchinsonBA-AM1 ...". No comma, no team — just back-to-back prefix-
+  // code+player chunks. Require at least two prefix-code occurrences so we
+  // don't false-positive on a one-off line.
+  if (/^[A-Z]{1,4}-[A-Z0-9]+\s+[A-Z][a-z][^,]*[A-Z]{1,4}-[A-Z0-9]+\s+[A-Z][a-z]/.test(line)) return true;
   return false;
+}
+
+// Returns true when the line looks like Leaf-style prefix-coded card data
+// (no comma+team form anywhere in the line).
+function isLeafStyleCardLine(line) {
+  return /^[A-Z]{1,4}-[A-Z0-9]+\s+[A-Z][a-z]/.test(line) && !/,\s*[A-Z][a-z]/.test(line);
 }
 
 function isMasterSetHeader(line, slice, idx) {
@@ -385,7 +403,30 @@ function parseMasterSet(slice, startIdx, category) {
 }
 
 function parseMasterCardLine(line) {
-  let processed = line.replace(/\/(\d{2,})(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
+  // Leaf-style branch: prefix-coded, no comma+team. Split on each prefix
+  // boundary; for each chunk extract ({prefix}-{code}, player[, printRun]).
+  if (isLeafStyleCardLine(line)) {
+    const out = [];
+    const parts = line.split(/(?=[A-Z]{1,4}-[A-Z0-9]+\s+[A-Z])/);
+    for (const raw of parts) {
+      const chunk = raw.trim();
+      if (!chunk) continue;
+      let printRun = null;
+      let clean = chunk
+        .replace(/\s+\/(\d+)\s*$/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
+        .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (!printRun) printRun = parseInt(d, 10); return ''; })
+        .replace(/\s*–\s*no base version\s*$/i, '');
+      const m = clean.match(/^([A-Z]{1,4}-[A-Z0-9]+)\s+(.+?)$/);
+      if (m && /[A-Z][a-z]/.test(m[2])) {
+        const card = { number: m[1], player: m[2].trim() };
+        if (printRun) card.printRun = printRun;
+        out.push(card);
+      }
+    }
+    return out;
+  }
+
+  let processed = line.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
   processed = processed.replace(/(\d+)\/(\d+?)(\d+\s+[A-Z][a-z])/g, (_, n, d, rest) => `${n}/${d} ${rest}`);
   const starts = [];
   const re = /(\d+)\s+([A-Z][a-z])/g;

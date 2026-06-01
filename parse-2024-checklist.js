@@ -445,8 +445,11 @@ function splitNumberedCards(line, useDash) {
   // Also handle "1/13 Marcus" → "1/1 3 Marcus" (print run 1/1, card #3)
   let processedLine = line;
 
-  // Handle "/PRCARD_NUM" → "/PR CARD_NUM" (e.g., "/10025 Marcus" → "/100 25 Marcus")
-  processedLine = processedLine.replace(/\/(\d{2,})(\d+\s+[A-Z][a-z])/g, (match, pr, rest) => {
+  // Handle "/PRCARD_NUM" → "/PR CARD_NUM" (e.g., "/10025 Marcus" → "/100 25 Marcus").
+  // Non-greedy 1-3 digits for the print run so the common /5N pattern unblocks
+  // the next-card boundary detection — without this, "Vikings /53 Brock" would
+  // keep "/53" attached as a print run instead of "/5" + card 3.
+  processedLine = processedLine.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][a-z])/g, (match, pr, rest) => {
     return `/${pr} ${rest}`;
   });
 
