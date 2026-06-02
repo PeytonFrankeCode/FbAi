@@ -115,12 +115,16 @@ async function loadScrapeDoStatus() {
   const form = document.getElementById('settings-scrapedo-form');
   const status = document.getElementById('settings-scrapedo-status');
   const clearBtn = document.getElementById('settings-scrapedo-clear');
+  const testBtn = document.getElementById('settings-scrapedo-test');
+  const testResult = document.getElementById('settings-scrapedo-test-result');
   const input = document.getElementById('settings-scrapedo-input');
   if (!loading || !form || !status) return;
   loading.style.display = '';
   form.classList.add('hidden');
   status.classList.add('hidden');
   if (clearBtn) clearBtn.style.display = 'none';
+  if (testBtn) testBtn.style.display = 'none';
+  if (testResult) testResult.classList.add('hidden');
   const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   if (!user) {
     loading.style.display = 'none';
@@ -142,6 +146,7 @@ async function loadScrapeDoStatus() {
       status.innerHTML = `<strong>Configured</strong> &middot; ${escHtml(data.hint || '••••••••')}`;
       input.placeholder = 'Paste a new token to replace the current one';
       if (clearBtn) clearBtn.style.display = '';
+      if (testBtn) testBtn.style.display = '';
     } else {
       status.classList.remove('hidden');
       status.textContent = 'Not configured. Add your token to enable Sold searches.';
@@ -151,6 +156,65 @@ async function loadScrapeDoStatus() {
     loading.style.display = 'none';
     status.classList.remove('hidden');
     status.textContent = `Couldn't load: ${(err && err.message) || err}`;
+  }
+}
+
+// Hit /api/debug/sold with a known query and render whether the user's
+// scrape.do key actually returned parseable sold listings. Useful when a
+// user's pasted token is wrong or scrape.do can't reach eBay right now.
+async function testScrapeDoKey() {
+  const btn = document.getElementById('settings-scrapedo-test');
+  const out = document.getElementById('settings-scrapedo-test-result');
+  if (!btn || !out) return;
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Testing…';
+  out.classList.remove('hidden');
+  out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--pending';
+  out.textContent = 'Asking scrape.do for sold listings of "Patrick Mahomes 2017 Prizm"…';
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/debug/sold?q=' + encodeURIComponent('Patrick Mahomes 2017 Prizm'), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+    });
+    const data = await safeJson(res);
+    if (res.status === 401 && data && data.noKey) {
+      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+      out.textContent = 'No key on file — save your scrape.do token first.';
+      return;
+    }
+    if (data && data.badKey) {
+      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+      out.textContent = `✗ scrape.do rejected the key. ${data.error || ''}`.trim();
+      return;
+    }
+    if (data && data.error) {
+      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+      out.textContent = `✗ ${data.error}`;
+      return;
+    }
+    if (data && typeof data.itemCount === 'number') {
+      if (data.itemCount === 0) {
+        out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+        out.textContent = '✗ Got a response but parsed 0 listings — eBay may have changed its layout, or the key is being throttled.';
+        return;
+      }
+      const sample = data.firstItem || {};
+      const title = (sample.title || '').slice(0, 80);
+      const price = sample.price ? `$${parseFloat(sample.price).toFixed(2)}` : '?';
+      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--ok';
+      out.innerHTML = `✓ Got <strong>${data.itemCount}</strong> sold listings. Sample: "${escHtml(title)}" at <strong>${escHtml(price)}</strong>.`;
+      return;
+    }
+    out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+    out.textContent = `✗ Unexpected response (HTTP ${res.status}). Check your key and try again.`;
+  } catch (err) {
+    out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+    out.textContent = `✗ ${(err && err.message) || err}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
   }
 }
 

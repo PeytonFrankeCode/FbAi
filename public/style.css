@@ -4782,6 +4782,28 @@ footer::before {
 .settings-scrapedo-status strong {
   color: var(--accent);
 }
+.settings-scrapedo-test-result {
+  margin-top: 0.45rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.settings-scrapedo-test-result--pending {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+}
+.settings-scrapedo-test-result--ok {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--text-primary);
+}
+.settings-scrapedo-test-result--bad {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error);
+}
 
 /* Inline "Open Settings" button used in the sold-search error panel
    when the user hasn't added their scrape.do key. */

@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=60" />
+  <link rel="stylesheet" href="style.css?v=61" />
 
 
 </head>
@@ -1109,9 +1109,11 @@
               <input type="password" id="settings-scrapedo-input" class="settings-scrapedo-input"
                      placeholder="Paste your scrape.do token" autocomplete="off" spellcheck="false" />
               <button class="settings-sub-btn" id="settings-scrapedo-save" onclick="saveScrapeDoKey()">Save</button>
+              <button class="settings-sub-btn" id="settings-scrapedo-test" onclick="testScrapeDoKey()" style="display:none">Test</button>
               <button class="settings-sub-btn settings-sub-cancel" id="settings-scrapedo-clear" onclick="clearScrapeDoKey()" style="display:none">Clear</button>
             </div>
             <div id="settings-scrapedo-status" class="settings-scrapedo-status hidden"></div>
+            <div id="settings-scrapedo-test-result" class="settings-scrapedo-test-result hidden"></div>
           </div>
         </div>
 
@@ -1225,6 +1227,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=79"></script>
+  <script src="app.js?v=80"></script>
 </body>
 </html>
