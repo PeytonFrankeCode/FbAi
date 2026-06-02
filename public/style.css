@@ -4748,24 +4748,84 @@ footer::before {
   color: var(--pro);
 }
 
-/* scrape.do API key row */
-.settings-scrapedo-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
+/* scrape.do API key rows (multi-key) */
+.settings-row--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
 }
+.settings-scrapedo-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.settings-scrapedo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.settings-scrapedo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+}
+.settings-scrapedo-row-info { min-width: 0; }
+.settings-scrapedo-row-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.settings-scrapedo-row-hint {
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  letter-spacing: 0.4px;
+}
+.settings-scrapedo-row-remove { flex-shrink: 0; }
+.settings-scrapedo-empty {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 0.4rem 0;
+}
+.settings-scrapedo-add {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--border-primary);
+  border-radius: var(--radius-md);
+}
+.settings-scrapedo-add-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.settings-scrapedo-label-input,
 .settings-scrapedo-input {
-  flex: 1 1 240px;
-  min-width: 0;
+  width: 100%;
   padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-primary);
   background: var(--bg-input);
   color: var(--text-primary);
-  font: 0.85rem 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  box-sizing: border-box;
+}
+.settings-scrapedo-input {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
   letter-spacing: 0.4px;
 }
+.settings-scrapedo-label-input:focus,
 .settings-scrapedo-input:focus {
   outline: none;
   border-color: var(--accent);
@@ -4774,21 +4834,17 @@ footer::before {
   color: var(--text-secondary);
   font-size: 0.85rem;
 }
-.settings-scrapedo-status {
-  margin-top: 0.45rem;
-  font-size: 0.82rem;
-  color: var(--text-secondary);
-}
-.settings-scrapedo-status strong {
-  color: var(--accent);
-}
 .settings-scrapedo-test-result {
   margin-top: 0.45rem;
   padding: 0.5rem 0.7rem;
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
-  line-height: 1.45;
+  line-height: 1.55;
 }
+.settings-scrapedo-test-result > div + div { margin-top: 0.2rem; }
+.settings-scrapedo-test-result--ok > div,
+.settings-scrapedo-test-result--bad > div { color: inherit; }
+.settings-scrapedo-test-result strong { font-weight: 600; }
 .settings-scrapedo-test-result--pending {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
