@@ -20,15 +20,14 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (
 
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 
-// ---- EbayApiData Setup ----
-const EBAY_API_DATA_KEY = process.env.EBAY_API_DATA_KEY;
-// Base URL is overridable via EBAY_API_DATA_BASE env var so the scraper can move
-// without code changes. Defaults to the production scraper at api.thecardhuddle.com.
-const EBAY_API_DATA_BASE = (process.env.EBAY_API_DATA_BASE || 'https://api.thecardhuddle.com').replace(/\/+$/, '');
-const EBAY_API_DATA_ENABLED = !!(EBAY_API_DATA_KEY && EBAY_API_DATA_KEY.length > 0);
+// ---- Sold-listings provider ----
+// Sold data now comes from scrape.do using each user's own API key (stored
+// on their account). There is no server-wide sold provider — sold searches
+// require a logged-in user with a key, and return { noKey: true } otherwise.
+const SCRAPE_DO_BASE = 'https://api.scrape.do';
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
-const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true' || !EBAY_API_DATA_ENABLED;
+const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true';
 const USE_MOCK = USE_MOCK_FORSALE && USE_MOCK_SOLD;
 
 // ---- Stripe Setup ----
@@ -374,8 +373,9 @@ app.get('/api/health', (req, res) => {
         hasCertId: !!process.env.EBAY_CERT_ID,
       },
       ebaySold: {
-        configured: EBAY_API_DATA_ENABLED,
-        provider: 'ebayapidata',
+        // Per-user keys now — server doesn't hold a sold-data secret.
+        configured: true,
+        provider: 'scrape.do (per-user key)',
       },
       stripe: {
         configured: !!stripeEnabled,
@@ -582,46 +582,191 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 }
 
 
-// ---- EbayApiData (sold listings) ----
-async function fetchViaEbayApiData(keywords, limit = 20, source = 'unknown') {
-  trackApiCall('ebayapidata', 'ebay-sold', keywords, source);
-  console.log(`[EbayApiData] Searching sold: "${keywords}"`);
+// ---- scrape.do (sold listings, per-user API keys) ----
+// Targets eBay's hosted sold-search HTML and parses the listings out of
+// the response. Each user supplies one or more scrape.do tokens (so they
+// can combine the monthly quotas of multiple scrape.do accounts). We
+// round-robin across the user's keys and fall back to the next key when
+// scrape.do reports a quota or rate-limit failure.
+async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown') {
+  trackApiCall('scrapedo', 'ebay-sold', keywords, source);
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(keywords)}&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
+  const scrapeUrl = `${SCRAPE_DO_BASE}/?token=${encodeURIComponent(apiKey)}&url=${encodeURIComponent(ebayUrl)}`;
+  console.log(`[scrape.do] Searching sold: "${keywords}"`);
   try {
-    const res = await axios.get(`${EBAY_API_DATA_BASE}/scrape/search`, {
-      params: { query: keywords, max_pages: 1 },
-      headers: { Authorization: `Bearer ${EBAY_API_DATA_KEY}` },
-      timeout: 30000,
-    });
-    const items = Array.isArray(res.data) ? res.data : [];
-    console.log(`[EbayApiData] ${items.length} items found`);
-    const results = items.map((item, i) => {
-      const price = typeof item.sale_price === 'number' ? item.sale_price : parseFloat(String(item.sale_price).replace(/[^0-9.]/g, '')) || 0;
-      const rawDate = item.sale_date || '';
-      let soldDate = '';
-      if (rawDate) { const p = new Date(rawDate); soldDate = isNaN(p.getTime()) ? rawDate : p.toISOString(); }
-      return { itemId: item.item_id || `ead-${i}`, title: item.title || keywords, price: String(price), currency: 'USD', soldDate, imageUrl: item.image_url || null, itemUrl: item.listing_url || '', condition: item.condition || 'Unknown' };
-    });
-    return { results: results.slice(0, limit), total: results.length };
+    const res = await axios.get(scrapeUrl, { timeout: 45000, responseType: 'text', transformResponse: [x => x] });
+    const html = typeof res.data === 'string' ? res.data : String(res.data || '');
+    const items = parseEbaySoldHtml(html);
+    console.log(`[scrape.do] parsed ${items.length} items`);
+    return { results: items.slice(0, limit), total: items.length };
   } catch (err) {
-    console.error(`[EbayApiData] Error: ${err.message}`);
-    if (err.response) console.error(`[EbayApiData] HTTP ${err.response.status}:`, JSON.stringify(err.response.data).slice(0, 200));
-    return { results: [], total: 0, error: err.message };
+    const status = err.response && err.response.status;
+    console.error(`[scrape.do] Error${status ? ` HTTP ${status}` : ''}: ${err.message}`);
+    // 401/403 = bad token. 402/429 = quota or rate-limit on this key.
+    // Surface both distinctly so the rotation layer can fall back instead
+    // of giving up.
+    if (status === 401 || status === 403) {
+      return { results: [], total: 0, error: 'scrape.do rejected your API key (HTTP ' + status + '). Update it in Settings.', badKey: true, status };
+    }
+    if (status === 402 || status === 429) {
+      return { results: [], total: 0, error: 'scrape.do quota/rate-limit hit (HTTP ' + status + ') for this key.', quotaExceeded: true, status };
+    }
+    return { results: [], total: 0, error: err.message, status };
   }
 }
 
+// In-memory round-robin index per (username|anon). Resets on cold start;
+// that's fine — the rotation just picks up from the top.
+const _scrapeDoRotation = new Map();
+
+// Drive a sold search through up to N user keys: pick a starting key via
+// per-user round-robin, then walk in order. Any key that returns badKey
+// (bogus token) or quotaExceeded (HTTP 402/429) is skipped to the next
+// one. Bubbles up the last error if every key fails.
+async function fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey) {
+  if (!keys || keys.length === 0) {
+    return { results: [], total: 0, error: 'no scrape.do keys configured', noProvider: true, noKey: true };
+  }
+  const start = ((_scrapeDoRotation.get(rotationKey) || 0)) % keys.length;
+  _scrapeDoRotation.set(rotationKey, start + 1);
+  let lastErr = null;
+  const badKeyLabels = [];
+  for (let i = 0; i < keys.length; i++) {
+    const idx = (start + i) % keys.length;
+    const k = keys[idx];
+    const r = await fetchViaScrapeDo(keywords, k.key, limit, source);
+    if (!r.badKey && !r.quotaExceeded) return r;
+    lastErr = r;
+    if (r.badKey) badKeyLabels.push(k.label || `Key ${idx + 1}`);
+    console.log(`[scrape.do rotation] key "${k.label || idx + 1}" failed (${r.badKey ? 'bad key' : 'quota'}), trying next`);
+  }
+  // All keys exhausted. If every failure was a bad key, surface that;
+  // otherwise surface the quota-exhaustion message.
+  if (lastErr && lastErr.badKey && badKeyLabels.length === keys.length) {
+    return { results: [], total: 0, error: 'All your scrape.do keys were rejected. Check them in Settings.', badKey: true };
+  }
+  return lastErr || { results: [], total: 0, error: 'All scrape.do keys failed for this request.' };
+}
+
+// Normalize whatever the legacy users record holds into a clean array of
+// `{ key, label }`. Supports both the old single-string `scrapeDoKey`
+// field and the new `scrapeDoKeys` array — so the migration is implicit
+// and a user record only needs to be rewritten when the user changes
+// their keys.
+function getUserScrapeDoKeys(userRec) {
+  if (!userRec) return [];
+  if (Array.isArray(userRec.scrapeDoKeys) && userRec.scrapeDoKeys.length > 0) {
+    return userRec.scrapeDoKeys
+      .filter(k => k && typeof k.key === 'string' && k.key.length > 0)
+      .map((k, i) => ({ key: k.key, label: k.label || `Key ${i + 1}`, addedAt: k.addedAt || null }));
+  }
+  if (typeof userRec.scrapeDoKey === 'string' && userRec.scrapeDoKey.length > 0) {
+    return [{ key: userRec.scrapeDoKey, label: 'Default', addedAt: null }];
+  }
+  return [];
+}
+
+// Lightweight eBay-search HTML parser. eBay's sold-listings page renders
+// each listing as <li class="s-item ..."> with predictable child markup;
+// extracting via regex avoids pulling in a real HTML parser (which would
+// bloat the Workers bundle).
+function parseEbaySoldHtml(html) {
+  if (!html || html.length < 500) return [];
+  const items = [];
+  const re = /<li[^>]*class="[^"]*\bs-item\b[^"]*"[\s\S]*?<\/li>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const block = m[0];
+    // Skip the "Shop on eBay" placeholder listing that eBay sometimes injects.
+    if (/s-item--placeholder/i.test(block)) continue;
+    if (/Shop on eBay/i.test(block) && !/s-item__price/i.test(block)) continue;
+
+    const linkMatch = block.match(/<a[^>]*class="[^"]*s-item__link[^"]*"[^>]*href="([^"]+)"/i);
+    const titleMatch =
+      block.match(/<span[^>]*role="heading"[^>]*>([^<]+)<\/span>/i) ||
+      block.match(/<div[^>]*class="[^"]*s-item__title[^"]*"[^>]*>(?:<span[^>]*>)?([^<]+)/i);
+    const priceMatch = block.match(/<span[^>]*class="[^"]*s-item__price[^"]*"[^>]*>([^<]+)/i);
+    const imgMatch =
+      block.match(/<img[^>]*class="[^"]*s-item__image-img[^"]*"[^>]*src="([^"]+)"/i) ||
+      block.match(/<img[^>]*src="([^"]+)"[^>]*class="[^"]*s-item__image[^"]*"/i);
+    const dateMatch =
+      block.match(/class="[^"]*s-item__caption[^"]*"[^>]*>\s*(?:<span[^>]*>)?[^<]*Sold\s+([^<]+)/i) ||
+      block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
+    const condMatch = block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([^<]+)/i);
+
+    if (!titleMatch || !priceMatch || !linkMatch) continue;
+    const title = decodeHtmlEntities(titleMatch[1]).trim();
+    if (!title || /shop on ebay/i.test(title)) continue;
+    const priceStr = decodeHtmlEntities(priceMatch[1]).trim();
+    const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
+    if (!price) continue;
+    const itemUrl = linkMatch[1].split('?')[0];
+    const itemIdMatch = itemUrl.match(/\/itm\/(?:[^/]+\/)?(\d{8,})/);
+    let soldDate = '';
+    if (dateMatch) {
+      const raw = dateMatch[1].trim();
+      const parsed = new Date(raw);
+      soldDate = isNaN(parsed.getTime()) ? raw : parsed.toISOString();
+    }
+    items.push({
+      itemId: itemIdMatch ? itemIdMatch[1] : `sdo-${items.length}`,
+      title,
+      price: String(price),
+      currency: 'USD',
+      soldDate,
+      imageUrl: imgMatch ? imgMatch[1] : null,
+      itemUrl,
+      condition: condMatch ? decodeHtmlEntities(condMatch[1]).trim() : 'Unknown',
+    });
+  }
+  return items;
+}
+
+function decodeHtmlEntities(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+}
+
+// Look up the current request's user and pull every scrape.do key off
+// their record. Returns `{ username, keys: Array<{key,label}> }` so the
+// rotation layer below can scope its round-robin per user.
+function getScrapeDoKeysForRequest(req) {
+  const username = getSessionUser(req);
+  if (!username) return { username: null, keys: [] };
+  const users = loadServerUsers();
+  return { username, keys: getUserScrapeDoKeys(users[username]) };
+}
+
 // ---- Shared fetch function ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (EbayApiData)
+// mode: 'forsale' (eBay Browse API) or 'sold' (scrape.do, per-user key)
 // Cache disabled for both modes per user request — every search hits the
 // upstream APIs fresh so users always see current listings/prices. The
 // in-memory ebayCache + getCached/setCache helpers stay in the file for
 // the unrelated marketplace endpoint to use.
-async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0) {
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, scrapeDoCtx = null) {
   if (mode === 'sold') {
-    if (!EBAY_API_DATA_ENABLED) {
-      console.log(`[Sold] EbayApiData not configured — add EBAY_API_DATA_KEY to .env`);
-      return { results: [], total: 0, noProvider: true };
+    // Backward compat: accept either the new {keys,username} context or a
+    // raw single key string (legacy callers like the alert worker).
+    let keys = [], rotationKey = 'anon';
+    if (scrapeDoCtx && Array.isArray(scrapeDoCtx.keys)) {
+      keys = scrapeDoCtx.keys;
+      rotationKey = scrapeDoCtx.username || 'anon';
+    } else if (typeof scrapeDoCtx === 'string' && scrapeDoCtx.length > 0) {
+      keys = [{ key: scrapeDoCtx, label: 'legacy' }];
     }
-    const response = await fetchViaEbayApiData(keywords, limit, source);
+    if (keys.length === 0) {
+      return { results: [], total: 0, noProvider: true, noKey: true };
+    }
+    const response = await fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey);
     const filtered = { ...response, results: filterJunkListings(response.results) };
     filtered.total = filtered.results.length;
     return filtered;
@@ -661,19 +806,28 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
+  // Sold mode needs the requesting user's scrape.do API key. Bail with a
+  // distinctive error code the frontend can recognize so it can prompt the
+  // user to add the key in Settings instead of showing a generic failure.
+  const scrapeDoCtx = (mode === 'sold') ? getScrapeDoKeysForRequest(req) : { username: null, keys: [] };
+  if (mode === 'sold' && scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({
+      error: 'Sold searches need your scrape.do API key. Add one in Settings → scrape.do API key.',
+      noKey: true,
+    });
+  }
+
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    if (mode === 'sold') {
-      return res.status(503).json({ error: 'Sold listings unavailable — EBAY_API_DATA_KEY not configured on this server.' });
-    }
     return res.json(getMockData(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
 
-    // Sold mode — EbayApiData
+    // Sold mode — scrape.do (per-user key)
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      const searchData = await fetchEbayItems(query, limit, mode, 'search', 0, scrapeDoCtx);
+      if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
@@ -1038,16 +1192,27 @@ app.get('/api/grading-advisor', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required' });
   }
 
+  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+  if (scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({
+      error: 'Grading Advisor needs your scrape.do API key. Add one in Settings → scrape.do API key.',
+      noKey: true,
+    });
+  }
+
   const GRADING_COST = { economy: 25, express: 50 };
 
   try {
     const baseQ = query.trim();
     const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
-      fetchEbayItems(baseQ, 20, 'sold', 'grading-raw'),
-      fetchEbayItems(`${baseQ} PSA 8`, 20, 'sold', 'grading-psa8'),
-      fetchEbayItems(`${baseQ} PSA 9`, 20, 'sold', 'grading-psa9'),
-      fetchEbayItems(`${baseQ} PSA 10`, 20, 'sold', 'grading-psa10'),
+      fetchEbayItems(baseQ, 20, 'sold', 'grading-raw', 0, scrapeDoCtx),
+      fetchEbayItems(`${baseQ} PSA 8`, 20, 'sold', 'grading-psa8', 0, scrapeDoCtx),
+      fetchEbayItems(`${baseQ} PSA 9`, 20, 'sold', 'grading-psa9', 0, scrapeDoCtx),
+      fetchEbayItems(`${baseQ} PSA 10`, 20, 'sold', 'grading-psa10', 0, scrapeDoCtx),
     ]);
+    if (rawData.badKey || psa8Data.badKey || psa9Data.badKey || psa10Data.badKey) {
+      return res.status(401).json({ error: 'scrape.do rejected your API key. Update it in Settings.', badKey: true });
+    }
 
     // Apply the same variant-strict filter used elsewhere so each grade's
     // sold comps reflect the actual card searched (excludes wrong colors,
@@ -1109,17 +1274,25 @@ app.get('/api/direct-search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
+  const scrapeDoCtx = (mode === 'sold') ? getScrapeDoKeysForRequest(req) : { username: null, keys: [] };
+  if (mode === 'sold' && scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({
+      error: 'Sold searches need your scrape.do API key. Add one in Settings → scrape.do API key.',
+      noKey: true,
+    });
+  }
+
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — EBAY_API_DATA_KEY not configured on this server.' });
     return res.json(getMockDirectSearch(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
 
-    // Sold mode
+    // Sold mode — scrape.do (per-user key)
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, 20, mode, 'direct-search');
+      const searchData = await fetchEbayItems(query, 20, mode, 'direct-search', 0, scrapeDoCtx);
+      if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
@@ -1220,8 +1393,15 @@ app.get('/api/variants', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
+  const scrapeDoCtx = (mode === 'sold') ? getScrapeDoKeysForRequest(req) : { username: null, keys: [] };
+  if (mode === 'sold' && scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({
+      error: 'Sold searches need your scrape.do API key. Add one in Settings → scrape.do API key.',
+      noKey: true,
+    });
+  }
+
   if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    if (mode === 'sold') return res.status(503).json({ error: 'Sold listings unavailable — EBAY_API_DATA_KEY not configured on this server.' });
     return res.json(getMockVariants(query, mode));
   }
 
@@ -1235,12 +1415,10 @@ app.get('/api/variants', async (req, res) => {
 
     // Sold mode
     if (mode === 'sold') {
-      const result = await fetchEbayItems(query, 50, mode, 'variants');
+      const result = await fetchEbayItems(query, 50, mode, 'variants', 0, scrapeDoCtx);
+      if (result.badKey) return res.status(401).json({ error: result.error, badKey: true });
       rawResults = result.results;
-      // Propagate upstream errors (e.g. invalid key, scraper down) so the
-      // frontend can show 'why' instead of a silent empty state.
       if (result.error) upstreamError = result.error;
-      if (result.noProvider) upstreamError = 'EBAY_API_DATA_KEY is not configured on this server.';
     } else if (serial) {
       // Dual search when serial present: targeted + broad for better coverage
       const [targeted, broad] = await Promise.all([
@@ -1332,16 +1510,35 @@ app.get('/api/variants', async (req, res) => {
   }
 });
 
-// ---- EbayApiData debug endpoint ----
-app.get('/api/debug/ebayapidata', async (req, res) => {
+// ---- Sold provider debug endpoint ----
+// Tests the current user's scrape.do keys with a small sold-search. With
+// no ?label= specified, tests every saved key in parallel and reports
+// per-key status (✓ count or ✗ reason) so users can see which of their
+// keys are healthy. With ?label=X, only tests that key.
+app.get('/api/debug/sold', async (req, res) => {
   const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
-  if (!EBAY_API_DATA_ENABLED) return res.json({ error: 'EBAY_API_DATA_KEY not configured' });
-  const fullUrl = `${EBAY_API_DATA_BASE}/scrape/search`;
+  const label = (req.query.label || '').toString();
+  const ctx = getScrapeDoKeysForRequest(req);
+  if (ctx.keys.length === 0) return res.status(401).json({ error: 'No scrape.do key on file for this user', noKey: true });
+  const targets = label ? ctx.keys.filter(k => k.label === label) : ctx.keys;
+  if (label && targets.length === 0) {
+    return res.status(404).json({ error: `No key with label "${label}"` });
+  }
   try {
-    const result = await fetchViaEbayApiData(q, 5, 'debug');
-    res.json({ baseUrl: EBAY_API_DATA_BASE, fullUrl, query: q, itemCount: result.results.length, firstItem: result.results[0] || null, error: result.error || null });
+    const perKey = await Promise.all(targets.map(async k => {
+      const r = await fetchViaScrapeDo(q, k.key, 5, 'debug');
+      return {
+        label: k.label,
+        itemCount: r.results.length,
+        firstItem: r.results[0] || null,
+        error: r.error || null,
+        badKey: !!r.badKey,
+        quotaExceeded: !!r.quotaExceeded,
+      };
+    }));
+    res.json({ provider: 'scrape.do', query: q, perKey });
   } catch (err) {
-    res.json({ baseUrl: EBAY_API_DATA_BASE, fullUrl, error: err.message });
+    res.json({ provider: 'scrape.do', error: err.message });
   }
 });
 
@@ -1656,13 +1853,23 @@ async function checkAlerts() {
 
   console.log(`[Alerts] Checking ${data.alerts.length} alerts...`);
 
+  const usersTable = loadServerUsers();
   for (const alert of data.alerts) {
     try {
       let searchResult;
       if (USE_MOCK) {
         searchResult = getMockData(alert.query, 'sold');
       } else {
-        searchResult = await fetchEbayItems(alert.query, 10, 'sold', 'alerts');
+        // Each alert is owned by a user; use that user's scrape.do keys
+        // (round-robin across however many they've saved). Skip if they
+        // haven't set any rather than failing the whole alerts run.
+        const owner = (alert.username || '').toLowerCase();
+        const keys = getUserScrapeDoKeys(owner && usersTable[owner]);
+        if (keys.length === 0) {
+          console.log(`[Alerts] skipping ${owner || '(no user)'} alert — no scrape.do key on file`);
+          continue;
+        }
+        searchResult = await fetchEbayItems(alert.query, 10, 'sold', 'alerts', 0, { username: owner, keys });
       }
 
       const currentIds = searchResult.results.map(r => r.itemId);
@@ -2191,6 +2398,101 @@ app.put('/api/auth/email', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ---- Per-user scrape.do API keys (multiple allowed) ----
+// Stored on the user record (server-side only — never returned to the
+// client in full, only `{ label, hint, addedAt }` per key). Users can
+// register multiple keys to combine the monthly quotas of multiple
+// scrape.do accounts; the sold-search path rotates across them and
+// falls back on quota-exhausted errors.
+const MAX_KEYS_PER_USER = 10;
+
+function maskKey(key) {
+  if (!key) return '';
+  const last4 = key.slice(-4);
+  return '••••••••' + last4;
+}
+
+// Read the user record and return both the storage form (array) and the
+// safe public view (no raw keys). Migrates legacy single-string field on
+// first write — never silently rewrites without an explicit user action.
+function readKeysFromRecord(rec) {
+  const list = getUserScrapeDoKeys(rec || {});
+  return list.map((k, i) => ({
+    label: k.label || `Key ${i + 1}`,
+    hint: maskKey(k.key),
+    addedAt: k.addedAt || null,
+  }));
+}
+
+app.get('/api/user/scrape-do-key', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const users = loadServerUsers();
+  const keys = readKeysFromRecord(users[username]);
+  res.json({ configured: keys.length > 0, count: keys.length, keys });
+});
+
+// POST adds a key (preferred). PUT also calls into this path so the
+// previous single-key clients keep working — the PUT just replaces the
+// whole list with a single key.
+function addKeyHandler(req, res, { replace = false } = {}) {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const { apiKey, label } = req.body || {};
+  if (typeof apiKey !== 'string' || apiKey.trim().length < 8) {
+    return res.status(400).json({ error: 'apiKey must be at least 8 characters' });
+  }
+  const trimmedKey = apiKey.trim();
+  if (trimmedKey.length > 200) return res.status(400).json({ error: 'apiKey too long' });
+  const cleanLabel = typeof label === 'string' ? label.trim().slice(0, 60) : '';
+
+  const users = loadServerUsers();
+  if (!users[username]) return res.status(404).json({ error: 'User record missing' });
+
+  const existing = replace ? [] : getUserScrapeDoKeys(users[username]);
+  if (existing.length >= MAX_KEYS_PER_USER) {
+    return res.status(409).json({ error: `Max ${MAX_KEYS_PER_USER} keys per account` });
+  }
+  if (existing.some(k => k.key === trimmedKey)) {
+    return res.status(409).json({ error: 'You already have this key on file' });
+  }
+  const next = existing.concat({
+    key: trimmedKey,
+    label: cleanLabel || `Key ${existing.length + 1}`,
+    addedAt: new Date().toISOString(),
+  });
+
+  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
+  // Clear the legacy field so we have a single source of truth going forward.
+  delete users[username].scrapeDoKey;
+  saveServerUsers(users);
+  res.json({ ok: true, configured: true, count: next.length, keys: readKeysFromRecord(users[username]) });
+}
+
+app.post('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: false }));
+app.put('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: true }));
+
+// DELETE removes by label. Without `?label=` it clears everything
+// (preserves the historical "clear my key" behavior of the old endpoint).
+app.delete('/api/user/scrape-do-key', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const label = (req.query.label || '').toString();
+  const users = loadServerUsers();
+  if (!users[username]) return res.json({ ok: true, configured: false, count: 0 });
+  const existing = getUserScrapeDoKeys(users[username]);
+  let next;
+  if (label) {
+    next = existing.filter(k => k.label !== label);
+  } else {
+    next = [];
+  }
+  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
+  delete users[username].scrapeDoKey;
+  saveServerUsers(users);
+  res.json({ ok: true, configured: next.length > 0, count: next.length, keys: readKeysFromRecord(users[username]) });
+});
+
 // Per-user data sync — single JSON blob per user containing the things that
 // used to live in localStorage only (collection, watchlist, completion,
 // seller listings, promoted cards). Client pulls on login and pushes
@@ -2467,13 +2769,17 @@ app.get('/api/flip-finder', requirePlan('pro'), async (req, res) => {
   const minProfit = parseFloat(req.query.minProfit) || 10;
   const limit = Math.min(parseInt(req.query.limit) || 20, 40);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+  if (scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({ error: 'Flip Finder needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
+  }
 
   try {
     const [soldData, forsaleData] = await Promise.all([
-      fetchViaEbayApiData(query, 50, 'flip-finder'),
+      fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 50, 'flip-finder', scrapeDoCtx.username),
       fetchEbayItems(query, 50, 'forsale', 'flip-finder'),
     ]);
+    if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
 
     const soldPrices = soldData.results.map(i => parseFloat(i.price)).filter(p => p > 0);
     if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough sold data for this query' });
@@ -2516,10 +2822,14 @@ app.get('/api/market-movers', requirePlan('pro'), async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 10, 20);
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+  if (scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({ error: 'Market Movers needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
+  }
 
   try {
-    const soldData = await fetchViaEbayApiData(query, 50, 'market-movers');
+    const soldData = await fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 50, 'market-movers', scrapeDoCtx.username);
+    if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
     const items = soldData.results
       .map(i => ({ price: parseFloat(i.price), date: i.soldDate ? new Date(i.soldDate) : null, title: i.title, imageUrl: i.imageUrl }))
       .filter(i => i.price > 0 && i.date && !isNaN(i.date));
@@ -2559,15 +2869,20 @@ app.get('/api/market-movers', requirePlan('pro'), async (req, res) => {
 app.get('/api/auto-price/search', async (req, res) => {
   const query = req.query.q;
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+  if (scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({ error: 'Auto-Pricer needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
+  }
   try {
-    let soldData = await fetchViaEbayApiData(query, 24, 'ap-search');
+    let soldData = await fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 24, 'ap-search', scrapeDoCtx.username);
+    if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
 
     // Progressively drop trailing words until we get results
     if (!soldData.results || soldData.results.length === 0) {
       const words = query.trim().split(/\s+/);
       for (let len = words.length - 1; len >= 2; len--) {
-        soldData = await fetchViaEbayApiData(words.slice(0, len).join(' '), 24, 'ap-search-fallback');
+        soldData = await fetchViaScrapeDoRotated(words.slice(0, len).join(' '), scrapeDoCtx.keys, 24, 'ap-search-fallback', scrapeDoCtx.username);
+        if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
         if (soldData.results && soldData.results.length > 0) break;
       }
     }
@@ -2595,7 +2910,10 @@ app.get('/api/auto-price/search', async (req, res) => {
 app.get('/api/auto-price', async (req, res) => {
   const query = req.query.q;
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+  if (scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({ error: 'Auto-Pricer needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
+  }
 
   const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
 
@@ -2609,7 +2927,8 @@ app.get('/api/auto-price', async (req, res) => {
 
     let soldData, usedQuery = query, attemptIndex = 0;
     for (let i = 0; i < attempts.length; i++) {
-      soldData = await fetchViaEbayApiData(attempts[i], 30, 'auto-price');
+      soldData = await fetchViaScrapeDoRotated(attempts[i], scrapeDoCtx.keys, 30, 'auto-price', scrapeDoCtx.username);
+      if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
       const prices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
       if (prices.length >= 3) { usedQuery = attempts[i]; attemptIndex = i; break; }
       if (i === attempts.length - 1) { usedQuery = attempts[i]; attemptIndex = i; }
@@ -2677,12 +2996,22 @@ app.post('/api/bulk-price', async (req, res) => {
   const { queries } = req.body;
   if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
   if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
-  if (!EBAY_API_DATA_ENABLED) return res.status(503).json({ error: 'EbayApiData not configured' });
+
+  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+  if (scrapeDoCtx.keys.length === 0) {
+    return res.status(401).json({
+      error: 'Bulk Pricer needs your scrape.do API key. Add one in Settings → scrape.do API key.',
+      noKey: true,
+    });
+  }
 
   const results = [];
   for (const q of queries) {
     try {
-      const response = await fetchEbayItems(q.trim(), 10, 'sold', 'bulk-price');
+      const response = await fetchEbayItems(q.trim(), 10, 'sold', 'bulk-price', 0, scrapeDoCtx);
+      if (response.badKey) {
+        return res.status(401).json({ error: response.error, badKey: true });
+      }
       const prices = response.results.map(r => parseFloat(r.price)).filter(p => p > 0);
       prices.sort((a, b) => a - b);
       const median = prices.length ? (prices.length % 2 ? prices[Math.floor(prices.length / 2)] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
@@ -2886,11 +3215,10 @@ if (!process.env.CF_WORKER) {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`For-sale mode: ${USE_MOCK_FORSALE ? 'MOCK' : 'LIVE (eBay Browse API)'}`);
-      console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (EbayApiData)'}`);
+      console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (scrape.do, per-user keys)'}`);
       console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
       console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
       console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);
-      console.log(`EbayApiData: ${EBAY_API_DATA_ENABLED ? 'ENABLED (sold listings active)' : 'NOT CONFIGURED — add EBAY_API_DATA_KEY to .env'}`);
     });
   });
 }

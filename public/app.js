@@ -101,7 +101,203 @@ function toggleTheme() {
 
 function showSettings() {
   updateSettingsSubscription();
+  loadScrapeDoStatus();
   document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+// ---- scrape.do API keys (per-user, server-stored, multi-key) ----
+// Sold-data searches require the user's own scrape.do token. Users can
+// save multiple keys to combine the monthly quotas of multiple scrape.do
+// accounts — the server round-robins across them and falls back when one
+// hits a quota. We never display the full token; the API only ever
+// returns a masked hint per key.
+
+async function loadScrapeDoStatus() {
+  const loading = document.getElementById('settings-scrapedo-loading');
+  const listEl = document.getElementById('settings-scrapedo-list');
+  const emptyEl = document.getElementById('settings-scrapedo-empty');
+  const addEl = document.getElementById('settings-scrapedo-add');
+  const testBtn = document.getElementById('settings-scrapedo-test-all');
+  const testResult = document.getElementById('settings-scrapedo-test-result');
+  if (!loading || !listEl || !emptyEl || !addEl) return;
+  loading.style.display = '';
+  listEl.classList.add('hidden');
+  emptyEl.classList.add('hidden');
+  addEl.classList.add('hidden');
+  if (testBtn) testBtn.style.display = 'none';
+  if (testResult) testResult.classList.add('hidden');
+
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!user) {
+    loading.style.display = 'none';
+    emptyEl.classList.remove('hidden');
+    emptyEl.textContent = 'Log in to add your scrape.do keys.';
+    return;
+  }
+
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/user/scrape-do-key', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+    });
+    const data = await safeJson(res);
+    loading.style.display = 'none';
+    addEl.classList.remove('hidden');
+
+    const keys = (data && Array.isArray(data.keys)) ? data.keys : [];
+    if (keys.length === 0) {
+      emptyEl.classList.remove('hidden');
+      emptyEl.textContent = 'No keys yet — add one below to enable Sold searches.';
+    } else {
+      listEl.classList.remove('hidden');
+      listEl.innerHTML = '';
+      keys.forEach(k => {
+        const li = document.createElement('li');
+        li.className = 'settings-scrapedo-row';
+        const added = k.addedAt ? new Date(k.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        li.innerHTML = `
+          <div class="settings-scrapedo-row-info">
+            <div class="settings-scrapedo-row-label">${escHtml(k.label || 'Untitled')}</div>
+            <div class="settings-scrapedo-row-hint">${escHtml(k.hint || '••••••••')}${added ? ' &middot; added ' + escHtml(added) : ''}</div>
+          </div>
+          <button class="settings-sub-btn settings-sub-cancel settings-scrapedo-row-remove"
+                  data-label="${escHtml(k.label || '')}" onclick="removeScrapeDoKey(this.dataset.label)">Remove</button>`;
+        listEl.appendChild(li);
+      });
+      if (testBtn) testBtn.style.display = '';
+    }
+  } catch (err) {
+    loading.style.display = 'none';
+    emptyEl.classList.remove('hidden');
+    emptyEl.textContent = `Couldn't load: ${(err && err.message) || err}`;
+  }
+}
+
+async function saveScrapeDoKey() {
+  const input = document.getElementById('settings-scrapedo-input');
+  const labelEl = document.getElementById('settings-scrapedo-label');
+  const saveBtn = document.getElementById('settings-scrapedo-save');
+  const value = (input && input.value || '').trim();
+  const label = (labelEl && labelEl.value || '').trim();
+  if (!value) { alert('Paste your scrape.do token first.'); return; }
+  if (value.length < 8) { alert('That token looks too short. Double-check and try again.'); return; }
+  const token = getSessionToken();
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Adding…'; }
+  try {
+    const res = await fetch('/api/user/scrape-do-key', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ apiKey: value, label }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error((data && (data.error || data.detail)) || `HTTP ${res.status}`);
+    input.value = '';
+    if (labelEl) labelEl.value = '';
+    await loadScrapeDoStatus();
+  } catch (err) {
+    alert(`Couldn't save your scrape.do key:\n\n${(err && err.message) || err}`);
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Add Key'; }
+  }
+}
+
+async function removeScrapeDoKey(label) {
+  if (!confirm(`Remove the scrape.do key "${label || 'this key'}"?`)) return;
+  const token = getSessionToken();
+  try {
+    const res = await fetch('/api/user/scrape-do-key?label=' + encodeURIComponent(label || ''), {
+      method: 'DELETE',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const data = await safeJson(res);
+      throw new Error((data && data.error) || `HTTP ${res.status}`);
+    }
+    await loadScrapeDoStatus();
+  } catch (err) {
+    alert(`Couldn't remove the key:\n\n${(err && err.message) || err}`);
+  }
+}
+
+// Hit /api/debug/sold and render a per-key health summary so users can
+// see at a glance which of their saved keys are working and which are
+// out of quota or bad.
+async function testScrapeDoKey() {
+  const btn = document.getElementById('settings-scrapedo-test-all');
+  const out = document.getElementById('settings-scrapedo-test-result');
+  if (!btn || !out) return;
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Testing…';
+  out.classList.remove('hidden');
+  out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--pending';
+  out.textContent = 'Asking scrape.do for sold listings of "Patrick Mahomes 2017 Prizm"…';
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/debug/sold?q=' + encodeURIComponent('Patrick Mahomes 2017 Prizm'), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+    });
+    const data = await safeJson(res);
+    if (res.status === 401 && data && data.noKey) {
+      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+      out.textContent = 'No keys on file — add one above first.';
+      return;
+    }
+    const perKey = Array.isArray(data && data.perKey) ? data.perKey : null;
+    if (!perKey) {
+      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+      out.textContent = `✗ ${(data && data.error) || 'Unexpected response from debug endpoint.'}`;
+      return;
+    }
+    const anyOk = perKey.some(r => r.itemCount > 0);
+    out.className = 'settings-scrapedo-test-result ' + (anyOk
+      ? 'settings-scrapedo-test-result--ok'
+      : 'settings-scrapedo-test-result--bad');
+    const rows = perKey.map(r => {
+      const label = escHtml(r.label || 'Key');
+      if (r.badKey) return `<div>✗ <strong>${label}</strong> &mdash; rejected by scrape.do</div>`;
+      if (r.quotaExceeded) return `<div>⚠ <strong>${label}</strong> &mdash; quota / rate-limit hit</div>`;
+      if (r.error) return `<div>✗ <strong>${label}</strong> &mdash; ${escHtml(r.error)}</div>`;
+      if (r.itemCount > 0) {
+        const sample = r.firstItem || {};
+        const title = (sample.title || '').slice(0, 60);
+        const price = sample.price ? `$${parseFloat(sample.price).toFixed(2)}` : '?';
+        return `<div>✓ <strong>${label}</strong> &mdash; ${r.itemCount} listings (sample: "${escHtml(title)}" at ${escHtml(price)})</div>`;
+      }
+      return `<div>✗ <strong>${label}</strong> &mdash; returned 0 listings (eBay HTML drift or throttled)</div>`;
+    });
+    out.innerHTML = rows.join('');
+  } catch (err) {
+    out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
+    out.textContent = `✗ ${(err && err.message) || err}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+// Backward-compat shim — old call sites delegate here. Clears all keys.
+async function clearScrapeDoKey() {
+  if (!confirm('Remove ALL of your scrape.do API keys? Sold searches will stop working until you add one again.')) return;
+  const token = getSessionToken();
+  try {
+    const res = await fetch('/api/user/scrape-do-key', {
+      method: 'DELETE',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const data = await safeJson(res);
+      throw new Error((data && data.error) || `HTTP ${res.status}`);
+    }
+    await loadScrapeDoStatus();
+  } catch (err) {
+    alert(`Couldn't remove your keys:\n\n${(err && err.message) || err}`);
+  }
 }
 
 function updateSettingsSubscription() {
@@ -1164,12 +1360,23 @@ async function fetchVariants(query) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
+    const token = getSessionToken();
     const response = await fetch(`/api/variants?${params}`, {
-      headers: {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const data = await safeJson(response);
 
-    if (response.status === 401) { showLogin(); return; }
+    if (response.status === 401) {
+      if (data && (data.noKey || data.badKey)) {
+        setLoading(false);
+        hideSkeleton();
+        errorMsg.classList.remove('hidden');
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        return;
+      }
+      showLogin();
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -1322,12 +1529,23 @@ async function fetchDirectSearch(query) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
+    const token = getSessionToken();
     const response = await fetch(`/api/direct-search?${params}`, {
-      headers: {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const data = await safeJson(response);
 
-    if (response.status === 401) { showLogin(); return; }
+    if (response.status === 401) {
+      if (data && (data.noKey || data.badKey)) {
+        setLoading(false);
+        hideSkeleton();
+        errorMsg.classList.remove('hidden');
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        return;
+      }
+      showLogin();
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -1549,9 +1767,22 @@ async function performSearch(query) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
+    // Sold searches need the user's scrape.do key — server reads it from
+    // the authenticated user record. Pass the session token along.
+    const token = getSessionToken();
     const response = await fetch(`/api/search?${params}`, {
-      headers: {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
+    if (response.status === 401) {
+      const errData = await safeJson(response).catch(() => ({}));
+      if (errData && (errData.noKey || errData.badKey)) {
+        setLoading(false);
+        hideSkeleton();
+        errorMsg.classList.remove('hidden');
+        errorMsg.innerHTML = `${escHtml(errData.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        return;
+      }
+    }
     const data = await safeJson(response);
 
     if (response.status === 401) { showLogin(); return; }
