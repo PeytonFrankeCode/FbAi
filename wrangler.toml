@@ -37,7 +37,9 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 # After deploying, hit GET /api/health to confirm what's actually loaded. Run:
 #
 #   wrangler secret put EBAY_CERT_ID            # eBay OAuth client secret (For Sale search)
-#   wrangler secret put EBAY_API_DATA_KEY       # ebayapidata.onrender.com bearer (Sold search)
+#   # NOTE: sold-search no longer needs a server secret. Each user provides
+#   # their own scrape.do token in Settings → scrape.do API key (stored on
+#   # the per-user record in KV, never sent back to the client in full).
 #   wrangler secret put EBAY_VERIFICATION_TOKEN # eBay marketplace deletion notifications
 #   wrangler secret put STRIPE_PUBLISHABLE_KEY  # pk_live_... or pk_test_...
 #   wrangler secret put STRIPE_SECRET_KEY       # sk_live_... or sk_test_...

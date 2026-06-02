@@ -4748,6 +4748,59 @@ footer::before {
   color: var(--pro);
 }
 
+/* scrape.do API key row */
+.settings-scrapedo-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.settings-scrapedo-input {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: 0.85rem 'SF Mono', Menlo, Consolas, monospace;
+  letter-spacing: 0.4px;
+}
+.settings-scrapedo-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.settings-scrapedo-loading {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.settings-scrapedo-status {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.settings-scrapedo-status strong {
+  color: var(--accent);
+}
+
+/* Inline "Open Settings" button used in the sold-search error panel
+   when the user hasn't added their scrape.do key. */
+.error-action-btn {
+  margin-left: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.error-action-btn:hover {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
 /* ---- Theme Toggle Switch ---- */
 .theme-toggle {
   position: relative;

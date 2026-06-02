@@ -101,7 +101,103 @@ function toggleTheme() {
 
 function showSettings() {
   updateSettingsSubscription();
+  loadScrapeDoStatus();
   document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+// ---- scrape.do API key (per-user, server-stored) ----
+// Sold-data searches require the user's own scrape.do token. This panel in
+// Settings shows whether one is configured and lets the user save or clear.
+// We never display the full token — the server only ever returns a masked
+// hint ('••••••••XYZW') so the value can't be exfiltrated via the API.
+async function loadScrapeDoStatus() {
+  const loading = document.getElementById('settings-scrapedo-loading');
+  const form = document.getElementById('settings-scrapedo-form');
+  const status = document.getElementById('settings-scrapedo-status');
+  const clearBtn = document.getElementById('settings-scrapedo-clear');
+  const input = document.getElementById('settings-scrapedo-input');
+  if (!loading || !form || !status) return;
+  loading.style.display = '';
+  form.classList.add('hidden');
+  status.classList.add('hidden');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (!user) {
+    loading.style.display = 'none';
+    status.classList.remove('hidden');
+    status.textContent = 'Log in to add your scrape.do key.';
+    return;
+  }
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/user/scrape-do-key', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+    });
+    const data = await safeJson(res);
+    loading.style.display = 'none';
+    form.classList.remove('hidden');
+    if (data && data.configured) {
+      status.classList.remove('hidden');
+      status.innerHTML = `<strong>Configured</strong> &middot; ${escHtml(data.hint || '••••••••')}`;
+      input.placeholder = 'Paste a new token to replace the current one';
+      if (clearBtn) clearBtn.style.display = '';
+    } else {
+      status.classList.remove('hidden');
+      status.textContent = 'Not configured. Add your token to enable Sold searches.';
+      input.placeholder = 'Paste your scrape.do token';
+    }
+  } catch (err) {
+    loading.style.display = 'none';
+    status.classList.remove('hidden');
+    status.textContent = `Couldn't load: ${(err && err.message) || err}`;
+  }
+}
+
+async function saveScrapeDoKey() {
+  const input = document.getElementById('settings-scrapedo-input');
+  const saveBtn = document.getElementById('settings-scrapedo-save');
+  const value = (input && input.value || '').trim();
+  if (!value) { alert('Paste your scrape.do token first.'); return; }
+  if (value.length < 8) { alert('That token looks too short. Double-check and try again.'); return; }
+  const token = getSessionToken();
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+  try {
+    const res = await fetch('/api/user/scrape-do-key', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ apiKey: value }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) throw new Error((data && (data.error || data.detail)) || `HTTP ${res.status}`);
+    input.value = '';
+    await loadScrapeDoStatus();
+  } catch (err) {
+    alert(`Couldn't save your scrape.do key:\n\n${(err && err.message) || err}`);
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+  }
+}
+
+async function clearScrapeDoKey() {
+  if (!confirm('Remove your scrape.do API key? Sold searches will stop working until you add one again.')) return;
+  const token = getSessionToken();
+  try {
+    const res = await fetch('/api/user/scrape-do-key', {
+      method: 'DELETE',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const data = await safeJson(res);
+      throw new Error((data && data.error) || `HTTP ${res.status}`);
+    }
+    await loadScrapeDoStatus();
+  } catch (err) {
+    alert(`Couldn't remove the key:\n\n${(err && err.message) || err}`);
+  }
 }
 
 function updateSettingsSubscription() {
@@ -1164,12 +1260,23 @@ async function fetchVariants(query) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
+    const token = getSessionToken();
     const response = await fetch(`/api/variants?${params}`, {
-      headers: {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const data = await safeJson(response);
 
-    if (response.status === 401) { showLogin(); return; }
+    if (response.status === 401) {
+      if (data && (data.noKey || data.badKey)) {
+        setLoading(false);
+        hideSkeleton();
+        errorMsg.classList.remove('hidden');
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        return;
+      }
+      showLogin();
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -1322,12 +1429,23 @@ async function fetchDirectSearch(query) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
+    const token = getSessionToken();
     const response = await fetch(`/api/direct-search?${params}`, {
-      headers: {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const data = await safeJson(response);
 
-    if (response.status === 401) { showLogin(); return; }
+    if (response.status === 401) {
+      if (data && (data.noKey || data.badKey)) {
+        setLoading(false);
+        hideSkeleton();
+        errorMsg.classList.remove('hidden');
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        return;
+      }
+      showLogin();
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -1549,9 +1667,22 @@ async function performSearch(query) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
+    // Sold searches need the user's scrape.do key — server reads it from
+    // the authenticated user record. Pass the session token along.
+    const token = getSessionToken();
     const response = await fetch(`/api/search?${params}`, {
-      headers: {},
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
+    if (response.status === 401) {
+      const errData = await safeJson(response).catch(() => ({}));
+      if (errData && (errData.noKey || errData.badKey)) {
+        setLoading(false);
+        hideSkeleton();
+        errorMsg.classList.remove('hidden');
+        errorMsg.innerHTML = `${escHtml(errData.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        return;
+      }
+    }
     const data = await safeJson(response);
 
     if (response.status === 401) { showLogin(); return; }

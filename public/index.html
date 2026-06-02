@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=58" />
+  <link rel="stylesheet" href="style.css?v=60" />
 
 
 </head>
@@ -1097,6 +1097,24 @@
           <div id="settings-sub-action"></div>
         </div>
 
+        <!-- Per-user scrape.do API key for sold searches -->
+        <div class="settings-row" id="settings-scrapedo-row">
+          <div class="settings-label">
+            <span class="settings-label-text">scrape.do API key</span>
+            <span class="settings-label-desc" id="settings-scrapedo-desc">Used for your Sold searches. <a href="https://scrape.do" target="_blank" rel="noopener">Get one here</a>.</span>
+          </div>
+          <div id="settings-scrapedo-action">
+            <div id="settings-scrapedo-loading" class="settings-scrapedo-loading">Loading…</div>
+            <div id="settings-scrapedo-form" class="settings-scrapedo-form hidden">
+              <input type="password" id="settings-scrapedo-input" class="settings-scrapedo-input"
+                     placeholder="Paste your scrape.do token" autocomplete="off" spellcheck="false" />
+              <button class="settings-sub-btn" id="settings-scrapedo-save" onclick="saveScrapeDoKey()">Save</button>
+              <button class="settings-sub-btn settings-sub-cancel" id="settings-scrapedo-clear" onclick="clearScrapeDoKey()" style="display:none">Clear</button>
+            </div>
+            <div id="settings-scrapedo-status" class="settings-scrapedo-status hidden"></div>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -1207,6 +1225,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=78"></script>
+  <script src="app.js?v=79"></script>
 </body>
 </html>
