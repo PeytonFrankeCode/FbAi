@@ -4872,6 +4872,22 @@ footer::before {
   color: var(--text-secondary);
   user-select: none;
 }
+.settings-scrapedo-snippet-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+}
+.settings-scrapedo-copy {
+  font: inherit;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+}
+.settings-scrapedo-copy:hover { background: var(--bg-secondary); }
 .settings-scrapedo-snippet pre {
   margin: 0.35rem 0 0;
   padding: 0.6rem;
