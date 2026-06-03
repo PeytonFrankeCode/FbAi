@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=65" />
+  <link rel="stylesheet" href="style.css?v=66" />
 
 
 </head>
@@ -293,6 +293,7 @@
             required
           />
         </div>
+        <button type="button" class="scan-cam-btn" onclick="openScanFillModal('search-input')" title="Scan card photo">&#128247;</button>
         <button type="submit" id="search-btn">Search</button>
       </form>
       <div id="mode-tabs" class="mode-tabs">
@@ -549,6 +550,7 @@
           <p class="watchlist-desc">Follow players and cards to monitor price trends over time.</p>
           <div class="watchlist-add-row">
             <input type="text" id="watchlist-input" class="watchlist-input" placeholder="e.g. Patrick Mahomes 2017 Prizm" />
+            <button type="button" class="scan-cam-btn" onclick="openScanFillModal('watchlist-input')" title="Scan card photo">&#128247;</button>
             <button class="watchlist-add-btn" onclick="addToWatchlist()">+ Add</button>
             <button class="watchlist-refresh-btn" onclick="refreshWatchlistPrices()" id="watchlist-refresh-btn">&#8635; Refresh Prices</button>
           </div>
@@ -577,6 +579,7 @@
               <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" id="grading-input" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" autocomplete="off" required />
             </div>
+            <button type="button" class="scan-cam-btn" onclick="openScanFillModal('grading-input')" title="Scan card photo">&#128247;</button>
             <button type="submit" id="grading-btn" class="grading-submit-btn">Analyze</button>
           </div>
         </form>
@@ -671,6 +674,9 @@
         </div>
         <p id="scanner-selected-title" class="search-meta" style="margin-bottom:0.5rem"></p>
         <div id="scanner-price-summary"></div>
+        <div id="scanner-collection-btn-wrap" class="hidden" style="margin-bottom:0.5rem">
+          <button class="scan-cam-btn" style="font-size:0.85rem;padding:0.5rem 1rem" onclick="addScannerCardToCollection()">&#127915; Add to Collection</button>
+        </div>
         <div id="scanner-sales-list" class="results-grid" style="margin-top:0.75rem"></div>
         <button class="btn-secondary" style="margin-top:0.75rem" onclick="showScannerMatches()">&#8592; Back to matches</button>
       </div>
@@ -818,6 +824,7 @@
         <p class="listing-helper-desc">Generate optimized eBay listing titles from your checklist data.</p>
         <div class="listing-helper-search">
           <input type="text" id="listing-helper-input" placeholder="Search for a card..." />
+          <button type="button" class="scan-cam-btn" onclick="openScanFillModal('listing-helper-input')" title="Scan card photo">&#128247;</button>
           <button onclick="generateListingTitles()">Generate</button>
         </div>
         <div id="listing-helper-results" class="listing-helper-results"></div>
@@ -923,6 +930,7 @@
       <p class="listing-helper-desc">Search your checklist data to auto-generate an optimized listing title.</p>
       <div class="listing-helper-search">
         <input type="text" id="autofill-search-input" placeholder="Search for a card..." />
+        <button type="button" class="scan-cam-btn" onclick="openScanFillModal('autofill-search-input')" title="Scan card photo">&#128247;</button>
         <button onclick="searchAutofillTitles()">Search</button>
       </div>
       <div id="autofill-results" class="listing-helper-results"></div>
@@ -1106,6 +1114,7 @@
           <p class="pp-desc">Get three data-backed listing price recommendations — aggressive, optimal, and premium — based on sold comps and live competition.</p>
           <div class="pp-search-row">
             <input type="text" id="ap-input" class="pp-input" placeholder="e.g. Joe Burrow 2020 Prizm PSA 10" />
+            <button type="button" class="scan-cam-btn" onclick="openScanFillModal('ap-input')" title="Scan card photo">&#128247;</button>
             <button class="pp-btn" onclick="runAutoPricer()">Get Prices</button>
           </div>
           <div id="ap-results"></div>
@@ -1116,6 +1125,7 @@
           <p class="pp-desc">Price up to 20 cards at once. Enter one card per line, click Price All, then export to CSV.</p>
           <textarea id="bulk-input" class="pp-textarea" placeholder="Patrick Mahomes 2017 Prizm Base&#10;Josh Allen 2018 Prizm Silver&#10;Justin Jefferson 2020 Prizm PSA 10"></textarea>
           <div class="pp-search-row" style="margin-top:0.5rem;">
+            <button type="button" class="scan-cam-btn" onclick="openScanFillModal('bulk-input', true)" title="Scan card photo">&#128247; Scan &amp; Add</button>
             <button class="pp-btn" onclick="runBulkPricer()">Price All</button>
             <button class="pp-btn pp-btn-secondary" onclick="exportBulkCSV()">Export CSV</button>
           </div>
@@ -1300,7 +1310,52 @@
     </div>
   </div>
 
+  <!-- Scan-to-Fill Modal — shared camera scan for any search input -->
+  <div id="scan-fill-modal" class="modal-overlay hidden" role="dialog" onclick="if(event.target===this)closeScanFillModal()">
+    <div class="modal-box modal-box-lg">
+      <button class="login-close" onclick="closeScanFillModal()">&times;</button>
+      <h2>&#128247; Scan Card</h2>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">Take or upload a card photo — we'll find the best matching title for you.</p>
+
+      <!-- Phase 1: Upload -->
+      <div id="scan-fill-phase-upload">
+        <div class="scanner-upload-area">
+          <label for="scan-fill-file-input" class="scanner-upload-label">
+            <div class="scanner-upload-icon">&#128247;</div>
+            <div class="scanner-upload-text">
+              <strong>Choose a photo or take one</strong>
+              <span>Tap to browse &nbsp;&bull;&nbsp; JPG, PNG, WEBP &nbsp;&bull;&nbsp; Max 8MB</span>
+            </div>
+            <input type="file" id="scan-fill-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleScanFillFile(event)" />
+          </label>
+        </div>
+        <div id="scan-fill-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
+          <img id="scan-fill-preview" src="" alt="Card preview" style="max-height:200px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button class="grading-submit-btn" onclick="submitScanFill()">&#128269; Find This Card</button>
+            <button class="btn-secondary" onclick="resetScanFill()">&#10005; Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spinner -->
+      <div id="scan-fill-matching" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Searching eBay card database&hellip;</span>
+      </div>
+
+      <div id="scan-fill-error" class="error-message hidden"></div>
+
+      <!-- Phase 2: Pick match -->
+      <div id="scan-fill-phase-matches" class="hidden">
+        <p class="grading-hint" style="margin-bottom:0.75rem">Tap the card that matches yours:</p>
+        <div id="scan-fill-matches-grid" class="scanner-matches-grid"></div>
+        <button class="btn-secondary" style="margin-top:0.75rem" onclick="resetScanFill()">&#8592; Try a different photo</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=89"></script>
+  <script src="app.js?v=90"></script>
 </body>
 </html>

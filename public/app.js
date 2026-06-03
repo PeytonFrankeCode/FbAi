@@ -3432,6 +3432,8 @@ function switchSearchSub(sub) {
 // listings, then loads sold prices when the user picks the right one.
 // Uses the existing Browse API OAuth token — zero extra cost.
 let _scannerImageDataUrl = null;
+let _scannerLastMedian = null;
+let _scannerLastQuery = null;
 
 function initScannerView() { /* no gate needed */ }
 
@@ -3455,6 +3457,8 @@ async function handleScannerFile(e) {
 
 function clearScannerImage() {
   _scannerImageDataUrl = null;
+  _scannerLastMedian = null;
+  _scannerLastQuery = null;
   document.getElementById('scanner-file-input').value = '';
   document.getElementById('scanner-phase-upload').classList.remove('hidden');
   document.getElementById('scanner-preview-wrap').classList.add('hidden');
@@ -3462,6 +3466,8 @@ function clearScannerImage() {
   document.getElementById('scanner-error').classList.add('hidden');
   document.getElementById('scanner-phase-matches').classList.add('hidden');
   document.getElementById('scanner-results').classList.add('hidden');
+  const collBtnWrap = document.getElementById('scanner-collection-btn-wrap');
+  if (collBtnWrap) collBtnWrap.classList.add('hidden');
 }
 
 function showScannerMatches() {
@@ -3592,20 +3598,30 @@ async function selectScannerMatch(index) {
 }
 
 function _renderScannerSoldResults(query, items) {
+  _scannerLastQuery = query;
   // Stats bar — same HTML structure as the main search renderStatsBar()
   const pEl = document.getElementById('scanner-price-summary');
+  const collBtnWrap = document.getElementById('scanner-collection-btn-wrap');
   if (items.length) {
     const prices = items.map(r => parseFloat(r.price)).filter(p => p > 0);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const sorted = [...prices].sort((a, b) => a - b);
+    _scannerLastMedian = sorted.length % 2 === 0
+      ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+      : sorted[Math.floor(sorted.length / 2)];
     pEl.innerHTML = `
       <div class="stats-bar">
         <div class="stat-item"><span class="stat-label">Results</span><span class="stat-value">${items.length}</span></div>
         <div class="stat-item"><span class="stat-label">Avg Sale</span><span class="stat-value">$${avg.toFixed(2)}</span></div>
+        <div class="stat-item"><span class="stat-label">Median</span><span class="stat-value">$${_scannerLastMedian.toFixed(2)}</span></div>
         <div class="stat-item"><span class="stat-label">Low</span><span class="stat-value">$${Math.min(...prices).toFixed(2)}</span></div>
         <div class="stat-item"><span class="stat-label">High</span><span class="stat-value">$${Math.max(...prices).toFixed(2)}</span></div>
       </div>`;
+    if (collBtnWrap) collBtnWrap.classList.remove('hidden');
   } else {
+    _scannerLastMedian = null;
     pEl.innerHTML = '';
+    if (collBtnWrap) collBtnWrap.classList.add('hidden');
   }
 
   // Results cards — reuse buildCard() exactly like the main sold search
@@ -3623,6 +3639,140 @@ function _renderScannerSoldResults(query, items) {
     const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
     salesEl.innerHTML = `<p style="color:var(--text-muted);font-size:0.9rem">No recent sold listings found. <a href="${escHtml(epnUrl(ebayUrl))}" target="_blank" rel="noopener">Search on eBay &rarr;</a></p>`;
   }
+}
+
+function addScannerCardToCollection() {
+  const name = _scannerLastQuery || '';
+  const price = _scannerLastMedian != null ? _scannerLastMedian.toFixed(2) : '';
+  document.getElementById('add-card-name').value = name;
+  document.getElementById('add-card-price').value = price;
+  document.getElementById('add-card-condition').value = '';
+  document.getElementById('add-card-notes').value = '';
+  showAddCardModal();
+}
+
+// ---- Scan-to-Fill Modal (shared camera scan for any search input) ----
+let _scanFillTargetId = null;
+let _scanFillIsTextarea = false;
+let _scanFillImageDataUrl = null;
+
+function openScanFillModal(targetId, isTextarea) {
+  _scanFillTargetId = targetId;
+  _scanFillIsTextarea = !!isTextarea;
+  _scanFillImageDataUrl = null;
+  document.getElementById('scan-fill-file-input').value = '';
+  document.getElementById('scan-fill-preview-wrap').classList.add('hidden');
+  document.getElementById('scan-fill-matching').classList.add('hidden');
+  document.getElementById('scan-fill-error').classList.add('hidden');
+  document.getElementById('scan-fill-phase-matches').classList.add('hidden');
+  document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+  document.getElementById('scan-fill-modal').classList.remove('hidden');
+}
+
+function closeScanFillModal() {
+  document.getElementById('scan-fill-modal').classList.add('hidden');
+  _scanFillImageDataUrl = null;
+  _scanFillTargetId = null;
+}
+
+function resetScanFill() {
+  _scanFillImageDataUrl = null;
+  document.getElementById('scan-fill-file-input').value = '';
+  document.getElementById('scan-fill-preview-wrap').classList.add('hidden');
+  document.getElementById('scan-fill-matching').classList.add('hidden');
+  document.getElementById('scan-fill-error').classList.add('hidden');
+  document.getElementById('scan-fill-phase-matches').classList.add('hidden');
+  document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+}
+
+async function handleScanFillFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+  if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
+  try {
+    _scanFillImageDataUrl = await readImageFileAsDataUrl(file, 800, 0.85);
+    document.getElementById('scan-fill-preview').src = _scanFillImageDataUrl;
+    document.getElementById('scan-fill-preview-wrap').classList.remove('hidden');
+    document.getElementById('scan-fill-error').classList.add('hidden');
+    document.getElementById('scan-fill-phase-matches').classList.add('hidden');
+  } catch (err) {
+    alert('Could not load image: ' + (err.message || 'Unknown error'));
+  }
+}
+
+async function submitScanFill() {
+  if (!_scanFillImageDataUrl) { alert('Please select a card photo first.'); return; }
+  const spinner = document.getElementById('scan-fill-matching');
+  const errEl = document.getElementById('scan-fill-error');
+  document.getElementById('scan-fill-phase-upload').classList.add('hidden');
+  spinner.classList.remove('hidden');
+  errEl.classList.add('hidden');
+  document.getElementById('scan-fill-phase-matches').classList.add('hidden');
+  try {
+    const res = await fetch('/api/scan-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageData: _scanFillImageDataUrl }),
+    });
+    const data = await res.json();
+    spinner.classList.add('hidden');
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Image search failed. Try a clearer photo.';
+      errEl.classList.remove('hidden');
+      document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+      return;
+    }
+    if (!data.matches || !data.matches.length) {
+      errEl.textContent = 'No matching cards found. Try a clearer, straight-on photo with good lighting.';
+      errEl.classList.remove('hidden');
+      document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+      return;
+    }
+    _renderScanFillMatches(data.matches);
+  } catch (err) {
+    spinner.classList.add('hidden');
+    document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+function _renderScanFillMatches(matches) {
+  const grid = document.getElementById('scan-fill-matches-grid');
+  grid.innerHTML = matches.map((m, i) => `
+    <div class="scanner-match-card" data-title="${escHtml(m.title)}">
+      <div class="scanner-match-card-accent"></div>
+      ${m.imageUrl
+        ? `<img class="scanner-match-card-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
+        : '<div class="scanner-match-card-noimg">&#127944;</div>'}
+      <div class="scanner-match-card-body">
+        <p class="scanner-match-card-title">${escHtml(m.title)}</p>
+        <button class="scanner-match-card-btn" onclick="selectScanFillMatch(${i})">Use This</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('scan-fill-phase-matches').classList.remove('hidden');
+}
+
+function selectScanFillMatch(index) {
+  const cards = document.getElementById('scan-fill-matches-grid').querySelectorAll('.scanner-match-card');
+  const card = cards[index];
+  if (!card) return;
+  const rawTitle = card.dataset.title || '';
+  const broadQuery = _broadenCardTitle(rawTitle);
+  const targetEl = _scanFillTargetId ? document.getElementById(_scanFillTargetId) : null;
+  if (targetEl) {
+    if (_scanFillIsTextarea) {
+      const existing = targetEl.value.trim();
+      targetEl.value = existing ? existing + '\n' + broadQuery : broadQuery;
+    } else {
+      targetEl.value = broadQuery;
+    }
+    targetEl.dispatchEvent(new Event('input', { bubbles: true }));
+    targetEl.focus();
+  }
+  closeScanFillModal();
 }
 
 // ---- Pro+ Tools ----

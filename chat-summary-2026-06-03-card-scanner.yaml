@@ -1,0 +1,117 @@
+session:
+  date: "2026-06-03"
+  branch: claude/card-photo-sold-value-7xS3I
+  topic: Card Scanner — photo-to-sold-value feature
+
+feature_overview: >
+  Added a "Scan Card" tab under the Search nav. Users take or upload a photo
+  of a card, eBay's visual search API matches it against their catalog,
+  the user picks the correct listing from a grid of thumbnails, and sold
+  price data (stats bar + full card tiles) loads automatically. Zero
+  additional API cost — reuses the existing eBay Browse API OAuth token.
+
+iterations:
+  - iteration: 1
+    approach: Claude vision API (claude-haiku-4-5)
+    outcome: Rejected — per-scan cost ($0.001–0.002), not suitable for large scale
+
+  - iteration: 2
+    approach: Tesseract.js client-side OCR
+    outcome: >
+      Rejected — "pure garbage". Tesseract cannot handle stylized card fonts,
+      foil/holographic backgrounds, or small text on busy designs. Works for
+      clean printed documents, not trading cards.
+
+  - iteration: 3
+    approach: eBay Browse API search_by_image
+    outcome: Adopted — works on any card type, leverages eBay's full card
+      catalog, $0 cost, uses existing OAuth token
+
+final_implementation:
+  backend:
+    file: server.js
+    endpoint: POST /api/scan-card
+    description: >
+      Accepts a base64 card photo, calls eBay's
+      search_by_image endpoint (category_ids=261328, limit=6),
+      returns top matching listing titles + thumbnail URLs.
+      Uses getOAuthToken() already in place. Has mock fallback
+      when USE_MOCK_FORSALE is true.
+
+  frontend_html:
+    file: public/index.html
+    changes:
+      - Added "📷 Scan Card" subtab button in #search-subtabs
+      - Added #scanner-view with 3-phase layout:
+          phase_1: Upload area + preview + "Find This Card" button
+          phase_2: Match grid (#scanner-matches-grid) — 6 eBay thumbnails
+          phase_3: Results — stats bar + sold card tiles + "Back to matches"
+
+  frontend_js:
+    file: public/app.js
+    key_functions:
+      handleScannerFile: Resizes uploaded image to 800px via canvas
+      submitCardScan: >
+        POSTs image to /api/scan-card, hides upload phase,
+        shows spinner, then renders match grid
+      _renderScannerMatches: >
+        Builds compact card-shaped tiles (scanner-match-card) with
+        accent bar, thumbnail, 2-line title, "Use This Listing" button
+      selectScannerMatch: >
+        Applies _broadenCardTitle() to strip card numbers/serials/grades,
+        then calls /api/search?mode=sold with the broad query
+      _broadenCardTitle: >
+        Strips #card-numbers (#269, #BU-4), print runs (/25, /99),
+        grades (PSA 10, BGS 9.5), and condition labels so the sold
+        search returns 10-20 comps instead of 1-2
+      _renderScannerSoldResults: >
+        Uses existing buildCard() and .stats-bar/.stat-item HTML so
+        results look identical to the main sold search
+      switchSearchSub: Updated to handle 'scanner' subtab
+
+  css:
+    file: public/style.css
+    key_classes:
+      scanner-upload-area: Dashed-border drop zone with camera icon
+      scanner-matches-grid: >
+        repeat(3, 1fr) on mobile, repeat(4, 1fr) on 600px+
+      scanner-match-card: >
+        Matches .card visual language — same border, radius,
+        box-shadow, accent bar, hover lift
+      scanner-match-card-img: Fixed 100px height, object-fit contain
+      scanner-match-card-btn: Accent-colored "Use This Listing" button
+
+ui_fixes:
+  - issue: Upload area stayed visible during match/result phases
+    fix: Hide #scanner-phase-upload on submit, restore on clear/error
+
+  - issue: Stats showed as unstyled plain text
+    fix: Replaced custom .scanner-stat with existing .stats-bar/.stat-item
+
+  - issue: Sold listings used custom row layout, looked different from search
+    fix: Call buildCard() directly with currentMode temporarily set to 'sold'
+
+  - issue: Match tiles were nearly full-screen (2-column grid + 2.5/3.5 aspect)
+    fix: 3-column grid, fixed 100px image height, tighter padding
+
+  - issue: CSS changes not visible (browser cached style.css?v=64)
+    fix: Bumped to style.css?v=65
+
+  - issue: Sold search returned 1-2 results (too-specific eBay title)
+    fix: _broadenCardTitle() strips identifiers before searching
+
+files_changed:
+  - public/app.js
+  - public/index.html
+  - public/style.css
+  - server.js
+  - wrangler.toml
+
+commits:
+  - "Add Card Scanner pro feature — photo-to-sold-value"
+  - "Switch Card Scanner from Claude vision to free client-side Tesseract OCR"
+  - "Replace Tesseract OCR with eBay visual image search for Card Scanner"
+  - "Scanner results now use the same card/stats UI as the main sold search"
+  - "Scanner match tiles now look like listing cards + broader sold search query"
+  - "Shrink scanner match tiles to 3-column compact grid"
+  - "Bust CSS cache — bump style.css version to v65"
