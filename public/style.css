@@ -7574,25 +7574,18 @@ footer {
 .btn-secondary:hover { background: var(--bg-hover); }
 
 
-.scanner-price-summary { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.75rem 0; }
-.scanner-stat { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.6rem 1rem; display: flex; flex-direction: column; gap: 0.15rem; min-width: 100px; flex: 1; }
-.scanner-stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.scanner-stat-value { font-size: 1.15rem; font-weight: 700; color: var(--accent); }
+.scanner-price-summary { margin: 0.75rem 0; }
 
-.scanner-matches-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
-.scanner-match-tile { background: var(--bg-secondary); border: 2px solid var(--border-primary); border-radius: 10px; padding: 0.6rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; transition: border-color 0.15s, transform 0.1s; }
-.scanner-match-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
-.scanner-match-tile.selected { border-color: var(--accent); background: var(--bg-hover); }
-.scanner-match-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 6px; background: var(--bg-primary); }
-.scanner-match-noimg { width: 100%; aspect-ratio: 3/4; border-radius: 6px; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-.scanner-match-title { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.3; word-break: break-word; }
+.scanner-matches-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (min-width: 480px) { .scanner-matches-grid { grid-template-columns: repeat(3, 1fr); } }
 
-
-.scanner-sales-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
-.scanner-sale-item { display: flex; align-items: center; gap: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.5rem 0.75rem; text-decoration: none; color: var(--text-primary); transition: border-color 0.15s; font-size: 0.88rem; }
-.scanner-sale-item:hover { border-color: var(--accent); }
-.scanner-sale-img { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--bg-primary); }
-.scanner-sale-noimg { width: 44px; height: 44px; border-radius: 4px; flex-shrink: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.7rem; }
-.scanner-sale-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.scanner-sale-price { font-weight: 700; color: var(--accent); white-space: nowrap; }
-.scanner-sale-date { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+.scanner-match-card { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+@media (hover: hover) { .scanner-match-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.3); border-color: var(--accent-border); } }
+.scanner-match-card.selected { border-color: var(--accent); }
+.scanner-match-card-accent { height: 4px; width: 100%; background: var(--accent); flex-shrink: 0; }
+.scanner-match-card-img { width: 100%; aspect-ratio: 2.5/3.5; object-fit: contain; background: var(--bg-primary); padding: 0.35rem; }
+.scanner-match-card-noimg { width: 100%; aspect-ratio: 2.5/3.5; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+.scanner-match-card-body { padding: 0.55rem 0.6rem 0.6rem; display: flex; flex-direction: column; gap: 0.45rem; flex: 1; }
+.scanner-match-card-title { font-size: 0.75rem; color: var(--text-primary); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+.scanner-match-card-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 0.45rem 0.5rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.15s; }
+.scanner-match-card-btn:hover { opacity: 0.85; }

@@ -3517,27 +3517,43 @@ async function submitCardScan() {
   }
 }
 
+function _broadenCardTitle(title) {
+  return title
+    .replace(/\b(PSA|BGS|SGC|CGC|HGA|CSG)\s*\d+(?:\.\d+)?\b/gi, '') // grades
+    .replace(/#[\w-]+/g, '')           // card numbers (#269, #BU-4)
+    .replace(/\/\d{1,4}\b/g, '')       // print runs (/25, /99)
+    .replace(/\b(NM|MT|NM-MT|EX|VG|GD|PR|PO)\b/gi, '') // condition
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+}
+
 function _renderScannerMatches(matches) {
   const grid = document.getElementById('scanner-matches-grid');
   grid.innerHTML = matches.map((m, i) => `
-    <button class="scanner-match-tile" onclick="selectScannerMatch(${i})" data-title="${escHtml(m.title)}">
+    <div class="scanner-match-card" data-title="${escHtml(m.title)}">
+      <div class="scanner-match-card-accent"></div>
       ${m.imageUrl
-        ? `<img class="scanner-match-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
-        : '<div class="scanner-match-noimg">&#127944;</div>'}
-      <span class="scanner-match-title">${escHtml(m.title)}</span>
-    </button>
+        ? `<img class="scanner-match-card-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
+        : '<div class="scanner-match-card-noimg">&#127944;</div>'}
+      <div class="scanner-match-card-body">
+        <p class="scanner-match-card-title">${escHtml(m.title)}</p>
+        <button class="scanner-match-card-btn" onclick="selectScannerMatch(${i})">Use This Listing</button>
+      </div>
+    </div>
   `).join('');
   document.getElementById('scanner-phase-matches').classList.remove('hidden');
 }
 
 async function selectScannerMatch(index) {
-  const tiles = document.querySelectorAll('.scanner-match-tile');
-  const tile = tiles[index];
-  if (!tile) return;
-  const title = tile.dataset.title || '';
+  const cards = document.querySelectorAll('.scanner-match-card');
+  const card = cards[index];
+  if (!card) return;
+  const rawTitle = card.dataset.title || '';
+  const broadQuery = _broadenCardTitle(rawTitle);
 
-  tiles.forEach(t => t.classList.remove('selected'));
-  tile.classList.add('selected');
+  cards.forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
 
   document.getElementById('scanner-phase-matches').classList.add('hidden');
 
@@ -3548,14 +3564,14 @@ async function selectScannerMatch(index) {
   const salesEl = document.getElementById('scanner-sales-list');
 
   resultsEl.classList.remove('hidden');
-  titleEl.textContent = title;
+  titleEl.textContent = broadQuery;
   loading.classList.remove('hidden');
   errEl.classList.add('hidden');
   document.getElementById('scanner-price-summary').innerHTML = '';
   salesEl.innerHTML = '';
 
   try {
-    const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(title)}&limit=20`);
+    const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(broadQuery)}&limit=20`);
     const data = await res.json();
     loading.classList.add('hidden');
 
@@ -3567,7 +3583,7 @@ async function selectScannerMatch(index) {
       return;
     }
 
-    _renderScannerSoldResults(title, data.results || []);
+    _renderScannerSoldResults(broadQuery, data.results || []);
   } catch (err) {
     loading.classList.add('hidden');
     errEl.textContent = 'Network error. Please try again.';
