@@ -795,86 +795,111 @@ function stripTags(s) {
   return decodeHtmlEntities(String(s).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
-function extractLegacySItem(block) {
-  if (/s-item--placeholder/i.test(block)) return null;
-  if (/Shop on eBay/i.test(block) && !/s-item__price/i.test(block)) return null;
-  const linkMatch = block.match(/<a[^>]*class="[^"]*s-item__link[^"]*"[^>]*href="([^"]+)"/i);
-  const titleMatch =
-    block.match(/<span[^>]*role="heading"[^>]*>([\s\S]*?)<\/span>/i) ||
-    block.match(/<div[^>]*class="[^"]*s-item__title[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-  const priceMatch = block.match(/<span[^>]*class="[^"]*s-item__price[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
-  const imgMatch =
-    block.match(/<img[^>]*class="[^"]*s-item__image-img[^"]*"[^>]*src="([^"]+)"/i) ||
-    block.match(/<img[^>]*src="([^"]+)"[^>]*class="[^"]*s-item__image[^"]*"/i);
-  const dateMatch =
-    block.match(/class="[^"]*s-item__caption[^"]*"[^>]*>\s*(?:<span[^>]*>)?[^<]*Sold\s+([^<]+)/i) ||
-    block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
-  const condMatch = block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([\s\S]*?)<\//i);
-  return assembleListing({
-    link: linkMatch ? linkMatch[1] : null,
-    title: titleMatch ? stripTags(titleMatch[1]) : '',
-    priceStr: priceMatch ? stripTags(priceMatch[1]) : '',
-    img: imgMatch ? imgMatch[1] : null,
-    date: dateMatch ? dateMatch[1] : null,
-    cond: condMatch ? stripTags(condMatch[1]) : null,
-  });
+// eBay mixes quoted AND unquoted HTML attributes in the same tag — e.g.
+// `<a class=s-card__link ... href=https://ebay.com/itm/123?...>`. These
+// helpers match attribute values regardless of quoting style, which is the
+// crux of parsing the current card markup (selectors that assumed `href="…"`
+// or `class="…"` silently matched nothing).
+
+// Return the value of attribute `attr` from the first tag in `block` that has
+// it. If `mustContain` is given, skip values that don't include that substring.
+function getAttr(block, attr, mustContain) {
+  const re = new RegExp(
+    '\\b' + attr + '\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\'|([^\\s"\'>]+))',
+    'gi'
+  );
+  let m;
+  while ((m = re.exec(block)) !== null) {
+    const v = m[1] != null ? m[1] : (m[2] != null ? m[2] : m[3]);
+    if (v && (!mustContain || v.indexOf(mustContain) !== -1)) return v;
+  }
+  return null;
 }
 
-// eBay's newer card layouts (srp-results__item / s-card). Class names keep
-// shifting and the title/price text is nested inside generic
-// `su-styled-text` spans, so we lean on structural signals (any /itm/ link,
-// the image alt, any element whose class mentions "price") rather than exact
-// hooks. resolveCard() does the field extraction; extractCardLayout() turns
-// it into a listing.
-function resolveCard(block) {
-  // Link: explicit hooks first, then any eBay /itm/<id> anchor.
-  const linkMatch =
-    block.match(/<a[^>]*class="[^"]*(?:s-card__link|su-link)[^"]*"[^>]*href="([^"]+)"/i) ||
-    block.match(/<a[^>]+href="([^"]*\/itm\/[^"]+)"/i);
+// Inner text of the first element whose class contains `cls`, quoting-agnostic.
+// Uses a tag-name backreference so we close on the right tag.
+function classInner(block, cls) {
+  const c = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(
+    '<([a-zA-Z][\\w-]*)\\b[^>]*\\bclass\\s*=\\s*' +
+      '(?:"[^"]*' + c + '[^"]*"|\'[^\']*' + c + '[^\']*\'|[^\\s"\'>]*' + c + '[^\\s"\'>]*)' +
+      '[^>]*>([\\s\\S]*?)<\\/\\1>',
+    'i'
+  );
+  const m = block.match(re);
+  return m ? stripTags(m[2]) : '';
+}
 
-  // Title: known hooks, else the heading span, else the image alt text
-  // (eBay mirrors the full listing title into the thumbnail's alt).
-  let title = '';
-  const titleHook =
-    block.match(/<[^>]*class="[^"]*s-card__title[^"]*"[^>]*>([\s\S]*?)<\/[a-zA-Z]+>/i) ||
-    block.match(/<span[^>]*role="heading"[^>]*>([\s\S]*?)<\/span>/i) ||
-    block.match(/<a[^>]*(?:s-card__link|su-link)[^>]*>([\s\S]*?)<\/a>/i);
-  if (titleHook) title = stripTags(titleHook[1]);
-  if (!title) {
-    const alt = block.match(/<img[^>]*\balt="([^"]+)"/i);
-    if (alt) title = decodeHtmlEntities(alt[1]).trim();
+// Pick the best image URL in a card, tolerating unquoted attrs and lazy-load
+// placeholders. eBay defers the real image via data-defer-load and shows a
+// gray ebaystatic placeholder in src; prefer the real i.ebayimg.com asset.
+function pickImage(block) {
+  const urls = [];
+  const re = /(?:src|data-defer-load|data-src)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'>]+))/gi;
+  let m;
+  while ((m = re.exec(block)) !== null) {
+    const v = m[1] || m[2] || m[3];
+    if (v && /^https?:/i.test(v)) urls.push(v);
   }
+  return urls.find(u => /i\.ebayimg\.com/i.test(u)) ||
+         urls.find(u => !/ebaystatic\.com/i.test(u)) ||
+         urls[0] || null;
+}
 
-  // Price: an element whose class mentions "price", else the first
-  // dollar-and-cents value anywhere in the card.
-  let priceStr = '';
-  const priceHook = block.match(/<[^>]*class="[^"]*price[^"]*"[^>]*>([\s\S]*?)<\/[a-zA-Z]+>/i);
-  if (priceHook) priceStr = stripTags(priceHook[1]);
+function extractLegacySItem(block) {
+  if (/s-item--placeholder/i.test(block)) return null;
+  return assembleListing(resolveCard(block));
+}
+
+// Field extractor for eBay's card layouts (s-card / srp-results__item) and the
+// older s-item layout. Class names and quoting keep shifting, so we lean on
+// structural signals — any /itm/ link, the title element's text, any element
+// whose class mentions "price" — all matched quote-agnostically.
+function resolveCard(block) {
+  // Link: any /itm/ href, quoted or bare.
+  const link = getAttr(block, 'href', '/itm/');
+
+  // Title: the card/item title element, else any heading element, else the
+  // thumbnail alt text (eBay mirrors the listing title into alt).
+  let title =
+    classInner(block, 's-card__title') ||
+    classInner(block, 's-item__title');
+  if (!title) {
+    const h = block.match(/<([a-zA-Z][\w-]*)\b[^>]*\brole\s*=\s*["']?heading["']?[^>]*>([\s\S]*?)<\/\1>/i);
+    if (h) title = stripTags(h[2]);
+  }
+  if (!title) title = (getAttr(block, 'alt') || '').trim();
+
+  // Price: a price-classed element, else the first dollar-and-cents value.
+  let priceStr =
+    classInner(block, 's-card__price') ||
+    classInner(block, 's-item__price') ||
+    classInner(block, 'price');
   if (!/\d/.test(priceStr)) {
     const dollar = block.match(/\$\s?[\d,]+\.\d{2}/);
-    if (dollar) priceStr = dollar[0];
+    priceStr = dollar ? dollar[0] : '';
   }
 
-  const imgMatch =
-    block.match(/<img[^>]*class="[^"]*s-card__image[^"]*"[^>]*src="([^"]+)"/i) ||
-    block.match(/<img[^>]*src="(https:\/\/i\.ebayimg\.com\/[^"]+)"/i);
-  const dateMatch = block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
-  const condMatch =
-    block.match(/<[^>]*class="[^"]*s-card__subtitle[^"]*"[^>]*>([\s\S]*?)<\/[a-zA-Z]+>/i) ||
-    block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([\s\S]*?)<\//i);
+  const img = pickImage(block);
+  const dateMatch = block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\.?\s+\d{1,2},?\s+\d{4})/i);
+  const cond =
+    classInner(block, 's-card__subtitle') ||
+    classInner(block, 'SECONDARY_INFO') ||
+    '';
 
   return {
-    link: linkMatch ? linkMatch[1] : null,
+    link: link || null,
     title,
     priceStr,
-    img: imgMatch ? imgMatch[1] : null,
+    img,
     date: dateMatch ? dateMatch[1] : null,
-    cond: condMatch ? stripTags(condMatch[1]) : null,
+    cond: cond || null,
   };
 }
 
 function extractCardLayout(block) {
-  if (/Shop on eBay/i.test(block)) return null;
+  // Promo "Shop on eBay" placeholder cards resolve to that title and are
+  // dropped by assembleListing, so no special-casing needed here.
   return assembleListing(resolveCard(block));
 }
 
