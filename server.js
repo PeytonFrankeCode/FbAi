@@ -620,6 +620,12 @@ async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown'
     if (opts.includeDebug) {
       const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
       const canonicalMatch = html.match(/<link[^>]+rel=["']?canonical["']?[^>]+href=["']([^"']+)["']/i);
+      // Grab the first matched container block (whichever layout
+      // matches) so the frontend can show us the actual markup
+      // structure when our extractor returns nothing.
+      let firstBlock = null;
+      const sample = splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item|su-card-container|s-item)\b[^"]*"/gi);
+      if (sample.length > 0) firstBlock = sample[0].slice(0, 3500);
       out._debug = {
         httpStatus: res.status,
         contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
@@ -636,6 +642,7 @@ async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown'
         looksLikeJson: /^\s*[{[]/.test(html),
         looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
         snippet: html.slice(0, 4000),
+        firstBlock,
         targetUrl: ebayUrl,
       };
     }
@@ -731,17 +738,33 @@ function parseEbaySoldHtml(html) {
   let m;
   while ((m = reLegacy.exec(html)) !== null) push(extractLegacySItem(m[0]));
 
-  // Layout 2: <li class="srp-results__item"> — same inner structure as
-  //   the new SRP card, but wrapped in a list.
-  const reSrpLi = /<li[^>]*class="[^"]*\bsrp-results__item\b[^"]*"[\s\S]*?<\/li>/gi;
-  while ((m = reSrpLi.exec(html)) !== null) push(extractCardLayout(m[0]));
-
-  // Layout 3: <div class="s-card ..."> (the newest card grid) — eBay's
-  //   removed list-item wrappers entirely on some search results pages.
-  const reCard = /<div[^>]*class="[^"]*\bs-card\b[^"]*"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi;
-  while ((m = reCard.exec(html)) !== null) push(extractCardLayout(m[0]));
+  // Layout 2/3: newer s-card / srp-results__item — eBay no longer
+  // wraps each card in a simple <li>...</li>. Slice between
+  // consecutive container-opening positions instead of trying to
+  // match nested </div> closers.
+  for (const block of splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item|su-card-container)\b[^"]*"/gi)) {
+    push(extractCardLayout(block));
+  }
 
   return items;
+}
+
+// Slice `html` into blocks where each block runs from the start of a
+// container match to the start of the next match (or end of document).
+// Robust against arbitrary nesting depth inside each card — we don't
+// have to guess where the closing tag is.
+function splitBlocks(html, openerRe) {
+  const starts = [];
+  let m;
+  openerRe.lastIndex = 0;
+  while ((m = openerRe.exec(html)) !== null) starts.push(m.index);
+  const blocks = [];
+  for (let i = 0; i < starts.length; i++) {
+    const s = starts[i];
+    const e = i + 1 < starts.length ? starts[i + 1] : Math.min(html.length, s + 8000);
+    blocks.push(html.slice(s, e));
+  }
+  return blocks;
 }
 
 function extractLegacySItem(block) {
