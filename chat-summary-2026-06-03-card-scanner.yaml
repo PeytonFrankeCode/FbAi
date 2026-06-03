@@ -9,6 +9,8 @@ feature_overview: >
   the user picks the correct listing from a grid of thumbnails, and sold
   price data (stats bar + full card tiles) loads automatically. Zero
   additional API cost — reuses the existing eBay Browse API OAuth token.
+  A shared scan-to-fill modal was also added to every search input across
+  the app, and scanner results gained an "Add to Collection" shortcut.
 
 iterations:
   - iteration: 1
@@ -40,12 +42,27 @@ final_implementation:
 
   frontend_html:
     file: public/index.html
+    version: app.js?v=90 / style.css?v=66
     changes:
       - Added "📷 Scan Card" subtab button in #search-subtabs
       - Added #scanner-view with 3-phase layout:
           phase_1: Upload area + preview + "Find This Card" button
           phase_2: Match grid (#scanner-matches-grid) — 6 eBay thumbnails
           phase_3: Results — stats bar + sold card tiles + "Back to matches"
+      - Added #scanner-collection-btn-wrap (hidden) between price-summary
+          and sales-list; shows "🏟 Add to Collection" once sold results load
+      - Added 📷 scan-cam-btn next to every search input:
+          - search-input (main Search form)
+          - grading-input (Grading Advisor)
+          - watchlist-input (Watchlist tab)
+          - ap-input (Auto-Pricer)
+          - bulk-input (Bulk Pricer — appends new line; labeled "📷 Scan & Add")
+          - listing-helper-input (Title Generator)
+          - autofill-search-input (Title Autofill Modal)
+      - Added #scan-fill-modal — shared overlay with 2 phases:
+          phase_1: Upload area + preview + "Find This Card" button
+          phase_2: Match grid reusing .scanner-match-card CSS;
+                   "Use This" fills target input and closes modal
 
   frontend_js:
     file: public/app.js
@@ -65,9 +82,39 @@ final_implementation:
         grades (PSA 10, BGS 9.5), and condition labels so the sold
         search returns 10-20 comps instead of 1-2
       _renderScannerSoldResults: >
+        Updated: stores _scannerLastQuery and calculates _scannerLastMedian
+        (sorted median). Stats bar now includes Median stat. Shows
+        #scanner-collection-btn-wrap when results exist; hides when empty.
         Uses existing buildCard() and .stats-bar/.stat-item HTML so
-        results look identical to the main sold search
+        results look identical to the main sold search.
+      clearScannerImage: >
+        Updated: also resets _scannerLastMedian, _scannerLastQuery,
+        and hides #scanner-collection-btn-wrap.
+      addScannerCardToCollection: >
+        Pre-fills #add-card-name with _scannerLastQuery and
+        #add-card-price with _scannerLastMedian, then calls showAddCardModal().
       switchSearchSub: Updated to handle 'scanner' subtab
+      openScanFillModal(targetId, isTextarea): >
+        Stores target input ID, resets modal state, opens #scan-fill-modal.
+        isTextarea=true means the match title is appended (new line) instead
+        of replacing the input value.
+      closeScanFillModal: Hides modal, clears _scanFillTargetId.
+      resetScanFill: Resets modal back to phase 1 (keeps modal open).
+      handleScanFillFile: Reads file via readImageFileAsDataUrl, shows preview.
+      submitScanFill: POSTs to /api/scan-card, renders _renderScanFillMatches.
+      _renderScanFillMatches: >
+        Same tile structure as _renderScannerMatches but calls selectScanFillMatch.
+      selectScanFillMatch(index): >
+        Gets title from tile data-title, broadens via _broadenCardTitle(),
+        fills the target element (appends for textarea, replaces for input),
+        dispatches 'input' event, focuses element, closes modal.
+
+    globals_added:
+      _scannerLastMedian: "null | number — median sold price from last scanner result"
+      _scannerLastQuery: "null | string — broadened query used in last scanner result"
+      _scanFillTargetId: "null | string — element ID that scan-fill modal is filling"
+      _scanFillIsTextarea: "boolean — true when target is a textarea (bulk pricer)"
+      _scanFillImageDataUrl: "null | string — current image for scan-fill modal"
 
   css:
     file: public/style.css
@@ -80,6 +127,10 @@ final_implementation:
         box-shadow, accent bar, hover lift
       scanner-match-card-img: Fixed 100px height, object-fit contain
       scanner-match-card-btn: Accent-colored "Use This Listing" button
+      scan-cam-btn: >
+        Small camera icon button placed next to search inputs.
+        bg-secondary with accent border/color on hover; flex-shrink:0
+        so it never collapses inside flex rows.
 
 ui_fixes:
   - issue: Upload area stayed visible during match/result phases
@@ -115,3 +166,4 @@ commits:
   - "Scanner match tiles now look like listing cards + broader sold search query"
   - "Shrink scanner match tiles to 3-column compact grid"
   - "Bust CSS cache — bump style.css version to v65"
+  - "Add scan-to-fill camera button on all search inputs + Add to Collection from scanner"
