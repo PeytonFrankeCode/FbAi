@@ -4689,6 +4689,13 @@ footer::before {
   padding: 2rem;
   width: 100%;
   max-width: 420px;
+  /* Cap to the viewport (minus the overlay's 1.5rem padding on each side) and
+     scroll internally. Without this the box grows past the screen when the
+     "Test Keys" result expands its diagnostic snippets, leaving the overflowed
+     content unreachable — the page appears to "freeze" because there's nothing
+     to scroll. */
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
   box-shadow: 0 20px 60px var(--shadow-modal);
   animation: fadeUp 0.4s ease;
   position: relative;
