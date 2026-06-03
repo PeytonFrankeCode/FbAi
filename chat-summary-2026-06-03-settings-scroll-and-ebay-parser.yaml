@@ -1,0 +1,174 @@
+session:
+  date: 2026-06-03
+  branch: claude/settings-scroll-freeze-test-keys-Iuayn
+  repo: peytonfrankecode/fbai
+  notes: >
+    Short, focused session that started as a Settings scroll-freeze bug
+    report and unwound into the real prize: fixing the eBay sold-listing
+    HTML parser, which had been returning 0 listings from a healthy
+    2 MB scrape.do response. Four layered issues were peeled back one at
+    a time, each surfaced by the Settings → Test Keys diagnostic. Final
+    state: parser works, user confirmed "it's working now."
+
+# ============================================================
+# IMPORTANT — USER CONSTRAINTS (carried from prior sessions)
+# ============================================================
+user_constraints:
+  no_dev_tools:
+    summary: >
+      User has no terminal, curl, DevTools, console, or local checkout.
+      They interact with the deployed site through the UI only and with
+      the codebase through Claude Code sessions.
+    do_instead:
+      - Run all commands in the Claude sandbox myself.
+      - To inspect server behavior, build a UI-visible diagnostic
+        (the Settings → Test Keys / Test All scrape.do panel).
+      - Direct network egress to eBay is blocked in the sandbox
+        (host allowlist), so live markup can't be fetched directly —
+        relied on the in-app diagnostic snippet instead.
+
+# ============================================================
+# Work in this session
+# ============================================================
+tasks:
+
+  - id: 1
+    title: Fix Settings page scroll freeze after Test Keys
+    request: >
+      Scrolling freezes on the settings page after hitting the test
+      keys button.
+    diagnosis: >
+      .settings-box had no max-height / overflow-y (unlike .modal-box
+      which uses max-height:85vh; overflow-y:auto). When the Test Keys
+      result expanded its diagnostic snippets the box grew past the
+      viewport with no scrollable region, so the overflowed content was
+      unreachable — appearing as a "freeze".
+    changes:
+      - public/style.css  # .settings-box: max-height: calc(100vh - 3rem)
+                          #   + overflow-y: auto
+    commit: 9133854
+
+  - id: 2
+    title: Add "Copy all" button to diagnostic snippets
+    request: >
+      User couldn't view/select the full "first matched card block" in
+      the diagnostic; asked for a copy-all button.
+    changes:
+      - public/app.js     # copyDiagSnippet(btn) — clipboard copy with
+                          #   execCommand fallback; Copy all button added
+                          #   to both <details> snippet blocks
+      - public/style.css  # .settings-scrapedo-snippet-bar + .copy button
+      - server.js         # debug firstBlock slice widened 3,500 → 8,000
+                          #   chars so the copied block reaches
+                          #   title/price/link
+    commit: 5ecd300
+
+  - id: 3
+    title: Parser robustness pass for nested s-card markup
+    request: >
+      Fix the API key — diagnostic showed 122 s-card found but 0
+      parsed (HTTP 200, 2 MB, correct page title). Key was fine; parser
+      was the problem.
+    changes:
+      - server.js  # stripTags() helper; rewrote card extraction to lean
+                   #   on structural signals: any /itm/ link, image alt
+                   #   as title fallback, any class-mentions-"price"
+                   #   element, tag-stripping so nested su-styled-text
+                   #   spans stop swallowing text.
+                   # Added debugFirstCard() → per-field hit/miss +
+                   #   first-card class list, surfaced in /api/debug/sold.
+      - public/app.js  # render firstCardExtract line (link/title/price/
+                       #   img ✓✗ + classes) in Test Keys result.
+    commit: dd01691
+    notes: >
+      Verified with a synthetic nested-span s-card; correct in isolation
+      but real page still returned 0 — pointed to the next two bugs.
+
+  - id: 4
+    title: Stop fragmenting cards on the inner su-card-container wrapper
+    request: >
+      Diagnostic's "first matched card block" was only the bare opening
+      <li> tag — a tell that the splitter broke mid-card.
+    diagnosis: >
+      Each s-card wraps its contents in an inner
+      <div class="su-card-container">. The block-splitter also broke on
+      su-card-container, so every card was sliced right after its opening
+      <li> tag and the title/price/link landed in a separate fragment.
+    changes:
+      - server.js  # split only on top-level card containers via shared
+                   #   CARD_CONTAINER_RE() (s-card | srp-results__item);
+                   #   su-card-container kept as a fallback splitter only.
+                   #   debug firstBlock uses the same splitter.
+    commit: 8c039fa
+    notes: >
+      Self-tested against markup with an inner su-card-container wrapper:
+      firstBlock became the full card; 2/2 listings parsed.
+
+  - id: 5
+    title: Parse eBay cards with UNQUOTED HTML attributes (the real fix)
+    request: >
+      User pasted the full first card block (via the new Copy-all path).
+    findings:
+      - First card is a "Shop on eBay" sponsored placeholder (title and
+        alt literally "Shop on eBay") — should be skipped, and is.
+      - ROOT CAUSE - the live markup uses UNQUOTED attributes on the key
+        elements - `<a class=s-card__link ... href=https://ebay.com/itm/
+        123?...>`. Every selector assumed href="..." / class="...", so
+        link (and image/title) extraction matched nothing and every card
+        was dropped by assembleListing → 122 cards, 0 listings.
+    changes:
+      - server.js  # quote-agnostic helpers:
+                   #   getAttr(block, attr, mustContain) — "..."/'...'/bare
+                   #   classInner(block, cls) — inner text of first element
+                   #     whose class contains cls, any quoting, tag-name
+                   #     backreference to close correctly
+                   #   pickImage(block) — handles unquoted src /
+                   #     data-defer-load; prefers i.ebayimg.com over the
+                   #     gray ebaystatic lazy-load placeholder
+                   # resolveCard rewritten on top of these:
+                   #   link  = first /itm/ href (any quoting)
+                   #   title = s-card__title / s-item__title → any
+                   #           role=heading → thumbnail alt
+                   #   price = price-classed element → bare $N.NN
+                   #   image = pickImage()
+                   # extractLegacySItem + extractCardLayout both route
+                   #   through resolveCard; "Shop on eBay" promo cards
+                   #   fall out via the title check in assembleListing.
+    commit: c8f918d
+    verified: >
+      Tested against the user's exact pasted promo card PLUS a realistic
+      sold card with unquoted attrs and a Sold date: promo dropped,
+      genuine listing fully parsed (title, $1,250.00 → 1250, sold date,
+      real i.ebayimg.com image, condition "Pre-Owned"). User confirmed
+      working in production.
+
+# ============================================================
+# Outcome
+# ============================================================
+outcome:
+  status: resolved
+  summary: >
+    Settings scroll freeze fixed; Test Keys diagnostic improved (copy-all
+    + per-field extraction report); eBay sold-listing parser fixed across
+    three compounding bugs (nested-span text extraction, su-card-container
+    fragmentation, and — the actual blocker — unquoted HTML attributes).
+    User confirmed sold searches are returning results again.
+  commits: [9133854, 5ecd300, dd01691, 8c039fa, c8f918d]
+  branch_pushed: claude/settings-scroll-freeze-test-keys-Iuayn
+  pr: none  # user declined; left as branch
+
+# ============================================================
+# Notes for next time
+# ============================================================
+follow_ups:
+  - The quote-agnostic helpers (getAttr / classInner / pickImage) should
+    be the template for any future eBay markup drift; the per-field
+    diagnostic (firstCardExtract) will pinpoint the next failing field
+    without pasting raw HTML.
+  - Minor risk - price selector takes the first price-classed element in a
+    card; if eBay ever shows a struck-through original price before the
+    sold price, that could grab the wrong number. Diagnostic would reveal
+    it; quick adjustment if so.
+  - Item-id extraction needs /itm/<8+ digits>; real eBay numbers (12-15
+    digits) satisfy this. Redacted examples with short ids fall back to a
+    generated sdo-… id, which is expected.
