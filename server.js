@@ -624,7 +624,7 @@ async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown'
       // matches) so the frontend can show us the actual markup
       // structure when our extractor returns nothing.
       let firstBlock = null;
-      const sample = splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item|su-card-container|s-item)\b[^"]*"/gi);
+      const sample = splitBlocks(html, CARD_CONTAINER_RE());
       if (sample.length > 0) firstBlock = sample[0].slice(0, 8000);
       out._debug = {
         httpStatus: res.status,
@@ -742,12 +742,31 @@ function parseEbaySoldHtml(html) {
   // Layout 2/3: newer s-card / srp-results__item — eBay no longer
   // wraps each card in a simple <li>...</li>. Slice between
   // consecutive container-opening positions instead of trying to
-  // match nested </div> closers.
-  for (const block of splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item|su-card-container)\b[^"]*"/gi)) {
+  // match nested </div> closers. We split ONLY on the top-level card
+  // containers (s-card / srp-results__item); the inner
+  // `su-card-container` wrapper appears once *inside* every card, so
+  // splitting on it would fragment each card right after its opening
+  // tag and strip away the title/price/link.
+  for (const block of splitBlocks(html, CARD_CONTAINER_RE())) {
     push(extractCardLayout(block));
   }
 
+  // Fallback for older A/B variants that wrap each result directly in
+  // <div class="su-card-container"> with no enclosing s-card. Only try
+  // this if the primary split produced nothing.
+  if (items.length === 0) {
+    for (const block of splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\bsu-card-container\b[^"]*"/gi)) {
+      push(extractCardLayout(block));
+    }
+  }
+
   return items;
+}
+
+// Fresh RegExp per call — these carry the /g flag and a mutable lastIndex,
+// so sharing one instance across splitBlocks calls would skip matches.
+function CARD_CONTAINER_RE() {
+  return /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item)\b[^"]*"/gi;
 }
 
 // Slice `html` into blocks where each block runs from the start of a
