@@ -276,6 +276,7 @@
     <div class="page-subtabs-inner">
       <button class="page-subtab active" data-search-sub="search" onclick="switchSearchSub('search')">Search</button>
       <button class="page-subtab" data-search-sub="grading" onclick="switchSearchSub('grading')">Grading Advisor</button>
+      <button class="page-subtab" data-search-sub="scanner" onclick="switchSearchSub('scanner')">&#128247; Scan Card</button>
     </div>
   </div>
 
@@ -606,6 +607,80 @@
           </table>
         </div>
         <p class="grading-disclaimer">Based on recent eBay sold listings. Grading costs vary — PSA Economy ~$25, Express ~$50. Results are estimates only.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Scanner View -->
+  <div id="scanner-view" class="collection-view hidden">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">&#128247; Card Scanner</h2>
+        <p class="collection-subtitle">Take or upload a card photo — we'll read the text and find recent sold prices</p>
+      </div>
+
+      <!-- Phase 1: Upload -->
+      <div id="scanner-phase-upload">
+        <div class="scanner-upload-area">
+          <label for="scanner-file-input" class="scanner-upload-label">
+            <div class="scanner-upload-icon">&#128247;</div>
+            <div class="scanner-upload-text">
+              <strong>Choose a photo or take one</strong>
+              <span>Tap to browse &nbsp;&bull;&nbsp; JPG, PNG, WEBP &nbsp;&bull;&nbsp; Max 8MB</span>
+            </div>
+            <input
+              type="file"
+              id="scanner-file-input"
+              accept="image/*"
+              capture="environment"
+              style="display:none"
+              onchange="handleScannerFile(event)"
+            />
+          </label>
+        </div>
+
+        <div id="scanner-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
+          <img id="scanner-preview" src="" alt="Card preview" style="max-height:260px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button class="grading-submit-btn" onclick="runCardOcr()">&#128270; Read Card Text</button>
+            <button class="btn-secondary" onclick="clearScannerImage()">&#10005; Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OCR progress -->
+      <div id="scanner-ocr-progress" class="hidden" style="margin:1rem 0">
+        <div class="scanner-progress-label" id="scanner-ocr-status">Reading card text&hellip;</div>
+        <div class="scanner-progress-bar-wrap">
+          <div class="scanner-progress-bar" id="scanner-ocr-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div id="scanner-error" class="error-message hidden"></div>
+
+      <!-- Phase 2: Review query + search -->
+      <div id="scanner-phase-query" class="hidden">
+        <p class="grading-hint" style="margin-bottom:0.5rem">Text read from card — edit if needed, then search:</p>
+        <div class="grading-input-row" style="margin-bottom:0.75rem">
+          <div class="search-input-wrap" style="flex:1">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="scanner-query-input" placeholder="e.g. 2020 Prizm Silver Patrick Mahomes" autocomplete="off" />
+          </div>
+          <button class="grading-submit-btn" onclick="searchScannedCard()">Search Sold Prices</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
+          <button class="btn-secondary" onclick="resetScannerToUpload()">&#8592; Re-scan</button>
+        </div>
+      </div>
+
+      <!-- Phase 3: Results -->
+      <div id="scanner-results" class="hidden">
+        <div id="scanner-loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Fetching sold prices&hellip;</span>
+        </div>
+        <div id="scanner-price-summary" class="scanner-price-summary"></div>
+        <div id="scanner-sales-list" class="scanner-sales-list"></div>
       </div>
     </div>
   </div>
@@ -1234,6 +1309,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=84"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="app.js?v=85"></script>
 </body>
 </html>
