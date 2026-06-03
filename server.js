@@ -643,6 +643,7 @@ async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown'
         looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
         snippet: html.slice(0, 4000),
         firstBlock,
+        firstCardExtract: debugFirstCard(firstBlock),
         targetUrl: ebayUrl,
       };
     }
@@ -767,61 +768,130 @@ function splitBlocks(html, openerRe) {
   return blocks;
 }
 
+// Strip tags from a captured HTML fragment and return clean text. eBay's
+// newer cards nest the real text one or two <span>s deep, so a naive
+// `>([^<]+)` capture grabs an empty string — pull the fragment and flatten it.
+function stripTags(s) {
+  if (s == null) return '';
+  return decodeHtmlEntities(String(s).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
 function extractLegacySItem(block) {
   if (/s-item--placeholder/i.test(block)) return null;
   if (/Shop on eBay/i.test(block) && !/s-item__price/i.test(block)) return null;
   const linkMatch = block.match(/<a[^>]*class="[^"]*s-item__link[^"]*"[^>]*href="([^"]+)"/i);
   const titleMatch =
-    block.match(/<span[^>]*role="heading"[^>]*>([^<]+)<\/span>/i) ||
-    block.match(/<div[^>]*class="[^"]*s-item__title[^"]*"[^>]*>(?:<span[^>]*>)?([^<]+)/i);
-  const priceMatch = block.match(/<span[^>]*class="[^"]*s-item__price[^"]*"[^>]*>([^<]+)/i);
+    block.match(/<span[^>]*role="heading"[^>]*>([\s\S]*?)<\/span>/i) ||
+    block.match(/<div[^>]*class="[^"]*s-item__title[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+  const priceMatch = block.match(/<span[^>]*class="[^"]*s-item__price[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
   const imgMatch =
     block.match(/<img[^>]*class="[^"]*s-item__image-img[^"]*"[^>]*src="([^"]+)"/i) ||
     block.match(/<img[^>]*src="([^"]+)"[^>]*class="[^"]*s-item__image[^"]*"/i);
   const dateMatch =
     block.match(/class="[^"]*s-item__caption[^"]*"[^>]*>\s*(?:<span[^>]*>)?[^<]*Sold\s+([^<]+)/i) ||
     block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
-  const condMatch = block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([^<]+)/i);
-  return assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatch, condMatch });
+  const condMatch = block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([\s\S]*?)<\//i);
+  return assembleListing({
+    link: linkMatch ? linkMatch[1] : null,
+    title: titleMatch ? stripTags(titleMatch[1]) : '',
+    priceStr: priceMatch ? stripTags(priceMatch[1]) : '',
+    img: imgMatch ? imgMatch[1] : null,
+    date: dateMatch ? dateMatch[1] : null,
+    cond: condMatch ? stripTags(condMatch[1]) : null,
+  });
 }
 
-// eBay's newer card layouts (srp-results__item / s-card) — class names are
-// shorter and the title moved from <span role="heading"> to <div class="s-card__title">.
-function extractCardLayout(block) {
-  if (/Shop on eBay/i.test(block)) return null;
-  const linkMatch = block.match(/<a[^>]*class="[^"]*(?:s-card__link|su-link)[^"]*"[^>]*href="([^"]+)"/i)
-    || block.match(/<a[^>]+href="(https?:\/\/www\.ebay\.com\/itm[^"]+)"/i);
-  const titleMatch =
-    block.match(/<span[^>]*role="heading"[^>]*>([^<]+)<\/span>/i) ||
-    block.match(/<div[^>]*class="[^"]*s-card__title[^"]*"[^>]*>(?:<span[^>]*>)?([^<]+)/i) ||
-    block.match(/<span[^>]*class="[^"]*su-styled-text[^"]*primary[^"]*"[^>]*>([^<]+)<\/span>/i);
-  const priceMatch =
-    block.match(/<span[^>]*class="[^"]*s-card__price[^"]*"[^>]*>([^<]+)/i) ||
-    block.match(/<span[^>]*class="[^"]*textual-display\b[^"]*"[^>]*>(\$[\d,.]+[^<]*)<\/span>/i);
+// eBay's newer card layouts (srp-results__item / s-card). Class names keep
+// shifting and the title/price text is nested inside generic
+// `su-styled-text` spans, so we lean on structural signals (any /itm/ link,
+// the image alt, any element whose class mentions "price") rather than exact
+// hooks. resolveCard() does the field extraction; extractCardLayout() turns
+// it into a listing.
+function resolveCard(block) {
+  // Link: explicit hooks first, then any eBay /itm/<id> anchor.
+  const linkMatch =
+    block.match(/<a[^>]*class="[^"]*(?:s-card__link|su-link)[^"]*"[^>]*href="([^"]+)"/i) ||
+    block.match(/<a[^>]+href="([^"]*\/itm\/[^"]+)"/i);
+
+  // Title: known hooks, else the heading span, else the image alt text
+  // (eBay mirrors the full listing title into the thumbnail's alt).
+  let title = '';
+  const titleHook =
+    block.match(/<[^>]*class="[^"]*s-card__title[^"]*"[^>]*>([\s\S]*?)<\/[a-zA-Z]+>/i) ||
+    block.match(/<span[^>]*role="heading"[^>]*>([\s\S]*?)<\/span>/i) ||
+    block.match(/<a[^>]*(?:s-card__link|su-link)[^>]*>([\s\S]*?)<\/a>/i);
+  if (titleHook) title = stripTags(titleHook[1]);
+  if (!title) {
+    const alt = block.match(/<img[^>]*\balt="([^"]+)"/i);
+    if (alt) title = decodeHtmlEntities(alt[1]).trim();
+  }
+
+  // Price: an element whose class mentions "price", else the first
+  // dollar-and-cents value anywhere in the card.
+  let priceStr = '';
+  const priceHook = block.match(/<[^>]*class="[^"]*price[^"]*"[^>]*>([\s\S]*?)<\/[a-zA-Z]+>/i);
+  if (priceHook) priceStr = stripTags(priceHook[1]);
+  if (!/\d/.test(priceStr)) {
+    const dollar = block.match(/\$\s?[\d,]+\.\d{2}/);
+    if (dollar) priceStr = dollar[0];
+  }
+
   const imgMatch =
     block.match(/<img[^>]*class="[^"]*s-card__image[^"]*"[^>]*src="([^"]+)"/i) ||
     block.match(/<img[^>]*src="(https:\/\/i\.ebayimg\.com\/[^"]+)"/i);
-  const dateMatch =
-    block.match(/class="[^"]*s-card__caption[^"]*"[^>]*>[\s\S]{0,40}?Sold\s+([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i) ||
-    block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
+  const dateMatch = block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
   const condMatch =
-    block.match(/class="[^"]*s-card__subtitle[^"]*"[^>]*>([^<]+)/i) ||
-    block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([^<]+)/i);
-  return assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatch, condMatch });
+    block.match(/<[^>]*class="[^"]*s-card__subtitle[^"]*"[^>]*>([\s\S]*?)<\/[a-zA-Z]+>/i) ||
+    block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([\s\S]*?)<\//i);
+
+  return {
+    link: linkMatch ? linkMatch[1] : null,
+    title,
+    priceStr,
+    img: imgMatch ? imgMatch[1] : null,
+    date: dateMatch ? dateMatch[1] : null,
+    cond: condMatch ? stripTags(condMatch[1]) : null,
+  };
 }
 
-function assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatch, condMatch }) {
-  if (!titleMatch || !priceMatch || !linkMatch) return null;
-  const title = decodeHtmlEntities(titleMatch[1]).trim();
+function extractCardLayout(block) {
+  if (/Shop on eBay/i.test(block)) return null;
+  return assembleListing(resolveCard(block));
+}
+
+// Compact per-field report for the FIRST matched card, surfaced in the debug
+// endpoint so we can see exactly which field extraction fails (and on what
+// markup) without pasting the whole multi-KB block.
+function debugFirstCard(block) {
+  if (!block) return null;
+  const r = resolveCard(block);
+  const classes = (block.match(/class="([^"]*)"/gi) || [])
+    .map(c => c.replace(/^class="/i, '').replace(/"$/, ''))
+    .join(' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  const uniqClasses = [...new Set(classes)].slice(0, 40);
+  return {
+    link: r.link ? r.link.slice(0, 120) : null,
+    title: r.title ? r.title.slice(0, 120) : null,
+    price: r.priceStr || null,
+    hasImg: !!r.img,
+    soldDate: r.date || null,
+    classes: uniqClasses,
+  };
+}
+
+function assembleListing({ link, title, priceStr, img, date, cond }) {
+  if (!title || !priceStr || !link) return null;
+  title = decodeHtmlEntities(title).trim();
   if (!title || /shop on ebay/i.test(title)) return null;
-  const priceStr = decodeHtmlEntities(priceMatch[1]).trim();
-  const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
+  const price = parseFloat(String(priceStr).replace(/[^0-9.]/g, '')) || 0;
   if (!price) return null;
-  const itemUrl = linkMatch[1].split('?')[0];
+  const itemUrl = link.split('?')[0];
   const itemIdMatch = itemUrl.match(/\/itm\/(?:[^/]+\/)?(\d{8,})/);
   let soldDate = '';
-  if (dateMatch) {
-    const raw = dateMatch[1].trim();
+  if (date) {
+    const raw = String(date).trim();
     const parsed = new Date(raw);
     soldDate = isNaN(parsed.getTime()) ? raw : parsed.toISOString();
   }
@@ -831,9 +901,9 @@ function assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatc
     price: String(price),
     currency: 'USD',
     soldDate,
-    imageUrl: imgMatch ? imgMatch[1] : null,
+    imageUrl: img || null,
     itemUrl,
-    condition: condMatch ? decodeHtmlEntities(condMatch[1]).trim() : 'Unknown',
+    condition: cond ? decodeHtmlEntities(cond).trim() : 'Unknown',
   };
 }
 
