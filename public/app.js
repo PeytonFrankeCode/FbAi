@@ -3441,9 +3441,9 @@ async function handleScannerFile(e) {
   if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
   if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
   try {
-    // 800px max — enough for eBay image search, keeps payload small
     _scannerImageDataUrl = await readImageFileAsDataUrl(file, 800, 0.85);
     document.getElementById('scanner-preview').src = _scannerImageDataUrl;
+    document.getElementById('scanner-phase-upload').classList.remove('hidden');
     document.getElementById('scanner-preview-wrap').classList.remove('hidden');
     document.getElementById('scanner-error').classList.add('hidden');
     document.getElementById('scanner-phase-matches').classList.add('hidden');
@@ -3456,12 +3456,12 @@ async function handleScannerFile(e) {
 function clearScannerImage() {
   _scannerImageDataUrl = null;
   document.getElementById('scanner-file-input').value = '';
+  document.getElementById('scanner-phase-upload').classList.remove('hidden');
   document.getElementById('scanner-preview-wrap').classList.add('hidden');
   document.getElementById('scanner-matching').classList.add('hidden');
   document.getElementById('scanner-error').classList.add('hidden');
   document.getElementById('scanner-phase-matches').classList.add('hidden');
   document.getElementById('scanner-results').classList.add('hidden');
-  document.getElementById('scanner-phase-upload').querySelector('.scanner-upload-area').classList.remove('hidden');
 }
 
 function showScannerMatches() {
@@ -3475,7 +3475,8 @@ async function submitCardScan() {
   const matchBtn = document.getElementById('scanner-match-btn');
   const spinner = document.getElementById('scanner-matching');
   const errEl = document.getElementById('scanner-error');
-  document.getElementById('scanner-preview-wrap').classList.add('hidden');
+
+  document.getElementById('scanner-phase-upload').classList.add('hidden');
   spinner.classList.remove('hidden');
   errEl.classList.add('hidden');
   document.getElementById('scanner-phase-matches').classList.add('hidden');
@@ -3495,14 +3496,14 @@ async function submitCardScan() {
     if (!res.ok) {
       errEl.textContent = data.error || 'Image search failed. Try a clearer photo.';
       errEl.classList.remove('hidden');
-      document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+      document.getElementById('scanner-phase-upload').classList.remove('hidden');
       return;
     }
 
     if (!data.matches || !data.matches.length) {
       errEl.textContent = 'No matching cards found. Try a clearer, straight-on photo with good lighting.';
       errEl.classList.remove('hidden');
-      document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+      document.getElementById('scanner-phase-upload').classList.remove('hidden');
       return;
     }
 
@@ -3510,7 +3511,7 @@ async function submitCardScan() {
   } catch (err) {
     spinner.classList.add('hidden');
     if (matchBtn) matchBtn.disabled = false;
-    document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+    document.getElementById('scanner-phase-upload').classList.remove('hidden');
     errEl.textContent = 'Network error. Please try again.';
     errEl.classList.remove('hidden');
   }
@@ -3535,21 +3536,23 @@ async function selectScannerMatch(index) {
   if (!tile) return;
   const title = tile.dataset.title || '';
 
-  // Highlight selection
   tiles.forEach(t => t.classList.remove('selected'));
   tile.classList.add('selected');
 
   document.getElementById('scanner-phase-matches').classList.add('hidden');
-  document.getElementById('scanner-results').classList.remove('hidden');
 
+  const resultsEl = document.getElementById('scanner-results');
   const loading = document.getElementById('scanner-loading');
   const errEl = document.getElementById('scanner-error');
   const titleEl = document.getElementById('scanner-selected-title');
-  titleEl.innerHTML = `<strong>Searching sold prices for:</strong> ${escHtml(title)}`;
+  const salesEl = document.getElementById('scanner-sales-list');
+
+  resultsEl.classList.remove('hidden');
+  titleEl.textContent = title;
   loading.classList.remove('hidden');
   errEl.classList.add('hidden');
   document.getElementById('scanner-price-summary').innerHTML = '';
-  document.getElementById('scanner-sales-list').innerHTML = '';
+  salesEl.innerHTML = '';
 
   try {
     const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(title)}&limit=20`);
@@ -3557,11 +3560,9 @@ async function selectScannerMatch(index) {
     loading.classList.add('hidden');
 
     if (!res.ok) {
-      if (data.noKey) {
-        errEl.textContent = 'Add a scrape.do API key in Settings → scrape.do API key to see sold prices.';
-      } else {
-        errEl.textContent = data.error || 'Search failed.';
-      }
+      errEl.textContent = data.noKey
+        ? 'Add a scrape.do API key in Settings → scrape.do API key to see sold prices.'
+        : (data.error || 'Search failed.');
       errEl.classList.remove('hidden');
       return;
     }
@@ -3575,44 +3576,37 @@ async function selectScannerMatch(index) {
 }
 
 function _renderScannerSoldResults(query, items) {
-  const prices = items.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
-
+  // Stats bar — same HTML structure as the main search renderStatsBar()
   const pEl = document.getElementById('scanner-price-summary');
-  if (prices.length) {
-    const mid = Math.floor(prices.length / 2);
-    const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+  if (items.length) {
+    const prices = items.map(r => parseFloat(r.price)).filter(p => p > 0);
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     pEl.innerHTML = `
-      <div class="scanner-stat"><span class="scanner-stat-label">Median Sold</span><span class="scanner-stat-value">$${median.toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label">Avg Sold</span><span class="scanner-stat-value">$${avg.toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label">Low</span><span class="scanner-stat-value">$${prices[0].toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label">High</span><span class="scanner-stat-value">$${prices[prices.length - 1].toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label"># Sales</span><span class="scanner-stat-value">${prices.length}</span></div>
-    `;
+      <div class="stats-bar">
+        <div class="stat-item"><span class="stat-label">Results</span><span class="stat-value">${items.length}</span></div>
+        <div class="stat-item"><span class="stat-label">Avg Sale</span><span class="stat-value">$${avg.toFixed(2)}</span></div>
+        <div class="stat-item"><span class="stat-label">Low</span><span class="stat-value">$${Math.min(...prices).toFixed(2)}</span></div>
+        <div class="stat-item"><span class="stat-label">High</span><span class="stat-value">$${Math.max(...prices).toFixed(2)}</span></div>
+      </div>`;
   } else {
     pEl.innerHTML = '';
   }
 
-  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
-  const sEl = document.getElementById('scanner-sales-list');
-  let html = `<p class="scanner-search-query"><a href="${escHtml(epnUrl(ebayUrl))}" target="_blank" rel="noopener noreferrer">View all on eBay &rarr;</a></p>`;
-
+  // Results cards — reuse buildCard() exactly like the main sold search
+  const salesEl = document.getElementById('scanner-sales-list');
   if (items.length) {
-    html += items.map(s => {
-      const date = s.soldDate ? new Date(s.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-      const itemUrl = s.itemUrl ? escHtml(epnUrl(s.itemUrl)) : '#';
-      return `<a class="scanner-sale-item" href="${itemUrl}" target="_blank" rel="noopener noreferrer">
-        ${s.imageUrl ? `<img class="scanner-sale-img" src="${escHtml(s.imageUrl)}" alt="" loading="lazy" />` : '<div class="scanner-sale-noimg">No img</div>'}
-        <span class="scanner-sale-title">${escHtml(s.title || '')}</span>
-        <span class="scanner-sale-price">$${parseFloat(s.price || 0).toFixed(2)}</span>
-        ${date ? `<span class="scanner-sale-date">${date}</span>` : ''}
-      </a>`;
-    }).join('');
+    const savedMode = currentMode;
+    currentMode = 'sold';
+    items.forEach((item, i) => {
+      const card = buildCard(item);
+      card.style.animationDelay = `${i * 0.04}s`;
+      salesEl.appendChild(card);
+    });
+    currentMode = savedMode;
   } else {
-    html += '<p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">No recent sold listings found for this card.</p>';
+    const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
+    salesEl.innerHTML = `<p style="color:var(--text-muted);font-size:0.9rem">No recent sold listings found. <a href="${escHtml(epnUrl(ebayUrl))}" target="_blank" rel="noopener">Search on eBay &rarr;</a></p>`;
   }
-
-  sEl.innerHTML = html;
 }
 
 // ---- Pro+ Tools ----
