@@ -288,10 +288,13 @@ async function testScrapeDoKey() {
       const detail = diagBits.length ? ' (' + diagBits.join(' · ') + ')' : '';
       const titleLine = d.title ? `<div class="settings-scrapedo-subline">page title: <em>${escHtml(d.title)}</em></div>` : '';
       const canonicalLine = d.canonical ? `<div class="settings-scrapedo-subline">canonical: <code>${escHtml(d.canonical)}</code></div>` : '';
-      const snippet = d.snippet
-        ? `<details class="settings-scrapedo-snippet"><summary>Show raw response snippet</summary><pre>${escHtml(d.snippet)}</pre></details>`
+      const blockBlock = d.firstBlock
+        ? `<details class="settings-scrapedo-snippet"><summary>Show first matched card block</summary><pre>${escHtml(d.firstBlock)}</pre></details>`
         : '';
-      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${snippet}</div>`;
+      const snippet = d.snippet
+        ? `<details class="settings-scrapedo-snippet"><summary>Show page-head snippet</summary><pre>${escHtml(d.snippet)}</pre></details>`
+        : '';
+      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${blockBlock}${snippet}</div>`;
     });
     out.innerHTML = rows.join('');
   } catch (err) {
