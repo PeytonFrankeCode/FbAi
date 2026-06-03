@@ -3368,6 +3368,7 @@ function switchView(view) {
 
   const proplusView = document.getElementById('proplus-view');
   const browseView = document.getElementById('browse-view');
+  const scannerView = document.getElementById('scanner-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -3378,6 +3379,7 @@ function switchView(view) {
   if (rainbowPage) rainbowPage.classList.add('hidden');
   if (proplusView) proplusView.classList.add('hidden');
   if (browseView) browseView.classList.add('hidden');
+  if (scannerView) scannerView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
 
   if (view === 'checklist') {
@@ -3404,19 +3406,159 @@ function switchView(view) {
 }
 
 // ---- Search top-tab subtabs ----
-// Toggles between the main search panel (mainEl) and the Grading
-// Advisor panel (gradingView). Both are siblings in the DOM, so we
-// just flip visibility here instead of moving markup around.
+// Toggles between the main search panel (mainEl), the Grading Advisor,
+// and the Card Scanner. All three are siblings in the DOM.
 function switchSearchSub(sub) {
   const tabs = document.querySelectorAll('.page-subtab[data-search-sub]');
   tabs.forEach(t => t.classList.toggle('active', t.dataset.searchSub === sub));
+  const scannerView = document.getElementById('scanner-view');
   if (sub === 'grading') {
     mainEl.classList.add('hidden');
     gradingView.classList.remove('hidden');
+    if (scannerView) scannerView.classList.add('hidden');
+  } else if (sub === 'scanner') {
+    mainEl.classList.add('hidden');
+    gradingView.classList.add('hidden');
+    if (scannerView) { scannerView.classList.remove('hidden'); initScannerView(); }
   } else {
     gradingView.classList.add('hidden');
+    if (scannerView) scannerView.classList.add('hidden');
     mainEl.classList.remove('hidden');
   }
+}
+
+// ---- Card Scanner ----
+let _scannerImageDataUrl = null;
+
+function initScannerView() {
+  const gate = document.getElementById('scanner-gate');
+  const content = document.getElementById('scanner-content');
+  if (!gate || !content) return;
+  if (!getSessionToken()) {
+    gate.classList.remove('hidden');
+    content.classList.add('hidden');
+  } else {
+    gate.classList.add('hidden');
+    content.classList.remove('hidden');
+  }
+}
+
+async function handleScannerFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+  if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB). Please use a smaller photo.'); return; }
+  try {
+    _scannerImageDataUrl = await readImageFileAsDataUrl(file, 1024, 0.85);
+    const preview = document.getElementById('scanner-preview');
+    const wrap = document.getElementById('scanner-preview-wrap');
+    preview.src = _scannerImageDataUrl;
+    wrap.classList.remove('hidden');
+    document.getElementById('scanner-results').classList.add('hidden');
+    document.getElementById('scanner-error').classList.add('hidden');
+  } catch (err) {
+    alert('Could not load image: ' + (err.message || 'Unknown error'));
+  }
+}
+
+function clearScannerImage() {
+  _scannerImageDataUrl = null;
+  document.getElementById('scanner-file-input').value = '';
+  document.getElementById('scanner-preview-wrap').classList.add('hidden');
+  document.getElementById('scanner-results').classList.add('hidden');
+  document.getElementById('scanner-error').classList.add('hidden');
+}
+
+async function submitCardScan() {
+  if (!_scannerImageDataUrl) { alert('Please select a card photo first.'); return; }
+  if (!getSessionToken()) { showLogin(); return; }
+
+  const loading = document.getElementById('scanner-loading');
+  const errEl = document.getElementById('scanner-error');
+  const results = document.getElementById('scanner-results');
+  loading.classList.remove('hidden');
+  errEl.classList.add('hidden');
+  results.classList.add('hidden');
+
+  try {
+    const res = await authFetch('/api/scan-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageData: _scannerImageDataUrl }),
+    });
+    const data = await res.json();
+    loading.classList.add('hidden');
+    if (!res.ok) { showScannerError(data.error || 'Could not identify card'); return; }
+    renderScannerResults(data);
+  } catch (err) {
+    loading.classList.add('hidden');
+    showScannerError('Network error. Please try again.');
+  }
+}
+
+function showScannerError(msg) {
+  const el = document.getElementById('scanner-error');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+function renderScannerResults(data) {
+  const { cardInfo, searchQuery, priceSummary, recentSales, soldError } = data;
+
+  // Card identification panel
+  const infoFields = [
+    { label: 'Player', value: cardInfo.player },
+    { label: 'Year', value: cardInfo.year },
+    { label: 'Brand / Set', value: cardInfo.brand },
+    { label: 'Variation', value: cardInfo.variation },
+    { label: 'Grade', value: cardInfo.grade },
+    { label: 'Card #', value: cardInfo.cardNumber },
+    { label: 'Sport', value: cardInfo.sport },
+  ].filter(f => f.value);
+
+  document.getElementById('scanner-card-info').innerHTML = infoFields.length
+    ? infoFields.map(f => `<div class="scanner-info-row"><span class="scanner-info-label">${escHtml(f.label)}</span><span class="scanner-info-value">${escHtml(String(f.value))}</span></div>`).join('')
+    : '<p style="color:var(--text-muted);font-size:0.9rem">Card details could not be fully read. Try a clearer photo.</p>';
+
+  // Price summary
+  const pEl = document.getElementById('scanner-price-summary');
+  if (priceSummary) {
+    pEl.innerHTML = `
+      <div class="scanner-stat"><span class="scanner-stat-label">Median Sold</span><span class="scanner-stat-value">$${priceSummary.median.toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">Avg Sold</span><span class="scanner-stat-value">$${priceSummary.avg.toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">Low</span><span class="scanner-stat-value">$${priceSummary.low.toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">High</span><span class="scanner-stat-value">$${priceSummary.high.toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label"># Sales</span><span class="scanner-stat-value">${priceSummary.count}</span></div>
+    `;
+  } else if (soldError) {
+    pEl.innerHTML = `<p class="pp-error" style="margin:0.5rem 0">${escHtml(soldError)}</p>`;
+  } else {
+    pEl.innerHTML = '';
+  }
+
+  // Recent sales list
+  const sEl = document.getElementById('scanner-sales-list');
+  const ebaySearchUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(searchQuery)}&LH_Sold=1&LH_Complete=1`;
+  let html = `<p class="scanner-search-query">Search: <strong>${escHtml(searchQuery)}</strong> &nbsp;&bull;&nbsp; <a href="${escHtml(epnUrl(ebaySearchUrl))}" target="_blank" rel="noopener noreferrer">View on eBay &rarr;</a></p>`;
+
+  if (recentSales && recentSales.length) {
+    html += recentSales.map(s => {
+      const date = s.soldDate ? new Date(s.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+      const itemUrl = s.itemUrl ? escHtml(epnUrl(s.itemUrl)) : '#';
+      return `
+        <a class="scanner-sale-item" href="${itemUrl}" target="_blank" rel="noopener noreferrer">
+          ${s.imageUrl ? `<img class="scanner-sale-img" src="${escHtml(s.imageUrl)}" alt="" loading="lazy" />` : '<div class="scanner-sale-noimg">No img</div>'}
+          <span class="scanner-sale-title">${escHtml(s.title || '')}</span>
+          <span class="scanner-sale-price">$${parseFloat(s.price || 0).toFixed(2)}</span>
+          ${date ? `<span class="scanner-sale-date">${date}</span>` : ''}
+        </a>`;
+    }).join('');
+  } else if (!soldError) {
+    html += '<p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">No recent sold listings found. Try searching manually.</p>';
+  }
+
+  sEl.innerHTML = html;
+  document.getElementById('scanner-results').classList.remove('hidden');
 }
 
 // ---- Pro+ Tools ----

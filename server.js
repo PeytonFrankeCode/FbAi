@@ -19,6 +19,7 @@ const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (Browse API)
 
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // ---- Sold-listings provider ----
 // Sold data now comes from scrape.do using each user's own API key (stored
@@ -3364,6 +3365,120 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
   }
 });
 
+
+// ---- Card Scanner (Pro) ----
+// Accepts a base64 card photo, uses Claude vision to identify the card,
+// then pulls recent eBay sold listings for it.
+app.post('/api/scan-card', requirePlan('pro'), async (req, res) => {
+  if (!ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'Card Scanner is not configured on this server. Add ANTHROPIC_API_KEY to the environment.' });
+  }
+
+  const { imageData } = req.body;
+  if (!imageData || typeof imageData !== 'string') {
+    return res.status(400).json({ error: 'imageData is required' });
+  }
+
+  const mediaTypeMatch = imageData.match(/^data:(image\/[\w+]+);base64,/);
+  const mediaType = mediaTypeMatch ? mediaTypeMatch[1] : 'image/jpeg';
+  const base64Data = imageData.replace(/^data:image\/[\w+]+;base64,/, '');
+
+  if (!base64Data || base64Data.length < 100) {
+    return res.status(400).json({ error: 'Invalid image data' });
+  }
+
+  try {
+    const claudeRes = await axios.post('https://api.anthropic.com/v1/messages', {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: mediaType, data: base64Data },
+          },
+          {
+            type: 'text',
+            text: `You are a sports card identification expert. Examine this card image and extract the key details needed for an eBay sold-listings search.
+
+Return ONLY a valid JSON object — no markdown, no extra text:
+{
+  "player": "full player/subject name (null if unreadable)",
+  "year": "4-digit year if visible, else null",
+  "brand": "brand or set name (e.g. Prizm, Optic, Topps Chrome, Bowman, etc.), null if unreadable",
+  "variation": "parallel or variation name (e.g. Silver, Gold, Holo, Base), null if base or unreadable",
+  "grade": "grade if card is slabbed (e.g. PSA 10, BGS 9.5, CGC 10), null if raw",
+  "cardNumber": "card number if clearly printed (e.g. #123), null if not visible",
+  "sport": "sport (Football, Basketball, Baseball, Hockey, Soccer, Other)",
+  "searchQuery": "an optimal eBay search string for finding this card sold (keep under 80 chars)"
+}`,
+          },
+        ],
+      }],
+    }, {
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+    });
+
+    let cardInfo;
+    try {
+      const raw = claudeRes.data?.content?.[0]?.text || '';
+      const match = raw.match(/\{[\s\S]*\}/);
+      cardInfo = JSON.parse(match ? match[0] : raw);
+    } catch {
+      return res.status(422).json({ error: 'Could not parse card details from photo. Try a clearer image.' });
+    }
+
+    if (!cardInfo.player && !cardInfo.searchQuery) {
+      return res.status(422).json({ error: 'Could not identify a card in this photo. Try a clearer, well-lit image.' });
+    }
+
+    const query = (cardInfo.searchQuery || [cardInfo.year, cardInfo.player, cardInfo.brand, cardInfo.variation, cardInfo.grade].filter(Boolean).join(' ')).slice(0, 100);
+
+    const scrapeDoCtx = getScrapeDoKeysForRequest(req);
+    let soldResults = [];
+    let soldError = null;
+    let priceSummary = null;
+
+    if (scrapeDoCtx.keys.length > 0) {
+      try {
+        const soldData = await fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 20, 'scan-card', scrapeDoCtx.username);
+        if (soldData.badKey) {
+          soldError = 'scrape.do key error — check your key in Settings';
+        } else {
+          soldResults = soldData.results || [];
+          const prices = soldResults.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
+          if (prices.length) {
+            const mid = Math.floor(prices.length / 2);
+            const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+            priceSummary = {
+              count: prices.length,
+              avg: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length * 100) / 100,
+              median: Math.round(median * 100) / 100,
+              low: prices[0],
+              high: prices[prices.length - 1],
+            };
+          }
+        }
+      } catch (err) {
+        soldError = 'Could not fetch sold data: ' + err.message;
+      }
+    } else {
+      soldError = 'Add a scrape.do API key in Settings → scrape.do API key to see sold prices.';
+    }
+
+    res.json({ cardInfo, searchQuery: query, priceSummary, recentSales: soldResults.slice(0, 20), soldError });
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 401 || status === 403) return res.status(503).json({ error: 'Card Scanner API key is invalid or expired.' });
+    console.error('[scan-card]', err.response?.data || err.message);
+    res.status(500).json({ error: 'Could not identify card: ' + (err.message || 'Unknown error') });
+  }
+});
 
 // ---- Feedback / Bug Reports ----
 const FEEDBACK_FILE = path.join(APP_ROOT, 'data', 'feedback.json');

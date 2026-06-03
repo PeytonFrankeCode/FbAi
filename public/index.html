@@ -276,6 +276,7 @@
     <div class="page-subtabs-inner">
       <button class="page-subtab active" data-search-sub="search" onclick="switchSearchSub('search')">Search</button>
       <button class="page-subtab" data-search-sub="grading" onclick="switchSearchSub('grading')">Grading Advisor</button>
+      <button class="page-subtab" data-search-sub="scanner" onclick="switchSearchSub('scanner')">&#128247; Scan Card</button>
     </div>
   </div>
 
@@ -606,6 +607,60 @@
           </table>
         </div>
         <p class="grading-disclaimer">Based on recent eBay sold listings. Grading costs vary — PSA Economy ~$25, Express ~$50. Results are estimates only.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Scanner View (Pro) -->
+  <div id="scanner-view" class="collection-view hidden">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">&#128247; Card Scanner <span class="pro-badge">Pro</span></h2>
+        <p class="collection-subtitle">Take or upload a photo of your card to instantly see its sold value on eBay</p>
+      </div>
+
+      <div id="scanner-gate" class="hidden">
+        <p class="pp-error">Sign in to use Card Scanner.</p>
+      </div>
+
+      <div id="scanner-content">
+        <div class="scanner-upload-area" id="scanner-drop-zone">
+          <label for="scanner-file-input" class="scanner-upload-label">
+            <div class="scanner-upload-icon">&#128247;</div>
+            <div class="scanner-upload-text">
+              <strong>Choose a photo or take one</strong>
+              <span>Tap to browse &nbsp;&bull;&nbsp; JPG, PNG, WEBP &nbsp;&bull;&nbsp; Max 8MB</span>
+            </div>
+            <input
+              type="file"
+              id="scanner-file-input"
+              accept="image/*"
+              capture="environment"
+              style="display:none"
+              onchange="handleScannerFile(event)"
+            />
+          </label>
+        </div>
+
+        <div id="scanner-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
+          <img id="scanner-preview" src="" alt="Card preview" style="max-height:280px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button class="grading-submit-btn" onclick="submitCardScan()">&#128269; Identify &amp; Price</button>
+            <button class="btn-secondary" onclick="clearScannerImage()">&#10005; Clear</button>
+          </div>
+        </div>
+
+        <div id="scanner-loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Identifying card and fetching sold prices&hellip;</span>
+        </div>
+        <div id="scanner-error" class="error-message hidden"></div>
+
+        <div id="scanner-results" class="hidden">
+          <div id="scanner-card-info" class="scanner-card-info"></div>
+          <div id="scanner-price-summary" class="scanner-price-summary"></div>
+          <div id="scanner-sales-list" class="scanner-sales-list"></div>
+        </div>
       </div>
     </div>
   </div>
