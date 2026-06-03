@@ -588,7 +588,7 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 // can combine the monthly quotas of multiple scrape.do accounts). We
 // round-robin across the user's keys and fall back to the next key when
 // scrape.do reports a quota or rate-limit failure.
-async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown') {
+async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown', opts = {}) {
   trackApiCall('scrapedo', 'ebay-sold', keywords, source);
   const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(keywords)}&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
   const scrapeUrl = `${SCRAPE_DO_BASE}/?token=${encodeURIComponent(apiKey)}&url=${encodeURIComponent(ebayUrl)}`;
@@ -597,21 +597,35 @@ async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown'
     const res = await axios.get(scrapeUrl, { timeout: 45000, responseType: 'text', transformResponse: [x => x] });
     const html = typeof res.data === 'string' ? res.data : String(res.data || '');
     const items = parseEbaySoldHtml(html);
-    console.log(`[scrape.do] parsed ${items.length} items`);
-    return { results: items.slice(0, limit), total: items.length };
+    console.log(`[scrape.do] parsed ${items.length} items (response was ${html.length} bytes)`);
+    const out = { results: items.slice(0, limit), total: items.length };
+    if (opts.includeDebug) {
+      out._debug = {
+        httpStatus: res.status,
+        contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
+        bytes: html.length,
+        sItemBlocks: (html.match(/class="[^"]*\bs-item\b[^"]*"/g) || []).length,
+        looksLikeJson: /^\s*[{[]/.test(html),
+        looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
+        snippet: html.slice(0, 1500),
+        targetUrl: ebayUrl,
+      };
+    }
+    return out;
   } catch (err) {
     const status = err.response && err.response.status;
     console.error(`[scrape.do] Error${status ? ` HTTP ${status}` : ''}: ${err.message}`);
+    const errBody = err.response && err.response.data ? String(err.response.data).slice(0, 600) : null;
     // 401/403 = bad token. 402/429 = quota or rate-limit on this key.
     // Surface both distinctly so the rotation layer can fall back instead
     // of giving up.
     if (status === 401 || status === 403) {
-      return { results: [], total: 0, error: 'scrape.do rejected your API key (HTTP ' + status + '). Update it in Settings.', badKey: true, status };
+      return { results: [], total: 0, error: 'scrape.do rejected your API key (HTTP ' + status + '). Update it in Settings.', badKey: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
     }
     if (status === 402 || status === 429) {
-      return { results: [], total: 0, error: 'scrape.do quota/rate-limit hit (HTTP ' + status + ') for this key.', quotaExceeded: true, status };
+      return { results: [], total: 0, error: 'scrape.do quota/rate-limit hit (HTTP ' + status + ') for this key.', quotaExceeded: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
     }
-    return { results: [], total: 0, error: err.message, status };
+    return { results: [], total: 0, error: err.message, status, _debug: opts.includeDebug ? { httpStatus: status || null, errBody, exception: err.message } : undefined };
   }
 }
 
@@ -1526,7 +1540,7 @@ app.get('/api/debug/sold', async (req, res) => {
   }
   try {
     const perKey = await Promise.all(targets.map(async k => {
-      const r = await fetchViaScrapeDo(q, k.key, 5, 'debug');
+      const r = await fetchViaScrapeDo(q, k.key, 5, 'debug', { includeDebug: true });
       return {
         label: k.label,
         itemCount: r.results.length,
@@ -1534,6 +1548,7 @@ app.get('/api/debug/sold', async (req, res) => {
         error: r.error || null,
         badKey: !!r.badKey,
         quotaExceeded: !!r.quotaExceeded,
+        debug: r._debug || null,
       };
     }));
     res.json({ provider: 'scrape.do', query: q, perKey });
