@@ -288,13 +288,23 @@ async function testScrapeDoKey() {
       const detail = diagBits.length ? ' (' + diagBits.join(' · ') + ')' : '';
       const titleLine = d.title ? `<div class="settings-scrapedo-subline">page title: <em>${escHtml(d.title)}</em></div>` : '';
       const canonicalLine = d.canonical ? `<div class="settings-scrapedo-subline">canonical: <code>${escHtml(d.canonical)}</code></div>` : '';
+      const fc = d.firstCardExtract;
+      const extractLine = fc
+        ? `<div class="settings-scrapedo-subline">first card &mdash; `
+          + `link: ${fc.link ? '✓' : '✗'} · title: ${fc.title ? '✓ <em>' + escHtml(fc.title) + '</em>' : '✗'} · `
+          + `price: ${fc.price ? '✓ <code>' + escHtml(fc.price) + '</code>' : '✗'} · img: ${fc.hasImg ? '✓' : '✗'}`
+          + (Array.isArray(fc.classes) && fc.classes.length
+              ? `<br>classes: <code>${escHtml(fc.classes.join(' '))}</code>`
+              : '')
+          + `</div>`
+        : '';
       const blockBlock = d.firstBlock
         ? `<details class="settings-scrapedo-snippet"><summary>Show first matched card block</summary><div class="settings-scrapedo-snippet-bar"><button type="button" class="settings-scrapedo-copy" onclick="copyDiagSnippet(this)">Copy all</button></div><pre>${escHtml(d.firstBlock)}</pre></details>`
         : '';
       const snippet = d.snippet
         ? `<details class="settings-scrapedo-snippet"><summary>Show page-head snippet</summary><div class="settings-scrapedo-snippet-bar"><button type="button" class="settings-scrapedo-copy" onclick="copyDiagSnippet(this)">Copy all</button></div><pre>${escHtml(d.snippet)}</pre></details>`
         : '';
-      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${blockBlock}${snippet}</div>`;
+      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${extractLine}${blockBlock}${snippet}</div>`;
     });
     out.innerHTML = rows.join('');
   } catch (err) {
