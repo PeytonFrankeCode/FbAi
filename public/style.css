@@ -1992,6 +1992,67 @@ main {
   border-color: var(--accent-border);
 }
 
+/* ---- Grade Filter (sold searches) ---- */
+.grade-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.grade-filter-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.grade-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.grade-filter-btn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.grade-filter-btn.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+.grade-filter-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-radius: 999px;
+  padding: 0.02rem 0.4rem;
+  line-height: 1.5;
+}
+
+.grade-filter-btn.active .grade-filter-count {
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.12);
+}
+
 /* ---- For Sale Badge ---- */
 .for-sale-badge {
   position: absolute;

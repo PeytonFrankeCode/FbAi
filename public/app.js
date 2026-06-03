@@ -1103,6 +1103,7 @@ let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
 let currentMode = 'sold'; // 'forsale' or 'sold'
 let currentResults = []; // store results for sorting
+let currentGradeFilter = 'all'; // 'all' or a grade label from detectGrade()
 
 // ---- Recent Searches (localStorage) ----
 const MAX_RECENT = 6;
@@ -1224,9 +1225,10 @@ document.querySelectorAll('.sort-btn').forEach(sortBtn => {
 });
 
 function applySortToResults(sortType) {
-  if (!currentResults.length) return;
+  const base = getGradeFilteredResults();
+  if (!base.length) return;
 
-  let sorted = [...currentResults];
+  let sorted = [...base];
   switch (sortType) {
     case 'price-low':
       sorted.sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
@@ -1238,7 +1240,7 @@ function applySortToResults(sortType) {
       sorted.sort((a, b) => new Date(b.soldDate || 0) - new Date(a.soldDate || 0));
       break;
     default: // 'default' — keep original order
-      sorted = [...currentResults];
+      sorted = [...base];
   }
 
   // Re-render cards only (keep stats bar)
@@ -1574,6 +1576,7 @@ async function fetchDirectSearch(query) {
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
   sortControls.classList.add('hidden');
+  resetGradeFilter();
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
   grid.innerHTML = '';
@@ -1676,7 +1679,7 @@ async function fetchDirectSearch(query) {
         }
       }
       injectPromotedCards(grid);
-      if (isSold) updatePriceChart(results);
+      if (isSold) { updatePriceChart(results); buildGradeFilter(); }
     }
 
     backBtn.classList.remove('hidden');
@@ -1816,6 +1819,7 @@ async function performSearch(query) {
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
   document.getElementById('grade-panel').classList.add('hidden');
+  resetGradeFilter();
   currentResults = [];
   if (priceChart) {
     priceChart.destroy();
@@ -1947,6 +1951,7 @@ async function performSearch(query) {
       if (isSold) {
         updatePriceChart(results);
         loadGradePanel(query);
+        buildGradeFilter();
       }
 
       // Also show similar cards below if serial search returned both
@@ -2223,6 +2228,67 @@ function renderGradeGroups(grid, results) {
   }
 
   updateLoadMoreButton(grid);
+}
+
+// ---- Grade Filter (sold searches) ----
+// Lets the user narrow the value stats, chart and card list to a single
+// grade (e.g. PSA 10) so the numbers reflect that grade only.
+function getGradeFilteredResults() {
+  if (currentGradeFilter === 'all') return currentResults;
+  return currentResults.filter(r => detectGrade(r.title) === currentGradeFilter);
+}
+
+function resetGradeFilter() {
+  currentGradeFilter = 'all';
+  const wrap = document.getElementById('grade-filter');
+  if (wrap) { wrap.innerHTML = ''; wrap.classList.add('hidden'); }
+}
+
+function buildGradeFilter() {
+  currentGradeFilter = 'all';
+  const wrap = document.getElementById('grade-filter');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  // Only meaningful for sold results that actually span multiple grades.
+  const groups = currentMode === 'sold' ? groupByGrade(currentResults) : [];
+  if (groups.length < 2) { wrap.classList.add('hidden'); return; }
+
+  const label = document.createElement('span');
+  label.className = 'grade-filter-label';
+  label.textContent = 'Grade:';
+  wrap.appendChild(label);
+
+  const addBtn = (grade, count, text) => {
+    const btn = document.createElement('button');
+    btn.className = 'grade-filter-btn' + (currentGradeFilter === grade ? ' active' : '');
+    btn.dataset.grade = grade;
+    btn.innerHTML = `${escHtml(text)} <span class="grade-filter-count">${count}</span>`;
+    btn.addEventListener('click', () => applyGradeFilter(grade));
+    wrap.appendChild(btn);
+  };
+  addBtn('all', currentResults.length, 'All');
+  for (const g of groups) addBtn(g.grade, g.items.length, g.grade);
+
+  wrap.classList.remove('hidden');
+}
+
+function applyGradeFilter(grade) {
+  currentGradeFilter = grade;
+  document.querySelectorAll('#grade-filter .grade-filter-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.grade === grade));
+
+  const filtered = getGradeFilteredResults();
+
+  // Re-render the value stats and card list for the selected grade,
+  // honoring whichever sort is currently active.
+  grid.innerHTML = '';
+  if (filtered.length > 0) renderStatsBar(filtered, true);
+  const sortType = document.querySelector('.sort-btn.active')?.dataset.sort || 'default';
+  applySortToResults(sortType);
+
+  // Re-render the price chart from the filtered sales only.
+  updatePriceChart(filtered);
 }
 
 function updateLoadMoreButton(grid) {
