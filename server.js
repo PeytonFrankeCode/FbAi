@@ -3365,6 +3365,63 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
 });
 
 
+// ---- Card Scanner — eBay image search ----
+// POSTs a base64 card photo to eBay's visual search endpoint and returns
+// the top matching listings. Uses the existing Browse API OAuth token —
+// no extra cost or API key needed.
+app.post('/api/scan-card', async (req, res) => {
+  const { imageData } = req.body;
+  if (!imageData || typeof imageData !== 'string') {
+    return res.status(400).json({ error: 'imageData required' });
+  }
+  const base64 = imageData.replace(/^data:image\/[\w+]+;base64,/, '');
+  if (!base64 || base64.length < 100) {
+    return res.status(400).json({ error: 'Invalid image data' });
+  }
+
+  if (USE_MOCK_FORSALE) {
+    return res.json({
+      matches: [
+        { title: '2020 Panini Prizm Patrick Mahomes Silver #269', imageUrl: null, itemUrl: '#' },
+        { title: '2020 Panini Prizm Patrick Mahomes Base #269', imageUrl: null, itemUrl: '#' },
+        { title: '2020 Panini Prizm Patrick Mahomes Gold #269 /10', imageUrl: null, itemUrl: '#' },
+      ],
+    });
+  }
+
+  try {
+    const token = await getOAuthToken();
+    const ebayRes = await axios.post(
+      'https://api.ebay.com/buy/browse/v1/item_summary/search_by_image',
+      { image: base64 },
+      {
+        params: { category_ids: '261328', limit: 6 },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+          'Content-Type': 'application/json',
+        },
+        timeout: 20000,
+      }
+    );
+
+    const items = ebayRes.data?.itemSummaries || [];
+    const matches = items.slice(0, 6).map(item => ({
+      title: item.title || '',
+      imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
+      itemUrl: item.itemWebUrl || null,
+    }));
+
+    res.json({ matches });
+  } catch (err) {
+    const status = err.response?.status;
+    const ebayMsg = err.response?.data?.errors?.[0]?.message;
+    console.error('[scan-card]', ebayMsg || err.message);
+    if (status === 401 || status === 403) return res.status(503).json({ error: 'eBay API not configured or token expired.' });
+    res.status(500).json({ error: ebayMsg || 'Image search failed. Try a clearer photo.' });
+  }
+});
+
 // ---- Feedback / Bug Reports ----
 const FEEDBACK_FILE = path.join(APP_ROOT, 'data', 'feedback.json');
 
