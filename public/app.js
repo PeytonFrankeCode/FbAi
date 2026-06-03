@@ -3641,11 +3641,18 @@ function _renderScannerSoldResults(query, items) {
   }
 }
 
+// Sold value (median of recent sold listings) captured from the last
+// scanner result, carried into handleAddCard so it can be stored on the
+// card as a distinct "Sold Value" alongside Paid and Mkt Value.
+let _pendingScannedSoldValue = null;
+
 function addScannerCardToCollection() {
   const name = _scannerLastQuery || '';
-  const price = _scannerLastMedian != null ? _scannerLastMedian.toFixed(2) : '';
+  _pendingScannedSoldValue = _scannerLastMedian != null ? _scannerLastMedian : null;
   document.getElementById('add-card-name').value = name;
-  document.getElementById('add-card-price').value = price;
+  // Leave Purchase price blank so the user enters what they actually paid —
+  // the scanned sold value is tracked separately as its own column.
+  document.getElementById('add-card-price').value = '';
   document.getElementById('add-card-condition').value = '';
   document.getElementById('add-card-notes').value = '';
   showAddCardModal();
@@ -4987,14 +4994,17 @@ function renderPortfolio() {
       const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
       const glClass = gl >= 0 ? 'gain' : 'loss';
       const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
+      const sold = c.soldValue != null ? Number(c.soldValue) : null;
+      const scannedTag = c.scanned ? '<span class="portfolio-scanned-tag">&#128247; Scanned</span>' : '';
       return `
         <div class="portfolio-card-item">
           <div class="portfolio-card-info">
-            <div class="portfolio-card-name">${escHtml(c.name)}</div>
+            <div class="portfolio-card-name">${scannedTag}${escHtml(c.name)}</div>
             <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
           </div>
           <div class="portfolio-card-prices">
             <span class="portfolio-card-cost">Paid: $${paid.toFixed(2)}</span>
+            ${sold != null ? `<span class="portfolio-card-sold">Sold: $${sold.toFixed(2)}</span>` : ''}
             ${mkt > 0 ? `<span class="portfolio-card-cost"> Mkt: $${mkt.toFixed(2)}</span>` : ''}
             ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
             ${roi !== null ? `<span class="portfolio-roi-inline ${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}% ROI</span>` : ''}
@@ -5012,6 +5022,7 @@ function showAddCardModal() {
 }
 function closeAddCardModal() {
   document.getElementById('add-card-modal').classList.add('hidden');
+  _pendingScannedSoldValue = null;
 }
 
 function handleAddCard(e) {
@@ -5024,8 +5035,19 @@ function handleAddCard(e) {
 
   const coll = getCollection();
   if (!checkCapLimit(coll.length, FREE_LIMITS.collection, 'cards in your collection')) return false;
-  coll.push({ name, purchasePrice: price, estValue: price, condition, notes, addedAt: new Date().toISOString() });
+  const card = { name, purchasePrice: price, condition, notes, addedAt: new Date().toISOString() };
+  if (_pendingScannedSoldValue != null) {
+    // Camera-scanned card: record the sold value as its own field and seed
+    // the market value with it, so the portfolio shows Paid / Sold / Mkt.
+    card.scanned = true;
+    card.soldValue = _pendingScannedSoldValue;
+    card.estValue = _pendingScannedSoldValue;
+  } else {
+    card.estValue = price;
+  }
+  coll.push(card);
   saveCollection(coll);
+  _pendingScannedSoldValue = null;
   closeAddCardModal();
   document.getElementById('add-card-form').reset();
   renderPortfolio();
