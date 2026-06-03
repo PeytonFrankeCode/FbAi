@@ -3428,25 +3428,25 @@ function switchSearchSub(sub) {
 }
 
 // ---- Card Scanner ----
-// OCR runs entirely client-side via Tesseract.js (no API cost).
-// After OCR the user reviews/edits the extracted query before searching.
+// Sends the card photo to eBay's visual search API, shows the top matching
+// listings, then loads sold prices when the user picks the right one.
+// Uses the existing Browse API OAuth token — zero extra cost.
 let _scannerImageDataUrl = null;
 
-function initScannerView() {
-  // Nothing to gate — no server-side API key needed
-}
+function initScannerView() { /* no gate needed */ }
 
 async function handleScannerFile(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
-  if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB). Please use a smaller photo.'); return; }
+  if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
   try {
-    _scannerImageDataUrl = await readImageFileAsDataUrl(file, 1200, 0.88);
+    // 800px max — enough for eBay image search, keeps payload small
+    _scannerImageDataUrl = await readImageFileAsDataUrl(file, 800, 0.85);
     document.getElementById('scanner-preview').src = _scannerImageDataUrl;
     document.getElementById('scanner-preview-wrap').classList.remove('hidden');
     document.getElementById('scanner-error').classList.add('hidden');
-    document.getElementById('scanner-phase-query').classList.add('hidden');
+    document.getElementById('scanner-phase-matches').classList.add('hidden');
     document.getElementById('scanner-results').classList.add('hidden');
   } catch (err) {
     alert('Could not load image: ' + (err.message || 'Unknown error'));
@@ -3457,132 +3457,102 @@ function clearScannerImage() {
   _scannerImageDataUrl = null;
   document.getElementById('scanner-file-input').value = '';
   document.getElementById('scanner-preview-wrap').classList.add('hidden');
-  document.getElementById('scanner-ocr-progress').classList.add('hidden');
+  document.getElementById('scanner-matching').classList.add('hidden');
   document.getElementById('scanner-error').classList.add('hidden');
-  document.getElementById('scanner-phase-query').classList.add('hidden');
+  document.getElementById('scanner-phase-matches').classList.add('hidden');
   document.getElementById('scanner-results').classList.add('hidden');
+  document.getElementById('scanner-phase-upload').querySelector('.scanner-upload-area').classList.remove('hidden');
 }
 
-function resetScannerToUpload() {
-  document.getElementById('scanner-phase-query').classList.add('hidden');
+function showScannerMatches() {
   document.getElementById('scanner-results').classList.add('hidden');
-  document.getElementById('scanner-error').classList.add('hidden');
-  document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+  document.getElementById('scanner-phase-matches').classList.remove('hidden');
 }
 
-function _setScannerOcrStatus(msg, pct) {
-  const label = document.getElementById('scanner-ocr-status');
-  const bar = document.getElementById('scanner-ocr-bar');
-  if (label) label.textContent = msg;
-  if (bar) bar.style.width = Math.round(pct) + '%';
-}
-
-async function runCardOcr() {
+async function submitCardScan() {
   if (!_scannerImageDataUrl) { alert('Please select a card photo first.'); return; }
 
-  const progressWrap = document.getElementById('scanner-ocr-progress');
+  const matchBtn = document.getElementById('scanner-match-btn');
+  const spinner = document.getElementById('scanner-matching');
   const errEl = document.getElementById('scanner-error');
   document.getElementById('scanner-preview-wrap').classList.add('hidden');
-  progressWrap.classList.remove('hidden');
+  spinner.classList.remove('hidden');
   errEl.classList.add('hidden');
-  document.getElementById('scanner-phase-query').classList.add('hidden');
+  document.getElementById('scanner-phase-matches').classList.add('hidden');
   document.getElementById('scanner-results').classList.add('hidden');
-  _setScannerOcrStatus('Starting OCR engine…', 2);
-
-  const STATUS_MAP = {
-    'loading tesseract core': 'Loading OCR engine…',
-    'initializing tesseract': 'Initializing…',
-    'loading language traineddata': 'Downloading language model (first time only)…',
-    'loaded language traineddata': 'Language model ready',
-    'initializing api': 'Starting…',
-    'recognizing text': 'Reading card text…',
-  };
+  if (matchBtn) matchBtn.disabled = true;
 
   try {
-    const result = await Tesseract.recognize(_scannerImageDataUrl, 'eng', {
-      logger: m => {
-        const label = STATUS_MAP[m.status] || m.status;
-        const pct = m.status === 'recognizing text' ? 10 + m.progress * 88 : (m.progress || 0) * 10;
-        _setScannerOcrStatus(label, pct);
-      },
+    const res = await fetch('/api/scan-card', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageData: _scannerImageDataUrl }),
     });
+    const data = await res.json();
+    spinner.classList.add('hidden');
+    if (matchBtn) matchBtn.disabled = false;
 
-    progressWrap.classList.add('hidden');
-    const rawText = result.data.text || '';
-    const query = _buildQueryFromOcr(rawText);
-
-    if (!query) {
-      errEl.textContent = 'Could not read any text from this photo. Try a clearer, well-lit image.';
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Image search failed. Try a clearer photo.';
       errEl.classList.remove('hidden');
       document.getElementById('scanner-preview-wrap').classList.remove('hidden');
       return;
     }
 
-    document.getElementById('scanner-query-input').value = query;
-    document.getElementById('scanner-phase-query').classList.remove('hidden');
+    if (!data.matches || !data.matches.length) {
+      errEl.textContent = 'No matching cards found. Try a clearer, straight-on photo with good lighting.';
+      errEl.classList.remove('hidden');
+      document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+      return;
+    }
+
+    _renderScannerMatches(data.matches);
   } catch (err) {
-    progressWrap.classList.add('hidden');
+    spinner.classList.add('hidden');
+    if (matchBtn) matchBtn.disabled = false;
     document.getElementById('scanner-preview-wrap').classList.remove('hidden');
-    errEl.textContent = 'OCR failed: ' + (err.message || 'Unknown error');
+    errEl.textContent = 'Network error. Please try again.';
     errEl.classList.remove('hidden');
   }
 }
 
-function _buildQueryFromOcr(rawText) {
-  // Clean and split into lines, dropping very short or symbol-only lines
-  const lines = rawText
-    .split('\n')
-    .map(l => l.replace(/[^A-Za-z0-9\s#.'/\-]/g, ' ').replace(/\s+/g, ' ').trim())
-    .filter(l => l.length > 2 && /[A-Za-z]/.test(l));
-
-  if (!lines.length) return '';
-
-  const fullText = lines.join(' ');
-
-  // Year (1980–2030)
-  const year = (fullText.match(/\b(19[89]\d|20[0-3]\d)\b/) || [])[1] || '';
-
-  // Grade (PSA 10, BGS 9.5, etc.)
-  const gradeMatch = fullText.match(/\b(PSA|BGS|SGC|CGC|HGA|CSG)\s*(\d+(?:\.\d+)?)\b/i);
-  const grade = gradeMatch ? gradeMatch[0] : '';
-
-  // Known brands/sets — drop these from the main text since they're often repeated
-  const BRANDS = ['Prizm', 'Optic', 'Select', 'Mosaic', 'Donruss', 'Score', 'Chronicles',
-    'Topps', 'Bowman', 'Upper Deck', 'Panini', 'Finest', 'Heritage', 'Chrome',
-    'Immaculate', 'Flawless', 'Contenders', 'National Treasures', 'Obsidian'];
-  const brand = BRANDS.find(b => new RegExp('\\b' + b + '\\b', 'i').test(fullText)) || '';
-
-  // Strip known junk lines (copyright, legal, set marketing copy)
-  const junkPattern = /^(nfl|nba|mlb|nhl|©|tm|licensed|officially|trading card|sports america|panini america|topps co|upper deck|all rights|printed in|www\.|http|\d{4}\s*(panini|topps|upper deck|donruss))/i;
-  const goodLines = lines.filter(l => !junkPattern.test(l.trim()));
-
-  // Build a combined text and take first 80 chars as the base query
-  const combined = goodLines.join(' ').slice(0, 80).trim();
-
-  // Assemble: year + combined + grade, deduplicate year if already in combined
-  const parts = [];
-  if (year && !combined.includes(year)) parts.push(year);
-  parts.push(combined);
-  if (grade && !combined.toLowerCase().includes(grade.toLowerCase())) parts.push(grade);
-
-  return parts.join(' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+function _renderScannerMatches(matches) {
+  const grid = document.getElementById('scanner-matches-grid');
+  grid.innerHTML = matches.map((m, i) => `
+    <button class="scanner-match-tile" onclick="selectScannerMatch(${i})" data-title="${escHtml(m.title)}">
+      ${m.imageUrl
+        ? `<img class="scanner-match-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
+        : '<div class="scanner-match-noimg">&#127944;</div>'}
+      <span class="scanner-match-title">${escHtml(m.title)}</span>
+    </button>
+  `).join('');
+  document.getElementById('scanner-phase-matches').classList.remove('hidden');
 }
 
-async function searchScannedCard() {
-  const query = (document.getElementById('scanner-query-input').value || '').trim();
-  if (!query) { alert('Please enter a search query.'); return; }
+async function selectScannerMatch(index) {
+  const tiles = document.querySelectorAll('.scanner-match-tile');
+  const tile = tiles[index];
+  if (!tile) return;
+  const title = tile.dataset.title || '';
+
+  // Highlight selection
+  tiles.forEach(t => t.classList.remove('selected'));
+  tile.classList.add('selected');
+
+  document.getElementById('scanner-phase-matches').classList.add('hidden');
+  document.getElementById('scanner-results').classList.remove('hidden');
 
   const loading = document.getElementById('scanner-loading');
   const errEl = document.getElementById('scanner-error');
-  const results = document.getElementById('scanner-results');
-  results.classList.remove('hidden');
+  const titleEl = document.getElementById('scanner-selected-title');
+  titleEl.innerHTML = `<strong>Searching sold prices for:</strong> ${escHtml(title)}`;
   loading.classList.remove('hidden');
   errEl.classList.add('hidden');
   document.getElementById('scanner-price-summary').innerHTML = '';
   document.getElementById('scanner-sales-list').innerHTML = '';
 
   try {
-    const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(query)}&limit=20`);
+    const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(title)}&limit=20`);
     const data = await res.json();
     loading.classList.add('hidden');
 
@@ -3590,13 +3560,13 @@ async function searchScannedCard() {
       if (data.noKey) {
         errEl.textContent = 'Add a scrape.do API key in Settings → scrape.do API key to see sold prices.';
       } else {
-        errEl.textContent = data.error || 'Search failed. Please try again.';
+        errEl.textContent = data.error || 'Search failed.';
       }
       errEl.classList.remove('hidden');
       return;
     }
 
-    _renderScannerResults(query, data.results || []);
+    _renderScannerSoldResults(title, data.results || []);
   } catch (err) {
     loading.classList.add('hidden');
     errEl.textContent = 'Network error. Please try again.';
@@ -3604,7 +3574,7 @@ async function searchScannedCard() {
   }
 }
 
-function _renderScannerResults(query, items) {
+function _renderScannerSoldResults(query, items) {
   const prices = items.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
 
   const pEl = document.getElementById('scanner-price-summary');
@@ -3639,7 +3609,7 @@ function _renderScannerResults(query, items) {
       </a>`;
     }).join('');
   } else {
-    html += '<p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">No recent sold listings found. Try editing the search query above.</p>';
+    html += '<p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">No recent sold listings found for this card.</p>';
   }
 
   sEl.innerHTML = html;

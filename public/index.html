@@ -616,7 +616,7 @@
     <div class="collection-container">
       <div class="collection-header">
         <h2 class="collection-title">&#128247; Card Scanner</h2>
-        <p class="collection-subtitle">Take or upload a card photo — we'll read the text and find recent sold prices</p>
+        <p class="collection-subtitle">Take or upload a card photo — eBay's image search finds the match instantly</p>
       </div>
 
       <!-- Phase 1: Upload -->
@@ -640,47 +640,39 @@
         </div>
 
         <div id="scanner-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
-          <img id="scanner-preview" src="" alt="Card preview" style="max-height:260px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
+          <img id="scanner-preview" src="" alt="Card preview" style="max-height:240px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
           <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-            <button class="grading-submit-btn" onclick="runCardOcr()">&#128270; Read Card Text</button>
+            <button class="grading-submit-btn" id="scanner-match-btn" onclick="submitCardScan()">&#128269; Find This Card</button>
             <button class="btn-secondary" onclick="clearScannerImage()">&#10005; Clear</button>
           </div>
         </div>
       </div>
 
-      <!-- OCR progress -->
-      <div id="scanner-ocr-progress" class="hidden" style="margin:1rem 0">
-        <div class="scanner-progress-label" id="scanner-ocr-status">Reading card text&hellip;</div>
-        <div class="scanner-progress-bar-wrap">
-          <div class="scanner-progress-bar" id="scanner-ocr-bar" style="width:0%"></div>
-        </div>
+      <!-- Matching spinner -->
+      <div id="scanner-matching" class="loading hidden">
+        <div class="spinner"></div>
+        <span>Searching eBay card database&hellip;</span>
       </div>
 
       <div id="scanner-error" class="error-message hidden"></div>
 
-      <!-- Phase 2: Review query + search -->
-      <div id="scanner-phase-query" class="hidden">
-        <p class="grading-hint" style="margin-bottom:0.5rem">Text read from card — edit if needed, then search:</p>
-        <div class="grading-input-row" style="margin-bottom:0.75rem">
-          <div class="search-input-wrap" style="flex:1">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="scanner-query-input" placeholder="e.g. 2020 Prizm Silver Patrick Mahomes" autocomplete="off" />
-          </div>
-          <button class="grading-submit-btn" onclick="searchScannedCard()">Search Sold Prices</button>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem">
-          <button class="btn-secondary" onclick="resetScannerToUpload()">&#8592; Re-scan</button>
-        </div>
+      <!-- Phase 2: Pick the right card -->
+      <div id="scanner-phase-matches" class="hidden">
+        <p class="grading-hint" style="margin-bottom:0.75rem">Tap the card that matches yours:</p>
+        <div id="scanner-matches-grid" class="scanner-matches-grid"></div>
+        <button class="btn-secondary" style="margin-top:0.75rem" onclick="clearScannerImage()">&#8592; Try a different photo</button>
       </div>
 
-      <!-- Phase 3: Results -->
+      <!-- Phase 3: Sold price results -->
       <div id="scanner-results" class="hidden">
         <div id="scanner-loading" class="loading hidden">
           <div class="spinner"></div>
           <span>Fetching sold prices&hellip;</span>
         </div>
+        <div id="scanner-selected-title" class="scanner-selected-title"></div>
         <div id="scanner-price-summary" class="scanner-price-summary"></div>
         <div id="scanner-sales-list" class="scanner-sales-list"></div>
+        <button class="btn-secondary" style="margin-top:0.75rem" onclick="showScannerMatches()">&#8592; Back to matches</button>
       </div>
     </div>
   </div>
@@ -1309,7 +1301,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="app.js?v=85"></script>
+  <script src="app.js?v=86"></script>
 </body>
 </html>
