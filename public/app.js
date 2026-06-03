@@ -289,10 +289,10 @@ async function testScrapeDoKey() {
       const titleLine = d.title ? `<div class="settings-scrapedo-subline">page title: <em>${escHtml(d.title)}</em></div>` : '';
       const canonicalLine = d.canonical ? `<div class="settings-scrapedo-subline">canonical: <code>${escHtml(d.canonical)}</code></div>` : '';
       const blockBlock = d.firstBlock
-        ? `<details class="settings-scrapedo-snippet"><summary>Show first matched card block</summary><pre>${escHtml(d.firstBlock)}</pre></details>`
+        ? `<details class="settings-scrapedo-snippet"><summary>Show first matched card block</summary><div class="settings-scrapedo-snippet-bar"><button type="button" class="settings-scrapedo-copy" onclick="copyDiagSnippet(this)">Copy all</button></div><pre>${escHtml(d.firstBlock)}</pre></details>`
         : '';
       const snippet = d.snippet
-        ? `<details class="settings-scrapedo-snippet"><summary>Show page-head snippet</summary><pre>${escHtml(d.snippet)}</pre></details>`
+        ? `<details class="settings-scrapedo-snippet"><summary>Show page-head snippet</summary><div class="settings-scrapedo-snippet-bar"><button type="button" class="settings-scrapedo-copy" onclick="copyDiagSnippet(this)">Copy all</button></div><pre>${escHtml(d.snippet)}</pre></details>`
         : '';
       return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${blockBlock}${snippet}</div>`;
     });
@@ -304,6 +304,36 @@ async function testScrapeDoKey() {
     btn.disabled = false;
     btn.textContent = origText;
   }
+}
+
+// Copy the full text of a diagnostic snippet's <pre> to the clipboard. The
+// <pre> is visually capped/scrollable so users can't always select all of it
+// by hand — this grabs the complete (server-truncated) block in one click.
+async function copyDiagSnippet(btn) {
+  const details = btn.closest('details');
+  const pre = details && details.querySelector('pre');
+  if (!pre) return;
+  const text = pre.textContent || '';
+  const orig = btn.textContent;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // Fallback for non-secure contexts / older browsers.
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    btn.textContent = 'Copied!';
+  } catch (_) {
+    btn.textContent = 'Copy failed';
+  }
+  setTimeout(() => { btn.textContent = orig; }, 1500);
 }
 
 // Backward-compat shim — old call sites delegate here. Clears all keys.

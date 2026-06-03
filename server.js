@@ -625,7 +625,7 @@ async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown'
       // structure when our extractor returns nothing.
       let firstBlock = null;
       const sample = splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item|su-card-container|s-item)\b[^"]*"/gi);
-      if (sample.length > 0) firstBlock = sample[0].slice(0, 3500);
+      if (sample.length > 0) firstBlock = sample[0].slice(0, 8000);
       out._debug = {
         httpStatus: res.status,
         contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
