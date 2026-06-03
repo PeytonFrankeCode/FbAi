@@ -258,7 +258,7 @@ async function testScrapeDoKey() {
     out.className = 'settings-scrapedo-test-result ' + (anyOk
       ? 'settings-scrapedo-test-result--ok'
       : 'settings-scrapedo-test-result--bad');
-    const rows = perKey.map(r => {
+    const rows = perKey.map((r, i) => {
       const label = escHtml(r.label || 'Key');
       if (r.badKey) return `<div>✗ <strong>${label}</strong> &mdash; rejected by scrape.do</div>`;
       if (r.quotaExceeded) return `<div>⚠ <strong>${label}</strong> &mdash; quota / rate-limit hit</div>`;
@@ -269,7 +269,20 @@ async function testScrapeDoKey() {
         const price = sample.price ? `$${parseFloat(sample.price).toFixed(2)}` : '?';
         return `<div>✓ <strong>${label}</strong> &mdash; ${r.itemCount} listings (sample: "${escHtml(title)}" at ${escHtml(price)})</div>`;
       }
-      return `<div>✗ <strong>${label}</strong> &mdash; returned 0 listings (eBay HTML drift or throttled)</div>`;
+      // 0 listings — surface diagnostics so we can see *why*.
+      const d = r.debug || {};
+      const diagBits = [];
+      if (d.httpStatus) diagBits.push(`HTTP ${d.httpStatus}`);
+      if (typeof d.bytes === 'number') diagBits.push(`${d.bytes.toLocaleString()} bytes`);
+      if (typeof d.sItemBlocks === 'number') diagBits.push(`${d.sItemBlocks} s-item blocks found`);
+      if (d.looksLikeJson) diagBits.push('response is JSON, not HTML');
+      if (d.looksLikeBlock) diagBits.push('looks like a bot-check / block page');
+      const detail = diagBits.length ? ' (' + diagBits.join(' · ') + ')' : '';
+      const snippetId = `sd-snippet-${i}-${Date.now()}`;
+      const snippet = d.snippet
+        ? `<details class="settings-scrapedo-snippet"><summary>Show raw response snippet</summary><pre id="${snippetId}">${escHtml(d.snippet)}</pre></details>`
+        : '';
+      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${snippet}</div>`;
     });
     out.innerHTML = rows.join('');
   } catch (err) {
