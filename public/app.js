@@ -274,15 +274,24 @@ async function testScrapeDoKey() {
       const diagBits = [];
       if (d.httpStatus) diagBits.push(`HTTP ${d.httpStatus}`);
       if (typeof d.bytes === 'number') diagBits.push(`${d.bytes.toLocaleString()} bytes`);
-      if (typeof d.sItemBlocks === 'number') diagBits.push(`${d.sItemBlocks} s-item blocks found`);
+      const cc = d.classCounts || {};
+      const counts = [];
+      if (cc.sItem)    counts.push(`${cc.sItem} s-item`);
+      if (cc.sCard)    counts.push(`${cc.sCard} s-card`);
+      if (cc.srpItem)  counts.push(`${cc.srpItem} srp-results__item`);
+      if (cc.srpRiver) counts.push(`${cc.srpRiver} srp-river`);
+      if (counts.length) diagBits.push(counts.join(' / '));
+      else if (cc.sItem === 0 && cc.sCard === 0 && cc.srpItem === 0)
+        diagBits.push('no listing markup at all');
       if (d.looksLikeJson) diagBits.push('response is JSON, not HTML');
       if (d.looksLikeBlock) diagBits.push('looks like a bot-check / block page');
       const detail = diagBits.length ? ' (' + diagBits.join(' · ') + ')' : '';
-      const snippetId = `sd-snippet-${i}-${Date.now()}`;
+      const titleLine = d.title ? `<div class="settings-scrapedo-subline">page title: <em>${escHtml(d.title)}</em></div>` : '';
+      const canonicalLine = d.canonical ? `<div class="settings-scrapedo-subline">canonical: <code>${escHtml(d.canonical)}</code></div>` : '';
       const snippet = d.snippet
-        ? `<details class="settings-scrapedo-snippet"><summary>Show raw response snippet</summary><pre id="${snippetId}">${escHtml(d.snippet)}</pre></details>`
+        ? `<details class="settings-scrapedo-snippet"><summary>Show raw response snippet</summary><pre>${escHtml(d.snippet)}</pre></details>`
         : '';
-      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${snippet}</div>`;
+      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${snippet}</div>`;
     });
     out.innerHTML = rows.join('');
   } catch (err) {

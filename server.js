@@ -590,24 +590,52 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 // scrape.do reports a quota or rate-limit failure.
 async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown', opts = {}) {
   trackApiCall('scrapedo', 'ebay-sold', keywords, source);
-  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(keywords)}&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
-  const scrapeUrl = `${SCRAPE_DO_BASE}/?token=${encodeURIComponent(apiKey)}&url=${encodeURIComponent(ebayUrl)}`;
+  // eBay's sold-listings URL. The _from=R40 token + Showsold=1 mirror what
+  // a normal browser sends and seem to be needed for scrape.do's data-
+  // center proxies to actually land on the sold page (without them, eBay
+  // bounces us to the active-listings page silently).
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodeURIComponent(keywords)}&_sacat=0&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
+  // scrape.do params:
+  //   render=true        run JS so eBay's React shell hydrates and the
+  //                      listings markup actually exists in the response
+  //   super=true         residential proxies — eBay blocks datacenter IPs
+  //                      with a "Pardon Our Interruption" page
+  //   geoCode=us         stay on US eBay; otherwise eBay redirects to
+  //                      the visitor's local site (.co.uk etc.)
+  const params = new URLSearchParams({
+    token: apiKey,
+    url: ebayUrl,
+    render: 'true',
+    super: 'true',
+    geoCode: 'us',
+  });
+  const scrapeUrl = `${SCRAPE_DO_BASE}/?${params.toString()}`;
   console.log(`[scrape.do] Searching sold: "${keywords}"`);
   try {
-    const res = await axios.get(scrapeUrl, { timeout: 45000, responseType: 'text', transformResponse: [x => x] });
+    const res = await axios.get(scrapeUrl, { timeout: 60000, responseType: 'text', transformResponse: [x => x] });
     const html = typeof res.data === 'string' ? res.data : String(res.data || '');
     const items = parseEbaySoldHtml(html);
     console.log(`[scrape.do] parsed ${items.length} items (response was ${html.length} bytes)`);
     const out = { results: items.slice(0, limit), total: items.length };
     if (opts.includeDebug) {
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      const canonicalMatch = html.match(/<link[^>]+rel=["']?canonical["']?[^>]+href=["']([^"']+)["']/i);
       out._debug = {
         httpStatus: res.status,
         contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
         bytes: html.length,
-        sItemBlocks: (html.match(/class="[^"]*\bs-item\b[^"]*"/g) || []).length,
+        title: titleMatch ? decodeHtmlEntities(titleMatch[1]).trim() : null,
+        canonical: canonicalMatch ? canonicalMatch[1] : null,
+        looksLikeSoldPage: /Sold\s+items|LH_Sold=1/i.test(html) && /sold/i.test(titleMatch ? titleMatch[1] : ''),
+        classCounts: {
+          sItem: (html.match(/class="[^"]*\bs-item\b[^"]*"/g) || []).length,
+          sCard: (html.match(/class="[^"]*\bs-card\b[^"]*"/g) || []).length,
+          srpItem: (html.match(/class="[^"]*\bsrp-results__item\b[^"]*"/g) || []).length,
+          srpRiver: (html.match(/class="[^"]*\bsrp-river\b[^"]*"/g) || []).length,
+        },
         looksLikeJson: /^\s*[{[]/.test(html),
         looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
-        snippet: html.slice(0, 1500),
+        snippet: html.slice(0, 4000),
         targetUrl: ebayUrl,
       };
     }
@@ -680,60 +708,110 @@ function getUserScrapeDoKeys(userRec) {
   return [];
 }
 
-// Lightweight eBay-search HTML parser. eBay's sold-listings page renders
-// each listing as <li class="s-item ..."> with predictable child markup;
-// extracting via regex avoids pulling in a real HTML parser (which would
-// bloat the Workers bundle).
+// Lightweight eBay-search HTML parser. eBay's been A/B-testing three
+// layouts in 2024-25:
+//   1. legacy `<li class="s-item s-item__pl-on-bottom">` (older Browse)
+//   2. `<li class="srp-results__item">` (newer SRP)
+//   3. `<div class="s-card ...">` (newest card-grid rollout)
+// We try each container shape and a per-shape field extractor.
 function parseEbaySoldHtml(html) {
   if (!html || html.length < 500) return [];
   const items = [];
-  const re = /<li[^>]*class="[^"]*\bs-item\b[^"]*"[\s\S]*?<\/li>/gi;
+  const seen = new Set();
+  const push = (it) => {
+    if (!it) return;
+    const k = it.itemUrl || `${it.title}|${it.price}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    items.push(it);
+  };
+
+  // Layout 1: legacy <li class="s-item">
+  const reLegacy = /<li[^>]*class="[^"]*\bs-item\b[^"]*"[\s\S]*?<\/li>/gi;
   let m;
-  while ((m = re.exec(html)) !== null) {
-    const block = m[0];
-    // Skip the "Shop on eBay" placeholder listing that eBay sometimes injects.
-    if (/s-item--placeholder/i.test(block)) continue;
-    if (/Shop on eBay/i.test(block) && !/s-item__price/i.test(block)) continue;
+  while ((m = reLegacy.exec(html)) !== null) push(extractLegacySItem(m[0]));
 
-    const linkMatch = block.match(/<a[^>]*class="[^"]*s-item__link[^"]*"[^>]*href="([^"]+)"/i);
-    const titleMatch =
-      block.match(/<span[^>]*role="heading"[^>]*>([^<]+)<\/span>/i) ||
-      block.match(/<div[^>]*class="[^"]*s-item__title[^"]*"[^>]*>(?:<span[^>]*>)?([^<]+)/i);
-    const priceMatch = block.match(/<span[^>]*class="[^"]*s-item__price[^"]*"[^>]*>([^<]+)/i);
-    const imgMatch =
-      block.match(/<img[^>]*class="[^"]*s-item__image-img[^"]*"[^>]*src="([^"]+)"/i) ||
-      block.match(/<img[^>]*src="([^"]+)"[^>]*class="[^"]*s-item__image[^"]*"/i);
-    const dateMatch =
-      block.match(/class="[^"]*s-item__caption[^"]*"[^>]*>\s*(?:<span[^>]*>)?[^<]*Sold\s+([^<]+)/i) ||
-      block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
-    const condMatch = block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([^<]+)/i);
+  // Layout 2: <li class="srp-results__item"> — same inner structure as
+  //   the new SRP card, but wrapped in a list.
+  const reSrpLi = /<li[^>]*class="[^"]*\bsrp-results__item\b[^"]*"[\s\S]*?<\/li>/gi;
+  while ((m = reSrpLi.exec(html)) !== null) push(extractCardLayout(m[0]));
 
-    if (!titleMatch || !priceMatch || !linkMatch) continue;
-    const title = decodeHtmlEntities(titleMatch[1]).trim();
-    if (!title || /shop on ebay/i.test(title)) continue;
-    const priceStr = decodeHtmlEntities(priceMatch[1]).trim();
-    const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
-    if (!price) continue;
-    const itemUrl = linkMatch[1].split('?')[0];
-    const itemIdMatch = itemUrl.match(/\/itm\/(?:[^/]+\/)?(\d{8,})/);
-    let soldDate = '';
-    if (dateMatch) {
-      const raw = dateMatch[1].trim();
-      const parsed = new Date(raw);
-      soldDate = isNaN(parsed.getTime()) ? raw : parsed.toISOString();
-    }
-    items.push({
-      itemId: itemIdMatch ? itemIdMatch[1] : `sdo-${items.length}`,
-      title,
-      price: String(price),
-      currency: 'USD',
-      soldDate,
-      imageUrl: imgMatch ? imgMatch[1] : null,
-      itemUrl,
-      condition: condMatch ? decodeHtmlEntities(condMatch[1]).trim() : 'Unknown',
-    });
-  }
+  // Layout 3: <div class="s-card ..."> (the newest card grid) — eBay's
+  //   removed list-item wrappers entirely on some search results pages.
+  const reCard = /<div[^>]*class="[^"]*\bs-card\b[^"]*"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/gi;
+  while ((m = reCard.exec(html)) !== null) push(extractCardLayout(m[0]));
+
   return items;
+}
+
+function extractLegacySItem(block) {
+  if (/s-item--placeholder/i.test(block)) return null;
+  if (/Shop on eBay/i.test(block) && !/s-item__price/i.test(block)) return null;
+  const linkMatch = block.match(/<a[^>]*class="[^"]*s-item__link[^"]*"[^>]*href="([^"]+)"/i);
+  const titleMatch =
+    block.match(/<span[^>]*role="heading"[^>]*>([^<]+)<\/span>/i) ||
+    block.match(/<div[^>]*class="[^"]*s-item__title[^"]*"[^>]*>(?:<span[^>]*>)?([^<]+)/i);
+  const priceMatch = block.match(/<span[^>]*class="[^"]*s-item__price[^"]*"[^>]*>([^<]+)/i);
+  const imgMatch =
+    block.match(/<img[^>]*class="[^"]*s-item__image-img[^"]*"[^>]*src="([^"]+)"/i) ||
+    block.match(/<img[^>]*src="([^"]+)"[^>]*class="[^"]*s-item__image[^"]*"/i);
+  const dateMatch =
+    block.match(/class="[^"]*s-item__caption[^"]*"[^>]*>\s*(?:<span[^>]*>)?[^<]*Sold\s+([^<]+)/i) ||
+    block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
+  const condMatch = block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([^<]+)/i);
+  return assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatch, condMatch });
+}
+
+// eBay's newer card layouts (srp-results__item / s-card) — class names are
+// shorter and the title moved from <span role="heading"> to <div class="s-card__title">.
+function extractCardLayout(block) {
+  if (/Shop on eBay/i.test(block)) return null;
+  const linkMatch = block.match(/<a[^>]*class="[^"]*(?:s-card__link|su-link)[^"]*"[^>]*href="([^"]+)"/i)
+    || block.match(/<a[^>]+href="(https?:\/\/www\.ebay\.com\/itm[^"]+)"/i);
+  const titleMatch =
+    block.match(/<span[^>]*role="heading"[^>]*>([^<]+)<\/span>/i) ||
+    block.match(/<div[^>]*class="[^"]*s-card__title[^"]*"[^>]*>(?:<span[^>]*>)?([^<]+)/i) ||
+    block.match(/<span[^>]*class="[^"]*su-styled-text[^"]*primary[^"]*"[^>]*>([^<]+)<\/span>/i);
+  const priceMatch =
+    block.match(/<span[^>]*class="[^"]*s-card__price[^"]*"[^>]*>([^<]+)/i) ||
+    block.match(/<span[^>]*class="[^"]*textual-display\b[^"]*"[^>]*>(\$[\d,.]+[^<]*)<\/span>/i);
+  const imgMatch =
+    block.match(/<img[^>]*class="[^"]*s-card__image[^"]*"[^>]*src="([^"]+)"/i) ||
+    block.match(/<img[^>]*src="(https:\/\/i\.ebayimg\.com\/[^"]+)"/i);
+  const dateMatch =
+    block.match(/class="[^"]*s-card__caption[^"]*"[^>]*>[\s\S]{0,40}?Sold\s+([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i) ||
+    block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
+  const condMatch =
+    block.match(/class="[^"]*s-card__subtitle[^"]*"[^>]*>([^<]+)/i) ||
+    block.match(/class="[^"]*SECONDARY_INFO[^"]*"[^>]*>([^<]+)/i);
+  return assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatch, condMatch });
+}
+
+function assembleListing({ linkMatch, titleMatch, priceMatch, imgMatch, dateMatch, condMatch }) {
+  if (!titleMatch || !priceMatch || !linkMatch) return null;
+  const title = decodeHtmlEntities(titleMatch[1]).trim();
+  if (!title || /shop on ebay/i.test(title)) return null;
+  const priceStr = decodeHtmlEntities(priceMatch[1]).trim();
+  const price = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
+  if (!price) return null;
+  const itemUrl = linkMatch[1].split('?')[0];
+  const itemIdMatch = itemUrl.match(/\/itm\/(?:[^/]+\/)?(\d{8,})/);
+  let soldDate = '';
+  if (dateMatch) {
+    const raw = dateMatch[1].trim();
+    const parsed = new Date(raw);
+    soldDate = isNaN(parsed.getTime()) ? raw : parsed.toISOString();
+  }
+  return {
+    itemId: itemIdMatch ? itemIdMatch[1] : `sdo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    price: String(price),
+    currency: 'USD',
+    soldDate,
+    imageUrl: imgMatch ? imgMatch[1] : null,
+    itemUrl,
+    condition: condMatch ? decodeHtmlEntities(condMatch[1]).trim() : 'Unknown',
+  };
 }
 
 function decodeHtmlEntities(s) {

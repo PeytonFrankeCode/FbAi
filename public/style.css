@@ -4845,6 +4845,17 @@ footer::before {
 .settings-scrapedo-test-result--ok > div,
 .settings-scrapedo-test-result--bad > div { color: inherit; }
 .settings-scrapedo-test-result strong { font-weight: 600; }
+.settings-scrapedo-subline {
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+.settings-scrapedo-subline em { color: var(--text-primary); font-style: normal; }
+.settings-scrapedo-subline code {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  word-break: break-all;
+}
 .settings-scrapedo-snippet {
   margin-top: 0.35rem;
   font-size: 0.78rem;
