@@ -3428,19 +3428,12 @@ function switchSearchSub(sub) {
 }
 
 // ---- Card Scanner ----
+// OCR runs entirely client-side via Tesseract.js (no API cost).
+// After OCR the user reviews/edits the extracted query before searching.
 let _scannerImageDataUrl = null;
 
 function initScannerView() {
-  const gate = document.getElementById('scanner-gate');
-  const content = document.getElementById('scanner-content');
-  if (!gate || !content) return;
-  if (!getSessionToken()) {
-    gate.classList.remove('hidden');
-    content.classList.add('hidden');
-  } else {
-    gate.classList.add('hidden');
-    content.classList.remove('hidden');
-  }
+  // Nothing to gate — no server-side API key needed
 }
 
 async function handleScannerFile(e) {
@@ -3449,13 +3442,12 @@ async function handleScannerFile(e) {
   if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
   if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB). Please use a smaller photo.'); return; }
   try {
-    _scannerImageDataUrl = await readImageFileAsDataUrl(file, 1024, 0.85);
-    const preview = document.getElementById('scanner-preview');
-    const wrap = document.getElementById('scanner-preview-wrap');
-    preview.src = _scannerImageDataUrl;
-    wrap.classList.remove('hidden');
-    document.getElementById('scanner-results').classList.add('hidden');
+    _scannerImageDataUrl = await readImageFileAsDataUrl(file, 1200, 0.88);
+    document.getElementById('scanner-preview').src = _scannerImageDataUrl;
+    document.getElementById('scanner-preview-wrap').classList.remove('hidden');
     document.getElementById('scanner-error').classList.add('hidden');
+    document.getElementById('scanner-phase-query').classList.add('hidden');
+    document.getElementById('scanner-results').classList.add('hidden');
   } catch (err) {
     alert('Could not load image: ' + (err.message || 'Unknown error'));
   }
@@ -3465,100 +3457,192 @@ function clearScannerImage() {
   _scannerImageDataUrl = null;
   document.getElementById('scanner-file-input').value = '';
   document.getElementById('scanner-preview-wrap').classList.add('hidden');
-  document.getElementById('scanner-results').classList.add('hidden');
+  document.getElementById('scanner-ocr-progress').classList.add('hidden');
   document.getElementById('scanner-error').classList.add('hidden');
+  document.getElementById('scanner-phase-query').classList.add('hidden');
+  document.getElementById('scanner-results').classList.add('hidden');
 }
 
-async function submitCardScan() {
+function resetScannerToUpload() {
+  document.getElementById('scanner-phase-query').classList.add('hidden');
+  document.getElementById('scanner-results').classList.add('hidden');
+  document.getElementById('scanner-error').classList.add('hidden');
+  document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+}
+
+function _setScannerOcrStatus(msg, pct) {
+  const label = document.getElementById('scanner-ocr-status');
+  const bar = document.getElementById('scanner-ocr-bar');
+  if (label) label.textContent = msg;
+  if (bar) bar.style.width = Math.round(pct) + '%';
+}
+
+async function runCardOcr() {
   if (!_scannerImageDataUrl) { alert('Please select a card photo first.'); return; }
-  if (!getSessionToken()) { showLogin(); return; }
+
+  const progressWrap = document.getElementById('scanner-ocr-progress');
+  const errEl = document.getElementById('scanner-error');
+  document.getElementById('scanner-preview-wrap').classList.add('hidden');
+  progressWrap.classList.remove('hidden');
+  errEl.classList.add('hidden');
+  document.getElementById('scanner-phase-query').classList.add('hidden');
+  document.getElementById('scanner-results').classList.add('hidden');
+  _setScannerOcrStatus('Starting OCR engine…', 2);
+
+  const STATUS_MAP = {
+    'loading tesseract core': 'Loading OCR engine…',
+    'initializing tesseract': 'Initializing…',
+    'loading language traineddata': 'Downloading language model (first time only)…',
+    'loaded language traineddata': 'Language model ready',
+    'initializing api': 'Starting…',
+    'recognizing text': 'Reading card text…',
+  };
+
+  try {
+    const result = await Tesseract.recognize(_scannerImageDataUrl, 'eng', {
+      logger: m => {
+        const label = STATUS_MAP[m.status] || m.status;
+        const pct = m.status === 'recognizing text' ? 10 + m.progress * 88 : (m.progress || 0) * 10;
+        _setScannerOcrStatus(label, pct);
+      },
+    });
+
+    progressWrap.classList.add('hidden');
+    const rawText = result.data.text || '';
+    const query = _buildQueryFromOcr(rawText);
+
+    if (!query) {
+      errEl.textContent = 'Could not read any text from this photo. Try a clearer, well-lit image.';
+      errEl.classList.remove('hidden');
+      document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('scanner-query-input').value = query;
+    document.getElementById('scanner-phase-query').classList.remove('hidden');
+  } catch (err) {
+    progressWrap.classList.add('hidden');
+    document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+    errEl.textContent = 'OCR failed: ' + (err.message || 'Unknown error');
+    errEl.classList.remove('hidden');
+  }
+}
+
+function _buildQueryFromOcr(rawText) {
+  // Clean and split into lines, dropping very short or symbol-only lines
+  const lines = rawText
+    .split('\n')
+    .map(l => l.replace(/[^A-Za-z0-9\s#.'/\-]/g, ' ').replace(/\s+/g, ' ').trim())
+    .filter(l => l.length > 2 && /[A-Za-z]/.test(l));
+
+  if (!lines.length) return '';
+
+  const fullText = lines.join(' ');
+
+  // Year (1980–2030)
+  const year = (fullText.match(/\b(19[89]\d|20[0-3]\d)\b/) || [])[1] || '';
+
+  // Grade (PSA 10, BGS 9.5, etc.)
+  const gradeMatch = fullText.match(/\b(PSA|BGS|SGC|CGC|HGA|CSG)\s*(\d+(?:\.\d+)?)\b/i);
+  const grade = gradeMatch ? gradeMatch[0] : '';
+
+  // Known brands/sets — drop these from the main text since they're often repeated
+  const BRANDS = ['Prizm', 'Optic', 'Select', 'Mosaic', 'Donruss', 'Score', 'Chronicles',
+    'Topps', 'Bowman', 'Upper Deck', 'Panini', 'Finest', 'Heritage', 'Chrome',
+    'Immaculate', 'Flawless', 'Contenders', 'National Treasures', 'Obsidian'];
+  const brand = BRANDS.find(b => new RegExp('\\b' + b + '\\b', 'i').test(fullText)) || '';
+
+  // Strip known junk lines (copyright, legal, set marketing copy)
+  const junkPattern = /^(nfl|nba|mlb|nhl|©|tm|licensed|officially|trading card|sports america|panini america|topps co|upper deck|all rights|printed in|www\.|http|\d{4}\s*(panini|topps|upper deck|donruss))/i;
+  const goodLines = lines.filter(l => !junkPattern.test(l.trim()));
+
+  // Build a combined text and take first 80 chars as the base query
+  const combined = goodLines.join(' ').slice(0, 80).trim();
+
+  // Assemble: year + combined + grade, deduplicate year if already in combined
+  const parts = [];
+  if (year && !combined.includes(year)) parts.push(year);
+  parts.push(combined);
+  if (grade && !combined.toLowerCase().includes(grade.toLowerCase())) parts.push(grade);
+
+  return parts.join(' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+}
+
+async function searchScannedCard() {
+  const query = (document.getElementById('scanner-query-input').value || '').trim();
+  if (!query) { alert('Please enter a search query.'); return; }
 
   const loading = document.getElementById('scanner-loading');
   const errEl = document.getElementById('scanner-error');
   const results = document.getElementById('scanner-results');
+  results.classList.remove('hidden');
   loading.classList.remove('hidden');
   errEl.classList.add('hidden');
-  results.classList.add('hidden');
+  document.getElementById('scanner-price-summary').innerHTML = '';
+  document.getElementById('scanner-sales-list').innerHTML = '';
 
   try {
-    const res = await authFetch('/api/scan-card', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageData: _scannerImageDataUrl }),
-    });
+    const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(query)}&limit=20`);
     const data = await res.json();
     loading.classList.add('hidden');
-    if (!res.ok) { showScannerError(data.error || 'Could not identify card'); return; }
-    renderScannerResults(data);
+
+    if (!res.ok) {
+      if (data.noKey) {
+        errEl.textContent = 'Add a scrape.do API key in Settings → scrape.do API key to see sold prices.';
+      } else {
+        errEl.textContent = data.error || 'Search failed. Please try again.';
+      }
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    _renderScannerResults(query, data.results || []);
   } catch (err) {
     loading.classList.add('hidden');
-    showScannerError('Network error. Please try again.');
+    errEl.textContent = 'Network error. Please try again.';
+    errEl.classList.remove('hidden');
   }
 }
 
-function showScannerError(msg) {
-  const el = document.getElementById('scanner-error');
-  el.textContent = msg;
-  el.classList.remove('hidden');
-}
+function _renderScannerResults(query, items) {
+  const prices = items.map(r => parseFloat(r.price)).filter(p => p > 0).sort((a, b) => a - b);
 
-function renderScannerResults(data) {
-  const { cardInfo, searchQuery, priceSummary, recentSales, soldError } = data;
-
-  // Card identification panel
-  const infoFields = [
-    { label: 'Player', value: cardInfo.player },
-    { label: 'Year', value: cardInfo.year },
-    { label: 'Brand / Set', value: cardInfo.brand },
-    { label: 'Variation', value: cardInfo.variation },
-    { label: 'Grade', value: cardInfo.grade },
-    { label: 'Card #', value: cardInfo.cardNumber },
-    { label: 'Sport', value: cardInfo.sport },
-  ].filter(f => f.value);
-
-  document.getElementById('scanner-card-info').innerHTML = infoFields.length
-    ? infoFields.map(f => `<div class="scanner-info-row"><span class="scanner-info-label">${escHtml(f.label)}</span><span class="scanner-info-value">${escHtml(String(f.value))}</span></div>`).join('')
-    : '<p style="color:var(--text-muted);font-size:0.9rem">Card details could not be fully read. Try a clearer photo.</p>';
-
-  // Price summary
   const pEl = document.getElementById('scanner-price-summary');
-  if (priceSummary) {
+  if (prices.length) {
+    const mid = Math.floor(prices.length / 2);
+    const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     pEl.innerHTML = `
-      <div class="scanner-stat"><span class="scanner-stat-label">Median Sold</span><span class="scanner-stat-value">$${priceSummary.median.toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label">Avg Sold</span><span class="scanner-stat-value">$${priceSummary.avg.toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label">Low</span><span class="scanner-stat-value">$${priceSummary.low.toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label">High</span><span class="scanner-stat-value">$${priceSummary.high.toFixed(2)}</span></div>
-      <div class="scanner-stat"><span class="scanner-stat-label"># Sales</span><span class="scanner-stat-value">${priceSummary.count}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">Median Sold</span><span class="scanner-stat-value">$${median.toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">Avg Sold</span><span class="scanner-stat-value">$${avg.toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">Low</span><span class="scanner-stat-value">$${prices[0].toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label">High</span><span class="scanner-stat-value">$${prices[prices.length - 1].toFixed(2)}</span></div>
+      <div class="scanner-stat"><span class="scanner-stat-label"># Sales</span><span class="scanner-stat-value">${prices.length}</span></div>
     `;
-  } else if (soldError) {
-    pEl.innerHTML = `<p class="pp-error" style="margin:0.5rem 0">${escHtml(soldError)}</p>`;
   } else {
     pEl.innerHTML = '';
   }
 
-  // Recent sales list
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
   const sEl = document.getElementById('scanner-sales-list');
-  const ebaySearchUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(searchQuery)}&LH_Sold=1&LH_Complete=1`;
-  let html = `<p class="scanner-search-query">Search: <strong>${escHtml(searchQuery)}</strong> &nbsp;&bull;&nbsp; <a href="${escHtml(epnUrl(ebaySearchUrl))}" target="_blank" rel="noopener noreferrer">View on eBay &rarr;</a></p>`;
+  let html = `<p class="scanner-search-query"><a href="${escHtml(epnUrl(ebayUrl))}" target="_blank" rel="noopener noreferrer">View all on eBay &rarr;</a></p>`;
 
-  if (recentSales && recentSales.length) {
-    html += recentSales.map(s => {
+  if (items.length) {
+    html += items.map(s => {
       const date = s.soldDate ? new Date(s.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
       const itemUrl = s.itemUrl ? escHtml(epnUrl(s.itemUrl)) : '#';
-      return `
-        <a class="scanner-sale-item" href="${itemUrl}" target="_blank" rel="noopener noreferrer">
-          ${s.imageUrl ? `<img class="scanner-sale-img" src="${escHtml(s.imageUrl)}" alt="" loading="lazy" />` : '<div class="scanner-sale-noimg">No img</div>'}
-          <span class="scanner-sale-title">${escHtml(s.title || '')}</span>
-          <span class="scanner-sale-price">$${parseFloat(s.price || 0).toFixed(2)}</span>
-          ${date ? `<span class="scanner-sale-date">${date}</span>` : ''}
-        </a>`;
+      return `<a class="scanner-sale-item" href="${itemUrl}" target="_blank" rel="noopener noreferrer">
+        ${s.imageUrl ? `<img class="scanner-sale-img" src="${escHtml(s.imageUrl)}" alt="" loading="lazy" />` : '<div class="scanner-sale-noimg">No img</div>'}
+        <span class="scanner-sale-title">${escHtml(s.title || '')}</span>
+        <span class="scanner-sale-price">$${parseFloat(s.price || 0).toFixed(2)}</span>
+        ${date ? `<span class="scanner-sale-date">${date}</span>` : ''}
+      </a>`;
     }).join('');
-  } else if (!soldError) {
-    html += '<p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">No recent sold listings found. Try searching manually.</p>';
+  } else {
+    html += '<p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">No recent sold listings found. Try editing the search query above.</p>';
   }
 
   sEl.innerHTML = html;
-  document.getElementById('scanner-results').classList.remove('hidden');
 }
 
 // ---- Pro+ Tools ----

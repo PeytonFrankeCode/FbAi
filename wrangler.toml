@@ -46,7 +46,6 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 #   wrangler secret put STRIPE_WEBHOOK_SECRET   # whsec_... from the Stripe dashboard webhook
 #   wrangler secret put MONGODB_URI             # mongodb+srv://...
 #   wrangler secret put AUTH_CODE               # admin login code
-#   wrangler secret put ANTHROPIC_API_KEY       # sk-ant-... from console.anthropic.com (Card Scanner feature)
 #   wrangler secret put CARDSIGHTS_API_KEY
 #   wrangler secret put CARDHEDGE_API_KEY
 #   wrangler secret put SMTP_HOST
