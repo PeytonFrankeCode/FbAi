@@ -3604,6 +3604,67 @@ function _broadenCardTitle(title) {
     .slice(0, 80);
 }
 
+// Key terms that decide which sold comps a scanned listing pulls — the set,
+// the parallel/color, print run, grade and card type. Surfaced as labeled
+// chips on each match tile so the user can confirm e.g. "Red Ice" instead of
+// accidentally picking a plain "Ice" listing.
+const SCAN_KEY_SETS = ['national treasures', 'prizm', 'optic', 'select', 'mosaic', 'donruss',
+  'contenders', 'chronicles', 'phoenix', 'certified', 'absolute', 'spectra', 'origins',
+  'illusions', 'prestige', 'luminance', 'immaculate', 'flawless', 'obsidian', 'playbook',
+  'zenith', 'score', 'bowman', 'chrome', 'sage', 'leaf', 'revolution', 'hoops', 'playoff'];
+const SCAN_KEY_PARALLEL_PHRASES = ['cracked ice', 'red ice', 'blue ice', 'fast break', 'tie-dye', 'snake skin'];
+const SCAN_KEY_PARALLEL_WORDS = new Set(['silver', 'gold', 'blue', 'green', 'red', 'purple', 'orange',
+  'pink', 'black', 'white', 'aqua', 'teal', 'emerald', 'ruby', 'sapphire', 'copper', 'bronze',
+  'yellow', 'neon', 'camo', 'holo', 'hyper', 'mojo', 'cosmic', 'disco', 'lava', 'ice', 'shimmer',
+  'wave', 'tiger', 'snakeskin', 'galaxy', 'choice', 'pulsar', 'sparkle', 'prizmatic', 'laser',
+  'lazer', 'scope', 'reactive', 'velocity', 'genesis', 'flash', 'rainbow', 'concourse', 'pandora',
+  'refractor', 'atomic', 'dragon', 'butterfly', 'seismic', 'fractor']);
+
+const _titleCase = s => s.replace(/\b\w/g, c => c.toUpperCase());
+
+function _scanKeyTerms(title) {
+  const t = String(title || '');
+  const lower = t.toLowerCase();
+  const out = [];
+  const seen = new Set();
+  const add = v => { const k = (v || '').toLowerCase(); if (v && !seen.has(k)) { seen.add(k); out.push(v); } };
+
+  // Set / product
+  const set = SCAN_KEY_SETS.find(s => new RegExp(`\\b${s}\\b`).test(lower));
+  if (set) add(_titleCase(set));
+
+  // Multi-word parallels first (so "Red Ice" stays one chip). Strip each
+  // matched phrase from the scratch text so its words aren't re-merged into a
+  // stray chip (e.g. "Cracked Ice Concourse" -> "Cracked Ice" + "Concourse").
+  let remaining = t;
+  for (const p of SCAN_KEY_PARALLEL_PHRASES) {
+    if (lower.includes(p)) { add(_titleCase(p)); remaining = remaining.replace(new RegExp(p, 'ig'), ' '); }
+  }
+
+  // Single-word parallels, merging consecutive hits in title order
+  let run = [];
+  const flush = () => { if (run.length) { add(run.join(' ')); run = []; } };
+  for (const w of remaining.split(/\s+/)) {
+    const clean = w.replace(/[^a-zA-Z-]/g, '');
+    if (clean && SCAN_KEY_PARALLEL_WORDS.has(clean.toLowerCase())) run.push(_titleCase(clean));
+    else flush();
+  }
+  flush();
+
+  const pr = parsePrintRun(t); if (pr) add('/' + pr);
+  const g = detectGrade(t); if (g && g !== 'Raw / Ungraded') add(g);
+  if (/\b(rookie|rc)\b/i.test(t)) add('RC');
+  if (/\bauto(graph)?\b/i.test(t)) add('Auto');
+  if (/\b(patch|rpa|relic|jersey|memorabilia)\b/i.test(t)) add('Patch');
+  return out;
+}
+
+function _keyTermsHtml(title) {
+  const terms = _scanKeyTerms(title);
+  if (!terms.length) return '';
+  return `<div class="scanner-key-terms"><span class="scanner-key-label">Key terms</span>${terms.map(x => `<span class="scanner-key-chip">${escHtml(x)}</span>`).join('')}</div>`;
+}
+
 function _renderScannerMatches(matches) {
   const grid = document.getElementById('scanner-matches-grid');
   grid.innerHTML = matches.map((m, i) => `
@@ -3614,6 +3675,7 @@ function _renderScannerMatches(matches) {
         : '<div class="scanner-match-card-noimg">&#127944;</div>'}
       <div class="scanner-match-card-body">
         <p class="scanner-match-card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</p>
+        ${_keyTermsHtml(m.title)}
         <button class="scanner-match-card-btn" onclick="selectScannerMatch(${i})">Use This Listing</button>
       </div>
     </div>
@@ -3825,6 +3887,7 @@ function _renderScanFillMatches(matches) {
         : '<div class="scanner-match-card-noimg">&#127944;</div>'}
       <div class="scanner-match-card-body">
         <p class="scanner-match-card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</p>
+        ${_keyTermsHtml(m.title)}
         <button class="scanner-match-card-btn" onclick="selectScanFillMatch(${i})">Use This</button>
       </div>
     </div>
