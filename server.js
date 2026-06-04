@@ -1001,9 +1001,11 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     return filtered;
   }
 
-  // For sale mode — eBay Browse API
+  // For sale mode — eBay Browse API. Apply the same junk filter the sold path
+  // uses (reprints, customs, proxies, lots, bundles, fakes) so For Sale
+  // listings come back as clean as Sold listings already are.
   const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source, offset));
-  return response;
+  return { ...response, results: filterJunkListings(response.results || []) };
 }
 
 // Extract print run serial like /4, /25, /99 from a query
@@ -1072,7 +1074,10 @@ app.get('/api/search', async (req, res) => {
         return res.json({ results: [], total: 0, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
       }
       if (searchData.results.length > 0) {
-        const filtered = applyVariantFilter(applyPriceFilter(searchData.results));
+        // Mirror the sold pipeline: variant + price-range filter, then drop
+        // mis-listed price outliers (>5x median) so a stray wrong/graded card
+        // doesn't pollute the For Sale results.
+        const filtered = filterPriceOutliers(applyVariantFilter(applyPriceFilter(searchData.results)));
         return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, hasMore: searchData.results.length >= limit });
       }
 
@@ -1138,8 +1143,9 @@ app.get('/api/search', async (req, res) => {
         return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
       });
 
-    // Forsale results get the same strict variant filter as the non-serial path
-    const exactOut = mode === 'forsale' ? applyVariantFilter(exact) : exact;
+    // Forsale results get the same strict variant filter + outlier removal as
+    // the non-serial path, so the popup listings stay accurate.
+    const exactOut = mode === 'forsale' ? filterPriceOutliers(applyVariantFilter(exact)) : exact;
     const similarOut = mode === 'forsale' ? applyVariantFilter(similar) : similar;
 
     res.json({
