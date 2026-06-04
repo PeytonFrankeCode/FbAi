@@ -3931,7 +3931,36 @@ async function runMarketMovers() {
   } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
 }
 
-let _apComps = [];
+let _apComps = [];     // [{ title, price, image, soldDate, url, pr, grade, include }]
+let _apUserPR = null;  // user's card print run (number) or null
+
+// Power-law scarcity exponent. Scarcer print runs command a premium that
+// scales as a power law, not linearly — an experienced collector knows a /25
+// isn't 4x a /99, it's closer to ~2x. 0.65 matches the value the checklist
+// estimator (estimateByPrintRun) already uses, so the whole app is consistent.
+const AP_SCARCITY_ALPHA = 0.65;
+
+// Parse a print-run / serial denominator out of a listing title.
+// Handles "/99", "#/25", "12/99" (serial stamp → denominator), "1/1",
+// "one of one", "numbered to 99". Skips season ranges like "2020/21".
+function parsePrintRun(title) {
+  if (!title) return null;
+  const t = title.toLowerCase();
+  if (/\b1\s*\/\s*1\b/.test(title) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
+  // X/Y serial stamp — take the denominator, ignoring year ranges (2020/21).
+  const frac = title.match(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/);
+  if (frac) {
+    const num = parseInt(frac[1], 10), denom = parseInt(frac[2], 10);
+    const looksLikeSeason = num >= 1900 && num <= 2099;
+    if (!looksLikeSeason && denom >= 1 && denom <= 5000) return denom;
+  }
+  const m = title.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|\/)\s*(\d{1,4})\b/i);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 1 && n <= 5000) return n;
+  }
+  return null;
+}
 
 async function runAutoPricer() {
   const q = document.getElementById('ap-input').value.trim();
@@ -3941,89 +3970,202 @@ async function runAutoPricer() {
     out.innerHTML = '<p class="pp-error">Free plan is limited to 1 auto-price per day. Upgrade to Pro for unlimited.</p>';
     return;
   }
+  _apUserPR = parsePrintRun(q);
   out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
   try {
     const res = await authFetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
-    if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
+    if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${escHtml(data.error || 'Search failed.')}</p>`; return; }
     if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found for this card.</p>'; return; }
-    _apComps = data.items;
-    renderApComps(out, data.items);
-  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+    _apComps = data.items
+      .filter(it => it && it.price > 0)
+      .map(it => ({ ...it, pr: parsePrintRun(it.title), grade: detectGrade(it.title), include: true }));
+    renderApComps(out);
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${escHtml(e.message)}</p>`; }
 }
 
-function renderApComps(out, items) {
+function renderApComps(out) {
+  const prVal = _apUserPR != null ? _apUserPR : '';
   out.innerHTML = `
     <div class="ap-pick-header">
-      <div class="ap-pick-title">Pick the closest match to your card</div>
-      <div class="ap-pick-sub">We'll calculate pricing recommendations based on your selection</div>
+      <div class="ap-pick-title">Select the comps that match your card</div>
+      <div class="ap-pick-sub">Check the sold listings that truly match yours. We adjust each one for print-run differences, then estimate your card's value.</div>
+    </div>
+    <div class="ap-yourcard-row">
+      <label class="ap-pr-label">Your card's print run
+        <span class="ap-pr-input-wrap">/<input type="number" id="ap-user-pr" class="ap-pr-input" min="1" max="5000" placeholder="—" value="${prVal}" oninput="_apUserPR = this.value ? parseInt(this.value, 10) : null" /></span>
+      </label>
+      <span class="ap-pr-hint">${_apUserPR ? `Auto-detected /${_apUserPR} from your search` : 'Leave blank if your card isn\'t serial-numbered'}</span>
+    </div>
+    <div class="ap-select-actions">
+      <button type="button" class="ap-mini-btn" onclick="apSelectAll(true)">Select all</button>
+      <button type="button" class="ap-mini-btn" onclick="apSelectAll(false)">Clear</button>
+      <span class="ap-select-count" id="ap-select-count"></span>
     </div>
     <div class="ap-comp-grid">
-      ${items.map((item, i) => `
-        <div class="ap-comp-card" onclick="selectApComp(${i})">
-          <div class="ap-comp-img-wrap">
-            <img class="ap-comp-img" src="${escHtml(item.image)}" onerror="this.parentElement.classList.add('no-img')" alt="" loading="lazy" />
-          </div>
-          <div class="ap-comp-info">
-            <div class="ap-comp-name">${escHtml(item.title)}</div>
-            <div class="ap-comp-bottom">
-              <span class="ap-comp-price">$${item.price.toFixed(2)}</span>
-              <span class="ap-comp-date">${timeAgo(item.soldDate)}</span>
-            </div>
-          </div>
-        </div>`).join('')}
-    </div>`;
+      ${_apComps.map((item, i) => apCompCardHtml(item, i)).join('')}
+    </div>
+    <button type="button" class="pp-btn ap-calc-btn" onclick="calculateApValue()">&#129518; Estimate My Card's Value</button>
+    <div id="ap-value-section"></div>`;
+  updateApSelectCount();
 }
 
-async function selectApComp(idx) {
-  const item = _apComps[idx];
-  if (!item) return;
+function apCompCardHtml(item, i) {
+  const prTag = item.pr
+    ? `<span class="ap-tag ap-tag-pr">/${item.pr}</span>`
+    : `<span class="ap-tag ap-tag-unp">unnumbered</span>`;
+  const gradeTag = item.grade && item.grade !== 'Raw / Ungraded'
+    ? `<span class="ap-tag ap-tag-grade">${escHtml(item.grade)}</span>` : '';
+  return `
+    <label class="ap-comp-card ${item.include ? 'ap-comp-selected' : ''}" data-i="${i}">
+      <input type="checkbox" class="ap-comp-check" ${item.include ? 'checked' : ''} onchange="toggleApComp(${i}, this.checked)" />
+      <div class="ap-comp-img-wrap">
+        <img class="ap-comp-img" src="${escHtml(item.image)}" onerror="this.parentElement.classList.add('no-img')" alt="" loading="lazy" />
+      </div>
+      <div class="ap-comp-info">
+        <div class="ap-comp-name">${escHtml(item.title)}</div>
+        <div class="ap-comp-tags">${prTag}${gradeTag}</div>
+        <div class="ap-comp-bottom">
+          <span class="ap-comp-price">$${item.price.toFixed(2)}</span>
+          <span class="ap-comp-date">${timeAgo(item.soldDate)}</span>
+        </div>
+      </div>
+    </label>`;
+}
 
-  document.querySelectorAll('.ap-comp-card').forEach((el, i) => el.classList.toggle('ap-comp-selected', i === idx));
+function toggleApComp(i, checked) {
+  if (_apComps[i]) _apComps[i].include = checked;
+  const card = document.querySelector(`.ap-comp-card[data-i="${i}"]`);
+  if (card) card.classList.toggle('ap-comp-selected', checked);
+  updateApSelectCount();
+}
 
-  const out = document.getElementById('ap-results');
-  let recSection = out.querySelector('.ap-rec-section');
-  if (recSection) recSection.remove();
+function apSelectAll(val) {
+  _apComps.forEach(c => { c.include = val; });
+  document.querySelectorAll('.ap-comp-check').forEach(el => { el.checked = val; });
+  document.querySelectorAll('.ap-comp-card').forEach(el => el.classList.toggle('ap-comp-selected', val));
+  updateApSelectCount();
+}
 
-  recSection = document.createElement('div');
-  recSection.className = 'ap-rec-section';
-  recSection.innerHTML = '<div class="pp-loading">&#127991;&#65039; Calculating prices&hellip;</div>';
-  out.appendChild(recSection);
-  recSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+function updateApSelectCount() {
+  const n = _apComps.filter(c => c.include).length;
+  const el = document.getElementById('ap-select-count');
+  if (el) el.textContent = `${n} of ${_apComps.length} selected`;
+}
 
-  const refinedQuery = item.title.split(' ').slice(0, 8).join(' ');
-  try {
-    const res = await authFetch(`/api/auto-price?q=${encodeURIComponent(refinedQuery)}`);
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      recSection.innerHTML = `<p class="pp-error">${data.error || 'Not enough comps found for this card.'}</p>`;
-      return;
+// The heart of the revamp: take the comps the user selected, adjust each
+// one for the difference between its print run and the user's card's print
+// run (the way an experienced collector does it — scarcer = worth more, but
+// sub-linearly), then aggregate into an estimated value with a transparent
+// breakdown so the reasoning is visible.
+function calculateApValue() {
+  const section = document.getElementById('ap-value-section');
+  if (!section) return;
+  const userPR = _apUserPR;
+  const sel = _apComps.filter(c => c.include && c.price > 0);
+  if (sel.length < 1) {
+    section.innerHTML = '<p class="pp-error">Select at least one comp to estimate value.</p>';
+    return;
+  }
+
+  const med = arr => {
+    const s = [...arr].sort((a, b) => a - b);
+    const n = s.length;
+    return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+  };
+
+  // Per-comp print-run adjustment.
+  const rows = sel.map(c => {
+    let mult = 1, note = '';
+    if (userPR && c.pr && c.pr !== userPR) {
+      mult = Math.pow(c.pr / userPR, AP_SCARCITY_ALPHA);
+      mult = Math.min(Math.max(mult, 0.15), 12); // clamp wild extremes (e.g. 1/1)
+      note = c.pr > userPR ? 'rarer than comp' : 'more common than comp';
+    } else if (userPR && !c.pr) {
+      note = 'comp unnumbered';
+    } else if (!userPR && c.pr) {
+      note = 'your card unnumbered';
     }
-    const recs = data.recommendations;
-    const confidenceColors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
-    const confidenceColor = confidenceColors[data.confidence] || '#94a3b8';
-    recSection.innerHTML = `
-      <div class="ap-selected-label">&#10003; Priced from: <em>${escHtml(item.title)}</em></div>
-      ${data.fallbackNote ? `<div class="ap-fallback-note">&#128270; ${escHtml(data.fallbackNote)}</div>` : ''}
-      <div class="ap-context">
-        <span class="ap-confidence" style="color:${confidenceColor}">&#9679; ${data.confidence?.charAt(0).toUpperCase() + data.confidence?.slice(1)} confidence</span>
-        &nbsp;&middot;&nbsp; Based on <strong>${data.soldCount} sold</strong> &nbsp;&middot;&nbsp;
-        Median <strong>$${data.soldMedian}</strong> &nbsp;&middot;&nbsp;
-        Range $${data.soldLow} &ndash; $${data.soldHigh}
-        ${data.competitionLow ? ` &nbsp;&middot;&nbsp; Lowest listed <strong>$${data.competitionLow}</strong>` : ''}
+    return { title: c.title, raw: c.price, pr: c.pr, grade: c.grade, mult, adj: c.price * mult, note };
+  });
+
+  const adjPrices = rows.map(r => r.adj);
+  const value = med(adjPrices);
+  const low = Math.min(...adjPrices);
+  const high = Math.max(...adjPrices);
+
+  // Independent cross-check: if the selected comps span multiple print runs
+  // and the user's print run is known, fit a log-log regression (same model
+  // the checklist value estimator uses) and predict the price at the user's PR.
+  let regVal = null;
+  if (userPR) {
+    const known = sel.filter(c => c.pr).map(c => ({ printRun: c.pr, price: c.price }));
+    const est = estimateByPrintRun(userPR, known);
+    if (est && isFinite(est.value) && est.value > 0) regVal = est.value;
+  }
+
+  // Confidence: more comps + tight spread + little adjustment = higher.
+  const adjustedCount = rows.filter(r => Math.abs(r.mult - 1) > 0.01).length;
+  const spread = value > 0 ? (high - low) / value : 2;
+  let confidence = 'medium';
+  if (sel.length >= 5 && spread < 0.9 && adjustedCount <= sel.length / 2) confidence = 'high';
+  else if (sel.length <= 2 || spread > 1.8) confidence = 'low';
+
+  const grades = [...new Set(sel.map(c => c.grade))];
+  const mixedGrades = grades.length > 1;
+
+  const recs = [
+    { label: 'Fast Sale', price: value * 0.90, description: 'Move it quickly — priced just under market' },
+    { label: 'Optimal',   price: value,        description: 'Fair market value from your adjusted comps' },
+    { label: 'Premium',   price: value * 1.12, description: 'Top dollar for a patient seller' },
+  ];
+
+  const confColors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+  const confColor = confColors[confidence];
+  const fmt = n => `$${n.toFixed(2)}`;
+  const prLabel = userPR ? `/${userPR}` : 'unnumbered';
+
+  section.innerHTML = `
+    <div class="ap-value-card">
+      <div class="ap-value-top">
+        <div class="ap-value-label">Estimated value &middot; your ${escHtml(prLabel)} card</div>
+        <div class="ap-value-amount">${fmt(value)}</div>
+        <div class="ap-value-meta">
+          <span class="ap-confidence" style="color:${confColor}">&#9679; ${confidence.charAt(0).toUpperCase() + confidence.slice(1)} confidence</span>
+          &nbsp;&middot;&nbsp; ${sel.length} comp${sel.length !== 1 ? 's' : ''}
+          &nbsp;&middot;&nbsp; range ${fmt(low)}&ndash;${fmt(high)}
+          ${regVal ? ` &nbsp;&middot;&nbsp; regression check <strong>${fmt(regVal)}</strong>` : ''}
+        </div>
       </div>
       <div class="ap-recs">
-        ${Object.values(recs).map(r => `
+        ${recs.map(r => `
           <div class="ap-rec">
             <div class="ap-rec-label">${r.label}</div>
-            <div class="ap-rec-price">$${r.price.toFixed(2)}</div>
+            <div class="ap-rec-price">${fmt(r.price)}</div>
             <div class="ap-rec-desc">${r.description}</div>
           </div>`).join('')}
       </div>
-      <button class="ap-repick-btn" onclick="document.querySelectorAll('.ap-comp-card').forEach(el=>el.classList.remove('ap-comp-selected')); document.querySelector('.ap-rec-section').remove()">&#8592; Pick a different card</button>`;
-  } catch (e) {
-    recSection.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`;
-  }
+      ${adjustedCount > 0 ? `<div class="ap-method-note">&#9881;&#65039; ${adjustedCount} comp${adjustedCount !== 1 ? 's were' : ' was'} a different print run than your card, so ${adjustedCount !== 1 ? 'they were' : 'it was'} scaled by a power-law scarcity model (a /25 runs ~2&times; a /99, not 4&times;).</div>` : ''}
+      ${mixedGrades ? `<div class="ap-method-note ap-warn">&#9888;&#65039; Selected comps span multiple grades (${grades.map(escHtml).join(', ')}). For a tighter estimate, include only comps in your card's grade.</div>` : ''}
+      <details class="ap-breakdown-wrap">
+        <summary>Show the math &mdash; how each comp was adjusted</summary>
+        <table class="ap-breakdown">
+          <thead><tr><th>Comp</th><th>Sold</th><th>Print run</th><th>Adj.</th><th>Value</th></tr></thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td class="ap-bd-title">${escHtml(r.title.length > 60 ? r.title.slice(0, 57) + '…' : r.title)}${r.grade && r.grade !== 'Raw / Ungraded' ? ` <span class="ap-tag ap-tag-grade">${escHtml(r.grade)}</span>` : ''}</td>
+                <td>${fmt(r.raw)}</td>
+                <td>${r.pr ? '/' + r.pr : '<span class="ap-bd-muted">—</span>'}</td>
+                <td>${Math.abs(r.mult - 1) > 0.01 ? `<span class="ap-bd-mult">&times;${r.mult.toFixed(2)}</span>` : '<span class="ap-bd-muted">—</span>'}</td>
+                <td class="ap-bd-adj">${fmt(r.adj)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="ap-breakdown-foot">Value = median of the adjusted comps. Adjustment = (comp print run &divide; your print run)<sup>0.65</sup>, clamped for extremes.</div>
+      </details>
+    </div>`;
+  section.querySelector('.ap-value-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 let bulkPriceResults = [];

@@ -1120,6 +1120,49 @@
 .ap-repick-btn { background: none; border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 7px; padding: 0.4rem 0.9rem; font-size: 0.8rem; cursor: pointer; margin-top: 0.25rem; }
 .ap-repick-btn:hover { border-color: #f59e0b; color: #f59e0b; }
 
+/* Multi-select comps + print-run-adjusted valuation */
+.ap-yourcard-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.9rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 0.85rem; }
+.ap-pr-label { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.45rem; }
+.ap-pr-input-wrap { display: inline-flex; align-items: center; gap: 0.15rem; color: var(--text-muted); font-weight: 700; }
+.ap-pr-input { width: 4.5rem; background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; padding: 0.3rem 0.45rem; font-family: inherit; }
+.ap-pr-input:focus { outline: none; border-color: #f59e0b; }
+.ap-pr-hint { font-size: 0.72rem; color: var(--text-muted); }
+
+.ap-select-actions { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; }
+.ap-mini-btn { background: none; border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 6px; padding: 0.25rem 0.65rem; font-size: 0.74rem; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+.ap-mini-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.ap-select-count { font-size: 0.74rem; color: var(--text-muted); margin-left: auto; }
+
+.ap-comp-card { position: relative; display: block; }
+.ap-comp-check { position: absolute; top: 0.45rem; left: 0.45rem; z-index: 2; width: 1.15rem; height: 1.15rem; accent-color: #f59e0b; cursor: pointer; }
+.ap-comp-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.4rem; }
+.ap-tag { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.02em; border-radius: 4px; padding: 0.08rem 0.35rem; line-height: 1.5; }
+.ap-tag-pr { color: #f59e0b; background: rgba(245,158,11,0.13); }
+.ap-tag-unp { color: var(--text-muted); background: var(--bg-card); }
+.ap-tag-grade { color: #3b82f6; background: rgba(59,130,246,0.13); }
+
+.ap-calc-btn { width: 100%; margin: 0.25rem 0 1rem; }
+
+.ap-value-card { border-top: 1px solid var(--border-primary); padding-top: 1.25rem; }
+.ap-value-top { text-align: center; margin-bottom: 1.1rem; }
+.ap-value-label { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+.ap-value-amount { font-size: 2.6rem; font-weight: 800; color: #f59e0b; line-height: 1.1; margin: 0.15rem 0 0.3rem; }
+.ap-value-meta { font-size: 0.78rem; color: var(--text-secondary); }
+
+.ap-method-note { font-size: 0.76rem; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 7px; padding: 0.5rem 0.75rem; margin-bottom: 0.6rem; }
+.ap-method-note.ap-warn { color: #fbbf24; background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.2); }
+
+.ap-breakdown-wrap { margin-top: 0.4rem; }
+.ap-breakdown-wrap summary { cursor: pointer; font-size: 0.8rem; font-weight: 600; color: #f59e0b; padding: 0.35rem 0; }
+.ap-breakdown { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 0.5rem; }
+.ap-breakdown th { text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); border-bottom: 1px solid var(--border-primary); padding: 0.35rem 0.5rem; }
+.ap-breakdown td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border-primary); color: var(--text-secondary); white-space: nowrap; }
+.ap-breakdown .ap-bd-title { white-space: normal; color: var(--text-primary); }
+.ap-bd-adj { font-weight: 700; color: #f59e0b; }
+.ap-bd-mult { color: #4ade80; font-weight: 700; }
+.ap-bd-muted { color: var(--text-muted); }
+.ap-breakdown-foot { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.5; }
+
 /* Bulk Pricer */
 .bulk-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .bulk-table th { text-align: left; color: var(--text-muted); font-weight: 600; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border-primary); }
