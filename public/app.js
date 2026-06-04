@@ -1986,7 +1986,7 @@ async function loadGradePanel(query) {
   body.innerHTML = '';
 
   try {
-    const res  = await fetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
@@ -3943,7 +3943,7 @@ async function runAutoPricer() {
   }
   out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
   try {
-    const res = await fetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
+    const res = await authFetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (!res.ok || data.error) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
     if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found for this card.</p>'; return; }
@@ -3993,7 +3993,7 @@ async function selectApComp(idx) {
 
   const refinedQuery = item.title.split(' ').slice(0, 8).join(' ');
   try {
-    const res = await fetch(`/api/auto-price?q=${encodeURIComponent(refinedQuery)}`);
+    const res = await authFetch(`/api/auto-price?q=${encodeURIComponent(refinedQuery)}`);
     const data = await res.json();
     if (!res.ok || data.error) {
       recSection.innerHTML = `<p class="pp-error">${data.error || 'Not enough comps found for this card.'}</p>`;
@@ -4035,7 +4035,7 @@ async function runBulkPricer() {
   const queries = raw.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 20);
   out.innerHTML = `<div class="pp-loading">Pricing ${queries.length} card${queries.length !== 1 ? 's' : ''}&hellip;</div>`;
   try {
-    const res = await fetch('/api/bulk-price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries }) });
+    const res = await authFetch('/api/bulk-price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries }) });
     const data = await res.json();
     if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
     bulkPriceResults = data.results;
@@ -4086,7 +4086,7 @@ async function runGradingAdvisor(e) {
   btn.textContent = 'Analyzing...';
 
   try {
-    const res  = await fetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
+    const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to fetch data');
     renderGradingResults(data);
