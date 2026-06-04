@@ -3613,7 +3613,7 @@ function _renderScannerMatches(matches) {
         ? `<img class="scanner-match-card-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
         : '<div class="scanner-match-card-noimg">&#127944;</div>'}
       <div class="scanner-match-card-body">
-        <p class="scanner-match-card-title">${escHtml(m.title)}</p>
+        <p class="scanner-match-card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</p>
         <button class="scanner-match-card-btn" onclick="selectScannerMatch(${i})">Use This Listing</button>
       </div>
     </div>
@@ -3824,7 +3824,7 @@ function _renderScanFillMatches(matches) {
         ? `<img class="scanner-match-card-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
         : '<div class="scanner-match-card-noimg">&#127944;</div>'}
       <div class="scanner-match-card-body">
-        <p class="scanner-match-card-title">${escHtml(m.title)}</p>
+        <p class="scanner-match-card-title" title="${escHtml(m.title)}">${escHtml(m.title)}</p>
         <button class="scanner-match-card-btn" onclick="selectScanFillMatch(${i})">Use This</button>
       </div>
     </div>
