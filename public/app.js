@@ -4179,23 +4179,136 @@ async function runBulkPricer() {
   try {
     const res = await authFetch('/api/bulk-price', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ queries }) });
     const data = await res.json();
-    if (!res.ok) { out.innerHTML = `<p class="pp-error">${data.error}</p>`; return; }
-    bulkPriceResults = data.results;
-    out.innerHTML = `
-      <table class="bulk-table">
-        <thead><tr><th>Card</th><th>Median Sold</th><th>Low</th><th>High</th><th># Sales</th></tr></thead>
-        <tbody>
-          ${data.results.map(r => `
-            <tr class="${r.median ? '' : 'bulk-row-na'}">
-              <td class="bulk-query">${escHtml(r.query)}</td>
-              <td class="bulk-median">${r.median ? `$${r.median.toFixed(2)}` : '—'}</td>
-              <td>${r.low ? `$${r.low.toFixed(2)}` : '—'}</td>
-              <td>${r.high ? `$${r.high.toFixed(2)}` : '—'}</td>
-              <td>${r.count}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
-  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${e.message}</p>`; }
+    if (!res.ok) { out.innerHTML = `<p class="pp-error">${escHtml(data.error || 'Failed')}</p>`; return; }
+    bulkPriceResults = (data.results || []).map(r => ({
+      ...r,
+      comps: (r.comps || []).map(c => ({ ...c, include: true })),
+    }));
+    renderBulkResults();
+  } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${escHtml(e.message)}</p>`; }
+}
+
+function renderBulkResults() {
+  const out = document.getElementById('bulk-results');
+  out.innerHTML = `
+    <table class="bulk-table">
+      <thead><tr><th>Card</th><th>Median Sold</th><th>Low</th><th>High</th><th># Sales</th><th></th></tr></thead>
+      <tbody>
+        ${bulkPriceResults.map((r, i) => bulkRowHtml(r, i)).join('')}
+      </tbody>
+    </table>`;
+}
+
+function bulkRowHtml(r, i) {
+  const hasComps = r.comps && r.comps.length > 0;
+  return `
+    <tr class="${r.median != null ? '' : 'bulk-row-na'}" data-bulk-row="${i}">
+      <td class="bulk-query">${escHtml(r.query)}</td>
+      <td class="bulk-median" data-cell="median">${r.median != null ? `$${r.median.toFixed(2)}` : '—'}</td>
+      <td data-cell="low">${r.low != null ? `$${r.low.toFixed(2)}` : '—'}</td>
+      <td data-cell="high">${r.high != null ? `$${r.high.toFixed(2)}` : '—'}</td>
+      <td data-cell="count">${r.count}</td>
+      <td class="bulk-comps-cell">${hasComps ? `<button type="button" class="bulk-comps-btn" onclick="toggleBulkComps(${i})">Comps (${r.comps.length})</button>` : ''}</td>
+    </tr>
+    ${hasComps ? `<tr class="bulk-comps-row hidden" data-bulk-comps="${i}"><td colspan="6"><div class="bulk-comps-panel"></div></td></tr>` : ''}`;
+}
+
+function toggleBulkComps(i) {
+  const row = document.querySelector(`tr[data-bulk-comps="${i}"]`);
+  if (!row) return;
+  if (row.classList.contains('hidden')) {
+    renderBulkCompsPanel(i);
+    row.classList.remove('hidden');
+  } else {
+    row.classList.add('hidden');
+  }
+}
+
+function renderBulkCompsPanel(i) {
+  const r = bulkPriceResults[i];
+  const panel = document.querySelector(`tr[data-bulk-comps="${i}"] .bulk-comps-panel`);
+  if (!panel || !r) return;
+  const med = r.median || 0;
+  const usedCount = r.comps.filter(c => c.include).length;
+  panel.innerHTML = `
+    <div class="bulk-comps-head">
+      <span class="bulk-comps-summary">${usedCount} of ${r.comps.length} comps used in median</span>
+      <button type="button" class="ap-mini-btn" onclick="bulkSelectAllComps(${i}, true)">Include all</button>
+      <button type="button" class="ap-mini-btn" onclick="bulkAutoExclude(${i})">Auto-trim highs</button>
+    </div>
+    <div class="bulk-comps-list">
+      ${r.comps.map((c, j) => {
+        const high = med && c.price > med * 2;
+        return `<label class="bulk-comp ${c.include ? '' : 'bulk-comp-excluded'}">
+          <input type="checkbox" ${c.include ? 'checked' : ''} onchange="toggleBulkComp(${i}, ${j}, this.checked)" />
+          ${c.image ? `<img class="bulk-comp-img" src="${escHtml(c.image)}" onerror="this.style.visibility='hidden'" loading="lazy" alt="" />` : '<span class="bulk-comp-img"></span>'}
+          <span class="bulk-comp-title">${escHtml(c.title)}</span>
+          <span class="bulk-comp-price ${high ? 'bulk-comp-high' : ''}">$${c.price.toFixed(2)}${high ? ' <span class="bulk-high-tag">high</span>' : ''}</span>
+          ${c.url ? `<a class="bulk-comp-link" href="${escHtml(epnUrl(c.url))}" target="_blank" rel="noopener">view</a>` : '<span class="bulk-comp-link"></span>'}
+        </label>`;
+      }).join('')}
+    </div>`;
+}
+
+function toggleBulkComp(i, j, checked) {
+  const r = bulkPriceResults[i];
+  if (!r || !r.comps[j]) return;
+  r.comps[j].include = checked;
+  recalcBulkRow(i);
+  const panel = document.querySelector(`tr[data-bulk-comps="${i}"] .bulk-comps-panel`);
+  if (panel) {
+    const label = panel.querySelectorAll('.bulk-comp')[j];
+    if (label) label.classList.toggle('bulk-comp-excluded', !checked);
+    const summary = panel.querySelector('.bulk-comps-summary');
+    if (summary) summary.textContent = `${r.comps.filter(c => c.include).length} of ${r.comps.length} comps used in median`;
+  }
+}
+
+// Recompute a card's median/low/high/count from only the included comps and
+// update its table row in place (so CSV export reflects the exclusions too).
+function recalcBulkRow(i) {
+  const r = bulkPriceResults[i];
+  if (!r) return;
+  const prices = r.comps.filter(c => c.include).map(c => c.price).filter(p => p > 0).sort((a, b) => a - b);
+  if (prices.length) {
+    const n = prices.length;
+    const m = n % 2 ? prices[(n - 1) / 2] : (prices[n / 2 - 1] + prices[n / 2]) / 2;
+    r.median = Math.round(m * 100) / 100;
+    r.low = prices[0]; r.high = prices[n - 1]; r.count = n;
+  } else {
+    r.median = null; r.low = null; r.high = null; r.count = 0;
+  }
+  const tr = document.querySelector(`tr[data-bulk-row="${i}"]`);
+  if (tr) {
+    tr.classList.toggle('bulk-row-na', r.median == null);
+    tr.querySelector('[data-cell="median"]').textContent = r.median != null ? `$${r.median.toFixed(2)}` : '—';
+    tr.querySelector('[data-cell="low"]').textContent = r.low != null ? `$${r.low.toFixed(2)}` : '—';
+    tr.querySelector('[data-cell="high"]').textContent = r.high != null ? `$${r.high.toFixed(2)}` : '—';
+    tr.querySelector('[data-cell="count"]').textContent = r.count;
+  }
+}
+
+function bulkSelectAllComps(i, val) {
+  const r = bulkPriceResults[i];
+  if (!r) return;
+  r.comps.forEach(c => { c.include = val; });
+  recalcBulkRow(i);
+  renderBulkCompsPanel(i);
+}
+
+// Exclude comps priced more than 2x the median of the currently-included
+// comps — the "random high ones" the user wants gone.
+function bulkAutoExclude(i) {
+  const r = bulkPriceResults[i];
+  if (!r) return;
+  const inc = r.comps.filter(c => c.include).map(c => c.price).sort((a, b) => a - b);
+  if (inc.length < 3) { showPortfolioToast('Need at least 3 comps to auto-trim.'); return; }
+  const med = inc.length % 2 ? inc[(inc.length - 1) / 2] : (inc[inc.length / 2 - 1] + inc[inc.length / 2]) / 2;
+  let trimmed = 0;
+  r.comps.forEach(c => { if (c.include && c.price > med * 2) { c.include = false; trimmed++; } });
+  recalcBulkRow(i);
+  renderBulkCompsPanel(i);
+  showPortfolioToast(trimmed ? `Excluded ${trimmed} high comp${trimmed !== 1 ? 's' : ''}.` : 'No high outliers found.');
 }
 
 function exportBulkCSV() {
