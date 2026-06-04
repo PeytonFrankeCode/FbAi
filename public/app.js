@@ -1039,8 +1039,7 @@ async function deleteTrackedCard(id) {
 async function addAlertForCard(query) {
   const user = getCurrentUser();
   if (!user) { showLogin(); return; }
-  const sub = getUserSubscription();
-  if (!sub) { showPricing(); return; }
+  if (!hasPro()) { showPricing(); return; }
   const users = getUsers();
   const userData = users[user.toLowerCase()];
   if (!userData?.email) {
@@ -2019,8 +2018,7 @@ async function loadGradePanel(query) {
 function updatePriceChart(results) {
   if (typeof Chart === 'undefined') return;
 
-  const sub = getUserSubscription();
-  const isPro = !!sub;
+  const isPro = hasPro();
   const cutoffDays = isPro ? 365 : 30;
   const cutoffDate = new Date(Date.now() - cutoffDays * 24 * 60 * 60 * 1000);
 
@@ -3193,8 +3191,14 @@ function getUserSubscription() {
 }
 
 function hasPro() {
-  const sub = getUserSubscription();
-  return sub?.plan === 'pro' && sub?.status === 'active';
+  // Pro is unlocked for everyone — all paywalls removed. Every feature gate
+  // (checkCapLimit, checkDailyLimit, proGate, dailyUsesLeft, price-alert
+  // options, promoted slots, full chart history) keys off this, so returning
+  // true here opens all Pro functionality. Flip back to the subscription
+  // check below to re-gate.
+  return true;
+  // const sub = getUserSubscription();
+  // return sub?.plan === 'pro' && sub?.status === 'active';
 }
 
 // Back-compat: isProPlus is the strict Pro-tier check. isProOrPlus
@@ -5198,8 +5202,7 @@ function showPortfolioToast(msg) {
 
 // ---- Monthly Market Report PDF ----
 function generateMarketReport() {
-  const sub = getUserSubscription();
-  if (!sub) { showPricing(); return; }
+  if (!hasPro()) { showPricing(); return; }
 
   const coll = getCollection();
   const user = getCurrentUser() || 'Collector';
