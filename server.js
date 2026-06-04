@@ -3258,7 +3258,13 @@ app.post('/api/bulk-price', async (req, res) => {
       const prices = matched.map(r => parseFloat(r.price)).filter(p => p > 0);
       prices.sort((a, b) => a - b);
       const median = prices.length ? (prices.length % 2 ? prices[Math.floor(prices.length / 2)] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
-      results.push({ query: q, median: median ? Math.round(median * 100) / 100 : null, count: prices.length, low: prices[0] || null, high: prices[prices.length - 1] || null });
+      // Return the matched comps (highest first) so the UI can show them and
+      // let the user exclude the random high ones.
+      const comps = matched
+        .map(r => ({ title: r.title || '', price: parseFloat(r.price), url: r.itemUrl || '', soldDate: r.soldDate || '', image: r.imageUrl || '' }))
+        .filter(c => c.price > 0)
+        .sort((a, b) => b.price - a.price);
+      results.push({ query: q, median: median ? Math.round(median * 100) / 100 : null, count: prices.length, low: prices[0] || null, high: prices[prices.length - 1] || null, comps });
     } catch {
       results.push({ query: q, median: null, count: 0, error: 'Failed' });
     }
