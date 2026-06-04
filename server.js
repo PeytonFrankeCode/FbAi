@@ -3011,7 +3011,7 @@ app.get('/api/flip-finder', requirePlan('pro'), async (req, res) => {
     ]);
     if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
 
-    const soldPrices = soldData.results.map(i => parseFloat(i.price)).filter(p => p > 0);
+    const soldPrices = (soldData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0);
     if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough sold data for this query' });
 
     const sorted = [...soldPrices].sort((a, b) => a - b);
@@ -3060,7 +3060,7 @@ app.get('/api/market-movers', requirePlan('pro'), async (req, res) => {
   try {
     const soldData = await fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 50, 'market-movers', scrapeDoCtx.username);
     if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-    const items = soldData.results
+    const items = (soldData.results || [])
       .map(i => ({ price: parseFloat(i.price), date: i.soldDate ? new Date(i.soldDate) : null, title: i.title, imageUrl: i.imageUrl }))
       .filter(i => i.price > 0 && i.date && !isNaN(i.date));
 
@@ -3159,12 +3159,12 @@ app.get('/api/auto-price', async (req, res) => {
     for (let i = 0; i < attempts.length; i++) {
       soldData = await fetchViaScrapeDoRotated(attempts[i], scrapeDoCtx.keys, 30, 'auto-price', scrapeDoCtx.username);
       if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-      const prices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+      const prices = (soldData.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
       if (prices.length >= 3) { usedQuery = attempts[i]; attemptIndex = i; break; }
       if (i === attempts.length - 1) { usedQuery = attempts[i]; attemptIndex = i; }
     }
 
-    const rawPrices = soldData.results.map(r => parseFloat(r.price)).filter(p => p > 0);
+    const rawPrices = (soldData.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
     const cleanPrices = removeOutliers(rawPrices);
     const finalPrices = (cleanPrices.length >= 2 ? cleanPrices : rawPrices).sort((a, b) => a - b);
 
