@@ -3833,12 +3833,153 @@ function _renderScannerSoldResults(query, items) {
 // card as a distinct "Sold Value" alongside Paid and Mkt Value.
 let _pendingScannedSoldValue = null;
 
-function addScannerCardToCollection() {
-  const name = _scannerLastQuery || '';
-  _pendingScannedSoldValue = _scannerLastMedian != null ? _scannerLastMedian : null;
-  document.getElementById('add-card-name').value = name;
-  // Leave Purchase price blank so the user enters what they actually paid —
-  // the scanned sold value is tracked separately as its own column.
+// ---- Match a scanned card to a checklist entry (for accuracy) ----
+let _checklistMatches = [];
+let _checklistMatchMeta = { soldValue: null, query: '' };
+
+function _normName(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function _playerMatches(checklistPlayer, target) {
+  const a = _normName(checklistPlayer), b = _normName(target);
+  if (!a || !b) return false;
+  if (a.includes(b) || b.includes(a)) return true;
+  const at = a.split(' '), bt = b.split(' ');
+  const al = at[at.length - 1], bl = bt[bt.length - 1];
+  return bl.length > 2 && al === bl && at[0][0] === bt[0][0];
+}
+function _bestParallelIndex(parallels, extracted) {
+  if (!parallels || !parallels.length || !extracted || !extracted.length) return -1;
+  for (const ex of extracted) {
+    const exl = ex.toLowerCase();
+    const i = parallels.findIndex(p => p.name && p.name.toLowerCase().includes(exl));
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+// Search the static checklist data for cards matching a scanned listing.
+async function matchChecklistFromQuery(rawQuery) {
+  const player = _extractPlayer(rawQuery);
+  const year = (String(rawQuery).match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const lower = String(rawQuery).toLowerCase();
+  const setTerms = SCAN_KEY_SETS.filter(s => new RegExp(`\\b${s}\\b`).test(lower));
+  const skip = new Set(['rc', 'auto', 'patch']);
+  const parallels = _scanKeyTerms(rawQuery).filter(t => {
+    const tl = t.toLowerCase();
+    return !/^\//.test(t) && !/^(psa|bgs|sgc|cgc|hga|csg)\b/i.test(t) && !skip.has(tl) && !SCAN_KEY_SETS.includes(tl);
+  });
+  if (!player) return { player: '', year, parallels, cards: [] };
+
+  let index;
+  try { index = await fetchChecklistsList(); } catch { return { player, year, parallels, cards: [] }; }
+  const products = (index.products || [])
+    .map(p => {
+      const hay = `${p.id} ${p.name} ${p.brand}`.toLowerCase();
+      return { p, score: setTerms.reduce((s, t) => s + (hay.includes(t) ? 1 : 0), 0) };
+    })
+    .filter(x => (year ? String(x.p.year) === String(year) : true) && (setTerms.length ? x.score > 0 : true))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(x => x.p);
+
+  const cards = [];
+  const seen = new Set();
+  for (const prod of products) {
+    let data;
+    try { data = await fetchChecklistProduct(prod.id); } catch { continue; }
+    for (const set of data.sets || []) {
+      for (const card of set.cards || []) {
+        if (!_playerMatches(card.player, player)) continue;
+        const key = `${data.id}|${set.name}|${card.number}|${card.player}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        cards.push({
+          year: data.year, brand: data.brand, setName: set.name, category: set.category || 'base',
+          number: card.number || '', player: card.player, team: card.team || '', parallels: set.parallels || [],
+        });
+        if (cards.length >= 60) break;
+      }
+      if (cards.length >= 60) break;
+    }
+    if (cards.length >= 60) break;
+  }
+  cards.sort((a, b) => (a.category === 'base' ? 0 : 1) - (b.category === 'base' ? 0 : 1));
+  return { player, year, parallels, cards: cards.slice(0, 20) };
+}
+
+// Photo add → match to checklist for accuracy, with a manual fallback.
+async function addScannerCardToCollection() {
+  const q = _scannerLastQuery || '';
+  _checklistMatchMeta = { soldValue: _scannerLastMedian != null ? _scannerLastMedian : null, query: q };
+  document.getElementById('checklist-match-modal').classList.remove('hidden');
+  const body = document.getElementById('checklist-match-body');
+  body.innerHTML = '<div class="pp-loading"><div class="spinner"></div> Matching to the official checklist…</div>';
+  let res;
+  try { res = await matchChecklistFromQuery(q); } catch { res = { cards: [] }; }
+  _checklistMatches = res.cards || [];
+  renderChecklistMatchModal(res);
+}
+
+function renderChecklistMatchModal(res) {
+  const body = document.getElementById('checklist-match-body');
+  if (!body) return;
+  if (!_checklistMatches.length) {
+    body.innerHTML = `
+      <p class="clm-none">No checklist match found${res && res.player ? ` for <strong>${escHtml(res.player)}</strong>` : ''}. You can still add it as a manual card.</p>
+      <button class="pp-btn" onclick="addScannerCardManual()">Add manually instead</button>`;
+    return;
+  }
+  const extracted = (res && res.parallels) || [];
+  const rows = _checklistMatches.map((c, i) => {
+    const best = _bestParallelIndex(c.parallels, extracted);
+    const opts = [`<option value="-1" ${best < 0 ? 'selected' : ''}>Base</option>`]
+      .concat((c.parallels || []).map((p, j) =>
+        `<option value="${j}" ${best === j ? 'selected' : ''}>${escHtml(p.name)}${p.printRun ? ` /${p.printRun}` : ''}</option>`));
+    return `<div class="clm-row">
+      <div class="clm-row-main">
+        <span class="clm-row-title">${c.year} ${escHtml(c.brand)} &middot; ${escHtml(c.setName)} &middot; #${escHtml(String(c.number))}</span>
+        <span class="clm-row-player">${escHtml(c.player)}${c.team ? ' &middot; ' + escHtml(c.team) : ''}</span>
+      </div>
+      <select id="clm-par-${i}" class="clm-select">${opts.join('')}</select>
+      <button class="clm-add-btn" onclick="addMatchedChecklistCard(${i})">Add</button>
+    </div>`;
+  }).join('');
+  body.innerHTML = `
+    <div class="clm-matched-label">Matched <strong>${escHtml(res.player)}</strong> &middot; pick the exact card &amp; parallel</div>
+    <div class="clm-list">${rows}</div>
+    <button class="clm-manual-link" onclick="addScannerCardManual()">None of these — add manually</button>`;
+}
+
+function addMatchedChecklistCard(i) {
+  const c = _checklistMatches[i];
+  if (!c) return;
+  const sel = document.getElementById(`clm-par-${i}`);
+  let parallelName = '', printRun = '';
+  const j = sel ? parseInt(sel.value, 10) : -1;
+  if (j >= 0 && c.parallels[j]) { parallelName = c.parallels[j].name; printRun = c.parallels[j].printRun || ''; }
+  const ok = addToCollectionFromChecklist(c.player, c.year, c.brand, c.setName, parallelName, printRun || '', c.number, c.team, c.category);
+  if (!ok) return;
+  // Carry the scanned sold value snapshot onto the just-added card.
+  if (_checklistMatchMeta.soldValue != null) {
+    const coll = getCollection();
+    const last = coll[coll.length - 1];
+    if (last) { last.soldValue = _checklistMatchMeta.soldValue; saveCollection(coll); }
+  }
+  closeChecklistMatchModal();
+  renderPortfolio();
+  showPortfolioToast('Added — matched to checklist for accuracy.');
+}
+
+function closeChecklistMatchModal() {
+  document.getElementById('checklist-match-modal').classList.add('hidden');
+}
+
+// Fallback: the original behavior — prefill the manual Add Card modal.
+function addScannerCardManual() {
+  closeChecklistMatchModal();
+  _pendingScannedSoldValue = _checklistMatchMeta.soldValue;
+  document.getElementById('add-card-name').value = _checklistMatchMeta.query || _scannerLastQuery || '';
   document.getElementById('add-card-price').value = '';
   document.getElementById('add-card-condition').value = '';
   document.getElementById('add-card-notes').value = '';
@@ -7267,44 +7408,98 @@ function closeTitleAutofill() {
   document.getElementById('title-autofill-modal').classList.add('hidden');
 }
 
+// Search the static checklist data for cards matching a free-text query.
+// Returns records shaped { year, brand, productName, setName, player, number,
+// category, parallels } — replaces the never-implemented /api/player-search.
+async function searchChecklistCards(query) {
+  const lower = String(query).toLowerCase();
+  const tokens = lower.split(/\s+/).filter(Boolean);
+  const year = (lower.match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const setTerms = SCAN_KEY_SETS.filter(s => lower.includes(s));
+  const stop = new Set([
+    ...SCAN_KEY_SETS.join(' ').split(/\s+/), ...SCAN_KEY_PARALLEL_WORDS,
+    'football', 'panini', 'topps', 'rc', 'rookie', 'auto', 'patch', 'base', 'card', 'the',
+  ]);
+  const playerTokens = tokens.filter(t => t.length > 1 && !/^\d{4}$/.test(t) && !stop.has(t));
+  if (!playerTokens.length) return { cards: [], needPlayer: true };
+
+  let index;
+  try { index = await fetchChecklistsList(); } catch { return { cards: [] }; }
+  let cands = (index.products || [])
+    .map(p => {
+      const hay = `${p.id} ${p.name} ${p.brand}`.toLowerCase();
+      return { p, score: setTerms.reduce((s, t) => s + (hay.includes(t) ? 1 : 0), 0) };
+    })
+    .filter(x => (year ? String(x.p.year) === year : true) && (setTerms.length ? x.score > 0 : true))
+    .sort((a, b) => b.score - a.score);
+  const fileCap = (setTerms.length || year) ? 10 : 25;
+  cands = cands.slice(0, fileCap).map(x => x.p);
+
+  const datas = await Promise.all(cands.map(p => fetchChecklistProduct(p.id).catch(() => null)));
+  const cards = [];
+  for (const data of datas) {
+    if (!data) continue;
+    for (const set of data.sets || []) {
+      for (const card of set.cards || []) {
+        const pn = _normName(card.player);
+        if (!playerTokens.every(t => pn.includes(t))) continue;
+        cards.push({
+          year: data.year, brand: data.brand, productName: data.name, setName: set.name,
+          player: card.player, number: card.number || '', category: set.category || 'base',
+          parallels: set.parallels || [],
+        });
+        if (cards.length >= 80) return { cards };
+      }
+    }
+  }
+  return { cards };
+}
+
+function _checklistTitleString(c, p) {
+  const pr = p.printRun ? ` /${p.printRun}` : '';
+  const pName = p.name ? ` ${p.name}` : '';
+  const autoTag = c.category === 'autograph' ? ' AUTO' : '';
+  const rcTag = /rookie|rated rookie|\brc\b/i.test(`${c.setName} ${c.category}`) ? ' RC' : '';
+  let title = `${c.year} ${c.brand} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
+  return title.length > 80 ? title.substring(0, 80).trim() : title;
+}
+
+// Build the title-row list shared by Auto-Fill ('use') and Generator ('copy').
+function _renderTitleRows(cards, mode) {
+  let html = '';
+  const seen = new Set();
+  for (const c of cards) {
+    const variants = [{ name: '', printRun: '' }, ...(c.parallels || []).slice(0, 5)];
+    for (const p of variants) {
+      const title = _checklistTitleString(c, p);
+      if (seen.has(title)) continue;
+      seen.add(title);
+      const esc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const btn = mode === 'autofill'
+        ? `<button class="listing-copy-btn" onclick="useAutofillTitle('${esc}')">Use</button>`
+        : `<button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${esc}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>`;
+      html += `<div class="listing-title-row">
+        <span class="listing-title-text">${escHtml(title)}</span>
+        <span class="listing-title-len">${title.length}/80</span>
+        ${btn}
+      </div>`;
+      if (seen.size >= 60) return html;
+    }
+  }
+  return html;
+}
+
 async function searchAutofillTitles() {
   const q = document.getElementById('autofill-search-input').value.trim();
   const resultsEl = document.getElementById('autofill-results');
   if (!q || q.length < 2) return;
 
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching checklist…</span></div>';
   try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      resultsEl.innerHTML = '<p>No matching cards found.</p>';
-      return;
-    }
-
-    let html = '';
-    const seen = new Set();
-    data.results.slice(0, 50).forEach(c => {
-      const parallels = c.parallels || [];
-      const allVariants = [{ name: '', printRun: '' }, ...parallels.slice(0, 5)];
-      allVariants.forEach(p => {
-        const pr = p.printRun ? ` /${p.printRun}` : '';
-        const pName = p.name ? ` ${p.name}` : '';
-        const autoTag = c.category === 'autograph' ? ' AUTO' : '';
-        const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
-        let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
-        if (title.length > 80) title = title.substring(0, 80).trim();
-        if (!seen.has(title)) {
-          seen.add(title);
-          const titleEsc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          html += `<div class="listing-title-row">
-            <span class="listing-title-text">${escHtml(title)}</span>
-            <span class="listing-title-len">${title.length}/80</span>
-            <button class="listing-copy-btn" onclick="useAutofillTitle('${titleEsc}')">Use</button>
-          </div>`;
-        }
-      });
-    });
-    resultsEl.innerHTML = html || '<p>No titles generated. Try a different search.</p>';
+    const { cards, needPlayer } = await searchChecklistCards(q);
+    if (needPlayer) { resultsEl.innerHTML = '<p>Include a player name (e.g. "Mahomes Prizm" or "2023 Justin Jefferson").</p>'; return; }
+    if (!cards.length) { resultsEl.innerHTML = '<p>No matching cards found. Try adding the set or year.</p>'; return; }
+    resultsEl.innerHTML = _renderTitleRows(cards, 'autofill') || '<p>No titles generated. Try a different search.</p>';
   } catch (err) {
     resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
   }
@@ -7323,39 +7518,12 @@ async function generateListingTitles() {
   const resultsEl = document.getElementById('listing-helper-results');
   if (!q || q.length < 2) return;
 
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching checklist…</span></div>';
   try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      resultsEl.innerHTML = '<p>No matching cards found.</p>';
-      return;
-    }
-
-    let html = '';
-    const seen = new Set();
-    data.results.slice(0, 50).forEach(c => {
-      const parallels = c.parallels || [];
-      const allVariants = [{ name: '', printRun: '' }, ...parallels.slice(0, 5)];
-      allVariants.forEach(p => {
-        const pr = p.printRun ? ` /${p.printRun}` : '';
-        const pName = p.name ? ` ${p.name}` : '';
-        const autoTag = c.category === 'autograph' ? ' AUTO' : '';
-        const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
-        let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
-        if (title.length > 80) title = title.substring(0, 80).trim();
-        if (!seen.has(title)) {
-          seen.add(title);
-          const titleEsc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          html += `<div class="listing-title-row">
-            <span class="listing-title-text">${escHtml(title)}</span>
-            <span class="listing-title-len">${title.length}/80</span>
-            <button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${titleEsc}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
-          </div>`;
-        }
-      });
-    });
-    resultsEl.innerHTML = html || '<p>No titles generated. Try a different search.</p>';
+    const { cards, needPlayer } = await searchChecklistCards(q);
+    if (needPlayer) { resultsEl.innerHTML = '<p>Include a player name (e.g. "Mahomes Prizm" or "2023 Justin Jefferson").</p>'; return; }
+    if (!cards.length) { resultsEl.innerHTML = '<p>No matching cards found. Try adding the set or year.</p>'; return; }
+    resultsEl.innerHTML = _renderTitleRows(cards, 'generate') || '<p>No titles generated. Try a different search.</p>';
   } catch (err) {
     resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
   }
