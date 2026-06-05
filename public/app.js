@@ -7408,44 +7408,98 @@ function closeTitleAutofill() {
   document.getElementById('title-autofill-modal').classList.add('hidden');
 }
 
+// Search the static checklist data for cards matching a free-text query.
+// Returns records shaped { year, brand, productName, setName, player, number,
+// category, parallels } — replaces the never-implemented /api/player-search.
+async function searchChecklistCards(query) {
+  const lower = String(query).toLowerCase();
+  const tokens = lower.split(/\s+/).filter(Boolean);
+  const year = (lower.match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const setTerms = SCAN_KEY_SETS.filter(s => lower.includes(s));
+  const stop = new Set([
+    ...SCAN_KEY_SETS.join(' ').split(/\s+/), ...SCAN_KEY_PARALLEL_WORDS,
+    'football', 'panini', 'topps', 'rc', 'rookie', 'auto', 'patch', 'base', 'card', 'the',
+  ]);
+  const playerTokens = tokens.filter(t => t.length > 1 && !/^\d{4}$/.test(t) && !stop.has(t));
+  if (!playerTokens.length) return { cards: [], needPlayer: true };
+
+  let index;
+  try { index = await fetchChecklistsList(); } catch { return { cards: [] }; }
+  let cands = (index.products || [])
+    .map(p => {
+      const hay = `${p.id} ${p.name} ${p.brand}`.toLowerCase();
+      return { p, score: setTerms.reduce((s, t) => s + (hay.includes(t) ? 1 : 0), 0) };
+    })
+    .filter(x => (year ? String(x.p.year) === year : true) && (setTerms.length ? x.score > 0 : true))
+    .sort((a, b) => b.score - a.score);
+  const fileCap = (setTerms.length || year) ? 10 : 25;
+  cands = cands.slice(0, fileCap).map(x => x.p);
+
+  const datas = await Promise.all(cands.map(p => fetchChecklistProduct(p.id).catch(() => null)));
+  const cards = [];
+  for (const data of datas) {
+    if (!data) continue;
+    for (const set of data.sets || []) {
+      for (const card of set.cards || []) {
+        const pn = _normName(card.player);
+        if (!playerTokens.every(t => pn.includes(t))) continue;
+        cards.push({
+          year: data.year, brand: data.brand, productName: data.name, setName: set.name,
+          player: card.player, number: card.number || '', category: set.category || 'base',
+          parallels: set.parallels || [],
+        });
+        if (cards.length >= 80) return { cards };
+      }
+    }
+  }
+  return { cards };
+}
+
+function _checklistTitleString(c, p) {
+  const pr = p.printRun ? ` /${p.printRun}` : '';
+  const pName = p.name ? ` ${p.name}` : '';
+  const autoTag = c.category === 'autograph' ? ' AUTO' : '';
+  const rcTag = /rookie|rated rookie|\brc\b/i.test(`${c.setName} ${c.category}`) ? ' RC' : '';
+  let title = `${c.year} ${c.brand} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
+  return title.length > 80 ? title.substring(0, 80).trim() : title;
+}
+
+// Build the title-row list shared by Auto-Fill ('use') and Generator ('copy').
+function _renderTitleRows(cards, mode) {
+  let html = '';
+  const seen = new Set();
+  for (const c of cards) {
+    const variants = [{ name: '', printRun: '' }, ...(c.parallels || []).slice(0, 5)];
+    for (const p of variants) {
+      const title = _checklistTitleString(c, p);
+      if (seen.has(title)) continue;
+      seen.add(title);
+      const esc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const btn = mode === 'autofill'
+        ? `<button class="listing-copy-btn" onclick="useAutofillTitle('${esc}')">Use</button>`
+        : `<button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${esc}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>`;
+      html += `<div class="listing-title-row">
+        <span class="listing-title-text">${escHtml(title)}</span>
+        <span class="listing-title-len">${title.length}/80</span>
+        ${btn}
+      </div>`;
+      if (seen.size >= 60) return html;
+    }
+  }
+  return html;
+}
+
 async function searchAutofillTitles() {
   const q = document.getElementById('autofill-search-input').value.trim();
   const resultsEl = document.getElementById('autofill-results');
   if (!q || q.length < 2) return;
 
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching checklist…</span></div>';
   try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      resultsEl.innerHTML = '<p>No matching cards found.</p>';
-      return;
-    }
-
-    let html = '';
-    const seen = new Set();
-    data.results.slice(0, 50).forEach(c => {
-      const parallels = c.parallels || [];
-      const allVariants = [{ name: '', printRun: '' }, ...parallels.slice(0, 5)];
-      allVariants.forEach(p => {
-        const pr = p.printRun ? ` /${p.printRun}` : '';
-        const pName = p.name ? ` ${p.name}` : '';
-        const autoTag = c.category === 'autograph' ? ' AUTO' : '';
-        const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
-        let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
-        if (title.length > 80) title = title.substring(0, 80).trim();
-        if (!seen.has(title)) {
-          seen.add(title);
-          const titleEsc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          html += `<div class="listing-title-row">
-            <span class="listing-title-text">${escHtml(title)}</span>
-            <span class="listing-title-len">${title.length}/80</span>
-            <button class="listing-copy-btn" onclick="useAutofillTitle('${titleEsc}')">Use</button>
-          </div>`;
-        }
-      });
-    });
-    resultsEl.innerHTML = html || '<p>No titles generated. Try a different search.</p>';
+    const { cards, needPlayer } = await searchChecklistCards(q);
+    if (needPlayer) { resultsEl.innerHTML = '<p>Include a player name (e.g. "Mahomes Prizm" or "2023 Justin Jefferson").</p>'; return; }
+    if (!cards.length) { resultsEl.innerHTML = '<p>No matching cards found. Try adding the set or year.</p>'; return; }
+    resultsEl.innerHTML = _renderTitleRows(cards, 'autofill') || '<p>No titles generated. Try a different search.</p>';
   } catch (err) {
     resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
   }
@@ -7464,39 +7518,12 @@ async function generateListingTitles() {
   const resultsEl = document.getElementById('listing-helper-results');
   if (!q || q.length < 2) return;
 
-  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching...</span></div>';
+  resultsEl.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Searching checklist…</span></div>';
   try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      resultsEl.innerHTML = '<p>No matching cards found.</p>';
-      return;
-    }
-
-    let html = '';
-    const seen = new Set();
-    data.results.slice(0, 50).forEach(c => {
-      const parallels = c.parallels || [];
-      const allVariants = [{ name: '', printRun: '' }, ...parallels.slice(0, 5)];
-      allVariants.forEach(p => {
-        const pr = p.printRun ? ` /${p.printRun}` : '';
-        const pName = p.name ? ` ${p.name}` : '';
-        const autoTag = c.category === 'autograph' ? ' AUTO' : '';
-        const rcTag = (c.category === 'base' && c.note && /rc|rookie/i.test(c.note)) ? ' RC' : '';
-        let title = `${c.year} ${c.brand} ${c.productName} ${c.player} #${c.number}${pName}${pr}${autoTag}${rcTag} Football`.replace(/\s+/g, ' ').trim();
-        if (title.length > 80) title = title.substring(0, 80).trim();
-        if (!seen.has(title)) {
-          seen.add(title);
-          const titleEsc = title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          html += `<div class="listing-title-row">
-            <span class="listing-title-text">${escHtml(title)}</span>
-            <span class="listing-title-len">${title.length}/80</span>
-            <button class="listing-copy-btn" onclick="navigator.clipboard.writeText('${titleEsc}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)">Copy</button>
-          </div>`;
-        }
-      });
-    });
-    resultsEl.innerHTML = html || '<p>No titles generated. Try a different search.</p>';
+    const { cards, needPlayer } = await searchChecklistCards(q);
+    if (needPlayer) { resultsEl.innerHTML = '<p>Include a player name (e.g. "Mahomes Prizm" or "2023 Justin Jefferson").</p>'; return; }
+    if (!cards.length) { resultsEl.innerHTML = '<p>No matching cards found. Try adding the set or year.</p>'; return; }
+    resultsEl.innerHTML = _renderTitleRows(cards, 'generate') || '<p>No titles generated. Try a different search.</p>';
   } catch (err) {
     resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
   }
