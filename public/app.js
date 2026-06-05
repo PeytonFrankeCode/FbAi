@@ -3776,7 +3776,11 @@ async function selectScannerMatch(index) {
       return;
     }
 
-    _renderScannerSoldResults(broadQuery, data.results || []);
+    // Strict key-term match so only true comps for this exact card count.
+    const _allSold = data.results || [];
+    const _qCard = _cardFromQuery(broadQuery);
+    const _strictSold = _allSold.filter(r => _compMatchesCard(_qCard, r.title));
+    _renderScannerSoldResults(broadQuery, _strictSold.length >= 1 ? _strictSold : _allSold);
   } catch (err) {
     loading.classList.add('hidden');
     errEl.textContent = 'Network error. Please try again.';
@@ -5691,7 +5695,12 @@ function _cardGradeToken(condition) {
 function buildCardSoldQuery(c) {
   const grade = _cardGradeToken(c.condition);
   if (c.player) {
-    let q = [c.player, c.year, c.brand, c.setName, c.parallel].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    const parts = [c.player, c.year, c.brand];
+    // Skip generic "Base Set" set names — the word "set" almost never appears
+    // in listing titles and poisons the match. Keep real insert/auto set names.
+    if (c.setName && !/^base/i.test(c.setName) && !/base set/i.test(c.setName)) parts.push(c.setName);
+    if (c.parallel) parts.push(c.parallel);
+    let q = parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
     if (c.printRun) q += ` /${c.printRun}`;
     if (grade) q += ` ${grade}`;
     return q.trim();
@@ -5699,6 +5708,82 @@ function buildCardSoldQuery(c) {
   let q = c.name || '';
   if (grade && !new RegExp(grade.replace(/\s/g, '\\s*'), 'i').test(q)) q += ` ${grade}`;
   return q.trim();
+}
+
+// ---- Strict comp matching (spotless comps) ----
+// Only count eBay sold listings whose title matches ALL of the card's key
+// terms — player, year, set, exact parallel/color, exact print run, grade —
+// and exclude mismatches (other colors, numbered when ours is unnumbered,
+// graded when ours is raw). This is what keeps random comps out.
+const _PARALLEL_COLORS = ['silver', 'gold', 'blue', 'green', 'red', 'purple', 'orange',
+  'pink', 'black', 'white', 'aqua', 'teal', 'emerald', 'ruby', 'sapphire', 'copper',
+  'bronze', 'yellow', 'neon', 'lime', 'maroon'];
+
+function _cardSetKeyword(card) {
+  const hay = `${card.brand || ''} ${card.setName || ''} ${card.name || ''}`.toLowerCase();
+  return SCAN_KEY_SETS.find(s => hay.includes(s)) || '';
+}
+
+function _compMatchesCard(card, title) {
+  const orig = String(title || '');
+  const lower = ' ' + orig.toLowerCase().replace(/\s+/g, ' ') + ' ';
+
+  // Player last name must appear.
+  const player = card.player || _extractPlayer(card.name || '');
+  if (player) {
+    const toks = _normName(player).split(' ').filter(w => w.length > 2);
+    const last = toks[toks.length - 1];
+    if (last && !lower.includes(last)) return false;
+  }
+  // Year.
+  if (card.year && !lower.includes(String(card.year))) return false;
+  // Set / product line.
+  const setKw = _cardSetKeyword(card);
+  if (setKw && !lower.includes(setKw)) return false;
+  // Parallel / color exclusivity.
+  const par = String(card.parallel || '').toLowerCase();
+  if (par) {
+    const generic = new Set(['refractor', 'refractors', 'parallel', 'prizm', 'prizms', 'hobby', 'only', 'variation', 'variations', 'ssp', 'sp', 'the']);
+    const pwords = par.split(/\s+/).map(w => w.replace(/[^a-z]/g, '')).filter(w => w.length > 2 && !generic.has(w));
+    if (pwords.length && !pwords.every(w => lower.includes(w))) return false;
+    const parColor = _PARALLEL_COLORS.find(col => new RegExp('\\b' + col + '\\b').test(par));
+    if (parColor && _PARALLEL_COLORS.some(col => col !== parColor && new RegExp('\\b' + col + '\\b').test(lower))) return false;
+  } else if (_PARALLEL_COLORS.some(col => new RegExp('\\b' + col + '\\b').test(lower))) {
+    return false; // base/no-parallel card: drop colored parallels
+  }
+  // Print run exactness.
+  if (card.printRun) {
+    if (!new RegExp('/\\s*' + card.printRun + '(?![0-9])').test(lower)) return false;
+  } else if (/\/\s*\d{1,4}\b/.test(lower)) {
+    return false; // unnumbered card: drop numbered listings
+  }
+  // Grade.
+  const grade = _cardGradeToken(card.condition);
+  if (grade) {
+    if (!new RegExp(grade.replace(/\s+/g, '\\s*'), 'i').test(orig)) return false;
+  } else if (/\b(psa|bgs|sgc|cgc|hga|csg)\s*\d/i.test(orig)) {
+    return false; // raw card: drop graded listings
+  }
+  return true;
+}
+
+// Derive a pseudo-card (key terms) from a free-text/scanned query string so
+// the same strict matcher can clean scanner results.
+function _cardFromQuery(q) {
+  const lower = String(q).toLowerCase();
+  let parallel = '';
+  for (const p of SCAN_KEY_PARALLEL_PHRASES) if (lower.includes(p)) { parallel = p; break; }
+  if (!parallel) for (const w of lower.split(/\s+/)) { const c = w.replace(/[^a-z]/g, ''); if (SCAN_KEY_PARALLEL_WORDS.has(c)) { parallel = c; break; } }
+  const g = detectGrade(q);
+  const pr = parsePrintRun(q);
+  return {
+    player: _extractPlayer(q),
+    year: (String(q).match(/\b(19|20)\d{2}\b/) || [])[0] || '',
+    brand: SCAN_KEY_SETS.find(s => lower.includes(s)) || '',
+    parallel,
+    printRun: pr ? String(pr) : '',
+    condition: g !== 'Raw / Ungraded' ? g : '',
+  };
 }
 
 function _medianOf(prices) {
@@ -5761,6 +5846,12 @@ async function _fetchCardComps(c) {
   let rows = (Array.isArray(data.results) ? data.results : [])
     .map(r => ({ title: String(r.title || '').slice(0, 90), price: parseFloat(r.price), url: r.itemUrl || r.url || r.link || '', soldDate: r.soldDate || '' }))
     .filter(x => x.price > 0);
+  // Strict key-term match — keep only listings that match this exact card
+  // (player/year/set/parallel/print run/grade). Falls back to the raw set
+  // only if nothing matches, flagged as approximate.
+  const strict = rows.filter(x => _compMatchesCard(c, x.title));
+  let loose = false;
+  if (strict.length >= 1) rows = strict; else loose = true;
   // Free members: only count comps from the last 2 months (keep undated ones
   // so a card never ends up with zero comps just for missing dates).
   let windowed = false;
@@ -5770,7 +5861,7 @@ async function _fetchCardComps(c) {
     if (recent.length) { rows = recent; windowed = true; }
   }
   rows.sort((a, b) => a.price - b.price);
-  return { comps: rows, broadened: data.searchType === 'broadened', query: q, windowed };
+  return { comps: rows, broadened: (data.searchType === 'broadened') || loose, query: q, windowed };
 }
 
 // Value a single card by collection index and persist (skips locked cards).
