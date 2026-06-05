@@ -5715,6 +5715,21 @@ tr:hover .cl-alert-btn {
 .ccm-comp-link:hover { text-decoration: underline; }
 .ccm-excluded { opacity: 0.45; }
 .ccm-excluded .ccm-comp-title { text-decoration: line-through; }
+
+/* Checklist match modal */
+.clm-help { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.clm-matched-label { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.6rem; }
+.clm-list { display: flex; flex-direction: column; gap: 0.35rem; max-height: 50vh; overflow-y: auto; margin-bottom: 0.75rem; }
+.clm-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.5rem; border: 1px solid var(--border-primary); border-radius: 8px; }
+.clm-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.clm-row-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clm-row-player { font-size: 0.72rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clm-select { background: var(--bg-card); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 6px; font-size: 0.74rem; padding: 0.3rem 0.4rem; max-width: 9rem; font-family: inherit; flex-shrink: 0; }
+.clm-add-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.76rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.clm-add-btn:hover { opacity: 0.88; }
+.clm-none { font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.clm-manual-link { background: none; border: none; color: var(--text-muted); font-size: 0.76rem; text-decoration: underline; cursor: pointer; padding: 0.25rem 0; }
+.clm-manual-link:hover { color: var(--accent); }
 .portfolio-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(1rem); background: #1e1e2e; border: 1px solid var(--border); color: var(--text-primary); padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; z-index: 9999; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
 .portfolio-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
