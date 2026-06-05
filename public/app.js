@@ -3665,6 +3665,55 @@ function _keyTermsHtml(title) {
   return `<div class="scanner-key-terms"><span class="scanner-key-label">Key terms</span>${terms.map(x => `<span class="scanner-key-chip">${escHtml(x)}</span>`).join('')}</div>`;
 }
 
+// Build the comps search from a listing's key terms (year + player + set +
+// parallel + numbering + grade) instead of the noisy full title — and keep the
+// print run so comps stay matched to the right numbering.
+const _SCAN_STOP = new Set([
+  'panini', 'topps', 'leaf', 'sage', 'bowman', 'chrome', 'fanatics',
+  'rookie', 'rc', 'auto', 'autograph', 'patch', 'rpa', 'relic', 'jersey', 'memorabilia',
+  'base', 'insert', 'parallel', 'mint', 'gem', 'rare', 'hot', 'fire', 'sharp', 'centered',
+  'invest', 'investment', 'psa', 'bgs', 'sgc', 'cgc', 'card', 'cards', 'nfl', 'football',
+  'the', 'sp', 'ssp', 'numbered', 'of', 'to', 'rated', 'and',
+  ...SCAN_KEY_SETS.join(' ').split(/\s+/),
+  ...SCAN_KEY_PARALLEL_WORDS,
+  ...SCAN_KEY_PARALLEL_PHRASES.join(' ').split(/\s+/),
+]);
+
+// Pull the player name — the first run of capitalized, non-stopword tokens
+// once years, card numbers, print runs and grades are stripped out.
+function _extractPlayer(title) {
+  const s = String(title || '')
+    .replace(/\b(19|20)\d{2}\b/g, ' ')
+    .replace(/#[\w-]+/g, ' ')
+    .replace(/\/\d{1,4}\b/g, ' ')
+    .replace(/\b(PSA|BGS|SGC|CGC|HGA|CSG)\s*\d+(?:\.\d+)?\b/gi, ' ');
+  const name = [];
+  for (const w of s.split(/\s+/)) {
+    const clean = w.replace(/[^a-zA-Z'.-]/g, '').replace(/\.$/, '');
+    if (!clean) continue;
+    if (_SCAN_STOP.has(clean.toLowerCase())) { if (name.length) break; else continue; }
+    if (/^[A-Z]/.test(clean) && clean.length > 1) { name.push(clean); if (name.length >= 3) break; }
+    else if (name.length) break;
+  }
+  return name.join(' ');
+}
+
+function _scanSearchQuery(title) {
+  const year = (String(title).match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const player = _extractPlayer(title);
+  const terms = _scanKeyTerms(title); // set, parallel(s), /printrun, grade, RC, Auto, Patch
+  const q = [year, player, ...terms].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+  // Fall back to a print-run-preserving broaden if we couldn't pull a player.
+  if (!player || q.split(' ').length < 3) {
+    return String(title)
+      .replace(/\b(PSA|BGS|SGC|CGC|HGA|CSG)\s*\d+(?:\.\d+)?\b/gi, '')
+      .replace(/#[\w-]+/g, '')
+      .replace(/\b(NM|MT|NM-MT|EX|VG|GD|PR|PO)\b/gi, '')
+      .replace(/\s+/g, ' ').trim().slice(0, 80);
+  }
+  return q;
+}
+
 function _renderScannerMatches(matches) {
   const grid = document.getElementById('scanner-matches-grid');
   grid.innerHTML = matches.map((m, i) => `
@@ -3688,7 +3737,7 @@ async function selectScannerMatch(index) {
   const card = cards[index];
   if (!card) return;
   const rawTitle = card.dataset.title || '';
-  const broadQuery = _broadenCardTitle(rawTitle);
+  const broadQuery = _scanSearchQuery(rawTitle);
 
   cards.forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
@@ -3900,7 +3949,7 @@ function selectScanFillMatch(index) {
   const card = cards[index];
   if (!card) return;
   const rawTitle = card.dataset.title || '';
-  const broadQuery = _broadenCardTitle(rawTitle);
+  const broadQuery = _scanSearchQuery(rawTitle);
   const targetEl = _scanFillTargetId ? document.getElementById(_scanFillTargetId) : null;
   if (targetEl) {
     if (_scanFillIsTextarea) {
