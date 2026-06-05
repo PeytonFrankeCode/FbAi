@@ -638,7 +638,6 @@
               type="file"
               id="scanner-file-input"
               accept="image/*"
-              capture="environment"
               style="display:none"
               onchange="handleScannerFile(event)"
             />
@@ -1329,7 +1328,7 @@
               <strong>Choose a photo or take one</strong>
               <span>Tap to browse &nbsp;&bull;&nbsp; JPG, PNG, WEBP &nbsp;&bull;&nbsp; Max 8MB</span>
             </div>
-            <input type="file" id="scan-fill-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleScanFillFile(event)" />
+            <input type="file" id="scan-fill-file-input" accept="image/*" style="display:none" onchange="handleScanFillFile(event)" />
           </label>
         </div>
         <div id="scan-fill-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
@@ -1359,6 +1358,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=98"></script>
+  <script src="app.js?v=99"></script>
 </body>
 </html>
