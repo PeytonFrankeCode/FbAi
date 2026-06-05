@@ -5350,6 +5350,11 @@ function renderPortfolio() {
 
   let html = '';
 
+  // Valuation summary — how many cards are valued from live comps + freshness.
+  const valuedCount = coll.filter(c => c.comps && c.comps.length).length;
+  const lastValued = coll.map(c => c.valuedAt).filter(Boolean).sort().pop();
+  html += `<div class="portfolio-valued-summary">${valuedCount} of ${coll.length} card${coll.length !== 1 ? 's' : ''} valued from live sold comps${lastValued ? ` &middot; updated ${timeAgo(lastValued)}` : ''} &middot; <span class="pf-summary-hint">tap any Mkt value to see &amp; edit its comps</span></div>`;
+
   // Group checklist cards by set (year + brand + setName)
   if (checklistCards.length > 0) {
     const groups = {};
@@ -5409,8 +5414,10 @@ function renderPortfolio() {
                   <td class="cl-team">${escHtml(c.team || '')}</td>
                   <td class="portfolio-detail-cell">${parallelTag}${prTag}${condTag}</td>
                   <td class="portfolio-price-cell"><span class="portfolio-card-cost">$${paid.toFixed(2)}</span></td>
-                  <td class="portfolio-price-cell">
-                    ${mkt > 0 ? `<span class="portfolio-card-cost">$${mkt.toFixed(2)}</span>${gl !== 0 ? `<span class="portfolio-card-value ${glClass}"> ${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}` : '<span class="portfolio-no-value">—</span>'}
+                  <td class="portfolio-price-cell portfolio-value-clickable" onclick="openCardComps(${c._idx})" title="View / edit comps">
+                    ${mkt > 0
+                      ? `<span class="portfolio-card-cost">$${mkt.toFixed(2)}</span>${gl !== 0 ? `<span class="portfolio-card-value ${glClass}"> ${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}${_cardValueMetaInline(c)}`
+                      : '<span class="portfolio-value-link">Value &rsaquo;</span>'}
                   </td>
                   <td class="portfolio-roi-cell ${roiClass}">
                     ${roi !== null ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}
@@ -5448,7 +5455,11 @@ function renderPortfolio() {
           <div class="portfolio-card-prices">
             <span class="portfolio-card-cost">Paid: $${paid.toFixed(2)}</span>
             ${sold != null ? `<span class="portfolio-card-sold">Sold: $${sold.toFixed(2)}</span>` : ''}
-            ${mkt > 0 ? `<span class="portfolio-card-cost"> Mkt: $${mkt.toFixed(2)}</span>` : ''}
+            <span class="portfolio-value-clickable" onclick="openCardComps(${c._idx})" title="View / edit comps">
+              ${mkt > 0
+                ? `<span class="portfolio-card-cost"> Mkt: $${mkt.toFixed(2)}</span>${_cardValueMetaInline(c)}`
+                : '<span class="portfolio-value-link">Value &rsaquo;</span>'}
+            </span>
             ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
             ${roi !== null ? `<span class="portfolio-roi-inline ${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}% ROI</span>` : ''}
           </div>
@@ -5490,10 +5501,13 @@ function handleAddCard(e) {
   }
   coll.push(card);
   saveCollection(coll);
+  const newIdx = coll.length - 1;
   _pendingScannedSoldValue = null;
   closeAddCardModal();
   document.getElementById('add-card-form').reset();
   renderPortfolio();
+  // Auto-value the new card from live sold comps (non-blocking).
+  setTimeout(() => valueCardAt(newIdx, { silent: true }), 50);
   return false;
 }
 
@@ -5509,6 +5523,9 @@ function addToCollectionFromChecklist(player, year, brand, setName, parallel, pr
     addedAt: new Date().toISOString()
   });
   saveCollection(coll);
+  // Auto-value the new card from live sold comps (non-blocking).
+  const newIdx = coll.length - 1;
+  setTimeout(() => valueCardAt(newIdx, { silent: true }), 50);
   return true;
 }
 
@@ -5519,44 +5536,272 @@ function removeFromCollection(idx) {
   renderPortfolio();
 }
 
+// ---- Collection valuation engine ----
+// Builds an accurate sold-comp query per card (including print run + grade),
+// pulls the filtered Sold comps, and tracks the comps so the value is
+// transparent and editable.
+function _cardGradeToken(condition) {
+  if (!condition) return '';
+  const m = String(condition).match(/\b(PSA|BGS|SGC|CGC|HGA|CSG)\s*(\d+(?:\.\d+)?)\b/i);
+  return m ? `${m[1].toUpperCase()} ${m[2]}` : '';
+}
+
+function buildCardSoldQuery(c) {
+  const grade = _cardGradeToken(c.condition);
+  if (c.player) {
+    let q = [c.player, c.year, c.brand, c.setName, c.parallel].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    if (c.printRun) q += ` /${c.printRun}`;
+    if (grade) q += ` ${grade}`;
+    return q.trim();
+  }
+  let q = c.name || '';
+  if (grade && !new RegExp(grade.replace(/\s/g, '\\s*'), 'i').test(q)) q += ` ${grade}`;
+  return q.trim();
+}
+
+function _medianOf(prices) {
+  const s = [...prices].sort((a, b) => a - b);
+  const n = s.length;
+  if (!n) return null;
+  return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+}
+
+const _compKey = comp => comp.url || comp.title;
+
+// Recompute a card's market value from its stored comps minus any the user
+// excluded. Returns the comp count used.
+function recomputeCardValue(c) {
+  const ex = new Set(c.excludedComps || []);
+  const prices = (c.comps || []).filter(x => !ex.has(_compKey(x))).map(x => x.price).filter(p => p > 0);
+  c.compCount = prices.length;
+  if (prices.length) {
+    const m = _medianOf(prices);
+    c.estValue = Math.round(m * 100) / 100;
+  }
+  return prices.length;
+}
+
+function _cardConfidence(c) {
+  if (!c.comps || !c.comps.length) return null;
+  const n = c.compCount != null ? c.compCount : c.comps.length;
+  if (c.broadened || n < 3) return 'low';
+  if (n < 6) return 'medium';
+  return 'high';
+}
+
+// Tiny inline meta shown next to a card's market value: confidence dot +
+// comp count, and a lock glyph when the value is locked/overridden.
+function _cardValueMetaInline(c) {
+  const conf = _cardConfidence(c);
+  const colors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+  const parts = [];
+  if (conf) parts.push(`<span class="pf-conf-dot" style="color:${colors[conf]}">&#9679;</span>${c.compCount || 0}`);
+  if (c.locked) parts.push('&#128274;');
+  return parts.length ? `<span class="pf-val-meta">${parts.join(' ')}</span>` : '';
+}
+
+// Fetch fresh sold comps for one card (authenticated — needs the scrape.do key).
+async function _fetchCardComps(c) {
+  const q = buildCardSoldQuery(c);
+  if (!q) return null;
+  const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(q)}&limit=25`);
+  const data = await res.json();
+  if (!res.ok) return { error: data.error || `Error ${res.status}`, noKey: data.noKey };
+  const comps = (Array.isArray(data.results) ? data.results : [])
+    .map(r => ({ title: String(r.title || '').slice(0, 90), price: parseFloat(r.price), url: r.itemUrl || r.url || r.link || '' }))
+    .filter(x => x.price > 0)
+    .sort((a, b) => a.price - b.price);
+  return { comps, broadened: data.searchType === 'broadened', query: q };
+}
+
+// Value a single card by collection index and persist (skips locked cards).
+async function valueCardAt(idx, { silent = false } = {}) {
+  const coll = getCollection();
+  const c = coll[idx];
+  if (!c || c.locked) return;
+  const r = await _fetchCardComps(c);
+  if (!r || r.error) {
+    if (!silent && r && r.noKey) showPortfolioToast('Add your scrape.do API key in Settings to value cards.');
+    return;
+  }
+  c.comps = r.comps;
+  c.broadened = r.broadened;
+  c.valueQuery = r.query;
+  c.valuedAt = new Date().toISOString();
+  c.excludedComps = (c.excludedComps || []).filter(k => c.comps.some(x => _compKey(x) === k));
+  recomputeCardValue(c);
+  saveCollection(coll);
+  renderPortfolio();
+}
+
 async function refreshPortfolioValues() {
   const btn = document.getElementById('refresh-market-btn');
   const origHTML = btn ? btn.innerHTML : '';
-  if (btn) { btn.disabled = true; btn.innerHTML = '&#8635; Refreshing…'; }
-
   const coll = getCollection();
-  const updates = [];
-  for (const c of coll) {
-    const query = c.player
-      ? `${c.player} ${c.year || ''} ${c.brand || ''} ${c.setName || ''} ${c.parallel || ''}`.replace(/\s+/g, ' ').trim()
-      : c.name || '';
-    if (!query) { updates.push(null); continue; }
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&mode=sold`);
-      const data = await res.json();
-      if (data.approximateValue && data.approximateValue.medianPrice) {
-        updates.push(data.approximateValue.medianPrice);
-      } else if (data.results && data.results.length > 0) {
-        const v = data.results.map(r => r.price).filter(p => p > 0).sort((a, b) => a - b);
-        if (v.length) {
-          const mid = Math.floor(v.length / 2);
-          updates.push(v.length % 2 === 0 ? (v[mid - 1] + v[mid]) / 2 : v[mid]);
-        } else updates.push(null);
-      } else updates.push(null);
-    } catch { updates.push(null); }
-  }
+  const targets = coll.filter(c => !c.locked && buildCardSoldQuery(c));
+  if (!targets.length) { showPortfolioToast('No cards to value, or all are locked.'); return; }
 
-  let refreshed = 0;
-  coll.forEach((c, i) => {
-    if (updates[i] !== null) { c.estValue = updates[i]; refreshed++; }
-  });
+  let done = 0, refreshed = 0, noKey = false;
+  for (const c of coll) {
+    if (c.locked || !buildCardSoldQuery(c)) continue;
+    if (btn) { btn.disabled = true; btn.innerHTML = `&#8635; Valuing ${++done}/${targets.length}…`; }
+    const r = await _fetchCardComps(c);
+    if (r && r.noKey) { noKey = true; break; }
+    if (r && !r.error) {
+      c.comps = r.comps;
+      c.broadened = r.broadened;
+      c.valueQuery = r.query;
+      c.valuedAt = new Date().toISOString();
+      c.excludedComps = (c.excludedComps || []).filter(k => c.comps.some(x => _compKey(x) === k));
+      if (recomputeCardValue(c) > 0) refreshed++;
+    }
+  }
   saveCollection(coll);
   renderPortfolio();
-
   if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
-  showPortfolioToast(refreshed > 0
-    ? `Updated market values for ${refreshed} card${refreshed !== 1 ? 's' : ''}.`
-    : 'No market data found. Try cards with more specific names.');
+  showPortfolioToast(noKey
+    ? 'Add your scrape.do API key in Settings to value cards.'
+    : refreshed > 0
+      ? `Valued ${refreshed} card${refreshed !== 1 ? 's' : ''} from live sold comps.`
+      : 'No sold comps found. Try more specific card details.');
+}
+
+// ---- Per-card comps drilldown (modal) ----
+let _compsModalIdx = null;
+
+function openCardComps(idx) {
+  const coll = getCollection();
+  const c = coll[idx];
+  if (!c) return;
+  _compsModalIdx = idx;
+  document.getElementById('card-comps-modal').classList.remove('hidden');
+  renderCardCompsModal();
+}
+
+function closeCardComps() {
+  document.getElementById('card-comps-modal').classList.add('hidden');
+  _compsModalIdx = null;
+}
+
+function renderCardCompsModal() {
+  const idx = _compsModalIdx;
+  const coll = getCollection();
+  const c = coll[idx];
+  const body = document.getElementById('card-comps-body');
+  if (!c || !body) return;
+  const title = c.player ? buildCardSoldQuery(c) : (c.name || 'Card');
+  const ex = new Set(c.excludedComps || []);
+  const comps = c.comps || [];
+  const med = c.estValue || 0;
+  const conf = _cardConfidence(c);
+  const confColors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+
+  let listHtml;
+  if (!comps.length) {
+    listHtml = `<div class="ccm-empty">No comps yet. Click <strong>Re-value from eBay</strong> to pull live sold listings${buildCardSoldQuery(c) ? '' : ' (add more card details first)'}.</div>`;
+  } else {
+    listHtml = comps.map((x, i) => {
+      const excluded = ex.has(_compKey(x));
+      const high = med && x.price > med * 2;
+      return `<label class="ccm-comp ${excluded ? 'ccm-excluded' : ''}">
+        <input type="checkbox" ${excluded ? '' : 'checked'} onchange="toggleCardComp(${i}, this.checked)" />
+        <span class="ccm-comp-title">${escHtml(x.title)}</span>
+        <span class="ccm-comp-price ${high ? 'ccm-high' : ''}">$${x.price.toFixed(2)}${high ? ' <span class="bulk-high-tag">high</span>' : ''}</span>
+        ${x.url ? `<a class="ccm-comp-link" href="${escHtml(epnUrl(x.url))}" target="_blank" rel="noopener">view</a>` : '<span class="ccm-comp-link"></span>'}
+      </label>`;
+    }).join('');
+  }
+
+  body.innerHTML = `
+    <div class="ccm-card-name">${escHtml(title)}</div>
+    <div class="ccm-value-row">
+      <div class="ccm-value">${med > 0 ? `$${med.toFixed(2)}` : '—'}<span class="ccm-value-label">market value</span></div>
+      ${conf ? `<span class="ccm-conf" style="color:${confColors[conf]}">&#9679; ${conf} confidence</span>` : ''}
+      <span class="ccm-meta">${c.compCount || 0} comps${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''}${c.broadened ? ' &middot; similar items' : ''}</span>
+    </div>
+    <div class="ccm-actions">
+      <button type="button" class="ap-mini-btn" onclick="revalueCardFromModal()">&#8635; Re-value from eBay</button>
+      <button type="button" class="ap-mini-btn" onclick="ccmIncludeAll()">Include all</button>
+      <button type="button" class="ap-mini-btn" onclick="ccmAutoTrim()">Auto-trim highs</button>
+      <label class="ccm-lock"><input type="checkbox" ${c.locked ? 'checked' : ''} onchange="toggleCardLock(this.checked)" /> Lock value</label>
+    </div>
+    <div class="ccm-manual">
+      Override: <span class="ccm-dollar">$</span><input type="number" id="ccm-manual-input" class="ap-pr-input" min="0" step="0.01" placeholder="set value" value="" />
+      <button type="button" class="ap-mini-btn" onclick="ccmApplyManual()">Set</button>
+    </div>
+    <div class="ccm-list">${listHtml}</div>`;
+}
+
+function toggleCardComp(i, included) {
+  const coll = getCollection();
+  const c = coll[_compsModalIdx];
+  if (!c || !c.comps || !c.comps[i]) return;
+  const key = _compKey(c.comps[i]);
+  const ex = new Set(c.excludedComps || []);
+  if (included) ex.delete(key); else ex.add(key);
+  c.excludedComps = [...ex];
+  recomputeCardValue(c);
+  saveCollection(coll);
+  renderCardCompsModal();
+  renderPortfolio();
+}
+
+function ccmIncludeAll() {
+  const coll = getCollection();
+  const c = coll[_compsModalIdx];
+  if (!c) return;
+  c.excludedComps = [];
+  recomputeCardValue(c);
+  saveCollection(coll);
+  renderCardCompsModal();
+  renderPortfolio();
+}
+
+function ccmAutoTrim() {
+  const coll = getCollection();
+  const c = coll[_compsModalIdx];
+  if (!c || !c.comps || c.comps.length < 3) { showPortfolioToast('Need at least 3 comps to auto-trim.'); return; }
+  const ex = new Set(c.excludedComps || []);
+  const incPrices = c.comps.filter(x => !ex.has(_compKey(x))).map(x => x.price).sort((a, b) => a - b);
+  const med = _medianOf(incPrices);
+  if (!med) return;
+  c.comps.forEach(x => { if (x.price > med * 2) ex.add(_compKey(x)); });
+  c.excludedComps = [...ex];
+  recomputeCardValue(c);
+  saveCollection(coll);
+  renderCardCompsModal();
+  renderPortfolio();
+}
+
+async function revalueCardFromModal() {
+  const idx = _compsModalIdx;
+  const btn = document.querySelector('#card-comps-body .ccm-actions .ap-mini-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Valuing…'; }
+  await valueCardAt(idx);
+  if (_compsModalIdx === idx) renderCardCompsModal();
+}
+
+function toggleCardLock(locked) {
+  const coll = getCollection();
+  const c = coll[_compsModalIdx];
+  if (!c) return;
+  c.locked = locked;
+  saveCollection(coll);
+  renderCardCompsModal();
+  renderPortfolio();
+}
+
+function ccmApplyManual() {
+  const coll = getCollection();
+  const c = coll[_compsModalIdx];
+  if (!c) return;
+  const v = parseFloat(document.getElementById('ccm-manual-input').value);
+  if (!Number.isFinite(v) || v < 0) { showPortfolioToast('Enter a valid value.'); return; }
+  c.estValue = Math.round(v * 100) / 100;
+  c.locked = true; // a manual override should stick through refreshes
+  saveCollection(coll);
+  renderCardCompsModal();
+  renderPortfolio();
 }
 
 function showPortfolioToast(msg) {
