@@ -124,7 +124,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=73" />
+  <link rel="stylesheet" href="style.css?v=74" />
 
 
 </head>
@@ -924,6 +924,16 @@
     </div>
   </div>
 
+  <!-- Card Comps Drilldown Modal -->
+  <div id="card-comps-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:560px">
+      <button class="login-close" onclick="closeCardComps()">&times;</button>
+      <h2>Card Value &amp; Comps</h2>
+      <p class="ccm-help">These are the recent sold listings behind this card's market value. Uncheck the ones that don't match (or are random highs) and the value updates instantly.</p>
+      <div id="card-comps-body"></div>
+    </div>
+  </div>
+
   <!-- Title Auto-Fill Modal -->
   <div id="title-autofill-modal" class="modal-overlay hidden" role="dialog">
     <div class="modal-box modal-box-lg">
@@ -1358,6 +1368,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=100"></script>
+  <script src="app.js?v=101"></script>
 </body>
 </html>

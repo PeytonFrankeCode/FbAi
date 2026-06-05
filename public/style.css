@@ -5679,6 +5679,42 @@ tr:hover .cl-alert-btn {
 .portfolio-roi-inline.gain { color: #10b981; }
 .portfolio-roi-inline.loss { color: #ef4444; }
 .portfolio-no-value { font-size: 0.75rem; color: var(--text-muted); }
+
+/* Collection valuation revamp */
+.portfolio-valued-summary { font-size: 0.76rem; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; }
+.pf-summary-hint { color: var(--text-muted); }
+.portfolio-value-clickable { cursor: pointer; border-radius: 5px; }
+.portfolio-value-clickable:hover { background: var(--bg-hover); }
+.portfolio-value-link { font-size: 0.78rem; font-weight: 700; color: var(--accent); }
+.pf-val-meta { font-size: 0.66rem; color: var(--text-muted); margin-left: 0.3rem; white-space: nowrap; }
+.pf-conf-dot { font-size: 0.7rem; }
+
+/* Card comps modal */
+.ccm-help { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.ccm-card-name { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; word-break: break-word; }
+.ccm-value-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem 0.85rem; margin-bottom: 0.75rem; }
+.ccm-value { font-size: 1.7rem; font-weight: 800; color: var(--accent); display: flex; align-items: baseline; gap: 0.4rem; }
+.ccm-value-label { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.ccm-conf { font-size: 0.76rem; font-weight: 700; }
+.ccm-meta { font-size: 0.74rem; color: var(--text-muted); }
+.ccm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; }
+.ccm-lock { font-size: 0.76rem; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; margin-left: auto; }
+.ccm-lock input { accent-color: var(--accent); cursor: pointer; }
+.ccm-manual { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.65rem; }
+.ccm-manual .ap-pr-input { width: 6rem; }
+.ccm-dollar { color: var(--text-muted); }
+.ccm-list { display: flex; flex-direction: column; gap: 0.2rem; max-height: 46vh; overflow-y: auto; }
+.ccm-empty { font-size: 0.82rem; color: var(--text-muted); padding: 1rem; text-align: center; }
+.ccm-comp { display: flex; align-items: center; gap: 0.55rem; padding: 0.35rem 0.4rem; border-radius: 6px; cursor: pointer; }
+.ccm-comp:hover { background: var(--bg-secondary); }
+.ccm-comp input { accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+.ccm-comp-title { flex: 1; font-size: 0.76rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ccm-comp-price { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); flex-shrink: 0; min-width: 4rem; text-align: right; }
+.ccm-comp-price.ccm-high { color: #f87171; }
+.ccm-comp-link { font-size: 0.72rem; color: var(--accent); text-decoration: none; flex-shrink: 0; min-width: 2.2rem; text-align: right; }
+.ccm-comp-link:hover { text-decoration: underline; }
+.ccm-excluded { opacity: 0.45; }
+.ccm-excluded .ccm-comp-title { text-decoration: line-through; }
 .portfolio-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(1rem); background: #1e1e2e; border: 1px solid var(--border); color: var(--text-primary); padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; z-index: 9999; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
 .portfolio-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
