@@ -537,9 +537,11 @@
           </div>
         </div>
         <div class="portfolio-actions">
-          <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Add Card</button>
+          <button class="portfolio-action-btn portfolio-action-primary" onclick="addPhotoToCollection()">&#128247; Add by Photo</button>
+          <button class="portfolio-action-btn portfolio-action-primary" onclick="openChecklistAddModal()">&#128203; Add from Checklist</button>
+          <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Manual</button>
           <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
-          <button class="portfolio-action-btn" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Market Values</button>
+          <button class="portfolio-action-btn" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Values</button>
           <button class="portfolio-action-btn" onclick="generateMarketReport()">&#128196; Market Report</button>
         </div>
         <div id="portfolio-list" class="portfolio-list">
@@ -941,6 +943,20 @@
       <h2>Match to Checklist</h2>
       <p class="clm-help">Pick the exact card from the official checklist so your collection has the accurate set, card #, parallel and print run.</p>
       <div id="checklist-match-body"></div>
+    </div>
+  </div>
+
+  <!-- Add from Checklist Modal -->
+  <div id="checklist-add-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:560px">
+      <button class="login-close" onclick="closeChecklistAddModal()">&times;</button>
+      <h2>Add from Checklist</h2>
+      <p class="clm-help">Find the exact card from the official checklist, pick the parallel, and add it to your collection — values pull automatically.</p>
+      <div class="clm-search-row">
+        <input type="text" id="checklist-add-input" class="pp-input" placeholder="e.g. Mahomes Prizm Silver or 2023 Justin Jefferson" onkeydown="if(event.key==='Enter')searchChecklistAdd()" />
+        <button class="pp-btn" onclick="searchChecklistAdd()">Search</button>
+      </div>
+      <div id="checklist-add-results"></div>
     </div>
   </div>
 

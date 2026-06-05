@@ -3935,48 +3935,97 @@ function renderChecklistMatchModal(res) {
     return;
   }
   const extracted = (res && res.parallels) || [];
-  const rows = _checklistMatches.map((c, i) => {
-    const best = _bestParallelIndex(c.parallels, extracted);
-    const opts = [`<option value="-1" ${best < 0 ? 'selected' : ''}>Base</option>`]
-      .concat((c.parallels || []).map((p, j) =>
-        `<option value="${j}" ${best === j ? 'selected' : ''}>${escHtml(p.name)}${p.printRun ? ` /${p.printRun}` : ''}</option>`));
-    return `<div class="clm-row">
-      <div class="clm-row-main">
-        <span class="clm-row-title">${c.year} ${escHtml(c.brand)} &middot; ${escHtml(c.setName)} &middot; #${escHtml(String(c.number))}</span>
-        <span class="clm-row-player">${escHtml(c.player)}${c.team ? ' &middot; ' + escHtml(c.team) : ''}</span>
-      </div>
-      <select id="clm-par-${i}" class="clm-select">${opts.join('')}</select>
-      <button class="clm-add-btn" onclick="addMatchedChecklistCard(${i})">Add</button>
-    </div>`;
-  }).join('');
+  const rows = _checklistMatches.map((c, i) => _checklistCardRowHtml(c, i, extracted, 'addMatchedChecklistCard')).join('');
   body.innerHTML = `
     <div class="clm-matched-label">Matched <strong>${escHtml(res.player)}</strong> &middot; pick the exact card &amp; parallel</div>
     <div class="clm-list">${rows}</div>
     <button class="clm-manual-link" onclick="addScannerCardManual()">None of these — add manually</button>`;
 }
 
-function addMatchedChecklistCard(i) {
+// Shared candidate-card row (used by photo match + checklist search add).
+function _checklistCardRowHtml(c, i, extractedParallels, addFn) {
+  const best = _bestParallelIndex(c.parallels, extractedParallels || []);
+  const opts = [`<option value="-1" ${best < 0 ? 'selected' : ''}>Base</option>`]
+    .concat((c.parallels || []).map((p, j) =>
+      `<option value="${j}" ${best === j ? 'selected' : ''}>${escHtml(p.name)}${p.printRun ? ` /${p.printRun}` : ''}</option>`));
+  return `<div class="clm-row">
+    <div class="clm-row-main">
+      <span class="clm-row-title">${c.year} ${escHtml(c.brand)} &middot; ${escHtml(c.setName)} &middot; #${escHtml(String(c.number))}</span>
+      <span class="clm-row-player">${escHtml(c.player)}${c.team ? ' &middot; ' + escHtml(c.team) : ''}</span>
+    </div>
+    <select id="clm-par-${i}" class="clm-select">${opts.join('')}</select>
+    <button class="clm-add-btn" onclick="${addFn}(${i})">Add</button>
+  </div>`;
+}
+
+// Add the candidate card at index i to the collection (shared core).
+function _addChecklistCardByIndex(i) {
   const c = _checklistMatches[i];
-  if (!c) return;
+  if (!c) return false;
   const sel = document.getElementById(`clm-par-${i}`);
   let parallelName = '', printRun = '';
   const j = sel ? parseInt(sel.value, 10) : -1;
   if (j >= 0 && c.parallels[j]) { parallelName = c.parallels[j].name; printRun = c.parallels[j].printRun || ''; }
   const ok = addToCollectionFromChecklist(c.player, c.year, c.brand, c.setName, parallelName, printRun || '', c.number, c.team, c.category);
-  if (!ok) return;
-  // Carry the scanned sold value snapshot onto the just-added card.
+  if (!ok) return false;
   if (_checklistMatchMeta.soldValue != null) {
     const coll = getCollection();
     const last = coll[coll.length - 1];
     if (last) { last.soldValue = _checklistMatchMeta.soldValue; saveCollection(coll); }
   }
-  closeChecklistMatchModal();
   renderPortfolio();
+  return true;
+}
+
+function addMatchedChecklistCard(i) {
+  if (!_addChecklistCardByIndex(i)) return;
+  closeChecklistMatchModal();
   showPortfolioToast('Added — matched to checklist for accuracy.');
 }
 
 function closeChecklistMatchModal() {
   document.getElementById('checklist-match-modal').classList.add('hidden');
+}
+
+// Add a card to the collection by photo — scan → checklist match → add.
+function addPhotoToCollection() {
+  openScanFillModal(null, false, 'collection');
+}
+
+// ---- Add from Checklist (text search → pick exact card) ----
+function openChecklistAddModal() {
+  _checklistMatches = [];
+  _checklistMatchMeta = { soldValue: null, query: '' };
+  document.getElementById('checklist-add-results').innerHTML = '<p class="clm-hint">Search a player and set (e.g. "Mahomes Prizm" or "2023 Justin Jefferson") to find the exact card.</p>';
+  const input = document.getElementById('checklist-add-input');
+  if (input) input.value = '';
+  document.getElementById('checklist-add-modal').classList.remove('hidden');
+  if (input) input.focus();
+}
+
+function closeChecklistAddModal() {
+  document.getElementById('checklist-add-modal').classList.add('hidden');
+}
+
+async function searchChecklistAdd() {
+  const q = document.getElementById('checklist-add-input').value.trim();
+  const out = document.getElementById('checklist-add-results');
+  if (!q || q.length < 2) { out.innerHTML = '<p class="clm-hint">Type at least 2 characters.</p>'; return; }
+  out.innerHTML = '<div class="pp-loading"><div class="spinner"></div> Searching checklist…</div>';
+  let res;
+  try { res = await searchChecklistCards(q); } catch { res = { cards: [] }; }
+  if (res.needPlayer) { out.innerHTML = '<p class="clm-hint">Include a player name (e.g. "Mahomes Prizm").</p>'; return; }
+  _checklistMatches = res.cards || [];
+  if (!_checklistMatches.length) { out.innerHTML = '<p class="clm-none">No matching cards found. Try adding the set or year.</p>'; return; }
+  const extracted = _scanKeyTerms(q).filter(t => !/^\//.test(t) && !SCAN_KEY_SETS.includes(t.toLowerCase()));
+  out.innerHTML = `<div class="clm-list">${_checklistMatches.map((c, i) => _checklistCardRowHtml(c, i, extracted, 'addChecklistSearchCard')).join('')}</div>`;
+}
+
+function addChecklistSearchCard(i) {
+  if (!_addChecklistCardByIndex(i)) return;
+  const btn = (typeof event !== 'undefined' && event) ? event.target : null;
+  if (btn) { btn.textContent = 'Added ✓'; btn.disabled = true; btn.classList.add('clm-added'); }
+  showPortfolioToast('Added to collection.');
 }
 
 // Fallback: the original behavior — prefill the manual Add Card modal.
@@ -3994,10 +4043,12 @@ function addScannerCardManual() {
 let _scanFillTargetId = null;
 let _scanFillIsTextarea = false;
 let _scanFillImageDataUrl = null;
+let _scanFillMode = 'fill'; // 'fill' = fill an input, 'collection' = add to My Cards
 
-function openScanFillModal(targetId, isTextarea) {
+function openScanFillModal(targetId, isTextarea, mode) {
   _scanFillTargetId = targetId;
   _scanFillIsTextarea = !!isTextarea;
+  _scanFillMode = mode || 'fill';
   _scanFillImageDataUrl = null;
   document.getElementById('scan-fill-file-input').value = '';
   document.getElementById('scan-fill-preview-wrap').classList.add('hidden');
@@ -4101,6 +4152,14 @@ function selectScanFillMatch(index) {
   if (!card) return;
   const rawTitle = card.dataset.title || '';
   const broadQuery = _scanSearchQuery(rawTitle);
+  // Collection mode: route the picked card into the checklist-match → add flow.
+  if (_scanFillMode === 'collection') {
+    closeScanFillModal();
+    _scannerLastQuery = broadQuery;
+    _scannerLastMedian = null;
+    addScannerCardToCollection();
+    return;
+  }
   const targetEl = _scanFillTargetId ? document.getElementById(_scanFillTargetId) : null;
   if (targetEl) {
     if (_scanFillIsTextarea) {
