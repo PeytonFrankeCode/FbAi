@@ -5494,7 +5494,8 @@ function renderPortfolio() {
   // Valuation summary — how many cards are valued from live comps + freshness.
   const valuedCount = coll.filter(c => c.comps && c.comps.length).length;
   const lastValued = coll.map(c => c.valuedAt).filter(Boolean).sort().pop();
-  html += `<div class="portfolio-valued-summary">${valuedCount} of ${coll.length} card${coll.length !== 1 ? 's' : ''} valued from live sold comps${lastValued ? ` &middot; updated ${timeAgo(lastValued)}` : ''} &middot; <span class="pf-summary-hint">tap any Mkt value to see &amp; edit its comps</span></div>`;
+  const windowLabel = _compsUseAllTime() ? 'all-time comps' : 'last 2 months (free)';
+  html += `<div class="portfolio-valued-summary">${valuedCount} of ${coll.length} card${coll.length !== 1 ? 's' : ''} valued from ${windowLabel}${lastValued ? ` &middot; updated ${timeAgo(lastValued)}` : ''} &middot; <span class="pf-summary-hint">tap any Mkt value to see &amp; edit its comps</span></div>`;
 
   // Group checklist cards by set (year + brand + setName)
   if (checklistCards.length > 0) {
@@ -5742,17 +5743,34 @@ function _cardValueMetaInline(c) {
 }
 
 // Fetch fresh sold comps for one card (authenticated — needs the scrape.do key).
+// Comp time window: Pro members value off all-time comps; Free members are
+// limited to the last 2 months. Keyed off the real subscription (independent
+// of the global hasPro() unlock) so the depth stays a Pro perk.
+const COMP_WINDOW_DAYS_FREE = 60;
+function _compsUseAllTime() {
+  const sub = (typeof getUserSubscription === 'function') ? getUserSubscription() : null;
+  return !!sub;
+}
+
 async function _fetchCardComps(c) {
   const q = buildCardSoldQuery(c);
   if (!q) return null;
   const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(q)}&limit=25`);
   const data = await res.json();
   if (!res.ok) return { error: data.error || `Error ${res.status}`, noKey: data.noKey };
-  const comps = (Array.isArray(data.results) ? data.results : [])
-    .map(r => ({ title: String(r.title || '').slice(0, 90), price: parseFloat(r.price), url: r.itemUrl || r.url || r.link || '' }))
-    .filter(x => x.price > 0)
-    .sort((a, b) => a.price - b.price);
-  return { comps, broadened: data.searchType === 'broadened', query: q };
+  let rows = (Array.isArray(data.results) ? data.results : [])
+    .map(r => ({ title: String(r.title || '').slice(0, 90), price: parseFloat(r.price), url: r.itemUrl || r.url || r.link || '', soldDate: r.soldDate || '' }))
+    .filter(x => x.price > 0);
+  // Free members: only count comps from the last 2 months (keep undated ones
+  // so a card never ends up with zero comps just for missing dates).
+  let windowed = false;
+  if (!_compsUseAllTime()) {
+    const cutoff = Date.now() - COMP_WINDOW_DAYS_FREE * 86400000;
+    const recent = rows.filter(x => { const t = Date.parse(x.soldDate); return isNaN(t) || t >= cutoff; });
+    if (recent.length) { rows = recent; windowed = true; }
+  }
+  rows.sort((a, b) => a.price - b.price);
+  return { comps: rows, broadened: data.searchType === 'broadened', query: q, windowed };
 }
 
 // Value a single card by collection index and persist (skips locked cards).
@@ -5860,6 +5878,9 @@ function renderCardCompsModal() {
       ${conf ? `<span class="ccm-conf" style="color:${confColors[conf]}">&#9679; ${conf} confidence</span>` : ''}
       <span class="ccm-meta">${c.compCount || 0} comps${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''}${c.broadened ? ' &middot; similar items' : ''}</span>
     </div>
+    <div class="ccm-window">${_compsUseAllTime()
+      ? '&#9989; Valued from <strong>all-time</strong> sold comps'
+      : '&#9201;&#65039; Free: valued from the <strong>last 2 months</strong> of comps &middot; <a href="#" onclick="showPricing();return false;">upgrade for all-time</a>'}</div>
     <div class="ccm-actions">
       <button type="button" class="ap-mini-btn" onclick="revalueCardFromModal()">&#8635; Re-value from eBay</button>
       <button type="button" class="ap-mini-btn" onclick="ccmIncludeAll()">Include all</button>

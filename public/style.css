@@ -5697,6 +5697,8 @@ tr:hover .cl-alert-btn {
 .ccm-value-label { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
 .ccm-conf { font-size: 0.76rem; font-weight: 700; }
 .ccm-meta { font-size: 0.74rem; color: var(--text-muted); }
+.ccm-window { font-size: 0.74rem; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 6px; padding: 0.4rem 0.6rem; margin-bottom: 0.65rem; }
+.ccm-window a { color: var(--accent); }
 .ccm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-bottom: 0.5rem; }
 .ccm-lock { font-size: 0.76rem; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer; margin-left: auto; }
 .ccm-lock input { accent-color: var(--accent); cursor: pointer; }
