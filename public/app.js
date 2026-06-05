@@ -3660,9 +3660,15 @@ function _scanKeyTerms(title) {
 }
 
 function _keyTermsHtml(title) {
-  const terms = _scanKeyTerms(title);
-  if (!terms.length) return '';
-  return `<div class="scanner-key-terms"><span class="scanner-key-label">Key terms</span>${terms.map(x => `<span class="scanner-key-chip">${escHtml(x)}</span>`).join('')}</div>`;
+  const player = _extractPlayer(title);
+  const year = (String(title).match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const rest = _scanKeyTerms(title);
+  const chips = [];
+  if (player) chips.push({ text: player, cls: 'scanner-key-chip-player' });
+  if (year) chips.push({ text: year, cls: '' });
+  rest.forEach(t => chips.push({ text: t, cls: '' }));
+  if (!chips.length) return '';
+  return `<div class="scanner-key-terms"><span class="scanner-key-label">Key terms</span>${chips.map(c => `<span class="scanner-key-chip ${c.cls}">${escHtml(c.text)}</span>`).join('')}</div>`;
 }
 
 // Build the comps search from a listing's key terms (year + player + set +
