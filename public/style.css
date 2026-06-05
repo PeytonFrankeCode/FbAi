@@ -5636,6 +5636,8 @@ tr:hover .cl-alert-btn {
 .portfolio-actions { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .portfolio-action-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
 .portfolio-action-btn:hover { border-color: var(--accent, #10b981); color: var(--text-primary); }
+.portfolio-action-primary { background: var(--accent, #10b981); border-color: var(--accent, #10b981); color: #04150d; font-weight: 700; }
+.portfolio-action-primary:hover { opacity: 0.9; color: #04150d; }
 .portfolio-action-btn--pro { border-color: rgba(139,92,246,0.4); color: #a78bfa; }
 .portfolio-action-btn--pro:hover { border-color: #8b5cf6; background: rgba(139,92,246,0.1); color: #c4b5fd; }
 .portfolio-action-btn--pro:disabled { opacity: 0.65; cursor: not-allowed; }
@@ -5730,6 +5732,10 @@ tr:hover .cl-alert-btn {
 .clm-add-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.76rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 .clm-add-btn:hover { opacity: 0.88; }
 .clm-none { font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+.clm-hint { font-size: 0.82rem; color: var(--text-muted); padding: 0.5rem 0; }
+.clm-search-row { display: flex; gap: 0.5rem; margin-bottom: 0.85rem; }
+.clm-search-row .pp-input { flex: 1; }
+.clm-added { background: #4ade80 !important; color: #000 !important; }
 .clm-manual-link { background: none; border: none; color: var(--text-muted); font-size: 0.76rem; text-decoration: underline; cursor: pointer; padding: 0.25rem 0; }
 .clm-manual-link:hover { color: var(--accent); }
 .portfolio-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(1rem); background: #1e1e2e; border: 1px solid var(--border); color: var(--text-primary); padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; z-index: 9999; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
