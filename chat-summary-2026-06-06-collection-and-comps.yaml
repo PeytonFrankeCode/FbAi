@@ -1,0 +1,162 @@
+session:
+  date: "2026-06-06"
+  branch: claude/scanned-cards-sold-value-PHj1x
+  topic: Collection revamp, comp accuracy, Auto-Pricer, Pro unlock & scanner→checklist add
+  note: >
+    All work auto-merged to main via the repo's per-push PR automation
+    (PRs #264–#273 and onward). Files touched: public/app.js,
+    public/index.html, public/style.css, server.js. Asset cache versions
+    ended at app.js?v=107 / style.css?v=77.
+
+overview: >
+  A long iterative session focused on making the collection actually track
+  accurate total value from sold comps, revamping the Auto-Pricer to value
+  like an experienced collector, unlocking all Pro features, fixing broken
+  Pro endpoints, and reworking the photo scanner so adds match the official
+  checklist. Ended by making the collection's "Add from Checklist" use the
+  app-wide checklist picker for UX consistency.
+
+features:
+  - title: Sold value on camera-scanned cards
+    detail: >
+      Scanned cards added to the collection store the median sold value as a
+      distinct soldValue field and show a "Scanned" badge + Sold column.
+
+  - title: Grade filter for sold searches
+    detail: >
+      Reuses detectGrade/groupByGrade. A grade-filter bar (All + each grade
+      present, with counts) narrows the value stats, price chart, and card
+      list. applySortToResults honors the active grade filter.
+    key_functions: [buildGradeFilter, applyGradeFilter, getGradeFilteredResults, resetGradeFilter]
+
+  - title: Remove all Pro paywalls
+    detail: >
+      hasPro() returns true — the master switch behind checkCapLimit,
+      checkDailyLimit, proGate, dailyUsesLeft, alert options, promoted slots,
+      full chart history. Direct subscription gates (price alerts, market
+      report) and chart depth re-pointed at hasPro(). getUserSubscription()
+      left reading real data (used later for comp-window tiering).
+
+  - title: Fix Auto-Pricer / Bulk / Grading auth + undefined guards
+    detail: >
+      These called the API with plain fetch() so the session token never
+      reached the server ("needs your scrape.do key" despite a saved key);
+      switched to authFetch(). Guarded direct fetchViaScrapeDoRotated callers
+      (auto-price, flip-finder, market-movers) with (soldData.results || [])
+      to stop "Cannot read properties of undefined (reading 'map')".
+
+  - title: Auto-Pricer revamp — multi-select comps + print-run valuation
+    detail: >
+      Enter card (print run auto-detected), multi-select which sold comps to
+      include, each comp scaled by (comp_PR / your_PR)^0.65 (the app's
+      existing power-law scarcity model; a /25 ≈ 2x a /99, not 4x), clamped
+      for extremes. Median of adjusted comps + low/high, log-log regression
+      cross-check, confidence, mixed-grade caution, transparent breakdown
+      table, Fast/Optimal/Premium prices.
+    key_functions: [parsePrintRun, calculateApValue, toggleApComp, apSelectAll, AP_SCARCITY_ALPHA]
+
+  - title: For Sale listing accuracy
+    detail: >
+      Added filterJunkListings to For Sale (reprints/customs/lots/bundles/
+      fakes) so it matches Sold. A price-outlier trim was also added but then
+      REVERTED — too aggressive for asking-price lists that legitimately mix
+      raw + graded (user said "too specific"). Junk filter kept.
+
+  - title: Bulk Pricer accuracy + comps drilldown
+    detail: >
+      Bulk now runs the same pipeline as the main Sold search
+      (filterPriceOutliers(filterByVariant(...))) and fetches 25/card. Each
+      row has a Comps button → panel of matched comps with checkboxes;
+      unchecking recomputes median/low/high live and flows to CSV. High comps
+      (>2x median) flagged; Auto-trim highs + Include all.
+    server: "/api/bulk-price now returns the matched comps array"
+
+  - title: Photo scanner improvements
+    detail: >
+      (1) Full listing title shown in the match picker (was 2-line clamped,
+      hiding the parallel like Red Ice vs Ice); grid widened to 2/3 cols.
+      (2) "Key terms" chips per tile (player lead + set, parallel, print run,
+      grade, RC/Auto/Patch). (3) Comps query built from key terms instead of
+      the full title, and KEEPS the print run (was stripped). (4) Removed
+      capture=environment so users can pick a photo from the device, not just
+      the camera.
+    key_functions: [_scanKeyTerms, _keyTermsHtml, _extractPlayer, _scanSearchQuery]
+
+  - title: Collection valuation revamp
+    detail: >
+      Root causes fixed — old refresh used plain fetch() (token never sent, so
+      values rarely updated) and the query dropped print run + grade.
+      buildCardSoldQuery now includes print run + grade and skips noisy
+      "Base Set". Per-card comps drilldown modal (exclude bad/high comps →
+      median recomputes live, Auto-trim, manual override, Lock value).
+      Auto-value on add; Refresh values re-prices unlocked cards with
+      progress. Confidence dot + comp count + lock glyph + "X of Y valued"
+      summary.
+    key_functions:
+      [buildCardSoldQuery, _fetchCardComps, valueCardAt, refreshPortfolioValues,
+       recomputeCardValue, openCardComps, ccmAutoTrim, toggleCardLock]
+
+  - title: Photo add → match to official checklist
+    detail: >
+      Adding a scanned card searches the static checklist data (player + year
+      + set terms → scored product files → fuzzy player match) and lets the
+      user confirm the exact card + parallel, storing accurate structured data
+      via addToCollectionFromChecklist. Falls back to manual when no match
+      (data covers 2022–2025 only).
+    key_functions: [matchChecklistFromQuery, _playerMatches, _bestParallelIndex, renderChecklistMatchModal]
+
+  - title: Fix Title Auto-Fill & Generator
+    detail: >
+      Both called the never-implemented /api/player-search. Replaced with
+      searchChecklistCards() over the static checklist JSON; shared
+      _checklistTitleString + _renderTitleRows build the eBay titles
+      (parallel/AUTO/RC tags, 80-char cap) for Use and Copy.
+
+  - title: Comp time-window tiering
+    detail: >
+      Collection valuation windows comps by membership — Pro = all-time,
+      Free = last 60 days (COMP_WINDOW_DAYS_FREE). Keyed off the real
+      subscription (getUserSubscription), independent of the hasPro() unlock,
+      so comp depth stays a Pro perk. Undated comps kept. Modal + summary
+      show the active window.
+
+  - title: Spotless sold comps — strict key-term matching
+    detail: >
+      The big accuracy fix. _compMatchesCard(card, title) keeps only listings
+      matching ALL key terms — player last name, year, set, parallel (all
+      significant words, ignoring generic suffixes) with color exclusivity,
+      exact print run (and excludes numbered when card is unnumbered), grade
+      (excludes graded when raw / wrong grade). Applied in _fetchCardComps and
+      the scanner sold results (via _cardFromQuery). Falls back to raw set
+      only when nothing matches, flagged approximate. Root leak was "Base Set"
+      injecting a "set" token that broke the server filter into its unfiltered
+      fallback.
+
+  - title: My Cards add options
+    detail: >
+      Added first-class "Add by Photo" (scan in a new 'collection' mode →
+      checklist match → add) and "Add from Checklist" buttons to the
+      portfolio actions, plus "+ Manual". Add from Checklist initially used a
+      bespoke text-search modal, then was switched to the app-wide
+      openChecklistPicker (product → set → card → parallel) so it matches
+      every other checklist picker; onPick maps to addToCollectionFromChecklist.
+
+valuation_model:
+  scarcity_exponent: 0.65
+  rule: value ∝ (1 / printRun)^0.65  (sub-linear; /25 ≈ 2x a /99)
+  research: >
+    Confirmed via hobby sources that lower print run = higher but sub-linear
+    premium; reused the app's existing estimateByPrintRun power law.
+
+gotchas:
+  - "/api/player-search referenced by frontend but never implemented server-side."
+  - "Checklist data (public/data/checklists/*.json) covers 2022–2025 only."
+  - "eBay sold via scrape.do typically only returns ~last 90 days, so 'all-time' ≈ what eBay returns."
+  - "Sold endpoints need the user's scrape.do key + session token — must use authFetch."
+  - "Ephemeral container reset local to an earlier commit mid-session; recovered by resetting local to the pushed remote head."
+
+files_changed:
+  - public/app.js
+  - public/index.html
+  - public/style.css
+  - server.js
