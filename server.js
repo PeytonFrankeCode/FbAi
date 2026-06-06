@@ -157,7 +157,7 @@ if (!process.env.CF_WORKER) {
     app.use(compression());
   } catch (_) { /* compression not bundled — that's fine */ }
 }
-app.use(express.json());
+app.use(express.json({ limit: '12mb' })); // card scans post base64 images (front + optional back)
 // Disable caching for JS/CSS so deploys take effect immediately, and for
 // every /api/* response so a stale answer (e.g. `enabled:false` cached
 // from before secrets were set) can never linger in a browser.
@@ -3634,15 +3634,46 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
 // POSTs a base64 card photo to eBay's visual search endpoint and returns
 // the top matching listings. Uses the existing Browse API OAuth token —
 // no extra cost or API key needed.
+// Run eBay's visual search for one image. Returns up to `limit` listing
+// summaries (title + thumbnail + url). Throws on API/auth failure.
+async function ebayImageSearch(base64, limit = 8) {
+  const token = await getOAuthToken();
+  const ebayRes = await axios.post(
+    'https://api.ebay.com/buy/browse/v1/item_summary/search_by_image',
+    { image: base64 },
+    {
+      params: { category_ids: '261328', limit },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        'Content-Type': 'application/json',
+      },
+      timeout: 20000,
+    }
+  );
+  const items = ebayRes.data?.itemSummaries || [];
+  return items.slice(0, limit).map(item => ({
+    title: item.title || '',
+    imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
+    itemUrl: item.itemWebUrl || null,
+  }));
+}
+
+function _cleanImageBase64(imageData) {
+  if (!imageData || typeof imageData !== 'string') return null;
+  const base64 = imageData.replace(/^data:image\/[\w+]+;base64,/, '');
+  return (!base64 || base64.length < 100) ? null : base64;
+}
+
 app.post('/api/scan-card', async (req, res) => {
-  const { imageData } = req.body;
-  if (!imageData || typeof imageData !== 'string') {
+  const { imageData, backImageData } = req.body;
+  const frontB64 = _cleanImageBase64(imageData);
+  if (!frontB64) {
     return res.status(400).json({ error: 'imageData required' });
   }
-  const base64 = imageData.replace(/^data:image\/[\w+]+;base64,/, '');
-  if (!base64 || base64.length < 100) {
-    return res.status(400).json({ error: 'Invalid image data' });
-  }
+  // Back photo is optional — used to re-rank the front matches by identity
+  // (player/year/set/card number), which the glare-prone front can get wrong.
+  const backB64 = _cleanImageBase64(backImageData);
 
   if (USE_MOCK_FORSALE) {
     return res.json({
@@ -3651,33 +3682,23 @@ app.post('/api/scan-card', async (req, res) => {
         { title: '2020 Panini Prizm Patrick Mahomes Base #269', imageUrl: null, itemUrl: '#' },
         { title: '2020 Panini Prizm Patrick Mahomes Gold #269 /10', imageUrl: null, itemUrl: '#' },
       ],
+      backMatches: backB64 ? [
+        { title: '2020 Panini Prizm Patrick Mahomes #269', imageUrl: null, itemUrl: '#' },
+      ] : [],
     });
   }
 
   try {
-    const token = await getOAuthToken();
-    const ebayRes = await axios.post(
-      'https://api.ebay.com/buy/browse/v1/item_summary/search_by_image',
-      { image: base64 },
-      {
-        params: { category_ids: '261328', limit: 6 },
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-          'Content-Type': 'application/json',
-        },
-        timeout: 20000,
-      }
-    );
+    // Front is required; back runs alongside it and never fails the scan.
+    const [matches, backMatches] = await Promise.all([
+      ebayImageSearch(frontB64, 8),
+      backB64 ? ebayImageSearch(backB64, 8).catch(err => {
+        console.error('[scan-card] back image search failed:', err.response?.data?.errors?.[0]?.message || err.message);
+        return [];
+      }) : Promise.resolve([]),
+    ]);
 
-    const items = ebayRes.data?.itemSummaries || [];
-    const matches = items.slice(0, 6).map(item => ({
-      title: item.title || '',
-      imageUrl: item.thumbnailImages?.[0]?.imageUrl || item.image?.imageUrl || null,
-      itemUrl: item.itemWebUrl || null,
-    }));
-
-    res.json({ matches });
+    res.json({ matches, backMatches });
   } catch (err) {
     const status = err.response?.status;
     const ebayMsg = err.response?.data?.errors?.[0]?.message;
