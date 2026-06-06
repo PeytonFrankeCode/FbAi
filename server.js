@@ -1059,9 +1059,29 @@ app.get('/api/search', async (req, res) => {
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search', 0, scrapeDoCtx);
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
-      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
+      // Keyword match: keep the listings sharing the most keywords with the
+      // query (all → all-but-one → all-but-two …), then trim price outliers.
+      const matched = matchSoldListings(searchData.results, query);
+      const variantFiltered = filterPriceOutliers(matched.results);
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
-      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, mode, serial: serial || null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: approx });
+      const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
+        ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
+        : null;
+      return res.json({
+        results: variantFiltered,
+        total: variantFiltered.length,
+        mock: false,
+        mode,
+        serial: serial || null,
+        similarResults: [],
+        searchType: matched.searchType,
+        broadenedQuery: null,
+        approximateValue: approx,
+        keywordsTotal: matched.keywordsTotal,
+        keywordsMatched: matched.keywordsMatched,
+        relaxedBy: matched.relaxedBy,
+        relaxedNote,
+      });
     }
 
     if (!serial || offset > 0) {
@@ -1371,6 +1391,232 @@ function filterByVariant(results, query, opts) {
   if (strict) return filtered;
   // Non-strict: fall back to unfiltered when the strict pass removed everything.
   return filtered.length > 0 ? filtered : results;
+}
+
+// ---- Keyword-based sold matching ----
+// New sold-search model: extract the meaningful keywords from the query
+// (player, year, set, parallel/color, print run, auto/mem intent, plus any
+// leftover terms), then keep the sold listings whose titles match the MOST
+// keywords. We require every keyword first; if nothing matches all of them we
+// relax to "all but one", then "all but two", and so on — so a thin card still
+// returns its closest comps instead of a blank chart.
+
+function escapeRegexLiteral(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Synonym groups so intent matches real-world title wording.
+const AUTO_TITLE_KEYWORDS = ['autograph', 'autographs', 'auto', 'signed', 'signature', 'sig', 'rpa'];
+const MEM_TITLE_KEYWORDS = ['patch', 'relic', 'jersey', 'memorabilia', 'swatch', 'material', 'logoman', 'rpa'];
+
+function titleHasAuto(title) {
+  return AUTO_TITLE_KEYWORDS.some(w => new RegExp('\\b' + w + '\\b').test(title));
+}
+function titleHasMem(title) {
+  return MEM_TITLE_KEYWORDS.some(w => new RegExp('\\b' + w + '\\b').test(title));
+}
+
+// Set words that double as a parallel finish ("Zebra Prizm" on a Select card)
+// — useful as a positive match but never as grounds to exclude another set.
+const NON_EXCLUSIVE_SETS = new Set(['prizm']);
+
+// Brand families whose members share titles (Donruss Optic is one product),
+// so finding one shouldn't exclude another in the same family.
+const SET_FAMILIES = [['donruss', 'optic']];
+function setFamilyOf(set) {
+  const fam = SET_FAMILIES.find(f => f.includes(set));
+  return fam || [set];
+}
+
+// Words that can never be a player's surname — used to keep the player
+// predicate from latching onto a trailing keyword like "auto" or "silver".
+const NON_NAME_WORDS = new Set(
+  [...AUTO_TITLE_KEYWORDS, ...MEM_TITLE_KEYWORDS, ...PARALLEL_KEYWORDS, ...PARALLEL_COLORS,
+   ...CARD_SET_NAMES, 'base', 'rc', 'rookie', 'sp', 'ssp', 'refractor', 'holo']
+    .flatMap(w => w.split(/\s+/))
+);
+
+// Classify the search intent for autograph / memorabilia content.
+// Returns 'both' | 'auto' | 'mem' | 'none'.
+function classifyCardType(qLower) {
+  const a = titleHasAuto(qLower);
+  const m = titleHasMem(qLower);
+  if (a && m) return 'both';
+  if (a) return 'auto';
+  if (m) return 'mem';
+  return 'none';
+}
+
+// Break a query into structured keyword predicates. Each predicate is a
+// { label, kind, test(title) } where `title` is a space-padded lowercase
+// title. A listing "matches" the keyword when test() returns true.
+function extractSearchKeywords(query) {
+  const qLower = ' ' + String(query).toLowerCase().replace(/\s+/g, ' ').trim() + ' ';
+  const predicates = [];
+
+  // Print run (e.g. /50). Bounded so /50 never matches /500 or /150.
+  const serial = extractSerial(query);
+  if (serial) {
+    const re = new RegExp('/\\s*' + serial + '(?![0-9])');
+    predicates.push({ label: `/${serial}`, kind: 'printRun', test: t => re.test(t) });
+  }
+
+  // Grade (e.g. PSA 10, BGS 9.5). When graded, comps must carry the same grade.
+  const gradeMatch = qLower.match(/\b(psa|bgs|sgc|cgc|hga|csg)\s*(\d+(?:\.\d+)?)\b/);
+  let gradeCompany = '', gradeNum = '';
+  if (gradeMatch) {
+    gradeCompany = gradeMatch[1];
+    gradeNum = gradeMatch[2];
+    const gradeRe = new RegExp('\\b' + gradeCompany + '\\s*' + escapeRegexLiteral(gradeNum) + '\\b');
+    predicates.push({ label: `${gradeCompany} ${gradeNum}`, kind: 'grade', test: t => gradeRe.test(t) });
+  }
+
+  // Year — substring match also catches "2017-18" style spans.
+  const year = extractYear(query);
+  if (year) predicates.push({ label: year, kind: 'year', test: t => t.includes(year) });
+
+  // Set name (+ exclusivity: a Prizm search shouldn't return Optic). Two
+  // brands in the same family (e.g. Donruss Optic) don't exclude each other,
+  // and "weak" set words that double as a parallel finish (Prizm appears on
+  // Select/Mosaic cards) never exclude anything.
+  const queriedSets = CARD_SET_NAMES.filter(s => qLower.includes(s));
+  if (queriedSets.length > 0) {
+    const queriedFamily = new Set(queriedSets.flatMap(setFamilyOf));
+    const excludedSets = CARD_SET_NAMES.filter(s =>
+      !queriedSets.includes(s) && !NON_EXCLUSIVE_SETS.has(s) && !queriedFamily.has(s)
+    );
+    predicates.push({
+      label: queriedSets.join('/'),
+      kind: 'set',
+      test: t => queriedSets.some(s => t.includes(s)) && !excludedSets.some(s => t.includes(s)),
+    });
+  }
+
+  // Parallels / colors. A color carries exclusivity (silver ≠ gold); other
+  // parallel effects are plain "must contain" keywords.
+  const searchedColor = PARALLEL_COLORS.find(c => qLower.includes(c));
+  const searchedParallels = PARALLEL_KEYWORDS.filter(p => qLower.includes(p));
+  for (const p of searchedParallels) {
+    if (p === searchedColor) continue; // handled by the color predicate below
+    predicates.push({ label: p, kind: 'parallel', test: t => t.includes(p) });
+  }
+  if (searchedColor) {
+    const otherColors = PARALLEL_COLORS.filter(c => c !== searchedColor);
+    predicates.push({
+      label: searchedColor,
+      kind: 'color',
+      test: t => t.includes(searchedColor) && !otherColors.some(c => t.includes(c)),
+    });
+  }
+
+  // Explicit base search — exclude any parallel wording.
+  const isBaseSearch = / base /.test(qLower);
+  if (isBaseSearch && searchedParallels.length === 0) {
+    predicates.push({ label: 'base', kind: 'base', test: t => !PARALLEL_KEYWORDS.some(p => t.includes(p)) });
+  }
+
+  // Auto / memorabilia intent.
+  const cardType = classifyCardType(qLower);
+  if (cardType === 'auto') {
+    predicates.push({ label: 'auto', kind: 'type', test: t => titleHasAuto(t) });
+  } else if (cardType === 'mem') {
+    predicates.push({ label: 'mem', kind: 'type', test: t => titleHasMem(t) });
+  } else if (cardType === 'both') {
+    predicates.push({ label: 'auto+mem', kind: 'type', test: t => titleHasAuto(t) && titleHasMem(t) });
+  } else {
+    predicates.push({ label: 'no auto/mem', kind: 'type', test: t => !titleHasAuto(t) && !titleHasMem(t) });
+  }
+
+  // Player — match on the last name, the most stable token (robust to first
+  // name spellings like "Ja'Marr" vs "Jamarr"). Strip trailing non-name words
+  // (auto/patch/colors/parallels/sets) so the surname isn't mistaken for them.
+  const player = extractPlayerName(query);
+  const rawPlayerToks = player ? player.toLowerCase().split(' ').filter(w => w.length > 1) : [];
+  const playerToks = rawPlayerToks.filter(w => !NON_NAME_WORDS.has(w));
+  if (playerToks.length > 0) {
+    const last = playerToks[playerToks.length - 1];
+    predicates.push({ label: playerToks.join(' '), kind: 'player', test: t => t.includes(last) });
+  }
+
+  // Leftover meaningful tokens — anything the structured fields didn't consume
+  // (e.g. a card number variant, an insert name) still has to be present.
+  let leftover = qLower;
+  if (serial) leftover = leftover.replace(/\/\s*\d{1,4}/g, ' ');
+  if (gradeMatch) leftover = leftover.replace(/\b(psa|bgs|sgc|cgc|hga|csg)\s*\d+(?:\.\d+)?\b/g, ' ');
+  if (year) leftover = leftover.replace(new RegExp('\\b' + year + '\\b', 'g'), ' ');
+  for (const s of queriedSets) leftover = leftover.replace(new RegExp(escapeRegexLiteral(s), 'g'), ' ');
+  for (const p of searchedParallels) leftover = leftover.replace(new RegExp('\\b' + escapeRegexLiteral(p) + '\\b', 'g'), ' ');
+  leftover = leftover.replace(/\b(autograph|autographs|auto|signed|signature|sig|rpa|patch|relic|jersey|memorabilia|swatch|material|logoman|base)\b/g, ' ');
+  for (const w of playerToks) leftover = leftover.replace(new RegExp('\\b' + escapeRegexLiteral(w) + '\\b', 'g'), ' ');
+  const leftoverToks = leftover.split(/\s+/).filter(t => t.length > 1 && !VARIANT_STOP_WORDS.has(t));
+  for (const tok of [...new Set(leftoverToks)]) {
+    predicates.push({ label: tok, kind: 'token', test: t => t.includes(tok) });
+  }
+
+  return { predicates, cardType, serial, year, player };
+}
+
+// A "no auto/mem" or "base" keyword is a negative signal almost every listing
+// satisfies — never keep a comp on one of those alone.
+function isNegativeKeyword(p) {
+  return (p.kind === 'type' && p.label === 'no auto/mem') || p.kind === 'base';
+}
+
+// Keep the sold listings that share the most keywords with the query.
+// Returns { results, keywordsTotal, keywordsMatched, relaxedBy, searchType }.
+//  - searchType 'exact'     : every keyword matched
+//  - searchType 'relaxed'   : best tier was missing 1+ keywords
+//  - searchType 'broadened' : couldn't even pin the player (eBay's own list)
+//
+// The player is an anchor: a comp for a different player is never useful, so we
+// never relax it away. Everything else relaxes all-at-once-fewer: all → all but
+// one → all but two …, and a listing is never kept on a negative keyword alone.
+function matchSoldListings(results, query) {
+  const { predicates } = extractSearchKeywords(query);
+  const total = predicates.length;
+  if (total === 0 || results.length === 0) {
+    return { results, keywordsTotal: total, keywordsMatched: total, relaxedBy: 0, searchType: 'exact' };
+  }
+
+  const playerPred = predicates.find(p => p.kind === 'player');
+  const rest = predicates.filter(p => p !== playerPred);
+  const restTotal = rest.length;
+
+  const scored = results.map(r => {
+    const title = ' ' + String(r.title || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+    const restMatched = rest.reduce((n, p) => n + (p.test(title) ? 1 : 0), 0);
+    const restPositive = rest.reduce((n, p) => n + (!isNegativeKeyword(p) && p.test(title) ? 1 : 0), 0);
+    const playerOk = playerPred ? playerPred.test(title) : true;
+    return { r, restMatched, restPositive, playerOk };
+  });
+
+  // With a player keyword, every comp must be that player. Without one, we
+  // require at least one positive (non-negative) keyword to match.
+  const pool = scored.filter(s => s.playerOk);
+  if (pool.length === 0) {
+    return { results, keywordsTotal: total, keywordsMatched: 0, relaxedBy: total, searchType: 'broadened' };
+  }
+
+  const floor = playerPred ? 0 : 1;
+  for (let k = restTotal; k >= floor; k--) {
+    const keep = pool
+      .filter(s => s.restMatched >= k && (playerPred || s.restPositive >= 1))
+      .map(s => s.r);
+    if (keep.length > 0) {
+      const keywordsMatched = (playerPred ? 1 : 0) + k;
+      const relaxedBy = total - keywordsMatched;
+      return {
+        results: keep,
+        keywordsTotal: total,
+        keywordsMatched,
+        relaxedBy,
+        searchType: relaxedBy <= 0 ? 'exact' : 'relaxed',
+      };
+    }
+  }
+
+  // Couldn't pin anything down — fall back to eBay's own results.
+  return { results, keywordsTotal: total, keywordsMatched: 0, relaxedBy: total, searchType: 'broadened' };
 }
 
 function removeOutliers(prices) {
@@ -3512,7 +3758,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB };
+module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

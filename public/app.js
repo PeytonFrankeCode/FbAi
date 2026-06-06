@@ -1618,7 +1618,7 @@ async function fetchDirectSearch(query) {
       throw new Error(msg);
     }
 
-    const { mock, searchType, approximateValue } = data;
+    const { mock, searchType, approximateValue, relaxedNote } = data;
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
     recordPriceHistory(query, results);
@@ -1650,7 +1650,8 @@ async function fetchDirectSearch(query) {
     }
 
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
-    const typeLabel = searchType === 'broadened' ? ' (similar cards)' : '';
+    let typeLabel = searchType === 'broadened' ? ' (similar cards)' : '';
+    if (searchType === 'relaxed' && relaxedNote) typeLabel = ` <span class="relaxed-badge">${escHtml(relaxedNote)}</span>`;
     const listingWord = isSold ? 'sold listing' : 'listing';
     meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}`;
     meta.classList.remove('hidden');
@@ -8555,6 +8556,8 @@ async function fetchPlayerListings(container, query, mode) {
         html += ` <span class="cl-broadened-detail">(based on ${approximateValue.sampleSize} ${approximateValue.sampleSize === 1 ? 'sale' : 'sales'} of ${escHtml(approximateValue.basedOn)})</span>`;
       }
       html += `</div>`;
+    } else if (searchType === 'relaxed' && data.relaxedNote) {
+      html += `<div class="cl-broadened-notice"><span class="cl-broadened-icon">&#128270;</span> No listing matched every keyword. ${escHtml(data.relaxedNote)}.</div>`;
     }
     html += `<div class="cl-listings-stats">
         <span>${results.length} sold${searchType === 'broadened' ? ' (similar)' : ''} ${mockBadge}</span>
