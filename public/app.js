@@ -3503,8 +3503,14 @@ function switchSearchSub(sub) {
 // listings, then loads sold prices when the user picks the right one.
 // Uses the existing Browse API OAuth token — zero extra cost.
 let _scannerImageDataUrl = null;
+let _scannerBackImageDataUrl = null;
 let _scannerLastMedian = null;
 let _scannerLastQuery = null;
+
+// Foil/shiny fronts confuse eBay's visual search, so we capture at higher
+// resolution than the old 800px to give it more detail to match against.
+const SCANNER_IMG_DIM = 1400;
+const SCANNER_IMG_QUALITY = 0.85;
 
 function initScannerView() { /* no gate needed */ }
 
@@ -3514,7 +3520,7 @@ async function handleScannerFile(e) {
   if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
   if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
   try {
-    _scannerImageDataUrl = await readImageFileAsDataUrl(file, 800, 0.85);
+    _scannerImageDataUrl = await readImageFileAsDataUrl(file, SCANNER_IMG_DIM, SCANNER_IMG_QUALITY);
     document.getElementById('scanner-preview').src = _scannerImageDataUrl;
     document.getElementById('scanner-phase-upload').classList.remove('hidden');
     document.getElementById('scanner-preview-wrap').classList.remove('hidden');
@@ -3524,6 +3530,32 @@ async function handleScannerFile(e) {
   } catch (err) {
     alert('Could not load image: ' + (err.message || 'Unknown error'));
   }
+}
+
+// Optional back-of-card photo. The back is matte (no glare) and its title
+// matches give us the base identity used to re-rank the front matches.
+async function handleScannerBackFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+  if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
+  try {
+    _scannerBackImageDataUrl = await readImageFileAsDataUrl(file, SCANNER_IMG_DIM, SCANNER_IMG_QUALITY);
+    const prev = document.getElementById('scanner-back-preview');
+    if (prev) prev.src = _scannerBackImageDataUrl;
+    document.getElementById('scanner-back-preview-wrap').classList.remove('hidden');
+    document.getElementById('scanner-back-add-label').classList.add('hidden');
+  } catch (err) {
+    alert('Could not load image: ' + (err.message || 'Unknown error'));
+  }
+}
+
+function clearScannerBackImage() {
+  _scannerBackImageDataUrl = null;
+  const input = document.getElementById('scanner-back-file-input');
+  if (input) input.value = '';
+  document.getElementById('scanner-back-preview-wrap').classList.add('hidden');
+  document.getElementById('scanner-back-add-label').classList.remove('hidden');
 }
 
 function clearScannerImage() {
@@ -3537,6 +3569,7 @@ function clearScannerImage() {
   document.getElementById('scanner-error').classList.add('hidden');
   document.getElementById('scanner-phase-matches').classList.add('hidden');
   document.getElementById('scanner-results').classList.add('hidden');
+  clearScannerBackImage();
   const collBtnWrap = document.getElementById('scanner-collection-btn-wrap');
   if (collBtnWrap) collBtnWrap.classList.add('hidden');
 }
@@ -3564,7 +3597,10 @@ async function submitCardScan() {
     const res = await fetch('/api/scan-card', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageData: _scannerImageDataUrl }),
+      body: JSON.stringify({
+        imageData: _scannerImageDataUrl,
+        backImageData: _scannerBackImageDataUrl || undefined,
+      }),
     });
     const data = await res.json();
     spinner.classList.add('hidden');
@@ -3584,7 +3620,10 @@ async function submitCardScan() {
       return;
     }
 
-    _renderScannerMatches(data.matches);
+    // If a back photo was sent, use the back's title matches to re-rank the
+    // front matches so the correct card/parallel surfaces first.
+    const reconciled = _reconcileMatchesWithBack(data.matches, data.backMatches || []);
+    _renderScannerMatches(reconciled.matches, reconciled.identity);
   } catch (err) {
     spinner.classList.add('hidden');
     if (matchBtn) matchBtn.disabled = false;
@@ -3721,11 +3760,103 @@ function _scanSearchQuery(title) {
   return q;
 }
 
-function _renderScannerMatches(matches) {
+// Helper: tally values and return the most common (consensus) one.
+function _topTally(tally) {
+  let best = '', bestN = 0;
+  for (const [k, n] of Object.entries(tally)) { if (n > bestN) { best = k; bestN = n; } }
+  return bestN > 0 ? { value: best, count: bestN } : null;
+}
+
+// Derive a consensus card identity (player surname, year, set, card number)
+// from a list of eBay listing titles — used on the glare-free back matches.
+function _identityFromTitles(titles) {
+  const players = {}, years = {}, sets = {}, numbers = {};
+  const bump = (o, k) => { if (k) o[k] = (o[k] || 0) + 1; };
+  for (const t of (titles || [])) {
+    const lower = String(t).toLowerCase();
+    const p = _extractPlayer(t);
+    if (p) bump(players, p.toLowerCase().split(' ').pop());
+    bump(years, (String(t).match(/\b(19|20)\d{2}\b/) || [])[0]);
+    bump(sets, SCAN_KEY_SETS.find(s => new RegExp(`\\b${s}\\b`).test(lower)));
+    const num = (String(t).match(/#([\w-]+)/) || [])[1];
+    bump(numbers, num ? num.toLowerCase() : '');
+  }
+  return {
+    player: _topTally(players),
+    year: _topTally(years),
+    set: _topTally(sets),
+    number: _topTally(numbers),
+  };
+}
+
+// Score a front-match title against the back's consensus identity. Card number
+// and player are the strongest identity signals.
+function _scoreAgainstIdentity(title, id) {
+  const orig = String(title || '');
+  const lower = orig.toLowerCase();
+  let score = 0;
+  if (id.player && lower.includes(id.player.value)) score += 2;
+  if (id.year && lower.includes(id.year.value)) score += 1;
+  if (id.set && new RegExp(`\\b${id.set.value}\\b`).test(lower)) score += 1;
+  if (id.number && new RegExp(`#${id.number.value}\\b`, 'i').test(orig)) score += 3;
+  return score;
+}
+
+// Re-rank front matches using the back photo's identity. Front matches that
+// contradict a confident player consensus are dropped (never to empty). Returns
+// { matches, identity } where identity is null when there's nothing usable.
+function _reconcileMatchesWithBack(frontMatches, backMatches) {
+  if (!backMatches || backMatches.length === 0) return { matches: frontMatches, identity: null };
+  const id = _identityFromTitles(backMatches.map(m => m.title));
+  const hasSignal = id.player || id.number;
+  if (!hasSignal) return { matches: frontMatches, identity: null };
+
+  const scored = frontMatches.map((m, i) => ({
+    m, i, score: _scoreAgainstIdentity(m.title, id),
+  }));
+
+  // Drop matches that clearly contradict a confident player consensus
+  // (seen on 2+ back titles), but only if agreeing matches remain.
+  let pool = scored;
+  if (id.player && id.player.count >= 2) {
+    const agree = scored.filter(s => s.m.title.toLowerCase().includes(id.player.value));
+    if (agree.length > 0) pool = agree;
+  }
+
+  // Stable sort by score (keep eBay's original order as the tiebreak).
+  pool.sort((a, b) => (b.score - a.score) || (a.i - b.i));
+  const topScore = pool.length ? pool[0].score : 0;
+  const matches = pool.map(s => ({ ...s.m, _agrees: s.score > 0 && s.score === topScore }));
+  return { matches, identity: id };
+}
+
+function _identityLabel(id) {
+  if (!id) return '';
+  const parts = [
+    id.year && id.year.value,
+    id.player && _titleCase(id.player.value),
+    id.set && _titleCase(id.set.value),
+    id.number && `#${id.number.value.toUpperCase()}`,
+  ].filter(Boolean);
+  return parts.join(' ');
+}
+
+function _renderScannerMatches(matches, backIdentity) {
   const grid = document.getElementById('scanner-matches-grid');
+  const note = document.getElementById('scanner-back-note');
+  if (note) {
+    const label = _identityLabel(backIdentity);
+    if (label) {
+      note.innerHTML = `&#10003; Card back read as <strong>${escHtml(label)}</strong> — best matches moved to the top.`;
+      note.classList.remove('hidden');
+    } else {
+      note.classList.add('hidden');
+    }
+  }
   grid.innerHTML = matches.map((m, i) => `
-    <div class="scanner-match-card" data-title="${escHtml(m.title)}">
+    <div class="scanner-match-card${m._agrees ? ' scanner-match-agrees' : ''}" data-title="${escHtml(m.title)}">
       <div class="scanner-match-card-accent"></div>
+      ${m._agrees ? '<span class="scanner-match-badge">&#10003; Matches back</span>' : ''}
       ${m.imageUrl
         ? `<img class="scanner-match-card-img" src="${escHtml(m.imageUrl)}" alt="" loading="lazy" />`
         : '<div class="scanner-match-card-noimg">&#127944;</div>'}

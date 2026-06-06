@@ -7781,6 +7781,17 @@ footer {
 .scanner-match-card { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; cursor: pointer; }
 @media (hover: hover) { .scanner-match-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); border-color: var(--accent-border); } }
 .scanner-match-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.scanner-match-card { position: relative; }
+.scanner-match-agrees { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(0,0,0,0.2); }
+.scanner-match-badge { position: absolute; top: 6px; right: 6px; z-index: 2; background: var(--accent); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+
+/* Optional back-of-card upload (accuracy booster for shiny cards) */
+.scanner-back-area { margin-top: 12px; }
+.scanner-back-add-label { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); border: 1px dashed var(--border-primary); border-radius: 8px; padding: 0.45rem 0.8rem; transition: border-color 0.2s, color 0.2s; }
+.scanner-back-add-label:hover { border-color: var(--accent); color: var(--text-primary); }
+.scanner-back-add-icon { font-size: 0.9rem; }
+.scanner-back-add-label em { font-style: normal; color: var(--text-tertiary, var(--text-secondary)); }
+.scanner-back-note { background: var(--bg-hover); border: 1px solid var(--accent-border, var(--border-primary)); border-radius: 8px; padding: 0.55rem 0.75rem; margin-bottom: 0.75rem; font-size: 0.82rem; color: var(--text-primary); }
 
 .scanner-match-card-accent { height: 3px; width: 100%; background: var(--accent); flex-shrink: 0; }
 .scanner-match-card-img { width: 100%; height: 100px; object-fit: contain; background: var(--bg-primary); }

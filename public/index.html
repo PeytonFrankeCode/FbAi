@@ -648,6 +648,28 @@
 
         <div id="scanner-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
           <img id="scanner-preview" src="" alt="Card preview" style="max-height:240px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
+
+          <!-- Optional back-of-card photo: boosts accuracy on shiny/foil cards -->
+          <div class="scanner-back-area">
+            <label for="scanner-back-file-input" id="scanner-back-add-label" class="scanner-back-add-label">
+              <span class="scanner-back-add-icon">&#10133;</span>
+              <span><strong>Add back of card</strong> <em>(optional — improves accuracy on shiny cards)</em></span>
+              <input
+                type="file"
+                id="scanner-back-file-input"
+                accept="image/*"
+                style="display:none"
+                onchange="handleScannerBackFile(event)"
+              />
+            </label>
+            <div id="scanner-back-preview-wrap" class="hidden" style="margin-top:8px">
+              <img id="scanner-back-preview" src="" alt="Card back preview" style="max-height:140px;max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2)" />
+              <div style="margin-top:6px">
+                <button class="btn-secondary" style="font-size:0.8rem;padding:0.35rem 0.8rem" onclick="clearScannerBackImage()">&#10005; Remove back</button>
+              </div>
+            </div>
+          </div>
+
           <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
             <button class="grading-submit-btn" id="scanner-match-btn" onclick="submitCardScan()">&#128269; Find This Card</button>
             <button class="btn-secondary" onclick="clearScannerImage()">&#10005; Clear</button>
@@ -665,6 +687,7 @@
 
       <!-- Phase 2: Pick the right card -->
       <div id="scanner-phase-matches" class="hidden">
+        <div id="scanner-back-note" class="scanner-back-note hidden"></div>
         <p class="grading-hint" style="margin-bottom:0.75rem">Tap the listing that matches yours — check the full title so the parallel is right (e.g. <em>Red Ice</em> vs just <em>Ice</em>):</p>
         <div id="scanner-matches-grid" class="scanner-matches-grid"></div>
         <button class="btn-secondary" style="margin-top:0.75rem" onclick="clearScannerImage()">&#8592; Try a different photo</button>
