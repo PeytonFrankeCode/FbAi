@@ -1667,6 +1667,18 @@ main {
   vertical-align: middle;
 }
 
+.relaxed-badge {
+  display: inline-block;
+  background: #2c5282;
+  color: #90cdf4;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
 /* ---- Mode Tabs ---- */
 .mode-tabs {
   display: flex;
