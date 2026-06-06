@@ -356,6 +356,7 @@
       <button class="sort-btn" data-sort="price-low">Price Low</button>
       <button class="sort-btn" data-sort="price-high">Price High</button>
       <button class="sort-btn" data-sort="date">Most Recent</button>
+      <button class="sort-btn" data-sort="grade">Grade</button>
     </div>
 
     <!-- Grade Filter (sold searches) — filters the value stats and chart by grade -->
@@ -956,6 +957,16 @@
       <h2>Card Value &amp; Comps</h2>
       <p class="ccm-help">These are the recent sold listings behind this card's market value. Uncheck the ones that don't match (or are random highs) and the value updates instantly.</p>
       <div id="card-comps-body"></div>
+    </div>
+  </div>
+
+  <!-- Grading Advisor Comps Modal -->
+  <div id="grading-comps-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:560px">
+      <button class="login-close" onclick="closeGradingComps()">&times;</button>
+      <h2 id="grading-comps-title">Sold comps</h2>
+      <p class="ccm-help">The recent eBay sold listings behind this grade's numbers.</p>
+      <div id="grading-comps-body"></div>
     </div>
   </div>
 
