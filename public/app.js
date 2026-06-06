@@ -1238,6 +1238,10 @@ function applySortToResults(sortType) {
     case 'date':
       sorted.sort((a, b) => new Date(b.soldDate || 0) - new Date(a.soldDate || 0));
       break;
+    case 'grade':
+      // Best grade first, raw last; ties keep their original relative order.
+      sorted.sort((a, b) => gradeSortRank(a.title) - gradeSortRank(b.title));
+      break;
     default: // 'default' — keep original order
       sorted = [...base];
   }
@@ -2178,6 +2182,13 @@ function detectGrade(title) {
 }
 
 const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC'];
+
+// Ranking for the "Grade" sort — best grade first, raw/ungraded last.
+const GRADE_SORT_DESC = ['PSA 10', 'BGS 10', 'PSA 9.5', 'BGS 9.5', 'PSA 9', 'BGS', 'PSA 8', 'SGC', 'CGC', 'PSA Other', 'Raw / Ungraded'];
+function gradeSortRank(title) {
+  const i = GRADE_SORT_DESC.indexOf(detectGrade(title));
+  return i < 0 ? GRADE_SORT_DESC.length : i;
+}
 
 function groupByGrade(results) {
   const groups = {};
@@ -4790,11 +4801,16 @@ async function runGradingAdvisor(e) {
   return false;
 }
 
+let _gradingComps = {};
+
 function renderGradingResults(data) {
   const { grades, premiums, query } = data;
   const tbody  = document.getElementById('grading-tbody');
   const recBox = document.getElementById('grading-recommendation');
   const results = document.getElementById('grading-results');
+
+  // Stash the comps behind each grade so "view" can open the listings.
+  _gradingComps = data.comps || {};
 
   const fmt = v => v != null ? `$${v.toFixed(2)}` : '—';
   const fmtNet = net => {
@@ -4804,23 +4820,27 @@ function renderGradingResults(data) {
   };
 
   const rows = [
-    { label: 'Raw', stats: grades.raw,   premium: null },
-    { label: 'PSA 8',  stats: grades.psa8,  premium: premiums.psa8  },
-    { label: 'PSA 9',  stats: grades.psa9,  premium: premiums.psa9  },
-    { label: 'PSA 10', stats: grades.psa10, premium: premiums.psa10 },
+    { label: 'Raw',    key: 'raw',   stats: grades.raw,   premium: null },
+    { label: 'PSA 8',  key: 'psa8',  stats: grades.psa8,  premium: premiums.psa8  },
+    { label: 'PSA 9',  key: 'psa9',  stats: grades.psa9,  premium: premiums.psa9  },
+    { label: 'PSA 10', key: 'psa10', stats: grades.psa10, premium: premiums.psa10 },
   ];
 
-  tbody.innerHTML = rows.map(({ label, stats, premium }) => {
+  tbody.innerHTML = rows.map(({ label, key, stats, premium }) => {
     if (!stats) return `<tr class="grading-no-data"><td>${label}</td><td colspan="6" style="color:var(--text-muted);font-style:italic">No recent sold data found</td></tr>`;
     const gross = premium ? fmt(premium.gross) : '—';
     const net   = premium ? fmtNet(premium.net) : '—';
     const isRaw = label === 'Raw';
+    const hasComps = (_gradingComps[key] || []).length > 0;
+    const salesCell = hasComps
+      ? `<button type="button" class="grading-comps-link" onclick="openGradingComps('${key}')" title="View the sold listings behind this">${stats.sales} <span class="grading-comps-eye">&#128065;</span></button>`
+      : `${stats.sales}`;
     return `<tr class="${isRaw ? 'grading-raw-row' : ''}">
       <td><strong>${label}</strong></td>
       <td>${fmt(stats.avg)}</td>
       <td>${fmt(stats.median)}</td>
       <td>${fmt(stats.min)} – ${fmt(stats.max)}</td>
-      <td>${stats.sales}</td>
+      <td>${salesCell}</td>
       <td>${gross}</td>
       <td>${net}</td>
     </tr>`;
@@ -4842,6 +4862,62 @@ function renderGradingResults(data) {
   }
 
   results.classList.remove('hidden');
+}
+
+// ---- Grading Advisor: view the comps behind each grade ----
+const _GRADING_GRADE_LABELS = { raw: 'Raw / Ungraded', psa8: 'PSA 8', psa9: 'PSA 9', psa10: 'PSA 10' };
+
+function openGradingComps(key) {
+  const comps = _gradingComps[key] || [];
+  const modal = document.getElementById('grading-comps-modal');
+  const titleEl = document.getElementById('grading-comps-title');
+  const body = document.getElementById('grading-comps-body');
+  if (!modal || !body) return;
+
+  titleEl.textContent = `${_GRADING_GRADE_LABELS[key] || key} — sold comps`;
+
+  if (!comps.length) {
+    body.innerHTML = '<p class="gc-empty">No comps available for this grade.</p>';
+  } else {
+    const prices = comps.map(c => parseFloat(c.price)).filter(p => !isNaN(p) && p > 0).sort((a, b) => a - b);
+    const median = prices.length
+      ? (prices.length % 2 ? prices[(prices.length - 1) / 2] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2)
+      : null;
+    const summary = `<p class="gc-summary">${comps.length} sold ${comps.length === 1 ? 'listing' : 'listings'}${median != null ? ` · median <strong>$${median.toFixed(2)}</strong>` : ''}</p>`;
+    const rows = comps.map(c => {
+      const price = parseFloat(c.price);
+      const priceStr = !isNaN(price) ? `$${price.toFixed(2)}` : (c.price || '');
+      const when = _gradingCompDate(c.soldDate);
+      const img = c.imageUrl
+        ? `<img class="gc-comp-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" />`
+        : '<div class="gc-comp-img gc-comp-noimg">&#127944;</div>';
+      const titleHtml = c.itemUrl
+        ? `<a class="gc-comp-title" href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener">${escHtml(c.title || '')}</a>`
+        : `<span class="gc-comp-title">${escHtml(c.title || '')}</span>`;
+      return `<div class="gc-comp">
+        ${img}
+        <div class="gc-comp-main">
+          ${titleHtml}
+          <div class="gc-comp-meta"><span class="gc-comp-price">${priceStr}</span>${when ? ` · ${escHtml(when)}` : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+    body.innerHTML = summary + `<div class="gc-comp-list">${rows}</div>`;
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeGradingComps() {
+  const modal = document.getElementById('grading-comps-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function _gradingCompDate(soldDate) {
+  if (!soldDate) return '';
+  const d = new Date(soldDate);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 async function loadChecklistProducts() {
@@ -8591,7 +8667,7 @@ function buildCompAnalysis(results) {
 
 // Close modals on overlay click
 document.addEventListener('click', function(e) {
-  ['add-card-modal', 'title-autofill-modal'].forEach(id => {
+  ['add-card-modal', 'title-autofill-modal', 'grading-comps-modal'].forEach(id => {
     const el = document.getElementById(id);
     if (e.target === el) el.classList.add('hidden');
   });

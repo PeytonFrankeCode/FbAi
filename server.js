@@ -1723,6 +1723,18 @@ app.get('/api/grading-advisor', async (req, res) => {
       return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
     };
 
+    // Return the actual comps behind each grade's numbers so the UI can show
+    // exactly which sold listings drove the recommendation. Trimmed to the
+    // fields the comp viewer needs and capped to keep the payload small.
+    const trimComps = (items) => (items || []).slice(0, 24).map(it => ({
+      title: it.title,
+      price: it.price,
+      itemUrl: it.itemUrl,
+      imageUrl: it.imageUrl,
+      soldDate: it.soldDate,
+      condition: it.condition,
+    }));
+
     res.json({
       query: query.trim(),
       grades: { raw, psa8, psa9, psa10 },
@@ -1732,6 +1744,12 @@ app.get('/api/grading-advisor', async (req, res) => {
         psa10: calcPremium(psa10, raw),
       },
       gradingCost: GRADING_COST,
+      comps: {
+        raw:   trimComps(rawItems),
+        psa8:  trimComps(psa8Items),
+        psa9:  trimComps(psa9Items),
+        psa10: trimComps(psa10Items),
+      },
     });
   } catch (err) {
     console.error('Grading advisor error:', err.message);
