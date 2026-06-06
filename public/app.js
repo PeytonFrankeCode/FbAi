@@ -3992,40 +3992,20 @@ function addPhotoToCollection() {
   openScanFillModal(null, false, 'collection');
 }
 
-// ---- Add from Checklist (text search → pick exact card) ----
+// ---- Add from Checklist — uses the standard checklist picker (same product
+// → set → card → parallel flow as everywhere else) for a consistent UX. ----
 function openChecklistAddModal() {
-  _checklistMatches = [];
-  _checklistMatchMeta = { soldValue: null, query: '' };
-  document.getElementById('checklist-add-results').innerHTML = '<p class="clm-hint">Search a player and set (e.g. "Mahomes Prizm" or "2023 Justin Jefferson") to find the exact card.</p>';
-  const input = document.getElementById('checklist-add-input');
-  if (input) input.value = '';
-  document.getElementById('checklist-add-modal').classList.remove('hidden');
-  if (input) input.focus();
-}
-
-function closeChecklistAddModal() {
-  document.getElementById('checklist-add-modal').classList.add('hidden');
-}
-
-async function searchChecklistAdd() {
-  const q = document.getElementById('checklist-add-input').value.trim();
-  const out = document.getElementById('checklist-add-results');
-  if (!q || q.length < 2) { out.innerHTML = '<p class="clm-hint">Type at least 2 characters.</p>'; return; }
-  out.innerHTML = '<div class="pp-loading"><div class="spinner"></div> Searching checklist…</div>';
-  let res;
-  try { res = await searchChecklistCards(q); } catch { res = { cards: [] }; }
-  if (res.needPlayer) { out.innerHTML = '<p class="clm-hint">Include a player name (e.g. "Mahomes Prizm").</p>'; return; }
-  _checklistMatches = res.cards || [];
-  if (!_checklistMatches.length) { out.innerHTML = '<p class="clm-none">No matching cards found. Try adding the set or year.</p>'; return; }
-  const extracted = _scanKeyTerms(q).filter(t => !/^\//.test(t) && !SCAN_KEY_SETS.includes(t.toLowerCase()));
-  out.innerHTML = `<div class="clm-list">${_checklistMatches.map((c, i) => _checklistCardRowHtml(c, i, extracted, 'addChecklistSearchCard')).join('')}</div>`;
-}
-
-function addChecklistSearchCard(i) {
-  if (!_addChecklistCardByIndex(i)) return;
-  const btn = (typeof event !== 'undefined' && event) ? event.target : null;
-  if (btn) { btn.textContent = 'Added ✓'; btn.disabled = true; btn.classList.add('clm-added'); }
-  showPortfolioToast('Added to collection.');
+  openChecklistPicker({
+    subtitle: 'Pick a card to add to your collection — its value pulls automatically.',
+    onPick: ctx => {
+      if (!ctx) return;
+      const ok = addToCollectionFromChecklist(
+        ctx.player, ctx.year, ctx.brand, ctx.setName,
+        ctx.parallel || '', ctx.printRun || '', ctx.cardNumber || '', '', ctx.setCategory || 'base'
+      );
+      if (ok) { renderPortfolio(); showPortfolioToast('Added to collection — matched to checklist.'); }
+    },
+  });
 }
 
 // Fallback: the original behavior — prefill the manual Add Card modal.
