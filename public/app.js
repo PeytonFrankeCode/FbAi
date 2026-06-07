@@ -5725,143 +5725,93 @@ function renderPortfolio() {
 
   const listEl = document.getElementById('portfolio-list');
   if (coll.length === 0) {
-    listEl.innerHTML = '<p class="portfolio-empty">No cards in your collection yet. Add cards from checklists or use the button above.</p>';
+    listEl.innerHTML = `<div class="pf-empty">
+      <div class="pf-empty-icon">&#127183;</div>
+      <h3>No cards yet</h3>
+      <p>Add a card to get started — then hit <strong>Refresh Values</strong> to pull live sold prices.</p>
+      <div class="pf-empty-steps">
+        <span><strong>1.</strong> Add by Photo, Checklist, or Manual</span>
+        <span><strong>2.</strong> Refresh Values for live sold prices</span>
+        <span><strong>3.</strong> Tap any value to see the comps used</span>
+      </div>
+    </div>`;
     return;
   }
-
-  // Separate checklist cards (have player field) from manually added cards
-  const checklistCards = [];
-  const manualCards = [];
-  coll.forEach((c, i) => {
-    if (c.player) {
-      checklistCards.push({ ...c, _idx: i });
-    } else {
-      manualCards.push({ ...c, _idx: i });
-    }
-  });
-
-  let html = '';
 
   // Valuation summary — how many cards are valued from live comps + freshness.
   const valuedCount = coll.filter(c => c.comps && c.comps.length).length;
   const lastValued = coll.map(c => c.valuedAt).filter(Boolean).sort().pop();
   const windowLabel = _compsUseAllTime() ? 'all-time comps' : 'last 2 months (free)';
-  html += `<div class="portfolio-valued-summary">${valuedCount} of ${coll.length} card${coll.length !== 1 ? 's' : ''} valued from ${windowLabel}${lastValued ? ` &middot; updated ${timeAgo(lastValued)}` : ''} &middot; <span class="pf-summary-hint">tap any Mkt value to see &amp; edit its comps</span></div>`;
+  let html = `<div class="portfolio-valued-summary">${valuedCount} of ${coll.length} card${coll.length !== 1 ? 's' : ''} valued from ${windowLabel}${lastValued ? ` &middot; updated ${timeAgo(lastValued)}` : ''} &middot; <span class="pf-summary-hint">tap any market value to see the comps used</span></div>`;
 
-  // Group checklist cards by set (year + brand + setName)
-  if (checklistCards.length > 0) {
-    const groups = {};
-    checklistCards.forEach(c => {
-      const key = `${c.year || ''} ${c.brand || ''} ${c.setName || ''}`.trim() || 'Unknown Set';
-      if (!groups[key]) groups[key] = { category: c.category || 'base', cards: [] };
-      groups[key].cards.push(c);
-    });
-
-    const categoryBadgeMap = {
-      'autograph': '<span class="checklist-badge auto">AUTO</span>',
-      'memorabilia': '<span class="checklist-badge memo">MEMO</span>',
-      'insert': '<span class="checklist-badge insert">INSERT</span>',
-      'base': '<span class="checklist-badge base">BASE</span>'
-    };
-
-    Object.keys(groups).forEach(setKey => {
-      const group = groups[setKey];
-      const badge = categoryBadgeMap[group.category] || categoryBadgeMap['base'];
-      html += `<div class="checklist-set portfolio-set expanded">
-        <div class="checklist-set-header" onclick="this.parentElement.classList.toggle('expanded')">
-          <div class="checklist-set-title-row">
-            ${badge}
-            <h3 class="checklist-set-name">${escHtml(setKey)}</h3>
-            <span class="checklist-set-count">${group.cards.length} card${group.cards.length !== 1 ? 's' : ''}</span>
-            <span class="checklist-set-toggle">&#9660;</span>
-          </div>
-        </div>
-        <div class="checklist-set-body">
-          <table class="checklist-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Player</th>
-                <th>Team</th>
-                <th>Details</th>
-                <th>Paid</th>
-                <th>Mkt Value</th>
-                <th>ROI</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${group.cards.map(c => {
-                const paid = c.purchasePrice || 0;
-                const mkt = c.estValue || 0;
-                const gl = mkt - paid;
-                const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
-                const glClass = gl >= 0 ? 'gain' : 'loss';
-                const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
-                const parallelTag = c.parallel ? `<span class="portfolio-parallel-tag">${escHtml(c.parallel)}</span>` : '';
-                const prTag = c.printRun ? `<span class="cl-printrun-inline ${parseInt(c.printRun) <= 25 ? 'cl-pr-rare' : parseInt(c.printRun) <= 99 ? 'cl-pr-low' : ''}">${'/' + c.printRun}</span>` : '';
-                const condTag = c.condition ? `<span class="portfolio-cond-tag">${escHtml(c.condition)}</span>` : '';
-                return `<tr>
-                  <td class="cl-num">${escHtml(c.cardNumber || '')}</td>
-                  <td class="cl-player">${escHtml(c.player)}</td>
-                  <td class="cl-team">${escHtml(c.team || '')}</td>
-                  <td class="portfolio-detail-cell">${parallelTag}${prTag}${condTag}</td>
-                  <td class="portfolio-price-cell"><span class="portfolio-card-cost">$${paid.toFixed(2)}</span></td>
-                  <td class="portfolio-price-cell portfolio-value-clickable" onclick="openCardComps(${c._idx})" title="View / edit comps">
-                    ${mkt > 0
-                      ? `<span class="portfolio-card-cost">$${mkt.toFixed(2)}</span>${gl !== 0 ? `<span class="portfolio-card-value ${glClass}"> ${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}${_cardValueMetaInline(c)}`
-                      : '<span class="portfolio-value-link">Value &rsaquo;</span>'}
-                  </td>
-                  <td class="portfolio-roi-cell ${roiClass}">
-                    ${roi !== null ? `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%` : '—'}
-                  </td>
-                  <td class="cl-action"><button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>`;
-    });
-  }
-
-  // Render manually added cards in the original simple format
-  if (manualCards.length > 0) {
-    if (checklistCards.length > 0) {
-      html += '<div class="portfolio-manual-header">Manually Added</div>';
-    }
-    html += manualCards.map(c => {
-      const paid = c.purchasePrice || 0;
-      const mkt = c.estValue || 0;
-      const gl = mkt - paid;
-      const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
-      const glClass = gl >= 0 ? 'gain' : 'loss';
-      const roiClass = roi === null ? '' : roi >= 0 ? 'gain' : 'loss';
-      const sold = c.soldValue != null ? Number(c.soldValue) : null;
-      const scannedTag = c.scanned ? '<span class="portfolio-scanned-tag">&#128247; Scanned</span>' : '';
-      return `
-        <div class="portfolio-card-item">
-          <div class="portfolio-card-info">
-            <div class="portfolio-card-name">${scannedTag}${escHtml(c.name)}</div>
-            <div class="portfolio-card-meta">${c.condition ? escHtml(c.condition) : ''}${c.notes ? ' &middot; ' + escHtml(c.notes) : ''}</div>
-          </div>
-          <div class="portfolio-card-prices">
-            <span class="portfolio-card-cost">Paid: $${paid.toFixed(2)}</span>
-            ${sold != null ? `<span class="portfolio-card-sold">Sold: $${sold.toFixed(2)}</span>` : ''}
-            <span class="portfolio-value-clickable" onclick="openCardComps(${c._idx})" title="View / edit comps">
-              ${mkt > 0
-                ? `<span class="portfolio-card-cost"> Mkt: $${mkt.toFixed(2)}</span>${_cardValueMetaInline(c)}`
-                : '<span class="portfolio-value-link">Value &rsaquo;</span>'}
-            </span>
-            ${gl !== 0 ? `<span class="portfolio-card-value ${glClass}">${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}</span>` : ''}
-            ${roi !== null ? `<span class="portfolio-roi-inline ${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}% ROI</span>` : ''}
-          </div>
-          <button class="portfolio-card-remove" onclick="removeFromCollection(${c._idx})" title="Remove">&times;</button>
-        </div>`;
-    }).join('');
-  }
+  // One unified card layout for every entry (checklist, photo, manual), newest
+  // first. Each card: identity + tags, Paid / Market (click for comps) / Gain,
+  // plus a per-card refresh and remove.
+  const entries = coll.map((c, i) => ({ c, i })).reverse();
+  html += '<div class="pf-cards">' + entries.map(({ c, i }) => _pfCardHtml(c, i)).join('') + '</div>';
 
   listEl.innerHTML = html;
+}
+
+const _PF_CATEGORY_BADGE = {
+  autograph: '<span class="checklist-badge auto">AUTO</span>',
+  memorabilia: '<span class="checklist-badge memo">MEMO</span>',
+  insert: '<span class="checklist-badge insert">INSERT</span>',
+  base: '<span class="checklist-badge base">BASE</span>',
+};
+
+// Build one portfolio card tile. `idx` is the real collection index.
+function _pfCardHtml(c, idx) {
+  const paid = c.purchasePrice || 0;
+  const mkt = c.estValue || 0;
+  const gl = mkt - paid;
+  const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
+  const glClass = gl >= 0 ? 'gain' : 'loss';
+
+  const title = c.player ? escHtml(c.player) : escHtml(c.name || 'Card');
+  const subParts = c.player
+    ? [c.year, c.brand, c.setName].filter(Boolean).map(escHtml)
+    : [];
+  const sub = subParts.join(' ');
+
+  const tags = [];
+  if (c.player && c.category && _PF_CATEGORY_BADGE[c.category]) tags.push(_PF_CATEGORY_BADGE[c.category]);
+  if (c.scanned) tags.push('<span class="portfolio-scanned-tag">&#128247; Scanned</span>');
+  if (c.cardNumber) tags.push(`<span class="pf-tag pf-tag-num">#${escHtml(c.cardNumber)}</span>`);
+  if (c.parallel) tags.push(`<span class="portfolio-parallel-tag">${escHtml(c.parallel)}</span>`);
+  if (c.printRun) tags.push(`<span class="cl-printrun-inline ${parseInt(c.printRun) <= 25 ? 'cl-pr-rare' : parseInt(c.printRun) <= 99 ? 'cl-pr-low' : ''}">/${escHtml(c.printRun)}</span>`);
+  if (c.condition) tags.push(`<span class="portfolio-cond-tag">${escHtml(c.condition)}</span>`);
+  if (c.team) tags.push(`<span class="pf-tag pf-tag-team">${escHtml(c.team)}</span>`);
+
+  const mktInner = mkt > 0
+    ? `<span class="pf-money-val">$${mkt.toFixed(2)}</span>${_cardValueMetaInline(c)}`
+    : '<span class="pf-money-val pf-value-link">Value &rsaquo;</span>';
+
+  return `<div class="pf-card">
+    <div class="pf-card-main">
+      <div class="pf-card-title">${title}</div>
+      ${sub ? `<div class="pf-card-sub">${sub}</div>` : ''}
+      ${tags.length ? `<div class="pf-card-tags">${tags.join('')}</div>` : ''}
+    </div>
+    <div class="pf-card-money">
+      <div class="pf-money-col">
+        <span class="pf-money-label">Paid</span>
+        <span class="pf-money-val pf-money-muted">$${paid.toFixed(2)}</span>
+      </div>
+      <div class="pf-money-col pf-money-mkt" onclick="openCardComps(${idx})" title="View the comps used">
+        <span class="pf-money-label">Market &rsaquo;</span>
+        ${mktInner}
+      </div>
+      <div class="pf-money-col">
+        <span class="pf-money-label">Gain</span>
+        <span class="pf-money-val ${mkt > 0 ? glClass : 'pf-money-muted'}">${mkt > 0 ? `${gl >= 0 ? '+' : ''}$${gl.toFixed(2)}` : '—'}${roi !== null && mkt > 0 ? ` <span class="pf-roi ${glClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(0)}%</span>` : ''}</span>
+      </div>
+    </div>
+    <div class="pf-card-actions">
+      <button class="pf-icon-btn pf-refresh-btn" onclick="refreshSingleCard(${idx}, this)" title="Refresh this card's value" ${c.locked ? 'disabled' : ''}>&#8635;</button>
+      <button class="pf-icon-btn pf-remove-btn" onclick="removeFromCollection(${idx})" title="Remove">&times;</button>
+    </div>
+  </div>`;
 }
 
 function showAddCardModal() {
@@ -6090,15 +6040,21 @@ async function _fetchCardComps(c) {
   const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(q)}&limit=25`);
   const data = await res.json();
   if (!res.ok) return { error: data.error || `Error ${res.status}`, noKey: data.noKey };
+  // Trust the server's keyword engine (matchSoldListings): it already extracts
+  // the card's keywords, keeps the listings sharing the most of them, and trims
+  // price outliers. So the comps it returns ARE the comps used — we no longer
+  // re-filter them client-side (that older strict pass dropped good comps and
+  // left cards unvalued).
   let rows = (Array.isArray(data.results) ? data.results : [])
-    .map(r => ({ title: String(r.title || '').slice(0, 90), price: parseFloat(r.price), url: r.itemUrl || r.url || r.link || '', soldDate: r.soldDate || '' }))
-    .filter(x => x.price > 0);
-  // Strict key-term match — keep only listings that match this exact card
-  // (player/year/set/parallel/print run/grade). Falls back to the raw set
-  // only if nothing matches, flagged as approximate.
-  const strict = rows.filter(x => _compMatchesCard(c, x.title));
-  let loose = false;
-  if (strict.length >= 1) rows = strict; else loose = true;
+    .map(r => ({
+      title: String(r.title || '').slice(0, 90),
+      price: parseFloat(r.price),
+      url: r.itemUrl || r.url || r.link || '',
+      imageUrl: r.imageUrl || r.thumbnailUrl || '',
+      soldDate: r.soldDate || '',
+    }))
+    .filter(x => x.price > 0)
+    .slice(0, 20);
   // Free members: only count comps from the last 2 months (keep undated ones
   // so a card never ends up with zero comps just for missing dates).
   let windowed = false;
@@ -6108,7 +6064,14 @@ async function _fetchCardComps(c) {
     if (recent.length) { rows = recent; windowed = true; }
   }
   rows.sort((a, b) => a.price - b.price);
-  return { comps: rows, broadened: (data.searchType === 'broadened') || loose, query: q, windowed };
+  return {
+    comps: rows,
+    broadened: data.searchType === 'broadened',
+    relaxed: data.searchType === 'relaxed',
+    matchNote: data.relaxedNote || null,
+    query: q,
+    windowed,
+  };
 }
 
 // Value a single card by collection index and persist (skips locked cards).
@@ -6123,12 +6086,23 @@ async function valueCardAt(idx, { silent = false } = {}) {
   }
   c.comps = r.comps;
   c.broadened = r.broadened;
+  c.relaxed = r.relaxed;
+  c.matchNote = r.matchNote;
   c.valueQuery = r.query;
   c.valuedAt = new Date().toISOString();
   c.excludedComps = (c.excludedComps || []).filter(k => c.comps.some(x => _compKey(x) === k));
   recomputeCardValue(c);
   saveCollection(coll);
   renderPortfolio();
+}
+
+// Re-value one card from the portfolio list (per-card refresh button).
+async function refreshSingleCard(idx, btnEl) {
+  if (btnEl) { btnEl.disabled = true; btnEl.classList.add('pf-refreshing'); }
+  await valueCardAt(idx);
+  // renderPortfolio() inside valueCardAt rebuilds the list, so no need to
+  // restore the button — but guard in case the card was already valued/locked.
+  if (btnEl && document.body.contains(btnEl)) { btnEl.disabled = false; btnEl.classList.remove('pf-refreshing'); }
 }
 
 async function refreshPortfolioValues() {
@@ -6147,6 +6121,8 @@ async function refreshPortfolioValues() {
     if (r && !r.error) {
       c.comps = r.comps;
       c.broadened = r.broadened;
+      c.relaxed = r.relaxed;
+      c.matchNote = r.matchNote;
       c.valueQuery = r.query;
       c.valuedAt = new Date().toISOString();
       c.excludedComps = (c.excludedComps || []).filter(k => c.comps.some(x => _compKey(x) === k));
@@ -6187,7 +6163,6 @@ function renderCardCompsModal() {
   const body = document.getElementById('card-comps-body');
   if (!c || !body) return;
   const title = c.player ? buildCardSoldQuery(c) : (c.name || 'Card');
-  const ex = new Set(c.excludedComps || []);
   const comps = c.comps || [];
   const med = c.estValue || 0;
   const conf = _cardConfidence(c);
@@ -6195,113 +6170,53 @@ function renderCardCompsModal() {
 
   let listHtml;
   if (!comps.length) {
-    listHtml = `<div class="ccm-empty">No comps yet. Click <strong>Re-value from eBay</strong> to pull live sold listings${buildCardSoldQuery(c) ? '' : ' (add more card details first)'}.</div>`;
+    listHtml = `<div class="gc-empty">No comps yet. Click <strong>Re-value from eBay</strong> to pull live sold listings${buildCardSoldQuery(c) ? '' : ' (add more card details first)'}.</div>`;
   } else {
-    listHtml = comps.map((x, i) => {
-      const excluded = ex.has(_compKey(x));
-      const high = med && x.price > med * 2;
-      return `<label class="ccm-comp ${excluded ? 'ccm-excluded' : ''}">
-        <input type="checkbox" ${excluded ? '' : 'checked'} onchange="toggleCardComp(${i}, this.checked)" />
-        <span class="ccm-comp-title">${escHtml(x.title)}</span>
-        <span class="ccm-comp-price ${high ? 'ccm-high' : ''}">$${x.price.toFixed(2)}${high ? ' <span class="bulk-high-tag">high</span>' : ''}</span>
-        ${x.url ? `<a class="ccm-comp-link" href="${escHtml(epnUrl(x.url))}" target="_blank" rel="noopener">view</a>` : '<span class="ccm-comp-link"></span>'}
-      </label>`;
-    }).join('');
+    // Read-only list of the exact sold comps the value was built from.
+    listHtml = '<div class="gc-comp-list">' + comps.map(x => {
+      const img = x.imageUrl
+        ? `<img class="gc-comp-img" src="${escHtml(x.imageUrl)}" alt="" loading="lazy" />`
+        : '<div class="gc-comp-img gc-comp-noimg">&#127944;</div>';
+      const when = _gradingCompDate(x.soldDate);
+      const titleHtml = x.url
+        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(x.url))}" target="_blank" rel="noopener">${escHtml(x.title)}</a>`
+        : `<span class="gc-comp-title">${escHtml(x.title)}</span>`;
+      return `<div class="gc-comp">
+        ${img}
+        <div class="gc-comp-main">
+          ${titleHtml}
+          <div class="gc-comp-meta"><span class="gc-comp-price">$${x.price.toFixed(2)}</span>${when ? ` · ${escHtml(when)}` : ''}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
   }
+
+  const matchNote = c.broadened
+    ? '<span class="ccm-match-note">&middot; similar items (no exact match)</span>'
+    : (c.relaxed ? `<span class="ccm-match-note">&middot; ${escHtml(c.matchNote || 'closest matches')}</span>` : '');
 
   body.innerHTML = `
     <div class="ccm-card-name">${escHtml(title)}</div>
     <div class="ccm-value-row">
-      <div class="ccm-value">${med > 0 ? `$${med.toFixed(2)}` : '—'}<span class="ccm-value-label">market value</span></div>
+      <div class="ccm-value">${med > 0 ? `$${med.toFixed(2)}` : '—'}<span class="ccm-value-label">market value (median)</span></div>
       ${conf ? `<span class="ccm-conf" style="color:${confColors[conf]}">&#9679; ${conf} confidence</span>` : ''}
-      <span class="ccm-meta">${c.compCount || 0} comps${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''}${c.broadened ? ' &middot; similar items' : ''}</span>
+      <span class="ccm-meta">${c.compCount || 0} comps${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''} ${matchNote}</span>
     </div>
     <div class="ccm-window">${_compsUseAllTime()
       ? '&#9989; Valued from <strong>all-time</strong> sold comps'
       : '&#9201;&#65039; Free: valued from the <strong>last 2 months</strong> of comps &middot; <a href="#" onclick="showPricing();return false;">upgrade for all-time</a>'}</div>
     <div class="ccm-actions">
-      <button type="button" class="ap-mini-btn" onclick="revalueCardFromModal()">&#8635; Re-value from eBay</button>
-      <button type="button" class="ap-mini-btn" onclick="ccmIncludeAll()">Include all</button>
-      <button type="button" class="ap-mini-btn" onclick="ccmAutoTrim()">Auto-trim highs</button>
-      <label class="ccm-lock"><input type="checkbox" ${c.locked ? 'checked' : ''} onchange="toggleCardLock(this.checked)" /> Lock value</label>
+      <button type="button" class="ap-mini-btn" id="ccm-revalue-btn" onclick="revalueCardFromModal()">&#8635; Re-value from eBay</button>
     </div>
-    <div class="ccm-manual">
-      Override: <span class="ccm-dollar">$</span><input type="number" id="ccm-manual-input" class="ap-pr-input" min="0" step="0.01" placeholder="set value" value="" />
-      <button type="button" class="ap-mini-btn" onclick="ccmApplyManual()">Set</button>
-    </div>
-    <div class="ccm-list">${listHtml}</div>`;
-}
-
-function toggleCardComp(i, included) {
-  const coll = getCollection();
-  const c = coll[_compsModalIdx];
-  if (!c || !c.comps || !c.comps[i]) return;
-  const key = _compKey(c.comps[i]);
-  const ex = new Set(c.excludedComps || []);
-  if (included) ex.delete(key); else ex.add(key);
-  c.excludedComps = [...ex];
-  recomputeCardValue(c);
-  saveCollection(coll);
-  renderCardCompsModal();
-  renderPortfolio();
-}
-
-function ccmIncludeAll() {
-  const coll = getCollection();
-  const c = coll[_compsModalIdx];
-  if (!c) return;
-  c.excludedComps = [];
-  recomputeCardValue(c);
-  saveCollection(coll);
-  renderCardCompsModal();
-  renderPortfolio();
-}
-
-function ccmAutoTrim() {
-  const coll = getCollection();
-  const c = coll[_compsModalIdx];
-  if (!c || !c.comps || c.comps.length < 3) { showPortfolioToast('Need at least 3 comps to auto-trim.'); return; }
-  const ex = new Set(c.excludedComps || []);
-  const incPrices = c.comps.filter(x => !ex.has(_compKey(x))).map(x => x.price).sort((a, b) => a - b);
-  const med = _medianOf(incPrices);
-  if (!med) return;
-  c.comps.forEach(x => { if (x.price > med * 2) ex.add(_compKey(x)); });
-  c.excludedComps = [...ex];
-  recomputeCardValue(c);
-  saveCollection(coll);
-  renderCardCompsModal();
-  renderPortfolio();
+    ${listHtml}`;
 }
 
 async function revalueCardFromModal() {
   const idx = _compsModalIdx;
-  const btn = document.querySelector('#card-comps-body .ccm-actions .ap-mini-btn');
+  const btn = document.getElementById('ccm-revalue-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Valuing…'; }
   await valueCardAt(idx);
   if (_compsModalIdx === idx) renderCardCompsModal();
-}
-
-function toggleCardLock(locked) {
-  const coll = getCollection();
-  const c = coll[_compsModalIdx];
-  if (!c) return;
-  c.locked = locked;
-  saveCollection(coll);
-  renderCardCompsModal();
-  renderPortfolio();
-}
-
-function ccmApplyManual() {
-  const coll = getCollection();
-  const c = coll[_compsModalIdx];
-  if (!c) return;
-  const v = parseFloat(document.getElementById('ccm-manual-input').value);
-  if (!Number.isFinite(v) || v < 0) { showPortfolioToast('Enter a valid value.'); return; }
-  c.estValue = Math.round(v * 100) / 100;
-  c.locked = true; // a manual override should stick through refreshes
-  saveCollection(coll);
-  renderCardCompsModal();
-  renderPortfolio();
 }
 
 function showPortfolioToast(msg) {
