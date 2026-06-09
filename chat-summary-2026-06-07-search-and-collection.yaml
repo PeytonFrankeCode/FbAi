@@ -1,0 +1,188 @@
+session:
+  date: "2026-06-07"
+  branch: claude/sold-search-keywords-nQxgK
+  topic: >
+    Sold-search keyword engine, card scanner accuracy, grading-advisor comps,
+    My Cards collection rebuild, and rainbow For Sale matching — a run of
+    accuracy/UX improvements across the app's pricing surfaces.
+
+overview: >
+  A multi-feature session that reworked how the app matches eBay listings to a
+  card. It started by replacing the raw token-bag sold-search filter with a
+  structured keyword engine (player / year / set / parallel / print run / grade
+  / auto-mem intent) plus progressive relaxation, then propagated that same
+  "match the keywords, show the comps used" philosophy through the scanner,
+  grading advisor, collection valuation, and rainbow For Sale search.
+
+features:
+  - id: sold-search-keywords
+    commit: "Rework sold search around structured keyword matching"
+    files: [server.js, public/app.js, public/style.css]
+    problem: >
+      Sold search sent the raw query string to eBay and then required every
+      token to appear literally in each title — fragile, and it over-filtered
+      (e.g. "Prizm" vs "Panini Prizm", "auto" vs "autograph", /50 vs /500).
+    solution:
+      server_js:
+        extractSearchKeywords(query): >
+          Turns a query into structured field predicates: player (surname),
+          year, set (+exclusivity), parallel/color (+color exclusivity), print
+          run (bounded so /50 != /500), grade, auto/mem/both/none intent (with
+          synonym groups), plus leftover meaningful tokens.
+        matchSoldListings(results, query): >
+          Scores each listing by how many keyword predicates it satisfies and
+          keeps the strictest tier that returns anything: all keywords ->
+          all-but-one -> all-but-two ... Player is an anchor (never relaxed
+          away); a listing is never kept on a negative keyword alone. Returns
+          searchType exact|relaxed|broadened + keywordsMatched/Total + note.
+        classifyCardType(qLower): "'both' | 'auto' | 'mem' | 'none'"
+        details:
+          - Donruss Optic treated as one family (don't exclude each other)
+          - "Prizm" is a non-exclusive set word (appears as a finish on Select)
+          - Surname stripped of trailing non-name words (auto/silver/zebra)
+      frontend: >
+        Sold path now shows a "Matched N of M keywords" badge when relaxed.
+        Response carries searchType/relaxedNote; .relaxed-badge CSS added.
+    answered_design_question: >
+      User chose: extraction can live both server/client (engine decided
+      server-side); when strict match is empty, relax by dropping one keyword
+      at a time (all-but-one, all-but-two, ...).
+    exported_for_tests: [extractSearchKeywords, matchSoldListings, classifyCardType]
+
+  - id: scanner-back-photo
+    commit: "Improve card scanner accuracy on shiny cards with optional back photo"
+    files: [server.js, public/app.js, public/index.html, public/style.css]
+    problem: >
+      eBay's search_by_image matches on appearance; foil/shiny fronts glare and
+      don't match the catalog image, so the base identity is often wrong.
+    solution:
+      backend: >
+        /api/scan-card now accepts optional backImageData and runs a second
+        eBay image search (best-effort, never fails the scan). Returns
+        { matches, backMatches }. Factored out ebayImageSearch() and
+        _cleanImageBase64(). express.json limit raised to 12mb for two images.
+      frontend: >
+        Optional "Add back of card" upload. The back's listing TITLES carry the
+        glare-proof identity (player/year/set/card #); _reconcileMatchesWithBack
+        derives a consensus and re-ranks the front matches, badging the agreeing
+        one and dropping fronts that contradict a confident player consensus.
+        Capture resolution bumped 800px -> 1400px.
+    design_choice: >
+      User picked eBay search_by_image on the back (zero new deps/keys) +
+      higher-res front capture + re-rank front matches with back data.
+    caveat: >
+      eBay's catalog is mostly card fronts, so the back search returns few/no
+      matches for many cards — additive only (falls back to today's behavior).
+
+  - id: grade-sort-and-grading-comps
+    commit: "Add grade sort to For Sale + view comps in Grading Advisor"
+    files: [server.js, public/app.js, public/index.html, public/style.css]
+    parts:
+      grade_sort: >
+        New "Grade" sort button on search results. Orders best grade first
+        (PSA 10 -> ... -> raw last) via detectGrade + GRADE_SORT_DESC; stable
+        ties. Works in For Sale (flat list), falls through cleanly in Sold.
+      grading_comps_viewer: >
+        /api/grading-advisor previously discarded the listings it used. It now
+        returns comps {raw, psa8, psa9, psa10} (trimmed, capped at 24). The
+        "# Sales" figure in the grading table is a link that opens a read-only
+        comps modal (#grading-comps-modal) showing thumbnail/title/price/date/
+        eBay link + median. New gc-comp CSS (reused later by the collection).
+
+  - id: my-cards-rebuild
+    commit: "Rebuild My Cards collection: reliable valuation + clean comps viewer"
+    files: [public/app.js, public/style.css]
+    user_request: >
+      Collection should follow: add via checklist/photo/manual -> hit refresh
+      to show sold price -> click the price to see the comps used. (All already
+      existed; user chose to fix valuation + clean popup + per-card refresh +
+      full UI rebuild.)
+    changes:
+      valuation_engine: >
+        _fetchCardComps no longer re-filters comps client-side with the old
+        strict _compMatchesCard (which dropped good comps and left cards
+        unvalued). It now trusts the server keyword engine (matchSoldListings)
+        and shows exactly those comps. Carries searchType/relaxed/matchNote.
+        Comp objects now include imageUrl (capped at 20).
+      per_card_refresh: >
+        refreshSingleCard(idx, btnEl) — each card gets its own spinning refresh
+        button alongside the whole-portfolio "Refresh Values".
+      comps_popup: >
+        renderCardCompsModal rewritten as a clean read-only viewer (Grading
+        Advisor style: thumbnail/title/price/date/link + median/confidence/
+        freshness/match note). Removed the include/exclude/auto-trim/lock/
+        manual-override clutter and the now-dead handlers (toggleCardComp,
+        ccmIncludeAll, ccmAutoTrim, toggleCardLock, ccmApplyManual).
+      unified_ui: >
+        renderPortfolio rebuilt: one consistent card tile for every entry
+        (checklist/photo/manual) instead of the split table/list. Shows
+        identity + tags (set, parallel, /print run, grade, #, team), Paid /
+        Market (click for comps) / Gain+ROI, refresh + remove. Responsive;
+        friendly empty state spelling out the 3 steps. New pf-* CSS.
+    preserved: >
+      Data model, localStorage key (cardHuddleCollection), and all three add
+      flows unchanged, so existing saved collections keep working.
+    dropped: >
+      Per-comp exclude + manual value override (read-only popup, per user's
+      "cleaner" choice). Offered to add a lightweight override back.
+
+  - id: rainbow-forsale-thorough
+    commits:
+      - "Make rainbow For Sale search more thorough"
+      - "Add parallel-effect exclusivity to rainbow For Sale matching"
+    files: [public/app.js]
+    target: filterStrictVariant(items, variantName, printRun)
+    problems_fixed:
+      - "Base tier required the literal word 'base'; real base listings found nothing"
+      - "Print run was a loose substring (/25 matched /250); now bounded"
+      - "No color exclusivity; multi-color parallels (Red White Blue) broke"
+      - "'ice' substring matched words like 'price'; now token-boundary"
+      - "Only 20 results fetched per parallel; widened to 50, concurrency 3->4"
+    new_behavior:
+      base: "Matches base by EXCLUDING any color/parallel-word/serial numbering"
+      color_exclusivity: "Blue never matches Green; multi-color variants handled"
+      effect_exclusivity: >
+        Plain 'Blue' excludes 'Blue Ice'/'Blue Wave'/'Blue Shimmer' etc. via a
+        curated _RB_EXCLUSIVE_EFFECTS list. Ubiquitous finishes (refractor,
+        holo, prizm, fractor) are intentionally NOT gated, so Chrome/Bowman
+        'Blue Refractor' still matches a 'Blue' variant (recall preserved).
+    note: >
+      _RB_EXCLUSIVE_EFFECTS is curated; checklists using other distinct
+      parallel names won't be gated until added.
+
+incidental:
+  - >
+    Mid-session the user reported a 503 on all searches (Cloudflare HTML error
+    page, meaning the Worker itself was failing — startup/bundle/resource, not
+    app JSON). User fixed it on their side before diagnosis completed.
+  - >
+    Answered an infra question: the app runs as a single Cloudflare Worker
+    ("the-card-huddle", main worker.js, nodejs_compat) with an ASSETS static
+    binding and a KV namespace; iconv-lite aliased to a stub; secrets via
+    wrangler secret. No Durable Objects / queues / cron.
+
+verification: >
+  No automated test suite in the repo. Each engine was unit-tested by
+  extracting the real functions from app.js/server.js and running them against
+  realistic card titles (sold matching, reconciliation, grade sort, rainbow
+  variant matching). Not exercised end-to-end against live eBay/scrape.do
+  (those need credentials).
+
+files_changed:
+  - server.js
+  - public/app.js
+  - public/index.html
+  - public/style.css
+
+commits:
+  - "Rework sold search around structured keyword matching"
+  - "Improve card scanner accuracy on shiny cards with optional back photo"
+  - "Add grade sort to For Sale + view comps in Grading Advisor"
+  - "Rebuild My Cards collection: reliable valuation + clean comps viewer"
+  - "Make rainbow For Sale search more thorough"
+  - "Add parallel-effect exclusivity to rainbow For Sale matching"
+
+open_threads:
+  - "Offered to re-add a lightweight manual value override to the comps popup"
+  - "Offered to extend _RB_EXCLUSIVE_EFFECTS if a checklist leaks the wrong parallel"
+  - "No PR opened yet — all work pushed to the feature branch"
