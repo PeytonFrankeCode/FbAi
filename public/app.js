@@ -6998,6 +6998,27 @@ const _RB_GENERIC_WORDS = new Set(['prizm', 'prizms', 'parallel', 'parallels', '
   'variations', 'rc', 'rookie', 'sp', 'ssp', 'the', 'of', 'to', 'and', 'card', 'cards',
   'numbered', 'insert', 'base', 'set']);
 
+// Distinctive parallel "effect"/pattern names that denote a SEPARATE parallel,
+// so a plain "Blue" should not match a "Blue Ice". Deliberately excludes
+// ubiquitous finishes (refractor, holo, prizm, fractor) that are often dropped
+// or added inconsistently in titles — gating on those would tank recall on
+// Chrome/Bowman.
+const _RB_EXCLUSIVE_EFFECTS = ['cracked ice', 'tie-dye', 'tie dye', 'snake skin', 'fast break',
+  'ice', 'wave', 'disco', 'mojo', 'shimmer', 'velocity', 'genesis', 'reactive', 'flash',
+  'pulsar', 'sparkle', 'hyper', 'cosmic', 'lava', 'tiger', 'snakeskin', 'galaxy', 'choice',
+  'scope', 'atomic', 'dragon', 'butterfly', 'seismic', 'concourse', 'pandora', 'camo'];
+
+// Which exclusive effects appear in a string (phrases by substring, single
+// words on token boundaries so 'ice' doesn't match "price").
+function _rbEffectsIn(s) {
+  const found = new Set();
+  for (const e of _RB_EXCLUSIVE_EFFECTS) {
+    const hit = /[ -]/.test(e) ? s.includes(e) : new RegExp('\\b' + e + '\\b').test(s);
+    if (hit) found.add(e);
+  }
+  return found;
+}
+
 // Filter For Sale results down to the ones that really are this parallel.
 // Thorough but precise: handles the Base tier (exclude any parallel/numbering),
 // color exclusivity (a Blue variant never matches a Green listing), multi-color
@@ -7015,6 +7036,7 @@ function filterStrictVariant(items, variantName, printRun) {
   // Colors named in the variant — used for exclusivity (and to allow
   // multi-color parallels like "Red White Blue").
   const variantColors = _PARALLEL_COLORS.filter(c => new RegExp('\\b' + c + '\\b').test(v));
+  const variantEffects = _rbEffectsIn(v);
   const prRe = printRun ? new RegExp('/\\s*' + printRun + '(?![0-9])') : null;
 
   return items.filter(item => {
@@ -7037,6 +7059,11 @@ function filterStrictVariant(items, variantName, printRun) {
       if (variantColors.length) {
         const bad = _PARALLEL_COLORS.filter(c => !variantColors.includes(c));
         if (bad.some(c => tokens.has(c))) return false;
+      }
+      // Effect exclusivity: a plain "Blue" shouldn't match a "Blue Ice" — drop
+      // listings carrying a distinct parallel effect the variant doesn't name.
+      for (const e of _rbEffectsIn(title)) {
+        if (!variantEffects.has(e)) return false;
       }
     }
 
