@@ -6992,18 +6992,54 @@ function renderVariantPage(container, items) {
 // if a print run is given, the literal "/<n>" must appear. Drops auto/relic
 // hits when the variant isn't itself an auto/relic, and drops obviously
 // wrong color parallels.
+// Generic words in a parallel name that shouldn't be required in the title —
+// they're filler ("Prizm", "Parallel") or the synthesized "Base" label.
+const _RB_GENERIC_WORDS = new Set(['prizm', 'prizms', 'parallel', 'parallels', 'variation',
+  'variations', 'rc', 'rookie', 'sp', 'ssp', 'the', 'of', 'to', 'and', 'card', 'cards',
+  'numbered', 'insert', 'base', 'set']);
+
+// Filter For Sale results down to the ones that really are this parallel.
+// Thorough but precise: handles the Base tier (exclude any parallel/numbering),
+// color exclusivity (a Blue variant never matches a Green listing), multi-color
+// parallels, bounded print runs (/25 != /250), and auto/relic exclusion.
 function filterStrictVariant(items, variantName, printRun) {
   const v = (variantName || '').toLowerCase().trim();
+  const isBase = !v || v === 'base';
   const wantsAuto = /\bauto/.test(v);
   const wantsRelic = /\b(patch|relic|jersey|memorabilia)\b/.test(v);
+
+  // Distinctive words the title must contain (skip generic filler).
+  const words = v.split(/\s+/)
+    .map(w => w.replace(/[^a-z0-9]/g, ''))
+    .filter(w => w.length > 2 && !_RB_GENERIC_WORDS.has(w));
+  // Colors named in the variant — used for exclusivity (and to allow
+  // multi-color parallels like "Red White Blue").
+  const variantColors = _PARALLEL_COLORS.filter(c => new RegExp('\\b' + c + '\\b').test(v));
+  const prRe = printRun ? new RegExp('/\\s*' + printRun + '(?![0-9])') : null;
+
   return items.filter(item => {
     const title = String(item.title || '').toLowerCase();
-    if (printRun && !title.includes('/' + printRun)) return false;
-    if (v) {
-      // Every non-trivial word of the variant name must appear in the title
-      const words = v.split(/\s+/).filter(w => w.length > 2);
+    const tokens = new Set(title.split(/[^a-z0-9]+/).filter(Boolean));
+
+    // Print run, bounded so /25 never matches /250.
+    if (prRe && !prRe.test(title)) return false;
+
+    if (isBase) {
+      // Base = no parallel wording, no color, no serial numbering.
+      if (_PARALLEL_COLORS.some(c => tokens.has(c))) return false;
+      if (SCAN_KEY_PARALLEL_WORDS && [...SCAN_KEY_PARALLEL_WORDS].some(p => tokens.has(p))) return false;
+      if (SCAN_KEY_PARALLEL_PHRASES.some(ph => title.includes(ph))) return false;
+      if (!printRun && /\/\s*\d{1,4}\b/.test(title)) return false;
+    } else {
+      // Every distinctive word of the parallel must appear.
       for (const w of words) if (!title.includes(w)) return false;
+      // Color exclusivity: drop listings that carry a color the variant doesn't.
+      if (variantColors.length) {
+        const bad = _PARALLEL_COLORS.filter(c => !variantColors.includes(c));
+        if (bad.some(c => tokens.has(c))) return false;
+      }
     }
+
     if (!wantsAuto && /\bauto(graph)?\b/.test(title)) return false;
     if (!wantsRelic && /\b(patch|relic|jersey number|memorabilia|logoman)\b/.test(title)) return false;
     return true;
@@ -7036,7 +7072,7 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
   let priced = 0;
   let unknown = 0;
 
-  const CONCURRENCY = 3;
+  const CONCURRENCY = 4;
   let idx = 0;
   let done = 0;
   async function worker() {
@@ -7046,7 +7082,9 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
       const baseQuery = buildChecklistQuery(player, year, brand, setName, category, v.printRun || '');
       const q = `${baseQuery} ${v.name}`.trim();
       try {
-        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '20' })}`);
+        // Pull a wider pool (50) so the cheapest true match isn't missed when
+        // eBay returns lots of near-matches ahead of the right parallel.
+        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '50' })}`);
         const data = await safeJson(res);
         const filtered = filterStrictVariant(data.results || [], v.name, v.printRun || '');
         const sorted = filtered.filter(r => parseFloat(r.price) > 0).sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
