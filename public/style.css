@@ -7919,8 +7919,13 @@ footer {
 .community-post-byline { display: flex; flex-direction: column; line-height: 1.2; }
 .community-post-author { font-weight: 700; color: var(--text-primary); font-size: 0.92rem; }
 .community-post-time { font-size: 0.75rem; color: var(--text-muted); }
-.community-post-delete { margin-left: auto; background: none; border: none; color: var(--text-muted); font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 0.3rem; }
+.community-post-actions { margin-left: auto; display: flex; align-items: center; gap: 0.4rem; }
+.community-post-delete { background: none; border: none; color: var(--text-muted); font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 0.3rem; }
 .community-post-delete:hover { color: #ef4444; }
+.community-post-report { background: none; border: 1px solid var(--border-primary); color: var(--text-muted); font-size: 0.72rem; font-weight: 600; line-height: 1; cursor: pointer; padding: 0.3rem 0.55rem; border-radius: 6px; transition: all 0.15s; }
+.community-post-report:hover { color: #ef4444; border-color: #ef4444; }
+.community-post-report:disabled { cursor: default; }
+.community-post-reported { color: var(--accent); border-color: var(--accent-border); }
 .community-post-message { color: var(--text-primary); font-size: 0.95rem; line-height: 1.5; margin: 0.7rem 0 0; white-space: pre-wrap; word-break: break-word; }
 .community-post-cardmeta { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.7rem; flex-wrap: wrap; }
 .community-post-title { font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; }

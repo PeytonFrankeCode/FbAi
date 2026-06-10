@@ -349,12 +349,31 @@
   </div>
 
   <div id="reports-list"></div>
+
+  <!-- Community Moderation -->
+  <div class="page-title" style="margin-top:2.5rem;">Community Moderation</div>
+  <div class="page-subtitle">Delete or hide member posts. Reported posts are listed first; posts auto-hide after 3 reports.</div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-cfilter="all" onclick="setCommunityFilter('all', this)">All Posts</button>
+    <button class="filter-tab" data-cfilter="reported" onclick="setCommunityFilter('reported', this)">⚐ Reported</button>
+    <button class="filter-tab" data-cfilter="hidden" onclick="setCommunityFilter('hidden', this)">🙈 Hidden</button>
+  </div>
+
+  <div class="toolbar">
+    <div class="result-count" id="community-count"></div>
+    <button class="refresh-btn" onclick="loadCommunityModeration()">↻ Refresh</button>
+  </div>
+
+  <div id="community-list"></div>
 </div>
 
 <script>
   let allReports = [];
   let currentFilter = 'all';
   let adminKey = '';
+  let allCommunity = [];
+  let communityFilter = 'all';
 
   function doLogin() {
     const pass = document.getElementById('admin-pass').value.trim();
@@ -381,6 +400,7 @@
       document.getElementById('admin-screen').style.display = 'block';
       updateStats();
       renderList();
+      loadCommunityModeration();
       const now = new Date();
       document.getElementById('last-refreshed').textContent =
         `Last refreshed: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -402,7 +422,7 @@
 
   function setFilter(f, btn) {
     currentFilter = f;
-    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
     btn.classList.add('active');
     renderList();
   }
@@ -470,6 +490,96 @@
           <div class="report-message">${escHtml(r.message)}</div>
         </div>`;
     }).join('');
+  }
+
+  // ---- Community moderation ----
+  async function loadCommunityModeration() {
+    try {
+      const resp = await fetch(`/api/community/posts?key=${encodeURIComponent(adminKey)}`);
+      const data = await resp.json();
+      allCommunity = Array.isArray(data.posts) ? data.posts : [];
+      renderCommunityModeration();
+    } catch (_) { /* ignore */ }
+  }
+
+  function setCommunityFilter(f, btn) {
+    communityFilter = f;
+    btn.parentElement.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderCommunityModeration();
+  }
+
+  function renderCommunityModeration() {
+    let posts = allCommunity.slice();
+    if (communityFilter === 'reported') posts = posts.filter(p => (p.reports || []).length > 0);
+    else if (communityFilter === 'hidden') posts = posts.filter(p => p.hidden);
+    // Reported / hidden surfaced first, then newest.
+    posts.sort((a, b) => {
+      const ra = (a.reports || []).length, rb = (b.reports || []).length;
+      if (rb !== ra) return rb - ra;
+      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+    });
+
+    document.getElementById('community-count').textContent =
+      `${posts.length} post${posts.length !== 1 ? 's' : ''}`;
+
+    const list = document.getElementById('community-list');
+    if (posts.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">🗂️</div><p>No posts to moderate.</p></div>`;
+      return;
+    }
+    list.innerHTML = posts.map(p => {
+      const reports = p.reports || [];
+      const flags = [];
+      if (p.hidden) flags.push('<span class="type-badge bug">Hidden</span>');
+      if (reports.length) flags.push(`<span class="type-badge bug">⚐ ${reports.length} report${reports.length !== 1 ? 's' : ''}</span>`);
+      if (p.imageUrl && p.imageVerified === false) flags.push('<span class="type-badge feedback">Image unverified</span>');
+      const reasons = reports.filter(r => r.reason).map(r => `“${escHtml(r.reason)}” — ${escHtml(r.by)}`).join('<br>');
+      const meta = [];
+      if (p.title) meta.push(escHtml(p.title));
+      if (p.price) meta.push('$' + Number(p.price).toFixed(2));
+      return `
+        <div class="report-card ${p.hidden || reports.length ? 'bug' : 'feedback'}">
+          <div class="report-header">
+            <span class="type-badge feedback">@${escHtml(p.author)}</span>
+            ${flags.join('')}
+            <span class="report-time" title="${escHtml(fullDate(p.createdAt))}">${timeAgo(p.createdAt)}</span>
+          </div>
+          ${meta.length ? `<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.3rem;">${meta.join(' · ')}</div>` : ''}
+          ${p.message ? `<div class="report-message">${escHtml(p.message)}</div>` : ''}
+          ${p.imageUrl ? `<img src="${escHtml(p.imageUrl)}" alt="post image" style="max-height:160px;max-width:100%;border-radius:8px;margin-top:0.5rem;border:1px solid var(--border-primary);" />` : ''}
+          ${reasons ? `<div style="font-size:0.78rem;color:var(--red,#ef4444);margin-top:0.5rem;">${reasons}</div>` : ''}
+          <div style="display:flex;gap:0.5rem;margin-top:0.7rem;">
+            <button class="refresh-btn" onclick="adminToggleHide('${p.id}', ${p.hidden ? 'true' : 'false'})">${p.hidden ? '↶ Unhide' : '🙈 Hide'}</button>
+            <button class="refresh-btn" style="border-color:var(--red,#ef4444);color:var(--red,#ef4444);" onclick="adminDeletePost('${p.id}')">🗑 Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function adminDeletePost(id) {
+    if (!confirm('Permanently delete this post?')) return;
+    try {
+      const resp = await fetch(`/api/community/posts/${encodeURIComponent(id)}?key=${encodeURIComponent(adminKey)}`, { method: 'DELETE' });
+      if (resp.ok) { allCommunity = allCommunity.filter(p => p.id !== id); renderCommunityModeration(); }
+      else alert('Delete failed.');
+    } catch (_) { alert('Delete failed.'); }
+  }
+
+  async function adminToggleHide(id, isHidden) {
+    try {
+      const resp = await fetch(`/api/community/posts/${encodeURIComponent(id)}/hide?key=${encodeURIComponent(adminKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unhide: isHidden }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        const post = allCommunity.find(p => p.id === id);
+        if (post) post.hidden = data.hidden;
+        renderCommunityModeration();
+      }
+    } catch (_) { /* ignore */ }
   }
 </script>
 </body>

@@ -5,6 +5,7 @@ const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
 const { connectDB, loadData, saveData, loadUserData, saveUserData } = require('./db');
+const { moderateText, moderateImage } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
 // Workers' bundled-CJS shim. Bare references would throw ReferenceError at
@@ -2659,6 +2660,14 @@ function getSessionUser(req) {
   return s.username.toLowerCase();
 }
 
+// True when the request carries the shared admin password (same scheme the
+// feedback/admin panel uses): ?key=... or an x-admin-key header.
+function isAdminReq(req) {
+  const key = (req.query && req.query.key) || req.headers['x-admin-key'];
+  const adminPass = process.env.ADMIN_PASSWORD || 'cardhuddle-admin';
+  return !!key && key === adminPass;
+}
+
 // Middleware factory: previously gated routes on a Pro subscription. Pro Tools
 // are open access now, so this just requires a logged-in user. The plan name
 // is still accepted so callers don't have to change; flip the body back to a
@@ -3181,6 +3190,7 @@ const COMMUNITY_MAX_POSTS = 300;          // keep the feed (and the KV blob) bou
 const COMMUNITY_MAX_MESSAGE = 1000;       // chars
 const COMMUNITY_MAX_TITLE = 140;          // chars
 const COMMUNITY_MAX_IMAGE_BYTES = 700 * 1024; // ~700KB cap on an attached data URL
+const COMMUNITY_AUTOHIDE_REPORTS = 3;     // unique reports that auto-hide a post
 
 function loadCommunityPosts() {
   const data = loadData('community', COMMUNITY_FILE, { posts: [] });
@@ -3191,14 +3201,27 @@ function saveCommunityPosts(posts) {
   saveData('community', COMMUNITY_FILE, { posts });
 }
 
-// Public — anyone can read the board.
+// Strip moderation bookkeeping the public feed shouldn't see (reporter names,
+// internal flags). Admins get the raw post via the admin endpoint.
+function publicPost(p) {
+  return {
+    id: p.id, author: p.author, message: p.message, title: p.title,
+    imageUrl: p.imageUrl, price: p.price, link: p.link, createdAt: p.createdAt,
+    reportCount: p.reports ? p.reports.length : 0,
+  };
+}
+
+// Public — anyone can read the board. Hidden (auto-moderated / admin-hidden)
+// posts are excluded unless the caller is an admin.
 app.get('/api/community/posts', (req, res) => {
+  const admin = isAdminReq(req);
   const posts = loadCommunityPosts();
-  res.json({ posts, total: posts.length });
+  const visible = admin ? posts : posts.filter(p => !p.hidden);
+  res.json({ posts: visible.map(admin ? (p => p) : publicPost), total: visible.length });
 });
 
 // Auth required — post to the board.
-app.post('/api/community/posts', (req, res) => {
+app.post('/api/community/posts', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Sign in to post to the community.' });
 
@@ -3230,6 +3253,28 @@ app.post('/api/community/posts', (req, res) => {
     return res.status(400).json({ error: 'Link must start with http:// or https://' });
   }
 
+  // --- Auto-moderation -------------------------------------------------
+  // Text: profanity / slurs / spam are rejected outright with a clear reason.
+  const textCheck = moderateText(`${message} ${title}`);
+  if (!textCheck.allowed) {
+    const msg = textCheck.reason === 'spam'
+      ? 'That looks like spam. Please drop the extra links/contact info.'
+      : 'Your post contains language that isn’t allowed. Please revise it.';
+    return res.status(422).json({ error: msg, reason: textCheck.reason });
+  }
+  // Image: blocked only when a configured provider scores it NSFW; otherwise
+  // it passes through marked unverified (reports/auto-hide remain the net).
+  let imageVerified = true;
+  if (imageUrl) {
+    try {
+      const imgCheck = await moderateImage(imageUrl);
+      if (!imgCheck.allowed) {
+        return res.status(422).json({ error: 'That image didn’t pass our content check. Please choose a different photo.', reason: 'image' });
+      }
+      imageVerified = !!imgCheck.verified;
+    } catch (_) { imageVerified = false; }
+  }
+
   const post = {
     id: 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     author: username,
@@ -3239,27 +3284,69 @@ app.post('/api/community/posts', (req, res) => {
     price,
     link: link || '',
     createdAt: new Date().toISOString(),
+    reports: [],
+    imageVerified,
   };
 
   const posts = loadCommunityPosts();
   posts.unshift(post);
   if (posts.length > COMMUNITY_MAX_POSTS) posts.length = COMMUNITY_MAX_POSTS;
   saveCommunityPosts(posts);
-  res.json({ ok: true, post });
+  res.json({ ok: true, post: publicPost(post) });
 });
 
-// Auth required — delete your own post.
-app.delete('/api/community/posts/:id', (req, res) => {
+// Auth required — report a post. Dedupes by reporter; auto-hides once a post
+// crosses COMMUNITY_AUTOHIDE_REPORTS so bad content disappears before an admin
+// gets to it. Admins still see hidden posts for review.
+app.post('/api/community/posts/:id/report', (req, res) => {
   const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Sign in required.' });
+  if (!username) return res.status(401).json({ error: 'Sign in to report a post.' });
+  const id = String(req.params.id || '');
+  const reason = String((req.body && req.body.reason) || '').trim().slice(0, 200);
+
+  const posts = loadCommunityPosts();
+  const post = posts.find(p => p.id === id);
+  if (!post) return res.status(404).json({ error: 'Post not found.' });
+  if (post.author === username) return res.status(400).json({ error: 'You can’t report your own post.' });
+
+  if (!Array.isArray(post.reports)) post.reports = [];
+  if (post.reports.some(r => r.by === username)) {
+    return res.json({ ok: true, alreadyReported: true });
+  }
+  post.reports.push({ by: username, reason, at: new Date().toISOString() });
+  if (post.reports.length >= COMMUNITY_AUTOHIDE_REPORTS) post.hidden = true;
+  saveCommunityPosts(posts);
+  res.json({ ok: true, autoHidden: !!post.hidden });
+});
+
+// Delete a post. Allowed for the post's author OR an admin (delete-any).
+app.delete('/api/community/posts/:id', (req, res) => {
+  const admin = isAdminReq(req);
+  const username = getSessionUser(req);
+  if (!admin && !username) return res.status(401).json({ error: 'Sign in required.' });
   const id = String(req.params.id || '');
   const posts = loadCommunityPosts();
   const idx = posts.findIndex(p => p.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Post not found.' });
-  if (posts[idx].author !== username) return res.status(403).json({ error: 'You can only delete your own posts.' });
+  if (!admin && posts[idx].author !== username) {
+    return res.status(403).json({ error: 'You can only delete your own posts.' });
+  }
   posts.splice(idx, 1);
   saveCommunityPosts(posts);
   res.json({ ok: true });
+});
+
+// Admin — hide / unhide a post without deleting it.
+app.post('/api/community/posts/:id/hide', (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const id = String(req.params.id || '');
+  const hidden = !(req.body && req.body.unhide);
+  const posts = loadCommunityPosts();
+  const post = posts.find(p => p.id === id);
+  if (!post) return res.status(404).json({ error: 'Post not found.' });
+  post.hidden = hidden;
+  saveCommunityPosts(posts);
+  res.json({ ok: true, hidden });
 });
 
 // ---- Stripe API Routes ----
