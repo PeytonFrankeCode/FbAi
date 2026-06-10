@@ -3171,6 +3171,97 @@ app.get('/api/promoted-cards/all', async (req, res) => {
   res.json({ cards: all, total: all.length, real: real.length, demo: filler.length });
 });
 
+// ---- Community Board ----
+// A shared feed under Browse Cards where any signed-in member can post a
+// message, optional card photo, and optional price/link. Stored as a single
+// global array under the 'community' key via the same loadData/saveData
+// pipeline as the promoted index, so it persists on Cloudflare KV.
+const COMMUNITY_FILE = path.join(APP_ROOT, 'data', 'community.json');
+const COMMUNITY_MAX_POSTS = 300;          // keep the feed (and the KV blob) bounded
+const COMMUNITY_MAX_MESSAGE = 1000;       // chars
+const COMMUNITY_MAX_TITLE = 140;          // chars
+const COMMUNITY_MAX_IMAGE_BYTES = 700 * 1024; // ~700KB cap on an attached data URL
+
+function loadCommunityPosts() {
+  const data = loadData('community', COMMUNITY_FILE, { posts: [] });
+  return Array.isArray(data.posts) ? data.posts : [];
+}
+
+function saveCommunityPosts(posts) {
+  saveData('community', COMMUNITY_FILE, { posts });
+}
+
+// Public — anyone can read the board.
+app.get('/api/community/posts', (req, res) => {
+  const posts = loadCommunityPosts();
+  res.json({ posts, total: posts.length });
+});
+
+// Auth required — post to the board.
+app.post('/api/community/posts', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to post to the community.' });
+
+  const body = req.body || {};
+  const message = String(body.message || '').trim();
+  const title = String(body.title || '').trim().slice(0, COMMUNITY_MAX_TITLE);
+  let imageUrl = String(body.imageUrl || '').trim();
+  let link = String(body.link || '').trim();
+  const priceNum = parseFloat(body.price);
+  const price = Number.isFinite(priceNum) && priceNum > 0 ? Math.round(priceNum * 100) / 100 : null;
+
+  if (!message && !imageUrl) {
+    return res.status(400).json({ error: 'Add a message or a photo before posting.' });
+  }
+  if (message.length > COMMUNITY_MAX_MESSAGE) {
+    return res.status(400).json({ error: `Message is too long (max ${COMMUNITY_MAX_MESSAGE} characters).` });
+  }
+  // Accept either an uploaded image (data URL) or a hosted image URL.
+  if (imageUrl) {
+    const isData = imageUrl.startsWith('data:image/');
+    const isHttp = /^https?:\/\//i.test(imageUrl);
+    if (!isData && !isHttp) return res.status(400).json({ error: 'Image must be an uploaded photo or an http(s) URL.' });
+    if (isData && imageUrl.length > COMMUNITY_MAX_IMAGE_BYTES) {
+      return res.status(413).json({ error: 'Photo is too large. Please use a smaller image.' });
+    }
+  }
+  // Only allow http(s) links; drop anything else (e.g. javascript:).
+  if (link && !/^https?:\/\//i.test(link)) {
+    return res.status(400).json({ error: 'Link must start with http:// or https://' });
+  }
+
+  const post = {
+    id: 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    author: username,
+    message: message.slice(0, COMMUNITY_MAX_MESSAGE),
+    title: title || '',
+    imageUrl: imageUrl || '',
+    price,
+    link: link || '',
+    createdAt: new Date().toISOString(),
+  };
+
+  const posts = loadCommunityPosts();
+  posts.unshift(post);
+  if (posts.length > COMMUNITY_MAX_POSTS) posts.length = COMMUNITY_MAX_POSTS;
+  saveCommunityPosts(posts);
+  res.json({ ok: true, post });
+});
+
+// Auth required — delete your own post.
+app.delete('/api/community/posts/:id', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in required.' });
+  const id = String(req.params.id || '');
+  const posts = loadCommunityPosts();
+  const idx = posts.findIndex(p => p.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Post not found.' });
+  if (posts[idx].author !== username) return res.status(403).json({ error: 'You can only delete your own posts.' });
+  posts.splice(idx, 1);
+  saveCommunityPosts(posts);
+  res.json({ ok: true });
+});
+
 // ---- Stripe API Routes ----
 
 // Build a usable origin (scheme + host) for Stripe success/cancel URLs.

@@ -8435,6 +8435,243 @@ function renderBrowseCards() {
   });
 }
 
+// ---- Community Board (Browse Cards subtab) ----
+// A shared feed where members post messages, card photos, and prices/links.
+// Reads are public; posting requires a signed-in account (Bearer token).
+let _communityImageDataUrl = null;
+let _communityPostsCache = null;
+let _communityWired = false;
+
+function switchBrowseTab(sub) {
+  document.querySelectorAll('.browse-subtab').forEach(b =>
+    b.classList.toggle('active', b.dataset.browseSub === sub));
+  const cardsPanel = document.getElementById('browse-panel-cards');
+  const communityPanel = document.getElementById('browse-panel-community');
+  if (cardsPanel) cardsPanel.classList.toggle('hidden', sub !== 'cards');
+  if (communityPanel) communityPanel.classList.toggle('hidden', sub !== 'community');
+  if (sub === 'community') initCommunityView();
+}
+
+function initCommunityView() {
+  if (!_communityWired) {
+    _communityWired = true;
+  }
+  syncCommunityComposerState();
+  loadCommunityPosts(false);
+}
+
+// Logged-out members can read but not post — swap the composer for a prompt.
+function syncCommunityComposerState() {
+  const composer = document.getElementById('community-composer');
+  if (!composer) return;
+  const user = getCurrentUser();
+  composer.classList.toggle('community-locked', !user);
+  const btn = document.getElementById('community-post-btn');
+  if (btn) {
+    btn.textContent = user ? 'Post' : 'Sign in to post';
+    btn.classList.toggle('community-post-btn-locked', !user);
+  }
+}
+
+function updateCommunityCount() {
+  const ta = document.getElementById('community-message');
+  const count = document.getElementById('community-char-count');
+  if (ta && count) count.textContent = `${ta.value.length}/1000`;
+}
+
+async function handleCommunityImage(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showCommunityError('Please choose an image file.'); return; }
+  if (file.size > 10 * 1024 * 1024) { showCommunityError('That image is too large (max 10MB).'); return; }
+  try {
+    // Downscale to keep the stored data URL small enough for the shared feed.
+    _communityImageDataUrl = await readImageFileAsDataUrl(file, 900, 0.8);
+    const img = document.getElementById('community-image-preview');
+    const wrap = document.getElementById('community-image-preview-wrap');
+    if (img) img.src = _communityImageDataUrl;
+    if (wrap) wrap.classList.remove('hidden');
+    hideCommunityError();
+  } catch (err) {
+    showCommunityError('Could not load that image: ' + (err.message || 'unknown error'));
+  }
+}
+
+function clearCommunityImage() {
+  _communityImageDataUrl = null;
+  const wrap = document.getElementById('community-image-preview-wrap');
+  const input = document.getElementById('community-image-input');
+  if (wrap) wrap.classList.add('hidden');
+  if (input) input.value = '';
+}
+
+function showCommunityError(msg) {
+  const el = document.getElementById('community-composer-error');
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+function hideCommunityError() {
+  const el = document.getElementById('community-composer-error');
+  if (el) el.classList.add('hidden');
+}
+
+async function submitCommunityPost() {
+  const user = getCurrentUser();
+  const token = getSessionToken();
+  if (!user || !token) { showLogin(); return; }
+
+  const message = (document.getElementById('community-message')?.value || '').trim();
+  const title = (document.getElementById('community-title')?.value || '').trim();
+  const link = (document.getElementById('community-link')?.value || '').trim();
+  const priceRaw = (document.getElementById('community-price')?.value || '').trim();
+  const price = priceRaw ? parseFloat(priceRaw) : null;
+
+  if (!message && !_communityImageDataUrl) {
+    showCommunityError('Add a message or a photo before posting.');
+    return;
+  }
+  hideCommunityError();
+
+  const btn = document.getElementById('community-post-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
+
+  try {
+    const res = await fetch('/api/community/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ message, title, link, price, imageUrl: _communityImageDataUrl || '' }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) { showCommunityError((data && data.error) || 'Could not post. Please try again.'); return; }
+
+    // Reset the composer and prepend the new post.
+    document.getElementById('community-message').value = '';
+    document.getElementById('community-title').value = '';
+    document.getElementById('community-link').value = '';
+    document.getElementById('community-price').value = '';
+    clearCommunityImage();
+    updateCommunityCount();
+    if (!Array.isArray(_communityPostsCache)) _communityPostsCache = [];
+    if (data && data.post) _communityPostsCache.unshift(data.post);
+    renderCommunityFeed();
+  } catch (_) {
+    showCommunityError('Network error — please try again.');
+  } finally {
+    if (btn) { btn.disabled = false; syncCommunityComposerState(); }
+  }
+}
+
+async function loadCommunityPosts(force) {
+  const feed = document.getElementById('community-feed');
+  if (feed && !Array.isArray(_communityPostsCache)) {
+    feed.innerHTML = `<div class="community-empty"><div class="community-empty-icon">&#9203;</div><p>Loading the community board…</p></div>`;
+  }
+  if (!force && Array.isArray(_communityPostsCache)) { renderCommunityFeed(); return; }
+  try {
+    const res = await fetch('/api/community/posts');
+    const data = await safeJson(res);
+    _communityPostsCache = Array.isArray(data && data.posts) ? data.posts : [];
+  } catch (_) {
+    _communityPostsCache = _communityPostsCache || [];
+  }
+  renderCommunityFeed();
+}
+
+function renderCommunityFeed() {
+  const feed = document.getElementById('community-feed');
+  if (!feed) return;
+  const posts = Array.isArray(_communityPostsCache) ? _communityPostsCache : [];
+  if (posts.length === 0) {
+    feed.innerHTML = `
+      <div class="community-empty">
+        <div class="community-empty-icon">&#128172;</div>
+        <h3>No posts yet</h3>
+        <p>Be the first to share a card and kick off the conversation.</p>
+      </div>`;
+    return;
+  }
+  const me = (getCurrentUser() || '').toLowerCase();
+  feed.innerHTML = '';
+  posts.forEach((p, i) => {
+    feed.appendChild(buildCommunityPost(p, me, i));
+  });
+}
+
+function buildCommunityPost(p, me, i) {
+  const el = document.createElement('div');
+  el.className = 'community-post';
+  el.style.animationDelay = `${Math.min(i, 20) * 0.04}s`;
+
+  const author = escHtml(p.author || 'Collector');
+  const initial = author.charAt(0).toUpperCase();
+  const when = formatCommunityTime(p.createdAt);
+  const isMine = (p.author || '').toLowerCase() === me && me;
+
+  let media = '';
+  if (p.imageUrl) {
+    media = `<div class="community-post-media"><img src="${escHtml(p.imageUrl)}" alt="${escHtml(p.title || 'Card photo')}" loading="lazy" /></div>`;
+  }
+
+  const metaBits = [];
+  if (p.title) metaBits.push(`<span class="community-post-title">${escHtml(p.title)}</span>`);
+  if (p.price != null && p.price > 0) metaBits.push(`<span class="community-post-price">$${Number(p.price).toFixed(2)}</span>`);
+  let metaRow = metaBits.length ? `<div class="community-post-cardmeta">${metaBits.join('')}</div>` : '';
+
+  let linkRow = '';
+  if (p.link) {
+    linkRow = `<a class="community-post-link" href="${escHtml(p.link)}" target="_blank" rel="noopener noreferrer">View listing &rarr;</a>`;
+  }
+
+  const msg = p.message ? `<p class="community-post-message">${escHtml(p.message).replace(/\n/g, '<br>')}</p>` : '';
+  const del = isMine ? `<button class="community-post-delete" onclick="deleteCommunityPost('${escHtml(p.id)}')" title="Delete post">&times;</button>` : '';
+
+  el.innerHTML = `
+    <div class="community-post-head">
+      <div class="community-avatar">${escHtml(initial)}</div>
+      <div class="community-post-byline">
+        <span class="community-post-author">${author}</span>
+        <span class="community-post-time">${escHtml(when)}</span>
+      </div>
+      ${del}
+    </div>
+    ${msg}
+    ${metaRow}
+    ${media}
+    ${linkRow}
+  `;
+  return el;
+}
+
+async function deleteCommunityPost(id) {
+  const token = getSessionToken();
+  if (!token) { showLogin(); return; }
+  if (!confirm('Delete this post?')) return;
+  try {
+    const res = await fetch(`/api/community/posts/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      _communityPostsCache = (_communityPostsCache || []).filter(p => p.id !== id);
+      renderCommunityFeed();
+    }
+  } catch (_) { /* ignore */ }
+}
+
+function formatCommunityTime(iso) {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diff = Date.now() - then;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const days = Math.floor(hr / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
 // ---- Marketplace (eBay Browse) ----
 let marketplaceOffset = 0;
 let marketplaceQuery = '';

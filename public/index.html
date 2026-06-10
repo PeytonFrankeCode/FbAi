@@ -1124,7 +1124,15 @@
     <div class="browse-container">
       <div class="browse-header">
         <h2 class="browse-title">Browse Cards</h2>
-        <p class="browse-subtitle">Every promoted listing on The Card Huddle, in one place.</p>
+        <p class="browse-subtitle">Promoted listings and the community board, all in one place.</p>
+        <div class="browse-subtabs">
+          <button class="browse-subtab active" data-browse-sub="cards" onclick="switchBrowseTab('cards')">Promoted Cards</button>
+          <button class="browse-subtab" data-browse-sub="community" onclick="switchBrowseTab('community')">Community</button>
+        </div>
+      </div>
+
+      <!-- Promoted Cards panel -->
+      <div id="browse-panel-cards" class="browse-panel">
         <div class="browse-controls">
           <div class="browse-search-wrap">
             <input type="text" id="browse-search" class="browse-search" placeholder="Filter by player, set, year…" />
@@ -1136,9 +1144,42 @@
           </select>
           <button class="browse-refresh-btn" onclick="loadBrowseCards(true)">&#8635; Refresh</button>
         </div>
+        <p id="browse-meta" class="browse-meta"></p>
+        <div id="browse-grid" class="results-grid"></div>
       </div>
-      <p id="browse-meta" class="browse-meta"></p>
-      <div id="browse-grid" class="results-grid"></div>
+
+      <!-- Community panel -->
+      <div id="browse-panel-community" class="browse-panel hidden">
+        <div class="community-intro">
+          <h3 class="community-heading">The Card Huddle Community</h3>
+          <p class="community-subtitle">Show off your cards, share pickups, and talk shop with other collectors.</p>
+        </div>
+
+        <!-- Composer -->
+        <div id="community-composer" class="community-composer">
+          <textarea id="community-message" class="community-textarea" maxlength="1000" placeholder="Share a pickup, ask a question, or start a conversation…" oninput="updateCommunityCount()"></textarea>
+          <div class="community-composer-row">
+            <input type="text" id="community-title" class="community-input" maxlength="140" placeholder="Card name / title (optional)" />
+            <input type="number" id="community-price" class="community-input community-input-price" min="0" step="0.01" placeholder="Price $ (optional)" />
+          </div>
+          <input type="text" id="community-link" class="community-input community-input-full" placeholder="Link (eBay listing, etc — optional)" />
+          <div id="community-image-preview-wrap" class="community-image-preview-wrap hidden">
+            <img id="community-image-preview" class="community-image-preview" alt="Attached photo" />
+            <button type="button" class="community-image-remove" onclick="clearCommunityImage()" title="Remove photo">&times;</button>
+          </div>
+          <div class="community-composer-actions">
+            <label class="community-photo-btn">
+              &#128247; Add Photo
+              <input type="file" id="community-image-input" accept="image/*" class="hidden" onchange="handleCommunityImage(event)" />
+            </label>
+            <span id="community-char-count" class="community-char-count">0/1000</span>
+            <button id="community-post-btn" class="community-post-btn" onclick="submitCommunityPost()">Post</button>
+          </div>
+          <p id="community-composer-error" class="community-error hidden"></p>
+        </div>
+
+        <div id="community-feed" class="community-feed"></div>
+      </div>
     </div>
   </div>
 
