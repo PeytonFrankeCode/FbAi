@@ -8471,6 +8471,28 @@ function syncCommunityComposerState() {
     btn.textContent = user ? 'Post' : 'Sign in to post';
     btn.classList.toggle('community-post-btn-locked', !user);
   }
+  const avatar = document.getElementById('community-composer-avatar');
+  if (avatar) {
+    if (user) {
+      avatar.textContent = user.charAt(0).toUpperCase();
+      avatar.style.background = communityAvatarGradient(user);
+    } else {
+      avatar.innerHTML = '&#128100;';
+      avatar.style.background = '';
+    }
+  }
+}
+
+// Populate the hero counters from the loaded feed.
+function updateCommunityStats(posts) {
+  const list = Array.isArray(posts) ? posts : [];
+  const postsEl = document.getElementById('community-stat-posts');
+  const membersEl = document.getElementById('community-stat-members');
+  if (postsEl) postsEl.textContent = list.length;
+  if (membersEl) {
+    const unique = new Set(list.map(p => (p.author || '').toLowerCase()).filter(Boolean));
+    membersEl.textContent = unique.size;
+  }
 }
 
 function updateCommunityCount() {
@@ -8580,6 +8602,7 @@ function renderCommunityFeed() {
   const feed = document.getElementById('community-feed');
   if (!feed) return;
   const posts = Array.isArray(_communityPostsCache) ? _communityPostsCache : [];
+  updateCommunityStats(posts);
   if (posts.length === 0) {
     feed.innerHTML = `
       <div class="community-empty">
@@ -8605,6 +8628,7 @@ function buildCommunityPost(p, me, i) {
   const initial = author.charAt(0).toUpperCase();
   const when = formatCommunityTime(p.createdAt);
   const isMine = (p.author || '').toLowerCase() === me && me;
+  const avatarBg = communityAvatarGradient(p.author);
 
   let media = '';
   if (p.imageUrl) {
@@ -8631,7 +8655,7 @@ function buildCommunityPost(p, me, i) {
 
   el.innerHTML = `
     <div class="community-post-head">
-      <div class="community-avatar">${escHtml(initial)}</div>
+      <div class="community-avatar" style="background:${avatarBg}">${escHtml(initial)}</div>
       <div class="community-post-byline">
         <span class="community-post-author">${author}</span>
         <span class="community-post-time">${escHtml(when)}</span>
@@ -8644,6 +8668,21 @@ function buildCommunityPost(p, me, i) {
     ${linkRow}
   `;
   return el;
+}
+
+// Deterministic avatar gradient per username so each collector keeps a stable,
+// recognisable colour across the feed.
+const COMMUNITY_AVATAR_GRADIENTS = [
+  ['#5ece99', '#2d8f60'], ['#60a5fa', '#2563eb'], ['#f472b6', '#db2777'],
+  ['#fbbf24', '#d97706'], ['#a78bfa', '#7c3aed'], ['#f87171', '#dc2626'],
+  ['#34d399', '#059669'], ['#22d3ee', '#0891b2'], ['#fb923c', '#ea580c'],
+];
+function communityAvatarGradient(name) {
+  const s = String(name || '?');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const [a, b] = COMMUNITY_AVATAR_GRADIENTS[h % COMMUNITY_AVATAR_GRADIENTS.length];
+  return `linear-gradient(135deg, ${a}, ${b})`;
 }
 
 async function deleteCommunityPost(id) {

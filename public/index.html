@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=78" />
+  <link rel="stylesheet" href="style.css?v=79" />
 
 
 </head>
@@ -1161,26 +1161,48 @@
 
       <!-- Community panel -->
       <div id="browse-panel-community" class="browse-panel hidden">
-        <div class="community-intro">
-          <h3 class="community-heading">The Card Huddle Community</h3>
-          <p class="community-subtitle">Show off your cards, share pickups, and talk shop with other collectors.</p>
+        <!-- Hero banner -->
+        <div class="community-hero">
+          <div class="community-hero-glow"></div>
+          <div class="community-hero-content">
+            <span class="community-hero-badge">&#127944; The Huddle</span>
+            <h2 class="community-hero-title">Community</h2>
+            <p class="community-hero-sub">Show off your pulls, share pickups, and talk shop with collectors across The Card Huddle.</p>
+            <div class="community-hero-stats">
+              <div class="community-stat"><span class="community-stat-num" id="community-stat-posts">0</span><span class="community-stat-label">Posts</span></div>
+              <div class="community-stat-divider"></div>
+              <div class="community-stat"><span class="community-stat-num" id="community-stat-members">0</span><span class="community-stat-label">Collectors</span></div>
+            </div>
+          </div>
         </div>
 
         <!-- Composer -->
         <div id="community-composer" class="community-composer">
-          <textarea id="community-message" class="community-textarea" maxlength="1000" placeholder="Share a pickup, ask a question, or start a conversation…" oninput="updateCommunityCount()"></textarea>
-          <div class="community-composer-row">
-            <input type="text" id="community-title" class="community-input" maxlength="140" placeholder="Card name / title (optional)" />
-            <input type="number" id="community-price" class="community-input community-input-price" min="0" step="0.01" placeholder="Price $ (optional)" />
+          <div class="community-composer-top">
+            <div class="community-avatar community-composer-avatar" id="community-composer-avatar">&#128100;</div>
+            <textarea id="community-message" class="community-textarea" maxlength="1000" placeholder="Share a pickup, ask a question, or start a conversation…" oninput="updateCommunityCount()"></textarea>
           </div>
-          <input type="text" id="community-link" class="community-input community-input-full" placeholder="Link (eBay listing, etc — optional)" />
+          <div class="community-composer-details">
+            <div class="community-field">
+              <span class="community-field-icon">&#127991;</span>
+              <input type="text" id="community-title" class="community-input" maxlength="140" placeholder="Card name / title" />
+            </div>
+            <div class="community-field community-field-price">
+              <span class="community-field-icon">$</span>
+              <input type="number" id="community-price" class="community-input" min="0" step="0.01" placeholder="Price" />
+            </div>
+            <div class="community-field community-field-link">
+              <span class="community-field-icon">&#128279;</span>
+              <input type="text" id="community-link" class="community-input" placeholder="Link (eBay listing, etc.)" />
+            </div>
+          </div>
           <div id="community-image-preview-wrap" class="community-image-preview-wrap hidden">
             <img id="community-image-preview" class="community-image-preview" alt="Attached photo" />
             <button type="button" class="community-image-remove" onclick="clearCommunityImage()" title="Remove photo">&times;</button>
           </div>
           <div class="community-composer-actions">
-            <label class="community-photo-btn">
-              &#128247; Add Photo
+            <label class="community-photo-btn" title="Attach a photo">
+              <span class="community-photo-ico">&#128247;</span><span class="community-photo-txt">Photo</span>
               <input type="file" id="community-image-input" accept="image/*" class="hidden" onchange="handleCommunityImage(event)" />
             </label>
             <span id="community-char-count" class="community-char-count">0/1000</span>
@@ -1466,6 +1488,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=108"></script>
+  <script src="app.js?v=109"></script>
 </body>
 </html>
