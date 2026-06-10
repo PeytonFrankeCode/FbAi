@@ -19,6 +19,17 @@
     gtag('config', 'G-37RKDTRBCH');
   </script>
 
+  <!-- Borealis Software analytics -->
+  <script>
+  (function(){
+    var SITE_ID = "PASTE-YOUR-SITE-ID-HERE";
+    var img = new Image();
+    img.src = "https://borealissoftwares.com/collect?site=" + SITE_ID +
+              "&path=" + encodeURIComponent(location.pathname) +
+              "&t=" + Date.now();
+  })();
+  </script>
+
   <!-- Open Graph -->
   <meta property="og:title" content="The Card Huddle — Football Card Price Tracker" />
   <meta property="og:description" content="Check what your football cards are actually worth. Real eBay sold prices for Prizm, Select, Mosaic, Optic and more — broken down by grade. Free portfolio tracker included." />
