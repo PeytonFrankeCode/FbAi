@@ -19,6 +19,17 @@
     gtag('config', 'G-37RKDTRBCH');
   </script>
 
+  <!-- Borealis Software analytics -->
+  <script>
+  (function(){
+    var SITE_ID = "83a792c9";
+    var img = new Image();
+    img.src = "https://borealissoftwares.com/collect?site=" + SITE_ID +
+              "&path=" + encodeURIComponent(location.pathname) +
+              "&t=" + Date.now();
+  })();
+  </script>
+
   <!-- Open Graph -->
   <meta property="og:title" content="The Card Huddle — Football Card Price Tracker" />
   <meta property="og:description" content="Check what your football cards are actually worth. Real eBay sold prices for Prizm, Select, Mosaic, Optic and more — broken down by grade. Free portfolio tracker included." />
@@ -124,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=77" />
+  <link rel="stylesheet" href="style.css?v=78" />
 
 
 </head>
@@ -1455,6 +1466,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=107"></script>
+  <script src="app.js?v=108"></script>
 </body>
 </html>

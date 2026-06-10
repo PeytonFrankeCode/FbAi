@@ -8623,6 +8623,11 @@ function buildCommunityPost(p, me, i) {
 
   const msg = p.message ? `<p class="community-post-message">${escHtml(p.message).replace(/\n/g, '<br>')}</p>` : '';
   const del = isMine ? `<button class="community-post-delete" onclick="deleteCommunityPost('${escHtml(p.id)}')" title="Delete post">&times;</button>` : '';
+  // Anyone but the author can report. Logged-out users get the same button; it
+  // prompts them to sign in. Posts already reported by this user show a marker.
+  const report = !isMine
+    ? `<button class="community-post-report" onclick="reportCommunityPost('${escHtml(p.id)}', this)" title="Report this post">&#9873; Report</button>`
+    : '';
 
   el.innerHTML = `
     <div class="community-post-head">
@@ -8631,7 +8636,7 @@ function buildCommunityPost(p, me, i) {
         <span class="community-post-author">${author}</span>
         <span class="community-post-time">${escHtml(when)}</span>
       </div>
-      ${del}
+      <div class="community-post-actions">${report}${del}</div>
     </div>
     ${msg}
     ${metaRow}
@@ -8655,6 +8660,37 @@ async function deleteCommunityPost(id) {
       renderCommunityFeed();
     }
   } catch (_) { /* ignore */ }
+}
+
+async function reportCommunityPost(id, btn) {
+  const token = getSessionToken();
+  if (!token) { showLogin(); return; }
+  const reason = prompt('What’s wrong with this post? (optional)') ?? null;
+  if (reason === null) return; // user cancelled
+  if (btn) { btn.disabled = true; btn.textContent = 'Reporting…'; }
+  try {
+    const res = await fetch(`/api/community/posts/${encodeURIComponent(id)}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ reason: reason.trim() }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '&#9873; Report'; }
+      alert((data && data.error) || 'Could not report this post.');
+      return;
+    }
+    if (data && data.autoHidden) {
+      // Enough reports — it's hidden now; drop it from this user's view too.
+      _communityPostsCache = (_communityPostsCache || []).filter(p => p.id !== id);
+      renderCommunityFeed();
+    } else if (btn) {
+      btn.innerHTML = '&#10003; Reported';
+      btn.classList.add('community-post-reported');
+    }
+  } catch (_) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#9873; Report'; }
+  }
 }
 
 function formatCommunityTime(iso) {
