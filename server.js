@@ -3191,6 +3191,8 @@ const COMMUNITY_MAX_MESSAGE = 1000;       // chars
 const COMMUNITY_MAX_TITLE = 140;          // chars
 const COMMUNITY_MAX_IMAGE_BYTES = 700 * 1024; // ~700KB cap on an attached data URL
 const COMMUNITY_AUTOHIDE_REPORTS = 3;     // unique reports that auto-hide a post
+const COMMENT_MAX_MESSAGE = 500;          // chars
+const COMMENT_MAX_PER_POST = 200;         // bound the per-post comment list
 
 function loadCommunityPosts() {
   const data = loadData('community', COMMUNITY_FILE, { posts: [] });
@@ -3201,6 +3203,14 @@ function saveCommunityPosts(posts) {
   saveData('community', COMMUNITY_FILE, { posts });
 }
 
+// Public shape for a comment — drops any internal moderation fields.
+function publicComment(c) {
+  return {
+    id: c.id, author: c.author, message: c.message,
+    imageUrl: c.imageUrl, createdAt: c.createdAt,
+  };
+}
+
 // Strip moderation bookkeeping the public feed shouldn't see (reporter names,
 // internal flags). Admins get the raw post via the admin endpoint.
 function publicPost(p) {
@@ -3208,6 +3218,7 @@ function publicPost(p) {
     id: p.id, author: p.author, message: p.message, title: p.title,
     imageUrl: p.imageUrl, price: p.price, link: p.link, createdAt: p.createdAt,
     reportCount: p.reports ? p.reports.length : 0,
+    comments: Array.isArray(p.comments) ? p.comments.map(publicComment) : [],
   };
 }
 
@@ -3347,6 +3358,93 @@ app.post('/api/community/posts/:id/hide', (req, res) => {
   post.hidden = hidden;
   saveCommunityPosts(posts);
   res.json({ ok: true, hidden });
+});
+
+// Auth required — reply to a post with a comment (message and/or photo).
+// Runs the same auto-moderation as posts.
+app.post('/api/community/posts/:id/comments', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to reply.' });
+
+  const id = String(req.params.id || '');
+  const body = req.body || {};
+  const message = String(body.message || '').trim();
+  let imageUrl = String(body.imageUrl || '').trim();
+
+  if (!message && !imageUrl) {
+    return res.status(400).json({ error: 'Add a message or a photo to reply.' });
+  }
+  if (message.length > COMMENT_MAX_MESSAGE) {
+    return res.status(400).json({ error: `Reply is too long (max ${COMMENT_MAX_MESSAGE} characters).` });
+  }
+  if (imageUrl) {
+    const isData = imageUrl.startsWith('data:image/');
+    const isHttp = /^https?:\/\//i.test(imageUrl);
+    if (!isData && !isHttp) return res.status(400).json({ error: 'Image must be an uploaded photo or an http(s) URL.' });
+    if (isData && imageUrl.length > COMMUNITY_MAX_IMAGE_BYTES) {
+      return res.status(413).json({ error: 'Photo is too large. Please use a smaller image.' });
+    }
+  }
+
+  // Auto-moderation, mirroring posts.
+  const textCheck = moderateText(message);
+  if (!textCheck.allowed) {
+    const msg = textCheck.reason === 'spam'
+      ? 'That looks like spam. Please drop the extra links/contact info.'
+      : 'Your reply contains language that isn’t allowed. Please revise it.';
+    return res.status(422).json({ error: msg, reason: textCheck.reason });
+  }
+  let imageVerified = true;
+  if (imageUrl) {
+    try {
+      const imgCheck = await moderateImage(imageUrl);
+      if (!imgCheck.allowed) {
+        return res.status(422).json({ error: 'That image didn’t pass our content check. Please choose a different photo.', reason: 'image' });
+      }
+      imageVerified = !!imgCheck.verified;
+    } catch (_) { imageVerified = false; }
+  }
+
+  const posts = loadCommunityPosts();
+  const post = posts.find(p => p.id === id);
+  if (!post) return res.status(404).json({ error: 'Post not found.' });
+  if (post.hidden) return res.status(403).json({ error: 'This post is no longer available.' });
+
+  if (!Array.isArray(post.comments)) post.comments = [];
+  if (post.comments.length >= COMMENT_MAX_PER_POST) {
+    return res.status(409).json({ error: 'This thread has reached its reply limit.' });
+  }
+  const comment = {
+    id: 'cc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+    author: username,
+    message: message.slice(0, COMMENT_MAX_MESSAGE),
+    imageUrl: imageUrl || '',
+    createdAt: new Date().toISOString(),
+    imageVerified,
+  };
+  post.comments.push(comment);
+  saveCommunityPosts(posts);
+  res.json({ ok: true, comment: publicComment(comment) });
+});
+
+// Delete a comment. Allowed for the comment's author, the post's author
+// (thread owner), or an admin.
+app.delete('/api/community/posts/:id/comments/:commentId', (req, res) => {
+  const admin = isAdminReq(req);
+  const username = getSessionUser(req);
+  if (!admin && !username) return res.status(401).json({ error: 'Sign in required.' });
+  const id = String(req.params.id || '');
+  const commentId = String(req.params.commentId || '');
+  const posts = loadCommunityPosts();
+  const post = posts.find(p => p.id === id);
+  if (!post || !Array.isArray(post.comments)) return res.status(404).json({ error: 'Not found.' });
+  const idx = post.comments.findIndex(c => c.id === commentId);
+  if (idx === -1) return res.status(404).json({ error: 'Comment not found.' });
+  const canDelete = admin || post.comments[idx].author === username || post.author === username;
+  if (!canDelete) return res.status(403).json({ error: 'You can’t delete this reply.' });
+  post.comments.splice(idx, 1);
+  saveCommunityPosts(posts);
+  res.json({ ok: true });
 });
 
 // ---- Stripe API Routes ----

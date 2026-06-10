@@ -8653,6 +8653,12 @@ function buildCommunityPost(p, me, i) {
     ? `<button class="community-post-report" onclick="reportCommunityPost('${escHtml(p.id)}', this)" title="Report this post">&#9873; Report</button>`
     : '';
 
+  const comments = Array.isArray(p.comments) ? p.comments : [];
+  const pid = escHtml(p.id);
+  const countLabel = comments.length
+    ? `${comments.length} ${comments.length === 1 ? 'reply' : 'replies'}`
+    : 'Reply';
+
   el.innerHTML = `
     <div class="community-post-head">
       <div class="community-avatar" style="background:${avatarBg}">${escHtml(initial)}</div>
@@ -8666,8 +8672,204 @@ function buildCommunityPost(p, me, i) {
     ${metaRow}
     ${media}
     ${linkRow}
+    <div class="community-post-footer">
+      <button class="community-comment-toggle" onclick="toggleComments('${pid}', this)">
+        <span class="community-comment-ico">&#128172;</span>
+        <span id="comment-count-${pid}">${escHtml(countLabel)}</span>
+      </button>
+    </div>
+    <div class="community-comments hidden" id="comments-${pid}">
+      <div class="community-comment-list" id="comment-list-${pid}"></div>
+      ${buildReplyComposer(p.id)}
+    </div>
   `;
   return el;
+}
+
+// The reply box at the bottom of an expanded thread. Logged-out members get a
+// sign-in prompt instead of the composer.
+function buildReplyComposer(postId) {
+  const pid = escHtml(postId);
+  const user = getCurrentUser();
+  if (!user) {
+    return `<div class="community-reply-locked">
+      <a href="#" onclick="showLogin();return false;">Sign in</a> to join the conversation.
+    </div>`;
+  }
+  const bg = communityAvatarGradient(user);
+  const initial = escHtml(user.charAt(0).toUpperCase());
+  return `
+    <div class="community-reply">
+      <div class="community-avatar community-reply-avatar" style="background:${bg}">${initial}</div>
+      <div class="community-reply-box">
+        <textarea id="comment-input-${pid}" class="community-reply-input" maxlength="500" rows="1" placeholder="Write a reply…"></textarea>
+        <div id="comment-image-wrap-${pid}" class="community-reply-preview hidden">
+          <img id="comment-image-${pid}" alt="Reply photo" />
+          <button type="button" class="community-image-remove" onclick="clearCommentImage('${pid}')" title="Remove photo">&times;</button>
+        </div>
+        <div class="community-reply-actions">
+          <label class="community-reply-photo" title="Attach a photo">
+            <span>&#128247;</span>
+            <input type="file" accept="image/*" class="hidden" id="comment-file-${pid}" onchange="handleCommentImage('${pid}', event)" />
+          </label>
+          <button class="community-reply-send" onclick="submitCommunityComment('${pid}', this)">Reply</button>
+        </div>
+        <p id="comment-error-${pid}" class="community-error hidden"></p>
+      </div>
+    </div>`;
+}
+
+// Per-post pending reply image, keyed by post id.
+const _commentImages = {};
+
+function toggleComments(postId, btn) {
+  const wrap = document.getElementById(`comments-${postId}`);
+  if (!wrap) return;
+  const opening = wrap.classList.contains('hidden');
+  wrap.classList.toggle('hidden');
+  if (btn) btn.classList.toggle('active', opening);
+  if (opening) {
+    renderCommentList(postId);
+    const ta = document.getElementById(`comment-input-${postId}`);
+    if (ta) setTimeout(() => ta.focus(), 0);
+  }
+}
+
+function findCachedPost(postId) {
+  return (Array.isArray(_communityPostsCache) ? _communityPostsCache : []).find(p => p.id === postId);
+}
+
+function renderCommentList(postId) {
+  const list = document.getElementById(`comment-list-${postId}`);
+  const post = findCachedPost(postId);
+  if (!list || !post) return;
+  const comments = Array.isArray(post.comments) ? post.comments : [];
+  const me = (getCurrentUser() || '').toLowerCase();
+  const postOwner = (post.author || '').toLowerCase() === me && me;
+  if (comments.length === 0) {
+    list.innerHTML = `<p class="community-comment-empty">No replies yet — be the first.</p>`;
+    return;
+  }
+  list.innerHTML = comments.map(c => buildCommentHtml(c, postId, me, postOwner)).join('');
+}
+
+function buildCommentHtml(c, postId, me, postOwner) {
+  const author = escHtml(c.author || 'Collector');
+  const initial = author.charAt(0).toUpperCase();
+  const bg = communityAvatarGradient(c.author);
+  const when = formatCommunityTime(c.createdAt);
+  const canDelete = ((c.author || '').toLowerCase() === me && me) || postOwner;
+  const del = canDelete
+    ? `<button class="community-comment-delete" onclick="deleteCommunityComment('${escHtml(postId)}','${escHtml(c.id)}')" title="Delete reply">&times;</button>`
+    : '';
+  const msg = c.message ? `<div class="community-comment-text">${escHtml(c.message).replace(/\n/g, '<br>')}</div>` : '';
+  const img = c.imageUrl
+    ? `<div class="community-comment-media"><img src="${escHtml(c.imageUrl)}" alt="Reply photo" loading="lazy" /></div>`
+    : '';
+  return `
+    <div class="community-comment">
+      <div class="community-avatar community-comment-avatar" style="background:${bg}">${escHtml(initial)}</div>
+      <div class="community-comment-body">
+        <div class="community-comment-head">
+          <span class="community-comment-author">${author}</span>
+          <span class="community-comment-time">${escHtml(when)}</span>
+          ${del}
+        </div>
+        ${msg}
+        ${img}
+      </div>
+    </div>`;
+}
+
+async function handleCommentImage(postId, e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { return; }
+  if (file.size > 10 * 1024 * 1024) { return; }
+  try {
+    _commentImages[postId] = await readImageFileAsDataUrl(file, 900, 0.8);
+    const img = document.getElementById(`comment-image-${postId}`);
+    const wrap = document.getElementById(`comment-image-wrap-${postId}`);
+    if (img) img.src = _commentImages[postId];
+    if (wrap) wrap.classList.remove('hidden');
+  } catch (_) { /* ignore */ }
+}
+
+function clearCommentImage(postId) {
+  delete _commentImages[postId];
+  const wrap = document.getElementById(`comment-image-wrap-${postId}`);
+  const input = document.getElementById(`comment-file-${postId}`);
+  if (wrap) wrap.classList.add('hidden');
+  if (input) input.value = '';
+}
+
+async function submitCommunityComment(postId, btn) {
+  const user = getCurrentUser();
+  const token = getSessionToken();
+  if (!user || !token) { showLogin(); return; }
+  const ta = document.getElementById(`comment-input-${postId}`);
+  const errEl = document.getElementById(`comment-error-${postId}`);
+  const message = (ta && ta.value || '').trim();
+  const imageUrl = _commentImages[postId] || '';
+  if (!message && !imageUrl) {
+    if (errEl) { errEl.textContent = 'Add a message or a photo to reply.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+  if (errEl) errEl.classList.add('hidden');
+  if (btn) { btn.disabled = true; btn.textContent = 'Replying…'; }
+  try {
+    const res = await fetch(`/api/community/posts/${encodeURIComponent(postId)}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ message, imageUrl }),
+    });
+    const data = await safeJson(res);
+    if (!res.ok) {
+      if (errEl) { errEl.textContent = (data && data.error) || 'Could not reply. Please try again.'; errEl.classList.remove('hidden'); }
+      return;
+    }
+    const post = findCachedPost(postId);
+    if (post) {
+      if (!Array.isArray(post.comments)) post.comments = [];
+      if (data && data.comment) post.comments.push(data.comment);
+    }
+    if (ta) ta.value = '';
+    clearCommentImage(postId);
+    renderCommentList(postId);
+    updateCommentCount(postId);
+  } catch (_) {
+    if (errEl) { errEl.textContent = 'Network error — please try again.'; errEl.classList.remove('hidden'); }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Reply'; }
+  }
+}
+
+async function deleteCommunityComment(postId, commentId) {
+  const token = getSessionToken();
+  if (!token) { showLogin(); return; }
+  if (!confirm('Delete this reply?')) return;
+  try {
+    const res = await fetch(`/api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const post = findCachedPost(postId);
+      if (post && Array.isArray(post.comments)) {
+        post.comments = post.comments.filter(c => c.id !== commentId);
+      }
+      renderCommentList(postId);
+      updateCommentCount(postId);
+    }
+  } catch (_) { /* ignore */ }
+}
+
+function updateCommentCount(postId) {
+  const post = findCachedPost(postId);
+  const el = document.getElementById(`comment-count-${postId}`);
+  if (!post || !el) return;
+  const n = Array.isArray(post.comments) ? post.comments.length : 0;
+  el.textContent = n ? `${n} ${n === 1 ? 'reply' : 'replies'}` : 'Reply';
 }
 
 // Deterministic avatar gradient per username so each collector keeps a stable,
