@@ -538,6 +538,21 @@
       const meta = [];
       if (p.title) meta.push(escHtml(p.title));
       if (p.price) meta.push('$' + Number(p.price).toFixed(2));
+      const comments = Array.isArray(p.comments) ? p.comments : [];
+      const commentsHtml = comments.length ? `
+        <div style="margin-top:0.7rem;border-top:1px solid var(--border-primary);padding-top:0.6rem;">
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.4rem;">${comments.length} repl${comments.length === 1 ? 'y' : 'ies'}</div>
+          ${comments.map(c => `
+            <div style="display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:0.5rem;">
+              <div style="flex:1;min-width:0;">
+                <span style="font-weight:700;font-size:0.8rem;">@${escHtml(c.author)}</span>
+                <span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.4rem;">${timeAgo(c.createdAt)}</span>
+                ${c.message ? `<div style="font-size:0.82rem;margin-top:0.15rem;">${escHtml(c.message)}</div>` : ''}
+                ${c.imageUrl ? `<img src="${escHtml(c.imageUrl)}" alt="reply image" style="max-height:110px;max-width:100%;border-radius:6px;margin-top:0.3rem;border:1px solid var(--border-primary);" />` : ''}
+              </div>
+              <button class="refresh-btn" style="border-color:var(--red,#ef4444);color:var(--red,#ef4444);padding:0.2rem 0.5rem;font-size:0.7rem;" onclick="adminDeleteComment('${p.id}','${c.id}')">Delete</button>
+            </div>`).join('')}
+        </div>` : '';
       return `
         <div class="report-card ${p.hidden || reports.length ? 'bug' : 'feedback'}">
           <div class="report-header">
@@ -549,12 +564,25 @@
           ${p.message ? `<div class="report-message">${escHtml(p.message)}</div>` : ''}
           ${p.imageUrl ? `<img src="${escHtml(p.imageUrl)}" alt="post image" style="max-height:160px;max-width:100%;border-radius:8px;margin-top:0.5rem;border:1px solid var(--border-primary);" />` : ''}
           ${reasons ? `<div style="font-size:0.78rem;color:var(--red,#ef4444);margin-top:0.5rem;">${reasons}</div>` : ''}
+          ${commentsHtml}
           <div style="display:flex;gap:0.5rem;margin-top:0.7rem;">
             <button class="refresh-btn" onclick="adminToggleHide('${p.id}', ${p.hidden ? 'true' : 'false'})">${p.hidden ? '↶ Unhide' : '🙈 Hide'}</button>
             <button class="refresh-btn" style="border-color:var(--red,#ef4444);color:var(--red,#ef4444);" onclick="adminDeletePost('${p.id}')">🗑 Delete</button>
           </div>
         </div>`;
     }).join('');
+  }
+
+  async function adminDeleteComment(postId, commentId) {
+    if (!confirm('Delete this reply?')) return;
+    try {
+      const resp = await fetch(`/api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}?key=${encodeURIComponent(adminKey)}`, { method: 'DELETE' });
+      if (resp.ok) {
+        const post = allCommunity.find(p => p.id === postId);
+        if (post && Array.isArray(post.comments)) post.comments = post.comments.filter(c => c.id !== commentId);
+        renderCommunityModeration();
+      } else alert('Delete failed.');
+    } catch (_) { alert('Delete failed.'); }
   }
 
   async function adminDeletePost(id) {

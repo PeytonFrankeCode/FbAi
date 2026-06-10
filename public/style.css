@@ -7962,6 +7962,45 @@ footer {
 .community-empty h3 { color: var(--text-primary); margin: 0 0 0.4rem; font-size: 1.1rem; font-weight: 700; }
 .community-empty p { margin: 0; font-size: 0.92rem; }
 
+/* ---- Community: comments / replies ---- */
+.community-post-footer { margin-top: 0.9rem; padding-top: 0.75rem; border-top: 1px solid var(--border-primary); }
+.community-comment-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: none; border: none; color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0.25rem 0.3rem; border-radius: 6px; transition: color 0.15s; }
+.community-comment-toggle:hover { color: var(--accent); }
+.community-comment-toggle.active { color: var(--accent); }
+.community-comment-ico { font-size: 0.95rem; }
+
+.community-comments { margin-top: 0.85rem; animation: communityFadeIn 0.25s ease both; }
+.community-comment-list { display: flex; flex-direction: column; gap: 0.85rem; }
+.community-comment-empty { font-size: 0.82rem; color: var(--text-muted); margin: 0 0 0.25rem; padding-left: 0.2rem; }
+.community-comment { display: flex; gap: 0.6rem; }
+.community-comment-avatar { width: 32px; height: 32px; font-size: 0.85rem; box-shadow: none; }
+.community-comment-body { flex: 1; min-width: 0; background: var(--bg-primary); border: 1px solid var(--border-primary); border-radius: 12px; padding: 0.6rem 0.8rem; }
+.community-comment-head { display: flex; align-items: center; gap: 0.5rem; }
+.community-comment-author { font-weight: 700; color: var(--text-primary); font-size: 0.85rem; }
+.community-comment-time { font-size: 0.72rem; color: var(--text-muted); }
+.community-comment-delete { margin-left: auto; background: none; border: none; color: var(--text-muted); font-size: 1.1rem; line-height: 1; cursor: pointer; padding: 0 0.2rem; border-radius: 5px; transition: color 0.15s; }
+.community-comment-delete:hover { color: #ef4444; }
+.community-comment-text { color: var(--text-primary); font-size: 0.9rem; line-height: 1.5; margin-top: 0.25rem; white-space: pre-wrap; word-break: break-word; }
+.community-comment-media { margin-top: 0.5rem; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-primary); max-width: 260px; }
+.community-comment-media img { width: 100%; max-height: 240px; object-fit: contain; display: block; }
+
+.community-reply { display: flex; gap: 0.6rem; margin-top: 1rem; }
+.community-reply-avatar { width: 32px; height: 32px; font-size: 0.85rem; box-shadow: none; flex-shrink: 0; }
+.community-reply-box { flex: 1; min-width: 0; }
+.community-reply-input { width: 100%; box-sizing: border-box; resize: vertical; min-height: 38px; background: var(--bg-primary); border: 1.5px solid var(--border-primary); border-radius: 12px; color: var(--text-primary); padding: 0.55rem 0.8rem; font-size: 0.9rem; font-family: inherit; line-height: 1.45; transition: border-color 0.15s, box-shadow 0.15s; }
+.community-reply-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.community-reply-preview { position: relative; display: inline-block; margin-top: 0.55rem; }
+.community-reply-preview img { max-height: 150px; max-width: 100%; border-radius: 10px; border: 1px solid var(--border-primary); display: block; }
+.community-reply-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.55rem; }
+.community-reply-photo { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; background: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 9px; cursor: pointer; font-size: 0.95rem; transition: all 0.15s; }
+.community-reply-photo:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.community-reply-send { margin-left: auto; background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.15s, opacity 0.15s; }
+.community-reply-send:hover { background: var(--accent-hover); }
+.community-reply-send:disabled { opacity: 0.55; cursor: default; }
+.community-reply-locked { margin-top: 0.9rem; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-primary); border: 1px dashed var(--border-primary); border-radius: 10px; padding: 0.7rem 0.85rem; }
+.community-reply-locked a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.community-reply-locked a:hover { text-decoration: underline; }
+
 @media (max-width: 640px) {
   .community-hero { padding: 1.5rem 1.25rem; }
   .community-hero-title { font-size: 1.6rem; }
