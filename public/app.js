@@ -8673,6 +8673,7 @@ function buildCommunityPost(p, me, i) {
     ${media}
     ${linkRow}
     <div class="community-post-footer">
+      ${buildReactionBar(p, p.id, '')}
       <button class="community-comment-toggle" onclick="toggleComments('${pid}', this)">
         <span class="community-comment-ico">&#128172;</span>
         <span id="comment-count-${pid}">${escHtml(countLabel)}</span>
@@ -8680,46 +8681,149 @@ function buildCommunityPost(p, me, i) {
     </div>
     <div class="community-comments hidden" id="comments-${pid}">
       <div class="community-comment-list" id="comment-list-${pid}"></div>
-      ${buildReplyComposer(p.id)}
+      ${buildCommentComposer(p.id, null)}
     </div>
   `;
   return el;
 }
 
-// The reply box at the bottom of an expanded thread. Logged-out members get a
-// sign-in prompt instead of the composer.
-function buildReplyComposer(postId) {
+// ---- Reactions ----
+// Must mirror COMMUNITY_REACTIONS on the server.
+const REACTION_EMOJIS = ['\u{1F44D}', '❤️', '\u{1F525}', '\u{1F602}', '\u{1F62E}'];
+function reactionKey(postId, commentId) { return commentId || postId; }
+
+function buildReactionBar(target, postId, commentId) {
+  const key = escHtml(reactionKey(postId, commentId));
+  return `<div class="community-reactions" id="reactbar-${key}">${reactionBarInner(target, postId, commentId)}</div>`;
+}
+
+function reactionBarInner(target, postId, commentId) {
+  const counts = (target && target.reactions) || {};
+  const mine = (target && target.myReaction) || null;
   const pid = escHtml(postId);
+  const cidArg = commentId ? `'${escHtml(commentId)}'` : `''`;
+  let chips = '';
+  REACTION_EMOJIS.forEach((em, idx) => {
+    const n = counts[em] || 0;
+    if (!n) return;
+    chips += `<button class="community-react-chip${mine === em ? ' mine' : ''}" onclick="reactCommunity('${pid}', ${cidArg}, ${idx})">${em}<span>${n}</span></button>`;
+  });
+  const opts = REACTION_EMOJIS.map((em, idx) =>
+    `<button class="community-react-opt${mine === em ? ' mine' : ''}" onclick="reactCommunity('${pid}', ${cidArg}, ${idx})">${em}</button>`
+  ).join('');
+  return `${chips}<div class="community-react-add">
+    <button class="community-react-trigger${mine ? ' active' : ''}" onclick="toggleReactPicker(event, this)" title="React">☺️<span class="community-react-plus">+</span></button>
+    <div class="community-react-picker">${opts}</div>
+  </div>`;
+}
+
+function toggleReactPicker(ev, btn) {
+  ev.stopPropagation();
+  const picker = btn.nextElementSibling;
+  if (!picker) return;
+  const isOpen = picker.classList.contains('open');
+  document.querySelectorAll('.community-react-picker.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) {
+    picker.classList.add('open');
+    // Close on the next outside click.
+    setTimeout(() => document.addEventListener('click', closeReactPickers, { once: true }), 0);
+  }
+}
+function closeReactPickers() {
+  document.querySelectorAll('.community-react-picker.open').forEach(p => p.classList.remove('open'));
+}
+
+function findCachedTarget(postId, commentId) {
+  const post = findCachedPost(postId);
+  if (!post) return null;
+  if (!commentId) return post;
+  return (Array.isArray(post.comments) ? post.comments : []).find(c => c.id === commentId) || null;
+}
+
+async function reactCommunity(postId, commentId, idx) {
+  closeReactPickers();
+  const token = getSessionToken();
+  if (!token) { showLogin(); return; }
+  const emoji = REACTION_EMOJIS[idx];
+  if (!emoji) return;
+  const target = findCachedTarget(postId, commentId);
+  // Optimistic toggle for snappy feedback.
+  if (target) {
+    const prev = target.myReaction || null;
+    const counts = Object.assign({}, target.reactions || {});
+    if (prev) counts[prev] = Math.max(0, (counts[prev] || 1) - 1);
+    let next = emoji;
+    if (prev === emoji) { next = null; }
+    else { counts[emoji] = (counts[emoji] || 0) + 1; }
+    Object.keys(counts).forEach(k => { if (!counts[k]) delete counts[k]; });
+    target.reactions = counts; target.myReaction = next;
+    renderReactionBar(postId, commentId);
+  }
+  try {
+    const path = commentId
+      ? `/api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}/react`
+      : `/api/community/posts/${encodeURIComponent(postId)}/react`;
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emoji }),
+    });
+    const data = await safeJson(res);
+    if (res.ok && target) {
+      target.reactions = (data && data.reactions) || {};
+      target.myReaction = (data && data.myReaction) || null;
+    }
+  } catch (_) { /* keep optimistic state */ }
+  renderReactionBar(postId, commentId);
+}
+
+function renderReactionBar(postId, commentId) {
+  const bar = document.getElementById(`reactbar-${reactionKey(postId, commentId)}`);
+  const target = findCachedTarget(postId, commentId);
+  if (bar && target) bar.innerHTML = reactionBarInner(target, postId, commentId);
+}
+
+// ---- Reply composer (top-level and inline/threaded) ----
+// composerKey is the parent comment id for inline replies, else the post id.
+function buildCommentComposer(postId, parentId) {
   const user = getCurrentUser();
+  const inline = !!parentId;
   if (!user) {
-    return `<div class="community-reply-locked">
+    return inline ? '' : `<div class="community-reply-locked">
       <a href="#" onclick="showLogin();return false;">Sign in</a> to join the conversation.
     </div>`;
   }
+  const key = escHtml(parentId || postId);
+  const pid = escHtml(postId);
+  const par = parentId ? `'${escHtml(parentId)}'` : `''`;
   const bg = communityAvatarGradient(user);
   const initial = escHtml(user.charAt(0).toUpperCase());
+  const cancel = inline
+    ? `<button class="community-reply-cancel" onclick="closeInlineReply('${escHtml(parentId)}')">Cancel</button>`
+    : '';
   return `
-    <div class="community-reply">
+    <div class="community-reply${inline ? ' community-reply-inline' : ''}">
       <div class="community-avatar community-reply-avatar" style="background:${bg}">${initial}</div>
       <div class="community-reply-box">
-        <textarea id="comment-input-${pid}" class="community-reply-input" maxlength="500" rows="1" placeholder="Write a reply…"></textarea>
-        <div id="comment-image-wrap-${pid}" class="community-reply-preview hidden">
-          <img id="comment-image-${pid}" alt="Reply photo" />
-          <button type="button" class="community-image-remove" onclick="clearCommentImage('${pid}')" title="Remove photo">&times;</button>
+        <textarea id="comment-input-${key}" class="community-reply-input" maxlength="500" rows="1" placeholder="${inline ? 'Write a reply…' : 'Write a reply…'}"></textarea>
+        <div id="comment-image-wrap-${key}" class="community-reply-preview hidden">
+          <img id="comment-image-${key}" alt="Reply photo" />
+          <button type="button" class="community-image-remove" onclick="clearCommentImage('${key}')" title="Remove photo">&times;</button>
         </div>
         <div class="community-reply-actions">
           <label class="community-reply-photo" title="Attach a photo">
             <span>&#128247;</span>
-            <input type="file" accept="image/*" class="hidden" id="comment-file-${pid}" onchange="handleCommentImage('${pid}', event)" />
+            <input type="file" accept="image/*" class="hidden" id="comment-file-${key}" onchange="handleCommentImage('${key}', event)" />
           </label>
-          <button class="community-reply-send" onclick="submitCommunityComment('${pid}', this)">Reply</button>
+          ${cancel}
+          <button class="community-reply-send" onclick="submitCommunityComment('${pid}', ${par}, this)">Reply</button>
         </div>
-        <p id="comment-error-${pid}" class="community-error hidden"></p>
+        <p id="comment-error-${key}" class="community-error hidden"></p>
       </div>
     </div>`;
 }
 
-// Per-post pending reply image, keyed by post id.
+// Per-composer pending image, keyed by composerKey (parent id or post id).
 const _commentImages = {};
 
 function toggleComments(postId, btn) {
@@ -8739,6 +8843,24 @@ function findCachedPost(postId) {
   return (Array.isArray(_communityPostsCache) ? _communityPostsCache : []).find(p => p.id === postId);
 }
 
+// Build a parent->children tree from the flat comment list.
+function buildCommentTree(comments) {
+  const byId = {};
+  comments.forEach(c => { byId[c.id] = Object.assign({}, c, { children: [] }); });
+  const roots = [];
+  comments.forEach(c => {
+    const node = byId[c.id];
+    if (c.parentId && byId[c.parentId]) byId[c.parentId].children.push(node);
+    else roots.push(node);
+  });
+  const sortRec = (arr) => {
+    arr.sort((a, b) => String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+    arr.forEach(n => sortRec(n.children));
+  };
+  sortRec(roots);
+  return roots;
+}
+
 function renderCommentList(postId) {
   const list = document.getElementById(`comment-list-${postId}`);
   const post = findCachedPost(postId);
@@ -8750,14 +8872,17 @@ function renderCommentList(postId) {
     list.innerHTML = `<p class="community-comment-empty">No replies yet — be the first.</p>`;
     return;
   }
-  list.innerHTML = comments.map(c => buildCommentHtml(c, postId, me, postOwner)).join('');
+  const roots = buildCommentTree(comments);
+  list.innerHTML = roots.map(n => buildCommentNode(n, postId, me, postOwner, 0)).join('');
 }
 
-function buildCommentHtml(c, postId, me, postOwner) {
+const COMMUNITY_MAX_INDENT = 4;
+function buildCommentNode(c, postId, me, postOwner, depth) {
   const author = escHtml(c.author || 'Collector');
   const initial = author.charAt(0).toUpperCase();
   const bg = communityAvatarGradient(c.author);
   const when = formatCommunityTime(c.createdAt);
+  const loggedIn = !!getCurrentUser();
   const canDelete = ((c.author || '').toLowerCase() === me && me) || postOwner;
   const del = canDelete
     ? `<button class="community-comment-delete" onclick="deleteCommunityComment('${escHtml(postId)}','${escHtml(c.id)}')" title="Delete reply">&times;</button>`
@@ -8766,6 +8891,13 @@ function buildCommentHtml(c, postId, me, postOwner) {
   const img = c.imageUrl
     ? `<div class="community-comment-media"><img src="${escHtml(c.imageUrl)}" alt="Reply photo" loading="lazy" /></div>`
     : '';
+  const replyBtn = loggedIn
+    ? `<button class="community-comment-reply-btn" onclick="openInlineReply('${escHtml(postId)}','${escHtml(c.id)}')">Reply</button>`
+    : '';
+  const children = (c.children || []).map(ch =>
+    buildCommentNode(ch, postId, me, postOwner, Math.min(depth + 1, COMMUNITY_MAX_INDENT))
+  ).join('');
+  const childWrap = children ? `<div class="community-comment-children">${children}</div>` : '';
   return `
     <div class="community-comment">
       <div class="community-avatar community-comment-avatar" style="background:${bg}">${escHtml(initial)}</div>
@@ -8777,40 +8909,62 @@ function buildCommentHtml(c, postId, me, postOwner) {
         </div>
         ${msg}
         ${img}
+        <div class="community-comment-actions">
+          ${buildReactionBar(c, postId, c.id)}
+          ${replyBtn}
+        </div>
+        <div class="community-replybox" id="replybox-${escHtml(c.id)}"></div>
+        ${childWrap}
       </div>
     </div>`;
 }
 
-async function handleCommentImage(postId, e) {
+function openInlineReply(postId, parentId) {
+  if (!getCurrentUser()) { showLogin(); return; }
+  const box = document.getElementById(`replybox-${parentId}`);
+  if (!box) return;
+  if (box.innerHTML.trim()) { closeInlineReply(parentId); return; } // toggle
+  box.innerHTML = buildCommentComposer(postId, parentId);
+  const ta = document.getElementById(`comment-input-${parentId}`);
+  if (ta) setTimeout(() => ta.focus(), 0);
+}
+function closeInlineReply(parentId) {
+  const box = document.getElementById(`replybox-${parentId}`);
+  clearCommentImage(parentId);
+  if (box) box.innerHTML = '';
+}
+
+async function handleCommentImage(key, e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) { return; }
   if (file.size > 10 * 1024 * 1024) { return; }
   try {
-    _commentImages[postId] = await readImageFileAsDataUrl(file, 900, 0.8);
-    const img = document.getElementById(`comment-image-${postId}`);
-    const wrap = document.getElementById(`comment-image-wrap-${postId}`);
-    if (img) img.src = _commentImages[postId];
+    _commentImages[key] = await readImageFileAsDataUrl(file, 900, 0.8);
+    const img = document.getElementById(`comment-image-${key}`);
+    const wrap = document.getElementById(`comment-image-wrap-${key}`);
+    if (img) img.src = _commentImages[key];
     if (wrap) wrap.classList.remove('hidden');
   } catch (_) { /* ignore */ }
 }
 
-function clearCommentImage(postId) {
-  delete _commentImages[postId];
-  const wrap = document.getElementById(`comment-image-wrap-${postId}`);
-  const input = document.getElementById(`comment-file-${postId}`);
+function clearCommentImage(key) {
+  delete _commentImages[key];
+  const wrap = document.getElementById(`comment-image-wrap-${key}`);
+  const input = document.getElementById(`comment-file-${key}`);
   if (wrap) wrap.classList.add('hidden');
   if (input) input.value = '';
 }
 
-async function submitCommunityComment(postId, btn) {
+async function submitCommunityComment(postId, parentId, btn) {
   const user = getCurrentUser();
   const token = getSessionToken();
   if (!user || !token) { showLogin(); return; }
-  const ta = document.getElementById(`comment-input-${postId}`);
-  const errEl = document.getElementById(`comment-error-${postId}`);
+  const key = parentId || postId;
+  const ta = document.getElementById(`comment-input-${key}`);
+  const errEl = document.getElementById(`comment-error-${key}`);
   const message = (ta && ta.value || '').trim();
-  const imageUrl = _commentImages[postId] || '';
+  const imageUrl = _commentImages[key] || '';
   if (!message && !imageUrl) {
     if (errEl) { errEl.textContent = 'Add a message or a photo to reply.'; errEl.classList.remove('hidden'); }
     return;
@@ -8821,7 +8975,7 @@ async function submitCommunityComment(postId, btn) {
     const res = await fetch(`/api/community/posts/${encodeURIComponent(postId)}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ message, imageUrl }),
+      body: JSON.stringify({ message, imageUrl, parentId: parentId || '' }),
     });
     const data = await safeJson(res);
     if (!res.ok) {
@@ -8833,8 +8987,9 @@ async function submitCommunityComment(postId, btn) {
       if (!Array.isArray(post.comments)) post.comments = [];
       if (data && data.comment) post.comments.push(data.comment);
     }
+    // Clear input + image. Inline composers get removed when the list re-renders.
     if (ta) ta.value = '';
-    clearCommentImage(postId);
+    clearCommentImage(key);
     renderCommentList(postId);
     updateCommentCount(postId);
   } catch (_) {
@@ -8847,16 +9002,18 @@ async function submitCommunityComment(postId, btn) {
 async function deleteCommunityComment(postId, commentId) {
   const token = getSessionToken();
   if (!token) { showLogin(); return; }
-  if (!confirm('Delete this reply?')) return;
+  if (!confirm('Delete this reply? Any replies to it will be removed too.')) return;
   try {
     const res = await fetch(`/api/community/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
+    const data = await safeJson(res);
     if (res.ok) {
       const post = findCachedPost(postId);
       if (post && Array.isArray(post.comments)) {
-        post.comments = post.comments.filter(c => c.id !== commentId);
+        const removed = new Set((data && data.removed) || [commentId]);
+        post.comments = post.comments.filter(c => !removed.has(c.id));
       }
       renderCommentList(postId);
       updateCommentCount(postId);
