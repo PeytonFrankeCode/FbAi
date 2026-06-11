@@ -3193,6 +3193,7 @@ const COMMUNITY_MAX_IMAGE_BYTES = 700 * 1024; // ~700KB cap on an attached data 
 const COMMUNITY_AUTOHIDE_REPORTS = 3;     // unique reports that auto-hide a post
 const COMMENT_MAX_MESSAGE = 500;          // chars
 const COMMENT_MAX_PER_POST = 200;         // bound the per-post comment list
+const COMMUNITY_REACTIONS = ['👍', '❤️', '🔥', '😂', '😮']; // allowed reaction emoji
 
 function loadCommunityPosts() {
   const data = loadData('community', COMMUNITY_FILE, { posts: [] });
@@ -3203,22 +3204,42 @@ function saveCommunityPosts(posts) {
   saveData('community', COMMUNITY_FILE, { posts });
 }
 
+// Aggregate a { username: emoji } reaction map into { counts, mine } for the
+// given viewer, so the public payload never leaks the full reactor list.
+function shapeReactions(reactions, viewer) {
+  const counts = {};
+  let mine = null;
+  if (reactions && typeof reactions === 'object') {
+    for (const [user, emoji] of Object.entries(reactions)) {
+      if (!COMMUNITY_REACTIONS.includes(emoji)) continue;
+      counts[emoji] = (counts[emoji] || 0) + 1;
+      if (viewer && user === viewer) mine = emoji;
+    }
+  }
+  return { counts, mine };
+}
+
 // Public shape for a comment — drops any internal moderation fields.
-function publicComment(c) {
+function publicComment(c, viewer) {
+  const { counts, mine } = shapeReactions(c.reactions, viewer);
   return {
     id: c.id, author: c.author, message: c.message,
     imageUrl: c.imageUrl, createdAt: c.createdAt,
+    parentId: c.parentId || null,
+    reactions: counts, myReaction: mine,
   };
 }
 
 // Strip moderation bookkeeping the public feed shouldn't see (reporter names,
 // internal flags). Admins get the raw post via the admin endpoint.
-function publicPost(p) {
+function publicPost(p, viewer) {
+  const { counts, mine } = shapeReactions(p.reactions, viewer);
   return {
     id: p.id, author: p.author, message: p.message, title: p.title,
     imageUrl: p.imageUrl, price: p.price, link: p.link, createdAt: p.createdAt,
     reportCount: p.reports ? p.reports.length : 0,
-    comments: Array.isArray(p.comments) ? p.comments.map(publicComment) : [],
+    reactions: counts, myReaction: mine,
+    comments: Array.isArray(p.comments) ? p.comments.map(c => publicComment(c, viewer)) : [],
   };
 }
 
@@ -3226,9 +3247,10 @@ function publicPost(p) {
 // posts are excluded unless the caller is an admin.
 app.get('/api/community/posts', (req, res) => {
   const admin = isAdminReq(req);
+  const viewer = getSessionUser(req); // null when logged out — fine
   const posts = loadCommunityPosts();
   const visible = admin ? posts : posts.filter(p => !p.hidden);
-  res.json({ posts: visible.map(admin ? (p => p) : publicPost), total: visible.length });
+  res.json({ posts: visible.map(admin ? (p => p) : (p => publicPost(p, viewer))), total: visible.length });
 });
 
 // Auth required — post to the board.
@@ -3414,6 +3436,11 @@ app.post('/api/community/posts/:id/comments', async (req, res) => {
   if (post.comments.length >= COMMENT_MAX_PER_POST) {
     return res.status(409).json({ error: 'This thread has reached its reply limit.' });
   }
+  // Optional parent for threaded replies — must reference a real comment here.
+  let parentId = String(body.parentId || '').trim() || null;
+  if (parentId && !post.comments.some(c => c.id === parentId)) {
+    return res.status(400).json({ error: 'The reply you’re responding to no longer exists.' });
+  }
   const comment = {
     id: 'cc_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     author: username,
@@ -3421,10 +3448,11 @@ app.post('/api/community/posts/:id/comments', async (req, res) => {
     imageUrl: imageUrl || '',
     createdAt: new Date().toISOString(),
     imageVerified,
+    parentId,
   };
   post.comments.push(comment);
   saveCommunityPosts(posts);
-  res.json({ ok: true, comment: publicComment(comment) });
+  res.json({ ok: true, comment: publicComment(comment, username) });
 });
 
 // Delete a comment. Allowed for the comment's author, the post's author
@@ -3442,9 +3470,60 @@ app.delete('/api/community/posts/:id/comments/:commentId', (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Comment not found.' });
   const canDelete = admin || post.comments[idx].author === username || post.author === username;
   if (!canDelete) return res.status(403).json({ error: 'You can’t delete this reply.' });
-  post.comments.splice(idx, 1);
+  // Cascade: remove this comment and any replies nested beneath it.
+  const toRemove = new Set([commentId]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const c of post.comments) {
+      if (c.parentId && toRemove.has(c.parentId) && !toRemove.has(c.id)) { toRemove.add(c.id); grew = true; }
+    }
+  }
+  post.comments = post.comments.filter(c => !toRemove.has(c.id));
   saveCommunityPosts(posts);
-  res.json({ ok: true });
+  res.json({ ok: true, removed: [...toRemove] });
+});
+
+// Auth required — set/toggle the viewer's reaction on a post or a comment.
+// emoji must be one of COMMUNITY_REACTIONS; sending the current emoji (or an
+// empty value) removes the reaction. One reaction per user per item.
+function applyReaction(target, username, emoji) {
+  if (!target.reactions || typeof target.reactions !== 'object') target.reactions = {};
+  const current = target.reactions[username];
+  if (!emoji || emoji === current) {
+    delete target.reactions[username];           // toggle off
+    return null;
+  }
+  target.reactions[username] = emoji;            // set / switch
+  return emoji;
+}
+
+app.post('/api/community/posts/:id/react', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to react.' });
+  const emoji = String((req.body && req.body.emoji) || '').trim();
+  if (emoji && !COMMUNITY_REACTIONS.includes(emoji)) return res.status(400).json({ error: 'Invalid reaction.' });
+  const posts = loadCommunityPosts();
+  const post = posts.find(p => p.id === String(req.params.id || ''));
+  if (!post) return res.status(404).json({ error: 'Post not found.' });
+  const mine = applyReaction(post, username, emoji);
+  saveCommunityPosts(posts);
+  res.json({ ok: true, reactions: shapeReactions(post.reactions, username).counts, myReaction: mine });
+});
+
+app.post('/api/community/posts/:id/comments/:commentId/react', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to react.' });
+  const emoji = String((req.body && req.body.emoji) || '').trim();
+  if (emoji && !COMMUNITY_REACTIONS.includes(emoji)) return res.status(400).json({ error: 'Invalid reaction.' });
+  const posts = loadCommunityPosts();
+  const post = posts.find(p => p.id === String(req.params.id || ''));
+  if (!post || !Array.isArray(post.comments)) return res.status(404).json({ error: 'Not found.' });
+  const comment = post.comments.find(c => c.id === String(req.params.commentId || ''));
+  if (!comment) return res.status(404).json({ error: 'Comment not found.' });
+  const mine = applyReaction(comment, username, emoji);
+  saveCommunityPosts(posts);
+  res.json({ ok: true, reactions: shapeReactions(comment.reactions, username).counts, myReaction: mine });
 });
 
 // ---- Stripe API Routes ----
