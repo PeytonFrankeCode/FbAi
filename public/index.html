@@ -1314,6 +1314,10 @@
           <div class="settings-label">
             <span class="settings-label-text">scrape.do API keys</span>
             <span class="settings-label-desc" id="settings-scrapedo-desc">Used for your Sold searches. Add multiple keys to combine quotas. <a href="https://scrape.do" target="_blank" rel="noopener">Get a key</a>.</span>
+            <button type="button" class="settings-video-toggle" id="settings-scrapedo-video-toggle" onclick="toggleScrapeDoVideo()">&#9654; Watch: how to get your API key</button>
+            <div class="settings-video-wrap hidden" id="settings-scrapedo-video-wrap">
+              <video id="settings-scrapedo-video" controls playsinline preload="none" src="media/scrapedo-key-tutorial.mp4"></video>
+            </div>
           </div>
           <div id="settings-scrapedo-action" class="settings-scrapedo-action">
             <div id="settings-scrapedo-loading" class="settings-scrapedo-loading">Loading…</div>
@@ -1423,6 +1427,26 @@
   </div>
 
   <!-- Feedback / Report Bug Modal -->
+  <!-- Shown after a scrape.do key is saved: a quick "all set" beat that
+       transitions into the sold-data petition ask. -->
+  <div id="apikey-success-modal" class="feedback-modal hidden" onclick="if(event.target===this)closeApiKeySuccessModal()">
+    <div class="feedback-modal-box apikey-success-box">
+      <button class="feedback-close" onclick="closeApiKeySuccessModal()">&times;</button>
+      <div id="apikey-success-step1" class="apikey-success-step">
+        <div class="apikey-success-emoji">&#127881;</div>
+        <h2>You're all set!</h2>
+        <p>Your API key was added — Sold searches are ready to go.</p>
+      </div>
+      <div id="apikey-success-step2" class="apikey-success-step apikey-success-step--hidden">
+        <div class="apikey-success-emoji">&#9997;&#65039;</div>
+        <h2>One more thing&hellip;</h2>
+        <p>Real sold prices shouldn't be locked behind paid APIs and 90-day windows. Help us push for open sold data for every collector &mdash; it takes 30 seconds.</p>
+        <a class="apikey-petition-btn" href="https://c.org/JNKMfjdfFj" target="_blank" rel="noopener noreferrer" onclick="closeApiKeySuccessModal()">Sign the Petition</a>
+        <button class="apikey-petition-skip" onclick="closeApiKeySuccessModal()">Maybe later</button>
+      </div>
+    </div>
+  </div>
+
   <div id="feedback-modal" class="feedback-modal hidden" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="feedback-modal-box">
       <button class="feedback-close" onclick="closeFeedbackModal()">&times;</button>
