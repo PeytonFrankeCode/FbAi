@@ -198,11 +198,47 @@ async function saveScrapeDoKey() {
     input.value = '';
     if (labelEl) labelEl.value = '';
     await loadScrapeDoStatus();
+    showApiKeySuccessModal();
   } catch (err) {
     alert(`Couldn't save your scrape.do key:\n\n${(err && err.message) || err}`);
   } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Add Key'; }
   }
+}
+
+function toggleScrapeDoVideo() {
+  const wrap = document.getElementById('settings-scrapedo-video-wrap');
+  const btn = document.getElementById('settings-scrapedo-video-toggle');
+  if (!wrap) return;
+  const opening = wrap.classList.contains('hidden');
+  wrap.classList.toggle('hidden');
+  if (btn) btn.innerHTML = opening ? '&#9660; Hide video' : '&#9654; Watch: how to get your API key';
+  const video = document.getElementById('settings-scrapedo-video');
+  if (!opening && video) video.pause();
+}
+
+// "You're all set" beat after saving a key, then fade into the
+// sold-data petition ask.
+let apiKeySuccessTimer = null;
+function showApiKeySuccessModal() {
+  const modal = document.getElementById('apikey-success-modal');
+  const step1 = document.getElementById('apikey-success-step1');
+  const step2 = document.getElementById('apikey-success-step2');
+  if (!modal || !step1 || !step2) return;
+  step1.classList.remove('apikey-success-step--hidden');
+  step2.classList.add('apikey-success-step--hidden');
+  modal.classList.remove('hidden');
+  clearTimeout(apiKeySuccessTimer);
+  apiKeySuccessTimer = setTimeout(() => {
+    step1.classList.add('apikey-success-step--hidden');
+    step2.classList.remove('apikey-success-step--hidden');
+  }, 2000);
+}
+
+function closeApiKeySuccessModal() {
+  clearTimeout(apiKeySuccessTimer);
+  const modal = document.getElementById('apikey-success-modal');
+  if (modal) modal.classList.add('hidden');
 }
 
 async function removeScrapeDoKey(label) {
