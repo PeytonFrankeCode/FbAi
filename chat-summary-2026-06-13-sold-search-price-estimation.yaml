@@ -1,0 +1,99 @@
+session:
+  date: "2026-06-13"
+  branch: claude/sold-search-price-estimation-4f7bbo
+  repo: peytonfrankecode/fbai
+  topic: >
+    Print-run-adjusted price estimate for the sold search bar — when a card has
+    no sold sales at the exact print run searched, estimate its value from
+    sales of the same card at OTHER print runs, adjusted for scarcity.
+
+user_constraints:
+  no_dev_tools:
+    summary: >
+      User has no terminal, curl, DevTools, console, or local checkout. They
+      interact with the deployed site through the UI only and the codebase
+      through Claude Code sessions. Run all commands in the sandbox; verify in
+      the sandbox before pushing.
+
+feature_overview: >
+  Asked for: when a sold search returns no sales for the exact card (e.g. a
+  /10), draw on other similar sales (e.g. a /25), adjust each comp's price for
+  the print-run difference, use 3–5 cards, then show the sold prices used
+  crossed against the resulting estimated price. Implemented across both sold
+  search surfaces (main search bar → /api/direct-search, and the variant flow →
+  /api/search).
+
+implementation:
+  server_js:
+    new_helpers:
+      ESTIMATE_SCARCITY_ALPHA: >
+        0.65 — matches AP_SCARCITY_ALPHA (app.js) and the checklist estimator
+        so the whole app values scarcity identically (a /25 ≈ 2x a /99, not 4x).
+      parsePrintRunFromTitle(title): >
+        Server mirror of the frontend parsePrintRun. Handles /99, 12/99 serial
+        stamps, 1/1, one-of-one, "numbered to 99"; skips season ranges.
+      buildSimilarPrintRunEstimate(query, results): >
+        Only fires for serial-numbered queries. Uses extractSearchKeywords to
+        keep comps matching the same card EXCEPT the print run (player anchor,
+        year, set, color/parallel, grade, type), relaxing to the player anchor
+        if the strict pass is empty. Keeps comps numbered to something OTHER
+        than the target, sorts by scarcity proximity (closest = most reliable),
+        takes the nearest 3–5, adjusts each by (compPR/targetPR)^0.65 clamped to
+        [0.15, 12], and returns { value (median adjusted), low, high,
+        targetPrintRun, sampleSize, alpha, comps[] } where each comp carries
+        soldPrice, printRun, multiplier, adjustedPrice, rarer, date/img/url.
+      hasExactPrintRunSales(query, results): >
+        True when any result matches the query's exact print-run predicate (or
+        no print run was requested). Gate so the estimate only appears when
+        there are zero exact-PR sales.
+    wired_into:
+      - /api/search sold path — adds `estimate` to the JSON response (built from
+        raw searchData.results) when hasExactPrintRunSales is false.
+      - /api/direct-search sold path — same, on the main search bar surface.
+    exports_added: [buildSimilarPrintRunEstimate, hasExactPrintRunSales, parsePrintRunFromTitle]
+
+  frontend_app_js:
+    buildSimilarEstimateSection(est, query): >
+      Renders the estimate into the existing #approx-section: ESTIMATED VALUE
+      badge, "No sold sales found for a /N — estimated from M similar sales",
+      big ~$value, low/high, then a list of the comps used where each row
+      crosses the struck-through actual sold price → the adjusted price (green
+      up / red down arrow) with the comp's /print run and (rarer|more common)
+      tag, plus the adjustment formula footnote.
+    wired_into:
+      - fetchDirectSearch — renders the estimate (takes priority over the
+        broadened approximate-value block).
+      - performSearch — hides #approx-section on reset; renders the estimate
+        after the rate-limit check.
+
+  style_css:
+    added: >
+      .est-comps / .est-comp / .est-comp-img / .est-comp-title /
+      .est-comp-sub / .est-comp-prtag / .est-comp-prices / .est-comp-sold
+      (struck-through) / .est-comp-cross (up green / down red) / .est-comp-adj
+      (orange) + a mobile wrap rule. Reuses the existing .approx-* shell.
+
+  cache_busts:
+    - style.css?v=82 -> v=83
+    - app.js?v=113 -> v=114
+
+verification: >
+  No automated suite in the repo. Extracted the new server helpers via the
+  module exports and ran them against realistic titles: print-run parsing,
+  player/color exclusivity (Jefferson + Silver excluded), unnumbered base
+  excluded, /10 estimate (median ~$711 from /25,/50,/99 sales each adjusted up),
+  /5 (rarer) pushing adjusted prices higher, no-serial → null, and the exact-PR
+  gate returning true when /25 sales are present. node --check passes on
+  server.js and public/app.js.
+
+design_notes:
+  - The estimate is print-run based (the user's concrete example). Grade/parallel
+    differences are matched-on (kept identical), not numerically re-priced — same
+    scope as the existing Auto-Pricer model.
+  - Takes up to 5 of the closest comps; will show fewer (down to 1) rather than
+    suppress the estimate entirely, with sampleSize surfaced for transparency.
+  - Built from raw eBay results (pre price-outlier-filter); median over the
+    adjusted comps keeps a single mis-list from skewing the value.
+
+open_threads:
+  - No PR opened — pushed to the feature branch only.

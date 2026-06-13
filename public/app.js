@@ -1674,8 +1674,12 @@ async function fetchDirectSearch(query) {
       return;
     }
 
-    // Show approximate value section if broadened
-    if (searchType === 'broadened' && approximateValue) {
+    // Show the print-run estimate when there were no sales at the exact print
+    // run searched; otherwise the broadened approximate value (if any).
+    if (data.estimate) {
+      buildSimilarEstimateSection(data.estimate, query);
+      approxSection.classList.remove('hidden');
+    } else if (searchType === 'broadened' && approximateValue) {
       buildApproxValueSection(approximateValue, query);
       approxSection.classList.remove('hidden');
     }
@@ -1815,6 +1819,59 @@ function buildApproxValueSection(approx, originalQuery) {
   `;
 }
 
+// ---- Similar-card price estimate (print-run adjusted) ----
+// Shown when a sold search finds NO sales at the exact print run the user
+// asked for (e.g. a /10). The server picks 3–5 sales of the same card at other
+// print runs, adjusts each one for the scarcity difference, and we display the
+// estimate crossed against the actual sold prices it used.
+function buildSimilarEstimateSection(est, query) {
+  const fmt = n => `$${Number(n).toFixed(2)}`;
+  const pr = est.targetPrintRun;
+
+  const rows = (est.comps || []).map(c => {
+    const dir = c.adjustedPrice >= c.soldPrice ? 'up' : 'down';
+    const dirArrow = dir === 'up' ? '&#9650;' : '&#9660;';
+    const scarcity = c.printRun > pr ? 'more common' : 'rarer';
+    const img = c.imageUrl
+      ? `<img class="est-comp-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+      : '<div class="est-comp-img est-comp-img-empty"></div>';
+    const titleInner = escHtml(c.title || '');
+    const titleHtml = c.itemUrl
+      ? `<a class="est-comp-title" href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener">${titleInner}</a>`
+      : `<span class="est-comp-title">${titleInner}</span>`;
+    return `
+      <div class="est-comp">
+        ${img}
+        <div class="est-comp-main">
+          ${titleHtml}
+          <div class="est-comp-sub">
+            <span class="est-comp-prtag">/${c.printRun} <span class="est-comp-scar">(${scarcity})</span></span>
+            ${c.soldDate ? `<span class="est-comp-date">${escHtml(timeAgo(c.soldDate))}</span>` : ''}
+          </div>
+        </div>
+        <div class="est-comp-prices">
+          <span class="est-comp-sold" title="Actual sold price">${fmt(c.soldPrice)}</span>
+          <span class="est-comp-cross est-${dir}">${dirArrow}</span>
+          <span class="est-comp-adj" title="Adjusted to a /${pr}">${fmt(c.adjustedPrice)}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  approxSection.innerHTML = `
+    <div class="approx-badge">ESTIMATED VALUE</div>
+    <div class="approx-note">No sold sales found for a <strong>/${pr}</strong>. Estimated from ${est.sampleSize} similar sale${est.sampleSize !== 1 ? 's' : ''} at other print runs, adjusted for scarcity.</div>
+    <div class="approx-price">~${fmt(est.value)}</div>
+    <div class="approx-details">
+      <span>Low: ${fmt(est.low)}</span>
+      <span>High: ${fmt(est.high)}</span>
+      <span>${est.sampleSize} adjusted comp${est.sampleSize !== 1 ? 's' : ''}</span>
+    </div>
+    <div class="est-comps-head">Sold comps used &rarr; adjusted to /${pr}</div>
+    <div class="est-comps">${rows}</div>
+    <div class="approx-source">Each sale is adjusted by (its print run &divide; /${pr})<sup>${est.alpha}</sup> &mdash; scarcer cards are worth more, but sub-linearly (a /25 &asymp; 2&times; a /99, not 4&times;).</div>
+  `;
+}
+
 // ---- Render Stats Bar ----
 function renderStatsBar(results, isSold) {
   const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
@@ -1858,6 +1915,7 @@ async function performSearch(query) {
   sortControls.classList.add('hidden');
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
+  approxSection.classList.add('hidden');
   document.getElementById('grade-panel').classList.add('hidden');
   resetGradeFilter();
   currentResults = [];
@@ -1930,6 +1988,13 @@ async function performSearch(query) {
       msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
       grid.appendChild(msg);
       return;
+    }
+
+    // No sales at the exact print run? Show the print-run-adjusted estimate
+    // built from sales of the same card at other print runs.
+    if (data.estimate) {
+      buildSimilarEstimateSection(data.estimate, query);
+      approxSection.classList.remove('hidden');
     }
 
     // Stats bar
