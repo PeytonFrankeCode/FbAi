@@ -1,2 +1,5 @@
 .env
 node_modules/
+
+# Runtime-generated price history (written by /api/price-history)
+data/price-history.json
