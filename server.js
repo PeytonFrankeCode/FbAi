@@ -4350,6 +4350,33 @@ app.get('/api/feedback', (req, res) => {
   }
 });
 
+// Admin-only account stats. Gated by the shared admin key (?key=… or the
+// x-admin-key header), same scheme as /api/feedback. Returns counts only — no
+// usernames, emails, or other PII — so it's safe to glance at from a browser.
+app.get('/api/admin/stats', (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const users = loadServerUsers();
+    const subs = loadSubscriptions();
+    const usernames = Object.keys(users);
+    const activePro = usernames.filter(u => {
+      const s = getEffectiveSubscription(u);
+      return s && s.status === 'active' && s.plan === 'pro';
+    }).length;
+    const withOAuth = usernames.filter(u => users[u] && users[u].oauth).length;
+    res.json({
+      totalAccounts: usernames.length,
+      activeProAccounts: activePro,
+      oauthAccounts: withOAuth,
+      subscriptionRecords: Object.keys(subs).length,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Error in /api/admin/stats:', err.message);
+    res.status(500).json({ error: 'Failed to load stats' });
+  }
+});
+
 // In Cloudflare Workers the ASSETS binding handles the SPA fallback
 if (!process.env.CF_WORKER) {
   app.get('*', (req, res) => {
