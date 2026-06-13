@@ -1067,6 +1067,12 @@ app.get('/api/search', async (req, res) => {
       const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
         ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
         : null;
+      // No sales at the exact print run the user searched (e.g. a /10)? Estimate
+      // the value from sales of the same card at other print runs, adjusted for
+      // scarcity, and surface the comps used.
+      const estimate = hasExactPrintRunSales(query, searchData.results)
+        ? null
+        : buildSimilarPrintRunEstimate(query, searchData.results);
       return res.json({
         results: variantFiltered,
         total: variantFiltered.length,
@@ -1077,6 +1083,7 @@ app.get('/api/search', async (req, res) => {
         searchType: matched.searchType,
         broadenedQuery: null,
         approximateValue: approx,
+        estimate,
         keywordsTotal: matched.keywordsTotal,
         keywordsMatched: matched.keywordsMatched,
         relaxedBy: matched.relaxedBy,
@@ -1619,6 +1626,118 @@ function matchSoldListings(results, query) {
   return { results, keywordsTotal: total, keywordsMatched: 0, relaxedBy: total, searchType: 'broadened' };
 }
 
+// ---- Similar-card price estimate (print-run adjusted) ----
+// Power-law scarcity exponent. Matches AP_SCARCITY_ALPHA (0.65) in app.js and
+// the checklist value estimator, so the whole app values scarcity the same
+// way: a scarcer print run is worth more, but sub-linearly (a /25 ≈ 2x a /99,
+// not 4x).
+const ESTIMATE_SCARCITY_ALPHA = 0.65;
+
+// Parse the print-run denominator out of a listing title (server mirror of the
+// frontend parsePrintRun). Handles "/99", "12/99" serial stamps, "1/1",
+// "one of one", "numbered to 99". Skips season ranges like "2020/21".
+function parsePrintRunFromTitle(title) {
+  if (!title) return null;
+  const s = String(title);
+  const t = s.toLowerCase();
+  if (/\b1\s*\/\s*1\b/.test(s) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
+  const frac = s.match(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/);
+  if (frac) {
+    const num = parseInt(frac[1], 10), denom = parseInt(frac[2], 10);
+    const looksLikeSeason = num >= 1900 && num <= 2099;
+    if (!looksLikeSeason && denom >= 1 && denom <= 5000) return denom;
+  }
+  const m = s.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|\/)\s*(\d{1,4})\b/i);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 1 && n <= 5000) return n;
+  }
+  return null;
+}
+
+// When a sold search finds NO sales for the exact print run the user wants
+// (e.g. a /10), estimate the card's value from sales of the SAME card at other
+// print runs (e.g. /25, /50), adjusting each comp's sold price for the scarcity
+// difference. Uses the 3–5 comps closest in scarcity to the target. Returns
+// null when there isn't a serial-numbered query or enough similar sales.
+function buildSimilarPrintRunEstimate(query, results) {
+  const serial = extractSerial(query);
+  if (!serial) return null;
+  const targetPR = parseInt(serial, 10);
+  if (!(targetPR > 0) || !Array.isArray(results) || results.length === 0) return null;
+
+  const pad = r => ' ' + String(r.title || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+
+  // Match the rest of the card (player / year / set / parallel / grade / type)
+  // — everything EXCEPT the print run — so "Gold /25" isn't estimated from a
+  // "Silver /25". Reuse the same keyword engine the sold search uses.
+  const { predicates } = extractSearchKeywords(query);
+  const playerPred = predicates.find(p => p.kind === 'player');
+  const nonPR = predicates.filter(p => p.kind !== 'printRun' && !isNegativeKeyword(p));
+
+  let pool = results.filter(r => { const t = pad(r); return nonPR.every(p => p.test(t)); });
+  // Relax toward the player anchor if the strict "same card" pass is empty, so
+  // a thin card still gets an estimate instead of nothing. Never estimate from
+  // a different player.
+  if (pool.length === 0 && playerPred) pool = results.filter(r => playerPred.test(pad(r)));
+  if (pool.length === 0) return null;
+
+  // Only comps numbered to something OTHER than the target help a print-run
+  // adjustment.
+  const others = pool
+    .map(r => ({ r, pr: parsePrintRunFromTitle(r.title), price: parseFloat(r.price) }))
+    .filter(c => c.pr && c.price > 0 && c.pr !== targetPR);
+  if (others.length === 0) return null;
+
+  // Prefer the comps closest in scarcity to the target — the smaller the
+  // adjustment, the more reliable. Take 3–5.
+  others.sort((a, b) =>
+    Math.abs(Math.log(a.pr / targetPR)) - Math.abs(Math.log(b.pr / targetPR)));
+  const chosen = others.slice(0, 5);
+
+  const comps = chosen.map(c => {
+    let mult = Math.pow(c.pr / targetPR, ESTIMATE_SCARCITY_ALPHA);
+    mult = Math.min(Math.max(mult, 0.15), 12); // clamp wild extremes (e.g. 1/1)
+    return {
+      title: c.r.title,
+      soldPrice: c.price,
+      printRun: c.pr,
+      multiplier: mult,
+      adjustedPrice: c.price * mult,
+      rarer: c.pr > targetPR,
+      soldDate: c.r.soldDate,
+      imageUrl: c.r.imageUrl,
+      itemUrl: c.r.itemUrl,
+      condition: c.r.condition,
+    };
+  });
+
+  const adj = comps.map(c => c.adjustedPrice).sort((a, b) => a - b);
+  const median = adj.length % 2
+    ? adj[(adj.length - 1) / 2]
+    : (adj[adj.length / 2 - 1] + adj[adj.length / 2]) / 2;
+
+  return {
+    value: median,
+    low: adj[0],
+    high: adj[adj.length - 1],
+    targetPrintRun: targetPR,
+    sampleSize: comps.length,
+    alpha: ESTIMATE_SCARCITY_ALPHA,
+    comps,
+  };
+}
+
+// Detect whether a sold result set has any sales matching the query's exact
+// print run. Used to decide when to fall back to a print-run estimate.
+function hasExactPrintRunSales(query, results) {
+  const { predicates } = extractSearchKeywords(query);
+  const prPred = predicates.find(p => p.kind === 'printRun');
+  if (!prPred) return true; // no print run requested → estimate doesn't apply
+  return (results || []).some(r =>
+    prPred.test(' ' + String(r.title || '').toLowerCase().replace(/\s+/g, ' ') + ' '));
+}
+
 function removeOutliers(prices) {
   if (prices.length < 4) return prices;
   const sorted = [...prices].sort((a, b) => a - b);
@@ -1796,7 +1915,12 @@ app.get('/api/direct-search', async (req, res) => {
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
-      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial: serial || null, similarResults: [] });
+      // No sales at the exact print run searched? Estimate from sales of the
+      // same card at other print runs, adjusted for scarcity (see /api/search).
+      const estimate = hasExactPrintRunSales(query, searchData.results)
+        ? null
+        : buildSimilarPrintRunEstimate(query, searchData.results);
+      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, estimate, mode, serial: serial || null, similarResults: [] });
     }
 
     if (serial) {
@@ -4151,7 +4275,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType };
+module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarPrintRunEstimate, hasExactPrintRunSales, parsePrintRunFromTitle };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
