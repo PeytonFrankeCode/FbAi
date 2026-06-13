@@ -1819,19 +1819,26 @@ function buildApproxValueSection(approx, originalQuery) {
   `;
 }
 
-// ---- Similar-card price estimate (print-run adjusted) ----
-// Shown when a sold search finds NO sales at the exact print run the user
-// asked for (e.g. a /10). The server picks 3–5 sales of the same card at other
-// print runs, adjusts each one for the scarcity difference, and we display the
-// estimate crossed against the actual sold prices it used.
+// ---- Similar-card price estimate (print-run + set adjusted) ----
+// Shown when a sold search finds NO sale of the exact card. The server picks
+// 3–5 of the same player's similar sales and adjusts each for print-run and
+// set differences; we display the estimate crossed against the sold prices used.
 function buildSimilarEstimateSection(est, query) {
   const fmt = n => `$${Number(n).toFixed(2)}`;
   const pr = est.targetPrintRun;
+  const targetLabel = pr ? `/${pr}` : (est.targetSet || 'this card');
 
   const rows = (est.comps || []).map(c => {
     const dir = c.adjustedPrice >= c.soldPrice ? 'up' : 'down';
     const dirArrow = dir === 'up' ? '&#9650;' : '&#9660;';
-    const scarcity = c.printRun > pr ? 'more common' : 'rarer';
+    const tags = [];
+    if (c.printRun) {
+      const scarcity = pr ? (c.printRun > pr ? 'more common' : 'rarer') : null;
+      tags.push(`<span class="est-comp-prtag">/${c.printRun}${scarcity ? ` <span class="est-comp-scar">(${scarcity})</span>` : ''}</span>`);
+    }
+    if (c.setName && c.setName !== est.targetSet) {
+      tags.push(`<span class="est-comp-prtag est-comp-settag">${escHtml(c.setName)}</span>`);
+    }
     const img = c.imageUrl
       ? `<img class="est-comp-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
       : '<div class="est-comp-img est-comp-img-empty"></div>';
@@ -1845,30 +1852,43 @@ function buildSimilarEstimateSection(est, query) {
         <div class="est-comp-main">
           ${titleHtml}
           <div class="est-comp-sub">
-            <span class="est-comp-prtag">/${c.printRun} <span class="est-comp-scar">(${scarcity})</span></span>
+            ${tags.join('')}
             ${c.soldDate ? `<span class="est-comp-date">${escHtml(timeAgo(c.soldDate))}</span>` : ''}
           </div>
         </div>
         <div class="est-comp-prices">
           <span class="est-comp-sold" title="Actual sold price">${fmt(c.soldPrice)}</span>
           <span class="est-comp-cross est-${dir}">${dirArrow}</span>
-          <span class="est-comp-adj" title="Adjusted to a /${pr}">${fmt(c.adjustedPrice)}</span>
+          <span class="est-comp-adj" title="Adjusted to ${escHtml(targetLabel)}">${fmt(c.adjustedPrice)}</span>
         </div>
       </div>`;
   }).join('');
 
+  // Adaptive copy depending on what was adjusted.
+  const adjustedBits = [];
+  if (est.adjustedForPrintRun) adjustedBits.push('print run');
+  if (est.adjustedForSet) adjustedBits.push('set value');
+  const adjustedText = adjustedBits.length ? `, adjusted for ${adjustedBits.join(' and ')}` : '';
+  const noWhat = pr
+    ? `No sold sales found for a <strong>/${pr}</strong>${est.targetSet ? ` ${escHtml(est.targetSet)}` : ''}.`
+    : `No exact sold sales found${est.targetSet ? ` for <strong>${escHtml(est.targetSet)}</strong>` : ''}.`;
+
+  const formulaBits = [];
+  if (est.adjustedForPrintRun) formulaBits.push(`print run by (its run &divide; ${targetLabel})<sup>${est.alpha}</sup> (a /25 &asymp; 2&times; a /99, not 4&times;)`);
+  if (est.adjustedForSet) formulaBits.push('set by relative set value (e.g. National Treasures &gt; Score)');
+
   approxSection.innerHTML = `
     <div class="approx-badge">ESTIMATED VALUE</div>
-    <div class="approx-note">No sold sales found for a <strong>/${pr}</strong>. Estimated from ${est.sampleSize} similar sale${est.sampleSize !== 1 ? 's' : ''} at other print runs, adjusted for scarcity.</div>
+    <div class="approx-note">${noWhat} Estimated from ${est.sampleSize} similar ${est.sampleSize === 1 ? 'sale' : 'sales'} of the same player${adjustedText}.</div>
     <div class="approx-price">~${fmt(est.value)}</div>
     <div class="approx-details">
       <span>Low: ${fmt(est.low)}</span>
       <span>High: ${fmt(est.high)}</span>
       <span>${est.sampleSize} adjusted comp${est.sampleSize !== 1 ? 's' : ''}</span>
     </div>
-    <div class="est-comps-head">Sold comps used &rarr; adjusted to /${pr}</div>
+    <div class="est-comps-head">Sold comps used &rarr; adjusted to ${escHtml(targetLabel)}</div>
     <div class="est-comps">${rows}</div>
-    <div class="approx-source">Each sale is adjusted by (its print run &divide; /${pr})<sup>${est.alpha}</sup> &mdash; scarcer cards are worth more, but sub-linearly (a /25 &asymp; 2&times; a /99, not 4&times;).</div>
+    ${formulaBits.length ? `<div class="approx-source">Each sale is adjusted for ${formulaBits.join('; and ')}.</div>` : ''}
   `;
 }
 
@@ -4477,12 +4497,43 @@ async function runMarketMovers() {
 
 let _apComps = [];     // [{ title, price, image, soldDate, url, pr, grade, include }]
 let _apUserPR = null;  // user's card print run (number) or null
+let _apUserSet = null; // user's card set { name, tier } or null
 
 // Power-law scarcity exponent. Scarcer print runs command a premium that
 // scales as a power law, not linearly — an experienced collector knows a /25
 // isn't 4x a /99, it's closer to ~2x. 0.65 matches the value the checklist
 // estimator (estimateByPrintRun) already uses, so the whole app is consistent.
 const AP_SCARCITY_ALPHA = 0.65;
+
+// Set desirability tiers — kept in sync with SET_VALUE_TIERS in server.js.
+// Relative weights (not dollars) used to normalize a comp from a different set
+// toward the searched card's set: a comp from set B is scaled by
+// tier(targetSet)/tier(compSet), clamped. Higher = more premium. Tweak freely.
+const SET_VALUE_TIERS = {
+  'national treasures': 8, 'flawless': 8, 'immaculate': 6, 'impeccable': 6,
+  'spectra': 4, 'obsidian': 4, 'noir': 4, 'encased': 3.5, 'limited': 3.5,
+  'gold standard': 3.5, 'majestic': 3.5, 'origins': 3, 'contenders': 3,
+  'prizm': 2.5, 'select': 2.5, 'mosaic': 2, 'optic': 2, 'phoenix': 2,
+  'certified': 2, 'absolute': 2, 'zenith': 2, 'elements': 2,
+  'luminance': 1.8, 'illusions': 1.8, 'chronicles': 1.8, 'photogenic': 1.8,
+  'prestige': 1.5,
+  'donruss': 1.2, 'score': 1, 'hoops': 1,
+};
+
+function clampNum(n, lo, hi) { return Math.min(Math.max(n, lo), hi); }
+
+// Find the most specific known set named in a title → { name, tier } or null.
+function detectSetTier(text) {
+  const t = ' ' + String(text || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+  let best = null;
+  for (const name of Object.keys(SET_VALUE_TIERS)) {
+    const re = new RegExp('(^| )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '( |$)');
+    if (re.test(t) && (!best || name.length > best.name.length)) {
+      best = { name, tier: SET_VALUE_TIERS[name] };
+    }
+  }
+  return best;
+}
 
 // Parse a print-run / serial denominator out of a listing title.
 // Handles "/99", "#/25", "12/99" (serial stamp → denominator), "1/1",
@@ -4515,6 +4566,7 @@ async function runAutoPricer() {
     return;
   }
   _apUserPR = parsePrintRun(q);
+  _apUserSet = detectSetTier(q);
   out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
   try {
     const res = await authFetch(`/api/auto-price/search?q=${encodeURIComponent(q)}`);
@@ -4523,7 +4575,8 @@ async function runAutoPricer() {
     if (!data.items || !data.items.length) { out.innerHTML = '<p class="pp-error">No sold listings found for this card.</p>'; return; }
     _apComps = data.items
       .filter(it => it && it.price > 0)
-      .map(it => ({ ...it, pr: parsePrintRun(it.title), grade: detectGrade(it.title), include: true }));
+      .slice(0, 10) // cap comps at 10
+      .map(it => ({ ...it, pr: parsePrintRun(it.title), set: detectSetTier(it.title), grade: detectGrade(it.title), include: true }));
     renderApComps(out);
   } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${escHtml(e.message)}</p>`; }
 }
@@ -4618,19 +4671,27 @@ function calculateApValue() {
     return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
   };
 
-  // Per-comp print-run adjustment.
+  const userSet = _apUserSet;
+  // Per-comp adjustment for BOTH print run (scarcity) and set (desirability).
   const rows = sel.map(c => {
-    let mult = 1, note = '';
+    let prMult = 1, setMult = 1;
+    const notes = [];
     if (userPR && c.pr && c.pr !== userPR) {
-      mult = Math.pow(c.pr / userPR, AP_SCARCITY_ALPHA);
-      mult = Math.min(Math.max(mult, 0.15), 12); // clamp wild extremes (e.g. 1/1)
-      note = c.pr > userPR ? 'rarer than comp' : 'more common than comp';
+      prMult = Math.pow(c.pr / userPR, AP_SCARCITY_ALPHA);
+      prMult = Math.min(Math.max(prMult, 0.15), 12); // clamp wild extremes (e.g. 1/1)
+      notes.push(c.pr > userPR ? 'rarer than comp' : 'more common than comp');
     } else if (userPR && !c.pr) {
-      note = 'comp unnumbered';
+      notes.push('comp unnumbered');
     } else if (!userPR && c.pr) {
-      note = 'your card unnumbered';
+      notes.push('your card unnumbered');
     }
-    return { title: c.title, raw: c.price, pr: c.pr, grade: c.grade, mult, adj: c.price * mult, note };
+    const compSet = c.set || detectSetTier(c.title);
+    if (userSet && compSet && compSet.name !== userSet.name) {
+      setMult = clampNum(userSet.tier / compSet.tier, 0.2, 5);
+      notes.push(setMult > 1 ? `${userSet.name} > ${compSet.name}` : `${userSet.name} < ${compSet.name}`);
+    }
+    const mult = prMult * setMult;
+    return { title: c.title, raw: c.price, pr: c.pr, set: compSet, grade: c.grade, prMult, setMult, mult, adj: c.price * mult, note: notes.join(' · ') };
   });
 
   const adjPrices = rows.map(r => r.adj);
@@ -4650,6 +4711,8 @@ function calculateApValue() {
 
   // Confidence: more comps + tight spread + little adjustment = higher.
   const adjustedCount = rows.filter(r => Math.abs(r.mult - 1) > 0.01).length;
+  const prAdjustedCount = rows.filter(r => Math.abs(r.prMult - 1) > 0.01).length;
+  const setAdjustedCount = rows.filter(r => Math.abs(r.setMult - 1) > 0.01).length;
   const spread = value > 0 ? (high - low) / value : 2;
   let confidence = 'medium';
   if (sel.length >= 5 && spread < 0.9 && adjustedCount <= sel.length / 2) confidence = 'high';
@@ -4689,24 +4752,31 @@ function calculateApValue() {
             <div class="ap-rec-desc">${r.description}</div>
           </div>`).join('')}
       </div>
-      ${adjustedCount > 0 ? `<div class="ap-method-note">&#9881;&#65039; ${adjustedCount} comp${adjustedCount !== 1 ? 's were' : ' was'} a different print run than your card, so ${adjustedCount !== 1 ? 'they were' : 'it was'} scaled by a power-law scarcity model (a /25 runs ~2&times; a /99, not 4&times;).</div>` : ''}
+      ${prAdjustedCount > 0 ? `<div class="ap-method-note">&#9881;&#65039; ${prAdjustedCount} comp${prAdjustedCount !== 1 ? 's were' : ' was'} a different print run than your card, so ${prAdjustedCount !== 1 ? 'they were' : 'it was'} scaled by a power-law scarcity model (a /25 runs ~2&times; a /99, not 4&times;).</div>` : ''}
+      ${setAdjustedCount > 0 ? `<div class="ap-method-note">&#127991;&#65039; ${setAdjustedCount} comp${setAdjustedCount !== 1 ? 's were from' : ' was from'} a different set${userSet ? ` than your <strong>${escHtml(userSet.name)}</strong>` : ''}, so ${setAdjustedCount !== 1 ? 'their prices were' : 'its price was'} balanced for set value (e.g. National Treasures &gt; Score).</div>` : ''}
       ${mixedGrades ? `<div class="ap-method-note ap-warn">&#9888;&#65039; Selected comps span multiple grades (${grades.map(escHtml).join(', ')}). For a tighter estimate, include only comps in your card's grade.</div>` : ''}
       <details class="ap-breakdown-wrap">
         <summary>Show the math &mdash; how each comp was adjusted</summary>
         <table class="ap-breakdown">
-          <thead><tr><th>Comp</th><th>Sold</th><th>Print run</th><th>Adj.</th><th>Value</th></tr></thead>
+          <thead><tr><th>Comp</th><th>Sold</th><th>Print run</th><th>Set</th><th>Adj.</th><th>Value</th></tr></thead>
           <tbody>
-            ${rows.map(r => `
+            ${rows.map(r => {
+              const adjBits = [];
+              if (Math.abs(r.prMult - 1) > 0.01) adjBits.push(`print run &times;${r.prMult.toFixed(2)}`);
+              if (Math.abs(r.setMult - 1) > 0.01) adjBits.push(`set &times;${r.setMult.toFixed(2)}`);
+              return `
               <tr>
                 <td class="ap-bd-title">${escHtml(r.title.length > 60 ? r.title.slice(0, 57) + '…' : r.title)}${r.grade && r.grade !== 'Raw / Ungraded' ? ` <span class="ap-tag ap-tag-grade">${escHtml(r.grade)}</span>` : ''}</td>
                 <td>${fmt(r.raw)}</td>
                 <td>${r.pr ? '/' + r.pr : '<span class="ap-bd-muted">—</span>'}</td>
-                <td>${Math.abs(r.mult - 1) > 0.01 ? `<span class="ap-bd-mult">&times;${r.mult.toFixed(2)}</span>` : '<span class="ap-bd-muted">—</span>'}</td>
+                <td>${r.set ? escHtml(r.set.name) : '<span class="ap-bd-muted">—</span>'}</td>
+                <td>${adjBits.length ? `<span class="ap-bd-mult" title="${adjBits.join(', ').replace(/&times;/g,'x')}">&times;${r.mult.toFixed(2)}</span>` : '<span class="ap-bd-muted">—</span>'}</td>
                 <td class="ap-bd-adj">${fmt(r.adj)}</td>
-              </tr>`).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
-        <div class="ap-breakdown-foot">Value = median of the adjusted comps. Adjustment = (comp print run &divide; your print run)<sup>0.65</sup>, clamped for extremes.</div>
+        <div class="ap-breakdown-foot">Value = median of the adjusted comps. Print-run adjustment = (comp print run &divide; your print run)<sup>0.65</sup>; set adjustment = (your set tier &divide; comp set tier). Both clamped for extremes.</div>
       </details>
     </div>`;
   section.querySelector('.ap-value-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });

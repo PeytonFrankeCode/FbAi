@@ -3196,6 +3196,13 @@ a.est-comp-title:hover { color: var(--accent, #5ece99); text-decoration: underli
 
 .est-comp-prtag { font-weight: 600; color: var(--text-primary); }
 .est-comp-scar { font-weight: 400; color: var(--text-secondary); }
+.est-comp-settag {
+  text-transform: capitalize;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 600;
+}
 
 .est-comp-prices {
   display: flex;

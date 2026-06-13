@@ -1067,12 +1067,12 @@ app.get('/api/search', async (req, res) => {
       const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
         ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
         : null;
-      // No sales at the exact print run the user searched (e.g. a /10)? Estimate
-      // the value from sales of the same card at other print runs, adjusted for
-      // scarcity, and surface the comps used.
-      const estimate = hasExactPrintRunSales(query, searchData.results)
+      // No sale of the exact card (e.g. a /10, or this set)? Estimate its value
+      // from the same player's similar sales, adjusted for print run and set,
+      // and surface the comps used.
+      const estimate = hasExactCardSales(query, searchData.results)
         ? null
-        : buildSimilarPrintRunEstimate(query, searchData.results);
+        : buildSimilarCardEstimate(query, searchData.results);
       return res.json({
         results: variantFiltered,
         total: variantFiltered.length,
@@ -1332,6 +1332,48 @@ const CARD_SET_NAMES = [
   'illusions', 'spectra', 'origins', 'majestic', 'phoenix', 'hoops',
   'flawless', 'immaculate', 'score', 'national treasures'
 ];
+
+// ---- Set desirability tiers (for cross-set value balancing) ----
+// A curated, hobby-informed ranking of how much a set's cards command relative
+// to each other, used ONLY to normalize comps from a different set than the one
+// searched (e.g. there are no National Treasures sales, so a Score sale is
+// scaled up toward NT). The numbers are RELATIVE weights, not dollar values; a
+// comp from set B is scaled toward target set A by tier(A)/tier(B), clamped.
+// Tweak freely — higher = more premium. Ambiguous names that double as a color
+// or parallel (e.g. "black", "elite", "one") are intentionally omitted so they
+// don't false-match inside titles.
+const SET_VALUE_TIERS = {
+  // Tier 1 — ultra high-end
+  'national treasures': 8, 'flawless': 8, 'immaculate': 6, 'impeccable': 6,
+  // Tier 2 — high-end
+  'spectra': 4, 'obsidian': 4, 'noir': 4, 'encased': 3.5, 'limited': 3.5,
+  'gold standard': 3.5, 'majestic': 3.5, 'origins': 3, 'contenders': 3,
+  // Tier 3 — mid
+  'prizm': 2.5, 'select': 2.5, 'mosaic': 2, 'optic': 2, 'phoenix': 2,
+  'certified': 2, 'absolute': 2, 'zenith': 2, 'elements': 2,
+  'luminance': 1.8, 'illusions': 1.8, 'chronicles': 1.8, 'photogenic': 1.8,
+  'prestige': 1.5,
+  // Tier 4 — base / entry
+  'donruss': 1.2, 'score': 1, 'hoops': 1,
+};
+
+// Find the most specific known set named in a title and return { name, tier }.
+// Prefers the longest matching name so "national treasures" beats nothing and
+// multi-word sets win over substrings.
+function detectSetTier(text) {
+  const t = ' ' + String(text || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+  let best = null;
+  for (const name of Object.keys(SET_VALUE_TIERS)) {
+    const re = new RegExp('(^| )' + escapeRegexLiteral(name) + '( |$)');
+    if (re.test(t) && (!best || name.length > best.name.length)) {
+      best = { name, tier: SET_VALUE_TIERS[name] };
+    }
+  }
+  return best;
+}
+
+function clampNum(n, lo, hi) { return Math.min(Math.max(n, lo), hi); }
+
 
 // Auto/memorabilia keywords — excluded from results unless user specifically searched for them
 const SPECIAL_CARD_KEYWORDS = ['autograph', 'patch', 'rpa', 'relic', 'jersey', 'memorabilia', 'logoman'];
@@ -1655,62 +1697,80 @@ function parsePrintRunFromTitle(title) {
   return null;
 }
 
-// When a sold search finds NO sales for the exact print run the user wants
-// (e.g. a /10), estimate the card's value from sales of the SAME card at other
-// print runs (e.g. /25, /50), adjusting each comp's sold price for the scarcity
-// difference. Uses the 3–5 comps closest in scarcity to the target. Returns
-// null when there isn't a serial-numbered query or enough similar sales.
-function buildSimilarPrintRunEstimate(query, results) {
-  const serial = extractSerial(query);
-  if (!serial) return null;
-  const targetPR = parseInt(serial, 10);
-  if (!(targetPR > 0) || !Array.isArray(results) || results.length === 0) return null;
+// When a sold search finds NO sale of the exact card, estimate its value from
+// sales of the SAME PLAYER's similar cards, adjusting each comp for the two
+// things that move value most:
+//   • print run — scaled by (compPR / targetPR)^0.65 (e.g. a /10 estimated
+//     from a /25), and
+//   • set       — scaled by tier(targetSet)/tier(compSet) so an unnumbered or
+//     cross-set comp from a cheaper set (Score) is lifted toward a pricier one
+//     (National Treasures), and vice-versa.
+// The player is always the anchor — a comp for a different player is never used,
+// honoring "only include it if it has the same name as the search". Uses the
+// 3–5 comps needing the smallest adjustment (closest to the target). Returns
+// null when there's no player to anchor on or no usable comps.
+function buildSimilarCardEstimate(query, results) {
+  if (!Array.isArray(results) || results.length === 0) return null;
 
   const pad = r => ' ' + String(r.title || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
-
-  // Match the rest of the card (player / year / set / parallel / grade / type)
-  // — everything EXCEPT the print run — so "Gold /25" isn't estimated from a
-  // "Silver /25". Reuse the same keyword engine the sold search uses.
   const { predicates } = extractSearchKeywords(query);
   const playerPred = predicates.find(p => p.kind === 'player');
-  const nonPR = predicates.filter(p => p.kind !== 'printRun' && !isNegativeKeyword(p));
+  if (!playerPred) return null; // no name to anchor → don't estimate from noise
 
+  // Prefer comps that match the whole card except the print run (same set,
+  // parallel, grade…). If that's empty, relax to the player anchor so we can
+  // still estimate across print runs / sets. Never relax past the player.
+  const nonPR = predicates.filter(p => p.kind !== 'printRun' && !isNegativeKeyword(p));
   let pool = results.filter(r => { const t = pad(r); return nonPR.every(p => p.test(t)); });
-  // Relax toward the player anchor if the strict "same card" pass is empty, so
-  // a thin card still gets an estimate instead of nothing. Never estimate from
-  // a different player.
-  if (pool.length === 0 && playerPred) pool = results.filter(r => playerPred.test(pad(r)));
+  let crossCard = false;
+  if (pool.length === 0) { pool = results.filter(r => playerPred.test(pad(r))); crossCard = true; }
   if (pool.length === 0) return null;
 
-  // Only comps numbered to something OTHER than the target help a print-run
-  // adjustment.
-  const others = pool
-    .map(r => ({ r, pr: parsePrintRunFromTitle(r.title), price: parseFloat(r.price) }))
-    .filter(c => c.pr && c.price > 0 && c.pr !== targetPR);
-  if (others.length === 0) return null;
+  const serial = extractSerial(query);
+  const targetPR = parseInt(serial, 10) > 0 ? parseInt(serial, 10) : null;
+  const targetSet = detectSetTier(query);
 
-  // Prefer the comps closest in scarcity to the target — the smaller the
-  // adjustment, the more reliable. Take 3–5.
-  others.sort((a, b) =>
-    Math.abs(Math.log(a.pr / targetPR)) - Math.abs(Math.log(b.pr / targetPR)));
-  const chosen = others.slice(0, 5);
+  // Adjust each comp for print-run and set differences, then keep the ones that
+  // needed the least adjustment (most comparable to the target card).
+  const scored = pool.map(r => {
+    const price = parseFloat(r.price);
+    if (!(price > 0)) return null;
+    const compPR = parsePrintRunFromTitle(r.title);
+    const compSet = detectSetTier(r.title);
 
-  const comps = chosen.map(c => {
-    let mult = Math.pow(c.pr / targetPR, ESTIMATE_SCARCITY_ALPHA);
-    mult = Math.min(Math.max(mult, 0.15), 12); // clamp wild extremes (e.g. 1/1)
-    return {
-      title: c.r.title,
-      soldPrice: c.price,
-      printRun: c.pr,
-      multiplier: mult,
-      adjustedPrice: c.price * mult,
-      rarer: c.pr > targetPR,
-      soldDate: c.r.soldDate,
-      imageUrl: c.r.imageUrl,
-      itemUrl: c.r.itemUrl,
-      condition: c.r.condition,
-    };
-  });
+    let prMult = 1;
+    if (targetPR && compPR && compPR !== targetPR) {
+      prMult = clampNum(Math.pow(compPR / targetPR, ESTIMATE_SCARCITY_ALPHA), 0.15, 12);
+    }
+    let setMult = 1;
+    if (targetSet && compSet && compSet.name !== targetSet.name) {
+      setMult = clampNum(targetSet.tier / compSet.tier, 0.2, 5);
+    }
+    const mult = prMult * setMult;
+    // A comp identical to the target on both axes needs no adjustment — ignore
+    // it for "distance" so true matches sort first.
+    return { r, price, compPR, compSet, prMult, setMult, mult, adj: price * mult };
+  }).filter(Boolean);
+  if (scored.length === 0) return null;
+
+  scored.sort((a, b) => Math.abs(Math.log(a.mult)) - Math.abs(Math.log(b.mult)));
+  const chosen = scored.slice(0, 5);
+
+  const comps = chosen.map(c => ({
+    title: c.r.title,
+    soldPrice: c.price,
+    printRun: c.compPR,
+    setName: c.compSet ? c.compSet.name : null,
+    prMultiplier: c.prMult,
+    setMultiplier: c.setMult,
+    multiplier: c.mult,
+    adjustedPrice: c.adj,
+    rarer: (targetPR && c.compPR) ? c.compPR > targetPR : null,
+    soldDate: c.r.soldDate,
+    imageUrl: c.r.imageUrl,
+    itemUrl: c.r.itemUrl,
+    condition: c.r.condition,
+  }));
 
   const adj = comps.map(c => c.adjustedPrice).sort((a, b) => a - b);
   const median = adj.length % 2
@@ -1722,20 +1782,27 @@ function buildSimilarPrintRunEstimate(query, results) {
     low: adj[0],
     high: adj[adj.length - 1],
     targetPrintRun: targetPR,
+    targetSet: targetSet ? targetSet.name : null,
     sampleSize: comps.length,
     alpha: ESTIMATE_SCARCITY_ALPHA,
+    crossCard,
+    adjustedForPrintRun: comps.some(c => Math.abs(c.prMultiplier - 1) > 0.01),
+    adjustedForSet: comps.some(c => Math.abs(c.setMultiplier - 1) > 0.01),
     comps,
   };
 }
 
-// Detect whether a sold result set has any sales matching the query's exact
-// print run. Used to decide when to fall back to a print-run estimate.
-function hasExactPrintRunSales(query, results) {
+// Whether a result set contains a sale of the EXACT card searched — a listing
+// that matches every positive keyword (player, year, set, parallel, print run,
+// grade, …). When false, the caller falls back to a similar-card estimate.
+function hasExactCardSales(query, results) {
   const { predicates } = extractSearchKeywords(query);
-  const prPred = predicates.find(p => p.kind === 'printRun');
-  if (!prPred) return true; // no print run requested → estimate doesn't apply
-  return (results || []).some(r =>
-    prPred.test(' ' + String(r.title || '').toLowerCase().replace(/\s+/g, ' ') + ' '));
+  const positive = predicates.filter(p => !isNegativeKeyword(p));
+  if (positive.length === 0) return true;
+  return (results || []).some(r => {
+    const t = ' ' + String(r.title || '').toLowerCase().replace(/\s+/g, ' ') + ' ';
+    return positive.every(p => p.test(t));
+  });
 }
 
 function removeOutliers(prices) {
@@ -1915,11 +1982,11 @@ app.get('/api/direct-search', async (req, res) => {
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
-      // No sales at the exact print run searched? Estimate from sales of the
-      // same card at other print runs, adjusted for scarcity (see /api/search).
-      const estimate = hasExactPrintRunSales(query, searchData.results)
+      // No sale of the exact card? Estimate from the same player's similar
+      // sales, adjusted for print run and set (see /api/search).
+      const estimate = hasExactCardSales(query, searchData.results)
         ? null
-        : buildSimilarPrintRunEstimate(query, searchData.results);
+        : buildSimilarCardEstimate(query, searchData.results);
       return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, estimate, mode, serial: serial || null, similarResults: [] });
     }
 
@@ -3867,7 +3934,21 @@ app.get('/api/auto-price/search', async (req, res) => {
       }
     }
 
-    const items = (soldData.results || [])
+    // Only keep sold listings for the SAME player as the search — the
+    // progressive word-dropping fallback above can otherwise pull in other
+    // players, polluting the comps. Anchor on the surname (the most stable
+    // token). If the surname can't be found, leave the pool untouched.
+    let pool = soldData.results || [];
+    const playerName = extractPlayerName(query);
+    const nameToks = playerName
+      ? playerName.toLowerCase().split(' ').filter(w => w.length > 1 && !NON_NAME_WORDS.has(w))
+      : [];
+    const surname = nameToks[nameToks.length - 1];
+    if (surname) {
+      pool = pool.filter(i => (' ' + String(i.title || '').toLowerCase() + ' ').includes(surname));
+    }
+
+    const items = pool
       .map(i => ({
         title: i.title,
         price: parseFloat(i.price),
@@ -3876,7 +3957,7 @@ app.get('/api/auto-price/search', async (req, res) => {
         url: i.itemUrl || '',
       }))
       .filter(i => i.price > 0)
-      .slice(0, 20);
+      .slice(0, 10); // cap the comps shown in the Auto-Pricer at 10
     res.json({ items });
   } catch (err) {
     console.error('[APSearch]', err.message);
@@ -4275,7 +4356,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarPrintRunEstimate, hasExactPrintRunSales, parsePrintRunFromTitle };
+module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
