@@ -3239,14 +3239,12 @@ function getUserSubscription() {
 }
 
 function hasPro() {
-  // Pro is unlocked for everyone — all paywalls removed. Every feature gate
-  // (checkCapLimit, checkDailyLimit, proGate, dailyUsesLeft, price-alert
-  // options, promoted slots, full chart history) keys off this, so returning
-  // true here opens all Pro functionality. Flip back to the subscription
-  // check below to re-gate.
-  return true;
-  // const sub = getUserSubscription();
-  // return sub?.plan === 'pro' && sub?.status === 'active';
+  // Real subscription check — Pro features (Tracked Cards, Pro Tools, full
+  // chart history, higher caps) require an active 'pro' plan. Every feature
+  // gate (checkCapLimit, checkDailyLimit, proGate, dailyUsesLeft,
+  // price-alert options, promoted slots) keys off this.
+  const sub = getUserSubscription();
+  return sub?.plan === 'pro' && sub?.status === 'active';
 }
 
 // Back-compat: isProPlus is the strict Pro-tier check. isProOrPlus

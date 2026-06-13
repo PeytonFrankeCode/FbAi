@@ -39,12 +39,11 @@ const STRIPE_PRODUCT_PRO = 'prod_UKcw8SMnNESbuE';
 const STRIPE_PRODUCT_SLOT = 'prod_UKczmqAaEo7wa9';
 const STRIPE_PRODUCT_PROPLUS = 'prod_ULtSajiX8Hszzy';
 
-// TEMPORARY KILL SWITCH — all paid checkout is paused while we finalize tax
-// setup. While false, every checkout/buy endpoint returns 503 and the
-// frontend hides the Go Pro CTA. Flip back to true (or set env
-// CHECKOUT_ENABLED=true) to re-open sales. Cancellation via the billing
-// portal stays available so existing subscribers aren't trapped.
-const CHECKOUT_ENABLED = process.env.CHECKOUT_ENABLED === 'true' ? true : false;
+// Checkout kill switch — set env CHECKOUT_ENABLED=false to pause all paid
+// checkout (every checkout/buy endpoint returns 503 and the frontend hides
+// the Go Pro CTA). Enabled by default. Cancellation via the billing portal
+// stays available either way so existing subscribers aren't trapped.
+const CHECKOUT_ENABLED = process.env.CHECKOUT_ENABLED === 'false' ? false : true;
 const CHECKOUT_PAUSED_MSG = 'Subscriptions are temporarily paused while we finalize tax setup. Please check back soon.';
 
 const stripeEnabled = STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('REPLACE');
