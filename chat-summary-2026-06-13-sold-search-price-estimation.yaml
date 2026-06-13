@@ -95,5 +95,62 @@ design_notes:
   - Built from raw eBay results (pre price-outlier-filter); median over the
     adjusted comps keeps a single mis-list from skewing the value.
 
+follow_up_round_2:
+  user_feedback: >
+    Estimate did well adjusting for similar print runs but doesn't change value
+    for unnumbered cards; cap the Auto-Pricer sold comps at 10; only include
+    comps with the same player name as the search; and balance for different
+    sets (National Treasures worth more than Score).
+  decisions:
+    - scope: applied to BOTH the sold-search estimate and the Auto-Pricer.
+    - set_values: built a curated, tweakable tier table; cross-set comps used
+      only when same-set comps are scarce, with conservative clamps.
+  changes:
+    server_js:
+      - SET_VALUE_TIERS + detectSetTier(text) + clampNum(): curated relative set
+        weights (National Treasures/Flawless 8 … Score/Hoops 1). Ambiguous names
+        (black/elite/one) intentionally omitted. detectSetTier returns the most
+        specific named set { name, tier }.
+      - Renamed buildSimilarPrintRunEstimate → buildSimilarCardEstimate. Now
+        adjusts each comp by BOTH print run ((compPR/targetPR)^0.65) AND set
+        (tier(targetSet)/tier(compSet), clamped 0.2–5). Requires a player anchor
+        (only same-name comps). Handles unnumbered cards (set-only adjustment).
+        Picks the 3–5 comps needing the least total adjustment. Returns
+        targetSet, crossCard, adjustedForPrintRun, adjustedForSet + per-comp
+        prMultiplier/setMultiplier/setName.
+      - Renamed hasExactPrintRunSales → hasExactCardSales: true when a listing
+        matches EVERY positive keyword (player/year/set/parallel/print run/grade).
+        When false, the estimate fires — generalizes the trigger from print-run-
+        only to "no exact card", so unnumbered/cross-set cases also estimate.
+      - /api/auto-price/search: filters comps to the searched player's surname
+        (anchored via extractPlayerName) and caps the returned items at 10.
+      - exports updated: buildSimilarCardEstimate, hasExactCardSales,
+        parsePrintRunFromTitle, detectSetTier.
+    frontend_app_js:
+      - Mirrored SET_VALUE_TIERS + detectSetTier + clampNum (kept in sync).
+      - runAutoPricer: detects _apUserSet, caps comps at 10, stamps each comp
+        with its detected set.
+      - calculateApValue: per-comp adjustment now multiplies print-run × set
+        multipliers; new method note for set balancing; breakdown table gained a
+        Set column and a combined-adjustment tooltip; footer documents both
+        formulas.
+      - buildSimilarEstimateSection: adaptive copy (handles /N, set-only, or
+        both), shows each comp's set chip when it differs, "adjusted to /N or
+        set", and only lists the formulas actually applied.
+    style_css: .est-comp-settag chip.
+    cache_busts:
+      - style.css?v=83 -> v=84
+      - app.js?v=114 -> v=115
+  verification: >
+    Re-ran the extracted server helpers: same-set /10 print-run estimate
+    (~$711); unnumbered National Treasures estimated from Score/Prizm/Donruss
+    sales (set-only lift, median $50, wrong player excluded); combined NT /10
+    from a Prizm /25 ($100 → ~$580 via ×1.81 PR × ×3.20 set); no-player → null;
+    exact-card present → no estimate. node --check passes on both files.
+
 open_threads:
+  - The set-tier table (SET_VALUE_TIERS, mirrored in server.js + app.js) is a
+    first cut — user can adjust the weights/ordering.
+  - Auto-Pricer surname filter is strict: if there are no same-name sales it
+    shows "No sold listings found" rather than off-name comps.
   - No PR opened — pushed to the feature branch only.
