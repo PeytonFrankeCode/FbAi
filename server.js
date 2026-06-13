@@ -2766,6 +2766,32 @@ function saveSubscriptions(subs) {
   saveData('subscriptions', SUBS_FILE, subs);
 }
 
+// Accounts granted a permanent, no-charge Pro plan (staff / owner / brand
+// accounts). These are treated as an active 'pro' subscription everywhere the
+// app reads subscription status, without a Stripe record. Usernames are
+// compared lowercased. Add or remove names here to grant/revoke.
+const PRO_GRANT_USERS = new Set(['thecardhuddle']);
+
+// Returns the subscription record for a user, layering in a permanent Pro grant
+// for allowlisted accounts. Any real Stripe fields already on the record are
+// preserved; the grant only guarantees an active 'pro' plan.
+function getEffectiveSubscription(username) {
+  const key = String(username || '').toLowerCase();
+  const subs = loadSubscriptions();
+  const existing = subs[key] || null;
+  if (PRO_GRANT_USERS.has(key)) {
+    return {
+      ...(existing || {}),
+      plan: 'pro',
+      status: 'active',
+      permanent: true,
+      period: existing?.period || 'lifetime',
+      subscribedAt: existing?.subscribedAt || new Date().toISOString(),
+    };
+  }
+  return existing;
+}
+
 // ---- Global User Accounts ----
 const USERS_FILE = path.join(APP_ROOT, 'data', 'users.json');
 const SESSIONS_FILE = path.join(APP_ROOT, 'data', 'sessions.json');
@@ -3085,8 +3111,7 @@ app.get('/api/auth/me', (req, res) => {
   if (!username) return res.status(401).json({ error: 'Not authenticated' });
   const users = loadServerUsers();
   const user = users[username] || {};
-  const subs = loadSubscriptions();
-  res.json({ username, email: user.email || '', subscription: subs[username] || null });
+  res.json({ username, email: user.email || '', subscription: getEffectiveSubscription(username) });
 });
 
 // PUT /api/auth/email
@@ -4104,8 +4129,7 @@ app.post('/api/stripe/buy-slot', async (req, res) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: 'Username required' });
 
-  const subs = loadSubscriptions();
-  const userSub = subs[username.toLowerCase()];
+  const userSub = getEffectiveSubscription(username);
   if (!userSub || userSub.status !== 'active') {
     return res.status(403).json({ error: 'Pro subscription required' });
   }
@@ -4148,8 +4172,7 @@ app.get('/api/stripe/subscription', async (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: 'Username required' });
 
-  const subs = loadSubscriptions();
-  const userSub = subs[username.toLowerCase()] || null;
+  const userSub = getEffectiveSubscription(username);
 
   let billing = null;
   if (userSub && userSub.stripeSubscriptionId && stripeEnabled) {
@@ -4356,7 +4379,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier };
+module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

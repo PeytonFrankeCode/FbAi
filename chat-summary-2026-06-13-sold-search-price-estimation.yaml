@@ -148,6 +148,32 @@ follow_up_round_2:
     from a Prizm /25 ($100 → ~$580 via ×1.81 PR × ×3.20 set); no-player → null;
     exact-card present → no estimate. node --check passes on both files.
 
+grant_pro_access:
+  request: Give full Pro access to the account named 'thecardhuddle'.
+  context: >
+    Pro paywalls are real again (hasPro() checks sub.plan==='pro' &&
+    status==='active', synced from /api/stripe/subscription which reads the
+    KV-backed subscriptions store). Production accounts live in Cloudflare KV —
+    can't be edited from the sandbox — so the durable way to grant Pro is a
+    code-level allowlist that deploys through the normal push pipeline.
+  implementation:
+    server_js:
+      - PRO_GRANT_USERS = new Set(['thecardhuddle']) — staff/owner accounts
+        always treated as active permanent 'pro' (lowercased compare).
+      - getEffectiveSubscription(username): layers the permanent pro grant over
+        any real record for allowlisted users; returns the real record otherwise.
+      - Wired into the three subscription read paths: GET /api/auth/me,
+        GET /api/stripe/subscription (drives the frontend hasPro() sync), and
+        POST /api/stripe/buy-slot (extra-slot gate).
+      - exports add getEffectiveSubscription + PRO_GRANT_USERS.
+  verification: >
+    getEffectiveSubscription('thecardhuddle') and 'TheCardHuddle' both →
+    { plan:'pro', status:'active', permanent:true }; 'someoneelse' → null.
+  user_note: >
+    The account must exist (register/login as 'thecardhuddle'); Pro activates on
+    the next login/refresh once syncSubscriptionStatus fetches the grant. To
+    grant more accounts later, add usernames to PRO_GRANT_USERS.
+
 open_threads:
   - The set-tier table (SET_VALUE_TIERS, mirrored in server.js + app.js) is a
     first cut — user can adjust the weights/ordering.
