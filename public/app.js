@@ -1874,8 +1874,9 @@ function buildSimilarEstimateSection(est, query) {
     : `No exact sold sales found${est.targetSet ? ` for <strong>${escHtml(est.targetSet)}</strong>` : ''}.`;
 
   const formulaBits = [];
-  if (est.adjustedForPrintRun) formulaBits.push(`print run by (its run &divide; ${targetLabel})<sup>${est.alpha}</sup> (a /25 &asymp; 2&times; a /99, not 4&times;)`);
+  if (est.adjustedForPrintRun) formulaBits.push(`print run by (its run &divide; ${targetLabel})<sup>${est.alpha}</sup> (a /25 &asymp; 2&times; a /99, not 4&times;; unnumbered treated as ~/250)`);
   if (est.adjustedForSet) formulaBits.push('set by relative set value (e.g. National Treasures &gt; Score)');
+  if (est.neutralized) formulaBits.push('then neutralized toward the comps&rsquo; shared consensus so one off sale can&rsquo;t swing it');
 
   approxSection.innerHTML = `
     <div class="approx-badge">ESTIMATED VALUE</div>
@@ -4505,6 +4506,22 @@ let _apUserSet = null; // user's card set { name, tier } or null
 // estimator (estimateByPrintRun) already uses, so the whole app is consistent.
 const AP_SCARCITY_ALPHA = 0.65;
 
+// Effective print run for UNNUMBERED cards so the power law yields a real
+// multiplier between numbered and unnumbered comps (kept in sync with
+// UNNUMBERED_EFFECTIVE_PR in server.js). At 250, a /25 ≈ 4.5× an unnumbered.
+const UNNUMBERED_EFFECTIVE_PR = 250;
+// Neutralizer strength (0 = scale comps independently; 1 = collapse to the
+// group consensus). Pulls each comp toward the consensus before scaling so one
+// off sale (e.g. a /25 that sold under a /50) can't swing the estimate.
+const AP_NEUTRALIZER = 0.45;
+function apEffectivePR(pr) { return pr && pr > 0 ? pr : UNNUMBERED_EFFECTIVE_PR; }
+function apMedian(nums) {
+  const s = [...nums].sort((a, b) => a - b);
+  const n = s.length;
+  if (!n) return null;
+  return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+}
+
 // Set desirability tiers — kept in sync with SET_VALUE_TIERS in server.js.
 // Relative weights (not dollars) used to normalize a comp from a different set
 // toward the searched card's set: a comp from set B is scaled by
@@ -4665,33 +4682,38 @@ function calculateApValue() {
     return;
   }
 
-  const med = arr => {
-    const s = [...arr].sort((a, b) => a - b);
-    const n = s.length;
-    return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
-  };
-
+  const med = apMedian;
   const userSet = _apUserSet;
-  // Per-comp adjustment for BOTH print run (scarcity) and set (desirability).
-  const rows = sel.map(c => {
-    let prMult = 1, setMult = 1;
-    const notes = [];
-    if (userPR && c.pr && c.pr !== userPR) {
-      prMult = Math.pow(c.pr / userPR, AP_SCARCITY_ALPHA);
-      prMult = Math.min(Math.max(prMult, 0.15), 12); // clamp wild extremes (e.g. 1/1)
-      notes.push(c.pr > userPR ? 'rarer than comp' : 'more common than comp');
-    } else if (userPR && !c.pr) {
-      notes.push('comp unnumbered');
-    } else if (!userPR && c.pr) {
-      notes.push('your card unnumbered');
-    }
+  const targetEffPR = apEffectivePR(userPR);
+  const targetFactor = Math.pow(targetEffPR, AP_SCARCITY_ALPHA);
+
+  // Pass 1 — for each comp note its (effective) print run, normalize its price
+  // to the target SET's value level, and compute its implied "price @ /1" scale.
+  const scored = sel.map(c => {
+    const compEffPR = apEffectivePR(c.pr);
     const compSet = c.set || detectSetTier(c.title);
+    const notes = [];
+    if (userPR && c.pr && c.pr !== userPR) notes.push(c.pr > userPR ? 'rarer than comp' : 'more common than comp');
+    else if (userPR && !c.pr) notes.push('comp unnumbered');
+    else if (!userPR && c.pr) notes.push('your card unnumbered');
+    let setMult = 1;
     if (userSet && compSet && compSet.name !== userSet.name) {
       setMult = clampNum(userSet.tier / compSet.tier, 0.2, 5);
       notes.push(setMult > 1 ? `${userSet.name} > ${compSet.name}` : `${userSet.name} < ${compSet.name}`);
     }
-    const mult = prMult * setMult;
-    return { title: c.title, raw: c.price, pr: c.pr, set: compSet, grade: c.grade, prMult, setMult, mult, adj: c.price * mult, note: notes.join(' · ') };
+    const prMult = clampNum(Math.pow(compEffPR / targetEffPR, AP_SCARCITY_ALPHA), 0.1, 15);
+    const scale = (c.price * setMult) * Math.pow(compEffPR, AP_SCARCITY_ALPHA);
+    return { c, compSet, prMult, setMult, scale, notes };
+  });
+
+  // Pass 2 — neutralizer: pull each comp's scale toward the group consensus,
+  // then value at the target print run.
+  const consensusScale = med(scored.map(s => s.scale));
+  const sStr = AP_NEUTRALIZER;
+  const rows = scored.map(o => {
+    const neutralizedScale = Math.pow(consensusScale, sStr) * Math.pow(o.scale, 1 - sStr);
+    const adj = neutralizedScale / targetFactor;
+    return { title: o.c.title, raw: o.c.price, pr: o.c.pr, set: o.compSet, grade: o.c.grade, prMult: o.prMult, setMult: o.setMult, mult: adj / o.c.price, adj, note: o.notes.join(' · ') };
   });
 
   const adjPrices = rows.map(r => r.adj);
@@ -4754,6 +4776,7 @@ function calculateApValue() {
       </div>
       ${prAdjustedCount > 0 ? `<div class="ap-method-note">&#9881;&#65039; ${prAdjustedCount} comp${prAdjustedCount !== 1 ? 's were' : ' was'} a different print run than your card, so ${prAdjustedCount !== 1 ? 'they were' : 'it was'} scaled by a power-law scarcity model (a /25 runs ~2&times; a /99, not 4&times;).</div>` : ''}
       ${setAdjustedCount > 0 ? `<div class="ap-method-note">&#127991;&#65039; ${setAdjustedCount} comp${setAdjustedCount !== 1 ? 's were from' : ' was from'} a different set${userSet ? ` than your <strong>${escHtml(userSet.name)}</strong>` : ''}, so ${setAdjustedCount !== 1 ? 'their prices were' : 'its price was'} balanced for set value (e.g. National Treasures &gt; Score).</div>` : ''}
+      ${rows.length > 1 && AP_NEUTRALIZER > 0 ? `<div class="ap-method-note">&#9878;&#65039; Comps were neutralized toward their shared consensus before scaling, so one off sale (e.g. a rarer card that happened to sell low) can't swing the estimate.</div>` : ''}
       ${mixedGrades ? `<div class="ap-method-note ap-warn">&#9888;&#65039; Selected comps span multiple grades (${grades.map(escHtml).join(', ')}). For a tighter estimate, include only comps in your card's grade.</div>` : ''}
       <details class="ap-breakdown-wrap">
         <summary>Show the math &mdash; how each comp was adjusted</summary>
@@ -4776,7 +4799,7 @@ function calculateApValue() {
             }).join('')}
           </tbody>
         </table>
-        <div class="ap-breakdown-foot">Value = median of the adjusted comps. Print-run adjustment = (comp print run &divide; your print run)<sup>0.65</sup>; set adjustment = (your set tier &divide; comp set tier). Both clamped for extremes.</div>
+        <div class="ap-breakdown-foot">Value = median of the adjusted comps. Print-run adjustment = (comp print run &divide; your print run)<sup>0.65</sup> (unnumbered cards treated as ~/250); set adjustment = (your set tier &divide; comp set tier); both clamped. Comps are then neutralized toward their shared consensus so a single off sale can't dominate.</div>
       </details>
     </div>`;
   section.querySelector('.ap-value-card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
