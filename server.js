@@ -830,6 +830,55 @@ function classInner(block, cls) {
   return m ? stripTags(m[2]) : '';
 }
 
+// Same matcher as classInner but returns the element's RAW inner HTML (tags
+// intact) so the price parser can see eBay's separate dollars/cents nodes.
+function classInnerRaw(block, cls) {
+  const c = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(
+    '<([a-zA-Z][\\w-]*)\\b[^>]*\\bclass\\s*=\\s*' +
+      '(?:"[^"]*' + c + '[^"]*"|\'[^\']*' + c + '[^\']*\'|[^\\s"\'>]*' + c + '[^\\s"\'>]*)' +
+      '[^>]*>([\\s\\S]*?)<\\/\\1>',
+    'i'
+  );
+  const m = block.match(re);
+  return m ? m[2] : '';
+}
+
+// Parse a sold price (number) from a price element's RAW inner HTML. Robust to:
+//  • eBay rendering cents in a separate node with no literal decimal point
+//    ("$152" <sup>10</sup>), which a naive digit-strip reads as 15210;
+//  • thousands separators ("$1,250.00");
+//  • more than one price in the element (a struck "was" price beside the sold
+//    price) — takes the first well-formed value.
+function parsePriceHtml(rawHtml) {
+  if (!rawHtml) return 0;
+  const raw = String(rawHtml);
+  const flat = raw.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ');
+
+  // 1) First well-formed money value WITH cents (1,234.56 or 50.00).
+  const cents = flat.match(/\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+\.\d{2}/);
+  if (cents) {
+    const n = parseFloat(cents[0].replace(/,/g, ''));
+    if (isFinite(n) && n > 0) return n;
+  }
+
+  // 2) Cents rendered in a separate node, no literal decimal: "$152<sup>10</sup>"
+  //    → 152.10. Dollars, then tag(s), then exactly two cents digits.
+  const split = raw.match(/\$\s*([\d,]+)\s*(?:<[^>]+>\s*)+(\d{2})(?!\d)/);
+  if (split) {
+    const dollars = parseInt(split[1].replace(/,/g, ''), 10);
+    if (isFinite(dollars)) return dollars + parseInt(split[2], 10) / 100;
+  }
+
+  // 3) Whole-dollar listing (no cents anywhere): first integer value.
+  const intMatch = flat.match(/\$?\s*([\d,]{1,9})(?!\d)/);
+  if (intMatch) {
+    const n = parseFloat(intMatch[1].replace(/,/g, ''));
+    if (isFinite(n) && n > 0) return n;
+  }
+  return 0;
+}
+
 // Pick the best image URL in a card, tolerating unquoted attrs and lazy-load
 // placeholders. eBay defers the real image via data-defer-load and shows a
 // gray ebaystatic placeholder in src; prefer the real i.ebayimg.com asset.
@@ -870,15 +919,19 @@ function resolveCard(block) {
   }
   if (!title) title = (getAttr(block, 'alt') || '').trim();
 
-  // Price: a price-classed element, else the first dollar-and-cents value.
-  let priceStr =
-    classInner(block, 's-card__price') ||
-    classInner(block, 's-item__price') ||
-    classInner(block, 'price');
-  if (!/\d/.test(priceStr)) {
-    const dollar = block.match(/\$\s?[\d,]+\.\d{2}/);
-    priceStr = dollar ? dollar[0] : '';
+  // Price: parse from the price element's RAW HTML so split dollars/cents nodes
+  // and thousands commas don't get mangled into a giant number. Fall back to the
+  // first dollars-and-cents value anywhere in the card.
+  const rawPrice =
+    classInnerRaw(block, 's-card__price') ||
+    classInnerRaw(block, 's-item__price') ||
+    classInnerRaw(block, 'price');
+  let priceNum = parsePriceHtml(rawPrice);
+  if (!priceNum) {
+    const dollar = block.match(/\$\s?[\d,]+(?:\.\d{2})?/);
+    if (dollar) priceNum = parsePriceHtml(dollar[0]);
   }
+  const priceStr = priceNum ? priceNum.toFixed(2) : '';
 
   const img = pickImage(block);
   const dateMatch = block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\.?\s+\d{1,2},?\s+\d{4})/i);
@@ -4442,7 +4495,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS };
+module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
