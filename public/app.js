@@ -5931,7 +5931,7 @@ function renderPortfolio() {
   }
 
   // Valuation summary — how many cards are valued from live comps + freshness.
-  const valuedCount = coll.filter(c => c.comps && c.comps.length).length;
+  const valuedCount = coll.filter(c => (c.comps && c.comps.length) || c.isEstimate).length;
   const lastValued = coll.map(c => c.valuedAt).filter(Boolean).sort().pop();
   const windowLabel = _compsUseAllTime() ? 'all-time comps' : 'last 2 months (free)';
   let html = `<div class="portfolio-valued-summary">${valuedCount} of ${coll.length} card${coll.length !== 1 ? 's' : ''} valued from ${windowLabel}${lastValued ? ` &middot; updated ${timeAgo(lastValued)}` : ''} &middot; <span class="pf-summary-hint">tap any market value to see the comps used</span></div>`;
@@ -5976,7 +5976,7 @@ function _pfCardHtml(c, idx) {
   if (c.team) tags.push(`<span class="pf-tag pf-tag-team">${escHtml(c.team)}</span>`);
 
   const mktInner = mkt > 0
-    ? `<span class="pf-money-val">$${mkt.toFixed(2)}</span>${_cardValueMetaInline(c)}`
+    ? `<span class="pf-money-val">${c.isEstimate ? '~' : ''}$${mkt.toFixed(2)}</span>${_cardValueMetaInline(c)}`
     : '<span class="pf-money-val pf-value-link">Value &rsaquo;</span>';
 
   return `<div class="pf-card">
@@ -6001,9 +6001,90 @@ function _pfCardHtml(c, idx) {
     </div>
     <div class="pf-card-actions">
       <button class="pf-icon-btn pf-refresh-btn" onclick="refreshSingleCard(${idx}, this)" title="Refresh this card's value" ${c.locked ? 'disabled' : ''}>&#8635;</button>
+      <button class="pf-icon-btn pf-edit-btn" onclick="openEditCard(${idx})" title="Edit card">&#9998;</button>
       <button class="pf-icon-btn pf-remove-btn" onclick="removeFromCollection(${idx})" title="Remove">&times;</button>
     </div>
   </div>`;
+}
+
+// ---- Edit a saved collection card ----
+let _editCardIdx = null;
+
+function openEditCard(idx) {
+  const coll = getCollection();
+  const c = coll[idx];
+  if (!c) return;
+  _editCardIdx = idx;
+  const structured = !!c.player;
+  const v = s => escHtml(s == null ? '' : String(s));
+  const body = document.getElementById('edit-card-body');
+  body.innerHTML = `
+    <form id="edit-card-form" onsubmit="return saveEditCard(event)">
+      ${structured ? '' : `<label class="ec-label ec-wide">Card name<input id="ec-name" value="${v(c.name)}" placeholder="e.g. Patrick Mahomes 2017 Prizm Silver" /></label>`}
+      <div class="ec-grid">
+        <label class="ec-label">Player<input id="ec-player" value="${v(c.player)}" placeholder="${structured ? '' : 'optional'}" /></label>
+        <label class="ec-label">Year<input id="ec-year" value="${v(c.year)}" /></label>
+        <label class="ec-label">Brand / Product<input id="ec-brand" value="${v(c.brand)}" placeholder="e.g. Panini Prizm" /></label>
+        <label class="ec-label">Set<input id="ec-set" value="${v(c.setName)}" /></label>
+        <label class="ec-label">Parallel<input id="ec-parallel" value="${v(c.parallel)}" /></label>
+        <label class="ec-label">Print run /<input id="ec-printrun" value="${v(c.printRun)}" inputmode="numeric" placeholder="e.g. 25" /></label>
+        <label class="ec-label">Card #<input id="ec-cardnum" value="${v(c.cardNumber)}" /></label>
+        <label class="ec-label">Condition / Grade<input id="ec-cond" value="${v(c.condition)}" placeholder="PSA 10, Raw" /></label>
+        <label class="ec-label">Paid $<input id="ec-paid" type="number" step="0.01" min="0" value="${c.purchasePrice != null ? c.purchasePrice : ''}" /></label>
+      </div>
+      <label class="ec-label ec-wide">Notes<input id="ec-notes" value="${v(c.notes)}" /></label>
+      <label class="ec-check"><input type="checkbox" id="ec-revalue" checked /> Re-price from sold comps after saving</label>
+      <button type="submit" class="pp-btn">Save changes</button>
+    </form>`;
+  document.getElementById('edit-card-modal').classList.remove('hidden');
+}
+
+function closeEditCard() {
+  document.getElementById('edit-card-modal').classList.add('hidden');
+  _editCardIdx = null;
+}
+
+function saveEditCard(e) {
+  e.preventDefault();
+  const idx = _editCardIdx;
+  const coll = getCollection();
+  const c = coll[idx];
+  if (!c) { closeEditCard(); return false; }
+  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+
+  const player = val('ec-player');
+  if (player) {
+    c.player = player;
+    c.year = val('ec-year');
+    c.brand = val('ec-brand');
+    c.setName = val('ec-set');
+    c.parallel = val('ec-parallel');
+    c.cardNumber = val('ec-cardnum');
+    c.printRun = val('ec-printrun').replace(/[^\d]/g, '');
+    delete c.name; // now identified structurally
+  } else {
+    // Manual card: keep it a free-text name.
+    const nameEl = document.getElementById('ec-name');
+    c.name = nameEl ? nameEl.value.trim() : (c.name || '');
+  }
+  c.condition = val('ec-cond');
+  c.purchasePrice = parseFloat(val('ec-paid')) || 0;
+  c.notes = val('ec-notes');
+
+  const revalue = document.getElementById('ec-revalue')?.checked;
+  if (revalue) {
+    // Identity may have changed — drop stale comps/estimate so the value
+    // reflects the edited card, then re-price.
+    c.comps = [];
+    c.estimate = null;
+    c.isEstimate = false;
+    c.excludedComps = [];
+  }
+  saveCollection(coll);
+  closeEditCard();
+  renderPortfolio();
+  if (revalue && buildCardSoldQuery(c)) setTimeout(() => valueCardAt(idx, { silent: true }), 50);
+  return false;
 }
 
 function showAddCardModal() {
@@ -6190,9 +6271,18 @@ function recomputeCardValue(c) {
   const ex = new Set(c.excludedComps || []);
   const prices = (c.comps || []).filter(x => !ex.has(_compKey(x))).map(x => x.price).filter(p => p > 0);
   c.compCount = prices.length;
-  if (prices.length) {
-    const m = _medianOf(prices);
-    c.estValue = Math.round(m * 100) / 100;
+  if (c.estimate && c.estimate.value > 0) {
+    // No exact sale was found — the sold search returned an alternate estimate
+    // built from the same player's similar cards, adjusted for print run and
+    // set. Use THAT, not the raw median of those differently-numbered comps.
+    c.estValue = Math.round(c.estimate.value * 100) / 100;
+    c.isEstimate = true;
+  } else if (prices.length) {
+    // Exact sold comps — straight median of the matching sales.
+    c.estValue = Math.round(_medianOf(prices) * 100) / 100;
+    c.isEstimate = false;
+  } else {
+    c.isEstimate = false;
   }
   return prices.length;
 }
@@ -6208,10 +6298,15 @@ function _cardConfidence(c) {
 // Tiny inline meta shown next to a card's market value: confidence dot +
 // comp count, and a lock glyph when the value is locked/overridden.
 function _cardValueMetaInline(c) {
-  const conf = _cardConfidence(c);
-  const colors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
   const parts = [];
-  if (conf) parts.push(`<span class="pf-conf-dot" style="color:${colors[conf]}">&#9679;</span>${c.compCount || 0}`);
+  if (c.isEstimate && c.estimate) {
+    const n = c.estimate.sampleSize || (c.estimate.comps || []).length;
+    parts.push(`<span class="pf-est-badge" title="Estimated from ${n} similar sale${n !== 1 ? 's' : ''} — no exact sold listing found">EST</span>`);
+  } else {
+    const conf = _cardConfidence(c);
+    const colors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
+    if (conf) parts.push(`<span class="pf-conf-dot" style="color:${colors[conf]}">&#9679;</span>${c.compCount || 0}`);
+  }
   if (c.locked) parts.push('&#128274;');
   return parts.length ? `<span class="pf-val-meta">${parts.join(' ')}</span>` : '';
 }
@@ -6258,6 +6353,7 @@ async function _fetchCardComps(c) {
   rows.sort((a, b) => a.price - b.price);
   return {
     comps: rows,
+    estimate: data.estimate || null,
     broadened: data.searchType === 'broadened',
     relaxed: data.searchType === 'relaxed',
     matchNote: data.relaxedNote || null,
@@ -6277,6 +6373,7 @@ async function valueCardAt(idx, { silent = false } = {}) {
     return;
   }
   c.comps = r.comps;
+  c.estimate = r.estimate || null;
   c.broadened = r.broadened;
   c.relaxed = r.relaxed;
   c.matchNote = r.matchNote;
@@ -6312,13 +6409,16 @@ async function refreshPortfolioValues() {
     if (r && r.noKey) { noKey = true; break; }
     if (r && !r.error) {
       c.comps = r.comps;
+      c.estimate = r.estimate || null;
       c.broadened = r.broadened;
       c.relaxed = r.relaxed;
       c.matchNote = r.matchNote;
       c.valueQuery = r.query;
       c.valuedAt = new Date().toISOString();
       c.excludedComps = (c.excludedComps || []).filter(k => c.comps.some(x => _compKey(x) === k));
-      if (recomputeCardValue(c) > 0) refreshed++;
+      recomputeCardValue(c);
+      // Count it as valued whether from exact comps OR the alternate estimate.
+      if (c.estValue > 0) refreshed++;
     }
   }
   saveCollection(coll);
@@ -6361,7 +6461,37 @@ function renderCardCompsModal() {
   const confColors = { high: '#4ade80', medium: '#fbbf24', low: '#f87171' };
 
   let listHtml;
-  if (!comps.length) {
+  if (c.isEstimate && c.estimate && (c.estimate.comps || []).length) {
+    // Alternate (estimated) value — show the similar sales it was built from,
+    // each crossed from its actual sold price to the adjusted price.
+    const est = c.estimate;
+    const adjLabel = est.targetPrintRun ? `/${est.targetPrintRun}` : (est.targetSet || 'this card');
+    listHtml = `<div class="ccm-est-note">&#9878;&#65039; No exact sold listing — estimated from ${est.sampleSize} similar sale${est.sampleSize !== 1 ? 's' : ''}, each adjusted to ${escHtml(adjLabel)} for print run${est.adjustedForSet ? ' &amp; set value' : ''}.</div>`;
+    listHtml += '<div class="gc-comp-list">' + (est.comps || []).map(x => {
+      const img = x.imageUrl
+        ? `<img class="gc-comp-img" src="${escHtml(x.imageUrl)}" alt="" loading="lazy" />`
+        : '<div class="gc-comp-img gc-comp-noimg">&#127944;</div>';
+      const when = _gradingCompDate(x.soldDate);
+      const tags = [];
+      if (x.printRun) tags.push(`/${x.printRun}`);
+      if (x.setName && x.setName !== est.targetSet) tags.push(escHtml(x.setName));
+      const titleHtml = x.itemUrl
+        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(x.itemUrl))}" target="_blank" rel="noopener">${escHtml(x.title)}</a>`
+        : `<span class="gc-comp-title">${escHtml(x.title)}</span>`;
+      return `<div class="gc-comp">
+        ${img}
+        <div class="gc-comp-main">
+          ${titleHtml}
+          <div class="gc-comp-meta">
+            <span class="gc-comp-price gc-comp-strike">$${Number(x.soldPrice).toFixed(2)}</span>
+            <span class="gc-comp-arrow">&rarr;</span>
+            <span class="gc-comp-price gc-comp-adj">$${Number(x.adjustedPrice).toFixed(2)}</span>
+            ${tags.length ? ` · ${tags.join(' · ')}` : ''}${when ? ` · ${escHtml(when)}` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  } else if (!comps.length) {
     listHtml = `<div class="gc-empty">No comps yet. Click <strong>Re-value from eBay</strong> to pull live sold listings${buildCardSoldQuery(c) ? '' : ' (add more card details first)'}.</div>`;
   } else {
     // Read-only list of the exact sold comps the value was built from.
@@ -6387,12 +6517,19 @@ function renderCardCompsModal() {
     ? '<span class="ccm-match-note">&middot; similar items (no exact match)</span>'
     : (c.relaxed ? `<span class="ccm-match-note">&middot; ${escHtml(c.matchNote || 'closest matches')}</span>` : '');
 
+  const isEst = c.isEstimate && c.estimate;
+  const valueLabel = isEst ? 'estimated value' : 'market value (median)';
+  const valueText = med > 0 ? `${isEst ? '~' : ''}$${med.toFixed(2)}` : '—';
+  const metaText = isEst
+    ? `${c.estimate.sampleSize || (c.estimate.comps || []).length} similar sale${(c.estimate.sampleSize || 0) !== 1 ? 's' : ''}${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''}`
+    : `${c.compCount || 0} comps${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''} ${matchNote}`;
+
   body.innerHTML = `
     <div class="ccm-card-name">${escHtml(title)}</div>
     <div class="ccm-value-row">
-      <div class="ccm-value">${med > 0 ? `$${med.toFixed(2)}` : '—'}<span class="ccm-value-label">market value (median)</span></div>
-      ${conf ? `<span class="ccm-conf" style="color:${confColors[conf]}">&#9679; ${conf} confidence</span>` : ''}
-      <span class="ccm-meta">${c.compCount || 0} comps${c.valuedAt ? ` &middot; ${timeAgo(c.valuedAt)}` : ''} ${matchNote}</span>
+      <div class="ccm-value">${valueText}<span class="ccm-value-label">${valueLabel}</span></div>
+      ${isEst ? '<span class="ccm-conf pf-est-badge">EST</span>' : (conf ? `<span class="ccm-conf" style="color:${confColors[conf]}">&#9679; ${conf} confidence</span>` : '')}
+      <span class="ccm-meta">${metaText}</span>
     </div>
     <div class="ccm-window">${_compsUseAllTime()
       ? '&#9989; Valued from <strong>all-time</strong> sold comps'

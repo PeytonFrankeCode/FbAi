@@ -216,6 +216,38 @@ follow_up_round_4:
     instead of the sold price), grab the card's title + price via Settings →
     Test Keys (firstCardExtract) so the exact markup can be targeted.
 
+follow_up_round_5:
+  user_feedback: >
+    Add the alternate (estimated) sold price to the portfolio; let users edit
+    saved collection cards; and make the alternate sold pricer drive Refresh
+    Values in the collection too.
+  changes:
+    alternate_price_in_portfolio:
+      - _fetchCardComps now returns data.estimate; valueCardAt and
+        refreshPortfolioValues persist it on the card (c.estimate).
+      - recomputeCardValue PREFERS the estimate when present: no exact sale →
+        c.estValue = estimate.value, c.isEstimate = true (the server returns the
+        relaxed similar comps as results too, so we must NOT median those raw,
+        differently-numbered listings — the adjusted estimate is the value).
+        Exact comps still use the median.
+      - refreshPortfolioValues counts a card valued when c.estValue > 0 (exact OR
+        estimate), so the alternate pricer participates in Refresh Values.
+      - Portfolio tile shows "~$X" + an "EST" badge; summary valuedCount and the
+        comps modal are estimate-aware (modal shows each similar sale crossed
+        from its sold price → adjusted price, with print-run/set tags).
+    edit_cards:
+      - New #edit-card-modal + openEditCard/closeEditCard/saveEditCard. Edits
+        player/year/brand/set/parallel/print run/card #/condition/paid/notes
+        (manual cards keep a free-text name). "Re-price after saving" checkbox
+        clears stale comps/estimate and re-values via valueCardAt. Pencil edit
+        button added to each portfolio card's actions.
+    css: pf-est-badge, pf-edit-btn, ec-grid/ec-label/ec-check (edit form),
+      ccm-est-note + gc-comp-strike/arrow/adj (estimate breakdown in modal).
+    cache_busts: [app.js?v=116 -> v=117, style.css?v=84 -> v=85]
+  verification: >
+    node --check passes on both files. Server estimate already unit-tested;
+    client mirrors the same data. (No automated browser test in repo.)
+
 grant_pro_access:
   request: Give full Pro access to the account named 'thecardhuddle'.
   context: >
