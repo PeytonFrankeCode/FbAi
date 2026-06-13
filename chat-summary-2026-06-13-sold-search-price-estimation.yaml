@@ -148,6 +148,44 @@ follow_up_round_2:
     from a Prizm /25 ($100 → ~$580 via ×1.81 PR × ×3.20 set); no-player → null;
     exact-card present → no estimate. node --check passes on both files.
 
+follow_up_round_3:
+  user_feedback: >
+    Add a multiplier for the unnumbered↔numbered transition; and on a screenshot
+    a /50 sold $50 while a /25 sold $35, giving a /10 comp adjusted to $63.49 —
+    the /25 seems low, so the estimate needs a "neutralizer".
+  changes:
+    unnumbered_multiplier:
+      - UNNUMBERED_EFFECTIVE_PR (=250, server + app) + effectivePrintRun()/
+        apEffectivePR(): unnumbered cards now get an effective print run so the
+        same 0.65 power law yields a real multiplier across the
+        numbered/unnumbered boundary (a /25 ≈ (250/25)^0.65 ≈ 4.5× an
+        unnumbered; an unnumbered target valued down from numbered comps).
+    neutralizer:
+      - ESTIMATE_NEUTRALIZER / AP_NEUTRALIZER (=0.45). Each comp's implied
+        price-scale C = (set-normalized price) × effPR^0.65 is blended toward the
+        median consensus (geometric: C' = consensus^s × C^(1−s)) BEFORE valuing
+        at the target print run. A low/high single sale (the screenshot /25) is
+        pulled toward what the other comps imply, so it can't swing the estimate.
+        s=0 recovers the old independent-scaling behavior.
+      - buildSimilarCardEstimate refactored to the two-pass scale/consensus
+        pipeline (set → effPR scale → consensus → neutralize → value@target);
+        returns `neutralized`. calculateApValue mirrors it (operates over the
+        user-selected comps). Median is still the aggregator, so outliers are
+        doubly contained.
+    ui:
+      - AP: new "comps neutralized toward consensus" method note; breakdown
+        footer documents effective-/250 + neutralizer.
+      - Sold estimate: footnote mentions unnumbered ~/250 + neutralizer when
+        applied.
+    cache_busts: [app.js?v=115 -> v=116]
+  verification: >
+    Screenshot case (/10 from /50@$50 + /25@$35): /25 now adjusts to $78.91
+    (lifted from $63.49 toward the /50's implied level), /50 to $123, value $101.
+    Unnumbered target from numbered comps values down (×0.23–0.34); /25 from an
+    unnumbered $10 comp → ×4.47. Three consistent /25 sales → exactly $40 (no
+    distortion). A wild /99 $500 outlier no longer drives the value (median $128).
+    node --check passes.
+
 grant_pro_access:
   request: Give full Pro access to the account named 'thecardhuddle'.
   context: >

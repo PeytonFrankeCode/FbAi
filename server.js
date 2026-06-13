@@ -1675,6 +1675,31 @@ function matchSoldListings(results, query) {
 // not 4x).
 const ESTIMATE_SCARCITY_ALPHA = 0.65;
 
+// Effective print run assigned to UNNUMBERED cards (base / no serial) so the
+// same power law produces a real multiplier between numbered and unnumbered
+// comps instead of treating them as equal. Higher = unnumbered treated as more
+// common (bigger gap to a numbered card). At 250, a /25 ≈ (250/25)^0.65 ≈ 4.5×
+// an unnumbered copy. Tweak to taste.
+const UNNUMBERED_EFFECTIVE_PR = 250;
+
+// Neutralizer strength (0 = off → scale each comp independently like before;
+// 1 = collapse every comp onto the group consensus). Comps rarely agree (a
+// rarer /25 can sell for less than a /50 on a bad day); this pulls each comp's
+// implied value toward the consensus of all the comps before scaling, so one
+// off sale can't swing the estimate. 0.45 = a moderate pull.
+const ESTIMATE_NEUTRALIZER = 0.45;
+
+function medianOf(nums) {
+  const s = [...nums].sort((a, b) => a - b);
+  const n = s.length;
+  if (n === 0) return null;
+  return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
+}
+
+// The print run to value a comp/target at — its serial, or the unnumbered
+// effective run when it isn't numbered.
+function effectivePrintRun(pr) { return pr && pr > 0 ? pr : UNNUMBERED_EFFECTIVE_PR; }
+
 // Parse the print-run denominator out of a listing title (server mirror of the
 // frontend parsePrintRun). Handles "/99", "12/99" serial stamps, "1/1",
 // "one of one", "numbered to 99". Skips season ranges like "2020/21".
@@ -1728,54 +1753,64 @@ function buildSimilarCardEstimate(query, results) {
 
   const serial = extractSerial(query);
   const targetPR = parseInt(serial, 10) > 0 ? parseInt(serial, 10) : null;
+  const targetEffPR = effectivePrintRun(targetPR);
   const targetSet = detectSetTier(query);
 
-  // Adjust each comp for print-run and set differences, then keep the ones that
-  // needed the least adjustment (most comparable to the target card).
+  // Score each comp: bring its price onto the target SET's value level, note its
+  // (effective) print run, and measure how much adjusting it would take so the
+  // closest comps sort first.
   const scored = pool.map(r => {
     const price = parseFloat(r.price);
     if (!(price > 0)) return null;
     const compPR = parsePrintRunFromTitle(r.title);
     const compSet = detectSetTier(r.title);
+    const compEffPR = effectivePrintRun(compPR);
 
-    let prMult = 1;
-    if (targetPR && compPR && compPR !== targetPR) {
-      prMult = clampNum(Math.pow(compPR / targetPR, ESTIMATE_SCARCITY_ALPHA), 0.15, 12);
-    }
     let setMult = 1;
     if (targetSet && compSet && compSet.name !== targetSet.name) {
       setMult = clampNum(targetSet.tier / compSet.tier, 0.2, 5);
     }
-    const mult = prMult * setMult;
-    // A comp identical to the target on both axes needs no adjustment — ignore
-    // it for "distance" so true matches sort first.
-    return { r, price, compPR, compSet, prMult, setMult, mult, adj: price * mult };
+    // Raw scarcity multiplier (pre-neutralizer), clamped, for sorting + display.
+    const prMult = clampNum(Math.pow(compEffPR / targetEffPR, ESTIMATE_SCARCITY_ALPHA), 0.1, 15);
+    const setPrice = price * setMult;                  // price at the target set's level
+    const scale = setPrice * Math.pow(compEffPR, ESTIMATE_SCARCITY_ALPHA); // implied "price @ /1"
+    return { r, price, compPR, compSet, compEffPR, setMult, prMult, setPrice, scale, dist: Math.abs(Math.log(prMult * setMult)) };
   }).filter(Boolean);
   if (scored.length === 0) return null;
 
-  scored.sort((a, b) => Math.abs(Math.log(a.mult)) - Math.abs(Math.log(b.mult)));
+  scored.sort((a, b) => a.dist - b.dist);
   const chosen = scored.slice(0, 5);
 
-  const comps = chosen.map(c => ({
-    title: c.r.title,
-    soldPrice: c.price,
-    printRun: c.compPR,
-    setName: c.compSet ? c.compSet.name : null,
-    prMultiplier: c.prMult,
-    setMultiplier: c.setMult,
-    multiplier: c.mult,
-    adjustedPrice: c.adj,
-    rarer: (targetPR && c.compPR) ? c.compPR > targetPR : null,
-    soldDate: c.r.soldDate,
-    imageUrl: c.r.imageUrl,
-    itemUrl: c.r.itemUrl,
-    condition: c.r.condition,
-  }));
+  // Neutralizer: derive a consensus price level from all chosen comps and pull
+  // each comp's implied scale toward it (geometric blend) before valuing at the
+  // target print run. This stops a single low/high sale (e.g. a /25 that sold
+  // under a /50) from dictating the estimate.
+  const consensusScale = medianOf(chosen.map(c => c.scale));
+  const s = ESTIMATE_NEUTRALIZER;
+  const targetFactor = Math.pow(targetEffPR, ESTIMATE_SCARCITY_ALPHA);
+
+  const comps = chosen.map(c => {
+    const neutralizedScale = Math.pow(consensusScale, s) * Math.pow(c.scale, 1 - s);
+    const adjustedPrice = neutralizedScale / targetFactor;
+    return {
+      title: c.r.title,
+      soldPrice: c.price,
+      printRun: c.compPR,
+      setName: c.compSet ? c.compSet.name : null,
+      prMultiplier: c.prMult,
+      setMultiplier: c.setMult,
+      multiplier: adjustedPrice / c.price,
+      adjustedPrice,
+      rarer: (targetPR && c.compPR) ? c.compPR > targetPR : null,
+      soldDate: c.r.soldDate,
+      imageUrl: c.r.imageUrl,
+      itemUrl: c.r.itemUrl,
+      condition: c.r.condition,
+    };
+  });
 
   const adj = comps.map(c => c.adjustedPrice).sort((a, b) => a - b);
-  const median = adj.length % 2
-    ? adj[(adj.length - 1) / 2]
-    : (adj[adj.length / 2 - 1] + adj[adj.length / 2]) / 2;
+  const median = medianOf(adj);
 
   return {
     value: median,
@@ -1785,6 +1820,7 @@ function buildSimilarCardEstimate(query, results) {
     targetSet: targetSet ? targetSet.name : null,
     sampleSize: comps.length,
     alpha: ESTIMATE_SCARCITY_ALPHA,
+    neutralized: s > 0 && comps.length > 1,
     crossCard,
     adjustedForPrintRun: comps.some(c => Math.abs(c.prMultiplier - 1) > 0.01),
     adjustedForSet: comps.some(c => Math.abs(c.setMultiplier - 1) > 0.01),
