@@ -186,6 +186,36 @@ follow_up_round_3:
     distortion). A wild /99 $500 outlier no longer drives the value (median $128).
     node --check passes.
 
+follow_up_round_4:
+  user_feedback: >
+    Sold price parsing wrong — a card shows a sold price of $15,210 when it's
+    really ~$50 (i.e. $152.10 read as 15210).
+  diagnosis: >
+    assembleListing did parseFloat(priceStr.replace(/[^0-9.]/g,'')) on the
+    tag-stripped price text. When eBay renders cents in a separate node with no
+    literal decimal ("$152<sup>10</sup>"), stripping tags concatenates the
+    digits → "15210". (Thousands commas and a second/struck price could mangle
+    it too.)
+  changes:
+    server_js:
+      - classInnerRaw(block, cls): like classInner but returns RAW inner HTML so
+        the price parser can see the dollars/cents node split.
+      - parsePriceHtml(rawHtml): (1) first well-formed money value with cents
+        (commas stripped); (2) reassemble split "$dollars<tag>cc" → dollars.cc;
+        (3) else first integer (whole-dollar listing). Replaces the naive strip.
+      - resolveCard now parses price via parsePriceHtml(rawPrice element), with a
+        block-level "$N(.NN)" fallback; returns a normalized priceStr.
+      - exported parsePriceHtml.
+  verification: >
+    Unit tests pass for: plain $50.00; the bug "$152<sup>10</sup>"→152.10;
+    "$50<span>00</span>"→50; "$1,250.00"→1250; two prices→first; whole-dollar
+    "$50"→50; "$1,500"→1500 (NOT 15.00); nested POSITIVE span; price+shipping
+    junk→50. Server-only change (no asset cache bump).
+  note: >
+    If a value still looks wrong after this (e.g. shows the struck "was" price
+    instead of the sold price), grab the card's title + price via Settings →
+    Test Keys (firstCardExtract) so the exact markup can be targeted.
+
 grant_pro_access:
   request: Give full Pro access to the account named 'thecardhuddle'.
   context: >
