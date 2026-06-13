@@ -5865,10 +5865,40 @@ tr:hover .cl-alert-btn {
 .pf-icon-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-primary, var(--border)); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; line-height: 1; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s, border-color 0.15s; }
 .pf-icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .pf-refresh-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pf-edit-btn:hover { border-color: var(--accent); color: var(--accent); }
 .pf-remove-btn:hover { border-color: #f87171; color: #f87171; }
 .pf-icon-btn:disabled { opacity: 0.4; cursor: default; }
 .pf-refresh-btn.pf-refreshing { animation: pf-spin 0.7s linear infinite; pointer-events: none; }
 @keyframes pf-spin { to { transform: rotate(360deg); } }
+
+/* "EST" badge — value came from the alternate similar-card estimate, not exact sales */
+.pf-est-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  background: rgba(214, 158, 46, 0.18);
+  color: #f6ad55;
+  border: 1px solid rgba(214, 158, 46, 0.4);
+  vertical-align: middle;
+}
+
+/* Edit Card modal form */
+.ec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.75rem; margin: 0.5rem 0; }
+.ec-label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
+.ec-label.ec-wide { width: 100%; }
+.ec-label input { font-size: 0.9rem; padding: 0.5rem 0.6rem; border-radius: 7px; border: 1px solid var(--border-primary, var(--border)); background: var(--bg-secondary); color: var(--text-primary); }
+.ec-check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); margin: 0.6rem 0; }
+.ec-check input { width: auto; }
+@media (max-width: 480px) { .ec-grid { grid-template-columns: 1fr; } }
+
+/* Estimate breakdown inside the card comps modal */
+.ccm-est-note { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.6rem; line-height: 1.4; }
+.gc-comp-strike { color: var(--text-muted); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.3); font-weight: 600; }
+.gc-comp-arrow { color: var(--text-muted); margin: 0 0.15rem; }
+.gc-comp-adj { color: #f6ad55; font-weight: 700; }
 
 .pf-empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); }
 .pf-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
