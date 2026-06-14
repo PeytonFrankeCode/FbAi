@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=85" />
+  <link rel="stylesheet" href="style.css?v=86" />
 
 
 </head>
@@ -171,6 +171,7 @@
       <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
       <button class="nav-tab" data-view="collection" onclick="switchView('collection')">My Cards</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">Sell</button>
+      <button class="nav-tab" data-view="proplus" onclick="switchView('proplus')">Tools</button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -726,223 +727,47 @@
   <div id="seller-view" class="collection-view hidden">
     <div class="collection-container">
       <div class="collection-header">
-        <h2 class="collection-title">Sell</h2>
-        <p class="collection-subtitle">Create, price, and promote your eBay card listings</p>
-        <div class="collection-tabs">
-          <button class="seller-subtab active" data-seller="create" onclick="switchSellerTab('create')">Create Listing</button>
-          <button class="seller-subtab" data-seller="mylistings" onclick="switchSellerTab('mylistings')">My Listings</button>
-          <button class="seller-subtab" data-seller="titlegenerator" onclick="switchSellerTab('titlegenerator')">Title Generator</button>
-          <button class="seller-subtab" data-seller="promote" onclick="switchSellerTab('promote')">Promote Cards</button>
-          <button class="seller-subtab" data-seller="autopricer" onclick="switchSellerTab('autopricer')">Auto-Pricer</button>
-          <button class="seller-subtab" data-seller="bulkpricer" onclick="switchSellerTab('bulkpricer')">Bulk Pricer <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
+        <h2 class="collection-title">Showcase</h2>
+        <p class="collection-subtitle">Show off your cards. Mark any for sale (links out to eBay) or for trade (links to Veriswap) &mdash; The Card Huddle isn't part of the transaction.</p>
+      </div>
+
+      <!-- Where sales / trades hand off to -->
+      <div class="showcase-settings">
+        <div class="showcase-setting">
+          <label>Your eBay store / seller URL <span class="sc-opt">(optional)</span></label>
+          <input type="url" id="showcase-ebay-store" placeholder="https://www.ebay.com/usr/yourname" oninput="saveShowcaseSettings()" />
+        </div>
+        <div class="showcase-setting">
+          <label>Your Veriswap profile <span class="sc-opt">(optional)</span></label>
+          <input type="text" id="showcase-veriswap" placeholder="veriswap.com/yourname or @handle" oninput="saveShowcaseSettings()" />
         </div>
       </div>
 
-      <!-- Create Listing Sub-tab -->
-      <div id="seller-create" class="seller-panel">
-        <form id="create-listing-form" onsubmit="return handleCreateListing(event)">
-          <div class="seller-form-grid">
-            <div class="seller-form-group seller-form-full">
-              <label>Listing Title <span class="seller-char-count" id="listing-title-count">0/80</span></label>
-              <div class="seller-title-row">
-                <input type="text" id="seller-listing-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm Football" maxlength="80" required oninput="updateTitleCount()" />
-                <button type="button" class="seller-autofill-btn" onclick="showTitleAutofill()">Auto-Fill</button>
-              </div>
-            </div>
-
-            <div class="seller-form-group">
-              <label>Category</label>
-              <select id="seller-category">
-                <option value="sports-cards">Sports Trading Cards</option>
-                <option value="singles">Singles</option>
-                <option value="lots">Lots</option>
-                <option value="boxes">Boxes & Packs</option>
-                <option value="graded">Graded Cards</option>
-              </select>
-            </div>
-
-            <div class="seller-form-group">
-              <label>Condition</label>
-              <select id="seller-condition">
-                <option value="ungraded-nm">Ungraded - Near Mint</option>
-                <option value="ungraded-ex">Ungraded - Excellent</option>
-                <option value="ungraded-vg">Ungraded - Very Good</option>
-                <option value="ungraded-good">Ungraded - Good</option>
-                <option value="psa10">PSA 10</option>
-                <option value="psa9">PSA 9</option>
-                <option value="psa8">PSA 8</option>
-                <option value="bgs10">BGS 10</option>
-                <option value="bgs9.5">BGS 9.5</option>
-                <option value="sgc10">SGC 10</option>
-              </select>
-            </div>
-
-            <div class="seller-form-group">
-              <label>Listing Format</label>
-              <select id="seller-format" onchange="toggleAuctionFields()">
-                <option value="fixed">Buy It Now (Fixed Price)</option>
-                <option value="auction">Auction</option>
-              </select>
-            </div>
-
-            <div class="seller-form-group">
-              <label id="seller-price-label">Buy It Now Price ($)</label>
-              <input type="number" id="seller-price" placeholder="0.00" step="0.01" min="0.01" required />
-            </div>
-
-            <div class="seller-form-group seller-auction-field hidden">
-              <label>Starting Bid ($)</label>
-              <input type="number" id="seller-start-bid" placeholder="0.99" step="0.01" min="0.01" />
-            </div>
-
-            <div class="seller-form-group">
-              <label>Quantity</label>
-              <input type="number" id="seller-quantity" value="1" min="1" max="99" />
-            </div>
-
-            <div class="seller-form-group">
-              <label>Shipping</label>
-              <select id="seller-shipping">
-                <option value="free">Free Shipping</option>
-                <option value="standard">Standard ($3.99)</option>
-                <option value="economy">Economy ($2.49)</option>
-                <option value="priority">Priority ($7.99)</option>
-                <option value="custom">Custom Amount</option>
-              </select>
-            </div>
-
-            <div class="seller-form-group seller-custom-shipping hidden">
-              <label>Shipping Cost ($)</label>
-              <input type="number" id="seller-shipping-cost" placeholder="0.00" step="0.01" min="0" />
-            </div>
-
-            <div class="seller-form-group seller-form-full">
-              <label>Description</label>
-              <textarea id="seller-description" rows="4" placeholder="Add details about your card — condition notes, centering, corners, edges, any flaws..."></textarea>
-            </div>
-
-            <div class="seller-form-group seller-form-full">
-              <label>Listing URL <span style="font-weight:normal;color:#888">(optional)</span></label>
-              <input type="url" id="seller-listing-url" placeholder="e.g. https://www.ebay.com/itm/123456789" />
-            </div>
-
-            <div class="seller-form-group seller-form-full">
-              <label>Photo Notes</label>
-              <div class="seller-photo-placeholder">
-                <span>Upload photos directly on eBay when creating your final listing</span>
-                <textarea id="seller-photo-notes" rows="2" placeholder="Note which photos to include (e.g. front, back, close-up of corners)..."></textarea>
-              </div>
-            </div>
-          </div>
-
-          <div class="seller-form-actions">
-            <button type="submit" class="seller-save-btn">Save Listing Draft</button>
-            <button type="button" class="seller-clear-btn" onclick="clearListingForm()">Clear Form</button>
-          </div>
-        </form>
+      <div class="showcase-actions">
+        <button type="button" class="seller-save-btn" onclick="openShowcasePicker()">+ Add from My Cards</button>
+        <button type="button" class="seller-clear-btn" onclick="openShowcaseManual()">+ Add Manually</button>
       </div>
 
-      <!-- My Listings Sub-tab -->
-      <div id="seller-mylistings" class="seller-panel hidden">
-        <div class="seller-listings-controls">
-          <div class="seller-listings-stats">
-            <span id="seller-listing-count">0 listings</span>
-            <span id="seller-total-value">Est. Value: $0.00</span>
-          </div>
-          <div class="seller-listings-actions">
-            <button class="seller-export-btn" onclick="exportListingsCSV()">Export CSV</button>
-          </div>
-        </div>
-        <div id="seller-listings-list" class="seller-listings-list">
-          <p class="seller-empty">No listing drafts yet. Create your first listing above!</p>
-        </div>
-      </div>
+      <div id="showcase-grid" class="showcase-grid"></div>
+    </div>
+  </div>
 
-      <!-- Title Generator Sub-tab -->
-      <div id="seller-titlegenerator" class="seller-panel hidden">
-        <p class="listing-helper-desc">Generate optimized eBay listing titles from your checklist data.</p>
-        <div class="listing-helper-search">
-          <input type="text" id="listing-helper-input" placeholder="Search for a card..." />
-          <button type="button" class="scan-cam-btn" onclick="openScanFillModal('listing-helper-input')" title="Scan card photo">&#128247;</button>
-          <button onclick="generateListingTitles()">Generate</button>
-        </div>
-        <div id="listing-helper-results" class="listing-helper-results"></div>
-      </div>
+  <!-- Showcase: pick cards from My Cards -->
+  <div id="showcase-picker-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:560px">
+      <button class="login-close" onclick="closeShowcasePicker()">&times;</button>
+      <h2>Add from My Cards</h2>
+      <p class="ccm-help">Pick the cards you want on your showcase. You can set each one for sale or trade after adding.</p>
+      <div id="showcase-picker-body"></div>
+    </div>
+  </div>
 
-      <!-- Promote Cards Sub-tab (Pro Only) -->
-      <div id="seller-promote" class="seller-panel hidden">
-        <div id="promote-pro-gate" class="promote-gate hidden">
-          <div class="promote-gate-icon">&#11088;</div>
-          <h3>Pro Feature</h3>
-          <p>Promote up to 5 of your eBay listings so they appear in search results across The Card Huddle.</p>
-          <button class="pro-btn" onclick="showPricing()">Upgrade to Pro</button>
-        </div>
-        <div id="promote-content">
-          <p class="listing-helper-desc">Add up to 5 eBay listings to promote in search results. Your cards will appear between results when other users search.</p>
-          <div class="promote-count"><span id="promote-card-count">0</span> / <span id="promote-max-count">5</span> slots used</div>
-          <div id="promote-buy-slot-wrap" class="promote-buy-slot hidden">
-            <p>All slots filled! Need more room? <span style="font-size:0.8rem;opacity:0.7;">(Extra slots expire when the card sells)</span></p>
-            <button class="promote-buy-slot-btn" onclick="handleBuyExtraSlot()">+ Add Extra Slot &mdash; $2.99</button>
-            <p id="promote-extra-cap-info" class="promote-cap-info"></p>
-          </div>
-          <div class="promote-autofill-wrap">
-            <label>Fill from My Listings</label>
-            <select id="promote-autofill-select" onchange="autofillPromoteFromListing(this.value)">
-              <option value="">-- Select a listing to autofill --</option>
-            </select>
-          </div>
-          <form id="promote-card-form" onsubmit="return handleAddPromotedCard(event)" class="promote-form">
-            <div class="seller-form-grid">
-              <div class="seller-form-group seller-form-full">
-                <label>Card Title</label>
-                <input type="text" id="promote-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm" required />
-              </div>
-              <div class="seller-form-group">
-                <label>eBay Listing URL</label>
-                <input type="url" id="promote-url" placeholder="https://www.ebay.com/itm/..." required onchange="autoFillFromEbayUrl()" onpaste="setTimeout(autoFillFromEbayUrl, 100)" />
-              </div>
-              <div class="seller-form-group">
-                <label>Price ($)</label>
-                <input type="number" id="promote-price" placeholder="0.00" step="0.01" min="0.01" required />
-              </div>
-              <div class="seller-form-group">
-                <label>Image URL (optional)</label>
-                <input type="url" id="promote-image" placeholder="https://i.ebayimg.com/..." />
-                <div class="promote-upload-row">
-                  <label for="promote-image-file" class="promote-upload-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Upload from device
-                  </label>
-                  <input type="file" id="promote-image-file" accept="image/*" onchange="handlePromoteImageFile(event)" hidden />
-                  <span id="promote-image-status" class="promote-upload-status"></span>
-                </div>
-                <div id="promote-image-preview-wrap" class="promote-image-preview-wrap hidden">
-                  <img id="promote-image-preview" alt="Preview" />
-                  <button type="button" class="promote-image-clear" onclick="clearPromoteImage()" aria-label="Remove image">&times;</button>
-                </div>
-              </div>
-              <div class="seller-form-group">
-                <label>Condition</label>
-                <select id="promote-condition">
-                  <option value="Ungraded - Near Mint">Ungraded - Near Mint</option>
-                  <option value="Ungraded - Excellent">Ungraded - Excellent</option>
-                  <option value="PSA 10">PSA 10</option>
-                  <option value="PSA 9">PSA 9</option>
-                  <option value="BGS 10">BGS 10</option>
-                  <option value="BGS 9.5">BGS 9.5</option>
-                  <option value="SGC 10">SGC 10</option>
-                </select>
-              </div>
-            </div>
-            <div class="seller-form-actions">
-              <button type="submit" class="seller-save-btn" id="promote-submit-btn">Add Promoted Card</button>
-            </div>
-          </form>
-          <div id="promoted-cards-list" class="seller-listings-list">
-            <p class="seller-empty">No promoted cards yet. Add your first listing above!</p>
-          </div>
-        </div>
-      </div>
+  <!-- Showcase: add / edit a showcase card -->
+  <div id="showcase-edit-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:480px">
+      <button class="login-close" onclick="closeShowcaseEdit()">&times;</button>
+      <h2 id="showcase-edit-title">Add to Showcase</h2>
+      <div id="showcase-edit-body"></div>
     </div>
   </div>
 
@@ -1248,6 +1073,7 @@
         <div class="proplus-tabs">
           <button class="proplus-tab active" data-pptab="autoprices" onclick="switchProPlusTab('autoprices')">&#127991;&#65039; Auto-Pricer</button>
           <button class="proplus-tab" data-pptab="bulkprice" onclick="switchProPlusTab('bulkprice')">&#128196; Bulk Pricer</button>
+          <button class="proplus-tab" data-pptab="promote" onclick="switchProPlusTab('promote')">&#11088; Promote Cards</button>
         </div>
 
         <!-- Auto-Pricer -->
@@ -1271,6 +1097,75 @@
             <button class="pp-btn pp-btn-secondary" onclick="exportBulkCSV()">Export CSV</button>
           </div>
           <div id="bulk-results"></div>
+        </div>
+
+        <!-- Promote Cards -->
+        <div id="pptab-promote" class="pptab-panel hidden">
+          <div id="promote-pro-gate" class="promote-gate hidden">
+            <div class="promote-gate-icon">&#11088;</div>
+            <h3>Pro Feature</h3>
+            <p>Promote up to 5 of your eBay listings so they appear in search results across The Card Huddle.</p>
+            <button class="pro-btn" onclick="showPricing()">Upgrade to Pro</button>
+          </div>
+          <div id="promote-content">
+            <p class="pp-desc">Add up to 5 eBay listings to promote in search results. Your cards will appear between results when other users search.</p>
+            <div class="promote-count"><span id="promote-card-count">0</span> / <span id="promote-max-count">5</span> slots used</div>
+            <div id="promote-buy-slot-wrap" class="promote-buy-slot hidden">
+              <p>All slots filled! Need more room? <span style="font-size:0.8rem;opacity:0.7;">(Extra slots expire when the card sells)</span></p>
+              <button class="promote-buy-slot-btn" onclick="handleBuyExtraSlot()">+ Add Extra Slot &mdash; $2.99</button>
+              <p id="promote-extra-cap-info" class="promote-cap-info"></p>
+            </div>
+            <form id="promote-card-form" onsubmit="return handleAddPromotedCard(event)" class="promote-form">
+              <div class="seller-form-grid">
+                <div class="seller-form-group seller-form-full">
+                  <label>Card Title</label>
+                  <input type="text" id="promote-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm" required />
+                </div>
+                <div class="seller-form-group">
+                  <label>eBay Listing URL</label>
+                  <input type="url" id="promote-url" placeholder="https://www.ebay.com/itm/..." required onchange="autoFillFromEbayUrl()" onpaste="setTimeout(autoFillFromEbayUrl, 100)" />
+                </div>
+                <div class="seller-form-group">
+                  <label>Price ($)</label>
+                  <input type="number" id="promote-price" placeholder="0.00" step="0.01" min="0.01" required />
+                </div>
+                <div class="seller-form-group">
+                  <label>Image URL (optional)</label>
+                  <input type="url" id="promote-image" placeholder="https://i.ebayimg.com/..." />
+                  <div class="promote-upload-row">
+                    <label for="promote-image-file" class="promote-upload-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Upload from device
+                    </label>
+                    <input type="file" id="promote-image-file" accept="image/*" onchange="handlePromoteImageFile(event)" hidden />
+                    <span id="promote-image-status" class="promote-upload-status"></span>
+                  </div>
+                  <div id="promote-image-preview-wrap" class="promote-image-preview-wrap hidden">
+                    <img id="promote-image-preview" alt="Preview" />
+                    <button type="button" class="promote-image-clear" onclick="clearPromoteImage()" aria-label="Remove image">&times;</button>
+                  </div>
+                </div>
+                <div class="seller-form-group">
+                  <label>Condition</label>
+                  <select id="promote-condition">
+                    <option value="Ungraded - Near Mint">Ungraded - Near Mint</option>
+                    <option value="Ungraded - Excellent">Ungraded - Excellent</option>
+                    <option value="PSA 10">PSA 10</option>
+                    <option value="PSA 9">PSA 9</option>
+                    <option value="BGS 10">BGS 10</option>
+                    <option value="BGS 9.5">BGS 9.5</option>
+                    <option value="SGC 10">SGC 10</option>
+                  </select>
+                </div>
+              </div>
+              <div class="seller-form-actions">
+                <button type="submit" class="seller-save-btn" id="promote-submit-btn">Add Promoted Card</button>
+              </div>
+            </form>
+            <div id="promoted-cards-list" class="seller-listings-list">
+              <p class="seller-empty">No promoted cards yet. Add your first listing above!</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1522,6 +1417,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=117"></script>
+  <script src="app.js?v=118"></script>
 </body>
 </html>

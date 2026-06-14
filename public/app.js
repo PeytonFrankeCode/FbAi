@@ -3555,14 +3555,13 @@ const rainbowPage = document.getElementById('rainbow-page');
 function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
   // any deep links / older code paths still route somewhere sensible.
-  // grading -> Search subtab, tracked -> My Cards subtab,
-  // proplus -> Sell -> Auto-Pricer subtab.
+  // grading -> Search subtab, tracked -> My Cards subtab.
+  // Tools (Auto-Pricer / Bulk Pricer / Promote Cards) is its own 'proplus' tab.
   let searchSub = null;
   let collSub = null;
-  let sellerSub = null;
+  let proplusSub = null;
   if (view === 'grading') { view = 'search'; searchSub = 'grading'; }
   else if (view === 'tracked') { view = 'collection'; collSub = 'tracked'; }
-  else if (view === 'proplus') { view = 'seller'; sellerSub = 'autopricer'; }
 
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
@@ -3597,8 +3596,13 @@ function switchView(view) {
     if (collSub) switchCollectionTab(collSub);
   } else if (view === 'seller') {
     sellerView.classList.remove('hidden');
-    renderMyListings();
-    if (sellerSub) switchSellerTab(sellerSub);
+    initShowcase();
+  } else if (view === 'proplus') {
+    if (proplusView) {
+      proplusView.classList.remove('hidden');
+      initProPlusView();
+      switchProPlusTab(proplusSub || 'autoprices');
+    }
   } else {
     // Search top-tab. Show the subtab strip and either the main search
     // panel or the Grading Advisor panel based on the (optional) sub.
@@ -4431,6 +4435,7 @@ function initProPlusView() {
 function switchProPlusTab(tab) {
   document.querySelectorAll('.proplus-tab').forEach(t => t.classList.toggle('active', t.dataset.pptab === tab));
   document.querySelectorAll('.pptab-panel').forEach(p => p.classList.toggle('hidden', p.id !== `pptab-${tab}`));
+  if (tab === 'promote') initPromoteTab();
 }
 
 async function runFlipFinder() {
@@ -5737,6 +5742,8 @@ const USER_SYNC_KEYS = [
   'cardHuddleCompletion',
   'cardHuddleSellerListings',
   'cardHuddlePromotedCards',
+  'cardHuddleShowcase',
+  'cardHuddleShowcaseSettings',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
 let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
@@ -7852,30 +7859,274 @@ function loadHotCold(days) {
 // ---- eBay Seller Section ----
 
 // Seller sub-tab switching
+// Legacy shim. The Sell tab is now the Showcase; the pricing/promote tools
+// moved to their own Tools (proplus) tab. Old sub-tab names are routed to
+// wherever those features live now so any remaining callers keep working.
 function switchSellerTab(tab) {
-  document.querySelectorAll('.seller-subtab').forEach(b => b.classList.toggle('active', b.dataset.seller === tab));
-  document.querySelectorAll('.seller-panel').forEach(p => p.classList.add('hidden'));
-
-  // Auto-Pricer and Bulk Pricer still live in the #proplus-view div for
-  // layout reasons. Treat them as Sell subtabs by swapping which
-  // top-level container is visible and pre-selecting the proplus tab.
-  const proplusView = document.getElementById('proplus-view');
-  if (tab === 'autopricer' || tab === 'bulkpricer') {
-    sellerView.classList.add('hidden');
-    if (proplusView) {
-      proplusView.classList.remove('hidden');
-      initProPlusView();
-      switchProPlusTab(tab === 'bulkpricer' ? 'bulkprice' : 'autoprices');
-    }
+  if (tab === 'autopricer' || tab === 'bulkpricer' || tab === 'promote') {
+    switchView('proplus');
+    switchProPlusTab(tab === 'bulkpricer' ? 'bulkprice' : tab === 'promote' ? 'promote' : 'autoprices');
     return;
   }
-  // Default: a regular Sell sub-panel inside seller-view.
-  if (proplusView) proplusView.classList.add('hidden');
-  sellerView.classList.remove('hidden');
-  const panel = document.getElementById(`seller-${tab}`);
-  if (panel) panel.classList.remove('hidden');
-  if (tab === 'mylistings') renderMyListings();
-  if (tab === 'promote') initPromoteTab();
+  switchView('seller');
+}
+
+// =====================================================================
+// Showcase (Sell tab)
+// A public-style "virtual table" of your cards. Each card can be marked
+// for sale (hands off to an eBay listing/search) or for trade (hands off
+// to Veriswap) — The Card Huddle is not part of the transaction.
+// Stored client-side for now (synced via schedulePushUserData), the same
+// way the collection and seller listings are.
+// =====================================================================
+const SHOWCASE_KEY = 'cardHuddleShowcase';
+const SHOWCASE_SETTINGS_KEY = 'cardHuddleShowcaseSettings';
+
+function getShowcase() {
+  try { return JSON.parse(localStorage.getItem(SHOWCASE_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveShowcase(items) {
+  localStorage.setItem(SHOWCASE_KEY, JSON.stringify(items));
+  schedulePushUserData();
+}
+function getShowcaseSettings() {
+  try { return JSON.parse(localStorage.getItem(SHOWCASE_SETTINGS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveShowcaseSettings() {
+  const settings = {
+    ebayStore: (document.getElementById('showcase-ebay-store')?.value || '').trim(),
+    veriswap: (document.getElementById('showcase-veriswap')?.value || '').trim(),
+  };
+  localStorage.setItem(SHOWCASE_SETTINGS_KEY, JSON.stringify(settings));
+  schedulePushUserData();
+}
+
+// Build a readable card name from a saved collection card.
+function _scCollName(c) {
+  if (c.player) {
+    return [c.player, c.year, c.brand, c.setName, c.parallel].filter(Boolean).join(' ');
+  }
+  return c.name || 'Card';
+}
+
+// Normalize a Veriswap profile value into a link. Their public URL scheme
+// isn't documented, so we make a best effort: full URLs are used as-is,
+// "@handle"/"handle" map to veriswap.com/<handle>, otherwise we point at
+// veriswap.com so the button always goes somewhere sensible.
+function _veriswapLink(v) {
+  v = (v || '').trim();
+  if (!v) return 'https://veriswap.com';
+  if (/^https?:\/\//i.test(v)) return v;
+  if (v.startsWith('@')) return 'https://veriswap.com/' + encodeURIComponent(v.slice(1));
+  if (v.includes('.') || v.includes('/')) return 'https://' + v.replace(/^\/+/, '');
+  return 'https://veriswap.com/' + encodeURIComponent(v);
+}
+
+// Where a "For sale" card sends the buyer: its own eBay listing if given,
+// otherwise an eBay search for the title (affiliate-wrapped via epnUrl).
+function _showcaseEbayLink(entry) {
+  const url = (entry.ebayUrl || '').trim();
+  if (url) return epnUrl(/^https?:\/\//i.test(url) ? url : 'https://' + url);
+  return epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(entry.title || '')}`);
+}
+
+function _showcaseTradeLink(entry) {
+  const settings = getShowcaseSettings();
+  return _veriswapLink((entry.veriswapUrl || '').trim() || settings.veriswap || '');
+}
+
+function initShowcase() {
+  const settings = getShowcaseSettings();
+  const ebayEl = document.getElementById('showcase-ebay-store');
+  const vsEl = document.getElementById('showcase-veriswap');
+  if (ebayEl) ebayEl.value = settings.ebayStore || '';
+  if (vsEl) vsEl.value = settings.veriswap || '';
+  renderShowcase();
+}
+
+function renderShowcase() {
+  const grid = document.getElementById('showcase-grid');
+  if (!grid) return;
+  const items = getShowcase();
+  if (!items.length) {
+    grid.innerHTML = `
+      <div class="showcase-empty">
+        <div class="showcase-empty-icon">&#127937;</div>
+        <h3>Your showcase is empty</h3>
+        <p>Build your virtual table in three steps:</p>
+        <ol>
+          <li>Add cards from <strong>My Cards</strong> (or add one manually).</li>
+          <li>Mark each card <strong>For sale</strong> or <strong>For trade</strong>.</li>
+          <li>Buyers tap through to <strong>eBay</strong>; traders tap through to <strong>Veriswap</strong>.</li>
+        </ol>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = items.map(it => {
+    const img = it.imageUrl
+      ? `<img class="sc-card-img" src="${escHtml(it.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+      : '<div class="sc-card-img sc-card-noimg">No Image</div>';
+    const price = (typeof it.price === 'number' && it.price > 0)
+      ? `<span class="sc-card-price">$${it.price.toFixed(2)}</span>` : '';
+    const forSale = it.status === 'sale' || it.status === 'both';
+    const forTrade = it.status === 'trade' || it.status === 'both';
+    const badges = [];
+    if (forSale) badges.push('<span class="sc-badge sc-badge-sale">For Sale</span>');
+    if (forTrade) badges.push('<span class="sc-badge sc-badge-trade">For Trade</span>');
+    if (!forSale && !forTrade) badges.push('<span class="sc-badge sc-badge-show">Showcase</span>');
+    const links = [];
+    if (forSale) links.push(`<a class="sc-link sc-link-ebay" href="${escHtml(_showcaseEbayLink(it))}" target="_blank" rel="noopener noreferrer">Buy on eBay &#8599;</a>`);
+    if (forTrade) links.push(`<a class="sc-link sc-link-trade" href="${escHtml(_showcaseTradeLink(it))}" target="_blank" rel="noopener noreferrer">Trade on Veriswap &#8599;</a>`);
+    return `<div class="sc-card">
+      ${img}
+      <div class="sc-card-body">
+        <div class="sc-card-badges">${badges.join('')}</div>
+        <div class="sc-card-title">${escHtml(it.title || 'Card')}</div>
+        ${it.note ? `<div class="sc-card-note">${escHtml(it.note)}</div>` : ''}
+        ${price}
+        <div class="sc-card-links">${links.join('')}</div>
+        <div class="sc-card-actions">
+          <button type="button" onclick="openShowcaseEdit('${it.id}')">Edit</button>
+          <button type="button" class="sc-del-btn" onclick="removeShowcaseCard('${it.id}')">Remove</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeShowcaseCard(id) {
+  saveShowcase(getShowcase().filter(it => it.id !== id));
+  renderShowcase();
+}
+
+// --- Add from My Cards picker ---
+function openShowcasePicker() {
+  const modal = document.getElementById('showcase-picker-modal');
+  const body = document.getElementById('showcase-picker-body');
+  if (!modal || !body) return;
+  const coll = getCollection();
+  if (!coll.length) {
+    body.innerHTML = `<p class="seller-empty">You don't have any cards in My Cards yet. Add some there first, or use <strong>+ Add Manually</strong>.</p>`;
+  } else {
+    body.innerHTML = `
+      <div class="sc-picker-list">
+        ${coll.map((c, i) => {
+          const name = _scCollName(c);
+          const img = c.imageUrl
+            ? `<img src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+            : '<span class="sc-picker-noimg"></span>';
+          const val = (c.estValue > 0) ? `$${c.estValue.toFixed(2)}` : '';
+          return `<label class="sc-picker-row">
+            <input type="checkbox" class="sc-picker-check" value="${i}" />
+            ${img}
+            <span class="sc-picker-name">${escHtml(name)}</span>
+            <span class="sc-picker-val">${val}</span>
+          </label>`;
+        }).join('')}
+      </div>
+      <button type="button" class="seller-save-btn" style="margin-top:0.75rem" onclick="addSelectedToShowcase()">Add selected</button>`;
+  }
+  modal.classList.remove('hidden');
+}
+function closeShowcasePicker() {
+  document.getElementById('showcase-picker-modal')?.classList.add('hidden');
+}
+function addSelectedToShowcase() {
+  const coll = getCollection();
+  const items = getShowcase();
+  const checks = document.querySelectorAll('.sc-picker-check:checked');
+  let added = 0;
+  checks.forEach(ch => {
+    const c = coll[parseInt(ch.value, 10)];
+    if (!c) return;
+    items.push({
+      id: 'sc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      title: _scCollName(c),
+      imageUrl: c.imageUrl || '',
+      price: (typeof c.estValue === 'number' && c.estValue > 0) ? c.estValue : null,
+      status: 'showcase',
+      ebayUrl: '',
+      veriswapUrl: '',
+      note: '',
+    });
+    added++;
+  });
+  if (added) saveShowcase(items);
+  closeShowcasePicker();
+  renderShowcase();
+}
+
+// --- Add / edit a single showcase card ---
+function openShowcaseManual() { openShowcaseEdit(null); }
+
+function openShowcaseEdit(id) {
+  const modal = document.getElementById('showcase-edit-modal');
+  const body = document.getElementById('showcase-edit-body');
+  const titleEl = document.getElementById('showcase-edit-title');
+  if (!modal || !body) return;
+  const entry = id ? getShowcase().find(it => it.id === id) : null;
+  if (titleEl) titleEl.textContent = entry ? 'Edit Showcase Card' : 'Add to Showcase';
+  const e = entry || { title: '', imageUrl: '', price: null, status: 'showcase', ebayUrl: '', veriswapUrl: '', note: '' };
+  body.innerHTML = `
+    <div class="sc-edit-grid">
+      <label class="sc-edit-full">Card title
+        <input type="text" id="sc-edit-title" value="${escHtml(e.title || '')}" placeholder="e.g. 2023 Prizm Justin Jefferson Silver /199" />
+      </label>
+      <label>Status
+        <select id="sc-edit-status">
+          <option value="showcase"${e.status === 'showcase' ? ' selected' : ''}>Showcase only</option>
+          <option value="sale"${e.status === 'sale' ? ' selected' : ''}>For sale (eBay)</option>
+          <option value="trade"${e.status === 'trade' ? ' selected' : ''}>For trade (Veriswap)</option>
+          <option value="both"${e.status === 'both' ? ' selected' : ''}>Sale + trade</option>
+        </select>
+      </label>
+      <label>Price ($)
+        <input type="number" id="sc-edit-price" step="0.01" min="0" value="${(typeof e.price === 'number' && e.price > 0) ? e.price : ''}" placeholder="optional" />
+      </label>
+      <label class="sc-edit-full">Image URL <span class="sc-opt">(optional)</span>
+        <input type="url" id="sc-edit-image" value="${escHtml(e.imageUrl || '')}" placeholder="https://i.ebayimg.com/..." />
+      </label>
+      <label class="sc-edit-full">eBay listing URL <span class="sc-opt">(optional — defaults to an eBay search)</span>
+        <input type="url" id="sc-edit-ebay" value="${escHtml(e.ebayUrl || '')}" placeholder="https://www.ebay.com/itm/..." />
+      </label>
+      <label class="sc-edit-full">Veriswap profile <span class="sc-opt">(optional — defaults to your profile above)</span>
+        <input type="text" id="sc-edit-veriswap" value="${escHtml(e.veriswapUrl || '')}" placeholder="veriswap.com/yourname" />
+      </label>
+      <label class="sc-edit-full">Note <span class="sc-opt">(optional)</span>
+        <input type="text" id="sc-edit-note" value="${escHtml(e.note || '')}" placeholder="e.g. open to offers, mint corners" />
+      </label>
+    </div>
+    <button type="button" class="seller-save-btn" style="margin-top:0.75rem" onclick="saveShowcaseCard('${id || ''}')">${entry ? 'Save changes' : 'Add to showcase'}</button>`;
+  modal.classList.remove('hidden');
+}
+function closeShowcaseEdit() {
+  document.getElementById('showcase-edit-modal')?.classList.add('hidden');
+}
+function saveShowcaseCard(id) {
+  const title = (document.getElementById('sc-edit-title')?.value || '').trim();
+  if (!title) { alert('Please enter a card title.'); return; }
+  const priceRaw = parseFloat(document.getElementById('sc-edit-price')?.value);
+  const data = {
+    title,
+    imageUrl: (document.getElementById('sc-edit-image')?.value || '').trim(),
+    price: (!isNaN(priceRaw) && priceRaw > 0) ? priceRaw : null,
+    status: document.getElementById('sc-edit-status')?.value || 'showcase',
+    ebayUrl: (document.getElementById('sc-edit-ebay')?.value || '').trim(),
+    veriswapUrl: (document.getElementById('sc-edit-veriswap')?.value || '').trim(),
+    note: (document.getElementById('sc-edit-note')?.value || '').trim(),
+  };
+  const items = getShowcase();
+  if (id) {
+    const idx = items.findIndex(it => it.id === id);
+    if (idx >= 0) items[idx] = { ...items[idx], ...data };
+  } else {
+    items.push({ id: 'sc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), ...data });
+  }
+  saveShowcase(items);
+  closeShowcaseEdit();
+  renderShowcase();
 }
 
 // Title character counter
@@ -7961,6 +8212,10 @@ function renderMyListings() {
   const listEl = document.getElementById('seller-listings-list');
   const countEl = document.getElementById('seller-listing-count');
   const valueEl = document.getElementById('seller-total-value');
+
+  // The Create Listing / My Listings UI was removed when the Sell tab
+  // became the Showcase; bail if those elements aren't on the page.
+  if (!listEl || !countEl || !valueEl) return;
 
   countEl.textContent = `${listings.length} listing${listings.length !== 1 ? 's' : ''}`;
   const totalVal = listings.reduce((s, l) => s + (l.price || l.startBid || 0) * (l.quantity || 1), 0);
@@ -8745,7 +9000,7 @@ function renderBrowseCards() {
         <div class="browse-empty" style="grid-column:1/-1">
           <div class="browse-empty-icon">&#11088;</div>
           <h3>No promoted cards yet</h3>
-          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('seller');return false;">eBay Seller &rarr; Promote Cards</a>.</p>
+          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('proplus');switchProPlusTab('promote');return false;">Tools &rarr; Promote Cards</a>.</p>
         </div>`;
     } else {
       grid.innerHTML = `
