@@ -8203,3 +8203,93 @@ footer {
 .apikey-petition-skip { display: block; margin: 0.75rem auto 0; background: none; border: none; color: var(--text-muted); font-size: 0.78rem; cursor: pointer; }
 .apikey-petition-skip:hover { color: var(--text-primary); }
 @keyframes apikeyFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ===================================================================
+   Showcase (Sell tab) — virtual table of cards, with sale/trade handoff
+   =================================================================== */
+.showcase-settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.showcase-setting { display: flex; flex-direction: column; gap: 0.35rem; }
+.showcase-setting label { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); }
+.showcase-setting input {
+  padding: 0.55rem 0.7rem;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+.showcase-setting input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.sc-opt { font-weight: 400; color: var(--text-muted); }
+
+.showcase-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 1rem;
+}
+.sc-card {
+  background: var(--card-gradient);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.sc-card-img { width: 100%; height: 180px; object-fit: cover; background: var(--bg-secondary); display: block; }
+.sc-card-noimg { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.8rem; }
+.sc-card-body { padding: 0.7rem 0.8rem 0.85rem; display: flex; flex-direction: column; gap: 0.45rem; flex: 1; }
+.sc-card-badges { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.sc-badge { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 999px; }
+.sc-badge-sale { background: rgba(94, 206, 153, 0.18); color: var(--accent); }
+.sc-badge-trade { background: rgba(99, 102, 241, 0.18); color: #818cf8; }
+.sc-badge-show { background: var(--bg-secondary); color: var(--text-muted); }
+.sc-card-title { font-size: 0.86rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
+.sc-card-note { font-size: 0.74rem; color: var(--text-secondary); }
+.sc-card-price { font-size: 1.05rem; font-weight: 800; color: var(--accent); }
+.sc-card-links { display: flex; flex-direction: column; gap: 0.35rem; margin-top: auto; }
+.sc-link { text-align: center; text-decoration: none; font-size: 0.78rem; font-weight: 700; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); }
+.sc-link-ebay { background: var(--accent); color: #06281b; }
+.sc-link-ebay:hover { background: var(--accent-hover); }
+.sc-link-trade { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); }
+.sc-link-trade:hover { background: rgba(99, 102, 241, 0.28); }
+.sc-card-actions { display: flex; gap: 0.4rem; }
+.sc-card-actions button {
+  flex: 1; font-size: 0.74rem; padding: 0.35rem; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer;
+}
+.sc-card-actions button:hover { color: var(--text-primary); border-color: var(--accent); }
+.sc-del-btn:hover { color: #ef4444 !important; border-color: #ef4444 !important; }
+
+.showcase-empty { grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); }
+.showcase-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.showcase-empty h3 { color: var(--text-primary); margin-bottom: 0.4rem; }
+.showcase-empty ol { display: inline-block; text-align: left; margin-top: 0.6rem; line-height: 1.7; font-size: 0.88rem; }
+
+/* Picker modal */
+.sc-picker-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.3rem; }
+.sc-picker-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer; }
+.sc-picker-row:hover { background: var(--bg-secondary); }
+.sc-picker-row img, .sc-picker-noimg { width: 38px; height: 38px; object-fit: cover; border-radius: 5px; background: var(--bg-secondary); flex-shrink: 0; }
+.sc-picker-name { flex: 1; font-size: 0.84rem; color: var(--text-primary); }
+.sc-picker-val { font-size: 0.82rem; font-weight: 700; color: var(--accent); }
+
+/* Edit modal */
+.sc-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+.sc-edit-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
+.sc-edit-grid .sc-edit-full { grid-column: 1 / -1; }
+.sc-edit-grid input, .sc-edit-grid select {
+  padding: 0.5rem 0.6rem; background: var(--bg-secondary); border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; font-weight: 400;
+}
+.sc-edit-grid input:focus, .sc-edit-grid select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+
+@media (max-width: 560px) {
+  .showcase-settings { grid-template-columns: 1fr; }
+  .sc-edit-grid { grid-template-columns: 1fr; }
+}
