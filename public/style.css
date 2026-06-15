@@ -8402,3 +8402,6 @@ footer {
 .floor-dir-visit:hover { color: var(--accent); border-color: var(--accent); }
 .floor-dir-walk:hover { color: var(--text-primary); border-color: var(--text-secondary); }
 .floor-dir-empty { color: var(--text-muted); font-size: 0.84rem; padding: 0.5rem; text-align: center; }
+
+/* The Floor — free-look toggle active state */
+.floor-hud-edit.active { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
