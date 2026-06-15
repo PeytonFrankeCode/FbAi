@@ -434,7 +434,9 @@ function makeFloorMaterial(h) {
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   const sizeX = h.maxX - h.minX + 8, sizeZ = h.maxZ - h.minZ + 8;
   const repX = Math.max(2, Math.round(sizeX / 6)), repZ = Math.max(2, Math.round(sizeZ / 6));
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.24, metalness: 0.0, envMapIntensity: 1.2 });
+  // mid-dark grey tint so the concrete reads as a real polished slab, not washed
+  // out by the bright hall lighting/reflections (multiplies the texture tone)
+  const mat = new THREE.MeshStandardMaterial({ color: 0x6f7276, roughness: 0.32, metalness: 0.0, envMapIntensity: 0.65 });
 
   const proc = makeConcreteTex();
   proc.repeat.set(repX, repZ); proc.anisotropy = maxAniso; proc.colorSpace = THREE.SRGBColorSpace;
@@ -507,7 +509,7 @@ function buildRoom(group, h) {
   const fixGeo = new THREE.PlaneGeometry(2.4, 0.55);
   const fixMat = new THREE.MeshBasicMaterial({ color: 0xfff4dc });
   const glowGeo = new THREE.PlaneGeometry(3.4, 3.4);
-  const glowMat = new THREE.MeshBasicMaterial({ map: glowTex(), transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false });
+  const glowMat = new THREE.MeshBasicMaterial({ map: glowTex(), transparent: true, opacity: 0.035, blending: THREE.AdditiveBlending, depthWrite: false });
   const stepX = 8, stepZ = 7;
   for (let gx = h.minX + 5; gx <= h.maxX - 5; gx += stepX) {
     for (let gz = h.minZ + 5; gz <= h.maxZ - 5; gz += stepZ) {
