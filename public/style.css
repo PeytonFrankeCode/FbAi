@@ -8249,6 +8249,7 @@ footer {
 .sc-badge-sale { background: rgba(94, 206, 153, 0.18); color: var(--accent); }
 .sc-badge-trade { background: rgba(99, 102, 241, 0.18); color: #818cf8; }
 .sc-badge-show { background: var(--bg-secondary); color: var(--text-muted); }
+.sc-badge-value { background: rgba(244, 208, 63, 0.18); color: #e0a92b; }
 .sc-card-title { font-size: 0.86rem; font-weight: 700; color: var(--text-primary); line-height: 1.25; }
 .sc-card-note { font-size: 0.74rem; color: var(--text-secondary); }
 .sc-card-price { font-size: 1.05rem; font-weight: 800; color: var(--accent); }
@@ -8283,6 +8284,8 @@ footer {
 .sc-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
 .sc-edit-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
 .sc-edit-grid .sc-edit-full { grid-column: 1 / -1; }
+.sc-edit-grid .sc-edit-check { flex-direction: row; align-items: flex-start; gap: 0.5rem; font-weight: 600; cursor: pointer; }
+.sc-edit-grid .sc-edit-check input { width: auto; margin-top: 0.15rem; flex: 0 0 auto; }
 .sc-edit-grid input, .sc-edit-grid select {
   padding: 0.5rem 0.6rem; background: var(--bg-secondary); border: 1.5px solid var(--border-primary);
   border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; font-weight: 400;
@@ -8321,6 +8324,29 @@ footer {
   background: var(--bg-secondary); border: 2px solid var(--border-primary); cursor: pointer;
 }
 .floor-emoji.sel { border-color: var(--accent); background: var(--accent-bg); }
+/* expanded character creator: preview + option sections */
+.floor-cc-box-wide { max-width: 720px; }
+.floor-cc-layout { display: flex; gap: 1.25rem; align-items: flex-start; }
+.floor-cc-preview-wrap {
+  flex: 0 0 auto; position: sticky; top: 0.5rem; background: var(--bg-secondary);
+  border: 1px solid var(--border-primary); border-radius: var(--radius-lg); padding: 0.5rem;
+}
+.floor-cc-preview-wrap canvas { display: block; width: 180px; height: 300px; }
+.floor-cc-options { flex: 1 1 auto; min-width: 0; }
+.floor-cc-section { margin-top: 0.85rem; }
+.floor-cc-h { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; }
+.floor-cc-opts { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+.floor-cc-opt {
+  padding: 0.4rem 0.75rem; font-size: 0.82rem; font-weight: 600; border-radius: var(--radius-sm);
+  background: var(--bg-secondary); border: 2px solid var(--border-primary); color: var(--text-secondary); cursor: pointer;
+}
+.floor-cc-opt:hover { color: var(--text-primary); border-color: var(--accent); }
+.floor-cc-opt.sel { border-color: var(--accent); background: var(--accent-bg); color: var(--text-primary); }
+@media (max-width: 560px) {
+  .floor-cc-layout { flex-direction: column; align-items: center; }
+  .floor-cc-preview-wrap { position: static; }
+  .floor-cc-options { width: 100%; }
+}
 .floor-cc-go {
   width: 100%; margin-top: 1.25rem; padding: 0.75rem; font-size: 0.95rem; font-weight: 800;
   background: var(--accent); color: #06281b; border: none; border-radius: var(--radius-md); cursor: pointer;
@@ -8347,6 +8373,12 @@ footer {
   padding: 0.5rem 0.9rem; font-weight: 600; font-size: 0.85rem; cursor: pointer;
 }
 .floor-arrange-btn:hover { background: var(--accent-hover); }
+.floor-menu-switch {
+  display: inline-block; margin-bottom: 0.9rem; background: var(--bg-secondary);
+  border: 1px solid var(--border-primary); color: var(--text-primary);
+  border-radius: var(--radius-sm); padding: 0.45rem 0.8rem; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.floor-menu-switch:hover { border-color: var(--accent); color: var(--accent); }
 .floor-editor-section-label {
   font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
   color: var(--text-secondary); margin: 0.9rem 0 0.4rem; display: flex; justify-content: space-between; align-items: baseline;
@@ -8389,7 +8421,7 @@ footer {
 
 .floor-canvas-wrap { position: relative; line-height: 0; }
 .floor-canvas {
-  width: 100%; height: auto; max-width: 960px; display: block; margin: 0 auto;
+  width: 100%; height: auto; max-width: 1200px; display: block; margin: 0 auto;
   border: 1px solid var(--border-primary); border-radius: var(--radius-lg);
   background: #10141f; touch-action: none; cursor: pointer;
 }

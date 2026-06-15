@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=88" />
+  <link rel="stylesheet" href="style.css?v=91" />
 
 
 </head>
@@ -1176,15 +1176,26 @@
   <div id="floor-view" class="floor-view hidden">
     <!-- Character creation (first visit / edit) -->
     <div id="floor-charcreate" class="floor-charcreate hidden">
-      <div class="floor-cc-box">
+      <div class="floor-cc-box floor-cc-box-wide">
         <h2>Create your collector</h2>
-        <p>Make a character, then step onto the floor to browse booths and trade or buy &mdash; deals run through eBay &amp; Veriswap.</p>
-        <label>Display name</label>
-        <input type="text" id="floor-cc-name" maxlength="16" placeholder="e.g. RookieRipper" />
-        <label>Avatar color</label>
-        <div id="floor-cc-colors" class="floor-cc-colors"></div>
-        <label>Look</label>
-        <div id="floor-cc-emojis" class="floor-cc-emojis"></div>
+        <p>Build your character, then step onto the floor to browse booths and trade or buy &mdash; deals run through eBay &amp; Veriswap.</p>
+        <div class="floor-cc-layout">
+          <div class="floor-cc-preview-wrap">
+            <canvas id="floor-cc-preview" width="180" height="300"></canvas>
+          </div>
+          <div class="floor-cc-options">
+            <label>Display name</label>
+            <input type="text" id="floor-cc-name" maxlength="16" placeholder="e.g. RookieRipper" />
+            <div class="floor-cc-section"><span class="floor-cc-h">Skin</span><div id="floor-cc-skin" class="floor-cc-colors"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Shirt</span><div id="floor-cc-colors" class="floor-cc-colors"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Pants</span><div id="floor-cc-pants" class="floor-cc-colors"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Hair color</span><div id="floor-cc-haircolor" class="floor-cc-colors"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Hair style</span><div id="floor-cc-hairstyle" class="floor-cc-opts"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Hat</span><div id="floor-cc-hat" class="floor-cc-opts"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Glasses</span><div id="floor-cc-accessory" class="floor-cc-opts"></div></div>
+            <div class="floor-cc-section"><span class="floor-cc-h">Badge face</span><div id="floor-cc-emojis" class="floor-cc-emojis"></div></div>
+          </div>
+        </div>
         <button type="button" class="floor-cc-go" onclick="saveCharacterAndEnter()">Enter the floor</button>
       </div>
     </div>
@@ -1498,7 +1509,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=120"></script>
+  <script src="app.js?v=121"></script>
   <script type="importmap">
   {
     "imports": {
@@ -1507,6 +1518,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=18"></script>
+  <script type="module" src="floor.js?v=21"></script>
 </body>
 </html>

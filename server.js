@@ -3512,6 +3512,7 @@ function sanitizeBoothCard(c) {
     ebayUrl: String((c && c.ebayUrl) || '').slice(0, 600),
     veriswapUrl: String((c && c.veriswapUrl) || '').slice(0, 120),
     note: String((c && c.note) || '').slice(0, 140),
+    valueBox: !!(c && c.valueBox),
   };
 }
 

@@ -7987,6 +7987,7 @@ function renderShowcase() {
     if (forSale) badges.push('<span class="sc-badge sc-badge-sale">For Sale</span>');
     if (forTrade) badges.push('<span class="sc-badge sc-badge-trade">For Trade</span>');
     if (!forSale && !forTrade) badges.push('<span class="sc-badge sc-badge-show">Showcase</span>');
+    if (it.valueBox) badges.push('<span class="sc-badge sc-badge-value">Value Box</span>');
     const links = [];
     if (forSale) links.push(`<a class="sc-link sc-link-ebay" href="${escHtml(_showcaseEbayLink(it))}" target="_blank" rel="noopener noreferrer">Buy on eBay &#8599;</a>`);
     if (forTrade) links.push(`<a class="sc-link sc-link-trade" href="${escHtml(_showcaseTradeLink(it))}" target="_blank" rel="noopener noreferrer">Trade on Veriswap &#8599;</a>`);
@@ -8079,7 +8080,7 @@ function openShowcaseEdit(id) {
   if (!modal || !body) return;
   const entry = id ? getShowcase().find(it => it.id === id) : null;
   if (titleEl) titleEl.textContent = entry ? 'Edit Showcase Card' : 'Add to Showcase';
-  const e = entry || { title: '', imageUrl: '', price: null, status: 'showcase', ebayUrl: '', veriswapUrl: '', note: '' };
+  const e = entry || { title: '', imageUrl: '', price: null, status: 'showcase', ebayUrl: '', veriswapUrl: '', note: '', valueBox: false };
   body.innerHTML = `
     <div class="sc-edit-grid">
       <label class="sc-edit-full">Card title
@@ -8108,6 +8109,10 @@ function openShowcaseEdit(id) {
       <label class="sc-edit-full">Note <span class="sc-opt">(optional)</span>
         <input type="text" id="sc-edit-note" value="${escHtml(e.note || '')}" placeholder="e.g. open to offers, mint corners" />
       </label>
+      <label class="sc-edit-full sc-edit-check">
+        <input type="checkbox" id="sc-edit-valuebox"${e.valueBox ? ' checked' : ''} />
+        <span>Put in value box <span class="sc-opt">(dollar-box / bulk — shown in its own Value Box menu on The Floor)</span></span>
+      </label>
     </div>
     <button type="button" class="seller-save-btn" style="margin-top:0.75rem" onclick="saveShowcaseCard('${id || ''}')">${entry ? 'Save changes' : 'Add to showcase'}</button>`;
   modal.classList.remove('hidden');
@@ -8127,6 +8132,7 @@ function saveShowcaseCard(id) {
     ebayUrl: (document.getElementById('sc-edit-ebay')?.value || '').trim(),
     veriswapUrl: (document.getElementById('sc-edit-veriswap')?.value || '').trim(),
     note: (document.getElementById('sc-edit-note')?.value || '').trim(),
+    valueBox: !!document.getElementById('sc-edit-valuebox')?.checked,
   };
   const items = getShowcase();
   if (id) {
