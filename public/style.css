@@ -8340,6 +8340,53 @@ footer {
 }
 .floor-hud-edit:hover { color: var(--text-primary); border-color: var(--accent); }
 
+/* --- booth layout editor --- */
+.floor-booth-owneracts { margin-bottom: 0.9rem; }
+.floor-arrange-btn {
+  background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm);
+  padding: 0.5rem 0.9rem; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+}
+.floor-arrange-btn:hover { background: var(--accent-hover); }
+.floor-editor-section-label {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-secondary); margin: 0.9rem 0 0.4rem; display: flex; justify-content: space-between; align-items: baseline;
+}
+.floor-editor-front { text-transform: none; letter-spacing: 0; font-size: 0.7rem; color: var(--text-muted, var(--text-secondary)); }
+.floor-editor-palette { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.floor-tool {
+  flex: 1 1 0; min-width: 88px; display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-md);
+  padding: 0.55rem 0.4rem; cursor: pointer; color: var(--text-secondary);
+}
+.floor-tool:hover { border-color: var(--accent); color: var(--text-primary); }
+.floor-tool.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text-primary); box-shadow: 0 0 0 1px var(--accent) inset; }
+.floor-tool-icon { font-size: 1.4rem; line-height: 1; }
+.floor-tool-label { font-size: 0.72rem; font-weight: 600; }
+.floor-editor-table {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem;
+  background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-md); padding: 0.5rem;
+}
+.floor-spot {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;
+  aspect-ratio: 3 / 4; border: 1px solid var(--border-primary); border-radius: var(--radius-sm);
+  background: var(--bg-card); color: var(--text-primary); cursor: pointer; padding: 0.3rem;
+}
+.floor-spot:hover { border-color: var(--accent); }
+.floor-spot.empty { color: var(--text-secondary); border-style: dashed; background: transparent; }
+.floor-spot-icon { font-size: 1.5rem; line-height: 1; }
+.floor-spot-label { font-size: 0.66rem; text-align: center; line-height: 1.1; }
+.floor-editor-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
+.floor-editor-clear {
+  flex: 0 0 auto; background: transparent; border: 1px solid var(--border-primary); color: var(--text-secondary);
+  border-radius: var(--radius-sm); padding: 0.55rem 0.9rem; font-size: 0.82rem; cursor: pointer;
+}
+.floor-editor-clear:hover { border-color: var(--danger, #ef4444); color: var(--danger, #ef4444); }
+.floor-editor-save {
+  flex: 1 1 auto; background: var(--accent); border: none; color: #fff; font-weight: 600;
+  border-radius: var(--radius-sm); padding: 0.55rem 0.9rem; font-size: 0.85rem; cursor: pointer;
+}
+.floor-editor-save:hover { background: var(--accent-hover); }
+
 .floor-canvas-wrap { position: relative; line-height: 0; }
 .floor-canvas {
   width: 100%; height: auto; max-width: 960px; display: block; margin: 0 auto;

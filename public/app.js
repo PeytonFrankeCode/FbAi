@@ -5754,6 +5754,7 @@ const USER_SYNC_KEYS = [
   'cardHuddleShowcase',
   'cardHuddleShowcaseSettings',
   'cardHuddleCharacter',
+  'cardHuddleBoothLayout',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
 let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
