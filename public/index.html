@@ -1194,10 +1194,10 @@
       <div class="floor-hud">
         <span id="floor-hud-name" class="floor-hud-name"></span>
         <span id="floor-online" class="floor-online"></span>
-        <span class="floor-hud-hint">Move: WASD / arrows &middot; Visit a booth: E (or tap it)</span>
+        <span class="floor-hud-hint">Move: W/S &middot; Turn: A/D or drag &middot; Visit: E (or tap a booth)</span>
         <button type="button" class="floor-hud-edit" onclick="editCharacter()">Edit character</button>
       </div>
-      <div class="floor-canvas-wrap">
+      <div id="floor-canvas-wrap" class="floor-canvas-wrap">
         <canvas id="floor-canvas" class="floor-canvas" width="960" height="600"></canvas>
         <div id="floor-prompt" class="floor-prompt hidden"></div>
       </div>
@@ -1480,6 +1480,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="app.js?v=119"></script>
-  <script src="floor.js?v=4"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three.module.js",
+      "three/addons/": "/vendor/addons/"
+    }
+  }
+  </script>
+  <script type="module" src="floor.js?v=5"></script>
 </body>
 </html>
