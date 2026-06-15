@@ -326,28 +326,26 @@ function buildShowcaseFixture(grp, x, y0, boothId, shared, cards, ci) {
 }
 
 // One acrylic display stand: a glossy black base with a near-clear acrylic
-// back panel holding two cards stacked upright and facing the buyer (-z).
+// back panel holding a single card upright and facing the buyer (-z).
 function buildAcrylicStand(grp, sx, sz, y0, boothId, shared, cards, ciRef) {
-  const baseH = 0.06, panelH = 1.0, W = 0.34;
+  const baseH = 0.06, panelH = 0.66, W = 0.36;
   const base = new THREE.Mesh(new THREE.BoxGeometry(W, baseH, 0.2), shared.blackAcrylic);
   base.position.set(sx, y0 + baseH / 2, sz); base.castShadow = true; base.receiveShadow = true;
   base.userData.boothId = boothId; grp.add(base);
   const panel = new THREE.Mesh(new THREE.BoxGeometry(W, panelH, 0.03), shared.clearAcrylic);
   panel.position.set(sx, y0 + baseH + panelH / 2, sz + 0.02); panel.userData.boothId = boothId; grp.add(panel);
-  // two cards stacked vertically, just in front of the panel, facing the buyer
-  for (let row = 0; row < 2; row++) {
-    const entry = cards[ciRef.i];
-    const card = new THREE.Mesh(shared.standCardGeo, cardMaterial(entry, shared, ciRef.i + 1));
-    card.position.set(sx, y0 + baseH + 0.27 + row * 0.46, sz - 0.005);
-    card.rotation.y = Math.PI;                  // front faces -z (the buyer)
-    card.userData.boothId = boothId;
-    grp.add(card);
-    if (entry) ciRef.i++;
-  }
+  // one tall card, just in front of the panel, facing the buyer
+  const entry = cards[ciRef.i];
+  const card = new THREE.Mesh(shared.standCardGeo, cardMaterial(entry, shared, ciRef.i + 1));
+  card.position.set(sx, y0 + baseH + 0.27, sz - 0.005);
+  card.rotation.y = Math.PI;                    // front faces -z (the buyer)
+  card.userData.boothId = boothId;
+  grp.add(card);
+  if (entry) ciRef.i++;
 }
 
 // A card-stand fixture: a row of acrylic display stands across the slot, each
-// holding two cards face-out. The booth's real cards fill them in order.
+// holding one card face-out. The booth's real cards fill them in order.
 function buildStandFixture(grp, x, y0, boothId, shared, cards, ci) {
   const STANDS = 3, gap = 0.36;
   const ciRef = { i: ci };
@@ -459,7 +457,7 @@ function buildWorld(remoteBooths) {
     flatGeo: new THREE.PlaneGeometry(0.34, 0.48),
     standGeo: new THREE.PlaneGeometry(0.22, 0.32),
     slabGeo: new THREE.PlaneGeometry(0.24, 0.33),
-    standCardGeo: new THREE.PlaneGeometry(0.3, 0.42),   // face-out card in an acrylic stand
+    standCardGeo: new THREE.PlaneGeometry(0.34, 0.48),  // single face-out card in an acrylic stand
     cardMats: [
       new THREE.MeshBasicMaterial({ map: makeCardTex('#1f6f4a'), side: THREE.DoubleSide }),
       new THREE.MeshBasicMaterial({ map: makeCardTex('#b45309'), side: THREE.DoubleSide }),
@@ -580,6 +578,45 @@ function makeConcreteTex() {
   return t;
 }
 
+// Warm wood-plank texture for the wall wainscot: vertical planks with grain
+// streaks and dark joint lines. One shared image, cloned per wall so each can
+// set its own horizontal repeat.
+let _woodTex = null;
+function makeWoodTex() {
+  if (_woodTex) return _woodTex;
+  const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d');
+  const planks = 8, pw = s / planks;
+  for (let i = 0; i < planks; i++) {
+    const base = 78 + Math.random() * 26;
+    c.fillStyle = `rgb(${(base + 34) | 0},${base | 0},${Math.max(0, base - 28) | 0})`;
+    c.fillRect(i * pw, 0, pw, s);
+    for (let g = 0; g < 36; g++) {
+      c.strokeStyle = `rgba(45,28,14,${Math.random() * 0.16})`; c.lineWidth = 1 + Math.random() * 1.4;
+      const gx = i * pw + Math.random() * pw;
+      c.beginPath(); c.moveTo(gx, 0);
+      c.bezierCurveTo(gx + (Math.random() * 8 - 4), s * 0.34, gx + (Math.random() * 8 - 4), s * 0.68, gx, s);
+      c.stroke();
+    }
+    c.fillStyle = 'rgba(18,11,5,0.55)'; c.fillRect(i * pw + pw - 2, 0, 2, s);  // joint shadow
+  }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
+  _woodTex = t; return t;
+}
+
+// Vertical gradient (warm, bright at the base) used to fake the under-light
+// washing up the wood paneling.
+let _upGlowTex = null;
+function upGlowTex() {
+  if (_upGlowTex) return _upGlowTex;
+  const cv = document.createElement('canvas'); cv.width = 8; cv.height = 64;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, 64, 0, 0);   // bottom -> top
+  g.addColorStop(0, 'rgba(255,206,138,0.85)'); g.addColorStop(0.35, 'rgba(255,196,128,0.28)'); g.addColorStop(1, 'rgba(255,196,128,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 8, 64);
+  _upGlowTex = new THREE.CanvasTexture(cv); return _upGlowTex;
+}
+
 // Floor material. Shows the procedural concrete immediately, then upgrades to
 // real PBR maps if present. Drop tileable files in /public/textures/ named
 // concrete-color.jpg / concrete-normal.jpg / concrete-rough.jpg (or set
@@ -649,6 +686,9 @@ function buildRoom(group, h) {
   const fL = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fL.position.set(h.minX + seg / 2, y, h.minZ); group.add(fL);
   const fR = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fR.position.set(h.maxX - seg / 2, y, h.minZ); group.add(fR);
 
+  // wood wainscot paneling with warm under-lighting + greenery on the walls
+  decorateWalls(group, h);
+
   // dark industrial ceiling + a few truss beams
   const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x101113, roughness: 1 }));
   ceil.rotation.x = Math.PI / 2; ceil.position.set(cx, CEIL, cz); group.add(ceil);
@@ -676,6 +716,85 @@ function buildRoom(group, h) {
   for (const px of [h.minX + ww * 0.3, h.maxX - ww * 0.3]) {
     const pl = new THREE.PointLight(0xfff4e0, 0.5, 80, 1.6);
     pl.position.set(px, CEIL - 2, cz); group.add(pl);
+  }
+}
+
+// ----------------------------------------------------- wall decor
+// Position a wall-hugging mesh given a wall segment, the distance along it,
+// the height, and how far it sits inside the wall face.
+function setWallPos(mesh, s, alongPos, y, depth) {
+  if (s.axis === 'x') mesh.position.set(alongPos, y, s.fixed + s.inward * depth);
+  else mesh.position.set(s.fixed + s.inward * depth, y, alongPos);
+}
+// A low-poly foliage cluster (a few faceted green blobs) for greenery.
+function addBush(group, x, y, z, scale, mat) {
+  for (let i = 0; i < 4; i++) {
+    const r = (0.26 + Math.random() * 0.2) * scale;
+    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), mat);
+    blob.position.set(x + (Math.random() - 0.5) * 0.5 * scale, y + (Math.random() - 0.2) * 0.5 * scale, z + (Math.random() - 0.5) * 0.4 * scale);
+    blob.castShadow = true; group.add(blob);
+  }
+}
+
+// Decorate every solid wall with wood wainscot paneling, a warm under-light
+// strip + up-glow, and greenery (floor planters and wall-mounted foliage).
+function decorateWalls(group, h) {
+  const mats = {
+    baseWood: makeWoodTex(),
+    rail: new THREE.MeshStandardMaterial({ color: 0x3a2616, roughness: 0.6 }),
+    glow: new THREE.MeshBasicMaterial({ map: upGlowTex(), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
+    strip: new THREE.MeshBasicMaterial({ color: 0xffce8a }),
+    green: new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.85, flatShading: true }),
+    greenDk: new THREE.MeshStandardMaterial({ color: 0x2f6630, roughness: 0.85, flatShading: true }),
+    pot: new THREE.MeshStandardMaterial({ color: 0x1b1b20, roughness: 0.8 }),
+  };
+  const WH = 4.0, off = 0.34, panelT = 0.12;
+  const ww = h.maxX - h.minX, gap = 8, seg = (ww - gap) / 2;
+  const segs = [
+    { axis: 'x', fixed: h.maxZ, from: h.minX, to: h.maxX, inward: -1 },          // back wall
+    { axis: 'z', fixed: h.minX, from: h.minZ, to: h.maxZ, inward: +1 },          // left wall
+    { axis: 'z', fixed: h.maxX, from: h.minZ, to: h.maxZ, inward: -1 },          // right wall
+    { axis: 'x', fixed: h.minZ, from: h.minX, to: h.minX + seg, inward: +1 },    // front-left of the entrance
+    { axis: 'x', fixed: h.minZ, from: h.maxX - seg, to: h.maxX, inward: +1 },    // front-right of the entrance
+  ];
+  for (const s of segs) addWoodSegment(group, s, WH, off, panelT, mats);
+}
+
+function addWoodSegment(group, s, WH, off, panelT, mats) {
+  const len = Math.abs(s.to - s.from), center = (s.from + s.to) / 2;
+  // wood wainscot panel (own cloned texture so the repeat suits the length)
+  const wtex = mats.baseWood.clone(); wtex.needsUpdate = true;
+  wtex.wrapS = wtex.wrapT = THREE.RepeatWrapping; wtex.repeat.set(Math.max(1, Math.round(len / 3)), 1);
+  wtex.colorSpace = THREE.SRGBColorSpace;
+  const woodMat = new THREE.MeshStandardMaterial({ map: wtex, roughness: 0.72, metalness: 0.04 });
+  const woodGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, WH, panelT) : new THREE.BoxGeometry(panelT, WH, len);
+  const panel = new THREE.Mesh(woodGeo, woodMat); panel.receiveShadow = true;
+  setWallPos(panel, s, center, WH / 2, off); group.add(panel);
+
+  // dark wood top rail
+  const railGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.18, panelT + 0.06) : new THREE.BoxGeometry(panelT + 0.06, 0.18, len);
+  const rail = new THREE.Mesh(railGeo, mats.rail); setWallPos(rail, s, center, WH, off); group.add(rail);
+
+  // warm under-light: an emissive strip at the base + an up-glow on the wood
+  const stripGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.08, 0.07) : new THREE.BoxGeometry(0.07, 0.08, len);
+  const strip = new THREE.Mesh(stripGeo, mats.strip); setWallPos(strip, s, center, 0.13, off + 0.07); group.add(strip);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(len, WH * 0.92), mats.glow);
+  if (s.axis === 'x') { glow.position.set(center, WH * 0.46, s.fixed + s.inward * (off + 0.09)); glow.rotation.y = s.inward > 0 ? 0 : Math.PI; }
+  else { glow.position.set(s.fixed + s.inward * (off + 0.09), WH * 0.46, center); glow.rotation.y = s.inward > 0 ? Math.PI / 2 : -Math.PI / 2; }
+  group.add(glow);
+
+  // greenery spaced along the wall: a floor planter with a bush, plus a
+  // wall-mounted foliage cluster up on the paneling
+  const spots = Math.max(2, Math.round(len / 12));
+  for (let i = 0; i < spots; i++) {
+    const ap = s.from + ((i + 0.5) / spots) * (s.to - s.from);
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.5, 12), mats.pot);
+    setWallPos(pot, s, ap, 0.25, 0.7); pot.castShadow = true; group.add(pot);
+    addBush(group, pot.position.x, 0.62, pot.position.z, 1.05, i % 2 ? mats.green : mats.greenDk);
+    // wall greenery, mounted partway up the wood
+    const wx = s.axis === 'x' ? ap : s.fixed + s.inward * (off + 0.18);
+    const wz = s.axis === 'x' ? s.fixed + s.inward * (off + 0.18) : ap;
+    addBush(group, wx, WH * 0.6, wz, 0.85, i % 2 ? mats.greenDk : mats.green);
   }
 }
 
