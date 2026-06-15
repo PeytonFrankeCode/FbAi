@@ -24,24 +24,27 @@ const CHAR_KEY = 'cardHuddleCharacter';
 const AVATAR_COLORS = ['#5ece99', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#06b6d4', '#a855f7', '#84cc16'];
 const AVATAR_EMOJIS = ['🧢', '😎', '🤠', '🦸', '🤖', '👽', '🧑‍🎤', '🐉'];
 
-const COLS = 4;
-const COL_X = [-20, -7, 7, 20];
-const ROW_Z0 = 9, ROW_DZ = 14;
 const TABLE_W = 6.2, TABLE_D = 2.4, TABLE_H = 1.05;   // 6ft folding table
-const PLAYER_R = 0.6, MOVE_SPEED = 0.15, TURN_SPEED = 0.04;
+const PLAYER_R = 0.6, MOVE_SPEED = 0.2, TURN_SPEED = 0.04;
 const INTERACT_DIST = 4.6;
-const EYE_H = 1.7;
+const EYE_H = 2.0;                                     // taller collector: eye clears the glass
 const PITCH_MIN = -1.2, PITCH_MAX = 1.0;
+// Convention-hall layout: blocks of tables on blue pads, separated by red
+// carpet aisles, with a perimeter walkway and a front entrance.
+const FLOOR_MAX_TABLES = 54;                           // capacity (>= 50 per server)
+const HALL = { BX: 3, BZ: 3, TCOLS: 2, TROWS: 3, cellX: 7.6, rowZ: 5.2, aisle: 7, margin: 9 };
 
 let renderer, scene, camera, clock;
 let worldGroup = null;
 let booths = [];
+let tableRects = [];                  // all table footprints (occupied + vacant) for collision
+let hall = null;
 let bounds = { minX: -30, maxX: 30, minZ: -10, maxZ: 44 };
 let rafId = null, running = false;
 let avatarModel = null;
 
 const player = { x: 0, z: -3 };
-let yaw = 0, pitch = -0.05;
+let yaw = 0, pitch = -0.12;
 let camMode = 'fp';                                   // 'fp' | 'free'
 const free = { az: 0, el: 0.55, dist: 6.5, target: new THREE.Vector3() };
 let nearBooth = null;
@@ -254,16 +257,16 @@ function buildAvatar(color, emoji, name) {
     m.scale.setScalar(avatarModel.userData.fitScale || 1);
     g.add(m);
   } else {
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.0, 6, 12), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
-    body.position.y = 1.0; body.castShadow = true;
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.6, 6, 12), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
+    body.position.y = 1.3; body.castShadow = true;
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 14), new THREE.MeshStandardMaterial({ color: col.clone().offsetHSL(0, 0, 0.12), roughness: 0.6 }));
-    head.position.y = 2.05; head.castShadow = true;
+    head.position.y = 2.55; head.castShadow = true;
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0x111317 }));
-    nose.position.set(0, 2.05, 0.4);
+    nose.position.set(0, 2.55, 0.4);
     g.add(body, head, nose);
   }
   const label = makeLabelSprite(`${emoji || '🙂'} ${name || 'Collector'}`, '');
-  label.position.set(0, 3.0, 0);
+  label.position.set(0, 3.4, 0);
   g.add(label);
   scene.add(g);
   return { group: g, label };
@@ -298,7 +301,6 @@ function buildWorld(remoteBooths) {
     const have = new Set(list.map(b => (b.owner || '').toLowerCase()));
     for (const d of demoBooths()) { if (!have.has(d.owner.toLowerCase())) list.push(Object.assign({ isYou: false }, d)); }
   }
-  list = list.slice(0, 24);
 
   clearGroup(worldGroup);
   worldGroup = new THREE.Group();
@@ -322,39 +324,95 @@ function buildWorld(remoteBooths) {
     glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.16 }),
   };
 
-  const rows = Math.ceil(list.length / COLS);
-  const floorDepth = ROW_Z0 + rows * ROW_DZ + 10;
-  bounds = { minX: -30, maxX: 30, minZ: -10, maxZ: floorDepth };
+  list = list.slice(0, FLOOR_MAX_TABLES);
 
-  const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(66, floorDepth + 18),
-    new THREE.MeshStandardMaterial({ color: 0x161b26, roughness: 0.96 }));
-  floorMesh.rotation.x = -Math.PI / 2; floorMesh.position.set(0, 0, (floorDepth - 10) / 2); floorMesh.receiveShadow = true;
-  worldGroup.add(floorMesh);
-  const grid = new THREE.GridHelper(70, 35, 0x2a3550, 0x1b232f);
-  grid.position.set(0, 0.02, (floorDepth - 10) / 2); worldGroup.add(grid);
+  hall = computeHall();
+  bounds = { minX: hall.minX + 1.5, maxX: hall.maxX - 1.5, minZ: hall.minZ + 1.5, maxZ: hall.maxZ - 1.5 };
+  tableRects = [];
 
-  list.forEach((b, i) => {
-    const col = i % COLS, row = Math.floor(i / COLS);
-    const px = COL_X[col], pz = ROW_Z0 + row * ROW_DZ;
-    const grp = new THREE.Group(); grp.position.set(px, 0, pz);
-    b._idx = i;
-    buildBoothTable(grp, b, shared);
+  // red carpet aisles (base) + blue table-zone pads under each block
+  const carpet = new THREE.Mesh(
+    new THREE.PlaneGeometry(hall.maxX - hall.minX + 4, hall.maxZ - hall.minZ + 4),
+    new THREE.MeshStandardMaterial({ color: 0x7c2b2b, roughness: 0.98 })
+  );
+  carpet.rotation.x = -Math.PI / 2;
+  carpet.position.set((hall.minX + hall.maxX) / 2, 0, (hall.minZ + hall.maxZ) / 2);
+  carpet.receiveShadow = true; worldGroup.add(carpet);
+  const padMat = new THREE.MeshStandardMaterial({ color: 0x22386b, roughness: 0.96 });
+  for (const p of hall.pads) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(p.w, p.d), padMat);
+    m.rotation.x = -Math.PI / 2; m.position.set(p.x, 0.02, p.z); m.receiveShadow = true;
+    worldGroup.add(m);
+  }
+  buildWalls(worldGroup, hall);
+
+  // place tables into the slots — occupied booths first (detailed), the rest
+  // are vacant ("available") tables so the hall reads full and has 50+ spots.
+  const slots = hall.slots.slice(0, FLOOR_MAX_TABLES);
+  slots.forEach((s, i) => {
+    const grp = new THREE.Group(); grp.position.set(s.x, 0, s.z);
+    tableRects.push({ px: s.x, pz: s.z });
+    if (i < list.length) {
+      const b = list[i]; b._idx = booths.length;
+      buildBoothTable(grp, b, shared);
+      booths.push({ id: b._idx, px: s.x, pz: s.z, owner: b.owner, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: b.cards, isYou: b.isYou });
+    } else {
+      buildVacantTable(grp);
+    }
     worldGroup.add(grp);
-    booths.push({ id: i, px, pz, owner: b.owner, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: b.cards, isYou: b.isYou });
   });
 
-  player.x = 0; player.z = -3; yaw = 0; pitch = -0.05; camMode = 'fp';
+  // spawn at the entrance (front-center), facing into the hall
+  player.x = 0; player.z = hall.minZ + 3; yaw = 0; pitch = -0.12; camMode = 'fp';
   nearBooth = null;
 
   const search = document.getElementById('floor-dir-search');
   renderDirectory(search ? search.value : '');
 }
 
+// Compute the hall: table slot positions, blue pad rects, and bounds.
+function computeHall() {
+  const { BX, BZ, TCOLS, TROWS, cellX, rowZ, aisle, margin } = HALL;
+  const blockW = TCOLS * cellX, blockD = TROWS * rowZ;
+  const totalW = BX * blockW + (BX - 1) * aisle;
+  const totalD = BZ * blockD + (BZ - 1) * aisle;
+  const x0 = -totalW / 2, z0 = 4;
+  const slots = [], pads = [];
+  for (let bz = 0; bz < BZ; bz++) for (let bx = 0; bx < BX; bx++) {
+    const ox = x0 + bx * (blockW + aisle), oz = z0 + bz * (blockD + aisle);
+    pads.push({ x: ox + blockW / 2, z: oz + blockD / 2, w: blockW + 1.6, d: blockD + 1.6 });
+    for (let tr = 0; tr < TROWS; tr++) for (let tc = 0; tc < TCOLS; tc++)
+      slots.push({ x: ox + cellX / 2 + tc * cellX, z: oz + rowZ / 2 + tr * rowZ });
+  }
+  return { slots, pads, minX: x0 - margin, maxX: x0 + totalW + margin, minZ: -margin, maxZ: z0 + totalD + margin };
+}
+
+// Perimeter walls with a front entrance gap (cosmetic; movement is bounded).
+function buildWalls(group, h) {
+  const mat = new THREE.MeshStandardMaterial({ color: 0x0e1119, roughness: 1 });
+  const t = 0.6, H = 4.5, y = H / 2;
+  const w = h.maxX - h.minX, d = h.maxZ - h.minZ, cx = (h.minX + h.maxX) / 2, cz = (h.minZ + h.maxZ) / 2;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(w, H, t), mat); back.position.set(cx, y, h.maxZ); group.add(back);
+  const left = new THREE.Mesh(new THREE.BoxGeometry(t, H, d), mat); left.position.set(h.minX, y, cz); group.add(left);
+  const right = new THREE.Mesh(new THREE.BoxGeometry(t, H, d), mat); right.position.set(h.maxX, y, cz); group.add(right);
+  const gap = 7, seg = (w - gap) / 2;
+  const fL = new THREE.Mesh(new THREE.BoxGeometry(seg, H, t), mat); fL.position.set(h.minX + seg / 2, y, h.minZ); group.add(fL);
+  const fR = new THREE.Mesh(new THREE.BoxGeometry(seg, H, t), mat); fR.position.set(h.maxX - seg / 2, y, h.minZ); group.add(fR);
+}
+
+// A vacant ("available") table — just the white-clothed table, cheap.
+function buildVacantTable(grp) {
+  const cloth = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W, TABLE_H, TABLE_D),
+    new THREE.MeshStandardMaterial({ color: 0xe7e9ee, roughness: 0.95 }));
+  cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true; grp.add(cloth);
+}
+
 function makeNpcs() {
   npcs.forEach(a => scene.remove(a.group)); npcs = [];
-  for (const d of [{ name: 'Browser1', emoji: '😀', color: '#38bdf8' }, { name: 'Browser2', emoji: '🥳', color: '#fbbf24' }]) {
+  for (const d of [{ name: 'Browser1', emoji: '😀', color: '#38bdf8' }, { name: 'Browser2', emoji: '🥳', color: '#fbbf24' }, { name: 'Browser3', emoji: '🤓', color: '#f472b6' }]) {
     const a = buildAvatar(d.color, d.emoji, d.name);
-    a.x = (Math.random() - 0.5) * 26; a.z = ROW_Z0 + Math.random() * (bounds.maxZ - ROW_Z0 - 8);
+    a.x = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6);
+    a.z = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6);
     a.tx = a.x; a.tz = a.z; a.repick = 0; a.group.position.set(a.x, 0, a.z); npcs.push(a);
   }
 }
@@ -362,9 +420,9 @@ function makeNpcs() {
 // ----------------------------------------------------- movement / collide
 function blocked(nx, nz) {
   if (nx < bounds.minX || nx > bounds.maxX || nz < bounds.minZ || nz > bounds.maxZ) return true;
-  for (const b of booths) {
-    if (nx > b.px - TABLE_W / 2 - PLAYER_R && nx < b.px + TABLE_W / 2 + PLAYER_R &&
-        nz > b.pz - TABLE_D / 2 - PLAYER_R && nz < b.pz + TABLE_D / 2 + PLAYER_R) return true;
+  for (const t of tableRects) {
+    if (nx > t.px - TABLE_W / 2 - PLAYER_R && nx < t.px + TABLE_W / 2 + PLAYER_R &&
+        nz > t.pz - TABLE_D / 2 - PLAYER_R && nz < t.pz + TABLE_D / 2 + PLAYER_R) return true;
   }
   return false;
 }
@@ -419,7 +477,7 @@ function update(dt) {
   }
 
   for (const n of npcs) {
-    if (n.repick <= 0 || Math.hypot(n.tx - n.x, n.tz - n.z) < 0.5) { n.tx = (Math.random() - 0.5) * 26; n.tz = ROW_Z0 + Math.random() * (bounds.maxZ - ROW_Z0 - 8); n.repick = 120 + Math.random() * 180; }
+    if (n.repick <= 0 || Math.hypot(n.tx - n.x, n.tz - n.z) < 0.5) { n.tx = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6); n.tz = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6); n.repick = 120 + Math.random() * 180; }
     n.repick--;
     const a = Math.atan2(n.tx - n.x, n.tz - n.z);
     n.x += Math.sin(a) * 0.04; n.z += Math.cos(a) * 0.04;
@@ -498,7 +556,7 @@ async function ensureThree() {
       const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
       const gltf = await new GLTFLoader().loadAsync(window.FLOOR_AVATAR_MODEL);
       const size = new THREE.Vector3(); new THREE.Box3().setFromObject(gltf.scene).getSize(size);
-      gltf.scene.userData.fitScale = size.y ? (2.2 / size.y) : 1;
+      gltf.scene.userData.fitScale = size.y ? (2.6 / size.y) : 1;
       avatarModel = gltf.scene;
     } catch (err) { console.warn('[floor] avatar model load failed:', err && err.message); }
   }
