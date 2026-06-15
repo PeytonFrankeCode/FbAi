@@ -147,6 +147,48 @@ function makeCardTex(header) {
   const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
 }
 
+// A closed aluminum briefcase display case: brushed-metal tray, dark felt
+// liner, a tight grid of slabs laid flat, a clear glass lid, side rails,
+// a carry handle and latches on the front edge. Modeled on a real case.
+function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared) {
+  const g = new THREE.Group();
+  g.position.set(ox, 0, oz);
+  const CASE_H = 0.16;
+
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(w, CASE_H, d), shared.alu);
+  tray.position.y = y0 + CASE_H / 2; tray.castShadow = true; tray.receiveShadow = true;
+  tray.userData.boothId = boothIdx; g.add(tray);
+
+  const liner = new THREE.Mesh(new THREE.BoxGeometry(w - 0.14, 0.02, d - 0.14), shared.aluDark);
+  liner.position.y = y0 + CASE_H + 0.01; g.add(liner);
+
+  const cols = 6, rows = 3;
+  const cw = (w - 0.24) / cols, cd = (d - 0.24) / rows;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const card = new THREE.Mesh(shared.slabGeo, shared.cardMats[(r * cols + c) % shared.cardMats.length]);
+    card.rotation.x = -Math.PI / 2;
+    card.position.set(-w / 2 + 0.12 + cw / 2 + c * cw, y0 + CASE_H + 0.03, -d / 2 + 0.12 + cd / 2 + r * cd);
+    g.add(card);
+  }
+
+  const railFB = new THREE.BoxGeometry(w, 0.13, 0.05);
+  const railLR = new THREE.BoxGeometry(0.05, 0.13, d);
+  for (const z of [-d / 2, d / 2]) { const m = new THREE.Mesh(railFB, shared.alu); m.position.set(0, y0 + CASE_H + 0.07, z); m.userData.boothId = boothIdx; g.add(m); }
+  for (const x of [-w / 2, w / 2]) { const m = new THREE.Mesh(railLR, shared.alu); m.position.set(x, y0 + CASE_H + 0.07, 0); m.userData.boothId = boothIdx; g.add(m); }
+
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(w - 0.03, 0.03, d - 0.03), shared.glass);
+  glass.position.y = y0 + CASE_H + 0.13; glass.userData.boothId = boothIdx; g.add(glass);
+
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 16, Math.PI), shared.alu);
+  handle.position.set(0, y0 + CASE_H, -d / 2 - 0.02); g.add(handle);
+  for (const lx of [-w / 2 + 0.4, w / 2 - 0.4]) {
+    const latch = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.07, 0.05), shared.alu);
+    latch.position.set(lx, y0 + CASE_H + 0.02, -d / 2 - 0.005); g.add(latch);
+  }
+
+  parent.add(g);
+}
+
 // ----------------------------------------------------- table / booth
 function buildBoothTable(grp, b, shared) {
   const cloth = new THREE.Mesh(
@@ -163,28 +205,9 @@ function buildBoothTable(grp, b, shared) {
 
   const y0 = TABLE_H + 0.03;
 
-  // --- 2 glass display cases (left side), slabs laid flat under glass ---
-  const caseW = 1.9, caseD = 1.4;
-  [-2.05, -0.05].forEach((cx) => {
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(caseW, 0.14, caseD),
-      new THREE.MeshStandardMaterial({ color: 0x9aa3b0, metalness: 0.6, roughness: 0.4 }));
-    frame.position.set(cx, y0 + 0.07, 0); frame.userData.boothId = b._idx; grp.add(frame);
-    // slabs inside
-    const cols = 4, rows = 2;
-    for (let i = 0; i < cols * rows; i++) {
-      const card = new THREE.Mesh(shared.flatGeo, shared.cardMats[i % shared.cardMats.length]);
-      card.rotation.x = -Math.PI / 2;
-      const gx = cx - caseW / 2 + 0.32 + (i % cols) * 0.42;
-      const gz = -caseD / 2 + 0.4 + Math.floor(i / cols) * 0.6;
-      card.position.set(gx, y0 + 0.1, gz);
-      card.userData.boothId = b._idx;
-      grp.add(card);
-    }
-    // glass lid
-    const glass = new THREE.Mesh(new THREE.BoxGeometry(caseW - 0.06, 0.02, caseD - 0.06),
-      new THREE.MeshStandardMaterial({ color: 0xafc6e0, transparent: true, opacity: 0.22, roughness: 0.1, metalness: 0.1 }));
-    glass.position.set(cx, y0 + 0.2, 0); glass.userData.boothId = b._idx; grp.add(glass);
-  });
+  // --- 2 aluminum display cases (left side), closed, slabs under glass ---
+  buildDisplayCase(grp, -2.05, 0, 1.95, 1.35, y0, b._idx, shared);
+  buildDisplayCase(grp, -0.05, 0, 1.95, 1.35, y0, b._idx, shared);
 
   // --- 3 card boxes (right side), cards standing up facing the buyer (-z) ---
   [1.45, 2.25, 3.05].forEach((bx) => {
@@ -286,11 +309,17 @@ function buildWorld(remoteBooths) {
   const shared = {
     flatGeo: new THREE.PlaneGeometry(0.34, 0.48),
     standGeo: new THREE.PlaneGeometry(0.22, 0.32),
+    slabGeo: new THREE.PlaneGeometry(0.2, 0.28),
     cardMats: [
       new THREE.MeshBasicMaterial({ map: makeCardTex('#1f6f4a'), side: THREE.DoubleSide }),
       new THREE.MeshBasicMaterial({ map: makeCardTex('#b45309'), side: THREE.DoubleSide }),
       new THREE.MeshBasicMaterial({ map: makeCardTex('#3b5bdb'), side: THREE.DoubleSide }),
     ],
+    // brushed aluminum, dark felt liner, and clear glass (use the scene
+    // environment map for realistic reflections)
+    alu: new THREE.MeshStandardMaterial({ color: 0xd7dade, metalness: 0.9, roughness: 0.34 }),
+    aluDark: new THREE.MeshStandardMaterial({ color: 0x111319, metalness: 0.25, roughness: 0.85 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.16 }),
   };
 
   const rows = Math.ceil(list.length / COLS);
@@ -454,6 +483,13 @@ async function ensureThree() {
   sun.position.set(16, 28, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45;
   scene.add(sun);
+
+  // image-based lighting so brushed aluminum + glass read correctly
+  try {
+    const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  } catch (err) { console.warn('[floor] env map unavailable:', err && err.message); }
 
   clock = new THREE.Clock(); playerObj = null;
 
