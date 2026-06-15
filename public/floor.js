@@ -7,15 +7,16 @@
    to Veriswap). The Card Huddle is never part of the transaction — every
    deal leaves to the third party.
 
-   This first version is single-player explorable: your own booth is real
-   (pulled from your Showcase in the Sell tab) and the other collectors
-   are demo booths so the floor feels alive. Live multiplayer (seeing
-   real people move in real time) is the next phase and would layer on a
-   Cloudflare Durable Object + WebSockets — the world/booth model here is
-   built so that can slot in without a rewrite.
+   Booths are real: each signed-in collector who has made a character and
+   put cards in their Showcase appears on the floor (served by
+   GET /api/floor/booths). Your own booth is rendered from your local
+   showcase so it reflects unsynced edits too. While the floor is still
+   small it's topped up with a few demo collectors. Live presence (seeing
+   real people move in real time) is the next phase — it would add a
+   Cloudflare Durable Object + WebSockets feeding the same world model.
 
    Relies on globals from app.js: escHtml, epnUrl, getShowcase,
-   getShowcaseSettings, schedulePushUserData.
+   getShowcaseSettings, getCurrentUser, schedulePushUserData.
    ===================================================================== */
 (function () {
   'use strict';
@@ -24,16 +25,21 @@
   const AVATAR_COLORS = ['#5ece99', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#06b6d4', '#a855f7', '#84cc16'];
   const AVATAR_EMOJIS = ['🧢', '😎', '🤠', '🦸', '🤖', '👽', '🧑‍🎤', '🐉'];
 
-  const WORLD_W = 960, WORLD_H = 600;
+  const WORLD_W = 960;         // fixed width (4 booth columns)
+  const VIEW_H = 600;          // canvas viewport height; world can be taller
   const PLAYER_R = 14, PLAYER_SPEED = 2.7;
   const BOOTH_W = 120, BOOTH_H = 72;
-  const INTERACT_PAD = 34; // how close you must be to a booth to open it
+  const INTERACT_PAD = 34;     // how close you must be to a booth to open it
+  const COLS = [60, 290, 520, 750];
+  const FIRST_ROW_Y = 110, ROW_SPACING = 235;
 
   let canvas, ctx;
   let rafId = null;
   let running = false;
   let world = null;            // { booths, npcs }
-  let player = { x: WORLD_W / 2, y: WORLD_H - 70 };
+  let worldH = VIEW_H;
+  let cameraY = 0;
+  let player = { x: WORLD_W / 2, y: VIEW_H - 70 };
   let nearBooth = null;
   let ccDraft = { color: AVATAR_COLORS[0], emoji: AVATAR_EMOJIS[0] };
   const keys = Object.create(null);
@@ -47,6 +53,9 @@
   function saveCharacter(c) {
     localStorage.setItem(CHAR_KEY, JSON.stringify(c));
     if (typeof schedulePushUserData === 'function') schedulePushUserData();
+  }
+  function myUsername() {
+    return (typeof getCurrentUser === 'function' ? (getCurrentUser() || '') : '').toLowerCase();
   }
 
   // ---- handoff links (third-party: eBay for buys, Veriswap for trades) ----
@@ -64,7 +73,7 @@
     return 'https://veriswap.com/' + encodeURIComponent(v);
   }
 
-  // ---- demo collectors so the floor isn't empty before real multiplayer ----
+  // ---- demo collectors so the floor isn't empty before it fills up ----
   function demoBooths() {
     return [
       { owner: 'PrizmPete', emoji: '😎', color: '#f59e0b', veriswap: 'prizmpete', cards: [
@@ -91,7 +100,6 @@
       ] },
       { owner: 'ChromeChloe', emoji: '🐉', color: '#84cc16', veriswap: 'chromechloe', cards: [
         { title: '2011 Topps Update Mike Trout RC PSA 10', price: 1100, status: 'sale' },
-        { title: '2019 Bowman Chrome Wander Franco Auto', price: 130, status: 'both', veriswapUrl: 'chromechloe' },
         { title: '2023 Bowman Chrome Jackson Holliday Auto /499', price: 200, status: 'trade', veriswapUrl: 'chromechloe' },
       ] },
       { owner: 'SlabSam', emoji: '🤖', color: '#ef4444', veriswap: 'slabsam', cards: [
@@ -100,8 +108,21 @@
     ];
   }
 
-  // Lay booths out in two rows; booth 0 is always YOU.
-  function buildWorld() {
+  function makeNpcs() {
+    return [
+      { name: 'Browser1', emoji: '😀', color: '#38bdf8' },
+      { name: 'Browser2', emoji: '🥳', color: '#fbbf24' },
+      { name: 'Browser3', emoji: '🤓', color: '#f472b6' },
+    ].map(n => Object.assign({
+      x: 120 + Math.random() * (WORLD_W - 240),
+      y: 230 + Math.random() * 120,
+      tx: 0, ty: 0, repick: 0,
+    }, n));
+  }
+
+  // Build the world. `remoteBooths` is the public list from the server;
+  // booth 0 is always YOU (rendered from your local showcase).
+  function buildWorld(remoteBooths) {
     const me = getCharacter() || { name: 'You', color: AVATAR_COLORS[0], emoji: AVATAR_EMOJIS[0] };
     const settings = (typeof getShowcaseSettings === 'function') ? getShowcaseSettings() : {};
     const yours = {
@@ -109,30 +130,32 @@
       veriswap: settings.veriswap || '',
       cards: (typeof getShowcase === 'function') ? getShowcase() : [],
     };
-    const all = [yours, ...demoBooths()];
 
-    const cols = [60, 290, 520, 750];
-    const rows = [120, 400];
-    const booths = all.slice(0, cols.length * rows.length).map((b, i) => {
-      const x = cols[i % cols.length];
-      const y = rows[Math.floor(i / cols.length)];
-      return Object.assign({ id: i, x, y, w: BOOTH_W, h: BOOTH_H }, b);
+    const mine = myUsername();
+    let others = (Array.isArray(remoteBooths) ? remoteBooths : [])
+      .filter(b => b && b.name && b.username !== mine)
+      .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [] }));
+
+    // Top up with demo collectors while real booths are few.
+    if (others.length < 5) {
+      const have = new Set(others.map(o => (o.owner || '').toLowerCase()));
+      for (const d of demoBooths()) { if (!have.has(d.owner.toLowerCase())) others.push(d); }
+    }
+    others = others.slice(0, 23);
+
+    const all = [yours, ...others];
+    const booths = all.map((b, i) => {
+      const col = i % COLS.length;
+      const row = Math.floor(i / COLS.length);
+      return Object.assign({ id: i, x: COLS[col], y: FIRST_ROW_Y + row * ROW_SPACING, w: BOOTH_W, h: BOOTH_H }, b);
     });
+    const rows = Math.ceil(all.length / COLS.length);
+    worldH = Math.max(VIEW_H, FIRST_ROW_Y + rows * ROW_SPACING + 60);
 
-    // A few wandering collectors to give the floor some life.
-    const npcs = [
-      { name: 'Browser1', emoji: '😀', color: '#38bdf8' },
-      { name: 'Browser2', emoji: '🥳', color: '#fbbf24' },
-      { name: 'Browser3', emoji: '🤓', color: '#f472b6' },
-    ].map(n => Object.assign({
-      x: 120 + Math.random() * (WORLD_W - 240),
-      y: 250 + Math.random() * 100,
-      tx: 0, ty: 0, repick: 0,
-    }, n));
-
-    world = { booths, npcs };
+    world = { booths, npcs: makeNpcs() };
     player.x = WORLD_W / 2;
-    player.y = WORLD_H - 60;
+    player.y = Math.min(worldH - 60, FIRST_ROW_Y + 150);
+    cameraY = 0;
     nearBooth = null;
   }
 
@@ -141,7 +164,7 @@
            py > b.y - PLAYER_R && py < b.y + b.h + PLAYER_R;
   }
   function blockedAt(px, py) {
-    if (px < PLAYER_R || px > WORLD_W - PLAYER_R || py < PLAYER_R || py > WORLD_H - PLAYER_R) return true;
+    if (px < PLAYER_R || px > WORLD_W - PLAYER_R || py < PLAYER_R || py > worldH - PLAYER_R) return true;
     return world.booths.some(b => boothBlocks(b, px, py));
   }
 
@@ -170,12 +193,12 @@
       if (!blockedAt(player.x, ny)) player.y = ny;
     }
     nearBooth = nearestBooth();
+    cameraY = Math.max(0, Math.min(player.y - VIEW_H / 2, Math.max(0, worldH - VIEW_H)));
 
-    // gentle NPC wandering
     for (const n of world.npcs) {
       if (n.repick <= 0 || Math.hypot(n.tx - n.x, n.ty - n.y) < 6) {
         n.tx = 120 + Math.random() * (WORLD_W - 240);
-        n.ty = 230 + Math.random() * 140;
+        n.ty = 200 + Math.random() * 160;
         n.repick = 120 + Math.random() * 180;
       }
       n.repick--;
@@ -222,25 +245,28 @@
   }
 
   function draw() {
-    // floor
+    ctx.clearRect(0, 0, WORLD_W, VIEW_H);
     ctx.fillStyle = '#10141f';
-    ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+    ctx.fillRect(0, 0, WORLD_W, VIEW_H);
+
+    ctx.save();
+    ctx.translate(0, -cameraY);
+
+    // grid only across the visible band (for tall worlds)
     ctx.strokeStyle = 'rgba(255,255,255,0.035)';
     ctx.lineWidth = 1;
-    for (let gx = 0; gx <= WORLD_W; gx += 48) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, WORLD_H); ctx.stroke(); }
-    for (let gy = 0; gy <= WORLD_H; gy += 48) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(WORLD_W, gy); ctx.stroke(); }
+    const top = Math.floor(cameraY / 48) * 48;
+    for (let gx = 0; gx <= WORLD_W; gx += 48) { ctx.beginPath(); ctx.moveTo(gx, top); ctx.lineTo(gx, top + VIEW_H + 48); ctx.stroke(); }
+    for (let gy = top; gy <= top + VIEW_H + 48; gy += 48) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(WORLD_W, gy); ctx.stroke(); }
 
-    // booths
     for (const b of world.booths) {
       const active = nearBooth && nearBooth.id === b.id;
-      // table
       roundRect(b.x, b.y, b.w, b.h, 10);
       ctx.fillStyle = active ? '#1f2940' : '#1a2133';
       ctx.fill();
       ctx.strokeStyle = active ? '#5ece99' : (b.isYou ? 'rgba(94,206,153,0.6)' : 'rgba(255,255,255,0.12)');
       ctx.lineWidth = active ? 3 : 1.5;
       ctx.stroke();
-      // banner
       roundRect(b.x, b.y, b.w, 22, 10);
       ctx.fillStyle = b.color || '#5ece99';
       ctx.fill();
@@ -249,7 +275,6 @@
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText((b.emoji || '🃏') + ' ' + (b.isYou ? 'Your Booth' : b.owner), b.x + 8, b.y + 11);
-      // card count / status line
       const n = (b.cards || []).length;
       const forSale = (b.cards || []).some(c => c.status === 'sale' || c.status === 'both');
       const forTrade = (b.cards || []).some(c => c.status === 'trade' || c.status === 'both');
@@ -260,12 +285,12 @@
       ctx.fillText((forSale ? '🛒' : '') + (forTrade ? '🤝' : ''), b.x + 8, b.y + 56);
     }
 
-    // npcs + player
     for (const n of world.npcs) drawAvatar(n.x, n.y, n.color, n.emoji, n.name, false);
     const me = getCharacter() || {};
     drawAvatar(player.x, player.y, me.color || '#5ece99', me.emoji || '🙂', me.name || 'You', true);
 
-    // proximity prompt
+    ctx.restore();
+
     const prompt = document.getElementById('floor-prompt');
     if (prompt) {
       if (nearBooth) {
@@ -338,7 +363,7 @@
     if (!modal || !body) return;
     if (title) title.textContent = (b.emoji || '🃏') + ' ' + (b.isYou ? 'Your Booth' : b.owner + "'s Booth");
     if (sub) sub.textContent = b.isYou
-      ? 'This is what other collectors see when they visit you.'
+      ? 'This is what other collectors see when they visit you. Edit it in the Sell tab.'
       : 'Buy hands off to eBay; trade hands off to Veriswap. The Card Huddle isn\'t part of the deal.';
     body.innerHTML = boothCardsHtml(b);
     modal.classList.remove('hidden');
@@ -366,14 +391,21 @@
       `<button type="button" class="floor-emoji${e === ccDraft.emoji ? ' sel' : ''}" data-emoji="${e}">${e}</button>`).join('');
   }
 
-  function enterFloor() {
+  async function enterFloor() {
     document.getElementById('floor-charcreate')?.classList.add('hidden');
     const stage = document.getElementById('floor-stage');
     if (stage) stage.classList.remove('hidden');
     const me = getCharacter();
     const hudName = document.getElementById('floor-hud-name');
     if (hudName && me) hudName.textContent = `${me.emoji || '🙂'} ${me.name || 'You'}`;
-    buildWorld();
+
+    // Fetch everyone's booth, then build & run. Falls back to demo-only.
+    let remote = [];
+    try {
+      const res = await fetch('/api/floor/booths');
+      if (res.ok) { const data = await res.json(); remote = Array.isArray(data.booths) ? data.booths : []; }
+    } catch (_) { /* offline / not deployed — demo floor */ }
+    buildWorld(remote);
     start();
   }
 
@@ -401,7 +433,6 @@
     if (!view || view.classList.contains('hidden')) return;
     const k = e.key.toLowerCase();
     if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'w', 'a', 's', 'd', 'e'].includes(k)) {
-      // don't hijack typing in the name field
       if (document.activeElement && document.activeElement.id === 'floor-cc-name') return;
       e.preventDefault();
       keys[k] = true;
@@ -410,23 +441,20 @@
   });
   document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
-  // character-creation pickers + d-pad (event delegation, set up once)
   document.addEventListener('click', e => {
     const sw = e.target.closest('.floor-swatch');
     if (sw) { ccDraft.color = sw.dataset.color; renderCharCreate(); return; }
     const em = e.target.closest('.floor-emoji');
     if (em) { ccDraft.emoji = em.dataset.emoji; renderCharCreate(); return; }
-    // tap a booth on the canvas to open it
     if (e.target && e.target.id === 'floor-canvas' && world) {
       const r = canvas.getBoundingClientRect();
       const mx = (e.clientX - r.left) * (WORLD_W / r.width);
-      const my = (e.clientY - r.top) * (WORLD_H / r.height);
+      const my = (e.clientY - r.top) * (VIEW_H / r.height) + cameraY;
       const hit = world.booths.find(b => mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h);
       if (hit) openBooth(hit);
     }
   });
 
-  // touch d-pad: press-and-hold to move, tap E to visit
   function bindDpad() {
     document.querySelectorAll('.floor-dbtn').forEach(btn => {
       const dir = btn.dataset.dir;

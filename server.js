@@ -3345,6 +3345,9 @@ app.put('/api/user/data', async (req, res) => {
     // Browse Cards page and search injection can show cards from everyone.
     const promos = Array.isArray(data.cardHuddlePromotedCards) ? data.cardHuddlePromotedCards : [];
     updateGlobalPromotedIndex(username, promos);
+    // Mirror this user's booth (character + showcase) into the global floor
+    // index so other collectors can visit it on The Floor.
+    updateGlobalFloorIndex(username, data);
     res.json({ ok: true });
   } catch (err) {
     console.error('[user/data PUT]', err && err.message);
@@ -3482,6 +3485,70 @@ app.get('/api/promoted-cards/all', async (req, res) => {
   const filler = demo.filter(c => !seen.has(c.itemUrl));
   const all = real.concat(filler);
   res.json({ cards: all, total: all.length, real: real.length, demo: filler.length });
+});
+
+// ---- Global Floor (Showcase booths) Index ----
+// Mirrors each user's public booth — their collector character plus the
+// showcase cards they've put out — into a single KV map { username: booth }
+// so The Floor can render everyone's table. Updated whenever a user PUTs
+// their data blob; read by GET /api/floor/booths. Same loadData/saveData
+// (Cloudflare KV) pipeline as the promoted index.
+const FLOOR_INDEX_FILE = path.join(APP_ROOT, 'data', 'floor-index.json');
+const FLOOR_MAX_BOOTHS = 60;       // bound the public list (and the KV blob)
+const FLOOR_MAX_CARDS = 24;        // cards shown per booth
+
+function loadGlobalFloorIndex() {
+  return loadData('floorIndex', FLOOR_INDEX_FILE, {});
+}
+
+function sanitizeBoothCard(c) {
+  const allowed = ['showcase', 'sale', 'trade', 'both'];
+  const price = parseFloat(c && c.price);
+  return {
+    title: String((c && c.title) || '').slice(0, 160),
+    imageUrl: String((c && c.imageUrl) || '').slice(0, 600),
+    price: (!isNaN(price) && price > 0) ? price : null,
+    status: allowed.includes(c && c.status) ? c.status : 'showcase',
+    ebayUrl: String((c && c.ebayUrl) || '').slice(0, 600),
+    veriswapUrl: String((c && c.veriswapUrl) || '').slice(0, 120),
+    note: String((c && c.note) || '').slice(0, 140),
+  };
+}
+
+function updateGlobalFloorIndex(username, data) {
+  if (!username) return;
+  const key = String(username).toLowerCase();
+  const index = loadGlobalFloorIndex();
+  const character = data && data.cardHuddleCharacter;
+  const showcase = Array.isArray(data && data.cardHuddleShowcase) ? data.cardHuddleShowcase : [];
+  const settings = (data && data.cardHuddleShowcaseSettings) || {};
+  // A booth only exists once the user has created a collector character.
+  // No character → remove them from the floor.
+  if (!character || !character.name) {
+    if (index[key]) { delete index[key]; saveData('floorIndex', FLOOR_INDEX_FILE, index); }
+    return;
+  }
+  index[key] = {
+    username: key,
+    name: String(character.name || '').slice(0, 24),
+    emoji: String(character.emoji || '🙂').slice(0, 8),
+    color: String(character.color || '#5ece99').slice(0, 16),
+    veriswap: String(settings.veriswap || '').slice(0, 120),
+    cards: showcase.slice(0, FLOOR_MAX_CARDS).map(sanitizeBoothCard).filter(c => c.title),
+    updatedAt: new Date().toISOString(),
+  };
+  saveData('floorIndex', FLOOR_INDEX_FILE, index);
+}
+
+// GET /api/floor/booths — public list of every collector's booth (newest
+// activity first). No auth required; this is the shared show floor.
+app.get('/api/floor/booths', (req, res) => {
+  const index = loadGlobalFloorIndex();
+  const booths = Object.values(index)
+    .filter(b => b && b.name)
+    .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
+    .slice(0, FLOOR_MAX_BOOTHS);
+  res.json({ booths });
 });
 
 // ---- Community Board ----
