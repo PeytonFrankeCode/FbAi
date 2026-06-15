@@ -182,6 +182,8 @@
     player.y = Math.min(worldH - 60, FIRST_ROW_Y + 150);
     cameraY = 0;
     nearBooth = null;
+    const search = document.getElementById('floor-dir-search');
+    renderDirectory(search ? search.value : '');
   }
 
   function boothBlocks(b, px, py) {
@@ -483,6 +485,41 @@
     document.getElementById('floor-booth-modal')?.classList.add('hidden');
   }
 
+  // ---- booth directory (find / open / walk to a booth) ----
+  function renderDirectory(filter) {
+    const listEl = document.getElementById('floor-dir-list');
+    if (!listEl) return;
+    if (!world) { listEl.innerHTML = '<p class="floor-dir-empty">Loading the floor…</p>'; return; }
+    const q = (filter || '').trim().toLowerCase();
+    const rows = world.booths
+      .filter(b => !q || (b.owner || '').toLowerCase().includes(q))
+      .map(b => {
+        const n = (b.cards || []).length;
+        const forSale = (b.cards || []).some(c => c.status === 'sale' || c.status === 'both');
+        const forTrade = (b.cards || []).some(c => c.status === 'trade' || c.status === 'both');
+        const tags = (forSale ? '🛒' : '') + (forTrade ? '🤝' : '');
+        return `<div class="floor-dir-row">
+          <span class="floor-dir-emoji">${escHtml(b.emoji || '🃏')}</span>
+          <span class="floor-dir-name">${escHtml(b.isYou ? 'You' : (b.owner || 'Collector'))}${b.isYou ? ' <span class="floor-dir-youbadge">YOUR BOOTH</span>' : ''}</span>
+          <span class="floor-dir-meta">${n} card${n !== 1 ? 's' : ''} ${tags}</span>
+          <span class="floor-dir-acts">
+            <button type="button" class="floor-dir-visit" data-booth="${b.id}">Visit</button>
+            <button type="button" class="floor-dir-walk" data-booth="${b.id}">Walk</button>
+          </span>
+        </div>`;
+      }).join('');
+    listEl.innerHTML = rows || '<p class="floor-dir-empty">No collectors match that search.</p>';
+  }
+
+  function boothById(id) {
+    return world && world.booths.find(b => String(b.id) === String(id));
+  }
+  function walkToBooth(b) {
+    if (!b) return;
+    player.x = Math.max(PLAYER_R, Math.min(WORLD_W - PLAYER_R, b.x + b.w / 2));
+    player.y = Math.min(worldH - PLAYER_R, b.y + b.h + PLAYER_R + 10);
+  }
+
   // ---- character creation UI ----
   function renderCharCreate() {
     const cc = document.getElementById('floor-charcreate');
@@ -509,6 +546,7 @@
     const me = getCharacter();
     const hudName = document.getElementById('floor-hud-name');
     if (hudName && me) hudName.textContent = `${me.emoji || '🙂'} ${me.name || 'You'}`;
+    world = null; renderDirectory('');   // show the loading state while we fetch
 
     // Fetch everyone's booth, then build & run. Falls back to demo-only.
     let remoteBooths = [];
@@ -554,11 +592,19 @@
   });
   document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
+  document.addEventListener('input', e => {
+    if (e.target && e.target.id === 'floor-dir-search') renderDirectory(e.target.value);
+  });
+
   document.addEventListener('click', e => {
     const sw = e.target.closest('.floor-swatch');
     if (sw) { ccDraft.color = sw.dataset.color; renderCharCreate(); return; }
     const em = e.target.closest('.floor-emoji');
     if (em) { ccDraft.emoji = em.dataset.emoji; renderCharCreate(); return; }
+    const visit = e.target.closest('.floor-dir-visit');
+    if (visit) { const b = boothById(visit.dataset.booth); if (b) openBooth(b); return; }
+    const walk = e.target.closest('.floor-dir-walk');
+    if (walk) { const b = boothById(walk.dataset.booth); if (b) walkToBooth(b); return; }
     if (e.target && e.target.id === 'floor-canvas' && world) {
       const r = canvas.getBoundingClientRect();
       const mx = (e.clientX - r.left) * (WORLD_W / r.width);
