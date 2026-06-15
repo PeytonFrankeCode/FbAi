@@ -453,6 +453,23 @@ function makeFloorMaterial(h) {
   return mat;
 }
 
+// Wall material. Solid light paint by default; auto-upgrades to a dropped-in
+// texture at /public/textures/wall-color.jpg (or window.FLOOR_WALL = {color,repeat}).
+function makeWallMaterial() {
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
+  const mat = new THREE.MeshStandardMaterial({ color: 0xeef0f2, roughness: 0.95 });
+  const cfg = window.FLOOR_WALL || {};
+  if (cfg !== false) {
+    const rep = cfg.repeat || 6;
+    new THREE.TextureLoader().load(cfg.color || '/textures/wall-color.jpg', t => {
+      t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rep, Math.max(2, Math.round(rep * 0.4)));
+      t.anisotropy = maxAniso; t.colorSpace = THREE.SRGBColorSpace;
+      mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true;
+    }, undefined, () => {});
+  }
+  return mat;
+}
+
 // Build the convention hall: polished concrete floor, tall light-gray walls
 // (front entrance gap), dark industrial ceiling with trusses, and a grid of
 // bright ceiling light fixtures — with faint light pools on the floor so the
@@ -466,8 +483,8 @@ function buildRoom(group, h) {
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), makeFloorMaterial(h));
   floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); floor.receiveShadow = true; group.add(floor);
 
-  // light-gray walls, tall, with a front entrance gap
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xd4d5d8, roughness: 0.92 });
+  // painted walls, tall, with a front entrance gap
+  const wallMat = makeWallMaterial();
   const t = 0.6, y = CEIL / 2, ww = h.maxX - h.minX, dd = h.maxZ - h.minZ;
   const back = new THREE.Mesh(new THREE.BoxGeometry(ww, CEIL, t), wallMat); back.position.set(cx, y, h.maxZ); group.add(back);
   const left = new THREE.Mesh(new THREE.BoxGeometry(t, CEIL, dd), wallMat); left.position.set(h.minX, y, cz); group.add(left);
