@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=86" />
+  <link rel="stylesheet" href="style.css?v=87" />
 
 
 </head>
@@ -170,6 +170,7 @@
       <button class="nav-tab" data-view="rainbow" onclick="switchView('rainbow')">Rainbow</button>
       <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
       <button class="nav-tab" data-view="collection" onclick="switchView('collection')">My Cards</button>
+      <button class="nav-tab" data-view="floor" onclick="switchView('floor')">The Floor</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">Sell</button>
       <button class="nav-tab" data-view="proplus" onclick="switchView('proplus')">Tools</button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
@@ -1171,6 +1172,57 @@
     </div>
   </div>
 
+  <!-- The Floor — a walkable card-show world -->
+  <div id="floor-view" class="floor-view hidden">
+    <!-- Character creation (first visit / edit) -->
+    <div id="floor-charcreate" class="floor-charcreate hidden">
+      <div class="floor-cc-box">
+        <h2>Create your collector</h2>
+        <p>Make a character, then step onto the floor to browse booths and trade or buy &mdash; deals run through eBay &amp; Veriswap.</p>
+        <label>Display name</label>
+        <input type="text" id="floor-cc-name" maxlength="16" placeholder="e.g. RookieRipper" />
+        <label>Avatar color</label>
+        <div id="floor-cc-colors" class="floor-cc-colors"></div>
+        <label>Look</label>
+        <div id="floor-cc-emojis" class="floor-cc-emojis"></div>
+        <button type="button" class="floor-cc-go" onclick="saveCharacterAndEnter()">Enter the floor</button>
+      </div>
+    </div>
+
+    <!-- Game stage -->
+    <div id="floor-stage" class="floor-stage hidden">
+      <div class="floor-hud">
+        <span id="floor-hud-name" class="floor-hud-name"></span>
+        <span class="floor-hud-hint">Move: WASD / arrows &middot; Visit a booth: E (or tap it)</span>
+        <button type="button" class="floor-hud-edit" onclick="editCharacter()">Edit character</button>
+      </div>
+      <div class="floor-canvas-wrap">
+        <canvas id="floor-canvas" class="floor-canvas" width="960" height="600"></canvas>
+        <div id="floor-prompt" class="floor-prompt hidden"></div>
+      </div>
+      <!-- On-screen controls for touch devices -->
+      <div class="floor-dpad">
+        <button type="button" class="floor-dbtn" data-dir="up" aria-label="Up">&#9650;</button>
+        <div class="floor-dpad-mid">
+          <button type="button" class="floor-dbtn" data-dir="left" aria-label="Left">&#9664;</button>
+          <button type="button" class="floor-dbtn floor-action" data-dir="action" aria-label="Visit booth">E</button>
+          <button type="button" class="floor-dbtn" data-dir="right" aria-label="Right">&#9654;</button>
+        </div>
+        <button type="button" class="floor-dbtn" data-dir="down" aria-label="Down">&#9660;</button>
+      </div>
+    </div>
+
+    <!-- Booth showcase modal -->
+    <div id="floor-booth-modal" class="modal-overlay hidden" role="dialog">
+      <div class="modal-box" style="max-width:640px">
+        <button class="login-close" onclick="closeBoothModal()">&times;</button>
+        <h2 id="floor-booth-title">Booth</h2>
+        <p id="floor-booth-sub" class="ccm-help"></p>
+        <div id="floor-booth-body"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings Modal -->
   <div id="settings-overlay" class="settings-overlay hidden" role="dialog" aria-label="Settings">
     <div class="settings-box">
@@ -1417,6 +1469,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=118"></script>
+  <script src="app.js?v=119"></script>
+  <script src="floor.js?v=1"></script>
 </body>
 </html>
