@@ -325,46 +325,69 @@ function buildShowcaseFixture(grp, x, y0, boothId, shared, cards, ci) {
   return ci + 9;
 }
 
-// A card stand: a shallow box with cards standing upright facing the buyer.
-// The booth's real cards fill the front slots; the rest are generic.
-function buildStandFixture(grp, x, y0, boothId, shared, cards, ci) {
-  const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.34, 1.4),
-    new THREE.MeshStandardMaterial({ color: 0x6b4f33, roughness: 0.95 }));
-  box.position.set(x, y0 + 0.17, 0); box.castShadow = true; box.userData.boothId = boothId; grp.add(box);
-  const n = 9;
-  for (let i = 0; i < n; i++) {
-    const entry = cards[ci];
-    const card = new THREE.Mesh(shared.standGeo, cardMaterial(entry, shared, i + 1));
-    card.position.set(x, y0 + 0.30, -0.55 + i * 0.12);
-    card.rotation.y = Math.PI;                 // face the buyer (-z)
+// One acrylic display stand: a glossy black base with a near-clear acrylic
+// back panel holding two cards stacked upright and facing the buyer (-z).
+function buildAcrylicStand(grp, sx, sz, y0, boothId, shared, cards, ciRef) {
+  const baseH = 0.06, panelH = 1.0, W = 0.34;
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W, baseH, 0.2), shared.blackAcrylic);
+  base.position.set(sx, y0 + baseH / 2, sz); base.castShadow = true; base.receiveShadow = true;
+  base.userData.boothId = boothId; grp.add(base);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(W, panelH, 0.03), shared.clearAcrylic);
+  panel.position.set(sx, y0 + baseH + panelH / 2, sz + 0.02); panel.userData.boothId = boothId; grp.add(panel);
+  // two cards stacked vertically, just in front of the panel, facing the buyer
+  for (let row = 0; row < 2; row++) {
+    const entry = cards[ciRef.i];
+    const card = new THREE.Mesh(shared.standCardGeo, cardMaterial(entry, shared, ciRef.i + 1));
+    card.position.set(sx, y0 + baseH + 0.27 + row * 0.46, sz - 0.005);
+    card.rotation.y = Math.PI;                  // front faces -z (the buyer)
     card.userData.boothId = boothId;
     grp.add(card);
-    if (entry) ci++;
+    if (entry) ciRef.i++;
   }
-  return ci;
 }
 
-// A value box: a deeper "dollar box" packed with generic cards leaning back,
-// with a little placard. Bulk inventory, so it doesn't consume listed cards.
-function buildValueBoxFixture(grp, x, y0, boothId, shared) {
-  const box = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.5, 1.3),
-    new THREE.MeshStandardMaterial({ color: 0x7a3b1d, roughness: 0.95 }));
-  box.position.set(x, y0 + 0.25, 0); box.castShadow = true; box.receiveShadow = true;
-  box.userData.boothId = boothId; grp.add(box);
-  const band = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 1.33),
-    new THREE.MeshStandardMaterial({ color: 0xe9dcc2, roughness: 0.9 }));
-  band.position.set(x, y0 + 0.36, 0); band.userData.boothId = boothId; grp.add(band);
-  for (let i = 0; i < 12; i++) {
-    const card = new THREE.Mesh(shared.standGeo, shared.cardMats[i % shared.cardMats.length]);
-    card.position.set(x, y0 + 0.48, -0.52 + i * 0.095);
-    card.rotation.x = -0.42;                    // leaning back like a packed box
-    card.userData.boothId = boothId;
-    grp.add(card);
+// A card-stand fixture: a row of acrylic display stands across the slot, each
+// holding two cards face-out. The booth's real cards fill them in order.
+function buildStandFixture(grp, x, y0, boothId, shared, cards, ci) {
+  const STANDS = 3, gap = 0.36;
+  const ciRef = { i: ci };
+  for (let s = 0; s < STANDS; s++) {
+    const sx = x + (s - (STANDS - 1) / 2) * gap;
+    buildAcrylicStand(grp, sx, 0.18, y0, boothId, shared, cards, ciRef);  // toward the front edge
   }
-  const placard = makeLabelSprite('💲 Value Box', '');
-  placard.scale.set(1.7, 0.64, 1);
-  placard.position.set(x, y0 + 0.95, -0.55);
-  grp.add(placard);
+  return ciRef.i;
+}
+
+// A value box: a white cardboard "dollar box" (open top) packed with rows of
+// cards standing upright, with a couple of coloured divider tabs and a hand-
+// lettered price tab. Bulk inventory, so it doesn't consume listed cards.
+function buildValueBoxFixture(grp, x, y0, boothId, shared) {
+  const W = 1.02, D = 1.34, H = 0.32, t = 0.04;
+  // box floor + four low walls (reads as an open-top row box)
+  const fl = new THREE.Mesh(new THREE.BoxGeometry(W, 0.03, D), shared.cardboardDark);
+  fl.position.set(x, y0 + 0.015, 0); fl.receiveShadow = true; fl.userData.boothId = boothId; grp.add(fl);
+  const longWall = new THREE.BoxGeometry(W + t, H, t), shortWall = new THREE.BoxGeometry(t, H, D);
+  for (const dz of [-D / 2, D / 2]) { const m = new THREE.Mesh(longWall, shared.cardboard); m.position.set(x, y0 + H / 2, dz); m.castShadow = true; m.userData.boothId = boothId; grp.add(m); }
+  for (const dx of [-W / 2, W / 2]) { const m = new THREE.Mesh(shortWall, shared.cardboard); m.position.set(x + dx, y0 + H / 2, 0); m.castShadow = true; m.userData.boothId = boothId; grp.add(m); }
+  // packed rows of cards standing up the length of the box
+  const n = 30, z0 = -D / 2 + 0.08, span = D - 0.16;
+  for (let i = 0; i < n; i++) {
+    const card = new THREE.Mesh(shared.standGeo, shared.cardMats[i % shared.cardMats.length]);
+    card.position.set(x, y0 + 0.18, z0 + (i / (n - 1)) * span);
+    card.userData.boothId = boothId; grp.add(card);
+  }
+  // a few coloured divider tabs poking up above the cards
+  const tabGeo = new THREE.PlaneGeometry(0.26, 0.12);
+  const tabCols = [0x4caf50, 0xf4d03f, 0xe74c3c];
+  [0.18, 0.5, 0.82].forEach((f, k) => {
+    const tab = new THREE.Mesh(tabGeo, new THREE.MeshStandardMaterial({ color: tabCols[k % tabCols.length], roughness: 0.85, side: THREE.DoubleSide }));
+    tab.position.set(x, y0 + 0.40, z0 + f * span); tab.userData.boothId = boothId; grp.add(tab);
+  });
+  // hand-lettered "$1 BOX" price tab on the front wall
+  const tag = makeLabelSprite('💲 $1 BOX', '');
+  tag.scale.set(1.5, 0.56, 1);
+  tag.position.set(x, y0 + 0.5, -D / 2 - 0.04);
+  grp.add(tag);
 }
 
 // ----------------------------------------------------- avatar meshes
@@ -436,6 +459,7 @@ function buildWorld(remoteBooths) {
     flatGeo: new THREE.PlaneGeometry(0.34, 0.48),
     standGeo: new THREE.PlaneGeometry(0.22, 0.32),
     slabGeo: new THREE.PlaneGeometry(0.24, 0.33),
+    standCardGeo: new THREE.PlaneGeometry(0.3, 0.42),   // face-out card in an acrylic stand
     cardMats: [
       new THREE.MeshBasicMaterial({ map: makeCardTex('#1f6f4a'), side: THREE.DoubleSide }),
       new THREE.MeshBasicMaterial({ map: makeCardTex('#b45309'), side: THREE.DoubleSide }),
@@ -446,6 +470,12 @@ function buildWorld(remoteBooths) {
     alu: new THREE.MeshStandardMaterial({ color: 0xd7dade, metalness: 0.9, roughness: 0.34 }),
     aluDark: new THREE.MeshStandardMaterial({ color: 0x111319, metalness: 0.25, roughness: 0.85 }),
     glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.16 }),
+    // glossy black acrylic base + near-clear acrylic for the upright card stands
+    blackAcrylic: new THREE.MeshStandardMaterial({ color: 0x0a0a0c, metalness: 0.3, roughness: 0.12 }),
+    clearAcrylic: new THREE.MeshStandardMaterial({ color: 0xeef4ff, metalness: 0.0, roughness: 0.03, transparent: true, opacity: 0.14 }),
+    // white cardboard row-box (the "dollar box") and its shaded interior
+    cardboard: new THREE.MeshStandardMaterial({ color: 0xe9e4d7, roughness: 0.96 }),
+    cardboardDark: new THREE.MeshStandardMaterial({ color: 0xcabfa8, roughness: 0.98 }),
   };
 
   list = list.slice(0, FLOOR_MAX_TABLES);
