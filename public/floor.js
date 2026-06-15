@@ -24,6 +24,42 @@ const CHAR_KEY = 'cardHuddleCharacter';
 const AVATAR_COLORS = ['#5ece99', '#f59e0b', '#ef4444', '#6366f1', '#ec4899', '#06b6d4', '#a855f7', '#84cc16'];
 const AVATAR_EMOJIS = ['🧢', '😎', '🤠', '🦸', '🤖', '👽', '🧑‍🎤', '🐉'];
 
+// Character customization palettes (a "definitive collector" you build part by
+// part). Shirt reuses AVATAR_COLORS; the rest get their own sets.
+const SKIN_TONES = ['#f7d7b5', '#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#5a3825'];
+const SHIRT_COLORS = AVATAR_COLORS;
+const PANTS_COLORS = ['#2b3a55', '#1f2937', '#4b5563', '#8b7355', '#3b5bdb', '#5b3a29'];
+const HAIR_COLORS = ['#1b1b1b', '#3b2417', '#6b4423', '#b8860b', '#d9b382', '#9aa0a6', '#ececec'];
+const HAIR_STYLES = [{ id: 'short', label: 'Short' }, { id: 'buzz', label: 'Buzz' }, { id: 'curly', label: 'Curly' }, { id: 'long', label: 'Long' }, { id: 'bald', label: 'Bald' }];
+const HATS = [{ id: 'none', label: 'None' }, { id: 'cap', label: 'Cap' }, { id: 'beanie', label: 'Beanie' }];
+const ACCESSORIES = [{ id: 'none', label: 'None' }, { id: 'glasses', label: 'Glasses' }];
+
+// Fill in any missing fields (and migrate the old {color} shape → {shirt}).
+function normalizeCharacter(c) {
+  c = c || {};
+  const shirt = c.shirt || c.color || SHIRT_COLORS[0];
+  return {
+    name: c.name || 'Collector',
+    emoji: c.emoji || AVATAR_EMOJIS[0],
+    skin: c.skin || SKIN_TONES[1],
+    shirt,
+    pants: c.pants || PANTS_COLORS[0],
+    hair: c.hair || HAIR_COLORS[0],
+    hairStyle: c.hairStyle || 'short',
+    hat: c.hat || 'none',
+    accessory: c.accessory || 'none',
+    color: shirt,                         // keep legacy field = shirt for the booth index
+  };
+}
+function randomCharacter(name) {
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  return normalizeCharacter({
+    name, emoji: pick(AVATAR_EMOJIS), skin: pick(SKIN_TONES), shirt: pick(SHIRT_COLORS),
+    pants: pick(PANTS_COLORS), hair: pick(HAIR_COLORS), hairStyle: pick(['short', 'buzz', 'curly', 'long', 'bald']),
+    hat: pick(['none', 'none', 'cap', 'beanie']), accessory: pick(['none', 'none', 'glasses']),
+  });
+}
+
 const TABLE_W = 6.2, TABLE_D = 2.4, TABLE_H = 1.05;   // 6ft folding table
 const PLAYER_R = 0.6, MOVE_SPEED = 0.2, TURN_SPEED = 0.04;
 const INTERACT_DIST = 4.6;
@@ -95,7 +131,7 @@ const keys = Object.create(null);
 const touchDir = { up: false, down: false, left: false, right: false };
 let dragging = false, lastX = 0, lastY = 0;
 
-let ccDraft = { color: AVATAR_COLORS[0], emoji: AVATAR_EMOJIS[0] };
+let ccDraft = normalizeCharacter(null);
 
 // ---------------------------------------------------------------- data
 function getCharacter() { try { return JSON.parse(localStorage.getItem(CHAR_KEY) || 'null'); } catch { return null; } }
@@ -398,24 +434,97 @@ function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
 }
 
 // ----------------------------------------------------- avatar meshes
-function buildAvatar(color, emoji, name) {
+// Build a segmented humanoid from a normalized character: legs (pants), torso
+// + arms (shirt), head/hands (skin), hair (style + colour), optional hat and
+// glasses. Roughly 3.7m tall so the eyes clear the display-case glass.
+function buildFigure(char) {
   const g = new THREE.Group();
-  const col = new THREE.Color(color || '#5ece99');
+  const std = (hex, rough) => new THREE.MeshStandardMaterial({ color: new THREE.Color(hex), roughness: rough == null ? 0.7 : rough });
+  const shirtMat = std(char.shirt, 0.72), pantsMat = std(char.pants, 0.8);
+  const skinMat = std(char.skin, 0.55), hairMat = std(char.hair, 0.85), darkMat = std('#15171c', 0.5);
+
+  // legs + shoes
+  for (const lx of [-0.24, 0.24]) {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.5, 0.4), pantsMat);
+    leg.position.set(lx, 0.78, 0); leg.castShadow = true; g.add(leg);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.18, 0.6), darkMat);
+    shoe.position.set(lx, 0.09, 0.1); shoe.castShadow = true; g.add(shoe);
+  }
+  // torso
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.5, 0.56), shirtMat);
+  torso.position.set(0, 2.25, 0); torso.castShadow = true; g.add(torso);
+  // arms (shirt) with skin hands
+  for (const ax of [-0.62, 0.62]) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.3, 0.3), shirtMat);
+    arm.position.set(ax, 2.3, 0); arm.castShadow = true; g.add(arm);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), skinMat);
+    hand.position.set(ax, 1.6, 0); hand.castShadow = true; g.add(hand);
+  }
+  // neck + head
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.2, 10), skinMat);
+  neck.position.set(0, 3.05, 0); g.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 20, 16), skinMat);
+  head.position.set(0, 3.45, 0); head.castShadow = true; g.add(head);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), skinMat);
+  nose.position.set(0, 3.42, 0.44); g.add(nose);
+
+  // hair
+  if (char.hairStyle && char.hairStyle !== 'bald') {
+    if (char.hairStyle === 'curly') {
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 8), hairMat);
+        curl.position.set(Math.cos(a) * 0.3, 3.7 + Math.sin(i) * 0.05, Math.sin(a) * 0.3 - 0.05);
+        g.add(curl);
+      }
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
+      cap.position.set(0, 3.45, 0); g.add(cap);
+    } else {
+      const cut = char.hairStyle === 'buzz' ? 0.4 : 0.62;
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.47, 18, 14, 0, Math.PI * 2, 0, Math.PI * cut), hairMat);
+      cap.position.set(0, 3.45, -0.02); g.add(cap);
+      if (char.hairStyle === 'long') {
+        const back = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.2), hairMat);
+        back.position.set(0, 3.15, -0.34); g.add(back);
+      }
+    }
+  }
+  // hat (matches the shirt colour like team gear)
+  if (char.hat === 'cap') {
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), shirtMat);
+    crown.position.set(0, 3.5, 0); g.add(crown);
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 0.4), shirtMat);
+    brim.position.set(0, 3.52, 0.46); g.add(brim);
+  } else if (char.hat === 'beanie') {
+    const beanie = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), shirtMat);
+    beanie.position.set(0, 3.46, 0); g.add(beanie);
+    const fold = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.07, 8, 20), shirtMat);
+    fold.position.set(0, 3.46, 0); fold.rotation.x = Math.PI / 2; g.add(fold);
+  }
+  // glasses
+  if (char.accessory === 'glasses') {
+    for (const gx of [-0.18, 0.18]) {
+      const lens = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 8, 16), darkMat);
+      lens.position.set(gx, 3.46, 0.42); g.add(lens);
+    }
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.03), darkMat);
+    bridge.position.set(0, 3.46, 0.43); g.add(bridge);
+  }
+  return g;
+}
+
+function buildAvatar(char) {
+  char = normalizeCharacter(char);
+  const g = new THREE.Group();
   if (avatarModel) {
     const m = avatarModel.clone(true);
     m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); } });
     m.scale.setScalar(avatarModel.userData.fitScale || 1);
     g.add(m);
   } else {
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.52, 2.3, 6, 12), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
-    body.position.y = 1.67; body.castShadow = true;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 18, 14), new THREE.MeshStandardMaterial({ color: col.clone().offsetHSL(0, 0, 0.12), roughness: 0.6 }));
-    head.position.y = 3.3; head.castShadow = true;
-    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0x111317 }));
-    nose.position.set(0, 3.3, 0.42);
-    g.add(body, head, nose);
+    g.add(buildFigure(char));
   }
-  const label = makeLabelSprite(`${emoji || '🙂'} ${name || 'Collector'}`, '');
+  const label = makeLabelSprite(`${char.emoji || '🙂'} ${char.name || 'Collector'}`, '');
   label.position.set(0, 4.2, 0);
   g.add(label);
   scene.add(g);
@@ -816,8 +925,8 @@ function buildVacantTable(grp) {
 
 function makeNpcs() {
   npcs.forEach(a => scene.remove(a.group)); npcs = [];
-  for (const d of [{ name: 'Browser1', emoji: '😀', color: '#38bdf8' }, { name: 'Browser2', emoji: '🥳', color: '#fbbf24' }, { name: 'Browser3', emoji: '🤓', color: '#f472b6' }]) {
-    const a = buildAvatar(d.color, d.emoji, d.name);
+  for (const nm of ['Browser', 'Collector', 'Trader']) {
+    const a = buildAvatar(randomCharacter(nm));
     a.x = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6);
     a.z = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6);
     a.tx = a.x; a.tz = a.z; a.repick = 0; a.group.position.set(a.x, 0, a.z); npcs.push(a);
@@ -1143,8 +1252,12 @@ function connectPresence() {
   catch (_) { return; }
   ws = sock;
   sock.addEventListener('open', () => {
-    const me = getCharacter() || {};
-    sendWs({ t: 'join', name: me.name || 'Collector', emoji: me.emoji || '🙂', color: me.color || '#5ece99', username: myUsername(), x: round1(player.x), y: round1(player.z) });
+    const me = normalizeCharacter(getCharacter());
+    sendWs({
+      t: 'join', name: me.name, emoji: me.emoji, color: me.shirt, username: myUsername(),
+      x: round1(player.x), y: round1(player.z),
+      appearance: { skin: me.skin, shirt: me.shirt, pants: me.pants, hair: me.hair, hairStyle: me.hairStyle, hat: me.hat, accessory: me.accessory },
+    });
     lastSent = { x: null, z: null };
     moveTimer = setInterval(() => { const x = round1(player.x), z = round1(player.z); if (x === lastSent.x && z === lastSent.z) return; lastSent = { x, z }; sendWs({ t: 'move', x, y: z }); }, 100);
   });
@@ -1167,7 +1280,7 @@ function connectPresence() {
 }
 function addRemote(p) {
   if (!p || !p.id || p.id === wsId) return;
-  const a = buildAvatar(p.color, p.emoji, p.name);
+  const a = buildAvatar(normalizeCharacter({ name: p.name, emoji: p.emoji, color: p.color, ...(p.appearance || {}) }));
   a.x = p.x || 0; a.z = p.y || 0; a.tx = a.x; a.tz = a.z; a.group.position.set(a.x, 0, a.z);
   remote.set(p.id, a);
 }
@@ -1187,13 +1300,67 @@ function renderCharCreate() {
   if (stage) stage.classList.add('hidden');
   if (cc) cc.classList.remove('hidden');
   const existing = getCharacter();
-  if (existing) ccDraft = { color: existing.color, emoji: existing.emoji };
+  ccDraft = normalizeCharacter(existing);
   const nameEl = document.getElementById('floor-cc-name');
   if (nameEl) nameEl.value = existing ? (existing.name || '') : '';
-  const colorWrap = document.getElementById('floor-cc-colors');
-  if (colorWrap) colorWrap.innerHTML = AVATAR_COLORS.map(c => `<button type="button" class="floor-swatch${c === ccDraft.color ? ' sel' : ''}" style="background:${c}" data-color="${c}"></button>`).join('');
+
+  const swatchRow = (id, field, colors) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = colors.map(c => `<button type="button" class="floor-swatch${c === ccDraft[field] ? ' sel' : ''}" style="background:${c}" data-cc="${field}" data-val="${c}"></button>`).join('');
+  };
+  const optRow = (id, field, opts) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts.map(o => `<button type="button" class="floor-cc-opt${o.id === ccDraft[field] ? ' sel' : ''}" data-cc="${field}" data-val="${o.id}">${escHtml(o.label)}</button>`).join('');
+  };
+  swatchRow('floor-cc-skin', 'skin', SKIN_TONES);
+  swatchRow('floor-cc-colors', 'shirt', SHIRT_COLORS);
+  swatchRow('floor-cc-pants', 'pants', PANTS_COLORS);
+  swatchRow('floor-cc-haircolor', 'hair', HAIR_COLORS);
+  optRow('floor-cc-hairstyle', 'hairStyle', HAIR_STYLES);
+  optRow('floor-cc-hat', 'hat', HATS);
+  optRow('floor-cc-accessory', 'accessory', ACCESSORIES);
   const emojiWrap = document.getElementById('floor-cc-emojis');
-  if (emojiWrap) emojiWrap.innerHTML = AVATAR_EMOJIS.map(e => `<button type="button" class="floor-emoji${e === ccDraft.emoji ? ' sel' : ''}" data-emoji="${e}">${e}</button>`).join('');
+  if (emojiWrap) emojiWrap.innerHTML = AVATAR_EMOJIS.map(e => `<button type="button" class="floor-emoji${e === ccDraft.emoji ? ' sel' : ''}" data-cc="emoji" data-val="${e}">${e}</button>`).join('');
+  drawCharPreview();
+}
+
+// 2D front-facing preview of the collector being built (no WebGL needed).
+function drawCharPreview() {
+  const cv = document.getElementById('floor-cc-preview');
+  if (!cv || !cv.getContext) return;
+  const c = cv.getContext('2d'), W = cv.width, H = cv.height, cx = W / 2;
+  const ch = ccDraft;
+  c.clearRect(0, 0, W, H);
+  const rr = (x, y, w, h, r) => { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); };
+  // soft ground shadow
+  c.fillStyle = 'rgba(0,0,0,0.18)'; c.beginPath(); c.ellipse(cx, H - 14, 46, 10, 0, 0, 7); c.fill();
+  // legs + shoes
+  c.fillStyle = ch.pants; rr(cx - 26, H - 120, 22, 96, 6); c.fill(); rr(cx + 4, H - 120, 22, 96, 6); c.fill();
+  c.fillStyle = '#15171c'; rr(cx - 30, H - 30, 28, 14, 5); c.fill(); rr(cx + 2, H - 30, 28, 14, 5); c.fill();
+  // arms (behind torso)
+  c.fillStyle = ch.shirt; rr(cx - 50, H - 210, 18, 96, 8); c.fill(); rr(cx + 32, H - 210, 18, 96, 8); c.fill();
+  c.fillStyle = ch.skin; c.beginPath(); c.arc(cx - 41, H - 116, 11, 0, 7); c.fill(); c.beginPath(); c.arc(cx + 41, H - 116, 11, 0, 7); c.fill();
+  // torso
+  c.fillStyle = ch.shirt; rr(cx - 36, H - 214, 72, 104, 14); c.fill();
+  // head + nose
+  const hy = H - 250;
+  c.fillStyle = ch.skin; c.beginPath(); c.arc(cx, hy, 30, 0, 7); c.fill();
+  c.fillStyle = 'rgba(0,0,0,0.12)'; c.beginPath(); c.arc(cx, hy + 6, 3.5, 0, 7); c.fill();
+  // hair
+  if (ch.hairStyle && ch.hairStyle !== 'bald') {
+    c.fillStyle = ch.hair;
+    if (ch.hairStyle === 'curly') { for (let i = 0; i < 8; i++) { const a = Math.PI + (i / 7) * Math.PI; c.beginPath(); c.arc(cx + Math.cos(a) * 28, hy + Math.sin(a) * 28, 11, 0, 7); c.fill(); } }
+    else {
+      const sweep = ch.hairStyle === 'buzz' ? 0.62 : 0.95;
+      c.beginPath(); c.arc(cx, hy, 32, Math.PI * (1 + (1 - sweep)), Math.PI * (2 - (1 - sweep))); c.fill();
+      if (ch.hairStyle === 'long') { rr(cx - 30, hy, 60, 46, 10); c.fill(); }
+    }
+  }
+  // hat
+  if (ch.hat === 'cap') { c.fillStyle = ch.shirt; c.beginPath(); c.arc(cx, hy - 4, 31, Math.PI, 2 * Math.PI); c.fill(); rr(cx - 6, hy - 8, 44, 9, 4); c.fill(); }
+  else if (ch.hat === 'beanie') { c.fillStyle = ch.shirt; c.beginPath(); c.arc(cx, hy - 2, 33, Math.PI * 1.05, Math.PI * 1.95); c.fill(); rr(cx - 33, hy - 6, 66, 10, 5); c.fill(); }
+  // glasses
+  if (ch.accessory === 'glasses') { c.strokeStyle = '#15171c'; c.lineWidth = 3; c.beginPath(); c.arc(cx - 12, hy + 2, 9, 0, 7); c.stroke(); c.beginPath(); c.arc(cx + 12, hy + 2, 9, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cx - 3, hy + 2); c.lineTo(cx + 3, hy + 2); c.stroke(); }
 }
 
 async function enterFloor() {
@@ -1214,7 +1381,7 @@ async function enterFloor() {
 
   buildWorld(remoteBooths);
   if (playerObj) scene.remove(playerObj.group);
-  playerObj = buildAvatar(me?.color, me?.emoji, me?.name || 'You');
+  playerObj = buildAvatar(me);
   makeNpcs();
   setFreeLook(false);
   start();
@@ -1229,7 +1396,7 @@ window.editCharacter = function () { stop(); renderCharCreate(); };
 window.saveCharacterAndEnter = function () {
   const name = (document.getElementById('floor-cc-name')?.value || '').trim();
   if (!name) { alert('Pick a display name for your collector.'); return; }
-  saveCharacter({ name, color: ccDraft.color, emoji: ccDraft.emoji });
+  saveCharacter(normalizeCharacter({ ...ccDraft, name }));
   enterFloor();
 };
 window.closeBoothModal = closeBooth;
@@ -1253,10 +1420,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 document.addEventListener('input', e => { if (e.target && e.target.id === 'floor-dir-search') renderDirectory(e.target.value); });
 document.addEventListener('click', e => {
-  const sw = e.target.closest('.floor-swatch');
-  if (sw) { ccDraft.color = sw.dataset.color; renderCharCreate(); return; }
-  const em = e.target.closest('.floor-emoji');
-  if (em) { ccDraft.emoji = em.dataset.emoji; renderCharCreate(); return; }
+  const ccOpt = e.target.closest('[data-cc]');
+  if (ccOpt) { ccDraft[ccOpt.dataset.cc] = ccOpt.dataset.val; renderCharCreate(); return; }
   const visit = e.target.closest('.floor-dir-visit');
   if (visit) { const b = boothById(visit.dataset.booth); if (b) openBooth(b); return; }
   const walk = e.target.closest('.floor-dir-walk');

@@ -256,11 +256,21 @@ export class FloorRoom {
       if (!msg || typeof msg !== 'object') return;
 
       if (msg.t === 'join') {
+        const ap = msg.appearance && typeof msg.appearance === 'object' ? msg.appearance : null;
         session.profile = {
           name: String(msg.name || 'Collector').slice(0, 24),
           emoji: String(msg.emoji || '🙂').slice(0, 8),
           color: String(msg.color || '#5ece99').slice(0, 16),
           username: String(msg.username || '').slice(0, 32),
+          appearance: ap ? {
+            skin: String(ap.skin || '').slice(0, 16),
+            shirt: String(ap.shirt || '').slice(0, 16),
+            pants: String(ap.pants || '').slice(0, 16),
+            hair: String(ap.hair || '').slice(0, 16),
+            hairStyle: String(ap.hairStyle || '').slice(0, 16),
+            hat: String(ap.hat || '').slice(0, 16),
+            accessory: String(ap.accessory || '').slice(0, 16),
+          } : null,
         };
         if (typeof msg.x === 'number') session.x = msg.x;
         if (typeof msg.y === 'number') session.y = msg.y;
