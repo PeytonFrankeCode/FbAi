@@ -330,21 +330,7 @@ function buildWorld(remoteBooths) {
   bounds = { minX: hall.minX + 1.5, maxX: hall.maxX - 1.5, minZ: hall.minZ + 1.5, maxZ: hall.maxZ - 1.5 };
   tableRects = [];
 
-  // red carpet aisles (base) + blue table-zone pads under each block
-  const carpet = new THREE.Mesh(
-    new THREE.PlaneGeometry(hall.maxX - hall.minX + 4, hall.maxZ - hall.minZ + 4),
-    new THREE.MeshStandardMaterial({ color: 0x7c2b2b, roughness: 0.98 })
-  );
-  carpet.rotation.x = -Math.PI / 2;
-  carpet.position.set((hall.minX + hall.maxX) / 2, 0, (hall.minZ + hall.maxZ) / 2);
-  carpet.receiveShadow = true; worldGroup.add(carpet);
-  const padMat = new THREE.MeshStandardMaterial({ color: 0x22386b, roughness: 0.96 });
-  for (const p of hall.pads) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(p.w, p.d), padMat);
-    m.rotation.x = -Math.PI / 2; m.position.set(p.x, 0.02, p.z); m.receiveShadow = true;
-    worldGroup.add(m);
-  }
-  buildWalls(worldGroup, hall);
+  buildRoom(worldGroup, hall);
 
   // place tables into the slots — occupied booths first (detailed), the rest
   // are vacant ("available") tables so the hall reads full and has 50+ spots.
@@ -387,17 +373,71 @@ function computeHall() {
   return { slots, pads, minX: x0 - margin, maxX: x0 + totalW + margin, minZ: -margin, maxZ: z0 + totalD + margin };
 }
 
-// Perimeter walls with a front entrance gap (cosmetic; movement is bounded).
-function buildWalls(group, h) {
-  const mat = new THREE.MeshStandardMaterial({ color: 0x0e1119, roughness: 1 });
-  const t = 0.6, H = 4.5, y = H / 2;
-  const w = h.maxX - h.minX, d = h.maxZ - h.minZ, cx = (h.minX + h.maxX) / 2, cz = (h.minZ + h.maxZ) / 2;
-  const back = new THREE.Mesh(new THREE.BoxGeometry(w, H, t), mat); back.position.set(cx, y, h.maxZ); group.add(back);
-  const left = new THREE.Mesh(new THREE.BoxGeometry(t, H, d), mat); left.position.set(h.minX, y, cz); group.add(left);
-  const right = new THREE.Mesh(new THREE.BoxGeometry(t, H, d), mat); right.position.set(h.maxX, y, cz); group.add(right);
-  const gap = 7, seg = (w - gap) / 2;
-  const fL = new THREE.Mesh(new THREE.BoxGeometry(seg, H, t), mat); fL.position.set(h.minX + seg / 2, y, h.minZ); group.add(fL);
-  const fR = new THREE.Mesh(new THREE.BoxGeometry(seg, H, t), mat); fR.position.set(h.maxX - seg / 2, y, h.minZ); group.add(fR);
+// Soft radial glow texture for faked light reflections on the concrete.
+let _glowTex = null;
+function glowTex() {
+  if (_glowTex) return _glowTex;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const c = cv.getContext('2d');
+  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255,250,235,1)'); g.addColorStop(1, 'rgba(255,250,235,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+  _glowTex = new THREE.CanvasTexture(cv);
+  return _glowTex;
+}
+
+// Build the convention hall: polished concrete floor, tall light-gray walls
+// (front entrance gap), dark industrial ceiling with trusses, and a grid of
+// bright ceiling light fixtures — with faint light pools on the floor so the
+// concrete reads as polished and reflective like a real expo hall.
+function buildRoom(group, h) {
+  const cx = (h.minX + h.maxX) / 2, cz = (h.minZ + h.maxZ) / 2;
+  const w = h.maxX - h.minX + 8, d = h.maxZ - h.minZ + 8;
+  const CEIL = 15;
+
+  // polished concrete floor (glossy; env map gives it a sheen)
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d),
+    new THREE.MeshStandardMaterial({ color: 0x9a9b9e, roughness: 0.16, metalness: 0.0, envMapIntensity: 1.3 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); floor.receiveShadow = true; group.add(floor);
+
+  // light-gray walls, tall, with a front entrance gap
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0xd4d5d8, roughness: 0.92 });
+  const t = 0.6, y = CEIL / 2, ww = h.maxX - h.minX, dd = h.maxZ - h.minZ;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(ww, CEIL, t), wallMat); back.position.set(cx, y, h.maxZ); group.add(back);
+  const left = new THREE.Mesh(new THREE.BoxGeometry(t, CEIL, dd), wallMat); left.position.set(h.minX, y, cz); group.add(left);
+  const right = new THREE.Mesh(new THREE.BoxGeometry(t, CEIL, dd), wallMat); right.position.set(h.maxX, y, cz); group.add(right);
+  const gap = 8, seg = (ww - gap) / 2;
+  const fL = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fL.position.set(h.minX + seg / 2, y, h.minZ); group.add(fL);
+  const fR = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fR.position.set(h.maxX - seg / 2, y, h.minZ); group.add(fR);
+
+  // dark industrial ceiling + a few truss beams
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x101113, roughness: 1 }));
+  ceil.rotation.x = Math.PI / 2; ceil.position.set(cx, CEIL, cz); group.add(ceil);
+  const beamMat = new THREE.MeshStandardMaterial({ color: 0x191a1e, roughness: 1 });
+  for (let i = 0; i < 6; i++) {
+    const bz = h.minZ + (i + 0.5) * (dd / 6);
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(ww, 0.5, 0.5), beamMat);
+    beam.position.set(cx, CEIL - 0.4, bz); group.add(beam);
+  }
+
+  // ceiling light fixtures (emissive) + faint floor reflections under each
+  const fixGeo = new THREE.PlaneGeometry(2.4, 0.55);
+  const fixMat = new THREE.MeshBasicMaterial({ color: 0xfff4dc });
+  const glowGeo = new THREE.PlaneGeometry(3.4, 3.4);
+  const glowMat = new THREE.MeshBasicMaterial({ map: glowTex(), transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false });
+  const stepX = 8, stepZ = 7;
+  for (let gx = h.minX + 5; gx <= h.maxX - 5; gx += stepX) {
+    for (let gz = h.minZ + 5; gz <= h.maxZ - 5; gz += stepZ) {
+      const fix = new THREE.Mesh(fixGeo, fixMat); fix.rotation.x = Math.PI / 2; fix.position.set(gx, CEIL - 0.25, gz); group.add(fix);
+      const glow = new THREE.Mesh(glowGeo, glowMat); glow.rotation.x = -Math.PI / 2; glow.position.set(gx, 0.04, gz); group.add(glow);
+    }
+  }
+
+  // a couple of soft fill lights so the hall isn't flat (no shadows — cheap)
+  for (const px of [h.minX + ww * 0.3, h.maxX - ww * 0.3]) {
+    const pl = new THREE.PointLight(0xfff4e0, 0.5, 80, 1.6);
+    pl.position.set(px, CEIL - 2, cz); group.add(pl);
+  }
 }
 
 // A vacant ("available") table — just the white-clothed table, cheap.
@@ -530,16 +570,20 @@ async function ensureThree() {
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0c0e14);
-  scene.fog = new THREE.Fog(0x0c0e14, 40, 80);
-  camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 200);
+  scene.background = new THREE.Color(0x17191e);
+  camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 250);
 
-  scene.add(new THREE.HemisphereLight(0xcfe0ff, 0x202838, 1.0));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.05);
-  sun.position.set(16, 28, 10); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
-  sun.shadow.camera.left = -45; sun.shadow.camera.right = 45; sun.shadow.camera.top = 45; sun.shadow.camera.bottom = -45;
+  // bright, even hall lighting (the fixtures themselves are emissive props)
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x6b6e75, 0.7));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.55);
+  sun.position.set(16, 30, 10); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -60; sun.shadow.camera.right = 60; sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60;
+  sun.shadow.bias = -0.0005;
   scene.add(sun);
 
   // image-based lighting so brushed aluminum + glass read correctly
