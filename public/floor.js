@@ -34,9 +34,43 @@ const PITCH_MIN = -1.2, PITCH_MAX = 1.0;
 const FLOOR_MAX_TABLES = 54;                           // capacity (>= 50 per server)
 const HALL = { BX: 3, BZ: 3, TCOLS: 2, TROWS: 3, cellX: 7.6, rowZ: 5.2, aisle: 7, margin: 9 };
 
+// Booth layout: each table has BOOTH_SLOTS placement spots in a single row.
+// Owners arrange them in the editor; each spot holds one fixture (or is empty).
+const LAYOUT_KEY = 'cardHuddleBoothLayout';
+const BOOTH_SLOTS = 5;
+const SLOT_W = 1.12;                                   // spot width along the table
+const LAYOUT_TYPES = ['showcase', 'stand', 'valuebox', 'empty'];
+const DEFAULT_LAYOUT = ['showcase', 'showcase', 'stand', 'stand', 'valuebox'];
+const FIXTURES = [
+  { id: 'showcase', label: 'Showcase', icon: '🧳', desc: 'Glass case of featured cards' },
+  { id: 'stand',    label: 'Card stand', icon: '🃏', desc: 'Cards standing up front' },
+  { id: 'valuebox', label: 'Value box', icon: '💲', desc: 'Bulk / dollar box' },
+  { id: 'empty',    label: 'Empty',    icon: '▫️', desc: 'Clear this spot' },
+];
+function slotX(i) { return -((BOOTH_SLOTS - 1) / 2) * SLOT_W + i * SLOT_W; }
+function getBoothLayout() {
+  try { const a = JSON.parse(localStorage.getItem(LAYOUT_KEY) || 'null'); return Array.isArray(a) ? a : null; }
+  catch { return null; }
+}
+function saveBoothLayout(arr) {
+  localStorage.setItem(LAYOUT_KEY, JSON.stringify(arr));
+  if (typeof schedulePushUserData === 'function') schedulePushUserData();
+}
+// Resolve a booth's layout to a clean BOOTH_SLOTS-long array (own booth uses
+// the live local layout; visitors use the server-mirrored one; fall back to
+// the classic default when none is set).
+function resolveLayout(b) {
+  const raw = (b && b.isYou) ? getBoothLayout() : (b && b.layout);
+  const src = (Array.isArray(raw) && raw.length) ? raw : DEFAULT_LAYOUT;
+  const out = [];
+  for (let i = 0; i < BOOTH_SLOTS; i++) out.push(LAYOUT_TYPES.includes(src[i]) ? src[i] : 'empty');
+  return out;
+}
+
 let renderer, scene, camera, clock;
 let worldGroup = null;
 let booths = [];
+let lastRemoteBooths = [];            // cached booth feed for live rebuilds (booth editor)
 let tableRects = [];                  // all table footprints (occupied + vacant) for collision
 let hall = null;
 let bounds = { minX: -30, maxX: 30, minZ: -10, maxZ: 44 };
@@ -182,10 +216,11 @@ function cardMaterial(card, shared, slot) {
 // A closed aluminum briefcase display case: brushed-metal tray, dark felt
 // liner, a tight grid of slabs laid flat, a clear glass lid, side rails,
 // a carry handle and latches on the front edge. Modeled on a real case.
-function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, cardOffset) {
+function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, cardOffset, cols, rows) {
   const g = new THREE.Group();
   g.position.set(ox, 0, oz);
   const CASE_H = 0.16;
+  cols = cols || 6; rows = rows || 3;
 
   const tray = new THREE.Mesh(new THREE.BoxGeometry(w, CASE_H, d), shared.alu);
   tray.position.y = y0 + CASE_H / 2; tray.castShadow = true; tray.receiveShadow = true;
@@ -197,14 +232,13 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
   // Slabs laid flat under the glass — each shows the real photo of the booth's
   // showcased card (cards[cardOffset + slot]); empty slots fall back to a
   // generic slab so the case still reads full.
-  const cols = 6, rows = 3;
-  const cw = (w - 0.24) / cols, cd = (d - 0.24) / rows;
+  const cw = (w - 0.18) / cols, cd = (d - 0.18) / rows;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const slot = r * cols + c;
     const entry = cards && cards[(cardOffset || 0) + slot];
     const card = new THREE.Mesh(shared.slabGeo, cardMaterial(entry, shared, slot));
     card.rotation.x = -Math.PI / 2;
-    card.position.set(-w / 2 + 0.12 + cw / 2 + c * cw, y0 + CASE_H + 0.03, -d / 2 + 0.12 + cd / 2 + r * cd);
+    card.position.set(-w / 2 + 0.09 + cw / 2 + c * cw, y0 + CASE_H + 0.03, -d / 2 + 0.09 + cd / 2 + r * cd);
     card.userData.boothId = boothIdx;   // tap a card to open the booth
     g.add(card);
   }
@@ -242,25 +276,20 @@ function buildBoothTable(grp, b, shared) {
   top.position.y = TABLE_H; top.userData.boothId = b._idx; grp.add(top);
 
   const y0 = TABLE_H + 0.03;
-
-  // --- 2 aluminum display cases (left side), closed, real card photos under
-  //     glass: first case holds cards 0–17, second holds 18+ ---
   const showCards = b.cards || [];
-  buildDisplayCase(grp, -2.05, 0, 1.95, 1.35, y0, b._idx, shared, showCards, 0);
-  buildDisplayCase(grp, -0.05, 0, 1.95, 1.35, y0, b._idx, shared, showCards, 18);
 
-  // --- 3 card boxes (right side), cards standing up facing the buyer (-z) ---
-  [1.45, 2.25, 3.05].forEach((bx) => {
-    const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.34, 1.4),
-      new THREE.MeshStandardMaterial({ color: 0x6b4f33, roughness: 0.95 }));
-    box.position.set(bx, y0 + 0.17, 0); box.userData.boothId = b._idx; grp.add(box);
-    for (let i = 0; i < 9; i++) {
-      const card = new THREE.Mesh(shared.standGeo, shared.cardMats[(i + 1) % shared.cardMats.length]);
-      card.position.set(bx, y0 + 0.28, -0.55 + i * 0.12);
-      card.userData.boothId = b._idx;
-      grp.add(card);
-    }
-  });
+  // --- fixtures, placed per the owner's chosen layout (5 spots across the
+  //     table). The booth's real cards flow into showcases and stands in order.
+  const layout = resolveLayout(b);
+  let ci = 0;                                          // card cursor across fixtures
+  for (let s = 0; s < BOOTH_SLOTS; s++) {
+    const x = slotX(s);
+    const type = layout[s];
+    if (type === 'showcase') ci = buildShowcaseFixture(grp, x, y0, b._idx, shared, showCards, ci);
+    else if (type === 'stand') ci = buildStandFixture(grp, x, y0, b._idx, shared, showCards, ci);
+    else if (type === 'valuebox') buildValueBoxFixture(grp, x, y0, b._idx, shared);
+    // 'empty' → leave the spot open
+  }
 
   // --- loose lay-down area (front center): the booth's first few cards laid
   //     flat on the cloth, showing their real photos up close to the buyer ---
@@ -283,6 +312,59 @@ function buildBoothTable(grp, b, shared) {
   const label = makeLabelSprite(`${b.emoji || '🃏'} ${b.isYou ? 'Your Booth' : b.owner}`, sub);
   label.position.set(0, TABLE_H + 1.5, 0);
   grp.add(label);
+}
+
+// ----------------------------------------------------- booth fixtures
+// Each builder drops one fixture centred at table-x `x` and returns the
+// advanced card cursor so the next fixture continues the booth's card list.
+
+// A slot-sized aluminium showcase: a closed glass case with a 3×3 grid of
+// real card photos laid flat under the glass. Consumes up to 9 cards.
+function buildShowcaseFixture(grp, x, y0, boothId, shared, cards, ci) {
+  buildDisplayCase(grp, x, 0, 1.0, 1.35, y0, boothId, shared, cards, ci, 3, 3);
+  return ci + 9;
+}
+
+// A card stand: a shallow box with cards standing upright facing the buyer.
+// The booth's real cards fill the front slots; the rest are generic.
+function buildStandFixture(grp, x, y0, boothId, shared, cards, ci) {
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.34, 1.4),
+    new THREE.MeshStandardMaterial({ color: 0x6b4f33, roughness: 0.95 }));
+  box.position.set(x, y0 + 0.17, 0); box.castShadow = true; box.userData.boothId = boothId; grp.add(box);
+  const n = 9;
+  for (let i = 0; i < n; i++) {
+    const entry = cards[ci];
+    const card = new THREE.Mesh(shared.standGeo, cardMaterial(entry, shared, i + 1));
+    card.position.set(x, y0 + 0.30, -0.55 + i * 0.12);
+    card.rotation.y = Math.PI;                 // face the buyer (-z)
+    card.userData.boothId = boothId;
+    grp.add(card);
+    if (entry) ci++;
+  }
+  return ci;
+}
+
+// A value box: a deeper "dollar box" packed with generic cards leaning back,
+// with a little placard. Bulk inventory, so it doesn't consume listed cards.
+function buildValueBoxFixture(grp, x, y0, boothId, shared) {
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.5, 1.3),
+    new THREE.MeshStandardMaterial({ color: 0x7a3b1d, roughness: 0.95 }));
+  box.position.set(x, y0 + 0.25, 0); box.castShadow = true; box.receiveShadow = true;
+  box.userData.boothId = boothId; grp.add(box);
+  const band = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, 1.33),
+    new THREE.MeshStandardMaterial({ color: 0xe9dcc2, roughness: 0.9 }));
+  band.position.set(x, y0 + 0.36, 0); band.userData.boothId = boothId; grp.add(band);
+  for (let i = 0; i < 12; i++) {
+    const card = new THREE.Mesh(shared.standGeo, shared.cardMats[i % shared.cardMats.length]);
+    card.position.set(x, y0 + 0.48, -0.52 + i * 0.095);
+    card.rotation.x = -0.42;                    // leaning back like a packed box
+    card.userData.boothId = boothId;
+    grp.add(card);
+  }
+  const placard = makeLabelSprite('💲 Value Box', '');
+  placard.scale.set(1.7, 0.64, 1);
+  placard.position.set(x, y0 + 0.95, -0.55);
+  grp.add(placard);
 }
 
 // ----------------------------------------------------- avatar meshes
@@ -326,8 +408,9 @@ function buildWorld(remoteBooths) {
   const localCards = (typeof getShowcase === 'function') ? (getShowcase() || []) : [];
   const mine = myUsername();
 
-  let list = (Array.isArray(remoteBooths) ? remoteBooths : []).filter(b => b && b.name)
-    .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [], isYou: !!mine && b.username === mine }));
+  lastRemoteBooths = Array.isArray(remoteBooths) ? remoteBooths : [];
+  let list = lastRemoteBooths.filter(b => b && b.name)
+    .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [], layout: Array.isArray(b.layout) ? b.layout : null, isYou: !!mine && b.username === mine }));
   const myBooth = list.find(b => b.isYou);
   if (myBooth) {
     myBooth.owner = me.name || myBooth.owner; myBooth.emoji = me.emoji || myBooth.emoji;
@@ -809,11 +892,48 @@ function openBooth(b) {
   const body = document.getElementById('floor-booth-body');
   if (!modal || !body) return;
   if (title) title.textContent = (b.emoji || '🃏') + ' ' + (b.isYou ? 'Your Booth' : b.owner + "'s Booth");
-  if (sub) sub.textContent = b.isYou ? 'This is what other collectors see when they visit you. Edit it in the Sell tab.' : 'Buy hands off to eBay; trade hands off to Veriswap. The Card Huddle isn\'t part of the deal.';
-  body.innerHTML = boothCardsHtml(b);
+  if (sub) sub.textContent = b.isYou ? 'This is what other collectors see when they visit you. Arrange your fixtures here; edit the cards in the Sell tab.' : 'Buy hands off to eBay; trade hands off to Veriswap. The Card Huddle isn\'t part of the deal.';
+  body.innerHTML = (b.isYou ? '<div class="floor-booth-owneracts"><button type="button" class="floor-arrange-btn" onclick="arrangeBooth()">🧩 Arrange booth</button></div>' : '') + boothCardsHtml(b);
   modal.classList.remove('hidden');
 }
 function closeBooth() { document.getElementById('floor-booth-modal')?.classList.add('hidden'); }
+
+// ----------------------------------------------------- booth editor
+let editorLayout = [];               // working copy while the editor is open
+let editorTool = 'showcase';         // currently selected fixture from the palette
+function openBoothEditor() {
+  if (!getCharacter()) { renderCharCreate(); return; }
+  closeBooth();
+  editorLayout = resolveLayout({ isYou: true });
+  editorTool = 'showcase';
+  renderBoothEditor();
+  document.getElementById('floor-booth-editor')?.classList.remove('hidden');
+}
+function closeBoothEditor() { document.getElementById('floor-booth-editor')?.classList.add('hidden'); }
+function fixtureMeta(id) { return FIXTURES.find(f => f.id === id) || FIXTURES[FIXTURES.length - 1]; }
+function renderBoothEditor() {
+  const pal = document.getElementById('floor-editor-palette');
+  if (pal) pal.innerHTML = FIXTURES.map(f =>
+    `<button type="button" class="floor-tool${f.id === editorTool ? ' sel' : ''}" data-tool="${f.id}" title="${escHtml(f.desc)}">
+       <span class="floor-tool-icon">${f.icon}</span><span class="floor-tool-label">${escHtml(f.label)}</span>
+     </button>`).join('');
+  const table = document.getElementById('floor-editor-table');
+  if (table) table.innerHTML = editorLayout.map((t, i) => {
+    const m = fixtureMeta(t);
+    return `<button type="button" class="floor-spot${t === 'empty' ? ' empty' : ''}" data-spot="${i}" title="${escHtml(m.label)}">
+        <span class="floor-spot-icon">${t === 'empty' ? '＋' : m.icon}</span>
+        <span class="floor-spot-label">${t === 'empty' ? 'Empty' : escHtml(m.label)}</span>
+      </button>`;
+  }).join('');
+}
+function boothEditorClear() { editorLayout = new Array(BOOTH_SLOTS).fill('empty'); renderBoothEditor(); }
+function saveBoothEditor() {
+  saveBoothLayout(editorLayout.slice());
+  closeBoothEditor();
+  buildWorld(lastRemoteBooths);              // re-render with the new layout
+  const mine = booths.find(b => b.isYou);
+  if (mine) walkToBooth(mine);               // step up to admire it
+}
 
 // ----------------------------------------------------- directory
 function renderDirectory(filter) {
@@ -937,6 +1057,10 @@ window.saveCharacterAndEnter = function () {
 };
 window.closeBoothModal = closeBooth;
 window.toggleFreeLook = function () { setFreeLook(camMode !== 'free'); };
+window.arrangeBooth = openBoothEditor;
+window.closeBoothEditor = closeBoothEditor;
+window.boothEditorClear = boothEditorClear;
+window.saveBoothEditor = saveBoothEditor;
 
 // ----------------------------------------------------- input wiring
 document.addEventListener('keydown', e => {
@@ -959,6 +1083,10 @@ document.addEventListener('click', e => {
   if (visit) { const b = boothById(visit.dataset.booth); if (b) openBooth(b); return; }
   const walk = e.target.closest('.floor-dir-walk');
   if (walk) { const b = boothById(walk.dataset.booth); if (b) walkToBooth(b); return; }
+  const tool = e.target.closest('.floor-tool');
+  if (tool) { editorTool = tool.dataset.tool; renderBoothEditor(); return; }
+  const spot = e.target.closest('.floor-spot');
+  if (spot) { editorLayout[+spot.dataset.spot] = editorTool; renderBoothEditor(); return; }
 });
 function bindDpad() {
   document.querySelectorAll('.floor-dbtn').forEach(btn => {

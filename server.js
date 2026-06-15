@@ -3515,6 +3515,17 @@ function sanitizeBoothCard(c) {
   };
 }
 
+// The booth's fixture layout: an ordered list of placement spots, each one of
+// a small allowed set. Bounded length so the KV blob stays small.
+const FLOOR_LAYOUT_SLOTS = 5;
+const FLOOR_FIXTURES = ['showcase', 'stand', 'valuebox', 'empty'];
+function sanitizeBoothLayout(arr) {
+  if (!Array.isArray(arr)) return null;
+  const out = arr.slice(0, FLOOR_LAYOUT_SLOTS)
+    .map(v => (FLOOR_FIXTURES.includes(v) ? v : 'empty'));
+  return out.length ? out : null;
+}
+
 function updateGlobalFloorIndex(username, data) {
   if (!username) return;
   const key = String(username).toLowerCase();
@@ -3522,6 +3533,7 @@ function updateGlobalFloorIndex(username, data) {
   const character = data && data.cardHuddleCharacter;
   const showcase = Array.isArray(data && data.cardHuddleShowcase) ? data.cardHuddleShowcase : [];
   const settings = (data && data.cardHuddleShowcaseSettings) || {};
+  const layout = sanitizeBoothLayout(data && data.cardHuddleBoothLayout);
   // A booth only exists once the user has created a collector character.
   // No character → remove them from the floor.
   if (!character || !character.name) {
@@ -3535,6 +3547,7 @@ function updateGlobalFloorIndex(username, data) {
     color: String(character.color || '#5ece99').slice(0, 16),
     veriswap: String(settings.veriswap || '').slice(0, 120),
     cards: showcase.slice(0, FLOOR_MAX_CARDS).map(sanitizeBoothCard).filter(c => c.title),
+    layout: layout || undefined,
     updatedAt: new Date().toISOString(),
   };
   saveData('floorIndex', FLOOR_INDEX_FILE, index);

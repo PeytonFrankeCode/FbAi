@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=87" />
+  <link rel="stylesheet" href="style.css?v=88" />
 
 
 </head>
@@ -1196,6 +1196,7 @@
         <span id="floor-online" class="floor-online"></span>
         <span class="floor-hud-hint">Look: drag &middot; Move: W/S + A/D &middot; Visit: E or tap a booth</span>
         <button type="button" class="floor-hud-edit" id="floor-freelook" onclick="toggleFreeLook()">Free look</button>
+        <button type="button" class="floor-hud-edit" onclick="arrangeBooth()">Arrange booth</button>
         <button type="button" class="floor-hud-edit" onclick="editCharacter()">Edit character</button>
       </div>
       <div id="floor-canvas-wrap" class="floor-canvas-wrap">
@@ -1220,6 +1221,23 @@
           <button type="button" class="floor-dbtn" data-dir="right" aria-label="Right">&#9654;</button>
         </div>
         <button type="button" class="floor-dbtn" data-dir="down" aria-label="Down">&#9660;</button>
+      </div>
+    </div>
+
+    <!-- Booth layout editor: place fixtures on your 5-spot table -->
+    <div id="floor-booth-editor" class="modal-overlay hidden" role="dialog" aria-label="Arrange your booth">
+      <div class="modal-box" style="max-width:600px">
+        <button class="login-close" onclick="closeBoothEditor()">&times;</button>
+        <h2>Arrange your booth</h2>
+        <p class="ccm-help">Pick a fixture, then tap a spot on your table to place it. Your listed cards fill the showcases and stands automatically.</p>
+        <div class="floor-editor-section-label">Fixtures</div>
+        <div id="floor-editor-palette" class="floor-editor-palette"></div>
+        <div class="floor-editor-section-label">Your table <span class="floor-editor-front">front&nbsp;&darr;&nbsp;(buyers stand here)</span></div>
+        <div id="floor-editor-table" class="floor-editor-table"></div>
+        <div class="floor-editor-actions">
+          <button type="button" class="floor-editor-clear" onclick="boothEditorClear()">Clear table</button>
+          <button type="button" class="floor-editor-save" onclick="saveBoothEditor()">Save layout</button>
+        </div>
       </div>
     </div>
 
@@ -1480,7 +1498,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=119"></script>
+  <script src="app.js?v=120"></script>
   <script type="importmap">
   {
     "imports": {
@@ -1489,6 +1507,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=15"></script>
+  <script type="module" src="floor.js?v=16"></script>
 </body>
 </html>
