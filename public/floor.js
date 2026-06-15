@@ -189,15 +189,16 @@ function demoBooths() {
 
 // ----------------------------------------------------- label sprite
 function makeLabelSprite(title, sub) {
-  const cw = 256, ch = 96;
+  // 2x canvas resolution so nameplates stay crisp when scaled up in 3D
+  const cw = 512, ch = 192;
   const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
   const c = cv.getContext('2d');
-  c.fillStyle = 'rgba(12,14,20,0.82)'; roundRectCtx(c, 4, 4, cw - 8, ch - 8, 14); c.fill();
+  c.fillStyle = 'rgba(12,14,20,0.82)'; roundRectCtx(c, 8, 8, cw - 16, ch - 16, 28); c.fill();
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillStyle = '#edf0f7'; c.font = '700 30px system-ui, sans-serif';
-  c.fillText(title.slice(0, 18), cw / 2, sub ? 38 : ch / 2);
-  if (sub) { c.fillStyle = '#94a3b8'; c.font = '22px system-ui, sans-serif'; c.fillText(sub.slice(0, 22), cw / 2, 70); }
-  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+  c.fillStyle = '#edf0f7'; c.font = '700 60px system-ui, sans-serif';
+  c.fillText(title.slice(0, 18), cw / 2, sub ? 76 : ch / 2);
+  if (sub) { c.fillStyle = '#94a3b8'; c.font = '44px system-ui, sans-serif'; c.fillText(sub.slice(0, 22), cw / 2, 140); }
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = aniso();
   const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
   spr.scale.set(3.6, 1.35, 1);
   return spr;
@@ -208,16 +209,17 @@ function roundRectCtx(c, x, y, w, h, r) {
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
 
-// a generic card face (white card with a colored header + image box)
+// a generic card face (white card with a colored header + image box) — drawn
+// at 2x so the placeholder slabs stay crisp up close
 function makeCardTex(header) {
-  const cv = document.createElement('canvas'); cv.width = 120; cv.height = 168;
+  const cv = document.createElement('canvas'); cv.width = 240; cv.height = 336;
   const c = cv.getContext('2d');
-  c.fillStyle = '#f6f6f1'; c.fillRect(0, 0, 120, 168);
-  c.fillStyle = header; c.fillRect(0, 0, 120, 22);
-  c.fillStyle = '#cdd2db'; c.fillRect(11, 30, 98, 92);
-  c.fillStyle = '#a7afbd'; c.fillRect(11, 130, 98, 8); c.fillRect(11, 144, 70, 8);
-  c.strokeStyle = '#e2e2e2'; c.lineWidth = 4; c.strokeRect(2, 2, 116, 164);
-  const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+  c.fillStyle = '#f6f6f1'; c.fillRect(0, 0, 240, 336);
+  c.fillStyle = header; c.fillRect(0, 0, 240, 44);
+  c.fillStyle = '#cdd2db'; c.fillRect(22, 60, 196, 184);
+  c.fillStyle = '#a7afbd'; c.fillRect(22, 260, 196, 16); c.fillRect(22, 288, 140, 16);
+  c.strokeStyle = '#e2e2e2'; c.lineWidth = 8; c.strokeRect(4, 4, 232, 328);
+  const t = new THREE.CanvasTexture(cv); t.anisotropy = aniso(); return t;
 }
 
 // ---- real card photos -------------------------------------------------
@@ -233,7 +235,7 @@ function applyCardImage(mat, url) {
   if (cached) { mat.map = cached; mat.needsUpdate = true; return; }
   if (!_cardTexLoader) { _cardTexLoader = new THREE.TextureLoader(); _cardTexLoader.setCrossOrigin('anonymous'); }
   _cardTexLoader.load(url, t => {
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso();
     _cardTexCache.set(url, t);
     mat.map = t; mat.needsUpdate = true;
   }, undefined, () => { /* keep the generic fallback already on `mat` */ });
@@ -883,7 +885,7 @@ function addWoodSegment(group, s, WH, off, panelT, mats) {
   // wood wainscot panel (own cloned texture so the repeat suits the length)
   const wtex = mats.baseWood.clone(); wtex.needsUpdate = true;
   wtex.wrapS = wtex.wrapT = THREE.RepeatWrapping; wtex.repeat.set(Math.max(1, Math.round(len / 3)), 1);
-  wtex.colorSpace = THREE.SRGBColorSpace;
+  wtex.colorSpace = THREE.SRGBColorSpace; wtex.anisotropy = aniso();
   const woodMat = new THREE.MeshStandardMaterial({ map: wtex, roughness: 0.72, metalness: 0.04 });
   const woodGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, WH, panelT) : new THREE.BoxGeometry(panelT, WH, len);
   const panel = new THREE.Mesh(woodGeo, woodMat); panel.receiveShadow = true;
@@ -1024,11 +1026,24 @@ function start() { if (!running) { running = true; clock.getDelta(); rafId = req
 function stop() { running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; disconnectPresence(); }
 
 // ----------------------------------------------------- three setup
+// Render at a slightly super-sampled ratio so the floor stays crisp even on
+// non-retina desktops, capped at 2x for performance. Override via
+// window.FLOOR_PIXEL_RATIO.
+function qualityPixelRatio() {
+  if (typeof window.FLOOR_PIXEL_RATIO === 'number') return window.FLOOR_PIXEL_RATIO;
+  const dpr = window.devicePixelRatio || 1;
+  return Math.min(Math.max(dpr, 1.5), 2);
+}
+let _maxAniso = 8;
+function aniso() { return _maxAniso; }
+function isLowPower() { return (navigator.maxTouchPoints || 0) > 0 && Math.min(window.innerWidth, window.innerHeight) < 900; }
+
 function resize() {
   const wrap = document.getElementById('floor-canvas-wrap');
   if (!wrap || !renderer) return;
   const w = wrap.clientWidth || 960;
-  const h = Math.max(380, Math.min(640, Math.round(w * 0.62)));
+  const h = Math.max(420, Math.min(760, Math.round(w * 0.62)));
+  renderer.setPixelRatio(qualityPixelRatio());   // re-apply (DPR can change between monitors)
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
@@ -1037,35 +1052,44 @@ async function ensureThree() {
   if (renderer) return true;
   const canvas = document.getElementById('floor-canvas');
   if (!canvas) return false;
-  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); }
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
   catch (err) {
     console.error('[floor] WebGL unavailable:', err && err.message);
     const list = document.getElementById('floor-dir-list');
     if (list) list.innerHTML = '<p class="floor-dir-empty">3D isn\'t available on this device/browser (WebGL is off).</p>';
     return false;
   }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(qualityPixelRatio());
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
+  _maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x17191e);
-  camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.1, 250);
+  // light fog tinted to the background hides far-distance aliasing/shimmer and
+  // adds depth without dimming the booths you're standing near
+  scene.fog = new THREE.Fog(0x17191e, 70, 200);
+  camera = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 240);
 
   // bright, even hall lighting (the fixtures themselves are emissive props)
   scene.add(new THREE.HemisphereLight(0xffffff, 0x6b6e75, 0.7));
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const sun = new THREE.DirectionalLight(0xffffff, 0.55);
-  sun.position.set(16, 30, 10); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  sun.position.set(16, 30, 10); sun.castShadow = true;
+  const shadowRes = isLowPower() ? 2048 : 4096;       // sharper contact shadows on capable devices
+  sun.shadow.mapSize.set(shadowRes, shadowRes);
   sun.shadow.camera.left = -60; sun.shadow.camera.right = 60; sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60;
-  sun.shadow.bias = -0.0005;
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 110;
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;   // crisper edges, less acne/peter-panning
   scene.add(sun);
 
   // image-based lighting so brushed aluminum + glass read correctly
   try {
     const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
     const pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem.compileEquirectangularShader();
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   } catch (err) { console.warn('[floor] env map unavailable:', err && err.message); }
 

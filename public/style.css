@@ -8421,7 +8421,7 @@ footer {
 
 .floor-canvas-wrap { position: relative; line-height: 0; }
 .floor-canvas {
-  width: 100%; height: auto; max-width: 960px; display: block; margin: 0 auto;
+  width: 100%; height: auto; max-width: 1200px; display: block; margin: 0 auto;
   border: 1px solid var(--border-primary); border-radius: var(--radius-lg);
   background: #10141f; touch-action: none; cursor: pointer;
 }
