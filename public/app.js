@@ -3570,6 +3570,7 @@ function switchView(view) {
   const proplusView = document.getElementById('proplus-view');
   const browseView = document.getElementById('browse-view');
   const scannerView = document.getElementById('scanner-view');
+  const floorView = document.getElementById('floor-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -3581,7 +3582,10 @@ function switchView(view) {
   if (proplusView) proplusView.classList.add('hidden');
   if (browseView) browseView.classList.add('hidden');
   if (scannerView) scannerView.classList.add('hidden');
+  if (floorView) floorView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
+  // The Floor runs an animation loop; pause it whenever we leave the tab.
+  if (typeof stopFloor === 'function') stopFloor();
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -3602,6 +3606,11 @@ function switchView(view) {
       proplusView.classList.remove('hidden');
       initProPlusView();
       switchProPlusTab(proplusSub || 'autoprices');
+    }
+  } else if (view === 'floor') {
+    if (floorView) {
+      floorView.classList.remove('hidden');
+      if (typeof initFloor === 'function') initFloor();
     }
   } else {
     // Search top-tab. Show the subtab strip and either the main search
@@ -5744,6 +5753,7 @@ const USER_SYNC_KEYS = [
   'cardHuddlePromotedCards',
   'cardHuddleShowcase',
   'cardHuddleShowcaseSettings',
+  'cardHuddleCharacter',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
 let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
