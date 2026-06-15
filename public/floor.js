@@ -335,9 +335,12 @@ function buildWorld(remoteBooths) {
   // place tables into the slots — occupied booths first (detailed), the rest
   // are vacant ("available") tables so the hall reads full and has 50+ spots.
   const slots = hall.slots.slice(0, FLOOR_MAX_TABLES);
+  const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex(), transparent: true, opacity: 0.5, depthWrite: false });
+  const shadowGeo = new THREE.PlaneGeometry(TABLE_W + 1.4, TABLE_D + 1.4);
   slots.forEach((s, i) => {
     const grp = new THREE.Group(); grp.position.set(s.x, 0, s.z);
     tableRects.push({ px: s.x, pz: s.z });
+    const sh = new THREE.Mesh(shadowGeo, shadowMat); sh.rotation.x = -Math.PI / 2; sh.position.set(s.x, 0.05, s.z); worldGroup.add(sh);
     if (i < list.length) {
       const b = list[i]; b._idx = booths.length;
       buildBoothTable(grp, b, shared);
@@ -386,6 +389,69 @@ function glowTex() {
   return _glowTex;
 }
 
+// Soft dark radial texture for grounding contact-shadows under tables.
+let _shadowTex = null;
+function shadowTex() {
+  if (_shadowTex) return _shadowTex;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const c = cv.getContext('2d');
+  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(0.7, 'rgba(0,0,0,0.18)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = g; c.fillRect(0, 0, 64, 64);
+  _shadowTex = new THREE.CanvasTexture(cv);
+  return _shadowTex;
+}
+
+// Procedural polished-concrete texture (used until/unless a real texture file
+// is dropped in). Mottled gray with subtle speckle and saw-cut joint lines.
+function makeConcreteTex() {
+  const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#a9aaad'; c.fillRect(0, 0, s, s);
+  for (let i = 0; i < 2600; i++) {
+    const x = Math.random() * s, y = Math.random() * s, r = Math.random() * 2.6 + 0.4;
+    const v = 150 + (Math.random() * 90) | 0;
+    c.fillStyle = `rgba(${v},${v},${v + 3},${Math.random() * 0.05})`;
+    c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  }
+  for (let i = 0; i < 70; i++) {
+    const x = Math.random() * s, y = Math.random() * s, r = 24 + Math.random() * 70;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(120,122,128,0.05)'); g.addColorStop(1, 'rgba(120,122,128,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+  }
+  c.strokeStyle = 'rgba(70,72,78,0.45)'; c.lineWidth = 2;
+  c.beginPath(); c.moveTo(0, 1); c.lineTo(s, 1); c.moveTo(1, 0); c.lineTo(1, s); c.stroke();
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+// Floor material. Shows the procedural concrete immediately, then upgrades to
+// real PBR maps if present. Drop tileable files in /public/textures/ named
+// concrete-color.jpg / concrete-normal.jpg / concrete-rough.jpg (or set
+// window.FLOOR_CONCRETE = { color, normal, rough, repeat } with URLs).
+function makeFloorMaterial(h) {
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
+  const sizeX = h.maxX - h.minX + 8, sizeZ = h.maxZ - h.minZ + 8;
+  const repX = Math.max(2, Math.round(sizeX / 6)), repZ = Math.max(2, Math.round(sizeZ / 6));
+  const mat = new THREE.MeshStandardMaterial({ color: 0xc2c3c6, roughness: 0.22, metalness: 0.0, envMapIntensity: 1.2 });
+
+  const proc = makeConcreteTex();
+  proc.repeat.set(repX, repZ); proc.anisotropy = maxAniso; proc.colorSpace = THREE.SRGBColorSpace;
+  mat.map = proc;
+
+  const cfg = window.FLOOR_CONCRETE || {};
+  if (cfg !== false) {
+    const loader = new THREE.TextureLoader();
+    const rx = cfg.repeat || repX, rz = cfg.repeat || repZ;
+    const setup = (t, srgb) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); t.anisotropy = maxAniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; };
+    loader.load(cfg.color || '/textures/concrete-color.jpg', t => { setup(t, true); mat.map = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.normal || '/textures/concrete-normal.jpg', t => { setup(t, false); mat.normalMap = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.rough || '/textures/concrete-rough.jpg', t => { setup(t, false); mat.roughnessMap = t; mat.needsUpdate = true; }, undefined, () => {});
+  }
+  return mat;
+}
+
 // Build the convention hall: polished concrete floor, tall light-gray walls
 // (front entrance gap), dark industrial ceiling with trusses, and a grid of
 // bright ceiling light fixtures — with faint light pools on the floor so the
@@ -395,9 +461,8 @@ function buildRoom(group, h) {
   const w = h.maxX - h.minX + 8, d = h.maxZ - h.minZ + 8;
   const CEIL = 15;
 
-  // polished concrete floor (glossy; env map gives it a sheen)
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d),
-    new THREE.MeshStandardMaterial({ color: 0x9a9b9e, roughness: 0.16, metalness: 0.0, envMapIntensity: 1.3 }));
+  // polished concrete floor (procedural now; upgrades to a dropped-in texture)
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), makeFloorMaterial(h));
   floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); floor.receiveShadow = true; group.add(floor);
 
   // light-gray walls, tall, with a front entrance gap
