@@ -434,7 +434,7 @@ function makeFloorMaterial(h) {
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   const sizeX = h.maxX - h.minX + 8, sizeZ = h.maxZ - h.minZ + 8;
   const repX = Math.max(2, Math.round(sizeX / 6)), repZ = Math.max(2, Math.round(sizeZ / 6));
-  const mat = new THREE.MeshStandardMaterial({ color: 0xc2c3c6, roughness: 0.22, metalness: 0.0, envMapIntensity: 1.2 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.24, metalness: 0.0, envMapIntensity: 1.2 });
 
   const proc = makeConcreteTex();
   proc.repeat.set(repX, repZ); proc.anisotropy = maxAniso; proc.colorSpace = THREE.SRGBColorSpace;
@@ -444,10 +444,28 @@ function makeFloorMaterial(h) {
   if (cfg !== false) {
     const loader = new THREE.TextureLoader();
     const rx = cfg.repeat || repX, rz = cfg.repeat || repZ;
-    const setup = (t, srgb) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, rz); t.anisotropy = maxAniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; };
+    // mirror-tile dropped-in textures so repeats don't show a visible seam grid
+    const setup = (t, srgb) => { t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rx, rz); t.anisotropy = maxAniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; };
     loader.load(cfg.color || '/textures/concrete-color.jpg', t => { setup(t, true); mat.map = t; mat.needsUpdate = true; }, undefined, () => {});
     loader.load(cfg.normal || '/textures/concrete-normal.jpg', t => { setup(t, false); mat.normalMap = t; mat.needsUpdate = true; }, undefined, () => {});
     loader.load(cfg.rough || '/textures/concrete-rough.jpg', t => { setup(t, false); mat.roughnessMap = t; mat.needsUpdate = true; }, undefined, () => {});
+  }
+  return mat;
+}
+
+// Wall material. Solid light paint by default; auto-upgrades to a dropped-in
+// texture at /public/textures/wall-color.jpg (or window.FLOOR_WALL = {color,repeat}).
+function makeWallMaterial() {
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
+  const mat = new THREE.MeshStandardMaterial({ color: 0xeef0f2, roughness: 0.95 });
+  const cfg = window.FLOOR_WALL || {};
+  if (cfg !== false) {
+    const rep = cfg.repeat || 6;
+    new THREE.TextureLoader().load(cfg.color || '/textures/wall-color.jpg', t => {
+      t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rep, Math.max(2, Math.round(rep * 0.4)));
+      t.anisotropy = maxAniso; t.colorSpace = THREE.SRGBColorSpace;
+      mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true;
+    }, undefined, () => {});
   }
   return mat;
 }
@@ -465,8 +483,8 @@ function buildRoom(group, h) {
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), makeFloorMaterial(h));
   floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); floor.receiveShadow = true; group.add(floor);
 
-  // light-gray walls, tall, with a front entrance gap
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0xd4d5d8, roughness: 0.92 });
+  // painted walls, tall, with a front entrance gap
+  const wallMat = makeWallMaterial();
   const t = 0.6, y = CEIL / 2, ww = h.maxX - h.minX, dd = h.maxZ - h.minZ;
   const back = new THREE.Mesh(new THREE.BoxGeometry(ww, CEIL, t), wallMat); back.position.set(cx, y, h.maxZ); group.add(back);
   const left = new THREE.Mesh(new THREE.BoxGeometry(t, CEIL, dd), wallMat); left.position.set(h.minX, y, cz); group.add(left);
