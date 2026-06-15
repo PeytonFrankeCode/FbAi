@@ -276,7 +276,11 @@ function buildBoothTable(grp, b, shared) {
   top.position.y = TABLE_H; top.userData.boothId = b._idx; grp.add(top);
 
   const y0 = TABLE_H + 0.03;
-  const showCards = b.cards || [];
+  // Premium cards fill the showcases/stands; value-box-flagged cards fill the
+  // value boxes — each pool has its own click menu.
+  const allCards = b.cards || [];
+  const showCards = allCards.filter(c => !c.valueBox);
+  const valueCards = allCards.filter(c => c.valueBox);
 
   // --- fixtures, placed per the owner's chosen layout (5 spots across the
   //     table). The booth's real cards flow into showcases and stands in order.
@@ -287,7 +291,7 @@ function buildBoothTable(grp, b, shared) {
     const type = layout[s];
     if (type === 'showcase') ci = buildShowcaseFixture(grp, x, y0, b._idx, shared, showCards, ci);
     else if (type === 'stand') ci = buildStandFixture(grp, x, y0, b._idx, shared, showCards, ci);
-    else if (type === 'valuebox') buildValueBoxFixture(grp, x, y0, b._idx, shared);
+    else if (type === 'valuebox') buildValueBoxFixture(grp, x, y0, b._idx, shared, valueCards);
     // 'empty' → leave the spot open
   }
 
@@ -358,28 +362,33 @@ function buildStandFixture(grp, x, y0, boothId, shared, cards, ci) {
 
 // A value box: a white cardboard "dollar box" (open top) packed with rows of
 // cards standing upright, with a couple of coloured divider tabs and a hand-
-// lettered price tab. Bulk inventory, so it doesn't consume listed cards.
-function buildValueBoxFixture(grp, x, y0, boothId, shared) {
+// lettered price tab. Holds the booth's value-box-flagged cards; clicking it
+// opens its own Value Box menu (userData.menu = 'value').
+function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
+  const tag2 = (m) => { m.userData.boothId = boothId; m.userData.menu = 'value'; return m; };
   const W = 1.02, D = 1.34, H = 0.32, t = 0.04;
+  cards = cards || [];
   // box floor + four low walls (reads as an open-top row box)
   const fl = new THREE.Mesh(new THREE.BoxGeometry(W, 0.03, D), shared.cardboardDark);
-  fl.position.set(x, y0 + 0.015, 0); fl.receiveShadow = true; fl.userData.boothId = boothId; grp.add(fl);
+  fl.position.set(x, y0 + 0.015, 0); fl.receiveShadow = true; tag2(fl); grp.add(fl);
   const longWall = new THREE.BoxGeometry(W + t, H, t), shortWall = new THREE.BoxGeometry(t, H, D);
-  for (const dz of [-D / 2, D / 2]) { const m = new THREE.Mesh(longWall, shared.cardboard); m.position.set(x, y0 + H / 2, dz); m.castShadow = true; m.userData.boothId = boothId; grp.add(m); }
-  for (const dx of [-W / 2, W / 2]) { const m = new THREE.Mesh(shortWall, shared.cardboard); m.position.set(x + dx, y0 + H / 2, 0); m.castShadow = true; m.userData.boothId = boothId; grp.add(m); }
-  // packed rows of cards standing up the length of the box
+  for (const dz of [-D / 2, D / 2]) { const m = new THREE.Mesh(longWall, shared.cardboard); m.position.set(x, y0 + H / 2, dz); m.castShadow = true; tag2(m); grp.add(m); }
+  for (const dx of [-W / 2, W / 2]) { const m = new THREE.Mesh(shortWall, shared.cardboard); m.position.set(x + dx, y0 + H / 2, 0); m.castShadow = true; tag2(m); grp.add(m); }
+  // packed rows of cards standing up the length of the box (real photos where
+  // the booth has value cards, generic filler beyond that so the box reads full)
   const n = 30, z0 = -D / 2 + 0.08, span = D - 0.16;
   for (let i = 0; i < n; i++) {
-    const card = new THREE.Mesh(shared.standGeo, shared.cardMats[i % shared.cardMats.length]);
+    const entry = cards[i % Math.max(1, cards.length)];
+    const card = new THREE.Mesh(shared.standGeo, cards.length ? cardMaterial(entry, shared, i) : shared.cardMats[i % shared.cardMats.length]);
     card.position.set(x, y0 + 0.18, z0 + (i / (n - 1)) * span);
-    card.userData.boothId = boothId; grp.add(card);
+    tag2(card); grp.add(card);
   }
   // a few coloured divider tabs poking up above the cards
   const tabGeo = new THREE.PlaneGeometry(0.26, 0.12);
   const tabCols = [0x4caf50, 0xf4d03f, 0xe74c3c];
   [0.18, 0.5, 0.82].forEach((f, k) => {
     const tab = new THREE.Mesh(tabGeo, new THREE.MeshStandardMaterial({ color: tabCols[k % tabCols.length], roughness: 0.85, side: THREE.DoubleSide }));
-    tab.position.set(x, y0 + 0.40, z0 + f * span); tab.userData.boothId = boothId; grp.add(tab);
+    tab.position.set(x, y0 + 0.40, z0 + f * span); tag2(tab); grp.add(tab);
   });
   // hand-lettered "$1 BOX" price tab on the front wall
   const tag = makeLabelSprite('💲 $1 BOX', '');
@@ -981,7 +990,7 @@ function bindPointer(canvas) {
       ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
       ray.setFromCamera(ndc, camera);
       const hits = ray.intersectObjects(worldGroup ? worldGroup.children : [], true);
-      for (const h of hits) { const id = h.object.userData.boothId; if (id != null) { const b = booths[id]; if (b) { openBooth(b); break; } } }
+      for (const h of hits) { const ud = h.object.userData; if (ud.boothId != null) { const b = booths[ud.boothId]; if (b) { openBooth(b, ud.menu); break; } } }
     }
     dragging = false;
   });
@@ -1014,11 +1023,15 @@ function setFreeLook(on) {
 }
 
 // ----------------------------------------------------- booth modal
-function boothCardsHtml(b) {
-  const cards = b.cards || [];
-  if (!cards.length) return b.isYou
-    ? '<p class="seller-empty">Your booth is empty. Add cards in the <strong>Sell</strong> tab and they\'ll appear here on the floor.</p>'
-    : '<p class="seller-empty">This collector hasn\'t put any cards out yet.</p>';
+function boothCardsHtml(cards, b, mode) {
+  if (!cards.length) {
+    if (mode === 'value') return b.isYou
+      ? '<p class="seller-empty">Your value box is empty. In the <strong>Sell</strong> tab, toggle a card into the value box and it\'ll land here.</p>'
+      : '<p class="seller-empty">This collector hasn\'t put any cards in their value box yet.</p>';
+    return b.isYou
+      ? '<p class="seller-empty">Your showcase is empty. Add cards in the <strong>Sell</strong> tab and they\'ll appear here on the floor.</p>'
+      : '<p class="seller-empty">This collector hasn\'t put any cards out yet.</p>';
+  }
   return '<div class="showcase-grid">' + cards.map(it => {
     const img = it.imageUrl ? `<img class="sc-card-img" src="${escHtml(it.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />` : '<div class="sc-card-img sc-card-noimg">No Image</div>';
     const price = (typeof it.price === 'number' && it.price > 0) ? `<span class="sc-card-price">$${it.price.toFixed(2)}</span>` : '';
@@ -1034,15 +1047,30 @@ function boothCardsHtml(b) {
     return `<div class="sc-card">${img}<div class="sc-card-body"><div class="sc-card-badges">${badges.join('')}</div><div class="sc-card-title">${escHtml(it.title || 'Card')}</div>${it.note ? `<div class="sc-card-note">${escHtml(it.note)}</div>` : ''}${price}<div class="sc-card-links">${links.join('')}</div></div></div>`;
   }).join('') + '</div>';
 }
-function openBooth(b) {
+let _boothModalB = null;
+function openBooth(b, menu) {
+  _boothModalB = b;
+  const mode = menu === 'value' ? 'value' : 'showcase';
   const modal = document.getElementById('floor-booth-modal');
   const title = document.getElementById('floor-booth-title');
   const sub = document.getElementById('floor-booth-sub');
   const body = document.getElementById('floor-booth-body');
   if (!modal || !body) return;
-  if (title) title.textContent = (b.emoji || '🃏') + ' ' + (b.isYou ? 'Your Booth' : b.owner + "'s Booth");
-  if (sub) sub.textContent = b.isYou ? 'This is what other collectors see when they visit you. Arrange your fixtures here; edit the cards in the Sell tab.' : 'Buy hands off to eBay; trade hands off to Veriswap. The Card Huddle isn\'t part of the deal.';
-  body.innerHTML = (b.isYou ? '<div class="floor-booth-owneracts"><button type="button" class="floor-arrange-btn" onclick="arrangeBooth()">🧩 Arrange booth</button></div>' : '') + boothCardsHtml(b);
+  const all = b.cards || [];
+  const cards = all.filter(c => mode === 'value' ? c.valueBox : !c.valueBox);
+  const who = b.isYou ? 'Your' : b.owner + "'s";
+  if (title) title.textContent = (b.emoji || '🃏') + ' ' + who + (mode === 'value' ? ' Value Box' : ' Booth');
+  if (sub) sub.textContent = mode === 'value'
+    ? (b.isYou ? 'Your dollar-box / bulk cards. Toggle cards into the value box in the Sell tab.' : 'Dollar-box finds — browse and grab a deal. Buy hands off to eBay; trade to Veriswap.')
+    : (b.isYou ? 'This is what other collectors see when they visit you. Arrange your fixtures here; edit the cards in the Sell tab.' : 'Buy hands off to eBay; trade hands off to Veriswap. The Card Huddle isn\'t part of the deal.');
+  // cross-link to the other menu when that pool has cards, so both are reachable
+  const otherMode = mode === 'value' ? 'showcase' : 'value';
+  const otherCount = all.filter(c => otherMode === 'value' ? c.valueBox : !c.valueBox).length;
+  const switchBtn = otherCount
+    ? `<button type="button" class="floor-menu-switch" onclick="floorSwitchMenu('${otherMode}')">${otherMode === 'value' ? '💲 View Value Box' : '🧳 View Showcase'} (${otherCount}) &rarr;</button>`
+    : '';
+  const ownerActs = b.isYou ? '<div class="floor-booth-owneracts"><button type="button" class="floor-arrange-btn" onclick="arrangeBooth()">🧩 Arrange booth</button></div>' : '';
+  body.innerHTML = ownerActs + switchBtn + boothCardsHtml(cards, b, mode);
   modal.classList.remove('hidden');
 }
 function closeBooth() { document.getElementById('floor-booth-modal')?.classList.add('hidden'); }
@@ -1205,6 +1233,7 @@ window.saveCharacterAndEnter = function () {
   enterFloor();
 };
 window.closeBoothModal = closeBooth;
+window.floorSwitchMenu = function (m) { if (_boothModalB) openBooth(_boothModalB, m); };
 window.toggleFreeLook = function () { setFreeLook(camMode !== 'free'); };
 window.arrangeBooth = openBoothEditor;
 window.closeBoothEditor = closeBoothEditor;
