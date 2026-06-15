@@ -27,7 +27,7 @@ const AVATAR_EMOJIS = ['🧢', '😎', '🤠', '🦸', '🤖', '👽', '🧑‍�
 const TABLE_W = 6.2, TABLE_D = 2.4, TABLE_H = 1.05;   // 6ft folding table
 const PLAYER_R = 0.6, MOVE_SPEED = 0.2, TURN_SPEED = 0.04;
 const INTERACT_DIST = 4.6;
-const EYE_H = 2.0;                                     // taller collector: eye clears the glass
+const EYE_H = 2.55;                                    // taller collector: eye well above the glass
 const PITCH_MIN = -1.2, PITCH_MAX = 1.0;
 // Convention-hall layout: blocks of tables on blue pads, separated by red
 // carpet aisles, with a perimeter walkway and a front entrance.
@@ -295,16 +295,16 @@ function buildAvatar(color, emoji, name) {
     m.scale.setScalar(avatarModel.userData.fitScale || 1);
     g.add(m);
   } else {
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 1.6, 6, 12), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
-    body.position.y = 1.3; body.castShadow = true;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 14), new THREE.MeshStandardMaterial({ color: col.clone().offsetHSL(0, 0, 0.12), roughness: 0.6 }));
-    head.position.y = 2.55; head.castShadow = true;
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.52, 2.3, 6, 12), new THREE.MeshStandardMaterial({ color: col, roughness: 0.7 }));
+    body.position.y = 1.67; body.castShadow = true;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 18, 14), new THREE.MeshStandardMaterial({ color: col.clone().offsetHSL(0, 0, 0.12), roughness: 0.6 }));
+    head.position.y = 3.3; head.castShadow = true;
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ color: 0x111317 }));
-    nose.position.set(0, 2.55, 0.4);
+    nose.position.set(0, 3.3, 0.42);
     g.add(body, head, nose);
   }
   const label = makeLabelSprite(`${emoji || '🙂'} ${name || 'Collector'}`, '');
-  label.position.set(0, 3.4, 0);
+  label.position.set(0, 4.2, 0);
   g.add(label);
   scene.add(g);
   return { group: g, label };
@@ -726,7 +726,7 @@ async function ensureThree() {
       const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
       const gltf = await new GLTFLoader().loadAsync(window.FLOOR_AVATAR_MODEL);
       const size = new THREE.Vector3(); new THREE.Box3().setFromObject(gltf.scene).getSize(size);
-      gltf.scene.userData.fitScale = size.y ? (2.6 / size.y) : 1;
+      gltf.scene.userData.fitScale = size.y ? (3.3 / size.y) : 1;
       avatarModel = gltf.scene;
     } catch (err) { console.warn('[floor] avatar model load failed:', err && err.message); }
   }
