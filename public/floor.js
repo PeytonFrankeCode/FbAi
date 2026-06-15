@@ -150,10 +150,39 @@ function makeCardTex(header) {
   const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
 }
 
+// ---- real card photos -------------------------------------------------
+// Load each showcased card's actual image and lay it under the glass.
+// Textures are cached per-build (cleared on rebuild in buildWorld) and load
+// lazily; on any failure (CORS / 404) we keep the generic slab so the case
+// never shows a blank black square.
+let _cardTexLoader = null;
+const _cardTexCache = new Map();
+function applyCardImage(mat, url) {
+  if (!url) return;
+  const cached = _cardTexCache.get(url);
+  if (cached) { mat.map = cached; mat.needsUpdate = true; return; }
+  if (!_cardTexLoader) { _cardTexLoader = new THREE.TextureLoader(); _cardTexLoader.setCrossOrigin('anonymous'); }
+  _cardTexLoader.load(url, t => {
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    _cardTexCache.set(url, t);
+    mat.map = t; mat.needsUpdate = true;
+  }, undefined, () => { /* keep the generic fallback already on `mat` */ });
+}
+// Material for one showcased card: the real photo if it has one (with the
+// generic slab as the loading/fallback face), otherwise a shared generic slab.
+function cardMaterial(card, shared, slot) {
+  const fallback = shared.cardMats[slot % shared.cardMats.length];
+  const url = card && card.imageUrl;
+  if (!url) return fallback;
+  const mat = new THREE.MeshBasicMaterial({ map: fallback.map, side: THREE.DoubleSide });
+  applyCardImage(mat, url);
+  return mat;
+}
+
 // A closed aluminum briefcase display case: brushed-metal tray, dark felt
 // liner, a tight grid of slabs laid flat, a clear glass lid, side rails,
 // a carry handle and latches on the front edge. Modeled on a real case.
-function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared) {
+function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, cardOffset) {
   const g = new THREE.Group();
   g.position.set(ox, 0, oz);
   const CASE_H = 0.16;
@@ -165,12 +194,18 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared) {
   const liner = new THREE.Mesh(new THREE.BoxGeometry(w - 0.14, 0.02, d - 0.14), shared.aluDark);
   liner.position.y = y0 + CASE_H + 0.01; g.add(liner);
 
+  // Slabs laid flat under the glass — each shows the real photo of the booth's
+  // showcased card (cards[cardOffset + slot]); empty slots fall back to a
+  // generic slab so the case still reads full.
   const cols = 6, rows = 3;
   const cw = (w - 0.24) / cols, cd = (d - 0.24) / rows;
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const card = new THREE.Mesh(shared.slabGeo, shared.cardMats[(r * cols + c) % shared.cardMats.length]);
+    const slot = r * cols + c;
+    const entry = cards && cards[(cardOffset || 0) + slot];
+    const card = new THREE.Mesh(shared.slabGeo, cardMaterial(entry, shared, slot));
     card.rotation.x = -Math.PI / 2;
     card.position.set(-w / 2 + 0.12 + cw / 2 + c * cw, y0 + CASE_H + 0.03, -d / 2 + 0.12 + cd / 2 + r * cd);
+    card.userData.boothId = boothIdx;   // tap a card to open the booth
     g.add(card);
   }
 
@@ -208,9 +243,11 @@ function buildBoothTable(grp, b, shared) {
 
   const y0 = TABLE_H + 0.03;
 
-  // --- 2 aluminum display cases (left side), closed, slabs under glass ---
-  buildDisplayCase(grp, -2.05, 0, 1.95, 1.35, y0, b._idx, shared);
-  buildDisplayCase(grp, -0.05, 0, 1.95, 1.35, y0, b._idx, shared);
+  // --- 2 aluminum display cases (left side), closed, real card photos under
+  //     glass: first case holds cards 0–17, second holds 18+ ---
+  const showCards = b.cards || [];
+  buildDisplayCase(grp, -2.05, 0, 1.95, 1.35, y0, b._idx, shared, showCards, 0);
+  buildDisplayCase(grp, -0.05, 0, 1.95, 1.35, y0, b._idx, shared, showCards, 18);
 
   // --- 3 card boxes (right side), cards standing up facing the buyer (-z) ---
   [1.45, 2.25, 3.05].forEach((bx) => {
@@ -225,9 +262,10 @@ function buildBoothTable(grp, b, shared) {
     }
   });
 
-  // --- loose lay-down area (front center): a few cards flat on the cloth ---
+  // --- loose lay-down area (front center): the booth's first few cards laid
+  //     flat on the cloth, showing their real photos up close to the buyer ---
   for (let i = 0; i < 4; i++) {
-    const card = new THREE.Mesh(shared.flatGeo, shared.cardMats[i % shared.cardMats.length]);
+    const card = new THREE.Mesh(shared.flatGeo, cardMaterial(showCards[i], shared, i));
     card.rotation.x = -Math.PI / 2;
     card.rotation.z = (Math.random() - 0.5) * 0.5;
     card.position.set(-2.6 + i * 0.5, y0 + 0.02, TABLE_D / 2 - 0.45);
@@ -303,6 +341,9 @@ function buildWorld(remoteBooths) {
   }
 
   clearGroup(worldGroup);
+  // the old build's card photos were disposed by clearGroup; drop the cache so
+  // the new build reloads fresh textures rather than reusing dead ones
+  _cardTexCache.clear();
   worldGroup = new THREE.Group();
   scene.add(worldGroup);
   booths = [];
@@ -311,7 +352,7 @@ function buildWorld(remoteBooths) {
   const shared = {
     flatGeo: new THREE.PlaneGeometry(0.34, 0.48),
     standGeo: new THREE.PlaneGeometry(0.22, 0.32),
-    slabGeo: new THREE.PlaneGeometry(0.2, 0.28),
+    slabGeo: new THREE.PlaneGeometry(0.24, 0.33),
     cardMats: [
       new THREE.MeshBasicMaterial({ map: makeCardTex('#1f6f4a'), side: THREE.DoubleSide }),
       new THREE.MeshBasicMaterial({ map: makeCardTex('#b45309'), side: THREE.DoubleSide }),
