@@ -1,0 +1,157 @@
+session:
+  date: "2026-06-15"
+  branch: claude/project-feasibility-scope-elio3y
+  repo: peytonfrankecode/fbai
+  topic: >
+    Scoped a new big feature for The Card Huddle and built it iteratively: a
+    "Showcase" that hands sales to eBay and trades to Veriswap, then grew it
+    into "The Floor" — a walkable 3D card-show world with live multiplayer
+    presence, realistic booths, a convention-hall room, and user-supplied
+    floor/wall textures.
+
+feasibility_discussion:
+  question: >
+    User asked whether a new big idea was feasible and whether it should be its
+    own website or part of the existing app.
+  conclusion:
+    - The app is a single Cloudflare Worker (worker.js + ~200KB server.js),
+      static public/ front end (vanilla JS), KV storage, Stripe subscriptions,
+      eBay data via scrape.do. Good for read-heavy tools; not a payments
+      platform.
+    - Idea evolved: NOT a money-handling marketplace. Instead a showcase +
+      discovery layer where sales hand off to eBay and trades to Veriswap (a
+      3rd-party escrow trade app). That removes the hard blockers (Stripe
+      Connect, KYC, payouts, chargebacks, 1099-K, marketplace sales tax).
+    - Recommendation: same website / same login, integrated. Veriswap has no
+      public API — handoff is a profile link (full URL, @handle, or name →
+      veriswap.com/<name>). eBay handoff via listing URL or affiliate search.
+
+showcase_feature:
+  summary: >
+    Reworked the Sell tab into a "Showcase" and moved the pricing/promote tools
+    to a new "Tools" tab.
+  nav_changes:
+    - Added top-level "The Floor" and "Tools" (proplus) nav tabs.
+    - Sell tab = Showcase. Tools tab = Auto-Pricer + Bulk Pricer + Promote Cards.
+    - Removed the old Create Listing / My Listings / Title Generator sub-tabs
+      (underlying functions kept but unreachable; switchSellerTab is now a
+      compatibility shim routing old names to the new structure).
+  showcase_ui:
+    - Per-card status (Showcase only / For sale / For trade / Both); for-sale
+      links to eBay (listing URL or affiliate search), for-trade to Veriswap.
+    - Account-level eBay store + Veriswap profile defaults.
+    - Add from My Cards (collection picker) or add manually; edit modal.
+    - Stored in localStorage (cardHuddleShowcase / cardHuddleShowcaseSettings)
+      and synced via USER_SYNC_KEYS like the rest of the user blob.
+
+the_floor:
+  overview: >
+    A walkable card-show world reached from the "The Floor" nav tab. Make a
+    collector (name + avatar emoji/color, stored as cardHuddleCharacter, synced),
+    then walk a hall of booths. Each booth is a showcase; open it to buy (eBay)
+    or trade (Veriswap). The Card Huddle is never in the transaction.
+  evolution:
+    - v1: 2D top-down canvas world (booths + your showcase + demo booths).
+    - phase1: real server-side booths (global floor index in KV) so other users'
+      booths appear.
+    - groundwork: live presence via a Durable Object + WebSockets (avatars move
+      in real time).
+    - 3D: rebuilt rendering on Three.js (vendored), then first-person + free-look,
+      realistic aluminum display cases, convention-hall layout, and textures.
+
+  server_side_booths:
+    files: [server.js, db.js]
+    floor_index:
+      - updateGlobalFloorIndex(username, data) mirrors each user's booth
+        (cardHuddleCharacter + cardHuddleShowcase[] + showcase veriswap) into a
+        single KV map under key 'floorIndex' (added to db.js KNOWN_KEYS). Mirrors
+        the existing promoted-cards-index pattern. No character => no booth.
+      - Wired into PUT /api/user/data (alongside updateGlobalPromotedIndex).
+      - GET /api/floor/booths returns the public booth list (sanitized cards,
+        capped 60 booths / 24 cards). No auth. Tested end-to-end (register →
+        push booth → list → clear → gone).
+
+  live_presence:
+    files: [worker.js, wrangler.toml, public/floor.js]
+    durable_object:
+      - FloorRoom DO (exported from worker.js) holds connected sockets + each
+        player's position/profile in memory and relays moves. One global
+        instance (idFromName('global')).
+      - Worker routes the /api/floor/ws WebSocket upgrade straight to the DO,
+        before the Express path.
+      - wrangler.toml: [[durable_objects.bindings]] FLOOR_ROOM + [[migrations]]
+        tag v1 new_sqlite_classes=["FloorRoom"]. Validated with
+        `wrangler deploy --dry-run`.
+    protocol: >
+      client->server {t:join,name,emoji,color,username,x,y} and {t:move,x,y};
+      server->client {t:welcome,id,players[]}, {t:join,player}, {t:move,id,x,y},
+      {t:leave,id}.
+    client: >
+      Opens the socket on entering the floor, sends throttled position updates
+      (~10/sec, only when moved), renders other collectors as interpolated live
+      avatars with a HUD head-count; auto-reconnects. Positions are in the shared
+      ground plane; the world layout is built from the same server booth order so
+      coordinates line up across clients.
+    NOTE_deploy: >
+      Presence only activates after a deploy that applies the v1 DO migration.
+
+  three_d_world:
+    file: public/floor.js  (ES module)
+    vendored: >
+      Three.js r160 in public/vendor/three.module.js + addons (GLTFLoader,
+      BufferGeometryUtils, environments/RoomEnvironment) loaded via an import map
+      in index.html. floor.js is <script type="module">. RoomEnvironment PMREM
+      gives image-based lighting so aluminum/glass read correctly. GLTFLoader is
+      dynamically imported only if a model URL is set.
+    camera_controls:
+      - First person (eye height 2.0): mouse-drag to look, W/S move, A/D strafe,
+        arrows turn, E (or tap a booth) to open it.
+      - Free look toggle (HUD button or F): orbit the camera around the table in
+        front of you and zoom (wheel / d-pad) to inspect the cards.
+      - Own avatar hidden in first person.
+    booths_tables:
+      - White-clothed folding tables. Each occupied booth has 2 closed aluminum
+        briefcase display cases (brushed-metal tray, dark liner, 6x3 slab grid,
+        clear glass lid, side rails, handle + latches), 3 card boxes with cards
+        standing up, and a loose lay-down area, plus a floating name/count label.
+      - Cards on the tables are generic props (perf/CORS); real card images +
+        Buy/Trade links show in the DOM booth modal on open (#floor-booth-modal).
+    layout_room:
+      - Convention-hall layout (HALL const): 3x3 blocks of tables, FLOOR_MAX_TABLES
+        = 54 slots (>= 50 capacity). Real+demo booths fill slots as detailed
+        tables; the rest render as cheap vacant tables so the hall reads full.
+      - Room: polished concrete floor, tall painted walls with a front entrance
+        gap (spawn point), dark industrial ceiling + truss beams, a grid of
+        emissive light fixtures with faint floor light-pools, ACES tone mapping,
+        bright even lighting, soft contact shadows under each table.
+      - Avatars made taller (~2.6m) so the eye clears the case glass.
+    textures:
+      - public/textures/concrete-color.jpg (user-supplied) auto-loads on the
+        floor; public/textures/wall-color.jpg (user-supplied) on the walls.
+      - Mirror-tiled to hide seams, max anisotropy, sRGB. Procedural concrete is
+        the fallback. Floor tinted mid-dark grey (color 0x6f7276,
+        envMapIntensity 0.65, glow opacity 0.035) so the bright hall doesn't wash
+        it out — last change in the session.
+      - Drop-in hooks: /textures/concrete-(color|normal|rough).jpg and
+        wall-color.jpg auto-load; or window.FLOOR_CONCRETE / window.FLOOR_WALL
+        = {color,normal,rough,repeat}. window.FLOOR_AVATAR_MODEL = glb url for
+        custom avatars (FLOOR_BOOTH_MODEL hook noted for later).
+
+verification: >
+  No automated suite. JS validated with `node --check` (server.js/db.js/worker.js)
+  and `npx esbuild --bundle` for the floor.js ES module each change. The floor
+  REST round-trip was tested against a locally-run server. The DO/WebSocket and
+  WebGL rendering can't be exercised here — need a real deploy / wrangler dev.
+
+asset_versions:
+  - public/index.html: style.css?v=87, app.js?v=119, floor.js?v=13
+
+open_threads:
+  - Floor reflections are faked (glow pools + glossy material), not a true planar
+    reflector — offered the real mirror floor as a next step (perf cost).
+  - Card props on tables are generic; could load real card-face textures for the
+    nearest booth.
+  - Normal/roughness maps for floor + walls would be the biggest realism jump
+    (drop in concrete-normal.jpg / concrete-rough.jpg / wall-normal.jpg).
+  - Custom GLTF avatar/booth models can be wired via the existing hooks.
+  - All work on the feature branch claude/project-feasibility-scope-elio3y; no PR.
