@@ -206,6 +206,93 @@ function expressToFetch(app, request, bodyBuffer) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// FloorRoom — Durable Object for live presence on The Floor.
+//
+// One global instance (idFromName('global')) holds every connected client's
+// WebSocket plus their last-known avatar position and profile, and relays
+// position updates to everyone else. State is in-memory only: a relay needs
+// no persistence (if the room hibernates, nobody's connected anyway).
+//
+// Wire protocol (JSON both ways):
+//   client → server: { t:'join', name, emoji, color, username, x, y }
+//                     { t:'move', x, y }
+//   server → client: { t:'welcome', id, players:[{id,name,emoji,color,x,y}] }
+//                     { t:'join',  player:{id,...} }
+//                     { t:'move',  id, x, y }
+//                     { t:'leave', id }
+//
+// Note: position broadcast is O(n²) per tick (fine for a modest floor). When
+// the floor gets busy this is where to add interest management / rate caps.
+// ---------------------------------------------------------------------------
+export class FloorRoom {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+    this.sessions = new Map(); // id -> { ws, id, profile, x, y }
+  }
+
+  async fetch(request) {
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return new Response('Expected a WebSocket upgrade', { status: 426 });
+    }
+    const pair = new WebSocketPair();
+    const client = pair[0];
+    const server = pair[1];
+    this.accept(server);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  accept(ws) {
+    ws.accept();
+    const id = crypto.randomUUID();
+    const session = { ws, id, profile: null, x: 480, y: 300 };
+    this.sessions.set(id, session);
+
+    ws.addEventListener('message', (evt) => {
+      let msg;
+      try { msg = JSON.parse(typeof evt.data === 'string' ? evt.data : ''); }
+      catch (_) { return; }
+      if (!msg || typeof msg !== 'object') return;
+
+      if (msg.t === 'join') {
+        session.profile = {
+          name: String(msg.name || 'Collector').slice(0, 24),
+          emoji: String(msg.emoji || '🙂').slice(0, 8),
+          color: String(msg.color || '#5ece99').slice(0, 16),
+          username: String(msg.username || '').slice(0, 32),
+        };
+        if (typeof msg.x === 'number') session.x = msg.x;
+        if (typeof msg.y === 'number') session.y = msg.y;
+        const players = [];
+        for (const s of this.sessions.values()) {
+          if (s.id !== id && s.profile) players.push({ id: s.id, ...s.profile, x: s.x, y: s.y });
+        }
+        this.sendTo(ws, { t: 'welcome', id, players });
+        this.broadcast({ t: 'join', player: { id, ...session.profile, x: session.x, y: session.y } }, id);
+      } else if (msg.t === 'move') {
+        if (typeof msg.x === 'number') session.x = msg.x;
+        if (typeof msg.y === 'number') session.y = msg.y;
+        if (session.profile) this.broadcast({ t: 'move', id, x: session.x, y: session.y }, id);
+      }
+    });
+
+    const drop = () => { if (this.sessions.delete(id)) this.broadcast({ t: 'leave', id }, id); };
+    ws.addEventListener('close', drop);
+    ws.addEventListener('error', drop);
+  }
+
+  sendTo(ws, obj) { try { ws.send(JSON.stringify(obj)); } catch (_) { /* closing */ } }
+
+  broadcast(obj, exceptId) {
+    const str = JSON.stringify(obj);
+    for (const s of this.sessions.values()) {
+      if (s.id === exceptId) continue;
+      try { s.ws.send(str); } catch (_) { /* closing */ }
+    }
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     // Expose ctx.waitUntil to the DB layer so KV writes can extend the
@@ -220,6 +307,20 @@ export default {
     }
     try {
       const url = new URL(request.url);
+
+      // Live presence WebSocket for The Floor — upgrade goes straight to the
+      // single global FloorRoom Durable Object, bypassing the Express path
+      // (Express can't speak the WebSocket upgrade protocol).
+      if (url.pathname === '/api/floor/ws') {
+        if (request.headers.get('Upgrade') !== 'websocket') {
+          return new Response('Expected a WebSocket upgrade', { status: 426 });
+        }
+        if (!env.FLOOR_ROOM) {
+          return new Response('Presence not available', { status: 503 });
+        }
+        const id = env.FLOOR_ROOM.idFromName('global');
+        return env.FLOOR_ROOM.get(id).fetch(request);
+      }
 
       // Static files and SPA fallback — served by Cloudflare ASSETS binding.
       // ANY non-/api request goes here, including bot scans like /wp-admin/*,

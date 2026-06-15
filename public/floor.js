@@ -45,6 +45,14 @@
   const keys = Object.create(null);
   const touchDir = { up: false, down: false, left: false, right: false };
 
+  // ---- live presence (WebSocket → FloorRoom Durable Object) ----
+  let ws = null;
+  let wsId = null;             // our id assigned by the room
+  const remote = new Map();    // id -> { name, emoji, color, x, y, tx, ty }
+  let moveTimer = null;
+  let lastSent = { x: null, y: null };
+  let reconnectTimer = null;
+
   // ---- character persistence ----
   function getCharacter() {
     try { return JSON.parse(localStorage.getItem(CHAR_KEY) || 'null'); }
@@ -120,36 +128,53 @@
     }, n));
   }
 
-  // Build the world. `remoteBooths` is the public list from the server;
-  // booth 0 is always YOU (rendered from your local showcase).
+  // Build the world from the server's booth list. The layout is shared: it's
+  // the same ordered list for everyone (so a remote player's coordinates line
+  // up with the same booths on every screen). Your own booth keeps its real
+  // position; its cards are overlaid from your LOCAL showcase so unsynced
+  // edits still show. If you haven't synced a booth yet, one is appended.
   function buildWorld(remoteBooths) {
     const me = getCharacter() || { name: 'You', color: AVATAR_COLORS[0], emoji: AVATAR_EMOJIS[0] };
     const settings = (typeof getShowcaseSettings === 'function') ? getShowcaseSettings() : {};
-    const yours = {
-      owner: me.name || 'You', emoji: me.emoji, color: me.color, isYou: true,
-      veriswap: settings.veriswap || '',
-      cards: (typeof getShowcase === 'function') ? getShowcase() : [],
-    };
-
+    const localCards = (typeof getShowcase === 'function') ? (getShowcase() || []) : [];
     const mine = myUsername();
-    let others = (Array.isArray(remoteBooths) ? remoteBooths : [])
-      .filter(b => b && b.name && b.username !== mine)
-      .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [] }));
 
-    // Top up with demo collectors while real booths are few.
-    if (others.length < 5) {
-      const have = new Set(others.map(o => (o.owner || '').toLowerCase()));
-      for (const d of demoBooths()) { if (!have.has(d.owner.toLowerCase())) others.push(d); }
+    let list = (Array.isArray(remoteBooths) ? remoteBooths : [])
+      .filter(b => b && b.name)
+      .map(b => ({
+        owner: b.name, username: b.username, emoji: b.emoji, color: b.color,
+        veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [],
+        isYou: !!mine && b.username === mine,
+      }));
+
+    const myBooth = list.find(b => b.isYou);
+    if (myBooth) {
+      myBooth.owner = me.name || myBooth.owner;
+      myBooth.emoji = me.emoji || myBooth.emoji;
+      myBooth.color = me.color || myBooth.color;
+      myBooth.veriswap = settings.veriswap || myBooth.veriswap;
+      myBooth.cards = localCards;
+    } else {
+      list.push({
+        owner: me.name || 'You', username: mine, emoji: me.emoji, color: me.color,
+        veriswap: settings.veriswap || '', cards: localCards, isYou: true,
+      });
     }
-    others = others.slice(0, 23);
 
-    const all = [yours, ...others];
-    const booths = all.map((b, i) => {
+    // Top up with demo collectors while the floor is small (deterministic,
+    // so every client still sees the same extra booths in the same spots).
+    if (list.length < 6) {
+      const have = new Set(list.map(b => (b.owner || '').toLowerCase()));
+      for (const d of demoBooths()) { if (!have.has(d.owner.toLowerCase())) list.push(Object.assign({ isYou: false }, d)); }
+    }
+    list = list.slice(0, 24);
+
+    const booths = list.map((b, i) => {
       const col = i % COLS.length;
       const row = Math.floor(i / COLS.length);
       return Object.assign({ id: i, x: COLS[col], y: FIRST_ROW_Y + row * ROW_SPACING, w: BOOTH_W, h: BOOTH_H }, b);
     });
-    const rows = Math.ceil(all.length / COLS.length);
+    const rows = Math.ceil(list.length / COLS.length);
     worldH = Math.max(VIEW_H, FIRST_ROW_Y + rows * ROW_SPACING + 60);
 
     world = { booths, npcs: makeNpcs() };
@@ -205,6 +230,12 @@
       const a = Math.atan2(n.ty - n.y, n.tx - n.x);
       n.x += Math.cos(a) * 0.8;
       n.y += Math.sin(a) * 0.8;
+    }
+
+    // smooth remote avatars toward their last reported position
+    for (const r of remote.values()) {
+      r.x += (r.tx - r.x) * 0.25;
+      r.y += (r.ty - r.y) * 0.25;
     }
   }
 
@@ -285,7 +316,12 @@
       ctx.fillText((forSale ? '🛒' : '') + (forTrade ? '🤝' : ''), b.x + 8, b.y + 56);
     }
 
-    for (const n of world.npcs) drawAvatar(n.x, n.y, n.color, n.emoji, n.name, false);
+    // Real collectors when anyone's online; ambient NPCs when you're alone.
+    if (remote.size > 0) {
+      for (const r of remote.values()) drawAvatar(r.x, r.y, r.color, r.emoji, r.name, false);
+    } else {
+      for (const n of world.npcs) drawAvatar(n.x, n.y, n.color, n.emoji, n.name, false);
+    }
     const me = getCharacter() || {};
     drawAvatar(player.x, player.y, me.color || '#5ece99', me.emoji || '🙂', me.name || 'You', true);
 
@@ -321,6 +357,81 @@
     running = false;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
+    disconnectPresence();
+  }
+
+  // ---- presence wiring ----
+  function updateOnlineCount() {
+    const el = document.getElementById('floor-online');
+    if (!el) return;
+    const n = remote.size + 1; // others + you
+    el.textContent = `🟢 ${n} on the floor`;
+  }
+
+  function connectPresence() {
+    if (ws || typeof WebSocket === 'undefined') return;
+    let sock;
+    try {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      sock = new WebSocket(`${proto}//${location.host}/api/floor/ws`);
+    } catch (_) { return; }
+    ws = sock;
+
+    sock.addEventListener('open', () => {
+      const me = getCharacter() || {};
+      sendWs({ t: 'join', name: me.name || 'Collector', emoji: me.emoji || '🙂', color: me.color || '#5ece99', username: myUsername(), x: Math.round(player.x), y: Math.round(player.y) });
+      // throttle position updates to ~10/sec, only when we've actually moved
+      lastSent = { x: null, y: null };
+      moveTimer = setInterval(() => {
+        const x = Math.round(player.x), y = Math.round(player.y);
+        if (x === lastSent.x && y === lastSent.y) return;
+        lastSent = { x, y };
+        sendWs({ t: 'move', x, y });
+      }, 100);
+    });
+
+    sock.addEventListener('message', (evt) => {
+      let msg; try { msg = JSON.parse(evt.data); } catch (_) { return; }
+      if (msg.t === 'welcome') {
+        wsId = msg.id;
+        remote.clear();
+        for (const p of (msg.players || [])) remote.set(p.id, { name: p.name, emoji: p.emoji, color: p.color, x: p.x, y: p.y, tx: p.x, ty: p.y });
+      } else if (msg.t === 'join' && msg.player) {
+        const p = msg.player;
+        remote.set(p.id, { name: p.name, emoji: p.emoji, color: p.color, x: p.x, y: p.y, tx: p.x, ty: p.y });
+      } else if (msg.t === 'move') {
+        const r = remote.get(msg.id);
+        if (r) { r.tx = msg.x; r.ty = msg.y; }
+      } else if (msg.t === 'leave') {
+        remote.delete(msg.id);
+      }
+      updateOnlineCount();
+    });
+
+    const onClose = () => {
+      if (moveTimer) { clearInterval(moveTimer); moveTimer = null; }
+      if (ws === sock) ws = null;
+      remote.clear();
+      updateOnlineCount();
+      // auto-reconnect while we're still on the floor
+      if (running && !reconnectTimer) {
+        reconnectTimer = setTimeout(() => { reconnectTimer = null; if (running) connectPresence(); }, 2500);
+      }
+    };
+    sock.addEventListener('close', onClose);
+    sock.addEventListener('error', () => { try { sock.close(); } catch (_) {} });
+  }
+
+  function disconnectPresence() {
+    if (moveTimer) { clearInterval(moveTimer); moveTimer = null; }
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if (ws) { try { ws.close(); } catch (_) {} ws = null; }
+    remote.clear();
+    wsId = null;
+  }
+
+  function sendWs(obj) {
+    if (ws && ws.readyState === 1) { try { ws.send(JSON.stringify(obj)); } catch (_) {} }
   }
 
   // ---- booth modal (the showcase, with third-party handoff) ----
@@ -400,13 +511,15 @@
     if (hudName && me) hudName.textContent = `${me.emoji || '🙂'} ${me.name || 'You'}`;
 
     // Fetch everyone's booth, then build & run. Falls back to demo-only.
-    let remote = [];
+    let remoteBooths = [];
     try {
       const res = await fetch('/api/floor/booths');
-      if (res.ok) { const data = await res.json(); remote = Array.isArray(data.booths) ? data.booths : []; }
+      if (res.ok) { const data = await res.json(); remoteBooths = Array.isArray(data.booths) ? data.booths : []; }
     } catch (_) { /* offline / not deployed — demo floor */ }
-    buildWorld(remote);
+    buildWorld(remoteBooths);
     start();
+    updateOnlineCount();
+    connectPresence();
   }
 
   // ---- public entry points (called from app.js / inline handlers) ----

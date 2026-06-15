@@ -8365,3 +8365,10 @@ footer {
 @media (hover: none), (max-width: 760px) {
   .floor-dpad { display: flex; }
 }
+
+/* The Floor — live presence indicator */
+.floor-online {
+  font-size: 0.78rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-bg); border: 1px solid var(--accent-border);
+  padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap;
+}

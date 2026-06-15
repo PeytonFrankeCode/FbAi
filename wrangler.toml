@@ -31,6 +31,18 @@ USE_MOCK_DATA = "false"
 binding = "KV"
 id = "5cc96b5126ec4e57960b945fb810481f"
 
+# Durable Object that powers live presence on The Floor — one global room
+# instance tracks who's connected and relays avatar positions over
+# WebSockets. SQLite-backed class so it's eligible on every plan tier
+# (we only use in-memory state + sockets, no stored rows yet).
+[[durable_objects.bindings]]
+name = "FLOOR_ROOM"
+class_name = "FloorRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["FloorRoom"]
+
 # Secrets — set these via `wrangler secret put <KEY>` or the Cloudflare dashboard.
 # Cloudflare [vars] above are public; secrets are encrypted and only visible to the worker.
 #
