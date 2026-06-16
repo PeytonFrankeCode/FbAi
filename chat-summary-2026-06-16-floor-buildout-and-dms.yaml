@@ -1,0 +1,226 @@
+session:
+  date: "2026-06-16"
+  branch: claude/floor-card-showcase-photos-uwd9ew
+  repo: peytonfrankecode/fbai
+  topic: >
+    A long iterative build-out of "The Floor" (the walkable 3D card-show) plus a
+    floor-only chat/DM system, render-quality work, a real card-show layout, an
+    under-construction demo gate, and assorted polish. Also configured Google
+    sign-in (no code change) and clarified the admin stats vs. visit tracker.
+  no_PR_yet: >
+    All work is on the feature branch; no PR opened. User was asked twice and
+    deferred. Branch builds on the previously-merged Floor work (PR #317).
+
+asset_versions:
+  - public/index.html: style.css?v=94, app.js?v=124, floor.js?v=26
+  - Floor is an ES module (public/floor.js) using vendored Three.js r160 via an
+    import map; validated each change with `npx esbuild --bundle public/floor.js
+    --format=esm --external:three`. server.js/app.js/db.js checked with
+    `node --check`; worker.js parsed via esbuild (can't node --check ESM).
+
+deploy_requirements:
+  - Real-time DMs need a deploy that applies the wrangler.toml **v2** Durable
+    Object migration (creates UserInbox). Until then DMs still work over HTTP +
+    the unread poll; the socket silently no-ops.
+  - Floor presence + floor-broadcast chat ride the existing FloorRoom DO (v1
+    migration) — already deployed previously.
+  - Google sign-in: set GOOGLE_CLIENT_ID (var or secret) on the the-card-huddle
+    worker, then deploy. User added it as a dashboard variable and confirmed it
+    works (/api/auth/providers → google.enabled:true; flag also in /api/ping
+    socialAuth, NOT /api/health).
+
+features_built:
+
+  showcase_card_photos:
+    files: [public/floor.js]
+    summary: >
+      The aluminum glass display cases now show each booth's REAL card images
+      under the glass (and the 4 front lay-down cards), instead of generic
+      procedural slabs.
+    details:
+      - applyCardImage()/cardMaterial() load card.imageUrl lazily with a per-build
+        texture cache (_cardTexCache, cleared on rebuild), crossOrigin anonymous,
+        and fall back to the generic slab on CORS/404 so a case never shows black.
+      - Slabs are tap-targets (userData.boothId) that open the booth.
+      - imageUrl already flowed through /api/floor/booths (sanitizeBoothCard).
+
+  taller_then_customizable_avatars:
+    files: [public/floor.js, public/index.html, public/style.css, worker.js]
+    summary: >
+      First made the capsule avatar taller; then replaced it with a fully
+      customizable segmented humanoid.
+    character_model:
+      - cardHuddleCharacter now: {name, emoji, skin, shirt, pants, hair,
+        hairStyle, hat, accessory} (+ legacy color===shirt). normalizeCharacter()
+        migrates the old {name,color,emoji} shape.
+      - buildFigure(): legs+shoes(pants), torso+arms(shirt), head/hands/neck/nose
+        (skin), hair (short/buzz/curly/long/bald), hat (cap/beanie, shirt-colored),
+        glasses. ~3.7m tall so eyes clear the case glass; EYE_H=2.55.
+      - Creator: live 2D <canvas> preview (drawCharPreview) + option rows
+        (delegated [data-cc]/[data-val] click handler). Palettes: SKIN_TONES,
+        SHIRT_COLORS(=AVATAR_COLORS), PANTS_COLORS, HAIR_COLORS, HAIR_STYLES,
+        HATS, ACCESSORIES.
+    presence:
+      - Appearance sent through the FloorRoom join message; worker FloorRoom
+        passes an `appearance` object through so remotes + NPCs render fully.
+      - NPCs use randomCharacter().
+
+  booth_layout_editor:
+    files: [public/floor.js, public/index.html, public/style.css, public/app.js, server.js]
+    summary: >
+      Owners arrange a fixed 5-spot table from an in-floor "Arrange booth" editor;
+      the 3D booth renders that layout and it syncs to visitors.
+    details:
+      - cardHuddleBoothLayout = array of 5 of ['showcase','stand','valuebox','empty'];
+        added to USER_SYNC_KEYS and mirrored server-side (sanitizeBoothLayout →
+        booth.layout). Default ['showcase','showcase','stand','stand','valuebox'].
+      - buildBoothTable iterates the layout (slotX) and places fixtures; listed
+        cards flow into showcases/stands in order. resolveLayout(b) uses local
+        layout for your booth, server layout for visitors, else default.
+      - Editor: palette + 5 tap spots; Save rebuilds the world live (buildWorld
+        from cached lastRemoteBooths) and walks you to your booth.
+
+  fixtures_match_real_photos:
+    files: [public/floor.js]
+    summary: >
+      Reworked two fixtures to match user reference photos.
+    details:
+      - Card stand = a row of 3 glossy black-base ACRYLIC display stands, each
+        holding ONE tall card face-out (initially two stacked; user asked for
+        single tall). Fills from the booth's real cards.
+      - Value box = a white cardboard "dollar box" packed with rows of standing
+        cards + colored divider tabs + a "$1 BOX" tag. Shows the booth's
+        value-box-flagged cards' real photos.
+      - Shared materials added: blackAcrylic, clearAcrylic, cardboard,
+        cardboardDark, standCardGeo.
+
+  value_box_two_menus:
+    files: [public/app.js, public/floor.js, public/style.css, server.js]
+    summary: >
+      Per-card "Put in value box" toggle splits a booth's cards into two pools
+      with two separate click-menus.
+    details:
+      - Sell tab: each showcase card has a valueBox boolean (+ "Value Box" badge);
+        synced and mirrored (sanitizeBoothCard.valueBox).
+      - Floor: showCards (!valueBox) fill showcases/stands; valueCards fill value
+        boxes. Clicking a value box opens the Value Box menu (userData.menu=
+        'value'); clicking a showcase/stand or pressing E opens the Showcase menu.
+      - openBooth(b, menu) filters by mode; each menu has its own title/blurb/
+        empty-state + a cross-link button to the other when it has cards.
+
+  render_quality:
+    files: [public/floor.js, public/style.css]
+    summary: Sharpened the floor's resolution/lighting/textures.
+    details:
+      - qualityPixelRatio() super-samples (>=1.5x, cap 2x; window.FLOOR_PIXEL_RATIO
+        override); re-applied on resize. Canvas max-width 1200, taller caps.
+      - Shadows 4096 on capable devices (2048 on low-power touch), tuned
+        near/far + normalBias. Explicit sRGB output, high-performance hint.
+      - Max anisotropy on card photos/generic cards/nameplates/wood; 2x-res
+        canvases for nameplates + generic cards. Light background-tinted fog
+        (70..200) to mask far aliasing.
+
+  chat_dms:
+    files: [server.js, db.js, worker.js, wrangler.toml, public/app.js, public/floor.js, public/index.html, public/style.css]
+    history: >
+      Built one-on-one DMs first (with a global nav "Messages" tab + real-time
+      DO), then the user redirected: keep chat FLOOR-ONLY with a Floor (broadcast)
+      tab and a Direct (DM) tab, and remove the outside nav tab. Final state below.
+    backend_dms:
+      - KV 'dms' blob (added to db.js KNOWN_KEYS): convos keyed "userA|userB" with
+        messages[] + read{}. Endpoints (auth via getSessionUser):
+        POST /api/dm/send (text + optional card ref, moderated via moderateText,
+        recipient validated), GET /api/dm/threads, GET /api/dm/with/:user (marks
+        read), GET /api/dm/unread.
+    realtime_do:
+      - New per-user UserInbox Durable Object (worker.js) holds a user's sockets
+        across devices. Worker authenticates /api/dm/ws via exported
+        getSessionUserByToken(token) and routes to USER_INBOX.idFromName(user).
+        After a successful /api/dm/send the worker fans the message (waitUntil)
+        to recipient + sender inboxes, which push {t:'dm',message,with}.
+      - wrangler.toml: USER_INBOX binding + [[migrations]] tag v2.
+    floor_only_chat_ui:
+      - Removed the global nav Messages tab. Entry is the floor HUD "💬 Chat"
+        button (openChat) + per-card "💬 Negotiate" buttons (openDM).
+      - #chat-overlay has two tabs: Floor (🌐) = live ephemeral broadcast to
+        everyone on the floor over the FloorRoom socket ({t:'chat'} in worker,
+        moderated via moderateText imported into worker.js); Direct (💬) = the
+        persisted DMs. floor.js owns the Floor tab (floorChatSend/onFloorChat),
+        app.js owns Direct + openChat/switchChatTab.
+      - Unread badge (.floor-dm-badge) on the HUD button + Direct tab; 45s poll
+        safety net + instant socket updates.
+
+  card_show_layout:
+    files: [public/floor.js, public/index.html, public/style.css]
+    summary: >
+      Replaced the 3x3 block grid with a real convention layout (from a user
+      floor-plan photo): perimeter booths lining all four walls, angled corner
+      booths, interior back-to-back N–S aisle rows, and a central main entrance.
+    details:
+      - computeHall() now emits slots as {x,z,rot}; tables face their aisle.
+        Collision (blocked), nearestBooth, walkToBooth are rotation-aware
+        (oriented-box test; boothFront() computes the stand-in-front point);
+        table shadows live in the rotated group. ~49 booths, FLOOR_MAX_TABLES=60.
+      - 3D "🚪 Main Entrance" sprite over the front gap; spawn at front-center.
+
+  under_construction_gate:
+    files: [public/floor.js, public/index.html, public/style.css]
+    summary: >
+      Opening The Floor shows a gate first: "Under construction — may be
+      incomplete or buggy" with an "Enter demo" button (enterFloorDemo →
+      enterFloor or renderCharCreate). A persistent construction banner stays
+      pinned in the stage.
+
+  wall_decor_polish:
+    files: [public/floor.js]
+    summary: >
+      Wood wainscot raised from ~4m to ~7m (to about the wall accent line); the
+      warm under-light emissive strip moved to the TOP of the wood with the
+      up-glow washing the painted wall above it; wall greenery kept low. Earlier
+      in the session the wood/under-light/greenery system itself was added
+      (makeWoodTex, upGlowTex, decorateWalls/addWoodSegment, addBush).
+
+  back_wall_logo:
+    files: [public/floor.js]
+    summary: >
+      Raised 3D Card Huddle logo centered high on the back wall — a dark backing
+      panel (depth) + an emissive /logo.png face (692x361, 1.92:1), ~5.5m tall
+      (~1/10 of the wall). Un-mirrored for the y=π facing via texture repeat.x=-1.
+
+non_code_threads:
+  admin_stats:
+    - User worried /api/admin/stats undercounts accounts (73 "joins", 0 accounts).
+    - Clarified: there is NO server visit counter; 73 came from the user's own
+      separate visit tracker (visitors != signups). totalAccounts counts the one
+      `users` KV map (password + OAuth both via saveServerUsers), so it isn't
+      missing a category. Real (minor) caveat noted: stats reads a per-isolate
+      in-memory cache snapshot, not live KV, so it can lag/undercount on a warm
+      isolate. User declined the hardening fix. NO code changed.
+  google_signin:
+    - Sign-in was already fully coded (frontend mountGoogleSignIn + /api/auth/
+      google verify via Google tokeninfo, aud check; /api/auth/providers gate).
+      Only missing config: GOOGLE_CLIENT_ID. User created an External OAuth Web
+      client (JS origins thecardhuddle.com + www), set the var in the Cloudflare
+      dashboard, redeployed — confirmed working. No Client Secret/redirect needed
+      for the GSI ID-token flow.
+
+verification: >
+  No automated suite. Per change: `node --check` (server.js/app.js/db.js),
+  esbuild bundle for floor.js, esbuild parse for worker.js, and a one-off esbuild
+  test confirmed the CommonJS moderateText named-import resolves for the worker.
+  WebGL render, DO/WebSocket delivery, and KV persistence can't be exercised here
+  — they need a real deploy / wrangler dev.
+
+open_threads:
+  - No PR opened for the branch (lots stacked: showcase photos, customizable
+    avatars, booth editor, fixtures, wall decor, two-menu value box, render
+    quality, floor-only chat + real-time DMs, new layout, demo gate, back-wall
+    logo). Offer to write a combined PR description still stands.
+  - Layout spacing/aisle widths are eyeballed from the floor-plan photo; entrance
+    is at the front (not the right wall like the reference) to keep spawn logic.
+    Easy to retune (aisle width, interior rows, entrance wall).
+  - Wood height (WH=7.0) and back-wall logo size (~5.5m) are eyeballed from a
+    screenshot — quick to nudge once viewed live.
+  - Possible next steps offered: post-processing (SMAA/SSAO/bloom) behind a
+    quality toggle; per-fixture card assignment; separate hat color; walk
+    animation; promote DMs to a global entry again if desired.
