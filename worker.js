@@ -1,5 +1,9 @@
 let serverInit = null;
 
+// Lightweight, dependency-free text screen — reused for the public floor chat
+// so broadcast messages get the same profanity/spam check as everything else.
+import { moderateText } from './moderation.js';
+
 // Last-line-of-defense traps. If anything inside the Worker rejects or
 // throws asynchronously without being caught, Cloudflare otherwise serves
 // its own HTML "Worker threw exception" error page — which the frontend
@@ -284,6 +288,18 @@ export class FloorRoom {
         if (typeof msg.x === 'number') session.x = msg.x;
         if (typeof msg.y === 'number') session.y = msg.y;
         if (session.profile) this.broadcast({ t: 'move', id, x: session.x, y: session.y }, id);
+      } else if (msg.t === 'chat') {
+        // Public floor chat — a message to everyone currently on the floor.
+        if (!session.profile) return;
+        const text = String(msg.text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+        if (!text) return;
+        let check; try { check = moderateText(text); } catch (_) { check = { allowed: true }; }
+        if (check && check.allowed === false) {
+          this.sendTo(session.ws, { t: 'chatblocked', reason: check.reason || 'blocked' });
+          return;
+        }
+        // include the sender (no exceptId) so their own line shows up too
+        this.broadcast({ t: 'chat', id, name: session.profile.name, emoji: session.profile.emoji, text, at: Date.now() });
       }
     });
 

@@ -8268,6 +8268,26 @@ footer {
   line-height: 1.25rem; text-align: center; color: #fff; background: #ef4444; border-radius: 999px;
 }
 .dm-box { max-width: 760px; width: 100%; }
+.chat-box { max-width: 760px; width: 100%; }
+.chat-tabs { display: flex; gap: 0.4rem; margin: -0.3rem 0 0.8rem; }
+.chat-tab {
+  flex: 1 1 0; padding: 0.5rem 0.6rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+.chat-tab:hover { color: var(--text-primary); border-color: var(--accent); }
+.chat-tab.active { background: var(--accent-bg); border-color: var(--accent); color: var(--text-primary); }
+.chat-pane.hidden { display: none; }
+.floor-chat-log {
+  height: 360px; max-height: 56vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.4rem;
+  padding: 0.7rem; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: var(--bg-secondary); margin-bottom: 0.6rem;
+}
+.fc-line { display: flex; flex-direction: column; gap: 0.05rem; max-width: 90%; }
+.fc-line.mine { align-self: flex-end; text-align: right; }
+.fc-who { font-size: 0.72rem; font-weight: 700; color: var(--accent); }
+.fc-line.mine .fc-who { color: #818cf8; }
+.fc-text { font-size: 0.88rem; color: var(--text-primary); word-break: break-word; }
+.fc-notice { font-size: 0.76rem; color: var(--text-secondary); font-style: italic; text-align: center; padding: 0.2rem; }
 .dm-layout { display: flex; gap: 0.75rem; height: 460px; max-height: 64vh; }
 .dm-threads {
   flex: 0 0 220px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: var(--radius-md);
