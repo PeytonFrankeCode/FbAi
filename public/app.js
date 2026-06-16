@@ -2711,6 +2711,8 @@ function setCurrentUser(username) {
   }
   updateAuthButton();
   if (typeof updateProButton === 'function') updateProButton();
+  if (username) { if (typeof startDmPoller === 'function') startDmPoller(); }
+  else if (typeof updateDmBadge === 'function') updateDmBadge(0);
 }
 
 function updateAuthButton() {
@@ -8146,6 +8148,157 @@ function saveShowcaseCard(id) {
   renderShowcase();
 }
 
+// ============================ Direct Messages ============================
+// One-to-one chat so a buyer can DM a booth owner to negotiate a card. Opens
+// from the Floor (HUD "Messages" and the per-card "Negotiate" button).
+let _dmActiveUser = null;      // username of the open conversation
+let _dmStagedCard = null;      // card being negotiated (attached to the next send)
+let _dmPollTimer = null;
+
+function openMessages() {
+  if (!getCurrentUser()) { if (typeof openLoginModal === 'function') openLoginModal(); else alert('Sign in to use messages.'); return; }
+  document.getElementById('dm-overlay')?.classList.remove('hidden');
+  loadDmThreads(true);
+}
+function closeMessages() {
+  document.getElementById('dm-overlay')?.classList.add('hidden');
+  _dmStagedCard = null;
+}
+// Open straight into a conversation, optionally staging a card to negotiate.
+function openDM(user, card) {
+  if (!user) return;
+  if (!getCurrentUser()) { if (typeof openLoginModal === 'function') openLoginModal(); else alert('Sign in to message collectors.'); return; }
+  document.getElementById('floor-booth-modal')?.classList.add('hidden');
+  document.getElementById('dm-overlay')?.classList.remove('hidden');
+  _dmStagedCard = card && card.title ? card : null;
+  openDmConvo(String(user).toLowerCase());
+  loadDmThreads(false);
+}
+
+async function loadDmThreads(autoOpenFirst) {
+  const wrap = document.getElementById('dm-threads');
+  if (!wrap) return;
+  try {
+    const res = await authFetch('/api/dm/threads');
+    const data = await res.json();
+    const threads = Array.isArray(data.threads) ? data.threads : [];
+    if (!threads.length) {
+      wrap.innerHTML = '<p class="dm-empty">No messages yet. Visit a booth on The Floor and hit <strong>Negotiate</strong> on a card to start a chat.</p>';
+    } else {
+      wrap.innerHTML = threads.map(t => `
+        <button type="button" class="dm-thread${t.user === _dmActiveUser ? ' active' : ''}" data-dm-open="${escHtml(t.user)}">
+          <span class="dm-thread-name">${escHtml(t.user)}</span>
+          ${t.unread ? `<span class="dm-thread-unread">${t.unread}</span>` : ''}
+          <span class="dm-thread-last">${escHtml(t.lastMessage || '')}</span>
+        </button>`).join('');
+    }
+    if (autoOpenFirst && !_dmActiveUser && threads.length) openDmConvo(threads[0].user);
+    refreshDmUnread();
+  } catch (_) { wrap.innerHTML = '<p class="dm-empty">Couldn’t load messages.</p>'; }
+}
+
+async function openDmConvo(user) {
+  _dmActiveUser = user;
+  const head = document.getElementById('dm-convo-head');
+  const list = document.getElementById('dm-messages');
+  const convo = document.getElementById('dm-convo');
+  if (convo) convo.classList.add('open');
+  if (head) head.innerHTML = `<button type="button" class="dm-back" onclick="dmBack()">&larr;</button><span class="dm-convo-name">${escHtml(user)}</span>`;
+  if (list) list.innerHTML = '<p class="dm-empty">Loading…</p>';
+  renderDmStagedCard();
+  document.querySelectorAll('.dm-thread').forEach(el => el.classList.toggle('active', el.dataset.dmOpen === user));
+  try {
+    const res = await authFetch('/api/dm/with/' + encodeURIComponent(user));
+    const data = await res.json();
+    renderDmMessages(Array.isArray(data.messages) ? data.messages : []);
+    refreshDmUnread();
+  } catch (_) { if (list) list.innerHTML = '<p class="dm-empty">Couldn’t load this conversation.</p>'; }
+}
+function dmBack() { document.getElementById('dm-convo')?.classList.remove('open'); }
+
+function renderDmMessages(messages) {
+  const list = document.getElementById('dm-messages');
+  if (!list) return;
+  const me = (getCurrentUser() || '').toLowerCase();
+  if (!messages.length) { list.innerHTML = '<p class="dm-empty">No messages yet — say hello and make an offer.</p>'; return; }
+  list.innerHTML = messages.map(m => {
+    const mine = m.from === me;
+    const card = m.card ? `<div class="dm-msg-card">${m.card.imageUrl ? `<img src="${escHtml(m.card.imageUrl)}" alt="" onerror="this.remove()" />` : ''}<span>📇 ${escHtml(m.card.title)}${(typeof m.card.price === 'number' && m.card.price > 0) ? ` · $${m.card.price.toFixed(2)}` : ''}</span></div>` : '';
+    const text = m.text ? `<div class="dm-msg-text">${escHtml(m.text)}</div>` : '';
+    return `<div class="dm-msg ${mine ? 'mine' : 'theirs'}">${card}${text}<div class="dm-msg-time">${dmTime(m.at)}</div></div>`;
+  }).join('');
+  list.scrollTop = list.scrollHeight;
+}
+function renderDmStagedCard() {
+  const el = document.getElementById('dm-card-stage');
+  if (!el) return;
+  if (_dmStagedCard && _dmStagedCard.title) {
+    el.classList.remove('hidden');
+    el.innerHTML = `<span class="dm-stage-label">Negotiating:</span> ${_dmStagedCard.imageUrl ? `<img src="${escHtml(_dmStagedCard.imageUrl)}" alt="" onerror="this.remove()" />` : ''}<span class="dm-stage-title">${escHtml(_dmStagedCard.title)}${(typeof _dmStagedCard.price === 'number' && _dmStagedCard.price > 0) ? ` · $${_dmStagedCard.price.toFixed(2)}` : ''}</span><button type="button" class="dm-stage-x" onclick="dmClearCard()">&times;</button>`;
+  } else { el.classList.add('hidden'); el.innerHTML = ''; }
+}
+function dmClearCard() { _dmStagedCard = null; renderDmStagedCard(); }
+
+async function dmSend(ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  const input = document.getElementById('dm-input');
+  const text = (input?.value || '').trim();
+  if (!_dmActiveUser) return false;
+  if (!text && !_dmStagedCard) return false;
+  try {
+    const res = await authFetch('/api/dm/send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: _dmActiveUser, text, card: _dmStagedCard }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Couldn’t send that message.'); return false; }
+    if (input) input.value = '';
+    _dmStagedCard = null; renderDmStagedCard();
+    await openDmConvo(_dmActiveUser);
+    loadDmThreads(false);
+  } catch (_) { alert('Couldn’t send that message.'); }
+  return false;
+}
+
+function dmTime(iso) {
+  try { const d = new Date(iso); return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+  catch (_) { return ''; }
+}
+
+async function refreshDmUnread() {
+  if (!getCurrentUser()) { updateDmBadge(0); return; }
+  try { const res = await authFetch('/api/dm/unread'); const data = await res.json(); updateDmBadge(data.unread || 0); }
+  catch (_) { /* leave badge */ }
+}
+function updateDmBadge(n) {
+  document.querySelectorAll('.floor-dm-badge').forEach(b => {
+    if (n > 0) { b.textContent = n > 99 ? '99+' : String(n); b.classList.remove('hidden'); }
+    else b.classList.add('hidden');
+  });
+}
+function startDmPoller() {
+  if (_dmPollTimer) return;
+  refreshDmUnread();
+  _dmPollTimer = setInterval(() => { if (!document.hidden && getCurrentUser()) refreshDmUnread(); }, 20000);
+}
+
+// Delegated handlers for thread rows and the per-card "Negotiate" button.
+document.addEventListener('click', e => {
+  const open = e.target.closest('[data-dm-open]');
+  if (open) { openDmConvo(open.dataset.dmOpen); return; }
+  const neg = e.target.closest('.sc-link-dm');
+  if (neg) {
+    const d = neg.dataset;
+    openDM(d.dmUser, { title: d.dmTitle || 'Card', imageUrl: d.dmImg || '', price: d.dmPrice ? parseFloat(d.dmPrice) : null });
+  }
+});
+window.openMessages = openMessages;
+window.closeMessages = closeMessages;
+window.openDM = openDM;
+window.dmSend = dmSend;
+window.dmBack = dmBack;
+window.dmClearCard = dmClearCard;
+
 // Title character counter
 function updateTitleCount() {
   const input = document.getElementById('seller-listing-title');
@@ -8468,6 +8621,9 @@ async function generateListingTitles() {
     resultsEl.innerHTML = `<p>Error: ${escHtml(err.message)}</p>`;
   }
 }
+
+// Begin polling for unread DMs once the page loads if already signed in.
+document.addEventListener('DOMContentLoaded', () => { if (getCurrentUser()) startDmPoller(); });
 
 // Enter key for listing helper & autofill
 document.addEventListener('DOMContentLoaded', () => {

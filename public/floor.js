@@ -616,7 +616,7 @@ function buildWorld(remoteBooths) {
     if (i < list.length) {
       const b = list[i]; b._idx = booths.length;
       buildBoothTable(grp, b, shared);
-      booths.push({ id: b._idx, px: s.x, pz: s.z, owner: b.owner, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: b.cards, isYou: b.isYou });
+      booths.push({ id: b._idx, px: s.x, pz: s.z, owner: b.owner, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: b.cards, isYou: b.isYou });
     } else {
       buildVacantTable(grp);
     }
@@ -1177,6 +1177,8 @@ function boothCardsHtml(cards, b, mode) {
     const links = [];
     if (forSale) links.push(`<a class="sc-link sc-link-ebay" href="${escHtml(floorEbayLink(it))}" target="_blank" rel="noopener noreferrer">Buy on eBay &#8599;</a>`);
     if (forTrade) links.push(`<a class="sc-link sc-link-trade" href="${escHtml(floorTradeLink(it, b.veriswap))}" target="_blank" rel="noopener noreferrer">Trade on Veriswap &#8599;</a>`);
+    // DM the booth owner to negotiate this card (real booths only, not your own)
+    if (!b.isYou && b.username) links.push(`<button type="button" class="sc-link sc-link-dm" data-dm-user="${escHtml(b.username)}" data-dm-title="${escHtml(it.title || 'Card')}" data-dm-img="${escHtml(it.imageUrl || '')}" data-dm-price="${typeof it.price === 'number' ? it.price : ''}">💬 Negotiate</button>`);
     return `<div class="sc-card">${img}<div class="sc-card-body"><div class="sc-card-badges">${badges.join('')}</div><div class="sc-card-title">${escHtml(it.title || 'Card')}</div>${it.note ? `<div class="sc-card-note">${escHtml(it.note)}</div>` : ''}${price}<div class="sc-card-links">${links.join('')}</div></div></div>`;
   }).join('') + '</div>';
 }
