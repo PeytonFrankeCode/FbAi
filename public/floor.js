@@ -65,10 +65,10 @@ const PLAYER_R = 0.6, MOVE_SPEED = 0.2, TURN_SPEED = 0.04;
 const INTERACT_DIST = 4.6;
 const EYE_H = 2.55;                                    // taller collector: eye well above the glass
 const PITCH_MIN = -1.2, PITCH_MAX = 1.0;
-// Convention-hall layout: blocks of tables on blue pads, separated by red
-// carpet aisles, with a perimeter walkway and a front entrance.
-const FLOOR_MAX_TABLES = 54;                           // capacity (>= 50 per server)
-const HALL = { BX: 3, BZ: 3, TCOLS: 2, TROWS: 3, cellX: 7.6, rowZ: 5.2, aisle: 7, margin: 9 };
+// Real card-show layout: booths line all four walls (with angled corner
+// booths), interior tables form north–south aisle rows, and there's a main
+// entrance gap at the front. Each slot can carry a yaw so tables face the aisle.
+const FLOOR_MAX_TABLES = 60;                           // capacity for the new layout
 
 // Booth layout: each table has BOOTH_SLOTS placement spots in a single row.
 // Owners arrange them in the editor; each spot holds one fixture (or is empty).
@@ -610,13 +610,14 @@ function buildWorld(remoteBooths) {
   const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex(), transparent: true, opacity: 0.5, depthWrite: false });
   const shadowGeo = new THREE.PlaneGeometry(TABLE_W + 1.4, TABLE_D + 1.4);
   slots.forEach((s, i) => {
-    const grp = new THREE.Group(); grp.position.set(s.x, 0, s.z);
-    tableRects.push({ px: s.x, pz: s.z });
-    const sh = new THREE.Mesh(shadowGeo, shadowMat); sh.rotation.x = -Math.PI / 2; sh.position.set(s.x, 0.05, s.z); worldGroup.add(sh);
+    const grp = new THREE.Group(); grp.position.set(s.x, 0, s.z); grp.rotation.y = s.rot || 0;
+    tableRects.push({ px: s.x, pz: s.z, rot: s.rot || 0 });
+    // shadow lives in the table group so it rotates with the (possibly angled) table
+    const sh = new THREE.Mesh(shadowGeo, shadowMat); sh.rotation.x = -Math.PI / 2; sh.position.set(0, 0.05, 0); grp.add(sh);
     if (i < list.length) {
       const b = list[i]; b._idx = booths.length;
       buildBoothTable(grp, b, shared);
-      booths.push({ id: b._idx, px: s.x, pz: s.z, owner: b.owner, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: b.cards, isYou: b.isYou });
+      booths.push({ id: b._idx, px: s.x, pz: s.z, rot: s.rot || 0, owner: b.owner, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: b.cards, isYou: b.isYou });
     } else {
       buildVacantTable(grp);
     }
@@ -631,21 +632,70 @@ function buildWorld(remoteBooths) {
   renderDirectory(search ? search.value : '');
 }
 
-// Compute the hall: table slot positions, blue pad rects, and bounds.
+// Compute the show floor: booth slots (each {x,z,rot}), hall bounds, and the
+// entrance position. Models a real card show — a perimeter ring of booths with
+// angled corners, plus interior back-to-back aisle rows.
 function computeHall() {
-  const { BX, BZ, TCOLS, TROWS, cellX, rowZ, aisle, margin } = HALL;
-  const blockW = TCOLS * cellX, blockD = TROWS * rowZ;
-  const totalW = BX * blockW + (BX - 1) * aisle;
-  const totalD = BZ * blockD + (BZ - 1) * aisle;
-  const x0 = -totalW / 2, z0 = 4;
-  const slots = [], pads = [];
-  for (let bz = 0; bz < BZ; bz++) for (let bx = 0; bx < BX; bx++) {
-    const ox = x0 + bx * (blockW + aisle), oz = z0 + bz * (blockD + aisle);
-    pads.push({ x: ox + blockW / 2, z: oz + blockD / 2, w: blockW + 1.6, d: blockD + 1.6 });
-    for (let tr = 0; tr < TROWS; tr++) for (let tc = 0; tc < TCOLS; tc++)
-      slots.push({ x: ox + cellX / 2 + tc * cellX, z: oz + rowZ / 2 + tr * rowZ });
+  const slots = [];
+  const add = (x, z, rot) => slots.push({ x, z, rot: rot || 0 });
+  const TW = TABLE_W, TD = TABLE_D;
+
+  // ---------- interior aisle rows (back-to-back pairs) ----------
+  const pairs = 3, perCol = 4;
+  const stepZ = TW + 0.8;                 // tables stacked along z (long side runs N–S)
+  const pairW = TD + 0.1;                 // two tables back-to-back
+  const pitchX = pairW + 6.4;             // pair pitch (≈6.4 aisle)
+  const intW = (pairs - 1) * pitchX;
+  const zc = 6;                           // interior vertical centre
+  for (let p = 0; p < pairs; p++) {
+    const px = -intW / 2 + p * pitchX;
+    for (let k = 0; k < perCol; k++) {
+      const z = zc + (k - (perCol - 1) / 2) * stepZ;
+      add(px - pairW / 2, z, Math.PI / 2);    // left column faces -x
+      add(px + pairW / 2, z, -Math.PI / 2);   // right column faces +x
+    }
   }
-  return { slots, pads, minX: x0 - margin, maxX: x0 + totalW + margin, minZ: -margin, maxZ: z0 + totalD + margin };
+  const intHalfX = intW / 2 + pairW / 2;
+  const intTopZ = zc + ((perCol - 1) / 2) * stepZ;
+  const intBotZ = zc - ((perCol - 1) / 2) * stepZ;
+
+  // ---------- perimeter ring ----------
+  const ring = 7.5;                        // walkway between interior and wall booths
+  const sideX = intHalfX + TD / 2 + ring;  // x of left/right wall-booth centres
+  const topZ = intTopZ + TW / 2 + ring;    // back row z
+  const botZ = intBotZ - TW / 2 - ring;    // front (entrance) row z
+
+  // left & right wall columns (face inward), strictly between the corners
+  const colSpanZ = topZ - botZ;
+  const colN = Math.max(3, Math.round(colSpanZ / (TW + 1.0)));
+  for (let i = 0; i < colN; i++) {
+    const z = botZ + (i + 1) * (colSpanZ / (colN + 1));
+    add(-sideX, z, -Math.PI / 2);          // left wall faces +x
+    add(+sideX, z, Math.PI / 2);           // right wall faces -x
+  }
+
+  // back & front rows (face inward); the front row keeps a central entrance gap
+  const rowSpanX = 2 * sideX;
+  const rowN = Math.max(3, Math.round(rowSpanX / (TW + 1.0)));
+  for (let i = 0; i < rowN; i++) {
+    const x = -sideX + (i + 1) * (rowSpanX / (rowN + 1));
+    add(x, topZ, 0);                       // back row faces -z
+    if (Math.abs(x) > TW * 0.8) add(x, botZ, Math.PI);  // front row, gap in the middle
+  }
+
+  // angled corner booths, each facing the hall centre
+  add(-sideX, topZ, -Math.PI / 4);
+  add(+sideX, topZ, Math.PI / 4);
+  add(-sideX, botZ, -3 * Math.PI / 4);
+  add(+sideX, botZ, 3 * Math.PI / 4);
+
+  const padX = TD / 2 + 4.5, padZ = TD / 2 + 5;
+  return {
+    slots, pads: [],
+    minX: -sideX - padX, maxX: sideX + padX,
+    minZ: botZ - padZ, maxZ: topZ + padZ,
+    entranceZ: botZ - padZ + 2,
+  };
 }
 
 // Soft radial glow texture for faked light reflections on the concrete.
@@ -806,6 +856,10 @@ function buildRoom(group, h) {
   const fL = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fL.position.set(h.minX + seg / 2, y, h.minZ); group.add(fL);
   const fR = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fR.position.set(h.maxX - seg / 2, y, h.minZ); group.add(fR);
 
+  // "Main Entrance" sign over the front gap
+  const ent = makeLabelSprite('🚪 Main Entrance', '');
+  ent.scale.set(6, 2.2, 1); ent.position.set(0, 3.4, h.minZ + 0.7); group.add(ent);
+
   // wood wainscot paneling with warm under-lighting + greenery on the walls
   decorateWalls(group, h);
 
@@ -938,16 +992,28 @@ function makeNpcs() {
 // ----------------------------------------------------- movement / collide
 function blocked(nx, nz) {
   if (nx < bounds.minX || nx > bounds.maxX || nz < bounds.minZ || nz > bounds.maxZ) return true;
+  const halfW = TABLE_W / 2 + PLAYER_R, halfD = TABLE_D / 2 + PLAYER_R;
   for (const t of tableRects) {
-    if (nx > t.px - TABLE_W / 2 - PLAYER_R && nx < t.px + TABLE_W / 2 + PLAYER_R &&
-        nz > t.pz - TABLE_D / 2 - PLAYER_R && nz < t.pz + TABLE_D / 2 + PLAYER_R) return true;
+    const dx = nx - t.px, dz = nz - t.pz;
+    if (t.rot) {
+      const c = Math.cos(t.rot), s = Math.sin(t.rot);
+      const lx = dx * c - dz * s, lz = dx * s + dz * c;   // into the table's local frame
+      if (Math.abs(lx) < halfW && Math.abs(lz) < halfD) return true;
+    } else if (Math.abs(dx) < halfW && Math.abs(dz) < halfD) return true;
   }
   return false;
+}
+// The point a buyer stands at to face a booth: just in front of the table,
+// along the table's "front" direction (which depends on its rotation).
+function boothFront(b, dist) {
+  const rot = b.rot || 0;
+  return { x: b.px - Math.sin(rot) * dist, z: b.pz - Math.cos(rot) * dist };
 }
 function nearestBooth() {
   let best = null, bestD = Infinity;
   for (const b of booths) {
-    const d = Math.hypot(player.x - b.px, player.z - (b.pz - TABLE_D / 2 - 1));
+    const f = boothFront(b, TABLE_D / 2 + 1);
+    const d = Math.hypot(player.x - f.x, player.z - f.z);
     if (d < bestD) { bestD = d; best = b; }
   }
   return bestD <= INTERACT_DIST ? best : null;
@@ -1265,7 +1331,8 @@ function renderDirectory(filter) {
 function boothById(id) { return booths.find(b => String(b.id) === String(id)); }
 function walkToBooth(b) {
   if (!b) return;
-  player.x = b.px; player.z = b.pz - TABLE_D / 2 - 2.4; yaw = 0; camMode = 'fp';
+  const f = boothFront(b, TABLE_D / 2 + 2.4);
+  player.x = f.x; player.z = f.z; yaw = b.rot || 0; camMode = 'fp';
   setFreeLook(false);
 }
 function updateOnlineCount() { const el = document.getElementById('floor-online'); if (el) el.textContent = `🟢 ${remote.size + 1} on the floor`; }
@@ -1374,6 +1441,7 @@ function round1(n) { return Math.round(n * 10) / 10; }
 function renderCharCreate() {
   const cc = document.getElementById('floor-charcreate');
   const stage = document.getElementById('floor-stage');
+  document.getElementById('floor-intro')?.classList.add('hidden');
   if (stage) stage.classList.add('hidden');
   if (cc) cc.classList.remove('hidden');
   const existing = getCharacter();
@@ -1442,6 +1510,7 @@ function drawCharPreview() {
 
 async function enterFloor() {
   document.getElementById('floor-charcreate')?.classList.add('hidden');
+  document.getElementById('floor-intro')?.classList.add('hidden');
   const stage = document.getElementById('floor-stage');
   if (stage) stage.classList.remove('hidden');
   const me = getCharacter();
@@ -1467,7 +1536,17 @@ async function enterFloor() {
 }
 
 // ----------------------------------------------------- public entry
-window.initFloor = function () { if (getCharacter()) enterFloor(); else renderCharCreate(); };
+// Show the "under construction" gate first; Enter demo proceeds into the floor.
+function showFloorIntro() {
+  document.getElementById('floor-charcreate')?.classList.add('hidden');
+  document.getElementById('floor-stage')?.classList.add('hidden');
+  document.getElementById('floor-intro')?.classList.remove('hidden');
+}
+window.initFloor = function () { showFloorIntro(); };
+window.enterFloorDemo = function () {
+  document.getElementById('floor-intro')?.classList.add('hidden');
+  if (getCharacter()) enterFloor(); else renderCharCreate();
+};
 window.stopFloor = stop;
 window.editCharacter = function () { stop(); renderCharCreate(); };
 window.saveCharacterAndEnter = function () {
