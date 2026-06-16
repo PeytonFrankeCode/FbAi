@@ -860,6 +860,9 @@ function buildRoom(group, h) {
   const ent = makeLabelSprite('🚪 Main Entrance', '');
   ent.scale.set(6, 2.2, 1); ent.position.set(0, 3.4, h.minZ + 0.7); group.add(ent);
 
+  // raised 3D Card Huddle logo, centred on the back wall
+  addBackWallLogo(group, h, CEIL);
+
   // wood wainscot paneling with warm under-lighting + greenery on the walls
   decorateWalls(group, h);
 
@@ -894,6 +897,40 @@ function buildRoom(group, h) {
 }
 
 // ----------------------------------------------------- wall decor
+// Raised 3D Card Huddle logo sign, centred high on the back wall. A dark backing
+// panel gives it physical depth; the logo face is lightly emissive so it reads
+// against the dim upper wall. Sized to ~1/10 of the wall (height ~5.5m).
+function addBackWallLogo(group, h, CEIL) {
+  const cx = (h.minX + h.maxX) / 2;
+  const yC = CEIL * 0.7;                 // centred in the upper wall, above the wood
+  const wallZ = h.maxZ - 0.3;            // interior face of the back wall
+  const depth = 0.35;
+
+  const backing = new THREE.Mesh(new THREE.BoxGeometry(1, 1, depth),
+    new THREE.MeshStandardMaterial({ color: 0x10131a, roughness: 0.5, metalness: 0.2 }));
+  backing.position.set(cx, yC, wallZ - depth / 2 - 0.02);
+  group.add(backing);
+
+  const loader = new THREE.TextureLoader();
+  const tex = loader.load('/logo.png', t => {
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso();
+    t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1;   // un-mirror for the y=π facing
+    t.needsUpdate = true;
+    const img = t.image, aspect = (img && img.width && img.height) ? img.width / img.height : 2.4;
+    const hLogo = 5.5, wLogo = hLogo * aspect;
+    logo.scale.set(wLogo, hLogo, 1);
+    backing.scale.set(wLogo + 0.7, hLogo + 0.7, 1);
+  }, undefined, () => {});
+  const logoMat = new THREE.MeshStandardMaterial({
+    map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.4,
+    transparent: true, alphaTest: 0.06, roughness: 0.55,
+  });
+  const logo = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), logoMat);
+  logo.position.set(cx, yC, wallZ - depth - 0.04);
+  logo.rotation.y = Math.PI;             // face into the hall (-z)
+  group.add(logo);
+}
+
 // Position a wall-hugging mesh given a wall segment, the distance along it,
 // the height, and how far it sits inside the wall face.
 function setWallPos(mesh, s, alongPos, y, depth) {
