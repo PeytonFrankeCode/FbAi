@@ -276,6 +276,7 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
     const entry = cards && cards[(cardOffset || 0) + slot];
     const card = new THREE.Mesh(shared.slabGeo, cardMaterial(entry, shared, slot));
     card.rotation.x = -Math.PI / 2;
+    card.scale.x = -1;                  // un-mirror the laid-flat photo
     card.position.set(-w / 2 + 0.09 + cw / 2 + c * cw, y0 + CASE_H + 0.03, -d / 2 + 0.09 + cd / 2 + r * cd);
     card.userData.boothId = boothIdx;   // tap a card to open the booth
     g.add(card);
@@ -339,6 +340,7 @@ function buildBoothTable(grp, b, shared) {
     const card = new THREE.Mesh(shared.flatGeo, cardMaterial(showCards[i], shared, i));
     card.rotation.x = -Math.PI / 2;
     card.rotation.z = (Math.random() - 0.5) * 0.5;
+    card.scale.x = -1;                  // un-mirror the laid-flat photo
     card.position.set(-2.6 + i * 0.5, y0 + 0.02, TABLE_D / 2 - 0.45);
     card.userData.boothId = b._idx;
     grp.add(card);
@@ -913,9 +915,7 @@ function addBackWallLogo(group, h, CEIL) {
 
   const loader = new THREE.TextureLoader();
   const tex = loader.load('/logo.png', t => {
-    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso();
-    t.wrapS = THREE.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1;   // un-mirror for the y=π facing
-    t.needsUpdate = true;
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso(); t.needsUpdate = true;
     const img = t.image, aspect = (img && img.width && img.height) ? img.width / img.height : 2.4;
     const hLogo = 5.5, wLogo = hLogo * aspect;
     logo.scale.set(wLogo, hLogo, 1);
