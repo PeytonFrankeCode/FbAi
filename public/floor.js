@@ -922,7 +922,7 @@ function decorateWalls(group, h) {
     greenDk: new THREE.MeshStandardMaterial({ color: 0x2f6630, roughness: 0.85, flatShading: true }),
     pot: new THREE.MeshStandardMaterial({ color: 0x1b1b20, roughness: 0.8 }),
   };
-  const WH = 4.0, off = 0.34, panelT = 0.12;
+  const WH = 7.0, off = 0.34, panelT = 0.12;
   const ww = h.maxX - h.minX, gap = 8, seg = (ww - gap) / 2;
   const segs = [
     { axis: 'x', fixed: h.maxZ, from: h.minX, to: h.maxX, inward: -1 },          // back wall
@@ -949,26 +949,28 @@ function addWoodSegment(group, s, WH, off, panelT, mats) {
   const railGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.18, panelT + 0.06) : new THREE.BoxGeometry(panelT + 0.06, 0.18, len);
   const rail = new THREE.Mesh(railGeo, mats.rail); setWallPos(rail, s, center, WH, off); group.add(rail);
 
-  // warm under-light: an emissive strip at the base + an up-glow on the wood
-  const stripGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.08, 0.07) : new THREE.BoxGeometry(0.07, 0.08, len);
-  const strip = new THREE.Mesh(stripGeo, mats.strip); setWallPos(strip, s, center, 0.13, off + 0.07); group.add(strip);
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(len, WH * 0.92), mats.glow);
-  if (s.axis === 'x') { glow.position.set(center, WH * 0.46, s.fixed + s.inward * (off + 0.09)); glow.rotation.y = s.inward > 0 ? 0 : Math.PI; }
-  else { glow.position.set(s.fixed + s.inward * (off + 0.09), WH * 0.46, center); glow.rotation.y = s.inward > 0 ? Math.PI / 2 : -Math.PI / 2; }
+  // warm under-light reveal along the TOP of the wood, plus an up-glow that
+  // washes the painted wall above it (this is the glowing line in the photo)
+  const stripGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.1, 0.09) : new THREE.BoxGeometry(0.09, 0.1, len);
+  const strip = new THREE.Mesh(stripGeo, mats.strip); setWallPos(strip, s, center, WH - 0.2, off + 0.08); group.add(strip);
+  const glowH = 3.4, gy = WH + glowH / 2 - 0.25;
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(len, glowH), mats.glow);
+  if (s.axis === 'x') { glow.position.set(center, gy, s.fixed + s.inward * (off + 0.09)); glow.rotation.y = s.inward > 0 ? 0 : Math.PI; }
+  else { glow.position.set(s.fixed + s.inward * (off + 0.09), gy, center); glow.rotation.y = s.inward > 0 ? Math.PI / 2 : -Math.PI / 2; }
   group.add(glow);
 
   // greenery spaced along the wall: a floor planter with a bush, plus a
-  // wall-mounted foliage cluster up on the paneling
+  // wall-mounted foliage cluster kept low on the paneling
   const spots = Math.max(2, Math.round(len / 12));
   for (let i = 0; i < spots; i++) {
     const ap = s.from + ((i + 0.5) / spots) * (s.to - s.from);
     const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.5, 12), mats.pot);
     setWallPos(pot, s, ap, 0.25, 0.7); pot.castShadow = true; group.add(pot);
     addBush(group, pot.position.x, 0.62, pot.position.z, 1.05, i % 2 ? mats.green : mats.greenDk);
-    // wall greenery, mounted partway up the wood
+    // wall greenery, mounted low on the wood
     const wx = s.axis === 'x' ? ap : s.fixed + s.inward * (off + 0.18);
     const wz = s.axis === 'x' ? s.fixed + s.inward * (off + 0.18) : ap;
-    addBush(group, wx, WH * 0.6, wz, 0.85, i % 2 ? mats.greenDk : mats.green);
+    addBush(group, wx, 1.7, wz, 0.85, i % 2 ? mats.greenDk : mats.green);
   }
 }
 
