@@ -2712,7 +2712,7 @@ function setCurrentUser(username) {
   updateAuthButton();
   if (typeof updateProButton === 'function') updateProButton();
   if (username) { if (typeof startDmPoller === 'function') startDmPoller(); }
-  else if (typeof updateDmBadge === 'function') updateDmBadge(0);
+  else { if (typeof updateDmBadge === 'function') updateDmBadge(0); if (typeof disconnectDmSocket === 'function') disconnectDmSocket(); }
 }
 
 function updateAuthButton() {
@@ -8277,9 +8277,48 @@ function updateDmBadge(n) {
   });
 }
 function startDmPoller() {
-  if (_dmPollTimer) return;
   refreshDmUnread();
-  _dmPollTimer = setInterval(() => { if (!document.hidden && getCurrentUser()) refreshDmUnread(); }, 20000);
+  connectDmSocket();
+  if (_dmPollTimer) return;
+  // a slow poll as a safety net behind the live socket (covers missed events)
+  _dmPollTimer = setInterval(() => { if (!document.hidden && getCurrentUser()) refreshDmUnread(); }, 45000);
+}
+
+// ---- real-time delivery over the per-user inbox WebSocket ----
+let _dmWs = null, _dmWsRetry = null;
+function connectDmSocket() {
+  if (_dmWs || typeof WebSocket === 'undefined') return;
+  const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
+  if (!token || !getCurrentUser()) return;
+  let sock;
+  try { const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'; sock = new WebSocket(`${proto}//${location.host}/api/dm/ws?token=${encodeURIComponent(token)}`); }
+  catch (_) { return; }
+  _dmWs = sock;
+  sock.addEventListener('message', evt => {
+    let msg; try { msg = JSON.parse(evt.data); } catch (_) { return; }
+    if (msg && msg.t === 'dm') handleIncomingDm(msg);
+  });
+  const onClose = () => {
+    if (_dmWs === sock) _dmWs = null;
+    if (getCurrentUser() && !_dmWsRetry) _dmWsRetry = setTimeout(() => { _dmWsRetry = null; connectDmSocket(); }, 4000);
+  };
+  sock.addEventListener('close', onClose);
+  sock.addEventListener('error', () => { try { sock.close(); } catch (_) {} });
+}
+function disconnectDmSocket() {
+  if (_dmWsRetry) { clearTimeout(_dmWsRetry); _dmWsRetry = null; }
+  if (_dmWs) { try { _dmWs.close(); } catch (_) {} _dmWs = null; }
+}
+function handleIncomingDm(msg) {
+  const other = msg.with;
+  const overlayOpen = !document.getElementById('dm-overlay')?.classList.contains('hidden');
+  if (overlayOpen) {
+    loadDmThreads(false);
+    if (_dmActiveUser && other === _dmActiveUser) openDmConvo(other);  // reloads + marks read
+    else refreshDmUnread();
+  } else {
+    refreshDmUnread();
+  }
 }
 
 // Delegated handlers for thread rows and the per-card "Negotiate" button.

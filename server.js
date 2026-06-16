@@ -2965,6 +2965,16 @@ function getSessionUser(req) {
   return s.username.toLowerCase();
 }
 
+// Lookup a username from a bare session token (no req). Used by the Worker to
+// authenticate the per-user DM inbox WebSocket before routing it to that
+// user's UserInbox Durable Object.
+function getSessionUserByToken(token) {
+  if (!token) return null;
+  const s = loadSessions()[token];
+  if (!s || Date.now() > s.expiresAt) return null;
+  return String(s.username).toLowerCase();
+}
+
 // True when the request carries the shared admin password (same scheme the
 // feedback/admin panel uses): ?key=... or an x-admin-key header.
 function isAdminReq(req) {
@@ -4668,7 +4678,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml };
+module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

@@ -39,9 +39,19 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 name = "FLOOR_ROOM"
 class_name = "FloorRoom"
 
+# Per-user inbox that fans real-time direct messages out to a collector's open
+# sockets. One instance per username; in-memory sockets only, no stored rows.
+[[durable_objects.bindings]]
+name = "USER_INBOX"
+class_name = "UserInbox"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["FloorRoom"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["UserInbox"]
 
 # Secrets — set these via `wrangler secret put <KEY>` or the Cloudflare dashboard.
 # Cloudflare [vars] above are public; secrets are encrypted and only visible to the worker.
