@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=93" />
+  <link rel="stylesheet" href="style.css?v=94" />
 
 
 </head>
@@ -1174,6 +1174,15 @@
 
   <!-- The Floor — a walkable card-show world -->
   <div id="floor-view" class="floor-view hidden">
+    <!-- Under-construction gate -->
+    <div id="floor-intro" class="floor-intro hidden">
+      <div class="floor-intro-box">
+        <div class="floor-construction">🚧 Under construction — this feature is still being built and may be incomplete or buggy.</div>
+        <h2>The Floor</h2>
+        <p>A walkable card show: stroll the aisles, browse booths, chat the floor, and DM collectors to negotiate. It's an early demo, so expect rough edges.</p>
+        <button type="button" class="floor-cc-go" onclick="enterFloorDemo()">Enter demo</button>
+      </div>
+    </div>
     <!-- Character creation (first visit / edit) -->
     <div id="floor-charcreate" class="floor-charcreate hidden">
       <div class="floor-cc-box floor-cc-box-wide">
@@ -1202,6 +1211,7 @@
 
     <!-- Game stage -->
     <div id="floor-stage" class="floor-stage hidden">
+      <div class="floor-construction-banner">🚧 Under construction — demo only, may be incomplete or buggy.</div>
       <div class="floor-hud">
         <span id="floor-hud-name" class="floor-hud-name"></span>
         <span id="floor-online" class="floor-online"></span>
@@ -1555,6 +1565,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=23"></script>
+  <script type="module" src="floor.js?v=24"></script>
 </body>
 </html>
