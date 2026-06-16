@@ -2965,6 +2965,16 @@ function getSessionUser(req) {
   return s.username.toLowerCase();
 }
 
+// Lookup a username from a bare session token (no req). Used by the Worker to
+// authenticate the per-user DM inbox WebSocket before routing it to that
+// user's UserInbox Durable Object.
+function getSessionUserByToken(token) {
+  if (!token) return null;
+  const s = loadSessions()[token];
+  if (!s || Date.now() > s.expiresAt) return null;
+  return String(s.username).toLowerCase();
+}
+
 // True when the request carries the shared admin password (same scheme the
 // feedback/admin panel uses): ?key=... or an x-admin-key header.
 function isAdminReq(req) {
@@ -3563,6 +3573,98 @@ app.get('/api/floor/booths', (req, res) => {
     .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
     .slice(0, FLOOR_MAX_BOOTHS);
   res.json({ booths });
+});
+
+// ---- Direct Messages (negotiate) ----
+// One-to-one chat so a buyer can DM a booth owner about a card. Stored as a
+// single 'dms' blob: { convos: { "userA|userB": { users, messages[], read{} } } }
+// via the same loadData/saveData (Cloudflare KV) pipeline as the rest.
+const DM_FILE = path.join(APP_ROOT, 'data', 'dms.json');
+const DM_MAX_MSG_LEN = 1000;          // chars per message
+const DM_MAX_PER_CONVO = 300;         // keep each conversation (and the blob) bounded
+
+function loadDMs() { return loadData('dms', DM_FILE, { convos: {} }); }
+function saveDMs(d) { saveData('dms', DM_FILE, d); }
+function convoKey(a, b) { return [a, b].sort().join('|'); }
+function dmUserExists(username) { return !!loadServerUsers()[String(username).toLowerCase()]; }
+function sanitizeDmCard(card) {
+  if (!card || typeof card !== 'object') return null;
+  const title = String(card.title || '').slice(0, 160);
+  if (!title) return null;
+  const price = parseFloat(card.price);
+  return { title, imageUrl: String(card.imageUrl || '').slice(0, 600), price: (!isNaN(price) && price > 0) ? price : null };
+}
+function publicDmMessage(m) { return { id: m.id, from: m.from, text: m.text, card: m.card || null, at: m.at }; }
+function dmUnreadCount(convo, me) {
+  const readAt = convo.read[me] || '';
+  return convo.messages.filter(m => m.from !== me && m.at > readAt).length;
+}
+
+// POST /api/dm/send — send a DM (optionally about a specific card).
+app.post('/api/dm/send', (req, res) => {
+  const me = getSessionUser(req);
+  if (!me) return res.status(401).json({ error: 'Sign in to send messages.' });
+  const body = req.body || {};
+  const to = String(body.to || '').trim().toLowerCase();
+  const text = String(body.text || '').trim();
+  const card = sanitizeDmCard(body.card);
+  if (!to) return res.status(400).json({ error: 'No recipient.' });
+  if (to === me) return res.status(400).json({ error: "You can't message yourself." });
+  if (!dmUserExists(to)) return res.status(404).json({ error: 'That collector no longer exists.' });
+  if (!text && !card) return res.status(400).json({ error: 'Write a message first.' });
+  if (text.length > DM_MAX_MSG_LEN) return res.status(400).json({ error: `Message is too long (max ${DM_MAX_MSG_LEN}).` });
+  if (text) {
+    const check = moderateText(text);
+    if (!check.allowed) return res.status(422).json({ error: check.reason === 'spam' ? 'That looks like spam. Please drop the extra links/contact info.' : 'Your message contains language that isn’t allowed. Please revise it.', reason: check.reason });
+  }
+  const data = loadDMs();
+  const key = convoKey(me, to);
+  const convo = data.convos[key] || (data.convos[key] = { users: [me, to].sort(), messages: [], read: {} });
+  const msg = { id: 'dm_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), from: me, text: text.slice(0, DM_MAX_MSG_LEN), card: card || null, at: new Date().toISOString() };
+  convo.messages.push(msg);
+  if (convo.messages.length > DM_MAX_PER_CONVO) convo.messages = convo.messages.slice(-DM_MAX_PER_CONVO);
+  convo.read[me] = msg.at;           // the sender has, by definition, seen up to here
+  saveDMs(data);
+  res.json({ ok: true, message: publicDmMessage(msg) });
+});
+
+// GET /api/dm/threads — my conversations, newest first, with unread counts.
+app.get('/api/dm/threads', (req, res) => {
+  const me = getSessionUser(req);
+  if (!me) return res.status(401).json({ error: 'Sign in to view messages.' });
+  const data = loadDMs();
+  const threads = [];
+  for (const c of Object.values(data.convos)) {
+    if (!c.users.includes(me)) continue;
+    const other = c.users.find(u => u !== me);
+    const last = c.messages[c.messages.length - 1] || null;
+    const preview = last ? (last.text || (last.card ? '📇 ' + last.card.title : '')) : '';
+    threads.push({ user: other, lastMessage: preview, lastAt: last ? last.at : '', unread: dmUnreadCount(c, me) });
+  }
+  threads.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)));
+  res.json({ threads });
+});
+
+// GET /api/dm/with/:user — the conversation with one collector (marks it read).
+app.get('/api/dm/with/:user', (req, res) => {
+  const me = getSessionUser(req);
+  if (!me) return res.status(401).json({ error: 'Sign in to view messages.' });
+  const other = String(req.params.user || '').toLowerCase();
+  const data = loadDMs();
+  const c = data.convos[convoKey(me, other)];
+  const messages = c ? c.messages.map(publicDmMessage) : [];
+  if (c) { c.read[me] = new Date().toISOString(); saveDMs(data); }
+  res.json({ user: other, messages });
+});
+
+// GET /api/dm/unread — total unread across all my conversations (for a badge).
+app.get('/api/dm/unread', (req, res) => {
+  const me = getSessionUser(req);
+  if (!me) return res.json({ unread: 0 });
+  const data = loadDMs();
+  let unread = 0;
+  for (const c of Object.values(data.convos)) { if (c.users.includes(me)) unread += dmUnreadCount(c, me); }
+  res.json({ unread });
 });
 
 // ---- Community Board ----
@@ -4576,7 +4678,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml };
+module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

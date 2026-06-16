@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=91" />
+  <link rel="stylesheet" href="style.css?v=92" />
 
 
 </head>
@@ -173,6 +173,7 @@
       <button class="nav-tab" data-view="floor" onclick="switchView('floor')">The Floor</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">Sell</button>
       <button class="nav-tab" data-view="proplus" onclick="switchView('proplus')">Tools</button>
+      <button class="nav-tab nav-messages" onclick="openMessages()" title="Messages">💬 Messages <span class="floor-dm-badge hidden">0</span></button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
@@ -1207,6 +1208,7 @@
         <span id="floor-online" class="floor-online"></span>
         <span class="floor-hud-hint">Look: drag &middot; Move: W/S + A/D &middot; Visit: E or tap a booth</span>
         <button type="button" class="floor-hud-edit" id="floor-freelook" onclick="toggleFreeLook()">Free look</button>
+        <button type="button" class="floor-hud-edit" onclick="openMessages()">💬 Messages <span class="floor-dm-badge hidden">0</span></button>
         <button type="button" class="floor-hud-edit" onclick="arrangeBooth()">Arrange booth</button>
         <button type="button" class="floor-hud-edit" onclick="editCharacter()">Edit character</button>
       </div>
@@ -1259,6 +1261,26 @@
         <h2 id="floor-booth-title">Booth</h2>
         <p id="floor-booth-sub" class="ccm-help"></p>
         <div id="floor-booth-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Direct Messages (negotiate with a booth owner) -->
+  <div id="dm-overlay" class="modal-overlay hidden" role="dialog" aria-label="Messages">
+    <div class="modal-box dm-box">
+      <button class="login-close" onclick="closeMessages()">&times;</button>
+      <h2>💬 Messages</h2>
+      <div class="dm-layout">
+        <div id="dm-threads" class="dm-threads"></div>
+        <div id="dm-convo" class="dm-convo">
+          <div id="dm-convo-head" class="dm-convo-head"></div>
+          <div id="dm-messages" class="dm-messages"><p class="dm-empty">Pick a conversation, or start one by hitting <strong>Negotiate</strong> on a card.</p></div>
+          <div id="dm-card-stage" class="dm-card-stage hidden"></div>
+          <form id="dm-form" class="dm-form" onsubmit="return dmSend(event)">
+            <input type="text" id="dm-input" placeholder="Write a message…" autocomplete="off" maxlength="1000" />
+            <button type="submit">Send</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1509,7 +1531,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=121"></script>
+  <script src="app.js?v=123"></script>
   <script type="importmap">
   {
     "imports": {
@@ -1518,6 +1540,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=21"></script>
+  <script type="module" src="floor.js?v=22"></script>
 </body>
 </html>

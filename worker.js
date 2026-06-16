@@ -33,7 +33,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB } = exports;
+  const { app, connectDB, getSessionUserByToken } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -42,7 +42,7 @@ async function init(env) {
   // first request — preload happens once, subsequent saves use the cached
   // binding stored inside db.js.
   await connectDB(env);
-  serverInit = { app };
+  serverInit = { app, getSessionUserByToken };
   return serverInit;
 }
 
@@ -303,6 +303,45 @@ export class FloorRoom {
   }
 }
 
+// ---------------------------------------------------------------------------
+// UserInbox — per-user Durable Object for real-time direct messages.
+//
+// One instance per username (idFromName(username)) holds that user's open
+// sockets across their devices/tabs. The worker authenticates the WS upgrade
+// (token → username) before routing here, so a socket only ever lands in its
+// own owner's inbox. After Express persists a DM, the worker POSTs /notify to
+// the recipient's and sender's inboxes, which fan it out to live sockets:
+//   server → client: { t:'dm', message:{id,from,text,card,at}, with:<other user> }
+// ---------------------------------------------------------------------------
+export class UserInbox {
+  constructor(state, env) { this.state = state; this.env = env; this.sockets = new Set(); }
+
+  async fetch(request) {
+    // Internal delivery hop from the worker (not a WebSocket): fan a message out.
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      if (request.method === 'POST') {
+        let payload; try { payload = await request.json(); } catch (_) { payload = null; }
+        if (payload && payload.message) this.broadcast({ t: 'dm', message: payload.message, with: payload.with || null });
+        return new Response('ok');
+      }
+      return new Response('Expected a WebSocket upgrade', { status: 426 });
+    }
+    const pair = new WebSocketPair();
+    const client = pair[0], server = pair[1];
+    server.accept();
+    this.sockets.add(server);
+    const drop = () => this.sockets.delete(server);
+    server.addEventListener('close', drop);
+    server.addEventListener('error', drop);
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  broadcast(obj) {
+    const str = JSON.stringify(obj);
+    for (const ws of this.sockets) { try { ws.send(str); } catch (_) { this.sockets.delete(ws); } }
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     // Expose ctx.waitUntil to the DB layer so KV writes can extend the
@@ -330,6 +369,23 @@ export default {
         }
         const id = env.FLOOR_ROOM.idFromName('global');
         return env.FLOOR_ROOM.get(id).fetch(request);
+      }
+
+      // Per-user real-time DM inbox WebSocket. Authenticate the token → username
+      // (so you can only subscribe to your own inbox) before routing to the
+      // UserInbox DO keyed by that username.
+      if (url.pathname === '/api/dm/ws') {
+        if (request.headers.get('Upgrade') !== 'websocket') {
+          return new Response('Expected a WebSocket upgrade', { status: 426 });
+        }
+        if (!env.USER_INBOX) return new Response('Messaging not available', { status: 503 });
+        let user = null;
+        try {
+          const { getSessionUserByToken } = await init(env);
+          user = getSessionUserByToken && getSessionUserByToken(url.searchParams.get('token'));
+        } catch (_) { /* fall through to 401 */ }
+        if (!user) return new Response('Unauthorized', { status: 401 });
+        return env.USER_INBOX.get(env.USER_INBOX.idFromName(user)).fetch(request);
       }
 
       // Static files and SPA fallback — served by Cloudflare ASSETS binding.
@@ -374,7 +430,27 @@ export default {
       // promise back to Cloudflare, so any rejection from inside Express
       // would surface as Cloudflare's HTML "Worker threw exception" page
       // instead of landing in our JSON outerErr catch below.
-      return await expressToFetch(app, request, bodyBuffer);
+      const apiResp = await expressToFetch(app, request, bodyBuffer);
+
+      // Real-time DM fan-out: after Express persists a DM, push it to the
+      // recipient's and sender's UserInbox DOs so their open sockets get it
+      // instantly. Done out-of-band (waitUntil) so it never delays the reply.
+      if (env.USER_INBOX && request.method === 'POST' && url.pathname === '/api/dm/send' && apiResp.status === 200) {
+        const deliver = (async () => {
+          try {
+            let recipient = '';
+            try { recipient = String(JSON.parse(bodyBuffer.toString('utf8')).to || '').toLowerCase(); } catch (_) { /* no body */ }
+            const out = await apiResp.clone().json();
+            const message = out && out.message;
+            if (!message || !recipient) return;
+            const post = (user, withUser) => env.USER_INBOX.get(env.USER_INBOX.idFromName(user))
+              .fetch('https://inbox/notify', { method: 'POST', body: JSON.stringify({ message, with: withUser }) });
+            await Promise.allSettled([post(recipient, message.from), post(message.from, recipient)]);
+          } catch (e) { console.error('[worker] DM fan-out failed:', e && e.message); }
+        })();
+        if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(deliver); else await deliver;
+      }
+      return apiResp;
     } catch (outerErr) {
       console.error('Worker fetch crashed:', outerErr && outerErr.stack || outerErr);
       return new Response(
