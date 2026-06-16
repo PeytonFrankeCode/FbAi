@@ -1270,6 +1270,55 @@ function walkToBooth(b) {
 }
 function updateOnlineCount() { const el = document.getElementById('floor-online'); if (el) el.textContent = `🟢 ${remote.size + 1} on the floor`; }
 
+// ----------------------------------------------------- floor chat (broadcast)
+// A live, ephemeral room for everyone currently on the floor, relayed over the
+// same FloorRoom presence socket. Sits in the "Floor" tab of the chat panel.
+let floorChatLog = [];
+function onFloorChat(msg) {
+  floorChatLog.push({ id: msg.id, name: msg.name || 'Collector', emoji: msg.emoji || '🙂', text: String(msg.text || ''), at: msg.at || Date.now(), mine: msg.id === wsId });
+  if (floorChatLog.length > 120) floorChatLog = floorChatLog.slice(-120);
+  if (isFloorChatVisible()) renderFloorChat();
+}
+function isFloorChatVisible() {
+  const ov = document.getElementById('chat-overlay');
+  const pane = document.getElementById('chat-floor');
+  return ov && !ov.classList.contains('hidden') && pane && !pane.classList.contains('hidden');
+}
+function renderFloorChat() {
+  const log = document.getElementById('floor-chat-log');
+  if (!log) return;
+  if (!floorChatLog.length) {
+    log.innerHTML = '<p class="dm-empty">No messages yet — say hi to the floor. Everyone here will see it.</p>';
+    return;
+  }
+  log.innerHTML = floorChatLog.map(m =>
+    `<div class="fc-line${m.mine ? ' mine' : ''}"><span class="fc-who">${escHtml(m.emoji)} ${escHtml(m.name)}</span><span class="fc-text">${escHtml(m.text)}</span></div>`
+  ).join('');
+  log.scrollTop = log.scrollHeight;
+}
+function floorChatNotice(text) {
+  const log = document.getElementById('floor-chat-log');
+  if (!log) return;
+  const p = document.createElement('div');
+  p.className = 'fc-notice'; p.textContent = text; log.appendChild(p); log.scrollTop = log.scrollHeight;
+}
+function floorChatActivate() {
+  renderFloorChat();
+  const input = document.getElementById('floor-chat-input');
+  if (input) setTimeout(() => input.focus(), 50);
+}
+window.floorChatActivate = floorChatActivate;
+window.floorChatSend = function (ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  const input = document.getElementById('floor-chat-input');
+  const text = (input && input.value || '').trim();
+  if (!text) return false;
+  if (!ws || ws.readyState !== 1) { floorChatNotice('Not connected to the floor yet — try again in a moment.'); return false; }
+  sendWs({ t: 'chat', text });
+  if (input) input.value = '';
+  return false;
+};
+
 // ----------------------------------------------------- presence
 function connectPresence() {
   if (ws || typeof WebSocket === 'undefined') return;
@@ -1293,6 +1342,8 @@ function connectPresence() {
     else if (msg.t === 'join' && msg.player) addRemote(msg.player);
     else if (msg.t === 'move') { const r = remote.get(msg.id); if (r) { r.tx = msg.x; r.tz = msg.y; } }
     else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } }
+    else if (msg.t === 'chat') { onFloorChat(msg); return; }
+    else if (msg.t === 'chatblocked') { floorChatNotice('Message blocked: ' + (msg.reason === 'spam' ? 'looks like spam.' : 'language not allowed.')); return; }
     updateOnlineCount();
   });
   const onClose = () => {

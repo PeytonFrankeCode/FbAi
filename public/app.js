@@ -8155,21 +8155,30 @@ let _dmActiveUser = null;      // username of the open conversation
 let _dmStagedCard = null;      // card being negotiated (attached to the next send)
 let _dmPollTimer = null;
 
-function openMessages() {
-  if (!getCurrentUser()) { if (typeof openLoginModal === 'function') openLoginModal(); else alert('Sign in to use messages.'); return; }
-  document.getElementById('dm-overlay')?.classList.remove('hidden');
-  loadDmThreads(true);
+// Open the floor chat panel. mode = 'floor' (everyone) | 'direct' (DMs).
+function openChat(mode) {
+  if (!getCurrentUser()) { if (typeof openLoginModal === 'function') openLoginModal(); else alert('Sign in to use chat.'); return; }
+  document.getElementById('chat-overlay')?.classList.remove('hidden');
+  switchChatTab(mode || 'floor');
 }
-function closeMessages() {
-  document.getElementById('dm-overlay')?.classList.add('hidden');
+function closeChat() {
+  document.getElementById('chat-overlay')?.classList.add('hidden');
   _dmStagedCard = null;
 }
-// Open straight into a conversation, optionally staging a card to negotiate.
+function switchChatTab(tab) {
+  document.querySelectorAll('.chat-tab').forEach(b => b.classList.toggle('active', b.dataset.chatTab === tab));
+  document.getElementById('chat-floor')?.classList.toggle('hidden', tab !== 'floor');
+  document.getElementById('chat-direct')?.classList.toggle('hidden', tab !== 'direct');
+  if (tab === 'floor') { if (typeof floorChatActivate === 'function') floorChatActivate(); }
+  else loadDmThreads(!_dmActiveUser);
+}
+// Jump straight into a DM, optionally staging a card to negotiate.
 function openDM(user, card) {
   if (!user) return;
   if (!getCurrentUser()) { if (typeof openLoginModal === 'function') openLoginModal(); else alert('Sign in to message collectors.'); return; }
   document.getElementById('floor-booth-modal')?.classList.add('hidden');
-  document.getElementById('dm-overlay')?.classList.remove('hidden');
+  document.getElementById('chat-overlay')?.classList.remove('hidden');
+  switchChatTab('direct');
   _dmStagedCard = card && card.title ? card : null;
   openDmConvo(String(user).toLowerCase());
   loadDmThreads(false);
@@ -8311,8 +8320,9 @@ function disconnectDmSocket() {
 }
 function handleIncomingDm(msg) {
   const other = msg.with;
-  const overlayOpen = !document.getElementById('dm-overlay')?.classList.contains('hidden');
-  if (overlayOpen) {
+  const directOpen = !document.getElementById('chat-overlay')?.classList.contains('hidden')
+    && !document.getElementById('chat-direct')?.classList.contains('hidden');
+  if (directOpen) {
     loadDmThreads(false);
     if (_dmActiveUser && other === _dmActiveUser) openDmConvo(other);  // reloads + marks read
     else refreshDmUnread();
@@ -8331,8 +8341,9 @@ document.addEventListener('click', e => {
     openDM(d.dmUser, { title: d.dmTitle || 'Card', imageUrl: d.dmImg || '', price: d.dmPrice ? parseFloat(d.dmPrice) : null });
   }
 });
-window.openMessages = openMessages;
-window.closeMessages = closeMessages;
+window.openChat = openChat;
+window.closeChat = closeChat;
+window.switchChatTab = switchChatTab;
 window.openDM = openDM;
 window.dmSend = dmSend;
 window.dmBack = dmBack;
