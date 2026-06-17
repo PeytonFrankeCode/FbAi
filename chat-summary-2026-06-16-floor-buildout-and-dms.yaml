@@ -12,7 +12,9 @@ session:
     deferred. Branch builds on the previously-merged Floor work (PR #317).
 
 asset_versions:
-  - public/index.html: style.css?v=94, app.js?v=124, floor.js?v=26
+  - public/index.html: style.css?v=94, app.js?v=124, floor.js?v=30
+  - (floor.js bumped repeatedly through the day; v27–v30 were the post-summary
+    fixes below.)
   - Floor is an ES module (public/floor.js) using vendored Three.js r160 via an
     import map; validated each change with `npx esbuild --bundle public/floor.js
     --format=esm --external:three`. server.js/app.js/db.js checked with
@@ -185,7 +187,43 @@ features_built:
     summary: >
       Raised 3D Card Huddle logo centered high on the back wall — a dark backing
       panel (depth) + an emissive /logo.png face (692x361, 1.92:1), ~5.5m tall
-      (~1/10 of the wall). Un-mirrored for the y=π facing via texture repeat.x=-1.
+      (~1/10 of the wall), faces the room via rotation.y=π (see mirror fix below).
+
+post_summary_fixes:
+  description: >
+    Polish/bug-fix round after the summary was first written (floor.js v27–v30).
+  mirrored_logo_and_cards:
+    files: [public/floor.js]
+    details:
+      - Logo was reversed: rotation.y=π already faces the room correctly (a sign
+        spun about its vertical axis reads fine), so the extra texture
+        repeat.x=-1 flip was REMOVED.
+      - Laid-flat card photos read backwards. A flat card (rotation.x=-π/2) can't
+        be left-right mirrored (you only see its top face) — it was spun the
+        wrong way in-plane. First attempt (scale.x=-1) was WRONG (made a vertical
+        mirror); correct fix is rotation.z=π on the display-case slabs and
+        lay-down cards so the photo top points away from the buyer. Cards inherit
+        each booth's facing, so this is right for back-to-back booths facing
+        opposite aisles (user's own correct diagnosis).
+      - Value-box packed cards faced away from the buyer; added rotation.y=π so
+        they aren't shown reversed. (Acrylic stands already used rotation.y=π and
+        were fine.)
+  controls_inverted:
+    files: [public/floor.js]
+    details:
+      - First-person walking felt reversed. Forward/back (W/S) was actually
+        correct (moves toward the look direction); only left/right strafe (A/D),
+        turning (arrows + d-pad), and the mouse-drag yaw were inverted.
+      - Final state: `strafe = -strafe; turn = -turn;` in update(), and the
+        mouse-drag yaw negated (yaw -= dx*…). W/S left as-is. (Briefly inverted
+        all three including fwd, then un-inverted fwd at the user's request.)
+  entrance_wall_filled:
+    files: [public/floor.js]
+    details:
+      - Closed the front entrance gap: one solid full-width front wall (replacing
+        the two gapped segments) + a continuous front wood wainscot segment.
+      - Removed the now-moot "Main Entrance" sprite. The front-ROW table still
+        keeps its central gap as the walk-in lane / clear spawn path.
 
 non_code_threads:
   admin_stats:
@@ -216,9 +254,10 @@ open_threads:
     avatars, booth editor, fixtures, wall decor, two-menu value box, render
     quality, floor-only chat + real-time DMs, new layout, demo gate, back-wall
     logo). Offer to write a combined PR description still stands.
-  - Layout spacing/aisle widths are eyeballed from the floor-plan photo; entrance
-    is at the front (not the right wall like the reference) to keep spawn logic.
-    Easy to retune (aisle width, interior rows, entrance wall).
+  - Layout spacing/aisle widths are eyeballed from the floor-plan photo. The
+    front entrance is now FILLED (solid wall); player still spawns front-centre
+    and walks in via the front-row table gap. Easy to retune (aisle width,
+    interior rows) or re-open an entrance if wanted.
   - Wood height (WH=7.0) and back-wall logo size (~5.5m) are eyeballed from a
     screenshot — quick to nudge once viewed live.
   - Possible next steps offered: post-processing (SMAA/SSAO/bloom) behind a
