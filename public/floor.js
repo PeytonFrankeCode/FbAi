@@ -1063,7 +1063,7 @@ function update(dt) {
     if (keys['d']) strafe += 1;
     if (keys['arrowleft'] || touchDir.left) turn -= 1;
     if (keys['arrowright'] || touchDir.right) turn += 1;
-    fwd = -fwd; strafe = -strafe; turn = -turn;   // controls were reversed — invert all of them
+    strafe = -strafe; turn = -turn;   // left/right strafe + turn were reversed; forward/back is correct
     yaw += turn * TURN_SPEED * k;
     if (fwd || strafe) {
       const sin = Math.sin(yaw), cos = Math.cos(yaw), step = MOVE_SPEED * k;
