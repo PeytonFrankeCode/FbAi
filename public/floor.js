@@ -276,7 +276,7 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
     const entry = cards && cards[(cardOffset || 0) + slot];
     const card = new THREE.Mesh(shared.slabGeo, cardMaterial(entry, shared, slot));
     card.rotation.x = -Math.PI / 2;
-    card.scale.x = -1;                  // un-mirror the laid-flat photo
+    card.rotation.z = Math.PI;          // spin in-plane so the laid-flat photo reads upright to the buyer
     card.position.set(-w / 2 + 0.09 + cw / 2 + c * cw, y0 + CASE_H + 0.03, -d / 2 + 0.09 + cd / 2 + r * cd);
     card.userData.boothId = boothIdx;   // tap a card to open the booth
     g.add(card);
@@ -339,8 +339,7 @@ function buildBoothTable(grp, b, shared) {
   for (let i = 0; i < 4; i++) {
     const card = new THREE.Mesh(shared.flatGeo, cardMaterial(showCards[i], shared, i));
     card.rotation.x = -Math.PI / 2;
-    card.rotation.z = (Math.random() - 0.5) * 0.5;
-    card.scale.x = -1;                  // un-mirror the laid-flat photo
+    card.rotation.z = Math.PI + (Math.random() - 0.5) * 0.5;   // upright to the buyer, with a slight scatter
     card.position.set(-2.6 + i * 0.5, y0 + 0.02, TABLE_D / 2 - 0.45);
     card.userData.boothId = b._idx;
     grp.add(card);
@@ -421,6 +420,7 @@ function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
     const entry = cards[i % Math.max(1, cards.length)];
     const card = new THREE.Mesh(shared.standGeo, cards.length ? cardMaterial(entry, shared, i) : shared.cardMats[i % shared.cardMats.length]);
     card.position.set(x, y0 + 0.18, z0 + (i / (n - 1)) * span);
+    card.rotation.y = Math.PI;          // face the buyer (-z) so photos aren't shown reversed
     tag2(card); grp.add(card);
   }
   // a few coloured divider tabs poking up above the cards
