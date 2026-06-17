@@ -854,13 +854,8 @@ function buildRoom(group, h) {
   const back = new THREE.Mesh(new THREE.BoxGeometry(ww, CEIL, t), wallMat); back.position.set(cx, y, h.maxZ); group.add(back);
   const left = new THREE.Mesh(new THREE.BoxGeometry(t, CEIL, dd), wallMat); left.position.set(h.minX, y, cz); group.add(left);
   const right = new THREE.Mesh(new THREE.BoxGeometry(t, CEIL, dd), wallMat); right.position.set(h.maxX, y, cz); group.add(right);
-  const gap = 8, seg = (ww - gap) / 2;
-  const fL = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fL.position.set(h.minX + seg / 2, y, h.minZ); group.add(fL);
-  const fR = new THREE.Mesh(new THREE.BoxGeometry(seg, CEIL, t), wallMat); fR.position.set(h.maxX - seg / 2, y, h.minZ); group.add(fR);
-
-  // "Main Entrance" sign over the front gap
-  const ent = makeLabelSprite('🚪 Main Entrance', '');
-  ent.scale.set(6, 2.2, 1); ent.position.set(0, 3.4, h.minZ + 0.7); group.add(ent);
+  // front wall — solid (the entrance gap is filled in)
+  const front = new THREE.Mesh(new THREE.BoxGeometry(ww, CEIL, t), wallMat); front.position.set(cx, y, h.minZ); group.add(front);
 
   // raised 3D Card Huddle logo, centred on the back wall
   addBackWallLogo(group, h, CEIL);
@@ -960,13 +955,11 @@ function decorateWalls(group, h) {
     pot: new THREE.MeshStandardMaterial({ color: 0x1b1b20, roughness: 0.8 }),
   };
   const WH = 7.0, off = 0.34, panelT = 0.12;
-  const ww = h.maxX - h.minX, gap = 8, seg = (ww - gap) / 2;
   const segs = [
     { axis: 'x', fixed: h.maxZ, from: h.minX, to: h.maxX, inward: -1 },          // back wall
     { axis: 'z', fixed: h.minX, from: h.minZ, to: h.maxZ, inward: +1 },          // left wall
     { axis: 'z', fixed: h.maxX, from: h.minZ, to: h.maxZ, inward: -1 },          // right wall
-    { axis: 'x', fixed: h.minZ, from: h.minX, to: h.minX + seg, inward: +1 },    // front-left of the entrance
-    { axis: 'x', fixed: h.minZ, from: h.maxX - seg, to: h.maxX, inward: +1 },    // front-right of the entrance
+    { axis: 'x', fixed: h.minZ, from: h.minX, to: h.maxX, inward: +1 },          // front wall (entrance filled in)
   ];
   for (const s of segs) addWoodSegment(group, s, WH, off, panelT, mats);
 }
@@ -1070,6 +1063,7 @@ function update(dt) {
     if (keys['d']) strafe += 1;
     if (keys['arrowleft'] || touchDir.left) turn -= 1;
     if (keys['arrowright'] || touchDir.right) turn += 1;
+    fwd = -fwd; strafe = -strafe; turn = -turn;   // controls were reversed — invert all of them
     yaw += turn * TURN_SPEED * k;
     if (fwd || strafe) {
       const sin = Math.sin(yaw), cos = Math.cos(yaw), step = MOVE_SPEED * k;
@@ -1237,7 +1231,7 @@ function bindPointer(canvas) {
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
     if (Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY) > 5) moved = true;
-    if (camMode === 'fp') { yaw += dx * 0.005; pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch - dy * 0.005)); }
+    if (camMode === 'fp') { yaw -= dx * 0.005; pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, pitch - dy * 0.005)); }
     else { free.az += dx * 0.01; free.el = Math.max(0.05, Math.min(1.4, free.el - dy * 0.01)); }
   });
   canvas.addEventListener('wheel', e => {
