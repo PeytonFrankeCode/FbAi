@@ -5208,7 +5208,9 @@ function estimateCardGrade() {
 }
 
 // Core analysis. Draws the image small enough to crunch quickly, then derives
-// the four condition pillars from real pixel measurements.
+// the four condition pillars from real pixel measurements. The first step is to
+// locate the card itself within the photo (auto-crop) so every pillar measures
+// the card — not the background or the table behind it.
 function _analyzeCardImage(img) {
   const MAX = 600;
   const scale = Math.min(1, MAX / Math.max(img.width, img.height));
@@ -5227,45 +5229,111 @@ function _analyzeCardImage(img) {
   }
   const at = (x, y) => gray[y * w + x];
 
-  const centering = _measureCentering(gray, w, h);
-  const corners   = _measureCorners(data, w, h);
-  const edges     = _measureEdges(data, w, h);
-  const surface   = _measureSurface(at, w, h);
+  // Detect the card's bounding box by separating it from the background.
+  const box = _detectCardBox(data, w, h);
+
+  const centering = _measureCentering(gray, w, h, box);
+  const corners   = _measureCorners(data, w, h, box);
+  const edges     = _measureEdges(data, w, h, box);
+  const surface   = _measureSurface(at, w, h, box);
 
   // Overall: a card can't grade much above its weakest pillar, so blend the
-  // weighted average toward the lowest sub-grade.
-  const subs = [centering.grade, corners.grade, edges.grade, surface.grade];
-  const lowest = Math.min(...subs);
-  const weighted = centering.grade * 0.35 + corners.grade * 0.25 + edges.grade * 0.25 + surface.grade * 0.15;
-  let overall = Math.round(Math.min(weighted, lowest + 1));
+  // weighted average toward the lowest sub-grade. Centering is the one pillar
+  // we measure directly, so it leads — but only when we actually found a border
+  // to measure. If we couldn't, drop it from the blend rather than guess.
+  let overall, lowest;
+  if (centering.measured) {
+    lowest = Math.min(centering.grade, corners.grade, edges.grade, surface.grade);
+    const weighted = centering.grade * 0.35 + corners.grade * 0.25 + edges.grade * 0.25 + surface.grade * 0.15;
+    overall = Math.round(Math.min(weighted, lowest + 1));
+  } else {
+    lowest = Math.min(corners.grade, edges.grade, surface.grade);
+    const weighted = corners.grade * 0.4 + edges.grade * 0.35 + surface.grade * 0.25;
+    overall = Math.round(Math.min(weighted, lowest + 1));
+  }
   overall = Math.max(1, Math.min(10, overall));
 
   // Confidence reflects how trustworthy the photo is for this kind of measure.
-  const confidence = _gradeConfidence(centering, surface, w, h);
+  const confidence = _gradeConfidence(centering, surface, box, w, h);
 
   return { overall, centering, corners, edges, surface, confidence };
 }
 
-// Centering — find the outer card edge and the inner frame on each side by
-// looking for the strongest brightness transitions, then compare the margins.
-function _measureCentering(gray, w, h) {
-  // Column/row gradient energy (where vertical/horizontal edges live).
-  const colE = new Float32Array(w);
-  const rowE = new Float32Array(h);
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
-      const gx = Math.abs(gray[y * w + x + 1] - gray[y * w + x - 1]);
-      const gy = Math.abs(gray[(y + 1) * w + x] - gray[(y - 1) * w + x]);
-      colE[x] += gx; rowE[y] += gy;
+// Sample the four photo corners to estimate the background colour, then find
+// the contiguous central region that differs from it on each axis — that's the
+// card. Falls back to the full frame for tight crops where the card already
+// fills the photo (no background to separate from).
+function _detectCardBox(data, w, h) {
+  const p = Math.max(4, Math.round(Math.min(w, h) * 0.05));
+  const corners = [[0, 0], [w - p, 0], [0, h - p], [w - p, h - p]];
+  const means = [];
+  let mr = 0, mg = 0, mb = 0, n = 0;
+  for (const [sx, sy] of corners) {
+    let rr = 0, gg = 0, bb = 0, c = 0;
+    for (let y = sy; y < sy + p; y++) for (let x = sx; x < sx + p; x++) {
+      const i = (y * w + x) * 4; rr += data[i]; gg += data[i + 1]; bb += data[i + 2]; c++;
     }
+    means.push([rr / c, gg / c, bb / c]); mr += rr; mg += gg; mb += bb; n += c;
   }
-  // Strongest edge peak inward from each side ≈ the card's outer border, so
-  // the gap from the photo edge to it is that side's margin.
-  const lr = _framePair(colE, w);
-  const tb = _framePair(rowE, h);
+  const bg = [mr / n, mg / n, mb / n];
+  // How consistent are the corners? A busy/cluttered background spreads them out
+  // and makes the card harder to isolate.
+  let spread = 0;
+  for (const m of means) spread += Math.hypot(m[0] - bg[0], m[1] - bg[1], m[2] - bg[2]);
+  spread /= means.length;
 
-  const leftPct  = lr ? (lr.first / (lr.first + lr.second)) * 100 : 50;
-  const topPct   = tb ? (tb.first / (tb.first + tb.second)) * 100 : 50;
+  const T = Math.max(36, spread * 1.5 + 24); // colour distance that counts as "card"
+  const colFg = new Float32Array(w), rowFg = new Float32Array(h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4;
+    const d = Math.hypot(data[i] - bg[0], data[i + 1] - bg[1], data[i + 2] - bg[2]);
+    if (d > T) { colFg[x]++; rowFg[y]++; }
+  }
+  for (let x = 0; x < w; x++) colFg[x] /= h;
+  for (let y = 0; y < h; y++) rowFg[y] /= w;
+
+  const xExt = _cardExtent(colFg, w);
+  const yExt = _cardExtent(rowFg, h);
+  return {
+    x0: xExt.a, x1: xExt.b, y0: yExt.a, y1: yExt.b,
+    cropped: !xExt.tight || !yExt.tight,
+    bgSpread: spread,
+  };
+}
+
+// Longest contiguous run of "card" coverage on one axis. If no clear run stands
+// out (card fills the frame, or background ≈ card), return the full extent.
+function _cardExtent(fg, n) {
+  let bestA = -1, bestB = -1, curA = -1;
+  for (let i = 0; i < n; i++) {
+    if (fg[i] > 0.45) { if (curA < 0) curA = i; }
+    else if (curA >= 0) { if (i - curA > bestB - bestA) { bestA = curA; bestB = i; } curA = -1; }
+  }
+  if (curA >= 0 && n - curA > bestB - bestA) { bestA = curA; bestB = n; }
+  const edgeLow = fg[Math.floor(n * 0.02)] < 0.4 && fg[Math.min(n - 1, Math.floor(n * 0.98))] < 0.4;
+  if (bestA >= 0 && (bestB - bestA) >= n * 0.35 && edgeLow) {
+    return { a: bestA, b: Math.min(n - 1, bestB), tight: false };
+  }
+  return { a: 0, b: n - 1, tight: true };
+}
+
+// Centering — the one pillar we can truly measure. Within the detected card box
+// we find the inner frame (the border-to-artwork transition) on each side and
+// compare the border widths, exactly the ratio PSA grades on. If there's no
+// clear border (full-bleed art, or an angled shot), we say so instead of faking
+// a number.
+function _measureCentering(gray, w, h, box) {
+  const colE = _axisEnergy(gray, w, h, box, 'x');
+  const rowE = _axisEnergy(gray, w, h, box, 'y');
+  const lr = _innerFrame(colE, box.x0, box.x1);
+  const tb = _innerFrame(rowE, box.y0, box.y1);
+
+  if (!lr || !tb) {
+    return { grade: 8, detail: 'No clear border found (borderless art or angled shot)', found: false, measured: false };
+  }
+
+  const leftPct = (lr.near / (lr.near + lr.far)) * 100;
+  const topPct  = (tb.near / (tb.near + tb.far)) * 100;
   // Worst (most off-center) axis drives the grade, as PSA does.
   const worstOff = Math.max(Math.abs(leftPct - 50), Math.abs(topPct - 50));
 
@@ -5280,47 +5348,74 @@ function _measureCentering(gray, w, h) {
   else grade = 4;
 
   const fmt = (p) => `${Math.round(p)}/${Math.round(100 - p)}`;
-  return {
-    grade,
-    detail: `${fmt(leftPct)} L/R · ${fmt(topPct)} T/B`,
-    found: !!(lr && tb),
-  };
+  return { grade, detail: `${fmt(leftPct)} L/R · ${fmt(topPct)} T/B`, found: true, measured: true };
 }
 
-// Find the strongest edge peak scanning inward from each end of an energy
-// profile (the card's border). Returns the near-side margin (first) and
-// far-side margin (second) so the caller can compare centering.
-function _framePair(energy, n) {
-  const margin = Math.max(2, Math.floor(n * 0.02));
-  const band = Math.floor(n * 0.45); // only look in the outer ~45% each side
-  const peakIn = (from, to, step) => {
-    let bestI = -1, best = -Infinity;
-    for (let i = from; step > 0 ? i < to : i > to; i += step) {
-      if (energy[i] > best) { best = energy[i]; bestI = i; }
+// Directional gradient energy, accumulated only over the orthogonal span of the
+// card box so background rows/columns don't pollute the profile.
+function _axisEnergy(gray, w, h, box, axis) {
+  if (axis === 'x') {
+    const e = new Float32Array(w);
+    const ya = Math.max(1, box.y0), yb = Math.min(h - 1, box.y1);
+    for (let y = ya; y < yb; y++) for (let x = 1; x < w - 1; x++) {
+      e[x] += Math.abs(gray[y * w + x + 1] - gray[y * w + x - 1]);
     }
-    return bestI;
-  };
-  const leftOuter  = peakIn(margin, margin + band, 1);
-  const rightOuter = peakIn(n - 1 - margin, n - 1 - margin - band, -1);
-  if (leftOuter < 0 || rightOuter < 0) return null;
-  // Margins from the photo edge to each detected card edge.
-  const leftMargin  = leftOuter;
-  const rightMargin = (n - 1) - rightOuter;
-  return { first: leftMargin, second: rightMargin };
+    return e;
+  }
+  const e = new Float32Array(h);
+  const xa = Math.max(1, box.x0), xb = Math.min(w - 1, box.x1);
+  for (let y = 1; y < h - 1; y++) for (let x = xa; x < xb; x++) {
+    e[y] += Math.abs(gray[(y + 1) * w + x] - gray[(y - 1) * w + x]);
+  }
+  return e;
 }
 
-// Corners — sample the four corner squares; whitening shows as a cluster of
-// near-white pixels, so more white = lower grade.
-function _measureCorners(data, w, h) {
-  const box = Math.max(6, Math.round(Math.min(w, h) * 0.07));
+// Inside a card span [a,b], find the strongest gradient peak within the outer
+// ~22% from each end — the border-to-artwork transition. Returns each side's
+// border width (near/far), or null when no prominent, plausible frame exists.
+function _innerFrame(energy, a, b) {
+  const span = b - a;
+  if (span < 20) return null;
+  const band = Math.max(4, Math.floor(span * 0.22));
+  const m = Math.max(2, Math.floor(span * 0.012));
+  let maxE = 0;
+  for (let i = a; i <= b; i++) if (energy[i] > maxE) maxE = energy[i];
+  if (maxE <= 0) return null;
+
+  const peak = (from, to, step) => {
+    let bi = -1, bv = -Infinity;
+    for (let i = from; step > 0 ? i <= to : i >= to; i += step) {
+      if (energy[i] > bv) { bv = energy[i]; bi = i; }
+    }
+    return { i: bi, v: bv };
+  };
+  const L = peak(a + m, a + band, 1);
+  const R = peak(b - m, b - band, -1);
+
+  const minProm = maxE * 0.25; // frame edge should be a real, strong line
+  if (L.v < minProm || R.v < minProm) return null;
+  const near = L.i - a, far = b - R.i;
+  // If a "frame" sits at the very edge of the search band, we didn't really find
+  // one — likely a full-bleed design with no border to grade.
+  if (near >= band - 1 || far >= band - 1 || near < 1 || far < 1) return null;
+  return { near, far };
+}
+
+// Corners — sample the four corners of the *detected card* (not the photo);
+// whitening shows as a cluster of near-white, colourless pixels. Approximate:
+// sensitive to lighting and glare.
+function _measureCorners(data, w, h, box) {
+  const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+  const s = Math.max(6, Math.round(Math.min(bw, bh) * 0.07));
   const regions = [
-    [0, 0], [w - box, 0], [0, h - box], [w - box, h - box],
+    [box.x0, box.y0], [box.x1 - s, box.y0], [box.x0, box.y1 - s], [box.x1 - s, box.y1 - s],
   ];
   let worst = 0;
   regions.forEach(([sx, sy]) => {
+    sx = Math.max(0, Math.min(w - s, sx)); sy = Math.max(0, Math.min(h - s, sy));
     let white = 0, total = 0;
-    for (let y = sy; y < sy + box; y++) {
-      for (let x = sx; x < sx + box; x++) {
+    for (let y = sy; y < sy + s; y++) {
+      for (let x = sx; x < sx + s; x++) {
         const i = (y * w + x) * 4;
         const r = data[i], g = data[i + 1], b = data[i + 2];
         const lum = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -5332,15 +5427,17 @@ function _measureCorners(data, w, h) {
     worst = Math.max(worst, total ? white / total : 0);
   });
   const grade = _ratioToGrade(worst, [0.02, 0.05, 0.10, 0.18, 0.28]);
-  return { grade, detail: `${Math.round(worst * 100)}% corner wear`, found: true };
+  return { grade, detail: `${Math.round(worst * 100)}% corner wear`, found: true, measured: false };
 }
 
-// Edges — thin strips just inside each border; whitening/chipping again reads
-// as a band of near-white, colorless pixels.
-function _measureEdges(data, w, h) {
-  const t = Math.max(2, Math.round(Math.min(w, h) * 0.02));
+// Edges — thin strips just inside the detected card border; whitening/chipping
+// reads as a band of near-white, colourless pixels. Approximate.
+function _measureEdges(data, w, h, box) {
+  const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+  const t = Math.max(2, Math.round(Math.min(bw, bh) * 0.02));
   let white = 0, total = 0;
   const sample = (x, y) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
     const i = (y * w + x) * 4;
     const r = data[i], g = data[i + 1], b = data[i + 2];
     const lum = 0.299 * r + 0.587 * g + 0.114 * b;
@@ -5348,19 +5445,21 @@ function _measureEdges(data, w, h) {
     if (lum > 205 && sat < 28) white++;
     total++;
   };
-  for (let y = 0; y < t; y++) for (let x = 0; x < w; x++) { sample(x, y); sample(x, h - 1 - y); }
-  for (let x = 0; x < t; x++) for (let y = t; y < h - t; y++) { sample(x, y); sample(w - 1 - x, y); }
+  for (let k = 0; k < t; k++) for (let x = box.x0; x <= box.x1; x++) { sample(x, box.y0 + k); sample(x, box.y1 - k); }
+  for (let k = 0; k < t; k++) for (let y = box.y0 + t; y <= box.y1 - t; y++) { sample(box.x0 + k, y); sample(box.x1 - k, y); }
   const ratio = total ? white / total : 0;
   const grade = _ratioToGrade(ratio, [0.04, 0.09, 0.16, 0.26, 0.38]);
-  return { grade, detail: `${Math.round(ratio * 100)}% edge whitening`, found: true };
+  return { grade, detail: `${Math.round(ratio * 100)}% edge whitening`, found: true, measured: false };
 }
 
 // Surface — scratches, print lines and creases raise high-frequency contrast.
 // We measure local Laplacian energy across the card interior; very high or
 // very low both hurt (defects vs. out-of-focus), so we target a clean midrange.
-function _measureSurface(at, w, h) {
-  const x0 = Math.floor(w * 0.15), x1 = Math.floor(w * 0.85);
-  const y0 = Math.floor(h * 0.15), y1 = Math.floor(h * 0.85);
+// Approximate: easily thrown off by glare, focus and card texture/foil.
+function _measureSurface(at, w, h, box) {
+  const bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+  const x0 = Math.max(1, Math.floor(box.x0 + bw * 0.15)), x1 = Math.min(w - 1, Math.floor(box.x1 - bw * 0.15));
+  const y0 = Math.max(1, Math.floor(box.y0 + bh * 0.15)), y1 = Math.min(h - 1, Math.floor(box.y1 - bh * 0.15));
   let spikes = 0, total = 0, sum = 0;
   for (let y = y0; y < y1; y++) {
     for (let x = x0; x < x1; x++) {
@@ -5374,7 +5473,7 @@ function _measureSurface(at, w, h) {
   const mean = total ? sum / total : 0;
   let grade = _ratioToGrade(spikeRatio, [0.015, 0.035, 0.065, 0.10, 0.16]);
   if (mean < 3) grade = Math.min(grade, 8); // too smooth → likely soft/blurry photo
-  return { grade, detail: `${(spikeRatio * 100).toFixed(1)}% surface defects`, found: true };
+  return { grade, detail: `${(spikeRatio * 100).toFixed(1)}% surface defects`, found: true, measured: false };
 }
 
 // Map a "defect ratio" to a 1–10 grade given ascending thresholds for 10/9/8/7/6.
@@ -5387,12 +5486,13 @@ function _ratioToGrade(ratio, thresholds) {
   return 5;
 }
 
-function _gradeConfidence(centering, surface, w, h) {
-  let score = 2; // start at medium
-  if (!centering.found) score -= 1;
-  if (Math.max(w, h) < 250) score -= 1;       // low-res photo
+function _gradeConfidence(centering, surface, box, w, h) {
+  let score = 1; // start just below medium — this is an estimate, not a grade
+  if (centering.measured) score += 1; else score -= 1; // a real border read is the strongest signal
+  if (Math.max(w, h) < 250) score -= 1;             // low-res photo
   if (surface.detail.startsWith('0.0')) score -= 1; // basically no detail = blurry
-  if (centering.found && Math.max(w, h) >= 450) score += 1;
+  if (box.bgSpread > 70) score -= 1;                // cluttered background = shaky crop
+  if (Math.max(w, h) >= 450) score += 1;
   if (score >= 3) return { level: 'High', cls: 'high' };
   if (score <= 0) return { level: 'Low', cls: 'low' };
   return { level: 'Medium', cls: 'med' };
@@ -5414,17 +5514,29 @@ function _renderGradeEstimate(a) {
     { k: 'Centering', v: a.centering }, { k: 'Corners', v: a.corners },
     { k: 'Edges', v: a.edges }, { k: 'Surface', v: a.surface },
   ];
-  const weakest = subs.reduce((m, s) => s.v.grade < m.v.grade ? s : m, subs[0]);
-  tip.textContent = a.overall >= 9
-    ? 'Looks clean across the board — a strong grading candidate if the photo is true to the card.'
-    : `${weakest.k.toLowerCase()} is holding it back the most. Re-shoot straight-on in even light to confirm.`;
+  // Only let directly-measured pillars (centering) claim to be "holding it
+  // back" — the approximated ones aren't reliable enough to call out by name.
+  const measuredSubs = subs.filter(s => s.v.measured);
+  const weakest = (measuredSubs.length ? measuredSubs : subs).reduce((m, s) => s.v.grade < m.v.grade ? s : m);
+  if (!a.centering.measured) {
+    tip.textContent = 'Couldn’t lock onto the card’s border, so centering is a guess here. Re-shoot straight-on against a plain, contrasting background for a real read.';
+  } else if (a.overall >= 9) {
+    tip.textContent = 'Centering looks strong. Corners, edges & surface are rough reads from one photo — inspect those in hand before grading.';
+  } else {
+    tip.textContent = `${weakest.k.toLowerCase()} is the main concern. Re-shoot straight-on in even light to confirm.`;
+  }
 
   const wrap = document.getElementById('gradescan-subgrades');
   wrap.innerHTML = subs.map(s => {
     const pct = s.v.grade * 10;
     const cls = s.v.grade >= 9 ? 'sg-gem' : s.v.grade >= 7 ? 'sg-good' : 'sg-low';
+    const measured = s.v.measured;
+    const tag = measured
+      ? '<span class="gradescan-sg-tag tag-measured" title="Measured directly from the photo">measured</span>'
+      : '<span class="gradescan-sg-tag tag-approx" title="Rough estimate — sensitive to lighting, angle & focus">approx</span>';
+    const num = (s.k === 'Centering' && !measured) ? '—' : s.v.grade;
     return `<div class="gradescan-sg">
-      <div class="gradescan-sg-top"><span>${s.k}</span><strong>${s.v.grade}</strong></div>
+      <div class="gradescan-sg-top"><span>${s.k} ${tag}</span><strong>${num}</strong></div>
       <div class="gradescan-sg-bar"><div class="gradescan-sg-fill ${cls}" style="width:${pct}%"></div></div>
       <div class="gradescan-sg-detail">${s.v.detail}</div>
     </div>`;
