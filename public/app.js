@@ -5128,6 +5128,309 @@ function _gradingCompDate(soldDate) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// ---- Grading Advisor: Grade My Card (photo pre-grade estimator) ----
+// Estimates a card's condition grade entirely client-side. The photo is drawn
+// to a canvas and analyzed for the four pillars PSA uses — centering, corners,
+// edges and surface — then mapped to a 1–10 estimate. Nothing is uploaded and
+// no API is called, so it costs nothing to run.
+let _gradeScanImageDataUrl = null;
+const GRADESCAN_IMG_DIM = 1100;
+
+const _GRADE_NAMES = {
+  10: 'Gem Mint', 9: 'Mint', 8: 'NM-Mint', 7: 'Near Mint',
+  6: 'Excellent-Mint', 5: 'Excellent', 4: 'Very Good-Excellent',
+  3: 'Very Good', 2: 'Good', 1: 'Poor',
+};
+
+async function handleGradeScanFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { alert('Please select an image file.'); return; }
+  if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
+  try {
+    // Keep resolution high so edge/corner detail survives the downscale.
+    _gradeScanImageDataUrl = await readImageFileAsDataUrl(file, GRADESCAN_IMG_DIM, 0.9);
+    document.getElementById('gradescan-preview').src = _gradeScanImageDataUrl;
+    document.getElementById('gradescan-preview-wrap').classList.remove('hidden');
+    document.getElementById('gradescan-error').classList.add('hidden');
+    document.getElementById('gradescan-results').classList.add('hidden');
+  } catch (err) {
+    alert('Could not load image: ' + (err.message || 'Unknown error'));
+  }
+}
+
+function clearGradeScan() {
+  _gradeScanImageDataUrl = null;
+  const input = document.getElementById('gradescan-file-input');
+  if (input) input.value = '';
+  document.getElementById('gradescan-preview-wrap').classList.add('hidden');
+  document.getElementById('gradescan-results').classList.add('hidden');
+  document.getElementById('gradescan-error').classList.add('hidden');
+}
+
+function estimateCardGrade() {
+  if (!_gradeScanImageDataUrl) { alert('Please select a card photo first.'); return; }
+  const loading = document.getElementById('gradescan-loading');
+  const errEl   = document.getElementById('gradescan-error');
+  const results = document.getElementById('gradescan-results');
+  const btn     = document.getElementById('gradescan-btn');
+
+  loading.classList.remove('hidden');
+  errEl.classList.add('hidden');
+  results.classList.add('hidden');
+  if (btn) btn.disabled = true;
+
+  const img = new Image();
+  img.onload = () => {
+    // Defer to the next frame so the spinner actually paints before the
+    // (synchronous) pixel crunch locks the main thread.
+    setTimeout(() => {
+      try {
+        const analysis = _analyzeCardImage(img);
+        _renderGradeEstimate(analysis);
+        results.classList.remove('hidden');
+      } catch (err) {
+        errEl.textContent = err.message || 'Could not analyze this photo. Try a sharper, straight-on shot.';
+        errEl.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+        if (btn) btn.disabled = false;
+      }
+    }, 30);
+  };
+  img.onerror = () => {
+    loading.classList.add('hidden');
+    if (btn) btn.disabled = false;
+    errEl.textContent = 'Could not read that image.';
+    errEl.classList.remove('hidden');
+  };
+  img.src = _gradeScanImageDataUrl;
+}
+
+// Core analysis. Draws the image small enough to crunch quickly, then derives
+// the four condition pillars from real pixel measurements.
+function _analyzeCardImage(img) {
+  const MAX = 600;
+  const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+  const w = Math.max(8, Math.round(img.width * scale));
+  const h = Math.max(8, Math.round(img.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
+
+  // Grayscale luminance buffer.
+  const gray = new Float32Array(w * h);
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+  }
+  const at = (x, y) => gray[y * w + x];
+
+  const centering = _measureCentering(gray, w, h);
+  const corners   = _measureCorners(data, w, h);
+  const edges     = _measureEdges(data, w, h);
+  const surface   = _measureSurface(at, w, h);
+
+  // Overall: a card can't grade much above its weakest pillar, so blend the
+  // weighted average toward the lowest sub-grade.
+  const subs = [centering.grade, corners.grade, edges.grade, surface.grade];
+  const lowest = Math.min(...subs);
+  const weighted = centering.grade * 0.35 + corners.grade * 0.25 + edges.grade * 0.25 + surface.grade * 0.15;
+  let overall = Math.round(Math.min(weighted, lowest + 1));
+  overall = Math.max(1, Math.min(10, overall));
+
+  // Confidence reflects how trustworthy the photo is for this kind of measure.
+  const confidence = _gradeConfidence(centering, surface, w, h);
+
+  return { overall, centering, corners, edges, surface, confidence };
+}
+
+// Centering — find the outer card edge and the inner frame on each side by
+// looking for the strongest brightness transitions, then compare the margins.
+function _measureCentering(gray, w, h) {
+  // Column/row gradient energy (where vertical/horizontal edges live).
+  const colE = new Float32Array(w);
+  const rowE = new Float32Array(h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const gx = Math.abs(gray[y * w + x + 1] - gray[y * w + x - 1]);
+      const gy = Math.abs(gray[(y + 1) * w + x] - gray[(y - 1) * w + x]);
+      colE[x] += gx; rowE[y] += gy;
+    }
+  }
+  // Strongest edge peak inward from each side ≈ the card's outer border, so
+  // the gap from the photo edge to it is that side's margin.
+  const lr = _framePair(colE, w);
+  const tb = _framePair(rowE, h);
+
+  const leftPct  = lr ? (lr.first / (lr.first + lr.second)) * 100 : 50;
+  const topPct   = tb ? (tb.first / (tb.first + tb.second)) * 100 : 50;
+  // Worst (most off-center) axis drives the grade, as PSA does.
+  const worstOff = Math.max(Math.abs(leftPct - 50), Math.abs(topPct - 50));
+
+  // Map % off-center to a sub-grade. 50/50→10, ~55/45→9, 60/40→8 ...
+  let grade;
+  if (worstOff <= 3) grade = 10;
+  else if (worstOff <= 7) grade = 9;
+  else if (worstOff <= 12) grade = 8;
+  else if (worstOff <= 17) grade = 7;
+  else if (worstOff <= 22) grade = 6;
+  else if (worstOff <= 28) grade = 5;
+  else grade = 4;
+
+  const fmt = (p) => `${Math.round(p)}/${Math.round(100 - p)}`;
+  return {
+    grade,
+    detail: `${fmt(leftPct)} L/R · ${fmt(topPct)} T/B`,
+    found: !!(lr && tb),
+  };
+}
+
+// Find the strongest edge peak scanning inward from each end of an energy
+// profile (the card's border). Returns the near-side margin (first) and
+// far-side margin (second) so the caller can compare centering.
+function _framePair(energy, n) {
+  const margin = Math.max(2, Math.floor(n * 0.02));
+  const band = Math.floor(n * 0.45); // only look in the outer ~45% each side
+  const peakIn = (from, to, step) => {
+    let bestI = -1, best = -Infinity;
+    for (let i = from; step > 0 ? i < to : i > to; i += step) {
+      if (energy[i] > best) { best = energy[i]; bestI = i; }
+    }
+    return bestI;
+  };
+  const leftOuter  = peakIn(margin, margin + band, 1);
+  const rightOuter = peakIn(n - 1 - margin, n - 1 - margin - band, -1);
+  if (leftOuter < 0 || rightOuter < 0) return null;
+  // Margins from the photo edge to each detected card edge.
+  const leftMargin  = leftOuter;
+  const rightMargin = (n - 1) - rightOuter;
+  return { first: leftMargin, second: rightMargin };
+}
+
+// Corners — sample the four corner squares; whitening shows as a cluster of
+// near-white pixels, so more white = lower grade.
+function _measureCorners(data, w, h) {
+  const box = Math.max(6, Math.round(Math.min(w, h) * 0.07));
+  const regions = [
+    [0, 0], [w - box, 0], [0, h - box], [w - box, h - box],
+  ];
+  let worst = 0;
+  regions.forEach(([sx, sy]) => {
+    let white = 0, total = 0;
+    for (let y = sy; y < sy + box; y++) {
+      for (let x = sx; x < sx + box; x++) {
+        const i = (y * w + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        const sat = Math.max(r, g, b) - Math.min(r, g, b);
+        if (lum > 200 && sat < 30) white++; // bright + colorless = wear/whitening
+        total++;
+      }
+    }
+    worst = Math.max(worst, total ? white / total : 0);
+  });
+  const grade = _ratioToGrade(worst, [0.02, 0.05, 0.10, 0.18, 0.28]);
+  return { grade, detail: `${Math.round(worst * 100)}% corner wear`, found: true };
+}
+
+// Edges — thin strips just inside each border; whitening/chipping again reads
+// as a band of near-white, colorless pixels.
+function _measureEdges(data, w, h) {
+  const t = Math.max(2, Math.round(Math.min(w, h) * 0.02));
+  let white = 0, total = 0;
+  const sample = (x, y) => {
+    const i = (y * w + x) * 4;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+    const sat = Math.max(r, g, b) - Math.min(r, g, b);
+    if (lum > 205 && sat < 28) white++;
+    total++;
+  };
+  for (let y = 0; y < t; y++) for (let x = 0; x < w; x++) { sample(x, y); sample(x, h - 1 - y); }
+  for (let x = 0; x < t; x++) for (let y = t; y < h - t; y++) { sample(x, y); sample(w - 1 - x, y); }
+  const ratio = total ? white / total : 0;
+  const grade = _ratioToGrade(ratio, [0.04, 0.09, 0.16, 0.26, 0.38]);
+  return { grade, detail: `${Math.round(ratio * 100)}% edge whitening`, found: true };
+}
+
+// Surface — scratches, print lines and creases raise high-frequency contrast.
+// We measure local Laplacian energy across the card interior; very high or
+// very low both hurt (defects vs. out-of-focus), so we target a clean midrange.
+function _measureSurface(at, w, h) {
+  const x0 = Math.floor(w * 0.15), x1 = Math.floor(w * 0.85);
+  const y0 = Math.floor(h * 0.15), y1 = Math.floor(h * 0.85);
+  let spikes = 0, total = 0, sum = 0;
+  for (let y = y0; y < y1; y++) {
+    for (let x = x0; x < x1; x++) {
+      const lap = Math.abs(4 * at(x, y) - at(x - 1, y) - at(x + 1, y) - at(x, y - 1) - at(x, y + 1));
+      sum += lap;
+      if (lap > 90) spikes++; // sharp local discontinuity = scratch/print line
+      total++;
+    }
+  }
+  const spikeRatio = total ? spikes / total : 0;
+  const mean = total ? sum / total : 0;
+  let grade = _ratioToGrade(spikeRatio, [0.015, 0.035, 0.065, 0.10, 0.16]);
+  if (mean < 3) grade = Math.min(grade, 8); // too smooth → likely soft/blurry photo
+  return { grade, detail: `${(spikeRatio * 100).toFixed(1)}% surface defects`, found: true };
+}
+
+// Map a "defect ratio" to a 1–10 grade given ascending thresholds for 10/9/8/7/6.
+function _ratioToGrade(ratio, thresholds) {
+  if (ratio <= thresholds[0]) return 10;
+  if (ratio <= thresholds[1]) return 9;
+  if (ratio <= thresholds[2]) return 8;
+  if (ratio <= thresholds[3]) return 7;
+  if (ratio <= thresholds[4]) return 6;
+  return 5;
+}
+
+function _gradeConfidence(centering, surface, w, h) {
+  let score = 2; // start at medium
+  if (!centering.found) score -= 1;
+  if (Math.max(w, h) < 250) score -= 1;       // low-res photo
+  if (surface.detail.startsWith('0.0')) score -= 1; // basically no detail = blurry
+  if (centering.found && Math.max(w, h) >= 450) score += 1;
+  if (score >= 3) return { level: 'High', cls: 'high' };
+  if (score <= 0) return { level: 'Low', cls: 'low' };
+  return { level: 'Medium', cls: 'med' };
+}
+
+function _renderGradeEstimate(a) {
+  document.getElementById('gradescan-grade-num').textContent = a.overall;
+  document.getElementById('gradescan-grade-name').textContent = _GRADE_NAMES[a.overall] || '';
+
+  const badge = document.getElementById('gradescan-badge');
+  badge.className = 'gradescan-badge ' + (a.overall >= 9 ? 'is-gem' : a.overall >= 7 ? 'is-good' : 'is-low');
+
+  const conf = document.getElementById('gradescan-confidence');
+  conf.className = 'gradescan-confidence conf-' + a.confidence.cls;
+  conf.textContent = `Confidence: ${a.confidence.level}`;
+
+  const tip = document.getElementById('gradescan-tip');
+  const subs = [
+    { k: 'Centering', v: a.centering }, { k: 'Corners', v: a.corners },
+    { k: 'Edges', v: a.edges }, { k: 'Surface', v: a.surface },
+  ];
+  const weakest = subs.reduce((m, s) => s.v.grade < m.v.grade ? s : m, subs[0]);
+  tip.textContent = a.overall >= 9
+    ? 'Looks clean across the board — a strong grading candidate if the photo is true to the card.'
+    : `${weakest.k.toLowerCase()} is holding it back the most. Re-shoot straight-on in even light to confirm.`;
+
+  const wrap = document.getElementById('gradescan-subgrades');
+  wrap.innerHTML = subs.map(s => {
+    const pct = s.v.grade * 10;
+    const cls = s.v.grade >= 9 ? 'sg-gem' : s.v.grade >= 7 ? 'sg-good' : 'sg-low';
+    return `<div class="gradescan-sg">
+      <div class="gradescan-sg-top"><span>${s.k}</span><strong>${s.v.grade}</strong></div>
+      <div class="gradescan-sg-bar"><div class="gradescan-sg-fill ${cls}" style="width:${pct}%"></div></div>
+      <div class="gradescan-sg-detail">${s.v.detail}</div>
+    </div>`;
+  }).join('');
+}
+
 async function loadChecklistProducts() {
   checklistProductGrid.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading checklists...</span></div>';
   try {

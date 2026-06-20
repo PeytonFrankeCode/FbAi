@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=94" />
+  <link rel="stylesheet" href="style.css?v=95" />
 
 
 </head>
@@ -629,6 +629,58 @@
           </table>
         </div>
         <p class="grading-disclaimer">Based on recent eBay sold listings. Grading costs vary — PSA Economy ~$25, Express ~$50. Results are estimates only.</p>
+      </div>
+
+      <!-- Pre-Grade Scanner: estimate a card's condition grade from a photo. -->
+      <!-- Runs entirely in the browser (canvas pixel analysis) — no upload, no API cost. -->
+      <div class="gradescan-section">
+        <div class="gradescan-head">
+          <h3 class="gradescan-title">&#128247; Grade My Card <span class="gradescan-beta">BETA</span></h3>
+          <p class="gradescan-sub">Upload a straight-on photo of the card front and we'll estimate its grade from centering, corners, edges &amp; surface. The photo never leaves your device — analysis runs right here in your browser.</p>
+        </div>
+
+        <div id="gradescan-phase-upload">
+          <div class="scanner-upload-area">
+            <label for="gradescan-file-input" class="scanner-upload-label">
+              <div class="scanner-upload-icon">&#9878;&#65039;</div>
+              <div class="scanner-upload-text">
+                <strong>Choose a photo or take one</strong>
+                <span>Card front &nbsp;&bull;&nbsp; Fill the frame &nbsp;&bull;&nbsp; Straight-on, even light</span>
+              </div>
+              <input type="file" id="gradescan-file-input" accept="image/*" style="display:none" onchange="handleGradeScanFile(event)" />
+            </label>
+          </div>
+
+          <div id="gradescan-preview-wrap" class="hidden" style="text-align:center;margin:16px 0">
+            <img id="gradescan-preview" src="" alt="Card preview" style="max-height:280px;max-width:100%;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.25)" />
+            <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+              <button class="grading-submit-btn" id="gradescan-btn" onclick="estimateCardGrade()">&#9878;&#65039; Estimate Grade</button>
+              <button class="btn-secondary" onclick="clearGradeScan()">&#10005; Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="gradescan-loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Analyzing centering, corners, edges &amp; surface&hellip;</span>
+        </div>
+        <div id="gradescan-error" class="error-message hidden"></div>
+
+        <div id="gradescan-results" class="hidden">
+          <div class="gradescan-result-top">
+            <div class="gradescan-badge" id="gradescan-badge">
+              <span class="gradescan-badge-cap">Estimated grade</span>
+              <span class="gradescan-badge-num" id="gradescan-grade-num">&mdash;</span>
+              <span class="gradescan-badge-name" id="gradescan-grade-name"></span>
+            </div>
+            <div class="gradescan-meta">
+              <div class="gradescan-confidence" id="gradescan-confidence"></div>
+              <p class="gradescan-tip" id="gradescan-tip"></p>
+            </div>
+          </div>
+          <div class="gradescan-subgrades" id="gradescan-subgrades"></div>
+          <p class="grading-disclaimer">&#9888;&#65039; This is an automated estimate from one photo &mdash; <strong>not an official grade</strong>. Centering is measured directly; corners, edges &amp; surface are approximated and are sensitive to lighting, angle and focus. Always inspect the card in hand before paying to grade.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1556,7 +1608,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=124"></script>
+  <script src="app.js?v=125"></script>
   <script type="importmap">
   {
     "imports": {
