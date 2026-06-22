@@ -2626,11 +2626,207 @@ app.post('/api/scan-lead', (req, res) => {
       grade: Number.isFinite(+grade) ? +grade : null,
       source: 'grade-scanner',
       createdAt: new Date().toISOString(),
+      // Drip nurture state — the sequence that converts the lead to Pro.
+      unsubToken: crypto.randomUUID(),
+      dripStage: 0,         // how many drip emails have been sent
+      lastDripAt: null,
+      unsubscribed: false,
+      dripDone: false,
     });
     saveScanLeads(data);
+    // Kick the drip soon so the welcome email goes out within seconds, not
+    // on the next interval. The in-flight lock prevents a double-send if the
+    // scheduled run overlaps.
+    setTimeout(() => { processScanLeadDrip().catch(() => {}); }, 1500);
   }
   res.json({ ok: true });
 });
+
+// ---- Lead → email drip (converts captured scanner emails to Pro) ----
+// A short nurture sequence: welcome + value → "is it worth grading?" → sell-window
+// urgency. Each email carries a Pro/free-trial CTA and a one-click unsubscribe.
+// Reuses the same provider-agnostic sendEmail() the price alerts use.
+const DRIP_ORIGIN = (process.env.SITE_URL || 'https://thecardhuddle.com').replace(/\/$/, '');
+const _DAY = 24 * 60 * 60 * 1000;
+
+function _dripUnsubUrl(lead) {
+  return `${DRIP_ORIGIN}/api/scan-lead/unsubscribe?id=${encodeURIComponent(lead.id)}&t=${encodeURIComponent(lead.unsubToken || '')}`;
+}
+function _dripCta(label, query) {
+  const url = query
+    ? `${DRIP_ORIGIN}/?utm_source=drip&utm_medium=email&prefill=${encodeURIComponent(query)}`
+    : `${DRIP_ORIGIN}/?utm_source=drip&utm_medium=email`;
+  return `<a href="${url}" style="display:inline-block;background:#2d6a4f;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:8px;">${label}</a>`;
+}
+function _dripShell(lead, bodyHtml) {
+  const card = lead.card || 'your card';
+  return `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#1a1a1a;">
+      <p style="font-size:13px;letter-spacing:0.06em;color:#2d6a4f;font-weight:700;margin:0 0 18px;">THE CARD HUDDLE</p>
+      ${bodyHtml}
+      <p style="color:#999;font-size:12px;margin-top:28px;border-top:1px solid #eee;padding-top:14px;">
+        You're getting this because you asked us to email sell-time tips for ${_esc(card)} on The Card Huddle.
+        <br><a href="${_dripUnsubUrl(lead)}" style="color:#999;">Unsubscribe</a>
+      </p>
+    </div>`;
+}
+function _esc(s) {
+  return String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+const DRIP_STEPS = [
+  {
+    key: 'welcome',
+    delayMs: 0,
+    subject: (l) => `What your ${l.card || 'card'} could be worth graded`,
+    body: (l) => {
+      const g = Number.isFinite(l.grade) ? l.grade : null;
+      const gradeLine = g != null
+        ? `Your scan came back around <strong>${g}/10</strong>. `
+        : '';
+      return _dripShell(l, `
+        <h2 style="margin:0 0 10px;font-size:22px;">Thanks for grading ${_esc(l.card || 'your card')} 👋</h2>
+        <p style="line-height:1.6;color:#333;">${gradeLine}Here's the thing most collectors miss: a clean copy that grades a 9 or 10 routinely sells for <strong>several times</strong> its raw price. That gap is your upside — but only if it's actually worth the grading fee.</p>
+        <p style="line-height:1.6;color:#333;">Pull the live eBay sold prices for ${_esc(l.card || 'your card')} — raw vs graded — and see the exact swing before you spend a dime:</p>
+        <p style="margin:22px 0;">${_dripCta('See live sold values', l.card)}</p>
+      `);
+    },
+  },
+  {
+    key: 'worth-grading',
+    delayMs: 2 * _DAY,
+    subject: (l) => `Is your ${l.card || 'card'} actually worth grading?`,
+    body: (l) => _dripShell(l, `
+      <h2 style="margin:0 0 10px;font-size:22px;">The grading math, in 30 seconds</h2>
+      <p style="line-height:1.6;color:#333;">Grading runs ~$25 and a few weeks. It only pays off when the graded premium clears that. Some cards triple in value at a PSA 10 — others barely move. Guessing wrong costs you money either way.</p>
+      <p style="line-height:1.6;color:#333;">The Card Huddle shows the <strong>raw-vs-graded swing</strong> for ${_esc(l.card || 'your card')} from real sold comps, so you only grade the ones that pay. Track it free and we'll keep an eye on the price for you.</p>
+      <p style="margin:22px 0;">${_dripCta('Run the numbers on my card', l.card)}</p>
+    `),
+  },
+  {
+    key: 'sell-window',
+    delayMs: 5 * _DAY,
+    subject: (l) => `Don't miss the sell window on your ${l.card || 'card'}`,
+    body: (l) => _dripShell(l, `
+      <h2 style="margin:0 0 10px;font-size:22px;">Prices move fast. Get the alert.</h2>
+      <p style="line-height:1.6;color:#333;">Playoff runs, breakouts, injuries — card values can swing 20–40% in a week. Miss the spike and you leave real money on the table.</p>
+      <p style="line-height:1.6;color:#333;">Set a free price alert on ${_esc(l.card || 'your card')} and we'll email you the moment the market moves. Start a <strong>free 7-day Pro trial</strong> to turn on sell-time alerts:</p>
+      <p style="margin:22px 0;">${_dripCta('Start my free trial', l.card)}</p>
+    `),
+  },
+];
+
+async function sendDripEmail(lead, stepIndex) {
+  const step = DRIP_STEPS[stepIndex];
+  if (!step) return false;
+  if (!useResend && !emailTransporter) {
+    console.log(`[Drip] email not configured — would send "${step.key}" to ${lead.email}`);
+    return false;
+  }
+  return sendEmail({ to: lead.email, subject: step.subject(lead), html: step.body(lead) });
+}
+
+// Backfill drip fields on any older lead that predates this feature.
+function _ensureDripFields(lead) {
+  if (!lead.unsubToken) lead.unsubToken = crypto.randomUUID();
+  if (typeof lead.dripStage !== 'number') lead.dripStage = 0;
+  if (typeof lead.unsubscribed !== 'boolean') lead.unsubscribed = false;
+  if (typeof lead.dripDone !== 'boolean') lead.dripDone = false;
+  if (!('lastDripAt' in lead)) lead.lastDripAt = null;
+}
+
+// Which step (if any) is due for this lead right now.
+function _dripDue(lead, now) {
+  if (lead.unsubscribed || lead.dripDone) return -1;
+  const stage = lead.dripStage || 0;
+  if (stage >= DRIP_STEPS.length) return -1;
+  const created = Date.parse(lead.createdAt) || now;
+  if (now - created < DRIP_STEPS[stage].delayMs) return -1;
+  // Safety throttle: never two drip emails to the same lead within 12h.
+  if (lead.lastDripAt && now - Date.parse(lead.lastDripAt) < 12 * 60 * 60 * 1000) return -1;
+  return stage;
+}
+
+let _dripRunning = false;
+async function processScanLeadDrip() {
+  if (_dripRunning) return;
+  _dripRunning = true;
+  try {
+    const data = loadScanLeads();
+    if (!data.leads || !data.leads.length) return;
+    const now = Date.now();
+    let changed = false;
+    let sent = 0;
+    for (const lead of data.leads) {
+      _ensureDripFields(lead);
+      const step = _dripDue(lead, now);
+      if (step < 0) continue;
+      const ok = await sendDripEmail(lead, step);
+      // Advance regardless of send success (best-effort) so a bad address
+      // can't wedge the sequence; log failures for visibility.
+      lead.dripStage = (lead.dripStage || 0) + 1;
+      lead.lastDripAt = new Date().toISOString();
+      if (lead.dripStage >= DRIP_STEPS.length) lead.dripDone = true;
+      changed = true;
+      sent++;
+      console.log(`[Drip] step "${DRIP_STEPS[step].key}" -> ${lead.email} (${ok ? 'sent' : 'send failed/unconfigured'})`);
+      await new Promise(r => setTimeout(r, 1500)); // gentle pacing
+    }
+    if (changed) saveScanLeads(data);
+    if (sent) console.log(`[Drip] processed ${sent} email(s).`);
+  } catch (err) {
+    console.error('[Drip] processing error:', err.message);
+  } finally {
+    _dripRunning = false;
+  }
+}
+
+// One-click unsubscribe (no auth — guarded by the per-lead token).
+app.get('/api/scan-lead/unsubscribe', (req, res) => {
+  const { id, t } = req.query;
+  const page = (ok) => `<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1">
+    <div style="font-family:system-ui,sans-serif;max-width:480px;margin:80px auto;text-align:center;padding:0 20px;">
+      <h2 style="color:#2d6a4f;">${ok ? "You're unsubscribed" : 'Link expired'}</h2>
+      <p style="color:#555;">${ok ? "You won't get any more sell-time emails for this card." : "We couldn't process that unsubscribe link."}</p>
+      <p><a href="${DRIP_ORIGIN}" style="color:#2d6a4f;">Back to The Card Huddle</a></p>
+    </div>`;
+  const data = loadScanLeads();
+  const lead = data.leads.find(l => l.id === id);
+  if (lead && lead.unsubToken && t === lead.unsubToken) {
+    if (!lead.unsubscribed) { lead.unsubscribed = true; lead.unsubscribedAt = new Date().toISOString(); saveScanLeads(data); }
+    return res.send(page(true));
+  }
+  res.status(400).send(page(false));
+});
+
+// Admin: drip funnel stats (counts only).
+app.get('/api/scan-lead/stats', (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const data = loadScanLeads();
+  const leads = data.leads || [];
+  const byStage = {};
+  for (const l of leads) { const s = l.dripStage || 0; byStage[s] = (byStage[s] || 0) + 1; }
+  res.json({
+    total: leads.length,
+    unsubscribed: leads.filter(l => l.unsubscribed).length,
+    completed: leads.filter(l => l.dripDone).length,
+    byStage,
+  });
+});
+
+// Admin: manually trigger a drip pass (for an external cron on Workers, where
+// setInterval doesn't persist between requests).
+app.post('/api/scan-lead/run-drip', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  await processScanLeadDrip();
+  res.json({ ok: true });
+});
+
+// Start the drip loop (Node host). Hourly is plenty — the day-based delays pace
+// the sequence; the per-capture kick handles the welcome promptly.
+const DRIP_INTERVAL = 60 * 60 * 1000;
+setInterval(() => { processScanLeadDrip().catch(() => {}); }, DRIP_INTERVAL);
+setTimeout(() => { processScanLeadDrip().catch(() => {}); }, 45000);
 
 // List alerts for a user
 app.get('/api/alerts', (req, res) => {
