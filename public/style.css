@@ -8090,6 +8090,124 @@ footer {
 .gradescan-sg-tag.tag-measured { color: var(--accent); background: rgba(94, 206, 153, 0.12); border: 1px solid rgba(94, 206, 153, 0.3); }
 .gradescan-sg-tag.tag-approx   { color: var(--text-muted); background: var(--bg-hover); border: 1px solid var(--border-primary); }
 
+/* ---- Grade scanner sales funnel ---- */
+.gradescan-next {
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-primary);
+}
+.gradescan-next-title { margin: 0 0 0.6rem; font-size: 0.95rem; color: var(--text-primary); }
+.gradescan-next-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.gradescan-card-q {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+.gradescan-card-q:focus { outline: none; border-color: var(--accent); }
+.gradescan-value-btn {
+  flex: 0 0 auto;
+  padding: 0.6rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #07120d;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.gradescan-value-btn:hover { filter: brightness(1.06); }
+.gradescan-value-out { margin-top: 0.85rem; }
+.gradescan-value-hint, .gradescan-value-foot { font-size: 0.78rem; color: var(--text-muted); margin: 0.4rem 0 0; }
+.gradescan-value-loading { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); padding: 0.5rem 0; }
+.gradescan-value-card {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+.gradescan-value-locked { border-style: dashed; }
+.gradescan-value-grid { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.gv-cell { display: flex; flex-direction: column; align-items: center; }
+.gv-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.gv-num { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+.gv-graded .gv-num { color: var(--accent); }
+.gv-arrow { font-size: 1.4rem; color: var(--text-muted); }
+.gradescan-value-swing { margin: 0.7rem 0 0; font-size: 0.9rem; color: var(--text-secondary); text-align: center; line-height: 1.45; }
+.gradescan-value-swing strong { color: var(--text-primary); }
+.gradescan-cta-card { margin-top: 0.8rem; }
+.gradescan-track-btn {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #52b788, #38a169);
+  color: #07120d;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.gradescan-track-btn:hover { filter: brightness(1.05); }
+.gradescan-track-msg { margin: 0.45rem 0 0; font-size: 0.78rem; color: var(--text-secondary); text-align: center; min-height: 0.8rem; }
+.gradescan-lead { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+.gradescan-lead-email {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+.gradescan-lead-email:focus { outline: none; border-color: var(--accent); }
+.gradescan-lead-btn {
+  flex: 0 0 auto;
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.gradescan-lead-btn:hover { border-color: var(--accent); }
+.gradescan-lead-msg { flex: 1 1 100%; margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--text-secondary); }
+.gradescan-share-btn {
+  margin-top: 0.9rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.gradescan-share-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Pricing modal: trial CTA */
+.pricing-cta-secondary {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.4rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.pricing-cta-secondary:hover { color: var(--text-primary); }
+.pricing-trial-note { margin: 0.55rem 0 0; font-size: 0.74rem; color: var(--text-muted); text-align: center; }
+
 .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-primary); padding: 0.55rem 1.2rem; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; }
 .btn-secondary:hover { background: var(--bg-hover); }
 

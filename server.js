@@ -2599,6 +2599,39 @@ app.post('/api/alerts', (req, res) => {
   res.json({ alert: { id: alert.id, query: alert.query, label: alert.label, createdAt: alert.createdAt, priceThreshold: alert.priceThreshold, priceCondition: alert.priceCondition } });
 });
 
+// ---- /api/scan-lead ----
+// Lightweight email capture from the free Grade My Card scanner. Anyone (no
+// account needed) can ask to be emailed when their scanned card's a good time
+// to sell. Stored as a lead so it can be converted later — this is top-of-funnel
+// for Pro, not a full price alert.
+const SCAN_LEADS_FILE = path.join(APP_ROOT, 'data', 'scan-leads.json');
+function loadScanLeads() { return loadData('scan-leads', SCAN_LEADS_FILE, { leads: [] }); }
+function saveScanLeads(data) { saveData('scan-leads', SCAN_LEADS_FILE, data); }
+
+app.post('/api/scan-lead', (req, res) => {
+  const { email, card, grade } = req.body || {};
+  if (!email || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    return res.status(400).json({ error: 'A valid email is required' });
+  }
+  const data = loadScanLeads();
+  const norm = email.trim().toLowerCase();
+  const cardStr = (card || '').toString().slice(0, 160);
+  // De-dupe on email+card so repeat scans of the same card don't pile up.
+  const dup = data.leads.find(l => l.email === norm && (l.card || '') === cardStr);
+  if (!dup) {
+    data.leads.push({
+      id: crypto.randomUUID(),
+      email: norm,
+      card: cardStr,
+      grade: Number.isFinite(+grade) ? +grade : null,
+      source: 'grade-scanner',
+      createdAt: new Date().toISOString(),
+    });
+    saveScanLeads(data);
+  }
+  res.json({ ok: true });
+});
+
 // List alerts for a user
 app.get('/api/alerts', (req, res) => {
   const { username } = req.query;
@@ -4046,6 +4079,10 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
   const { username, period } = req.body;
   if (!username) return res.status(400).json({ error: 'Username required' });
 
+  // Opt-in 7-day free trial. Stripe collects the card now and only charges
+  // after the trial ends, so the entitlement is real and self-expiring.
+  const wantsTrial = req.body.trial === true || req.body.trial === 'true';
+
   try {
     const priceData = period === 'yearly'
       ? { unit_amount: 3999, recurring: { interval: 'year' } }
@@ -4062,6 +4099,7 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
         },
         quantity: 1
       }],
+      ...(wantsTrial ? { subscription_data: { trial_period_days: 7 } } : {}),
       // Surfaces Stripe's built-in "Add promotion code" field on Checkout so
       // codes like PRODUCTHUNTLAUNCH (created in Stripe Dashboard -> Coupons)
       // can be redeemed. Coupon definitions live entirely in Stripe so we

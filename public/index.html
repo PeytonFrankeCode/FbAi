@@ -270,7 +270,9 @@
             <li class="included">5 promoted listing slots</li>
             <li class="included">CSV export of your collection</li>
           </ul>
-          <button class="pricing-cta pro" onclick="handleSubscribe('pro')">Get Pro</button>
+          <button class="pricing-cta pro" onclick="handleSubscribe('pro', true)">Start 7-day free trial</button>
+          <button class="pricing-cta-secondary" onclick="handleSubscribe('pro')">or subscribe now</button>
+          <p class="pricing-trial-note">Free for 7 days, then <span id="pro-trial-price">$4.99/mo</span>. Cancel anytime.</p>
         </div>
       </div>
 
@@ -679,6 +681,18 @@
             </div>
           </div>
           <div class="gradescan-subgrades" id="gradescan-subgrades"></div>
+
+          <!-- Sales funnel: turn the free scan into a "should I grade & sell this?" moment -->
+          <div class="gradescan-next">
+            <h4 class="gradescan-next-title">&#128176; What&rsquo;s it worth at this grade?</h4>
+            <div class="gradescan-next-row">
+              <input id="gradescan-card-q" class="gradescan-card-q" placeholder="Which card? e.g. 2023 Prizm C.J. Stroud" onkeydown="if(event.key==='Enter'){event.preventDefault();scanValueLookup();}" />
+              <button class="gradescan-value-btn" id="gradescan-value-btn" onclick="scanValueLookup()">See value</button>
+            </div>
+            <div id="gradescan-value-out" class="gradescan-value-out hidden"></div>
+            <button class="gradescan-share-btn" onclick="shareGradeResult()">&#128247; Share my grade</button>
+          </div>
+
           <p class="grading-disclaimer">&#9888;&#65039; This is an automated estimate from one photo &mdash; <strong>not an official grade</strong>. Centering is measured directly; corners, edges &amp; surface are approximated and are sensitive to lighting, angle and focus. Always inspect the card in hand before paying to grade.</p>
         </div>
       </div>
