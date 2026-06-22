@@ -3466,6 +3466,24 @@ function checkPaymentReturn() {
   }
 }
 
+// Drip/email deep-link: ?prefill=<card> drops the visitor straight into a sold
+// search for that card, closing the loop from the nurture emails to the value
+// they were promised.
+function checkPrefillParam() {
+  const params = new URLSearchParams(window.location.search);
+  const prefill = params.get('prefill');
+  if (!prefill) return;
+  const inp = document.getElementById('search-input');
+  const frm = document.getElementById('search-form');
+  if (!inp || !frm) return;
+  try { switchView('search'); } catch {}
+  inp.value = prefill.slice(0, 120);
+  // Strip params so a refresh doesn't re-run the search.
+  window.history.replaceState({}, '', window.location.pathname);
+  // Let the view switch settle before submitting.
+  setTimeout(() => { frm.dispatchEvent(new Event('submit')); }, 60);
+}
+
 function updateProButton() {
   const sub = getUserSubscription();
   if (sub) {
@@ -3493,6 +3511,8 @@ document.addEventListener('keydown', (e) => {
 updateProButton();
 // Sync Stripe subscription status and check for payment return
 syncSubscriptionStatus();
+// Email-drip deep links (?prefill=<card>) → run that card's sold search.
+checkPrefillParam();
 // Pull this account's collection/watchlist/etc. from the server so they show
 // up here even if the user signed in on a different device. No-op if not
 // logged in (no session token).

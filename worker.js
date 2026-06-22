@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -46,7 +46,7 @@ async function init(env) {
   // first request — preload happens once, subsequent saves use the cached
   // binding stored inside db.js.
   await connectDB(env);
-  serverInit = { app, getSessionUserByToken };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip };
   return serverInit;
 }
 
@@ -474,5 +474,27 @@ export default {
         { status: 500, headers: { 'content-type': 'application/json' } }
       );
     }
+  },
+
+  // Cron Trigger entry point. setInterval/setTimeout don't persist across
+  // Workers' request-scoped isolates, so the in-process loops in server.js are
+  // Node-only — here Cloudflare's scheduler drives the same work: price-alert
+  // checks and the scan-lead email drip. connectDB(env) (via init) re-preloads
+  // KV each invocation; waitUntil keeps the isolate alive until both finish so
+  // their KV writes flush.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => {
+      try {
+        const { checkAlerts, processScanLeadDrip } = await init(env);
+        if (typeof checkAlerts === 'function') {
+          await checkAlerts().catch(err => console.error('[Cron] checkAlerts failed:', err && err.message || err));
+        }
+        if (typeof processScanLeadDrip === 'function') {
+          await processScanLeadDrip().catch(err => console.error('[Cron] drip failed:', err && err.message || err));
+        }
+      } catch (err) {
+        console.error('Worker scheduled crashed:', err && err.stack || err);
+      }
+    })());
   },
 };
