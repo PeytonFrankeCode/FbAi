@@ -8077,6 +8077,18 @@ footer {
 .gradescan-sg-fill.sg-good { background: var(--gold); }
 .gradescan-sg-fill.sg-low  { background: var(--error); }
 .gradescan-sg-detail { font-size: 0.72rem; color: var(--text-muted); }
+.gradescan-sg-tag {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  padding: 0.08rem 0.34rem;
+  border-radius: 999px;
+  vertical-align: middle;
+  margin-left: 0.3rem;
+}
+.gradescan-sg-tag.tag-measured { color: var(--accent); background: rgba(94, 206, 153, 0.12); border: 1px solid rgba(94, 206, 153, 0.3); }
+.gradescan-sg-tag.tag-approx   { color: var(--text-muted); background: var(--bg-hover); border: 1px solid var(--border-primary); }
 
 .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-primary); padding: 0.55rem 1.2rem; border-radius: 8px; font-size: 0.9rem; cursor: pointer; transition: background 0.15s; }
 .btn-secondary:hover { background: var(--bg-hover); }
