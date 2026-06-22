@@ -404,88 +404,8 @@ async function clearScrapeDoKey() {
 function updateSettingsSubscription() {
   const desc = document.getElementById('settings-sub-desc');
   const action = document.getElementById('settings-sub-action');
-  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-
-  if (!user) {
-    desc.textContent = 'Log in to manage your plan';
-    action.innerHTML = `<button class="settings-sub-btn" onclick="closeSettings(); showLogin();">Log In</button>`;
-    return;
-  }
-
-  const sub = typeof getUserSubscription === 'function' ? getUserSubscription() : null;
-
-  if (!sub) {
-    desc.textContent = 'You\'re on the Free plan';
-    action.innerHTML = `<button class="settings-sub-btn settings-sub-upgrade" onclick="closeSettings(); showPricing();">Upgrade</button>`;
-  } else {
-    const period = sub.period === 'yearly' ? 'Yearly' : 'Monthly';
-    const date = new Date(sub.subscribedAt);
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    desc.innerHTML = `<strong>Pro</strong> &middot; ${period} &middot; Since ${dateStr}<br><span class="settings-sub-billing" id="settings-sub-billing">Loading billing details…</span>`;
-    action.innerHTML = `<button class="settings-sub-btn settings-sub-cancel" id="manage-sub-btn" onclick="openBillingPortal()">Manage Subscription</button>`;
-    loadBillingDetails();
-  }
-}
-
-// Pull next-bill / cancel-at-period-end details from Stripe via our server
-// and render them in the Settings panel. Anything that can fail (no Stripe
-// customer linked, network drop, subscription deleted upstream) silently
-// hides the line — the basic plan info above still renders fine.
-async function loadBillingDetails() {
-  const el = document.getElementById('settings-sub-billing');
-  if (!el) return;
-  const user = getCurrentUser();
-  if (!user) { el.remove(); return; }
-  try {
-    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}&_=${Date.now()}`, { cache: 'no-store' });
-    const data = await safeJson(res);
-    const b = data && data.billing;
-    if (!b || !b.currentPeriodEnd) { el.remove(); return; }
-    const when = new Date(b.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    if (b.cancelAtPeriodEnd) {
-      el.innerHTML = `<strong>Cancels on ${when}</strong> &middot; you'll keep Pro access until then`;
-      el.classList.add('settings-sub-billing--cancelling');
-    } else if (typeof b.unitAmount === 'number') {
-      const amount = `$${(b.unitAmount / 100).toFixed(2)}`;
-      const cur = (b.currency || 'usd').toUpperCase();
-      el.textContent = `Next bill: ${amount} ${cur === 'USD' ? '' : cur + ' '}on ${when}`;
-    } else {
-      el.textContent = `Renews on ${when}`;
-    }
-  } catch (_) {
-    el.remove();
-  }
-}
-
-// Send the user to Stripe's hosted Billing Portal where they can cancel,
-// switch plans, update payment method, or download invoices. Cancellation
-// flows back to us via the subscription.deleted / subscription.updated
-// webhook, which marks the KV-backed subscription record cancelled.
-async function openBillingPortal() {
-  const user = getCurrentUser();
-  if (!user) return;
-  const btn = document.getElementById('manage-sub-btn');
-  const orig = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
-  try {
-    const res = await fetch(`/api/stripe/create-portal-session?_=${Date.now()}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-      body: JSON.stringify({ username: user }),
-    });
-    const data = await safeJson(res);
-    if (res.ok && data && data.url) {
-      window.location.href = data.url;
-      return;
-    }
-    const detail = (data && (data.detail || data.error)) || `Server returned HTTP ${res.status}`;
-    alert(`Couldn't open the billing portal:\n\n${detail}`);
-  } catch (err) {
-    alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = orig; }
-  }
+  if (desc) desc.textContent = 'Every feature is unlocked and free. Enjoy!';
+  if (action) action.innerHTML = '';
 }
 
 function closeSettings() {
@@ -498,7 +418,7 @@ document.addEventListener('click', function(e) {
   if (e.target === overlay) closeSettings();
 });
 
-// ---- Tracked Cards / Card Alerts (Pro feature) ----
+// ---- Tracked Cards / Card Alerts ----
 
 function initTrackedView() {
   const gate = document.getElementById('tracked-gate');
@@ -1017,21 +937,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const query = input.value.trim();
       const conditionEl = document.getElementById('tracked-condition');
       const thresholdEl = document.getElementById('tracked-threshold');
-      // Free tier can save tracked cards locally but doesn't get
-      // email alerts — those are the Pro upsell here.
-      const priceCondition = hasPro() && conditionEl ? conditionEl.value || null : null;
-      const priceThreshold = hasPro() && thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
+      const priceCondition = conditionEl ? conditionEl.value || null : null;
+      const priceThreshold = thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
       const errEl = document.getElementById('tracked-error');
       errEl.classList.add('hidden');
 
-      if (!hasPro() && (conditionEl?.value || thresholdEl?.value)) {
-        // User filled in a threshold but isn't on Pro — show the
-        // upsell instead of silently dropping their threshold.
-        proPrompt('Email alerts on a price threshold are a Pro feature. Upgrade to enable them.');
-        return;
-      }
-
-      if (!email && hasPro()) {
+      if (!email) {
         errEl.textContent = 'Add an email to your account to receive alerts (sign up again with email).';
         errEl.classList.remove('hidden');
         return;
@@ -2145,16 +2056,14 @@ async function loadGradePanel(query) {
 function updatePriceChart(results) {
   if (typeof Chart === 'undefined') return;
 
-  const isPro = hasPro();
-  const cutoffDays = isPro ? 365 : 30;
-  const cutoffDate = new Date(Date.now() - cutoffDays * 24 * 60 * 60 * 1000);
+  // Full price history is free for everyone — show up to a year.
+  const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
 
   const allSorted = [...results]
     .filter(r => r.soldDate && r.price)
     .sort((a, b) => new Date(a.soldDate) - new Date(b.soldDate));
 
   const sorted = allSorted.filter(r => new Date(r.soldDate) >= cutoffDate);
-  const hiddenCount = allSorted.length - sorted.length;
 
   // Show depth notice
   let depthEl = document.getElementById('chart-depth-notice');
@@ -2164,10 +2073,7 @@ function updatePriceChart(results) {
     depthEl.className = 'chart-depth-notice';
     chartSection.appendChild(depthEl);
   }
-  if (!isPro && hiddenCount > 0) {
-    depthEl.innerHTML = `Last 30 days shown &middot; <a href="#" onclick="showPricing();return false;" class="chart-depth-upgrade">${hiddenCount} older sale${hiddenCount !== 1 ? 's' : ''} hidden — Upgrade to Pro for full history</a>`;
-    depthEl.classList.remove('hidden');
-  } else if (isPro && allSorted.length > 0) {
+  if (allSorted.length > 0) {
     depthEl.textContent = `Showing up to 1 year of price history`;
     depthEl.classList.remove('hidden');
   } else {
@@ -3230,117 +3136,22 @@ document.addEventListener('keydown', (e) => {
 updateAuthButton();
 
 // ---- Subscription / Pricing ----
-const pricingOverlay = document.getElementById('pricing-overlay');
-const proBtn = document.getElementById('pro-btn');
-const proBtnText = document.getElementById('pro-btn-text');
-let pricingPeriod = 'monthly';
+// Paywalls and paid plans have been removed — every feature is free. These
+// stay as inert no-ops so any remaining caller is harmless.
+function showPricing() {}
+function closePricing() {}
+function setPricingPeriod() {}
+function handleSubscribe() {}
 
-function showPricing() {
-  if (pricingOverlay) pricingOverlay.classList.remove('hidden');
-}
-function closePricing() {
-  if (pricingOverlay) pricingOverlay.classList.add('hidden');
-}
-
-function setPricingPeriod(period) {
-  pricingPeriod = period;
-  document.querySelectorAll('.pricing-period').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.period === period);
-  });
-  const yearly = period === 'yearly';
-  const priceEl = document.getElementById('pro-price');
-  const freqEl = document.getElementById('pro-freq');
-  if (priceEl) { priceEl.textContent = yearly ? '$39.99' : '$4.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
-  const trialPriceEl = document.getElementById('pro-trial-price');
-  if (trialPriceEl) trialPriceEl.textContent = yearly ? '$39.99/yr' : '$4.99/mo';
-}
-
-async function handleSubscribe(plan, trial = false) {
-  const user = getCurrentUser();
-  if (!user) {
-    closePricing();
-    showLogin();
-    return;
-  }
-
-  // 1) Ask the worker whether Stripe is wired up.
-  let stripeConfig = null;
-  let configErr = null;
-  try {
-    // Cache-bust the request so a stale `enabled:false` answer cached
-    // before secrets were set in Cloudflare can't keep the user locked out.
-    const configRes = await fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' });
-    stripeConfig = await safeJson(configRes);
-  } catch (err) {
-    configErr = err;
-    console.warn('[stripe] config fetch failed:', err && err.message || err);
-  }
-
-  // 2) If the config endpoint itself failed, that's the bug — surface it.
-  if (!stripeConfig) {
-    alert(`Couldn't talk to the Stripe config endpoint:\n\n${configErr ? (configErr.message || configErr) : 'no response'}\n\nIf this keeps failing, please report it.`);
-    return;
-  }
-
-  // 2b) Paid checkout temporarily paused (tax setup). Tell the user and stop.
-  if (stripeConfig.checkoutEnabled === false) {
-    applyCheckoutState(false);
-    alert(`Subscriptions are temporarily paused while we finalize tax setup.\n\nPlease check back soon — thanks for your patience!`);
-    return;
-  }
-
-  // 3) Stripe explicitly off on this environment (no STRIPE_SECRET_KEY).
-  //    Tell the user clearly instead of pretending they bought Pro.
-  if (!stripeConfig.enabled) {
-    alert(`Stripe isn't configured on this environment.\n\nThis usually means STRIPE_SECRET_KEY is missing as a Cloudflare Worker secret.`);
-    return;
-  }
-
-  // 4) Stripe is on. Start the checkout session.
-  try {
-    const endpoint = plan === 'proplus' ? '/api/stripe/create-checkout-proplus' : '/api/stripe/create-checkout';
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, period: pricingPeriod, trial: !!trial })
-    });
-    const data = await safeJson(res);
-    if (res.ok && data.url) {
-      window.location.href = data.url;
-      return;
-    }
-    const detail = (data && (data.detail || data.error)) || `Server returned HTTP ${res.status}`;
-    alert(`Couldn't start Stripe checkout:\n\n${detail}`);
-    console.error('[stripe] create-checkout failed:', res.status, data);
-  } catch (err) {
-    const msg = (err && err.message) || String(err);
-    alert(`Couldn't reach Stripe:\n\n${msg}\n\nCheck your connection and try again.`);
-    console.error('[stripe] create-checkout threw:', err);
-  }
-}
-
-// One paid tier called 'pro'. Reads from localStorage, server-synced via
-// syncSubscriptionStatus on login. Pro unlocks Tracked Cards and Pro Tools.
-function getUserSubscription() {
-  const user = getCurrentUser();
-  if (!user) return null;
-  const users = getUsers();
-  return users[user.toLowerCase()]?.subscription || null;
-}
+function getUserSubscription() { return null; }
 
 function hasPro() {
-  // Real subscription check — Pro features (Tracked Cards, Pro Tools, full
-  // chart history, higher caps) require an active 'pro' plan. Every feature
-  // gate (checkCapLimit, checkDailyLimit, proGate, dailyUsesLeft,
-  // price-alert options, promoted slots) keys off this.
-  const sub = getUserSubscription();
-  return sub?.plan === 'pro' && sub?.status === 'active';
+  // Everything is free now — all feature gates pass.
+  return true;
 }
 
-// Back-compat: isProPlus is the strict Pro-tier check. isProOrPlus
-// remains permissive — features that always return true are gated
-// instead via the explicit soft-limit helpers below.
-function isProPlus() { return hasPro(); }
+// Back-compat shims for callers that still check a tier — all true now.
+function isProPlus() { return true; }
 function isProOrPlus() { return true; }
 
 // ---- Soft Limits (Free tier) ----
@@ -3354,12 +3165,14 @@ function isProOrPlus() { return true; }
 // short reason in the title bar so the user knows why they're seeing
 // it — much higher conversion than a generic "upgrade now".
 
+// Everything is free and uncapped now. Kept only so the (always-passing) limit
+// helpers still have values to reference. Promoted listings are capped at 5.
 const FREE_LIMITS = {
-  collection: 50,
-  watchlist: 5,
-  promotedSlots: 1,        // Pro gets 5 (or +extra via Stripe)
-  dailyGrading: 3,
-  dailyAutoPricer: 1,
+  collection: Infinity,
+  watchlist: Infinity,
+  promotedSlots: 5,
+  dailyGrading: Infinity,
+  dailyAutoPricer: Infinity,
 };
 
 function _todayKey() {
@@ -3387,83 +3200,22 @@ function dailyUsesLeft(name, limit) {
   return Math.max(0, limit - _dailyUseGet(name));
 }
 
-// Shows the pricing modal with a contextual reason. Returns false so
-// the call site can `return proPrompt(...)` in one line.
-function proPrompt(reason) {
-  try {
-    const subtext = document.querySelector('.pricing-subtext');
-    if (subtext && reason) subtext.textContent = reason;
-  } catch {}
-  showPricing();
-  return false;
-}
+// No paywalls anymore — inert. Returns true so any legacy `if (!proPrompt())`
+// gate treats the action as allowed.
+function proPrompt() { return true; }
 
-// Returns true if the action is allowed. Pass `{ silent: true }` to
-// suppress the upgrade prompt (useful when you only want to check).
-function checkDailyLimit(name, limit, label, opts) {
-  if (hasPro()) return true;
-  const used = _dailyUseGet(name);
-  if (used < limit) { _dailyUseInc(name); return true; }
-  if (!opts || !opts.silent) {
-    proPrompt(`${label} hits ${limit}/day on Free. Upgrade for unlimited.`);
-  }
-  return false;
-}
+// All features are free and uncapped — these always allow the action now.
+function checkDailyLimit() { return true; }
+function checkCapLimit() { return true; }
+function proGate() { return true; }
 
-function checkCapLimit(currentCount, max, label) {
-  if (hasPro()) return true;
-  if (currentCount < max) return true;
-  proPrompt(`Free is capped at ${max} ${label}. Upgrade for unlimited.`);
-  return false;
-}
+// Paid plans removed — nothing to sync.
+async function syncSubscriptionStatus() {}
 
-function proGate(label) {
-  if (hasPro()) return true;
-  proPrompt(`${label} is a Pro feature. Upgrade to unlock.`);
-  return false;
-}
-
-// Sync subscription status from server (called on login and page load)
-async function syncSubscriptionStatus() {
-  const user = getCurrentUser();
-  if (!user) return;
-  try {
-    const token = getSessionToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await fetch(`/api/stripe/subscription?username=${encodeURIComponent(user)}`, { headers });
-    const data = await res.json();
-    if (data.subscription && data.subscription.status === 'active') {
-      const users = getUsers();
-      const key = user.toLowerCase();
-      if (!users[key]) users[key] = {};
-      users[key].subscription = { plan: data.subscription.plan, period: data.subscription.period, subscribedAt: data.subscription.subscribedAt, status: data.subscription.status || 'active' };
-      if (data.subscription.extraPromoteSlots) {
-        users[key].extraPromoteSlots = data.subscription.extraPromoteSlots;
-      }
-      localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-      updateProButton();
-    }
-  } catch (err) { /* server unavailable, use local data */ }
-}
-
-// Check for payment success/cancel in URL params
+// No paid checkout anymore — just clear any stale payment params from the URL.
 function checkPaymentReturn() {
   const params = new URLSearchParams(window.location.search);
-  const payment = params.get('payment');
-  if (payment === 'success') {
-    const type = params.get('type');
-    if (type === 'slot') {
-      alert('Extra promote slot purchased successfully!');
-    } else {
-      const plan = params.get('plan');
-      alert(plan === 'proplus' ? 'Pro+ activated! Welcome to Card Huddle Pro+.' : 'Pro subscription activated! Welcome to Card Huddle Pro.');
-    }
-    // Sync from server and clean URL
-    syncSubscriptionStatus();
-    window.history.replaceState({}, '', window.location.pathname);
-  } else if (payment === 'cancelled') {
-    window.history.replaceState({}, '', window.location.pathname);
-  }
+  if (params.has('payment')) window.history.replaceState({}, '', window.location.pathname);
 }
 
 // Drip/email deep-link: ?prefill=<card> drops the visitor straight into a sold
@@ -3484,33 +3236,9 @@ function checkPrefillParam() {
   setTimeout(() => { frm.dispatchEvent(new Event('submit')); }, 60);
 }
 
-function updateProButton() {
-  const sub = getUserSubscription();
-  if (sub) {
-    proBtnText.textContent = 'Pro';
-    proBtn.classList.add('subscribed');
-  } else {
-    proBtnText.textContent = 'Go Pro';
-    proBtn.classList.remove('subscribed');
-  }
-}
+// Pro button removed — inert.
+function updateProButton() {}
 
-// Close pricing on overlay click
-pricingOverlay.addEventListener('click', (e) => {
-  if (e.target === pricingOverlay) closePricing();
-});
-
-// Close pricing on Escape
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !pricingOverlay.classList.contains('hidden')) {
-    closePricing();
-  }
-});
-
-// Init pro button state
-updateProButton();
-// Sync Stripe subscription status and check for payment return
-syncSubscriptionStatus();
 // Email-drip deep links (?prefill=<card>) → run that card's sold search.
 checkPrefillParam();
 // Pull this account's collection/watchlist/etc. from the server so they show
@@ -3518,40 +3246,6 @@ checkPrefillParam();
 // logged in (no session token).
 enableUserSync();
 checkPaymentReturn();
-
-// Warm the worker so the first Create Account submit doesn't time out on a
-// cold start. Cheap, cacheable, doesn't depend on auth.
-// Warm the worker AND learn whether paid checkout is currently open. When
-// the server reports checkoutEnabled:false (tax-setup pause), hide the
-// Go Pro CTA and switch the pricing modal into a "paused" state.
-fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' })
-  .then(r => r.json())
-  .then(cfg => { if (cfg && typeof cfg.checkoutEnabled === 'boolean') applyCheckoutState(cfg.checkoutEnabled); })
-  .catch(() => {});
-
-// Toggle every paid-checkout entry point. Reversible: when the server flips
-// CHECKOUT_ENABLED back to true this restores the normal Go Pro UI.
-let _checkoutEnabled = true;
-function applyCheckoutState(enabled) {
-  _checkoutEnabled = !!enabled;
-  // Header Go Pro button
-  const pb = document.getElementById('pro-btn');
-  if (pb) pb.style.display = enabled ? '' : 'none';
-  // Pricing modal: pause notice + disable the Get Pro CTA
-  const notice = document.getElementById('pricing-paused-notice');
-  if (notice) notice.style.display = enabled ? 'none' : 'block';
-  const promoHint = document.querySelector('.pricing-promo-hint');
-  if (promoHint) promoHint.style.display = enabled ? '' : 'none';
-  document.querySelectorAll('.pricing-cta.pro').forEach(btn => {
-    btn.disabled = !enabled;
-    if (!enabled) {
-      btn.dataset.origText = btn.dataset.origText || btn.textContent;
-      btn.textContent = 'Temporarily Unavailable';
-    } else if (btn.dataset.origText) {
-      btn.textContent = btn.dataset.origText;
-    }
-  });
-}
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
@@ -4616,10 +4310,6 @@ async function runAutoPricer() {
   const q = document.getElementById('ap-input').value.trim();
   const out = document.getElementById('ap-results');
   if (!q) { out.innerHTML = '<p class="pp-error">Enter a card to price.</p>'; return; }
-  if (!checkDailyLimit('autoPricer', FREE_LIMITS.dailyAutoPricer, 'Auto-Pricer')) {
-    out.innerHTML = '<p class="pp-error">Free plan is limited to 1 auto-price per day. Upgrade to Pro for unlimited.</p>';
-    return;
-  }
   _apUserPR = parsePrintRun(q);
   _apUserSet = detectSetTier(q);
   out.innerHTML = '<div class="pp-loading">&#128269; Finding sold comps&hellip;</div>';
@@ -5613,16 +5303,15 @@ async function scanValueLookup() {
   }
 }
 
-// Shown when we can't pull live comps (no/invalid scrape.do key). This is itself
-// an upsell: the value is exactly what a paid collector wants.
+// Shown when we can't pull live comps (no/invalid scrape.do key).
 function _scanValueLocked(q, data) {
   const est = _lastGradeAnalysis ? _lastGradeAnalysis.overall : 9;
   const tier = _TIER_LABEL[_gradeToTier(est)];
   return `<div class="gradescan-value-card gradescan-value-locked">
-    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Connect live sold data to see the exact swing for “${escHtml(q)}”.</p>
+    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Add your free scrape.do API key to see the exact live swing for “${escHtml(q)}”.</p>
     <div class="gradescan-cta-card">
-      <button class="gradescan-track-btn" onclick="showPricing()">Unlock live values &amp; sell-time alerts</button>
-      <p class="gradescan-track-msg">Add a scrape.do key in Settings, or start a free 7-day Pro trial.</p>
+      <button class="gradescan-track-btn" onclick="showSettings()">Add your scrape.do key in Settings</button>
+      <p class="gradescan-track-msg">It's free and unlocks live sold-price lookups everywhere.</p>
     </div>
   </div>` + _scanLeadBlock();
 }
@@ -5679,11 +5368,8 @@ async function scanTrackCard() {
   const q = _scanValueQuery || (document.getElementById('gradescan-card-q')?.value || '').trim();
   const msg = document.getElementById('gradescan-track-msg');
   if (!q) return;
-  if (!hasPro()) {
-    proPrompt('Sell-time email alerts on a card are a Pro feature. Start a free 7-day trial to switch them on.');
-    return;
-  }
   const user = getCurrentUser();
+  if (!user) { showLogin(); return; }
   const email = getUsers()[user?.toLowerCase()]?.email;
   if (!email) { if (msg) msg.textContent = 'Add an email to your account first (Settings) to receive alerts.'; return; }
   try {
@@ -7000,13 +6686,9 @@ function _cardValueMetaInline(c) {
 
 // Fetch fresh sold comps for one card (authenticated — needs the scrape.do key).
 // Comp time window: Pro members value off all-time comps; Free members are
-// limited to the last 2 months. Keyed off the real subscription (independent
-// of the global hasPro() unlock) so the depth stays a Pro perk.
+// All-time comp depth is free for everyone now.
 const COMP_WINDOW_DAYS_FREE = 60;
-function _compsUseAllTime() {
-  const sub = (typeof getUserSubscription === 'function') ? getUserSubscription() : null;
-  return !!sub;
-}
+function _compsUseAllTime() { return true; }
 
 async function _fetchCardComps(c) {
   const q = buildCardSoldQuery(c);
@@ -7218,9 +6900,7 @@ function renderCardCompsModal() {
       ${isEst ? '<span class="ccm-conf pf-est-badge">EST</span>' : (conf ? `<span class="ccm-conf" style="color:${confColors[conf]}">&#9679; ${conf} confidence</span>` : '')}
       <span class="ccm-meta">${metaText}</span>
     </div>
-    <div class="ccm-window">${_compsUseAllTime()
-      ? '&#9989; Valued from <strong>all-time</strong> sold comps'
-      : '&#9201;&#65039; Free: valued from the <strong>last 2 months</strong> of comps &middot; <a href="#" onclick="showPricing();return false;">upgrade for all-time</a>'}</div>
+    <div class="ccm-window">&#9989; Valued from <strong>all-time</strong> sold comps</div>
     <div class="ccm-actions">
       <button type="button" class="ap-mini-btn" id="ccm-revalue-btn" onclick="revalueCardFromModal()">&#8635; Re-value from eBay</button>
     </div>
@@ -9398,67 +9078,13 @@ function savePromotedCards(cards) {
   schedulePushUserData();
 }
 
-// Extra promotion slots — default 5 + purchased extras
+// Everyone gets 5 promoted-listing slots, free.
 function getPromoteSlotCount() {
-  const user = getCurrentUser();
-  // Free tier gets a single slot as a sample; Pro unlocks 5 + any
-  // extras the user has bought via Stripe.
-  const base = hasPro() ? 5 : FREE_LIMITS.promotedSlots;
-  if (!user) return base;
-  const users = getUsers();
-  const extra = users[user.toLowerCase()]?.extraPromoteSlots || 0;
-  return base + extra;
+  return 5;
 }
 
-async function handleBuyExtraSlot() {
-  const user = getCurrentUser();
-  if (!user) { showLogin(); return; }
-  const sub = getUserSubscription();
-  if (!sub) { showPricing(); return; }
-
-  const users = getUsers();
-  const key = user.toLowerCase();
-  const currentExtra = users[key]?.extraPromoteSlots || 0;
-
-  if (currentExtra >= 10) {
-    alert('You\'ve reached the maximum of 10 extra slots (15 total).');
-    return;
-  }
-
-  const currentMax = getPromoteSlotCount();
-  if (!confirm(`Add 1 extra promotion slot for $2.99?\nYou'll go from ${currentMax} to ${currentMax + 1} slots.`)) return;
-
-  // Try Stripe checkout
-  try {
-    const configRes = await fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' });
-    const config = await configRes.json();
-
-    if (config.enabled) {
-      const res = await fetch('/api/stripe/buy-slot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user })
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      } else {
-        alert(data.error || 'Failed to start checkout');
-        return;
-      }
-    }
-  } catch (err) {
-    console.log('Stripe not available, using local purchase:', err);
-  }
-
-  // Fallback: local (when Stripe not configured)
-  if (users[key]) {
-    users[key].extraPromoteSlots = currentExtra + 1;
-    localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-  }
-  renderPromotedCards();
-}
+// Paid extra slots removed — inert.
+function handleBuyExtraSlot() {}
 
 function initPromoteTab() {
   const gate = document.getElementById('promote-pro-gate');
@@ -9622,7 +9248,7 @@ async function handleAddPromotedCard(e) {
   const cards = getPromotedCards();
   const maxSlots = getPromoteSlotCount();
   if (cards.length >= maxSlots) {
-    alert(`You've used all ${maxSlots} promotion slots. Remove one or buy an extra slot.`);
+    alert(`You've used all ${maxSlots} promotion slots. Remove one to add another.`);
     return false;
   }
 
@@ -9703,24 +9329,11 @@ function renderPromotedCards() {
   const countEl = document.getElementById('promote-card-count');
   const maxEl = document.getElementById('promote-max-count');
   const submitBtn = document.getElementById('promote-submit-btn');
-  const buySlotWrap = document.getElementById('promote-buy-slot-wrap');
 
   const maxSlots = getPromoteSlotCount();
   countEl.textContent = cards.length;
   if (maxEl) maxEl.textContent = maxSlots;
   submitBtn.disabled = cards.length >= maxSlots;
-
-  // Show/hide buy extra slot button
-  if (buySlotWrap) {
-    buySlotWrap.classList.toggle('hidden', cards.length < maxSlots);
-    const user = getCurrentUser();
-    const users = user ? getUsers() : {};
-    const extraUsed = user ? (users[user.toLowerCase()]?.extraPromoteSlots || 0) : 0;
-    const capInfo = document.getElementById('promote-extra-cap-info');
-    const buyBtn = buySlotWrap.querySelector('.promote-buy-slot-btn');
-    if (capInfo) capInfo.textContent = `Extra slots: ${extraUsed} / 10 purchased`;
-    if (buyBtn) buyBtn.disabled = extraUsed >= 10;
-  }
 
   if (cards.length === 0) {
     listEl.innerHTML = '<p class="seller-empty">No promoted cards yet. Add your first listing above!</p>';
