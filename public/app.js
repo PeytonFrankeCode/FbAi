@@ -9041,8 +9041,11 @@ function getPromotedCards() {
 // after the first GET so the Browse page and search injection can use it
 // synchronously. Falls back to the local user's cards when the global feed
 // hasn't loaded yet (first paint).
-let _globalPromotedCache = null;
-let _globalPromotedLoading = null;
+// `var` (not `let`) so these are hoisted and can never land in a temporal
+// dead zone — any code path that reads them before this line just sees
+// `undefined`, which the Array.isArray() guards below handle gracefully.
+var _globalPromotedCache = null;
+var _globalPromotedLoading = null;
 
 function getGlobalPromotedCards() {
   if (Array.isArray(_globalPromotedCache)) return _globalPromotedCache;
