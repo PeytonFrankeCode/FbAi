@@ -2822,11 +2822,15 @@ app.post('/api/scan-lead/run-drip', async (req, res) => {
   res.json({ ok: true });
 });
 
-// Start the drip loop (Node host). Hourly is plenty — the day-based delays pace
-// the sequence; the per-capture kick handles the welcome promptly.
+// Start the drip loop. Hourly is plenty — the day-based delays pace the
+// sequence; the per-capture kick handles the welcome promptly. On Workers the
+// Cron Trigger drives processScanLeadDrip() instead (setInterval is unreliable
+// across request-scoped isolates).
 const DRIP_INTERVAL = 60 * 60 * 1000;
-setInterval(() => { processScanLeadDrip().catch(() => {}); }, DRIP_INTERVAL);
-setTimeout(() => { processScanLeadDrip().catch(() => {}); }, 45000);
+if (process.env.CF_WORKER !== '1') {
+  setInterval(() => { processScanLeadDrip().catch(() => {}); }, DRIP_INTERVAL);
+  setTimeout(() => { processScanLeadDrip().catch(() => {}); }, 45000);
+}
 
 // List alerts for a user
 app.get('/api/alerts', (req, res) => {
@@ -2960,10 +2964,14 @@ async function sendAlertEmail(alert, newListings) {
   });
 }
 
-// Start alert checker loop
-setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
-// Run first check 30 seconds after startup
-setTimeout(checkAlerts, 30000);
+// Start alert checker loop. On Node (local/VPS) we self-schedule; on Cloudflare
+// Workers, setInterval doesn't survive between requests, so a Cron Trigger calls
+// checkAlerts() via the worker's scheduled() handler instead.
+if (process.env.CF_WORKER !== '1') {
+  setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
+  // Run first check 30 seconds after startup
+  setTimeout(checkAlerts, 30000);
+}
 
 // ---- Marketplace: Browse active eBay listings ----
 app.get('/api/marketplace', async (req, res) => {
@@ -4912,7 +4920,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml };
+module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
