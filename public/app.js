@@ -3251,9 +3251,11 @@ function setPricingPeriod(period) {
   const priceEl = document.getElementById('pro-price');
   const freqEl = document.getElementById('pro-freq');
   if (priceEl) { priceEl.textContent = yearly ? '$39.99' : '$4.99'; freqEl.textContent = yearly ? '/yr' : '/mo'; }
+  const trialPriceEl = document.getElementById('pro-trial-price');
+  if (trialPriceEl) trialPriceEl.textContent = yearly ? '$39.99/yr' : '$4.99/mo';
 }
 
-async function handleSubscribe(plan) {
+async function handleSubscribe(plan, trial = false) {
   const user = getCurrentUser();
   if (!user) {
     closePricing();
@@ -3300,7 +3302,7 @@ async function handleSubscribe(plan) {
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, period: pricingPeriod })
+      body: JSON.stringify({ username: user, period: pricingPeriod, trial: !!trial })
     });
     const data = await safeJson(res);
     if (res.ok && data.url) {
@@ -5134,6 +5136,8 @@ function _gradingCompDate(soldDate) {
 // edges and surface — then mapped to a 1–10 estimate. Nothing is uploaded and
 // no API is called, so it costs nothing to run.
 let _gradeScanImageDataUrl = null;
+let _lastGradeAnalysis = null;   // most recent scan result — drives the value/share funnel
+let _scanValueQuery = '';        // card name the user looked up after scanning
 const GRADESCAN_IMG_DIM = 1100;
 
 const _GRADE_NAMES = {
@@ -5499,6 +5503,13 @@ function _gradeConfidence(centering, surface, box, w, h) {
 }
 
 function _renderGradeEstimate(a) {
+  _lastGradeAnalysis = a;
+  // Reset the funnel state for the new scan.
+  _scanValueQuery = '';
+  const valOut = document.getElementById('gradescan-value-out');
+  if (valOut) { valOut.classList.add('hidden'); valOut.innerHTML = ''; }
+  const qEl = document.getElementById('gradescan-card-q');
+  if (qEl) qEl.value = '';
   document.getElementById('gradescan-grade-num').textContent = a.overall;
   document.getElementById('gradescan-grade-name').textContent = _GRADE_NAMES[a.overall] || '';
 
@@ -5541,6 +5552,227 @@ function _renderGradeEstimate(a) {
       <div class="gradescan-sg-detail">${s.v.detail}</div>
     </div>`;
   }).join('');
+}
+
+// ---- Grade scanner sales funnel ----
+// The free scan is the hook; this turns it into a buy moment by answering the
+// very next question — "so what's it worth, and should I grade & sell it?" — and
+// routing intent into Pro (track-to-sell alerts), lead capture and sharing.
+const _usd = (n) => (n == null || isNaN(n)) ? '—' : `$${Number(n).toFixed(2)}`;
+
+function _gradeToTier(overall) {
+  if (overall >= 10) return 'psa10';
+  if (overall >= 9) return 'psa9';
+  if (overall >= 8) return 'psa8';
+  return 'raw';
+}
+const _TIER_LABEL = { psa10: 'PSA 10', psa9: 'PSA 9', psa8: 'PSA 8', raw: 'Raw' };
+
+async function scanValueLookup() {
+  const qEl = document.getElementById('gradescan-card-q');
+  const out = document.getElementById('gradescan-value-out');
+  if (!qEl || !out) return;
+  const q = qEl.value.trim();
+  out.classList.remove('hidden');
+  if (q.length < 3) {
+    out.innerHTML = '<p class="gradescan-value-hint">Type the card — year, set, player — to pull live sold values.</p>';
+    return;
+  }
+  _scanValueQuery = q;
+  out.innerHTML = '<div class="gradescan-value-loading"><div class="spinner"></div><span>Pulling live sold comps…</span></div>';
+  try {
+    const res = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(q)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.noKey || data.badKey || !data.grades) {
+      out.innerHTML = _scanValueLocked(q, data);
+      return;
+    }
+    _renderScanValue(q, data.grades);
+  } catch {
+    out.innerHTML = '<p class="gradescan-value-hint">Couldn’t load values right now — try again in a moment.</p>';
+  }
+}
+
+// Shown when we can't pull live comps (no/invalid scrape.do key). This is itself
+// an upsell: the value is exactly what a paid collector wants.
+function _scanValueLocked(q, data) {
+  const est = _lastGradeAnalysis ? _lastGradeAnalysis.overall : 9;
+  const tier = _TIER_LABEL[_gradeToTier(est)];
+  return `<div class="gradescan-value-card gradescan-value-locked">
+    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Connect live sold data to see the exact swing for “${escHtml(q)}”.</p>
+    <div class="gradescan-cta-card">
+      <button class="gradescan-track-btn" onclick="showPricing()">Unlock live values &amp; sell-time alerts</button>
+      <p class="gradescan-track-msg">Add a scrape.do key in Settings, or start a free 7-day Pro trial.</p>
+    </div>
+  </div>` + _scanLeadBlock();
+}
+
+function _renderScanValue(q, grades) {
+  const out = document.getElementById('gradescan-value-out');
+  const est = _lastGradeAnalysis ? _lastGradeAnalysis.overall : 9;
+  const raw = grades.raw;
+  // Use the estimated tier, falling back to whatever graded data exists.
+  const order = [_gradeToTier(est), 'psa10', 'psa9', 'psa8'].filter((v, i, a) => a.indexOf(v) === i && v !== 'raw');
+  let gKey = null, gStat = null;
+  for (const k of order) { if (grades[k] && grades[k].median) { gKey = k; gStat = grades[k]; break; } }
+
+  if (!raw || !raw.median || !gStat) {
+    out.innerHTML = `<div class="gradescan-value-card"><p class="gradescan-value-hint">Not enough sold data for “${escHtml(q)}”. Try a more specific card name (add the year & set).</p></div>` + _scanCtaBlock();
+    return;
+  }
+
+  const GRADING_FEE = 25; // economy grading, roughly
+  const swing = gStat.median - raw.median;
+  const net = swing - GRADING_FEE;
+  const worth = net > 0;
+  out.innerHTML = `
+    <div class="gradescan-value-card">
+      <div class="gradescan-value-grid">
+        <div class="gv-cell"><span class="gv-label">Raw</span><span class="gv-num">${_usd(raw.median)}</span></div>
+        <div class="gv-arrow">→</div>
+        <div class="gv-cell gv-graded"><span class="gv-label">${_TIER_LABEL[gKey]} · your est.</span><span class="gv-num">${_usd(gStat.median)}</span></div>
+      </div>
+      <p class="gradescan-value-swing">${worth
+        ? `Grading could add about <strong>${_usd(net)}</strong> after fees — this looks <strong>worth grading</strong>.`
+        : `The graded premium (~${_usd(Math.max(0, swing))}) barely clears grading fees here — likely <strong>not worth it</strong>.`}</p>
+      <p class="gradescan-value-foot">Based on recent eBay sold medians (${raw.sales || 0} raw · ${gStat.sales || 0} graded).</p>
+    </div>` + _scanCtaBlock();
+}
+
+// Track-to-sell CTA (Pro conversion) + email lead capture (works for anyone).
+function _scanCtaBlock() {
+  return `<div class="gradescan-cta-card">
+    <button class="gradescan-track-btn" onclick="scanTrackCard()">&#128276; Track this card — get alerted when it&rsquo;s time to sell</button>
+    <p class="gradescan-track-msg" id="gradescan-track-msg"></p>
+  </div>` + _scanLeadBlock();
+}
+
+function _scanLeadBlock() {
+  return `<form class="gradescan-lead" onsubmit="return scanLeadSubmit(event)">
+    <input type="email" class="gradescan-lead-email" id="gradescan-lead-email" placeholder="you@email.com" autocomplete="email" />
+    <button type="submit" class="gradescan-lead-btn">Email me sell tips</button>
+    <p class="gradescan-lead-msg" id="gradescan-lead-msg"></p>
+  </form>`;
+}
+
+async function scanTrackCard() {
+  const q = _scanValueQuery || (document.getElementById('gradescan-card-q')?.value || '').trim();
+  const msg = document.getElementById('gradescan-track-msg');
+  if (!q) return;
+  if (!hasPro()) {
+    proPrompt('Sell-time email alerts on a card are a Pro feature. Start a free 7-day trial to switch them on.');
+    return;
+  }
+  const user = getCurrentUser();
+  const email = getUsers()[user?.toLowerCase()]?.email;
+  if (!email) { if (msg) msg.textContent = 'Add an email to your account first (Settings) to receive alerts.'; return; }
+  try {
+    const res = await fetch('/api/alerts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, email, query: q, label: q }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (msg) msg.textContent = res.ok
+      ? '✓ Tracking — we’ll email you when the market moves on this card.'
+      : (data.error || 'Could not track this card.');
+  } catch { if (msg) msg.textContent = 'Network error — try again.'; }
+}
+
+async function scanLeadSubmit(e) {
+  e.preventDefault();
+  const emailEl = document.getElementById('gradescan-lead-email');
+  const msg = document.getElementById('gradescan-lead-msg');
+  const email = (emailEl?.value || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { if (msg) msg.textContent = 'Enter a valid email.'; return false; }
+  try {
+    const res = await fetch('/api/scan-lead', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, card: _scanValueQuery || '', grade: _lastGradeAnalysis?.overall ?? null }),
+    });
+    if (msg) msg.textContent = res.ok ? '✓ You’re on the list — we’ll email sell-time tips for this card.' : 'Something went wrong, try again.';
+    if (res.ok && emailEl) emailEl.value = '';
+  } catch { if (msg) msg.textContent = 'Network error — try again.'; }
+  return false;
+}
+
+// Build a shareable square image of the grade result and hand it to the native
+// share sheet (or download + copy a link as a fallback). Every share is free
+// top-of-funnel marketing.
+async function shareGradeResult() {
+  if (!_lastGradeAnalysis) return;
+  try {
+    const blob = await _buildShareImage(_lastGradeAnalysis);
+    const origin = location.origin;
+    const text = `My card scored an estimated ${_lastGradeAnalysis.overall}/10 on The Card Huddle — grade yours free at ${origin}`;
+    const file = new File([blob], 'card-grade.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], text, title: 'My Card Grade' });
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'card-grade.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    try { await navigator.clipboard.writeText(text); } catch {}
+    alert('Saved your grade image — share link copied to your clipboard!');
+  } catch {
+    alert('Could not create the share image on this device.');
+  }
+}
+
+function _buildShareImage(a) {
+  return new Promise((resolve, reject) => {
+    const W = 1080, H = 1080;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#0f1714'); bg.addColorStop(1, '#16241d');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    const accent = a.overall >= 9 ? '#5ece99' : a.overall >= 7 ? '#facc15' : '#f87171';
+    ctx.textAlign = 'center';
+
+    // Brand
+    ctx.fillStyle = '#9fb3aa';
+    ctx.font = '600 34px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillText('THE CARD HUDDLE', W / 2, 110);
+    ctx.fillStyle = '#6f857c';
+    ctx.font = '500 26px system-ui, sans-serif';
+    ctx.fillText('Free card grade estimate', W / 2, 156);
+
+    // Big grade
+    ctx.fillStyle = accent;
+    ctx.font = '800 360px system-ui, sans-serif';
+    ctx.fillText(String(a.overall), W / 2, 540);
+    ctx.fillStyle = '#e6efea';
+    ctx.font = '700 56px system-ui, sans-serif';
+    ctx.fillText((_GRADE_NAMES[a.overall] || '') + ' · est. ' + a.overall + '/10', W / 2, 620);
+
+    // Sub-grades row
+    const subs = [['Centering', a.centering], ['Corners', a.corners], ['Edges', a.edges], ['Surface', a.surface]];
+    const colW = 230, startX = W / 2 - (colW * 4) / 2 + colW / 2;
+    subs.forEach(([k, v], i) => {
+      const x = startX + i * colW;
+      ctx.fillStyle = '#9fb3aa';
+      ctx.font = '600 30px system-ui, sans-serif';
+      ctx.fillText(k, x, 770);
+      ctx.fillStyle = '#e6efea';
+      ctx.font = '800 64px system-ui, sans-serif';
+      ctx.fillText((k === 'Centering' && !v.measured) ? '—' : String(v.grade), x, 840);
+    });
+
+    // Footer CTA
+    ctx.fillStyle = accent;
+    ctx.font = '700 40px system-ui, sans-serif';
+    ctx.fillText('Grade your cards free', W / 2, 970);
+    ctx.fillStyle = '#9fb3aa';
+    ctx.font = '500 32px system-ui, sans-serif';
+    ctx.fillText(location.host, W / 2, 1018);
+
+    c.toBlob((b) => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+  });
 }
 
 async function loadChecklistProducts() {
