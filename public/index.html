@@ -64,14 +64,7 @@
         "name": "Free",
         "price": "0",
         "priceCurrency": "USD",
-        "description": "Card search, 30-day price charts, grade breakdown, collection & portfolio tracker"
-      },
-      {
-        "@type": "Offer",
-        "name": "Pro",
-        "price": "4.99",
-        "priceCurrency": "USD",
-        "description": "Tracked Cards with price alerts, Flip Finder, Market Movers, Auto-Pricer, Bulk CSV Pricer"
+        "description": "Everything included free: card search, price charts, grade breakdown, collection & portfolio tracker, tracked cards with price alerts, Flip Finder, Market Movers, Auto-Pricer, and Bulk CSV Pricer"
       }
     ]
   }
@@ -104,7 +97,7 @@
         "name": "Is The Card Huddle free to use?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes! The Card Huddle is free to use. The free plan includes card price search, 30-day price trend charts, grade-by-grade value breakdowns, and a personal card collection and portfolio tracker. Pro plans add full price history and advanced tools."
+          "text": "Yes! The Card Huddle is completely free. Every feature is included at no cost — card price search, full price history, grade-by-grade value breakdowns, a personal card collection and portfolio tracker, tracked cards with price alerts, and seller tools like Flip Finder, Market Movers, Auto-Pricer and Bulk CSV Pricer."
         }
       },
       {
@@ -149,12 +142,6 @@
         <button id="auth-btn" class="auth-btn" onclick="showLogin()">
           <svg class="auth-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span id="auth-btn-text">Log In</span>
-        </button>
-      </div>
-      <div class="header-pro">
-        <button id="pro-btn" class="pro-btn" onclick="showPricing()">
-          <svg class="pro-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span id="pro-btn-text">Go Pro</span>
         </button>
       </div>
       <div class="header-brand">
@@ -213,77 +200,6 @@
       </p>
     </div>
   </div>
-
-  <!-- Pricing / Subscription Modal -->
-  <div id="pricing-overlay" class="pricing-overlay hidden" role="dialog" aria-label="Subscription plans">
-    <div class="pricing-box">
-      <button class="login-close" aria-label="Close" onclick="closePricing()">&times;</button>
-      <h2 class="pricing-heading">Choose Your Plan</h2>
-      <p class="pricing-subtext">Unlock premium features for smarter card collecting</p>
-
-      <div id="pricing-paused-notice" class="pricing-paused-notice" style="display:none">
-        Pro subscriptions are temporarily paused while we finalize tax setup.
-        You can still use every Free feature — check back soon!
-      </div>
-
-      <div class="pricing-toggle">
-        <button class="pricing-period active" data-period="monthly" onclick="setPricingPeriod('monthly')">Monthly</button>
-        <button class="pricing-period" data-period="yearly" onclick="setPricingPeriod('yearly')">Yearly</button>
-        <span class="pricing-save-badge">Save big yearly</span>
-      </div>
-
-      <div class="pricing-cards pricing-cards--two">
-        <div class="pricing-card">
-          <h3 class="pricing-tier">Free</h3>
-          <div class="pricing-price"><span class="pricing-amount">$0</span><span class="pricing-freq">/mo</span></div>
-          <ul class="pricing-features">
-            <li class="included">Unlimited card search — sold &amp; for sale</li>
-            <li class="included">Grade-by-grade breakdown</li>
-            <li class="included">Price trend chart (30 days)</li>
-            <li class="included">Collection &amp; Portfolio (up to 50 cards)</li>
-            <li class="included">Watchlist (up to 5 cards)</li>
-            <li class="included">NFL checklists + Rainbow pricing</li>
-            <li class="included">Grading Advisor (3 / day)</li>
-            <li class="included">Auto-Pricer (1 / day)</li>
-            <li class="included">1 promoted listing slot</li>
-            <li class="excluded">Tracked Card email alerts</li>
-            <li class="excluded">Bulk CSV Pricer (20 at once)</li>
-            <li class="excluded">CSV export of your collection</li>
-          </ul>
-          <button class="pricing-cta free" onclick="closePricing()">Current Plan</button>
-        </div>
-
-        <div class="pricing-card featured">
-          <div class="pricing-badge">Unlock everything</div>
-          <h3 class="pricing-tier">Pro</h3>
-          <div class="pricing-price">
-            <span class="pricing-amount" id="pro-price">$4.99</span>
-            <span class="pricing-freq" id="pro-freq">/mo</span>
-          </div>
-          <ul class="pricing-features">
-            <li class="included">Everything in Free, with the limits removed</li>
-            <li class="included">Email alerts when a tracked card hits your price</li>
-            <li class="included">Full price history (not just last 30 days)</li>
-            <li class="included">Unlimited Collection &amp; Watchlist</li>
-            <li class="included">Unlimited Grading Advisor + Auto-Pricer runs</li>
-            <li class="included">Bulk CSV Pricer — price 20 cards at once</li>
-            <li class="included">5 promoted listing slots</li>
-            <li class="included">CSV export of your collection</li>
-          </ul>
-          <button class="pricing-cta pro" onclick="handleSubscribe('pro', true)">Start 7-day free trial</button>
-          <button class="pricing-cta-secondary" onclick="handleSubscribe('pro')">or subscribe now</button>
-          <p class="pricing-trial-note">Free for 7 days, then <span id="pro-trial-price">$4.99/mo</span>. Cancel anytime.</p>
-        </div>
-      </div>
-
-      <p class="pricing-promo-hint">
-        Have a promo code? Enter it at checkout. Launch users can redeem
-        <code class="pricing-promo-code">PRODUCTHUNTLAUNCH</code>
-        for the first month free.
-      </p>
-    </div>
-  </div>
-
   <!-- Search top-tab subtab strip — visible only when switchView('search')
        is active. Default subtab shows the main search; the second swaps
        mainEl out for #grading-view (which lives further down the DOM). -->
@@ -506,15 +422,15 @@
   <!-- Collection View -->
   <div id="collection-view" class="collection-view hidden">
 
-    <!-- Not logged in / Not Pro gate -->
+    <!-- Sign-in nudge (kept for logged-out state; always hidden otherwise) -->
     <div id="collection-gate" class="tracked-gate hidden">
       <div class="tracked-gate-icon">&#127915;</div>
-      <h3>Pro Feature</h3>
-      <p>Collection tracking, portfolio value, and set completion are exclusive Pro features.</p>
-      <button class="settings-sub-btn settings-sub-upgrade" id="collection-upgrade-btn">Upgrade to Pro</button>
+      <h3>Sign in to use your collection</h3>
+      <p>Log in or create a free account to track your collection, portfolio value and set completion.</p>
+      <button class="settings-sub-btn" id="collection-upgrade-btn" onclick="showLogin()">Log In</button>
     </div>
 
-    <!-- Pro content -->
+    <!-- content -->
     <div id="collection-content">
     <div class="collection-container">
       <div class="collection-header">
@@ -523,7 +439,7 @@
         <div class="collection-tabs">
           <button class="coll-tab active" data-coll="portfolio" onclick="switchCollectionTab('portfolio')">Portfolio</button>
           <button class="coll-tab" data-coll="watchlist" onclick="switchCollectionTab('watchlist')">Watchlist</button>
-          <button class="coll-tab" data-coll="tracked" onclick="switchCollectionTab('tracked')">Tracked Cards <span class="pro-feature-badge" style="margin-left:4px;font-size:0.5rem;">PRO</span></button>
+          <button class="coll-tab" data-coll="tracked" onclick="switchCollectionTab('tracked')">Tracked Cards</button>
 
         </div>
       </div>
@@ -907,7 +823,7 @@
     </div>
   </div>
 
-  <!-- Tracked Cards View (Pro Feature) -->
+  <!-- Tracked Cards View -->
   <div id="tracked-view" class="tracked-view hidden">
     <div class="tracked-container">
       <div class="tracked-header">
@@ -918,15 +834,15 @@
         <p class="tracked-subtitle">Get email notifications when new eBay listings match your tracked cards</p>
       </div>
 
-      <!-- Not logged in / Not Pro gate -->
+      <!-- Sign-in nudge (shown only when logged out) -->
       <div id="tracked-gate" class="tracked-gate hidden">
         <div class="tracked-gate-icon">&#128274;</div>
-        <h3>Pro Feature</h3>
-        <p>Card tracking with email alerts is an exclusive Pro feature. Upgrade to never miss a listing.</p>
-        <button class="settings-sub-btn settings-sub-upgrade" id="tracked-upgrade-btn">Upgrade to Pro</button>
+        <h3>Sign in to track cards</h3>
+        <p>Log in or create a free account to start tracking cards and get email alerts.</p>
+        <button class="settings-sub-btn" id="tracked-upgrade-btn">Log In</button>
       </div>
 
-      <!-- Pro content -->
+      <!-- content -->
       <div id="tracked-content" class="tracked-content hidden">
         <!-- Two ways to pick a card to track: free-text input or
              pick-from-checklist. The picker fills the same hidden
@@ -999,7 +915,6 @@
               <option value="above">Above $</option>
             </select>
             <input type="number" id="tracked-threshold" class="alerts-threshold-input" placeholder="0.00" min="0" step="0.01" />
-            <span class="alerts-threshold-pro-badge">PRO</span>
           </div>
           <button type="submit" class="alerts-add-btn">Track Card</button>
         </form>
@@ -1117,23 +1032,17 @@
     </div>
   </div>
 
-  <!-- Pro Tools View -->
+  <!-- Seller Tools View -->
   <div id="proplus-view" class="proplus-view hidden">
     <div class="proplus-container">
 
-      <!-- Gate for non-Pro users -->
-      <div id="proplus-gate" class="proplus-gate hidden">
-        <div class="proplus-gate-icon">&#9889;</div>
-        <h2>Pro Tools</h2>
-        <p>Flip Finder, Market Movers, Auto-Pricer, Bulk Pricing and more — built for serious dealers and resellers.</p>
-        <button class="proplus-upgrade-btn" onclick="showPricing()">Upgrade to Pro — $4.99/mo</button>
-      </div>
+      <!-- Legacy gate, always hidden (every tool is free) -->
+      <div id="proplus-gate" class="proplus-gate hidden"></div>
 
-      <!-- Pro Content -->
+      <!-- Tools Content -->
       <div id="proplus-content" class="hidden">
         <div class="proplus-header">
-          <h2 class="proplus-title">Pro Tools</h2>
-          <span class="proplus-badge-label">&#9889; PRO</span>
+          <h2 class="proplus-title">Seller Tools</h2>
         </div>
 
         <!-- Sub-tabs -->
@@ -1168,20 +1077,10 @@
 
         <!-- Promote Cards -->
         <div id="pptab-promote" class="pptab-panel hidden">
-          <div id="promote-pro-gate" class="promote-gate hidden">
-            <div class="promote-gate-icon">&#11088;</div>
-            <h3>Pro Feature</h3>
-            <p>Promote up to 5 of your eBay listings so they appear in search results across The Card Huddle.</p>
-            <button class="pro-btn" onclick="showPricing()">Upgrade to Pro</button>
-          </div>
+          <div id="promote-pro-gate" class="promote-gate hidden"></div>
           <div id="promote-content">
             <p class="pp-desc">Add up to 5 eBay listings to promote in search results. Your cards will appear between results when other users search.</p>
             <div class="promote-count"><span id="promote-card-count">0</span> / <span id="promote-max-count">5</span> slots used</div>
-            <div id="promote-buy-slot-wrap" class="promote-buy-slot hidden">
-              <p>All slots filled! Need more room? <span style="font-size:0.8rem;opacity:0.7;">(Extra slots expire when the card sells)</span></p>
-              <button class="promote-buy-slot-btn" onclick="handleBuyExtraSlot()">+ Add Extra Slot &mdash; $2.99</button>
-              <p id="promote-extra-cap-info" class="promote-cap-info"></p>
-            </div>
             <form id="promote-card-form" onsubmit="return handleAddPromotedCard(event)" class="promote-form">
               <div class="seller-form-grid">
                 <div class="seller-form-group seller-form-full">
