@@ -4,7 +4,12 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, cacheGet, cachePut } = require('./db');
+
+// How long to cache an eBay For-Sale (Browse API) response in KV. Light by
+// design: long enough to absorb a traffic spike (a viral card searched 100x in
+// the window costs 1 eBay call, not 100), short enough that listings stay fresh.
+const FORSALE_CACHE_TTL = 1800; // 30 minutes
 const { moderateText, moderateImage } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
@@ -543,6 +548,16 @@ async function withRetry(fn, maxRetries = 1) {
 
 // ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0) {
+  // KV cache: shared across isolates so a launch-day spike on a popular card
+  // doesn't burn one eBay Browse call per request. Keyed by the exact params
+  // that determine eBay's response.
+  const cacheKey = `browse:v1:${limit}:${offset}:${String(keywords).toLowerCase().trim()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached && Array.isArray(cached.results)) {
+    console.log(`[Browse API] KV cache hit for "${keywords}" (${cached.results.length} items)`);
+    return cached;
+  }
+
   trackApiCall('browse', 'browse/search', keywords, source);
   console.log(`[Browse API] Searching for: "${keywords}", limit: ${limit}, offset: ${offset}`);
   const token = await getOAuthToken();
@@ -578,7 +593,9 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
     buyingOptions: Array.isArray(item.buyingOptions) ? item.buyingOptions : [],
   }));
 
-  return { results, total: res.data?.total || results.length };
+  const out = { results, total: res.data?.total || results.length };
+  cachePut(cacheKey, out, FORSALE_CACHE_TTL); // best-effort, fire-and-forget
+  return out;
 }
 
 

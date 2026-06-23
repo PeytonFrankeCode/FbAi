@@ -169,4 +169,25 @@ async function saveUserData(username, data) {
   }
 }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData };
+// ---- Lightweight TTL cache (Cloudflare KV-backed) ----
+// Separate from the preloaded app-state cache above: this is a short-lived,
+// self-expiring cache for things like eBay API responses, shared across all
+// worker isolates so a traffic spike doesn't re-hit the upstream once per
+// isolate. No-op when KV isn't bound (local Node dev) — callers just see a
+// miss and fetch fresh.
+async function cacheGet(key) {
+  if (!kv) return null;
+  try { return await kv.get(key, 'json'); } catch (_) { return null; }
+}
+function cachePut(key, value, ttlSeconds) {
+  if (!kv) return;
+  try {
+    const ttl = Math.max(60, ttlSeconds | 0); // KV minimum is 60s
+    const p = kv.put(key, JSON.stringify(value), { expirationTtl: ttl });
+    // Fire-and-forget so it never adds latency, but use waitUntil (when the
+    // worker provided it) so Cloudflare doesn't drop the write at response time.
+    if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
+  } catch (_) { /* cache write is best-effort */ }
+}
+
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, cacheGet, cachePut };
