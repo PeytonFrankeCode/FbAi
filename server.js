@@ -4,7 +4,22 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, cacheGet, cachePut } = require('./db');
+
+// How long to cache an eBay For-Sale (Browse API) response in KV. Light by
+// design: long enough to absorb a traffic spike (a viral card searched 100x in
+// the window costs 1 eBay call, not 100), short enough that listings stay fresh.
+const FORSALE_CACHE_TTL = 1800; // 30 minutes
+
+// How long (seconds) to cache an eBay Sold (scrape.do) response in KV. Sold/
+// completed listings change slowly, so a few hours is plenty fresh — and because
+// results are identical for every user, one scrape covers everyone who searches
+// that card in the window, stretching the scrape.do plan a long way. (Distinct
+// from the in-memory SOLD_CACHE_TTL below, which is per-isolate and in ms.)
+const SOLD_KV_TTL = 10800; // 3 hours
+
+// scrape.do plan size, for the usage counter (sold calls used vs remaining).
+const SCRAPE_DO_MONTHLY_QUOTA = 250000;
 const { moderateText, moderateImage } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
@@ -418,16 +433,47 @@ function saveApiCallLog(log) {
   saveData('apiCallLog', API_CALLS_FILE, log);
 }
 
+function emptyDay() {
+  return { total: 0, finding: 0, browse: 0, insights: 0, scrapedo: 0, soldCacheHits: 0, forsaleCacheHits: 0 };
+}
+
+// Cache hits are the common case, so we DON'T write one KV entry per hit — we
+// buffer them in memory and flush in batches (and ride along on the next API
+// write via trackApiCall). Approximate by design; good enough for a usage gauge.
+let pendingSoldHits = 0;
+let pendingForsaleHits = 0;
+function trackCacheHit(kind) {
+  if (kind === 'sold') pendingSoldHits++; else pendingForsaleHits++;
+  if (pendingSoldHits + pendingForsaleHits >= 10) flushCacheHits();
+}
+function flushCacheHits() {
+  if (pendingSoldHits + pendingForsaleHits <= 0) return;
+  const log = loadApiCallLog();
+  const today = new Date().toISOString().slice(0, 10);
+  if (!log.daily[today]) log.daily[today] = emptyDay();
+  log.daily[today].soldCacheHits = (log.daily[today].soldCacheHits || 0) + pendingSoldHits;
+  log.daily[today].forsaleCacheHits = (log.daily[today].forsaleCacheHits || 0) + pendingForsaleHits;
+  pendingSoldHits = 0; pendingForsaleHits = 0;
+  saveApiCallLog(log);
+}
+
 function trackApiCall(apiName, endpoint, keywords, source) {
   const log = loadApiCallLog();
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
 
-  if (!log.daily[today]) log.daily[today] = { total: 0, finding: 0, browse: 0, insights: 0 };
+  if (!log.daily[today]) log.daily[today] = emptyDay();
   log.daily[today].total++;
   if (apiName === 'finding') log.daily[today].finding++;
   else if (apiName === 'browse') log.daily[today].browse++;
   else if (apiName === 'insights') log.daily[today].insights++;
+  else if (apiName === 'scrapedo') log.daily[today].scrapedo = (log.daily[today].scrapedo || 0) + 1;
+  // Free ride: fold any buffered cache hits into this write.
+  if (pendingSoldHits + pendingForsaleHits > 0) {
+    log.daily[today].soldCacheHits = (log.daily[today].soldCacheHits || 0) + pendingSoldHits;
+    log.daily[today].forsaleCacheHits = (log.daily[today].forsaleCacheHits || 0) + pendingForsaleHits;
+    pendingSoldHits = 0; pendingForsaleHits = 0;
+  }
 
   log.calls.push({
     time: now.toISOString(),
@@ -446,7 +492,21 @@ function trackApiCall(apiName, endpoint, keywords, source) {
 function getApiCallStats() {
   const log = loadApiCallLog();
   const today = new Date().toISOString().slice(0, 10);
-  const todayStats = log.daily[today] || { total: 0, finding: 0, browse: 0, insights: 0 };
+  const base = log.daily[today] || emptyDay();
+  // Fold this isolate's not-yet-flushed cache hits in so a live read isn't understated.
+  const todayStats = {
+    ...emptyDay(), ...base,
+    soldCacheHits: (base.soldCacheHits || 0) + pendingSoldHits,
+    forsaleCacheHits: (base.forsaleCacheHits || 0) + pendingForsaleHits,
+  };
+
+  // Month-to-date scrape.do usage (the metric to watch against the plan).
+  const month = today.slice(0, 7);
+  let monthScrapedo = 0;
+  for (const [d, s] of Object.entries(log.daily || {})) {
+    if (d.startsWith(month)) monthScrapedo += (s.scrapedo || 0);
+  }
+  const rate = (h, m) => (h + m) > 0 ? Math.round((h / (h + m)) * 100) : null;
 
   // Last 24h calls grouped by source
   const cutoff24h = Date.now() - 24 * 60 * 60 * 1000;
@@ -461,7 +521,20 @@ function getApiCallStats() {
     daily: log.daily,
     last24hBySource: bySource,
     last24hTotal: recent.length,
-    recentCalls: (log.calls || []).slice(-20)
+    recentCalls: (log.calls || []).slice(-20),
+    scrapeDo: {
+      callsToday: todayStats.scrapedo || 0,
+      cacheHitsToday: todayStats.soldCacheHits || 0,
+      cacheHitRatePct: rate(todayStats.soldCacheHits || 0, todayStats.scrapedo || 0),
+      monthUsed: monthScrapedo,
+      monthQuota: SCRAPE_DO_MONTHLY_QUOTA,
+      monthRemaining: Math.max(0, SCRAPE_DO_MONTHLY_QUOTA - monthScrapedo),
+    },
+    forsale: {
+      callsToday: todayStats.browse || 0,
+      cacheHitsToday: todayStats.forsaleCacheHits || 0,
+      cacheHitRatePct: rate(todayStats.forsaleCacheHits || 0, todayStats.browse || 0),
+    },
   };
 }
 
@@ -543,6 +616,17 @@ async function withRetry(fn, maxRetries = 1) {
 
 // ---- Browse API (active listings) ----
 async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0) {
+  // KV cache: shared across isolates so a launch-day spike on a popular card
+  // doesn't burn one eBay Browse call per request. Keyed by the exact params
+  // that determine eBay's response.
+  const cacheKey = `browse:v1:${limit}:${offset}:${String(keywords).toLowerCase().trim()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached && Array.isArray(cached.results)) {
+    console.log(`[Browse API] KV cache hit for "${keywords}" (${cached.results.length} items)`);
+    trackCacheHit('forsale');
+    return cached;
+  }
+
   trackApiCall('browse', 'browse/search', keywords, source);
   console.log(`[Browse API] Searching for: "${keywords}", limit: ${limit}, offset: ${offset}`);
   const token = await getOAuthToken();
@@ -578,7 +662,9 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
     buyingOptions: Array.isArray(item.buyingOptions) ? item.buyingOptions : [],
   }));
 
-  return { results, total: res.data?.total || results.length };
+  const out = { results, total: res.data?.total || results.length };
+  cachePut(cacheKey, out, FORSALE_CACHE_TTL); // best-effort, fire-and-forget
+  return out;
 }
 
 
@@ -1021,11 +1107,26 @@ function decodeHtmlEntities(s) {
 // Look up the current request's user and pull every scrape.do key off
 // their record. Returns `{ username, keys: Array<{key,label}> }` so the
 // rotation layer below can scope its round-robin per user.
+// The shared, server-wide scrape.do key (a paid plan) so sold search works for
+// every visitor — logged in or not — without each person bringing their own
+// key. Set via `wrangler secret put SCRAPE_DO_KEY`.
+function getServerScrapeDoKeys() {
+  const k = (process.env.SCRAPE_DO_KEY || '').trim();
+  return k ? [{ key: k, label: 'Server', addedAt: null }] : [];
+}
+
 function getScrapeDoKeysForRequest(req) {
   const username = getSessionUser(req);
-  if (!username) return { username: null, keys: [] };
-  const users = loadServerUsers();
-  return { username, keys: getUserScrapeDoKeys(users[username]) };
+  let userKeys = [];
+  if (username) {
+    const users = loadServerUsers();
+    userKeys = getUserScrapeDoKeys(users[username]);
+  }
+  // Prefer the user's own key(s) — it spends their quota, not ours — and fall
+  // back to the shared server key so sold search works for everyone, including
+  // logged-out visitors.
+  const keys = userKeys.length > 0 ? userKeys : getServerScrapeDoKeys();
+  return { username, keys };
 }
 
 // ---- Shared fetch function ----
@@ -1048,9 +1149,24 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     if (keys.length === 0) {
       return { results: [], total: 0, noProvider: true, noKey: true };
     }
+    // KV cache: sold results are identical for every user, so one scrape covers
+    // everyone searching that card within the TTL — the main lever that keeps
+    // the scrape.do plan from being drained by repeat/viral searches.
+    const soldCacheKey = `sold:v1:${limit}:${String(keywords).toLowerCase().trim()}`;
+    const cachedSold = await cacheGet(soldCacheKey);
+    if (cachedSold && Array.isArray(cachedSold.results)) {
+      console.log(`[scrape.do] KV cache hit for "${keywords}" (${cachedSold.results.length} items)`);
+      trackCacheHit('sold');
+      return cachedSold;
+    }
     const response = await fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey);
     const filtered = { ...response, results: filterJunkListings(response.results) };
     filtered.total = filtered.results.length;
+    // Only cache genuine hits — never cache key/quota/rate-limit errors or empty
+    // misses, so a transient failure can't poison the cache for hours.
+    if (filtered.results.length > 0 && !filtered.badKey && !filtered.rateLimited && !filtered.quotaExceeded && !filtered.error) {
+      cachePut(soldCacheKey, filtered, SOLD_KV_TTL);
+    }
     return filtered;
   }
 
@@ -2363,6 +2479,8 @@ app.get('/api/stats/api-calls', (req, res) => {
         browseRemaining: null, // Browse API uses OAuth, different limits
       },
       daily: stats.daily,
+      scrapeDo: stats.scrapeDo,   // sold calls today, cache-hit rate, month used vs 250k
+      forsale: stats.forsale,     // browse calls today + cache-hit rate
       last24h: {
         total: stats.last24hTotal,
         bySource: stats.last24hBySource,
