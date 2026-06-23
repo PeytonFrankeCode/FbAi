@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Usage — The Card Huddle</title>
+  <style>
+    :root{--bg:#0c0e14;--card:#161b28;--text:#edf0f7;--muted:#9aa3b2;--accent:#5ece99;--amber:#f59e0b;--red:#f87171;--border:#2a3142}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,Segoe UI,Roboto,sans-serif;line-height:1.5;padding:1.5rem}
+    .wrap{max-width:720px;margin:0 auto}
+    h1{font-size:1.5rem;margin:0 0 .25rem}
+    .sub{color:var(--muted);font-size:.9rem;margin:0 0 1.5rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem}
+    .label{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem}
+    .big{font-size:2rem;font-weight:800}
+    .accent{color:var(--accent)} .amber{color:var(--amber)} .red{color:var(--red)} .muted{color:var(--muted)}
+    .bar{height:10px;background:#0a0c12;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin-top:.6rem}
+    .bar > div{height:100%;background:var(--accent);width:0%}
+    .section-title{font-size:.9rem;font-weight:700;color:var(--muted);margin:1.75rem 0 .6rem;text-transform:uppercase;letter-spacing:.05em}
+    .row{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.95rem}
+    .row:last-child{border-bottom:none}
+    button{background:rgba(94,206,153,.1);border:1px solid var(--accent);color:var(--accent);padding:.5rem 1rem;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+    .ts{color:var(--muted);font-size:.8rem;margin-top:1rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>📊 Usage</h1>
+    <p class="sub">scrape.do (sold) &amp; eBay Browse (for-sale) — live counters. <span id="auto"></span></p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">scrape.do — this month</div>
+        <div class="big"><span id="m-used" class="accent">—</span> <span class="muted" style="font-size:1rem">/ <span id="m-quota">250,000</span></span></div>
+        <div class="bar"><div id="m-bar"></div></div>
+        <div class="muted" style="font-size:.85rem;margin-top:.5rem"><span id="m-remaining">—</span> calls remaining</div>
+      </div>
+      <div class="card">
+        <div class="label">Sold calls today</div>
+        <div class="big" id="s-today">—</div>
+        <div class="muted" style="font-size:.85rem;margin-top:.5rem">cache hit rate: <span id="s-rate" class="accent">—</span></div>
+      </div>
+      <div class="card">
+        <div class="label">Sold cache hits today</div>
+        <div class="big accent" id="s-hits">—</div>
+        <div class="muted" style="font-size:.85rem;margin-top:.5rem">scrapes saved by caching</div>
+      </div>
+    </div>
+
+    <div class="section-title">For-Sale (eBay Browse API)</div>
+    <div class="card">
+      <div class="row"><span class="muted">Browse calls today</span><span id="f-today">—</span></div>
+      <div class="row"><span class="muted">Cache hits today</span><span id="f-hits">—</span></div>
+      <div class="row"><span class="muted">Cache hit rate</span><span id="f-rate" class="accent">—</span></div>
+    </div>
+
+    <div style="margin-top:1.5rem"><button onclick="load()">↻ Refresh</button></div>
+    <div class="ts" id="ts"></div>
+  </div>
+
+  <script>
+    const fmt = n => (n == null ? '—' : Number(n).toLocaleString('en-US'));
+    const pct = n => (n == null ? '—' : n + '%');
+    async function load() {
+      try {
+        const r = await fetch('/api/stats/api-calls', { cache: 'no-store' });
+        const d = await r.json();
+        const sd = d.scrapeDo || {}, fs = d.forsale || {};
+        document.getElementById('m-used').textContent = fmt(sd.monthUsed);
+        document.getElementById('m-quota').textContent = fmt(sd.monthQuota);
+        document.getElementById('m-remaining').textContent = fmt(sd.monthRemaining);
+        const usedPct = sd.monthQuota ? Math.min(100, (sd.monthUsed / sd.monthQuota) * 100) : 0;
+        const bar = document.getElementById('m-bar');
+        bar.style.width = usedPct + '%';
+        bar.style.background = usedPct > 90 ? 'var(--red)' : usedPct > 70 ? 'var(--amber)' : 'var(--accent)';
+        document.getElementById('s-today').textContent = fmt(sd.callsToday);
+        document.getElementById('s-hits').textContent = fmt(sd.cacheHitsToday);
+        document.getElementById('s-rate').textContent = pct(sd.cacheHitRatePct);
+        document.getElementById('f-today').textContent = fmt(fs.callsToday);
+        document.getElementById('f-hits').textContent = fmt(fs.cacheHitsToday);
+        document.getElementById('f-rate').textContent = pct(fs.cacheHitRatePct);
+        document.getElementById('ts').textContent = 'Updated ' + new Date().toLocaleTimeString();
+      } catch (e) {
+        document.getElementById('ts').textContent = 'Failed to load: ' + e.message;
+      }
+    }
+    document.getElementById('auto').textContent = 'Auto-refreshes every 30s.';
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

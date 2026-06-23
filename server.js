@@ -17,6 +17,9 @@ const FORSALE_CACHE_TTL = 1800; // 30 minutes
 // that card in the window, stretching the scrape.do plan a long way. (Distinct
 // from the in-memory SOLD_CACHE_TTL below, which is per-isolate and in ms.)
 const SOLD_KV_TTL = 10800; // 3 hours
+
+// scrape.do plan size, for the usage counter (sold calls used vs remaining).
+const SCRAPE_DO_MONTHLY_QUOTA = 250000;
 const { moderateText, moderateImage } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
@@ -430,16 +433,47 @@ function saveApiCallLog(log) {
   saveData('apiCallLog', API_CALLS_FILE, log);
 }
 
+function emptyDay() {
+  return { total: 0, finding: 0, browse: 0, insights: 0, scrapedo: 0, soldCacheHits: 0, forsaleCacheHits: 0 };
+}
+
+// Cache hits are the common case, so we DON'T write one KV entry per hit — we
+// buffer them in memory and flush in batches (and ride along on the next API
+// write via trackApiCall). Approximate by design; good enough for a usage gauge.
+let pendingSoldHits = 0;
+let pendingForsaleHits = 0;
+function trackCacheHit(kind) {
+  if (kind === 'sold') pendingSoldHits++; else pendingForsaleHits++;
+  if (pendingSoldHits + pendingForsaleHits >= 10) flushCacheHits();
+}
+function flushCacheHits() {
+  if (pendingSoldHits + pendingForsaleHits <= 0) return;
+  const log = loadApiCallLog();
+  const today = new Date().toISOString().slice(0, 10);
+  if (!log.daily[today]) log.daily[today] = emptyDay();
+  log.daily[today].soldCacheHits = (log.daily[today].soldCacheHits || 0) + pendingSoldHits;
+  log.daily[today].forsaleCacheHits = (log.daily[today].forsaleCacheHits || 0) + pendingForsaleHits;
+  pendingSoldHits = 0; pendingForsaleHits = 0;
+  saveApiCallLog(log);
+}
+
 function trackApiCall(apiName, endpoint, keywords, source) {
   const log = loadApiCallLog();
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
 
-  if (!log.daily[today]) log.daily[today] = { total: 0, finding: 0, browse: 0, insights: 0 };
+  if (!log.daily[today]) log.daily[today] = emptyDay();
   log.daily[today].total++;
   if (apiName === 'finding') log.daily[today].finding++;
   else if (apiName === 'browse') log.daily[today].browse++;
   else if (apiName === 'insights') log.daily[today].insights++;
+  else if (apiName === 'scrapedo') log.daily[today].scrapedo = (log.daily[today].scrapedo || 0) + 1;
+  // Free ride: fold any buffered cache hits into this write.
+  if (pendingSoldHits + pendingForsaleHits > 0) {
+    log.daily[today].soldCacheHits = (log.daily[today].soldCacheHits || 0) + pendingSoldHits;
+    log.daily[today].forsaleCacheHits = (log.daily[today].forsaleCacheHits || 0) + pendingForsaleHits;
+    pendingSoldHits = 0; pendingForsaleHits = 0;
+  }
 
   log.calls.push({
     time: now.toISOString(),
@@ -458,7 +492,21 @@ function trackApiCall(apiName, endpoint, keywords, source) {
 function getApiCallStats() {
   const log = loadApiCallLog();
   const today = new Date().toISOString().slice(0, 10);
-  const todayStats = log.daily[today] || { total: 0, finding: 0, browse: 0, insights: 0 };
+  const base = log.daily[today] || emptyDay();
+  // Fold this isolate's not-yet-flushed cache hits in so a live read isn't understated.
+  const todayStats = {
+    ...emptyDay(), ...base,
+    soldCacheHits: (base.soldCacheHits || 0) + pendingSoldHits,
+    forsaleCacheHits: (base.forsaleCacheHits || 0) + pendingForsaleHits,
+  };
+
+  // Month-to-date scrape.do usage (the metric to watch against the plan).
+  const month = today.slice(0, 7);
+  let monthScrapedo = 0;
+  for (const [d, s] of Object.entries(log.daily || {})) {
+    if (d.startsWith(month)) monthScrapedo += (s.scrapedo || 0);
+  }
+  const rate = (h, m) => (h + m) > 0 ? Math.round((h / (h + m)) * 100) : null;
 
   // Last 24h calls grouped by source
   const cutoff24h = Date.now() - 24 * 60 * 60 * 1000;
@@ -473,7 +521,20 @@ function getApiCallStats() {
     daily: log.daily,
     last24hBySource: bySource,
     last24hTotal: recent.length,
-    recentCalls: (log.calls || []).slice(-20)
+    recentCalls: (log.calls || []).slice(-20),
+    scrapeDo: {
+      callsToday: todayStats.scrapedo || 0,
+      cacheHitsToday: todayStats.soldCacheHits || 0,
+      cacheHitRatePct: rate(todayStats.soldCacheHits || 0, todayStats.scrapedo || 0),
+      monthUsed: monthScrapedo,
+      monthQuota: SCRAPE_DO_MONTHLY_QUOTA,
+      monthRemaining: Math.max(0, SCRAPE_DO_MONTHLY_QUOTA - monthScrapedo),
+    },
+    forsale: {
+      callsToday: todayStats.browse || 0,
+      cacheHitsToday: todayStats.forsaleCacheHits || 0,
+      cacheHitRatePct: rate(todayStats.forsaleCacheHits || 0, todayStats.browse || 0),
+    },
   };
 }
 
@@ -562,6 +623,7 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
   const cached = await cacheGet(cacheKey);
   if (cached && Array.isArray(cached.results)) {
     console.log(`[Browse API] KV cache hit for "${keywords}" (${cached.results.length} items)`);
+    trackCacheHit('forsale');
     return cached;
   }
 
@@ -1094,6 +1156,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     const cachedSold = await cacheGet(soldCacheKey);
     if (cachedSold && Array.isArray(cachedSold.results)) {
       console.log(`[scrape.do] KV cache hit for "${keywords}" (${cachedSold.results.length} items)`);
+      trackCacheHit('sold');
       return cachedSold;
     }
     const response = await fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey);
@@ -2416,6 +2479,8 @@ app.get('/api/stats/api-calls', (req, res) => {
         browseRemaining: null, // Browse API uses OAuth, different limits
       },
       daily: stats.daily,
+      scrapeDo: stats.scrapeDo,   // sold calls today, cache-hit rate, month used vs 250k
+      forsale: stats.forsale,     // browse calls today + cache-hit rate
       last24h: {
         total: stats.last24hTotal,
         bySource: stats.last24hBySource,
