@@ -10,6 +10,13 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, cacheGet, cac
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
 // the window costs 1 eBay call, not 100), short enough that listings stay fresh.
 const FORSALE_CACHE_TTL = 1800; // 30 minutes
+
+// How long (seconds) to cache an eBay Sold (scrape.do) response in KV. Sold/
+// completed listings change slowly, so a few hours is plenty fresh — and because
+// results are identical for every user, one scrape covers everyone who searches
+// that card in the window, stretching the scrape.do plan a long way. (Distinct
+// from the in-memory SOLD_CACHE_TTL below, which is per-isolate and in ms.)
+const SOLD_KV_TTL = 10800; // 3 hours
 const { moderateText, moderateImage } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
@@ -1038,11 +1045,26 @@ function decodeHtmlEntities(s) {
 // Look up the current request's user and pull every scrape.do key off
 // their record. Returns `{ username, keys: Array<{key,label}> }` so the
 // rotation layer below can scope its round-robin per user.
+// The shared, server-wide scrape.do key (a paid plan) so sold search works for
+// every visitor — logged in or not — without each person bringing their own
+// key. Set via `wrangler secret put SCRAPE_DO_KEY`.
+function getServerScrapeDoKeys() {
+  const k = (process.env.SCRAPE_DO_KEY || '').trim();
+  return k ? [{ key: k, label: 'Server', addedAt: null }] : [];
+}
+
 function getScrapeDoKeysForRequest(req) {
   const username = getSessionUser(req);
-  if (!username) return { username: null, keys: [] };
-  const users = loadServerUsers();
-  return { username, keys: getUserScrapeDoKeys(users[username]) };
+  let userKeys = [];
+  if (username) {
+    const users = loadServerUsers();
+    userKeys = getUserScrapeDoKeys(users[username]);
+  }
+  // Prefer the user's own key(s) — it spends their quota, not ours — and fall
+  // back to the shared server key so sold search works for everyone, including
+  // logged-out visitors.
+  const keys = userKeys.length > 0 ? userKeys : getServerScrapeDoKeys();
+  return { username, keys };
 }
 
 // ---- Shared fetch function ----
@@ -1065,9 +1087,23 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     if (keys.length === 0) {
       return { results: [], total: 0, noProvider: true, noKey: true };
     }
+    // KV cache: sold results are identical for every user, so one scrape covers
+    // everyone searching that card within the TTL — the main lever that keeps
+    // the scrape.do plan from being drained by repeat/viral searches.
+    const soldCacheKey = `sold:v1:${limit}:${String(keywords).toLowerCase().trim()}`;
+    const cachedSold = await cacheGet(soldCacheKey);
+    if (cachedSold && Array.isArray(cachedSold.results)) {
+      console.log(`[scrape.do] KV cache hit for "${keywords}" (${cachedSold.results.length} items)`);
+      return cachedSold;
+    }
     const response = await fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey);
     const filtered = { ...response, results: filterJunkListings(response.results) };
     filtered.total = filtered.results.length;
+    // Only cache genuine hits — never cache key/quota/rate-limit errors or empty
+    // misses, so a transient failure can't poison the cache for hours.
+    if (filtered.results.length > 0 && !filtered.badKey && !filtered.rateLimited && !filtered.quotaExceeded && !filtered.error) {
+      cachePut(soldCacheKey, filtered, SOLD_KV_TTL);
+    }
     return filtered;
   }
 
