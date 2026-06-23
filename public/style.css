@@ -2350,6 +2350,35 @@ main {
   animation: fadeIn 0.25s ease;
 }
 
+/* Soft note shown when a Sold search falls back to live For-Sale prices */
+.sold-fallback-note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid var(--pro-border, rgba(245, 158, 11, 0.35));
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: fadeIn 0.25s ease;
+}
+.sold-fallback-note strong { color: var(--text-primary); }
+.sold-fallback-icon { flex-shrink: 0; }
+.sold-fallback-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 /* Shareable price-card button (under the stats bar) */
 .share-row {
   grid-column: 1 / -1;
