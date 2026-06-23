@@ -4013,6 +4013,31 @@ footer::before {
   margin-bottom: 1.5rem;
 }
 
+/* Links to the SEO landing pages (player price guides + set checklists). */
+.checklist-guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1.5rem;
+}
+.checklist-guide-link {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(94, 206, 153, 0.08);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.checklist-guide-link:hover {
+  background: rgba(94, 206, 153, 0.16);
+  border-color: rgba(94, 206, 153, 0.45);
+}
+
 .checklist-product-grid {
   display: flex;
   flex-direction: column;
