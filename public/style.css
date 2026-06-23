@@ -526,6 +526,36 @@
   color: var(--pro-on);
 }
 
+/* ---- Donate / Support button (top-right of header) ---- */
+.header-support {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+}
+.donate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(236, 72, 153, 0.10);
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  color: #f472b6;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  font-family: inherit;
+}
+.donate-btn:hover {
+  background: rgba(236, 72, 153, 0.18);
+  border-color: rgba(236, 72, 153, 0.55);
+}
+.donate-btn.hidden { display: none; }
+.donate-icon { width: 14px; height: 14px; }
+
 /* ---- Pricing Modal ---- */
 .pricing-overlay {
   position: fixed;
