@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "build:pages": "node scripts/build-landing-pages.js",
+    "predeploy": "node scripts/build-landing-pages.js",
     "deploy": "wrangler deploy",
     "cf:dev": "wrangler dev"
   },

@@ -3247,6 +3247,21 @@ checkPrefillParam();
 enableUserSync();
 checkPaymentReturn();
 
+// ---- Donate / Support button ----
+// Set DONATE_URL to your donation link (Buy Me a Coffee, Ko-fi, PayPal,
+// GitHub Sponsors, etc.). The button stays hidden until a real URL is set,
+// so it never ships as a dead link.
+const DONATE_URL = 'https://www.buymeacoffee.com/REPLACE_ME';
+function initDonateButton() {
+  const btn = document.getElementById('donate-btn');
+  if (!btn) return;
+  if (DONATE_URL && !/REPLACE_ME/.test(DONATE_URL)) {
+    btn.href = DONATE_URL;
+    btn.classList.remove('hidden');
+  }
+}
+initDonateButton();
+
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
 const checklistProducts = document.getElementById('checklist-products');

@@ -1,2 +1,9 @@
 .env
 node_modules/
+
+# Generated SEO landing pages — build artifacts produced from
+# public/data/checklists by scripts/build-landing-pages.js (npm run build:pages).
+# Regenerated in CI before every deploy; no need to track ~tens of MB of HTML.
+public/sets/
+public/players/
+public/sitemap.xml
