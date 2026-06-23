@@ -1049,6 +1049,7 @@ let currentVariantQuery = '';
 let currentSearchMode = 'variants'; // 'variants' or 'direct'
 let currentMode = 'sold'; // 'forsale' or 'sold'
 let currentResults = []; // store results for sorting
+let currentResultMode = 'sold'; // mode the visible results actually came from ('sold' | 'forsale'), which may differ from the toggle when we fall back
 let currentGradeFilter = 'all'; // 'all' or a grade label from detectGrade()
 
 // ---- Recent Searches (localStorage) ----
@@ -1843,7 +1844,10 @@ function renderStatsBar(results, isSold) {
 }
 
 // ---- Search (fetch individual sales for a specific variant) ----
-async function performSearch(query) {
+// opts.fallback = true means "sold data is unavailable for this user (no/bad
+// scrape.do key), so quietly search live For-Sale listings instead and show a
+// soft note" — never a dead-end error wall.
+async function performSearch(query, opts = {}) {
   setLoading(true);
   showSkeleton();
   grid.innerHTML = '';
@@ -1862,12 +1866,14 @@ async function performSearch(query) {
     priceChart = null;
   }
 
-  const isSold = currentMode === 'sold';
+  const fallback = !!opts.fallback;
+  const effectiveMode = fallback ? 'forsale' : currentMode;
+  const isSold = effectiveMode === 'sold';
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
 
   try {
-    const params = new URLSearchParams({ q: query, limit: '50', mode: currentMode });
-    if (currentMode === 'forsale') {
+    const params = new URLSearchParams({ q: query, limit: '50', mode: effectiveMode });
+    if (effectiveMode === 'forsale' && !fallback) {
       const f = getPriceFilter();
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
@@ -1881,17 +1887,17 @@ async function performSearch(query) {
     if (response.status === 401) {
       const errData = await safeJson(response).catch(() => ({}));
       if (errData && (errData.noKey || errData.badKey)) {
-        setLoading(false);
-        hideSkeleton();
-        errorMsg.classList.remove('hidden');
-        errorMsg.innerHTML = `${escHtml(errData.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
-        return;
+        // No sold-data key for this user → don't dead-end. Fall back to live
+        // For-Sale listings with a soft note (handled on re-entry).
+        if (!fallback) return performSearch(query, { fallback: true });
+        return; // shouldn't happen (For-Sale needs no key)
       }
     }
     const data = await safeJson(response);
 
     if (response.status === 401) { showLogin(); return; }
-    if (response.status === 503 && currentMode === 'sold') {
+    if (response.status === 503 && effectiveMode === 'sold') {
+      if (!fallback) return performSearch(query, { fallback: true });
       setLoading(false);
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
@@ -1907,12 +1913,13 @@ async function performSearch(query) {
     const { mock, serial, similarResults } = data;
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
+    currentResultMode = effectiveMode;
     recordPriceHistory(query, results);
 
     // Reset pagination state for the new search
     _searchPaging = {
       query,
-      mode: currentMode,
+      mode: effectiveMode,
       offset: data.offset || 0,
       hasMore: !!data.hasMore,
       fetching: false,
@@ -1920,6 +1927,7 @@ async function performSearch(query) {
 
     // Check for rate limiting
     if (data.rateLimited || data.soldUnavailable) {
+      if (!fallback) return performSearch(query, { fallback: true });
       meta.classList.add('hidden');
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
@@ -2008,6 +2016,15 @@ async function performSearch(query) {
         });
         similarSection.classList.remove('hidden');
       }
+    }
+
+    // Soft note: we fell back to live For-Sale listings because sold data
+    // wasn't available for this user. Pin it above the results.
+    if (fallback) {
+      const note = document.createElement('div');
+      note.className = 'sold-fallback-note';
+      note.innerHTML = `<span class="sold-fallback-icon">&#128161;</span> <span>Showing <strong>live asking prices</strong> for &ldquo;${escHtml(query)}&rdquo;. Sold price history needs a scrape.do API key &mdash; <button type="button" class="sold-fallback-link" onclick="showSettings()">add yours</button> to see exact sold comps by grade.</span>`;
+      grid.insertBefore(note, grid.firstChild);
     }
 
   } catch (err) {
@@ -5515,7 +5532,7 @@ async function shareSearchResult() {
     median: sorted[Math.floor(sorted.length / 2)],
     min: sorted[0],
     max: sorted[sorted.length - 1],
-    isSold: currentMode === 'sold',
+    isSold: currentResultMode === 'sold',
   };
   try {
     const blob = await _buildPriceShareImage(query, stats);
