@@ -35,8 +35,38 @@ const CHECKLIST_DIR = path.join(ROOT, 'public', 'data', 'checklists');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const SETS_DIR = path.join(PUBLIC_DIR, 'sets');
 const PLAYERS_DIR = path.join(PUBLIC_DIR, 'players');
+const TEAMS_DIR = path.join(PUBLIC_DIR, 'teams');
 const SITE = 'https://thecardhuddle.com';
 const TODAY = new Date().toISOString().slice(0, 10);
+
+// The 32 current NFL franchises (clean, high-volume team values). Relocated /
+// renamed franchises are merged into their current name so e.g. "Oakland
+// Raiders" cards roll up under the Raiders page. College / one-off team values
+// are intentionally ignored — only these get pages.
+const NFL_TEAMS = [
+  'Arizona Cardinals', 'Atlanta Falcons', 'Baltimore Ravens', 'Buffalo Bills',
+  'Carolina Panthers', 'Chicago Bears', 'Cincinnati Bengals', 'Cleveland Browns',
+  'Dallas Cowboys', 'Denver Broncos', 'Detroit Lions', 'Green Bay Packers',
+  'Houston Texans', 'Indianapolis Colts', 'Jacksonville Jaguars', 'Kansas City Chiefs',
+  'Las Vegas Raiders', 'Los Angeles Chargers', 'Los Angeles Rams', 'Miami Dolphins',
+  'Minnesota Vikings', 'New England Patriots', 'New Orleans Saints', 'New York Giants',
+  'New York Jets', 'Philadelphia Eagles', 'Pittsburgh Steelers', 'San Francisco 49ers',
+  'Seattle Seahawks', 'Tampa Bay Buccaneers', 'Tennessee Titans', 'Washington Commanders',
+];
+const TEAM_ALIASES = {
+  'Oakland Raiders': 'Las Vegas Raiders', 'Los Angeles Raiders': 'Las Vegas Raiders',
+  'San Diego Chargers': 'Los Angeles Chargers', 'St. Louis Rams': 'Los Angeles Rams',
+  'St Louis Rams': 'Los Angeles Rams',
+  'Washington Football Team': 'Washington Commanders', 'Washington Redskins': 'Washington Commanders',
+  'Houston Oilers': 'Tennessee Titans', 'Tennessee Oilers': 'Tennessee Titans',
+};
+const NFL_TEAM_SET = new Set(NFL_TEAMS);
+function canonicalTeam(t) {
+  const name = (t || '').trim();
+  if (NFL_TEAM_SET.has(name)) return name;
+  if (TEAM_ALIASES[name]) return TEAM_ALIASES[name];
+  return null; // college / unknown — no page
+}
 
 // Bound page weight: render at most this many cards per page; the rest are
 // reachable via the "search all in the app" CTA.
@@ -143,7 +173,7 @@ function head({ title, description, canonical, extraJsonLd }) {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/sets/landing.css?v=2" />
+  <link rel="stylesheet" href="/sets/landing.css?v=3" />
 ${extraJsonLd || ''}
 </head>
 <body>
@@ -157,7 +187,7 @@ function footer() {
   return `
   <footer class="lp-footer">
     <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>
-    <p class="lp-muted"><a href="/sets/">All Checklists</a> &bull; <a href="/players/">Player Price Guides</a> &bull; Data sourced from eBay &bull; Not affiliated with eBay Inc.</p>
+    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; Data sourced from eBay &bull; Not affiliated with eBay Inc.</p>
   </footer>
 </body>
 </html>`;
@@ -176,6 +206,27 @@ function breadcrumbJsonLd(items) {
       '@type': 'ListItem', position: i + 1, name: jsonText(it.label), ...(it.absUrl ? { item: it.absUrl } : {}),
     })),
   });
+}
+
+// Renders a visible FAQ (<details> accordions) plus the matching FAQPage
+// JSON-LD — the combination that makes a page eligible for Google's
+// "People Also Ask" / FAQ rich results. `items` is [{ q, aHtml, aText }].
+function faqSection(items) {
+  const list = items.filter(it => it && it.q && it.aHtml);
+  if (!list.length) return { html: '', jsonLd: '' };
+  let html = `    <section class="lp-faq">\n      <h2>Frequently asked questions</h2>\n`;
+  for (const it of list) {
+    html += `      <details class="lp-faq-item"><summary>${esc(it.q)}</summary><div class="lp-faq-a">${it.aHtml}</div></details>\n`;
+  }
+  html += `    </section>\n`;
+  const jsonLd = ldScript({
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: list.map(it => ({
+      '@type': 'Question', name: jsonText(it.q),
+      acceptedAnswer: { '@type': 'Answer', text: jsonText(it.aText || it.aHtml.replace(/<[^>]+>/g, ' ')) },
+    })),
+  });
+  return { html, jsonLd };
 }
 
 // ---- Per-set page ---------------------------------------------------------
@@ -211,7 +262,27 @@ function buildSetPage(cl, related, playerSlug) {
     },
   });
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd });
+  // Rarest parallels (lowest print runs) for the FAQ.
+  const prs = [];
+  for (const s of cl.sets) for (const par of (s.parallels || [])) {
+    if (par && par.printRun) prs.push({ name: (par.name || '').replace(/\s+/g, ' ').trim(), run: par.printRun });
+  }
+  prs.sort((a, b) => a.run - b.run);
+  const rarest = []; const seenPar = new Set();
+  for (const par of prs) { if (!par.name || seenPar.has(par.name)) continue; seenPar.add(par.name); rarest.push(`${par.name} /${par.run}`); if (rarest.length >= 4) break; }
+  const topNames = sampleCards.slice(0, 3);
+  const faq = faqSection([
+    { q: `How much is ${setLabel} worth?`,
+      aHtml: `Prices depend heavily on the player, parallel and grade. Base cards in raw condition often sell for a few dollars, while low-numbered parallels, rookies and autographs${topNames.length ? ` of stars like ${esc(topNames.join(', '))}` : ''} can reach hundreds or thousands. Tap any card above for real eBay sold prices by grade.` },
+    { q: `How many cards are in ${cl.name}?`,
+      aHtml: `There are ${cl.cardCount.toLocaleString()} cards across ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'}, with ${cl.parallelCount} different parallels.` },
+    ...(rarest.length ? [{ q: `What are the rarest ${setLabel} parallels?`,
+      aHtml: `Some of the toughest pulls are ${esc(rarest.join(', '))}. One-of-one Superfractors and printing plates are the rarest of all.` }] : []),
+    { q: `Where can I check ${setLabel} card prices?`,
+      aHtml: `Right here — every card links to real eBay sold prices broken down by grade (Raw, PSA 10, PSA 9, BGS and more), so you see what collectors actually paid, not asking prices.` },
+  ]);
+
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -262,12 +333,13 @@ function buildSetPage(cl, related, playerSlug) {
     for (const r of related) html += `        <li><a href="/sets/${r.id}/">${esc(r.name)}</a></li>\n`;
     html += `      </ul>\n      <p><a href="/sets/">&larr; Browse all football card checklists</a></p>\n    </section>\n`;
   }
+  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
 
 // ---- Per-player page ------------------------------------------------------
-function buildPlayerPage(p, related) {
+function buildPlayerPage(p, related, teamSlug) {
   const title = `${p.name} Football Cards — Values & Checklist | The Card Huddle`;
   const canonical = `${SITE}/players/${p.slug}/`;
   const years = [...p.years].sort((a, b) => a - b);
@@ -308,8 +380,21 @@ function buildPlayerPage(p, related) {
     setsMap.get(c.setId).cards.push(c);
   }
   const sortedYears = [...byYear.keys()].sort((a, b) => b - a);
+  const minYear = years.length ? years[0] : null;
+  const teamLinks = [...new Set([...p.teams].map(canonicalTeam).filter(Boolean))].filter(t => teamSlug && teamSlug.has(t));
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd });
+  const faq = faqSection([
+    { q: `How much is a ${p.name} card worth?`,
+      aHtml: `It depends on the set, parallel and grade. ${esc(p.name)}'s cards${yearRange ? ` span ${yearRange} across` : ` appear across`} ${p.setIds.size} sets — base cards stay affordable, while rookie-year cards, low-numbered parallels and autographs command the most. Tap any card above for real eBay sold prices by grade.` },
+    { q: `What is ${p.name}'s most valuable card?`,
+      aHtml: `Typically his rookie-year cards and rare parallels or autographs — especially one-of-one Superfractors and low /numbered cards — are worth the most. Compare the sold prices on each card to see current values.` },
+    { q: `How many ${p.name} cards are there?`,
+      aHtml: `He appears on ${p.cards.length} different cards across ${p.setIds.size} sets in our checklist database${yearRange ? ` (${yearRange})` : ''}.` },
+    ...(minYear ? [{ q: `Does ${p.name} have rookie cards?`,
+      aHtml: `His earliest cards in our database are from ${minYear}. Rookie-year cards are usually the most sought-after — check their sold prices by grade above.` }] : []),
+  ]);
+
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -318,7 +403,7 @@ function buildPlayerPage(p, related) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(p.name)}">&#128270; See all ${esc(p.name)} prices now</a>
     </p>
-`;
+${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a href="/teams/${teamSlug.get(t)}/">${esc(t)}</a>`).join(' ')}</p>\n` : ''}`;
 
   let rendered = 0, truncated = false;
   for (const y of sortedYears) {
@@ -349,6 +434,7 @@ function buildPlayerPage(p, related) {
     for (const r of related) html += `        <li><a href="/players/${r.slug}/">${esc(r.name)}</a></li>\n`;
     html += `      </ul>\n      <p><a href="/players/">&larr; Browse all player price guides</a></p>\n    </section>\n`;
   }
+  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
@@ -444,6 +530,120 @@ function buildPlayersHub(players) {
   return html;
 }
 
+// ---- Team pages -----------------------------------------------------------
+function buildTeamIndex(checklists) {
+  const teams = new Map();
+  for (const cl of checklists) for (const s of cl.sets) for (const c of (s.cards || [])) {
+    const ct = canonicalTeam(c.team);
+    if (!ct) continue;
+    let t = teams.get(ct);
+    if (!t) { t = { name: ct, slug: slugify(ct), players: new Map(), cardCount: 0, setIds: new Set() }; teams.set(ct, t); }
+    t.cardCount++; t.setIds.add(cl.id);
+    const pn = (c.player || '').trim();
+    if (pn) t.players.set(pn, (t.players.get(pn) || 0) + 1);
+  }
+  return teams;
+}
+
+const TEAM_PLAYER_CAP = 250;
+
+function buildTeamPage(team, playerSlug, relatedTeams) {
+  const title = `${team.name} Football Cards — Checklist & Values | The Card Huddle`;
+  const canonical = `${SITE}/teams/${team.slug}/`;
+  const players = [...team.players.entries()].sort((a, b) => b[1] - a[1]); // [name, count]
+  const topNames = players.slice(0, 4).map(x => x[0]);
+  const description =
+    `${team.name} football card price guide — ${team.cardCount.toLocaleString()} cards ` +
+    `for ${players.length} players across ${team.setIds.size} sets. Check real eBay sold ` +
+    `prices by grade (Raw, PSA 10, PSA 9) for every card. Free.`;
+  const crumbs = [
+    { label: 'Home', href: '/', absUrl: SITE + '/' },
+    { label: 'Teams', href: '/teams/', absUrl: SITE + '/teams/' },
+    { label: team.name, absUrl: canonical },
+  ];
+  const collectionLd = ldScript({
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: jsonText(team.name + ' Football Cards'), url: canonical, description: jsonText(description),
+    about: { '@type': 'SportsTeam', name: jsonText(team.name) },
+    isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
+    mainEntity: {
+      '@type': 'ItemList', numberOfItems: players.length,
+      itemListElement: players.slice(0, JSONLD_ITEM_CAP).map(([n], i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(n) })),
+    },
+  });
+  const faq = faqSection([
+    { q: `How much are ${team.name} cards worth?`,
+      aHtml: `It varies by player, set, parallel and grade. Common base cards sell for a few dollars, while star rookies, low-numbered parallels and autographs${topNames.length ? ` of players like ${esc(topNames.slice(0, 3).join(', '))}` : ''} can reach hundreds or thousands. Tap any player below for real eBay sold prices by grade.` },
+    { q: `Who are the most-collected ${team.name} players?`,
+      aHtml: `${topNames.length ? esc(topNames.join(', ')) + ' are among the most-collected on the team.' : 'See the full player list below.'} Tap any name to view their cards and values.` },
+    { q: `Where can I check ${team.name} card prices?`,
+      aHtml: `Right here — every player links to real eBay sold prices broken down by grade (Raw, PSA 10, PSA 9, BGS and more), so you see what collectors actually paid.` },
+  ]);
+
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  html += `
+  <main class="lp-main">
+    ${breadcrumb(crumbs)}
+    <h1>${esc(team.name)} Football Cards</h1>
+    <p class="lp-lede">Browse <strong>${esc(team.name)}</strong> football cards — ${team.cardCount.toLocaleString()} cards for ${players.length} players across ${team.setIds.size} sets. Tap a player to see real eBay sold prices by grade (Raw, PSA 10, PSA 9 and more).</p>
+    <p class="lp-cta-row"><a class="lp-btn" href="${prefillHref(team.name)}">&#128270; Search ${esc(team.name)} cards on eBay</a></p>
+    <section class="lp-subset">
+      <h2>Players <span class="lp-count">${players.length}</span></h2>
+      <ul class="lp-cards">
+`;
+  let shown = 0;
+  for (const [name, count] of players) {
+    if (shown >= TEAM_PLAYER_CAP) break;
+    const slug = playerSlug.get(name);
+    const href = slug ? `/players/${slug}/` : prefillHref(`${name} ${team.name}`);
+    html += `        <li><a href="${href}">${esc(name)} <span class="lp-team">${count}</span></a></li>\n`;
+    shown++;
+  }
+  html += `      </ul>\n`;
+  if (players.length > shown) html += `      <p class="lp-truncate">Showing the top ${shown} players. <a href="${prefillHref(team.name)}">Search all ${esc(team.name)} cards in the live tool &rarr;</a></p>\n`;
+  html += `    </section>\n`;
+  if (relatedTeams && relatedTeams.length) {
+    html += `    <section class="lp-related">\n      <h2>Other teams</h2>\n      <ul class="lp-related-list">\n`;
+    for (const r of relatedTeams) html += `        <li><a href="/teams/${r.slug}/">${esc(r.name)}</a></li>\n`;
+    html += `      </ul>\n      <p><a href="/teams/">&larr; Browse all NFL team card guides</a></p>\n    </section>\n`;
+  }
+  html += faq.html;
+  html += `  </main>\n` + footer();
+  return html;
+}
+
+function buildTeamsHub(teams) {
+  const title = 'NFL Team Football Card Guides & Prices | The Card Huddle';
+  const canonical = `${SITE}/teams/`;
+  const description =
+    `Browse football cards by NFL team — all 32 franchises. See checklists and real ` +
+    `eBay sold prices by grade for every team's players. 100% free.`;
+  const crumbs = [{ label: 'Home', href: '/', absUrl: SITE + '/' }, { label: 'Teams', absUrl: canonical }];
+  const sorted = [...teams].sort((a, b) => a.name.localeCompare(b.name));
+  const itemListLd = ldScript({
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: 'NFL Team Football Card Guides', url: canonical, description: jsonText(description),
+    isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
+    mainEntity: {
+      '@type': 'ItemList', numberOfItems: sorted.length,
+      itemListElement: sorted.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(t.name), url: `${SITE}/teams/${t.slug}/` })),
+    },
+  });
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + itemListLd });
+  html += `
+  <main class="lp-main">
+    ${breadcrumb(crumbs)}
+    <h1>NFL Team Card Guides</h1>
+    <p class="lp-lede">Browse football cards by team — all <strong>${sorted.length} NFL franchises</strong>. Tap a team to see its players and check real eBay sold prices by grade.</p>
+    <p class="lp-cta-row"><a class="lp-btn" href="/players/">&#127944; Browse player price guides &rarr;</a></p>
+    <ul class="lp-set-list">
+`;
+  for (const t of sorted)
+    html += `      <li><a href="/teams/${t.slug}/"><span class="lp-set-name">${esc(t.name)}</span><span class="lp-set-meta">${t.cardCount.toLocaleString()} cards</span></a></li>\n`;
+  html += `    </ul>\n  </main>\n` + footer();
+  return html;
+}
+
 // ---- Stylesheet -----------------------------------------------------------
 const LANDING_CSS = `/* Lightweight stylesheet for SEO landing pages. Brand-matched, self-contained. */
 :root{--bg:#0c0e14;--card:#161b28;--text:#edf0f7;--muted:#9aa3b2;--accent:#5ece99;--accent-2:#3fae7d;--border:#2a3142;--amber:#f59e0b}
@@ -489,6 +689,15 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-aznav{display:flex;flex-wrap:wrap;gap:.35rem;margin:1.5rem 0 .5rem;position:sticky;top:64px;background:rgba(12,14,20,.92);backdrop-filter:blur(8px);padding:.5rem 0;z-index:4}
 .lp-aznav a{display:inline-block;min-width:1.6rem;text-align:center;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.25rem .35rem;font-size:.82rem;font-weight:600}
 .lp-aznav a:hover{border-color:var(--accent);text-decoration:none}
+.lp-teamline{margin:-0.75rem 0 1.25rem;font-size:.9rem;color:var(--muted)}
+.lp-teamline a{margin-right:.6rem}
+.lp-faq{border-top:1px solid var(--border);margin-top:2.25rem;padding-top:.5rem}
+.lp-faq-item{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:.5rem 0;padding:.2rem .9rem}
+.lp-faq-item summary{cursor:pointer;font-weight:600;padding:.65rem 0;list-style:none}
+.lp-faq-item summary::-webkit-details-marker{display:none}
+.lp-faq-item summary::after{content:'+';float:right;color:var(--accent);font-weight:700}
+.lp-faq-item[open] summary::after{content:'\\2212'}
+.lp-faq-a{color:#c8cedb;font-size:.95rem;padding:0 0 .8rem}
 .lp-muted{color:var(--muted)}
 .lp-footer{border-top:1px solid var(--border);padding:1.75rem 1.25rem;text-align:center;color:var(--muted);font-size:.9rem}
 .lp-footer a{color:var(--accent)}
@@ -496,15 +705,17 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 `;
 
 // ---- Sitemap --------------------------------------------------------------
-function buildSitemap(list, players) {
+function buildSitemap(list, players, teams) {
   const urls = [];
   const push = (loc, priority, changefreq) =>
     urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${TODAY}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
   push(`${SITE}/`, '1.0', 'daily');
   push(`${SITE}/sets/`, '0.9', 'weekly');
   push(`${SITE}/players/`, '0.9', 'weekly');
+  push(`${SITE}/teams/`, '0.9', 'weekly');
   for (const cl of list) push(`${SITE}/sets/${cl.id}/`, '0.7', 'weekly');
   for (const p of players) push(`${SITE}/players/${p.slug}/`, '0.6', 'weekly');
+  for (const t of teams) push(`${SITE}/teams/${t.slug}/`, '0.7', 'weekly');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
 }
 
@@ -543,13 +754,20 @@ function main() {
     setPlayers.get(sid).push(p);
   }
 
+  // NFL team index + slug lookup (for player↔team cross-links).
+  const teamIndex = buildTeamIndex(checklists);
+  const teams = [...teamIndex.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const teamSlug = new Map(teams.map(t => [t.name, t.slug]));
+
   console.log(`  ${checklists.length} sets (${checklists.reduce((n, c) => n + c.cardCount, 0).toLocaleString()} cards)`);
   console.log(`  ${eligible.length} eligible players (>= ${MIN_CARDS} cards in >= ${MIN_SETS} sets)`);
+  console.log(`  ${teams.length} NFL team pages`);
 
   // Fresh dirs so removed entries don't linger.
-  rmDirSafe(SETS_DIR); rmDirSafe(PLAYERS_DIR);
+  rmDirSafe(SETS_DIR); rmDirSafe(PLAYERS_DIR); rmDirSafe(TEAMS_DIR);
   fs.mkdirSync(SETS_DIR, { recursive: true });
   fs.mkdirSync(PLAYERS_DIR, { recursive: true });
+  fs.mkdirSync(TEAMS_DIR, { recursive: true });
   fs.writeFileSync(path.join(SETS_DIR, 'landing.css'), LANDING_CSS);
 
   let bytes = 0;
@@ -565,15 +783,23 @@ function main() {
     const related = (setPlayers.get(primarySet) || []).filter(x => x.name !== p.name).slice(0, 10);
     const dir = path.join(PLAYERS_DIR, p.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const html = buildPlayerPage(p, related);
+    const html = buildPlayerPage(p, related, teamSlug);
+    fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
+  }
+  for (const t of teams) {
+    const relatedTeams = teams.filter(x => x.slug !== t.slug).slice(0, 8);
+    const dir = path.join(TEAMS_DIR, t.slug);
+    fs.mkdirSync(dir, { recursive: true });
+    const html = buildTeamPage(t, playerSlug, relatedTeams);
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
   }
 
   fs.writeFileSync(path.join(SETS_DIR, 'index.html'), buildSetsHub(checklists));
   fs.writeFileSync(path.join(PLAYERS_DIR, 'index.html'), buildPlayersHub(eligible));
-  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), buildSitemap(checklists, eligible));
+  fs.writeFileSync(path.join(TEAMS_DIR, 'index.html'), buildTeamsHub(teams));
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), buildSitemap(checklists, eligible, teams));
 
-  console.log(`  wrote ${checklists.length} set pages + ${eligible.length} player pages + 2 hubs + sitemap`);
+  console.log(`  wrote ${checklists.length} set + ${eligible.length} player + ${teams.length} team pages + 3 hubs + sitemap`);
   console.log(`  total generated HTML: ${(bytes / 1024 / 1024).toFixed(1)} MB`);
   console.log('  done.');
 }

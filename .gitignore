@@ -6,4 +6,5 @@ node_modules/
 # Regenerated in CI before every deploy; no need to track ~tens of MB of HTML.
 public/sets/
 public/players/
+public/teams/
 public/sitemap.xml

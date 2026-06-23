@@ -2350,6 +2350,31 @@ main {
   animation: fadeIn 0.25s ease;
 }
 
+/* Shareable price-card button (under the stats bar) */
+.share-row {
+  grid-column: 1 / -1;
+  margin: -0.25rem 0 0.5rem;
+}
+.share-price-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(94, 206, 153, 0.08);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.share-price-btn:hover {
+  background: rgba(94, 206, 153, 0.16);
+  border-color: rgba(94, 206, 153, 0.45);
+}
+
 .stat-item {
   display: flex;
   flex-direction: column;

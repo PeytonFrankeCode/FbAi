@@ -1834,6 +1834,12 @@ function renderStatsBar(results, isSold) {
     </div>
   `;
   grid.appendChild(statsEl);
+
+  // Shareable price card — every share is free top-of-funnel marketing.
+  const shareRow = document.createElement('div');
+  shareRow.className = 'share-row';
+  shareRow.innerHTML = `<button class="share-price-btn" onclick="shareSearchResult()" title="Share this card's price">&#128228; Share this price</button>`;
+  grid.appendChild(shareRow);
 }
 
 // ---- Search (fetch individual sales for a specific variant) ----
@@ -5491,6 +5497,120 @@ function _buildShareImage(a) {
     ctx.fillStyle = '#9fb3aa';
     ctx.font = '500 32px system-ui, sans-serif';
     ctx.fillText(location.host, W / 2, 1018);
+
+    c.toBlob((b) => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+  });
+}
+
+// Build a shareable square image of the current card's price summary and hand
+// it to the native share sheet (or download + copy a link as a fallback).
+async function shareSearchResult() {
+  const prices = (currentResults || []).map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+  const query = (_searchPaging && _searchPaging.query) || (input && input.value) || '';
+  if (!prices.length || !query) { alert('Run a search first, then share the price.'); return; }
+  const sorted = [...prices].sort((a, b) => a - b);
+  const stats = {
+    count: prices.length,
+    avg: prices.reduce((a, b) => a + b, 0) / prices.length,
+    median: sorted[Math.floor(sorted.length / 2)],
+    min: sorted[0],
+    max: sorted[sorted.length - 1],
+    isSold: currentMode === 'sold',
+  };
+  try {
+    const blob = await _buildPriceShareImage(query, stats);
+    const origin = location.origin;
+    const text = `${query} — ${stats.isSold ? 'avg sold' : 'avg'} $${stats.avg.toFixed(2)} (${stats.count} ${stats.isSold ? 'recent sales' : 'listings'}). Check any card's value free at ${origin}`;
+    const file = new File([blob], 'card-price.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], text, title: 'Card Price' });
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'card-price.png'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    try { await navigator.clipboard.writeText(text); } catch {}
+    alert('Saved your price image — share link copied to your clipboard!');
+  } catch {
+    alert('Could not create the share image on this device.');
+  }
+}
+
+function _buildPriceShareImage(query, stats) {
+  return new Promise((resolve, reject) => {
+    const W = 1080, H = 1080;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    const accent = '#5ece99';
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#0c0e14'); bg.addColorStop(1, '#161b28');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+
+    // Brand
+    ctx.fillStyle = '#9aa3b2';
+    ctx.font = '700 36px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    ctx.fillText('THE CARD HUDDLE', W / 2, 120);
+    ctx.fillStyle = '#6f7a8c';
+    ctx.font = '500 26px system-ui, sans-serif';
+    ctx.fillText('Real eBay sold prices', W / 2, 164);
+
+    // Card title (wrapped, up to 3 lines)
+    ctx.fillStyle = '#edf0f7';
+    ctx.font = '800 58px system-ui, sans-serif';
+    const words = String(query).trim().split(/\s+/);
+    const lines = []; let line = '';
+    for (const w of words) {
+      const t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width > W - 160 && line) { lines.push(line); line = w; } else line = t;
+    }
+    if (line) lines.push(line);
+    if (lines.length > 3) { lines.length = 3; lines[2] = lines[2].replace(/\W*$/, '') + '…'; }
+    const titleY = 300 - (lines.length - 1) * 34;
+    lines.forEach((ln, i) => ctx.fillText(ln, W / 2, titleY + i * 70));
+
+    const money = (v) => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Big average price — shrink to fit the canvas width (4–5 digit prices
+    // would otherwise overflow at a fixed size).
+    const priceStr = money(stats.avg);
+    let pf = 200;
+    ctx.font = `800 ${pf}px system-ui, sans-serif`;
+    while (ctx.measureText(priceStr).width > W - 120 && pf > 80) { pf -= 8; ctx.font = `800 ${pf}px system-ui, sans-serif`; }
+    ctx.fillStyle = accent;
+    ctx.fillText(priceStr, W / 2, 620);
+    ctx.fillStyle = '#9aa3b2';
+    ctx.font = '600 34px system-ui, sans-serif';
+    ctx.fillText(`${stats.isSold ? 'Average of' : 'Average across'} ${stats.count} ${stats.isSold ? 'recent eBay sales' : 'live listings'}`, W / 2, 686);
+
+    // Low / Median / High row
+    const cells = [['Low', stats.min], ['Median', stats.median], ['High', stats.max]];
+    const colW = 300, startX = W / 2 - colW, baseY = 820;
+    cells.forEach(([k, v], i) => {
+      const x = startX + i * colW;
+      ctx.fillStyle = '#6f7a8c';
+      ctx.font = '600 30px system-ui, sans-serif';
+      ctx.fillText(k, x, baseY);
+      ctx.fillStyle = '#edf0f7';
+      ctx.font = '800 48px system-ui, sans-serif';
+      ctx.fillText(money(v), x, baseY + 64);
+    });
+
+    // Footer CTA
+    ctx.fillStyle = accent;
+    ctx.font = '700 40px system-ui, sans-serif';
+    ctx.fillText('Check any card’s value free', W / 2, 980);
+    ctx.fillStyle = '#9aa3b2';
+    ctx.font = '500 32px system-ui, sans-serif';
+    ctx.fillText(location.host, W / 2, 1026);
+
+    // Accent bar
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, H - 12, W, 12);
 
     c.toBlob((b) => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
   });
