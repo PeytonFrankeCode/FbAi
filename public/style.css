@@ -355,20 +355,32 @@
   border-color: var(--accent);
 }
 
-/* Go Pro — filled accent so it reads as the upgrade CTA, not another link. */
+/* Go Pro — filled accent pill so it reads as the upgrade CTA. Self-contained
+   (not an .auth-btn) since it sits in its own centered row below the nameplate. */
 .pro-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   background: var(--accent);
   color: #06281b;
-  border-color: var(--accent);
-  margin-right: 0.4rem;
+  border: 1px solid var(--accent);
+  padding: 0.4rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 2px 10px rgba(94, 206, 153, 0.25);
+  transition: filter var(--transition-fast), transform var(--transition-fast);
 }
 .pro-btn:hover {
-  background: var(--accent);
   filter: brightness(1.08);
+  transform: translateY(-1px);
 }
 .pro-btn.subscribed {
   background: rgba(94, 206, 153, 0.12);
   color: var(--accent);
+  box-shadow: none;
 }
 
 .auth-dropdown {
@@ -1517,7 +1529,7 @@ header::before {
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  grid-template-rows: auto auto;
+  grid-template-rows: auto auto auto;
   align-items: center;
   gap: 0.5rem 1rem;
 }
@@ -1530,14 +1542,6 @@ header::before {
   justify-self: start;
 }
 
-/* Pro button — right side */
-.header-inner .header-pro {
-  position: static;
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-}
-
 /* Brand logo — center */
 .header-inner .header-brand {
   grid-column: 2;
@@ -1545,12 +1549,21 @@ header::before {
   text-align: center;
 }
 
-/* Tagline — full width below */
+/* Tagline — full width below the nameplate */
 .header-inner .header-tagline {
   grid-column: 1 / -1;
   grid-row: 2;
   text-align: center;
   margin-top: 0;
+}
+
+/* Go Pro — centered, full-width row directly below the nameplate/tagline */
+.header-inner .header-pro-row {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  justify-content: center;
+  margin-top: 0.15rem;
 }
 
 header h1 {
