@@ -1,0 +1,227 @@
+session:
+  date: "2026-06-24"
+  branch: claude/card-scanner-grading-96uil8
+  topic: >
+    Traffic & monetization push — donate button, social share image, favicon,
+    a programmatic SEO landing-page system (set / player / team pages, FAQ +
+    structured data), shareable price-card images, a graceful sold→for-sale
+    fallback, KV caching, a shared paid scrape.do key, and a usage/quota
+    dashboard. Plus research/advice (Dallas Card Show, branding idea).
+  note: >
+    All code committed to branch claude/card-scanner-grading-96uil8 and pushed,
+    but NOT yet deployed — everything goes live on the deploy to main (CI runs
+    on push to main). Files touched: public/app.js, public/index.html,
+    public/style.css, server.js, db.js, wrangler.toml,
+    scripts/build-landing-pages.js, .github/workflows/deploy.yml, .gitignore,
+    public/og-image.png, public/favicon.ico, public/favicon-32x32.png,
+    public/favicon-48x48.png, public/favicon-192x192.png,
+    public/apple-touch-icon.png, public/usage.html. Generated SEO pages
+    (public/sets/, public/players/, public/teams/, public/sitemap.xml) are now
+    gitignored build artifacts. Asset cache versions ended at app.js?v=129 /
+    style.css?v=100 / sets/landing.css?v=3.
+
+overview: >
+  A long marketing/growth-focused session. Started with small monetization &
+  shareability wins (donate button, fixed-missing OG share image, favicon),
+  then built the big lever: a static, crawlable SEO landing-page system
+  generated from the checklist JSON and served by Cloudflare ASSETS — turning a
+  single-page app (one indexable URL) into ~2,048 indexable pages. Added FAQ
+  structured data and NFL team pages, and an in-app shareable price-card image
+  (viral loop). Mid-session the launch strategy shifted: scrape.do banned the
+  owner's old accounts, so we made sold search degrade gracefully to the free
+  official For-Sale eBay API, added KV caching to protect quota, then — once the
+  owner committed to a paid $30/mo 250k-call scrape.do plan — wired a shared
+  server-side scrape.do key (sold works for everyone) plus sold KV caching and a
+  /usage quota dashboard. Ended with two research/advice questions (Dallas Card
+  Show advertising costs; a branding idea for spelling thecardhuddle.com in cards).
+
+features:
+  - title: Donate / Support button
+    detail: >
+      Recommended Buy Me a Coffee. Header top-right heart button driven by a
+      single DONATE_URL constant in app.js; stays hidden until a real URL is set
+      (placeholder check) so it never ships a dead link. STILL PLACEHOLDER —
+      owner must set DONATE_URL to their real Buy Me a Coffee link.
+    key_functions: [initDonateButton]
+
+  - title: Social share image (og-image.png) + sitemap cleanup
+    detail: >
+      OG/Twitter tags pointed at /og-image.png which did not exist, so every
+      shared link showed a blank preview. Generated a branded 1200x630 PNG with
+      sharp (dark theme, green accent, composited logo, grade breakdown). Also
+      trimmed sitemap.xml to the canonical homepage (the old ?view= entries all
+      canonical back to root; two were nonexistent views).
+
+  - title: Favicon from the logo mark
+    detail: >
+      Site had no favicon (Google showed a generic globe). Cropped the logo's
+      icon mark (calculator/chart/football, wordmark removed) with sharp,
+      centered on white, produced favicon.ico + 32/48/192 PNGs + 180px
+      apple-touch-icon, wired into <head>. Google re-crawl to update search
+      result icon takes days–weeks; browser tabs update immediately.
+
+  - title: SEO landing pages — generator + per-set pages
+    detail: >
+      scripts/build-landing-pages.js reads public/data/checklists (153 sets,
+      152k cards) and generates static HTML served directly by Cloudflare
+      ASSETS (no SSR). 153 per-set checklist pages at /sets/<id>/ + a /sets/ hub.
+      Each card/set deep-links into the live tool via the existing ?prefill=
+      handler (auto-submits a sold search). Unique title/meta/canonical, OG +
+      Twitter, BreadcrumbList + CollectionPage JSON-LD, internal links. Page
+      weight bounded (CARD_CAP 1000). npm run build:pages.
+    key_functions: [buildSetPage, buildSetsHub, loadChecklists]
+
+  - title: SEO landing pages — per-player pages + cross-linking
+    detail: >
+      1,859 per-player pages at /players/<slug>/ aggregating every card a player
+      appears on across all sets, targeting high-intent "what's my <player> card
+      worth" searches. Quality gate MIN_CARDS=5 AND MIN_SETS=2 excludes ~7,040
+      one-card players (no thin/doorway pages). Cross-linked both ways: set pages
+      link each player to their page (else ?prefill search); player pages link
+      back to every set. /players/ hub (A–Z + most-searched). Slug collisions
+      de-duped.
+    key_functions: [buildPlayerIndex, buildPlayerPage, buildPlayersHub, slugify]
+
+  - title: Pages as build artifacts (repo hygiene)
+    detail: >
+      Generated HTML (~67MB) is fully derived from checklists, so it's gitignored
+      (public/sets/, public/players/, public/teams/, public/sitemap.xml) and
+      rebuilt instead of committed. CI deploy.yml runs `npm run build:pages`
+      before wrangler deploy; a predeploy npm hook covers local `npm run deploy`.
+      Removed the 21MB of set-page HTML committed earlier in the session.
+
+  - title: FAQ blocks + FAQPage structured data
+    detail: >
+      Every set/player/team page gets a visible <details> FAQ plus matching
+      FAQPage JSON-LD (eligible for Google "People Also Ask"). Questions are
+      generated from real data (card counts, rarest parallels by print run, star
+      players, rookie years). Deliberately did NOT add Product/Offer schema —
+      it requires a real price we don't have on the pages (empty = Google
+      "missing field" errors); deferred to the price-on-pages work.
+    key_functions: [faqSection]
+
+  - title: NFL team pages
+    detail: >
+      32 per-team pages at /teams/<slug>/ + /teams/ hub, targeting
+      "<team> football cards" searches. Scoped to the 32 current NFL franchises
+      (team data clean for these; college/long-tail excluded), with relocated
+      teams alias-merged (Oakland/LA Raiders -> Las Vegas, Washington FT ->
+      Commanders, Oilers -> Titans, etc.). Cross-linked with player pages.
+      Sitemap now ~2,048 URLs. Teams link added to in-app Checklists callout +
+      footers.
+    key_functions: [buildTeamIndex, buildTeamPage, buildTeamsHub, canonicalTeam]
+
+  - title: In-app links to SEO hubs
+    detail: >
+      Checklists view shows a callout linking /players/, /sets/, /teams/; site
+      footer links all three. (Earlier "Go Pro" header slot reused for donate.)
+
+  - title: Shareable price-card images
+    detail: >
+      "Share this price" button under the search stats bar generates a branded
+      1080x1080 canvas image (card title, big average price, recent-sales count,
+      low/median/high, thecardhuddle.com CTA) and hands it to the Web Share API,
+      with a download + clipboard-link fallback on desktop. Mirrors the existing
+      shareGradeResult/_buildShareImage pattern. Price auto-shrinks to fit the
+      canvas (4–5 figure cards) and uses thousands separators (both were bugs
+      caught by previewing).
+    key_functions: [shareSearchResult, _buildPriceShareImage, renderStatsBar]
+
+  - title: Graceful sold -> for-sale fallback
+    detail: >
+      Previously a Sold search without a scrape.do key hit a dead-end error wall.
+      Now when sold data is unavailable (no/bad key, 503, rate-limited),
+      performSearch transparently re-runs against the official For-Sale Browse
+      API (works for everyone, no key) and pins a soft "showing live asking
+      prices … add your key for sold comps" note — no wall. Tracks the mode the
+      visible results actually came from so share labels/pagination stay correct.
+    key_functions: [performSearch, shareSearchResult]
+    notes: opts.fallback re-entry; currentResultMode state var.
+
+  - title: KV caching for For-Sale (Browse API)
+    detail: >
+      fetchViaBrowseAPI wrapped with a Cloudflare KV TTL cache (FORSALE_CACHE_TTL
+      = 1800s / 30 min) keyed by query+limit+offset, shared across worker
+      isolates so a traffic spike costs one eBay call instead of one per request.
+      Added cacheGet/cachePut to db.js (KV-backed, fire-and-forget via
+      __kvWaitUntil, no-op without KV in local Node).
+    key_functions: [cacheGet, cachePut, fetchViaBrowseAPI]
+
+  - title: Shared scrape.do key for sold search + sold KV caching
+    detail: >
+      Owner committed to a paid scrape.do plan ($30/mo, 250k calls). Sold search
+      switched from per-user keys to a shared server key (SCRAPE_DO_KEY secret)
+      via getScrapeDoKeysForRequest — works for every visitor, logged in or not;
+      a user's own key still takes precedence. Sold results KV-cached
+      (SOLD_KV_TTL = 10800s / 3h, keyed by query+limit) — identical for all users
+      so one scrape covers everyone, the main lever stretching the 250k. Only
+      genuine non-empty hits cached (never key/quota/rate errors). Until the
+      secret is set, sold degrades to the for-sale fallback.
+    key_functions: [getScrapeDoKeysForRequest, getServerScrapeDoKeys, fetchEbayItems]
+
+  - title: Usage / quota dashboard
+    detail: >
+      trackApiCall now counts a 'scrapedo' bucket; cache hits counted via
+      trackCacheHit (sold/forsale), buffered in memory and flushed in batches
+      (every 10 hits or piggybacked on the next API write) to avoid a KV write
+      per hit. getApiCallStats + /api/stats/api-calls report sold calls today,
+      sold/for-sale cache-hit rate, and month-to-date scrape.do usage vs the
+      250k quota. New /usage.html (noindex) is a live dashboard with a
+      month-used-vs-quota bar (amber >70%, red >90%), calls today, hit rate.
+    key_functions: [trackCacheHit, flushCacheHits, trackApiCall, getApiCallStats, emptyDay]
+    notes: SCRAPE_DO_MONTHLY_QUOTA = 250000.
+
+research_and_advice:
+  - title: Reddit launch readiness
+    detail: >
+      Confirmed For-Sale uses the official eBay Browse API server-side (works for
+      everyone, free); only Sold needed scrape.do. Recommended launching once
+      sold degrades gracefully + caching is in place. Wrote a sample
+      "looking for testers" post.
+  - title: scrape.do alternatives / Apify
+    detail: >
+      Discussed Apify vs a shared scrape.do key. Apify viable (you own the actor,
+      cheap with a Cheerio actor + caching, ~$5–15/mo at launch with a spend
+      cap) but more work; better suited to scheduled price-cache jobs. Resolved
+      by the owner buying a paid scrape.do plan instead.
+  - title: Dallas Card Show advertising costs (web research)
+    detail: >
+      Allen, TX flagship (largest US show, 6x/yr, Marriott Allen, 700+ tables).
+      Vendor table ~$400/8-ft for the weekend (waitlisted). DFW-area local shows
+      $50–150/table. Admission $15 GA / $35 day VIP / $90 weekend VIP.
+      Sponsorship/banner pricing NOT public — contact 469-656-1445 /
+      dallascardshow.com. Recommended a cheap QR-card/attendee approach first.
+  - title: Branding idea — spell thecardhuddle.com in 2023 Zenith cards
+    detail: >
+      For the "." use a card whose name contains a period (top pick C.J. Stroud;
+      also A.J. Brown, T.J. Hockenson, or any "Jr." rookie). For a card that
+      visually looks like a dot, scanned all sets for circular/orb inserts —
+      best: Spectra "Solar Eclipse", "On Target" (bullseye), Obsidian
+      "Eclipse"/"Nucleus", National Treasures "Moon". (No images in data — judged
+      by design theme.)
+
+pending_user_actions:
+  - "Deploy branch to main — EVERYTHING above is gated on this (CI builds pages + deploys)."
+  - "wrangler secret put SCRAPE_DO_KEY (the paid key), then redeploy — until set, sold falls back to for-sale."
+  - "ROTATE the scrape.do key: it was pasted in chat, so generate a fresh one and set that."
+  - "Set DONATE_URL in app.js to the real Buy Me a Coffee link (still placeholder)."
+  - "Submit https://thecardhuddle.com/sitemap.xml in Google Search Console (Domain property; enter full URL). Use full https:// URL — bare domain was rejected as invalid."
+  - "After deploy: verify a logged-out Sold search shows real prices (key set) or the live-prices fallback (key unset)."
+  - "Watch /usage during launch; optionally gate /usage + /api/stats/api-calls behind the admin key (currently public)."
+
+open_followups:
+  - "Real prices ON the landing pages (Product/Offer schema) — needs a price-cache pipeline (scrape.do cron or Apify); deferred."
+  - "Optional: KV-cache the sold path's other callers; per-IP rate limiting if unique-search volume is high."
+  - "Tunable TTLs: FORSALE_CACHE_TTL (30m), SOLD_KV_TTL (3h)."
+
+asset_versions:
+  app_js: 129
+  style_css: 100
+  landing_css: 3
+
+key_constants_and_secrets:
+  SCRAPE_DO_KEY: "Worker secret — shared paid scrape.do key (sold search for all)."
+  FORSALE_CACHE_TTL: 1800
+  SOLD_KV_TTL: 10800
+  SCRAPE_DO_MONTHLY_QUOTA: 250000
+  DONATE_URL: "constant in public/app.js — set to real Buy Me a Coffee URL."
