@@ -3377,8 +3377,8 @@ function renderSoldUsagePill() {
 function updateProButton() {
   const btn = document.getElementById('pro-btn');
   if (!btn) return;
-  if (hasPro()) { btn.textContent = 'Pro'; btn.classList.add('subscribed'); btn.onclick = () => openBillingPortal(); }
-  else { btn.textContent = 'Go Pro'; btn.classList.remove('subscribed'); btn.onclick = () => showUpgrade(); }
+  if (hasPro()) { btn.textContent = '★ Pro'; btn.classList.add('subscribed'); btn.onclick = () => openBillingPortal(); }
+  else { btn.textContent = '★ Go Pro'; btn.classList.remove('subscribed'); btn.onclick = () => showUpgrade(); }
 }
 
 // Send a subscriber to Stripe's hosted billing portal to manage/cancel.
@@ -3403,8 +3403,9 @@ async function openBillingPortal() {
 let _checkoutEnabled = true;
 function applyCheckoutState(enabled) {
   _checkoutEnabled = !!enabled;
-  const pb = document.getElementById('pro-btn');
-  if (pb) pb.style.display = enabled ? '' : 'none';
+  // Keep the Go Pro button visible either way — when checkout is paused the
+  // modal shows the "temporarily unavailable" notice rather than the button
+  // silently vanishing (which reads as a broken button).
   const notice = document.getElementById('upgrade-paused');
   if (notice) notice.style.display = enabled ? 'none' : 'block';
   document.querySelectorAll('.pricing-cta.pro').forEach(btn => {
