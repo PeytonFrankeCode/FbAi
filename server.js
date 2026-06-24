@@ -1192,10 +1192,14 @@ function getScrapeDoKeysForRequest(req) {
   // logged-out visitors.
   const usingShared = userKeys.length === 0;
   const keys = usingShared ? getServerScrapeDoKeys() : userKeys;
-  // Sold data is free for everyone — The Card Huddle is community-funded, not
-  // paywalled. No per-user meter; the KV cache + shared key keep costs sane.
-  // (meter stays in the shape for back-compat with fetchEbayItems, always null.)
-  return { username, keys, shared: usingShared, meter: null };
+  // Sold data is free for everyone (no paywall), but capped per day to protect
+  // the shared scrape.do quota while we're community-funded — the cap is a
+  // temporary guardrail that lifts as funding grows, not a Pro gate. Users on
+  // their own scrape.do key spend their own quota, so they're never capped.
+  const meter = usingShared
+    ? { id: soldMeterIdFor(username, req), limit: SOLD_FREE_DAILY }
+    : null;
+  return { username, keys, shared: usingShared, meter };
 }
 
 // ---- Shared fetch function ----
@@ -1313,8 +1317,8 @@ app.get('/api/search', async (req, res) => {
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
       if (searchData.limitReached) {
         return res.status(402).json({
-          error: `You've used all ${searchData.freeLimit} free sold-price searches for today.`,
-          limitReached: true, freeLimit: searchData.freeLimit, upgrade: true,
+          error: `You've hit today's free sold-search limit (${searchData.freeLimit}). The Card Huddle is community-funded — chip in to help us lift the cap, or add your own scrape.do key in Settings.`,
+          limitReached: true, freeLimit: searchData.freeLimit, fund: true,
         });
       }
       // Keyword match: keep the listings sharing the most keywords with the
@@ -2178,8 +2182,8 @@ app.get('/api/grading-advisor', async (req, res) => {
     }
     if (rawData.limitReached || psa8Data.limitReached || psa9Data.limitReached || psa10Data.limitReached) {
       return res.status(402).json({
-        error: `You've used all ${SOLD_FREE_DAILY} free sold-price searches for today.`,
-        limitReached: true, freeLimit: SOLD_FREE_DAILY, upgrade: true,
+        error: `You've hit today's free sold-search limit (${SOLD_FREE_DAILY}). The Card Huddle is community-funded — chip in to help us lift the cap, or add your own scrape.do key in Settings.`,
+        limitReached: true, freeLimit: SOLD_FREE_DAILY, fund: true,
       });
     }
 
@@ -2282,8 +2286,8 @@ app.get('/api/direct-search', async (req, res) => {
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
       if (searchData.limitReached) {
         return res.status(402).json({
-          error: `You've used all ${searchData.freeLimit} free sold-price searches for today.`,
-          limitReached: true, freeLimit: searchData.freeLimit, upgrade: true,
+          error: `You've hit today's free sold-search limit (${searchData.freeLimit}). The Card Huddle is community-funded — chip in to help us lift the cap, or add your own scrape.do key in Settings.`,
+          limitReached: true, freeLimit: searchData.freeLimit, fund: true,
         });
       }
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));

@@ -1913,10 +1913,10 @@ async function performSearch(query, opts = {}) {
       return;
     }
     if (response.status === 402 && data && data.limitReached) {
-      // Out of free sold-price searches for today → show the upgrade nudge.
+      // Hit today's free sold-search cap → invite them to fund / lift the cap.
       setLoading(false);
       refreshSoldUsage();
-      showUpgrade(`You've used all ${data.freeLimit || 25} free sold-price searches today.`);
+      showFund(data.error || `You've hit today's free sold-search limit (${data.freeLimit || 25}).`);
       return;
     }
     if (!response.ok) {
@@ -2068,8 +2068,8 @@ async function loadGradePanel(query) {
     if (res.status === 402 && data && data.limitReached) {
       loading.classList.add('hidden');
       refreshSoldUsage();
-      showUpgrade(`You've used all ${data.freeLimit || 25} free sold-price searches today.`);
-      body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Daily free limit reached — upgrade for unlimited grade data.</span>';
+      showFund(data.error || `You've hit today's free sold-search limit (${data.freeLimit || 25}).`);
+      body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Daily sold-search limit reached — ♥ Fund to help lift it.</span>';
       return;
     }
     if (!res.ok) throw new Error(data.error);
@@ -3197,10 +3197,45 @@ function hasPro() { return false; }
 function isProPlus() { return false; }
 function isProOrPlus() { return true; }
 
-// The sold-usage pill is gone (sold data is free + unmetered). No-ops kept so
-// existing callers never throw.
-async function refreshSoldUsage() { const p = document.getElementById('sold-usage-pill'); if (p) p.style.display = 'none'; }
-function renderSoldUsagePill() {}
+// Sold data is free for everyone but capped per day to protect the shared
+// scrape.do quota while we're community-funded. The pill shows how many are
+// left today and routes to the Fund modal — the cap lifts as funding grows.
+let _soldUsage = null;
+async function refreshSoldUsage() {
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/sold-usage', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) return;
+    _soldUsage = await res.json();
+  } catch { return; }
+  renderSoldUsagePill();
+}
+
+function renderSoldUsagePill() {
+  let pill = document.getElementById('sold-usage-pill');
+  const u = _soldUsage;
+  // Hide for own-key users (unlimited) or when usage is unknown.
+  if (!u || u.unlimited || typeof u.remaining !== 'number') {
+    if (pill) pill.style.display = 'none';
+    return;
+  }
+  if (!pill) {
+    pill = document.createElement('button');
+    pill.id = 'sold-usage-pill';
+    pill.type = 'button';
+    pill.onclick = () => showFund(`You have ${(_soldUsage && _soldUsage.remaining) || 0} free sold searches left today. The cap protects our shared data costs — fund us to help lift it.`);
+    pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#ddd);'
+      + 'background:var(--bg-secondary,#f4f4f6);color:var(--text-secondary,#555);border-radius:999px;'
+      + 'padding:4px 12px;font-size:.78rem;cursor:pointer;margin:6px auto 0;font-family:inherit';
+    const form = document.getElementById('search-form');
+    if (form && form.parentNode) form.parentNode.insertBefore(pill, form.nextSibling);
+    else document.body.appendChild(pill);
+  }
+  pill.style.display = 'inline-flex';
+  pill.textContent = u.remaining > 0
+    ? `${u.remaining} free sold searches left today · ♥ Fund to lift the cap`
+    : 'Daily sold-search limit reached · ♥ Fund to help lift it';
+}
 
 // Still pull /api/auth/me so a legacy subscriber can reach the billing portal to
 // cancel now that the site is free; refreshes the Fund button either way.
