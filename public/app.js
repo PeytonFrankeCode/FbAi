@@ -3261,7 +3261,7 @@ function _ensureFundModal() {
     .fund-card h2{margin:0 0 6px;font-size:1.4rem;color:var(--text-primary,#edf0f7)}
     .fund-sub{color:var(--text-secondary,#9aa4bf);font-size:.9rem;margin:0 0 18px;line-height:1.5}
     .fund-amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-    .fund-amt{border:1px solid var(--border-primary,#2b3650);background:var(--bg-secondary,#161b28);color:var(--text-primary,#edf0f7);padding:11px 0;border-radius:10px;cursor:pointer;font-weight:700;font-size:.95rem;font-family:inherit}
+    .fund-amt{box-sizing:border-box;text-align:center;border:1px solid var(--border-primary,#2b3650);background:var(--bg-secondary,#161b28);color:var(--text-primary,#edf0f7);padding:11px 4px;border-radius:10px;cursor:pointer;font-weight:700;font-size:.95rem;font-family:inherit}
     .fund-amt.active{background:var(--accent,#5ece99);color:#06281b;border-color:var(--accent,#5ece99)}
     .fund-custom{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-primary,#2b3650);border-radius:10px;margin-bottom:14px;font-size:.95rem;font-family:inherit;background:var(--bg-secondary,#161b28);color:var(--text-primary,#edf0f7)}
     .fund-recurring{display:flex;align-items:center;gap:8px;font-size:.9rem;margin-bottom:16px;cursor:pointer;color:var(--text-secondary,#9aa4bf)}
