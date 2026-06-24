@@ -3319,6 +3319,8 @@ function renderFundGoal() {
   const g = _fundGoal;
   if (!g) return;
   const pct = typeof g.pct === 'number' ? g.pct : 0;
+  const reached = pct >= 100;
+  const width = Math.min(100, pct);
   const raised = Math.round(g.raised || 0);
   const goal = Math.round(g.goal || 0);
   const supText = g.supporters ? `${g.supporters} monthly supporter${g.supporters !== 1 ? 's' : ''}` : '';
@@ -3326,17 +3328,23 @@ function renderFundGoal() {
   const box = document.getElementById('fund-goal');
   if (box) {
     box.style.display = 'block';
-    const t = document.getElementById('fund-goal-text'); if (t) t.textContent = `$${raised} of $${goal} this month`;
+    box.classList.toggle('goal-reached', reached);
+    const t = document.getElementById('fund-goal-text');
+    if (t) t.textContent = reached ? `🎉 $${raised} raised — this month's goal is met!` : `$${raised} of $${goal} this month`;
     const s = document.getElementById('fund-goal-supporters'); if (s) s.textContent = supText;
-    const fill = document.getElementById('fund-goal-fill'); if (fill) fill.style.width = pct + '%';
+    const fill = document.getElementById('fund-goal-fill'); if (fill) fill.style.width = width + '%';
   }
   // Footer bar (always visible passive nudge)
   const foot = document.getElementById('fund-goal-footer');
   if (foot) {
     foot.classList.remove('hidden');
-    foot.innerHTML = `<div class="fund-goal-foot-label">Monthly goal: <strong>$${raised}</strong> of $${goal}${supText ? ' &middot; ' + escHtml(supText) : ''}</div>`
-      + `<div class="fund-goal-track"><div class="fund-goal-fill" style="width:${pct}%"></div></div>`
-      + `<button type="button" class="fund-goal-foot-btn" onclick="showFund()">&#9829; Chip in</button>`;
+    foot.classList.toggle('goal-reached', reached);
+    const label = reached
+      ? `&#127881; <strong>$${raised}</strong> raised — this month's goal is met. Thank you! &#128153;`
+      : `Monthly goal: <strong>$${raised}</strong> of $${goal}${supText ? ' &middot; ' + escHtml(supText) : ''}`;
+    foot.innerHTML = `<div class="fund-goal-foot-label">${label}</div>`
+      + `<div class="fund-goal-track"><div class="fund-goal-fill" style="width:${width}%"></div></div>`
+      + `<button type="button" class="fund-goal-foot-btn" onclick="showFund()">${reached ? '&#9829; Keep it going' : '&#9829; Chip in'}</button>`;
   }
 }
 // Back-compat: plenty of code still calls showUpgrade()/showPricing(). With

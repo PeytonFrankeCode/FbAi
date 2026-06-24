@@ -151,6 +151,17 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
       saveSubscriptions(subs);
       break;
     }
+    case 'invoice.payment_succeeded': {
+      // Count recurring monthly-Supporter renewals toward the funding goal. The
+      // first invoice (billing_reason 'subscription_create') is already counted
+      // at checkout, so only count subsequent cycles to avoid double-counting.
+      const invoice = event.data.object;
+      if (invoice.billing_reason === 'subscription_cycle') {
+        recordDonation(invoice.amount_paid, false);
+        console.log(`[fund] supporter renewal: $${((invoice.amount_paid || 0) / 100).toFixed(2)}`);
+      }
+      break;
+    }
   }
 
   res.json({ received: true });
