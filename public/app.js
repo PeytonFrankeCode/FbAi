@@ -3181,228 +3181,147 @@ document.addEventListener('keydown', (e) => {
 // Init auth state on load
 updateAuthButton();
 
-// ---- Subscription / Membership ----
-// The model: almost everything is free and unlimited (browsing, the card
-// scanner, checklists, the collection, The Floor). The ONE metered action is
-// sold-price search — the only thing that spends our shared scrape.do quota.
-// Free accounts get a generous daily allowance (server-enforced); Pro removes
-// it. This keeps the app cheap to run for casual users while the people who
-// lean on it hardest (active flippers) fund it.
-//
-// Source of truth is the server. _subscription is synced from /api/auth/me on
-// login and on payment return; everything here reads from it.
-let _subscription = null;
-let _pricingPeriod = 'monthly';
-let _soldUsage = null; // { unlimited, limit, used, remaining } from /api/sold-usage
+// ---- Fund The Card Huddle ----
+// No memberships, no paywalls — every feature is free for everyone. The site is
+// community-funded: eBay Partner Network affiliate links on every listing,
+// optional sponsors, and voluntary donations collected here via Stripe (one-time
+// or a recurring monthly "Supporter"). Donations unlock NO extra features.
+let _subscription = null;     // legacy: only set for pre-existing real subs
+let _fundAmount = 5;          // selected donation amount in dollars
+let _fundRecurring = false;   // monthly supporter vs one-time
+let _checkoutEnabled = true;
 
 function getUserSubscription() { return _subscription; }
-
-function hasPro() {
-  return !!(_subscription && _subscription.status === 'active'
-    && (_subscription.plan === 'pro' || _subscription.plan === 'proplus'));
-}
-
-// Tracked Cards / Seller Tools stay open-access, so these keep returning true.
-function isProPlus() { return hasPro(); }
+// Memberships removed — nothing is gated. Kept so any legacy caller stays safe.
+function hasPro() { return false; }
+function isProPlus() { return false; }
 function isProOrPlus() { return true; }
 
-// Pull the live subscription for the signed-in user. Safe to call when logged
-// out (no-op). Updates the header Go Pro button and the sold-usage pill.
+// The sold-usage pill is gone (sold data is free + unmetered). No-ops kept so
+// existing callers never throw.
+async function refreshSoldUsage() { const p = document.getElementById('sold-usage-pill'); if (p) p.style.display = 'none'; }
+function renderSoldUsagePill() {}
+
+// Still pull /api/auth/me so a legacy subscriber can reach the billing portal to
+// cancel now that the site is free; refreshes the Fund button either way.
 async function syncSubscriptionStatus() {
   const user = getCurrentUser();
-  if (!user) { _subscription = null; updateProButton(); refreshSoldUsage(); return; }
+  if (!user) { _subscription = null; updateProButton(); return; }
   try {
     const token = getSessionToken();
     const res = await fetch('/api/auth/me', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-    if (!res.ok) return;
-    const data = await res.json();
-    _subscription = data.subscription || null;
-  } catch { /* offline — leave last-known status */ }
+    if (res.ok) { const data = await res.json(); _subscription = data.subscription || null; }
+  } catch { /* offline — keep last-known */ }
   updateProButton();
-  refreshSoldUsage();
 }
 
-// ---- Upgrade modal (self-contained: injects its own DOM + styles) ----
-// Built in JS so it doesn't depend on markup in index.html. Opened by the
-// header Go Pro button and whenever a sold search hits the free daily limit.
-function _ensureUpgradeModal() {
-  if (document.getElementById('upgrade-overlay')) return;
+// ---- Fund modal (self-contained: injects its own DOM + styles) ----
+function _ensureFundModal() {
+  if (document.getElementById('fund-overlay')) return;
   const style = document.createElement('style');
   style.textContent = `
-    #upgrade-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;
-      align-items:center;justify-content:center;z-index:9999;padding:20px}
-    #upgrade-overlay.hidden{display:none}
-    .upgrade-card{background:var(--card-bg,#fff);color:var(--text-primary,#111);
-      border-radius:16px;max-width:420px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.35);
-      position:relative;font-family:inherit}
-    .upgrade-card h2{margin:0 0 6px;font-size:1.45rem}
-    .upgrade-reason{color:var(--text-secondary,#666);font-size:.92rem;margin:0 0 18px}
-    .upgrade-price{font-size:2.1rem;font-weight:800;margin:4px 0}
-    .upgrade-price small{font-size:.95rem;font-weight:500;color:var(--text-secondary,#666)}
-    .upgrade-toggle{display:inline-flex;gap:4px;background:var(--bg-secondary,#f1f1f4);
-      border-radius:999px;padding:4px;margin:8px 0 16px}
-    .upgrade-toggle button{border:0;background:transparent;padding:6px 14px;border-radius:999px;
-      cursor:pointer;font-size:.85rem;color:var(--text-secondary,#666)}
-    .upgrade-toggle button.active{background:var(--accent,#2563eb);color:#fff;font-weight:600}
-    .upgrade-feats{list-style:none;padding:0;margin:0 0 20px;text-align:left}
-    .upgrade-feats li{padding:6px 0;font-size:.92rem;display:flex;gap:8px;align-items:flex-start}
-    .upgrade-feats li::before{content:"✓";color:var(--accent,#2563eb);font-weight:800}
-    .upgrade-cta{width:100%;border:0;background:var(--accent,#2563eb);color:#fff;
-      padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer}
-    .upgrade-cta:disabled{opacity:.5;cursor:not-allowed}
-    .upgrade-x{position:absolute;top:14px;right:16px;border:0;background:transparent;
-      font-size:1.4rem;line-height:1;cursor:pointer;color:var(--text-secondary,#888)}
-    #upgrade-paused{display:none;background:#fef3c7;color:#92400e;border-radius:8px;
-      padding:10px;font-size:.85rem;margin-bottom:14px}
+    #fund-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+    #fund-overlay.hidden{display:none}
+    .fund-card{background:var(--card-bg,#fff);color:var(--text-primary,#111);border-radius:16px;max-width:430px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative;font-family:inherit}
+    .fund-card h2{margin:0 0 6px;font-size:1.4rem}
+    .fund-sub{color:var(--text-secondary,#666);font-size:.9rem;margin:0 0 18px;line-height:1.5}
+    .fund-amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+    .fund-amt{border:1px solid var(--border,#ddd);background:transparent;color:inherit;padding:11px 0;border-radius:10px;cursor:pointer;font-weight:700;font-size:.95rem;font-family:inherit}
+    .fund-amt.active{background:var(--accent,#5ece99);color:#06281b;border-color:var(--accent,#5ece99)}
+    .fund-custom{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border,#ddd);border-radius:10px;margin-bottom:14px;font-size:.95rem;font-family:inherit;background:transparent;color:inherit}
+    .fund-recurring{display:flex;align-items:center;gap:8px;font-size:.9rem;margin-bottom:16px;cursor:pointer}
+    .fund-cta{width:100%;border:0;background:var(--accent,#5ece99);color:#06281b;padding:13px;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit}
+    .fund-cta:disabled{opacity:.5;cursor:not-allowed}
+    .fund-x{position:absolute;top:14px;right:16px;border:0;background:transparent;font-size:1.4rem;line-height:1;cursor:pointer;color:var(--text-secondary,#888)}
+    .fund-foot{margin-top:14px;font-size:.74rem;color:var(--text-muted,#999);text-align:center;line-height:1.5}
   `;
   document.head.appendChild(style);
   const overlay = document.createElement('div');
-  overlay.id = 'upgrade-overlay';
+  overlay.id = 'fund-overlay';
   overlay.className = 'hidden';
   overlay.innerHTML = `
-    <div class="upgrade-card" role="dialog" aria-modal="true" aria-label="Upgrade to Pro">
-      <button class="upgrade-x" aria-label="Close" onclick="closePricing()">&times;</button>
-      <h2>Go Pro</h2>
-      <p class="upgrade-reason" id="upgrade-reason">Unlimited sold-price searches and more.</p>
-      <div id="upgrade-paused">Subscriptions are temporarily paused while we finalize tax setup. Please check back soon.</div>
-      <div class="upgrade-toggle">
-        <button data-period="monthly" class="active" onclick="setPricingPeriod('monthly')">Monthly</button>
-        <button data-period="yearly" onclick="setPricingPeriod('yearly')">Yearly · save 33%</button>
+    <div class="fund-card" role="dialog" aria-modal="true" aria-label="Fund The Card Huddle">
+      <button class="fund-x" aria-label="Close" onclick="closeFund()">&times;</button>
+      <h2>&#9829; Fund The Card Huddle</h2>
+      <p class="fund-sub" id="fund-reason">The Card Huddle is free for everyone — no paywalls, ever. It runs on community support. Chip in to help cover sold-data costs and keep it growing.</p>
+      <div class="fund-amounts" id="fund-amounts">
+        ${[3, 5, 10, 25].map(a => `<button type="button" class="fund-amt${a === 5 ? ' active' : ''}" data-amt="${a}" onclick="selectFundAmount(${a})">$${a}</button>`).join('')}
       </div>
-      <div class="upgrade-price"><span id="upgrade-amount">$4.99</span><small id="upgrade-freq">/mo</small></div>
-      <ul class="upgrade-feats">
-        <li>Unlimited sold-price searches (no daily cap)</li>
-        <li>Unlimited Grading Advisor lookups</li>
-        <li>Price alerts &amp; full price history</li>
-        <li>Support the site &amp; keep it running</li>
-      </ul>
-      <button class="upgrade-cta pricing-cta pro" id="upgrade-cta" onclick="handleSubscribe('pro')">Get Pro</button>
+      <input class="fund-custom" id="fund-custom" type="number" min="1" max="1000" step="1" placeholder="Custom amount ($)" oninput="setFundCustom(this.value)" />
+      <label class="fund-recurring"><input type="checkbox" id="fund-recurring" onchange="toggleFundRecurring(this.checked)" /> Make it monthly (become a Supporter)</label>
+      <button class="fund-cta" id="fund-cta" onclick="submitDonation()">Donate $5</button>
+      <p class="fund-foot">Secure checkout via Stripe &middot; Donations are voluntary and unlock no extra features — everything's free.</p>
     </div>`;
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closePricing(); });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closePricing();
-  });
-  applyCheckoutState(_checkoutEnabled);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeFund(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeFund(); });
 }
 
-function showUpgrade(reason) {
-  _ensureUpgradeModal();
-  const r = document.getElementById('upgrade-reason');
+function showFund(reason) {
+  _ensureFundModal();
+  const r = document.getElementById('fund-reason');
   if (r && reason) r.textContent = reason;
-  setPricingPeriod(_pricingPeriod);
-  document.getElementById('upgrade-overlay').classList.remove('hidden');
+  _updateFundCta();
+  document.getElementById('fund-overlay').classList.remove('hidden');
 }
-// Back-compat aliases for the many existing callers of showPricing().
-function showPricing() { showUpgrade(); }
-function closePricing() {
-  const o = document.getElementById('upgrade-overlay');
-  if (o) o.classList.add('hidden');
+// Back-compat: plenty of code still calls showUpgrade()/showPricing(). With
+// memberships gone these all become a gentle "support us" nudge.
+function showUpgrade(reason) { showFund(reason); }
+function showPricing() { showFund(); }
+function setPricingPeriod() {}
+function handleSubscribe() { showFund(); }
+function closeFund() { const o = document.getElementById('fund-overlay'); if (o) o.classList.add('hidden'); }
+function closePricing() { closeFund(); }
+
+function selectFundAmount(a) {
+  _fundAmount = a;
+  const custom = document.getElementById('fund-custom'); if (custom) custom.value = '';
+  document.querySelectorAll('#fund-amounts .fund-amt').forEach(b => b.classList.toggle('active', Number(b.dataset.amt) === a));
+  _updateFundCta();
 }
-function setPricingPeriod(period) {
-  _pricingPeriod = period === 'yearly' ? 'yearly' : 'monthly';
-  document.querySelectorAll('#upgrade-overlay .upgrade-toggle button').forEach(b =>
-    b.classList.toggle('active', b.dataset.period === _pricingPeriod));
-  const yearly = _pricingPeriod === 'yearly';
-  const amt = document.getElementById('upgrade-amount');
-  const freq = document.getElementById('upgrade-freq');
-  if (amt) amt.textContent = yearly ? '$39.99' : '$4.99';
-  if (freq) freq.textContent = yearly ? '/yr' : '/mo';
+function setFundCustom(val) {
+  const n = parseFloat(val);
+  if (n > 0) { _fundAmount = n; document.querySelectorAll('#fund-amounts .fund-amt').forEach(b => b.classList.remove('active')); }
+  _updateFundCta();
+}
+function toggleFundRecurring(on) { _fundRecurring = !!on; _updateFundCta(); }
+function _updateFundCta() {
+  const cta = document.getElementById('fund-cta');
+  if (!cta) return;
+  const amt = _fundAmount > 0 ? _fundAmount : 0;
+  cta.textContent = _fundRecurring ? `Support $${amt}/mo` : `Donate $${amt}`;
 }
 
-// Start Stripe checkout for the chosen plan. Proven flow: confirm Stripe is
-// configured + checkout open, then redirect to the hosted Checkout page.
-async function handleSubscribe(plan) {
-  const user = getCurrentUser();
-  if (!user) { closePricing(); showLogin(); return; }
-  let cfg = null;
+async function submitDonation() {
+  const amt = _fundAmount;
+  if (!(amt >= 1)) { alert('Please choose an amount of at least $1.'); return; }
+  const cta = document.getElementById('fund-cta');
+  if (cta) { cta.disabled = true; cta.textContent = 'Redirecting…'; }
   try {
-    const r = await fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' });
-    cfg = await safeJson(r);
-  } catch (err) {
-    alert(`Couldn't reach the payment service:\n\n${(err && err.message) || err}`);
-    return;
-  }
-  if (!cfg) { alert("Couldn't reach the payment service. Please try again."); return; }
-  if (cfg.checkoutEnabled === false) { applyCheckoutState(false); return; }
-  if (!cfg.enabled) { alert("Payments aren't configured on this environment yet."); return; }
-  try {
-    const endpoint = plan === 'proplus' ? '/api/stripe/create-checkout-proplus' : '/api/stripe/create-checkout';
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, period: _pricingPeriod }),
+    const res = await fetch('/api/stripe/create-donation', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: amt, recurring: _fundRecurring }),
     });
     const data = await safeJson(res);
     if (res.ok && data.url) { window.location.href = data.url; return; }
-    alert(`Couldn't start checkout:\n\n${(data && (data.detail || data.error)) || `HTTP ${res.status}`}`);
+    alert(`Couldn't start the donation:\n\n${(data && (data.detail || data.error)) || `HTTP ${res.status}`}`);
   } catch (err) {
     alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
+  } finally {
+    if (cta) { cta.disabled = false; _updateFundCta(); }
   }
 }
 
-// ---- Sold-search allowance pill ----
-// Shows "N free searches left today" for metered (free) users, and routes them
-// to the upgrade modal. Hidden for Pro / own-key / logged-out-with-no-pill.
-async function refreshSoldUsage() {
-  try {
-    const token = getSessionToken();
-    const res = await fetch('/api/sold-usage', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-    if (!res.ok) return;
-    _soldUsage = await res.json();
-  } catch { return; }
-  renderSoldUsagePill();
-}
-
-function renderSoldUsagePill() {
-  let pill = document.getElementById('sold-usage-pill');
-  const u = _soldUsage;
-  // Only show for metered users with a finite allowance.
-  if (!u || u.unlimited || typeof u.remaining !== 'number') {
-    if (pill) pill.style.display = 'none';
-    return;
-  }
-  if (!pill) {
-    pill = document.createElement('button');
-    pill.id = 'sold-usage-pill';
-    pill.type = 'button';
-    pill.onclick = () => showUpgrade(`You have ${(_soldUsage && _soldUsage.remaining) || 0} free sold-price searches left today.`);
-    pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#ddd);'
-      + 'background:var(--bg-secondary,#f4f4f6);color:var(--text-secondary,#555);border-radius:999px;'
-      + 'padding:4px 12px;font-size:.78rem;cursor:pointer;margin:6px auto 0;font-family:inherit';
-    const form = document.getElementById('search-form');
-    if (form && form.parentNode) form.parentNode.insertBefore(pill, form.nextSibling);
-    else document.body.appendChild(pill);
-  }
-  pill.style.display = 'inline-flex';
-  const low = u.remaining <= 5;
-  pill.textContent = u.remaining > 0
-    ? `${u.remaining} free sold searches left today${low ? ' — Go Pro for unlimited' : ''}`
-    : 'Daily free limit reached — Go Pro for unlimited';
-}
-
+// Header button → opens the Fund modal.
 function updateProButton() {
   const btn = document.getElementById('pro-btn');
   if (!btn) return;
-  if (hasPro()) {
-    btn.textContent = '★ Pro';
-    btn.classList.add('subscribed');
-    const sub = _subscription || {};
-    // Complimentary / permanent-grant accounts have no Stripe customer, so the
-    // billing portal would 400. Show a friendly status instead of routing there.
-    if (sub.permanent || sub.period === 'lifetime' || !sub.stripeCustomerId) {
-      btn.onclick = () => alert("You're on Pro — every feature is unlocked. 🎉\n\nThis account doesn't have a billing subscription to manage.");
-    } else {
-      btn.onclick = () => openBillingPortal();
-    }
-  } else {
-    btn.textContent = '★ Go Pro';
-    btn.classList.remove('subscribed');
-    btn.onclick = () => showUpgrade();
-  }
+  btn.textContent = '♥ Fund';
+  btn.classList.remove('subscribed');
+  btn.onclick = () => showFund();
 }
 
-// Send a subscriber to Stripe's hosted billing portal to manage/cancel.
+// Kept for any legacy subscriber who wants to cancel from Settings.
 async function openBillingPortal() {
   const token = getSessionToken();
   try {
@@ -3419,22 +3338,8 @@ async function openBillingPortal() {
   }
 }
 
-// Checkout kill-switch mirror (server flips CHECKOUT_ENABLED). When off, hide
-// the Go Pro button and disable the modal CTA with a notice.
-let _checkoutEnabled = true;
-function applyCheckoutState(enabled) {
-  _checkoutEnabled = !!enabled;
-  // Keep the Go Pro button visible either way — when checkout is paused the
-  // modal shows the "temporarily unavailable" notice rather than the button
-  // silently vanishing (which reads as a broken button).
-  const notice = document.getElementById('upgrade-paused');
-  if (notice) notice.style.display = enabled ? 'none' : 'block';
-  document.querySelectorAll('.pricing-cta.pro').forEach(btn => {
-    btn.disabled = !enabled;
-    if (!enabled) { btn.dataset.origText = btn.dataset.origText || btn.textContent; btn.textContent = 'Temporarily Unavailable'; }
-    else if (btn.dataset.origText) { btn.textContent = btn.dataset.origText; }
-  });
-}
+// Donations aren't gated by the old tax-pause switch; this just records state.
+function applyCheckoutState(enabled) { _checkoutEnabled = !!enabled; }
 
 // ---- Soft Limits (Free tier) ----
 // Free users get a generous but capped slice of every feature. Pro
@@ -3482,21 +3387,11 @@ function dailyUsesLeft(name, limit) {
   return Math.max(0, limit - _dailyUseGet(name));
 }
 
-// Opens the upgrade modal with a feature-specific reason. Used by proGate.
-function proPrompt(reason) { showUpgrade(reason); return false; }
-
-// These soft daily/cap limits stay uncapped (the real cost control is the
-// server-side sold-search meter), so they keep allowing the action.
+// Memberships removed — every feature is free, so all gates pass.
+function proPrompt() { return true; }
 function checkDailyLimit() { return true; }
 function checkCapLimit() { return true; }
-
-// Real Pro gate: Pro/Pro+ users pass; everyone else gets the upgrade modal
-// with a reason. Drives Bulk Pricer, Promote Cards, and other Pro-only actions.
-function proGate(label) {
-  if (hasPro()) return true;
-  showUpgrade(`${label || 'This'} is a Pro feature — upgrade to unlock it.`);
-  return false;
-}
+function proGate() { return true; }
 
 // syncSubscriptionStatus / updateProButton are defined above (real impls).
 
@@ -3504,13 +3399,16 @@ function proGate(label) {
 // the new plan, refresh subscription + allowance, then clean the URL.
 function checkPaymentReturn() {
   const params = new URLSearchParams(window.location.search);
-  const payment = params.get('payment');
-  if (payment === 'success') {
-    const plan = params.get('plan');
-    alert(plan === 'proplus' ? 'Pro+ activated — welcome!' : 'Pro activated — welcome! Sold-price searches are now unlimited.');
-    syncSubscriptionStatus().catch(() => {});
+  // Donation return: ?funded=once|monthly|cancel
+  const funded = params.get('funded');
+  if (funded === 'once' || funded === 'monthly') {
+    alert(funded === 'monthly'
+      ? 'Thank you for becoming a Supporter! 💚 Your monthly contribution keeps The Card Huddle free for everyone.'
+      : 'Thank you for your support! 💚 Every dollar helps keep The Card Huddle free and growing.');
   }
-  if (params.has('payment')) window.history.replaceState({}, '', window.location.pathname);
+  if (params.has('funded') || params.has('payment')) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 // Drip/email deep-link: ?prefill=<card> drops the visitor straight into a sold
@@ -3551,19 +3449,43 @@ fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' })
   .catch(() => {});
 
 // ---- Donate / Support button ----
-// Set DONATE_URL to your donation link (Buy Me a Coffee, Ko-fi, PayPal,
-// GitHub Sponsors, etc.). The button stays hidden until a real URL is set,
-// so it never ships as a dead link.
-const DONATE_URL = 'https://www.buymeacoffee.com/REPLACE_ME';
+// The header heart button opens the in-app "Fund The Card Huddle" modal
+// (Stripe). Always shown — funding is how the free site stays alive.
 function initDonateButton() {
   const btn = document.getElementById('donate-btn');
   if (!btn) return;
-  if (DONATE_URL && !/REPLACE_ME/.test(DONATE_URL)) {
-    btn.href = DONATE_URL;
-    btn.classList.remove('hidden');
-  }
+  btn.classList.remove('hidden');
+  btn.href = '#';
+  btn.onclick = (e) => { e.preventDefault(); showFund(); };
+  const label = btn.querySelector('span');
+  if (label) label.textContent = 'Fund';
 }
 initDonateButton();
+
+// ---- Sponsors ----
+// Add sponsors here as they come on board (BCW, card shops, breakers, etc.).
+// Each: { name, img (logo URL), url (affiliate/landing link) }. The strip stays
+// hidden until at least one is configured, so it never ships empty.
+//   e.g. { name: 'BCW Supplies', img: '/sponsors/bcw.png', url: 'https://www.bcwsupplies.com/?aff=...' }
+const SPONSORS = [];
+
+function renderSponsors() {
+  const strip = document.getElementById('sponsor-strip');
+  if (!strip) return;
+  if (!Array.isArray(SPONSORS) || SPONSORS.length === 0) {
+    strip.classList.add('hidden');
+    return;
+  }
+  strip.innerHTML = '<span class="sponsor-label">Supported by</span>'
+    + SPONSORS.map(s => {
+        const inner = s.img
+          ? `<img src="${escHtml(s.img)}" alt="${escHtml(s.name || 'Sponsor')}" loading="lazy" />`
+          : escHtml(s.name || 'Sponsor');
+        return `<a class="sponsor-item" href="${escHtml(s.url || '#')}" target="_blank" rel="noopener sponsored" title="${escHtml(s.name || '')}">${inner}</a>`;
+      }).join('');
+  strip.classList.remove('hidden');
+}
+renderSponsors();
 
 // ---- Checklist Browse Feature ----
 const checklistView = document.getElementById('checklist-view');
@@ -6793,25 +6715,7 @@ function renderPortfolioAnalytics(coll, totalValue) {
   if (!el) return;
   if (!coll || coll.length === 0) { el.innerHTML = ''; return; }
 
-  // Free users get a teaser — they see the shape of the feature, not the data.
-  if (!hasPro()) {
-    el.innerHTML = `
-      <div class="pf-analytics-teaser" onclick="showUpgrade('Collection Analytics is a Pro feature.')">
-        <div class="pf-analytics-blur">
-          <div class="pf-an-fakechart"></div>
-          <div class="pf-an-fakemovers"><span></span><span></span><span></span></div>
-        </div>
-        <div class="pf-analytics-cta">
-          <span class="pro-gate-badge">★ PRO</span>
-          <h4>Unlock Collection Analytics</h4>
-          <p>Value over time, your biggest movers, and all-time comps.</p>
-          <button class="pro-btn" type="button" onclick="event.stopPropagation();showUpgrade('Collection Analytics is a Pro feature.')">★ Go Pro</button>
-        </div>
-      </div>`;
-    return;
-  }
-
-  // Pro: biggest movers (need both a paid price and a market value to compute).
+  // Biggest movers (need both a paid price and a market value to compute).
   const movers = coll
     .filter(c => (c.purchasePrice || 0) > 0 && (c.estValue || 0) > 0)
     .map(c => {
@@ -6832,7 +6736,7 @@ function renderPortfolioAnalytics(coll, totalValue) {
   const hist = getPortfolioHistory();
   el.innerHTML = `
     <div class="pf-analytics">
-      <div class="pf-an-head"><h4>★ Collection Analytics</h4><span class="pf-an-pro">PRO</span></div>
+      <div class="pf-an-head"><h4>&#128202; Collection Analytics</h4></div>
       <div class="pf-an-chart-wrap">
         ${hist.length >= 2
           ? '<canvas id="pf-value-chart" height="130"></canvas>'
@@ -7234,8 +7138,8 @@ function _cardValueMetaInline(c) {
 // Comp time window: Pro members value off all-time comps; Free members are
 // All-time comp depth is free for everyone now.
 const COMP_WINDOW_DAYS_FREE = 60;
-// All-time comp window is a Pro perk; free users value from the last 2 months.
-function _compsUseAllTime() { return hasPro(); }
+// All-time comps are free for everyone now.
+function _compsUseAllTime() { return true; }
 
 async function _fetchCardComps(c) {
   const q = buildCardSoldQuery(c);
@@ -9652,16 +9556,7 @@ function _proGateHtml(title, desc) {
 function initPromoteTab() {
   const gate = document.getElementById('promote-pro-gate');
   const content = document.getElementById('promote-content');
-  // Promote Cards is Pro: a free user's cards still save locally but don't get
-  // featured across the platform. Show the gate instead of the form.
-  if (!hasPro()) {
-    if (content) content.classList.add('hidden');
-    if (gate) {
-      gate.innerHTML = _proGateHtml('Promote Cards', 'Feature your cards across The Card Huddle — they show up on Browse Cards and inside other collectors’ search results, putting your listings in front of buyers.');
-      gate.classList.remove('hidden');
-    }
-    return;
-  }
+  // Promote Cards is free for everyone.
   if (gate) gate.classList.add('hidden');
   if (content) content.classList.remove('hidden');
   populatePromoteAutofill();

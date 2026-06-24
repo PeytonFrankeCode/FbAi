@@ -95,6 +95,15 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
+
+      // Donations / monthly supporters grant NO perks — just acknowledge them
+      // and stop, so a supporter is never mislabeled as a paid plan.
+      if (session.metadata?.type === 'donation' || session.metadata?.type === 'supporter') {
+        const amt = (session.amount_total != null) ? `$${(session.amount_total / 100).toFixed(2)}` : 'unknown';
+        console.log(`[fund] ${session.metadata.type} received: ${amt} (${session.metadata.username || 'anon'})`);
+        break;
+      }
+
       const username = session.metadata?.username;
       if (!username) break;
 
@@ -1183,13 +1192,10 @@ function getScrapeDoKeysForRequest(req) {
   // logged-out visitors.
   const usingShared = userKeys.length === 0;
   const keys = usingShared ? getServerScrapeDoKeys() : userKeys;
-  // Attach a meter only when this request would spend OUR shared quota and the
-  // user isn't on an unlimited plan. fetchEbayItems enforces/increments it on
-  // the live (cache-miss) scrape path. null meter == unmetered (own key / Pro).
-  const meter = (usingShared && !hasUnlimitedSold(username))
-    ? { id: soldMeterIdFor(username, req), limit: SOLD_FREE_DAILY }
-    : null;
-  return { username, keys, shared: usingShared, meter };
+  // Sold data is free for everyone — The Card Huddle is community-funded, not
+  // paywalled. No per-user meter; the KV cache + shared key keep costs sane.
+  // (meter stays in the shape for back-compat with fetchEbayItems, always null.)
+  return { username, keys, shared: usingShared, meter: null };
 }
 
 // ---- Shared fetch function ----
@@ -2784,18 +2790,11 @@ app.post('/api/alerts', (req, res) => {
   }
 
   const data = loadAlerts();
-  // Limit per user. Free accounts get a single alert as a taste; Pro unlocks
-  // unlimited (hard-capped at 25 to keep the cron check bounded).
+  // Price alerts are free for everyone — capped at 25/account to keep the cron
+  // check bounded.
   const userAlerts = data.alerts.filter(a => a.username.toLowerCase() === username.toLowerCase());
-  const pro = isProUser(username);
-  const FREE_ALERT_LIMIT = 1;
-  const maxAlerts = pro ? 25 : FREE_ALERT_LIMIT;
-  if (userAlerts.length >= maxAlerts) {
-    if (pro) return res.status(400).json({ error: 'Maximum 25 alerts per account' });
-    return res.status(402).json({
-      error: `Free accounts get ${FREE_ALERT_LIMIT} price alert. Upgrade to Pro for unlimited price alerts.`,
-      upgrade: true, proFeature: 'Price Alerts',
-    });
+  if (userAlerts.length >= 25) {
+    return res.status(400).json({ error: 'Maximum 25 alerts per account' });
   }
   // No duplicate queries for same user
   if (userAlerts.some(a => a.query.toLowerCase() === query.toLowerCase() && !a.priceThreshold)) {
@@ -3828,11 +3827,8 @@ app.put('/api/user/data', async (req, res) => {
   try {
     await saveUserData(username, data);
     // Mirror this user's promoted cards into the global index so the Browse
-    // Cards page and search injection can show cards from everyone — but only
-    // for Pro accounts. Promoting into other collectors' feeds is a Pro perk;
-    // a free user's cards still save locally, they just don't go global.
-    // (On upgrade, the next data push mirrors them in.)
-    const promos = (isProUser(username) && Array.isArray(data.cardHuddlePromotedCards))
+    // Cards page and search injection can show cards from everyone — free for all.
+    const promos = Array.isArray(data.cardHuddlePromotedCards)
       ? data.cardHuddlePromotedCards : [];
     updateGlobalPromotedIndex(username, promos);
     // Mirror this user's booth (character + showcase) into the global floor
@@ -4512,10 +4508,42 @@ app.get('/api/stripe/config', (req, res) => {
   res.json({
     publishableKey: stripeEnabled ? STRIPE_PUBLISHABLE_KEY : null,
     enabled: stripeEnabled,
-    // Paid checkout temporarily paused (tax setup). Frontend hides the
-    // Go Pro CTA and short-circuits handleSubscribe when this is false.
+    // Whether donations ("Fund the Card Huddle") can be collected right now.
     checkoutEnabled: !!CHECKOUT_ENABLED,
   });
+});
+
+// ---- Fund the Card Huddle (donations) ----
+// The Card Huddle is free for everyone and community-funded. This creates a
+// Stripe Checkout session for either a one-time donation (mode: payment) or a
+// recurring monthly "Supporter" (mode: subscription). Donations grant NO perks
+// — every feature is free regardless. Ad-hoc price_data so no pre-created
+// product/price IDs are needed.
+app.post('/api/stripe/create-donation', async (req, res) => {
+  if (!stripeEnabled) return res.status(503).json({ error: 'Donations are not configured on this server yet.' });
+  const { amount, recurring } = req.body || {};
+  const dollars = parseFloat(amount);
+  if (!dollars || isNaN(dollars)) return res.status(400).json({ error: 'Please choose an amount.' });
+  const cents = Math.round(dollars * 100);
+  if (cents < 100 || cents > 100000) return res.status(400).json({ error: 'Amount must be between $1 and $1000.' });
+  const username = getSessionUser(req) || '';
+  const isRecurring = !!recurring;
+  try {
+    const priceData = isRecurring
+      ? { currency: 'usd', unit_amount: cents, recurring: { interval: 'month' }, product_data: { name: 'The Card Huddle — Monthly Supporter' } }
+      : { currency: 'usd', unit_amount: cents, product_data: { name: 'The Card Huddle — Donation' } };
+    const session = await stripe.checkout.sessions.create({
+      mode: isRecurring ? 'subscription' : 'payment',
+      line_items: [{ price_data: priceData, quantity: 1 }],
+      metadata: { type: isRecurring ? 'supporter' : 'donation', username: username.toLowerCase() },
+      success_url: `${siteOrigin(req)}/?funded=${isRecurring ? 'monthly' : 'once'}`,
+      cancel_url: `${siteOrigin(req)}/?funded=cancel`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe donation error:', err);
+    res.status(500).json({ error: 'Could not start the donation checkout.', detail: String(err && err.message || err) });
+  }
 });
 
 // Create checkout session for Pro subscription
@@ -4839,14 +4867,6 @@ app.post('/api/bulk-price', async (req, res) => {
   const { queries } = req.body;
   if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
   if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
-
-  // Pro-only: bulk pricing prices a whole collection at once (each card is a
-  // sold-search that spends the shared quota), so it's gated to subscribers.
-  const reqUser = getSessionUser(req);
-  if (!reqUser) return res.status(401).json({ error: 'Sign in required.', needAuth: true });
-  if (!isProUser(reqUser)) {
-    return res.status(402).json({ error: 'Bulk Pricer is a Pro feature. Upgrade to price your whole collection at once.', upgrade: true, proFeature: 'Bulk Pricer' });
-  }
 
   const scrapeDoCtx = getScrapeDoKeysForRequest(req);
   if (scrapeDoCtx.keys.length === 0) {
