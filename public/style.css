@@ -5965,6 +5965,37 @@ tr:hover .cl-alert-btn {
 .portfolio-roi-inline.loss { color: #ef4444; }
 .portfolio-no-value { font-size: 0.75rem; color: var(--text-muted); }
 
+/* ---- Pro gates (shared) ---- */
+.pro-gate-badge { display: inline-block; background: var(--accent); color: #06281b; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; }
+.pro-gate-box { text-align: center; padding: 2rem 1.5rem; border: 1px dashed var(--accent-border); border-radius: 14px; background: rgba(94, 206, 153, 0.05); }
+.pro-gate-box h3 { margin: 0.7rem 0 0.3rem; }
+.pro-gate-box p { color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.1rem; font-size: 0.9rem; line-height: 1.45; }
+
+/* ---- Collection Analytics (Pro) ---- */
+.portfolio-analytics { margin: 0 0 1rem; }
+.pf-analytics { border: 1px solid var(--border-primary); border-radius: 14px; padding: 1rem; background: var(--bg-secondary); }
+.pf-an-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.pf-an-head h4 { margin: 0; font-size: 1rem; }
+.pf-an-pro { background: var(--accent); color: #06281b; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 999px; }
+.pf-an-chart-wrap { height: 130px; margin-bottom: 0.8rem; }
+.pf-an-movers { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.pf-an-col h5 { margin: 0 0 0.4rem; font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.pf-mover { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.84rem; padding: 3px 0; }
+.pf-mover-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-mover-val.gain { color: #10b981; white-space: nowrap; }
+.pf-mover-val.loss { color: #ef4444; white-space: nowrap; }
+.pf-an-empty { color: var(--text-muted); font-size: 0.78rem; margin: 0.2rem 0; }
+
+/* Free teaser: blurred fake content under a Go Pro CTA */
+.pf-analytics-teaser { position: relative; border: 1px solid var(--border-primary); border-radius: 14px; overflow: hidden; cursor: pointer; min-height: 170px; }
+.pf-analytics-blur { filter: blur(6px); opacity: 0.5; padding: 1rem; pointer-events: none; }
+.pf-an-fakechart { height: 95px; border-radius: 8px; background: linear-gradient(90deg, rgba(94, 206, 153, 0.18), rgba(94, 206, 153, 0.04)); margin-bottom: 0.75rem; }
+.pf-an-fakemovers { display: flex; gap: 0.5rem; }
+.pf-an-fakemovers span { flex: 1; height: 34px; border-radius: 6px; background: var(--border-primary); }
+.pf-analytics-cta { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.25rem; padding: 1rem; }
+.pf-analytics-cta h4 { margin: 0.3rem 0 0; }
+.pf-analytics-cta p { margin: 0 0 0.7rem; color: var(--text-secondary); font-size: 0.85rem; }
+
 /* Collection valuation revamp */
 .portfolio-valued-summary { font-size: 0.76rem; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; }
 .pf-summary-hint { color: var(--text-muted); }

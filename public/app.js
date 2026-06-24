@@ -955,6 +955,10 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ username: user, email, query, label: query, priceThreshold, priceCondition }),
         });
         const data = await res.json();
+        if (res.status === 402 || (data && data.upgrade)) {
+          showUpgrade(data.error || 'Price Alerts is a Pro feature.');
+          return;
+        }
         if (!res.ok) {
           errEl.textContent = data.error || 'Failed to track card';
           errEl.classList.remove('hidden');
@@ -986,7 +990,6 @@ async function deleteTrackedCard(id) {
 async function addAlertForCard(query) {
   const user = getCurrentUser();
   if (!user) { showLogin(); return; }
-  if (!hasPro()) { showPricing(); return; }
   const users = getUsers();
   const userData = users[user.toLowerCase()];
   if (!userData?.email) {
@@ -1000,6 +1003,10 @@ async function addAlertForCard(query) {
       body: JSON.stringify({ username: user, email: userData.email, query, label: query }),
     });
     const data = await res.json();
+    if (res.status === 402 || (data && data.upgrade)) {
+      showUpgrade(data.error || 'Price Alerts is a Pro feature.');
+      return;
+    }
     if (res.ok) {
       // Visual feedback — find the button that triggered this
       const btns = document.querySelectorAll('.cl-alert-btn');
@@ -3475,14 +3482,21 @@ function dailyUsesLeft(name, limit) {
   return Math.max(0, limit - _dailyUseGet(name));
 }
 
-// No paywalls anymore — inert. Returns true so any legacy `if (!proPrompt())`
-// gate treats the action as allowed.
-function proPrompt() { return true; }
+// Opens the upgrade modal with a feature-specific reason. Used by proGate.
+function proPrompt(reason) { showUpgrade(reason); return false; }
 
-// All features are free and uncapped — these always allow the action now.
+// These soft daily/cap limits stay uncapped (the real cost control is the
+// server-side sold-search meter), so they keep allowing the action.
 function checkDailyLimit() { return true; }
 function checkCapLimit() { return true; }
-function proGate() { return true; }
+
+// Real Pro gate: Pro/Pro+ users pass; everyone else gets the upgrade modal
+// with a reason. Drives Bulk Pricer, Promote Cards, and other Pro-only actions.
+function proGate(label) {
+  if (hasPro()) return true;
+  showUpgrade(`${label || 'This'} is a Pro feature — upgrade to unlock it.`);
+  return false;
+}
 
 // syncSubscriptionStatus / updateProButton are defined above (real impls).
 
@@ -5682,6 +5696,11 @@ async function scanTrackCard() {
       body: JSON.stringify({ username: user, email, query: q, label: q }),
     });
     const data = await res.json().catch(() => ({}));
+    if (res.status === 402 || (data && data.upgrade)) {
+      showUpgrade(data.error || 'Price Alerts is a Pro feature.');
+      if (msg) msg.textContent = '';
+      return;
+    }
     if (msg) msg.textContent = res.ok
       ? '✓ Tracking — we’ll email you when the market moves on this card.'
       : (data.error || 'Could not track this card.');
@@ -6528,6 +6547,7 @@ const USER_SYNC_KEYS = [
   'cardHuddleShowcaseSettings',
   'cardHuddleCharacter',
   'cardHuddleBoothLayout',
+  'cardHuddlePortfolioHistory',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
 let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
@@ -6706,6 +6726,10 @@ function renderPortfolio() {
     }
   }
 
+  // Log today's value for the Pro value-over-time chart, then render analytics.
+  if (totalValue > 0) recordPortfolioSnapshot(totalValue);
+  renderPortfolioAnalytics(coll, totalValue);
+
   const listEl = document.getElementById('portfolio-list');
   if (coll.length === 0) {
     listEl.innerHTML = `<div class="pf-empty">
@@ -6734,6 +6758,110 @@ function renderPortfolio() {
   html += '<div class="pf-cards">' + entries.map(({ c, i }) => _pfCardHtml(c, i)).join('') + '</div>';
 
   listEl.innerHTML = html;
+}
+
+// ---- Collection Analytics (Pro) ----
+// Value-over-time history: one snapshot per day in localStorage, synced across
+// devices via USER_SYNC_KEYS. Cheap to keep (≤365 points).
+function getPortfolioHistory() {
+  try { return JSON.parse(localStorage.getItem('cardHuddlePortfolioHistory') || '[]'); }
+  catch { return []; }
+}
+function recordPortfolioSnapshot(totalValue) {
+  if (!(totalValue > 0)) return;
+  const today = new Date().toISOString().slice(0, 10);
+  let hist = getPortfolioHistory();
+  const last = hist[hist.length - 1];
+  const rounded = Math.round(totalValue * 100) / 100;
+  let newDay = false;
+  if (last && last.d === today) {
+    last.v = rounded;            // keep today's value current
+  } else {
+    hist.push({ d: today, v: rounded });
+    newDay = true;
+  }
+  if (hist.length > 365) hist = hist.slice(-365);
+  try { localStorage.setItem('cardHuddlePortfolioHistory', JSON.stringify(hist)); } catch {}
+  // Only push to the server when a new day is logged, to avoid chatty syncs on
+  // every render. Same-day value updates ride along on the next natural push.
+  if (newDay) schedulePushUserData();
+}
+
+let _pfChart = null;
+function renderPortfolioAnalytics(coll, totalValue) {
+  const el = document.getElementById('portfolio-analytics');
+  if (!el) return;
+  if (!coll || coll.length === 0) { el.innerHTML = ''; return; }
+
+  // Free users get a teaser — they see the shape of the feature, not the data.
+  if (!hasPro()) {
+    el.innerHTML = `
+      <div class="pf-analytics-teaser" onclick="showUpgrade('Collection Analytics is a Pro feature.')">
+        <div class="pf-analytics-blur">
+          <div class="pf-an-fakechart"></div>
+          <div class="pf-an-fakemovers"><span></span><span></span><span></span></div>
+        </div>
+        <div class="pf-analytics-cta">
+          <span class="pro-gate-badge">★ PRO</span>
+          <h4>Unlock Collection Analytics</h4>
+          <p>Value over time, your biggest movers, and all-time comps.</p>
+          <button class="pro-btn" type="button" onclick="event.stopPropagation();showUpgrade('Collection Analytics is a Pro feature.')">★ Go Pro</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  // Pro: biggest movers (need both a paid price and a market value to compute).
+  const movers = coll
+    .filter(c => (c.purchasePrice || 0) > 0 && (c.estValue || 0) > 0)
+    .map(c => {
+      const gl = (c.estValue || 0) - (c.purchasePrice || 0);
+      return { c, gl, pct: (gl / (c.purchasePrice || 1)) * 100 };
+    })
+    .sort((a, b) => b.gl - a.gl);
+  const gainers = movers.filter(m => m.gl > 0).slice(0, 3);
+  const losers = movers.filter(m => m.gl < 0).slice(-3).reverse();
+
+  const moverRow = (m) => {
+    const name = escHtml(m.c.player || m.c.name || 'Card');
+    const cls = m.gl >= 0 ? 'gain' : 'loss';
+    return `<div class="pf-mover"><span class="pf-mover-name">${name}</span>`
+      + `<span class="pf-mover-val ${cls}">${m.gl >= 0 ? '+' : ''}$${m.gl.toFixed(2)} (${m.pct >= 0 ? '+' : ''}${m.pct.toFixed(0)}%)</span></div>`;
+  };
+
+  const hist = getPortfolioHistory();
+  el.innerHTML = `
+    <div class="pf-analytics">
+      <div class="pf-an-head"><h4>★ Collection Analytics</h4><span class="pf-an-pro">PRO</span></div>
+      <div class="pf-an-chart-wrap">
+        ${hist.length >= 2
+          ? '<canvas id="pf-value-chart" height="130"></canvas>'
+          : '<p class="pf-an-empty">Your value-over-time chart builds as you refresh values day to day — check back tomorrow.</p>'}
+      </div>
+      <div class="pf-an-movers">
+        <div class="pf-an-col"><h5>Top Gainers</h5>${gainers.length ? gainers.map(moverRow).join('') : '<p class="pf-an-empty">Add what you paid + refresh values to see movers.</p>'}</div>
+        <div class="pf-an-col"><h5>Top Losers</h5>${losers.length ? losers.map(moverRow).join('') : '<p class="pf-an-empty">No losers right now.</p>'}</div>
+      </div>
+    </div>`;
+
+  if (hist.length >= 2 && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('pf-value-chart');
+    if (ctx) {
+      if (_pfChart) { try { _pfChart.destroy(); } catch {} }
+      _pfChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: hist.map(h => h.d.slice(5)),
+          datasets: [{ data: hist.map(h => h.v), borderColor: '#5ece99', backgroundColor: 'rgba(94,206,153,0.12)', fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2 }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { x: { display: false }, y: { ticks: { callback: (v) => '$' + v } } },
+          maintainAspectRatio: false,
+        },
+      });
+    }
+  }
 }
 
 const _PF_CATEGORY_BADGE = {
@@ -7106,7 +7234,8 @@ function _cardValueMetaInline(c) {
 // Comp time window: Pro members value off all-time comps; Free members are
 // All-time comp depth is free for everyone now.
 const COMP_WINDOW_DAYS_FREE = 60;
-function _compsUseAllTime() { return true; }
+// All-time comp window is a Pro perk; free users value from the last 2 months.
+function _compsUseAllTime() { return hasPro(); }
 
 async function _fetchCardComps(c) {
   const q = buildCardSoldQuery(c);
@@ -9507,9 +9636,32 @@ function getPromoteSlotCount() {
 // Paid extra slots removed — inert.
 function handleBuyExtraSlot() {}
 
+// Shared "this is a Pro feature" gate panel. featureKey is passed to showUpgrade
+// as the modal reason.
+function _proGateHtml(title, desc) {
+  const safeTitle = escHtml(title);
+  return `
+    <div class="pro-gate-box">
+      <span class="pro-gate-badge">★ PRO</span>
+      <h3>${safeTitle} is a Pro feature</h3>
+      <p>${escHtml(desc)}</p>
+      <button class="pro-btn" onclick="showUpgrade('${safeTitle.replace(/'/g, '')} is a Pro feature.')">★ Go Pro — $4.99/mo</button>
+    </div>`;
+}
+
 function initPromoteTab() {
   const gate = document.getElementById('promote-pro-gate');
   const content = document.getElementById('promote-content');
+  // Promote Cards is Pro: a free user's cards still save locally but don't get
+  // featured across the platform. Show the gate instead of the form.
+  if (!hasPro()) {
+    if (content) content.classList.add('hidden');
+    if (gate) {
+      gate.innerHTML = _proGateHtml('Promote Cards', 'Feature your cards across The Card Huddle — they show up on Browse Cards and inside other collectors’ search results, putting your listings in front of buyers.');
+      gate.classList.remove('hidden');
+    }
+    return;
+  }
   if (gate) gate.classList.add('hidden');
   if (content) content.classList.remove('hidden');
   populatePromoteAutofill();
@@ -10756,7 +10908,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ---- CSV Export ----
 function exportCollectionCSV() {
-  if (!proGate('CSV export of your collection')) return;
+  // CSV export stays free — an easy on-ramp tool.
   const coll = getCollection();
   if (coll.length === 0) { alert('No cards in your collection to export.'); return; }
 

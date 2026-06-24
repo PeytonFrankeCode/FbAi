@@ -1156,13 +1156,19 @@ function bumpSoldUsage(id, current) {
   cachePut(soldMeterKeyFor(id), { count: (current || 0) + 1 }, 172800);
 }
 
-// True when a user should bypass the free meter entirely: an active paid plan
-// (Pro / Pro+) or a permanent grant. BYO-key users are handled separately —
-// their request never touches the shared key, so it's never metered.
-function hasUnlimitedSold(username) {
+// True when a user has an active paid plan (Pro / Pro+) or a permanent grant.
+// The single source of truth for every Pro feature gate (bulk pricer, promote,
+// unlimited alerts, unlimited sold search, all-time comps).
+function isProUser(username) {
   if (!username) return false;
   const sub = getEffectiveSubscription(username);
   return !!(sub && sub.status === 'active' && (sub.plan === 'pro' || sub.plan === 'proplus'));
+}
+
+// Bypass the free sold-search meter when on an unlimited plan. (Same check as
+// isProUser; kept as a named alias so the metering code reads clearly.)
+function hasUnlimitedSold(username) {
+  return isProUser(username);
 }
 
 function getScrapeDoKeysForRequest(req) {
@@ -2778,10 +2784,18 @@ app.post('/api/alerts', (req, res) => {
   }
 
   const data = loadAlerts();
-  // Limit per user
+  // Limit per user. Free accounts get a single alert as a taste; Pro unlocks
+  // unlimited (hard-capped at 25 to keep the cron check bounded).
   const userAlerts = data.alerts.filter(a => a.username.toLowerCase() === username.toLowerCase());
-  if (userAlerts.length >= 25) {
-    return res.status(400).json({ error: 'Maximum 25 alerts per account' });
+  const pro = isProUser(username);
+  const FREE_ALERT_LIMIT = 1;
+  const maxAlerts = pro ? 25 : FREE_ALERT_LIMIT;
+  if (userAlerts.length >= maxAlerts) {
+    if (pro) return res.status(400).json({ error: 'Maximum 25 alerts per account' });
+    return res.status(402).json({
+      error: `Free accounts get ${FREE_ALERT_LIMIT} price alert. Upgrade to Pro for unlimited price alerts.`,
+      upgrade: true, proFeature: 'Price Alerts',
+    });
   }
   // No duplicate queries for same user
   if (userAlerts.some(a => a.query.toLowerCase() === query.toLowerCase() && !a.priceThreshold)) {
@@ -3813,9 +3827,13 @@ app.put('/api/user/data', async (req, res) => {
   }
   try {
     await saveUserData(username, data);
-    // Mirror this user's promoted cards into the global index so the
-    // Browse Cards page and search injection can show cards from everyone.
-    const promos = Array.isArray(data.cardHuddlePromotedCards) ? data.cardHuddlePromotedCards : [];
+    // Mirror this user's promoted cards into the global index so the Browse
+    // Cards page and search injection can show cards from everyone — but only
+    // for Pro accounts. Promoting into other collectors' feeds is a Pro perk;
+    // a free user's cards still save locally, they just don't go global.
+    // (On upgrade, the next data push mirrors them in.)
+    const promos = (isProUser(username) && Array.isArray(data.cardHuddlePromotedCards))
+      ? data.cardHuddlePromotedCards : [];
     updateGlobalPromotedIndex(username, promos);
     // Mirror this user's booth (character + showcase) into the global floor
     // index so other collectors can visit it on The Floor.
@@ -4821,6 +4839,14 @@ app.post('/api/bulk-price', async (req, res) => {
   const { queries } = req.body;
   if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
   if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
+
+  // Pro-only: bulk pricing prices a whole collection at once (each card is a
+  // sold-search that spends the shared quota), so it's gated to subscribers.
+  const reqUser = getSessionUser(req);
+  if (!reqUser) return res.status(401).json({ error: 'Sign in required.', needAuth: true });
+  if (!isProUser(reqUser)) {
+    return res.status(402).json({ error: 'Bulk Pricer is a Pro feature. Upgrade to price your whole collection at once.', upgrade: true, proFeature: 'Bulk Pricer' });
+  }
 
   const scrapeDoCtx = getScrapeDoKeysForRequest(req);
   if (scrapeDoCtx.keys.length === 0) {
