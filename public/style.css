@@ -5999,6 +5999,20 @@ tr:hover .cl-alert-btn {
 /* ---- Fund / Sponsors ---- */
 .fund-footer-btn { background: var(--accent); color: #06281b; border-color: var(--accent); font-weight: 700; }
 .fund-footer-btn:hover { filter: brightness(1.08); }
+
+/* Funding-goal progress bars (modal + footer share the track/fill) */
+.fund-goal { margin: 0 0 16px; }
+.fund-goal-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; color: var(--text-secondary, #666); margin-bottom: 6px; }
+.fund-goal-row span:first-child { font-weight: 700; color: var(--text-primary, #111); }
+.fund-goal-track { height: 8px; border-radius: 999px; background: var(--border-primary, #e5e5e5); overflow: hidden; }
+.fund-goal-fill { height: 100%; background: var(--accent, #5ece99); border-radius: 999px; transition: width 0.6s ease; min-width: 2px; }
+.fund-goal-footer { max-width: 460px; margin: 1rem auto 0; padding: 0.75rem 1rem; border: 1px solid var(--border-primary); border-radius: 12px; background: var(--bg-secondary); }
+.fund-goal-footer.hidden { display: none; }
+.fund-goal-foot-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; text-align: center; }
+.fund-goal-foot-label strong { color: var(--accent); }
+.fund-goal-footer .fund-goal-track { margin-bottom: 8px; }
+.fund-goal-foot-btn { display: block; margin: 0 auto; background: var(--accent); color: #06281b; border: 0; padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+.fund-goal-foot-btn:hover { filter: brightness(1.08); }
 .sponsor-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.75rem 1.25rem; margin: 1rem auto 0; padding: 0.85rem 1rem; border-top: 1px solid var(--border-primary); max-width: 760px; }
 .sponsor-strip.hidden { display: none; }
 .sponsor-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }

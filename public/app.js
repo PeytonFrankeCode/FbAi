@@ -3279,6 +3279,10 @@ function _ensureFundModal() {
       <button class="fund-x" aria-label="Close" onclick="closeFund()">&times;</button>
       <h2>&#9829; Fund The Card Huddle</h2>
       <p class="fund-sub" id="fund-reason">The Card Huddle is free for everyone — no paywalls, ever. It runs on community support. Chip in to help cover sold-data costs and keep it growing.</p>
+      <div class="fund-goal" id="fund-goal" style="display:none">
+        <div class="fund-goal-row"><span id="fund-goal-text">—</span><span id="fund-goal-supporters"></span></div>
+        <div class="fund-goal-track"><div class="fund-goal-fill" id="fund-goal-fill"></div></div>
+      </div>
       <div class="fund-amounts" id="fund-amounts">
         ${[3, 5, 10, 25].map(a => `<button type="button" class="fund-amt${a === 5 ? ' active' : ''}" data-amt="${a}" onclick="selectFundAmount(${a})">$${a}</button>`).join('')}
       </div>
@@ -3297,7 +3301,43 @@ function showFund(reason) {
   const r = document.getElementById('fund-reason');
   if (r && reason) r.textContent = reason;
   _updateFundCta();
+  loadFundGoal();
   document.getElementById('fund-overlay').classList.remove('hidden');
+}
+
+// ---- Funding goal progress ("$X of $Y this month") ----
+let _fundGoal = null;
+async function loadFundGoal() {
+  try {
+    const res = await fetch('/api/fund-goal');
+    if (!res.ok) return;
+    _fundGoal = await res.json();
+  } catch { return; }
+  renderFundGoal();
+}
+function renderFundGoal() {
+  const g = _fundGoal;
+  if (!g) return;
+  const pct = typeof g.pct === 'number' ? g.pct : 0;
+  const raised = Math.round(g.raised || 0);
+  const goal = Math.round(g.goal || 0);
+  const supText = g.supporters ? `${g.supporters} monthly supporter${g.supporters !== 1 ? 's' : ''}` : '';
+  // Modal bar
+  const box = document.getElementById('fund-goal');
+  if (box) {
+    box.style.display = 'block';
+    const t = document.getElementById('fund-goal-text'); if (t) t.textContent = `$${raised} of $${goal} this month`;
+    const s = document.getElementById('fund-goal-supporters'); if (s) s.textContent = supText;
+    const fill = document.getElementById('fund-goal-fill'); if (fill) fill.style.width = pct + '%';
+  }
+  // Footer bar (always visible passive nudge)
+  const foot = document.getElementById('fund-goal-footer');
+  if (foot) {
+    foot.classList.remove('hidden');
+    foot.innerHTML = `<div class="fund-goal-foot-label">Monthly goal: <strong>$${raised}</strong> of $${goal}${supText ? ' &middot; ' + escHtml(supText) : ''}</div>`
+      + `<div class="fund-goal-track"><div class="fund-goal-fill" style="width:${pct}%"></div></div>`
+      + `<button type="button" class="fund-goal-foot-btn" onclick="showFund()">&#9829; Chip in</button>`;
+  }
 }
 // Back-compat: plenty of code still calls showUpgrade()/showPricing(). With
 // memberships gone these all become a gentle "support us" nudge.
@@ -3502,6 +3542,9 @@ initDonateButton();
 // Each: { name, img (logo URL), url (affiliate/landing link) }. The strip stays
 // hidden until at least one is configured, so it never ships empty.
 //   e.g. { name: 'BCW Supplies', img: '/sponsors/bcw.png', url: 'https://www.bcwsupplies.com/?aff=...' }
+// Show the monthly funding-goal bar in the footer on load.
+loadFundGoal();
+
 const SPONSORS = [];
 
 function renderSponsors() {

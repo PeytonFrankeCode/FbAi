@@ -96,9 +96,12 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     case 'checkout.session.completed': {
       const session = event.data.object;
 
-      // Donations / monthly supporters grant NO perks — just acknowledge them
-      // and stop, so a supporter is never mislabeled as a paid plan.
+      // Donations / monthly supporters grant NO perks — record them toward the
+      // monthly funding goal and stop, so a supporter is never mislabeled as a
+      // paid plan.
       if (session.metadata?.type === 'donation' || session.metadata?.type === 'supporter') {
+        const isRecurring = session.metadata.type === 'supporter';
+        recordDonation(session.amount_total, isRecurring);
         const amt = (session.amount_total != null) ? `$${(session.amount_total / 100).toFixed(2)}` : 'unknown';
         console.log(`[fund] ${session.metadata.type} received: ${amt} (${session.metadata.username || 'anon'})`);
         break;
@@ -4514,6 +4517,47 @@ app.get('/api/stripe/config', (req, res) => {
     enabled: stripeEnabled,
     // Whether donations ("Fund the Card Huddle") can be collected right now.
     checkoutEnabled: !!CHECKOUT_ENABLED,
+  });
+});
+
+// ---- Fund the Card Huddle: monthly goal + progress ----
+// The visible "$X of $Y this month" bar. Goal is configurable via env; raised
+// is accumulated by the Stripe webhook as donations come in, bucketed by
+// calendar month so it resets cleanly on the 1st. Persisted via the normal
+// loadData/saveData (KV) pipeline — 'fundStats' is in KNOWN_KEYS so it survives
+// cold starts instead of being overwritten.
+const FUND_GOAL_MONTHLY = parseFloat(process.env.FUND_GOAL_MONTHLY) || 50;
+const FUND_STATS_FILE = path.join(APP_ROOT, 'data', 'fund-stats.json');
+function _fundMonth() { return new Date().toISOString().slice(0, 7); } // YYYY-MM
+function loadFundStats() {
+  const s = loadData('fundStats', FUND_STATS_FILE, { month: _fundMonth(), raised: 0, supporters: 0, allTime: 0 });
+  // Roll over to a fresh bucket when the calendar month changes.
+  if (s.month !== _fundMonth()) {
+    return { month: _fundMonth(), raised: 0, supporters: 0, allTime: s.allTime || 0 };
+  }
+  return s;
+}
+function recordDonation(amountCents, isRecurring) {
+  const dollars = (amountCents || 0) / 100;
+  if (dollars <= 0) return;
+  const s = loadFundStats();
+  s.raised = Math.round((s.raised + dollars) * 100) / 100;
+  s.allTime = Math.round(((s.allTime || 0) + dollars) * 100) / 100;
+  if (isRecurring) s.supporters = (s.supporters || 0) + 1;
+  saveData('fundStats', FUND_STATS_FILE, s);
+}
+
+// GET /api/fund-goal — drives the progress bar. Public, cache-light.
+app.get('/api/fund-goal', (req, res) => {
+  const s = loadFundStats();
+  const goal = FUND_GOAL_MONTHLY;
+  res.json({
+    goal,
+    raised: s.raised || 0,
+    supporters: s.supporters || 0,
+    month: s.month,
+    pct: goal > 0 ? Math.min(100, Math.round(((s.raised || 0) / goal) * 100)) : 0,
+    currency: 'usd',
   });
 });
 

@@ -1384,6 +1384,9 @@
         <button class="footer-btn bug-btn" onclick="openFeedbackModal('bug')">&#128027; Report Bug</button>
         <a class="footer-btn petition-btn" href="https://c.org/JNKMfjdfFj" target="_blank" rel="noopener noreferrer">&#9997;&#65039; Sign the Petition for Sold Data</a>
       </div>
+      <!-- Monthly funding-goal progress — populated by renderFundGoal() from
+           /api/fund-goal. -->
+      <div id="fund-goal-footer" class="fund-goal-footer hidden"></div>
       <!-- Sponsors — populated by renderSponsors() from the SPONSORS config in
            app.js. Stays hidden until at least one sponsor is configured. -->
       <div id="sponsor-strip" class="sponsor-strip hidden"></div>
@@ -1553,7 +1556,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=134"></script>
+  <script src="app.js?v=135"></script>
   <script type="importmap">
   {
     "imports": {
