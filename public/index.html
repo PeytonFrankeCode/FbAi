@@ -156,7 +156,7 @@
       </div>
       <p class="header-tagline">Find. Collect. Track.</p>
       <div class="header-pro-row">
-        <button id="pro-btn" class="pro-btn" onclick="showUpgrade()">★ Go Pro</button>
+        <button id="pro-btn" class="pro-btn" onclick="showFund()">♥ Fund</button>
       </div>
       <div class="header-support">
         <a id="donate-btn" class="donate-btn hidden" href="#" target="_blank" rel="noopener noreferrer" title="Support The Card Huddle">
@@ -1379,10 +1379,17 @@
       </div>
       <p class="footer-description">Helping collectors research fair market values with real eBay sold data. Transparent pricing for smarter buying and selling.</p>
       <div class="footer-actions">
+        <button class="footer-btn fund-footer-btn" onclick="showFund()">&#9829; Fund The Card Huddle</button>
         <button class="footer-btn feedback-btn" onclick="openFeedbackModal('feedback')">&#128172; Feedback</button>
         <button class="footer-btn bug-btn" onclick="openFeedbackModal('bug')">&#128027; Report Bug</button>
         <a class="footer-btn petition-btn" href="https://c.org/JNKMfjdfFj" target="_blank" rel="noopener noreferrer">&#9997;&#65039; Sign the Petition for Sold Data</a>
       </div>
+      <!-- Monthly funding-goal progress — populated by renderFundGoal() from
+           /api/fund-goal. -->
+      <div id="fund-goal-footer" class="fund-goal-footer hidden"></div>
+      <!-- Sponsors — populated by renderSponsors() from the SPONSORS config in
+           app.js. Stays hidden until at least one sponsor is configured. -->
+      <div id="sponsor-strip" class="sponsor-strip hidden"></div>
       <div class="footer-links">
         <a href="/sets/">Card Checklists</a>
         <span class="footer-sep">&bull;</span>
@@ -1549,7 +1556,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=132"></script>
+  <script src="app.js?v=136"></script>
   <script type="importmap">
   {
     "imports": {
