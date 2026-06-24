@@ -3377,8 +3377,22 @@ function renderSoldUsagePill() {
 function updateProButton() {
   const btn = document.getElementById('pro-btn');
   if (!btn) return;
-  if (hasPro()) { btn.textContent = '★ Pro'; btn.classList.add('subscribed'); btn.onclick = () => openBillingPortal(); }
-  else { btn.textContent = '★ Go Pro'; btn.classList.remove('subscribed'); btn.onclick = () => showUpgrade(); }
+  if (hasPro()) {
+    btn.textContent = '★ Pro';
+    btn.classList.add('subscribed');
+    const sub = _subscription || {};
+    // Complimentary / permanent-grant accounts have no Stripe customer, so the
+    // billing portal would 400. Show a friendly status instead of routing there.
+    if (sub.permanent || sub.period === 'lifetime' || !sub.stripeCustomerId) {
+      btn.onclick = () => alert("You're on Pro — every feature is unlocked. 🎉\n\nThis account doesn't have a billing subscription to manage.");
+    } else {
+      btn.onclick = () => openBillingPortal();
+    }
+  } else {
+    btn.textContent = '★ Go Pro';
+    btn.classList.remove('subscribed');
+    btn.onclick = () => showUpgrade();
+  }
 }
 
 // Send a subscriber to Stripe's hosted billing portal to manage/cancel.
