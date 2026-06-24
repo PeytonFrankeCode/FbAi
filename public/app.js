@@ -1905,6 +1905,13 @@ async function performSearch(query, opts = {}) {
       grid.appendChild(msg);
       return;
     }
+    if (response.status === 402 && data && data.limitReached) {
+      // Out of free sold-price searches for today → show the upgrade nudge.
+      setLoading(false);
+      refreshSoldUsage();
+      showUpgrade(`You've used all ${data.freeLimit || 25} free sold-price searches today.`);
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -1915,6 +1922,8 @@ async function performSearch(query, opts = {}) {
     currentResults = results;
     currentResultMode = effectiveMode;
     recordPriceHistory(query, results);
+    // A sold search may have consumed a free allowance unit — refresh the pill.
+    if (effectiveMode === 'sold') refreshSoldUsage();
 
     // Reset pagination state for the new search
     _searchPaging = {
@@ -2049,6 +2058,13 @@ async function loadGradePanel(query) {
   try {
     const res  = await authFetch(`/api/grading-advisor?q=${encodeURIComponent(query)}`);
     const data = await res.json();
+    if (res.status === 402 && data && data.limitReached) {
+      loading.classList.add('hidden');
+      refreshSoldUsage();
+      showUpgrade(`You've used all ${data.freeLimit || 25} free sold-price searches today.`);
+      body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Daily free limit reached — upgrade for unlimited grade data.</span>';
+      return;
+    }
     if (!res.ok) throw new Error(data.error);
 
     const { grades } = data;
@@ -3158,24 +3174,245 @@ document.addEventListener('keydown', (e) => {
 // Init auth state on load
 updateAuthButton();
 
-// ---- Subscription / Pricing ----
-// Paywalls and paid plans have been removed — every feature is free. These
-// stay as inert no-ops so any remaining caller is harmless.
-function showPricing() {}
-function closePricing() {}
-function setPricingPeriod() {}
-function handleSubscribe() {}
+// ---- Subscription / Membership ----
+// The model: almost everything is free and unlimited (browsing, the card
+// scanner, checklists, the collection, The Floor). The ONE metered action is
+// sold-price search — the only thing that spends our shared scrape.do quota.
+// Free accounts get a generous daily allowance (server-enforced); Pro removes
+// it. This keeps the app cheap to run for casual users while the people who
+// lean on it hardest (active flippers) fund it.
+//
+// Source of truth is the server. _subscription is synced from /api/auth/me on
+// login and on payment return; everything here reads from it.
+let _subscription = null;
+let _pricingPeriod = 'monthly';
+let _soldUsage = null; // { unlimited, limit, used, remaining } from /api/sold-usage
 
-function getUserSubscription() { return null; }
+function getUserSubscription() { return _subscription; }
 
 function hasPro() {
-  // Everything is free now — all feature gates pass.
-  return true;
+  return !!(_subscription && _subscription.status === 'active'
+    && (_subscription.plan === 'pro' || _subscription.plan === 'proplus'));
 }
 
-// Back-compat shims for callers that still check a tier — all true now.
-function isProPlus() { return true; }
+// Tracked Cards / Seller Tools stay open-access, so these keep returning true.
+function isProPlus() { return hasPro(); }
 function isProOrPlus() { return true; }
+
+// Pull the live subscription for the signed-in user. Safe to call when logged
+// out (no-op). Updates the header Go Pro button and the sold-usage pill.
+async function syncSubscriptionStatus() {
+  const user = getCurrentUser();
+  if (!user) { _subscription = null; updateProButton(); refreshSoldUsage(); return; }
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/auth/me', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) return;
+    const data = await res.json();
+    _subscription = data.subscription || null;
+  } catch { /* offline — leave last-known status */ }
+  updateProButton();
+  refreshSoldUsage();
+}
+
+// ---- Upgrade modal (self-contained: injects its own DOM + styles) ----
+// Built in JS so it doesn't depend on markup in index.html. Opened by the
+// header Go Pro button and whenever a sold search hits the free daily limit.
+function _ensureUpgradeModal() {
+  if (document.getElementById('upgrade-overlay')) return;
+  const style = document.createElement('style');
+  style.textContent = `
+    #upgrade-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;
+      align-items:center;justify-content:center;z-index:9999;padding:20px}
+    #upgrade-overlay.hidden{display:none}
+    .upgrade-card{background:var(--card-bg,#fff);color:var(--text-primary,#111);
+      border-radius:16px;max-width:420px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.35);
+      position:relative;font-family:inherit}
+    .upgrade-card h2{margin:0 0 6px;font-size:1.45rem}
+    .upgrade-reason{color:var(--text-secondary,#666);font-size:.92rem;margin:0 0 18px}
+    .upgrade-price{font-size:2.1rem;font-weight:800;margin:4px 0}
+    .upgrade-price small{font-size:.95rem;font-weight:500;color:var(--text-secondary,#666)}
+    .upgrade-toggle{display:inline-flex;gap:4px;background:var(--bg-secondary,#f1f1f4);
+      border-radius:999px;padding:4px;margin:8px 0 16px}
+    .upgrade-toggle button{border:0;background:transparent;padding:6px 14px;border-radius:999px;
+      cursor:pointer;font-size:.85rem;color:var(--text-secondary,#666)}
+    .upgrade-toggle button.active{background:var(--accent,#2563eb);color:#fff;font-weight:600}
+    .upgrade-feats{list-style:none;padding:0;margin:0 0 20px;text-align:left}
+    .upgrade-feats li{padding:6px 0;font-size:.92rem;display:flex;gap:8px;align-items:flex-start}
+    .upgrade-feats li::before{content:"✓";color:var(--accent,#2563eb);font-weight:800}
+    .upgrade-cta{width:100%;border:0;background:var(--accent,#2563eb);color:#fff;
+      padding:13px;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer}
+    .upgrade-cta:disabled{opacity:.5;cursor:not-allowed}
+    .upgrade-x{position:absolute;top:14px;right:16px;border:0;background:transparent;
+      font-size:1.4rem;line-height:1;cursor:pointer;color:var(--text-secondary,#888)}
+    #upgrade-paused{display:none;background:#fef3c7;color:#92400e;border-radius:8px;
+      padding:10px;font-size:.85rem;margin-bottom:14px}
+  `;
+  document.head.appendChild(style);
+  const overlay = document.createElement('div');
+  overlay.id = 'upgrade-overlay';
+  overlay.className = 'hidden';
+  overlay.innerHTML = `
+    <div class="upgrade-card" role="dialog" aria-modal="true" aria-label="Upgrade to Pro">
+      <button class="upgrade-x" aria-label="Close" onclick="closePricing()">&times;</button>
+      <h2>Go Pro</h2>
+      <p class="upgrade-reason" id="upgrade-reason">Unlimited sold-price searches and more.</p>
+      <div id="upgrade-paused">Subscriptions are temporarily paused while we finalize tax setup. Please check back soon.</div>
+      <div class="upgrade-toggle">
+        <button data-period="monthly" class="active" onclick="setPricingPeriod('monthly')">Monthly</button>
+        <button data-period="yearly" onclick="setPricingPeriod('yearly')">Yearly · save 33%</button>
+      </div>
+      <div class="upgrade-price"><span id="upgrade-amount">$4.99</span><small id="upgrade-freq">/mo</small></div>
+      <ul class="upgrade-feats">
+        <li>Unlimited sold-price searches (no daily cap)</li>
+        <li>Unlimited Grading Advisor lookups</li>
+        <li>Price alerts &amp; full price history</li>
+        <li>Support the site &amp; keep it running</li>
+      </ul>
+      <button class="upgrade-cta pricing-cta pro" id="upgrade-cta" onclick="handleSubscribe('pro')">Get Pro</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closePricing(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closePricing();
+  });
+  applyCheckoutState(_checkoutEnabled);
+}
+
+function showUpgrade(reason) {
+  _ensureUpgradeModal();
+  const r = document.getElementById('upgrade-reason');
+  if (r && reason) r.textContent = reason;
+  setPricingPeriod(_pricingPeriod);
+  document.getElementById('upgrade-overlay').classList.remove('hidden');
+}
+// Back-compat aliases for the many existing callers of showPricing().
+function showPricing() { showUpgrade(); }
+function closePricing() {
+  const o = document.getElementById('upgrade-overlay');
+  if (o) o.classList.add('hidden');
+}
+function setPricingPeriod(period) {
+  _pricingPeriod = period === 'yearly' ? 'yearly' : 'monthly';
+  document.querySelectorAll('#upgrade-overlay .upgrade-toggle button').forEach(b =>
+    b.classList.toggle('active', b.dataset.period === _pricingPeriod));
+  const yearly = _pricingPeriod === 'yearly';
+  const amt = document.getElementById('upgrade-amount');
+  const freq = document.getElementById('upgrade-freq');
+  if (amt) amt.textContent = yearly ? '$39.99' : '$4.99';
+  if (freq) freq.textContent = yearly ? '/yr' : '/mo';
+}
+
+// Start Stripe checkout for the chosen plan. Proven flow: confirm Stripe is
+// configured + checkout open, then redirect to the hosted Checkout page.
+async function handleSubscribe(plan) {
+  const user = getCurrentUser();
+  if (!user) { closePricing(); showLogin(); return; }
+  let cfg = null;
+  try {
+    const r = await fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' });
+    cfg = await safeJson(r);
+  } catch (err) {
+    alert(`Couldn't reach the payment service:\n\n${(err && err.message) || err}`);
+    return;
+  }
+  if (!cfg) { alert("Couldn't reach the payment service. Please try again."); return; }
+  if (cfg.checkoutEnabled === false) { applyCheckoutState(false); return; }
+  if (!cfg.enabled) { alert("Payments aren't configured on this environment yet."); return; }
+  try {
+    const endpoint = plan === 'proplus' ? '/api/stripe/create-checkout-proplus' : '/api/stripe/create-checkout';
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, period: _pricingPeriod }),
+    });
+    const data = await safeJson(res);
+    if (res.ok && data.url) { window.location.href = data.url; return; }
+    alert(`Couldn't start checkout:\n\n${(data && (data.detail || data.error)) || `HTTP ${res.status}`}`);
+  } catch (err) {
+    alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
+  }
+}
+
+// ---- Sold-search allowance pill ----
+// Shows "N free searches left today" for metered (free) users, and routes them
+// to the upgrade modal. Hidden for Pro / own-key / logged-out-with-no-pill.
+async function refreshSoldUsage() {
+  try {
+    const token = getSessionToken();
+    const res = await fetch('/api/sold-usage', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) return;
+    _soldUsage = await res.json();
+  } catch { return; }
+  renderSoldUsagePill();
+}
+
+function renderSoldUsagePill() {
+  let pill = document.getElementById('sold-usage-pill');
+  const u = _soldUsage;
+  // Only show for metered users with a finite allowance.
+  if (!u || u.unlimited || typeof u.remaining !== 'number') {
+    if (pill) pill.style.display = 'none';
+    return;
+  }
+  if (!pill) {
+    pill = document.createElement('button');
+    pill.id = 'sold-usage-pill';
+    pill.type = 'button';
+    pill.onclick = () => showUpgrade(`You have ${(_soldUsage && _soldUsage.remaining) || 0} free sold-price searches left today.`);
+    pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#ddd);'
+      + 'background:var(--bg-secondary,#f4f4f6);color:var(--text-secondary,#555);border-radius:999px;'
+      + 'padding:4px 12px;font-size:.78rem;cursor:pointer;margin:6px auto 0;font-family:inherit';
+    const form = document.getElementById('search-form');
+    if (form && form.parentNode) form.parentNode.insertBefore(pill, form.nextSibling);
+    else document.body.appendChild(pill);
+  }
+  pill.style.display = 'inline-flex';
+  const low = u.remaining <= 5;
+  pill.textContent = u.remaining > 0
+    ? `${u.remaining} free sold searches left today${low ? ' — Go Pro for unlimited' : ''}`
+    : 'Daily free limit reached — Go Pro for unlimited';
+}
+
+function updateProButton() {
+  const btn = document.getElementById('pro-btn');
+  if (!btn) return;
+  if (hasPro()) { btn.textContent = 'Pro'; btn.classList.add('subscribed'); btn.onclick = () => openBillingPortal(); }
+  else { btn.textContent = 'Go Pro'; btn.classList.remove('subscribed'); btn.onclick = () => showUpgrade(); }
+}
+
+// Send a subscriber to Stripe's hosted billing portal to manage/cancel.
+async function openBillingPortal() {
+  const token = getSessionToken();
+  try {
+    const res = await fetch('/api/stripe/create-portal-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ username: getCurrentUser() }),
+    });
+    const data = await safeJson(res);
+    if (res.ok && data.url) { window.location.href = data.url; return; }
+    alert(`Couldn't open the billing portal:\n\n${(data && (data.detail || data.error)) || `HTTP ${res.status}`}`);
+  } catch (err) {
+    alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
+  }
+}
+
+// Checkout kill-switch mirror (server flips CHECKOUT_ENABLED). When off, hide
+// the Go Pro button and disable the modal CTA with a notice.
+let _checkoutEnabled = true;
+function applyCheckoutState(enabled) {
+  _checkoutEnabled = !!enabled;
+  const pb = document.getElementById('pro-btn');
+  if (pb) pb.style.display = enabled ? '' : 'none';
+  const notice = document.getElementById('upgrade-paused');
+  if (notice) notice.style.display = enabled ? 'none' : 'block';
+  document.querySelectorAll('.pricing-cta.pro').forEach(btn => {
+    btn.disabled = !enabled;
+    if (!enabled) { btn.dataset.origText = btn.dataset.origText || btn.textContent; btn.textContent = 'Temporarily Unavailable'; }
+    else if (btn.dataset.origText) { btn.textContent = btn.dataset.origText; }
+  });
+}
 
 // ---- Soft Limits (Free tier) ----
 // Free users get a generous but capped slice of every feature. Pro
@@ -3232,12 +3469,18 @@ function checkDailyLimit() { return true; }
 function checkCapLimit() { return true; }
 function proGate() { return true; }
 
-// Paid plans removed — nothing to sync.
-async function syncSubscriptionStatus() {}
+// syncSubscriptionStatus / updateProButton are defined above (real impls).
 
-// No paid checkout anymore — just clear any stale payment params from the URL.
+// Stripe redirects back with ?payment=success|cancelled. On success, confirm
+// the new plan, refresh subscription + allowance, then clean the URL.
 function checkPaymentReturn() {
   const params = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  if (payment === 'success') {
+    const plan = params.get('plan');
+    alert(plan === 'proplus' ? 'Pro+ activated — welcome!' : 'Pro activated — welcome! Sold-price searches are now unlimited.');
+    syncSubscriptionStatus().catch(() => {});
+  }
   if (params.has('payment')) window.history.replaceState({}, '', window.location.pathname);
 }
 
@@ -3259,8 +3502,7 @@ function checkPrefillParam() {
   setTimeout(() => { frm.dispatchEvent(new Event('submit')); }, 60);
 }
 
-// Pro button removed — inert.
-function updateProButton() {}
+// updateProButton is defined above (real impl).
 
 // Email-drip deep links (?prefill=<card>) → run that card's sold search.
 checkPrefillParam();
@@ -3269,6 +3511,15 @@ checkPrefillParam();
 // logged in (no session token).
 enableUserSync();
 checkPaymentReturn();
+
+// Membership: sync the signed-in user's plan + today's free-search allowance,
+// and learn whether paid checkout is currently open (server kill-switch).
+syncSubscriptionStatus().catch(() => {});
+refreshSoldUsage().catch(() => {});
+fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' })
+  .then(r => r.json())
+  .then(cfg => { if (cfg && typeof cfg.checkoutEnabled === 'boolean') applyCheckoutState(cfg.checkoutEnabled); })
+  .catch(() => {});
 
 // ---- Donate / Support button ----
 // Set DONATE_URL to your donation link (Buy Me a Coffee, Ko-fi, PayPal,

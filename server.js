@@ -1115,6 +1115,56 @@ function getServerScrapeDoKeys() {
   return k ? [{ key: k, label: 'Server', addedAt: null }] : [];
 }
 
+// ---- Free-tier metering for sold-price search ----
+// Sold-price lookups are the ONE action that spends our shared scrape.do quota,
+// so they're the only metered action. Browsing (For Sale), the card scanner,
+// checklists, and the collection stay unlimited and free for everyone.
+//
+// Only LIVE shared-key scrapes count toward the daily allowance:
+//   - KV cache hits are free to us, so they never count (a user re-checking a
+//     popular card all day never burns their allowance).
+//   - Users on their OWN scrape.do key spend their own quota, so they're never
+//     metered.
+//   - Pro / Pro+ subscribers (and permanent grants) get unlimited lookups.
+//
+// The counter lives in the short-TTL KV cache (one key per user/IP per day) and
+// self-expires, so it needs no cleanup. cachePut is fire-and-forget and KV is
+// eventually consistent, so under bursts the count may lag low — we
+// deliberately err on the generous side.
+const SOLD_FREE_DAILY = parseInt(process.env.SOLD_FREE_DAILY, 10) || 25;
+
+function soldMeterIdFor(username, req) {
+  if (username) return 'u:' + String(username).toLowerCase();
+  const ipRaw = req && (req.headers['cf-connecting-ip']
+    || (req.headers['x-forwarded-for'] || '').split(',')[0]
+    || req.ip);
+  const ip = String(ipRaw || 'anon').trim() || 'anon';
+  return 'ip:' + ip;
+}
+
+function soldMeterKeyFor(id) {
+  return `soldmeter:v1:${new Date().toISOString().slice(0, 10)}:${id}`;
+}
+
+async function getSoldUsage(id) {
+  const rec = await cacheGet(soldMeterKeyFor(id));
+  return (rec && typeof rec.count === 'number') ? rec.count : 0;
+}
+
+function bumpSoldUsage(id, current) {
+  // 2-day TTL so the key outlives the calendar day but still self-expires.
+  cachePut(soldMeterKeyFor(id), { count: (current || 0) + 1 }, 172800);
+}
+
+// True when a user should bypass the free meter entirely: an active paid plan
+// (Pro / Pro+) or a permanent grant. BYO-key users are handled separately —
+// their request never touches the shared key, so it's never metered.
+function hasUnlimitedSold(username) {
+  if (!username) return false;
+  const sub = getEffectiveSubscription(username);
+  return !!(sub && sub.status === 'active' && (sub.plan === 'pro' || sub.plan === 'proplus'));
+}
+
 function getScrapeDoKeysForRequest(req) {
   const username = getSessionUser(req);
   let userKeys = [];
@@ -1125,8 +1175,15 @@ function getScrapeDoKeysForRequest(req) {
   // Prefer the user's own key(s) — it spends their quota, not ours — and fall
   // back to the shared server key so sold search works for everyone, including
   // logged-out visitors.
-  const keys = userKeys.length > 0 ? userKeys : getServerScrapeDoKeys();
-  return { username, keys };
+  const usingShared = userKeys.length === 0;
+  const keys = usingShared ? getServerScrapeDoKeys() : userKeys;
+  // Attach a meter only when this request would spend OUR shared quota and the
+  // user isn't on an unlimited plan. fetchEbayItems enforces/increments it on
+  // the live (cache-miss) scrape path. null meter == unmetered (own key / Pro).
+  const meter = (usingShared && !hasUnlimitedSold(username))
+    ? { id: soldMeterIdFor(username, req), limit: SOLD_FREE_DAILY }
+    : null;
+  return { username, keys, shared: usingShared, meter };
 }
 
 // ---- Shared fetch function ----
@@ -1157,7 +1214,18 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     if (cachedSold && Array.isArray(cachedSold.results)) {
       console.log(`[scrape.do] KV cache hit for "${keywords}" (${cachedSold.results.length} items)`);
       trackCacheHit('sold');
-      return cachedSold;
+      return cachedSold;  // cache hits are free — never metered
+    }
+    // Cache miss → this will spend the shared quota. Enforce the free daily
+    // allowance here (after the cache check, so cached lookups stay free even
+    // for users who are over their limit). meter is null for Pro / own-key.
+    const meter = scrapeDoCtx && scrapeDoCtx.meter;
+    let meterUsed = 0;
+    if (meter) {
+      meterUsed = await getSoldUsage(meter.id);
+      if (meterUsed >= meter.limit) {
+        return { results: [], total: 0, limitReached: true, freeLimit: meter.limit, used: meterUsed };
+      }
     }
     const response = await fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey);
     const filtered = { ...response, results: filterJunkListings(response.results) };
@@ -1166,6 +1234,9 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     // misses, so a transient failure can't poison the cache for hours.
     if (filtered.results.length > 0 && !filtered.badKey && !filtered.rateLimited && !filtered.quotaExceeded && !filtered.error) {
       cachePut(soldCacheKey, filtered, SOLD_KV_TTL);
+      // Count this live scrape against the free allowance only on a genuine
+      // success — a failed/empty scrape never costs the user an allowance unit.
+      if (meter) bumpSoldUsage(meter.id, meterUsed);
     }
     return filtered;
   }
@@ -1228,6 +1299,12 @@ app.get('/api/search', async (req, res) => {
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, limit, mode, 'search', 0, scrapeDoCtx);
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
+      if (searchData.limitReached) {
+        return res.status(402).json({
+          error: `You've used all ${searchData.freeLimit} free sold-price searches for today.`,
+          limitReached: true, freeLimit: searchData.freeLimit, upgrade: true,
+        });
+      }
       // Keyword match: keep the listings sharing the most keywords with the
       // query (all → all-but-one → all-but-two …), then trim price outliers.
       const matched = matchSoldListings(searchData.results, query);
@@ -2087,6 +2164,12 @@ app.get('/api/grading-advisor', async (req, res) => {
     if (rawData.badKey || psa8Data.badKey || psa9Data.badKey || psa10Data.badKey) {
       return res.status(401).json({ error: 'scrape.do rejected your API key. Update it in Settings.', badKey: true });
     }
+    if (rawData.limitReached || psa8Data.limitReached || psa9Data.limitReached || psa10Data.limitReached) {
+      return res.status(402).json({
+        error: `You've used all ${SOLD_FREE_DAILY} free sold-price searches for today.`,
+        limitReached: true, freeLimit: SOLD_FREE_DAILY, upgrade: true,
+      });
+    }
 
     // Apply the same variant-strict filter used elsewhere so each grade's
     // sold comps reflect the actual card searched (excludes wrong colors,
@@ -2185,6 +2268,12 @@ app.get('/api/direct-search', async (req, res) => {
     if (mode === 'sold') {
       const searchData = await fetchEbayItems(query, 20, mode, 'direct-search', 0, scrapeDoCtx);
       if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
+      if (searchData.limitReached) {
+        return res.status(402).json({
+          error: `You've used all ${searchData.freeLimit} free sold-price searches for today.`,
+          limitReached: true, freeLimit: searchData.freeLimit, upgrade: true,
+        });
+      }
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       // No sale of the exact card? Estimate from the same player's similar
@@ -3566,6 +3655,24 @@ app.get('/api/auth/me', (req, res) => {
   const users = loadServerUsers();
   const user = users[username] || {};
   res.json({ username, email: user.email || '', subscription: getEffectiveSubscription(username) });
+});
+
+// GET /api/sold-usage — today's free sold-search allowance for this caller.
+// Drives the "X searches left today" hint and the upgrade nudge. Works for
+// logged-out visitors too (metered per IP). `unlimited` is true for Pro / Pro+,
+// permanent grants, and users on their own scrape.do key.
+app.get('/api/sold-usage', async (req, res) => {
+  const ctx = getScrapeDoKeysForRequest(req);
+  if (!ctx.meter) {
+    return res.json({ unlimited: true, limit: SOLD_FREE_DAILY, used: 0, remaining: null });
+  }
+  const used = await getSoldUsage(ctx.meter.id);
+  res.json({
+    unlimited: false,
+    limit: ctx.meter.limit,
+    used,
+    remaining: Math.max(0, ctx.meter.limit - used),
+  });
 });
 
 // PUT /api/auth/email
