@@ -6038,7 +6038,7 @@ tr:hover .cl-alert-btn {
 .bcw-callout-aff { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); opacity: 0.7; align-self: flex-start; }
 
 /* BCW banner under search results (dismissible) */
-.bcw-banner { position: relative; margin: 1.25rem auto 0; max-width: 760px; }
+.bcw-banner { position: relative; margin: 0.5rem auto 1.5rem; max-width: 760px; }
 .bcw-banner.hidden { display: none; }
 .bcw-banner-link { display: flex; align-items: center; gap: 0.7rem; padding: 0.8rem 2.4rem 0.8rem 1rem; border: 1px solid var(--accent-border); border-radius: 12px; background: rgba(94, 206, 153, 0.06); text-decoration: none; color: var(--text-primary); transition: background 0.15s ease, border-color 0.15s ease; }
 .bcw-banner-link:hover { background: rgba(94, 206, 153, 0.12); border-color: var(--accent); }
