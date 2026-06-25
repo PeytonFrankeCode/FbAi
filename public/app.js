@@ -2049,6 +2049,7 @@ async function performSearch(query, opts = {}) {
   } finally {
     setLoading(false);
     hideSkeleton();
+    renderBcwBanner();
   }
 }
 
@@ -3563,6 +3564,11 @@ const BCW_AFFILIATE = {
   url: 'https://www.bcwsupplies.com/?acc=cardhuddle',
   coupon: 'TCH10',
   discount: '10% off',
+  // Official BCW banner from ShareASale. Leave '' to use the text/coupon
+  // fallback; paste the banner IMAGE url here (e.g. a static.shareasale.com
+  // image) to show their real creative. Optional banner dimensions for layout.
+  banner: '',
+  bannerAlt: 'BCW Supplies — card storage & protection',
 };
 const SPONSORS = [
   { name: BCW_AFFILIATE.name, url: BCW_AFFILIATE.url, coupon: BCW_AFFILIATE.coupon, discount: BCW_AFFILIATE.discount },
@@ -3578,6 +3584,46 @@ function _bcwScanCalloutHtml() {
     + `<span class="bcw-callout-arrow">&rarr;</span>`
     + `<span class="bcw-callout-aff">affiliate</span>`
     + `</a>`;
+}
+
+// ---- BCW affiliate banner (under search results, dismissible) ----
+// Shows BCW's official banner image when one is configured, otherwise a clean
+// text/coupon treatment. Dismiss hides it for a week so it never nags.
+const BCW_BANNER_DISMISS_DAYS = 7;
+function bcwBannerDismissed() {
+  const t = parseInt(localStorage.getItem('cardHuddleBcwBannerDismissed') || '0', 10);
+  return !!t && (Date.now() - t) < BCW_BANNER_DISMISS_DAYS * 86400000;
+}
+function dismissBcwBanner(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  try { localStorage.setItem('cardHuddleBcwBannerDismissed', String(Date.now())); } catch {}
+  const el = document.getElementById('bcw-banner');
+  if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+}
+function bcwBannerInnerHtml() {
+  const b = BCW_AFFILIATE;
+  const creative = b.banner
+    ? `<img class="bcw-banner-img" src="${escHtml(b.banner)}" alt="${escHtml(b.bannerAlt || b.name)}" loading="lazy" />`
+    : `<span class="bcw-banner-icon">&#128737;&#65039;</span>`
+      + `<span class="bcw-banner-text"><strong>Protect &amp; store your cards with BCW Supplies</strong>`
+      + ` &mdash; sleeves, toploaders, binders &amp; more.`
+      + ` <span class="bcw-banner-code">${escHtml(b.discount)} &middot; code ${escHtml(b.coupon)}</span></span>`
+      + `<span class="bcw-banner-cta">Shop &rarr;</span>`;
+  return `<a class="bcw-banner-link" href="${escHtml(b.url)}" target="_blank" rel="noopener sponsored">${creative}</a>`
+    + `<span class="bcw-banner-aff">affiliate</span>`
+    + `<button class="bcw-banner-x" type="button" onclick="dismissBcwBanner(event)" aria-label="Dismiss">&times;</button>`;
+}
+function renderBcwBanner() {
+  const el = document.getElementById('bcw-banner');
+  if (!el) return;
+  const hasResults = !!(grid && grid.querySelector('.card'));
+  if (!hasResults || bcwBannerDismissed()) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = bcwBannerInnerHtml();
+  el.classList.remove('hidden');
 }
 
 function renderSponsors() {
