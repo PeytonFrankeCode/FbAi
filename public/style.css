@@ -6025,6 +6025,17 @@ tr:hover .cl-alert-btn {
 .sponsor-item { display: inline-flex; align-items: center; opacity: 0.85; transition: opacity 0.15s ease; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; }
 .sponsor-item:hover { opacity: 1; }
 .sponsor-item img { height: 30px; width: auto; object-fit: contain; }
+.sponsor-coupon { margin-left: 0.5rem; background: rgba(94, 206, 153, 0.12); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; }
+.sponsor-aff-note { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); opacity: 0.7; }
+
+/* BCW "protect this card" affiliate callout (after a scan) */
+.bcw-callout { display: flex; align-items: center; gap: 0.6rem; margin: 0.75rem 0 0; padding: 0.7rem 0.9rem; border: 1px solid var(--accent-border); border-radius: 12px; background: rgba(94, 206, 153, 0.06); text-decoration: none; color: var(--text-primary); transition: background 0.15s ease, border-color 0.15s ease; }
+.bcw-callout:hover { background: rgba(94, 206, 153, 0.12); border-color: var(--accent); }
+.bcw-callout-icon { font-size: 1.1rem; }
+.bcw-callout-text { flex: 1; font-size: 0.85rem; line-height: 1.35; }
+.bcw-callout-text strong { color: var(--accent); }
+.bcw-callout-arrow { color: var(--accent); font-weight: 700; }
+.bcw-callout-aff { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); opacity: 0.7; align-self: flex-start; }
 
 /* Collection valuation revamp */
 .portfolio-valued-summary { font-size: 0.76rem; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; }

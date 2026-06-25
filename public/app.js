@@ -3553,7 +3553,32 @@ initDonateButton();
 // Show the monthly funding-goal bar in the footer on load.
 loadFundGoal();
 
-const SPONSORS = [];
+// Affiliate / sponsor config. BCW Supplies — card storage & protection.
+// Uses the exact ShareASale tracking link (no edits); we deliberately DON'T use
+// a BCW logo — their terms (§9.1) only permit logos/banners they provide, so we
+// use a clean text + coupon treatment with a clear "affiliate" disclosure to
+// stay clearly independent (§2.1.9 / §8.1 + FTC).
+const BCW_AFFILIATE = {
+  name: 'BCW Supplies',
+  url: 'https://www.bcwsupplies.com/?acc=cardhuddle',
+  coupon: 'TCH10',
+  discount: '10% off',
+};
+const SPONSORS = [
+  { name: BCW_AFFILIATE.name, url: BCW_AFFILIATE.url, coupon: BCW_AFFILIATE.coupon, discount: BCW_AFFILIATE.discount },
+];
+
+// Tasteful "protect this card" affiliate callout, shown after a scan returns a
+// value. Reused so the link/coupon live in one place.
+function _bcwScanCalloutHtml() {
+  const b = BCW_AFFILIATE;
+  return `<a class="bcw-callout" href="${escHtml(b.url)}" target="_blank" rel="noopener sponsored">`
+    + `<span class="bcw-callout-icon">&#128737;&#65039;</span>`
+    + `<span class="bcw-callout-text"><strong>Protect this card.</strong> ${escHtml(b.discount)} BCW supplies &mdash; code <strong>${escHtml(b.coupon)}</strong></span>`
+    + `<span class="bcw-callout-arrow">&rarr;</span>`
+    + `<span class="bcw-callout-aff">affiliate</span>`
+    + `</a>`;
+}
 
 function renderSponsors() {
   const strip = document.getElementById('sponsor-strip');
@@ -3564,11 +3589,15 @@ function renderSponsors() {
   }
   strip.innerHTML = '<span class="sponsor-label">Supported by</span>'
     + SPONSORS.map(s => {
-        const inner = s.img
+        const label = s.img
           ? `<img src="${escHtml(s.img)}" alt="${escHtml(s.name || 'Sponsor')}" loading="lazy" />`
           : escHtml(s.name || 'Sponsor');
-        return `<a class="sponsor-item" href="${escHtml(s.url || '#')}" target="_blank" rel="noopener sponsored" title="${escHtml(s.name || '')}">${inner}</a>`;
-      }).join('');
+        const coupon = s.coupon
+          ? `<span class="sponsor-coupon">${escHtml(s.discount || 'Save')} &middot; ${escHtml(s.coupon)}</span>`
+          : '';
+        return `<a class="sponsor-item" href="${escHtml(s.url || '#')}" target="_blank" rel="noopener sponsored" title="${escHtml(s.name || '')}">${label}${coupon}</a>`;
+      }).join('')
+    + '<span class="sponsor-aff-note">affiliate</span>';
   strip.classList.remove('hidden');
 }
 renderSponsors();
@@ -4127,7 +4156,7 @@ function _renderScannerSoldResults(query, items) {
         <div class="stat-item"><span class="stat-label">Median</span><span class="stat-value">$${_scannerLastMedian.toFixed(2)}</span></div>
         <div class="stat-item"><span class="stat-label">Low</span><span class="stat-value">$${Math.min(...prices).toFixed(2)}</span></div>
         <div class="stat-item"><span class="stat-label">High</span><span class="stat-value">$${Math.max(...prices).toFixed(2)}</span></div>
-      </div>`;
+      </div>` + _bcwScanCalloutHtml();
     if (collBtnWrap) collBtnWrap.classList.remove('hidden');
   } else {
     _scannerLastMedian = null;
