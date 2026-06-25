@@ -6024,7 +6024,7 @@ tr:hover .cl-alert-btn {
 .sponsor-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
 .sponsor-item { display: inline-flex; align-items: center; opacity: 0.85; transition: opacity 0.15s ease; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; }
 .sponsor-item:hover { opacity: 1; }
-.sponsor-item img { height: 30px; width: auto; object-fit: contain; }
+.sponsor-item img { height: 30px; width: auto; object-fit: contain; border-radius: 5px; }
 .sponsor-coupon { margin-left: 0.5rem; background: rgba(94, 206, 153, 0.12); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; }
 .sponsor-aff-note { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); opacity: 0.7; }
 
@@ -6038,12 +6038,13 @@ tr:hover .cl-alert-btn {
 .bcw-callout-aff { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); opacity: 0.7; align-self: flex-start; }
 
 /* BCW banner under search results (dismissible) */
-.bcw-banner { position: relative; margin: 1.25rem auto 0; max-width: 760px; }
+.bcw-banner { position: relative; margin: 0.5rem auto 1.5rem; max-width: 760px; }
 .bcw-banner.hidden { display: none; }
 .bcw-banner-link { display: flex; align-items: center; gap: 0.7rem; padding: 0.8rem 2.4rem 0.8rem 1rem; border: 1px solid var(--accent-border); border-radius: 12px; background: rgba(94, 206, 153, 0.06); text-decoration: none; color: var(--text-primary); transition: background 0.15s ease, border-color 0.15s ease; }
 .bcw-banner-link:hover { background: rgba(94, 206, 153, 0.12); border-color: var(--accent); }
 .bcw-banner-img { display: block; width: 100%; height: auto; border-radius: 8px; }
 .bcw-banner-icon { font-size: 1.25rem; }
+.bcw-banner-logo { height: 38px; width: auto; border-radius: 6px; flex-shrink: 0; }
 .bcw-banner-text { flex: 1; font-size: 0.88rem; line-height: 1.4; }
 .bcw-banner-code { display: inline-block; background: rgba(94, 206, 153, 0.15); color: var(--accent); border-radius: 999px; padding: 1px 8px; font-weight: 700; font-size: 0.78rem; white-space: nowrap; }
 .bcw-banner-cta { color: var(--accent); font-weight: 700; white-space: nowrap; }

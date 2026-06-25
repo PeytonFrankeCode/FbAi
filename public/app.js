@@ -3564,14 +3564,16 @@ const BCW_AFFILIATE = {
   url: 'https://www.bcwsupplies.com/?acc=cardhuddle',
   coupon: 'TCH10',
   discount: '10% off',
-  // Official BCW banner from ShareASale. Leave '' to use the text/coupon
-  // fallback; paste the banner IMAGE url here (e.g. a static.shareasale.com
-  // image) to show their real creative. Optional banner dimensions for layout.
+  // Official BCW logo (cropped from their provided affiliate creative), shown in
+  // the sponsor strip and banner.
+  logo: 'sponsors/bcw-logo.png',
+  // Full BCW banner from ShareASale. Leave '' to use the logo + text/coupon
+  // treatment; paste a full banner IMAGE url here to show their whole creative.
   banner: '',
   bannerAlt: 'BCW Supplies — card storage & protection',
 };
 const SPONSORS = [
-  { name: BCW_AFFILIATE.name, url: BCW_AFFILIATE.url, coupon: BCW_AFFILIATE.coupon, discount: BCW_AFFILIATE.discount },
+  { name: BCW_AFFILIATE.name, url: BCW_AFFILIATE.url, img: BCW_AFFILIATE.logo, coupon: BCW_AFFILIATE.coupon, discount: BCW_AFFILIATE.discount },
 ];
 
 // Tasteful "protect this card" affiliate callout, shown after a scan returns a
@@ -3602,13 +3604,19 @@ function dismissBcwBanner(e) {
 }
 function bcwBannerInnerHtml() {
   const b = BCW_AFFILIATE;
-  const creative = b.banner
-    ? `<img class="bcw-banner-img" src="${escHtml(b.banner)}" alt="${escHtml(b.bannerAlt || b.name)}" loading="lazy" />`
-    : `<span class="bcw-banner-icon">&#128737;&#65039;</span>`
-      + `<span class="bcw-banner-text"><strong>Protect &amp; store your cards with BCW Supplies</strong>`
+  let creative;
+  if (b.banner) {
+    creative = `<img class="bcw-banner-img" src="${escHtml(b.banner)}" alt="${escHtml(b.bannerAlt || b.name)}" loading="lazy" />`;
+  } else {
+    const brand = b.logo
+      ? `<img class="bcw-banner-logo" src="${escHtml(b.logo)}" alt="${escHtml(b.name)}" loading="lazy" />`
+      : `<span class="bcw-banner-icon">&#128737;&#65039;</span>`;
+    creative = brand
+      + `<span class="bcw-banner-text"><strong>Protect &amp; store your cards</strong>`
       + ` &mdash; sleeves, toploaders, binders &amp; more.`
       + ` <span class="bcw-banner-code">${escHtml(b.discount)} &middot; code ${escHtml(b.coupon)}</span></span>`
       + `<span class="bcw-banner-cta">Shop &rarr;</span>`;
+  }
   return `<a class="bcw-banner-link" href="${escHtml(b.url)}" target="_blank" rel="noopener sponsored">${creative}</a>`
     + `<span class="bcw-banner-aff">affiliate</span>`
     + `<button class="bcw-banner-x" type="button" onclick="dismissBcwBanner(event)" aria-label="Dismiss">&times;</button>`;
