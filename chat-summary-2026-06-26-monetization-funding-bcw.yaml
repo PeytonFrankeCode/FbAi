@@ -1,0 +1,155 @@
+session: "2026-06-26 — Monetization pivot: memberships to community funding + BCW affiliate"
+branch: claude/membership-monetization-e15g3c
+
+app: |
+  The Card Huddle (thecardhuddle.com) — football card sold-price tracker.
+  Node/Express in server.js, deployed on Cloudflare Workers via worker.js;
+  KV + Durable Objects; static frontend in public/app.js + index.html + style.css.
+
+summary: |
+  Long session that started as "build memberships," briefly built a full Pro tier,
+  then PIVOTED (user's call) to a no-paywall, community-funded model: everything
+  free, a 25/day sold-search cap as a funding nudge (NOT a paywall), Stripe-based
+  "Fund The Card Huddle" donations with a live monthly goal bar, and affiliate
+  revenue (eBay Partner Network already live + a new BCW Supplies affiliate).
+  Ended on UI polish (theme-matching modal, header alignment) and wiring BCW's
+  real logo into the sponsor strip + an under-results banner.
+
+cost_model_facts: |
+  - The ONLY real variable cost is sold-price search via scrape.do (shared paid
+    key, 250k/mo quota, KV-cached ~3h so repeat/viral searches are cheap).
+  - Everything else is ~free to serve: For-Sale browse (eBay Browse API), the card
+    scanner (eBay visual search — NO AI cost), checklists, collection, The Floor.
+
+key_decisions: |
+  - Initially: 25/day free sold searches, Pro $4.99/mo unlimited, paid ON. Built a
+    Pro tier (collection analytics / price alerts / bulk pricer / promote gates).
+  - PIVOT: user removed memberships entirely -> "fund your cardhuddle" + free sold
+    data for everyone + small affiliates (EPN, BCW). No Pro anywhere.
+  - Kept the 25/day sold cap, reframed as a TEMPORARY funding guardrail that lifts
+    as the goal is reached (env SOLD_FREE_DAILY, default 25). Own-key users
+    uncapped; cache hits never counted.
+  - Donations: reuse Stripe (custom in-app modal), one-time + monthly "Supporter".
+    Donations grant NO perks.
+  - Funding goal bar: target FUND_GOAL_MONTHLY (env, default 50 dollars); raised
+    auto-accumulated by the Stripe webhook, bucketed per calendar month.
+  - BCW placements chosen by user: footer sponsor strip + after-scan callout, then
+    (added) a dismissible under-results banner.
+
+final_state_server: |
+  Files: server.js, db.js.
+  - isProUser()/hasUnlimitedSold() helpers exist (Pro now effectively unused but
+    harmless; permanent-grant users still 'pro' via PRO_GRANT_USERS=['thecardhuddle']).
+  - getScrapeDoKeysForRequest() attaches a flat meter {id, limit=SOLD_FREE_DAILY}
+    to shared-key requests; own-key -> meter null. Enforced INSIDE fetchEbayItems
+    on cache-MISS only; counts only genuine successful scrapes. Per-user (logged in)
+    or per-IP (anon) daily KV counter soldmeter:v1:YYYY-MM-DD:<id> (2-day TTL).
+  - 402 {limitReached, fund:true} from /api/search, /api/direct-search,
+    /api/grading-advisor with a funding-framed message.
+  - GET /api/sold-usage -> {unlimited, limit, used, remaining}.
+  - Donations: POST /api/stripe/create-donation (one-time payment / monthly
+    'supporter' subscription, ad-hoc price_data). Webhook records donations and
+    invoice.payment_succeeded renewals (billing_reason 'subscription_cycle') into
+    fundStats; first invoice skipped (counted at checkout) to avoid double-count.
+  - Fund goal: FUND_GOAL_MONTHLY const, loadFundStats()/recordDonation(),
+    GET /api/fund-goal -> {goal, raised, supporters, pct, month}. 'fundStats' added
+    to db.js KNOWN_KEYS so it survives cold starts.
+
+final_state_frontend: |
+  Files: public/app.js, index.html, style.css.
+  - Subscription module repurposed: showUpgrade() aliases showFund(); hasPro() reads
+    /api/auth/me; complimentary/permanent/no-stripe-customer accounts get a friendly
+    "you're on Pro" note instead of the (previously broken) billing portal.
+  - Fund modal (self-contained, JS-injected): suggested + custom amount, "make it
+    monthly (Supporter)", Stripe checkout. Now theme-correct.
+  - Sold-usage pill under the search bar: "N free sold searches left today, Fund to
+    lift the cap"; hitting the cap opens the Fund modal.
+  - Funding goal bar in the Fund modal AND a slim footer bar (#fund-goal-footer),
+    loaded from /api/fund-goal; 100 percent -> gold "goal met" state + "Keep it going".
+  - Collection Analytics (built in the Pro phase, still present): value-over-time
+    chart (daily localStorage snapshots, synced) + Top Gainers/Losers; free users
+    see a blurred teaser. _compsUseAllTime() === hasPro().
+  - BCW affiliate: BCW_AFFILIATE + SPONSORS config (one place for url/coupon/logo/
+    banner). Footer sponsor strip (logo + 10% off + TCH10 + "affiliate"), after-scan
+    callout under price stats, dismissible under-results banner (#bcw-banner, above
+    #results-grid, 7-day dismiss). Real BCW logo at public/sponsors/bcw-logo.png.
+
+ui_fixes: |
+  - Fund button "click does nothing": stale cached app.js lacked showUpgrade ->
+    bumped cache. Removed duplicate Go-Pro button; single pink "Fund" (the donate
+    button) placed in the header grid (col3,row1,end) LEVEL with the account button
+    (had been absolute-positioned at top).
+  - Fund modal was WHITE in dark mode because it used var(--card-bg), which does NOT
+    exist in this app (correct token is --bg-card) -> white fallback. Switched modal
+    to real theme tokens (--bg-card/--bg-secondary/--text-primary/--border-primary).
+  - Donation amount chips: added text-align:center + box-sizing so "$3"/"$25" stop
+    hugging the chip edges.
+  - BCW banner "not showing": logic was fine but it sat AFTER all result cards
+    (buried at page bottom). Moved above #results-grid.
+
+critical_cache_lesson: |
+  index.html cache-busts assets via ?v=N. I bumped app.js every change but left
+  style.css stuck at ?v=100 for many edits, so CSS changes (incl. header alignment)
+  silently never loaded. ALWAYS bump BOTH when CSS changes. public/_headers: /*.html
+  and / are no-cache (markup reloads), style.css is immutable 1yr, app.js max-age 1d,
+  images immutable -> the ?v= query is the only cache-bust. Ended at app.js?v=141,
+  style.css?v=105.
+
+config_knobs: |
+  Cloudflare Worker env vars:
+  - SOLD_FREE_DAILY (default 25) — daily sold-search cap; raise as funding grows.
+  - FUND_GOAL_MONTHLY (default 50) — monthly donation goal shown on the bar.
+  - CHECKOUT_ENABLED — legacy kill switch (default on).
+  - Donations + the goal bar's 'raised' require STRIPE_SECRET_KEY/PUBLISHABLE/
+    WEBHOOK_SECRET and a registered Stripe webhook.
+
+bcw_affiliate: |
+  link: https://www.bcwsupplies.com/?acc=cardhuddle  (used unaltered)
+  coupon: TCH10 (10% off)
+  logo: public/sponsors/bcw-logo.png (cropped 300x68 from BCW's provided creative)
+  compliance: Per BCW terms section 9.1 only use logos/banners they provide; using
+  their own logo to identify them + accurate coupon is fine. rel="noopener sponsored"
+  + a visible "affiliate" disclosure on every placement (FTC + 2.1.9/8.1 stay
+  independent). The uploaded image was a TEMPLATE (had "Your Coupon"/"YOUR LOGO"
+  placeholders) so we cropped just the logo rather than show it as-is.
+
+commits_pushed_to_branch: |
+  (newest last)
+  - Pro membership infra (meter + 402 + /api/sold-usage + checkout plumbing)
+  - Don't route complimentary/grant accounts to Stripe billing portal
+  - Pro features: collection analytics + price alerts; gate bulk pricer & promote
+  - Re-add 25/day cap as community-funding guardrail (not a paywall)
+  - Visible monthly funding-goal progress bar
+  - Count supporter renewals + celebratory 100% state
+  - Fix Fund modal theming + dedupe/align Fund button
+  - Fix header alignment (bump style.css) + center donation amounts
+  - BCW affiliate: footer sponsor strip + after-scan link
+  - Dismissible BCW banner under search results (+ moved above results)
+  - Use the official BCW logo in sponsor strip + banner
+
+verification: |
+  No automated suite. Per change: node --check on server.js / public/app.js /
+  worker.js. Could NOT run the app here (needs wrangler dev + live KV/Stripe), so
+  modal/checkout/webhook/goal-bar behavior verified by inspection only. Several bugs
+  surfaced only via user screenshots (white modal, button placement, buried banner)
+  — worth a real preview-deploy pass.
+
+open_threads: |
+  - REVISIT the leftover Pro gates after the "everything free" pivot: bulk-price 402,
+    alerts free=1, promote global-mirror gate, collection-analytics blurred teaser,
+    _compsUseAllTime===hasPro. With no Pro tier these now gate everyone except the
+    owner grant. User likely wants them fully free OR retied to "funding unlocks".
+    NOT yet reconciled.
+  - No PR opened; branch not merged to main. Confirm how the user is deploying (they
+    see changes, so something deploys this branch).
+  - Offered but not done: BCW banner in My Cards view; a /affiliates disclosure line
+    (EPN + BCW) in footer/About; swap in BCW's full 300x250 creative via
+    BCW_AFFILIATE.banner if they get a TCH10-baked version from ShareASale.
+  - AskUserQuestion failed twice (once missing `question`, once a permissions stream
+    error) -> proceeded with recommended defaults.
+  - Commitment: auto-bump style.css alongside app.js going forward.
+
+next_steps_suggested: |
+  - Reconcile the Pro gates (make truly free or tie to funding).
+  - Preview-deploy and click-test Fund checkout + webhook + goal bar end to end.
+  - Sponsor deals beyond BCW; test funding-bar prominence.
