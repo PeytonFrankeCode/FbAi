@@ -9015,7 +9015,31 @@ footer {
 }
 .floor-dir-visit:hover { color: var(--accent); border-color: var(--accent); }
 .floor-dir-walk:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.floor-dir-msg { color: var(--accent); border-color: var(--accent) !important; }
+.floor-dir-msg:hover { background: var(--accent); color: #06281b; }
 .floor-dir-empty { color: var(--text-muted); font-size: 0.84rem; padding: 0.5rem; text-align: center; }
+
+/* DM notification toasts — slide in at the corner with a message preview */
+.dm-toast-host {
+  position: fixed; top: 1rem; right: 1rem; z-index: 4000;
+  display: flex; flex-direction: column; gap: 0.5rem; max-width: min(92vw, 340px);
+  pointer-events: none;
+}
+.dm-toast {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: 0.55rem; text-align: left;
+  width: 100%; padding: 0.6rem 0.75rem; border-radius: 12px; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--accent);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  opacity: 0; transform: translateX(20px); transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.dm-toast.show { opacity: 1; transform: translateX(0); }
+.dm-toast-icon { font-size: 1.1rem; line-height: 1.2; }
+.dm-toast-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.dm-toast-from { font-weight: 700; font-size: 0.82rem; color: var(--accent); }
+.dm-toast-text {
+  font-size: 0.82rem; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px;
+}
 
 /* The Floor — free-look toggle active state */
 .floor-hud-edit.active { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
