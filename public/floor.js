@@ -1357,7 +1357,11 @@ function renderDirectory(filter) {
     const forSale = (b.cards || []).some(c => c.status === 'sale' || c.status === 'both');
     const forTrade = (b.cards || []).some(c => c.status === 'trade' || c.status === 'both');
     const tags = (forSale ? '🛒' : '') + (forTrade ? '🤝' : '');
-    return `<div class="floor-dir-row"><span class="floor-dir-emoji">${escHtml(b.emoji || '🃏')}</span><span class="floor-dir-name">${escHtml(b.isYou ? 'You' : (b.owner || 'Collector'))}${b.isYou ? ' <span class="floor-dir-youbadge">YOUR BOOTH</span>' : ''}</span><span class="floor-dir-meta">${n} card${n !== 1 ? 's' : ''} ${tags}</span><span class="floor-dir-acts"><button type="button" class="floor-dir-visit" data-booth="${b.id}">Visit</button><button type="button" class="floor-dir-walk" data-booth="${b.id}">Walk</button></span></div>`;
+    // Message button for any real collector on the floor (not you, and not the
+    // demo booths which have no account to deliver to).
+    const canDm = !b.isYou && b.username;
+    const dmBtn = canDm ? `<button type="button" class="floor-dir-msg" data-dm-user="${escHtml(b.username)}" data-dm-name="${escHtml(b.owner || b.username)}">💬 Message</button>` : '';
+    return `<div class="floor-dir-row"><span class="floor-dir-emoji">${escHtml(b.emoji || '🃏')}</span><span class="floor-dir-name">${escHtml(b.isYou ? 'You' : (b.owner || 'Collector'))}${b.isYou ? ' <span class="floor-dir-youbadge">YOUR BOOTH</span>' : ''}</span><span class="floor-dir-meta">${n} card${n !== 1 ? 's' : ''} ${tags}</span><span class="floor-dir-acts">${dmBtn}<button type="button" class="floor-dir-visit" data-booth="${b.id}">Visit</button><button type="button" class="floor-dir-walk" data-booth="${b.id}">Walk</button></span></div>`;
   }).join('');
   listEl.innerHTML = rows || '<p class="floor-dir-empty">No collectors match that search.</p>';
 }
@@ -1391,7 +1395,11 @@ function renderFloorChat() {
     log.innerHTML = '<p class="dm-empty">No messages yet — say hi to the floor. Everyone here will see it.</p>';
     return;
   }
-  log.innerHTML = floorChatLog.map(m =>
+  // Always render oldest → newest so the conversation reads top-to-bottom in
+  // the order it was sent (guards against any out-of-order socket delivery).
+  const ordered = floorChatLog.map((m, i) => ({ m, i }))
+    .sort((a, b) => (a.m.at - b.m.at) || (a.i - b.i)).map(x => x.m);
+  log.innerHTML = ordered.map(m =>
     `<div class="fc-line${m.mine ? ' mine' : ''}"><span class="fc-who">${escHtml(m.emoji)} ${escHtml(m.name)}</span><span class="fc-text">${escHtml(m.text)}</span></div>`
   ).join('');
   log.scrollTop = log.scrollHeight;
@@ -1597,16 +1605,27 @@ window.boothEditorClear = boothEditorClear;
 window.saveBoothEditor = saveBoothEditor;
 
 // ----------------------------------------------------- input wiring
+// True when the user is typing into a form field (chat box, directory search,
+// the name field, …). While typing we must NOT hijack W/A/S/D as movement —
+// otherwise those letters never reach the input and the avatar walks off.
+function isTypingTarget(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
 document.addEventListener('keydown', e => {
   const view = document.getElementById('floor-view');
   if (!view || view.classList.contains('hidden')) return;
-  if (document.activeElement && document.activeElement.id === 'floor-cc-name') return;
+  if (isTypingTarget(document.activeElement)) return;   // let the keystroke type; don't move
   const k = e.key.toLowerCase();
   if (k === 'f') { e.preventDefault(); setFreeLook(camMode !== 'free'); return; }
   if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', 'w', 'a', 's', 'd'].includes(k)) { e.preventDefault(); keys[k] = true; }
   if (k === 'e') { e.preventDefault(); if (nearBooth) openBooth(nearBooth); }
 });
 document.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+// Focusing a text field (chat, search, name) cancels any held movement key so
+// the avatar doesn't keep walking while you type.
+document.addEventListener('focusin', e => { if (isTypingTarget(e.target)) for (const k in keys) keys[k] = false; });
 document.addEventListener('input', e => { if (e.target && e.target.id === 'floor-dir-search') renderDirectory(e.target.value); });
 document.addEventListener('click', e => {
   const ccOpt = e.target.closest('[data-cc]');
@@ -1615,6 +1634,8 @@ document.addEventListener('click', e => {
   if (visit) { const b = boothById(visit.dataset.booth); if (b) openBooth(b); return; }
   const walk = e.target.closest('.floor-dir-walk');
   if (walk) { const b = boothById(walk.dataset.booth); if (b) walkToBooth(b); return; }
+  const msg = e.target.closest('.floor-dir-msg');
+  if (msg) { if (typeof window.openDM === 'function') window.openDM(msg.dataset.dmUser); return; }
   const tool = e.target.closest('.floor-tool');
   if (tool) { editorTool = tool.dataset.tool; renderBoothEditor(); return; }
   const spot = e.target.closest('.floor-spot');

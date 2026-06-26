@@ -9197,6 +9197,11 @@ function renderDmMessages(messages) {
   if (!list) return;
   const me = (getCurrentUser() || '').toLowerCase();
   if (!messages.length) { list.innerHTML = '<p class="dm-empty">No messages yet — say hello and make an offer.</p>'; return; }
+  // Always show oldest → newest so the thread reads top-to-bottom in send order
+  // (a stable sort by timestamp guards against any out-of-order delivery).
+  messages = messages.map((m, i) => ({ m, i }))
+    .sort((a, b) => (String(a.m.at).localeCompare(String(b.m.at))) || (a.i - b.i))
+    .map(x => x.m);
   list.innerHTML = messages.map(m => {
     const mine = m.from === me;
     const card = m.card ? `<div class="dm-msg-card">${m.card.imageUrl ? `<img src="${escHtml(m.card.imageUrl)}" alt="" onerror="this.remove()" />` : ''}<span>📇 ${escHtml(m.card.title)}${(typeof m.card.price === 'number' && m.card.price > 0) ? ` · $${m.card.price.toFixed(2)}` : ''}</span></div>` : '';
@@ -9287,15 +9292,49 @@ function disconnectDmSocket() {
 }
 function handleIncomingDm(msg) {
   const other = msg.with;
+  const m = msg.message || {};
+  const me = (getCurrentUser() || '').toLowerCase();
+  const incoming = m.from && m.from !== me;        // a message TO me (not my own echo)
   const directOpen = !document.getElementById('chat-overlay')?.classList.contains('hidden')
     && !document.getElementById('chat-direct')?.classList.contains('hidden');
+  const watchingThis = directOpen && _dmActiveUser && other === _dmActiveUser;
   if (directOpen) {
     loadDmThreads(false);
-    if (_dmActiveUser && other === _dmActiveUser) openDmConvo(other);  // reloads + marks read
+    if (watchingThis) openDmConvo(other);          // reloads + marks read
     else refreshDmUnread();
   } else {
     refreshDmUnread();
   }
+  // Pop a preview toast unless you're already reading this exact conversation.
+  if (incoming && !watchingThis) {
+    const preview = m.text || (m.card && m.card.title ? '📇 ' + m.card.title : 'Sent you a card');
+    showDmToast(other, preview);
+  }
+}
+
+// A slide-in notification with a sender + message preview, shown when a DM
+// arrives and you're not already looking at that conversation. Click it to jump
+// straight into the chat. Stacks (newest on top), auto-dismisses after a few s.
+function showDmToast(fromUser, preview) {
+  if (!fromUser) return;
+  let host = document.getElementById('dm-toast-host');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'dm-toast-host';
+    host.className = 'dm-toast-host';
+    document.body.appendChild(host);
+  }
+  const toast = document.createElement('button');
+  toast.type = 'button';
+  toast.className = 'dm-toast';
+  const text = String(preview || '').slice(0, 100);
+  toast.innerHTML = `<span class="dm-toast-icon">💬</span><span class="dm-toast-body"><span class="dm-toast-from">${escHtml(fromUser)}</span><span class="dm-toast-text">${escHtml(text)}</span></span>`;
+  const dismiss = () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 220); };
+  toast.addEventListener('click', () => { dismiss(); if (typeof openDM === 'function') openDM(fromUser); });
+  host.insertBefore(toast, host.firstChild);
+  while (host.children.length > 3) host.removeChild(host.lastChild);   // keep at most 3
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(dismiss, 6000);
 }
 
 // Delegated handlers for thread rows and the per-card "Negotiate" button.
