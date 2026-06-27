@@ -10568,7 +10568,7 @@ function buildCommentComposer(postId, parentId) {
     <div class="community-reply${inline ? ' community-reply-inline' : ''}">
       <div class="community-avatar community-reply-avatar" style="background:${bg}">${initial}</div>
       <div class="community-reply-box">
-        <textarea id="comment-input-${key}" class="community-reply-input" maxlength="500" rows="1" placeholder="${inline ? 'Write a reply…' : 'Write a reply…'}"></textarea>
+        <textarea id="comment-input-${key}" class="community-reply-input" maxlength="500" rows="1" placeholder="${inline ? 'Write a reply…' : 'Write a reply…'}" onkeydown="commentKeydown(event, '${pid}', ${par})"></textarea>
         <div id="comment-image-wrap-${key}" class="community-reply-preview hidden">
           <img id="comment-image-${key}" alt="Reply photo" />
           <button type="button" class="community-image-remove" onclick="clearCommentImage('${key}')" title="Remove photo">&times;</button>
@@ -10686,7 +10686,14 @@ function openInlineReply(postId, parentId) {
   if (!getCurrentUser()) { showLogin(); return; }
   const box = document.getElementById(`replybox-${parentId}`);
   if (!box) return;
-  if (box.innerHTML.trim()) { closeInlineReply(parentId); return; } // toggle
+  // Already open — just focus it. Never discard text the user has typed; the
+  // composer's own Cancel button is how you close it. (Previously re-clicking
+  // Reply here wiped the composer, so a half-typed reply silently vanished.)
+  if (box.innerHTML.trim()) {
+    const open = box.querySelector('textarea');
+    if (open) open.focus();
+    return;
+  }
   box.innerHTML = buildCommentComposer(postId, parentId);
   const ta = document.getElementById(`comment-input-${parentId}`);
   if (ta) setTimeout(() => ta.focus(), 0);
@@ -10719,6 +10726,18 @@ function clearCommentImage(key) {
   if (input) input.value = '';
 }
 
+// Enter sends a reply (Shift+Enter inserts a newline). This is the path most
+// people expect, and it sidesteps any confusion with the two "Reply" buttons.
+function commentKeydown(ev, postId, parentId) {
+  if (ev.key !== 'Enter' || ev.shiftKey) return;
+  ev.preventDefault();
+  const key = parentId || postId;
+  const ta = document.getElementById(`comment-input-${key}`);
+  const composer = ta && ta.closest('.community-reply');
+  const btn = composer ? composer.querySelector('.community-reply-send') : null;
+  submitCommunityComment(postId, parentId || '', btn);
+}
+
 async function submitCommunityComment(postId, parentId, btn) {
   const user = getCurrentUser();
   const token = getSessionToken();
@@ -10746,15 +10765,30 @@ async function submitCommunityComment(postId, parentId, btn) {
       return;
     }
     const post = findCachedPost(postId);
-    if (post) {
+    let added = false;
+    if (post && data && data.comment) {
       if (!Array.isArray(post.comments)) post.comments = [];
-      if (data && data.comment) post.comments.push(data.comment);
+      post.comments.push(data.comment);
+      added = true;
     }
     // Clear input + image. Inline composers get removed when the list re-renders.
     if (ta) ta.value = '';
     clearCommentImage(key);
-    renderCommentList(postId);
-    updateCommentCount(postId);
+    if (added) {
+      renderCommentList(postId);
+      updateCommentCount(postId);
+    } else {
+      // Saved server-side but we couldn't optimistically add it (cache miss /
+      // no echo). Pull fresh so the reply still shows instead of vanishing.
+      await loadCommunityPosts(true);
+      const wrap = document.getElementById(`comments-${postId}`);
+      if (wrap && wrap.classList.contains('hidden')) {
+        const toggle = wrap.parentElement && wrap.parentElement.querySelector('.community-comment-toggle');
+        toggleComments(postId, toggle);
+      } else {
+        renderCommentList(postId);
+      }
+    }
   } catch (_) {
     if (errEl) { errEl.textContent = 'Network error — please try again.'; errEl.classList.remove('hidden'); }
   } finally {
