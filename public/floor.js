@@ -1400,7 +1400,7 @@ function renderFloorChat() {
   const ordered = floorChatLog.map((m, i) => ({ m, i }))
     .sort((a, b) => (a.m.at - b.m.at) || (a.i - b.i)).map(x => x.m);
   log.innerHTML = ordered.map(m =>
-    `<div class="fc-line${m.mine ? ' mine' : ''}"><span class="fc-who">${escHtml(m.emoji)} ${escHtml(m.name)}</span><span class="fc-text">${escHtml(m.text)}</span></div>`
+    `<div class="fc-line${m.mine ? ' mine' : ''}"><span class="fc-who">${escHtml(m.emoji)} ${escHtml(m.name)}</span><span class="fc-text" dir="ltr">${escHtml(m.text)}</span></div>`
   ).join('');
   log.scrollTop = log.scrollHeight;
 }
@@ -1467,8 +1467,27 @@ function addRemote(p) {
   if (!p || !p.id || p.id === wsId) return;
   const a = buildAvatar(normalizeCharacter({ name: p.name, emoji: p.emoji, color: p.color, ...(p.appearance || {}) }));
   a.x = p.x || 0; a.z = p.y || 0; a.tx = a.x; a.tz = a.z; a.group.position.set(a.x, 0, a.z);
+  // keep the identity so we can offer to DM this person from the chat panel
+  a.username = (p.username || '').toLowerCase(); a.name = p.name || 'Collector'; a.emoji = p.emoji || '🙂';
   remote.set(p.id, a);
 }
+
+// Everyone you could start a direct message with right now: live collectors
+// walking the floor plus booth owners, de-duped by username (registered users
+// only — DMs need a real account). Surfaced in the chat panel's Direct tab.
+window.getFloorPeople = function () {
+  const me = myUsername();
+  const map = new Map();
+  for (const r of remote.values()) {
+    const u = (r.username || '').toLowerCase();
+    if (u && u !== me && !map.has(u)) map.set(u, { username: u, name: r.name || u, emoji: r.emoji || '🙂' });
+  }
+  for (const b of booths) {
+    const u = (b.username || '').toLowerCase();
+    if (u && !b.isYou && !map.has(u)) map.set(u, { username: u, name: b.owner || u, emoji: b.emoji || '🙂' });
+  }
+  return Array.from(map.values());
+};
 function disconnectPresence() {
   if (moveTimer) { clearInterval(moveTimer); moveTimer = null; }
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }

@@ -9158,15 +9158,30 @@ async function loadDmThreads(autoOpenFirst) {
     const res = await authFetch('/api/dm/threads');
     const data = await res.json();
     const threads = Array.isArray(data.threads) ? data.threads : [];
-    if (!threads.length) {
-      wrap.innerHTML = '<p class="dm-empty">No messages yet. Visit a booth on The Floor and hit <strong>Negotiate</strong> on a card to start a chat.</p>';
+    // People currently on the floor you can start a new chat with (minus anyone
+    // you already have a thread open with).
+    const haveThread = new Set(threads.map(t => t.user));
+    const people = (typeof window.getFloorPeople === 'function' ? window.getFloorPeople() : [])
+      .filter(p => p.username && !haveThread.has(p.username));
+    const peopleHtml = people.length ? `
+      <div class="dm-people">
+        <div class="dm-people-label">Start a new chat</div>
+        ${people.map(p => `
+          <button type="button" class="dm-person" data-dm-open="${escHtml(p.username)}">
+            <span class="dm-person-emoji">${escHtml(p.emoji)}</span>
+            <span class="dm-person-name">${escHtml(p.name)}</span>
+          </button>`).join('')}
+      </div>` : '';
+    const threadsHtml = threads.length ? threads.map(t => `
+      <button type="button" class="dm-thread${t.user === _dmActiveUser ? ' active' : ''}" data-dm-open="${escHtml(t.user)}">
+        <span class="dm-thread-name">${escHtml(t.user)}</span>
+        ${t.unread ? `<span class="dm-thread-unread">${t.unread}</span>` : ''}
+        <span class="dm-thread-last">${escHtml(t.lastMessage || '')}</span>
+      </button>`).join('') : '';
+    if (!threads.length && !people.length) {
+      wrap.innerHTML = '<p class="dm-empty">No one to message yet. Walk The Floor to meet collectors, or hit <strong>Negotiate</strong> on a card to start a chat.</p>';
     } else {
-      wrap.innerHTML = threads.map(t => `
-        <button type="button" class="dm-thread${t.user === _dmActiveUser ? ' active' : ''}" data-dm-open="${escHtml(t.user)}">
-          <span class="dm-thread-name">${escHtml(t.user)}</span>
-          ${t.unread ? `<span class="dm-thread-unread">${t.unread}</span>` : ''}
-          <span class="dm-thread-last">${escHtml(t.lastMessage || '')}</span>
-        </button>`).join('');
+      wrap.innerHTML = peopleHtml + threadsHtml;
     }
     if (autoOpenFirst && !_dmActiveUser && threads.length) openDmConvo(threads[0].user);
     refreshDmUnread();
@@ -9205,7 +9220,7 @@ function renderDmMessages(messages) {
   list.innerHTML = messages.map(m => {
     const mine = m.from === me;
     const card = m.card ? `<div class="dm-msg-card">${m.card.imageUrl ? `<img src="${escHtml(m.card.imageUrl)}" alt="" onerror="this.remove()" />` : ''}<span>📇 ${escHtml(m.card.title)}${(typeof m.card.price === 'number' && m.card.price > 0) ? ` · $${m.card.price.toFixed(2)}` : ''}</span></div>` : '';
-    const text = m.text ? `<div class="dm-msg-text">${escHtml(m.text)}</div>` : '';
+    const text = m.text ? `<div class="dm-msg-text" dir="ltr">${escHtml(m.text)}</div>` : '';
     return `<div class="dm-msg ${mine ? 'mine' : 'theirs'}">${card}${text}<div class="dm-msg-time">${dmTime(m.at)}</div></div>`;
   }).join('');
   list.scrollTop = list.scrollHeight;
