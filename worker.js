@@ -410,7 +410,22 @@ export default {
       if (!url.pathname.startsWith('/api/')) {
         if (env.ASSETS) {
           try {
-            return await env.ASSETS.fetch(request);
+            const resp = await env.ASSETS.fetch(request);
+            // Never let HTML (index.html + the SPA fallback) be cached: it
+            // carries the ?v= references to app.js/floor.js/style.css, so a
+            // stale copy pins the browser to old code and silently swallows
+            // every deploy. The public/_headers no-cache rule is NOT reliably
+            // applied when assets are fetched through the worker binding
+            // (run_worker_first), so enforce it here.
+            const ct = resp.headers.get('content-type') || '';
+            if (ct.includes('text/html')) {
+              const h = new Headers(resp.headers);
+              h.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+              h.set('Pragma', 'no-cache');
+              h.set('Expires', '0');
+              return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+            }
+            return resp;
           } catch (assetErr) {
             console.error('ASSETS.fetch failed:', assetErr && assetErr.stack || assetErr);
             return new Response('Static asset fetch failed: ' + String(assetErr && assetErr.message || assetErr), { status: 502 });
