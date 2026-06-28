@@ -95,6 +95,17 @@ function moderateText(text) {
   return { allowed: true };
 }
 
+// --- Bidi control stripping ---------------------------------------------
+// Remove Unicode bidirectional control characters (RLO/LRO/RLE/LRM/RLM and the
+// isolate set). A single U+202E makes a whole message render backwards
+// ("Hi there" -> "ereht iH") on every client, and CSS direction:ltr can't undo
+// it — the character itself must be removed. Some mobile keyboards inject these
+// and they're the classic Trojan-Source text-spoofing vector, so we strip them
+// from all user text at the source.
+function stripBidi(text) {
+  return String(text == null ? '' : text).replace(/[\u202A-\u202E\u2066-\u2069\u200E\u200F\u061C]/g, '');
+}
+
 // --- Image moderation ---------------------------------------------------
 const IMG_TIMEOUT_MS = 6000;
 
@@ -149,4 +160,4 @@ async function moderateImage(imageUrl, env) {
   }
 }
 
-module.exports = { moderateText, moderateImage };
+module.exports = { moderateText, moderateImage, stripBidi };
