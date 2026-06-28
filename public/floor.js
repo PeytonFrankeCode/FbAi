@@ -1377,9 +1377,17 @@ function updateOnlineCount() { const el = document.getElementById('floor-online'
 // ----------------------------------------------------- floor chat (broadcast)
 // A live, ephemeral room for everyone currently on the floor, relayed over the
 // same FloorRoom presence socket. Sits in the "Floor" tab of the chat panel.
+
+// Strip Unicode bidirectional control characters (RLO/LRO/RLE/LRM/RLM/isolates).
+// A stray U+202E flips an entire line to read backwards ("Hi there" → "ereht
+// iH") and CSS direction:ltr can't undo it — only removing the character does.
+// Some mobile keyboards inject these; stripping also blocks text spoofing.
+const BIDI_CTRL = /[\u202A-\u202E\u2066-\u2069\u200E\u200F\u061C]/g;
+function stripBidi(s) { return String(s == null ? '' : s).replace(BIDI_CTRL, ''); }
+
 let floorChatLog = [];
 function onFloorChat(msg) {
-  floorChatLog.push({ id: msg.id, name: msg.name || 'Collector', emoji: msg.emoji || '🙂', text: String(msg.text || ''), at: msg.at || Date.now(), mine: msg.id === wsId });
+  floorChatLog.push({ id: msg.id, name: msg.name || 'Collector', emoji: msg.emoji || '🙂', text: stripBidi(msg.text), at: msg.at || Date.now(), mine: msg.id === wsId });
   if (floorChatLog.length > 120) floorChatLog = floorChatLog.slice(-120);
   if (isFloorChatVisible()) renderFloorChat();
 }
@@ -1419,7 +1427,7 @@ window.floorChatActivate = floorChatActivate;
 window.floorChatSend = function (ev) {
   if (ev && ev.preventDefault) ev.preventDefault();
   const input = document.getElementById('floor-chat-input');
-  const text = (input && input.value || '').trim();
+  const text = stripBidi(input && input.value || '').trim();
   if (!text) return false;
   if (!ws || ws.readyState !== 1) { floorChatNotice('Not connected to the floor yet — try again in a moment.'); return false; }
   sendWs({ t: 'chat', text });

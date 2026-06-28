@@ -20,7 +20,7 @@ const SOLD_KV_TTL = 10800; // 3 hours
 
 // scrape.do plan size, for the usage counter (sold calls used vs remaining).
 const SCRAPE_DO_MONTHLY_QUOTA = 250000;
-const { moderateText, moderateImage } = require('./moderation');
+const { moderateText, moderateImage, stripBidi } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
 // Workers' bundled-CJS shim. Bare references would throw ReferenceError at
@@ -4100,7 +4100,7 @@ app.post('/api/dm/send', (req, res) => {
   if (!me) return res.status(401).json({ error: 'Sign in to send messages.' });
   const body = req.body || {};
   const to = String(body.to || '').trim().toLowerCase();
-  const text = String(body.text || '').trim();
+  const text = stripBidi(body.text).trim();
   const card = sanitizeDmCard(body.card);
   if (!to) return res.status(400).json({ error: 'No recipient.' });
   if (to === me) return res.status(400).json({ error: "You can't message yourself." });
@@ -4240,8 +4240,8 @@ app.post('/api/community/posts', async (req, res) => {
   if (!username) return res.status(401).json({ error: 'Sign in to post to the community.' });
 
   const body = req.body || {};
-  const message = String(body.message || '').trim();
-  const title = String(body.title || '').trim().slice(0, COMMUNITY_MAX_TITLE);
+  const message = stripBidi(body.message).trim();
+  const title = stripBidi(body.title).trim().slice(0, COMMUNITY_MAX_TITLE);
   let imageUrl = String(body.imageUrl || '').trim();
   let link = String(body.link || '').trim();
   const priceNum = parseFloat(body.price);
@@ -4371,7 +4371,7 @@ app.post('/api/community/posts/:id/comments', async (req, res) => {
 
   const id = String(req.params.id || '');
   const body = req.body || {};
-  const message = String(body.message || '').trim();
+  const message = stripBidi(body.message).trim();
   let imageUrl = String(body.imageUrl || '').trim();
 
   if (!message && !imageUrl) {

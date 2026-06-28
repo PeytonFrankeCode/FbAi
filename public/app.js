@@ -2621,6 +2621,15 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+// Remove Unicode bidirectional control characters (RLO/LRO/RLE/LRM/RLM and the
+// isolate set). A stray U+202E makes a whole message render backwards
+// ("Hi there" → "ereht iH") and no amount of CSS direction:ltr can undo it —
+// the character itself has to go. Some mobile keyboards inject these; stripping
+// them also blocks Trojan-Source-style text spoofing.
+function stripBidi(str) {
+  return String(str == null ? '' : str).replace(/[\u202A-\u202E\u2066-\u2069\u200E\u200F\u061C]/g, '');
+}
+
 function setLoading(isLoading) {
   btn.disabled = isLoading;
   loading.classList.toggle('hidden', !isLoading);
@@ -9220,7 +9229,7 @@ function renderDmMessages(messages) {
   list.innerHTML = messages.map(m => {
     const mine = m.from === me;
     const card = m.card ? `<div class="dm-msg-card">${m.card.imageUrl ? `<img src="${escHtml(m.card.imageUrl)}" alt="" onerror="this.remove()" />` : ''}<span>📇 ${escHtml(m.card.title)}${(typeof m.card.price === 'number' && m.card.price > 0) ? ` · $${m.card.price.toFixed(2)}` : ''}</span></div>` : '';
-    const text = m.text ? `<div class="dm-msg-text" dir="ltr">${escHtml(m.text)}</div>` : '';
+    const text = m.text ? `<div class="dm-msg-text" dir="ltr">${escHtml(stripBidi(m.text))}</div>` : '';
     return `<div class="dm-msg ${mine ? 'mine' : 'theirs'}">${card}${text}<div class="dm-msg-time">${dmTime(m.at)}</div></div>`;
   }).join('');
   list.scrollTop = list.scrollHeight;
@@ -9238,7 +9247,7 @@ function dmClearCard() { _dmStagedCard = null; renderDmStagedCard(); }
 async function dmSend(ev) {
   if (ev && ev.preventDefault) ev.preventDefault();
   const input = document.getElementById('dm-input');
-  const text = (input?.value || '').trim();
+  const text = stripBidi(input?.value || '').trim();
   if (!_dmActiveUser) return false;
   if (!text && !_dmStagedCard) return false;
   try {
@@ -10423,7 +10432,7 @@ function buildCommunityPost(p, me, i) {
     linkRow = `<a class="community-post-link" href="${escHtml(p.link)}" target="_blank" rel="noopener noreferrer">View listing &rarr;</a>`;
   }
 
-  const msg = p.message ? `<p class="community-post-message">${escHtml(p.message).replace(/\n/g, '<br>')}</p>` : '';
+  const msg = p.message ? `<p class="community-post-message">${escHtml(stripBidi(p.message)).replace(/\n/g, '<br>')}</p>` : '';
   const del = isMine ? `<button class="community-post-delete" onclick="deleteCommunityPost('${escHtml(p.id)}')" title="Delete post">&times;</button>` : '';
   // Anyone but the author can report. Logged-out users get the same button; it
   // prompts them to sign in. Posts already reported by this user show a marker.
@@ -10665,7 +10674,7 @@ function buildCommentNode(c, postId, me, postOwner, depth) {
   const del = canDelete
     ? `<button class="community-comment-delete" onclick="deleteCommunityComment('${escHtml(postId)}','${escHtml(c.id)}')" title="Delete reply">&times;</button>`
     : '';
-  const msg = c.message ? `<div class="community-comment-text">${escHtml(c.message).replace(/\n/g, '<br>')}</div>` : '';
+  const msg = c.message ? `<div class="community-comment-text">${escHtml(stripBidi(c.message)).replace(/\n/g, '<br>')}</div>` : '';
   const img = c.imageUrl
     ? `<div class="community-comment-media"><img src="${escHtml(c.imageUrl)}" alt="Reply photo" loading="lazy" /></div>`
     : '';
@@ -10760,7 +10769,7 @@ async function submitCommunityComment(postId, parentId, btn) {
   const key = parentId || postId;
   const ta = document.getElementById(`comment-input-${key}`);
   const errEl = document.getElementById(`comment-error-${key}`);
-  const message = (ta && ta.value || '').trim();
+  const message = stripBidi(ta && ta.value || '').trim();
   const imageUrl = _commentImages[key] || '';
   if (!message && !imageUrl) {
     if (errEl) { errEl.textContent = 'Add a message or a photo to reply.'; errEl.classList.remove('hidden'); }
