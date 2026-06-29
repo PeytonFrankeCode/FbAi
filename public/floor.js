@@ -1387,9 +1387,18 @@ function stripBidi(s) { return String(s == null ? '' : s).replace(BIDI_CTRL, '')
 
 let floorChatLog = [];
 function onFloorChat(msg) {
-  floorChatLog.push({ id: msg.id, name: msg.name || 'Collector', emoji: msg.emoji || '🙂', text: stripBidi(msg.text), at: msg.at || Date.now(), mine: msg.id === wsId });
+  const entry = { id: msg.id, name: msg.name || 'Collector', emoji: msg.emoji || '🙂', text: stripBidi(msg.text), at: msg.at || Date.now(), mine: msg.id === wsId };
+  floorChatLog.push(entry);
   if (floorChatLog.length > 120) floorChatLog = floorChatLog.slice(-120);
   if (isFloorChatVisible()) renderFloorChat();
+  else if (!entry.mine && typeof window.showChatToast === 'function') {
+    // Someone messaged everyone on the floor and you're not looking at the chat
+    // — pop a preview toast that opens the Floor chat when tapped.
+    window.showChatToast({
+      icon: '🌐', from: `${entry.emoji} ${entry.name}`, text: entry.text,
+      onClick: () => { if (typeof window.openChat === 'function') window.openChat('floor'); },
+    });
+  }
 }
 function isFloorChatVisible() {
   const ov = document.getElementById('chat-overlay');
