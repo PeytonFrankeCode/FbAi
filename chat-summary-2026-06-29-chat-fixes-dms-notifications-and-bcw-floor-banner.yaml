@@ -1,0 +1,198 @@
+session:
+  date: "2026-06-29"
+  branch: claude/chat-messaging-dm-fixes-svj5lw
+  topic: >
+    Fixed Floor + community chat/messaging bugs (reversed text, WASD-while-typing,
+    DM people list, dropped community replies), added chat notification toasts
+    (DM + floor broadcast), discovered & fixed a Cloudflare Workers HTML-caching
+    bug that was silently swallowing every deploy, and added a BCW sponsor banner
+    + "Use code TCH for 10% off" sign to the Floor's 3D world. Plus research on
+    Arena Club Slab Packs & how to monetize them.
+  note: >
+    All work committed to branch claude/chat-messaging-dm-fixes-svj5lw and pushed.
+    Each push was merged to main via PRs (#357-#360 and later); main deploys to
+    Cloudflare Workers via .github/workflows/deploy.yml (push to main only).
+    Files touched - public/app.js, public/floor.js, public/style.css,
+    public/index.html, worker.js, server.js, moderation.js. Asset cache versions
+    ended at app.js?v=146 / floor.js?v=36 / style.css?v=107.
+
+overview: >
+  An iterative bug-fix + polish session on The Floor (3D card-show world) chat,
+  direct messages, and the community board, followed by sponsor-banner work.
+  The headline saga - chat messages displayed reversed ("Hi there" -> "ereht
+  iH"). Multiple correct-looking fixes appeared to do nothing; the real blocker
+  was HTML caching (the Worker served index.html without no-cache, pinning the
+  browser to stale app.js/floor.js so NONE of the deploys ever loaded). Once that
+  was fixed, the messaging fixes took effect. The reversal itself was traced to
+  Unicode bidi control characters (e.g. U+202E RLO) in message text, now stripped
+  everywhere. Session ended by adding a BCW sponsor banner and a "USE CODE TCH FOR
+  10% OFF" sign to the Floor, both tap-to-open the BCW affiliate link.
+
+the_caching_saga:
+  problem: >
+    The user kept reporting fixes "still not working" after deploys. Root cause -
+    wrangler.toml run_worker_first=true routes static assets through
+    env.ASSETS.fetch(), where public/_headers (a Cloudflare PAGES feature) is NOT
+    reliably applied, so index.html (which carries the ?v= references to
+    app.js/floor.js/style.css) got cached by the browser, pinning users to old
+    code no matter how many times main was deployed.
+  fix: >
+    worker.js now explicitly sets Cache-Control no-cache,no-store,must-revalidate
+    (+ Pragma/Expires) on any text/html response returned from env.ASSETS.fetch(),
+    so the freshest index.html (and thus latest versioned JS/CSS) always loads.
+  lesson: >
+    On Cloudflare WORKERS (not Pages) with run_worker_first, do not rely on
+    _headers for cache control; set headers in the worker. Diagnosis confirmed via
+    an Incognito test (fresh code rendered correctly) and GitHub Actions showing
+    deploys succeeding while the user saw no change.
+
+features:
+  - title: Reversed chat text - root cause + fix (Unicode bidi controls)
+    files: [moderation.js, worker.js, server.js, public/app.js, public/floor.js, public/style.css, public/index.html]
+    detail: >
+      Messages rendered character-reversed with spaces preserved ("Hi there" ->
+      "ereht iH") - the signature of a Unicode bidi direction flip, NOT a JS
+      .reverse() (none exists in the code).
+    steps:
+      - >
+        First (insufficient) attempts - a defensive chronological message sort,
+        then forced LTR via CSS (direction:ltr; unicode-bidi:isolate) plus
+        dir="ltr" on chat text/inputs. CSS cannot undo an in-text override char.
+      - >
+        Real fix - stripBidi() removes the bidi control set
+        (U+202A-202E, U+2066-2069, U+200E, U+200F, U+061C). A stray U+202E (RLO),
+        injected by some mobile keyboards and the classic "Trojan Source" spoofing
+        vector, was flipping whole lines.
+      - >
+        Applied at every entry/exit point - moderation.js exports stripBidi();
+        worker.js floor broadcast; server.js DM send + community post
+        (message + title) + comment; floor.js floor chat on ingest + send; app.js
+        DM render+send, community post/comment render, comment send, toast text.
+    note: >
+      The forced-LTR CSS (unicode-bidi:isolate) and dir="ltr" attributes were kept
+      as belt-and-suspenders even though stripBidi is the actual fix.
+
+  - title: WASD typed as movement while typing in chat
+    files: [public/floor.js]
+    detail: >
+      The Floor's global keydown handler hijacked W/A/S/D (with preventDefault)
+      even when a text field was focused, so letters never reached the input and
+      the avatar walked off.
+    fix: >
+      isTypingTarget(el) (INPUT/TEXTAREA/SELECT/contentEditable) - the keydown
+      handler returns early when typing; a focusin handler also clears any held
+      movement key so the avatar can't keep walking while you type.
+
+  - title: DM with any person on the floor (names now listed)
+    files: [public/floor.js, public/app.js, public/style.css]
+    detail: >
+      Previously the Direct tab only showed existing threads, so you could never
+      start a new 1:1 chat by name.
+    fix:
+      - >
+        Floor directory rows gained a "Message" button (real usernames only, not
+        you / demo booths) that calls window.openDM(username).
+      - >
+        addRemote() now stores username/name/emoji on remote presence; new
+        window.getFloorPeople() returns floor collectors (presence + booth owners,
+        de-duped, registered accounts only).
+      - >
+        Direct tab renders a "Start a new chat" people list (loadDmThreads) from
+        getFloorPeople(), de-duped against existing threads.
+
+  - title: Chat notification toasts (DM + floor broadcast)
+    files: [public/app.js, public/floor.js, public/style.css]
+    detail: >
+      A slide-in toast with icon + sender + message preview; click to jump in.
+    fix:
+      - >
+        Generalized into showChatToast({icon,from,text,onClick}) (window-exposed),
+        host #dm-toast-host, stacks newest-on-top max 3, auto-dismiss ~6s.
+      - >
+        DM toast via handleIncomingDm over the per-user inbox socket - only when
+        incoming (m.from !== me) and you're not already viewing that conversation.
+      - >
+        Floor toast via onFloorChat - when not your own message and the Floor chat
+        pane isn't visible; tapping opens openChat('floor'). Preview is stripBidi'd.
+
+  - title: Community board replies disappearing / not sending
+    files: [public/app.js]
+    detail: >
+      Hitting "Reply" made the typed text vanish without posting. Cause - the
+      inline Reply button toggled the composer CLOSED on a second click
+      (closeInlineReply wiped innerHTML), and the send button is ALSO labeled
+      "Reply", so re-clicking was a natural mistake.
+    fix:
+      - >
+        openInlineReply no longer discards text - if the composer is already open
+        it just focuses it (use Cancel to close).
+      - Enter sends a reply (Shift+Enter = newline) via commentKeydown().
+      - >
+        submitCommunityComment hardened - only clears the textarea after a
+        confirmed save; on cache-miss / missing echoed comment it reloads the feed
+        so a sent reply always appears instead of vanishing.
+
+  - title: BCW sponsor banner on the Floor (left wall, centered)
+    files: [public/floor.js]
+    detail: >
+      Mirrors the back-wall Card Huddle logo treatment (raised dark backing panel
+      + lightly emissive face) but centered high on the LEFT wall, facing into the
+      hall (rotation.y = Math.PI/2). Uses /sponsors/bcw-logo.png, auto-sized to the
+      image aspect (height ~3.4m). New function addSideWallBanner(group,h,CEIL).
+    interactivity: >
+      Tappable - opens the BCW affiliate link
+      https://www.bcwsupplies.com/?acc=cardhuddle. The pointer raycaster
+      (bindPointer) now follows userData.href in addition to userData.boothId.
+
+  - title: '"Use code TCH for 10% off" promo sign'
+    files: [public/floor.js]
+    detail: >
+      A flat green accent-pill sign reading "USE CODE TCH FOR 10% OFF" centered
+      just below the BCW banner (y = yC - 2.9), same +x facing, sharing the same
+      tap-to-open affiliate href. New helper makeSignTex(line) draws a 4:1
+      rounded-pill canvas texture (accent #5ece99 bg, dark #06281b bold text).
+
+research_and_advice:
+  arena_club_slab_packs:
+    summary: >
+      Researched Arena Club Slab Packs (virtual packs of real pre-graded slabs,
+      ~$250/pack, 400/series, buyback option; co-founded by Derek Jeter) and how
+      to join their affiliate program.
+    key_finding: >
+      Slab Packs drop EXCLUSIVELY on eBay (weekly Wednesday drops), so the app's
+      EXISTING eBay Partner Network integration (epnUrl(), campid=5339145753) can
+      already earn commission on slab-pack purchases by linking the eBay listings.
+      For arenaclub.com direct sales, Arena Club is listed on Sovrn Commerce
+      (formerly VigLink, merchant 251926); otherwise contact them for a
+      direct/creator deal. Offered to wire an eBay-EPN "Arena Club Slab Packs"
+      tile (not yet built).
+
+how_it_works_refs:
+  floor_chat: >
+    Ephemeral broadcast over the FloorRoom Durable Object WebSocket. Client
+    floorChatSend -> sendWs({t:'chat',text}); worker FloorRoom screens
+    (moderateText) + stripBidi + broadcasts {t:'chat',id,name,emoji,text,at};
+    onFloorChat pushes to floorChatLog (cap 120) and renderFloorChat renders
+    oldest->newest. Sender sees their own line (broadcast includes them).
+  direct_messages: >
+    Persisted server-side (server.js /api/dm/*, KV blob keyed userA|userB).
+    Real-time fan-out - worker POSTs to recipient + sender UserInbox DOs after
+    /api/dm/send; client per-user socket (/api/dm/ws?token=) -> handleIncomingDm.
+    Unread badge (.floor-dm-badge) via /api/dm/unread.
+  deploy: >
+    .github/workflows/deploy.yml deploys to Cloudflare Workers on push to MAIN
+    only (wrangler-action). Branch work must be merged to main (PRs) to go live.
+
+next_ideas:
+  - >
+    Verify on a fresh load (post-deploy) that reversed text is fully gone; if any
+    message still flips, capture the raw bytes (would point to a non-bidi cause or
+    an RTL-keyboard device setting).
+  - >
+    Optional - unread dot on the HUD "Chat" button when floor messages arrive
+    while the panel is closed.
+  - Optional - build the eBay-EPN "Arena Club Slab Packs" affiliate tile/banner.
+  - >
+    Eyeball the BCW banner + promo sign for sizing/orientation; tweak wall side,
+    casing, or scale if desired. (User reported it "came out a little weird" -
+    see follow-up.)
