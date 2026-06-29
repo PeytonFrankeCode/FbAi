@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=108" />
+  <link rel="stylesheet" href="style.css?v=109" />
 
 
 </head>
@@ -1199,17 +1199,22 @@
     <!-- Game stage -->
     <div id="floor-stage" class="floor-stage hidden">
       <div class="floor-construction-banner">🚧 Under construction — demo only, may be incomplete or buggy.</div>
-      <div class="floor-hud">
-        <span id="floor-hud-name" class="floor-hud-name"></span>
-        <span id="floor-online" class="floor-online"></span>
-        <span class="floor-hud-hint">Look: drag &middot; Move: W/S + A/D &middot; Visit: E or tap a booth</span>
-        <button type="button" class="floor-hud-edit" id="floor-freelook" onclick="toggleFreeLook()">Free look</button>
-        <button type="button" class="floor-hud-edit" onclick="openChat('floor')">💬 Chat <span class="floor-dm-badge hidden">0</span></button>
-        <button type="button" class="floor-hud-edit" onclick="arrangeBooth()">Arrange booth</button>
-        <button type="button" class="floor-hud-edit" onclick="editCharacter()">Edit character</button>
-      </div>
       <div id="floor-canvas-wrap" class="floor-canvas-wrap">
         <canvas id="floor-canvas" class="floor-canvas" width="960" height="600"></canvas>
+        <!-- In-world identity + live presence (top-left overlay) -->
+        <div class="floor-status">
+          <span id="floor-hud-name" class="floor-hud-name"></span>
+          <span id="floor-online" class="floor-online"></span>
+        </div>
+        <!-- Floating action toolbar (top-right overlay) -->
+        <div class="floor-toolbar">
+          <button type="button" class="floor-tbtn" id="floor-freelook" onclick="toggleFreeLook()">🔭 Free look</button>
+          <button type="button" class="floor-tbtn" onclick="openChat('floor')">💬 Chat <span class="floor-dm-badge hidden">0</span></button>
+          <button type="button" class="floor-tbtn" onclick="arrangeBooth()">🛠️ Arrange booth</button>
+          <button type="button" class="floor-tbtn" onclick="editCharacter()">🧍 Edit character</button>
+        </div>
+        <!-- Controls hint (bottom-left overlay) -->
+        <div class="floor-hint">Look: drag &middot; Move: W/S + A/D &middot; Visit: E or tap a booth</div>
         <div id="floor-prompt" class="floor-prompt hidden"></div>
       </div>
 
@@ -1565,6 +1570,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=37"></script>
+  <script type="module" src="floor.js?v=38"></script>
 </body>
 </html>
