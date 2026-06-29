@@ -124,6 +124,17 @@ let playerObj = null;
 let ws = null, wsId = null, moveTimer = null, reconnectTimer = null;
 let lastSent = { x: null, z: null };
 const remote = new Map();
+
+// voice chat (WebRTC mesh, signaled over the FloorRoom socket)
+const VOICE_ICE = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+];
+const voice = {
+  active: false, muted: false, stream: null, audioCtx: null,
+  localMeter: null, localSpeaking: false,
+  peers: new Map(), // peerId -> { pc, audioEl, speaking, meter }
+};
 let npcs = [];
 
 // input
@@ -1193,7 +1204,7 @@ function loop() {
   rafId = requestAnimationFrame(loop);
 }
 function start() { if (!running) { running = true; clock.getDelta(); rafId = requestAnimationFrame(loop); } }
-function stop() { running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; disconnectPresence(); }
+function stop() { running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; voiceStop(); disconnectPresence(); }
 
 // ----------------------------------------------------- three setup
 // Render at a slightly super-sampled ratio so the floor stays crisp even on
@@ -1535,20 +1546,30 @@ function connectPresence() {
     });
     lastSent = { x: null, z: null };
     moveTimer = setInterval(() => { const x = round1(player.x), z = round1(player.z); if (x === lastSent.x && z === lastSent.z) return; lastSent = { x, z }; sendWs({ t: 'move', x, y: z }); }, 100);
+    // If voice was on before a reconnect, rejoin so peers re-offer to our new id.
+    if (voice.active) sendWs({ t: 'voice-join' });
   });
   sock.addEventListener('message', evt => {
     let msg; try { msg = JSON.parse(evt.data); } catch (_) { return; }
     if (msg.t === 'welcome') { wsId = msg.id; for (const r of remote.values()) scene.remove(r.group); remote.clear(); for (const p of (msg.players || [])) addRemote(p); }
     else if (msg.t === 'join' && msg.player) addRemote(msg.player);
     else if (msg.t === 'move') { const r = remote.get(msg.id); if (r) { r.tx = msg.x; r.tz = msg.y; } }
-    else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } }
+    else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } closeVoicePeer(msg.id); }
     else if (msg.t === 'chat') { onFloorChat(msg); return; }
     else if (msg.t === 'chatblocked') { floorChatNotice('Message blocked: ' + (msg.reason === 'spam' ? 'looks like spam.' : 'language not allowed.')); return; }
+    else if (msg.t === 'voice-peers') { for (const pid of (msg.ids || [])) createVoicePeer(pid, true); updateVoiceUi(); return; }
+    else if (msg.t === 'voice-join') { updateVoiceUi(); return; }
+    else if (msg.t === 'voice-leave') { closeVoicePeer(msg.id); updateVoiceUi(); return; }
+    else if (msg.t === 'voice-signal') { onVoiceSignal(msg.from, msg.data); return; }
     updateOnlineCount();
   });
   const onClose = () => {
     if (moveTimer) { clearInterval(moveTimer); moveTimer = null; }
     if (ws === sock) ws = null;
+    // The signaling socket died: every peer connection is now stale. Drop them
+    // (but keep the local mic + voice.active so we re-join on reconnect).
+    for (const id of Array.from(voice.peers.keys())) closeVoicePeer(id);
+    updateVoiceUi();
     for (const r of remote.values()) scene.remove(r.group); remote.clear(); updateOnlineCount();
     if (running && !reconnectTimer) reconnectTimer = setTimeout(() => { reconnectTimer = null; if (running) connectPresence(); }, 2500);
   };
@@ -1588,6 +1609,196 @@ function disconnectPresence() {
 }
 function sendWs(o) { if (ws && ws.readyState === 1) { try { ws.send(JSON.stringify(o)); } catch (_) {} } }
 function round1(n) { return Math.round(n * 10) / 10; }
+
+// ----------------------------------------------------- voice chat
+// Live, in-world voice for everyone on the floor. Audio travels peer-to-peer
+// over WebRTC; the FloorRoom socket is only the signaling relay (offer/answer +
+// ICE). Turning the mic on makes you a "voice peer"; the newcomer always sends
+// the offers (the server hands them the existing-peer list) so two sides never
+// offer at once. This is a full mesh — fine for a modest booth's worth of people.
+
+async function voiceStart() {
+  if (voice.active) return;
+  if (typeof RTCPeerConnection === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Voice chat isn’t supported in this browser.'); return;
+  }
+  if (!ws || ws.readyState !== 1) { alert('Still connecting to the floor — try again in a moment.'); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false,
+    });
+  } catch (_) { alert('Microphone access is needed to talk on the floor. Allow the mic and try again.'); return; }
+  voice.active = true; voice.muted = false; voice.stream = stream;
+  ensureAudioCtx();
+  attachMeter(null, stream, true);     // local "you're talking" meter
+  sendWs({ t: 'voice-join' });         // server replies with voice-peers (existing talkers)
+  updateVoiceUi();
+}
+
+function voiceStop() {
+  if (!voice.active && !voice.stream && !voice.peers.size) return;
+  if (ws && ws.readyState === 1) sendWs({ t: 'voice-leave' });
+  for (const id of Array.from(voice.peers.keys())) closeVoicePeer(id);
+  if (voice.localMeter) { voice.localMeter.stop(); voice.localMeter = null; }
+  if (voice.stream) { voice.stream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} }); voice.stream = null; }
+  voice.active = false; voice.muted = false; voice.localSpeaking = false;
+  updateVoiceUi();
+}
+
+function toggleFloorVoice() { if (voice.active) voiceStop(); else voiceStart(); }
+function toggleVoiceMute() {
+  if (!voice.active || !voice.stream) return;
+  voice.muted = !voice.muted;
+  voice.stream.getAudioTracks().forEach(t => { t.enabled = !voice.muted; });
+  if (voice.muted) voice.localSpeaking = false;
+  updateVoiceUi();
+}
+
+async function createVoicePeer(id, initiator) {
+  if (!id || id === wsId) return null;
+  if (voice.peers.has(id)) return voice.peers.get(id);
+  let pc;
+  try { pc = new RTCPeerConnection({ iceServers: VOICE_ICE }); } catch (_) { return null; }
+  const entry = { pc, audioEl: null, speaking: false, meter: null };
+  voice.peers.set(id, entry);
+  if (voice.stream) for (const t of voice.stream.getTracks()) { try { pc.addTrack(t, voice.stream); } catch (_) {} }
+  pc.onicecandidate = (e) => { if (e.candidate) sendWs({ t: 'voice-signal', to: id, data: { candidate: e.candidate } }); };
+  pc.ontrack = (e) => attachRemoteAudio(id, e.streams && e.streams[0]);
+  pc.onconnectionstatechange = () => {
+    const st = pc.connectionState;
+    if (st === 'failed' || st === 'closed') closeVoicePeer(id);
+    updateVoiceUi();
+  };
+  if (initiator) {
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      sendWs({ t: 'voice-signal', to: id, data: { sdp: pc.localDescription } });
+    } catch (_) { closeVoicePeer(id); }
+  }
+  updateVoiceUi();
+  return entry;
+}
+
+async function onVoiceSignal(from, data) {
+  if (!voice.active || !data) return;
+  let entry = voice.peers.get(from);
+  try {
+    if (data.sdp) {
+      if (data.sdp.type === 'offer') {
+        if (!entry) entry = await createVoicePeer(from, false);
+        if (!entry) return;
+        await entry.pc.setRemoteDescription(data.sdp);
+        const answer = await entry.pc.createAnswer();
+        await entry.pc.setLocalDescription(answer);
+        sendWs({ t: 'voice-signal', to: from, data: { sdp: entry.pc.localDescription } });
+      } else if (data.sdp.type === 'answer' && entry) {
+        await entry.pc.setRemoteDescription(data.sdp);
+      }
+    } else if (data.candidate && entry) {
+      try { await entry.pc.addIceCandidate(data.candidate); } catch (_) {}
+    }
+  } catch (_) { /* renegotiation race — ignore, ICE will recover */ }
+}
+
+function attachRemoteAudio(id, stream) {
+  if (!stream) return;
+  const entry = voice.peers.get(id);
+  if (!entry) return;
+  let el = entry.audioEl;
+  if (!el) {
+    el = document.createElement('audio');
+    el.autoplay = true; el.setAttribute('playsinline', ''); el.style.display = 'none';
+    document.body.appendChild(el); entry.audioEl = el;
+  }
+  el.srcObject = stream;
+  const p = el.play && el.play(); if (p && p.catch) p.catch(() => {});
+  if (entry.meter) { entry.meter.stop(); entry.meter = null; }  // avoid stacking on renegotiation
+  attachMeter(entry, stream, false);   // "this collector is talking" meter
+  updateVoiceUi();
+}
+
+function closeVoicePeer(id) {
+  const entry = voice.peers.get(id);
+  if (!entry) return;
+  if (entry.meter) { entry.meter.stop(); entry.meter = null; }
+  try { entry.pc.close(); } catch (_) {}
+  if (entry.audioEl) { try { entry.audioEl.srcObject = null; entry.audioEl.remove(); } catch (_) {} }
+  voice.peers.delete(id);
+}
+
+// --- "who's talking" meters (Web Audio level detection, cheap + per-stream) ---
+function ensureAudioCtx() {
+  if (!voice.audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) voice.audioCtx = new AC();
+  }
+  if (voice.audioCtx && voice.audioCtx.state === 'suspended') voice.audioCtx.resume().catch(() => {});
+  return voice.audioCtx;
+}
+function attachMeter(entry, stream, isLocal) {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  let src, an, raf;
+  try {
+    src = ctx.createMediaStreamSource(stream);
+    an = ctx.createAnalyser(); an.fftSize = 256; an.smoothingTimeConstant = 0.5;
+    src.connect(an);               // analyser only — never to destination (no echo)
+  } catch (_) { return; }
+  const buf = new Uint8Array(an.frequencyBinCount);
+  const tick = () => {
+    an.getByteFrequencyData(buf);
+    let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i];
+    const speaking = (sum / buf.length) > 12;
+    if (isLocal) {
+      const s = speaking && !voice.muted;
+      if (s !== voice.localSpeaking) { voice.localSpeaking = s; scheduleVoiceUi(); }
+    } else if (entry) {
+      if (speaking !== entry.speaking) { entry.speaking = speaking; scheduleVoiceUi(); }
+    }
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+  const meter = { stop: () => { try { cancelAnimationFrame(raf); src.disconnect(); } catch (_) {} } };
+  if (isLocal) voice.localMeter = meter; else entry.meter = meter;
+}
+
+// --- voice UI (HUD button + floating participant panel) ---
+let _voiceUiPending = false;
+function scheduleVoiceUi() {
+  if (_voiceUiPending) return;
+  _voiceUiPending = true;
+  setTimeout(() => { _voiceUiPending = false; updateVoiceUi(); }, 150);
+}
+function voiceRow(label, state) {
+  const dot = state === 'speaking' ? '🟢' : state === 'muted' ? '🔇' : state === 'connecting' ? '⏳' : '⚪';
+  return `<div class="fv-row${state === 'speaking' ? ' speaking' : ''}"><span class="fv-dot">${dot}</span><span class="fv-name">${escHtml(label)}</span></div>`;
+}
+function updateVoiceUi() {
+  const btn = document.getElementById('floor-voice-btn');
+  if (btn) { btn.textContent = voice.active ? '🔴 Leave voice' : '🎙️ Voice'; btn.classList.toggle('active', voice.active); }
+  const panel = document.getElementById('floor-voice-panel');
+  if (panel) panel.classList.toggle('hidden', !voice.active);
+  const muteBtn = document.getElementById('floor-voice-mute');
+  if (muteBtn) { muteBtn.textContent = voice.muted ? '🔇 Unmute' : '🎤 Mute'; muteBtn.classList.toggle('active', voice.muted); }
+  const list = document.getElementById('floor-voice-list');
+  if (list && voice.active) {
+    const me = getCharacter() || {};
+    const rows = [voiceRow(`${me.emoji || '🙂'} ${me.name || 'You'} (you)`, voice.muted ? 'muted' : (voice.localSpeaking ? 'speaking' : ''))];
+    for (const [id, entry] of voice.peers) {
+      const r = remote.get(id);
+      const label = r ? `${r.emoji || '🙂'} ${r.name || 'Collector'}` : '🙂 Collector';
+      const connected = entry.pc && entry.pc.connectionState === 'connected';
+      rows.push(voiceRow(label, entry.speaking ? 'speaking' : (connected ? '' : 'connecting')));
+    }
+    if (voice.peers.size === 0) rows.push('<div class="fv-empty">Waiting for others to join voice…</div>');
+    list.innerHTML = rows.join('');
+  }
+}
+window.toggleFloorVoice = toggleFloorVoice;
+window.toggleVoiceMute = toggleVoiceMute;
+window.leaveFloorVoice = voiceStop;
 
 // ----------------------------------------------------- char create
 function renderCharCreate() {
