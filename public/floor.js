@@ -963,6 +963,32 @@ function addSideWallBanner(group, h, CEIL) {
   banner.rotation.y = Math.PI / 2;       // face into the hall (+x)
   banner.userData.href = HREF;
   group.add(banner);
+
+  // promo sign just below the banner: "Use code TCH for 10% off"
+  const promoW = 6, promoH = 1.5;
+  const promo = new THREE.Mesh(
+    new THREE.PlaneGeometry(promoW, promoH),
+    new THREE.MeshBasicMaterial({ map: makeSignTex('USE CODE TCH FOR 10% OFF'), transparent: true })
+  );
+  promo.position.set(wallX + depth + 0.05, yC - 2.9, cz);  // centred under the banner
+  promo.rotation.y = Math.PI / 2;        // face into the hall (+x)
+  promo.userData.href = HREF;
+  group.add(promo);
+}
+
+// A flat "pill" sign texture (accent background, bold dark text) for a wall
+// promo like a coupon code. Drawn at 4:1 to match the plane it's mapped onto.
+function makeSignTex(line) {
+  const cw = 1024, ch = 256;
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#5ece99';
+  roundRectCtx(c, 10, 48, cw - 20, ch - 96, 80); c.fill();
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillStyle = '#06281b'; c.font = '800 96px system-ui, sans-serif';
+  c.fillText(line, cw / 2, ch / 2 + 4);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso();
+  return t;
 }
 
 // Position a wall-hugging mesh given a wall segment, the distance along it,
