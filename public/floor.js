@@ -985,7 +985,13 @@ function makeSignTex(line) {
   c.fillStyle = '#5ece99';
   roundRectCtx(c, 10, 48, cw - 20, ch - 96, 80); c.fill();
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillStyle = '#06281b'; c.font = '800 96px system-ui, sans-serif';
+  c.fillStyle = '#06281b';
+  // Auto-shrink the font so the text always fits inside the pill (no clipping).
+  let size = 92;
+  const maxW = cw - 150;                 // padding inside the pill
+  c.font = `800 ${size}px system-ui, sans-serif`;
+  const w = c.measureText(line).width;
+  if (w > maxW) { size = Math.floor(size * maxW / w); c.font = `800 ${size}px system-ui, sans-serif`; }
   c.fillText(line, cw / 2, ch / 2 + 4);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso();
   return t;
