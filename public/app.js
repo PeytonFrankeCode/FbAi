@@ -9336,11 +9336,10 @@ function handleIncomingDm(msg) {
   }
 }
 
-// A slide-in notification with a sender + message preview, shown when a DM
-// arrives and you're not already looking at that conversation. Click it to jump
-// straight into the chat. Stacks (newest on top), auto-dismisses after a few s.
-function showDmToast(fromUser, preview) {
-  if (!fromUser) return;
+// A slide-in chat notification with an icon, sender, and message preview. Used
+// for both DMs (someone messaging you) and floor broadcast chat (someone
+// messaging everyone). Click runs onClick. Stacks (newest on top), auto-dismiss.
+function showChatToast({ icon, from, text, onClick }) {
   let host = document.getElementById('dm-toast-host');
   if (!host) {
     host = document.createElement('div');
@@ -9351,14 +9350,22 @@ function showDmToast(fromUser, preview) {
   const toast = document.createElement('button');
   toast.type = 'button';
   toast.className = 'dm-toast';
-  const text = String(preview || '').slice(0, 100);
-  toast.innerHTML = `<span class="dm-toast-icon">💬</span><span class="dm-toast-body"><span class="dm-toast-from">${escHtml(fromUser)}</span><span class="dm-toast-text">${escHtml(text)}</span></span>`;
+  const body = String(text || '').slice(0, 100);
+  toast.innerHTML = `<span class="dm-toast-icon">${escHtml(icon || '💬')}</span><span class="dm-toast-body"><span class="dm-toast-from">${escHtml(from || '')}</span><span class="dm-toast-text">${escHtml(stripBidi(body))}</span></span>`;
   const dismiss = () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 220); };
-  toast.addEventListener('click', () => { dismiss(); if (typeof openDM === 'function') openDM(fromUser); });
+  toast.addEventListener('click', () => { dismiss(); if (typeof onClick === 'function') onClick(); });
   host.insertBefore(toast, host.firstChild);
   while (host.children.length > 3) host.removeChild(host.lastChild);   // keep at most 3
   requestAnimationFrame(() => toast.classList.add('show'));
   setTimeout(dismiss, 6000);
+}
+window.showChatToast = showChatToast;
+
+// DM notification: shown when a direct message arrives and you're not already
+// reading that conversation. Click jumps straight into the chat.
+function showDmToast(fromUser, preview) {
+  if (!fromUser) return;
+  showChatToast({ icon: '💬', from: fromUser, text: preview, onClick: () => { if (typeof openDM === 'function') openDM(fromUser); } });
 }
 
 // Delegated handlers for thread rows and the per-card "Negotiate" button.
