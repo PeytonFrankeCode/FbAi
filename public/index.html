@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=108" />
+  <link rel="stylesheet" href="style.css?v=107" />
 
 
 </head>
@@ -1205,24 +1205,12 @@
         <span class="floor-hud-hint">Look: drag &middot; Move: W/S + A/D &middot; Visit: E or tap a booth</span>
         <button type="button" class="floor-hud-edit" id="floor-freelook" onclick="toggleFreeLook()">Free look</button>
         <button type="button" class="floor-hud-edit" onclick="openChat('floor')">💬 Chat <span class="floor-dm-badge hidden">0</span></button>
-        <button type="button" class="floor-hud-edit" id="floor-voice-btn" onclick="toggleFloorVoice()">🎙️ Voice</button>
         <button type="button" class="floor-hud-edit" onclick="arrangeBooth()">Arrange booth</button>
         <button type="button" class="floor-hud-edit" onclick="editCharacter()">Edit character</button>
       </div>
       <div id="floor-canvas-wrap" class="floor-canvas-wrap">
         <canvas id="floor-canvas" class="floor-canvas" width="960" height="600"></canvas>
         <div id="floor-prompt" class="floor-prompt hidden"></div>
-        <!-- Live voice: who's currently talking on the floor (P2P over WebRTC) -->
-        <div id="floor-voice-panel" class="floor-voice-panel hidden">
-          <div class="fv-head">
-            <span class="fv-title">🎙️ Floor voice</span>
-            <button type="button" class="fv-leave" onclick="leaveFloorVoice()">Leave</button>
-          </div>
-          <div id="floor-voice-list" class="fv-list"></div>
-          <div class="fv-actions">
-            <button type="button" id="floor-voice-mute" class="fv-mute" onclick="toggleVoiceMute()">🎤 Mute</button>
-          </div>
-        </div>
       </div>
 
       <!-- Booth directory: find a collector, open their booth or walk to it -->
@@ -1577,6 +1565,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=38"></script>
+  <script type="module" src="floor.js?v=37"></script>
 </body>
 </html>
