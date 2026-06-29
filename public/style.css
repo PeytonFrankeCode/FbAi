@@ -8920,6 +8920,40 @@ footer {
 }
 .floor-hud-edit:hover { color: var(--text-primary); border-color: var(--accent); }
 
+/* --- floor voice chat --- */
+.floor-voice-panel {
+  position: absolute; top: 0.7rem; right: 0.7rem; width: 220px; z-index: 6;
+  background: rgba(17, 24, 39, 0.92); border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md, 10px); padding: 0.6rem 0.7rem;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35); backdrop-filter: blur(4px);
+  color: var(--text-primary); font-size: 0.82rem;
+}
+.floor-voice-panel.hidden { display: none; }
+.fv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+.fv-title { font-weight: 800; }
+.fv-leave {
+  background: transparent; border: 1px solid var(--border-primary); color: var(--text-secondary);
+  border-radius: var(--radius-sm); padding: 0.15rem 0.5rem; font-size: 0.72rem; cursor: pointer;
+}
+.fv-leave:hover { color: #fca5a5; border-color: #fca5a5; }
+.fv-list { display: flex; flex-direction: column; gap: 0.2rem; max-height: 180px; overflow-y: auto; }
+.fv-row {
+  display: flex; align-items: center; gap: 0.4rem; padding: 0.22rem 0.35rem;
+  border-radius: var(--radius-sm); transition: background 0.15s;
+}
+.fv-row.speaking { background: rgba(94, 206, 153, 0.18); }
+.fv-dot { font-size: 0.7rem; line-height: 1; }
+.fv-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fv-empty { color: var(--text-secondary); font-size: 0.76rem; padding: 0.22rem 0.35rem; }
+.fv-actions { margin-top: 0.5rem; }
+.fv-mute {
+  width: 100%; background: var(--bg-secondary); border: 1px solid var(--border-primary);
+  color: var(--text-primary); border-radius: var(--radius-sm); padding: 0.4rem; font-size: 0.78rem;
+  font-weight: 600; cursor: pointer;
+}
+.fv-mute:hover { border-color: var(--accent); }
+.fv-mute.active { color: #fca5a5; border-color: #fca5a5; background: rgba(252, 165, 165, 0.1); }
+
 /* --- booth layout editor --- */
 .floor-booth-owneracts { margin-bottom: 0.9rem; }
 .floor-arrange-btn {
