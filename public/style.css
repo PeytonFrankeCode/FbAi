@@ -225,20 +225,29 @@
 
 .login-close {
   position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: none;
-  border: none;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 50%;
   color: var(--text-secondary);
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   cursor: pointer;
   line-height: 1;
-  padding: 0.25rem;
-  transition: color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 
 .login-close:hover {
   color: var(--text-primary);
+  border-color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .login-box {
@@ -8713,7 +8722,9 @@ footer {
 }
 .dm-box { max-width: 760px; width: 100%; }
 .chat-box { max-width: 760px; width: 100%; }
-.chat-tabs { display: flex; gap: 0.4rem; margin: -0.3rem 0 0.8rem; }
+/* Reserve room on the right so the tabs never slide under the absolute close
+   button (the right tab's accent border was colliding with the ✕). */
+.chat-tabs { display: flex; gap: 0.4rem; margin: 0 0 0.8rem; padding-right: 2.4rem; }
 .chat-tab {
   flex: 1 1 0; padding: 0.5rem 0.6rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;
   background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: var(--radius-sm);
@@ -8789,7 +8800,10 @@ footer {
    narrow screens instead of squeezing the input down to a tiny box. */
 .dm-form input { flex: 1 1 14rem; min-width: 0; padding: 0.7rem 0.85rem; background: var(--bg-secondary); border: 1.5px solid var(--border-primary); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 1rem; line-height: 1.3; }
 .dm-form input:focus { outline: none; border-color: var(--accent); }
-.dm-form button { flex: 0 0 auto; min-width: 5rem; padding: 0.7rem 1.2rem; background: var(--accent); color: #06281b; border: none; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; }
+/* width:auto overrides the global `.modal-box button[type="submit"]{width:100%}`
+   rule (more specific) that was forcing Send to full width and squeezing the
+   input down to a tiny box. */
+.dm-form button, .dm-form button[type="submit"] { flex: 0 0 auto; width: auto; min-width: 5rem; margin-top: 0; padding: 0.7rem 1.2rem; background: var(--accent); color: #06281b; border: none; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
 .dm-form button:hover { background: var(--accent-hover); }
 @media (max-width: 620px) {
   .dm-layout { height: 70vh; }
@@ -8986,6 +9000,46 @@ footer {
   position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%);
   background: rgba(12,14,20,0.88); color: var(--text-primary); border: 1px solid var(--accent-border);
   padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; pointer-events: none;
+}
+
+/* --- In-canvas floating HUD (identity, action toolbar, controls hint) --- */
+/* These sit on top of the 3D view so the controls live "inside the screen"
+   instead of in a bar above it. The wrap is line-height:0 for the canvas, so
+   every overlay resets its own line-height. */
+.floor-status {
+  position: absolute; top: 0.7rem; left: 0.7rem; z-index: 4; line-height: 1.2;
+  display: flex; align-items: center; gap: 0.5rem; pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+}
+.floor-status .floor-hud-name { font-weight: 800; color: #fff; font-size: 0.9rem; }
+
+.floor-toolbar {
+  position: absolute; top: 0.7rem; right: 0.7rem; z-index: 4; line-height: 1;
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem; max-width: 72%;
+}
+.floor-tbtn {
+  position: relative; display: inline-flex; align-items: center; gap: 0.35rem; line-height: 1;
+  background: rgba(14, 17, 25, 0.62); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+  border: 1px solid rgba(255, 255, 255, 0.14); color: #eaecf2;
+  padding: 0.5rem 0.85rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28); transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+.floor-tbtn:hover { background: rgba(94, 206, 153, 0.24); border-color: var(--accent); color: #fff; }
+.floor-tbtn:active { transform: translateY(1px); }
+.floor-tbtn.active { background: var(--accent); border-color: var(--accent); color: #06281b; }
+
+.floor-hint {
+  position: absolute; left: 0.7rem; bottom: 0.7rem; z-index: 3; line-height: 1.2;
+  background: rgba(14, 17, 25, 0.55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 999px;
+  padding: 0.3rem 0.75rem; font-size: 0.72rem; font-weight: 600; color: rgba(255, 255, 255, 0.82);
+  pointer-events: none; max-width: calc(100% - 1.4rem);
+}
+/* Tighter on phones: smaller pills, hide the verbose hint to save room. */
+@media (max-width: 560px) {
+  .floor-toolbar { gap: 0.3rem; max-width: 64%; }
+  .floor-tbtn { padding: 0.4rem 0.6rem; font-size: 0.72rem; }
+  .floor-hint { display: none; }
 }
 
 /* Touch d-pad — hidden on pointer-capable wide screens, shown on touch */

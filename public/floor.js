@@ -1320,7 +1320,7 @@ function bindPointer(canvas) {
 function setFreeLook(on) {
   camMode = on ? 'free' : 'fp';
   const btn = document.getElementById('floor-freelook');
-  if (btn) { btn.textContent = on ? 'Exit free look' : 'Free look'; btn.classList.toggle('active', on); }
+  if (btn) { btn.textContent = on ? '🔭 Exit free look' : '🔭 Free look'; btn.classList.toggle('active', on); }
   if (on) {
     const b = nearBooth || nearestBooth();
     if (b) free.target.set(b.px, TABLE_H + 0.5, b.pz);
