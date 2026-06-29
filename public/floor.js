@@ -860,6 +860,9 @@ function buildRoom(group, h) {
   // raised 3D Card Huddle logo, centred on the back wall
   addBackWallLogo(group, h, CEIL);
 
+  // BCW Supplies sponsor banner, centred high on the left wall
+  addSideWallBanner(group, h, CEIL);
+
   // wood wainscot paneling with warm under-lighting + greenery on the walls
   decorateWalls(group, h);
 
@@ -924,6 +927,42 @@ function addBackWallLogo(group, h, CEIL) {
   logo.position.set(cx, yC, wallZ - depth - 0.04);
   logo.rotation.y = Math.PI;             // face into the hall (-z)
   group.add(logo);
+}
+
+// BCW Supplies sponsor banner — same raised, lightly-emissive treatment as the
+// back-wall logo, but centred high on the left wall and facing into the hall.
+// Tapping it opens the BCW affiliate link (card storage & protection).
+function addSideWallBanner(group, h, CEIL) {
+  const cz = (h.minZ + h.maxZ) / 2;      // centred along the wall
+  const yC = CEIL * 0.7;                 // matches the logo's height
+  const wallX = h.minX + 0.3;            // interior face of the left wall
+  const depth = 0.35;
+  const HREF = 'https://www.bcwsupplies.com/?acc=cardhuddle';
+
+  const backing = new THREE.Mesh(new THREE.BoxGeometry(1, 1, depth),
+    new THREE.MeshStandardMaterial({ color: 0x10131a, roughness: 0.5, metalness: 0.2 }));
+  backing.position.set(wallX + depth / 2 + 0.02, yC, cz);
+  backing.rotation.y = Math.PI / 2;
+  backing.userData.href = HREF;
+  group.add(backing);
+
+  const loader = new THREE.TextureLoader();
+  const tex = loader.load('/sponsors/bcw-logo.png', t => {
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso(); t.needsUpdate = true;
+    const img = t.image, aspect = (img && img.width && img.height) ? img.width / img.height : 3;
+    const hB = 3.4, wB = hB * aspect;
+    banner.scale.set(wB, hB, 1);
+    backing.scale.set(wB + 0.7, hB + 0.7, 1);
+  }, undefined, () => {});
+  const mat = new THREE.MeshStandardMaterial({
+    map: tex, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: 0.4,
+    transparent: true, alphaTest: 0.06, roughness: 0.55,
+  });
+  const banner = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+  banner.position.set(wallX + depth + 0.04, yC, cz);
+  banner.rotation.y = Math.PI / 2;       // face into the hall (+x)
+  banner.userData.href = HREF;
+  group.add(banner);
 }
 
 // Position a wall-hugging mesh given a wall segment, the distance along it,
@@ -1222,7 +1261,11 @@ function bindPointer(canvas) {
       ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
       ray.setFromCamera(ndc, camera);
       const hits = ray.intersectObjects(worldGroup ? worldGroup.children : [], true);
-      for (const h of hits) { const ud = h.object.userData; if (ud.boothId != null) { const b = booths[ud.boothId]; if (b) { openBooth(b, ud.menu); break; } } }
+      for (const h of hits) {
+        const ud = h.object.userData;
+        if (ud.boothId != null) { const b = booths[ud.boothId]; if (b) { openBooth(b, ud.menu); break; } }
+        if (ud.href) { window.open(ud.href, '_blank', 'noopener'); break; }
+      }
     }
     dragging = false;
   });
