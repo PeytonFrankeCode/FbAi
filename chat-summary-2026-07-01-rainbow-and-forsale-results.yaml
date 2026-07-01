@@ -1,0 +1,116 @@
+session:
+  date: "2026-07-01"
+  branch: claude/improve-for-sale-results-dlk00m
+  repo: peytonfrankecode/fbai
+  topic: >
+    First rework pass on the For Sale / Rainbow results, which the user said were
+    "quite poor." Focused on three self-identified pain points: Rainbow picking
+    bad "cheapest" prices, Rainbow being slow/flaky with many unpriced variants,
+    and poor sorting/layout. All changes are client-side (public/app.js +
+    public/style.css); no server.js or worker.js changes this session.
+  note: >
+    All work on branch claude/improve-for-sale-results-dlk00m and pushed. No PR
+    opened. Deploy only fires on push to MAIN (.github/workflows/deploy.yml), so
+    nothing is live until merged. app.js asset cache version was NOT bumped this
+    session (still whatever it was, ~v146) — bump index.html's app.js?v= and
+    style.css?v= when this goes live or the changes won't ship to cached clients.
+
+commits_this_session:
+  - "Improve Rainbow pricing quality, speed, and For Sale sort persistence (0fbba03)"
+
+user_request_and_scope:
+  asked: >
+    "Improve the for sale results because the rainbow mode and other are quite
+    poor right now." Clarified via AskUserQuestion.
+  answers:
+    biggest_problems: [Poor sorting/layout, Too slow / flaky, Bad prices picked]
+    scope: Bigger rework
+
+how_it_works_today (pre-existing, for context):
+  forsale_search: >
+    /api/search?mode=forsale (server.js:1287) hits eBay Browse API, applies a
+    strict variant filter (filterByVariant, server.js:1673 — every query token
+    must appear in title, with color/set/auto exclusivity), returns eBay's
+    default ("Relevance"/Best Match) order. Frontend has a "Load 40 more" pager
+    (loadMoreForsaleResults, app.js) and sort buttons (Relevance/Price Low/Price
+    High/Most Recent/Grade) that call applySortToResults.
+  rainbow_cost: >
+    calculateRainbowCost (app.js ~8463) builds every parallel of a card
+    (buildVariants), fires one forsale search per variant, re-filters client-side
+    with filterStrictVariant (app.js ~8371), took the single cheapest priced
+    listing per variant, summed them. Breakdown pill click -> showRainbowBreakdown
+    inline panel. Same function is reused by the standalone Rainbow tab
+    (renderRainbowPlayerCards, ~11871) and the in-checklist completion view
+    (~8830).
+
+changes_made:
+  1_bad_prices:
+    files: [public/app.js]
+    what:
+      - Added _RB_JUNK_PATTERNS + _rbLooksJunk() — drops titles that aren't a
+        single genuine card before any price is chosen — reprints, customs,
+        novelty, aceo, proxy, digital, facsimile, lots/bundle/mystery/repack,
+        "you pick"/"u pick"/"pick your card"/choose, case break / break spot /
+        random, and damaged/creased/poor condition/as-is/trimmed.
+      - Added pickRainbowListing(items) — filters junk + price>0, sorts ascending;
+        for pools >=4 it computes the pool MEDIAN and skips anything priced below
+        25% of median (a stray $1 lot / mispriced item can't tank the total),
+        then takes the cheapest believable one. Pools <4 just trust the cheapest
+        clean listing. Returns { listing, pool } | null.
+    note: This junk/outlier logic currently applies to RAINBOW pricing only, not
+      the main For Sale results grid (offered as a follow-up; user hasn't decided).
+  2_slow_flaky:
+    files: [public/app.js]
+    what:
+      - _rbListingCache (module-level Map) keyed by the exact per-variant forsale
+        query. Re-running a rainbow / reopening the tab / same parallel on another
+        card reuses the result. Only SUCCESSFUL fetches are cached (genuine empties
+        included); transient errors are NOT cached so they retry.
+      - Refactored the worker loop into an inner priceVariant(v) helper.
+      - Concurrency 4 -> 6.
+      - 12s per-request timeout via AbortController so one hung fetch can't stall
+        the whole rainbow.
+      - Print-run-relaxed retry — if the strict filter returns 0 for a numbered
+        variant, retry filterStrictVariant(..., {relaxPrintRun true}). Rationale —
+        many sellers omit "/25" from titles, which was the biggest source of "no
+        listing" variants. filterStrictVariant gained an opts arg; relaxed mode
+        treats print run as positive-only BUT still drops titles naming a
+        DIFFERENT explicit print run (so a /25 variant won't grab a /99).
+  3_sorting_layout:
+    files: [public/app.js, public/style.css]
+    what:
+      - Rainbow breakdown (showRainbowBreakdown) now orders cheapest-priced first
+        with unpriced variants grouped at the bottom, labeled "no listing"
+        (previously an em dash "—", in checklist order). Added CSS so the
+        "no listing" label reads muted/uppercase, not like a real price.
+      - For Sale grid sort now survives "Load 40 more" —
+        applySortToResults re-adds the pager (or end-of-listings marker) after
+          a re-sort for forsale — previously sorting WIPED the Load More button,
+          so you couldn't page after sorting.
+        loadMoreForsaleResults, when a non-default sort is active, pushes the
+          new page into currentResults then calls applySortToResults so new items
+          MERGE into sorted order instead of stacking below in eBay's order.
+
+verification:
+  - node --check on public/app.js and server.js — both pass.
+  - Standalone node unit test of the junk regexes + pickRainbowListing outlier
+    math — all cases pass (reprint/lot/pick/break/damaged/custom/digital flagged;
+    PSA 10 and /99 kept; $1 gross outlier skipped for the $48 real low; tiny pool
+    trusts cheapest; all-junk/zero -> null).
+  - Could NOT exercise the live UI or real eBay responses here — needs a deploy /
+    device. Behavior reasoned from reading the code paths.
+
+follow_ups_offered_not_yet_done:
+  - Default the For Sale grid sort to "Price Low" (currently eBay "Relevance").
+    Left as-is to avoid surprising the user; they liked the pass ("looking good")
+    but did not pick this.
+  - Apply the same junk/damaged exclusion (_rbLooksJunk) to the main For Sale
+    results grid, not just Rainbow pricing.
+
+open_threads:
+  - No PR opened; nothing live until this branch merges to main.
+  - Remember to bump app.js?v= / style.css?v= in public/index.html at deploy time
+    or cached clients won't get these changes.
+  - pickRainbowListing's 25%-of-median floor is weaker on very low-value cards
+    (a $2 damaged raw can still pass when median is ~$7); acceptable since those
+    barely move the total, but a candidate to tune with real data.
