@@ -6840,6 +6840,13 @@ tr:hover .cl-alert-btn {
   opacity: 0.55;
   grid-template-columns: 1fr auto;
 }
+.rainbow-breakdown-row.missing .rainbow-breakdown-price {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 .rainbow-breakdown-img {
   width: 56px;
   height: 56px;

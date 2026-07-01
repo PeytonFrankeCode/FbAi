@@ -1215,6 +1215,19 @@ function applySortToResults(sortType) {
     });
   }
   injectPromotedCards(grid);
+
+  // For Sale keeps its "Load more" pager after a re-sort, so paging still works
+  // once the user has changed the order. (Sorting used to wipe the button.)
+  if (currentMode === 'forsale' && _forsalePaging && _forsalePaging.query) {
+    if (_forsalePaging.hasMore) {
+      addForsaleLoadMore(grid);
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'load-more-wrap';
+      wrap.innerHTML = '<span class="cl-listings-end">— end of listings —</span>';
+      grid.appendChild(wrap);
+    }
+  }
 }
 
 // ---- Known sets/parallels for client-side detection ----
@@ -1697,6 +1710,15 @@ async function loadMoreForsaleResults(grid) {
     } else {
       _forsalePaging.offset += items.length;
       _forsalePaging.hasMore = items.length >= 40;
+      currentResults.push(...items);
+      const activeSort = document.querySelector('.sort-btn.active')?.dataset.sort;
+      if (activeSort && activeSort !== 'default') {
+        // A sort is active — re-render the whole set so the new page merges into
+        // the sorted order (and re-adds the pager) instead of stacking below.
+        _forsalePaging.fetching = false;
+        applySortToResults(activeSort);
+        return;
+      }
       const wrap = grid.querySelector('.load-more-wrap');
       let baseIdx = grid.querySelectorAll('.card:not(.promoted-card)').length;
       items.forEach(item => {
@@ -1705,7 +1727,6 @@ async function loadMoreForsaleResults(grid) {
         if (wrap) wrap.before(card); else grid.appendChild(card);
         baseIdx++;
       });
-      currentResults.push(...items);
     }
   } catch (err) {
     const wrap = grid.querySelector('.load-more-wrap');
@@ -8348,7 +8369,8 @@ function _rbEffectsIn(s) {
 // Thorough but precise: handles the Base tier (exclude any parallel/numbering),
 // color exclusivity (a Blue variant never matches a Green listing), multi-color
 // parallels, bounded print runs (/25 != /250), and auto/relic exclusion.
-function filterStrictVariant(items, variantName, printRun) {
+function filterStrictVariant(items, variantName, printRun, opts) {
+  const relaxPrintRun = !!(opts && opts.relaxPrintRun);
   const v = (variantName || '').toLowerCase().trim();
   const isBase = !v || v === 'base';
   const wantsAuto = /\bauto/.test(v);
@@ -8368,8 +8390,19 @@ function filterStrictVariant(items, variantName, printRun) {
     const title = String(item.title || '').toLowerCase();
     const tokens = new Set(title.split(/[^a-z0-9]+/).filter(Boolean));
 
-    // Print run, bounded so /25 never matches /250.
-    if (prRe && !prRe.test(title)) return false;
+    // Print run, bounded so /25 never matches /250. Relaxed mode keeps it as a
+    // positive-only signal — many sellers omit "/25" from the title, so a hard
+    // requirement here is the single biggest source of "no listing" variants.
+    // Even relaxed, a title that names a DIFFERENT print run is a different
+    // numbered parallel and stays excluded.
+    if (prRe) {
+      if (!relaxPrintRun) {
+        if (!prRe.test(title)) return false;
+      } else {
+        const other = title.match(/\/\s*(\d{1,4})(?![0-9])/);
+        if (other && other[1] !== String(printRun)) return false;
+      }
+    }
 
     if (isBase) {
       // Base = no parallel wording, no color, no serial numbering.
@@ -8398,12 +8431,55 @@ function filterStrictVariant(items, variantName, printRun) {
   });
 }
 
+// Titles that mean the listing isn't a single genuine copy of the card — lots,
+// reprints, customs, digital art, "pick your card" break spots, or damaged
+// goods. A cheapest-price search is exactly where these sneak in and wreck the
+// total, so we drop them before choosing a price.
+const _RB_JUNK_PATTERNS = [
+  /\breprints?\b/, /\bre-?print/, /\bcustom\b/, /\bnovelty\b/, /\baceo\b/,
+  /\bproxy\b/, /\bdigital\b/, /\bfacsimile\b/,
+  /\blots?\b/, /\bbundle\b/, /\bmystery\b/, /\brepack/,
+  /\byou\s*pick\b/, /\bu\s*pick\b/, /\bpick\s*(your|a|one|from|the)\b/, /\bchoose\b/,
+  /\bcase\s*break\b/, /\bbreak\s*spot\b/, /\brandom\b/,
+  /\bdamaged\b/, /\bcreased?\b/, /\bpoor\s*condition\b/, /\bas[-\s]*is\b/, /\btrimmed\b/,
+];
+function _rbLooksJunk(title) {
+  const t = String(title || '').toLowerCase();
+  return _RB_JUNK_PATTERNS.some(re => re.test(t));
+}
+
+// Choose the cheapest *believable* listing from a variant's matches. Items are
+// already filtered to the right parallel; here we drop obvious junk and guard
+// against anomalously-cheap outliers (a stray lot or damaged copy) by ignoring
+// anything priced far below the pool's middle before taking the lowest that
+// remains. Returns { listing, pool } or null when nothing usable is left.
+function pickRainbowListing(items) {
+  const priced = (items || [])
+    .filter(r => parseFloat(r.price) > 0 && !_rbLooksJunk(r.title))
+    .sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+  if (priced.length === 0) return null;
+  // Too few to reason about outliers — trust the cheapest clean listing.
+  if (priced.length < 4) return { listing: priced[0], pool: priced.length };
+  // Skip listings priced below 25% of the pool median (near-certainly a lot,
+  // damaged copy, or misprice), then take the cheapest believable one.
+  const median = parseFloat(priced[Math.floor(priced.length / 2)].price);
+  const floor = median * 0.25;
+  const believable = priced.find(r => parseFloat(r.price) >= floor) || priced[0];
+  return { listing: believable, pool: priced.length };
+}
+
 // Rainbow cost — for the card's row, compute cheapest For Sale price for
 // each variant, sum them, and render the result in place of the button.
 // cardKey looks like 's<si>_c<ci>' so we can read both indices off it.
 // Per-rainbow-result store, keyed by an id we put on the result span.
 // Lets the user click the green pill to see all the cheapest listings used.
 const _rainbowBreakdowns = {};
+
+// Session cache of priced variants, keyed by the exact For Sale query. Re-running
+// a rainbow, re-opening the tab, or pricing the same parallel on another card
+// reuses the result instead of re-hitting eBay. Only successful fetches are
+// cached, so a transient network error retries next time.
+const _rbListingCache = new Map();
 
 async function calculateRainbowCost(btn, productKey, cardKey, player, year, brand, setName, category, cardNum, ci) {
   if (!completionData) { btn.textContent = 'Rainbow: data missing'; return; }
@@ -8424,31 +8500,48 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
   let priced = 0;
   let unknown = 0;
 
-  const CONCURRENCY = 4;
+  // Price a single variant: cache-first, then a For Sale fetch (with a timeout
+  // so one hung request can't stall the whole rainbow), strict parallel filter,
+  // a print-run-relaxed retry when strict finds nothing, and a junk/outlier-
+  // aware cheapest pick. Returns { listing, pool } | null.
+  async function priceVariant(v) {
+    const baseQuery = buildChecklistQuery(player, year, brand, setName, category, v.printRun || '');
+    const q = `${baseQuery} ${v.name}`.trim();
+    if (_rbListingCache.has(q)) return _rbListingCache.get(q);
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      // Pull a wider pool (50) so the cheapest true match isn't missed when
+      // eBay returns lots of near-matches ahead of the right parallel.
+      const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '50' })}`, { signal: ctrl.signal });
+      const data = await safeJson(res);
+      const raw = data.results || [];
+      let matched = filterStrictVariant(raw, v.name, v.printRun || '');
+      if (matched.length === 0 && v.printRun) {
+        matched = filterStrictVariant(raw, v.name, v.printRun || '', { relaxPrintRun: true });
+      }
+      const picked = pickRainbowListing(matched);
+      _rbListingCache.set(q, picked); // cache success (incl. genuine empties)
+      return picked;
+    } catch (_) {
+      return null; // transient failure — don't cache, let it retry later
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  const CONCURRENCY = 6;
   let idx = 0;
   let done = 0;
   async function worker() {
     while (idx < variants.length) {
       const myIdx = idx++;
       const v = variants[myIdx];
-      const baseQuery = buildChecklistQuery(player, year, brand, setName, category, v.printRun || '');
-      const q = `${baseQuery} ${v.name}`.trim();
-      try {
-        // Pull a wider pool (50) so the cheapest true match isn't missed when
-        // eBay returns lots of near-matches ahead of the right parallel.
-        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '50' })}`);
-        const data = await safeJson(res);
-        const filtered = filterStrictVariant(data.results || [], v.name, v.printRun || '');
-        const sorted = filtered.filter(r => parseFloat(r.price) > 0).sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-        if (sorted.length > 0) {
-          const cheapest = sorted[0];
-          perVariant[myIdx] = { variant: v, listing: cheapest };
-          priced++;
-        } else {
-          perVariant[myIdx] = { variant: v, listing: null };
-          unknown++;
-        }
-      } catch (_) {
+      const picked = await priceVariant(v);
+      if (picked && picked.listing) {
+        perVariant[myIdx] = { variant: v, listing: picked.listing, pool: picked.pool };
+        priced++;
+      } else {
         perVariant[myIdx] = { variant: v, listing: null };
         unknown++;
       }
@@ -8496,14 +8589,21 @@ function showRainbowBreakdown(btn) {
 
   btn.classList.add('rainbow-cost-active');
 
-  const rows = data.perVariant.map(entry => {
-    if (!entry) return '';
+  // Cheapest priced variants first; variants with no listing sink to the bottom
+  // so the panel reads as a shopping list rather than checklist order.
+  const entries = data.perVariant.filter(Boolean);
+  const withPrice = entries.filter(e => e.listing)
+    .sort((a, b) => parseFloat(a.listing.price) - parseFloat(b.listing.price));
+  const missing = entries.filter(e => !e.listing);
+  const ordered = [...withPrice, ...missing];
+
+  const rows = ordered.map(entry => {
     const v = entry.variant;
     const pr = v.printRun ? ' /' + escHtml(v.printRun) : '';
     if (!entry.listing) {
       return `<div class="rainbow-breakdown-row missing">
         <span class="rainbow-breakdown-name">${escHtml(v.name)}${pr}</span>
-        <span class="rainbow-breakdown-price">—</span>
+        <span class="rainbow-breakdown-price">no listing</span>
       </div>`;
     }
     const item = entry.listing;
