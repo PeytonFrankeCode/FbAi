@@ -254,13 +254,36 @@ function cardMaterial(card, shared, slot) {
 // A closed aluminum briefcase display case: brushed-metal tray, dark felt
 // liner, a tight grid of slabs laid flat, a clear glass lid, side rails,
 // a carry handle and latches on the front edge. Modeled on a real case.
+// A box with softly rounded edges/corners. Projects a segmented box's shell
+// onto a rounded-box surface: faces stay flat, only the hard edges get eased,
+// so tables/cases read less blocky. Returns a Mesh when a material is given,
+// otherwise the geometry. Self-contained — no addon dependency.
+function roundedBox(w, h, d, r, mat, seg) {
+  seg = seg || 3;
+  r = Math.max(0.001, Math.min(r, w / 2, h / 2, d / 2));
+  const geo = new THREE.BoxGeometry(w, h, d, seg, seg, seg);
+  const pos = geo.attributes.position, v = new THREE.Vector3();
+  const hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const cx = Math.max(-hx, Math.min(hx, v.x));
+    const cy = Math.max(-hy, Math.min(hy, v.y));
+    const cz = Math.max(-hz, Math.min(hz, v.z));
+    const dx = v.x - cx, dy = v.y - cy, dz = v.z - cz;
+    const len = Math.hypot(dx, dy, dz) || 1;
+    pos.setXYZ(i, cx + dx / len * r, cy + dy / len * r, cz + dz / len * r);
+  }
+  geo.computeVertexNormals();
+  return mat ? new THREE.Mesh(geo, mat) : geo;
+}
+
 function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, cardOffset, cols, rows) {
   const g = new THREE.Group();
   g.position.set(ox, 0, oz);
   const CASE_H = 0.16;
   cols = cols || 6; rows = rows || 3;
 
-  const tray = new THREE.Mesh(new THREE.BoxGeometry(w, CASE_H, d), shared.alu);
+  const tray = roundedBox(w, CASE_H, d, 0.035, shared.alu);
   tray.position.y = y0 + CASE_H / 2; tray.castShadow = true; tray.receiveShadow = true;
   tray.userData.boothId = boothIdx; g.add(tray);
 
@@ -287,7 +310,7 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
   for (const z of [-d / 2, d / 2]) { const m = new THREE.Mesh(railFB, shared.alu); m.position.set(0, y0 + CASE_H + 0.07, z); m.userData.boothId = boothIdx; g.add(m); }
   for (const x of [-w / 2, w / 2]) { const m = new THREE.Mesh(railLR, shared.alu); m.position.set(x, y0 + CASE_H + 0.07, 0); m.userData.boothId = boothIdx; g.add(m); }
 
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(w - 0.03, 0.03, d - 0.03), shared.glass);
+  const glass = roundedBox(w - 0.03, 0.03, d - 0.03, 0.012, shared.glass);
   glass.position.y = y0 + CASE_H + 0.13; glass.userData.boothId = boothIdx; g.add(glass);
 
   const handle = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 16, Math.PI), shared.alu);
@@ -302,15 +325,13 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
 
 // ----------------------------------------------------- table / booth
 function buildBoothTable(grp, b, shared) {
-  const cloth = new THREE.Mesh(
-    new THREE.BoxGeometry(TABLE_W, TABLE_H, TABLE_D),
-    new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.95 })
-  );
+  const cloth = roundedBox(TABLE_W, TABLE_H, TABLE_D, 0.08,
+    new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.95 }));
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true;
   cloth.userData.boothId = b._idx;
   grp.add(cloth);
   // thin tabletop trim
-  const top = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W + 0.05, 0.06, TABLE_D + 0.05),
+  const top = roundedBox(TABLE_W + 0.05, 0.06, TABLE_D + 0.05, 0.028,
     new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }));
   top.position.y = TABLE_H; top.userData.boothId = b._idx; grp.add(top);
 
@@ -372,7 +393,7 @@ function buildShowcaseFixture(grp, x, y0, boothId, shared, cards, ci) {
 // back panel holding a single card upright and facing the buyer (-z).
 function buildAcrylicStand(grp, sx, sz, y0, boothId, shared, cards, ciRef) {
   const baseH = 0.06, panelH = 0.66, W = 0.36;
-  const base = new THREE.Mesh(new THREE.BoxGeometry(W, baseH, 0.2), shared.blackAcrylic);
+  const base = roundedBox(W, baseH, 0.2, 0.02, shared.blackAcrylic);
   base.position.set(sx, y0 + baseH / 2, sz); base.castShadow = true; base.receiveShadow = true;
   base.userData.boothId = boothId; grp.add(base);
   const panel = new THREE.Mesh(new THREE.BoxGeometry(W, panelH, 0.03), shared.clearAcrylic);
@@ -410,7 +431,7 @@ function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
   // box floor + four low walls (reads as an open-top row box)
   const fl = new THREE.Mesh(new THREE.BoxGeometry(W, 0.03, D), shared.cardboardDark);
   fl.position.set(x, y0 + 0.015, 0); fl.receiveShadow = true; tag2(fl); grp.add(fl);
-  const longWall = new THREE.BoxGeometry(W + t, H, t), shortWall = new THREE.BoxGeometry(t, H, D);
+  const longWall = roundedBox(W + t, H, t, 0.015, null, 1), shortWall = roundedBox(t, H, D, 0.015, null, 1);
   for (const dz of [-D / 2, D / 2]) { const m = new THREE.Mesh(longWall, shared.cardboard); m.position.set(x, y0 + H / 2, dz); m.castShadow = true; tag2(m); grp.add(m); }
   for (const dx of [-W / 2, W / 2]) { const m = new THREE.Mesh(shortWall, shared.cardboard); m.position.set(x + dx, y0 + H / 2, 0); m.castShadow = true; tag2(m); grp.add(m); }
   // packed rows of cards standing up the length of the box (real photos where
@@ -1124,7 +1145,7 @@ function addWoodSegment(group, s, WH, off, panelT, mats) {
 
 // A vacant ("available") table — just the white-clothed table, cheap.
 function buildVacantTable(grp) {
-  const cloth = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W, TABLE_H, TABLE_D),
+  const cloth = roundedBox(TABLE_W, TABLE_H, TABLE_D, 0.08,
     new THREE.MeshStandardMaterial({ color: 0xe7e9ee, roughness: 0.95 }));
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true; grp.add(cloth);
 }
