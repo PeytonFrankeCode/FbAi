@@ -1,0 +1,140 @@
+session:
+  date: "2026-07-01"
+  branch: claude/voice-chat-floor-option-29l09r
+  repo: peytonfrankecode/fbai
+  topic: >
+    Added floor-wide voice chat to The Floor (WebRTC mesh signaled over the
+    existing FloorRoom Durable Object), then removed it again at the user's
+    request pending a "2 separate servers" decision. Followed by chat-composer
+    and HUD polish: widened the collapsed chat input, fixed the close-button
+    overlapping the chat tabs, and moved the floor action buttons off the top
+    bar into a floating in-canvas toolbar.
+  note: >
+    All work on branch claude/voice-chat-floor-option-29l09r and pushed. No PR
+    opened this session. Deploy still only fires on push to MAIN
+    (.github/workflows/deploy.yml), so none of this is live until merged.
+    Asset cache versions ended at style.css?v=109 / floor.js?v=38
+    (app.js untouched, still v146).
+
+commits_this_session:
+  - "Add voice chat as a separate option on The Floor (498945a)"
+  - "Revert \"Add voice chat as a separate option on The Floor\" (c2cf951)"
+  - "Widen the floor/DM chat input so typed text is visible (39157fa)"
+  - "Fix chat close-button overlap; move floor HUD controls into the canvas (5af8dd0)"
+
+voice_chat_added_then_removed:
+  status: REMOVED (reverted). Full implementation preserved in git history.
+  intent: >
+    User asked to add voice chat "as a separate option in the floor" (alongside
+    the existing text Floor-broadcast chat + Direct DMs). Built it, then user
+    said "it needs to be on 2 separate servers"; when asked to clarify the
+    topology they answered "actually lets go ahead and remove voice chat from
+    the website temp." Cleanly reverted the whole feature commit (easy to bring
+    back later by reverting the revert).
+  how_it_was_built:
+    architecture: >
+      WebRTC audio mesh, peer-to-peer. The existing FloorRoom Durable Object
+      WebSocket was reused purely as the SIGNALING relay (SDP offer/answer +
+      ICE) — audio never touched the worker. No new DO migration needed
+      (FloorRoom v1 already deployed).
+    worker_js:
+      - Added voice-join / voice-leave / voice-signal message types to
+        FloorRoom. On voice-join the server hands the NEWCOMER the list of
+        existing voice peers so the newcomer always sends the offers
+        (deterministic caller = no glare). voice-signal is an opaque
+        pass-through to one target session. Disconnect broadcasts voice-leave.
+      - session gained a `voice: false` flag.
+    floor_js:
+      - getUserMedia mic, one RTCPeerConnection per peer, STUN-only ICE
+        (Google + Twilio), hidden autoplay <audio> elements for remotes.
+      - Toggle from a HUD "🎙️ Voice" button; mute/leave from a floating
+        participant panel; Web Audio analyser meters drove "who's talking"
+        dots. Survived a presence-socket reconnect (re-join → peers re-offer);
+        torn down on leaving the floor (stop()).
+    ui:
+      - HUD "🎙️ Voice" button + #floor-voice-panel participant list with
+        mute/leave; ~110 lines of CSS.
+  open_decision_for_next_time:
+    - The unresolved "2 separate servers" question. Most likely real need for
+      two people on different networks to reliably hear each other is a TURN
+      server (the STUN-only build fails on strict/corporate/symmetric NAT).
+      Other interpretations offered but not chosen: voice on its own
+      Worker/service; separate room/DO per booth; or it was just a
+      two-machine test need.
+
+chat_composer_fixes:
+  widened_input:
+    files: [public/style.css, public/index.html]
+    problem: >
+      The floor/DM chat input had collapsed to a tiny box while the green
+      "Send" button ate the whole row (IMG_2017).
+    root_cause: >
+      NOT caching. The global rule `.modal-box button[type="submit"]
+      {width:100%}` (specificity 0,2,1) outranks `.dm-form button` (0,1,1), so
+      Send was forced to 100% width with flex-shrink:0, squeezing the
+      flex-shrink:1 input down to nothing.
+    fix:
+      - First pass (39157fa): made .dm-form input dominate the row
+        (flex:1 1 14rem, taller padding, 1rem font) and let .dm-form wrap Send
+        below on very narrow screens. Helped but did not address the real cause.
+      - Real fix (5af8dd0): scoped `.dm-form button, .dm-form button[type=
+        "submit"] { width:auto; min-width:5rem; margin-top:0 }` to override the
+        global 100%-width rule. Input now fills, Send is a fixed pill.
+  close_button_overlap:
+    files: [public/style.css]
+    problem: >
+      The modal close ✕ overlapped the right chat TAB (IMG_2018). The green
+      "rounded input" in the screenshot was actually the active chat tab —
+      .chat-tab.active has a green accent border.
+    root_cause: >
+      .chat-tabs had margin-top:-0.3rem pulling the full-width flex tabs UP into
+      the row occupied by the absolute .login-close (top/right 0.75rem), and the
+      right tab stretched to the modal's right edge under the ✕.
+    fix:
+      - .chat-tabs: removed the negative top margin (now `margin:0 0 0.8rem`) and
+        added `padding-right:2.4rem` so tabs clear the button.
+      - Restyled .login-close globally into a clean 2rem circular button
+        (bg + border + z-index:5, hover accent) so it reads as a button and
+        sits above content in every modal.
+
+floor_hud_moved_into_canvas:
+  files: [public/index.html, public/style.css, public/floor.js]
+  request: >
+    Move the Chat / Arrange booth / Free look / Edit character buttons "inside
+    the screen" and make them look nicer.
+  changes:
+    - Deleted the old `.floor-hud` bar that sat ABOVE the canvas. The four
+      action buttons now live in a floating glass toolbar overlaid on the 3D
+      view (top-right): new .floor-toolbar + frosted pill .floor-tbtn buttons
+      (backdrop-blur, hover/active states). Buttons: 🔭 Free look, 💬 Chat
+      (keeps the .floor-dm-badge unread span), 🛠️ Arrange booth, 🧍 Edit
+      character.
+    - Identity + presence moved to a top-left overlay (.floor-status wrapping
+      #floor-hud-name + the #floor-online pill), text-shadowed for legibility.
+    - Controls hint moved to a subtle bottom-left pill (.floor-hint), hidden on
+      phones (<=560px, where toolbar pills also shrink).
+    - IDs preserved so JS still works: floor-hud-name (enterFloor),
+      floor-online (updateOnlineCount), floor-freelook (setFreeLook).
+    - floor.js setFreeLook now sets textContent to "🔭 Free look" /
+      "🔭 Exit free look" so the icon survives the relabel (it overwrites
+      textContent, which would otherwise drop a nested icon span).
+  leftover: >
+    Old unused .floor-hud / .floor-hud-edit / .floor-hud-hint CSS rules were
+    left in place (harmless) to minimize churn; .floor-hud-name and
+    .floor-online base rules are still used/overridden.
+
+verification: >
+  No automated suite. floor.js validated each change with
+  `npx esbuild --bundle public/floor.js --format=esm --external:three`;
+  worker.js parsed with `npx esbuild worker.js --format=esm`. WebGL render,
+  WebRTC/DO delivery, and the live layout can't be exercised here — need a real
+  deploy / device. Fixes were reasoned from two user iPad screenshots
+  (IMG_2017 squished input, IMG_2018 ✕ overlapping the active tab).
+
+open_threads:
+  - No PR opened; nothing is live until this branch merges to main.
+  - Voice chat is removed but recoverable (revert the revert) once the "2
+    separate servers" / TURN question is decided.
+  - HUD toolbar placement + pill sizing were eyeballed, not seen against the
+    real 3D scene — quick to nudge (e.g. bottom bar vs top-right) once viewed
+    live. Same for the circular close button and widened composer.
