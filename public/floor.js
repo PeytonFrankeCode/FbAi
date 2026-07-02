@@ -325,14 +325,16 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
 
 // ----------------------------------------------------- table / booth
 function buildBoothTable(grp, b, shared) {
+  // black draped tablecloth (matte fabric); a slightly lighter top edge gives
+  // the fold some definition against the dark drape
   const cloth = roundedBox(TABLE_W, TABLE_H, TABLE_D, 0.08,
-    new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.95 }));
+    new THREE.MeshStandardMaterial({ color: 0x121318, roughness: 0.97 }));
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true;
   cloth.userData.boothId = b._idx;
   grp.add(cloth);
   // thin tabletop trim
   const top = roundedBox(TABLE_W + 0.05, 0.06, TABLE_D + 0.05, 0.028,
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }));
+    new THREE.MeshStandardMaterial({ color: 0x1c1e26, roughness: 0.94 }));
   top.position.y = TABLE_H; top.userData.boothId = b._idx; grp.add(top);
 
   const y0 = TABLE_H + 0.03;
@@ -1145,8 +1147,9 @@ function addWoodSegment(group, s, WH, off, panelT, mats) {
 
 // A vacant ("available") table — just the white-clothed table, cheap.
 function buildVacantTable(grp) {
+  // empty booths get the same black cloth, a touch darker so they read as vacant
   const cloth = roundedBox(TABLE_W, TABLE_H, TABLE_D, 0.08,
-    new THREE.MeshStandardMaterial({ color: 0xe7e9ee, roughness: 0.95 }));
+    new THREE.MeshStandardMaterial({ color: 0x0e0f13, roughness: 0.97 }));
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true; grp.add(cloth);
 }
 
