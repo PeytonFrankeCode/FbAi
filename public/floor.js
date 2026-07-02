@@ -785,24 +785,26 @@ function shadowTex() {
 
 // Procedural polished-concrete texture (used until/unless a real texture file
 // is dropped in). Mottled gray with subtle speckle and saw-cut joint lines.
-// Speckled convention-hall carpet: a flat expo-blue base scattered with tiny
-// lighter/darker fiber flecks and faint broad mottling so big floors don't band.
+// Speckled convention-hall carpet: a light silver-blue base scattered with
+// tiny lighter/darker fiber flecks and faint broad mottling so big floors
+// don't band. Kept bright so the hall doesn't go cave-dark and the black
+// tables read against it.
 function makeCarpetTex() {
   const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
   const c = cv.getContext('2d');
-  c.fillStyle = '#2d3f63'; c.fillRect(0, 0, s, s);
+  c.fillStyle = '#aab3c4'; c.fillRect(0, 0, s, s);
   for (let i = 0; i < 9000; i++) {                       // fiber flecks
     const x = Math.random() * s, y = Math.random() * s, r = 0.5 + Math.random() * 1.1;
     const lite = Math.random() < 0.5;
-    const v = lite ? 70 + Math.random() * 40 : 22 + Math.random() * 18;
-    c.fillStyle = `rgba(${v | 0},${(v * 1.18) | 0},${(v * 1.75) | 0},${0.12 + Math.random() * 0.2})`;
+    const v = lite ? 205 + Math.random() * 40 : 105 + Math.random() * 35;
+    c.fillStyle = `rgba(${v | 0},${(v + 5) | 0},${(v + 14) | 0},${0.12 + Math.random() * 0.2})`;
     c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   }
   for (let i = 0; i < 46; i++) {                         // broad wear mottling
     const x = Math.random() * s, y = Math.random() * s, r = 30 + Math.random() * 80;
     const g = c.createRadialGradient(x, y, 0, x, y, r);
     const d = Math.random() < 0.5;
-    g.addColorStop(0, d ? 'rgba(16,24,44,0.08)' : 'rgba(90,110,160,0.06)');
+    g.addColorStop(0, d ? 'rgba(75,85,110,0.07)' : 'rgba(238,242,250,0.08)');
     g.addColorStop(1, 'rgba(0,0,0,0)');
     c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   }
