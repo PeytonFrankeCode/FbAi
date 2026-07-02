@@ -4056,9 +4056,12 @@ async function fetchFloorSellerCards(seller) {
       timeout: 8000,
     });
     const items = (r.data && r.data.itemSummaries) || [];
+    // image: ONLY the listing's primary (first) photo — `image` is eBay's
+    // primary listing image; thumbnailImages are resized copies of that same
+    // photo. additionalImages (the rest of the gallery) are never used.
     const cards = items.map(item => Object.assign(sanitizeBoothCard({
       title: item.title,
-      imageUrl: (item.thumbnailImages && item.thumbnailImages[0] && item.thumbnailImages[0].imageUrl) || (item.image && item.image.imageUrl) || '',
+      imageUrl: (item.image && item.image.imageUrl) || (item.thumbnailImages && item.thumbnailImages[0] && item.thumbnailImages[0].imageUrl) || '',
       price: item.price && item.price.value,
       status: 'sale',
       ebayUrl: item.itemWebUrl || '',
@@ -4072,6 +4075,14 @@ async function fetchFloorSellerCards(seller) {
     cachePut(cacheKey, { cards: [] }, 300);
     return [];
   }
+}
+
+// Hidden-card keys from the booth editor (listing URL for eBay-synced cards,
+// title|image for manual ones). Bounded so the KV blob stays small.
+function sanitizeHiddenCards(arr) {
+  if (!Array.isArray(arr) || !arr.length) return undefined;
+  const out = arr.filter(v => typeof v === 'string' && v).map(v => v.slice(0, 700)).slice(0, 100);
+  return out.length ? out : undefined;
 }
 
 // The booth's fixture layout: an ordered list of placement spots, each one of
@@ -4106,6 +4117,10 @@ function updateGlobalFloorIndex(username, data) {
     color: String(character.color || '#5ece99').slice(0, 16),
     veriswap: String(settings.veriswap || '').slice(0, 120),
     ebaySeller: ebaySellerFromStore(settings.ebayStore) || undefined,
+    // hide-from-table card keys chosen in the booth editor. Kept on the public
+    // booth (not filtered server-side) so the owner's editor can list hidden
+    // cards for re-enabling; visitors' clients filter them out at render.
+    hidden: sanitizeHiddenCards(data && data.cardHuddleBoothHidden),
     cards: showcase.slice(0, FLOOR_MAX_CARDS).map(sanitizeBoothCard).filter(c => c.title),
     layout: layout || undefined,
     updatedAt: new Date().toISOString(),
