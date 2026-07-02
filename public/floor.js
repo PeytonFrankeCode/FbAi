@@ -1,7 +1,7 @@
 /* =====================================================================
    The Floor — a walkable, first-person 3D card-show world (Three.js).
 
-   Create a collector, then walk a show floor of white-clothed tables.
+   Create a collector, then walk a show floor of black-draped tables.
    Each table is a booth: two glass display cases, three card boxes, and a
    loose lay-down area. Walk up and open a booth to buy (eBay) or trade
    (Veriswap) — The Card Huddle is never part of the transaction.
@@ -770,19 +770,6 @@ function computeHall() {
   };
 }
 
-// Soft radial glow texture for faked light reflections on the concrete.
-let _glowTex = null;
-function glowTex() {
-  if (_glowTex) return _glowTex;
-  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
-  const c = cv.getContext('2d');
-  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
-  g.addColorStop(0, 'rgba(255,250,235,1)'); g.addColorStop(1, 'rgba(255,250,235,0)');
-  c.fillStyle = g; c.fillRect(0, 0, 64, 64);
-  _glowTex = new THREE.CanvasTexture(cv);
-  return _glowTex;
-}
-
 // Soft dark radial texture for grounding contact-shadows under tables.
 let _shadowTex = null;
 function shadowTex() {
@@ -798,92 +785,77 @@ function shadowTex() {
 
 // Procedural polished-concrete texture (used until/unless a real texture file
 // is dropped in). Mottled gray with subtle speckle and saw-cut joint lines.
-function makeConcreteTex() {
+// Speckled convention-hall carpet: a flat expo-blue base scattered with tiny
+// lighter/darker fiber flecks and faint broad mottling so big floors don't band.
+function makeCarpetTex() {
   const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
   const c = cv.getContext('2d');
-  c.fillStyle = '#a9aaad'; c.fillRect(0, 0, s, s);
-  for (let i = 0; i < 2600; i++) {
-    const x = Math.random() * s, y = Math.random() * s, r = Math.random() * 2.6 + 0.4;
-    const v = 150 + (Math.random() * 90) | 0;
-    c.fillStyle = `rgba(${v},${v},${v + 3},${Math.random() * 0.05})`;
+  c.fillStyle = '#2d3f63'; c.fillRect(0, 0, s, s);
+  for (let i = 0; i < 9000; i++) {                       // fiber flecks
+    const x = Math.random() * s, y = Math.random() * s, r = 0.5 + Math.random() * 1.1;
+    const lite = Math.random() < 0.5;
+    const v = lite ? 70 + Math.random() * 40 : 22 + Math.random() * 18;
+    c.fillStyle = `rgba(${v | 0},${(v * 1.18) | 0},${(v * 1.75) | 0},${0.12 + Math.random() * 0.2})`;
     c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   }
-  for (let i = 0; i < 70; i++) {
-    const x = Math.random() * s, y = Math.random() * s, r = 24 + Math.random() * 70;
+  for (let i = 0; i < 46; i++) {                         // broad wear mottling
+    const x = Math.random() * s, y = Math.random() * s, r = 30 + Math.random() * 80;
     const g = c.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, 'rgba(120,122,128,0.05)'); g.addColorStop(1, 'rgba(120,122,128,0)');
+    const d = Math.random() < 0.5;
+    g.addColorStop(0, d ? 'rgba(16,24,44,0.08)' : 'rgba(90,110,160,0.06)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
     c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   }
-  c.strokeStyle = 'rgba(70,72,78,0.45)'; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(0, 1); c.lineTo(s, 1); c.moveTo(1, 0); c.lineTo(1, s); c.stroke();
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
 }
 
-// Warm wood-plank texture for the wall wainscot: vertical planks with grain
-// streaks and dark joint lines. One shared image, cloned per wall so each can
-// set its own horizontal repeat.
-let _woodTex = null;
-function makeWoodTex() {
-  if (_woodTex) return _woodTex;
-  const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
+// Pleated fabric for the pipe-and-drape walls: soft vertical folds (offset
+// sine waves so pleats read hand-hung, not machine-perfect) on show-black cloth.
+let _drapeTex = null;
+function makeDrapeTex() {
+  if (_drapeTex) return _drapeTex;
+  const w = 512, hgt = 256, cv = document.createElement('canvas'); cv.width = w; cv.height = hgt;
   const c = cv.getContext('2d');
-  const planks = 8, pw = s / planks;
-  for (let i = 0; i < planks; i++) {
-    const base = 78 + Math.random() * 26;
-    c.fillStyle = `rgb(${(base + 34) | 0},${base | 0},${Math.max(0, base - 28) | 0})`;
-    c.fillRect(i * pw, 0, pw, s);
-    for (let g = 0; g < 36; g++) {
-      c.strokeStyle = `rgba(45,28,14,${Math.random() * 0.16})`; c.lineWidth = 1 + Math.random() * 1.4;
-      const gx = i * pw + Math.random() * pw;
-      c.beginPath(); c.moveTo(gx, 0);
-      c.bezierCurveTo(gx + (Math.random() * 8 - 4), s * 0.34, gx + (Math.random() * 8 - 4), s * 0.68, gx, s);
-      c.stroke();
-    }
-    c.fillStyle = 'rgba(18,11,5,0.55)'; c.fillRect(i * pw + pw - 2, 0, 2, s);  // joint shadow
+  for (let x = 0; x < w; x++) {
+    // two overlapping fold frequencies + a little noise = natural pleats
+    const p = Math.sin(x * 0.10) * 0.6 + Math.sin(x * 0.033 + 1.7) * 0.4;
+    const v = 26 + p * 11 + Math.random() * 2.5;
+    c.fillStyle = `rgb(${v | 0},${(v + 1) | 0},${(v + 4) | 0})`;
+    c.fillRect(x, 0, 1, hgt);
   }
+  // slight darkening toward the hem so the cloth reads grounded
+  const g = c.createLinearGradient(0, 0, 0, hgt);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
+  c.fillStyle = g; c.fillRect(0, 0, w, hgt);
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
-  _woodTex = t; return t;
+  _drapeTex = t; return t;
 }
 
-// Vertical gradient (warm, bright at the base) used to fake the under-light
-// washing up the wood paneling.
-let _upGlowTex = null;
-function upGlowTex() {
-  if (_upGlowTex) return _upGlowTex;
-  const cv = document.createElement('canvas'); cv.width = 8; cv.height = 64;
-  const c = cv.getContext('2d');
-  const g = c.createLinearGradient(0, 64, 0, 0);   // bottom -> top
-  g.addColorStop(0, 'rgba(255,206,138,0.85)'); g.addColorStop(0.35, 'rgba(255,196,128,0.28)'); g.addColorStop(1, 'rgba(255,196,128,0)');
-  c.fillStyle = g; c.fillRect(0, 0, 8, 64);
-  _upGlowTex = new THREE.CanvasTexture(cv); return _upGlowTex;
-}
-
-// Floor material. Shows the procedural concrete immediately, then upgrades to
-// real PBR maps if present. Drop tileable files in /public/textures/ named
-// concrete-color.jpg / concrete-normal.jpg / concrete-rough.jpg (or set
-// window.FLOOR_CONCRETE = { color, normal, rough, repeat } with URLs).
+// Floor material — convention-hall carpet (dead matte: carpet doesn't reflect,
+// which is half of what killed the "hotel lobby" look). Shows the procedural
+// speckled carpet immediately, then upgrades to real PBR maps if present. Drop
+// tileable files in /public/textures/ named carpet-color.jpg / carpet-normal.jpg
+// / carpet-rough.jpg (or set window.FLOOR_CARPET = { color, normal, rough, repeat }).
 function makeFloorMaterial(h) {
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   const sizeX = h.maxX - h.minX + 8, sizeZ = h.maxZ - h.minZ + 8;
-  const repX = Math.max(2, Math.round(sizeX / 6)), repZ = Math.max(2, Math.round(sizeZ / 6));
-  // mid-dark grey tint so the concrete reads as a real polished slab, not washed
-  // out by the bright hall lighting/reflections (multiplies the texture tone)
-  const mat = new THREE.MeshStandardMaterial({ color: 0x6f7276, roughness: 0.32, metalness: 0.0, envMapIntensity: 0.65 });
+  const repX = Math.max(3, Math.round(sizeX / 4)), repZ = Math.max(3, Math.round(sizeZ / 4));
+  const mat = new THREE.MeshStandardMaterial({ roughness: 1.0, metalness: 0.0, envMapIntensity: 0.12 });
 
-  const proc = makeConcreteTex();
+  const proc = makeCarpetTex();
   proc.repeat.set(repX, repZ); proc.anisotropy = maxAniso; proc.colorSpace = THREE.SRGBColorSpace;
   mat.map = proc;
 
-  const cfg = window.FLOOR_CONCRETE || {};
+  const cfg = window.FLOOR_CARPET || {};
   if (cfg !== false) {
     const loader = new THREE.TextureLoader();
     const rx = cfg.repeat || repX, rz = cfg.repeat || repZ;
     // mirror-tile dropped-in textures so repeats don't show a visible seam grid
     const setup = (t, srgb) => { t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rx, rz); t.anisotropy = maxAniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; };
-    loader.load(cfg.color || '/textures/concrete-color.jpg', t => { setup(t, true); mat.map = t; mat.needsUpdate = true; }, undefined, () => {});
-    loader.load(cfg.normal || '/textures/concrete-normal.jpg', t => { setup(t, false); mat.normalMap = t; mat.needsUpdate = true; }, undefined, () => {});
-    loader.load(cfg.rough || '/textures/concrete-rough.jpg', t => { setup(t, false); mat.roughnessMap = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.color || '/textures/carpet-color.jpg', t => { setup(t, true); mat.map = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.normal || '/textures/carpet-normal.jpg', t => { setup(t, false); mat.normalMap = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.rough || '/textures/carpet-rough.jpg', t => { setup(t, false); mat.roughnessMap = t; mat.needsUpdate = true; }, undefined, () => {});
   }
   return mat;
 }
@@ -905,16 +877,16 @@ function makeWallMaterial() {
   return mat;
 }
 
-// Build the convention hall: polished concrete floor, tall light-gray walls
-// (front entrance gap), dark industrial ceiling with trusses, and a grid of
-// bright ceiling light fixtures — with faint light pools on the floor so the
-// concrete reads as polished and reflective like a real expo hall.
+// Build the convention hall: speckled show carpet, tall light-gray walls
+// (front entrance gap) dressed with pipe-and-drape, dark industrial ceiling
+// with trusses, and a grid of cool fluorescent ceiling fixtures — flat, even
+// trade-show light rather than warm hotel accent lighting.
 function buildRoom(group, h) {
   const cx = (h.minX + h.maxX) / 2, cz = (h.minZ + h.maxZ) / 2;
   const w = h.maxX - h.minX + 8, d = h.maxZ - h.minZ + 8;
   const CEIL = 15;
 
-  // polished concrete floor (procedural now; upgrades to a dropped-in texture)
+  // convention carpet (procedural now; upgrades to a dropped-in texture)
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), makeFloorMaterial(h));
   floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); floor.receiveShadow = true; group.add(floor);
 
@@ -933,7 +905,7 @@ function buildRoom(group, h) {
   // BCW Supplies sponsor banner, centred high on the left wall
   addSideWallBanner(group, h, CEIL);
 
-  // wood wainscot paneling with warm under-lighting + greenery on the walls
+  // pipe-and-drape along every solid wall
   decorateWalls(group, h);
 
   // dark industrial ceiling + a few truss beams
@@ -946,22 +918,21 @@ function buildRoom(group, h) {
     beam.position.set(cx, CEIL - 0.4, bz); group.add(beam);
   }
 
-  // ceiling light fixtures (emissive) + faint floor reflections under each
+  // ceiling light fixtures (emissive) — cool fluorescent strips; no floor
+  // glow pools since carpet doesn't reflect like polished concrete did
   const fixGeo = new THREE.PlaneGeometry(2.4, 0.55);
-  const fixMat = new THREE.MeshBasicMaterial({ color: 0xfff4dc });
-  const glowGeo = new THREE.PlaneGeometry(3.4, 3.4);
-  const glowMat = new THREE.MeshBasicMaterial({ map: glowTex(), transparent: true, opacity: 0.035, blending: THREE.AdditiveBlending, depthWrite: false });
+  const fixMat = new THREE.MeshBasicMaterial({ color: 0xf2f6fb });
   const stepX = 8, stepZ = 7;
   for (let gx = h.minX + 5; gx <= h.maxX - 5; gx += stepX) {
     for (let gz = h.minZ + 5; gz <= h.maxZ - 5; gz += stepZ) {
       const fix = new THREE.Mesh(fixGeo, fixMat); fix.rotation.x = Math.PI / 2; fix.position.set(gx, CEIL - 0.25, gz); group.add(fix);
-      const glow = new THREE.Mesh(glowGeo, glowMat); glow.rotation.x = -Math.PI / 2; glow.position.set(gx, 0.04, gz); group.add(glow);
     }
   }
 
-  // a couple of soft fill lights so the hall isn't flat (no shadows — cheap)
+  // a couple of soft fill lights so the hall isn't flat (no shadows — cheap);
+  // near-white so the hall reads fluorescent, not warm hotel ambience
   for (const px of [h.minX + ww * 0.3, h.maxX - ww * 0.3]) {
-    const pl = new THREE.PointLight(0xfff4e0, 0.5, 80, 1.6);
+    const pl = new THREE.PointLight(0xf2f5fa, 0.5, 80, 1.6);
     pl.position.set(px, CEIL - 2, cz); group.add(pl);
   }
 }
@@ -1073,75 +1044,50 @@ function setWallPos(mesh, s, alongPos, y, depth) {
   if (s.axis === 'x') mesh.position.set(alongPos, y, s.fixed + s.inward * depth);
   else mesh.position.set(s.fixed + s.inward * depth, y, alongPos);
 }
-// A low-poly foliage cluster (a few faceted green blobs) for greenery.
-function addBush(group, x, y, z, scale, mat) {
-  for (let i = 0; i < 4; i++) {
-    const r = (0.26 + Math.random() * 0.2) * scale;
-    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), mat);
-    blob.position.set(x + (Math.random() - 0.5) * 0.5 * scale, y + (Math.random() - 0.2) * 0.5 * scale, z + (Math.random() - 0.5) * 0.4 * scale);
-    blob.castShadow = true; group.add(blob);
-  }
-}
-
-// Decorate every solid wall with wood wainscot paneling, a warm under-light
-// strip + up-glow, and greenery (floor planters and wall-mounted foliage).
+// Dress every solid wall with pipe-and-drape — the fabric backdrop wall every
+// real card show rents: pleated black drape hung from an aluminum top pipe on
+// slim uprights. (Replaces the old hotel-style wood wainscot + planters.)
 function decorateWalls(group, h) {
   const mats = {
-    baseWood: makeWoodTex(),
-    rail: new THREE.MeshStandardMaterial({ color: 0x3a2616, roughness: 0.6 }),
-    glow: new THREE.MeshBasicMaterial({ map: upGlowTex(), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
-    strip: new THREE.MeshBasicMaterial({ color: 0xffce8a }),
-    green: new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.85, flatShading: true }),
-    greenDk: new THREE.MeshStandardMaterial({ color: 0x2f6630, roughness: 0.85, flatShading: true }),
-    pot: new THREE.MeshStandardMaterial({ color: 0x1b1b20, roughness: 0.8 }),
+    drape: new THREE.MeshStandardMaterial({ map: makeDrapeTex(), roughness: 0.98 }),
+    pipe: new THREE.MeshStandardMaterial({ color: 0xc2c6cc, metalness: 0.85, roughness: 0.38 }),
   };
-  const WH = 7.0, off = 0.34, panelT = 0.12;
   const segs = [
     { axis: 'x', fixed: h.maxZ, from: h.minX, to: h.maxX, inward: -1 },          // back wall
     { axis: 'z', fixed: h.minX, from: h.minZ, to: h.maxZ, inward: +1 },          // left wall
     { axis: 'z', fixed: h.maxX, from: h.minZ, to: h.maxZ, inward: -1 },          // right wall
     { axis: 'x', fixed: h.minZ, from: h.minX, to: h.maxX, inward: +1 },          // front wall (entrance filled in)
   ];
-  for (const s of segs) addWoodSegment(group, s, WH, off, panelT, mats);
+  for (const s of segs) addDrapeSegment(group, s, mats);
 }
 
-function addWoodSegment(group, s, WH, off, panelT, mats) {
+// One wall's worth of pipe-and-drape. Height is scaled to the world's oversized
+// avatars (~3.7m tall) the way an 8ft drape reads against a real person.
+function addDrapeSegment(group, s, mats) {
+  const DRAPE_H = 5.0, off = 0.3;
   const len = Math.abs(s.to - s.from), center = (s.from + s.to) / 2;
-  // wood wainscot panel (own cloned texture so the repeat suits the length)
-  const wtex = mats.baseWood.clone(); wtex.needsUpdate = true;
-  wtex.wrapS = wtex.wrapT = THREE.RepeatWrapping; wtex.repeat.set(Math.max(1, Math.round(len / 3)), 1);
-  wtex.colorSpace = THREE.SRGBColorSpace; wtex.anisotropy = aniso();
-  const woodMat = new THREE.MeshStandardMaterial({ map: wtex, roughness: 0.72, metalness: 0.04 });
-  const woodGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, WH, panelT) : new THREE.BoxGeometry(panelT, WH, len);
-  const panel = new THREE.Mesh(woodGeo, woodMat); panel.receiveShadow = true;
-  setWallPos(panel, s, center, WH / 2, off); group.add(panel);
 
-  // dark wood top rail
-  const railGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.18, panelT + 0.06) : new THREE.BoxGeometry(panelT + 0.06, 0.18, len);
-  const rail = new THREE.Mesh(railGeo, mats.rail); setWallPos(rail, s, center, WH, off); group.add(rail);
+  // pleated cloth (own cloned texture so the pleat repeat suits the length)
+  const tex = mats.drape.map.clone(); tex.needsUpdate = true;
+  tex.repeat.set(Math.max(2, Math.round(len / 2.4)), 1); tex.anisotropy = aniso();
+  const cloth = mats.drape.clone(); cloth.map = tex;
+  const geo = s.axis === 'x' ? new THREE.BoxGeometry(len, DRAPE_H, 0.09) : new THREE.BoxGeometry(0.09, DRAPE_H, len);
+  const drape = new THREE.Mesh(geo, cloth); drape.receiveShadow = true;
+  setWallPos(drape, s, center, DRAPE_H / 2, off); group.add(drape);
 
-  // warm under-light reveal along the TOP of the wood, plus an up-glow that
-  // washes the painted wall above it (this is the glowing line in the photo)
-  const stripGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.1, 0.09) : new THREE.BoxGeometry(0.09, 0.1, len);
-  const strip = new THREE.Mesh(stripGeo, mats.strip); setWallPos(strip, s, center, WH - 0.2, off + 0.08); group.add(strip);
-  const glowH = 3.4, gy = WH + glowH / 2 - 0.25;
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(len, glowH), mats.glow);
-  if (s.axis === 'x') { glow.position.set(center, gy, s.fixed + s.inward * (off + 0.09)); glow.rotation.y = s.inward > 0 ? 0 : Math.PI; }
-  else { glow.position.set(s.fixed + s.inward * (off + 0.09), gy, center); glow.rotation.y = s.inward > 0 ? Math.PI / 2 : -Math.PI / 2; }
-  group.add(glow);
+  // aluminum top pipe the cloth hangs from
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, len, 10), mats.pipe);
+  if (s.axis === 'x') pipe.rotation.z = Math.PI / 2; else pipe.rotation.x = Math.PI / 2;
+  setWallPos(pipe, s, center, DRAPE_H + 0.06, off); group.add(pipe);
 
-  // greenery spaced along the wall: a floor planter with a bush, plus a
-  // wall-mounted foliage cluster kept low on the paneling
-  const spots = Math.max(2, Math.round(len / 12));
-  for (let i = 0; i < spots; i++) {
-    const ap = s.from + ((i + 0.5) / spots) * (s.to - s.from);
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.5, 12), mats.pot);
-    setWallPos(pot, s, ap, 0.25, 0.7); pot.castShadow = true; group.add(pot);
-    addBush(group, pot.position.x, 0.62, pot.position.z, 1.05, i % 2 ? mats.green : mats.greenDk);
-    // wall greenery, mounted low on the wood
-    const wx = s.axis === 'x' ? ap : s.fixed + s.inward * (off + 0.18);
-    const wz = s.axis === 'x' ? s.fixed + s.inward * (off + 0.18) : ap;
-    addBush(group, wx, 1.7, wz, 0.85, i % 2 ? mats.greenDk : mats.green);
+  // slim uprights every ~7m, feet included, standing just in front of the cloth
+  const posts = Math.max(2, Math.round(len / 7));
+  for (let i = 0; i <= posts; i++) {
+    const ap = s.from + (i / posts) * (s.to - s.from);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, DRAPE_H + 0.06, 8), mats.pipe);
+    setWallPos(post, s, ap, (DRAPE_H + 0.06) / 2, off + 0.1); group.add(post);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.05, 10), mats.pipe);
+    setWallPos(foot, s, ap, 0.025, off + 0.1); group.add(foot);
   }
 }
 
