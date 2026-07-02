@@ -4020,6 +4020,60 @@ function sanitizeBoothCard(c) {
   };
 }
 
+// Pull the eBay seller username out of the "eBay store / seller URL" the user
+// already enters in Sell settings: ebay.com/usr/<name> URLs and bare
+// usernames/@handles work; store URLs (/str/) don't map to a username, so
+// they're skipped rather than guessed.
+function ebaySellerFromStore(v) {
+  v = String(v || '').trim();
+  if (!v) return '';
+  const m = v.match(/ebay\.[a-z.]+\/usr\/([^/?#]+)/i);
+  let name = m ? m[1] : ((!v.includes('/') && !v.includes('.')) ? v.replace(/^@/, '') : '');
+  try { name = decodeURIComponent(name); } catch (_) {}
+  return name.replace(/[^\w.\-*]/g, '').slice(0, 64);
+}
+
+// A linked seller's active card listings, mapped to booth-card shape and
+// KV-cached so The Floor costs ~2 Browse calls per seller per hour, no matter
+// how many visitors walk it. Public data via the app OAuth token — the vendor
+// never has to link their eBay account, just name it.
+const FLOOR_SELLER_TTL = 1800;    // 30 min
+async function fetchFloorSellerCards(seller) {
+  const cacheKey = `floorSeller:v1:${seller.toLowerCase()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached && Array.isArray(cached.cards)) return cached.cards;
+  try {
+    trackApiCall('browse', 'browse/seller', seller, 'floor');
+    const token = await getOAuthToken();
+    const r = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+      params: {
+        category_ids: '261328',              // same card category the For Sale search uses
+        filter: `sellers:{${seller}}`,
+        sort: 'newlyListed',
+        limit: FLOOR_MAX_CARDS,
+      },
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+      timeout: 8000,
+    });
+    const items = (r.data && r.data.itemSummaries) || [];
+    const cards = items.map(item => Object.assign(sanitizeBoothCard({
+      title: item.title,
+      imageUrl: (item.thumbnailImages && item.thumbnailImages[0] && item.thumbnailImages[0].imageUrl) || (item.image && item.image.imageUrl) || '',
+      price: item.price && item.price.value,
+      status: 'sale',
+      ebayUrl: item.itemWebUrl || '',
+    }), { source: 'ebay' })).filter(c => c.title);
+    cachePut(cacheKey, { cards }, FLOOR_SELLER_TTL);
+    return cards;
+  } catch (err) {
+    console.error(`[Floor] eBay seller fetch failed for "${seller}":`, err && err.message);
+    // negative-cache briefly so a broken seller name / eBay outage doesn't
+    // cost a Browse call on every single /api/floor/booths request
+    cachePut(cacheKey, { cards: [] }, 300);
+    return [];
+  }
+}
+
 // The booth's fixture layout: an ordered list of placement spots, each one of
 // a small allowed set. Bounded length so the KV blob stays small.
 const FLOOR_LAYOUT_SLOTS = 5;
@@ -4051,6 +4105,7 @@ function updateGlobalFloorIndex(username, data) {
     emoji: String(character.emoji || '🙂').slice(0, 8),
     color: String(character.color || '#5ece99').slice(0, 16),
     veriswap: String(settings.veriswap || '').slice(0, 120),
+    ebaySeller: ebaySellerFromStore(settings.ebayStore) || undefined,
     cards: showcase.slice(0, FLOOR_MAX_CARDS).map(sanitizeBoothCard).filter(c => c.title),
     layout: layout || undefined,
     updatedAt: new Date().toISOString(),
@@ -4060,12 +4115,23 @@ function updateGlobalFloorIndex(username, data) {
 
 // GET /api/floor/booths — public list of every collector's booth (newest
 // activity first). No auth required; this is the shared show floor.
-app.get('/api/floor/booths', (req, res) => {
-  const index = loadGlobalFloorIndex();
+// Booths with a linked eBay seller get their active card listings merged in
+// after the hand-picked showcase cards (KV-cached; failures just mean the
+// booth shows its manual cards).
+app.get('/api/floor/booths', async (req, res) => {
+  const index = loadGlobalFloorIndex();     // deep copy — safe to mutate
   const booths = Object.values(index)
     .filter(b => b && b.name)
     .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')))
     .slice(0, FLOOR_MAX_BOOTHS);
+  await Promise.all(booths.filter(b => b.ebaySeller).map(async (b) => {
+    const listed = await fetchFloorSellerCards(b.ebaySeller);
+    if (!listed.length) return;
+    const manual = Array.isArray(b.cards) ? b.cards : [];
+    // manual cards keep priority; skip listings the vendor already showcased
+    const have = new Set(manual.map(c => (c.ebayUrl || '').split('?')[0]).filter(Boolean));
+    b.cards = manual.concat(listed.filter(c => !have.has((c.ebayUrl || '').split('?')[0]))).slice(0, FLOOR_MAX_CARDS);
+  }));
   res.json({ booths });
 });
 

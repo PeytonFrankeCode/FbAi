@@ -658,7 +658,12 @@ function buildWorld(remoteBooths) {
   const myBooth = list.find(b => b.isYou);
   if (myBooth) {
     myBooth.owner = me.name || myBooth.owner; myBooth.emoji = me.emoji || myBooth.emoji;
-    myBooth.color = me.color || myBooth.color; myBooth.veriswap = settings.veriswap || myBooth.veriswap; myBooth.cards = localCards;
+    myBooth.color = me.color || myBooth.color; myBooth.veriswap = settings.veriswap || myBooth.veriswap;
+    // local showcase is the freshest copy of hand-picked cards, but keep the
+    // server-merged eBay listings (source:'ebay') so a linked seller sees
+    // their own booth the way visitors do
+    const ebayCards = (myBooth.cards || []).filter(c => c && c.source === 'ebay');
+    myBooth.cards = localCards.concat(ebayCards).slice(0, 24);
   } else {
     list.push({ owner: me.name || 'You', username: mine, emoji: me.emoji, color: me.color, veriswap: settings.veriswap || '', cards: localCards, isYou: true });
   }
