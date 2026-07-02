@@ -277,6 +277,24 @@ function roundedBox(w, h, d, r, mat, seg) {
   return mat ? new THREE.Mesh(geo, mat) : geo;
 }
 
+// Diagonal light-streak texture overlaid on showcase glass — a fixed specular
+// "glint" so the pane reads as glass even where env reflections don't line up.
+let _glassStreakTex = null;
+function makeGlassStreakTex() {
+  if (_glassStreakTex) return _glassStreakTex;
+  const s = 256, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, s, s, 0);
+  g.addColorStop(0.30, 'rgba(255,255,255,0)');
+  g.addColorStop(0.42, 'rgba(255,255,255,0.55)');
+  g.addColorStop(0.50, 'rgba(255,255,255,0)');
+  g.addColorStop(0.58, 'rgba(255,255,255,0.30)');
+  g.addColorStop(0.66, 'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0, 0, s, s);
+  _glassStreakTex = new THREE.CanvasTexture(cv);
+  return _glassStreakTex;
+}
+
 function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, cardOffset, cols, rows) {
   const g = new THREE.Group();
   g.position.set(ox, 0, oz);
@@ -305,13 +323,32 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
     g.add(card);
   }
 
-  const railFB = new THREE.BoxGeometry(w, 0.13, 0.05);
-  const railLR = new THREE.BoxGeometry(0.05, 0.13, d);
-  for (const z of [-d / 2, d / 2]) { const m = new THREE.Mesh(railFB, shared.alu); m.position.set(0, y0 + CASE_H + 0.07, z); m.userData.boothId = boothIdx; g.add(m); }
-  for (const x of [-w / 2, w / 2]) { const m = new THREE.Mesh(railLR, shared.alu); m.position.set(x, y0 + CASE_H + 0.07, 0); m.userData.boothId = boothIdx; g.add(m); }
+  // glass enclosure: four side panes + a top pane between aluminum corner
+  // posts, capped by a slim top frame — so the case visibly reads as a glass
+  // box from standing height instead of an open tray
+  const GH = 0.2, gy = y0 + CASE_H + GH / 2, paneT = 0.02;
+  const sideFB = new THREE.BoxGeometry(w - 0.06, GH, paneT);
+  const sideLR = new THREE.BoxGeometry(paneT, GH, d - 0.06);
+  for (const z of [-d / 2 + 0.03, d / 2 - 0.03]) { const p = new THREE.Mesh(sideFB, shared.glass); p.position.set(0, gy, z); p.userData.boothId = boothIdx; g.add(p); }
+  for (const x of [-w / 2 + 0.03, w / 2 - 0.03]) { const p = new THREE.Mesh(sideLR, shared.glass); p.position.set(x, gy, 0); p.userData.boothId = boothIdx; g.add(p); }
+  const glass = roundedBox(w - 0.03, paneT, d - 0.03, 0.008, shared.glass);
+  glass.position.y = y0 + CASE_H + GH; glass.userData.boothId = boothIdx; g.add(glass);
 
-  const glass = roundedBox(w - 0.03, 0.03, d - 0.03, 0.012, shared.glass);
-  glass.position.y = y0 + CASE_H + 0.13; glass.userData.boothId = boothIdx; g.add(glass);
+  // fixed diagonal glint on the top pane
+  const streak = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.08, d - 0.08), shared.glassStreak);
+  streak.rotation.x = -Math.PI / 2;
+  streak.position.y = y0 + CASE_H + GH + paneT / 2 + 0.004;
+  streak.userData.boothId = boothIdx; g.add(streak);
+
+  // aluminum corner posts + slim top frame
+  const postGeo = new THREE.BoxGeometry(0.05, GH, 0.05);
+  for (const px of [-w / 2 + 0.03, w / 2 - 0.03]) for (const pz of [-d / 2 + 0.03, d / 2 - 0.03]) {
+    const post = new THREE.Mesh(postGeo, shared.alu); post.position.set(px, gy, pz); post.userData.boothId = boothIdx; g.add(post);
+  }
+  const railFB = new THREE.BoxGeometry(w, 0.05, 0.06);
+  const railLR = new THREE.BoxGeometry(0.06, 0.05, d);
+  for (const z of [-d / 2, d / 2]) { const m = new THREE.Mesh(railFB, shared.alu); m.position.set(0, y0 + CASE_H + GH + 0.02, z); m.userData.boothId = boothIdx; g.add(m); }
+  for (const x of [-w / 2, w / 2]) { const m = new THREE.Mesh(railLR, shared.alu); m.position.set(x, y0 + CASE_H + GH + 0.02, 0); m.userData.boothId = boothIdx; g.add(m); }
 
   const handle = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 16, Math.PI), shared.alu);
   handle.position.set(0, y0 + CASE_H, -d / 2 - 0.02); g.add(handle);
@@ -436,22 +473,25 @@ function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
   const longWall = roundedBox(W + t, H, t, 0.015, null, 1), shortWall = roundedBox(t, H, D, 0.015, null, 1);
   for (const dz of [-D / 2, D / 2]) { const m = new THREE.Mesh(longWall, shared.cardboard); m.position.set(x, y0 + H / 2, dz); m.castShadow = true; tag2(m); grp.add(m); }
   for (const dx of [-W / 2, W / 2]) { const m = new THREE.Mesh(shortWall, shared.cardboard); m.position.set(x + dx, y0 + H / 2, 0); m.castShadow = true; tag2(m); grp.add(m); }
-  // packed rows of cards standing up the length of the box (real photos where
-  // the booth has value cards, generic filler beyond that so the box reads full)
-  const n = 30, z0 = -D / 2 + 0.08, span = D - 0.16;
+  // packed rows of full-size cards riffled front-to-back: leaned back a touch
+  // and poking well above the rim so the box clearly reads FULL from standing
+  // height (real photos where the booth has value cards, generic filler beyond
+  // that). They used to stand fully below the walls — invisible from any angle.
+  const n = 26, z0 = -D / 2 + 0.12, span = D - 0.3;
   for (let i = 0; i < n; i++) {
     const entry = cards[i % Math.max(1, cards.length)];
-    const card = new THREE.Mesh(shared.standGeo, cards.length ? cardMaterial(entry, shared, i) : shared.cardMats[i % shared.cardMats.length]);
-    card.position.set(x, y0 + 0.18, z0 + (i / (n - 1)) * span);
-    card.rotation.y = Math.PI;          // face the buyer (-z) so photos aren't shown reversed
+    const card = new THREE.Mesh(shared.standCardGeo, cards.length ? cardMaterial(entry, shared, i) : shared.cardMats[i % shared.cardMats.length]);
+    card.position.set(x + (Math.random() - 0.5) * 0.05, y0 + 0.24, z0 + (i / (n - 1)) * span);
+    card.rotation.y = Math.PI;                              // face the buyer (-z)
+    card.rotation.x = 0.26 + (Math.random() - 0.5) * 0.07;  // hand-riffled lean-back
     tag2(card); grp.add(card);
   }
-  // a few coloured divider tabs poking up above the cards
-  const tabGeo = new THREE.PlaneGeometry(0.26, 0.12);
+  // a few coloured divider tabs poking up above the cards, leaning with them
+  const tabGeo = new THREE.PlaneGeometry(0.3, 0.14);
   const tabCols = [0x4caf50, 0xf4d03f, 0xe74c3c];
   [0.18, 0.5, 0.82].forEach((f, k) => {
     const tab = new THREE.Mesh(tabGeo, new THREE.MeshStandardMaterial({ color: tabCols[k % tabCols.length], roughness: 0.85, side: THREE.DoubleSide }));
-    tab.position.set(x, y0 + 0.40, z0 + f * span); tag2(tab); grp.add(tab);
+    tab.position.set(x, y0 + 0.52, z0 + f * span); tab.rotation.x = 0.26; tag2(tab); grp.add(tab);
   });
   // hand-lettered "$1 BOX" price tab on the front wall
   const tag = makeLabelSprite('💲 $1 BOX', '');
@@ -659,7 +699,9 @@ function buildWorld(remoteBooths) {
     // environment map for realistic reflections)
     alu: new THREE.MeshStandardMaterial({ color: 0xd7dade, metalness: 0.9, roughness: 0.34 }),
     aluDark: new THREE.MeshStandardMaterial({ color: 0x111319, metalness: 0.25, roughness: 0.85 }),
-    glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.16 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.24, envMapIntensity: 1.6 }),
+    // additive diagonal glint laid over showcase glass tops
+    glassStreak: new THREE.MeshBasicMaterial({ map: makeGlassStreakTex(), transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }),
     // glossy black acrylic base + near-clear acrylic for the upright card stands
     blackAcrylic: new THREE.MeshStandardMaterial({ color: 0x0a0a0c, metalness: 0.3, roughness: 0.12 }),
     clearAcrylic: new THREE.MeshStandardMaterial({ color: 0xeef4ff, metalness: 0.0, roughness: 0.03, transparent: true, opacity: 0.14 }),
