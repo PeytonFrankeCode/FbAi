@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=109" />
+  <link rel="stylesheet" href="style.css?v=110" />
 
 
 </head>
@@ -1243,11 +1243,13 @@
       <div class="modal-box" style="max-width:600px">
         <button class="login-close" onclick="closeBoothEditor()">&times;</button>
         <h2>Arrange your booth</h2>
-        <p class="ccm-help">Pick a fixture, then tap a spot on your table to place it. Your listed cards fill the showcases and stands automatically.</p>
+        <p class="ccm-help">Pick a fixture, then tap a spot on your table to place it. Then choose which of your cards are on display &mdash; they fill the showcases and stands in order.</p>
         <div class="floor-editor-section-label">Fixtures</div>
         <div id="floor-editor-palette" class="floor-editor-palette"></div>
         <div class="floor-editor-section-label">Your table <span class="floor-editor-front">front&nbsp;&darr;&nbsp;(buyers stand here)</span></div>
         <div id="floor-editor-table" class="floor-editor-table"></div>
+        <div class="floor-editor-section-label">Cards on display <span class="floor-editor-front">tap a card to show / hide it</span></div>
+        <div id="floor-editor-cards" class="floor-editor-cards"></div>
         <div class="floor-editor-actions">
           <button type="button" class="floor-editor-clear" onclick="boothEditorClear()">Clear table</button>
           <button type="button" class="floor-editor-save" onclick="saveBoothEditor()">Save layout</button>
@@ -1561,7 +1563,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=146"></script>
+  <script src="app.js?v=147"></script>
   <script type="importmap">
   {
     "imports": {
@@ -1570,6 +1572,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=46"></script>
+  <script type="module" src="floor.js?v=47"></script>
 </body>
 </html>

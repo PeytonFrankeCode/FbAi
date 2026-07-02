@@ -84,6 +84,37 @@ function saveBoothLayout(arr) {
   localStorage.setItem(LAYOUT_KEY, JSON.stringify(arr));
   if (typeof schedulePushUserData === 'function') schedulePushUserData();
 }
+// Which of your cards are hidden from the 3D table (chosen in the booth
+// editor). Stored as a list of stable card keys: the listing URL for
+// eBay-synced cards, title|image for hand-added showcase cards. Hiding only
+// affects the table display — the Sell tab still manages the cards themselves.
+const HIDDEN_KEY = 'cardHuddleBoothHidden';
+function boothCardKey(c) {
+  const url = ((c && c.ebayUrl) || '').split('?')[0];
+  return url || (((c && c.title) || '') + '|' + ((c && c.imageUrl) || ''));
+}
+function getHiddenCards() {
+  try { const a = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]'); return new Set(Array.isArray(a) ? a : []); }
+  catch { return new Set(); }
+}
+function saveHiddenCards(set) {
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify([...set].slice(0, 100)));
+  if (typeof schedulePushUserData === 'function') schedulePushUserData();
+}
+function filterHiddenCards(cards, hiddenArr) {
+  if (!Array.isArray(cards) || !cards.length) return [];
+  const h = hiddenArr instanceof Set ? hiddenArr : new Set(Array.isArray(hiddenArr) ? hiddenArr : []);
+  return h.size ? cards.filter(c => !h.has(boothCardKey(c))) : cards;
+}
+// Your booth's full display pool: hand-picked showcase cards plus the
+// eBay-synced listings the server merged into your booth feed.
+function myMergedCards() {
+  const localCards = (typeof getShowcase === 'function') ? (getShowcase() || []) : [];
+  const mine = myUsername();
+  const rb = mine ? lastRemoteBooths.find(b => b && b.username === mine) : null;
+  const ebayCards = (rb && Array.isArray(rb.cards)) ? rb.cards.filter(c => c && c.source === 'ebay') : [];
+  return localCards.concat(ebayCards);
+}
 // Resolve a booth's layout to a clean BOOTH_SLOTS-long array (own booth uses
 // the live local layout; visitors use the server-mirrored one; fall back to
 // the classic default when none is set).
@@ -654,7 +685,7 @@ function buildWorld(remoteBooths) {
 
   lastRemoteBooths = Array.isArray(remoteBooths) ? remoteBooths : [];
   let list = lastRemoteBooths.filter(b => b && b.name)
-    .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [], layout: Array.isArray(b.layout) ? b.layout : null, isYou: !!mine && b.username === mine }));
+    .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [], layout: Array.isArray(b.layout) ? b.layout : null, hidden: Array.isArray(b.hidden) ? b.hidden : [], isYou: !!mine && b.username === mine }));
   const myBooth = list.find(b => b.isYou);
   if (myBooth) {
     myBooth.owner = me.name || myBooth.owner; myBooth.emoji = me.emoji || myBooth.emoji;
@@ -663,7 +694,7 @@ function buildWorld(remoteBooths) {
     // server-merged eBay listings (source:'ebay') so a linked seller sees
     // their own booth the way visitors do
     const ebayCards = (myBooth.cards || []).filter(c => c && c.source === 'ebay');
-    myBooth.cards = localCards.concat(ebayCards).slice(0, 24);
+    myBooth.cards = localCards.concat(ebayCards);
   } else {
     list.push({ owner: me.name || 'You', username: mine, emoji: me.emoji, color: me.color, veriswap: settings.veriswap || '', cards: localCards, isYou: true });
   }
@@ -671,6 +702,10 @@ function buildWorld(remoteBooths) {
     const have = new Set(list.map(b => (b.owner || '').toLowerCase()));
     for (const d of demoBooths()) { if (!have.has(d.owner.toLowerCase())) list.push(Object.assign({ isYou: false }, d)); }
   }
+  // apply each booth's hide-from-table choices (yours from local storage —
+  // the freshest copy — everyone else's from the server mirror)
+  const localHidden = getHiddenCards();
+  for (const b of list) b.cards = filterHiddenCards(b.cards, b.isYou ? localHidden : b.hidden).slice(0, 24);
 
   clearGroup(worldGroup);
   // the old build's card photos were disposed by clearGroup; drop the cache so
@@ -1434,11 +1469,13 @@ function closeBooth() { document.getElementById('floor-booth-modal')?.classList.
 // ----------------------------------------------------- booth editor
 let editorLayout = [];               // working copy while the editor is open
 let editorTool = 'showcase';         // currently selected fixture from the palette
+let editorHidden = new Set();        // working copy of hidden card keys
 function openBoothEditor() {
   if (!getCharacter()) { renderCharCreate(); return; }
   closeBooth();
   editorLayout = resolveLayout({ isYou: true });
   editorTool = 'showcase';
+  editorHidden = getHiddenCards();
   renderBoothEditor();
   document.getElementById('floor-booth-editor')?.classList.remove('hidden');
 }
@@ -1458,10 +1495,33 @@ function renderBoothEditor() {
         <span class="floor-spot-label">${t === 'empty' ? 'Empty' : escHtml(m.label)}</span>
       </button>`;
   }).join('');
+  // card picker: every card in your display pool (showcase + synced eBay
+  // listings); tap to show/hide it on the table
+  const cardsEl = document.getElementById('floor-editor-cards');
+  if (cardsEl) {
+    const pool = myMergedCards();
+    cardsEl.innerHTML = pool.length ? pool.map(c => {
+      const k = boothCardKey(c);
+      const on = !editorHidden.has(k);
+      const img = c.imageUrl
+        ? `<img class="floor-cardpick-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+        : '<span class="floor-cardpick-img floor-cardpick-noimg">🃏</span>';
+      const price = (typeof c.price === 'number' && c.price > 0) ? '$' + c.price.toFixed(2)
+        : (c.price && !isNaN(parseFloat(c.price)) ? '$' + parseFloat(c.price).toFixed(2) : '');
+      const src = c.source === 'ebay' ? 'eBay' : '';
+      return `<button type="button" class="floor-cardpick${on ? ' on' : ''}" data-cardkey="${escHtml(k)}" title="${escHtml(c.title || 'Card')}">
+          ${img}
+          <span class="floor-cardpick-title">${escHtml(c.title || 'Card')}</span>
+          <span class="floor-cardpick-meta">${[src, price].filter(Boolean).join(' · ')}</span>
+          <span class="floor-cardpick-state">${on ? '✓ Shown' : 'Hidden'}</span>
+        </button>`;
+    }).join('') : '<p class="floor-cardpick-empty">No cards yet — add cards in the Sell tab, or link your eBay store there to auto-fill your booth.</p>';
+  }
 }
 function boothEditorClear() { editorLayout = new Array(BOOTH_SLOTS).fill('empty'); renderBoothEditor(); }
 function saveBoothEditor() {
   saveBoothLayout(editorLayout.slice());
+  saveHiddenCards(editorHidden);
   closeBoothEditor();
   buildWorld(lastRemoteBooths);              // re-render with the new layout
   const mine = booths.find(b => b.isYou);
@@ -1797,6 +1857,12 @@ document.addEventListener('click', e => {
   if (tool) { editorTool = tool.dataset.tool; renderBoothEditor(); return; }
   const spot = e.target.closest('.floor-spot');
   if (spot) { editorLayout[+spot.dataset.spot] = editorTool; renderBoothEditor(); return; }
+  const pick = e.target.closest('.floor-cardpick');
+  if (pick) {
+    const k = pick.dataset.cardkey;
+    if (editorHidden.has(k)) editorHidden.delete(k); else editorHidden.add(k);
+    renderBoothEditor(); return;
+  }
 });
 function bindDpad() {
   document.querySelectorAll('.floor-dbtn').forEach(btn => {
