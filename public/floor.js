@@ -51,14 +51,6 @@ function normalizeCharacter(c) {
     color: shirt,                         // keep legacy field = shirt for the booth index
   };
 }
-function randomCharacter(name) {
-  const pick = a => a[Math.floor(Math.random() * a.length)];
-  return normalizeCharacter({
-    name, emoji: pick(AVATAR_EMOJIS), skin: pick(SKIN_TONES), shirt: pick(SHIRT_COLORS),
-    pants: pick(PANTS_COLORS), hair: pick(HAIR_COLORS), hairStyle: pick(['short', 'buzz', 'curly', 'long', 'bald']),
-    hat: pick(['none', 'none', 'cap', 'beanie']), accessory: pick(['none', 'none', 'glasses']),
-  });
-}
 
 const TABLE_W = 6.2, TABLE_D = 2.4, TABLE_H = 1.05;   // 6ft folding table
 const PLAYER_R = 0.6, MOVE_SPEED = 0.2, TURN_SPEED = 0.04;
@@ -124,7 +116,6 @@ let playerObj = null;
 let ws = null, wsId = null, moveTimer = null, reconnectTimer = null;
 let lastSent = { x: null, z: null };
 const remote = new Map();
-let npcs = [];
 
 // input
 const keys = Object.create(null);
@@ -667,7 +658,12 @@ function buildWorld(remoteBooths) {
   const myBooth = list.find(b => b.isYou);
   if (myBooth) {
     myBooth.owner = me.name || myBooth.owner; myBooth.emoji = me.emoji || myBooth.emoji;
-    myBooth.color = me.color || myBooth.color; myBooth.veriswap = settings.veriswap || myBooth.veriswap; myBooth.cards = localCards;
+    myBooth.color = me.color || myBooth.color; myBooth.veriswap = settings.veriswap || myBooth.veriswap;
+    // local showcase is the freshest copy of hand-picked cards, but keep the
+    // server-merged eBay listings (source:'ebay') so a linked seller sees
+    // their own booth the way visitors do
+    const ebayCards = (myBooth.cards || []).filter(c => c && c.source === 'ebay');
+    myBooth.cards = localCards.concat(ebayCards).slice(0, 24);
   } else {
     list.push({ owner: me.name || 'You', username: mine, emoji: me.emoji, color: me.color, veriswap: settings.veriswap || '', cards: localCards, isYou: true });
   }
@@ -1143,15 +1139,6 @@ function buildVacantTable(grp) {
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true; grp.add(cloth);
 }
 
-function makeNpcs() {
-  npcs.forEach(a => scene.remove(a.group)); npcs = [];
-  for (const nm of ['Browser', 'Collector', 'Trader']) {
-    const a = buildAvatar(randomCharacter(nm));
-    a.x = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6);
-    a.z = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6);
-    a.tx = a.x; a.tz = a.z; a.repick = 0; a.group.position.set(a.x, 0, a.z); npcs.push(a);
-  }
-}
 
 // ----------------------------------------------------- movement / collide
 function blocked(nx, nz) {
@@ -1225,14 +1212,6 @@ function update(dt) {
     nearBooth = nearestBooth();
   }
 
-  for (const n of npcs) {
-    if (n.repick <= 0 || Math.hypot(n.tx - n.x, n.tz - n.z) < 0.5) { n.tx = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6); n.tz = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6); n.repick = 120 + Math.random() * 180; }
-    n.repick--;
-    const a = Math.atan2(n.tx - n.x, n.tz - n.z);
-    n.x += Math.sin(a) * 0.04; n.z += Math.cos(a) * 0.04;
-    n.group.position.set(n.x, 0, n.z); n.group.rotation.y = a; n.group.visible = remote.size === 0;
-    if (n.group.visible) animateAvatar(n.group, dt, true);
-  }
   for (const r of remote.values()) {
     const dx = r.tx - r.x, dz = r.tz - r.z, moving = Math.hypot(dx, dz) > 0.02;
     r.x += dx * 0.2; r.z += dz * 0.2; r.group.position.set(r.x, 0, r.z);
@@ -1748,7 +1727,6 @@ async function enterFloor() {
   buildWorld(remoteBooths);
   if (playerObj) scene.remove(playerObj.group);
   playerObj = buildAvatar(me);
-  makeNpcs();
   setFreeLook(false);
   start();
   updateOnlineCount();
