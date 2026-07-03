@@ -572,28 +572,34 @@ function buildFigure(char) {
     sh.add(el); g.add(sh); arms.push({ sh, el });
   }
 
-  // neck + head
+  // neck stays on the body; the head lives in its own group that pivots at the
+  // top of the neck so it can turn, tilt, and nod (see animateAvatar). All the
+  // face/hair/hat parts are parented to headGroup and positioned relative to
+  // the pivot (HY = head centre in head-local space) so they move as one.
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.115, 0.18, 12), skinMat);
   neck.position.set(0, 3.08, 0); g.add(neck);
+  const HP = 3.02, HY = HEAD_Y - HP;
+  const headGroup = new THREE.Group(); headGroup.position.set(0, HP, 0); g.add(headGroup);
   const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 20), skinMat);
-  head.scale.set(0.92, 1.1, 0.96); head.position.set(0, HEAD_Y, 0); head.castShadow = true; g.add(head);
+  head.scale.set(0.92, 1.1, 0.96); head.position.set(0, HY, 0); head.castShadow = true; headGroup.add(head);
 
   // face: eyes (white + pupil), brows, nose, mouth, ears
+  const eyes = [];
   for (const ex of [-0.105, 0.105]) {
     const white = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), whiteMat);
-    white.scale.z = 0.5; white.position.set(ex, HEAD_Y + 0.03, 0.245); g.add(white);
+    white.scale.z = 0.5; white.position.set(ex, HY + 0.03, 0.245); headGroup.add(white); eyes.push(white);
     const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), darkMat);
-    pupil.position.set(ex, HEAD_Y + 0.03, 0.272); g.add(pupil);
+    pupil.position.set(ex, HY + 0.03, 0.272); headGroup.add(pupil);
     const brow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.022, 0.02), hairMat);
-    brow.position.set(ex, HEAD_Y + 0.115, 0.252); g.add(brow);
+    brow.position.set(ex, HY + 0.115, 0.252); headGroup.add(brow);
   }
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
-  nose.scale.set(0.8, 1, 1); nose.position.set(0, HEAD_Y - 0.03, 0.27); g.add(nose);
+  nose.scale.set(0.8, 1, 1); nose.position.set(0, HY - 0.03, 0.27); headGroup.add(nose);
   const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.018, 0.02), std('#9c5a52', 0.6));
-  mouth.position.set(0, HEAD_Y - 0.12, 0.263); g.add(mouth);
+  mouth.position.set(0, HY - 0.12, 0.263); headGroup.add(mouth);
   for (const ex of [-1, 1]) {
     const ear = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMat);
-    ear.scale.set(0.45, 1, 0.7); ear.position.set(ex * 0.26, HEAD_Y + 0.01, 0); g.add(ear);
+    ear.scale.set(0.45, 1, 0.7); ear.position.set(ex * 0.26, HY + 0.01, 0); headGroup.add(ear);
   }
 
   // hair (fitted to the head)
@@ -603,60 +609,65 @@ function buildFigure(char) {
       for (let i = 0; i < 10; i++) {
         const a = (i / 10) * Math.PI * 2;
         const curl = new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 8), hairMat);
-        curl.position.set(Math.cos(a) * 0.19, HEAD_Y + 0.21 + Math.sin(i * 2.7) * 0.03, Math.sin(a) * 0.19 - 0.02);
-        g.add(curl);
+        curl.position.set(Math.cos(a) * 0.19, HY + 0.21 + Math.sin(i * 2.7) * 0.03, Math.sin(a) * 0.19 - 0.02);
+        headGroup.add(curl);
       }
       const cap = new THREE.Mesh(new THREE.SphereGeometry(0.295, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
-      cap.scale.set(0.95, 1.05, 0.98); cap.position.set(0, HEAD_Y + 0.02, -0.01); g.add(cap);
+      cap.scale.set(0.95, 1.05, 0.98); cap.position.set(0, HY + 0.02, -0.01); headGroup.add(cap);
     } else {
       const cut = hs === 'buzz' ? 0.42 : 0.58;
       const cap = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14, 0, Math.PI * 2, 0, Math.PI * cut), hairMat);
-      cap.scale.set(0.93, 1.08, 0.97); cap.position.set(0, HEAD_Y + 0.02, -0.015); g.add(cap);
+      cap.scale.set(0.93, 1.08, 0.97); cap.position.set(0, HY + 0.02, -0.015); headGroup.add(cap);
       if (hs === 'long') {
         const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.3, 6, 12), hairMat);
-        back.scale.set(1.5, 1, 0.5); back.position.set(0, HEAD_Y - 0.18, -0.19); g.add(back);
+        back.scale.set(1.5, 1, 0.5); back.position.set(0, HY - 0.18, -0.19); headGroup.add(back);
       }
     }
   }
   // hat (matches the shirt colour like team gear)
   if (char.hat === 'cap') {
     const crown = new THREE.Mesh(new THREE.SphereGeometry(0.305, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.46), shirtMat);
-    crown.scale.set(0.94, 1.02, 0.97); crown.position.set(0, HEAD_Y + 0.07, 0); g.add(crown);
+    crown.scale.set(0.94, 1.02, 0.97); crown.position.set(0, HY + 0.07, 0); headGroup.add(crown);
     const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.03, 14, 1, false, -Math.PI / 2, Math.PI), shirtMat);
-    brim.position.set(0, HEAD_Y + 0.12, 0.28); brim.rotation.x = 0.1; g.add(brim);
+    brim.position.set(0, HY + 0.12, 0.28); brim.rotation.x = 0.1; headGroup.add(brim);
   } else if (char.hat === 'beanie') {
     const beanie = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), shirtMat);
-    beanie.scale.set(0.95, 1.05, 0.98); beanie.position.set(0, HEAD_Y + 0.03, 0); g.add(beanie);
+    beanie.scale.set(0.95, 1.05, 0.98); beanie.position.set(0, HY + 0.03, 0); headGroup.add(beanie);
     const fold = new THREE.Mesh(new THREE.TorusGeometry(0.275, 0.045, 8, 20), shirtMat);
-    fold.position.set(0, HEAD_Y + 0.02, 0); fold.rotation.x = Math.PI / 2; fold.scale.z = 1.4; g.add(fold);
+    fold.position.set(0, HY + 0.02, 0); fold.rotation.x = Math.PI / 2; fold.scale.z = 1.4; headGroup.add(fold);
   }
   // glasses (with temple arms back to the ears)
   if (char.accessory === 'glasses') {
     for (const gx of [-0.105, 0.105]) {
       const lens = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.016, 8, 16), darkMat);
-      lens.position.set(gx, HEAD_Y + 0.03, 0.265); g.add(lens);
+      lens.position.set(gx, HY + 0.03, 0.265); headGroup.add(lens);
     }
     const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.018), darkMat);
-    bridge.position.set(0, HEAD_Y + 0.03, 0.27); g.add(bridge);
+    bridge.position.set(0, HY + 0.03, 0.27); headGroup.add(bridge);
     for (const gx of [-1, 1]) {
       const arm = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.22), darkMat);
-      arm.position.set(gx * 0.175, HEAD_Y + 0.035, 0.15); g.add(arm);
+      arm.position.set(gx * 0.175, HY + 0.035, 0.15); headGroup.add(arm);
     }
   }
 
-  // limb pivots + a per-figure clock let update() drive idle/walk motion
-  g.userData.anim = { root: g, legs, arms };
+  // limb pivots + head/eyes + a random phase so a crowd doesn't move in unison;
+  // update() drives idle/walk/look/blink motion off this
+  g.userData.anim = { root: g, legs, arms, head: headGroup, eyes, phase: Math.random() * Math.PI * 2 };
   return g;
 }
 
 // Procedural idle/walk motion for a primitive avatar. `group` is the outer
 // avatar group; `moving` drives a stride with knee bend and counter-swinging
-// arms, otherwise a gentle breath/sway. No-op for GLB models (no anim data).
+// arms, otherwise a gentle breath/sway plus an idle head look-around. Everyone
+// carries a random phase so a crowd never moves in lockstep, and blinks on an
+// independent timer. No-op for GLB models (no anim data).
 function animateAvatar(group, dt, moving) {
   const an = group && group.userData && group.userData.anim;
   if (!an) return;
-  group.userData.t = (group.userData.t || 0) + dt * (moving ? 7.5 : 2.0);
+  if (group.userData.t == null) group.userData.t = an.phase || 0;   // desync the crowd
+  group.userData.t += dt * (moving ? 7.5 : 2.0);
   const t = group.userData.t;
+  const head = an.head;
   if (moving) {
     for (let i = 0; i < 2; i++) {
       const ph = t + i * Math.PI;
@@ -668,6 +679,12 @@ function animateAvatar(group, dt, moving) {
       an.arms[i].el.rotation.x = -0.28 - Math.max(0, -s) * 0.25;
     }
     an.root.position.y = Math.abs(Math.cos(t)) * 0.045;   // step bob
+    if (head) {                                           // settle the head to face forward
+      const k = Math.min(1, dt * 6);
+      head.rotation.y += -head.rotation.y * k;
+      head.rotation.x += (Math.sin(t) * 0.03 - head.rotation.x) * k;
+      head.rotation.z += -head.rotation.z * k;
+    }
   } else {
     const s = Math.sin(t);
     for (let i = 0; i < 2; i++) {
@@ -676,6 +693,27 @@ function animateAvatar(group, dt, moving) {
       an.arms[i].el.rotation.x = -0.16 + s * 0.02;
     }
     an.root.position.y = (s * 0.5 + 0.5) * 0.02;          // breathing
+    if (head) {                                           // slow, layered look-around
+      head.rotation.y = Math.sin(t * 0.35) * 0.34 + Math.sin(t * 0.13 + 1.7) * 0.14;
+      head.rotation.x = Math.sin(t * 0.27 + 0.6) * 0.07;
+      head.rotation.z = Math.sin(t * 0.19) * 0.03;
+    }
+  }
+  // blink: eyes snap shut for ~0.13s, then reschedule 2-6s out (real time, so
+  // it reads the same whether the avatar is walking or standing still)
+  const eyes = an.eyes;
+  if (eyes && eyes.length) {
+    let bt = group.userData.blinkTimer;
+    if (bt == null) bt = 1.5 + Math.random() * 4;
+    bt -= dt;
+    let open = 1;
+    if (bt <= 0) {
+      const p = -bt / 0.13;                               // 0->1 over the blink
+      if (p >= 1) bt = 2 + Math.random() * 4;             // done; schedule the next
+      else open = Math.abs(Math.cos(p * Math.PI));        // 1 -> 0 -> 1
+    }
+    group.userData.blinkTimer = bt;
+    for (const e of eyes) e.scale.y = open;
   }
 }
 
@@ -1282,7 +1320,13 @@ function update(dt) {
   for (const r of remote.values()) {
     const dx = r.tx - r.x, dz = r.tz - r.z, moving = Math.hypot(dx, dz) > 0.02;
     r.x += dx * 0.2; r.z += dz * 0.2; r.group.position.set(r.x, 0, r.z);
-    if (moving) r.group.rotation.y = Math.atan2(dx, dz);   // face the way they're walking
+    if (moving) {
+      // turn smoothly toward the heading (shortest way around) instead of snapping
+      const target = Math.atan2(dx, dz);
+      let diff = target - r.group.rotation.y;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      r.group.rotation.y += diff * Math.min(1, dt * 9);
+    }
     animateAvatar(r.group, dt, moving);
   }
   if (playerObj && camMode !== 'fp') animateAvatar(playerObj.group, dt, false);
