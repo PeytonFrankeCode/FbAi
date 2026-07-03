@@ -2078,7 +2078,24 @@ async function enterFloor() {
   start();
   updateOnlineCount();
   connectPresence();
+  maybeShowRulesOnFirstEntry();
 }
+
+// Floor rules: shown big and up-front the first time someone enters, and
+// reopenable any time from the toolbar. "Seen" is remembered per-browser.
+const RULES_SEEN_KEY = 'floor.rulesSeen.v1';
+function openFloorRules() { document.getElementById('floor-rules')?.classList.remove('hidden'); }
+function closeFloorRules() {
+  document.getElementById('floor-rules')?.classList.add('hidden');
+  try { localStorage.setItem(RULES_SEEN_KEY, '1'); } catch (_) {}
+}
+function maybeShowRulesOnFirstEntry() {
+  let seen = false;
+  try { seen = localStorage.getItem(RULES_SEEN_KEY) === '1'; } catch (_) {}
+  if (!seen) openFloorRules();
+}
+window.openFloorRules = openFloorRules;
+window.closeFloorRules = closeFloorRules;
 
 // ----------------------------------------------------- public entry
 // Show the "under construction" gate first; Enter demo proceeds into the floor.
