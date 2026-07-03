@@ -242,6 +242,45 @@ function roundRectCtx(c, x, y, w, h, r) {
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
 
+// Small in-world voice badges that sit beside an avatar's nameplate: a green
+// "talking" dot and a "muted" mic. Textures are built once and shared.
+let _voiceBadgeTex = null;
+function voiceBadgeTex() {
+  if (_voiceBadgeTex) return _voiceBadgeTex;
+  const make = (draw) => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 96;
+    draw(cv.getContext('2d'));
+    const t = new THREE.CanvasTexture(cv); t.anisotropy = aniso(); return t;
+  };
+  const speaking = make(c => {
+    c.fillStyle = 'rgba(12,14,20,0.82)'; c.beginPath(); c.arc(48, 48, 46, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#34d17d'; c.beginPath(); c.arc(48, 48, 26, 0, Math.PI * 2); c.fill();
+  });
+  const muted = make(c => {
+    c.fillStyle = 'rgba(12,14,20,0.82)'; c.beginPath(); c.arc(48, 48, 46, 0, Math.PI * 2); c.fill();
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '52px system-ui, sans-serif';
+    c.fillText('🔇', 48, 52);
+  });
+  _voiceBadgeTex = { speaking, muted };
+  return _voiceBadgeTex;
+}
+// Show/clear the talking/muted badge next to an avatar's nameplate.
+// state: 'speaking' | 'muted' | null
+function setAvatarVoiceBadge(av, state) {
+  if (!av) return;
+  if (!state) { if (av.voiceBadge) av.voiceBadge.visible = false; return; }
+  if (!av.voiceBadge) {
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+    spr.scale.set(0.62, 0.62, 1);
+    spr.position.set(-2.15, 4.2, 0);   // just left of the nameplate (label sits at y 4.2, spans ±1.8)
+    av.group.add(spr); av.voiceBadge = spr;
+  }
+  const tex = voiceBadgeTex();
+  av.voiceBadge.material.map = state === 'muted' ? tex.muted : tex.speaking;
+  av.voiceBadge.material.needsUpdate = true;
+  av.voiceBadge.visible = true;
+}
+
 // a generic card face (white card with a colored header + image box) — drawn
 // at 2x so the placeholder slabs stay crisp up close
 function makeCardTex(header) {
@@ -1740,9 +1779,10 @@ function connectPresence() {
     else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } closeVoicePeer(msg.id); }
     else if (msg.t === 'chat') { onFloorChat(msg); return; }
     else if (msg.t === 'chatblocked') { floorChatNotice('Message blocked: ' + (msg.reason === 'spam' ? 'looks like spam.' : 'language not allowed.')); return; }
-    else if (msg.t === 'voice-peers') { for (const pid of (msg.ids || [])) createVoicePeer(pid, true); updateVoiceUi(); return; }
+    else if (msg.t === 'voice-peers') { (async () => { for (const p of (msg.peers || [])) { const e = await createVoicePeer(p.id, true); if (e) e.muted = !!p.muted; } updateVoiceUi(); })(); return; }
     else if (msg.t === 'voice-join') { updateVoiceUi(); return; }
     else if (msg.t === 'voice-leave') { closeVoicePeer(msg.id); updateVoiceUi(); return; }
+    else if (msg.t === 'voice-mute') { const e = voice.peers.get(msg.id); if (e) e.muted = !!msg.muted; updateVoiceUi(); return; }
     else if (msg.t === 'voice-signal') { onVoiceSignal(msg.from, msg.data); return; }
     updateOnlineCount();
   });
@@ -1835,6 +1875,8 @@ function toggleVoiceMute() {
   voice.muted = !voice.muted;
   voice.stream.getAudioTracks().forEach(t => { t.enabled = !voice.muted; });
   if (voice.muted) voice.localSpeaking = false;
+  // tell everyone on voice so the mute badge shows on their side too
+  if (ws && ws.readyState === 1) sendWs({ t: 'voice-mute', muted: voice.muted });
   updateVoiceUi();
 }
 
@@ -1843,7 +1885,7 @@ async function createVoicePeer(id, initiator) {
   if (voice.peers.has(id)) return voice.peers.get(id);
   let pc;
   try { pc = new RTCPeerConnection({ iceServers: VOICE_ICE }); } catch (_) { return null; }
-  const entry = { pc, audioEl: null, speaking: false, meter: null };
+  const entry = { pc, audioEl: null, speaking: false, muted: false, meter: null };
   voice.peers.set(id, entry);
   if (voice.stream) for (const t of voice.stream.getTracks()) { try { pc.addTrack(t, voice.stream); } catch (_) {} }
   pc.onicecandidate = (e) => { if (e.candidate) sendWs({ t: 'voice-signal', to: id, data: { candidate: e.candidate } }); };
@@ -1908,6 +1950,7 @@ function closeVoicePeer(id) {
   if (entry.meter) { entry.meter.stop(); entry.meter = null; }
   try { entry.pc.close(); } catch (_) {}
   if (entry.audioEl) { try { entry.audioEl.srcObject = null; entry.audioEl.remove(); } catch (_) {} }
+  setAvatarVoiceBadge(remote.get(id), null);   // drop the in-world talking/muted badge
   voice.peers.delete(id);
 }
 
@@ -1973,10 +2016,15 @@ function updateVoiceUi() {
       const r = remote.get(id);
       const label = r ? `${r.emoji || '🙂'} ${r.name || 'Collector'}` : '🙂 Collector';
       const connected = entry.pc && entry.pc.connectionState === 'connected';
-      rows.push(voiceRow(label, entry.speaking ? 'speaking' : (connected ? '' : 'connecting')));
+      const state = entry.muted ? 'muted' : (entry.speaking ? 'speaking' : (connected ? '' : 'connecting'));
+      rows.push(voiceRow(label, state));
+      // mirror talking/muted above the collector's head in the world
+      setAvatarVoiceBadge(r, entry.muted ? 'muted' : (entry.speaking ? 'speaking' : null));
     }
     if (voice.peers.size === 0) rows.push('<div class="fv-empty">Waiting for others to join voice…</div>');
     list.innerHTML = rows.join('');
+  } else if (!voice.active) {
+    for (const r of remote.values()) setAvatarVoiceBadge(r, null);   // cleared when you leave voice
   }
 }
 window.toggleFloorVoice = toggleFloorVoice;

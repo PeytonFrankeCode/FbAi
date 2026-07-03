@@ -250,7 +250,7 @@ export class FloorRoom {
   accept(ws) {
     ws.accept();
     const id = crypto.randomUUID();
-    const session = { ws, id, profile: null, x: 480, y: 300, voice: false };
+    const session = { ws, id, profile: null, x: 480, y: 300, voice: false, muted: false };
     this.sessions.set(id, session);
 
     ws.addEventListener('message', (evt) => {
@@ -307,15 +307,24 @@ export class FloorRoom {
         // caller = newcomer avoids both sides offering at once / glare).
         if (!session.profile) return;
         session.voice = true;
+        session.muted = false;                 // mic just turned on — start unmuted
         const peers = [];
         for (const s of this.sessions.values()) {
-          if (s.id !== id && s.voice && s.profile) peers.push(s.id);
+          if (s.id !== id && s.voice && s.profile) peers.push({ id: s.id, muted: !!s.muted });
         }
-        this.sendTo(session.ws, { t: 'voice-peers', ids: peers });
+        this.sendTo(session.ws, { t: 'voice-peers', peers });
         this.broadcast({ t: 'voice-join', id }, id);
       } else if (msg.t === 'voice-leave') {
         session.voice = false;
+        session.muted = false;
         this.broadcast({ t: 'voice-leave', id }, id);
+      } else if (msg.t === 'voice-mute') {
+        // Broadcast this collector's mute state so everyone on voice sees the
+        // muted badge (a muted mic just sends silence — indistinguishable from
+        // "not talking" — so it has to be signaled explicitly).
+        if (!session.voice) return;
+        session.muted = !!msg.muted;
+        this.broadcast({ t: 'voice-mute', id, muted: session.muted }, id);
       } else if (msg.t === 'voice-signal') {
         // Relay an opaque WebRTC blob (SDP offer/answer or ICE candidate) to one
         // specific peer. The server never inspects it — pure pass-through.
