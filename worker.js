@@ -233,7 +233,7 @@ export class FloorRoom {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    this.sessions = new Map(); // id -> { ws, id, profile, x, y }
+    this.sessions = new Map(); // id -> { ws, id, profile, x, y, voice }
   }
 
   async fetch(request) {
@@ -250,7 +250,7 @@ export class FloorRoom {
   accept(ws) {
     ws.accept();
     const id = crypto.randomUUID();
-    const session = { ws, id, profile: null, x: 480, y: 300 };
+    const session = { ws, id, profile: null, x: 480, y: 300, voice: false };
     this.sessions.set(id, session);
 
     ws.addEventListener('message', (evt) => {
@@ -300,10 +300,36 @@ export class FloorRoom {
         }
         // include the sender (no exceptId) so their own line shows up too
         this.broadcast({ t: 'chat', id, name: session.profile.name, emoji: session.profile.emoji, text, at: Date.now() });
+      } else if (msg.t === 'voice-join') {
+        // The collector turned on their mic. This DO is only the signaling
+        // relay — the audio itself flows peer-to-peer over WebRTC. Tell the
+        // newcomer who is already talking so THEY open the offers (deterministic
+        // caller = newcomer avoids both sides offering at once / glare).
+        if (!session.profile) return;
+        session.voice = true;
+        const peers = [];
+        for (const s of this.sessions.values()) {
+          if (s.id !== id && s.voice && s.profile) peers.push(s.id);
+        }
+        this.sendTo(session.ws, { t: 'voice-peers', ids: peers });
+        this.broadcast({ t: 'voice-join', id }, id);
+      } else if (msg.t === 'voice-leave') {
+        session.voice = false;
+        this.broadcast({ t: 'voice-leave', id }, id);
+      } else if (msg.t === 'voice-signal') {
+        // Relay an opaque WebRTC blob (SDP offer/answer or ICE candidate) to one
+        // specific peer. The server never inspects it — pure pass-through.
+        const target = this.sessions.get(msg.to);
+        if (target && target.ws) this.sendTo(target.ws, { t: 'voice-signal', from: id, data: msg.data });
       }
     });
 
-    const drop = () => { if (this.sessions.delete(id)) this.broadcast({ t: 'leave', id }, id); };
+    const drop = () => {
+      if (this.sessions.delete(id)) {
+        if (session.voice) this.broadcast({ t: 'voice-leave', id }, id);
+        this.broadcast({ t: 'leave', id }, id);
+      }
+    };
     ws.addEventListener('close', drop);
     ws.addEventListener('error', drop);
   }

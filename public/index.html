@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=110" />
+  <link rel="stylesheet" href="style.css?v=112" />
 
 
 </head>
@@ -1210,12 +1210,25 @@
         <div class="floor-toolbar">
           <button type="button" class="floor-tbtn" id="floor-freelook" onclick="toggleFreeLook()">🔭 Free look</button>
           <button type="button" class="floor-tbtn" onclick="openChat('floor')">💬 Chat <span class="floor-dm-badge hidden">0</span></button>
+          <button type="button" class="floor-tbtn" id="floor-voice-btn" onclick="toggleFloorVoice()">🎙️ Voice</button>
           <button type="button" class="floor-tbtn" onclick="arrangeBooth()">🛠️ Arrange booth</button>
           <button type="button" class="floor-tbtn" onclick="editCharacter()">🧍 Edit character</button>
+          <button type="button" class="floor-tbtn" onclick="openFloorRules()">📋 Rules</button>
         </div>
         <!-- Controls hint (bottom-left overlay) -->
         <div class="floor-hint">Look: drag &middot; Move: W/S + A/D &middot; Visit: E or tap a booth</div>
         <div id="floor-prompt" class="floor-prompt hidden"></div>
+        <!-- Live voice: who's currently talking on the floor (P2P over WebRTC) -->
+        <div id="floor-voice-panel" class="floor-voice-panel hidden">
+          <div class="fv-head">
+            <span class="fv-title">🎙️ Floor voice</span>
+            <button type="button" class="fv-leave" onclick="leaveFloorVoice()">Leave</button>
+          </div>
+          <div id="floor-voice-list" class="fv-list"></div>
+          <div class="fv-actions">
+            <button type="button" id="floor-voice-mute" class="fv-mute" onclick="toggleVoiceMute()">🎤 Mute</button>
+          </div>
+        </div>
       </div>
 
       <!-- Booth directory: find a collector, open their booth or walk to it -->
@@ -1254,6 +1267,24 @@
           <button type="button" class="floor-editor-clear" onclick="boothEditorClear()">Clear table</button>
           <button type="button" class="floor-editor-save" onclick="saveBoothEditor()">Save layout</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Floor rules: shown automatically on first entry, reopenable from the toolbar -->
+    <div id="floor-rules" class="modal-overlay hidden" role="dialog" aria-label="Floor rules">
+      <div class="modal-box floor-rules-box">
+        <button class="login-close" onclick="closeFloorRules()">&times;</button>
+        <h2 class="floor-rules-title">The Floor Rules</h2>
+        <p class="floor-rules-sub">Keep the hall friendly for everyone. Break these and you can be muted or removed.</p>
+        <ol class="floor-rules-list">
+          <li><span class="fr-icon">🤝</span><div><b>Be respectful.</b> No harassment, hate speech, or slurs — in text or voice.</div></li>
+          <li><span class="fr-icon">🧼</span><div><b>Keep it clean.</b> No explicit, NSFW, or illegal content anywhere on the floor.</div></li>
+          <li><span class="fr-icon">💎</span><div><b>Trade honestly.</b> Represent your cards accurately. No scams, baits, or fake listings.</div></li>
+          <li><span class="fr-icon">🎙️</span><div><b>Voice is public.</b> Anyone standing near you can hear you. Mute yourself when you're not talking.</div></li>
+          <li><span class="fr-icon">🚫</span><div><b>No spam.</b> Don't flood chat or blast the same promo over and over.</div></li>
+          <li><span class="fr-icon">🚩</span><div><b>Report trouble.</b> Flag bad actors — moderators can mute or remove them.</div></li>
+        </ol>
+        <button type="button" class="floor-rules-go" onclick="closeFloorRules()">Got it — enter the floor</button>
       </div>
     </div>
 
@@ -1572,6 +1603,6 @@
     }
   }
   </script>
-  <script type="module" src="floor.js?v=48"></script>
+  <script type="module" src="floor.js?v=50"></script>
 </body>
 </html>
