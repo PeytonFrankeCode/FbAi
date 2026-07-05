@@ -633,15 +633,19 @@ function buildFigure(char) {
   const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 20), skinMat);
   head.scale.set(0.92, 1.1, 0.96); head.position.set(0, HY, 0); head.castShadow = true; headGroup.add(head);
 
-  // face: eyes (white + pupil), brows, nose, mouth, ears
+  // face: eyes (white + iris + pupil), brows, nose, mouth, ears. The eyes sit
+  // shallow in the face (flattened whites) with a small iris/pupil so they read
+  // as looking, not bug-eyed.
   const eyes = [];
-  for (const ex of [-0.105, 0.105]) {
-    const white = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), whiteMat);
-    white.scale.z = 0.5; white.position.set(ex, HY + 0.03, 0.245); headGroup.add(white); eyes.push(white);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), darkMat);
-    pupil.position.set(ex, HY + 0.03, 0.272); headGroup.add(pupil);
-    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.022, 0.02), hairMat);
-    brow.position.set(ex, HY + 0.115, 0.252); headGroup.add(brow);
+  for (const ex of [-0.1, 0.1]) {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), whiteMat);
+    white.scale.set(1, 0.82, 0.42); white.userData.baseSy = 0.82; white.position.set(ex, HY + 0.025, 0.246); headGroup.add(white); eyes.push(white);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.021, 10, 8), std('#5b4636', 0.4));
+    iris.scale.z = 0.6; iris.position.set(ex, HY + 0.025, 0.262); headGroup.add(iris);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), darkMat);
+    pupil.position.set(ex, HY + 0.025, 0.27); headGroup.add(pupil);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.02, 0.02), hairMat);
+    brow.position.set(ex, HY + 0.105, 0.248); brow.rotation.z = ex > 0 ? -0.08 : 0.08; headGroup.add(brow);
   }
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
   nose.scale.set(0.8, 1, 1); nose.position.set(0, HY - 0.03, 0.27); headGroup.add(nose);
@@ -652,25 +656,33 @@ function buildFigure(char) {
     ear.scale.set(0.45, 1, 0.7); ear.position.set(ex * 0.26, HY + 0.01, 0); headGroup.add(ear);
   }
 
-  // hair (fitted to the head)
+  // hair — a snug scalp cap tilted back so it reads as a real hairline: high
+  // over the brow, tucked to ear level at the sides, lower at the nape, never a
+  // face-covering helmet. `theta` sets how far down the cap wraps.
   const hs = char.hairStyle || 'short';
   if (hs !== 'bald') {
+    const scalpCap = (theta, sy, r) => {
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(r || 0.3, 22, 16, 0, Math.PI * 2, 0, Math.PI * theta), hairMat);
+      cap.scale.set(0.985, sy, 1.02); cap.position.set(0, HY + 0.075, -0.055);
+      cap.rotation.x = 0.34; cap.castShadow = true; headGroup.add(cap);
+      return cap;
+    };
     if (hs === 'curly') {
-      for (let i = 0; i < 10; i++) {
-        const a = (i / 10) * Math.PI * 2;
-        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 8), hairMat);
-        curl.position.set(Math.cos(a) * 0.19, HY + 0.21 + Math.sin(i * 2.7) * 0.03, Math.sin(a) * 0.19 - 0.02);
-        headGroup.add(curl);
+      scalpCap(0.62, 1.02, 0.29);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2, rad = 0.17 + (i % 2) * 0.03;
+        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), hairMat);
+        curl.position.set(Math.cos(a) * rad, HY + 0.24 + Math.sin(i * 2.3) * 0.03, Math.sin(a) * rad - 0.05);
+        curl.castShadow = true; headGroup.add(curl);
       }
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.295, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
-      cap.scale.set(0.95, 1.05, 0.98); cap.position.set(0, HY + 0.02, -0.01); headGroup.add(cap);
+    } else if (hs === 'buzz') {
+      scalpCap(0.6, 1.0, 0.295);
     } else {
-      const cut = hs === 'buzz' ? 0.42 : 0.58;
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14, 0, Math.PI * 2, 0, Math.PI * cut), hairMat);
-      cap.scale.set(0.93, 1.08, 0.97); cap.position.set(0, HY + 0.02, -0.015); headGroup.add(cap);
+      scalpCap(0.66, 1.06);                                   // short (also base for long)
       if (hs === 'long') {
-        const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.3, 6, 12), hairMat);
-        back.scale.set(1.5, 1, 0.5); back.position.set(0, HY - 0.18, -0.19); headGroup.add(back);
+        const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.34, 8, 14), hairMat);
+        back.scale.set(1.35, 1, 0.6); back.position.set(0, HY - 0.16, -0.16);
+        back.castShadow = true; headGroup.add(back);
       }
     }
   }
@@ -763,7 +775,7 @@ function animateAvatar(group, dt, moving) {
       else open = Math.abs(Math.cos(p * Math.PI));        // 1 -> 0 -> 1
     }
     group.userData.blinkTimer = bt;
-    for (const e of eyes) e.scale.y = open;
+    for (const e of eyes) e.scale.y = open * (e.userData.baseSy || 1);
   }
 }
 
@@ -2032,6 +2044,9 @@ window.toggleVoiceMute = toggleVoiceMute;
 window.leaveFloorVoice = voiceStop;
 
 // ----------------------------------------------------- char create
+// Open the editor: reset the draft from the saved character and paint once.
+// The per-option repaint (paintCharCreate) is what click handlers call so a
+// selection isn't immediately overwritten by re-reading the saved character.
 function renderCharCreate() {
   const cc = document.getElementById('floor-charcreate');
   const stage = document.getElementById('floor-stage');
@@ -2042,7 +2057,12 @@ function renderCharCreate() {
   ccDraft = normalizeCharacter(existing);
   const nameEl = document.getElementById('floor-cc-name');
   if (nameEl) nameEl.value = existing ? (existing.name || '') : '';
+  paintCharCreate();
+}
 
+// Repaint the option rows + preview from the current ccDraft (no reset), so
+// picking a swatch/style updates the selection and preview in place.
+function paintCharCreate() {
   const swatchRow = (id, field, colors) => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = colors.map(c => `<button type="button" class="floor-swatch${c === ccDraft[field] ? ' sel' : ''}" style="background:${c}" data-cc="${field}" data-val="${c}"></button>`).join('');
@@ -2081,25 +2101,40 @@ function drawCharPreview() {
   c.fillStyle = ch.skin; c.beginPath(); c.arc(cx - 41, H - 116, 11, 0, 7); c.fill(); c.beginPath(); c.arc(cx + 41, H - 116, 11, 0, 7); c.fill();
   // torso
   c.fillStyle = ch.shirt; rr(cx - 36, H - 214, 72, 104, 14); c.fill();
-  // head + nose
+  // head
   const hy = H - 250;
+  // long hair falls behind the head/shoulders — draw it first
+  if (ch.hairStyle === 'long') { c.fillStyle = ch.hair; rr(cx - 34, hy - 6, 68, 62, 22); c.fill(); }
   c.fillStyle = ch.skin; c.beginPath(); c.arc(cx, hy, 30, 0, 7); c.fill();
-  c.fillStyle = 'rgba(0,0,0,0.12)'; c.beginPath(); c.arc(cx, hy + 6, 3.5, 0, 7); c.fill();
-  // hair
+  // ears
+  c.beginPath(); c.arc(cx - 29, hy + 2, 6, 0, 7); c.fill(); c.beginPath(); c.arc(cx + 29, hy + 2, 6, 0, 7); c.fill();
+  // eyes (white + iris + pupil) and brows
+  for (const ex of [-11, 11]) {
+    c.fillStyle = '#f4f4f4'; c.beginPath(); c.ellipse(cx + ex, hy - 1, 5, 6, 0, 0, 7); c.fill();
+    c.fillStyle = '#5b4636'; c.beginPath(); c.arc(cx + ex, hy - 1, 3, 0, 7); c.fill();
+    c.fillStyle = '#15171c'; c.beginPath(); c.arc(cx + ex, hy - 1, 1.5, 0, 7); c.fill();
+    c.strokeStyle = ch.hairStyle === 'bald' ? '#7a5a44' : ch.hair; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(cx + ex - 6, hy - 10); c.lineTo(cx + ex + 6, hy - 9); c.stroke();
+  }
+  // nose + mouth
+  c.fillStyle = 'rgba(0,0,0,0.10)'; c.beginPath(); c.ellipse(cx, hy + 8, 3, 4, 0, 0, 7); c.fill();
+  c.strokeStyle = '#9c5a52'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(cx - 7, hy + 18); c.lineTo(cx + 7, hy + 18); c.stroke();
+  // hair — a cap on the crown with the hairline kept above the brows
   if (ch.hairStyle && ch.hairStyle !== 'bald') {
     c.fillStyle = ch.hair;
-    if (ch.hairStyle === 'curly') { for (let i = 0; i < 8; i++) { const a = Math.PI + (i / 7) * Math.PI; c.beginPath(); c.arc(cx + Math.cos(a) * 28, hy + Math.sin(a) * 28, 11, 0, 7); c.fill(); } }
-    else {
-      const sweep = ch.hairStyle === 'buzz' ? 0.62 : 0.95;
-      c.beginPath(); c.arc(cx, hy, 32, Math.PI * (1 + (1 - sweep)), Math.PI * (2 - (1 - sweep))); c.fill();
-      if (ch.hairStyle === 'long') { rr(cx - 30, hy, 60, 46, 10); c.fill(); }
+    if (ch.hairStyle === 'curly') {
+      for (let i = 0; i < 11; i++) { const a = Math.PI + (i / 10) * Math.PI; c.beginPath(); c.arc(cx + Math.cos(a) * 27, hy - 7 + Math.sin(a) * 24, 10, 0, 7); c.fill(); }
+    } else {
+      const off = ch.hairStyle === 'buzz' ? 0.62 : 0.36;   // buzz sits higher (less hair)
+      c.beginPath(); c.arc(cx, hy, 32, Math.PI + off, 2 * Math.PI - off); c.fill();
+      if (ch.hairStyle === 'long') { rr(cx - 33, hy - 6, 12, 54, 6); c.fill(); rr(cx + 21, hy - 6, 12, 54, 6); c.fill(); }
     }
   }
   // hat
   if (ch.hat === 'cap') { c.fillStyle = ch.shirt; c.beginPath(); c.arc(cx, hy - 4, 31, Math.PI, 2 * Math.PI); c.fill(); rr(cx - 6, hy - 8, 44, 9, 4); c.fill(); }
   else if (ch.hat === 'beanie') { c.fillStyle = ch.shirt; c.beginPath(); c.arc(cx, hy - 2, 33, Math.PI * 1.05, Math.PI * 1.95); c.fill(); rr(cx - 33, hy - 6, 66, 10, 5); c.fill(); }
   // glasses
-  if (ch.accessory === 'glasses') { c.strokeStyle = '#15171c'; c.lineWidth = 3; c.beginPath(); c.arc(cx - 12, hy + 2, 9, 0, 7); c.stroke(); c.beginPath(); c.arc(cx + 12, hy + 2, 9, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cx - 3, hy + 2); c.lineTo(cx + 3, hy + 2); c.stroke(); }
+  if (ch.accessory === 'glasses') { c.strokeStyle = '#15171c'; c.lineWidth = 3; c.beginPath(); c.arc(cx - 11, hy - 1, 8, 0, 7); c.stroke(); c.beginPath(); c.arc(cx + 11, hy - 1, 8, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cx - 3, hy - 1); c.lineTo(cx + 3, hy - 1); c.stroke(); }
 }
 
 async function enterFloor() {
@@ -2198,7 +2233,7 @@ document.addEventListener('focusin', e => { if (isTypingTarget(e.target)) for (c
 document.addEventListener('input', e => { if (e.target && e.target.id === 'floor-dir-search') renderDirectory(e.target.value); });
 document.addEventListener('click', e => {
   const ccOpt = e.target.closest('[data-cc]');
-  if (ccOpt) { ccDraft[ccOpt.dataset.cc] = ccOpt.dataset.val; renderCharCreate(); return; }
+  if (ccOpt) { ccDraft[ccOpt.dataset.cc] = ccOpt.dataset.val; paintCharCreate(); return; }
   const visit = e.target.closest('.floor-dir-visit');
   if (visit) { const b = boothById(visit.dataset.booth); if (b) openBooth(b); return; }
   const walk = e.target.closest('.floor-dir-walk');

@@ -63,14 +63,16 @@ function buildFigureV2(char) {
   const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 20), skinMat);
   head.scale.set(0.92, 1.1, 0.96); head.position.set(0, HEAD_Y, 0); head.castShadow = true; g.add(head);
 
-  // ---- face: eyes (white + pupil), brows, nose, mouth, ears
-  for (const ex of [-0.105, 0.105]) {
-    const white = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), whiteMat);
-    white.scale.z = 0.5; white.position.set(ex, HEAD_Y + 0.03, 0.245); g.add(white);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), darkMat);
-    pupil.position.set(ex, HEAD_Y + 0.03, 0.272); g.add(pupil);
-    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.022, 0.02), hairMat);
-    brow.position.set(ex, HEAD_Y + 0.115, 0.252); g.add(brow);
+  // ---- face: eyes (white + iris + pupil), brows, nose, mouth, ears
+  for (const ex of [-0.1, 0.1]) {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), whiteMat);
+    white.scale.set(1, 0.82, 0.42); white.position.set(ex, HEAD_Y + 0.025, 0.246); g.add(white);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.021, 10, 8), std('#5b4636', 0.4));
+    iris.scale.z = 0.6; iris.position.set(ex, HEAD_Y + 0.025, 0.262); g.add(iris);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), darkMat);
+    pupil.position.set(ex, HEAD_Y + 0.025, 0.27); g.add(pupil);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.02, 0.02), hairMat);
+    brow.position.set(ex, HEAD_Y + 0.105, 0.248); brow.rotation.z = ex > 0 ? -0.08 : 0.08; g.add(brow);
   }
   const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
   nose.scale.set(0.8, 1, 1); nose.position.set(0, HEAD_Y - 0.03, 0.27); g.add(nose);
@@ -81,25 +83,30 @@ function buildFigureV2(char) {
     ear.scale.set(0.45, 1, 0.7); ear.position.set(ex * 0.26, HEAD_Y + 0.01, 0); g.add(ear);
   }
 
-  // ---- hair (fitted to the new head)
+  // ---- hair: snug scalp cap tilted back → real hairline, never a helmet
   const hs = char.hairStyle || 'short';
   if (hs !== 'bald') {
+    const scalpCap = (theta, sy, r) => {
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(r || 0.3, 22, 16, 0, Math.PI * 2, 0, Math.PI * theta), hairMat);
+      cap.scale.set(0.985, sy, 1.02); cap.position.set(0, HEAD_Y + 0.075, -0.055);
+      cap.rotation.x = 0.34; g.add(cap);
+      return cap;
+    };
     if (hs === 'curly') {
-      for (let i = 0; i < 10; i++) {
-        const a = (i / 10) * Math.PI * 2;
-        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.095, 8, 8), hairMat);
-        curl.position.set(Math.cos(a) * 0.19, HEAD_Y + 0.21 + Math.sin(i * 2.7) * 0.03, Math.sin(a) * 0.19 - 0.02);
+      scalpCap(0.62, 1.02, 0.29);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2, rad = 0.17 + (i % 2) * 0.03;
+        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), hairMat);
+        curl.position.set(Math.cos(a) * rad, HEAD_Y + 0.24 + Math.sin(i * 2.3) * 0.03, Math.sin(a) * rad - 0.05);
         g.add(curl);
       }
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.295, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), hairMat);
-      cap.scale.set(0.95, 1.05, 0.98); cap.position.set(0, HEAD_Y + 0.02, -0.01); g.add(cap);
+    } else if (hs === 'buzz') {
+      scalpCap(0.6, 1.0, 0.295);
     } else {
-      const cut = hs === 'buzz' ? 0.42 : 0.58;
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14, 0, Math.PI * 2, 0, Math.PI * cut), hairMat);
-      cap.scale.set(0.93, 1.08, 0.97); cap.position.set(0, HEAD_Y + 0.02, -0.015); g.add(cap);
+      scalpCap(0.66, 1.06);
       if (hs === 'long') {
-        const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.3, 6, 12), hairMat);
-        back.scale.set(1.5, 1, 0.5); back.position.set(0, HEAD_Y - 0.18, -0.19); g.add(back);
+        const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.34, 8, 14), hairMat);
+        back.scale.set(1.35, 1, 0.6); back.position.set(0, HEAD_Y - 0.16, -0.16); g.add(back);
       }
     }
   }
