@@ -123,6 +123,7 @@ async function main() {
     }
 
     if (!product) continue;
+    product.sets = mergeDuplicateIdSets(product.sets);
     const totalCards = product.sets.reduce((s, x) => s + x.cards.length, 0);
     if (totalCards === 0) {
       console.log(`  skip ${productName} — no cards parsed`);
@@ -182,14 +183,18 @@ function parseTeamSplitProduct(productName, blocks, lines) {
 
       // Find the boundary where the set name ends and the first card number begins.
       // Pattern: <SetName><digit(s)><space><Capital letter> ...
-      const startMatch = line.match(/^([^\d]{1,80}?)(\d+\s+[A-Z])/);
+      // Set names may embed a year ("Retro 1993", "Retro 2003 Autographs") —
+      // without the optional year group the digits of the year get glued
+      // onto the first card number ("Retro 199313 Lamar Jackson").
+      const startMatch = line.match(/^([^\d]{1,80}?(?:(?:19|20)\d{2})?(?:\s*Autographs)?)(\d+\s+[A-Z])/);
       if (!startMatch) continue;
       const setName = cleanSetName(startMatch[1]);
       if (!setName) continue;
       // Drop author bylines and Beckett editorial chrome that occasionally
       // get caught in team-page blocks (Cheap Wax Wednesday, Ryan Cracknell,
       // Subscribe, etc.) so they don't become bogus set names.
-      if (/^(Here'?s|Cheap Wax|Ryan Cracknell|THE BECKETT|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|1 COMMENT|Collecting|What does|Copyright|SUBJECT|Please reach|Please note|You can|Check out|View |Buy on|Refer to|Highest print|Updates to previous|Next Article)/i.test(setName)) continue;
+      if (/^(Here'?s|Cheap Wax|Ryan Cracknell|THE BECKETT|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|1 COMMENT|Collecting|What does|Copyright|SUBJECT|Please reach|Please note|You can|Check out|View |Buy on|Refer to|Highest print|Updates to previous|Next Article|Previous Article|THIS INSERT IS NUMBERED|Hockey|Basketball|Trading Cards CEO|Want to know|Second Look|Upper Deck)/i.test(setName)) continue;
+      if (/^TAGS\b/.test(setName) || /^\d+:/.test(setName)) continue;
       const cardsText = line.slice(startMatch[1].length);
       const cards = parseTeamSplitCards(cardsText, team);
       if (cards.length === 0) continue;
@@ -221,20 +226,79 @@ function parseTeamSplitProduct(productName, blocks, lines) {
   return wrapProduct(productName, consolidated);
 }
 
+// A player-name start: capital followed by a second name character. The
+// second char may itself be a capital ("BJ Ojulari", "DK Metcalf"), a
+// period ("C.J. Stroud") or an apostrophe ("L’Jarius Sneed") — the old
+// [A-Z][a-z] pattern silently merged all of those cards into their
+// predecessor.
+const NAME_START = '[A-Z][A-Za-z.\'’]';
+
+// Print runs seen across these products, longest-first so glued-digit
+// resolution prefers the realistic 3-digit run over a 1-digit prefix
+// (e.g. "/350128" is /350 + card #128, not /3 + card #50128).
+const KNOWN_PRS = [999, 499, 449, 399, 350, 349, 325, 300, 299, 275, 250, 249, 225, 199, 175, 150, 149, 125, 100, 99, 98, 97, 96, 95, 79, 75, 65, 60, 55, 50, 49, 45, 40, 35, 30, 25, 24, 23, 22, 21, 20, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2];
+
+// Split "/<digits><digits> Name" where a print run and the next card's
+// number were concatenated. Candidates are scored against print runs seen
+// unambiguously elsewhere in the same line (end-of-line "/N", or "/N –"
+// before an annotation), then against the global KNOWN_PRS list.
+function ungluePrintRuns(s) {
+  const linePRs = new Set();
+  for (const m of s.matchAll(/\/(\d{1,4})(?=\s*(?:–|$))/g)) linePRs.add(m[1]);
+
+  const glueRe = new RegExp(`\\/(\\d{2,7})(\\s+${NAME_START})`, 'g');
+  return s.replace(glueRe, (whole, digits, rest) => {
+    // A short digit run followed by a name (no number) is just a plain
+    // print run — nothing glued to unstick.
+    const candidates = [];
+    for (let k = 1; k <= Math.min(4, digits.length - 1); k++) {
+      const pr = digits.slice(0, k);
+      const num = digits.slice(k);
+      if (num[0] === '0' || num.length > 3) continue;
+      candidates.push({ pr, num });
+    }
+    if (candidates.length === 0) return whole;
+    let pick = null;
+    for (let k = candidates.length - 1; k >= 0 && !pick; k--) {
+      if (linePRs.has(candidates[k].pr)) pick = candidates[k];
+    }
+    if (!pick) {
+      for (const known of KNOWN_PRS) {
+        const hit = candidates.find(c => parseInt(c.pr, 10) === known);
+        if (hit) { pick = hit; break; }
+      }
+    }
+    if (!pick) pick = candidates[0];
+    return `/${pick.pr} ${pick.num}${rest}`;
+  });
+}
+
 function parseTeamSplitCards(text, team) {
   if (!text) return [];
-  // Pre-split print runs glued to next card numbers, mirroring 2024 logic.
-  let s = text;
-  // Print-run glued to next card number — e.g. "/53 Brock" is actually
-  // print run /5 + card #3 "Brock". Non-greedy 1-3 digits for PR so the
-  // common /5N pattern unblocks the next-card boundary detection below.
-  s = s.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
-  s = s.replace(/(\d+)\/(\d+?)(\d+\s+[A-Z][a-z])/g, (_, n, d, rest) => `${n}/${d} ${rest}`);
+  // Drop any next-product header glued to the tail of the card row
+  // ("Tim Smith /102023 Bowman University Alabama Football Checklist – …").
+  let s = text.replace(/2023\s+[A-Za-z][A-Za-z0-9 .'’&-]*Football Checklist.*$/, '').trim();
+  // Pre-split print runs glued to next card numbers.
+  s = ungluePrintRuns(s);
+  s = s.replace(new RegExp(`(\\d+)\\/(\\d+?)(\\d+\\s+${NAME_START})`, 'g'), (_, n, d, rest) => `${n}/${d} ${rest}`);
+  // Slash-less glue: "29 Michael Wilson 29936 Clayton Tune 299" — the
+  // trailing 299 print run of one card runs into the next card's number.
+  // Standalone 4+ digit blobs are never real card numbers here.
+  s = s.replace(new RegExp(`(\\s)(\\d{4,7})(\\s+${NAME_START})`, 'g'), (whole, sp, digits, rest) => {
+    for (const known of KNOWN_PRS) {
+      const ks = String(known);
+      if (digits.startsWith(ks)) {
+        const num = digits.slice(ks.length);
+        if (num && num[0] !== '0' && num.length <= 3) return `${sp}${ks} ${num}${rest}`;
+      }
+    }
+    return whole;
+  });
 
-  // Split positions: digits followed by a single space and a capital letter
-  // (start of a player name). Skip positions immediately after "/".
+  // Split positions: digits followed by a single space and a player-name
+  // start. Skip positions immediately after "/".
   const starts = [];
-  const re = /(\d+)\s+[A-Z][a-z]/g;
+  const re = new RegExp(`(\\d+)\\s+${NAME_START}`, 'g');
   let m;
   while ((m = re.exec(s)) !== null) {
     if (m.index > 0 && s[m.index - 1] === '/') continue;
@@ -253,19 +317,62 @@ function parseTeamSplitCards(text, team) {
   return out;
 }
 
+// Historical / relocated franchise names that appear as trailing "– Team"
+// overrides on legend cards (e.g. "Marshall Faulk /375 – St. Louis Rams").
+// Without this the override stays glued to the player and blocks the
+// print-run extraction.
+const TEAM_OVERRIDES = new Set([
+  'Oakland Raiders', 'Los Angeles Raiders', 'San Diego Chargers',
+  'St. Louis Rams', 'Los Angeles Rams', 'Washington Redskins',
+  'Washington Football Team', 'Houston Oilers', 'Tennessee Oilers',
+  'St. Louis Cardinals', 'Phoenix Cardinals', 'Baltimore Colts',
+  'Boston Patriots', 'New York Titans',
+]);
+
+function extractTeamOverride(text) {
+  const m = text.match(/^(.*?)\s*–\s*([A-Z][A-Za-z. ]+?)\s*$/);
+  if (m && TEAM_OVERRIDES.has(m[2].trim())) {
+    return { text: m[1].trim(), team: m[2].trim() };
+  }
+  return null;
+}
+
+// Beckett page chrome that can masquerade as a card row.
+const JUNK_CARD_RE = /checklist|upper deck|here'?s the|want to know|topps\s|panini\s+[a-z]+\s+football/i;
+
 function parseSingleTeamSplitCard(text, team) {
   if (!text) return null;
   let printRun = null;
   let clean = text;
+  const override = extractTeamOverride(clean);
+  if (override) { clean = override.text; team = override.team; }
+  // Mid-string print run followed by a subset annotation —
+  // "Michael Wilson /399 – Rookie Premiere Materials Autos". Pull the
+  // print run out and keep the annotation on the player.
+  clean = clean.replace(/\s+\/(\d+)(?=\s*–\s)/, (_, pr) => { printRun = parseInt(pr, 10); return ''; });
+  // Print run with the NEXT set's header glued straight on —
+  // "Dorian Thompson-Robinson /75Elegance Rookie Silver Autos". Take the
+  // print run and drop the header fragment (that set has its own lines).
+  clean = clean.replace(/\s*\/(\d+)[A-Z][A-Za-z .'’&-]*$/, (_, pr) => { if (!printRun) printRun = parseInt(pr, 10); return ''; });
   // " /99"
-  clean = clean.replace(/\s+\/(\d+)\s*$/, (_, pr) => { printRun = parseInt(pr, 10); return ''; });
+  if (!printRun) clean = clean.replace(/\s+\/(\d+)\s*$/, (_, pr) => { printRun = parseInt(pr, 10); return ''; });
   // " 1/1"
   if (!printRun) {
     clean = clean.replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { printRun = parseInt(d, 10); return ''; });
   }
+  // Slash-less trailing print run — a few source pages write "36 Clayton
+  // Tune 299" instead of "/299". Player names never end in digits, so a
+  // trailing standalone known print run is safe to lift.
+  if (!printRun) {
+    clean = clean.replace(/\s+(\d{2,4})\s*$/, (whole, pr) => {
+      const v = parseInt(pr, 10);
+      if (v >= 25 && KNOWN_PRS.includes(v)) { printRun = v; return ''; }
+      return whole;
+    });
+  }
   // Trailing notes.
   clean = clean
-    .replace(/\s*–\s*no base version\s*$/i, '')
+    .replace(/\s*–\s*no base ver(si|is)on\s*$/i, '')
     .replace(/\s*–\s*Vertical\s*$/i, '')
     .replace(/\s*–\s*Horizontal\s*$/i, '')
     .replace(/\s*\((no base|eBay)\)\s*$/i, '')
@@ -273,6 +380,8 @@ function parseSingleTeamSplitCard(text, team) {
     .trim();
   const m = clean.match(/^(\d+)\s+(.+?)$/);
   if (!m) return null;
+  if (m[1].length > 3) return null; // glued junk, not a real card number
+  if (JUNK_CARD_RE.test(m[2])) return null;
   const card = { number: m[1], player: m[2].trim(), team };
   if (printRun) card.printRun = printRun;
   return card;
@@ -289,9 +398,13 @@ function parseMasterProduct(productName, block, lines) {
   let currentCategory = 'base';
   while (i < slice.length) {
     const line = slice[i].trim();
-    if (/^Autograph/i.test(line) && line.length < 80 && !isMasterCardLine(line)) { currentCategory = 'autograph'; i++; continue; }
-    if (/^(Memorabilia|Relic|Jersey|Patch)/i.test(line) && line.length < 80 && !isMasterCardLine(line)) { currentCategory = 'memorabilia'; i++; continue; }
-    if (/^Insert/i.test(line) && line.length < 80 && !isMasterCardLine(line)) { currentCategory = 'insert'; i++; continue; }
+    // A line ending in "Checklist" is a set header ("Relics Autographs
+    // Checklist"), not a bare category marker — don't swallow it here or
+    // its cards end up orphaned.
+    const isSetHeaderish = /Checklist\s*$/i.test(line);
+    if (/^Autograph/i.test(line) && line.length < 80 && !isMasterCardLine(line) && !isSetHeaderish) { currentCategory = 'autograph'; i++; continue; }
+    if (/^(Memorabilia|Relic|Jersey|Patch)/i.test(line) && line.length < 80 && !isMasterCardLine(line) && !isSetHeaderish) { currentCategory = 'memorabilia'; i++; continue; }
+    if (/^Insert/i.test(line) && line.length < 80 && !isMasterCardLine(line) && !isSetHeaderish) { currentCategory = 'insert'; i++; continue; }
     if (isMasterSetHeader(line, slice, i)) {
       const result = parseMasterSet(slice, i, currentCategory);
       if (result && result.set.cards.length > 0) {
@@ -327,7 +440,9 @@ function isLeafStyleCardLine(line) {
 function isMasterSetHeader(line, slice, idx) {
   if (!line || line.length === 0 || line.length > 120) return false;
   if (/[–\-]\s*(?:1\/1|\/\d+|\()/.test(line)) return false;
-  if (/^(Here'?s|Next Article|Cheap Wax|Ryan Cracknell|THE BECKETT|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|1 COMMENT|Collecting|What does|Copyright|SUBJECT|Please reach|Check out|View |Buy on|Refer to|Highest print|Versions:|Parallels:)/i.test(line)) return false;
+  if (/^(Here'?s|Next Article|Cheap Wax|Ryan Cracknell|THE BECKETT|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|1 COMMENT|Collecting|What does|Copyright|SUBJECT|Please reach|Check out|View |Buy on|Refer to|Highest print|Versions:|Parallels:|Previous Article|THIS INSERT IS NUMBERED|Want to know|Second Look|Upper Deck)/i.test(line)) return false;
+  if (/^TAGS\b/.test(line) || /^\d+:\d/.test(line)) return false;
+  if (/Hockey|Basketball|Trading Cards CEO/i.test(line)) return false;
   if (/^(Parallels?|Parallel)\b/i.test(line)) return false;
   if (/^\d+\s+cards/i.test(line)) return false;
   if (/^–\s*\/\d+/.test(line)) return false;
@@ -403,6 +518,10 @@ function parseMasterSet(slice, startIdx, category) {
 }
 
 function parseMasterCardLine(line) {
+  // Drop any next-product header glued to the tail of the row before either
+  // branch parses it ("Tim Smith /102023 Bowman University Alabama Football
+  // Checklist – Memorabilia Cards").
+  line = line.replace(/2023\s+[A-Za-z][A-Za-z0-9 .'’&-]*Football Checklist.*$/, '').trim();
   // Leaf-style branch: prefix-coded, no comma+team. Split on each prefix
   // boundary; for each chunk extract ({prefix}-{code}, player[, printRun]).
   if (isLeafStyleCardLine(line)) {
@@ -415,7 +534,7 @@ function parseMasterCardLine(line) {
       let clean = chunk
         .replace(/\s+\/(\d+)\s*$/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
         .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (!printRun) printRun = parseInt(d, 10); return ''; })
-        .replace(/\s*–\s*no base version\s*$/i, '');
+        .replace(/\s*–\s*no base ver(si|is)on\s*$/i, '');
       const m = clean.match(/^([A-Z]{1,4}-[A-Z0-9]+)\s+(.+?)$/);
       if (m && /[A-Z][a-z]/.test(m[2])) {
         const card = { number: m[1], player: m[2].trim() };
@@ -426,10 +545,11 @@ function parseMasterCardLine(line) {
     return out;
   }
 
-  let processed = line.replace(/\/(\d{1,3}?)(\d+\s+[A-Z][a-z])/g, (_, pr, rest) => `/${pr} ${rest}`);
-  processed = processed.replace(/(\d+)\/(\d+?)(\d+\s+[A-Z][a-z])/g, (_, n, d, rest) => `${n}/${d} ${rest}`);
+  let processed = line.replace(/2023\s+[A-Za-z][A-Za-z0-9 .'’&-]*Football Checklist.*$/, '').trim();
+  processed = ungluePrintRuns(processed);
+  processed = processed.replace(new RegExp(`(\\d+)\\/(\\d+?)(\\d+\\s+${NAME_START})`, 'g'), (_, n, d, rest) => `${n}/${d} ${rest}`);
   const starts = [];
-  const re = /(\d+)\s+([A-Z][a-z])/g;
+  const re = new RegExp(`(\\d+)\\s+(${NAME_START})`, 'g');
   let m;
   while ((m = re.exec(processed)) !== null) {
     if (m.index > 0 && processed[m.index - 1] === '/') continue;
@@ -444,11 +564,11 @@ function parseMasterCardLine(line) {
     let clean = chunk
       .replace(/\s+\/(\d+)\s*$/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
       .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (!printRun) printRun = parseInt(d, 10); return ''; })
-      .replace(/\s*–\s*no base version\s*$/i, '')
+      .replace(/\s*–\s*no base ver(si|is)on\s*$/i, '')
       .replace(/\s*\(eBay\)\s*$/i, '')
       .replace(/\s+RC\s*$/i, '');
     const cm = clean.match(/^(\d+)\s+(.+?),\s*(.+?)$/);
-    if (cm) {
+    if (cm && cm[1].length <= 3 && !JUNK_CARD_RE.test(cm[2])) {
       const card = { number: cm[1], player: cm[2].trim(), team: cm[3].trim() };
       if (printRun) card.printRun = printRun;
       out.push(card);
@@ -470,6 +590,29 @@ function parseParallel(line) {
     return { name: line.trim(), printRun: null };
   }
   return null;
+}
+
+// Two sets can end up with the same name but different categories (the
+// master parser derives category from the section it's in, so "Ticket Stub"
+// appears once under inserts and once under the print-run list section).
+// Merge them by id so a product never carries duplicate set ids.
+function mergeDuplicateIdSets(sets) {
+  const byId = new Map();
+  for (const set of sets) {
+    const existing = byId.get(set.id);
+    if (!existing) { byId.set(set.id, set); continue; }
+    const [primary, secondary] = set.cards.length > existing.cards.length ? [set, existing] : [existing, set];
+    const seen = new Set(primary.cards.map(c => `${c.number}|${c.player}`));
+    for (const c of secondary.cards) {
+      if (!seen.has(`${c.number}|${c.player}`)) { primary.cards.push(c); seen.add(`${c.number}|${c.player}`); }
+    }
+    for (const p of (secondary.parallels || [])) {
+      if (!primary.parallels.some(x => x.name === p.name)) primary.parallels.push(p);
+    }
+    primary.totalCards = Math.max(primary.totalCards || 0, secondary.totalCards || 0, primary.cards.length);
+    byId.set(set.id, primary);
+  }
+  return Array.from(byId.values());
 }
 
 // ============================================================
