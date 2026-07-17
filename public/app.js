@@ -6668,6 +6668,7 @@ const USER_SYNC_KEYS = [
   'cardHuddleShowcaseSettings',
   'cardHuddleCharacter',
   'cardHuddleBoothLayout',
+  'cardHuddleBoothHidden',
   'cardHuddlePortfolioHistory',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>avatar preview (dev only — not shipped)</title>
+<style>html,body{margin:0;background:#20242c}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+
+// ---------------------------------------------------------------- v2 figure
+// Adult proportions at the world's 3.7m scale: head r=0.28 (~6.6 heads tall),
+// two-segment limbs (hip/knee, shoulder/elbow), tapered torso, real face.
+function buildFigureV2(char) {
+  const g = new THREE.Group();
+  const std = (hex, rough) => new THREE.MeshStandardMaterial({ color: new THREE.Color(hex), roughness: rough == null ? 0.7 : rough });
+  const shirtMat = std(char.shirt, 0.68), pantsMat = std(char.pants, 0.8);
+  const skinMat = std(char.skin, 0.5), hairMat = std(char.hair, 0.85), darkMat = std('#15171c', 0.5);
+  const whiteMat = std('#f4f4f4', 0.4);
+
+  const HIP_Y = 1.85, SH_Y = 2.86, HEAD_Y = 3.42, HEAD_R = 0.28;
+
+  // ---- legs: hip pivot > upper leg > knee pivot > shin + shoe
+  const legs = [];
+  for (const lx of [-0.19, 0.19]) {
+    const hip = new THREE.Group(); hip.position.set(lx, HIP_Y, 0);
+    const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.62, 6, 12), pantsMat);
+    upper.position.y = -0.45; upper.castShadow = true; hip.add(upper);
+    const knee = new THREE.Group(); knee.position.y = -0.9;
+    const shin = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.6, 6, 12), pantsMat);
+    shin.position.y = -0.4; shin.castShadow = true; knee.add(shin);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.13, 0.44), darkMat);
+    shoe.position.set(0, -0.885, 0.08); shoe.castShadow = true; knee.add(shoe);
+    g.add(hip); legs.push({ hip, knee }); hip.add(knee);
+  }
+
+  // ---- pelvis + torso (chest wider than waist), sits over the hip pivots
+  const pelvis = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.1, 6, 14), pantsMat);
+  pelvis.scale.set(1.35, 1, 0.9); pelvis.position.set(0, 1.94, 0); pelvis.castShadow = true; g.add(pelvis);
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.62, 8, 16), shirtMat);
+  torso.scale.set(1.35, 1, 0.78); torso.position.set(0, 2.48, 0); torso.castShadow = true; g.add(torso);
+
+  // ---- arms: shoulder pivot > upper arm > elbow pivot > forearm + hand
+  const arms = [];
+  for (const side of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(side * 0.44, SH_Y - 0.03, 0);
+    sh.rotation.z = -side * 0.1;                       // relaxed A-pose, not a T
+    const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.46, 6, 12), shirtMat);
+    upper.position.y = -0.33; upper.castShadow = true; sh.add(upper);
+    const el = new THREE.Group(); el.position.y = -0.62;
+    const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.082, 0.44, 6, 12), skinMat);
+    fore.position.y = -0.3; fore.castShadow = true; el.add(fore);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 10), skinMat);
+    hand.position.y = -0.6; hand.castShadow = true; el.add(hand);
+    sh.add(el); g.add(sh); arms.push({ sh, el, side });
+  }
+
+  // ---- neck + head
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.115, 0.18, 12), skinMat);
+  neck.position.set(0, 3.08, 0); g.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 20), skinMat);
+  head.scale.set(0.92, 1.1, 0.96); head.position.set(0, HEAD_Y, 0); head.castShadow = true; g.add(head);
+
+  // ---- face: eyes (white + iris + pupil), brows, nose, mouth, ears
+  for (const ex of [-0.1, 0.1]) {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), whiteMat);
+    white.scale.set(1, 0.82, 0.42); white.position.set(ex, HEAD_Y + 0.025, 0.246); g.add(white);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.021, 10, 8), std('#5b4636', 0.4));
+    iris.scale.z = 0.6; iris.position.set(ex, HEAD_Y + 0.025, 0.262); g.add(iris);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), darkMat);
+    pupil.position.set(ex, HEAD_Y + 0.025, 0.27); g.add(pupil);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.02, 0.02), hairMat);
+    brow.position.set(ex, HEAD_Y + 0.105, 0.248); brow.rotation.z = ex > 0 ? -0.08 : 0.08; g.add(brow);
+  }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
+  nose.scale.set(0.8, 1, 1); nose.position.set(0, HEAD_Y - 0.03, 0.27); g.add(nose);
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.018, 0.02), std('#9c5a52', 0.6));
+  mouth.position.set(0, HEAD_Y - 0.12, 0.263); g.add(mouth);
+  for (const ex of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMat);
+    ear.scale.set(0.45, 1, 0.7); ear.position.set(ex * 0.26, HEAD_Y + 0.01, 0); g.add(ear);
+  }
+
+  // ---- hair: snug scalp cap tilted back → real hairline, never a helmet
+  const hs = char.hairStyle || 'short';
+  if (hs !== 'bald') {
+    const scalpCap = (theta, sy, r) => {
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(r || 0.3, 22, 16, 0, Math.PI * 2, 0, Math.PI * theta), hairMat);
+      cap.scale.set(0.985, sy, 1.02); cap.position.set(0, HEAD_Y + 0.075, -0.055);
+      cap.rotation.x = 0.34; g.add(cap);
+      return cap;
+    };
+    if (hs === 'curly') {
+      scalpCap(0.62, 1.02, 0.29);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2, rad = 0.17 + (i % 2) * 0.03;
+        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), hairMat);
+        curl.position.set(Math.cos(a) * rad, HEAD_Y + 0.24 + Math.sin(i * 2.3) * 0.03, Math.sin(a) * rad - 0.05);
+        g.add(curl);
+      }
+    } else if (hs === 'buzz') {
+      scalpCap(0.6, 1.0, 0.295);
+    } else {
+      scalpCap(0.66, 1.06);
+      if (hs === 'long') {
+        const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.34, 8, 14), hairMat);
+        back.scale.set(1.35, 1, 0.6); back.position.set(0, HEAD_Y - 0.16, -0.16); g.add(back);
+      }
+    }
+  }
+  // ---- hat (team-gear: shirt colour)
+  if (char.hat === 'cap') {
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.305, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.46), shirtMat);
+    crown.scale.set(0.94, 1.02, 0.97); crown.position.set(0, HEAD_Y + 0.07, 0); g.add(crown);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.03, 14, 1, false, -Math.PI / 2, Math.PI));
+    brim.material = shirtMat; brim.position.set(0, HEAD_Y + 0.12, 0.28); brim.rotation.x = 0.1; g.add(brim);
+  } else if (char.hat === 'beanie') {
+    const beanie = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), shirtMat);
+    beanie.scale.set(0.95, 1.05, 0.98); beanie.position.set(0, HEAD_Y + 0.03, 0); g.add(beanie);
+    const fold = new THREE.Mesh(new THREE.TorusGeometry(0.275, 0.045, 8, 20), shirtMat);
+    fold.position.set(0, HEAD_Y + 0.02, 0); fold.rotation.x = Math.PI / 2; fold.scale.z = 1.4; g.add(fold);
+  }
+  // ---- glasses
+  if (char.accessory === 'glasses') {
+    for (const gx of [-0.105, 0.105]) {
+      const lens = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.016, 8, 16), darkMat);
+      lens.position.set(gx, HEAD_Y + 0.03, 0.265); g.add(lens);
+    }
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.018), darkMat);
+    bridge.position.set(0, HEAD_Y + 0.03, 0.27); g.add(bridge);
+    for (const gx of [-1, 1]) {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.22), darkMat);
+      arm.position.set(gx * 0.175, HEAD_Y + 0.035, 0.15); g.add(arm);
+    }
+  }
+
+  g.userData.anim = { root: g, legs, arms };
+  return g;
+}
+
+// ---------------------------------------------------------------- v2 anim
+function animateAvatarV2(group, dt, moving) {
+  const an = group && group.userData && group.userData.anim;
+  if (!an) return;
+  group.userData.t = (group.userData.t || 0) + dt * (moving ? 7.5 : 2.0);
+  const t = group.userData.t;
+  if (moving) {
+    for (let i = 0; i < 2; i++) {
+      const ph = t + i * Math.PI;
+      const s = Math.sin(ph);
+      an.legs[i].hip.rotation.x = s * 0.5;
+      // knee bends as the leg swings through, straightens at plant
+      an.legs[i].knee.rotation.x = Math.max(0, Math.sin(ph - 1.1)) * 0.85;
+      const a = an.arms[i];
+      a.sh.rotation.x = -s * 0.38;
+      a.el.rotation.x = -0.28 - Math.max(0, -s) * 0.25;
+    }
+    an.root.position.y = Math.abs(Math.cos(t)) * 0.045;
+  } else {
+    const s = Math.sin(t);
+    for (let i = 0; i < 2; i++) {
+      an.legs[i].hip.rotation.x = 0; an.legs[i].knee.rotation.x = 0;
+      const a = an.arms[i];
+      a.sh.rotation.x = s * 0.04 * (i ? 1 : -1);
+      a.el.rotation.x = -0.16 + s * 0.02;
+    }
+    an.root.position.y = (s * 0.5 + 0.5) * 0.02;
+  }
+}
+
+// ---------------------------------------------------------------- scene
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x262b34);
+const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
+cam.position.set(0, 3.4, 10.5); cam.lookAt(0, 1.9, 0);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(4, 9, 6); sun.castShadow = true; scene.add(sun);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: 0xaab3c4, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+try {
+  const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js');
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+} catch (e) {}
+
+// a lineup covering the customization space
+const chars = [
+  { skin: '#f1c27d', shirt: '#5ece99', pants: '#2b3a55', hair: '#3b2417', hairStyle: 'short', hat: 'none',   accessory: 'none' },
+  { skin: '#8d5524', shirt: '#ef4444', pants: '#1f2937', hair: '#1b1b1b', hairStyle: 'curly', hat: 'none',   accessory: 'glasses' },
+  { skin: '#f7d7b5', shirt: '#6366f1', pants: '#4b5563', hair: '#d9b382', hairStyle: 'long',  hat: 'none',   accessory: 'none' },
+  { skin: '#e0ac69', shirt: '#f59e0b', pants: '#5b3a29', hair: '#6b4423', hairStyle: 'buzz',  hat: 'cap',    accessory: 'none' },
+  { skin: '#c68642', shirt: '#06b6d4', pants: '#3b5bdb', hair: '#1b1b1b', hairStyle: 'bald',  hat: 'beanie', accessory: 'glasses' },
+];
+const figs = chars.map((c, i) => {
+  const f = buildFigureV2(c);
+  f.position.x = (i - (chars.length - 1) / 2) * 2.1;
+  // walking pose for some, idle for others; freeze mid-stride for the shot
+  f.userData.moving = i % 2 === 1;
+  scene.add(f);
+  return f;
+});
+// rotate the last one to show the back/side
+figs[figs.length - 1].rotation.y = Math.PI * 0.75;
+figs[2].rotation.y = -Math.PI * 0.25;
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  for (const f of figs) animateAvatarV2(f, dt, f.userData.moving);
+  renderer.render(scene, cam);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+window.__ready = true;
+</script>
+</body>
+</html>

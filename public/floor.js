@@ -1,7 +1,7 @@
 /* =====================================================================
    The Floor — a walkable, first-person 3D card-show world (Three.js).
 
-   Create a collector, then walk a show floor of white-clothed tables.
+   Create a collector, then walk a show floor of black-draped tables.
    Each table is a booth: two glass display cases, three card boxes, and a
    loose lay-down area. Walk up and open a booth to buy (eBay) or trade
    (Veriswap) — The Card Huddle is never part of the transaction.
@@ -51,14 +51,6 @@ function normalizeCharacter(c) {
     color: shirt,                         // keep legacy field = shirt for the booth index
   };
 }
-function randomCharacter(name) {
-  const pick = a => a[Math.floor(Math.random() * a.length)];
-  return normalizeCharacter({
-    name, emoji: pick(AVATAR_EMOJIS), skin: pick(SKIN_TONES), shirt: pick(SHIRT_COLORS),
-    pants: pick(PANTS_COLORS), hair: pick(HAIR_COLORS), hairStyle: pick(['short', 'buzz', 'curly', 'long', 'bald']),
-    hat: pick(['none', 'none', 'cap', 'beanie']), accessory: pick(['none', 'none', 'glasses']),
-  });
-}
 
 const TABLE_W = 6.2, TABLE_D = 2.4, TABLE_H = 1.05;   // 6ft folding table
 const PLAYER_R = 0.6, MOVE_SPEED = 0.2, TURN_SPEED = 0.04;
@@ -92,6 +84,37 @@ function saveBoothLayout(arr) {
   localStorage.setItem(LAYOUT_KEY, JSON.stringify(arr));
   if (typeof schedulePushUserData === 'function') schedulePushUserData();
 }
+// Which of your cards are hidden from the 3D table (chosen in the booth
+// editor). Stored as a list of stable card keys: the listing URL for
+// eBay-synced cards, title|image for hand-added showcase cards. Hiding only
+// affects the table display — the Sell tab still manages the cards themselves.
+const HIDDEN_KEY = 'cardHuddleBoothHidden';
+function boothCardKey(c) {
+  const url = ((c && c.ebayUrl) || '').split('?')[0];
+  return url || (((c && c.title) || '') + '|' + ((c && c.imageUrl) || ''));
+}
+function getHiddenCards() {
+  try { const a = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]'); return new Set(Array.isArray(a) ? a : []); }
+  catch { return new Set(); }
+}
+function saveHiddenCards(set) {
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify([...set].slice(0, 100)));
+  if (typeof schedulePushUserData === 'function') schedulePushUserData();
+}
+function filterHiddenCards(cards, hiddenArr) {
+  if (!Array.isArray(cards) || !cards.length) return [];
+  const h = hiddenArr instanceof Set ? hiddenArr : new Set(Array.isArray(hiddenArr) ? hiddenArr : []);
+  return h.size ? cards.filter(c => !h.has(boothCardKey(c))) : cards;
+}
+// Your booth's full display pool: hand-picked showcase cards plus the
+// eBay-synced listings the server merged into your booth feed.
+function myMergedCards() {
+  const localCards = (typeof getShowcase === 'function') ? (getShowcase() || []) : [];
+  const mine = myUsername();
+  const rb = mine ? lastRemoteBooths.find(b => b && b.username === mine) : null;
+  const ebayCards = (rb && Array.isArray(rb.cards)) ? rb.cards.filter(c => c && c.source === 'ebay') : [];
+  return localCards.concat(ebayCards);
+}
 // Resolve a booth's layout to a clean BOOTH_SLOTS-long array (own booth uses
 // the live local layout; visitors use the server-mirrored one; fall back to
 // the classic default when none is set).
@@ -124,7 +147,17 @@ let playerObj = null;
 let ws = null, wsId = null, moveTimer = null, reconnectTimer = null;
 let lastSent = { x: null, z: null };
 const remote = new Map();
-let npcs = [];
+
+// voice chat (WebRTC mesh, signaled over the FloorRoom socket)
+const VOICE_ICE = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' },
+];
+const voice = {
+  active: false, muted: false, stream: null, audioCtx: null,
+  localMeter: null, localSpeaking: false,
+  peers: new Map(), // peerId -> { pc, audioEl, speaking, meter }
+};
 
 // input
 const keys = Object.create(null);
@@ -209,6 +242,45 @@ function roundRectCtx(c, x, y, w, h, r) {
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
 
+// Small in-world voice badges that sit beside an avatar's nameplate: a green
+// "talking" dot and a "muted" mic. Textures are built once and shared.
+let _voiceBadgeTex = null;
+function voiceBadgeTex() {
+  if (_voiceBadgeTex) return _voiceBadgeTex;
+  const make = (draw) => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 96;
+    draw(cv.getContext('2d'));
+    const t = new THREE.CanvasTexture(cv); t.anisotropy = aniso(); return t;
+  };
+  const speaking = make(c => {
+    c.fillStyle = 'rgba(12,14,20,0.82)'; c.beginPath(); c.arc(48, 48, 46, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#34d17d'; c.beginPath(); c.arc(48, 48, 26, 0, Math.PI * 2); c.fill();
+  });
+  const muted = make(c => {
+    c.fillStyle = 'rgba(12,14,20,0.82)'; c.beginPath(); c.arc(48, 48, 46, 0, Math.PI * 2); c.fill();
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '52px system-ui, sans-serif';
+    c.fillText('🔇', 48, 52);
+  });
+  _voiceBadgeTex = { speaking, muted };
+  return _voiceBadgeTex;
+}
+// Show/clear the talking/muted badge next to an avatar's nameplate.
+// state: 'speaking' | 'muted' | null
+function setAvatarVoiceBadge(av, state) {
+  if (!av) return;
+  if (!state) { if (av.voiceBadge) av.voiceBadge.visible = false; return; }
+  if (!av.voiceBadge) {
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthTest: false }));
+    spr.scale.set(0.62, 0.62, 1);
+    spr.position.set(-2.15, 4.2, 0);   // just left of the nameplate (label sits at y 4.2, spans ±1.8)
+    av.group.add(spr); av.voiceBadge = spr;
+  }
+  const tex = voiceBadgeTex();
+  av.voiceBadge.material.map = state === 'muted' ? tex.muted : tex.speaking;
+  av.voiceBadge.material.needsUpdate = true;
+  av.voiceBadge.visible = true;
+}
+
 // a generic card face (white card with a colored header + image box) — drawn
 // at 2x so the placeholder slabs stay crisp up close
 function makeCardTex(header) {
@@ -254,13 +326,54 @@ function cardMaterial(card, shared, slot) {
 // A closed aluminum briefcase display case: brushed-metal tray, dark felt
 // liner, a tight grid of slabs laid flat, a clear glass lid, side rails,
 // a carry handle and latches on the front edge. Modeled on a real case.
+// A box with softly rounded edges/corners. Projects a segmented box's shell
+// onto a rounded-box surface: faces stay flat, only the hard edges get eased,
+// so tables/cases read less blocky. Returns a Mesh when a material is given,
+// otherwise the geometry. Self-contained — no addon dependency.
+function roundedBox(w, h, d, r, mat, seg) {
+  seg = seg || 3;
+  r = Math.max(0.001, Math.min(r, w / 2, h / 2, d / 2));
+  const geo = new THREE.BoxGeometry(w, h, d, seg, seg, seg);
+  const pos = geo.attributes.position, v = new THREE.Vector3();
+  const hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const cx = Math.max(-hx, Math.min(hx, v.x));
+    const cy = Math.max(-hy, Math.min(hy, v.y));
+    const cz = Math.max(-hz, Math.min(hz, v.z));
+    const dx = v.x - cx, dy = v.y - cy, dz = v.z - cz;
+    const len = Math.hypot(dx, dy, dz) || 1;
+    pos.setXYZ(i, cx + dx / len * r, cy + dy / len * r, cz + dz / len * r);
+  }
+  geo.computeVertexNormals();
+  return mat ? new THREE.Mesh(geo, mat) : geo;
+}
+
+// Diagonal light-streak texture overlaid on showcase glass — a fixed specular
+// "glint" so the pane reads as glass even where env reflections don't line up.
+let _glassStreakTex = null;
+function makeGlassStreakTex() {
+  if (_glassStreakTex) return _glassStreakTex;
+  const s = 256, cv = document.createElement('canvas'); cv.width = cv.height = s;
+  const c = cv.getContext('2d');
+  const g = c.createLinearGradient(0, s, s, 0);
+  g.addColorStop(0.30, 'rgba(255,255,255,0)');
+  g.addColorStop(0.42, 'rgba(255,255,255,0.55)');
+  g.addColorStop(0.50, 'rgba(255,255,255,0)');
+  g.addColorStop(0.58, 'rgba(255,255,255,0.30)');
+  g.addColorStop(0.66, 'rgba(255,255,255,0)');
+  c.fillStyle = g; c.fillRect(0, 0, s, s);
+  _glassStreakTex = new THREE.CanvasTexture(cv);
+  return _glassStreakTex;
+}
+
 function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, cardOffset, cols, rows) {
   const g = new THREE.Group();
   g.position.set(ox, 0, oz);
   const CASE_H = 0.16;
   cols = cols || 6; rows = rows || 3;
 
-  const tray = new THREE.Mesh(new THREE.BoxGeometry(w, CASE_H, d), shared.alu);
+  const tray = roundedBox(w, CASE_H, d, 0.035, shared.alu);
   tray.position.y = y0 + CASE_H / 2; tray.castShadow = true; tray.receiveShadow = true;
   tray.userData.boothId = boothIdx; g.add(tray);
 
@@ -282,13 +395,32 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
     g.add(card);
   }
 
-  const railFB = new THREE.BoxGeometry(w, 0.13, 0.05);
-  const railLR = new THREE.BoxGeometry(0.05, 0.13, d);
-  for (const z of [-d / 2, d / 2]) { const m = new THREE.Mesh(railFB, shared.alu); m.position.set(0, y0 + CASE_H + 0.07, z); m.userData.boothId = boothIdx; g.add(m); }
-  for (const x of [-w / 2, w / 2]) { const m = new THREE.Mesh(railLR, shared.alu); m.position.set(x, y0 + CASE_H + 0.07, 0); m.userData.boothId = boothIdx; g.add(m); }
+  // glass enclosure: four side panes + a top pane between aluminum corner
+  // posts, capped by a slim top frame — so the case visibly reads as a glass
+  // box from standing height instead of an open tray
+  const GH = 0.2, gy = y0 + CASE_H + GH / 2, paneT = 0.02;
+  const sideFB = new THREE.BoxGeometry(w - 0.06, GH, paneT);
+  const sideLR = new THREE.BoxGeometry(paneT, GH, d - 0.06);
+  for (const z of [-d / 2 + 0.03, d / 2 - 0.03]) { const p = new THREE.Mesh(sideFB, shared.glass); p.position.set(0, gy, z); p.userData.boothId = boothIdx; g.add(p); }
+  for (const x of [-w / 2 + 0.03, w / 2 - 0.03]) { const p = new THREE.Mesh(sideLR, shared.glass); p.position.set(x, gy, 0); p.userData.boothId = boothIdx; g.add(p); }
+  const glass = roundedBox(w - 0.03, paneT, d - 0.03, 0.008, shared.glass);
+  glass.position.y = y0 + CASE_H + GH; glass.userData.boothId = boothIdx; g.add(glass);
 
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(w - 0.03, 0.03, d - 0.03), shared.glass);
-  glass.position.y = y0 + CASE_H + 0.13; glass.userData.boothId = boothIdx; g.add(glass);
+  // fixed diagonal glint on the top pane
+  const streak = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.08, d - 0.08), shared.glassStreak);
+  streak.rotation.x = -Math.PI / 2;
+  streak.position.y = y0 + CASE_H + GH + paneT / 2 + 0.004;
+  streak.userData.boothId = boothIdx; g.add(streak);
+
+  // aluminum corner posts + slim top frame
+  const postGeo = new THREE.BoxGeometry(0.05, GH, 0.05);
+  for (const px of [-w / 2 + 0.03, w / 2 - 0.03]) for (const pz of [-d / 2 + 0.03, d / 2 - 0.03]) {
+    const post = new THREE.Mesh(postGeo, shared.alu); post.position.set(px, gy, pz); post.userData.boothId = boothIdx; g.add(post);
+  }
+  const railFB = new THREE.BoxGeometry(w, 0.05, 0.06);
+  const railLR = new THREE.BoxGeometry(0.06, 0.05, d);
+  for (const z of [-d / 2, d / 2]) { const m = new THREE.Mesh(railFB, shared.alu); m.position.set(0, y0 + CASE_H + GH + 0.02, z); m.userData.boothId = boothIdx; g.add(m); }
+  for (const x of [-w / 2, w / 2]) { const m = new THREE.Mesh(railLR, shared.alu); m.position.set(x, y0 + CASE_H + GH + 0.02, 0); m.userData.boothId = boothIdx; g.add(m); }
 
   const handle = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 8, 16, Math.PI), shared.alu);
   handle.position.set(0, y0 + CASE_H, -d / 2 - 0.02); g.add(handle);
@@ -302,16 +434,16 @@ function buildDisplayCase(parent, ox, oz, w, d, y0, boothIdx, shared, cards, car
 
 // ----------------------------------------------------- table / booth
 function buildBoothTable(grp, b, shared) {
-  const cloth = new THREE.Mesh(
-    new THREE.BoxGeometry(TABLE_W, TABLE_H, TABLE_D),
-    new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.95 })
-  );
+  // black draped tablecloth (matte fabric); a slightly lighter top edge gives
+  // the fold some definition against the dark drape
+  const cloth = roundedBox(TABLE_W, TABLE_H, TABLE_D, 0.08,
+    new THREE.MeshStandardMaterial({ color: 0x121318, roughness: 0.97 }));
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true;
   cloth.userData.boothId = b._idx;
   grp.add(cloth);
   // thin tabletop trim
-  const top = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W + 0.05, 0.06, TABLE_D + 0.05),
-    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }));
+  const top = roundedBox(TABLE_W + 0.05, 0.06, TABLE_D + 0.05, 0.028,
+    new THREE.MeshStandardMaterial({ color: 0x1c1e26, roughness: 0.94 }));
   top.position.y = TABLE_H; top.userData.boothId = b._idx; grp.add(top);
 
   const y0 = TABLE_H + 0.03;
@@ -372,7 +504,7 @@ function buildShowcaseFixture(grp, x, y0, boothId, shared, cards, ci) {
 // back panel holding a single card upright and facing the buyer (-z).
 function buildAcrylicStand(grp, sx, sz, y0, boothId, shared, cards, ciRef) {
   const baseH = 0.06, panelH = 0.66, W = 0.36;
-  const base = new THREE.Mesh(new THREE.BoxGeometry(W, baseH, 0.2), shared.blackAcrylic);
+  const base = roundedBox(W, baseH, 0.2, 0.02, shared.blackAcrylic);
   base.position.set(sx, y0 + baseH / 2, sz); base.castShadow = true; base.receiveShadow = true;
   base.userData.boothId = boothId; grp.add(base);
   const panel = new THREE.Mesh(new THREE.BoxGeometry(W, panelH, 0.03), shared.clearAcrylic);
@@ -410,25 +542,28 @@ function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
   // box floor + four low walls (reads as an open-top row box)
   const fl = new THREE.Mesh(new THREE.BoxGeometry(W, 0.03, D), shared.cardboardDark);
   fl.position.set(x, y0 + 0.015, 0); fl.receiveShadow = true; tag2(fl); grp.add(fl);
-  const longWall = new THREE.BoxGeometry(W + t, H, t), shortWall = new THREE.BoxGeometry(t, H, D);
+  const longWall = roundedBox(W + t, H, t, 0.015, null, 1), shortWall = roundedBox(t, H, D, 0.015, null, 1);
   for (const dz of [-D / 2, D / 2]) { const m = new THREE.Mesh(longWall, shared.cardboard); m.position.set(x, y0 + H / 2, dz); m.castShadow = true; tag2(m); grp.add(m); }
   for (const dx of [-W / 2, W / 2]) { const m = new THREE.Mesh(shortWall, shared.cardboard); m.position.set(x + dx, y0 + H / 2, 0); m.castShadow = true; tag2(m); grp.add(m); }
-  // packed rows of cards standing up the length of the box (real photos where
-  // the booth has value cards, generic filler beyond that so the box reads full)
-  const n = 30, z0 = -D / 2 + 0.08, span = D - 0.16;
+  // packed rows of full-size cards riffled front-to-back: leaned back a touch
+  // and poking well above the rim so the box clearly reads FULL from standing
+  // height (real photos where the booth has value cards, generic filler beyond
+  // that). They used to stand fully below the walls — invisible from any angle.
+  const n = 26, z0 = -D / 2 + 0.12, span = D - 0.3;
   for (let i = 0; i < n; i++) {
     const entry = cards[i % Math.max(1, cards.length)];
-    const card = new THREE.Mesh(shared.standGeo, cards.length ? cardMaterial(entry, shared, i) : shared.cardMats[i % shared.cardMats.length]);
-    card.position.set(x, y0 + 0.18, z0 + (i / (n - 1)) * span);
-    card.rotation.y = Math.PI;          // face the buyer (-z) so photos aren't shown reversed
+    const card = new THREE.Mesh(shared.standCardGeo, cards.length ? cardMaterial(entry, shared, i) : shared.cardMats[i % shared.cardMats.length]);
+    card.position.set(x + (Math.random() - 0.5) * 0.05, y0 + 0.24, z0 + (i / (n - 1)) * span);
+    card.rotation.y = Math.PI;                              // face the buyer (-z)
+    card.rotation.x = 0.26 + (Math.random() - 0.5) * 0.07;  // hand-riffled lean-back
     tag2(card); grp.add(card);
   }
-  // a few coloured divider tabs poking up above the cards
-  const tabGeo = new THREE.PlaneGeometry(0.26, 0.12);
+  // a few coloured divider tabs poking up above the cards, leaning with them
+  const tabGeo = new THREE.PlaneGeometry(0.3, 0.14);
   const tabCols = [0x4caf50, 0xf4d03f, 0xe74c3c];
   [0.18, 0.5, 0.82].forEach((f, k) => {
     const tab = new THREE.Mesh(tabGeo, new THREE.MeshStandardMaterial({ color: tabCols[k % tabCols.length], roughness: 0.85, side: THREE.DoubleSide }));
-    tab.position.set(x, y0 + 0.40, z0 + f * span); tag2(tab); grp.add(tab);
+    tab.position.set(x, y0 + 0.52, z0 + f * span); tab.rotation.x = 0.26; tag2(tab); grp.add(tab);
   });
   // hand-lettered "$1 BOX" price tab on the front wall
   const tag = makeLabelSprite('💲 $1 BOX', '');
@@ -438,83 +573,210 @@ function buildValueBoxFixture(grp, x, y0, boothId, shared, cards) {
 }
 
 // ----------------------------------------------------- avatar meshes
-// Build a segmented humanoid from a normalized character: legs (pants), torso
-// + arms (shirt), head/hands (skin), hair (style + colour), optional hat and
-// glasses. Roughly 3.7m tall so the eyes clear the display-case glass.
+// Build a humanoid with adult proportions (~6.6 heads tall at the world's
+// 3.7m scale) from a normalized character: two-segment limbs (hip/knee,
+// shoulder/elbow pivots), tapered torso, and a real face (eyes with pupils,
+// brows, nose, mouth, ears). Hair/hat/glasses fit the head. Tuned visually
+// against /_avatar-preview.html (headless-rendered lineup).
 function buildFigure(char) {
   const g = new THREE.Group();
   const std = (hex, rough) => new THREE.MeshStandardMaterial({ color: new THREE.Color(hex), roughness: rough == null ? 0.7 : rough });
-  const shirtMat = std(char.shirt, 0.72), pantsMat = std(char.pants, 0.8);
-  const skinMat = std(char.skin, 0.55), hairMat = std(char.hair, 0.85), darkMat = std('#15171c', 0.5);
+  const shirtMat = std(char.shirt, 0.68), pantsMat = std(char.pants, 0.8);
+  const skinMat = std(char.skin, 0.5), hairMat = std(char.hair, 0.85), darkMat = std('#15171c', 0.5);
+  const whiteMat = std('#f4f4f4', 0.4);
 
-  // legs + shoes
-  for (const lx of [-0.24, 0.24]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.5, 0.4), pantsMat);
-    leg.position.set(lx, 0.78, 0); leg.castShadow = true; g.add(leg);
-    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.18, 0.6), darkMat);
-    shoe.position.set(lx, 0.09, 0.1); shoe.castShadow = true; g.add(shoe);
-  }
-  // torso
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.5, 0.56), shirtMat);
-  torso.position.set(0, 2.25, 0); torso.castShadow = true; g.add(torso);
-  // arms (shirt) with skin hands
-  for (const ax of [-0.62, 0.62]) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.3, 0.3), shirtMat);
-    arm.position.set(ax, 2.3, 0); arm.castShadow = true; g.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), skinMat);
-    hand.position.set(ax, 1.6, 0); hand.castShadow = true; g.add(hand);
-  }
-  // neck + head
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.2, 10), skinMat);
-  neck.position.set(0, 3.05, 0); g.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.44, 20, 16), skinMat);
-  head.position.set(0, 3.45, 0); head.castShadow = true; g.add(head);
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), skinMat);
-  nose.position.set(0, 3.42, 0.44); g.add(nose);
+  const HIP_Y = 1.85, SH_Y = 2.86, HEAD_Y = 3.42, HEAD_R = 0.28;
 
-  // hair
-  if (char.hairStyle && char.hairStyle !== 'bald') {
-    if (char.hairStyle === 'curly') {
-      for (let i = 0; i < 7; i++) {
-        const a = (i / 7) * Math.PI * 2;
-        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 8), hairMat);
-        curl.position.set(Math.cos(a) * 0.3, 3.7 + Math.sin(i) * 0.05, Math.sin(a) * 0.3 - 0.05);
-        g.add(curl);
+  // legs: hip pivot > upper leg > knee pivot > shin + shoe
+  const legs = [];
+  for (const lx of [-0.19, 0.19]) {
+    const hip = new THREE.Group(); hip.position.set(lx, HIP_Y, 0);
+    const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.135, 0.62, 6, 12), pantsMat);
+    upper.position.y = -0.45; upper.castShadow = true; hip.add(upper);
+    const knee = new THREE.Group(); knee.position.y = -0.9;
+    const shin = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.6, 6, 12), pantsMat);
+    shin.position.y = -0.4; shin.castShadow = true; knee.add(shin);
+    const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.13, 0.44), darkMat);
+    shoe.position.set(0, -0.885, 0.08); shoe.castShadow = true; knee.add(shoe);
+    hip.add(knee); g.add(hip); legs.push({ hip, knee });
+  }
+
+  // pelvis + torso (chest wider than waist)
+  const pelvis = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.1, 6, 14), pantsMat);
+  pelvis.scale.set(1.35, 1, 0.9); pelvis.position.set(0, 1.94, 0); pelvis.castShadow = true; g.add(pelvis);
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.62, 8, 16), shirtMat);
+  torso.scale.set(1.35, 1, 0.78); torso.position.set(0, 2.48, 0); torso.castShadow = true; g.add(torso);
+
+  // arms: shoulder pivot > upper arm > elbow pivot > forearm + hand
+  const arms = [];
+  for (const side of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(side * 0.44, SH_Y - 0.03, 0);
+    sh.rotation.z = -side * 0.1;                       // relaxed A-pose, not a T
+    const upper = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.46, 6, 12), shirtMat);
+    upper.position.y = -0.33; upper.castShadow = true; sh.add(upper);
+    const el = new THREE.Group(); el.position.y = -0.62;
+    const fore = new THREE.Mesh(new THREE.CapsuleGeometry(0.082, 0.44, 6, 12), skinMat);
+    fore.position.y = -0.3; fore.castShadow = true; el.add(fore);
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 10), skinMat);
+    hand.position.y = -0.6; hand.castShadow = true; el.add(hand);
+    sh.add(el); g.add(sh); arms.push({ sh, el });
+  }
+
+  // neck stays on the body; the head lives in its own group that pivots at the
+  // top of the neck so it can turn, tilt, and nod (see animateAvatar). All the
+  // face/hair/hat parts are parented to headGroup and positioned relative to
+  // the pivot (HY = head centre in head-local space) so they move as one.
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.115, 0.18, 12), skinMat);
+  neck.position.set(0, 3.08, 0); g.add(neck);
+  const HP = 3.02, HY = HEAD_Y - HP;
+  const headGroup = new THREE.Group(); headGroup.position.set(0, HP, 0); g.add(headGroup);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(HEAD_R, 24, 20), skinMat);
+  head.scale.set(0.92, 1.1, 0.96); head.position.set(0, HY, 0); head.castShadow = true; headGroup.add(head);
+
+  // face: eyes (white + iris + pupil), brows, nose, mouth, ears. The eyes sit
+  // shallow in the face (flattened whites) with a small iris/pupil so they read
+  // as looking, not bug-eyed.
+  const eyes = [];
+  for (const ex of [-0.1, 0.1]) {
+    const white = new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), whiteMat);
+    white.scale.set(1, 0.82, 0.42); white.userData.baseSy = 0.82; white.position.set(ex, HY + 0.025, 0.246); headGroup.add(white); eyes.push(white);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.021, 10, 8), std('#5b4636', 0.4));
+    iris.scale.z = 0.6; iris.position.set(ex, HY + 0.025, 0.262); headGroup.add(iris);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 8), darkMat);
+    pupil.position.set(ex, HY + 0.025, 0.27); headGroup.add(pupil);
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.02, 0.02), hairMat);
+    brow.position.set(ex, HY + 0.105, 0.248); brow.rotation.z = ex > 0 ? -0.08 : 0.08; headGroup.add(brow);
+  }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), skinMat);
+  nose.scale.set(0.8, 1, 1); nose.position.set(0, HY - 0.03, 0.27); headGroup.add(nose);
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.018, 0.02), std('#9c5a52', 0.6));
+  mouth.position.set(0, HY - 0.12, 0.263); headGroup.add(mouth);
+  for (const ex of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), skinMat);
+    ear.scale.set(0.45, 1, 0.7); ear.position.set(ex * 0.26, HY + 0.01, 0); headGroup.add(ear);
+  }
+
+  // hair — a snug scalp cap tilted back so it reads as a real hairline: high
+  // over the brow, tucked to ear level at the sides, lower at the nape, never a
+  // face-covering helmet. `theta` sets how far down the cap wraps.
+  const hs = char.hairStyle || 'short';
+  if (hs !== 'bald') {
+    const scalpCap = (theta, sy, r) => {
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(r || 0.3, 22, 16, 0, Math.PI * 2, 0, Math.PI * theta), hairMat);
+      cap.scale.set(0.985, sy, 1.02); cap.position.set(0, HY + 0.075, -0.055);
+      cap.rotation.x = 0.34; cap.castShadow = true; headGroup.add(cap);
+      return cap;
+    };
+    if (hs === 'curly') {
+      scalpCap(0.62, 1.02, 0.29);
+      for (let i = 0; i < 14; i++) {
+        const a = (i / 14) * Math.PI * 2, rad = 0.17 + (i % 2) * 0.03;
+        const curl = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), hairMat);
+        curl.position.set(Math.cos(a) * rad, HY + 0.24 + Math.sin(i * 2.3) * 0.03, Math.sin(a) * rad - 0.05);
+        curl.castShadow = true; headGroup.add(curl);
       }
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.46, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
-      cap.position.set(0, 3.45, 0); g.add(cap);
+    } else if (hs === 'buzz') {
+      scalpCap(0.6, 1.0, 0.295);
     } else {
-      const cut = char.hairStyle === 'buzz' ? 0.4 : 0.62;
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.47, 18, 14, 0, Math.PI * 2, 0, Math.PI * cut), hairMat);
-      cap.position.set(0, 3.45, -0.02); g.add(cap);
-      if (char.hairStyle === 'long') {
-        const back = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.2), hairMat);
-        back.position.set(0, 3.15, -0.34); g.add(back);
+      scalpCap(0.66, 1.06);                                   // short (also base for long)
+      if (hs === 'long') {
+        const back = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.34, 8, 14), hairMat);
+        back.scale.set(1.35, 1, 0.6); back.position.set(0, HY - 0.16, -0.16);
+        back.castShadow = true; headGroup.add(back);
       }
     }
   }
   // hat (matches the shirt colour like team gear)
   if (char.hat === 'cap') {
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), shirtMat);
-    crown.position.set(0, 3.5, 0); g.add(crown);
-    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 0.4), shirtMat);
-    brim.position.set(0, 3.52, 0.46); g.add(brim);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(0.305, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.46), shirtMat);
+    crown.scale.set(0.94, 1.02, 0.97); crown.position.set(0, HY + 0.07, 0); headGroup.add(crown);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.03, 14, 1, false, -Math.PI / 2, Math.PI), shirtMat);
+    brim.position.set(0, HY + 0.12, 0.28); brim.rotation.x = 0.1; headGroup.add(brim);
   } else if (char.hat === 'beanie') {
-    const beanie = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), shirtMat);
-    beanie.position.set(0, 3.46, 0); g.add(beanie);
-    const fold = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.07, 8, 20), shirtMat);
-    fold.position.set(0, 3.46, 0); fold.rotation.x = Math.PI / 2; g.add(fold);
+    const beanie = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), shirtMat);
+    beanie.scale.set(0.95, 1.05, 0.98); beanie.position.set(0, HY + 0.03, 0); headGroup.add(beanie);
+    const fold = new THREE.Mesh(new THREE.TorusGeometry(0.275, 0.045, 8, 20), shirtMat);
+    fold.position.set(0, HY + 0.02, 0); fold.rotation.x = Math.PI / 2; fold.scale.z = 1.4; headGroup.add(fold);
   }
-  // glasses
+  // glasses (with temple arms back to the ears)
   if (char.accessory === 'glasses') {
-    for (const gx of [-0.18, 0.18]) {
-      const lens = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.025, 8, 16), darkMat);
-      lens.position.set(gx, 3.46, 0.42); g.add(lens);
+    for (const gx of [-0.105, 0.105]) {
+      const lens = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.016, 8, 16), darkMat);
+      lens.position.set(gx, HY + 0.03, 0.265); headGroup.add(lens);
     }
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.03, 0.03), darkMat);
-    bridge.position.set(0, 3.46, 0.43); g.add(bridge);
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.018), darkMat);
+    bridge.position.set(0, HY + 0.03, 0.27); headGroup.add(bridge);
+    for (const gx of [-1, 1]) {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.22), darkMat);
+      arm.position.set(gx * 0.175, HY + 0.035, 0.15); headGroup.add(arm);
+    }
   }
+
+  // limb pivots + head/eyes + a random phase so a crowd doesn't move in unison;
+  // update() drives idle/walk/look/blink motion off this
+  g.userData.anim = { root: g, legs, arms, head: headGroup, eyes, phase: Math.random() * Math.PI * 2 };
   return g;
+}
+
+// Procedural idle/walk motion for a primitive avatar. `group` is the outer
+// avatar group; `moving` drives a stride with knee bend and counter-swinging
+// arms, otherwise a gentle breath/sway plus an idle head look-around. Everyone
+// carries a random phase so a crowd never moves in lockstep, and blinks on an
+// independent timer. No-op for GLB models (no anim data).
+function animateAvatar(group, dt, moving) {
+  const an = group && group.userData && group.userData.anim;
+  if (!an) return;
+  if (group.userData.t == null) group.userData.t = an.phase || 0;   // desync the crowd
+  group.userData.t += dt * (moving ? 7.5 : 2.0);
+  const t = group.userData.t;
+  const head = an.head;
+  if (moving) {
+    for (let i = 0; i < 2; i++) {
+      const ph = t + i * Math.PI;
+      const s = Math.sin(ph);
+      an.legs[i].hip.rotation.x = s * 0.5;
+      // knee bends as the leg swings through, straightens at plant
+      an.legs[i].knee.rotation.x = Math.max(0, Math.sin(ph - 1.1)) * 0.85;
+      an.arms[i].sh.rotation.x = -s * 0.38;
+      an.arms[i].el.rotation.x = -0.28 - Math.max(0, -s) * 0.25;
+    }
+    an.root.position.y = Math.abs(Math.cos(t)) * 0.045;   // step bob
+    if (head) {                                           // settle the head to face forward
+      const k = Math.min(1, dt * 6);
+      head.rotation.y += -head.rotation.y * k;
+      head.rotation.x += (Math.sin(t) * 0.03 - head.rotation.x) * k;
+      head.rotation.z += -head.rotation.z * k;
+    }
+  } else {
+    const s = Math.sin(t);
+    for (let i = 0; i < 2; i++) {
+      an.legs[i].hip.rotation.x = 0; an.legs[i].knee.rotation.x = 0;
+      an.arms[i].sh.rotation.x = s * 0.04 * (i ? 1 : -1);
+      an.arms[i].el.rotation.x = -0.16 + s * 0.02;
+    }
+    an.root.position.y = (s * 0.5 + 0.5) * 0.02;          // breathing
+    if (head) {                                           // slow, layered look-around
+      head.rotation.y = Math.sin(t * 0.35) * 0.34 + Math.sin(t * 0.13 + 1.7) * 0.14;
+      head.rotation.x = Math.sin(t * 0.27 + 0.6) * 0.07;
+      head.rotation.z = Math.sin(t * 0.19) * 0.03;
+    }
+  }
+  // blink: eyes snap shut for ~0.13s, then reschedule 2-6s out (real time, so
+  // it reads the same whether the avatar is walking or standing still)
+  const eyes = an.eyes;
+  if (eyes && eyes.length) {
+    let bt = group.userData.blinkTimer;
+    if (bt == null) bt = 1.5 + Math.random() * 4;
+    bt -= dt;
+    let open = 1;
+    if (bt <= 0) {
+      const p = -bt / 0.13;                               // 0->1 over the blink
+      if (p >= 1) bt = 2 + Math.random() * 4;             // done; schedule the next
+      else open = Math.abs(Math.cos(p * Math.PI));        // 1 -> 0 -> 1
+    }
+    group.userData.blinkTimer = bt;
+    for (const e of eyes) e.scale.y = open * (e.userData.baseSy || 1);
+  }
 }
 
 function buildAvatar(char) {
@@ -526,7 +788,9 @@ function buildAvatar(char) {
     m.scale.setScalar(avatarModel.userData.fitScale || 1);
     g.add(m);
   } else {
-    g.add(buildFigure(char));
+    const fig = buildFigure(char);
+    g.add(fig);
+    g.userData.anim = fig.userData.anim;   // surface limb pivots for animateAvatar
   }
   const label = makeLabelSprite(`${char.emoji || '🙂'} ${char.name || 'Collector'}`, '');
   label.position.set(0, 4.2, 0);
@@ -553,11 +817,16 @@ function buildWorld(remoteBooths) {
 
   lastRemoteBooths = Array.isArray(remoteBooths) ? remoteBooths : [];
   let list = lastRemoteBooths.filter(b => b && b.name)
-    .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [], layout: Array.isArray(b.layout) ? b.layout : null, isYou: !!mine && b.username === mine }));
+    .map(b => ({ owner: b.name, username: b.username, emoji: b.emoji, color: b.color, veriswap: b.veriswap, cards: Array.isArray(b.cards) ? b.cards : [], layout: Array.isArray(b.layout) ? b.layout : null, hidden: Array.isArray(b.hidden) ? b.hidden : [], isYou: !!mine && b.username === mine }));
   const myBooth = list.find(b => b.isYou);
   if (myBooth) {
     myBooth.owner = me.name || myBooth.owner; myBooth.emoji = me.emoji || myBooth.emoji;
-    myBooth.color = me.color || myBooth.color; myBooth.veriswap = settings.veriswap || myBooth.veriswap; myBooth.cards = localCards;
+    myBooth.color = me.color || myBooth.color; myBooth.veriswap = settings.veriswap || myBooth.veriswap;
+    // local showcase is the freshest copy of hand-picked cards, but keep the
+    // server-merged eBay listings (source:'ebay') so a linked seller sees
+    // their own booth the way visitors do
+    const ebayCards = (myBooth.cards || []).filter(c => c && c.source === 'ebay');
+    myBooth.cards = localCards.concat(ebayCards);
   } else {
     list.push({ owner: me.name || 'You', username: mine, emoji: me.emoji, color: me.color, veriswap: settings.veriswap || '', cards: localCards, isYou: true });
   }
@@ -565,6 +834,10 @@ function buildWorld(remoteBooths) {
     const have = new Set(list.map(b => (b.owner || '').toLowerCase()));
     for (const d of demoBooths()) { if (!have.has(d.owner.toLowerCase())) list.push(Object.assign({ isYou: false }, d)); }
   }
+  // apply each booth's hide-from-table choices (yours from local storage —
+  // the freshest copy — everyone else's from the server mirror)
+  const localHidden = getHiddenCards();
+  for (const b of list) b.cards = filterHiddenCards(b.cards, b.isYou ? localHidden : b.hidden).slice(0, 24);
 
   clearGroup(worldGroup);
   // the old build's card photos were disposed by clearGroup; drop the cache so
@@ -589,7 +862,9 @@ function buildWorld(remoteBooths) {
     // environment map for realistic reflections)
     alu: new THREE.MeshStandardMaterial({ color: 0xd7dade, metalness: 0.9, roughness: 0.34 }),
     aluDark: new THREE.MeshStandardMaterial({ color: 0x111319, metalness: 0.25, roughness: 0.85 }),
-    glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.16 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0xeaf2ff, metalness: 0.0, roughness: 0.04, transparent: true, opacity: 0.24, envMapIntensity: 1.6 }),
+    // additive diagonal glint laid over showcase glass tops
+    glassStreak: new THREE.MeshBasicMaterial({ map: makeGlassStreakTex(), transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false }),
     // glossy black acrylic base + near-clear acrylic for the upright card stands
     blackAcrylic: new THREE.MeshStandardMaterial({ color: 0x0a0a0c, metalness: 0.3, roughness: 0.12 }),
     clearAcrylic: new THREE.MeshStandardMaterial({ color: 0xeef4ff, metalness: 0.0, roughness: 0.03, transparent: true, opacity: 0.14 }),
@@ -700,19 +975,6 @@ function computeHall() {
   };
 }
 
-// Soft radial glow texture for faked light reflections on the concrete.
-let _glowTex = null;
-function glowTex() {
-  if (_glowTex) return _glowTex;
-  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
-  const c = cv.getContext('2d');
-  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
-  g.addColorStop(0, 'rgba(255,250,235,1)'); g.addColorStop(1, 'rgba(255,250,235,0)');
-  c.fillStyle = g; c.fillRect(0, 0, 64, 64);
-  _glowTex = new THREE.CanvasTexture(cv);
-  return _glowTex;
-}
-
 // Soft dark radial texture for grounding contact-shadows under tables.
 let _shadowTex = null;
 function shadowTex() {
@@ -728,92 +990,79 @@ function shadowTex() {
 
 // Procedural polished-concrete texture (used until/unless a real texture file
 // is dropped in). Mottled gray with subtle speckle and saw-cut joint lines.
-function makeConcreteTex() {
+// Speckled convention-hall carpet: a light silver-blue base scattered with
+// tiny lighter/darker fiber flecks and faint broad mottling so big floors
+// don't band. Kept bright so the hall doesn't go cave-dark and the black
+// tables read against it.
+function makeCarpetTex() {
   const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
   const c = cv.getContext('2d');
-  c.fillStyle = '#a9aaad'; c.fillRect(0, 0, s, s);
-  for (let i = 0; i < 2600; i++) {
-    const x = Math.random() * s, y = Math.random() * s, r = Math.random() * 2.6 + 0.4;
-    const v = 150 + (Math.random() * 90) | 0;
-    c.fillStyle = `rgba(${v},${v},${v + 3},${Math.random() * 0.05})`;
+  c.fillStyle = '#aab3c4'; c.fillRect(0, 0, s, s);
+  for (let i = 0; i < 9000; i++) {                       // fiber flecks
+    const x = Math.random() * s, y = Math.random() * s, r = 0.5 + Math.random() * 1.1;
+    const lite = Math.random() < 0.5;
+    const v = lite ? 205 + Math.random() * 40 : 105 + Math.random() * 35;
+    c.fillStyle = `rgba(${v | 0},${(v + 5) | 0},${(v + 14) | 0},${0.12 + Math.random() * 0.2})`;
     c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   }
-  for (let i = 0; i < 70; i++) {
-    const x = Math.random() * s, y = Math.random() * s, r = 24 + Math.random() * 70;
+  for (let i = 0; i < 46; i++) {                         // broad wear mottling
+    const x = Math.random() * s, y = Math.random() * s, r = 30 + Math.random() * 80;
     const g = c.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, 'rgba(120,122,128,0.05)'); g.addColorStop(1, 'rgba(120,122,128,0)');
+    const d = Math.random() < 0.5;
+    g.addColorStop(0, d ? 'rgba(75,85,110,0.07)' : 'rgba(238,242,250,0.08)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
     c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
   }
-  c.strokeStyle = 'rgba(70,72,78,0.45)'; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(0, 1); c.lineTo(s, 1); c.moveTo(1, 0); c.lineTo(1, s); c.stroke();
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
 }
 
-// Warm wood-plank texture for the wall wainscot: vertical planks with grain
-// streaks and dark joint lines. One shared image, cloned per wall so each can
-// set its own horizontal repeat.
-let _woodTex = null;
-function makeWoodTex() {
-  if (_woodTex) return _woodTex;
-  const s = 512, cv = document.createElement('canvas'); cv.width = cv.height = s;
+// Pleated fabric for the pipe-and-drape walls: soft vertical folds (offset
+// sine waves so pleats read hand-hung, not machine-perfect) on show-black cloth.
+let _drapeTex = null;
+function makeDrapeTex() {
+  if (_drapeTex) return _drapeTex;
+  const w = 512, hgt = 256, cv = document.createElement('canvas'); cv.width = w; cv.height = hgt;
   const c = cv.getContext('2d');
-  const planks = 8, pw = s / planks;
-  for (let i = 0; i < planks; i++) {
-    const base = 78 + Math.random() * 26;
-    c.fillStyle = `rgb(${(base + 34) | 0},${base | 0},${Math.max(0, base - 28) | 0})`;
-    c.fillRect(i * pw, 0, pw, s);
-    for (let g = 0; g < 36; g++) {
-      c.strokeStyle = `rgba(45,28,14,${Math.random() * 0.16})`; c.lineWidth = 1 + Math.random() * 1.4;
-      const gx = i * pw + Math.random() * pw;
-      c.beginPath(); c.moveTo(gx, 0);
-      c.bezierCurveTo(gx + (Math.random() * 8 - 4), s * 0.34, gx + (Math.random() * 8 - 4), s * 0.68, gx, s);
-      c.stroke();
-    }
-    c.fillStyle = 'rgba(18,11,5,0.55)'; c.fillRect(i * pw + pw - 2, 0, 2, s);  // joint shadow
+  for (let x = 0; x < w; x++) {
+    // two overlapping fold frequencies + a little noise = natural pleats
+    const p = Math.sin(x * 0.10) * 0.6 + Math.sin(x * 0.033 + 1.7) * 0.4;
+    const v = 26 + p * 11 + Math.random() * 2.5;
+    c.fillStyle = `rgb(${v | 0},${(v + 1) | 0},${(v + 4) | 0})`;
+    c.fillRect(x, 0, 1, hgt);
   }
+  // slight darkening toward the hem so the cloth reads grounded
+  const g = c.createLinearGradient(0, 0, 0, hgt);
+  g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
+  c.fillStyle = g; c.fillRect(0, 0, w, hgt);
   const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace;
-  _woodTex = t; return t;
+  _drapeTex = t; return t;
 }
 
-// Vertical gradient (warm, bright at the base) used to fake the under-light
-// washing up the wood paneling.
-let _upGlowTex = null;
-function upGlowTex() {
-  if (_upGlowTex) return _upGlowTex;
-  const cv = document.createElement('canvas'); cv.width = 8; cv.height = 64;
-  const c = cv.getContext('2d');
-  const g = c.createLinearGradient(0, 64, 0, 0);   // bottom -> top
-  g.addColorStop(0, 'rgba(255,206,138,0.85)'); g.addColorStop(0.35, 'rgba(255,196,128,0.28)'); g.addColorStop(1, 'rgba(255,196,128,0)');
-  c.fillStyle = g; c.fillRect(0, 0, 8, 64);
-  _upGlowTex = new THREE.CanvasTexture(cv); return _upGlowTex;
-}
-
-// Floor material. Shows the procedural concrete immediately, then upgrades to
-// real PBR maps if present. Drop tileable files in /public/textures/ named
-// concrete-color.jpg / concrete-normal.jpg / concrete-rough.jpg (or set
-// window.FLOOR_CONCRETE = { color, normal, rough, repeat } with URLs).
+// Floor material — convention-hall carpet (dead matte: carpet doesn't reflect,
+// which is half of what killed the "hotel lobby" look). Shows the procedural
+// speckled carpet immediately, then upgrades to real PBR maps if present. Drop
+// tileable files in /public/textures/ named carpet-color.jpg / carpet-normal.jpg
+// / carpet-rough.jpg (or set window.FLOOR_CARPET = { color, normal, rough, repeat }).
 function makeFloorMaterial(h) {
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   const sizeX = h.maxX - h.minX + 8, sizeZ = h.maxZ - h.minZ + 8;
-  const repX = Math.max(2, Math.round(sizeX / 6)), repZ = Math.max(2, Math.round(sizeZ / 6));
-  // mid-dark grey tint so the concrete reads as a real polished slab, not washed
-  // out by the bright hall lighting/reflections (multiplies the texture tone)
-  const mat = new THREE.MeshStandardMaterial({ color: 0x6f7276, roughness: 0.32, metalness: 0.0, envMapIntensity: 0.65 });
+  const repX = Math.max(3, Math.round(sizeX / 4)), repZ = Math.max(3, Math.round(sizeZ / 4));
+  const mat = new THREE.MeshStandardMaterial({ roughness: 1.0, metalness: 0.0, envMapIntensity: 0.12 });
 
-  const proc = makeConcreteTex();
+  const proc = makeCarpetTex();
   proc.repeat.set(repX, repZ); proc.anisotropy = maxAniso; proc.colorSpace = THREE.SRGBColorSpace;
   mat.map = proc;
 
-  const cfg = window.FLOOR_CONCRETE || {};
+  const cfg = window.FLOOR_CARPET || {};
   if (cfg !== false) {
     const loader = new THREE.TextureLoader();
     const rx = cfg.repeat || repX, rz = cfg.repeat || repZ;
     // mirror-tile dropped-in textures so repeats don't show a visible seam grid
     const setup = (t, srgb) => { t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping; t.repeat.set(rx, rz); t.anisotropy = maxAniso; if (srgb) t.colorSpace = THREE.SRGBColorSpace; };
-    loader.load(cfg.color || '/textures/concrete-color.jpg', t => { setup(t, true); mat.map = t; mat.needsUpdate = true; }, undefined, () => {});
-    loader.load(cfg.normal || '/textures/concrete-normal.jpg', t => { setup(t, false); mat.normalMap = t; mat.needsUpdate = true; }, undefined, () => {});
-    loader.load(cfg.rough || '/textures/concrete-rough.jpg', t => { setup(t, false); mat.roughnessMap = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.color || '/textures/carpet-color.jpg', t => { setup(t, true); mat.map = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.normal || '/textures/carpet-normal.jpg', t => { setup(t, false); mat.normalMap = t; mat.needsUpdate = true; }, undefined, () => {});
+    loader.load(cfg.rough || '/textures/carpet-rough.jpg', t => { setup(t, false); mat.roughnessMap = t; mat.needsUpdate = true; }, undefined, () => {});
   }
   return mat;
 }
@@ -835,16 +1084,16 @@ function makeWallMaterial() {
   return mat;
 }
 
-// Build the convention hall: polished concrete floor, tall light-gray walls
-// (front entrance gap), dark industrial ceiling with trusses, and a grid of
-// bright ceiling light fixtures — with faint light pools on the floor so the
-// concrete reads as polished and reflective like a real expo hall.
+// Build the convention hall: speckled show carpet, tall light-gray walls
+// (front entrance gap) dressed with pipe-and-drape, dark industrial ceiling
+// with trusses, and a grid of cool fluorescent ceiling fixtures — flat, even
+// trade-show light rather than warm hotel accent lighting.
 function buildRoom(group, h) {
   const cx = (h.minX + h.maxX) / 2, cz = (h.minZ + h.maxZ) / 2;
   const w = h.maxX - h.minX + 8, d = h.maxZ - h.minZ + 8;
   const CEIL = 15;
 
-  // polished concrete floor (procedural now; upgrades to a dropped-in texture)
+  // convention carpet (procedural now; upgrades to a dropped-in texture)
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), makeFloorMaterial(h));
   floor.rotation.x = -Math.PI / 2; floor.position.set(cx, 0, cz); floor.receiveShadow = true; group.add(floor);
 
@@ -863,7 +1112,7 @@ function buildRoom(group, h) {
   // BCW Supplies sponsor banner, centred high on the left wall
   addSideWallBanner(group, h, CEIL);
 
-  // wood wainscot paneling with warm under-lighting + greenery on the walls
+  // pipe-and-drape along every solid wall
   decorateWalls(group, h);
 
   // dark industrial ceiling + a few truss beams
@@ -876,22 +1125,21 @@ function buildRoom(group, h) {
     beam.position.set(cx, CEIL - 0.4, bz); group.add(beam);
   }
 
-  // ceiling light fixtures (emissive) + faint floor reflections under each
+  // ceiling light fixtures (emissive) — cool fluorescent strips; no floor
+  // glow pools since carpet doesn't reflect like polished concrete did
   const fixGeo = new THREE.PlaneGeometry(2.4, 0.55);
-  const fixMat = new THREE.MeshBasicMaterial({ color: 0xfff4dc });
-  const glowGeo = new THREE.PlaneGeometry(3.4, 3.4);
-  const glowMat = new THREE.MeshBasicMaterial({ map: glowTex(), transparent: true, opacity: 0.035, blending: THREE.AdditiveBlending, depthWrite: false });
+  const fixMat = new THREE.MeshBasicMaterial({ color: 0xf2f6fb });
   const stepX = 8, stepZ = 7;
   for (let gx = h.minX + 5; gx <= h.maxX - 5; gx += stepX) {
     for (let gz = h.minZ + 5; gz <= h.maxZ - 5; gz += stepZ) {
       const fix = new THREE.Mesh(fixGeo, fixMat); fix.rotation.x = Math.PI / 2; fix.position.set(gx, CEIL - 0.25, gz); group.add(fix);
-      const glow = new THREE.Mesh(glowGeo, glowMat); glow.rotation.x = -Math.PI / 2; glow.position.set(gx, 0.04, gz); group.add(glow);
     }
   }
 
-  // a couple of soft fill lights so the hall isn't flat (no shadows — cheap)
+  // a couple of soft fill lights so the hall isn't flat (no shadows — cheap);
+  // near-white so the hall reads fluorescent, not warm hotel ambience
   for (const px of [h.minX + ww * 0.3, h.maxX - ww * 0.3]) {
-    const pl = new THREE.PointLight(0xfff4e0, 0.5, 80, 1.6);
+    const pl = new THREE.PointLight(0xf2f5fa, 0.5, 80, 1.6);
     pl.position.set(px, CEIL - 2, cz); group.add(pl);
   }
 }
@@ -1003,94 +1251,61 @@ function setWallPos(mesh, s, alongPos, y, depth) {
   if (s.axis === 'x') mesh.position.set(alongPos, y, s.fixed + s.inward * depth);
   else mesh.position.set(s.fixed + s.inward * depth, y, alongPos);
 }
-// A low-poly foliage cluster (a few faceted green blobs) for greenery.
-function addBush(group, x, y, z, scale, mat) {
-  for (let i = 0; i < 4; i++) {
-    const r = (0.26 + Math.random() * 0.2) * scale;
-    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), mat);
-    blob.position.set(x + (Math.random() - 0.5) * 0.5 * scale, y + (Math.random() - 0.2) * 0.5 * scale, z + (Math.random() - 0.5) * 0.4 * scale);
-    blob.castShadow = true; group.add(blob);
-  }
-}
-
-// Decorate every solid wall with wood wainscot paneling, a warm under-light
-// strip + up-glow, and greenery (floor planters and wall-mounted foliage).
+// Dress every solid wall with pipe-and-drape — the fabric backdrop wall every
+// real card show rents: pleated black drape hung from an aluminum top pipe on
+// slim uprights. (Replaces the old hotel-style wood wainscot + planters.)
 function decorateWalls(group, h) {
   const mats = {
-    baseWood: makeWoodTex(),
-    rail: new THREE.MeshStandardMaterial({ color: 0x3a2616, roughness: 0.6 }),
-    glow: new THREE.MeshBasicMaterial({ map: upGlowTex(), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }),
-    strip: new THREE.MeshBasicMaterial({ color: 0xffce8a }),
-    green: new THREE.MeshStandardMaterial({ color: 0x3f7d3a, roughness: 0.85, flatShading: true }),
-    greenDk: new THREE.MeshStandardMaterial({ color: 0x2f6630, roughness: 0.85, flatShading: true }),
-    pot: new THREE.MeshStandardMaterial({ color: 0x1b1b20, roughness: 0.8 }),
+    drape: new THREE.MeshStandardMaterial({ map: makeDrapeTex(), roughness: 0.98 }),
+    pipe: new THREE.MeshStandardMaterial({ color: 0xc2c6cc, metalness: 0.85, roughness: 0.38 }),
   };
-  const WH = 7.0, off = 0.34, panelT = 0.12;
   const segs = [
     { axis: 'x', fixed: h.maxZ, from: h.minX, to: h.maxX, inward: -1 },          // back wall
     { axis: 'z', fixed: h.minX, from: h.minZ, to: h.maxZ, inward: +1 },          // left wall
     { axis: 'z', fixed: h.maxX, from: h.minZ, to: h.maxZ, inward: -1 },          // right wall
     { axis: 'x', fixed: h.minZ, from: h.minX, to: h.maxX, inward: +1 },          // front wall (entrance filled in)
   ];
-  for (const s of segs) addWoodSegment(group, s, WH, off, panelT, mats);
+  for (const s of segs) addDrapeSegment(group, s, mats);
 }
 
-function addWoodSegment(group, s, WH, off, panelT, mats) {
+// One wall's worth of pipe-and-drape. Height is scaled to the world's oversized
+// avatars (~3.7m tall) the way an 8ft drape reads against a real person.
+function addDrapeSegment(group, s, mats) {
+  const DRAPE_H = 5.0, off = 0.3;
   const len = Math.abs(s.to - s.from), center = (s.from + s.to) / 2;
-  // wood wainscot panel (own cloned texture so the repeat suits the length)
-  const wtex = mats.baseWood.clone(); wtex.needsUpdate = true;
-  wtex.wrapS = wtex.wrapT = THREE.RepeatWrapping; wtex.repeat.set(Math.max(1, Math.round(len / 3)), 1);
-  wtex.colorSpace = THREE.SRGBColorSpace; wtex.anisotropy = aniso();
-  const woodMat = new THREE.MeshStandardMaterial({ map: wtex, roughness: 0.72, metalness: 0.04 });
-  const woodGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, WH, panelT) : new THREE.BoxGeometry(panelT, WH, len);
-  const panel = new THREE.Mesh(woodGeo, woodMat); panel.receiveShadow = true;
-  setWallPos(panel, s, center, WH / 2, off); group.add(panel);
 
-  // dark wood top rail
-  const railGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.18, panelT + 0.06) : new THREE.BoxGeometry(panelT + 0.06, 0.18, len);
-  const rail = new THREE.Mesh(railGeo, mats.rail); setWallPos(rail, s, center, WH, off); group.add(rail);
+  // pleated cloth (own cloned texture so the pleat repeat suits the length)
+  const tex = mats.drape.map.clone(); tex.needsUpdate = true;
+  tex.repeat.set(Math.max(2, Math.round(len / 2.4)), 1); tex.anisotropy = aniso();
+  const cloth = mats.drape.clone(); cloth.map = tex;
+  const geo = s.axis === 'x' ? new THREE.BoxGeometry(len, DRAPE_H, 0.09) : new THREE.BoxGeometry(0.09, DRAPE_H, len);
+  const drape = new THREE.Mesh(geo, cloth); drape.receiveShadow = true;
+  setWallPos(drape, s, center, DRAPE_H / 2, off); group.add(drape);
 
-  // warm under-light reveal along the TOP of the wood, plus an up-glow that
-  // washes the painted wall above it (this is the glowing line in the photo)
-  const stripGeo = s.axis === 'x' ? new THREE.BoxGeometry(len, 0.1, 0.09) : new THREE.BoxGeometry(0.09, 0.1, len);
-  const strip = new THREE.Mesh(stripGeo, mats.strip); setWallPos(strip, s, center, WH - 0.2, off + 0.08); group.add(strip);
-  const glowH = 3.4, gy = WH + glowH / 2 - 0.25;
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(len, glowH), mats.glow);
-  if (s.axis === 'x') { glow.position.set(center, gy, s.fixed + s.inward * (off + 0.09)); glow.rotation.y = s.inward > 0 ? 0 : Math.PI; }
-  else { glow.position.set(s.fixed + s.inward * (off + 0.09), gy, center); glow.rotation.y = s.inward > 0 ? Math.PI / 2 : -Math.PI / 2; }
-  group.add(glow);
+  // aluminum top pipe the cloth hangs from
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, len, 10), mats.pipe);
+  if (s.axis === 'x') pipe.rotation.z = Math.PI / 2; else pipe.rotation.x = Math.PI / 2;
+  setWallPos(pipe, s, center, DRAPE_H + 0.06, off); group.add(pipe);
 
-  // greenery spaced along the wall: a floor planter with a bush, plus a
-  // wall-mounted foliage cluster kept low on the paneling
-  const spots = Math.max(2, Math.round(len / 12));
-  for (let i = 0; i < spots; i++) {
-    const ap = s.from + ((i + 0.5) / spots) * (s.to - s.from);
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.5, 12), mats.pot);
-    setWallPos(pot, s, ap, 0.25, 0.7); pot.castShadow = true; group.add(pot);
-    addBush(group, pot.position.x, 0.62, pot.position.z, 1.05, i % 2 ? mats.green : mats.greenDk);
-    // wall greenery, mounted low on the wood
-    const wx = s.axis === 'x' ? ap : s.fixed + s.inward * (off + 0.18);
-    const wz = s.axis === 'x' ? s.fixed + s.inward * (off + 0.18) : ap;
-    addBush(group, wx, 1.7, wz, 0.85, i % 2 ? mats.greenDk : mats.green);
+  // slim uprights every ~7m, feet included, standing just in front of the cloth
+  const posts = Math.max(2, Math.round(len / 7));
+  for (let i = 0; i <= posts; i++) {
+    const ap = s.from + (i / posts) * (s.to - s.from);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, DRAPE_H + 0.06, 8), mats.pipe);
+    setWallPos(post, s, ap, (DRAPE_H + 0.06) / 2, off + 0.1); group.add(post);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 0.05, 10), mats.pipe);
+    setWallPos(foot, s, ap, 0.025, off + 0.1); group.add(foot);
   }
 }
 
 // A vacant ("available") table — just the white-clothed table, cheap.
 function buildVacantTable(grp) {
-  const cloth = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W, TABLE_H, TABLE_D),
-    new THREE.MeshStandardMaterial({ color: 0xe7e9ee, roughness: 0.95 }));
+  // empty booths get the same black cloth, a touch darker so they read as vacant
+  const cloth = roundedBox(TABLE_W, TABLE_H, TABLE_D, 0.08,
+    new THREE.MeshStandardMaterial({ color: 0x0e0f13, roughness: 0.97 }));
   cloth.position.y = TABLE_H / 2; cloth.castShadow = true; cloth.receiveShadow = true; grp.add(cloth);
 }
 
-function makeNpcs() {
-  npcs.forEach(a => scene.remove(a.group)); npcs = [];
-  for (const nm of ['Browser', 'Collector', 'Trader']) {
-    const a = buildAvatar(randomCharacter(nm));
-    a.x = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6);
-    a.z = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6);
-    a.tx = a.x; a.tz = a.z; a.repick = 0; a.group.position.set(a.x, 0, a.z); npcs.push(a);
-  }
-}
 
 // ----------------------------------------------------- movement / collide
 function blocked(nx, nz) {
@@ -1164,14 +1379,19 @@ function update(dt) {
     nearBooth = nearestBooth();
   }
 
-  for (const n of npcs) {
-    if (n.repick <= 0 || Math.hypot(n.tx - n.x, n.tz - n.z) < 0.5) { n.tx = bounds.minX + 3 + Math.random() * (bounds.maxX - bounds.minX - 6); n.tz = bounds.minZ + 3 + Math.random() * (bounds.maxZ - bounds.minZ - 6); n.repick = 120 + Math.random() * 180; }
-    n.repick--;
-    const a = Math.atan2(n.tx - n.x, n.tz - n.z);
-    n.x += Math.sin(a) * 0.04; n.z += Math.cos(a) * 0.04;
-    n.group.position.set(n.x, 0, n.z); n.group.rotation.y = a; n.group.visible = remote.size === 0;
+  for (const r of remote.values()) {
+    const dx = r.tx - r.x, dz = r.tz - r.z, moving = Math.hypot(dx, dz) > 0.02;
+    r.x += dx * 0.2; r.z += dz * 0.2; r.group.position.set(r.x, 0, r.z);
+    if (moving) {
+      // turn smoothly toward the heading (shortest way around) instead of snapping
+      const target = Math.atan2(dx, dz);
+      let diff = target - r.group.rotation.y;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      r.group.rotation.y += diff * Math.min(1, dt * 9);
+    }
+    animateAvatar(r.group, dt, moving);
   }
-  for (const r of remote.values()) { r.x += (r.tx - r.x) * 0.2; r.z += (r.tz - r.z) * 0.2; r.group.position.set(r.x, 0, r.z); }
+  if (playerObj && camMode !== 'fp') animateAvatar(playerObj.group, dt, false);
 
   updatePrompt();
 }
@@ -1193,7 +1413,7 @@ function loop() {
   rafId = requestAnimationFrame(loop);
 }
 function start() { if (!running) { running = true; clock.getDelta(); rafId = requestAnimationFrame(loop); } }
-function stop() { running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; disconnectPresence(); }
+function stop() { running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; voiceStop(); disconnectPresence(); }
 
 // ----------------------------------------------------- three setup
 // Render at a slightly super-sampled ratio so the floor stays crisp even on
@@ -1387,11 +1607,13 @@ function closeBooth() { document.getElementById('floor-booth-modal')?.classList.
 // ----------------------------------------------------- booth editor
 let editorLayout = [];               // working copy while the editor is open
 let editorTool = 'showcase';         // currently selected fixture from the palette
+let editorHidden = new Set();        // working copy of hidden card keys
 function openBoothEditor() {
   if (!getCharacter()) { renderCharCreate(); return; }
   closeBooth();
   editorLayout = resolveLayout({ isYou: true });
   editorTool = 'showcase';
+  editorHidden = getHiddenCards();
   renderBoothEditor();
   document.getElementById('floor-booth-editor')?.classList.remove('hidden');
 }
@@ -1411,10 +1633,33 @@ function renderBoothEditor() {
         <span class="floor-spot-label">${t === 'empty' ? 'Empty' : escHtml(m.label)}</span>
       </button>`;
   }).join('');
+  // card picker: every card in your display pool (showcase + synced eBay
+  // listings); tap to show/hide it on the table
+  const cardsEl = document.getElementById('floor-editor-cards');
+  if (cardsEl) {
+    const pool = myMergedCards();
+    cardsEl.innerHTML = pool.length ? pool.map(c => {
+      const k = boothCardKey(c);
+      const on = !editorHidden.has(k);
+      const img = c.imageUrl
+        ? `<img class="floor-cardpick-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+        : '<span class="floor-cardpick-img floor-cardpick-noimg">🃏</span>';
+      const price = (typeof c.price === 'number' && c.price > 0) ? '$' + c.price.toFixed(2)
+        : (c.price && !isNaN(parseFloat(c.price)) ? '$' + parseFloat(c.price).toFixed(2) : '');
+      const src = c.source === 'ebay' ? 'eBay' : '';
+      return `<button type="button" class="floor-cardpick${on ? ' on' : ''}" data-cardkey="${escHtml(k)}" title="${escHtml(c.title || 'Card')}">
+          ${img}
+          <span class="floor-cardpick-title">${escHtml(c.title || 'Card')}</span>
+          <span class="floor-cardpick-meta">${[src, price].filter(Boolean).join(' · ')}</span>
+          <span class="floor-cardpick-state">${on ? '✓ Shown' : 'Hidden'}</span>
+        </button>`;
+    }).join('') : '<p class="floor-cardpick-empty">No cards yet — add cards in the Sell tab, or link your eBay store there to auto-fill your booth.</p>';
+  }
 }
 function boothEditorClear() { editorLayout = new Array(BOOTH_SLOTS).fill('empty'); renderBoothEditor(); }
 function saveBoothEditor() {
   saveBoothLayout(editorLayout.slice());
+  saveHiddenCards(editorHidden);
   closeBoothEditor();
   buildWorld(lastRemoteBooths);              // re-render with the new layout
   const mine = booths.find(b => b.isYou);
@@ -1535,20 +1780,31 @@ function connectPresence() {
     });
     lastSent = { x: null, z: null };
     moveTimer = setInterval(() => { const x = round1(player.x), z = round1(player.z); if (x === lastSent.x && z === lastSent.z) return; lastSent = { x, z }; sendWs({ t: 'move', x, y: z }); }, 100);
+    // If voice was on before a reconnect, rejoin so peers re-offer to our new id.
+    if (voice.active) sendWs({ t: 'voice-join' });
   });
   sock.addEventListener('message', evt => {
     let msg; try { msg = JSON.parse(evt.data); } catch (_) { return; }
     if (msg.t === 'welcome') { wsId = msg.id; for (const r of remote.values()) scene.remove(r.group); remote.clear(); for (const p of (msg.players || [])) addRemote(p); }
     else if (msg.t === 'join' && msg.player) addRemote(msg.player);
     else if (msg.t === 'move') { const r = remote.get(msg.id); if (r) { r.tx = msg.x; r.tz = msg.y; } }
-    else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } }
+    else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } closeVoicePeer(msg.id); }
     else if (msg.t === 'chat') { onFloorChat(msg); return; }
     else if (msg.t === 'chatblocked') { floorChatNotice('Message blocked: ' + (msg.reason === 'spam' ? 'looks like spam.' : 'language not allowed.')); return; }
+    else if (msg.t === 'voice-peers') { (async () => { for (const p of (msg.peers || [])) { const e = await createVoicePeer(p.id, true); if (e) e.muted = !!p.muted; } updateVoiceUi(); })(); return; }
+    else if (msg.t === 'voice-join') { updateVoiceUi(); return; }
+    else if (msg.t === 'voice-leave') { closeVoicePeer(msg.id); updateVoiceUi(); return; }
+    else if (msg.t === 'voice-mute') { const e = voice.peers.get(msg.id); if (e) e.muted = !!msg.muted; updateVoiceUi(); return; }
+    else if (msg.t === 'voice-signal') { onVoiceSignal(msg.from, msg.data); return; }
     updateOnlineCount();
   });
   const onClose = () => {
     if (moveTimer) { clearInterval(moveTimer); moveTimer = null; }
     if (ws === sock) ws = null;
+    // The signaling socket died: every peer connection is now stale. Drop them
+    // (but keep the local mic + voice.active so we re-join on reconnect).
+    for (const id of Array.from(voice.peers.keys())) closeVoicePeer(id);
+    updateVoiceUi();
     for (const r of remote.values()) scene.remove(r.group); remote.clear(); updateOnlineCount();
     if (running && !reconnectTimer) reconnectTimer = setTimeout(() => { reconnectTimer = null; if (running) connectPresence(); }, 2500);
   };
@@ -1589,7 +1845,208 @@ function disconnectPresence() {
 function sendWs(o) { if (ws && ws.readyState === 1) { try { ws.send(JSON.stringify(o)); } catch (_) {} } }
 function round1(n) { return Math.round(n * 10) / 10; }
 
+// ----------------------------------------------------- voice chat
+// Live, in-world voice for everyone on the floor. Audio travels peer-to-peer
+// over WebRTC; the FloorRoom socket is only the signaling relay (offer/answer +
+// ICE). Turning the mic on makes you a "voice peer"; the newcomer always sends
+// the offers (the server hands them the existing-peer list) so two sides never
+// offer at once. This is a full mesh — fine for a modest booth's worth of people.
+
+async function voiceStart() {
+  if (voice.active) return;
+  if (typeof RTCPeerConnection === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Voice chat isn’t supported in this browser.'); return;
+  }
+  if (!ws || ws.readyState !== 1) { alert('Still connecting to the floor — try again in a moment.'); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false,
+    });
+  } catch (_) { alert('Microphone access is needed to talk on the floor. Allow the mic and try again.'); return; }
+  voice.active = true; voice.muted = false; voice.stream = stream;
+  ensureAudioCtx();
+  attachMeter(null, stream, true);     // local "you're talking" meter
+  sendWs({ t: 'voice-join' });         // server replies with voice-peers (existing talkers)
+  updateVoiceUi();
+}
+
+function voiceStop() {
+  if (!voice.active && !voice.stream && !voice.peers.size) return;
+  if (ws && ws.readyState === 1) sendWs({ t: 'voice-leave' });
+  for (const id of Array.from(voice.peers.keys())) closeVoicePeer(id);
+  if (voice.localMeter) { voice.localMeter.stop(); voice.localMeter = null; }
+  if (voice.stream) { voice.stream.getTracks().forEach(t => { try { t.stop(); } catch (_) {} }); voice.stream = null; }
+  voice.active = false; voice.muted = false; voice.localSpeaking = false;
+  updateVoiceUi();
+}
+
+function toggleFloorVoice() { if (voice.active) voiceStop(); else voiceStart(); }
+function toggleVoiceMute() {
+  if (!voice.active || !voice.stream) return;
+  voice.muted = !voice.muted;
+  voice.stream.getAudioTracks().forEach(t => { t.enabled = !voice.muted; });
+  if (voice.muted) voice.localSpeaking = false;
+  // tell everyone on voice so the mute badge shows on their side too
+  if (ws && ws.readyState === 1) sendWs({ t: 'voice-mute', muted: voice.muted });
+  updateVoiceUi();
+}
+
+async function createVoicePeer(id, initiator) {
+  if (!id || id === wsId) return null;
+  if (voice.peers.has(id)) return voice.peers.get(id);
+  let pc;
+  try { pc = new RTCPeerConnection({ iceServers: VOICE_ICE }); } catch (_) { return null; }
+  const entry = { pc, audioEl: null, speaking: false, muted: false, meter: null };
+  voice.peers.set(id, entry);
+  if (voice.stream) for (const t of voice.stream.getTracks()) { try { pc.addTrack(t, voice.stream); } catch (_) {} }
+  pc.onicecandidate = (e) => { if (e.candidate) sendWs({ t: 'voice-signal', to: id, data: { candidate: e.candidate } }); };
+  pc.ontrack = (e) => attachRemoteAudio(id, e.streams && e.streams[0]);
+  pc.onconnectionstatechange = () => {
+    const st = pc.connectionState;
+    if (st === 'failed' || st === 'closed') closeVoicePeer(id);
+    updateVoiceUi();
+  };
+  if (initiator) {
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      sendWs({ t: 'voice-signal', to: id, data: { sdp: pc.localDescription } });
+    } catch (_) { closeVoicePeer(id); }
+  }
+  updateVoiceUi();
+  return entry;
+}
+
+async function onVoiceSignal(from, data) {
+  if (!voice.active || !data) return;
+  let entry = voice.peers.get(from);
+  try {
+    if (data.sdp) {
+      if (data.sdp.type === 'offer') {
+        if (!entry) entry = await createVoicePeer(from, false);
+        if (!entry) return;
+        await entry.pc.setRemoteDescription(data.sdp);
+        const answer = await entry.pc.createAnswer();
+        await entry.pc.setLocalDescription(answer);
+        sendWs({ t: 'voice-signal', to: from, data: { sdp: entry.pc.localDescription } });
+      } else if (data.sdp.type === 'answer' && entry) {
+        await entry.pc.setRemoteDescription(data.sdp);
+      }
+    } else if (data.candidate && entry) {
+      try { await entry.pc.addIceCandidate(data.candidate); } catch (_) {}
+    }
+  } catch (_) { /* renegotiation race — ignore, ICE will recover */ }
+}
+
+function attachRemoteAudio(id, stream) {
+  if (!stream) return;
+  const entry = voice.peers.get(id);
+  if (!entry) return;
+  let el = entry.audioEl;
+  if (!el) {
+    el = document.createElement('audio');
+    el.autoplay = true; el.setAttribute('playsinline', ''); el.style.display = 'none';
+    document.body.appendChild(el); entry.audioEl = el;
+  }
+  el.srcObject = stream;
+  const p = el.play && el.play(); if (p && p.catch) p.catch(() => {});
+  if (entry.meter) { entry.meter.stop(); entry.meter = null; }  // avoid stacking on renegotiation
+  attachMeter(entry, stream, false);   // "this collector is talking" meter
+  updateVoiceUi();
+}
+
+function closeVoicePeer(id) {
+  const entry = voice.peers.get(id);
+  if (!entry) return;
+  if (entry.meter) { entry.meter.stop(); entry.meter = null; }
+  try { entry.pc.close(); } catch (_) {}
+  if (entry.audioEl) { try { entry.audioEl.srcObject = null; entry.audioEl.remove(); } catch (_) {} }
+  setAvatarVoiceBadge(remote.get(id), null);   // drop the in-world talking/muted badge
+  voice.peers.delete(id);
+}
+
+// --- "who's talking" meters (Web Audio level detection, cheap + per-stream) ---
+function ensureAudioCtx() {
+  if (!voice.audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) voice.audioCtx = new AC();
+  }
+  if (voice.audioCtx && voice.audioCtx.state === 'suspended') voice.audioCtx.resume().catch(() => {});
+  return voice.audioCtx;
+}
+function attachMeter(entry, stream, isLocal) {
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  let src, an, raf;
+  try {
+    src = ctx.createMediaStreamSource(stream);
+    an = ctx.createAnalyser(); an.fftSize = 256; an.smoothingTimeConstant = 0.5;
+    src.connect(an);               // analyser only — never to destination (no echo)
+  } catch (_) { return; }
+  const buf = new Uint8Array(an.frequencyBinCount);
+  const tick = () => {
+    an.getByteFrequencyData(buf);
+    let sum = 0; for (let i = 0; i < buf.length; i++) sum += buf[i];
+    const speaking = (sum / buf.length) > 12;
+    if (isLocal) {
+      const s = speaking && !voice.muted;
+      if (s !== voice.localSpeaking) { voice.localSpeaking = s; scheduleVoiceUi(); }
+    } else if (entry) {
+      if (speaking !== entry.speaking) { entry.speaking = speaking; scheduleVoiceUi(); }
+    }
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+  const meter = { stop: () => { try { cancelAnimationFrame(raf); src.disconnect(); } catch (_) {} } };
+  if (isLocal) voice.localMeter = meter; else entry.meter = meter;
+}
+
+// --- voice UI (HUD button + floating participant panel) ---
+let _voiceUiPending = false;
+function scheduleVoiceUi() {
+  if (_voiceUiPending) return;
+  _voiceUiPending = true;
+  setTimeout(() => { _voiceUiPending = false; updateVoiceUi(); }, 150);
+}
+function voiceRow(label, state) {
+  const dot = state === 'speaking' ? '🟢' : state === 'muted' ? '🔇' : state === 'connecting' ? '⏳' : '⚪';
+  return `<div class="fv-row${state === 'speaking' ? ' speaking' : ''}"><span class="fv-dot">${dot}</span><span class="fv-name">${escHtml(label)}</span></div>`;
+}
+function updateVoiceUi() {
+  const btn = document.getElementById('floor-voice-btn');
+  if (btn) { btn.textContent = voice.active ? '🔴 Leave voice' : '🎙️ Voice'; btn.classList.toggle('active', voice.active); }
+  const panel = document.getElementById('floor-voice-panel');
+  if (panel) panel.classList.toggle('hidden', !voice.active);
+  const muteBtn = document.getElementById('floor-voice-mute');
+  if (muteBtn) { muteBtn.textContent = voice.muted ? '🔇 Unmute' : '🎤 Mute'; muteBtn.classList.toggle('active', voice.muted); }
+  const list = document.getElementById('floor-voice-list');
+  if (list && voice.active) {
+    const me = getCharacter() || {};
+    const rows = [voiceRow(`${me.emoji || '🙂'} ${me.name || 'You'} (you)`, voice.muted ? 'muted' : (voice.localSpeaking ? 'speaking' : ''))];
+    for (const [id, entry] of voice.peers) {
+      const r = remote.get(id);
+      const label = r ? `${r.emoji || '🙂'} ${r.name || 'Collector'}` : '🙂 Collector';
+      const connected = entry.pc && entry.pc.connectionState === 'connected';
+      const state = entry.muted ? 'muted' : (entry.speaking ? 'speaking' : (connected ? '' : 'connecting'));
+      rows.push(voiceRow(label, state));
+      // mirror talking/muted above the collector's head in the world
+      setAvatarVoiceBadge(r, entry.muted ? 'muted' : (entry.speaking ? 'speaking' : null));
+    }
+    if (voice.peers.size === 0) rows.push('<div class="fv-empty">Waiting for others to join voice…</div>');
+    list.innerHTML = rows.join('');
+  } else if (!voice.active) {
+    for (const r of remote.values()) setAvatarVoiceBadge(r, null);   // cleared when you leave voice
+  }
+}
+window.toggleFloorVoice = toggleFloorVoice;
+window.toggleVoiceMute = toggleVoiceMute;
+window.leaveFloorVoice = voiceStop;
+
 // ----------------------------------------------------- char create
+// Open the editor: reset the draft from the saved character and paint once.
+// The per-option repaint (paintCharCreate) is what click handlers call so a
+// selection isn't immediately overwritten by re-reading the saved character.
 function renderCharCreate() {
   const cc = document.getElementById('floor-charcreate');
   const stage = document.getElementById('floor-stage');
@@ -1600,7 +2057,12 @@ function renderCharCreate() {
   ccDraft = normalizeCharacter(existing);
   const nameEl = document.getElementById('floor-cc-name');
   if (nameEl) nameEl.value = existing ? (existing.name || '') : '';
+  paintCharCreate();
+}
 
+// Repaint the option rows + preview from the current ccDraft (no reset), so
+// picking a swatch/style updates the selection and preview in place.
+function paintCharCreate() {
   const swatchRow = (id, field, colors) => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = colors.map(c => `<button type="button" class="floor-swatch${c === ccDraft[field] ? ' sel' : ''}" style="background:${c}" data-cc="${field}" data-val="${c}"></button>`).join('');
@@ -1639,25 +2101,40 @@ function drawCharPreview() {
   c.fillStyle = ch.skin; c.beginPath(); c.arc(cx - 41, H - 116, 11, 0, 7); c.fill(); c.beginPath(); c.arc(cx + 41, H - 116, 11, 0, 7); c.fill();
   // torso
   c.fillStyle = ch.shirt; rr(cx - 36, H - 214, 72, 104, 14); c.fill();
-  // head + nose
+  // head
   const hy = H - 250;
+  // long hair falls behind the head/shoulders — draw it first
+  if (ch.hairStyle === 'long') { c.fillStyle = ch.hair; rr(cx - 34, hy - 6, 68, 62, 22); c.fill(); }
   c.fillStyle = ch.skin; c.beginPath(); c.arc(cx, hy, 30, 0, 7); c.fill();
-  c.fillStyle = 'rgba(0,0,0,0.12)'; c.beginPath(); c.arc(cx, hy + 6, 3.5, 0, 7); c.fill();
-  // hair
+  // ears
+  c.beginPath(); c.arc(cx - 29, hy + 2, 6, 0, 7); c.fill(); c.beginPath(); c.arc(cx + 29, hy + 2, 6, 0, 7); c.fill();
+  // eyes (white + iris + pupil) and brows
+  for (const ex of [-11, 11]) {
+    c.fillStyle = '#f4f4f4'; c.beginPath(); c.ellipse(cx + ex, hy - 1, 5, 6, 0, 0, 7); c.fill();
+    c.fillStyle = '#5b4636'; c.beginPath(); c.arc(cx + ex, hy - 1, 3, 0, 7); c.fill();
+    c.fillStyle = '#15171c'; c.beginPath(); c.arc(cx + ex, hy - 1, 1.5, 0, 7); c.fill();
+    c.strokeStyle = ch.hairStyle === 'bald' ? '#7a5a44' : ch.hair; c.lineWidth = 2.5;
+    c.beginPath(); c.moveTo(cx + ex - 6, hy - 10); c.lineTo(cx + ex + 6, hy - 9); c.stroke();
+  }
+  // nose + mouth
+  c.fillStyle = 'rgba(0,0,0,0.10)'; c.beginPath(); c.ellipse(cx, hy + 8, 3, 4, 0, 0, 7); c.fill();
+  c.strokeStyle = '#9c5a52'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(cx - 7, hy + 18); c.lineTo(cx + 7, hy + 18); c.stroke();
+  // hair — a cap on the crown with the hairline kept above the brows
   if (ch.hairStyle && ch.hairStyle !== 'bald') {
     c.fillStyle = ch.hair;
-    if (ch.hairStyle === 'curly') { for (let i = 0; i < 8; i++) { const a = Math.PI + (i / 7) * Math.PI; c.beginPath(); c.arc(cx + Math.cos(a) * 28, hy + Math.sin(a) * 28, 11, 0, 7); c.fill(); } }
-    else {
-      const sweep = ch.hairStyle === 'buzz' ? 0.62 : 0.95;
-      c.beginPath(); c.arc(cx, hy, 32, Math.PI * (1 + (1 - sweep)), Math.PI * (2 - (1 - sweep))); c.fill();
-      if (ch.hairStyle === 'long') { rr(cx - 30, hy, 60, 46, 10); c.fill(); }
+    if (ch.hairStyle === 'curly') {
+      for (let i = 0; i < 11; i++) { const a = Math.PI + (i / 10) * Math.PI; c.beginPath(); c.arc(cx + Math.cos(a) * 27, hy - 7 + Math.sin(a) * 24, 10, 0, 7); c.fill(); }
+    } else {
+      const off = ch.hairStyle === 'buzz' ? 0.62 : 0.36;   // buzz sits higher (less hair)
+      c.beginPath(); c.arc(cx, hy, 32, Math.PI + off, 2 * Math.PI - off); c.fill();
+      if (ch.hairStyle === 'long') { rr(cx - 33, hy - 6, 12, 54, 6); c.fill(); rr(cx + 21, hy - 6, 12, 54, 6); c.fill(); }
     }
   }
   // hat
   if (ch.hat === 'cap') { c.fillStyle = ch.shirt; c.beginPath(); c.arc(cx, hy - 4, 31, Math.PI, 2 * Math.PI); c.fill(); rr(cx - 6, hy - 8, 44, 9, 4); c.fill(); }
   else if (ch.hat === 'beanie') { c.fillStyle = ch.shirt; c.beginPath(); c.arc(cx, hy - 2, 33, Math.PI * 1.05, Math.PI * 1.95); c.fill(); rr(cx - 33, hy - 6, 66, 10, 5); c.fill(); }
   // glasses
-  if (ch.accessory === 'glasses') { c.strokeStyle = '#15171c'; c.lineWidth = 3; c.beginPath(); c.arc(cx - 12, hy + 2, 9, 0, 7); c.stroke(); c.beginPath(); c.arc(cx + 12, hy + 2, 9, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cx - 3, hy + 2); c.lineTo(cx + 3, hy + 2); c.stroke(); }
+  if (ch.accessory === 'glasses') { c.strokeStyle = '#15171c'; c.lineWidth = 3; c.beginPath(); c.arc(cx - 11, hy - 1, 8, 0, 7); c.stroke(); c.beginPath(); c.arc(cx + 11, hy - 1, 8, 0, 7); c.stroke(); c.beginPath(); c.moveTo(cx - 3, hy - 1); c.lineTo(cx + 3, hy - 1); c.stroke(); }
 }
 
 async function enterFloor() {
@@ -1680,12 +2157,28 @@ async function enterFloor() {
   buildWorld(remoteBooths);
   if (playerObj) scene.remove(playerObj.group);
   playerObj = buildAvatar(me);
-  makeNpcs();
   setFreeLook(false);
   start();
   updateOnlineCount();
   connectPresence();
+  maybeShowRulesOnFirstEntry();
 }
+
+// Floor rules: shown big and up-front the first time someone enters, and
+// reopenable any time from the toolbar. "Seen" is remembered per-browser.
+const RULES_SEEN_KEY = 'floor.rulesSeen.v1';
+function openFloorRules() { document.getElementById('floor-rules')?.classList.remove('hidden'); }
+function closeFloorRules() {
+  document.getElementById('floor-rules')?.classList.add('hidden');
+  try { localStorage.setItem(RULES_SEEN_KEY, '1'); } catch (_) {}
+}
+function maybeShowRulesOnFirstEntry() {
+  let seen = false;
+  try { seen = localStorage.getItem(RULES_SEEN_KEY) === '1'; } catch (_) {}
+  if (!seen) openFloorRules();
+}
+window.openFloorRules = openFloorRules;
+window.closeFloorRules = closeFloorRules;
 
 // ----------------------------------------------------- public entry
 // Show the "under construction" gate first; Enter demo proceeds into the floor.
@@ -1740,7 +2233,7 @@ document.addEventListener('focusin', e => { if (isTypingTarget(e.target)) for (c
 document.addEventListener('input', e => { if (e.target && e.target.id === 'floor-dir-search') renderDirectory(e.target.value); });
 document.addEventListener('click', e => {
   const ccOpt = e.target.closest('[data-cc]');
-  if (ccOpt) { ccDraft[ccOpt.dataset.cc] = ccOpt.dataset.val; renderCharCreate(); return; }
+  if (ccOpt) { ccDraft[ccOpt.dataset.cc] = ccOpt.dataset.val; paintCharCreate(); return; }
   const visit = e.target.closest('.floor-dir-visit');
   if (visit) { const b = boothById(visit.dataset.booth); if (b) openBooth(b); return; }
   const walk = e.target.closest('.floor-dir-walk');
@@ -1751,6 +2244,12 @@ document.addEventListener('click', e => {
   if (tool) { editorTool = tool.dataset.tool; renderBoothEditor(); return; }
   const spot = e.target.closest('.floor-spot');
   if (spot) { editorLayout[+spot.dataset.spot] = editorTool; renderBoothEditor(); return; }
+  const pick = e.target.closest('.floor-cardpick');
+  if (pick) {
+    const k = pick.dataset.cardkey;
+    if (editorHidden.has(k)) editorHidden.delete(k); else editorHidden.add(k);
+    renderBoothEditor(); return;
+  }
 });
 function bindDpad() {
   document.querySelectorAll('.floor-dbtn').forEach(btn => {
