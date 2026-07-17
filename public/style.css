@@ -6146,12 +6146,14 @@ tr:hover .cl-alert-btn {
 
 .ccm-match-note { color: var(--text-muted); }
 
-/* Stack money columns under the card identity on narrow screens */
+/* Stack money columns under the card identity on narrow screens. Four
+   columns (Paid / Market / Min / Gain) won't fit in one phone-width row,
+   so wrap them into a 2x2 grid instead of overflowing off-screen. */
 @media (max-width: 560px) {
   .pf-card { flex-wrap: wrap; }
   .pf-card-main { flex-basis: 100%; }
-  .pf-card-money { flex: 1; }
-  .pf-money-col { flex: 1; align-items: flex-start; }
+  .pf-card-money { flex: 1 1 100%; flex-wrap: wrap; gap: 0.3rem; }
+  .pf-money-col { flex: 1 1 calc(50% - 0.3rem); min-width: 0; align-items: flex-start; }
   .pf-card-actions { flex-direction: row; }
 }
 .pf-conf-dot { font-size: 0.7rem; }
