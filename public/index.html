@@ -495,6 +495,7 @@
           <button class="portfolio-action-btn portfolio-action-primary" onclick="openChecklistAddModal()">&#128203; Add from Checklist</button>
           <button class="portfolio-action-btn" onclick="showAddCardModal()">+ Manual</button>
           <button class="portfolio-action-btn" onclick="exportCollectionCSV()">Export CSV</button>
+          <button class="portfolio-action-btn" onclick="exportCollectionPDF()">&#128196; Export PDF</button>
           <button class="portfolio-action-btn" id="refresh-market-btn" onclick="refreshPortfolioValues()">&#8635; Refresh Values</button>
           <button class="portfolio-action-btn" onclick="generateMarketReport()">&#128196; Market Report</button>
         </div>
@@ -783,7 +784,8 @@
       <h2>Add Card to Collection</h2>
       <form id="add-card-form" onsubmit="return handleAddCard(event)">
         <input type="text" id="add-card-name" placeholder="Card name (e.g. Patrick Mahomes 2017 Prizm Silver)" required />
-        <input type="number" id="add-card-price" placeholder="Purchase price ($)" step="0.01" min="0" />
+        <input type="number" id="add-card-price" placeholder="Purchase price ($) — what you paid" step="0.01" min="0" />
+        <input type="number" id="add-card-min" placeholder="Minimum price you'll accept ($)" step="0.01" min="0" />
         <input type="text" id="add-card-condition" placeholder="Condition (e.g. PSA 10, Raw NM)" />
         <input type="text" id="add-card-notes" placeholder="Notes (optional)" />
         <button type="submit">Add to Collection</button>

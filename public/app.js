@@ -6982,6 +6982,10 @@ function _pfCardHtml(c, idx) {
   const gl = mkt - paid;
   const roi = paid > 0 ? ((mkt - paid) / paid) * 100 : null;
   const glClass = gl >= 0 ? 'gain' : 'loss';
+  const hasMin = c.minPrice != null && c.minPrice !== '';
+  const minVal = hasMin ? Number(c.minPrice) : null;
+  // Market has slipped below the lowest price the collector will accept.
+  const belowFloor = hasMin && mkt > 0 && mkt < minVal;
 
   const title = c.player ? escHtml(c.player) : escHtml(c.name || 'Card');
   const subParts = c.player
@@ -7013,9 +7017,14 @@ function _pfCardHtml(c, idx) {
         <span class="pf-money-label">Paid</span>
         <span class="pf-money-val pf-money-muted">$${paid.toFixed(2)}</span>
       </div>
-      <div class="pf-money-col pf-money-mkt" onclick="openCardComps(${idx})" title="View the comps used">
+      <div class="pf-money-col pf-money-mkt${belowFloor ? ' pf-below-floor' : ''}" onclick="openCardComps(${idx})" title="${belowFloor ? 'Market is below your minimum — ' : ''}View the comps used">
         <span class="pf-money-label">Market &rsaquo;</span>
         ${mktInner}
+        ${belowFloor ? '<span class="pf-floor-flag" title="Market value is below your minimum">&#9660; below min</span>' : ''}
+      </div>
+      <div class="pf-money-col">
+        <span class="pf-money-label">Min</span>
+        <span class="pf-money-val pf-money-muted">${hasMin ? '$' + minVal.toFixed(2) : '—'}</span>
       </div>
       <div class="pf-money-col">
         <span class="pf-money-label">Gain</span>
@@ -7054,6 +7063,7 @@ function openEditCard(idx) {
         <label class="ec-label">Card #<input id="ec-cardnum" value="${v(c.cardNumber)}" /></label>
         <label class="ec-label">Condition / Grade<input id="ec-cond" value="${v(c.condition)}" placeholder="PSA 10, Raw" /></label>
         <label class="ec-label">Paid $<input id="ec-paid" type="number" step="0.01" min="0" value="${c.purchasePrice != null ? c.purchasePrice : ''}" /></label>
+        <label class="ec-label">Min want $<input id="ec-min" type="number" step="0.01" min="0" value="${c.minPrice != null ? c.minPrice : ''}" placeholder="lowest you'll sell for" /></label>
       </div>
       <label class="ec-label ec-wide">Notes<input id="ec-notes" value="${v(c.notes)}" /></label>
       <label class="ec-check"><input type="checkbox" id="ec-revalue" checked /> Re-price from sold comps after saving</label>
@@ -7092,6 +7102,9 @@ function saveEditCard(e) {
   }
   c.condition = val('ec-cond');
   c.purchasePrice = parseFloat(val('ec-paid')) || 0;
+  const minRaw = val('ec-min');
+  if (minRaw === '') delete c.minPrice;
+  else c.minPrice = parseFloat(minRaw) || 0;
   c.notes = val('ec-notes');
 
   const revalue = document.getElementById('ec-revalue')?.checked;
@@ -7122,6 +7135,8 @@ function handleAddCard(e) {
   e.preventDefault();
   const name = document.getElementById('add-card-name').value.trim();
   const price = parseFloat(document.getElementById('add-card-price').value) || 0;
+  const minEl = document.getElementById('add-card-min');
+  const minPrice = minEl && minEl.value !== '' ? (parseFloat(minEl.value) || 0) : null;
   const condition = document.getElementById('add-card-condition').value.trim();
   const notes = document.getElementById('add-card-notes').value.trim();
   if (!name) return false;
@@ -7129,6 +7144,7 @@ function handleAddCard(e) {
   const coll = getCollection();
   if (!checkCapLimit(coll.length, FREE_LIMITS.collection, 'cards in your collection')) return false;
   const card = { name, purchasePrice: price, condition, notes, addedAt: new Date().toISOString() };
+  if (minPrice != null) card.minPrice = minPrice;
   if (_pendingScannedSoldValue != null) {
     // Camera-scanned card: record the sold value as its own field and seed
     // the market value with it, so the portfolio shows Paid / Sold / Mkt.
@@ -11176,16 +11192,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ---- CSV Export ----
+// Human-readable card name for exports — prefers the structured identity
+// (player/year/brand/set/parallel), falling back to the free-text name.
+function _cardDisplayName(c) {
+  if (c.player) {
+    return [c.player, c.year, c.brand, c.setName, c.parallel].filter(Boolean).join(' ');
+  }
+  return c.name || 'Card';
+}
+
 function exportCollectionCSV() {
   // CSV export stays free — an easy on-ramp tool.
   const coll = getCollection();
   if (coll.length === 0) { alert('No cards in your collection to export.'); return; }
 
-  const headers = ['Name', 'Purchase Price', 'Est Value', 'Condition', 'Notes', 'Date Added'];
+  const headers = ['Name', 'Purchase Price', 'Est Value', 'Min Price', 'Condition', 'Notes', 'Date Added'];
   const rows = coll.map(c => [
-    `"${(c.name || '').replace(/"/g, '""')}"`,
+    `"${_cardDisplayName(c).replace(/"/g, '""')}"`,
     (c.purchasePrice || 0).toFixed(2),
     (c.estValue || 0).toFixed(2),
+    c.minPrice != null && c.minPrice !== '' ? Number(c.minPrice).toFixed(2) : '',
     `"${(c.condition || '').replace(/"/g, '""')}"`,
     `"${(c.notes || '').replace(/"/g, '""')}"`,
     c.addedAt || '',
@@ -11197,6 +11223,94 @@ function exportCollectionCSV() {
   const a = document.createElement('a');
   a.href = url; a.download = 'card-huddle-collection.csv'; a.click();
   URL.revokeObjectURL(url);
+}
+
+// Export the collection as a printable PDF. Uses the browser's own
+// print-to-PDF (no library, works offline) — opens a clean printable page
+// and triggers the print dialog, where the user picks "Save as PDF".
+function exportCollectionPDF() {
+  const coll = getCollection();
+  if (coll.length === 0) { alert('No cards in your collection to export.'); return; }
+
+  const user = (typeof getCurrentUser === 'function' && getCurrentUser()) || 'Collector';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const totalCost = coll.reduce((s, c) => s + (c.purchasePrice || 0), 0);
+  const totalValue = coll.reduce((s, c) => s + (c.estValue || c.purchasePrice || 0), 0);
+  const totalMin = coll.reduce((s, c) => s + (c.minPrice != null && c.minPrice !== '' ? Number(c.minPrice) : 0), 0);
+  const gainLoss = totalValue - totalCost;
+  const glSign = gainLoss >= 0 ? '+' : '';
+  const glColor = gainLoss >= 0 ? '#0a7d38' : '#c0392b';
+
+  const esc = (typeof escHtml === 'function') ? escHtml : (s => String(s == null ? '' : s));
+
+  const rows = coll.map(c => {
+    const paid = c.purchasePrice || 0;
+    const mkt = c.estValue || 0;
+    const hasMin = c.minPrice != null && c.minPrice !== '';
+    const minVal = hasMin ? Number(c.minPrice) : null;
+    const gl = mkt - paid;
+    const glC = gl >= 0 ? '#0a7d38' : '#c0392b';
+    const belowFloor = hasMin && mkt > 0 && mkt < minVal;
+    return `<tr>
+      <td class="lft">${esc(_cardDisplayName(c))}${c.condition ? ` <span class="cond">${esc(c.condition)}</span>` : ''}</td>
+      <td class="num">$${paid.toFixed(2)}</td>
+      <td class="num">${mkt > 0 ? '$' + mkt.toFixed(2) : '—'}</td>
+      <td class="num${belowFloor ? ' warn' : ''}">${hasMin ? '$' + minVal.toFixed(2) : '—'}${belowFloor ? ' ▼' : ''}</td>
+      <td class="num" style="color:${mkt > 0 ? glC : '#999'}">${mkt > 0 ? (gl >= 0 ? '+' : '') + '$' + gl.toFixed(2) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"/><title>The Card Huddle — Collection ${dateStr}</title>
+<style>
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; padding: 28px; }
+  .hdr { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 3px solid #1db954; padding-bottom: 12px; margin-bottom: 18px; }
+  .title { font-size: 22px; font-weight: 800; color: #128a3e; }
+  .meta { font-size: 12px; color: #666; text-align: right; }
+  .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; }
+  .stat { min-width: 120px; }
+  .stat-l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 3px; }
+  .stat-v { font-size: 17px; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { border-bottom: 2px solid #ccc; padding: 7px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; text-align: right; }
+  thead th.lft { text-align: left; }
+  tbody td { padding: 6px 8px; font-size: 12px; border-bottom: 1px solid #eee; }
+  td.num { text-align: right; white-space: nowrap; }
+  td.lft { text-align: left; }
+  td.warn { color: #c0392b; font-weight: 700; }
+  .cond { color: #888; font-size: 10px; }
+  .foot { margin-top: 18px; font-size: 10px; color: #aaa; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+</style></head>
+<body>
+  <div class="hdr">
+    <div class="title">The Card Huddle — My Collection</div>
+    <div class="meta">${esc(user)}<br/>${dateStr} &middot; ${coll.length} card${coll.length !== 1 ? 's' : ''}</div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-l">Total Invested</div><div class="stat-v">$${totalCost.toFixed(2)}</div></div>
+    <div class="stat"><div class="stat-l">Est. Market Value</div><div class="stat-v">$${totalValue.toFixed(2)}</div></div>
+    <div class="stat"><div class="stat-l">Total Minimum</div><div class="stat-v">$${totalMin.toFixed(2)}</div></div>
+    <div class="stat"><div class="stat-l">Gain / Loss</div><div class="stat-v" style="color:${glColor}">${glSign}$${gainLoss.toFixed(2)}</div></div>
+  </div>
+  <table>
+    <thead><tr><th class="lft">Card</th><th>Paid</th><th>Market</th><th>Min Want</th><th>Gain/Loss</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="foot">Generated by The Card Huddle &middot; thecardhuddle.com &middot; ${dateStr}</div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  } else {
+    (typeof showPortfolioToast === 'function' ? showPortfolioToast : alert)('Allow popups to export the PDF.');
+  }
 }
 
 // ---- Price History Recording (auto-record after searches) ----
