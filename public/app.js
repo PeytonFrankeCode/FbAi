@@ -11228,10 +11228,15 @@ function exportCollectionCSV() {
 // Export the collection as a printable PDF. Uses the browser's own
 // print-to-PDF (no library, works offline) — opens a clean printable page
 // and triggers the print dialog, where the user picks "Save as PDF".
-function exportCollectionPDF() {
+// Export the collection as a polished, on-brand PDF. Uses the browser's
+// own print-to-PDF via a hidden iframe (no popup, works on mobile). The
+// Card Huddle logo is fetched and inlined as a data URI so it renders in
+// the srcdoc iframe regardless of base URL.
+async function exportCollectionPDF() {
   const coll = getCollection();
   if (coll.length === 0) { alert('No cards in your collection to export.'); return; }
 
+  const esc = (typeof escHtml === 'function') ? escHtml : (s => String(s == null ? '' : s));
   const user = (typeof getCurrentUser === 'function' && getCurrentUser()) || 'Collector';
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -11240,73 +11245,141 @@ function exportCollectionPDF() {
   const totalValue = coll.reduce((s, c) => s + (c.estValue || c.purchasePrice || 0), 0);
   const totalMin = coll.reduce((s, c) => s + (c.minPrice != null && c.minPrice !== '' ? Number(c.minPrice) : 0), 0);
   const gainLoss = totalValue - totalCost;
+  const roi = totalCost > 0 ? (gainLoss / totalCost) * 100 : null;
   const glSign = gainLoss >= 0 ? '+' : '';
-  const glColor = gainLoss >= 0 ? '#0a7d38' : '#c0392b';
+  const GAIN = '#5ece99', LOSS = '#f87171';
+  const glColor = gainLoss >= 0 ? GAIN : LOSS;
 
-  const esc = (typeof escHtml === 'function') ? escHtml : (s => String(s == null ? '' : s));
+  // Fetch the logo once and inline it so it always renders in the PDF.
+  let logoTag = '<div class="ch-logomark">CH</div>';
+  try {
+    const resp = await fetch(location.origin + '/logo.png', { cache: 'force-cache' });
+    const blob = await resp.blob();
+    const dataUrl = await new Promise((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob);
+    });
+    logoTag = `<img class="ch-logo" src="${dataUrl}" alt="The Card Huddle" />`;
+  } catch (_) { /* keep the CH monogram fallback */ }
 
-  const rows = coll.map(c => {
+  const BADGE = {
+    base: 'background:#2d6a4f;color:#d1fae5',
+    autograph: 'background:#744210;color:#f6ad55',
+    insert: 'background:#2b4c7e;color:#90cdf4',
+    memorabilia: 'background:#553c6e;color:#d6bcfa',
+  };
+  const BADGE_LABEL = { base: 'BASE', autograph: 'AUTO', insert: 'INSERT', memorabilia: 'MEMO' };
+
+  const cardRows = coll.map(c => {
     const paid = c.purchasePrice || 0;
     const mkt = c.estValue || 0;
     const hasMin = c.minPrice != null && c.minPrice !== '';
     const minVal = hasMin ? Number(c.minPrice) : null;
     const gl = mkt - paid;
-    const glC = gl >= 0 ? '#0a7d38' : '#c0392b';
+    const r = paid > 0 ? (gl / paid) * 100 : null;
+    const glC = gl >= 0 ? GAIN : LOSS;
     const belowFloor = hasMin && mkt > 0 && mkt < minVal;
-    return `<tr>
-      <td class="lft">${esc(_cardDisplayName(c))}${c.condition ? ` <span class="cond">${esc(c.condition)}</span>` : ''}</td>
-      <td class="num">$${paid.toFixed(2)}</td>
-      <td class="num">${mkt > 0 ? '$' + mkt.toFixed(2) : '—'}</td>
-      <td class="num${belowFloor ? ' warn' : ''}">${hasMin ? '$' + minVal.toFixed(2) : '—'}${belowFloor ? ' ▼' : ''}</td>
-      <td class="num" style="color:${mkt > 0 ? glC : '#999'}">${mkt > 0 ? (gl >= 0 ? '+' : '') + '$' + gl.toFixed(2) : '—'}</td>
-    </tr>`;
+
+    const title = c.player ? esc(c.player) : esc(c.name || 'Card');
+    const sub = c.player ? [c.year, c.brand, c.setName].filter(Boolean).map(esc).join(' ') : '';
+
+    const tags = [];
+    if (c.player && c.category && BADGE[c.category]) tags.push(`<span class="ch-badge" style="${BADGE[c.category]}">${BADGE_LABEL[c.category]}</span>`);
+    if (c.cardNumber) tags.push(`<span class="ch-tag">#${esc(c.cardNumber)}</span>`);
+    if (c.parallel) tags.push(`<span class="ch-tag ch-tag-par">${esc(c.parallel)}</span>`);
+    if (c.printRun) tags.push(`<span class="ch-tag ch-tag-pr">/${esc(c.printRun)}</span>`);
+    if (c.condition) tags.push(`<span class="ch-tag">${esc(c.condition)}</span>`);
+
+    return `<div class="ch-row">
+      <div class="ch-row-id">
+        <div class="ch-row-title">${title}</div>
+        ${sub ? `<div class="ch-row-sub">${sub}</div>` : ''}
+        ${tags.length ? `<div class="ch-row-tags">${tags.join('')}</div>` : ''}
+      </div>
+      <div class="ch-row-money">
+        <div class="ch-m"><span class="ch-m-l">Paid</span><span class="ch-m-v muted">$${paid.toFixed(2)}</span></div>
+        <div class="ch-m ch-m-mkt${belowFloor ? ' below' : ''}"><span class="ch-m-l">Market</span><span class="ch-m-v">${mkt > 0 ? '$' + mkt.toFixed(2) : '—'}</span>${belowFloor ? '<span class="ch-floor">▼ below min</span>' : ''}</div>
+        <div class="ch-m"><span class="ch-m-l">Min</span><span class="ch-m-v muted">${hasMin ? '$' + minVal.toFixed(2) : '—'}</span></div>
+        <div class="ch-m"><span class="ch-m-l">Gain</span><span class="ch-m-v" style="color:${mkt > 0 ? glC : '#475569'}">${mkt > 0 ? (gl >= 0 ? '+' : '') + '$' + gl.toFixed(2) : '—'}${r !== null && mkt > 0 ? ` <span class="ch-roi" style="color:${glC}">${r >= 0 ? '+' : ''}${r.toFixed(0)}%</span>` : ''}</span></div>
+      </div>
+    </div>`;
   }).join('');
 
+  const statCard = (label, value, color) =>
+    `<div class="ch-stat"><div class="ch-stat-l">${label}</div><div class="ch-stat-v"${color ? ` style="color:${color}"` : ''}>${value}</div></div>`;
+
   const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"/><title>The Card Huddle — Collection ${dateStr}</title>
+<html><head><meta charset="UTF-8"/><title>The Card Huddle — My Collection</title>
 <style>
+  @page { margin: 0.5in; }
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; padding: 28px; }
-  .hdr { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 3px solid #1db954; padding-bottom: 12px; margin-bottom: 18px; }
-  .title { font-size: 22px; font-weight: 800; color: #128a3e; }
-  .meta { font-size: 12px; color: #666; text-align: right; }
-  .stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 18px; }
-  .stat { min-width: 120px; }
-  .stat-l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 3px; }
-  .stat-v { font-size: 17px; font-weight: 700; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { border-bottom: 2px solid #ccc; padding: 7px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; text-align: right; }
-  thead th.lft { text-align: left; }
-  tbody td { padding: 6px 8px; font-size: 12px; border-bottom: 1px solid #eee; }
-  td.num { text-align: right; white-space: nowrap; }
-  td.lft { text-align: left; }
-  td.warn { color: #c0392b; font-weight: 700; }
-  .cond { color: #888; font-size: 10px; }
-  .foot { margin-top: 18px; font-size: 10px; color: #aaa; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+  body { font-family: 'Inter','Segoe UI',system-ui,-apple-system,sans-serif; background: #0c0e14;
+    background-image: radial-gradient(ellipse 90% 45% at 50% -10%, rgba(94,206,153,0.10) 0%, transparent 62%);
+    color: #edf0f7; padding: 30px 30px 40px; -webkit-font-smoothing: antialiased; }
+  .ch-head { display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border-bottom: 1px solid #232d42; padding-bottom: 18px; margin-bottom: 22px; }
+  .ch-brand { display: flex; align-items: center; gap: 12px; }
+  .ch-logo { width: 46px; height: 46px; border-radius: 10px; object-fit: cover; }
+  .ch-logomark { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg,#5ece99,#2d6a4f); color: #06231a; font-weight: 900; font-size: 18px; letter-spacing: 0.02em; }
+  .ch-wordmark { font-size: 21px; font-weight: 800; letter-spacing: -0.01em;
+    background: linear-gradient(135deg,#7edcb0,#5ece99); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .ch-tagline { font-size: 11px; color: #94a3b8; margin-top: 2px; letter-spacing: 0.02em; }
+  .ch-meta { text-align: right; font-size: 11px; color: #94a3b8; line-height: 1.6; }
+  .ch-meta strong { color: #edf0f7; font-size: 13px; }
+  .ch-stats { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 24px; }
+  .ch-stat { background: #161b28; border: 1px solid #232d42; border-radius: 11px; padding: 12px 14px; }
+  .ch-stat-l { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin-bottom: 6px; }
+  .ch-stat-v { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+  .ch-section { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: #94a3b8; margin: 0 2px 10px; }
+  .ch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    background: #12172180; border: 1px solid #232d42; border-radius: 11px; padding: 12px 15px; margin-bottom: 9px; break-inside: avoid; }
+  .ch-row-id { min-width: 0; flex: 1; }
+  .ch-row-title { font-size: 14px; font-weight: 700; color: #edf0f7; }
+  .ch-row-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+  .ch-row-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .ch-badge { font-size: 8.5px; font-weight: 800; letter-spacing: 0.09em; padding: 2px 6px; border-radius: 4px; }
+  .ch-tag { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #1b2233; color: #94a3b8; border: 1px solid #232d42; }
+  .ch-tag-par { color: #7edcb0; border-color: #2d6a4f; }
+  .ch-tag-pr { color: #f6ad55; border-color: #744210; font-variant-numeric: tabular-nums; }
+  .ch-row-money { display: flex; gap: 6px; flex-shrink: 0; }
+  .ch-m { display: flex; flex-direction: column; align-items: flex-end; min-width: 72px; padding: 3px 9px; border-radius: 8px; }
+  .ch-m-l { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 2px; }
+  .ch-m-v { font-size: 13px; font-weight: 800; color: #edf0f7; white-space: nowrap; }
+  .ch-m-v.muted { color: #94a3b8; font-weight: 700; }
+  .ch-roi { font-size: 9.5px; font-weight: 800; }
+  .ch-m-mkt { background: #161b28; border: 1px solid #2d6a4f; }
+  .ch-m-mkt .ch-m-l { color: #5ece99; }
+  .ch-m-mkt.below { border-color: #f87171; background: rgba(248,113,113,0.10); }
+  .ch-m-mkt.below .ch-m-l { color: #f87171; }
+  .ch-floor { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: #f87171; margin-top: 2px; }
+  .ch-foot { margin-top: 22px; padding-top: 14px; border-top: 1px solid #232d42; text-align: center; font-size: 10px; color: #475569; }
+  .ch-foot b { color: #5ece99; font-weight: 700; }
 </style></head>
 <body>
-  <div class="hdr">
-    <div class="title">The Card Huddle — My Collection</div>
-    <div class="meta">${esc(user)}<br/>${dateStr} &middot; ${coll.length} card${coll.length !== 1 ? 's' : ''}</div>
+  <div class="ch-head">
+    <div class="ch-brand">
+      ${logoTag}
+      <div>
+        <div class="ch-wordmark">The Card Huddle</div>
+        <div class="ch-tagline">Collection Report</div>
+      </div>
+    </div>
+    <div class="ch-meta"><strong>${esc(user)}</strong><br/>${dateStr}<br/>${coll.length} card${coll.length !== 1 ? 's' : ''}</div>
   </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-l">Total Invested</div><div class="stat-v">$${totalCost.toFixed(2)}</div></div>
-    <div class="stat"><div class="stat-l">Est. Market Value</div><div class="stat-v">$${totalValue.toFixed(2)}</div></div>
-    <div class="stat"><div class="stat-l">Total Minimum</div><div class="stat-v">$${totalMin.toFixed(2)}</div></div>
-    <div class="stat"><div class="stat-l">Gain / Loss</div><div class="stat-v" style="color:${glColor}">${glSign}$${gainLoss.toFixed(2)}</div></div>
+  <div class="ch-stats">
+    ${statCard('Total Cards', String(coll.length))}
+    ${statCard('Invested', '$' + totalCost.toFixed(2))}
+    ${statCard('Market Value', '$' + totalValue.toFixed(2))}
+    ${statCard('Total Minimum', '$' + totalMin.toFixed(2))}
+    ${statCard('Gain / Loss', `${glSign}$${gainLoss.toFixed(2)}${roi !== null ? ` (${roi >= 0 ? '+' : ''}${roi.toFixed(0)}%)` : ''}`, glColor)}
   </div>
-  <table>
-    <thead><tr><th class="lft">Card</th><th>Paid</th><th>Market</th><th>Min Want</th><th>Gain/Loss</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div class="foot">Generated by The Card Huddle &middot; thecardhuddle.com &middot; ${dateStr}</div>
+  <div class="ch-section">Cards</div>
+  ${cardRows}
+  <div class="ch-foot">Generated by <b>The Card Huddle</b> &middot; thecardhuddle.com &middot; ${dateStr}</div>
 </body></html>`;
 
-  // Print via a hidden iframe rather than a popup window — popups get
-  // blocked (especially on mobile) and blank-window document.write +
-  // inline auto-print is unreliable. The iframe needs no user-gesture
-  // popup and prints on desktop and mobile alike.
+  // Print via a hidden iframe — no popup blockers, works on mobile.
   const prev = document.getElementById('pf-print-frame');
   if (prev) prev.remove();
   const frame = document.createElement('iframe');
@@ -11319,7 +11392,6 @@ function exportCollectionPDF() {
       cw.focus();
       cw.print();
     } catch (err) {
-      // Last-resort fallback: hand the sheet off as a downloadable file.
       try {
         const blob = new Blob([html], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
@@ -11328,7 +11400,6 @@ function exportCollectionPDF() {
         setTimeout(() => URL.revokeObjectURL(url), 4000);
       } catch (_) {}
     }
-    // Give the print dialog time to grab the document before teardown.
     setTimeout(() => frame.remove(), 60000);
   };
   document.body.appendChild(frame);
