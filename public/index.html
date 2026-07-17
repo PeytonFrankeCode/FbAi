@@ -135,7 +135,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=112" />
+  <link rel="stylesheet" href="style.css?v=113" />
 
 
 </head>
@@ -785,6 +785,7 @@
       <form id="add-card-form" onsubmit="return handleAddCard(event)">
         <input type="text" id="add-card-name" placeholder="Card name (e.g. Patrick Mahomes 2017 Prizm Silver)" required />
         <input type="number" id="add-card-price" placeholder="Purchase price ($) — what you paid" step="0.01" min="0" />
+        <input type="number" id="add-card-market" placeholder="Market value ($) — leave blank to auto-price" step="0.01" min="0" />
         <input type="number" id="add-card-min" placeholder="Minimum price you'll accept ($)" step="0.01" min="0" />
         <input type="text" id="add-card-condition" placeholder="Condition (e.g. PSA 10, Raw NM)" />
         <input type="text" id="add-card-notes" placeholder="Notes (optional)" />
@@ -1596,7 +1597,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=148"></script>
+  <script src="app.js?v=149"></script>
   <script type="importmap">
   {
     "imports": {

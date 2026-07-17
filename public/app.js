@@ -7064,9 +7064,11 @@ function openEditCard(idx) {
         <label class="ec-label">Condition / Grade<input id="ec-cond" value="${v(c.condition)}" placeholder="PSA 10, Raw" /></label>
         <label class="ec-label">Paid $<input id="ec-paid" type="number" step="0.01" min="0" value="${c.purchasePrice != null ? c.purchasePrice : ''}" /></label>
         <label class="ec-label">Min want $<input id="ec-min" type="number" step="0.01" min="0" value="${c.minPrice != null ? c.minPrice : ''}" placeholder="lowest you'll sell for" /></label>
+        <label class="ec-label">Market $<input id="ec-market" type="number" step="0.01" min="0" value="${c.manualValue && c.estValue != null ? c.estValue : ''}" placeholder="${!c.manualValue && c.estValue ? 'auto $' + Number(c.estValue).toFixed(2) : 'set your own'}" oninput="_ecMarketChanged()" /></label>
       </div>
+      <p class="ec-hint" id="ec-market-hint">Leave Market blank to auto-price from sold comps. Enter a number to set the value yourself (it won't be overwritten on refresh).</p>
       <label class="ec-label ec-wide">Notes<input id="ec-notes" value="${v(c.notes)}" /></label>
-      <label class="ec-check"><input type="checkbox" id="ec-revalue" checked /> Re-price from sold comps after saving</label>
+      <label class="ec-check" id="ec-revalue-wrap"><input type="checkbox" id="ec-revalue" ${c.manualValue ? '' : 'checked'} ${c.manualValue ? 'disabled' : ''} /> Re-price from sold comps after saving</label>
       <button type="submit" class="pp-btn">Save changes</button>
     </form>`;
   document.getElementById('edit-card-modal').classList.remove('hidden');
@@ -7107,7 +7109,22 @@ function saveEditCard(e) {
   else c.minPrice = parseFloat(minRaw) || 0;
   c.notes = val('ec-notes');
 
-  const revalue = document.getElementById('ec-revalue')?.checked;
+  // Manual market-value override. A number here replaces the auto value and
+  // locks the card so a refresh won't overwrite it; clearing it reverts to
+  // auto-pricing from sold comps.
+  const marketRaw = val('ec-market');
+  if (marketRaw !== '') {
+    c.estValue = parseFloat(marketRaw) || 0;
+    c.manualValue = true;
+    c.locked = true;
+    c.isEstimate = false;
+  } else if (c.manualValue) {
+    delete c.manualValue;
+    c.locked = false;
+  }
+
+  // Re-price only when the user isn't hand-setting the value.
+  const revalue = !c.manualValue && document.getElementById('ec-revalue')?.checked;
   if (revalue) {
     // Identity may have changed — drop stale comps/estimate so the value
     // reflects the edited card, then re-price.
@@ -7121,6 +7138,17 @@ function saveEditCard(e) {
   renderPortfolio();
   if (revalue && buildCardSoldQuery(c)) setTimeout(() => valueCardAt(idx, { silent: true }), 50);
   return false;
+}
+
+// When the user types a manual market value, disable the "re-price" checkbox
+// (a hand-set value shouldn't be auto-overwritten); re-enable it when cleared.
+function _ecMarketChanged() {
+  const mkt = document.getElementById('ec-market');
+  const rev = document.getElementById('ec-revalue');
+  if (!mkt || !rev) return;
+  const manual = mkt.value.trim() !== '';
+  rev.disabled = manual;
+  if (manual) rev.checked = false;
 }
 
 function showAddCardModal() {
@@ -7137,6 +7165,8 @@ function handleAddCard(e) {
   const price = parseFloat(document.getElementById('add-card-price').value) || 0;
   const minEl = document.getElementById('add-card-min');
   const minPrice = minEl && minEl.value !== '' ? (parseFloat(minEl.value) || 0) : null;
+  const mktEl = document.getElementById('add-card-market');
+  const manualMkt = mktEl && mktEl.value !== '' ? (parseFloat(mktEl.value) || 0) : null;
   const condition = document.getElementById('add-card-condition').value.trim();
   const notes = document.getElementById('add-card-notes').value.trim();
   if (!name) return false;
@@ -7145,7 +7175,12 @@ function handleAddCard(e) {
   if (!checkCapLimit(coll.length, FREE_LIMITS.collection, 'cards in your collection')) return false;
   const card = { name, purchasePrice: price, condition, notes, addedAt: new Date().toISOString() };
   if (minPrice != null) card.minPrice = minPrice;
-  if (_pendingScannedSoldValue != null) {
+  if (manualMkt != null) {
+    // Hand-entered market value — lock it so refresh won't overwrite.
+    card.estValue = manualMkt;
+    card.manualValue = true;
+    card.locked = true;
+  } else if (_pendingScannedSoldValue != null) {
     // Camera-scanned card: record the sold value as its own field and seed
     // the market value with it, so the portfolio shows Paid / Sold / Mkt.
     card.scanned = true;
@@ -7161,8 +7196,9 @@ function handleAddCard(e) {
   closeAddCardModal();
   document.getElementById('add-card-form').reset();
   renderPortfolio();
-  // Auto-value the new card from live sold comps (non-blocking).
-  setTimeout(() => valueCardAt(newIdx, { silent: true }), 50);
+  // Auto-value the new card from live sold comps — unless the user set the
+  // value by hand (then it stays locked to their number).
+  if (manualMkt == null) setTimeout(() => valueCardAt(newIdx, { silent: true }), 50);
   return false;
 }
 
@@ -7337,6 +7373,10 @@ function _cardConfidence(c) {
 // Tiny inline meta shown next to a card's market value: confidence dot +
 // comp count, and a lock glyph when the value is locked/overridden.
 function _cardValueMetaInline(c) {
+  // Hand-set value — show a MANUAL tag rather than a comp-confidence dot.
+  if (c.manualValue) {
+    return '<span class="pf-val-meta"><span class="pf-manual-badge" title="You set this value manually — refresh won\'t change it">MANUAL</span></span>';
+  }
   const parts = [];
   if (c.isEstimate && c.estimate) {
     const n = c.estimate.sampleSize || (c.estimate.comps || []).length;
