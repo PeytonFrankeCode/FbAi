@@ -6093,6 +6093,10 @@ tr:hover .cl-alert-btn {
 .pf-money-mkt { cursor: pointer; background: var(--bg-secondary); border: 1px solid var(--border-primary, var(--border)); }
 .pf-money-mkt:hover { border-color: var(--accent); background: var(--bg-hover); }
 .pf-money-mkt .pf-money-label { color: var(--accent); }
+/* Market has dropped below the minimum the collector will accept. */
+.pf-money-mkt.pf-below-floor { border-color: #f87171; background: rgba(248,113,113,0.08); }
+.pf-money-mkt.pf-below-floor .pf-money-label { color: #f87171; }
+.pf-floor-flag { font-size: 0.58rem; font-weight: 700; color: #f87171; text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.1rem; }
 .pf-value-link { color: var(--accent); }
 
 .pf-card-actions { display: flex; flex-direction: column; gap: 0.3rem; flex-shrink: 0; }
