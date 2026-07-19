@@ -102,6 +102,7 @@ function toggleTheme() {
 function showSettings() {
   updateSettingsSubscription();
   loadScrapeDoStatus();
+  if (typeof initOfflinePanel === 'function') initOfflinePanel();
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
@@ -12284,3 +12285,126 @@ function refreshRainbowPageFromSync() {
   const player = document.getElementById('rainbow-player-select');
   if (player && player.value && completionData) loadRainbowPlayer();
 }
+
+// ============================================================
+//   PWA: offline support & install (service worker + packs)
+// ============================================================
+// Registers the service worker, keeps it fresh with a safe one-time reload
+// on update, drives the per-year "download for offline" packs, and shows an
+// offline banner so users know live prices may be stale at a card show.
+
+function _getOfflineYears() {
+  try { return JSON.parse(localStorage.getItem('cardHuddleOfflineYears') || '{}'); }
+  catch { return {}; }
+}
+function _setOfflineYear(y, rec) {
+  const s = _getOfflineYears(); s[y] = rec;
+  localStorage.setItem('cardHuddleOfflineYears', JSON.stringify(s));
+}
+function _delOfflineYear(y) {
+  const s = _getOfflineYears(); delete s[y];
+  localStorage.setItem('cardHuddleOfflineYears', JSON.stringify(s));
+}
+
+async function initOfflinePanel() {
+  const host = document.getElementById('offline-packs');
+  if (!host) return;
+  if (!('serviceWorker' in navigator)) {
+    host.innerHTML = '<p class="op-note">Offline mode isn’t supported in this browser.</p>';
+    return;
+  }
+  if (!host.dataset.loaded) host.innerHTML = '<p class="op-note">Loading years…</p>';
+  let index;
+  try { index = await (await fetch('/data/checklists/index.json')).json(); }
+  catch { host.innerHTML = '<p class="op-note">Couldn’t load the checklist list. Connect once to set up offline packs.</p>'; return; }
+
+  const products = index.products || [];
+  window.__offlineProducts = products;
+  const years = [...new Set(products.map(p => p.year))].sort((a, b) => b - a);
+  const saved = _getOfflineYears();
+
+  host.dataset.loaded = '1';
+  host.innerHTML = `<p class="op-note">Download a year so its checklists work with no signal at the show. Your collection always works offline; live prices need a connection.</p>`
+    + years.map(y => {
+      const count = products.filter(p => p.year === y).length;
+      const rec = saved[y];
+      const status = rec ? `Saved &middot; ${rec.ok}/${count} sets` : `${count} sets`;
+      return `<div class="op-row" data-year="${y}">
+        <div class="op-row-main"><span class="op-year">${y}${rec ? ' <span class="op-badge">OFFLINE</span>' : ''}</span><span class="op-status" id="op-status-${y}">${status}</span></div>
+        <div class="op-row-actions">
+          ${rec ? `<button class="op-btn op-remove" onclick="removeYearOffline(${y})">Remove</button>` : ''}
+          <button class="op-btn op-dl" id="op-dl-${y}" onclick="downloadYearOffline(${y})">${rec ? 'Update' : 'Download'}</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function _yearProductUrls(year) {
+  const products = window.__offlineProducts || [];
+  return ['/data/checklists/index.json',
+    ...products.filter(p => p.year === year).map(p => `/data/checklists/${p.id}.json`)];
+}
+
+function downloadYearOffline(year) {
+  const btn = document.getElementById('op-dl-' + year);
+  const status = document.getElementById('op-status-' + year);
+  const ctrl = navigator.serviceWorker && navigator.serviceWorker.controller;
+  if (!ctrl) { if (status) status.textContent = 'Reload the app once, then try again.'; return; }
+  const urls = _yearProductUrls(year);
+  if (btn) { btn.disabled = true; btn.textContent = '0%'; }
+
+  const onMsg = (e) => {
+    const d = e.data || {};
+    if (d.tag !== year) return;
+    if (d.type === 'CACHE_PROGRESS' && btn) btn.textContent = Math.round((d.done / d.total) * 100) + '%';
+    if (d.type === 'CACHE_DONE') {
+      navigator.serviceWorker.removeEventListener('message', onMsg);
+      _setOfflineYear(year, { ok: d.ok, total: d.total, at: Date.now() });
+      initOfflinePanel();
+    }
+  };
+  navigator.serviceWorker.addEventListener('message', onMsg);
+  ctrl.postMessage({ type: 'CACHE_URLS', tag: year, urls });
+}
+
+function removeYearOffline(year) {
+  const ctrl = navigator.serviceWorker && navigator.serviceWorker.controller;
+  const urls = _yearProductUrls(year).filter(u => u !== '/data/checklists/index.json');
+  if (ctrl) ctrl.postMessage({ type: 'UNCACHE_URLS', tag: year, urls });
+  _delOfflineYear(year);
+  initOfflinePanel();
+}
+
+function _updateOnlineStatus() {
+  const b = document.getElementById('offline-banner');
+  if (b) b.classList.toggle('hidden', navigator.onLine);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Whether a worker already controls this page. On the very first visit it
+    // doesn't — so we must NOT reload when it first takes control (that would
+    // flash a reload on every new user). We only reload on a genuine update.
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          // A newer worker is ready and an old one is in control — activate it.
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            nw.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(() => {});
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded || !hadController) return; // skip the first-install claim
+      reloaded = true; location.reload();
+    });
+  });
+}
+window.addEventListener('online', _updateOnlineStatus);
+window.addEventListener('offline', _updateOnlineStatus);
+document.addEventListener('DOMContentLoaded', _updateOnlineStatus);
