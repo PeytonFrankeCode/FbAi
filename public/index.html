@@ -17,6 +17,13 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png?v=1" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=1" />
 
+  <!-- PWA: installable + offline-capable (works at card shows on bad wifi) -->
+  <link rel="manifest" href="/manifest.json?v=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Card Huddle" />
+
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH"></script>
   <script>
@@ -135,11 +142,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=113" />
+  <link rel="stylesheet" href="style.css?v=114" />
 
 
 </head>
 <body>
+<!-- Offline indicator — shown when the device loses connection so users know
+     live prices may be stale (checklists & collection still work). -->
+<div id="offline-banner" class="offline-banner hidden" role="status">
+  &#128246; Offline — your checklists &amp; collection still work. Live prices will refresh when you reconnect.
+</div>
 <!-- Layout: auto-detected via window width on first visit; user can switch
      manually from Settings → Layout. (Was a first-visit modal popup.) -->
 
@@ -1368,6 +1380,16 @@
           </div>
         </div>
 
+        <!-- Offline packs: download a year's checklists so they work with no
+             signal at a card show. -->
+        <div class="settings-row settings-row--stacked" id="settings-offline-row">
+          <div class="settings-label">
+            <span class="settings-label-text">Offline at the show</span>
+            <span class="settings-label-desc">Install this app (Add to Home Screen) and download years so checklists load with no wifi.</span>
+          </div>
+          <div id="offline-packs" class="offline-packs"><p class="op-note">Open to load…</p></div>
+        </div>
+
         <!-- Subscription Management -->
         <div class="settings-row" id="settings-sub-row">
           <div class="settings-label">
@@ -1597,7 +1619,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=149"></script>
+  <script src="app.js?v=150"></script>
   <script type="importmap">
   {
     "imports": {

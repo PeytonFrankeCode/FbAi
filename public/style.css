@@ -9232,3 +9232,36 @@ footer {
 
 /* The Floor — free-look toggle active state */
 .floor-hud-edit.active { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
+
+/* ---- PWA: offline banner + offline download packs ---- */
+.offline-banner {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999;
+  background: #7c5312; color: #ffe9c7;
+  border-top: 1px solid #a9741f;
+  font-size: 0.82rem; font-weight: 600; text-align: center;
+  padding: 0.6rem 1rem; line-height: 1.35;
+  box-shadow: 0 -4px 14px rgba(0,0,0,0.28);
+}
+.offline-banner.hidden { display: none; }
+
+.offline-packs { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem; }
+.op-note { font-size: 0.75rem; color: var(--text-muted); line-height: 1.45; margin: 0 0 0.2rem; }
+.op-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  background: var(--bg-secondary); border: 1px solid var(--border-primary, var(--border));
+  border-radius: 9px; padding: 0.55rem 0.7rem;
+}
+.op-row-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.op-year { font-size: 0.92rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem; }
+.op-badge { font-size: 0.58rem; font-weight: 800; letter-spacing: 0.05em; padding: 0.05rem 0.35rem; border-radius: 3px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+.op-status { font-size: 0.72rem; color: var(--text-secondary); }
+.op-row-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.op-btn {
+  font-size: 0.76rem; font-weight: 600; font-family: inherit;
+  padding: 0.35rem 0.7rem; border-radius: 7px; cursor: pointer; border: 1px solid var(--border-primary, var(--border));
+  background: var(--bg-primary); color: var(--text-primary); transition: all 0.15s;
+}
+.op-btn.op-dl { background: var(--accent); border-color: var(--accent); color: #06231a; font-weight: 700; min-width: 84px; }
+.op-btn.op-dl:hover { background: var(--accent-hover); }
+.op-btn.op-dl:disabled { opacity: 0.7; cursor: default; }
+.op-btn.op-remove:hover { border-color: #f87171; color: #f87171; }
