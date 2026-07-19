@@ -2444,6 +2444,43 @@ main {
 }
 .sold-fallback-note strong { color: var(--text-primary); }
 .sold-fallback-icon { flex-shrink: 0; }
+
+/* Offline sold results — comps served from the on-device database */
+.offline-sold-note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  animation: fadeIn 0.25s ease;
+}
+.offline-sold-note strong { color: var(--text-primary); }
+.offline-sold-icon { flex-shrink: 0; }
+.offline-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+  vertical-align: middle;
+}
+.offline-avail-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
 .sold-fallback-link {
   background: none;
   border: none;
@@ -9303,7 +9340,7 @@ footer {
   padding: 0.35rem 0.7rem; border-radius: 7px; cursor: pointer; border: 1px solid var(--border-primary, var(--border));
   background: var(--bg-primary); color: var(--text-primary); transition: all 0.15s;
 }
-.op-btn.op-dl { background: var(--accent); border-color: var(--accent); color: #06231a; font-weight: 700; min-width: 84px; }
+.op-btn.op-dl { background: var(--accent); border-color: var(--accent); color: var(--accent-on); font-weight: 700; min-width: 84px; }
 .op-btn.op-dl:hover { background: var(--accent-hover); }
 .op-btn.op-dl:disabled { opacity: 0.7; cursor: default; }
 .op-btn.op-remove:hover { border-color: #f87171; color: #f87171; }

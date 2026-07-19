@@ -103,6 +103,7 @@ function showSettings() {
   updateSettingsSubscription();
   loadScrapeDoStatus();
   if (typeof initOfflinePanel === 'function') initOfflinePanel();
+  if (typeof initOfflineSoldPanel === 'function') initOfflineSoldPanel();
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
@@ -1563,6 +1564,10 @@ async function fetchDirectSearch(query) {
   showSkeleton();
 
   try {
+    // No signal? Answer from the on-device sold database before trying the
+    // network at all.
+    if (isSold && !navigator.onLine && await renderOfflineSoldResults(query)) return;
+
     const params = new URLSearchParams({ q: query, mode: currentMode });
     if (currentMode === 'forsale') {
       const f = getPriceFilter();
@@ -1595,6 +1600,8 @@ async function fetchDirectSearch(query) {
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
     recordPriceHistory(query, results);
+    // Build the on-device sold database as they search (mock data excluded).
+    if (isSold && !mock) saveSoldSearchOffline(query, results);
 
     // Check for rate limiting
     if (data.rateLimited || data.soldUnavailable) {
@@ -1662,6 +1669,8 @@ async function fetchDirectSearch(query) {
     backBtn.classList.remove('hidden');
 
   } catch (err) {
+    // Network died mid-search — fall back to comps saved on this device.
+    if (isSold && _isNetworkError(err) && await renderOfflineSoldResults(query)) return;
     errorMsg.textContent = `Error: ${err.message}`;
     errorMsg.classList.remove('hidden');
   } finally {
@@ -1901,6 +1910,10 @@ async function performSearch(query, opts = {}) {
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
 
   try {
+    // No signal? Answer from the on-device sold database before trying the
+    // network at all — at a card show this is the common case.
+    if (isSold && !navigator.onLine && await renderOfflineSoldResults(query)) return;
+
     const params = new URLSearchParams({ q: query, limit: '50', mode: effectiveMode });
     if (effectiveMode === 'forsale' && !fallback) {
       const f = getPriceFilter();
@@ -1951,6 +1964,8 @@ async function performSearch(query, opts = {}) {
     currentResults = results;
     currentResultMode = effectiveMode;
     recordPriceHistory(query, results);
+    // Build the on-device sold database as they search (mock data excluded).
+    if (effectiveMode === 'sold' && !mock) saveSoldSearchOffline(query, results);
     // A sold search may have consumed a free allowance unit — refresh the pill.
     if (effectiveMode === 'sold') refreshSoldUsage();
 
@@ -2066,6 +2081,8 @@ async function performSearch(query, opts = {}) {
     }
 
   } catch (err) {
+    // Network died mid-search — fall back to comps saved on this device.
+    if (isSold && _isNetworkError(err) && await renderOfflineSoldResults(query)) return;
     errorMsg.textContent = `Error: ${err.message}`;
     errorMsg.classList.remove('hidden');
   } finally {
@@ -12373,6 +12390,187 @@ function removeYearOffline(year) {
   if (ctrl) ctrl.postMessage({ type: 'UNCACHE_URLS', tag: year, urls });
   _delOfflineYear(year);
   initOfflinePanel();
+}
+
+// ---- Offline sold database (IndexedDB) ----
+// Every successful Sold search is saved on-device, building a personal
+// sold-comps database. When a sold search can't reach the server (no signal
+// at a show), the saved comps answer it instead — exact query first, then
+// the closest saved search that covers every word of the query.
+
+const SOLD_DB_NAME = 'chuddle-sold-db';
+const SOLD_DB_STORE = 'searches';
+const SOLD_DB_MAX = 400; // searches kept before pruning the oldest
+
+function _sdbOpen() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('IndexedDB unavailable')); return; }
+    const req = indexedDB.open(SOLD_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(SOLD_DB_STORE)) {
+        db.createObjectStore(SOLD_DB_STORE, { keyPath: 'norm' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Run one request against the store and settle when it completes.
+function _sdbReq(mode, run) {
+  return _sdbOpen().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(SOLD_DB_STORE, mode);
+    const req = run(tx.objectStore(SOLD_DB_STORE));
+    tx.oncomplete = () => { db.close(); resolve(req ? req.result : undefined); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+    tx.onabort = () => { db.close(); reject(tx.error); };
+  }));
+}
+
+const _sdbGet = (norm) => _sdbReq('readonly', (s) => s.get(norm));
+const _sdbGetAll = () => _sdbReq('readonly', (s) => s.getAll()).then((r) => r || []).catch(() => []);
+const _sdbPut = (rec) => _sdbReq('readwrite', (s) => s.put(rec));
+const _sdbDelete = (norm) => _sdbReq('readwrite', (s) => s.delete(norm));
+const _sdbClear = () => _sdbReq('readwrite', (s) => s.clear());
+
+// Word-order-independent key so "prizm mahomes" and "mahomes prizm" are the
+// same saved search. Keeps # and / for serial numbers like /99.
+function _soldNorm(q) {
+  return String(q || '').toLowerCase()
+    .replace(/[^a-z0-9#\/\s]/g, ' ')
+    .split(/\s+/).filter(Boolean).sort().join(' ');
+}
+
+async function saveSoldSearchOffline(query, results) {
+  try {
+    if (!Array.isArray(results) || results.length === 0) return;
+    const norm = _soldNorm(query);
+    if (!norm) return;
+    await _sdbPut({ norm, query: String(query), results, savedAt: Date.now() });
+    const all = await _sdbGetAll();
+    if (all.length > SOLD_DB_MAX) {
+      all.sort((a, b) => (a.savedAt || 0) - (b.savedAt || 0));
+      for (const r of all.slice(0, all.length - SOLD_DB_MAX)) await _sdbDelete(r.norm);
+    }
+  } catch { /* saving is best-effort — never break a live search */ }
+}
+
+// Exact saved search, else the tightest saved search containing every word
+// of the query (so "mahomes prizm" finds a saved "2017 mahomes prizm psa 10"
+// only if nothing closer exists).
+async function findSoldSearchOffline(query) {
+  const norm = _soldNorm(query);
+  if (!norm) return null;
+  const exact = await _sdbGet(norm).catch(() => null);
+  if (exact) return exact;
+  const qTokens = norm.split(' ');
+  let best = null, bestExtra = Infinity;
+  for (const rec of await _sdbGetAll()) {
+    const rTokens = new Set(rec.norm.split(' '));
+    if (!qTokens.every((t) => rTokens.has(t))) continue;
+    const extra = rTokens.size - qTokens.length;
+    if (extra < bestExtra || (extra === bestExtra && (rec.savedAt || 0) > (best.savedAt || 0))) {
+      best = rec; bestExtra = extra;
+    }
+  }
+  return best;
+}
+
+function _isNetworkError(err) {
+  return err instanceof TypeError || /failed to fetch|network|load failed/i.test(String(err && err.message));
+}
+
+// Render saved comps for a query the network couldn't answer. Returns true
+// if something useful was shown (results, or the list of searches that ARE
+// available offline); false leaves the caller's normal error path to run.
+async function renderOfflineSoldResults(query) {
+  let rec = null;
+  try { rec = await findSoldSearchOffline(query); } catch { return false; }
+
+  if (rec) {
+    const results = rec.results || [];
+    currentResults = results;
+    currentResultMode = 'sold';
+
+    const note = document.createElement('div');
+    note.className = 'offline-sold-note';
+    const whenIso = new Date(rec.savedAt || Date.now()).toISOString();
+    note.innerHTML = `<span class="offline-sold-icon">&#128225;</span> <span>You're offline &mdash; showing <strong>saved sold comps</strong> from ${escHtml(timeAgo(whenIso))}${rec.query && _soldNorm(rec.query) !== _soldNorm(query) ? ` for &ldquo;${escHtml(rec.query)}&rdquo;` : ''}. Prices may have moved since.</span>`;
+    grid.appendChild(note);
+
+    renderStatsBar(results, true);
+    sortControls.classList.remove('hidden');
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    const defSort = document.querySelector('.sort-btn[data-sort="default"]');
+    if (defSort) defSort.classList.add('active');
+
+    meta.innerHTML = `${results.length} sold listing${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo; <span class="offline-badge">SAVED OFFLINE</span>`;
+    meta.classList.remove('hidden');
+
+    renderGradeGroups(grid, results);
+    updatePriceChart(results);
+    buildGradeFilter();
+    backBtn.classList.remove('hidden');
+    return true;
+  }
+
+  // Nothing matches — tell them which searches ARE on this device.
+  const all = await _sdbGetAll();
+  if (all.length === 0) return false;
+  all.sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+
+  const box = document.createElement('div');
+  box.className = 'no-listings-box';
+  box.innerHTML = `<div class="no-listings-icon">&#128225;</div><h3>Offline &mdash; No Saved Comps for This Search</h3><p>Sold results save to this device automatically as you search. These searches are available offline:</p>`;
+  const chips = document.createElement('div');
+  chips.className = 'offline-avail-chips';
+  for (const r of all.slice(0, 24)) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip';
+    chip.textContent = r.query;
+    chip.addEventListener('click', () => {
+      const input = document.getElementById('search-input');
+      if (input) input.value = r.query;
+      performSearch(r.query);
+    });
+    chips.appendChild(chip);
+  }
+  box.appendChild(chips);
+  grid.appendChild(box);
+  meta.classList.add('hidden');
+  backBtn.classList.remove('hidden');
+  return true;
+}
+
+// Settings row: how much sold data is saved on this device + a clear button.
+async function initOfflineSoldPanel() {
+  const host = document.getElementById('offline-sold');
+  if (!host) return;
+  if (!('indexedDB' in window)) { host.innerHTML = ''; return; }
+  const all = await _sdbGetAll();
+  if (all.length === 0) {
+    host.innerHTML = '<p class="op-note">Sold searches save to this device automatically as you run them, so prices you’ve already looked up keep working with no signal.</p>';
+    return;
+  }
+  const comps = all.reduce((n, r) => n + (Array.isArray(r.results) ? r.results.length : 0), 0);
+  let bytes = 0;
+  try { bytes = JSON.stringify(all).length; } catch {}
+  const size = bytes > 1024 * 1024 ? (bytes / (1024 * 1024)).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+  const newest = all.reduce((m, r) => Math.max(m, r.savedAt || 0), 0);
+  host.innerHTML = `<div class="op-row">
+    <div class="op-row-main">
+      <span class="op-year">Sold prices <span class="op-badge">OFFLINE</span></span>
+      <span class="op-status">${all.length} search${all.length !== 1 ? 'es' : ''} &middot; ${comps} comps &middot; ${size} &middot; newest ${escHtml(timeAgo(new Date(newest).toISOString()))}</span>
+    </div>
+    <div class="op-row-actions"><button class="op-btn op-remove" onclick="clearSoldOffline()">Clear</button></div>
+  </div>`;
+}
+
+async function clearSoldOffline() {
+  try { await _sdbClear(); } catch {}
+  initOfflineSoldPanel();
 }
 
 function _updateOnlineStatus() {
