@@ -8933,6 +8933,7 @@ footer {
 .floor-cc-options { flex: 1 1 auto; min-width: 0; }
 .floor-cc-section { margin-top: 0.85rem; }
 .floor-cc-h { display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; }
+.floor-cc-note { font-weight: 500; font-size: 0.72rem; color: var(--text-tertiary, var(--text-secondary)); opacity: 0.8; }
 .floor-cc-opts { display: flex; gap: 0.45rem; flex-wrap: wrap; }
 .floor-cc-opt {
   padding: 0.4rem 0.75rem; font-size: 0.82rem; font-weight: 600; border-radius: var(--radius-sm);

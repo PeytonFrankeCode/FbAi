@@ -12,8 +12,11 @@
      - Free look: toggle to orbit the camera around the table in front of
        you and zoom (wheel / pinchless d-pad) to inspect the cards.
 
-   Custom models: window.FLOOR_AVATAR_MODEL = '<url.glb>' loads via
-   GLTFLoader; otherwise simple primitives are used.
+   Avatars: animated low-poly humans from /models/humans.glb (11 modular
+   characters + shared skeleton, playing Idle/Walk/Wave/Interact clips). Each
+   collector is rendered as a chosen character and animated via an
+   AnimationMixer. If the model can't load, a procedural primitive figure is
+   used instead. Override the model URL with window.FLOOR_AVATAR_MODEL.
 
    Data/presence layers unchanged: booths from /api/floor/booths, live
    avatars over the FloorRoom Durable Object WebSocket.
@@ -34,6 +37,29 @@ const HAIR_STYLES = [{ id: 'short', label: 'Short' }, { id: 'buzz', label: 'Buzz
 const HATS = [{ id: 'none', label: 'None' }, { id: 'cap', label: 'Cap' }, { id: 'beanie', label: 'Beanie' }];
 const ACCESSORIES = [{ id: 'none', label: 'None' }, { id: 'glasses', label: 'Glasses' }];
 
+// 3D character models bundled in /models/humans.glb (low-poly modular humans,
+// all sharing one skeleton + animation set). Each `id` is the part-node prefix
+// in the GLB ("<id>_Body/Head/Feet/Legs"); the floor keeps only that
+// character's parts and plays the shared clips. Non-human models were excluded
+// at build time. '' means "no preference" → a human is picked deterministically
+// from the collector's name so a given person always looks the same.
+const CHAR_MODELS = [
+  { id: '',           label: 'Surprise me' },
+  { id: 'Casual',     label: 'Casual' },
+  { id: 'Casual2',    label: 'Casual 2' },
+  { id: 'Adventurer', label: 'Adventurer' },
+  { id: 'Suit',       label: 'Suit' },
+  { id: 'Worker',     label: 'Worker' },
+  { id: 'Farmer',     label: 'Farmer' },
+  { id: 'Punk',       label: 'Punk' },
+  { id: 'Beach',      label: 'Beach' },
+  { id: 'King',       label: 'King' },
+  { id: 'Swat',       label: 'SWAT' },
+  { id: 'SpaceSuit',  label: 'Astronaut' },
+];
+const CHAR_MODEL_IDS = CHAR_MODELS.map(m => m.id).filter(Boolean);
+const AVATAR_TARGET_H = 3.6;   // world-scaled avatar height (eye line clears the case glass)
+
 // Fill in any missing fields (and migrate the old {color} shape → {shirt}).
 function normalizeCharacter(c) {
   c = c || {};
@@ -48,6 +74,7 @@ function normalizeCharacter(c) {
     hairStyle: c.hairStyle || 'short',
     hat: c.hat || 'none',
     accessory: c.accessory || 'none',
+    model: CHAR_MODEL_IDS.includes(c.model) ? c.model : '',   // chosen 3D character (''=auto)
     color: shirt,                         // keep legacy field = shirt for the booth index
   };
 }
@@ -134,7 +161,10 @@ let tableRects = [];                  // all table footprints (occupied + vacant
 let hall = null;
 let bounds = { minX: -30, maxX: 30, minZ: -10, maxZ: 44 };
 let rafId = null, running = false;
-let avatarModel = null;
+// Loaded avatar kit: { templates:Map<charId,Object3D>, clips:{idle,idleAlt,walk,
+// run,wave,interact}, keys:[charId], fitScale, footOffset, skClone }. Null until
+// /models/humans.glb loads; while null, avatars fall back to procedural figures.
+let humanKit = null;
 
 const player = { x: 0, z: -3 };
 let yaw = 0, pitch = -0.12;
@@ -724,6 +754,8 @@ function buildFigure(char) {
 // carries a random phase so a crowd never moves in lockstep, and blinks on an
 // independent timer. No-op for GLB models (no anim data).
 function animateAvatar(group, dt, moving) {
+  const glb = group && group.userData && group.userData.glb;
+  if (glb) { updateGlbAvatar(glb, dt, moving); return; }
   const an = group && group.userData && group.userData.anim;
   if (!an) return;
   if (group.userData.t == null) group.userData.t = an.phase || 0;   // desync the crowd
@@ -779,15 +811,134 @@ function animateAvatar(group, dt, moving) {
   }
 }
 
+// ------------------------------------------------- animated GLB characters
+// A part node in the GLB is named "<Character>_<Body|Head|Feet|Legs|Pants>".
+const CHAR_PART_RE = /^([A-Za-z]+[0-9]*)_(Body|Head|Feet|Legs|Pants)$/;
+function charOfNode(name) { const m = CHAR_PART_RE.exec(name || ''); return m ? m[1] : null; }
+
+// Turn the loaded humans.glb into a kit of ready-to-clone, single-character
+// templates + the shared animation clips. Called once after the model loads.
+function buildHumanKit(gltf, skClone) {
+  const root = gltf.scene;
+  root.updateMatrixWorld(true);
+
+  // Fit scale + ground offset from the rest-pose height (models are ~1.97m).
+  const box = new THREE.Box3().setFromObject(root);
+  const h = box.max.y - box.min.y;
+  const fitScale = h > 0 ? AVATAR_TARGET_H / h : 1;
+  const footOffset = -box.min.y * fitScale;   // keep the feet on the ground
+
+  const clipByName = {};
+  for (const c of gltf.animations || []) clipByName[c.name] = c;
+  const clips = {
+    idle:     clipByName['Idle'] || null,
+    idleAlt:  clipByName['Idle_Neutral'] || clipByName['Idle'] || null,
+    walk:     clipByName['Walk'] || null,
+    run:      clipByName['Run'] || clipByName['Walk'] || null,
+    wave:     clipByName['Wave'] || null,
+    interact: clipByName['Interact'] || null,
+  };
+
+  // Which characters are actually present (keep our preferred order).
+  const present = new Set();
+  root.traverse(o => { const c = charOfNode(o.name); if (c) present.add(c); });
+  const keys = CHAR_MODEL_IDS.filter(k => present.has(k));
+  if (!keys.length) { console.warn('[floor] no human characters found in model'); return; }
+
+  // One stripped template per character: clone the whole rig (SkeletonUtils so
+  // the skeleton is independent), then drop every other character's parts.
+  const templates = new Map();
+  for (const key of keys) {
+    const t = skClone(root);
+    const drop = [];
+    t.traverse(o => { const c = charOfNode(o.name); if (c && c !== key) drop.push(o); });
+    for (const o of drop) if (o.parent) o.parent.remove(o);
+    t.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    templates.set(key, t);
+  }
+  humanKit = { templates, clips, keys, fitScale, footOffset, skClone };
+}
+
+// Pick a character id for a collector: their explicit choice if valid, else a
+// stable hash of their name/badge so a given person always looks the same.
+function pickModelKey(char) {
+  const keys = humanKit.keys;
+  if (char && char.model && humanKit.templates.has(char.model)) return char.model;
+  const s = String((char && char.name) || '') + String((char && char.emoji) || '');
+  let hsh = 5381;
+  for (let i = 0; i < s.length; i++) hsh = ((hsh << 5) + hsh + s.charCodeAt(i)) >>> 0;
+  return keys[hsh % keys.length];
+}
+
+// Build an animated character instance (clone of a template + its own mixer).
+// Stored on the group's userData.glb so animateAvatar can drive it.
+function buildGlbAvatar(char, g) {
+  const key = pickModelKey(char);
+  const tmpl = humanKit.templates.get(key) || humanKit.templates.get(humanKit.keys[0]);
+  const model = humanKit.skClone(tmpl);
+  model.scale.setScalar(humanKit.fitScale);
+  model.position.y = humanKit.footOffset;
+  model.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  g.add(model);
+
+  const mixer = new THREE.AnimationMixer(model);
+  const act = clip => (clip ? mixer.clipAction(clip) : null);
+  const idle = act(Math.random() < 0.5 ? humanKit.clips.idle : humanKit.clips.idleAlt) || act(humanKit.clips.idle);
+  const actions = { idle, walk: act(humanKit.clips.walk), wave: act(humanKit.clips.wave), interact: act(humanKit.clips.interact) };
+  if (idle) { idle.play(); }
+  g.userData.glb = { mixer, actions, current: idle, oneShot: null };
+  return true;
+}
+
+// Crossfade a looping GLB avatar between idle and walk based on movement, and
+// keep its mixer ticking. One-shot gestures (wave/interact) play through first.
+function updateGlbAvatar(glb, dt, moving) {
+  if (!glb.oneShot) {
+    const want = (moving && glb.actions.walk) ? glb.actions.walk : glb.actions.idle;
+    if (want && glb.current !== want) {
+      want.reset(); want.enabled = true; want.setEffectiveTimeScale(1); want.setEffectiveWeight(1);
+      if (glb.current) want.crossFadeFrom(glb.current, 0.25, false);
+      want.play();
+      glb.current = want;
+    }
+  }
+  glb.mixer.update(dt);
+}
+
+// Play a one-shot gesture (e.g. a wave), then settle back to the idle loop.
+function glbGesture(group, name) {
+  const glb = group && group.userData && group.userData.glb;
+  if (!glb) return;
+  const act = glb.actions[name];
+  if (!act || glb.oneShot) return;
+  act.reset(); act.setLoop(THREE.LoopOnce, 1); act.clampWhenFinished = true;
+  act.enabled = true; act.setEffectiveTimeScale(1); act.setEffectiveWeight(1);
+  if (glb.current) act.crossFadeFrom(glb.current, 0.2, false);
+  act.play();
+  glb.oneShot = act;
+  const onFinished = e => {
+    if (e.action !== act) return;
+    glb.mixer.removeEventListener('finished', onFinished);
+    glb.oneShot = null;
+    const back = glb.actions.idle;
+    if (back) { back.reset(); back.enabled = true; back.setEffectiveWeight(1); back.crossFadeFrom(act, 0.25, false); back.play(); glb.current = back; }
+  };
+  glb.mixer.addEventListener('finished', onFinished);
+}
+
 function buildAvatar(char) {
   char = normalizeCharacter(char);
   const g = new THREE.Group();
-  if (avatarModel) {
-    const m = avatarModel.clone(true);
-    m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.material = o.material.clone(); } });
-    m.scale.setScalar(avatarModel.userData.fitScale || 1);
-    g.add(m);
-  } else {
+  let built = false;
+  if (humanKit) {
+    try { built = buildGlbAvatar(char, g); }
+    catch (err) {
+      console.warn('[floor] character build failed, using primitive:', err && err.message);
+      while (g.children.length) g.remove(g.children[0]);   // drop any partial model
+      g.userData.glb = null;
+    }
+  }
+  if (!built) {
     const fig = buildFigure(char);
     g.add(fig);
     g.userData.anim = fig.userData.anim;   // surface limb pivots for animateAvatar
@@ -1485,15 +1636,15 @@ async function ensureThree() {
 
   clock = new THREE.Clock(); playerObj = null;
 
-  if (window.FLOOR_AVATAR_MODEL) {
-    try {
-      const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
-      const gltf = await new GLTFLoader().loadAsync(window.FLOOR_AVATAR_MODEL);
-      const size = new THREE.Vector3(); new THREE.Box3().setFromObject(gltf.scene).getSize(size);
-      gltf.scene.userData.fitScale = size.y ? (3.3 / size.y) : 1;
-      avatarModel = gltf.scene;
-    } catch (err) { console.warn('[floor] avatar model load failed:', err && err.message); }
-  }
+  try {
+    const url = window.FLOOR_AVATAR_MODEL || '/models/humans.glb';
+    const [{ GLTFLoader }, skUtils] = await Promise.all([
+      import('three/addons/loaders/GLTFLoader.js'),
+      import('three/addons/utils/SkeletonUtils.js'),
+    ]);
+    const gltf = await new GLTFLoader().loadAsync(url);
+    buildHumanKit(gltf, skUtils.clone);
+  } catch (err) { console.warn('[floor] avatar models failed to load, using primitives:', err && err.message); }
 
   window.addEventListener('resize', () => { if (!document.getElementById('floor-view')?.classList.contains('hidden')) resize(); });
   bindPointer(canvas);
@@ -1776,7 +1927,7 @@ function connectPresence() {
     sendWs({
       t: 'join', name: me.name, emoji: me.emoji, color: me.shirt, username: myUsername(),
       x: round1(player.x), y: round1(player.z),
-      appearance: { skin: me.skin, shirt: me.shirt, pants: me.pants, hair: me.hair, hairStyle: me.hairStyle, hat: me.hat, accessory: me.accessory },
+      appearance: { skin: me.skin, shirt: me.shirt, pants: me.pants, hair: me.hair, hairStyle: me.hairStyle, hat: me.hat, accessory: me.accessory, model: me.model },
     });
     lastSent = { x: null, z: null };
     moveTimer = setInterval(() => { const x = round1(player.x), z = round1(player.z); if (x === lastSent.x && z === lastSent.z) return; lastSent = { x, z }; sendWs({ t: 'move', x, y: z }); }, 100);
@@ -1786,7 +1937,7 @@ function connectPresence() {
   sock.addEventListener('message', evt => {
     let msg; try { msg = JSON.parse(evt.data); } catch (_) { return; }
     if (msg.t === 'welcome') { wsId = msg.id; for (const r of remote.values()) scene.remove(r.group); remote.clear(); for (const p of (msg.players || [])) addRemote(p); }
-    else if (msg.t === 'join' && msg.player) addRemote(msg.player);
+    else if (msg.t === 'join' && msg.player) { addRemote(msg.player); const r = remote.get(msg.player.id); if (r) glbGesture(r.group, 'wave'); }
     else if (msg.t === 'move') { const r = remote.get(msg.id); if (r) { r.tx = msg.x; r.tz = msg.y; } }
     else if (msg.t === 'leave') { const r = remote.get(msg.id); if (r) { scene.remove(r.group); remote.delete(msg.id); } closeVoicePeer(msg.id); }
     else if (msg.t === 'chat') { onFloorChat(msg); return; }
@@ -2071,6 +2222,7 @@ function paintCharCreate() {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts.map(o => `<button type="button" class="floor-cc-opt${o.id === ccDraft[field] ? ' sel' : ''}" data-cc="${field}" data-val="${o.id}">${escHtml(o.label)}</button>`).join('');
   };
+  optRow('floor-cc-model', 'model', CHAR_MODELS);
   swatchRow('floor-cc-skin', 'skin', SKIN_TONES);
   swatchRow('floor-cc-colors', 'shirt', SHIRT_COLORS);
   swatchRow('floor-cc-pants', 'pants', PANTS_COLORS);
