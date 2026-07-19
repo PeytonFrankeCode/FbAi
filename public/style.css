@@ -23,6 +23,10 @@
   --accent-lighter: #d1fae5;
   --accent-bg: rgba(94, 206, 153, 0.1);
   --accent-border: rgba(94, 206, 153, 0.22);
+  /* Text color for content sitting ON an accent-colored surface. Dark theme
+     uses near-black on the bright mint; light theme flips to white because
+     its accent is a deep forest green. */
+  --accent-on: #0a1a12;
 
   --gold: #facc15;
   --gold-bg: rgba(250, 204, 21, 0.1);
@@ -63,36 +67,39 @@
 }
 
 [data-theme="light"] {
-  /* Modernized light mode — neutral cool grays (slate scale) instead of the
-     warm beige/parchment palette, which read as dated. Accent green stays
-     for brand continuity. Backgrounds are flat (no decorative gradients). */
-  --bg-primary: #f8fafc;       /* slate-50 — page bg */
-  --bg-secondary: #ffffff;     /* card surfaces */
-  --bg-tertiary: #f1f5f9;      /* slate-100 — subtle differentiation */
+  /* "Fresh field" light mode — crisp white cards on a faintly green-tinted
+     page, with a rich field-green accent (deeper than the old bright
+     emerald, but still clearly green rather than blackish). The header is a
+     true green band so the brand color anchors the page without the glare
+     of a white header. */
+  --bg-primary: #f0f4ef;       /* faint green tint — page bg */
+  --bg-secondary: #ffffff;     /* card surfaces stay white for crispness */
+  --bg-tertiary: #e7ede5;      /* subtle differentiation */
   --bg-card: #ffffff;
-  --bg-card-end: #ffffff;
-  --bg-footer: #f1f5f9;
+  --bg-card-end: #fbfdfa;
+  --bg-footer: #e7ede5;
   --bg-input: #ffffff;
-  --bg-hover: rgba(5, 150, 105, 0.06);
+  --bg-hover: rgba(21, 128, 61, 0.06);
 
-  --border-primary: #e2e8f0;   /* slate-200 — clean, subtle */
-  --border-accent: #10b981;
+  --border-primary: #dde4da;   /* green-gray hairline */
+  --border-accent: #15803d;
 
-  --text-primary: #0f172a;     /* slate-900 — near-black, not pure */
-  --text-secondary: #475569;   /* slate-600 */
-  --text-muted: #64748b;       /* slate-500 */
-  --text-faint: #94a3b8;       /* slate-400 */
+  --text-primary: #1a2620;     /* green-tinged near-black */
+  --text-secondary: #47584d;
+  --text-muted: #6b7c70;
+  --text-faint: #a3b2a7;
 
-  --accent: #059669;
-  --accent-hover: #047857;
-  --accent-light: #10b981;
-  --accent-lighter: #34d399;
-  --accent-bg: rgba(5, 150, 105, 0.08);
-  --accent-border: rgba(5, 150, 105, 0.22);
+  --accent: #15803d;           /* field green (was bright emerald) */
+  --accent-hover: #166534;
+  --accent-light: #16a34a;
+  --accent-lighter: #22c55e;
+  --accent-bg: rgba(21, 128, 61, 0.08);
+  --accent-border: rgba(21, 128, 61, 0.3);
+  --accent-on: #ffffff;        /* white text on the field-green accent */
 
-  --gold: #b45309;
-  --gold-bg: rgba(180, 83, 9, 0.08);
-  --gold-border: rgba(180, 83, 9, 0.25);
+  --gold: #a16207;
+  --gold-bg: rgba(161, 98, 7, 0.08);
+  --gold-border: rgba(161, 98, 7, 0.25);
 
   /* Pro tier branding — same orange in light mode, slightly deeper bg/border
      so it reads correctly on white surfaces */
@@ -110,15 +117,16 @@
   --sold-bg: #dc2626;
   --sold-ribbon: #991b1b;
 
-  --shadow-card: rgba(15, 23, 42, 0.06);
-  --shadow-modal: rgba(15, 23, 42, 0.12);
-  --overlay-bg: rgba(15, 23, 42, 0.4);
+  --shadow-card: rgba(26, 38, 32, 0.07);
+  --shadow-modal: rgba(26, 38, 32, 0.16);
+  --overlay-bg: rgba(20, 32, 24, 0.45);
 
-  /* Solid header — was a mint gradient that read as 2010s.
-     Solid neutral surface lines up with the rest of the page. */
-  --header-bg: #ffffff;
-  --header-glow: transparent;
-  --card-gradient: #ffffff;
+  /* Green header band — a true field green (not near-black) so it reads as
+     a deliberate brand banner on the light page. Header children get
+     white-on-green overrides further down. */
+  --header-bg: linear-gradient(140deg, #14532d 0%, #1a6b3c 60%, #17753f 100%);
+  --header-glow: rgba(255, 255, 255, 0.08);
+  --card-gradient: var(--bg-card);
   --surface-gradient: var(--bg-secondary);
 }
 
@@ -197,7 +205,7 @@
 #login-form button {
   padding: 0.75rem;
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   border: none;
   border-radius: var(--radius-sm);
   font-size: 1rem;
@@ -371,7 +379,7 @@
   align-items: center;
   gap: 0.35rem;
   background: var(--accent);
-  color: #06281b;
+  color: var(--accent-on);
   border: 1px solid var(--accent);
   padding: 0.4rem 1.1rem;
   border-radius: var(--radius-md);
@@ -419,7 +427,7 @@
   height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: #0c0e14;
+  color: var(--accent-on);
   font-size: 1rem;
   font-weight: 700;
   display: flex;
@@ -487,7 +495,7 @@
 
 .auth-dropdown-save-btn:hover {
   background: var(--accent);
-  color: #0c0e14;
+  color: var(--accent-on);
 }
 
 .auth-dropdown-divider {
@@ -704,7 +712,7 @@
 .pricing-period.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0c0e14;
+  color: var(--accent-on);
 }
 
 .pricing-save-badge {
@@ -1306,19 +1314,46 @@ body {
 }
 
 /* Light-mode body overrides — the radial green tints above were designed for
-   the dark theme and read as dingy on white. Strip them, add a single hairline
-   bottom border to the header for definition. */
+   the dark theme and read as dingy on light surfaces. Strip them. */
 [data-theme="light"] body {
   background-image: none;
 }
-[data-theme="light"] header {
-  border-bottom: 1px solid var(--border-primary);
-}
+/* The header is a green band in light mode (see --header-bg), so its
+   children need white-on-green colors even though the rest of the page is
+   light. The nav bar below it stays on the light surface. */
 [data-theme="light"] .nav-bar {
   background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
 }
-[data-theme="light"] header::before {
-  display: none;
+[data-theme="light"] .header-tagline {
+  color: rgba(255, 255, 255, 0.82);
+}
+[data-theme="light"] .header-tagline span,
+[data-theme="light"] header h1 {
+  color: #bbf7d0;
+}
+[data-theme="light"] .auth-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+[data-theme="light"] .auth-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+[data-theme="light"] .auth-btn.logged-in {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+/* Fund button — the dark-mode pink translucency vanishes on green; use a
+   white pill treatment to match the auth button. */
+[data-theme="light"] .donate-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #fbcfe8;
+}
+[data-theme="light"] .donate-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 /* Dark-mode-tuned shadows are too heavy on light backgrounds — they make
    cards look like cutouts instead of subtly elevated surfaces. */
@@ -1528,7 +1563,7 @@ header::before {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 50% 40%, rgba(94, 206, 153, 0.05) 0%, transparent 50%);
+  background: radial-gradient(circle at 50% 40%, var(--header-glow) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -1604,9 +1639,11 @@ header h1 {
   transform: scale(1.03);
 }
 
+/* Logo sits on the green header band in light mode, so the dark-mode screen
+   blend still applies; a small brightness lift keeps the wordmark legible
+   against the lighter green. */
 [data-theme="light"] .header-logo {
-  mix-blend-mode: normal;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+  filter: brightness(1.35);
 }
 
 .header-tagline {
@@ -1695,7 +1732,7 @@ main {
   border-radius: var(--radius-md);
   border: none;
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   font-size: 1rem;
   font-weight: 700;
   font-family: inherit;
@@ -1859,7 +1896,7 @@ main {
 
 .mode-tab.active {
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   border-color: var(--accent);
   font-weight: 700;
 }
@@ -1954,7 +1991,7 @@ main {
 
 .chip:hover {
   background: var(--accent);
-  color: #0c0e14;
+  color: var(--accent-on);
   border-color: var(--accent);
 }
 
@@ -2207,7 +2244,7 @@ main {
   top: 10px;
   right: 10px;
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -2597,6 +2634,10 @@ main {
 .promote-buy-slot-btn:hover {
   opacity: 0.85;
 }
+/* Light-mode gold is a deep amber — black text can't hold contrast on it */
+[data-theme="light"] .promote-buy-slot-btn {
+  color: #ffffff;
+}
 .promote-buy-slot-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -2907,7 +2948,7 @@ main {
 
 .card-link:hover {
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   border-color: var(--accent);
 }
 
@@ -2960,7 +3001,7 @@ main {
 
 .back-btn:hover {
   background: var(--accent);
-  color: #0c0e14;
+  color: var(--accent-on);
   border-color: var(--accent);
 }
 
@@ -3477,7 +3518,7 @@ a.est-comp-title:hover { color: var(--accent, #5ece99); text-decoration: underli
   border-radius: var(--radius-md);
   border: none;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-  color: #0a1a12;
+  color: var(--accent-on);
   font-size: 1rem;
   font-weight: 700;
   font-family: inherit;
@@ -3912,7 +3953,7 @@ footer::before {
   padding: 0.75rem;
   text-align: center;
   background: var(--accent);
-  color: #0c0e14;
+  color: var(--accent-on);
   text-decoration: none;
   border-radius: var(--radius-md);
   font-size: 0.9rem;
@@ -4075,7 +4116,7 @@ footer::before {
 
 .nav-tab.active {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-  color: #0a1a12;
+  color: var(--accent-on);
   border-color: var(--accent);
   box-shadow: 0 2px 14px rgba(94, 206, 153, 0.3), inset 0 1px 0 rgba(255,255,255,0.12);
   font-weight: 700;
@@ -5976,7 +6017,7 @@ tr:hover .cl-alert-btn {
 .portfolio-no-value { font-size: 0.75rem; color: var(--text-muted); }
 
 /* ---- Pro gates (shared) ---- */
-.pro-gate-badge { display: inline-block; background: var(--accent); color: #06281b; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; }
+.pro-gate-badge { display: inline-block; background: var(--accent); color: var(--accent-on); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; }
 .pro-gate-box { text-align: center; padding: 2rem 1.5rem; border: 1px dashed var(--accent-border); border-radius: 14px; background: rgba(94, 206, 153, 0.05); }
 .pro-gate-box h3 { margin: 0.7rem 0 0.3rem; }
 .pro-gate-box p { color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.1rem; font-size: 0.9rem; line-height: 1.45; }
@@ -5986,7 +6027,7 @@ tr:hover .cl-alert-btn {
 .pf-analytics { border: 1px solid var(--border-primary); border-radius: 14px; padding: 1rem; background: var(--bg-secondary); }
 .pf-an-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
 .pf-an-head h4 { margin: 0; font-size: 1rem; }
-.pf-an-pro { background: var(--accent); color: #06281b; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 999px; }
+.pf-an-pro { background: var(--accent); color: var(--accent-on); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 999px; }
 .pf-an-chart-wrap { height: 130px; margin-bottom: 0.8rem; }
 .pf-an-movers { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .pf-an-col h5 { margin: 0 0 0.4rem; font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -6007,7 +6048,7 @@ tr:hover .cl-alert-btn {
 .pf-analytics-cta p { margin: 0 0 0.7rem; color: var(--text-secondary); font-size: 0.85rem; }
 
 /* ---- Fund / Sponsors ---- */
-.fund-footer-btn { background: var(--accent); color: #06281b; border-color: var(--accent); font-weight: 700; }
+.fund-footer-btn { background: var(--accent); color: var(--accent-on); border-color: var(--accent); font-weight: 700; }
 .fund-footer-btn:hover { filter: brightness(1.08); }
 
 /* Funding-goal progress bars (modal + footer share the track/fill) */
@@ -6021,7 +6062,7 @@ tr:hover .cl-alert-btn {
 .fund-goal-foot-label { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; text-align: center; }
 .fund-goal-foot-label strong { color: var(--accent); }
 .fund-goal-footer .fund-goal-track { margin-bottom: 8px; }
-.fund-goal-foot-btn { display: block; margin: 0 auto; background: var(--accent); color: #06281b; border: 0; padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
+.fund-goal-foot-btn { display: block; margin: 0 auto; background: var(--accent); color: var(--accent-on); border: 0; padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: inherit; }
 .fund-goal-foot-btn:hover { filter: brightness(1.08); }
 
 /* Goal reached — gold celebratory fill + accent label */
@@ -6210,7 +6251,7 @@ tr:hover .cl-alert-btn {
 .clm-row-title { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .clm-row-player { font-size: 0.72rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .clm-select { background: var(--bg-card); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 6px; font-size: 0.74rem; padding: 0.3rem 0.4rem; max-width: 9rem; font-family: inherit; flex-shrink: 0; }
-.clm-add-btn { background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.76rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.clm-add-btn { background: var(--accent); color: var(--accent-on); border: none; border-radius: 6px; padding: 0.4rem 0.75rem; font-size: 0.76rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 .clm-add-btn:hover { opacity: 0.88; }
 .clm-none { font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
 .clm-hint { font-size: 0.82rem; color: var(--text-muted); padding: 0.5rem 0; }
@@ -6584,7 +6625,7 @@ tr:hover .cl-alert-btn {
 }
 .completion-set.complete .completion-set-count {
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
 }
 
 /* Slim per-set progress bar tracks the count text */
@@ -6825,7 +6866,7 @@ tr:hover .cl-alert-btn {
 }
 .rainbow-cost-result.rainbow-cost-active {
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   border-color: var(--accent);
 }
 
@@ -7397,7 +7438,7 @@ tr:hover .cl-alert-btn {
 .grading-submit-btn {
   padding: 0.75rem 2rem !important;
   background: var(--accent) !important;
-  color: #0a1a12 !important;
+  color: var(--accent-on) !important;
   border: none !important;
   font-weight: 700 !important;
   font-size: 0.95rem !important;
@@ -7481,7 +7522,7 @@ tr:hover .cl-alert-btn {
 .seller-save-btn {
   padding: 0.65rem 2rem !important;
   background: var(--accent) !important;
-  color: #0a1a12 !important;
+  color: var(--accent-on) !important;
   border: none !important;
   font-weight: 700 !important;
   border-radius: var(--radius-md) !important;
@@ -7518,7 +7559,7 @@ tr:hover .cl-alert-btn {
 
 .seller-autofill-btn:hover {
   background: var(--accent);
-  color: #0c0e14;
+  color: var(--accent-on);
 }
 
 /* ---- Completion Sub-Tabs ---- */
@@ -7610,7 +7651,7 @@ tr:hover .cl-alert-btn {
 
 .settings-sub-upgrade {
   background: var(--accent);
-  color: #0a1a12;
+  color: var(--accent-on);
   border-color: transparent;
   font-weight: 700;
 }
@@ -8483,7 +8524,7 @@ footer {
 .scanner-match-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .scanner-match-card { position: relative; }
 .scanner-match-agrees { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(0,0,0,0.2); }
-.scanner-match-badge { position: absolute; top: 6px; right: 6px; z-index: 2; background: var(--accent); color: #000; font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
+.scanner-match-badge { position: absolute; top: 6px; right: 6px; z-index: 2; background: var(--accent); color: var(--accent-on); font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
 
 /* Optional back-of-card upload (accuracy booster for shiny cards) */
 .scanner-back-area { margin-top: 12px; }
@@ -8501,8 +8542,8 @@ footer {
 .scanner-key-terms { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.25rem; }
 .scanner-key-label { font-size: 0.54rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); margin-right: 0.1rem; }
 .scanner-key-chip { font-size: 0.62rem; font-weight: 700; color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: 4px; padding: 0.05rem 0.32rem; line-height: 1.45; }
-.scanner-key-chip-player { color: #000; background: var(--accent); border-color: var(--accent); }
-.scanner-match-card-btn { background: var(--accent); color: #000; border: none; border-radius: 5px; padding: 0.38rem 0.4rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.15s; }
+.scanner-key-chip-player { color: var(--accent-on); background: var(--accent); border-color: var(--accent); }
+.scanner-match-card-btn { background: var(--accent); color: var(--accent-on); border: none; border-radius: 5px; padding: 0.38rem 0.4rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.15s; }
 .scanner-match-card-btn:hover { opacity: 0.85; }
 
 .scan-cam-btn { background: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 8px; padding: 0.55rem 0.7rem; font-size: 1rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; flex-shrink: 0; line-height: 1; white-space: nowrap; }
@@ -8735,7 +8776,7 @@ footer {
 .sc-card-price { font-size: 1.05rem; font-weight: 800; color: var(--accent); }
 .sc-card-links { display: flex; flex-direction: column; gap: 0.35rem; margin-top: auto; }
 .sc-link { text-align: center; text-decoration: none; font-size: 0.78rem; font-weight: 700; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); }
-.sc-link-ebay { background: var(--accent); color: #06281b; }
+.sc-link-ebay { background: var(--accent); color: var(--accent-on); }
 .sc-link-ebay:hover { background: var(--accent-hover); }
 .sc-link-trade { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); }
 .sc-link-trade:hover { background: rgba(99, 102, 241, 0.28); }
@@ -8810,7 +8851,7 @@ footer {
 .dm-messages { flex: 1 1 auto; overflow-y: auto; padding: 0.7rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .dm-empty { color: var(--text-secondary); font-size: 0.84rem; text-align: center; margin: auto; padding: 1rem; }
 .dm-msg { max-width: 78%; padding: 0.45rem 0.6rem; border-radius: 12px; font-size: 0.85rem; }
-.dm-msg.mine { align-self: flex-end; background: var(--accent); color: #06281b; border-bottom-right-radius: 4px; }
+.dm-msg.mine { align-self: flex-end; background: var(--accent); color: var(--accent-on); border-bottom-right-radius: 4px; }
 .dm-msg.theirs { align-self: flex-start; background: var(--bg-secondary); color: var(--text-primary); border-bottom-left-radius: 4px; }
 .dm-msg-text { white-space: pre-wrap; word-break: break-word; }
 .dm-msg-card { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; opacity: 0.92; margin-bottom: 0.2rem; }
@@ -8830,7 +8871,7 @@ footer {
 /* width:auto overrides the global `.modal-box button[type="submit"]{width:100%}`
    rule (more specific) that was forcing Send to full width and squeezing the
    input down to a tiny box. */
-.dm-form button, .dm-form button[type="submit"] { flex: 0 0 auto; width: auto; min-width: 5rem; margin-top: 0; padding: 0.7rem 1.2rem; background: var(--accent); color: #06281b; border: none; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+.dm-form button, .dm-form button[type="submit"] { flex: 0 0 auto; width: auto; min-width: 5rem; margin-top: 0; padding: 0.7rem 1.2rem; background: var(--accent); color: var(--accent-on); border: none; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
 .dm-form button:hover { background: var(--accent-hover); }
 @media (max-width: 620px) {
   .dm-layout { height: 70vh; }
@@ -8948,7 +8989,7 @@ footer {
 }
 .floor-cc-go {
   width: 100%; margin-top: 1.25rem; padding: 0.75rem; font-size: 0.95rem; font-weight: 800;
-  background: var(--accent); color: #06281b; border: none; border-radius: var(--radius-md); cursor: pointer;
+  background: var(--accent); color: var(--accent-on); border: none; border-radius: var(--radius-md); cursor: pointer;
 }
 .floor-cc-go:hover { background: var(--accent-hover); }
 
@@ -9140,7 +9181,7 @@ footer {
 }
 .floor-tbtn:hover { background: rgba(94, 206, 153, 0.24); border-color: var(--accent); color: #fff; }
 .floor-tbtn:active { transform: translateY(1px); }
-.floor-tbtn.active { background: var(--accent); border-color: var(--accent); color: #06281b; }
+.floor-tbtn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
 
 .floor-hint {
   position: absolute; left: 0.7rem; bottom: 0.7rem; z-index: 3; line-height: 1.2;
@@ -9206,7 +9247,7 @@ footer {
 .floor-dir-visit:hover { color: var(--accent); border-color: var(--accent); }
 .floor-dir-walk:hover { color: var(--text-primary); border-color: var(--text-secondary); }
 .floor-dir-msg { color: var(--accent); border-color: var(--accent) !important; }
-.floor-dir-msg:hover { background: var(--accent); color: #06281b; }
+.floor-dir-msg:hover { background: var(--accent); color: var(--accent-on); }
 .floor-dir-empty { color: var(--text-muted); font-size: 0.84rem; padding: 0.5rem; text-align: center; }
 
 /* DM notification toasts — slide in at the corner with a message preview */
