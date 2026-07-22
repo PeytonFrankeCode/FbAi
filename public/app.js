@@ -12447,10 +12447,14 @@ document.addEventListener('DOMContentLoaded', _updateOnlineStatus);
 // "Moves" is the audit log — every relocation records what went where, so
 // packing for a show / unloading back into storage is documented.
 //
-// Photos are stored SEPARATELY, under 'cardHuddleInventoryPhotos' (a
-// { itemId: dataUrl } map), and are intentionally NOT in USER_SYNC_KEYS: the
-// cross-device account blob has a 1MB cap, so inlining photos there would
-// break sync for the whole account. Metadata syncs; photos stay device-local.
+// Photos are kept OUT of the 1MB userdata blob (inlining them there would
+// break sync for the whole account). Instead each photo has its own home:
+//   - locally, in 'cardHuddleInventoryPhotos' (a { itemId: dataUrl } map) for
+//     instant display, and
+//   - server-side, one KV key per photo via /api/inventory/photo/:id, so it
+//     follows the account across devices.
+// The item's metadata (which DOES sync) carries a `hasPhoto` flag, so a fresh
+// device knows to pull each photo it doesn't already have locally.
 
 const INV_DEFAULT_LOCATIONS = ['Home', 'Storage', 'Card Show'];
 const INV_MOVE_LOG_CAP = 200;
@@ -12496,16 +12500,53 @@ function _invFmtPrintRun(pr) {
   return s.includes('/') ? s : '/' + s;
 }
 
-// ---- Photo store (device-local, not synced — see module header) ----
+// ---- Photo store (local cache + cross-device server sync — see header) ----
 function getInvPhotos() {
   try { return JSON.parse(localStorage.getItem(INV_PHOTOS_KEY) || '{}') || {}; }
   catch (_) { return {}; }
 }
-function setInvPhoto(id, dataUrl) {
+// Local cache only. Server sync is handled by the _invServer* helpers so the
+// two concerns stay separable (anonymous users still get local photos).
+function setInvPhotoLocal(id, dataUrl) {
   const map = getInvPhotos();
   if (dataUrl) map[id] = dataUrl; else delete map[id];
-  try { localStorage.setItem(INV_PHOTOS_KEY, JSON.stringify(map)); }
-  catch (_) { alert('Could not save the photo — this device may be out of storage. The item was still saved without it.'); }
+  try { localStorage.setItem(INV_PHOTOS_KEY, JSON.stringify(map)); return true; }
+  catch (_) {
+    alert('Could not save the photo on this device — it may be out of storage. The item was still saved without it.');
+    return false;
+  }
+}
+
+// Push/delete a photo on the server (fire-and-forget; local cache is the fast
+// path). No-ops for logged-out users — authFetch simply sends no token.
+function _invServerPutPhoto(id, dataUrl) {
+  if (!getSessionToken()) return;
+  authFetch(`/api/inventory/photo/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataUrl }),
+  }).catch(err => console.warn('[inv] photo push failed:', err && err.message));
+}
+function _invServerDeletePhoto(id) {
+  if (!getSessionToken()) return;
+  authFetch(`/api/inventory/photo/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    .catch(err => console.warn('[inv] photo delete failed:', err && err.message));
+}
+
+// Ids we've already tried to pull this session, so a persistent 404/miss
+// doesn't loop renderInventory forever.
+const _invPhotoFetchTried = new Set();
+async function _invServerFetchPhoto(id) {
+  if (!getSessionToken()) return;
+  _invPhotoFetchTried.add(id);
+  try {
+    const res = await authFetch(`/api/inventory/photo/${encodeURIComponent(id)}`);
+    if (!res.ok) return;
+    const { dataUrl } = await res.json();
+    if (dataUrl) { setInvPhotoLocal(id, dataUrl); renderInventory(); }
+  } catch (err) {
+    console.warn('[inv] photo fetch failed:', err && err.message);
+  }
 }
 
 function _invWhen(ts) {
@@ -12584,15 +12625,21 @@ function renderInventory() {
          </div>`
       : '<div class="inv-empty"><p>No cards match the current filters.</p></div>';
   } else {
+    const toFetch = []; // photos this device is missing but the account has
     listEl.innerHTML = items.map(i => {
       const pr = _invFmtPrintRun(i.printRun);
       const photo = photos[i.id];
+      // On a fresh device the metadata says hasPhoto but the bytes aren't
+      // cached locally yet — pull them from the server (once).
+      const pending = !photo && i.hasPhoto && !!getSessionToken() && !_invPhotoFetchTried.has(i.id);
+      if (pending) toFetch.push(i.id);
+      const thumb = photo
+        ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" onclick="openInvPhotoViewer('${escHtml(i.id)}')" />`
+        : (pending
+            ? '<div class="inv-thumb-placeholder inv-thumb-loading">&#8987;</div>'
+            : '<div class="inv-thumb-placeholder">&#127183;</div>');
       return `<div class="inv-item" data-id="${escHtml(i.id)}">
-        <div class="inv-item-thumb">
-          ${photo
-            ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" onclick="openInvPhotoViewer('${escHtml(i.id)}')" />`
-            : '<div class="inv-thumb-placeholder">&#127183;</div>'}
-        </div>
+        <div class="inv-item-thumb">${thumb}</div>
         <div class="inv-item-main">
           <div class="inv-item-name">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
           <div class="inv-item-meta">
@@ -12613,6 +12660,8 @@ function renderInventory() {
         </div>
       </div>`;
     }).join('');
+    // Kick off any missing-photo pulls; each re-renders when it lands.
+    toFetch.forEach(id => _invServerFetchPhoto(id));
   }
 
   // ---- Move log ----
@@ -12675,17 +12724,29 @@ function handleInvItemSubmit(e) {
 
   const now = Date.now();
   const existing = id ? inv.items.find(i => i.id === id) : null;
-  let itemId;
+  let itemId, item;
   if (existing) {
     Object.assign(existing, { name, printRun, auto, mem, location, updatedAt: now });
-    itemId = existing.id;
+    itemId = existing.id; item = existing;
   } else {
     itemId = _invId();
     // New cards default to a single copy; the +/- steppers adjust from there.
-    inv.items.push({ id: itemId, name, printRun, auto, mem, qty: 1, location, addedAt: now, updatedAt: now });
+    item = { id: itemId, name, printRun, auto, mem, qty: 1, location, addedAt: now, updatedAt: now };
+    inv.items.push(item);
   }
-  // Commit the photo draft. undefined = leave as-is; string/null = set/clear.
-  if (_invPhotoDraft !== undefined) setInvPhoto(itemId, _invPhotoDraft);
+  // Commit the photo draft. undefined = leave as-is; string = set, null = clear.
+  // hasPhoto rides the synced metadata so other devices know to pull the photo.
+  if (_invPhotoDraft !== undefined) {
+    if (_invPhotoDraft) {
+      setInvPhotoLocal(itemId, _invPhotoDraft);
+      _invServerPutPhoto(itemId, _invPhotoDraft);
+      item.hasPhoto = true;
+    } else {
+      setInvPhotoLocal(itemId, null);
+      _invServerDeletePhoto(itemId);
+      item.hasPhoto = false;
+    }
+  }
   saveInventory(inv);
   closeInvItemModal();
   renderInventory();
@@ -12742,7 +12803,7 @@ function deleteInvItem(id) {
   if (!item) return;
   if (!confirm(`Delete "${item.name}" from your inventory?`)) return;
   inv.items = inv.items.filter(i => i.id !== id);
-  setInvPhoto(id, null); // drop its photo too
+  setInvPhotoLocal(id, null); _invServerDeletePhoto(id); // drop its photo too
   saveInventory(inv);
   renderInventory();
 }
@@ -12799,7 +12860,8 @@ function handleInvMoveSubmit(e) {
       twin.qty = (Number(twin.qty) || 0) + qty;
       twin.updatedAt = now;
       inv.items = inv.items.filter(i => i.id !== item.id);
-      setInvPhoto(item.id, null); // absorbed — keep the twin's photo, drop this one's
+      // Absorbed — keep the twin's photo, drop this one's (local + server).
+      setInvPhotoLocal(item.id, null); _invServerDeletePhoto(item.id);
     } else {
       item.location = dest;
       item.updatedAt = now;
@@ -12812,9 +12874,10 @@ function handleInvMoveSubmit(e) {
       twin.updatedAt = now;
     } else {
       const newId = _invId();
-      inv.items.push({ ...item, id: newId, qty, location: dest, addedAt: now, updatedAt: now });
       const photo = getInvPhotos()[item.id];
-      if (photo) setInvPhoto(newId, photo); // split copies keep the same photo
+      inv.items.push({ ...item, id: newId, qty, location: dest, addedAt: now, updatedAt: now, hasPhoto: !!photo });
+      // Split off a copy — the new stack keeps the same photo (local + server).
+      if (photo) { setInvPhotoLocal(newId, photo); _invServerPutPhoto(newId, photo); }
     }
   }
 

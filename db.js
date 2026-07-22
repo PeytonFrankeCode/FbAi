@@ -169,6 +169,73 @@ async function saveUserData(username, data) {
   }
 }
 
+// ---- Per-user inventory photos ----
+// Card photos are too big for the 1MB userdata blob, so each one gets its own
+// KV key: `invphoto:<username>:<photoId>`. Async, no preload (a collector may
+// have hundreds). Mirrors the loadUserData shape. On local file mode each
+// user's photos live under data/userphotos/<username>/<photoId>.json.
+function _safeName(s) {
+  const v = String(s == null ? '' : s).toLowerCase();
+  return /^[a-z0-9_.-]+$/.test(v) ? v : null;
+}
+
+function _userPhotoDir(username) {
+  const base = (typeof __dirname !== 'undefined') ? __dirname : '.';
+  return path.join(base, 'data', 'userphotos', username);
+}
+
+async function loadUserPhoto(username, photoId) {
+  const user = _safeName(username);
+  const id = _safeName(photoId);
+  if (!user || !id) return null;
+  const key = `invphoto:${user}:${id}`;
+  if (kv) {
+    try { return await kv.get(key); } // stored as a plain string (data URL)
+    catch (err) { console.error(`[DB] KV get ${key} failed:`, err && err.message); return null; }
+  }
+  if (fs) {
+    const filePath = path.join(_userPhotoDir(user), `${id}.txt`);
+    try { if (fs.existsSync(filePath)) return fs.readFileSync(filePath, 'utf-8'); }
+    catch (e) { console.error(`[DB] Error loading ${key} from file:`, e.message); }
+  }
+  return null;
+}
+
+async function saveUserPhoto(username, photoId, dataUrl) {
+  const user = _safeName(username);
+  const id = _safeName(photoId);
+  if (!user || !id || !dataUrl) return;
+  const key = `invphoto:${user}:${id}`;
+  if (kv) {
+    try { await kv.put(key, String(dataUrl)); }
+    catch (err) { console.error(`[DB] KV put ${key} failed:`, err && err.message); }
+  }
+  if (fs) {
+    const dir = _userPhotoDir(user);
+    const filePath = path.join(dir, `${id}.txt`);
+    try {
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(filePath, String(dataUrl));
+    } catch (e) { console.error(`[DB] Error saving ${key} to file:`, e.message); }
+  }
+}
+
+async function deleteUserPhoto(username, photoId) {
+  const user = _safeName(username);
+  const id = _safeName(photoId);
+  if (!user || !id) return;
+  const key = `invphoto:${user}:${id}`;
+  if (kv) {
+    try { await kv.delete(key); }
+    catch (err) { console.error(`[DB] KV delete ${key} failed:`, err && err.message); }
+  }
+  if (fs) {
+    const filePath = path.join(_userPhotoDir(user), `${id}.txt`);
+    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); }
+    catch (e) { console.error(`[DB] Error deleting ${key} from file:`, e.message); }
+  }
+}
+
 // ---- Lightweight TTL cache (Cloudflare KV-backed) ----
 // Separate from the preloaded app-state cache above: this is a short-lived,
 // self-expiring cache for things like eBay API responses, shared across all
@@ -190,4 +257,4 @@ function cachePut(key, value, ttlSeconds) {
   } catch (_) { /* cache write is best-effort */ }
 }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, cacheGet, cachePut };
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut };
