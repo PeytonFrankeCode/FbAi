@@ -2011,7 +2011,7 @@ async function performSearch(query, opts = {}) {
         similarTitle.textContent = `Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}`;
         similarGrid.innerHTML = '';
         similarResults.forEach((item, i) => {
-          const card = buildCard(item);
+          const card = buildCard(item, { showPrintRun: true });
           card.style.animationDelay = `${i * 0.05}s`;
           similarGrid.appendChild(card);
         });
@@ -2048,7 +2048,7 @@ async function performSearch(query, opts = {}) {
         similarTitle.textContent = `Other Numbered Cards`;
         similarGrid.innerHTML = '';
         similarResults.forEach((item, i) => {
-          const card = buildCard(item);
+          const card = buildCard(item, { showPrintRun: true });
           card.style.animationDelay = `${i * 0.05}s`;
           similarGrid.appendChild(card);
         });
@@ -2490,7 +2490,14 @@ function loadMoreCards(grid) {
 }
 
 // ---- Build Sale Card ----
-function buildCard(item) {
+// Small "/25" badge parsed from a listing title. Used to label similar comps
+// so you can see which print run each one is at a glance.
+function printRunBadgeHtml(title) {
+  const pr = parsePrintRun(title);
+  return pr ? `<span class="card-pr-badge">/${pr}</span>` : '';
+}
+
+function buildCard(item, opts = {}) {
   const card = document.createElement('div');
   card.className = 'card';
 
@@ -2537,7 +2544,7 @@ function buildCard(item) {
     <div class="card-body">
       ${cardTagHtml}
       <p class="card-title">${escHtml(item.title)}</p>
-      <p class="card-price">${price}</p>
+      <p class="card-price">${price}${opts.showPrintRun ? printRunBadgeHtml(item.title) : ''}</p>
       <div class="card-meta">
         ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
@@ -4765,7 +4772,9 @@ function parsePrintRun(title) {
     const looksLikeSeason = num >= 1900 && num <= 2099;
     if (!looksLikeSeason && denom >= 1 && denom <= 5000) return denom;
   }
-  const m = title.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|\/)\s*(\d{1,4})\b/i);
+  // Bare "/NN" only when NOT preceded by a digit, so a season like "2020/21"
+  // (whose "/21" survived the frac check above) isn't misread as a print run.
+  const m = title.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|(?<!\d)\/)\s*(\d{1,4})\b/i);
   if (m) {
     const n = parseInt(m[1], 10);
     if (n >= 1 && n <= 5000) return n;
@@ -6654,7 +6663,7 @@ function generateListingReasoning(results, isSold, serial) {
 }
 
 // Build a single listing card for checklist inline results
-function buildClListingCard(item, mode) {
+function buildClListingCard(item, mode, opts = {}) {
   const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A';
   const dateStr = item.soldDate
     ? new Date(item.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -6672,6 +6681,7 @@ function buildClListingCard(item, mode) {
       <div class="cl-item-img">${imgHtml}</div>
       <div class="cl-item-info">
         <span class="cl-item-price">${price}</span>
+        ${opts.showPrintRun ? printRunBadgeHtml(item.title) : ''}
         ${badge}
         ${buyOptBadge}
         ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
@@ -11598,7 +11608,7 @@ async function fetchPlayerListings(container, query, mode) {
         emptyHtml += `<div class="cl-similar-section">`;
         emptyHtml += `<div class="cl-similar-header">Similar Numbered Cards${serial ? ` (other than /${serial})` : ''}</div>`;
         emptyHtml += `<div class="cl-listings-grid">`;
-        similarResults.slice(0, 8).forEach(item => { emptyHtml += buildClListingCard(item, mode); });
+        similarResults.slice(0, 8).forEach(item => { emptyHtml += buildClListingCard(item, mode, { showPrintRun: true }); });
         emptyHtml += '</div></div>';
       }
       body.innerHTML = emptyHtml;
@@ -11637,7 +11647,7 @@ async function fetchPlayerListings(container, query, mode) {
       html += `<div class="cl-similar-section">`;
       html += `<div class="cl-similar-header">Other Numbered Cards</div>`;
       html += `<div class="cl-listings-grid">`;
-      similarResults.slice(0, 6).forEach(item => { html += buildClListingCard(item, mode); });
+      similarResults.slice(0, 6).forEach(item => { html += buildClListingCard(item, mode, { showPrintRun: true }); });
       html += '</div></div>';
     }
     body.innerHTML = html;
