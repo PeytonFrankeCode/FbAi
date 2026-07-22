@@ -9603,3 +9603,12 @@ footer {
 .inv-networth-sub { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.35rem; }
 .inv-networth-now { font-size: 1.25rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
 .inv-networth-wrap { position: relative; height: 170px; }
+
+/* Print-run badge on similar comps (main sold popup + checklist panels) */
+.card-pr-badge {
+  display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.4rem;
+  border-radius: 999px; background: var(--accent-bg); color: var(--accent);
+  border: 1px solid var(--accent-border); font-size: 0.72rem; font-weight: 700;
+  vertical-align: middle; white-space: nowrap;
+}
+.cl-item-info .card-pr-badge { margin-left: 0; font-size: 0.66rem; padding: 0.02rem 0.35rem; }
