@@ -1339,23 +1339,58 @@ app.get('/api/search', async (req, res) => {
       // query (all → all-but-one → all-but-two …), then trim price outliers.
       const matched = matchSoldListings(searchData.results, query);
       const variantFiltered = filterPriceOutliers(matched.results);
+      const exactExists = hasExactCardSales(query, searchData.results);
+
+      // Serial requested but nothing sold AT that print run? The first search
+      // was constrained to "/serial", so it can't surface other print runs on
+      // its own. Run a second broad search with the serial stripped to pull the
+      // nearest print runs (a /5 with no sales still gets /20, /60 …) — used
+      // both as displayable comps and to power the print-run-adjusted estimate.
+      let similarResults = [];
+      let estimatePool = searchData.results;
+      if (serial && !exactExists) {
+        const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
+        let broad = null;
+        try {
+          broad = await fetchEbayItems(baseQuery, limit, mode, 'search-serial-broad', 0, scrapeDoCtx);
+        } catch (_) { /* best-effort — fall back to what the exact search returned */ }
+        if (broad && Array.isArray(broad.results) && broad.results.length) {
+          const seen = new Set(searchData.results.map(r => r.itemId));
+          estimatePool = searchData.results.concat(broad.results.filter(r => !seen.has(r.itemId)));
+          // Keep the same card at OTHER print runs (base query minus the serial),
+          // sorted by how close each print run is to the one requested.
+          const reqSerial = parseInt(serial, 10);
+          const numberedRe = /\/(\d{1,4})(?![0-9])/;
+          const exactRe = new RegExp(`\\/${serial}(?![0-9])`);
+          const shownIds = new Set(variantFiltered.map(r => r.itemId));
+          similarResults = matchSoldListings(estimatePool, baseQuery).results
+            .filter(r => !shownIds.has(r.itemId) && numberedRe.test(r.title || '') && !exactRe.test(r.title || ''))
+            .sort((a, b) => {
+              const an = parseInt((String(a.title).match(numberedRe) || [])[1] || 9999, 10);
+              const bn = parseInt((String(b.title).match(numberedRe) || [])[1] || 9999, 10);
+              return (Math.abs(an - reqSerial) - Math.abs(bn - reqSerial)) || (an - bn);
+            })
+            .slice(0, 20);
+        }
+      }
+
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
         ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
         : null;
-      // No sale of the exact card (e.g. a /10, or this set)? Estimate its value
-      // from the same player's similar sales, adjusted for print run and set,
-      // and surface the comps used.
-      const estimate = hasExactCardSales(query, searchData.results)
+      // No sale of the exact card (e.g. a /5, or this set)? Estimate its value
+      // from the same player's similar sales (now including the broad-search
+      // print runs), adjusted for print run and set, and surface the comps used.
+      const estimate = exactExists
         ? null
-        : buildSimilarCardEstimate(query, searchData.results);
+        : buildSimilarCardEstimate(query, estimatePool);
       return res.json({
         results: variantFiltered,
         total: variantFiltered.length,
         mock: false,
         mode,
         serial: serial || null,
-        similarResults: [],
+        similarResults,
         searchType: matched.searchType,
         broadenedQuery: null,
         approximateValue: approx,
