@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, cacheGet, cachePut } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut } = require('./db');
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -3856,6 +3856,67 @@ app.put('/api/user/data', async (req, res) => {
   } catch (err) {
     console.error('[user/data PUT]', err && err.message);
     res.status(500).json({ error: 'Failed to save user data' });
+  }
+});
+
+// ---- Inventory photos (per-user, cross-device) ----
+// Card photos are stored one-per-KV-key (see db.js) so they don't bloat the
+// 1MB userdata blob. Ids are the client-generated item ids (inv_...). The
+// inventory metadata (which syncs in the userdata blob) carries a hasPhoto
+// flag, so a fresh device knows to pull each photo it doesn't have locally.
+const INV_PHOTO_MAX_BYTES = 500 * 1024; // ~500KB — a 600px JPEG is well under this.
+const INV_PHOTO_ID_RE = /^[a-z0-9_.-]{1,64}$/i;
+
+// GET /api/inventory/photo/:id → { dataUrl } (404 if none)
+app.get('/api/inventory/photo/:id', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const id = String(req.params.id || '');
+  if (!INV_PHOTO_ID_RE.test(id)) return res.status(400).json({ error: 'Bad photo id' });
+  try {
+    const dataUrl = await loadUserPhoto(username, id);
+    if (!dataUrl) return res.status(404).json({ error: 'No photo' });
+    res.json({ dataUrl });
+  } catch (err) {
+    console.error('[inventory/photo GET]', err && err.message);
+    res.status(500).json({ error: 'Failed to load photo' });
+  }
+});
+
+// PUT /api/inventory/photo/:id  { dataUrl } — store/replace this card's photo
+app.put('/api/inventory/photo/:id', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const id = String(req.params.id || '');
+  if (!INV_PHOTO_ID_RE.test(id)) return res.status(400).json({ error: 'Bad photo id' });
+  const { dataUrl } = req.body || {};
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+    return res.status(400).json({ error: 'Expected { dataUrl: "data:image/..." }' });
+  }
+  if (dataUrl.length > INV_PHOTO_MAX_BYTES) {
+    return res.status(413).json({ error: `Photo exceeds ${INV_PHOTO_MAX_BYTES} bytes` });
+  }
+  try {
+    await saveUserPhoto(username, id, dataUrl);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[inventory/photo PUT]', err && err.message);
+    res.status(500).json({ error: 'Failed to save photo' });
+  }
+});
+
+// DELETE /api/inventory/photo/:id
+app.delete('/api/inventory/photo/:id', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const id = String(req.params.id || '');
+  if (!INV_PHOTO_ID_RE.test(id)) return res.status(400).json({ error: 'Bad photo id' });
+  try {
+    await deleteUserPhoto(username, id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[inventory/photo DELETE]', err && err.message);
+    res.status(500).json({ error: 'Failed to delete photo' });
   }
 });
 
