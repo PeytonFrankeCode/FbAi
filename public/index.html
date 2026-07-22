@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=120" />
+  <link rel="stylesheet" href="style.css?v=121" />
 
 
 </head>
@@ -558,6 +558,18 @@
           </div>
         </div>
         <div id="inv-wallet-log" class="inv-wallet-log"></div>
+      </div>
+
+      <!-- Collection value over time (wallet + cards) -->
+      <div class="inv-networth">
+        <div class="inv-networth-head">
+          <span class="inv-networth-label">Collection value over time <span class="inv-networth-sub">wallet + cards</span></span>
+          <span class="inv-networth-now" id="inv-networth-now">$0.00</span>
+        </div>
+        <div class="inv-networth-wrap">
+          <canvas id="inv-networth-chart" height="150"></canvas>
+          <p id="inv-networth-empty" class="inv-moves-empty hidden">Your collection-value chart builds day by day as your wallet and card values change — check back tomorrow to see the trend.</p>
+        </div>
       </div>
 
       <div class="portfolio-stats">
@@ -1847,7 +1859,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=155"></script>
+  <script src="app.js?v=156"></script>
   <script type="importmap">
   {
     "imports": {

@@ -12479,7 +12479,29 @@ function getInventory() {
   if (typeof inv.wallet !== 'number' || !isFinite(inv.wallet)) inv.wallet = 0;
   if (!Array.isArray(inv.walletLog)) inv.walletLog = [];
   if (!Array.isArray(inv.history)) inv.history = [];
+  if (!Array.isArray(inv.netWorthHistory)) inv.netWorthHistory = [];
   return inv;
+}
+
+// Current collection value: wallet balance + market value of every card held.
+function _invNetWorth(inv) {
+  const cards = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
+  return Math.round(((Number(inv.wallet) || 0) + cards) * 100) / 100;
+}
+
+// Upsert today's collection-value snapshot (one point per day, last write wins)
+// so the "collection value over time" chart builds day by day. Called from
+// saveInventory so every mutation keeps the running total current.
+function _invRecordNetWorth(inv) {
+  if (!Array.isArray(inv.netWorthHistory)) inv.netWorthHistory = [];
+  const total = _invNetWorth(inv);
+  const d = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const last = inv.netWorthHistory[inv.netWorthHistory.length - 1];
+  if (last && last.d === d) last.v = total;
+  else inv.netWorthHistory.push({ d, v: total });
+  if (inv.netWorthHistory.length > INV_VALUE_HISTORY_CAP) {
+    inv.netWorthHistory.splice(0, inv.netWorthHistory.length - INV_VALUE_HISTORY_CAP);
+  }
 }
 
 function _invMoney(n) {
@@ -12515,6 +12537,7 @@ function _invEnsurePhoto(id) {
 }
 
 function saveInventory(inv) {
+  _invRecordNetWorth(inv); // keep today's collection-value snapshot current
   localStorage.setItem('cardHuddleInventory', JSON.stringify(inv));
   schedulePushUserData();
 }
@@ -12637,6 +12660,7 @@ function renderInventory() {
   }
 
   renderWallet();
+  renderNetWorthChart();
   renderInvHistory();
 
   // ---- Filter dropdowns ----
@@ -13455,4 +13479,47 @@ function _invDateStr(ts) {
   const d = new Date(ts);
   if (isNaN(d)) return '';
   return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
+}
+
+// ==================== Inventory: Collection value over time ====================
+// One combined line — wallet balance + total card value — from the daily
+// snapshots recorded in saveInventory (_invRecordNetWorth).
+let _invNetWorthChart = null;
+function renderNetWorthChart() {
+  const inv = getInventory();
+  const nowEl = document.getElementById('inv-networth-now');
+  if (nowEl) nowEl.textContent = _invMoney(_invNetWorth(inv));
+
+  const canvas = document.getElementById('inv-networth-chart');
+  const empty = document.getElementById('inv-networth-empty');
+  const hist = Array.isArray(inv.netWorthHistory) ? inv.netWorthHistory : [];
+  if (!canvas) return;
+
+  if (hist.length < 2 || typeof Chart === 'undefined') {
+    if (_invNetWorthChart) { try { _invNetWorthChart.destroy(); } catch (_) {} _invNetWorthChart = null; }
+    canvas.classList.add('hidden');
+    if (empty) empty.classList.remove('hidden');
+    return;
+  }
+  canvas.classList.remove('hidden');
+  if (empty) empty.classList.add('hidden');
+
+  if (_invNetWorthChart) { try { _invNetWorthChart.destroy(); } catch (_) {} }
+  _invNetWorthChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: hist.map(p => (p.d || '').slice(5)), // MM-DD
+      datasets: [{
+        data: hist.map(p => Number(p.v) || 0),
+        borderColor: '#5ece99',
+        backgroundColor: 'rgba(94,206,153,0.14)',
+        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
+      }],
+    },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y } } },
+      scales: { x: { display: false }, y: { ticks: { callback: (v) => '$' + v } } },
+      maintainAspectRatio: false,
+    },
+  });
 }

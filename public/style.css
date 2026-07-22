@@ -9592,3 +9592,14 @@ footer {
   .inv-item-pl { order: 5; flex-basis: 100%; justify-content: space-between; margin-top: 0.3rem; }
   .inv-pl-col { align-items: center; flex: 1; }
 }
+
+/* ---- Inventory: collection value over time ---- */
+.inv-networth {
+  background: var(--card-gradient); border: 1px solid var(--border);
+  border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem;
+}
+.inv-networth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+.inv-networth-label { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
+.inv-networth-sub { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.35rem; }
+.inv-networth-now { font-size: 1.25rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.inv-networth-wrap { position: relative; height: 170px; }
