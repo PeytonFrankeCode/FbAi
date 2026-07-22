@@ -12488,6 +12488,21 @@ function _invMoney(n) {
   return sign + '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+// Record a market-value point on a card, dated, for its value-over-time graph.
+// Only appends when the value actually changed from the last point (or is the
+// first), so the graph reflects real updates rather than every save.
+const INV_VALUE_HISTORY_CAP = 365;
+function _invPushValue(item, value, now) {
+  const v = Number(value) || 0;
+  if (!Array.isArray(item.valueHistory)) item.valueHistory = [];
+  const last = item.valueHistory[item.valueHistory.length - 1];
+  if (last && Number(last.value) === v) return;
+  item.valueHistory.push({ at: now || Date.now(), value: v });
+  if (item.valueHistory.length > INV_VALUE_HISTORY_CAP) {
+    item.valueHistory.splice(0, item.valueHistory.length - INV_VALUE_HISTORY_CAP);
+  }
+}
+
 // Fetch a photo we don't have cached locally but the account has (cross-device).
 // Safe to call for any id — no-ops without a token, when already cached, or
 // when already attempted this session. Shared by the card list and history.
@@ -12605,6 +12620,8 @@ function renderInventory() {
   // ---- Stats ----
   const totalUnits = inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
   const totalValue = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
+  const totalPaid = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.paid) || 0), 0);
+  const totalNet = totalValue - totalPaid;
   const hits = inv.items.filter(i => i.auto || i.mem).length;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('inv-stat-items', String(inv.items.length));
@@ -12612,6 +12629,12 @@ function renderInventory() {
   set('inv-stat-value', _invMoney(totalValue));
   set('inv-stat-hits', String(hits));
   set('inv-stat-locations', String(inv.locations.length));
+  const netEl = document.getElementById('inv-stat-net');
+  if (netEl) {
+    netEl.textContent = (totalNet >= 0 ? '+' : '−') + _invMoney(Math.abs(totalNet)).replace('-', '');
+    netEl.classList.toggle('inv-net-pos', totalNet >= 0);
+    netEl.classList.toggle('inv-net-neg', totalNet < 0);
+  }
 
   renderWallet();
   renderInvHistory();
@@ -12659,21 +12682,30 @@ function renderInventory() {
       const pending = !photo && i.hasPhoto && !!getSessionToken() && !_invPhotoFetchTried.has(i.id);
       if (pending) toFetch.push(i.id);
       const thumb = photo
-        ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" onclick="openInvPhotoViewer('${escHtml(i.id)}')" />`
+        ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" />`
         : (pending
             ? '<div class="inv-thumb-placeholder inv-thumb-loading">&#8987;</div>'
             : '<div class="inv-thumb-placeholder">&#127183;</div>');
+      const paid = Number(i.paid) || 0;
+      const val = Number(i.value) || 0;
+      const net = val - paid;
+      const netCls = net >= 0 ? 'inv-net-pos' : 'inv-net-neg';
+      const pl = `<div class="inv-item-pl" onclick="openInvDetail('${escHtml(i.id)}')" title="View details & value graph">
+        <span class="inv-pl-col"><span class="inv-pl-lbl">Paid</span><span class="inv-pl-neg">${paid > 0 ? '−' + _invMoney(paid).replace('-', '') : '—'}</span></span>
+        <span class="inv-pl-col"><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></span>
+        <span class="inv-pl-col"><span class="inv-pl-lbl">Net</span><span class="${netCls}">${(paid > 0 || val > 0) ? (net >= 0 ? '+' : '−') + _invMoney(Math.abs(net)).replace('-', '') : '—'}</span></span>
+      </div>`;
       return `<div class="inv-item" data-id="${escHtml(i.id)}">
-        <div class="inv-item-thumb">${thumb}</div>
+        <div class="inv-item-thumb inv-clickable" onclick="openInvDetail('${escHtml(i.id)}')">${thumb}</div>
         <div class="inv-item-main">
-          <div class="inv-item-name">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
+          <div class="inv-item-name inv-clickable" onclick="openInvDetail('${escHtml(i.id)}')">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
           <div class="inv-item-meta">
-            ${Number(i.value) > 0 ? `<span class="inv-badge inv-badge-val">${_invMoney(i.value)}</span>` : ''}
             ${i.auto ? '<span class="inv-badge inv-badge-auto">AUTO</span>' : ''}
             ${i.mem ? '<span class="inv-badge inv-badge-mem">MEM</span>' : ''}
             <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
           </div>
         </div>
+        ${pl}
         <div class="inv-item-qty">
           <button class="inv-qty-btn" title="Remove one" onclick="adjustInvQty('${escHtml(i.id)}', -1)">&minus;</button>
           <span class="inv-qty-num">${Number(i.qty) || 0}</span>
@@ -12716,6 +12748,7 @@ function openInvItemModal(id) {
   document.getElementById('inv-item-id').value = item ? item.id : '';
   document.getElementById('inv-item-name').value = item ? item.name : '';
   document.getElementById('inv-item-printrun').value = item ? (item.printRun || '') : '';
+  document.getElementById('inv-item-paid').value = (item && item.paid) ? item.paid : '';
   document.getElementById('inv-item-value').value = (item && item.value) ? item.value : '';
   document.getElementById('inv-item-auto').checked = !!(item && item.auto);
   document.getElementById('inv-item-mem').checked = !!(item && item.mem);
@@ -12744,6 +12777,8 @@ function handleInvItemSubmit(e) {
   const id = document.getElementById('inv-item-id').value;
   const name = document.getElementById('inv-item-name').value.trim();
   const printRun = document.getElementById('inv-item-printrun').value.trim().slice(0, 20);
+  const paidRaw = document.getElementById('inv-item-paid').value;
+  const paid = paidRaw === '' ? 0 : Math.max(0, Number(paidRaw) || 0);
   const valueRaw = document.getElementById('inv-item-value').value;
   const value = valueRaw === '' ? 0 : Math.max(0, Number(valueRaw) || 0);
   const auto = document.getElementById('inv-item-auto').checked;
@@ -12755,14 +12790,16 @@ function handleInvItemSubmit(e) {
   const existing = id ? inv.items.find(i => i.id === id) : null;
   let itemId, item;
   if (existing) {
-    Object.assign(existing, { name, printRun, value, auto, mem, location, updatedAt: now });
+    Object.assign(existing, { name, printRun, paid, value, auto, mem, location, updatedAt: now });
     itemId = existing.id; item = existing;
   } else {
     itemId = _invId();
     // New cards default to a single copy; the +/- steppers adjust from there.
-    item = { id: itemId, name, printRun, value, auto, mem, qty: 1, location, addedAt: now, updatedAt: now };
+    item = { id: itemId, name, printRun, paid, value, auto, mem, qty: 1, location, valueHistory: [], addedAt: now, updatedAt: now };
     inv.items.push(item);
   }
+  // Log a dated value point whenever a market value is present/changed.
+  if (value > 0) _invPushValue(item, value, now);
   // Commit the photo draft. undefined = leave as-is; string = set, null = clear.
   // hasPhoto rides the synced metadata so other devices know to pull the photo.
   if (_invPhotoDraft !== undefined) {
@@ -12982,14 +13019,17 @@ function exportInventoryCSV() {
   const inv = getInventory();
   if (inv.items.length === 0) { alert('No inventory items to export.'); return; }
   const esc = (s) => `"${String(s == null ? '' : s).replace(/"/g, '""')}"`;
-  const headers = ['Name', 'Print Run', 'Value', 'Auto', 'Memorabilia', 'Quantity', 'Location', 'Added'];
-  const rows = inv.items.map(i => [
-    esc(i.name), esc(_invFmtPrintRun(i.printRun)),
-    (Number(i.value) || 0).toFixed(2),
-    i.auto ? 'Yes' : '', i.mem ? 'Yes' : '',
-    Number(i.qty) || 0, esc(i.location),
-    i.addedAt ? new Date(i.addedAt).toISOString().slice(0, 10) : '',
-  ]);
+  const headers = ['Name', 'Print Run', 'Paid', 'Value', 'Net', 'Auto', 'Memorabilia', 'Quantity', 'Location', 'Added'];
+  const rows = inv.items.map(i => {
+    const paid = Number(i.paid) || 0, val = Number(i.value) || 0;
+    return [
+      esc(i.name), esc(_invFmtPrintRun(i.printRun)),
+      paid.toFixed(2), val.toFixed(2), (val - paid).toFixed(2),
+      i.auto ? 'Yes' : '', i.mem ? 'Yes' : '',
+      Number(i.qty) || 0, esc(i.location),
+      i.addedAt ? new Date(i.addedAt).toISOString().slice(0, 10) : '',
+    ];
+  });
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -13018,12 +13058,14 @@ function renderWallet() {
     if (inv.walletLog.length === 0) {
       logEl.innerHTML = '<span class="inv-wallet-empty">No wallet activity yet. Add your budget, or log a cash sale to credit it.</span>';
     } else {
-      logEl.innerHTML = inv.walletLog.slice(0, INV_WALLET_LOG_SHOWN).map(e => {
+      logEl.innerHTML = inv.walletLog.slice(0, INV_WALLET_LOG_SHOWN).map((e, idx) => {
         const up = (Number(e.delta) || 0) >= 0;
+        const ref = e.id ? `'${escHtml(e.id)}'` : String(idx);
         return `<div class="inv-wallet-line">
           <span class="inv-wallet-delta ${up ? 'up' : 'down'}">${up ? '+' : '−'}${_invMoney(Math.abs(Number(e.delta) || 0)).replace('-', '')}</span>
           <span class="inv-wallet-lnote">${escHtml(e.note || (up ? 'Added' : 'Subtracted'))}</span>
           <span class="inv-wallet-when">${_invWhen(e.at)}</span>
+          <button class="inv-log-del" title="Remove entry (reverses its effect on the balance)" onclick="removeWalletEntry(${ref})">&times;</button>
         </div>`;
       }).join('');
     }
@@ -13037,7 +13079,7 @@ function _walletApplyTo(inv, delta, note) {
   const d = Number(delta) || 0;
   if (!d) return;
   inv.wallet = Math.round(((Number(inv.wallet) || 0) + d) * 100) / 100;
-  inv.walletLog.unshift({ at: Date.now(), delta: d, note: String(note || '').slice(0, 80) });
+  inv.walletLog.unshift({ id: _invId(), at: Date.now(), delta: d, note: String(note || '').slice(0, 80) });
   if (inv.walletLog.length > INV_WALLET_LOG_CAP) inv.walletLog.length = INV_WALLET_LOG_CAP;
 }
 
@@ -13210,8 +13252,9 @@ function handleSaleTradeSubmit(e) {
       _invServerPutPhoto(newId, _salePhotoDraft.got);
     }
     inv.items.push({
-      id: newId, name: gotName, printRun: gotPrintRun, value: gotValue,
+      id: newId, name: gotName, printRun: gotPrintRun, paid: 0, value: gotValue,
       auto: gotAuto, mem: gotMem, qty: 1, location: inv.locations[0],
+      valueHistory: gotValue > 0 ? [{ at: now, value: gotValue }] : [],
       hasPhoto, addedAt: now, updatedAt: now,
     });
     entry.kind = 'traded';
@@ -13283,6 +13326,133 @@ function renderInvHistory() {
       ${outcome}
       ${h.note ? `<span class="inv-hist-note">${escHtml(h.note)}</span>` : ''}
       <span class="inv-move-when">${_invWhen(h.at)}</span>
+      <button class="inv-log-del" title="Remove this record" onclick="removeInvHistoryEntry('${escHtml(h.id)}')">&times;</button>
     </div>`;
   }).join('');
+}
+
+// ---- Remove history / wallet entries ----
+// Trade & sale records are a log — deleting one removes the record only; it
+// does NOT restore the card or reverse the wallet (the wallet has its own
+// separate entry you can remove independently).
+function removeInvHistoryEntry(id) {
+  const inv = getInventory();
+  const entry = inv.history.find(h => h.id === id);
+  if (!entry) return;
+  if (!confirm('Remove this sale/trade record? This only deletes the log entry — it won\'t restore the card or change your wallet.')) return;
+  inv.history = inv.history.filter(h => h.id !== id);
+  saveInventory(inv);
+  renderInventory();
+}
+
+// Removing a wallet entry reverses its effect on the balance so the log and
+// the balance stay consistent. Accepts an id (preferred) or a numeric index
+// (legacy entries saved before ids existed).
+function removeWalletEntry(ref) {
+  const inv = getInventory();
+  let idx = -1;
+  if (typeof ref === 'number') idx = ref;
+  else idx = inv.walletLog.findIndex(e => e.id === ref);
+  const entry = inv.walletLog[idx];
+  if (!entry) return;
+  const delta = Number(entry.delta) || 0;
+  const verb = delta >= 0 ? 'add' : 'subtraction';
+  if (!confirm(`Remove this wallet ${verb}? Your balance will be adjusted by ${delta >= 0 ? '−' : '+'}${_invMoney(Math.abs(delta)).replace('-', '')} to stay consistent.`)) return;
+  inv.wallet = Math.round(((Number(inv.wallet) || 0) - delta) * 100) / 100;
+  inv.walletLog.splice(idx, 1);
+  saveInventory(inv);
+  renderInventory();
+}
+
+// ==================== Inventory: Card detail + value graph ====================
+let _invDetailChart = null;
+let _invDetailId = null;
+
+function openInvDetail(id) {
+  const inv = getInventory();
+  const item = inv.items.find(i => i.id === id);
+  if (!item) return;
+  _invDetailId = id;
+  _invEnsurePhoto(item.hasPhoto ? item.id : null);
+  const photo = getInvPhotos()[item.id];
+  const pr = _invFmtPrintRun(item.printRun);
+  const paid = Number(item.paid) || 0;
+  const val = Number(item.value) || 0;
+  const net = val - paid;
+  const hist = Array.isArray(item.valueHistory) ? item.valueHistory : [];
+
+  const tags = [
+    item.auto ? '<span class="inv-badge inv-badge-auto">AUTO</span>' : '',
+    item.mem ? '<span class="inv-badge inv-badge-mem">MEM</span>' : '',
+    `<span class="inv-badge inv-badge-loc">&#128205; ${escHtml(item.location)}</span>`,
+    (Number(item.qty) || 0) > 1 ? `<span class="inv-badge">x${item.qty}</span>` : '',
+  ].filter(Boolean).join(' ');
+
+  const body = document.getElementById('inv-detail-body');
+  body.innerHTML = `
+    <div class="inv-detail-head">
+      <div class="inv-detail-photo">
+        ${photo
+          ? `<img src="${escHtml(photo)}" alt="${escHtml(item.name)}" onclick="openInvPhotoViewer('${escHtml(item.id)}')" />`
+          : '<div class="inv-thumb-placeholder">&#127183;</div>'}
+      </div>
+      <div class="inv-detail-info">
+        <h2 class="inv-detail-name">${escHtml(item.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</h2>
+        <div class="inv-detail-tags">${tags}</div>
+        <div class="inv-detail-pl">
+          <div><span class="inv-pl-lbl">Paid</span><span class="inv-pl-neg">${paid > 0 ? '−' + _invMoney(paid).replace('-', '') : '—'}</span></div>
+          <div><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></div>
+          <div><span class="inv-pl-lbl">Net</span><span class="${net >= 0 ? 'inv-net-pos' : 'inv-net-neg'}">${(paid > 0 || val > 0) ? (net >= 0 ? '+' : '−') + _invMoney(Math.abs(net)).replace('-', '') : '—'}</span></div>
+        </div>
+        <button class="inv-act-btn" onclick="openInvItemModal('${escHtml(item.id)}'); closeInvDetail();">Edit card</button>
+      </div>
+    </div>
+    <h3 class="inv-detail-graph-title">Value over time</h3>
+    <div class="inv-detail-graph-wrap">
+      ${hist.length >= 2
+        ? '<canvas id="inv-detail-chart" height="150"></canvas>'
+        : '<p class="inv-moves-empty">Update this card\'s market value more than once (Edit card) and the graph will chart it over time.</p>'}
+    </div>
+    ${hist.length ? `<div class="inv-detail-points">${hist.slice().reverse().map(p =>
+      `<div class="inv-detail-point"><span>${_invMoney(p.value)}</span><span class="inv-wallet-when">${_invDateStr(p.at)}</span></div>`
+    ).join('')}</div>` : ''}
+  `;
+
+  document.getElementById('inv-detail-modal').classList.remove('hidden');
+
+  if (hist.length >= 2 && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('inv-detail-chart');
+    if (ctx) {
+      if (_invDetailChart) { try { _invDetailChart.destroy(); } catch (_) {} }
+      _invDetailChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: hist.map(p => _invDateStr(p.at)),
+          datasets: [{
+            data: hist.map(p => Number(p.value) || 0),
+            borderColor: '#5ece99',
+            backgroundColor: 'rgba(94,206,153,0.12)',
+            fill: true, tension: 0.25, pointRadius: 3, borderWidth: 2,
+          }],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { ticks: { callback: (v) => '$' + v } } },
+          maintainAspectRatio: false,
+        },
+      });
+    }
+  }
+}
+
+function closeInvDetail() {
+  document.getElementById('inv-detail-modal').classList.add('hidden');
+  if (_invDetailChart) { try { _invDetailChart.destroy(); } catch (_) {} _invDetailChart = null; }
+  _invDetailId = null;
+}
+
+function _invDateStr(ts) {
+  const d = new Date(ts);
+  if (isNaN(d)) return '';
+  return `${d.getMonth() + 1}/${d.getDate()}/${String(d.getFullYear()).slice(2)}`;
 }
