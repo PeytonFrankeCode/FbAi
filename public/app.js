@@ -3548,6 +3548,14 @@ function checkPrefillParam() {
 
 // Email-drip deep links (?prefill=<card>) → run that card's sold search.
 checkPrefillParam();
+// /inventory deep link — the SPA fallback serves index.html for it, so land
+// the visitor straight on the Inventory page. Deferred to DOMContentLoaded so
+// the view-element consts below switchView are initialized before it runs.
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname === '/inventory') {
+    try { switchView('inventory'); } catch (_) {}
+  }
+});
 // Pull this account's collection/watchlist/etc. from the server so they show
 // up here even if the user signed in on a different device. No-op if not
 // logged in (no session token).
@@ -3729,6 +3737,7 @@ function switchView(view) {
   const browseView = document.getElementById('browse-view');
   const scannerView = document.getElementById('scanner-view');
   const floorView = document.getElementById('floor-view');
+  const inventoryView = document.getElementById('inventory-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -3741,6 +3750,7 @@ function switchView(view) {
   if (browseView) browseView.classList.add('hidden');
   if (scannerView) scannerView.classList.add('hidden');
   if (floorView) floorView.classList.add('hidden');
+  if (inventoryView) inventoryView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
   // The Floor runs an animation loop; pause it whenever we leave the tab.
   if (typeof stopFloor === 'function') stopFloor();
@@ -3770,12 +3780,29 @@ function switchView(view) {
       floorView.classList.remove('hidden');
       if (typeof initFloor === 'function') initFloor();
     }
+  } else if (view === 'inventory') {
+    if (inventoryView) {
+      inventoryView.classList.remove('hidden');
+      initInventoryView();
+    }
   } else {
     // Search top-tab. Show the subtab strip and either the main search
     // panel or the Grading Advisor panel based on the (optional) sub.
     if (searchSubtabs) searchSubtabs.classList.remove('hidden');
     switchSearchSub(searchSub || 'search');
   }
+
+  // Keep the URL in sync with the Inventory page (/inventory is a real,
+  // shareable path — the SPA fallback serves index.html for it). Every other
+  // view lives at the root path.
+  try {
+    const path = window.location.pathname;
+    if (view === 'inventory' && path !== '/inventory') {
+      window.history.replaceState({}, '', '/inventory' + window.location.search);
+    } else if (view !== 'inventory' && path === '/inventory') {
+      window.history.replaceState({}, '', '/' + window.location.search);
+    }
+  } catch (_) { /* history API unavailable */ }
 }
 
 // ---- Search top-tab subtabs ----
@@ -6661,6 +6688,7 @@ function buildClListingCard(item, mode) {
 // untouched: with no session token, every helper here exits silently.
 const USER_SYNC_KEYS = [
   'cardHuddleCollection',
+  'cardHuddleInventory',
   'cardHuddleWatchlist',
   'cardHuddleCompletion',
   'cardHuddleSellerListings',
@@ -6742,6 +6770,7 @@ function _userSyncRerender() {
   try { if (typeof renderMyListings === 'function') renderMyListings(); } catch (_) {}
   try { if (typeof renderPromotedCards === 'function') renderPromotedCards(); } catch (_) {}
   try { if (typeof refreshRainbowPageFromSync === 'function') refreshRainbowPageFromSync(); } catch (_) {}
+  try { if (typeof renderInventory === 'function') renderInventory(); } catch (_) {}
 }
 
 async function enableUserSync() {
@@ -12408,3 +12437,385 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('online', _updateOnlineStatus);
 window.addEventListener('offline', _updateOnlineStatus);
 document.addEventListener('DOMContentLoaded', _updateOnlineStatus);
+
+// ==================== Inventory (/inventory) ====================
+// Physical-stock tracker for everything that isn't a single tracked card:
+// hobby boxes, supplies, display gear, show stock. Items live in
+// localStorage under 'cardHuddleInventory' (synced across devices via
+// USER_SYNC_KEYS) as { locations: [names], items: [...], moves: [...] }.
+// "Moves" is the audit log — every relocation records what went where, so
+// packing for a show / unloading back into storage is documented.
+
+const INV_CATEGORIES = ['Singles', 'Slabs', 'Sealed Wax', 'Supplies', 'Display', 'Equipment', 'Other'];
+const INV_DEFAULT_LOCATIONS = ['Home', 'Storage', 'Card Show'];
+const INV_MOVE_LOG_CAP = 200;
+const INV_MOVES_SHOWN = 25;
+
+let _invFilter = { q: '', location: 'all', category: 'all' };
+
+function getInventory() {
+  let inv = null;
+  try { inv = JSON.parse(localStorage.getItem('cardHuddleInventory') || 'null'); }
+  catch (_) { /* malformed — start fresh */ }
+  if (!inv || typeof inv !== 'object' || Array.isArray(inv)) inv = {};
+  if (!Array.isArray(inv.items)) inv.items = [];
+  if (!Array.isArray(inv.locations) || inv.locations.length === 0) {
+    inv.locations = INV_DEFAULT_LOCATIONS.slice();
+  }
+  if (!Array.isArray(inv.moves)) inv.moves = [];
+  return inv;
+}
+
+function saveInventory(inv) {
+  localStorage.setItem('cardHuddleInventory', JSON.stringify(inv));
+  schedulePushUserData();
+}
+
+function initInventoryView() {
+  renderInventory();
+}
+
+function _invMoney(n) {
+  const v = Number(n) || 0;
+  return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function _invId() {
+  return 'inv_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function _invWhen(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  if (isNaN(d)) return '';
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString();
+}
+
+function setInvFilter(field, value) {
+  _invFilter[field] = field === 'q' ? String(value || '').trim().toLowerCase() : value;
+  renderInventory();
+}
+
+// Rebuild a <select>'s options, preserving the current selection when the
+// option still exists after the rebuild.
+function _invFillSelect(el, options, selected) {
+  if (!el) return;
+  el.innerHTML = options.map(o =>
+    `<option value="${escHtml(o.value)}"${o.value === selected ? ' selected' : ''}>${escHtml(o.label)}</option>`
+  ).join('');
+}
+
+function renderInventory() {
+  const listEl = document.getElementById('inventory-list');
+  if (!listEl) return; // page not in the DOM (e.g. older cached HTML)
+  const inv = getInventory();
+
+  // ---- Stats ----
+  const totalUnits = inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+  const totalValue = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('inv-stat-items', String(inv.items.length));
+  set('inv-stat-units', String(totalUnits));
+  set('inv-stat-value', _invMoney(totalValue));
+  set('inv-stat-locations', String(inv.locations.length));
+
+  // ---- Filter dropdowns ----
+  _invFillSelect(document.getElementById('inv-filter-location'),
+    [{ value: 'all', label: 'All locations' }, ...inv.locations.map(l => ({ value: l, label: l }))],
+    _invFilter.location);
+  _invFillSelect(document.getElementById('inv-filter-category'),
+    [{ value: 'all', label: 'All categories' }, ...INV_CATEGORIES.map(c => ({ value: c, label: c }))],
+    _invFilter.category);
+  if (_invFilter.location !== 'all' && !inv.locations.includes(_invFilter.location)) _invFilter.location = 'all';
+
+  // ---- Item list ----
+  const q = _invFilter.q;
+  const items = inv.items.filter(i => {
+    if (_invFilter.location !== 'all' && i.location !== _invFilter.location) return false;
+    if (_invFilter.category !== 'all' && i.category !== _invFilter.category) return false;
+    if (q && !`${i.name} ${i.notes || ''} ${i.location}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+  if (items.length === 0) {
+    listEl.innerHTML = inv.items.length === 0
+      ? `<div class="inv-empty">
+           <p><strong>Nothing documented yet.</strong></p>
+           <p>Add your boxes, supplies and show stock with <strong>+ Add Item</strong>, set up your spots under <strong>Locations</strong>, then use <strong>Move</strong> whenever stuff changes places — every move is logged below.</p>
+         </div>`
+      : '<div class="inv-empty"><p>No items match the current filters.</p></div>';
+  } else {
+    listEl.innerHTML = items.map(i => {
+      const lineValue = (Number(i.qty) || 0) * (Number(i.value) || 0);
+      return `<div class="inv-item" data-id="${escHtml(i.id)}">
+        <div class="inv-item-main">
+          <div class="inv-item-name">${escHtml(i.name)}</div>
+          <div class="inv-item-meta">
+            <span class="inv-badge inv-badge-cat">${escHtml(i.category || 'Other')}</span>
+            <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
+            ${Number(i.value) > 0 ? `<span class="inv-badge">${_invMoney(i.value)}/ea &middot; ${_invMoney(lineValue)}</span>` : ''}
+            ${i.notes ? `<span class="inv-item-notes">${escHtml(i.notes)}</span>` : ''}
+          </div>
+        </div>
+        <div class="inv-item-qty">
+          <button class="inv-qty-btn" title="Remove one" onclick="adjustInvQty('${escHtml(i.id)}', -1)">&minus;</button>
+          <span class="inv-qty-num">${Number(i.qty) || 0}</span>
+          <button class="inv-qty-btn" title="Add one" onclick="adjustInvQty('${escHtml(i.id)}', 1)">+</button>
+        </div>
+        <div class="inv-item-actions">
+          <button class="inv-act-btn inv-act-move" onclick="openInvMoveModal('${escHtml(i.id)}')">&#8644; Move</button>
+          <button class="inv-act-btn" onclick="openInvItemModal('${escHtml(i.id)}')">Edit</button>
+          <button class="inv-act-btn inv-act-del" title="Delete item" onclick="deleteInvItem('${escHtml(i.id)}')">&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ---- Move log ----
+  const movesEl = document.getElementById('inventory-moves');
+  if (movesEl) {
+    if (inv.moves.length === 0) {
+      movesEl.innerHTML = '<p class="inv-moves-empty">No moves logged yet. Use the <strong>&#8644; Move</strong> button on an item when it changes location.</p>';
+    } else {
+      movesEl.innerHTML = inv.moves.slice(0, INV_MOVES_SHOWN).map(m => `
+        <div class="inv-move-row">
+          <span class="inv-move-what"><strong>${m.qty}&times;</strong> ${escHtml(m.name)}</span>
+          <span class="inv-move-route">${escHtml(m.from)} &rarr; <strong>${escHtml(m.to)}</strong></span>
+          ${m.note ? `<span class="inv-move-note">${escHtml(m.note)}</span>` : ''}
+          <span class="inv-move-when">${_invWhen(m.at)}</span>
+        </div>`).join('');
+    }
+  }
+}
+
+// ---- Add / edit item ----
+function openInvItemModal(id) {
+  const inv = getInventory();
+  const item = id ? inv.items.find(i => i.id === id) : null;
+  document.getElementById('inv-item-modal-title').textContent = item ? 'Edit Inventory Item' : 'Add Inventory Item';
+  document.getElementById('inv-item-submit').textContent = item ? 'Save Changes' : 'Add Item';
+  document.getElementById('inv-item-id').value = item ? item.id : '';
+  document.getElementById('inv-item-name').value = item ? item.name : '';
+  document.getElementById('inv-item-qty').value = item ? item.qty : '';
+  document.getElementById('inv-item-value').value = item && item.value ? item.value : '';
+  document.getElementById('inv-item-notes').value = item ? (item.notes || '') : '';
+  _invFillSelect(document.getElementById('inv-item-category'),
+    INV_CATEGORIES.map(c => ({ value: c, label: c })),
+    item ? item.category : INV_CATEGORIES[0]);
+  const defaultLoc = _invFilter.location !== 'all' ? _invFilter.location : inv.locations[0];
+  _invFillSelect(document.getElementById('inv-item-location'),
+    inv.locations.map(l => ({ value: l, label: l })),
+    item ? item.location : defaultLoc);
+  document.getElementById('inv-item-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('inv-item-name').focus(), 50);
+}
+
+function closeInvItemModal() {
+  document.getElementById('inv-item-modal').classList.add('hidden');
+}
+
+function handleInvItemSubmit(e) {
+  e.preventDefault();
+  const inv = getInventory();
+  const id = document.getElementById('inv-item-id').value;
+  const name = document.getElementById('inv-item-name').value.trim();
+  const qty = Math.max(0, Math.floor(Number(document.getElementById('inv-item-qty').value) || 0));
+  const valueRaw = document.getElementById('inv-item-value').value;
+  const value = valueRaw === '' ? 0 : Math.max(0, Number(valueRaw) || 0);
+  const category = document.getElementById('inv-item-category').value || 'Other';
+  const location = document.getElementById('inv-item-location').value || inv.locations[0];
+  const notes = document.getElementById('inv-item-notes').value.trim();
+  if (!name) return false;
+
+  const now = Date.now();
+  const existing = id ? inv.items.find(i => i.id === id) : null;
+  if (existing) {
+    Object.assign(existing, { name, qty, value, category, location, notes, updatedAt: now });
+  } else {
+    inv.items.push({ id: _invId(), name, qty, value, category, location, notes, addedAt: now, updatedAt: now });
+  }
+  saveInventory(inv);
+  closeInvItemModal();
+  renderInventory();
+  return false;
+}
+
+function adjustInvQty(id, delta) {
+  const inv = getInventory();
+  const item = inv.items.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(0, (Number(item.qty) || 0) + delta);
+  item.updatedAt = Date.now();
+  saveInventory(inv);
+  renderInventory();
+}
+
+function deleteInvItem(id) {
+  const inv = getInventory();
+  const item = inv.items.find(i => i.id === id);
+  if (!item) return;
+  if (!confirm(`Delete "${item.name}" from your inventory?`)) return;
+  inv.items = inv.items.filter(i => i.id !== id);
+  saveInventory(inv);
+  renderInventory();
+}
+
+// ---- Moving stuff ----
+function openInvMoveModal(id) {
+  const inv = getInventory();
+  const item = inv.items.find(i => i.id === id);
+  if (!item) return;
+  if (inv.locations.length < 2) {
+    alert('Add a second location first (Locations button) so there is somewhere to move to.');
+    return;
+  }
+  document.getElementById('inv-move-id').value = id;
+  document.getElementById('inv-move-desc').innerHTML =
+    `Moving <strong>${escHtml(item.name)}</strong> &mdash; ${Number(item.qty) || 0} at ${escHtml(item.location)}`;
+  const qtyEl = document.getElementById('inv-move-qty');
+  qtyEl.value = item.qty || 1;
+  qtyEl.max = item.qty || 1;
+  const dests = inv.locations.filter(l => l !== item.location);
+  _invFillSelect(document.getElementById('inv-move-dest'),
+    dests.map(l => ({ value: l, label: l })), dests[0]);
+  document.getElementById('inv-move-note').value = '';
+  document.getElementById('inv-move-modal').classList.remove('hidden');
+}
+
+function closeInvMoveModal() {
+  document.getElementById('inv-move-modal').classList.add('hidden');
+}
+
+function handleInvMoveSubmit(e) {
+  e.preventDefault();
+  const inv = getInventory();
+  const id = document.getElementById('inv-move-id').value;
+  const item = inv.items.find(i => i.id === id);
+  if (!item) { closeInvMoveModal(); return false; }
+  const dest = document.getElementById('inv-move-dest').value;
+  const have = Number(item.qty) || 0;
+  const qty = Math.min(have, Math.max(1, Math.floor(Number(document.getElementById('inv-move-qty').value) || 0)));
+  const note = document.getElementById('inv-move-note').value.trim();
+  if (!dest || dest === item.location || qty < 1) { closeInvMoveModal(); return false; }
+
+  const now = Date.now();
+  const from = item.location;
+  // Merge into an identical stack at the destination when one exists,
+  // otherwise relocate (full move) or split off a new stack (partial move).
+  const twin = inv.items.find(i =>
+    i.id !== item.id && i.location === dest &&
+    i.name === item.name && i.category === item.category);
+  if (qty >= have) {
+    if (twin) {
+      twin.qty = (Number(twin.qty) || 0) + qty;
+      twin.updatedAt = now;
+      inv.items = inv.items.filter(i => i.id !== item.id);
+    } else {
+      item.location = dest;
+      item.updatedAt = now;
+    }
+  } else {
+    item.qty = have - qty;
+    item.updatedAt = now;
+    if (twin) {
+      twin.qty = (Number(twin.qty) || 0) + qty;
+      twin.updatedAt = now;
+    } else {
+      inv.items.push({ ...item, id: _invId(), qty, location: dest, addedAt: now, updatedAt: now });
+    }
+  }
+
+  inv.moves.unshift({ at: now, name: item.name, qty, from, to: dest, note });
+  if (inv.moves.length > INV_MOVE_LOG_CAP) inv.moves.length = INV_MOVE_LOG_CAP;
+  saveInventory(inv);
+  closeInvMoveModal();
+  renderInventory();
+  return false;
+}
+
+// ---- Locations ----
+function openInvLocationsModal() {
+  renderInvLocations();
+  document.getElementById('inv-locations-modal').classList.remove('hidden');
+}
+
+function closeInvLocationsModal() {
+  document.getElementById('inv-locations-modal').classList.add('hidden');
+}
+
+function renderInvLocations() {
+  const inv = getInventory();
+  const listEl = document.getElementById('inv-locations-list');
+  if (!listEl) return;
+  listEl.innerHTML = inv.locations.map(loc => {
+    const here = inv.items.filter(i => i.location === loc);
+    const units = here.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+    return `<div class="inv-loc-row">
+      <span class="inv-loc-name">&#128205; ${escHtml(loc)}</span>
+      <span class="inv-loc-count">${here.length} item${here.length === 1 ? '' : 's'} &middot; ${units} unit${units === 1 ? '' : 's'}</span>
+      <button class="inv-act-btn inv-act-del" title="Remove location" onclick="removeInvLocation('${escHtml(loc).replace(/'/g, "\\'")}')">&times;</button>
+    </div>`;
+  }).join('');
+}
+
+function handleInvLocationAdd(e) {
+  e.preventDefault();
+  const input = document.getElementById('inv-location-name');
+  const name = input.value.trim().slice(0, 60);
+  if (!name) return false;
+  const inv = getInventory();
+  if (inv.locations.some(l => l.toLowerCase() === name.toLowerCase())) {
+    alert('That location already exists.');
+    return false;
+  }
+  inv.locations.push(name);
+  saveInventory(inv);
+  input.value = '';
+  renderInvLocations();
+  renderInventory();
+  return false;
+}
+
+function removeInvLocation(name) {
+  const inv = getInventory();
+  if (inv.items.some(i => i.location === name)) {
+    alert('That location still has items. Move or delete them first.');
+    return;
+  }
+  if (inv.locations.length <= 1) {
+    alert('Keep at least one location.');
+    return;
+  }
+  inv.locations = inv.locations.filter(l => l !== name);
+  saveInventory(inv);
+  renderInvLocations();
+  renderInventory();
+}
+
+// ---- Export ----
+function exportInventoryCSV() {
+  const inv = getInventory();
+  if (inv.items.length === 0) { alert('No inventory items to export.'); return; }
+  const esc = (s) => `"${String(s == null ? '' : s).replace(/"/g, '""')}"`;
+  const headers = ['Name', 'Category', 'Quantity', 'Location', 'Est Value Per Unit', 'Est Total', 'Notes', 'Added'];
+  const rows = inv.items.map(i => [
+    esc(i.name), esc(i.category || ''), Number(i.qty) || 0, esc(i.location),
+    (Number(i.value) || 0).toFixed(2),
+    ((Number(i.qty) || 0) * (Number(i.value) || 0)).toFixed(2),
+    esc(i.notes || ''),
+    i.addedAt ? new Date(i.addedAt).toISOString().slice(0, 10) : '',
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'card-huddle-inventory.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
