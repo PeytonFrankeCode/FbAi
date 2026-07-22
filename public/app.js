@@ -12476,7 +12476,27 @@ function getInventory() {
     inv.locations = INV_DEFAULT_LOCATIONS.slice();
   }
   if (!Array.isArray(inv.moves)) inv.moves = [];
+  if (typeof inv.wallet !== 'number' || !isFinite(inv.wallet)) inv.wallet = 0;
+  if (!Array.isArray(inv.walletLog)) inv.walletLog = [];
+  if (!Array.isArray(inv.history)) inv.history = [];
   return inv;
+}
+
+function _invMoney(n) {
+  const v = Number(n) || 0;
+  const sign = v < 0 ? '-' : '';
+  return sign + '$' + Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// Fetch a photo we don't have cached locally but the account has (cross-device).
+// Safe to call for any id — no-ops without a token, when already cached, or
+// when already attempted this session. Shared by the card list and history.
+function _invEnsurePhoto(id) {
+  if (!id) return;
+  if (getInvPhotos()[id]) return;
+  if (!getSessionToken()) return;
+  if (_invPhotoFetchTried.has(id)) return;
+  _invServerFetchPhoto(id);
 }
 
 function saveInventory(inv) {
@@ -12584,12 +12604,17 @@ function renderInventory() {
 
   // ---- Stats ----
   const totalUnits = inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+  const totalValue = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
   const hits = inv.items.filter(i => i.auto || i.mem).length;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('inv-stat-items', String(inv.items.length));
   set('inv-stat-units', String(totalUnits));
+  set('inv-stat-value', _invMoney(totalValue));
   set('inv-stat-hits', String(hits));
   set('inv-stat-locations', String(inv.locations.length));
+
+  renderWallet();
+  renderInvHistory();
 
   // ---- Filter dropdowns ----
   _invFillSelect(document.getElementById('inv-filter-location'),
@@ -12643,6 +12668,7 @@ function renderInventory() {
         <div class="inv-item-main">
           <div class="inv-item-name">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
           <div class="inv-item-meta">
+            ${Number(i.value) > 0 ? `<span class="inv-badge inv-badge-val">${_invMoney(i.value)}</span>` : ''}
             ${i.auto ? '<span class="inv-badge inv-badge-auto">AUTO</span>' : ''}
             ${i.mem ? '<span class="inv-badge inv-badge-mem">MEM</span>' : ''}
             <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
@@ -12690,6 +12716,7 @@ function openInvItemModal(id) {
   document.getElementById('inv-item-id').value = item ? item.id : '';
   document.getElementById('inv-item-name').value = item ? item.name : '';
   document.getElementById('inv-item-printrun').value = item ? (item.printRun || '') : '';
+  document.getElementById('inv-item-value').value = (item && item.value) ? item.value : '';
   document.getElementById('inv-item-auto').checked = !!(item && item.auto);
   document.getElementById('inv-item-mem').checked = !!(item && item.mem);
   const defaultLoc = _invFilter.location !== 'all' ? _invFilter.location : inv.locations[0];
@@ -12717,6 +12744,8 @@ function handleInvItemSubmit(e) {
   const id = document.getElementById('inv-item-id').value;
   const name = document.getElementById('inv-item-name').value.trim();
   const printRun = document.getElementById('inv-item-printrun').value.trim().slice(0, 20);
+  const valueRaw = document.getElementById('inv-item-value').value;
+  const value = valueRaw === '' ? 0 : Math.max(0, Number(valueRaw) || 0);
   const auto = document.getElementById('inv-item-auto').checked;
   const mem = document.getElementById('inv-item-mem').checked;
   const location = document.getElementById('inv-item-location').value || inv.locations[0];
@@ -12726,12 +12755,12 @@ function handleInvItemSubmit(e) {
   const existing = id ? inv.items.find(i => i.id === id) : null;
   let itemId, item;
   if (existing) {
-    Object.assign(existing, { name, printRun, auto, mem, location, updatedAt: now });
+    Object.assign(existing, { name, printRun, value, auto, mem, location, updatedAt: now });
     itemId = existing.id; item = existing;
   } else {
     itemId = _invId();
     // New cards default to a single copy; the +/- steppers adjust from there.
-    item = { id: itemId, name, printRun, auto, mem, qty: 1, location, addedAt: now, updatedAt: now };
+    item = { id: itemId, name, printRun, value, auto, mem, qty: 1, location, addedAt: now, updatedAt: now };
     inv.items.push(item);
   }
   // Commit the photo draft. undefined = leave as-is; string = set, null = clear.
@@ -12953,9 +12982,10 @@ function exportInventoryCSV() {
   const inv = getInventory();
   if (inv.items.length === 0) { alert('No inventory items to export.'); return; }
   const esc = (s) => `"${String(s == null ? '' : s).replace(/"/g, '""')}"`;
-  const headers = ['Name', 'Print Run', 'Auto', 'Memorabilia', 'Quantity', 'Location', 'Added'];
+  const headers = ['Name', 'Print Run', 'Value', 'Auto', 'Memorabilia', 'Quantity', 'Location', 'Added'];
   const rows = inv.items.map(i => [
     esc(i.name), esc(_invFmtPrintRun(i.printRun)),
+    (Number(i.value) || 0).toFixed(2),
     i.auto ? 'Yes' : '', i.mem ? 'Yes' : '',
     Number(i.qty) || 0, esc(i.location),
     i.addedAt ? new Date(i.addedAt).toISOString().slice(0, 10) : '',
@@ -12966,4 +12996,293 @@ function exportInventoryCSV() {
   const a = document.createElement('a');
   a.href = url; a.download = 'card-huddle-inventory.csv'; a.click();
   URL.revokeObjectURL(url);
+}
+
+// ==================== Inventory: Wallet ====================
+// A running cash balance that doubles as a budget guideline. Sales credit it
+// automatically; the user can add/subtract by hand. Lives in the synced
+// inventory blob (wallet + walletLog), so it follows the account like the
+// rest of the metadata.
+const INV_WALLET_LOG_CAP = 100;
+const INV_WALLET_LOG_SHOWN = 8;
+
+function renderWallet() {
+  const inv = getInventory();
+  const balEl = document.getElementById('inv-wallet-balance');
+  if (balEl) {
+    balEl.textContent = _invMoney(inv.wallet);
+    balEl.classList.toggle('inv-wallet-neg', (Number(inv.wallet) || 0) < 0);
+  }
+  const logEl = document.getElementById('inv-wallet-log');
+  if (logEl) {
+    if (inv.walletLog.length === 0) {
+      logEl.innerHTML = '<span class="inv-wallet-empty">No wallet activity yet. Add your budget, or log a cash sale to credit it.</span>';
+    } else {
+      logEl.innerHTML = inv.walletLog.slice(0, INV_WALLET_LOG_SHOWN).map(e => {
+        const up = (Number(e.delta) || 0) >= 0;
+        return `<div class="inv-wallet-line">
+          <span class="inv-wallet-delta ${up ? 'up' : 'down'}">${up ? '+' : '−'}${_invMoney(Math.abs(Number(e.delta) || 0)).replace('-', '')}</span>
+          <span class="inv-wallet-lnote">${escHtml(e.note || (up ? 'Added' : 'Subtracted'))}</span>
+          <span class="inv-wallet-when">${_invWhen(e.at)}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+// Apply a signed wallet change + log entry to an inventory object IN PLACE
+// (no load/save). Callers that already hold an inv snapshot use this so their
+// own saveInventory doesn't clobber the change. Positive delta = money in.
+function _walletApplyTo(inv, delta, note) {
+  const d = Number(delta) || 0;
+  if (!d) return;
+  inv.wallet = Math.round(((Number(inv.wallet) || 0) + d) * 100) / 100;
+  inv.walletLog.unshift({ at: Date.now(), delta: d, note: String(note || '').slice(0, 80) });
+  if (inv.walletLog.length > INV_WALLET_LOG_CAP) inv.walletLog.length = INV_WALLET_LOG_CAP;
+}
+
+// Standalone wallet change (loads + saves). Used by the manual adjust modal.
+function _walletApply(delta, note) {
+  const d = Number(delta) || 0;
+  if (!d) return;
+  const inv = getInventory();
+  _walletApplyTo(inv, d, note);
+  saveInventory(inv);
+}
+
+function openWalletModal() {
+  const form = document.getElementById('inv-wallet-form');
+  if (form) form.reset();
+  const add = document.querySelector('input[name="wallet-dir"][value="add"]');
+  if (add) add.checked = true;
+  document.getElementById('inv-wallet-modal').classList.remove('hidden');
+  setTimeout(() => { const a = document.getElementById('inv-wallet-amount'); if (a) a.focus(); }, 50);
+}
+function closeWalletModal() {
+  document.getElementById('inv-wallet-modal').classList.add('hidden');
+}
+function handleWalletSubmit(e) {
+  e.preventDefault();
+  const amount = Math.max(0, Number(document.getElementById('inv-wallet-amount').value) || 0);
+  if (!amount) { closeWalletModal(); return false; }
+  const dirEl = document.querySelector('input[name="wallet-dir"]:checked');
+  const dir = dirEl ? dirEl.value : 'add';
+  const note = document.getElementById('inv-wallet-note').value.trim()
+    || (dir === 'add' ? 'Added to wallet' : 'Subtracted from wallet');
+  _walletApply(dir === 'sub' ? -amount : amount, note);
+  closeWalletModal();
+  renderInventory();
+  return false;
+}
+
+// ==================== Inventory: Log Sale / Trade ====================
+// Record a card leaving (sold or traded) and what came back — cash (optionally
+// credited to the wallet) or another card (added to active inventory). The card
+// given moves out of active cards into the sold/traded history.
+let _saleMode = 'cash';          // 'cash' | 'card'
+let _salePhotoDraft = { gave: undefined, got: undefined };
+
+function openSaleTradeModal() {
+  const inv = getInventory();
+  const form = document.getElementById('inv-sale-form');
+  if (form) form.reset();
+  _salePhotoDraft = { gave: undefined, got: undefined };
+  _showSalePhoto('gave', null);
+  _showSalePhoto('got', null);
+
+  // Card-you-gave picker: your active cards, plus a fresh-entry option.
+  const opts = [
+    ...inv.items.map(i => ({
+      value: i.id,
+      label: `${i.name}${_invFmtPrintRun(i.printRun) ? ' ' + _invFmtPrintRun(i.printRun) : ''}${(Number(i.qty) || 0) > 1 ? ` (x${i.qty})` : ''}`,
+    })),
+    { value: '__fresh__', label: '— Another card (not in my inventory) —' },
+  ];
+  _invFillSelect(document.getElementById('inv-sale-card'), opts, opts[0] ? opts[0].value : '__fresh__');
+  onSaleCardPick();
+  setSaleMode('cash');
+  document.getElementById('inv-sale-modal').classList.remove('hidden');
+}
+function closeSaleTradeModal() {
+  document.getElementById('inv-sale-modal').classList.add('hidden');
+  _salePhotoDraft = { gave: undefined, got: undefined };
+}
+
+// Toggle the fresh-card fields when "Another card" is chosen (or when the
+// inventory is empty so the only option is fresh entry).
+function onSaleCardPick() {
+  const sel = document.getElementById('inv-sale-card');
+  const fresh = document.getElementById('inv-sale-gave-fresh');
+  const isFresh = !sel || sel.value === '__fresh__';
+  if (fresh) fresh.classList.toggle('hidden', !isFresh);
+}
+
+function setSaleMode(mode) {
+  _saleMode = mode === 'card' ? 'card' : 'cash';
+  document.getElementById('inv-sale-mode-cash').classList.toggle('active', _saleMode === 'cash');
+  document.getElementById('inv-sale-mode-card').classList.toggle('active', _saleMode === 'card');
+  document.getElementById('inv-sale-cash').classList.toggle('hidden', _saleMode !== 'cash');
+  document.getElementById('inv-sale-card-got').classList.toggle('hidden', _saleMode !== 'card');
+  const submit = document.getElementById('inv-sale-submit');
+  if (submit) submit.textContent = _saleMode === 'cash' ? 'Log sale' : 'Log trade';
+}
+
+function _showSalePhoto(which, url) {
+  const wrap = document.getElementById(`inv-sale-${which}-photo-preview`);
+  const img = document.getElementById(`inv-sale-${which}-photo-img`);
+  if (!wrap || !img) return;
+  if (url) { img.src = url; wrap.classList.remove('hidden'); }
+  else { img.src = ''; wrap.classList.add('hidden'); }
+}
+async function handleSalePhotoPick(e, which) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  try {
+    const url = await readImageFileAsDataUrl(file, 600, 0.72);
+    _salePhotoDraft[which] = url;
+    _showSalePhoto(which, url);
+  } catch (_) {
+    alert('Could not read that image. Try a different photo.');
+  }
+  e.target.value = '';
+}
+function clearSalePhoto(which) {
+  _salePhotoDraft[which] = null;
+  _showSalePhoto(which, null);
+}
+
+function handleSaleTradeSubmit(e) {
+  e.preventDefault();
+  const inv = getInventory();
+  const now = Date.now();
+  const sel = document.getElementById('inv-sale-card');
+  const givenId = sel ? sel.value : '__fresh__';
+  const fromInv = givenId && givenId !== '__fresh__';
+  const givenItem = fromInv ? inv.items.find(i => i.id === givenId) : null;
+
+  // ---- Resolve the card given ----
+  let gaveName, gavePrintRun, gavePhotoId = null;
+  if (givenItem) {
+    gaveName = givenItem.name;
+    gavePrintRun = givenItem.printRun || '';
+    // Reference the item's existing photo (kept — not deleted on sale).
+    if (getInvPhotos()[givenItem.id] || givenItem.hasPhoto) gavePhotoId = givenItem.id;
+  } else {
+    gaveName = document.getElementById('inv-sale-gave-name').value.trim();
+    gavePrintRun = document.getElementById('inv-sale-gave-printrun').value.trim().slice(0, 20);
+    if (_salePhotoDraft.gave) {
+      gavePhotoId = _invId();
+      setInvPhotoLocal(gavePhotoId, _salePhotoDraft.gave);
+      _invServerPutPhoto(gavePhotoId, _salePhotoDraft.gave);
+    }
+  }
+  if (!gaveName) { alert('Add the name of the card you gave or sold.'); return false; }
+
+  const note = document.getElementById('inv-sale-note').value.trim().slice(0, 120);
+  const entry = {
+    id: _invId(), at: now, gaveName, gavePrintRun, gavePhotoId, note,
+  };
+
+  if (_saleMode === 'cash') {
+    const amount = Math.max(0, Number(document.getElementById('inv-sale-cash-amount').value) || 0);
+    if (!amount) { alert('Enter the cash amount you received.'); return false; }
+    const source = document.getElementById('inv-sale-cash-source').value || 'Other';
+    const toWallet = document.getElementById('inv-sale-to-wallet').checked;
+    entry.kind = 'sold';
+    entry.cashAmount = amount;
+    entry.cashSource = source;
+    entry.toWallet = toWallet;
+    if (toWallet) _walletApplyTo(inv, amount, `Sold ${gaveName} on ${source}`);
+  } else {
+    const gotName = document.getElementById('inv-sale-got-name').value.trim();
+    if (!gotName) { alert('Add the name of the card you received.'); return false; }
+    const gotPrintRun = document.getElementById('inv-sale-got-printrun').value.trim().slice(0, 20);
+    const gotAuto = document.getElementById('inv-sale-got-auto').checked;
+    const gotMem = document.getElementById('inv-sale-got-mem').checked;
+    const gotValRaw = document.getElementById('inv-sale-got-value').value;
+    const gotValue = gotValRaw === '' ? 0 : Math.max(0, Number(gotValRaw) || 0);
+    // The received card becomes a new active inventory item at the default
+    // location. One photo id is shared by the item and the history entry.
+    const newId = _invId();
+    const hasPhoto = !!_salePhotoDraft.got;
+    if (hasPhoto) {
+      setInvPhotoLocal(newId, _salePhotoDraft.got);
+      _invServerPutPhoto(newId, _salePhotoDraft.got);
+    }
+    inv.items.push({
+      id: newId, name: gotName, printRun: gotPrintRun, value: gotValue,
+      auto: gotAuto, mem: gotMem, qty: 1, location: inv.locations[0],
+      hasPhoto, addedAt: now, updatedAt: now,
+    });
+    entry.kind = 'traded';
+    entry.gotName = gotName;
+    entry.gotPrintRun = gotPrintRun;
+    entry.gotAuto = gotAuto;
+    entry.gotMem = gotMem;
+    entry.gotValue = gotValue;
+    entry.gotItemId = newId;
+    entry.gotPhotoId = hasPhoto ? newId : null;
+  }
+
+  // ---- Retire the given card: one unit leaves; remove when it hits zero ----
+  if (givenItem) {
+    const left = (Number(givenItem.qty) || 1) - 1;
+    if (left > 0) { givenItem.qty = left; givenItem.updatedAt = now; }
+    else { inv.items = inv.items.filter(i => i.id !== givenItem.id); }
+    // Photo is intentionally kept — the history entry still references it.
+  }
+
+  inv.history.unshift(entry);
+  if (inv.history.length > INV_MOVE_LOG_CAP) inv.history.length = INV_MOVE_LOG_CAP;
+  saveInventory(inv);
+  closeSaleTradeModal();
+  renderInventory();
+  return false;
+}
+
+const INV_HISTORY_SHOWN = 25;
+function renderInvHistory() {
+  const el = document.getElementById('inventory-history');
+  if (!el) return;
+  const inv = getInventory();
+  if (inv.history.length === 0) {
+    el.innerHTML = '<p class="inv-moves-empty">No sales or trades logged yet. Use <strong>&#128176; Log Sale / Trade</strong> when a card leaves your hands.</p>';
+    return;
+  }
+  const photos = getInvPhotos();
+  el.innerHTML = inv.history.slice(0, INV_HISTORY_SHOWN).map(h => {
+    _invEnsurePhoto(h.gavePhotoId);
+    if (h.gotPhotoId) _invEnsurePhoto(h.gotPhotoId);
+    const gaveThumb = h.gavePhotoId && photos[h.gavePhotoId]
+      ? `<img src="${escHtml(photos[h.gavePhotoId])}" alt="${escHtml(h.gaveName)}" />`
+      : '<div class="inv-thumb-placeholder">&#127183;</div>';
+    const gavePr = _invFmtPrintRun(h.gavePrintRun);
+    let outcome;
+    if (h.kind === 'sold') {
+      outcome = `<div class="inv-hist-cash">
+        <span class="inv-hist-amount">${_invMoney(h.cashAmount)}</span>
+        <span class="inv-hist-src">${escHtml(h.cashSource || '')}${h.toWallet ? ' · to wallet' : ''}</span>
+      </div>`;
+    } else {
+      const gotThumb = h.gotPhotoId && photos[h.gotPhotoId]
+        ? `<img src="${escHtml(photos[h.gotPhotoId])}" alt="${escHtml(h.gotName)}" />`
+        : '<div class="inv-thumb-placeholder">&#127183;</div>';
+      const gotPr = _invFmtPrintRun(h.gotPrintRun);
+      outcome = `<div class="inv-hist-card">
+        <div class="inv-hist-thumb">${gotThumb}</div>
+        <span class="inv-hist-name">${escHtml(h.gotName)}${gotPr ? ` <span class="inv-printrun">${escHtml(gotPr)}</span>` : ''}</span>
+      </div>`;
+    }
+    return `<div class="inv-hist-row">
+      <span class="inv-hist-kind inv-hist-${h.kind}">${h.kind === 'sold' ? 'SOLD' : 'TRADED'}</span>
+      <div class="inv-hist-gave">
+        <div class="inv-hist-thumb">${gaveThumb}</div>
+        <span class="inv-hist-name">${escHtml(h.gaveName)}${gavePr ? ` <span class="inv-printrun">${escHtml(gavePr)}</span>` : ''}</span>
+      </div>
+      <span class="inv-hist-arrow">&rarr;</span>
+      ${outcome}
+      ${h.note ? `<span class="inv-hist-note">${escHtml(h.note)}</span>` : ''}
+      <span class="inv-move-when">${_invWhen(h.at)}</span>
+    </div>`;
+  }).join('');
 }
