@@ -12439,19 +12439,28 @@ window.addEventListener('offline', _updateOnlineStatus);
 document.addEventListener('DOMContentLoaded', _updateOnlineStatus);
 
 // ==================== Inventory (/inventory) ====================
-// Physical-stock tracker for everything that isn't a single tracked card:
-// hobby boxes, supplies, display gear, show stock. Items live in
+// Card-stock tracker with a light touch: each item is a card name, an
+// optional print run (shown on the front of the tile), Auto / Memorabilia
+// flags and an optional photo, kept at a location. Items live in
 // localStorage under 'cardHuddleInventory' (synced across devices via
 // USER_SYNC_KEYS) as { locations: [names], items: [...], moves: [...] }.
 // "Moves" is the audit log — every relocation records what went where, so
 // packing for a show / unloading back into storage is documented.
+//
+// Photos are stored SEPARATELY, under 'cardHuddleInventoryPhotos' (a
+// { itemId: dataUrl } map), and are intentionally NOT in USER_SYNC_KEYS: the
+// cross-device account blob has a 1MB cap, so inlining photos there would
+// break sync for the whole account. Metadata syncs; photos stay device-local.
 
-const INV_CATEGORIES = ['Singles', 'Slabs', 'Sealed Wax', 'Supplies', 'Display', 'Equipment', 'Other'];
 const INV_DEFAULT_LOCATIONS = ['Home', 'Storage', 'Card Show'];
 const INV_MOVE_LOG_CAP = 200;
 const INV_MOVES_SHOWN = 25;
+const INV_PHOTOS_KEY = 'cardHuddleInventoryPhotos';
 
-let _invFilter = { q: '', location: 'all', category: 'all' };
+let _invFilter = { q: '', location: 'all', type: 'all' };
+// Photo chosen in the add/edit modal but not yet committed. undefined = leave
+// the item's existing photo untouched, null = remove it, string = new data URL.
+let _invPhotoDraft = undefined;
 
 function getInventory() {
   let inv = null;
@@ -12475,13 +12484,28 @@ function initInventoryView() {
   renderInventory();
 }
 
-function _invMoney(n) {
-  const v = Number(n) || 0;
-  return '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-
 function _invId() {
   return 'inv_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// Normalize a print run for display on the front of the tile. "25" -> "/25",
+// "1/1" stays "1/1", "/99" stays "/99". Empty stays empty.
+function _invFmtPrintRun(pr) {
+  const s = String(pr == null ? '' : pr).trim();
+  if (!s) return '';
+  return s.includes('/') ? s : '/' + s;
+}
+
+// ---- Photo store (device-local, not synced — see module header) ----
+function getInvPhotos() {
+  try { return JSON.parse(localStorage.getItem(INV_PHOTOS_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+function setInvPhoto(id, dataUrl) {
+  const map = getInvPhotos();
+  if (dataUrl) map[id] = dataUrl; else delete map[id];
+  try { localStorage.setItem(INV_PHOTOS_KEY, JSON.stringify(map)); }
+  catch (_) { alert('Could not save the photo — this device may be out of storage. The item was still saved without it.'); }
 }
 
 function _invWhen(ts) {
@@ -12519,28 +12543,36 @@ function renderInventory() {
 
   // ---- Stats ----
   const totalUnits = inv.items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
-  const totalValue = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
+  const hits = inv.items.filter(i => i.auto || i.mem).length;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   set('inv-stat-items', String(inv.items.length));
   set('inv-stat-units', String(totalUnits));
-  set('inv-stat-value', _invMoney(totalValue));
+  set('inv-stat-hits', String(hits));
   set('inv-stat-locations', String(inv.locations.length));
 
   // ---- Filter dropdowns ----
   _invFillSelect(document.getElementById('inv-filter-location'),
     [{ value: 'all', label: 'All locations' }, ...inv.locations.map(l => ({ value: l, label: l }))],
     _invFilter.location);
-  _invFillSelect(document.getElementById('inv-filter-category'),
-    [{ value: 'all', label: 'All categories' }, ...INV_CATEGORIES.map(c => ({ value: c, label: c }))],
-    _invFilter.category);
+  _invFillSelect(document.getElementById('inv-filter-type'),
+    [
+      { value: 'all', label: 'All cards' },
+      { value: 'auto', label: 'Autos' },
+      { value: 'mem', label: 'Memorabilia' },
+      { value: 'numbered', label: 'Numbered' },
+    ],
+    _invFilter.type);
   if (_invFilter.location !== 'all' && !inv.locations.includes(_invFilter.location)) _invFilter.location = 'all';
 
   // ---- Item list ----
   const q = _invFilter.q;
+  const photos = getInvPhotos();
   const items = inv.items.filter(i => {
     if (_invFilter.location !== 'all' && i.location !== _invFilter.location) return false;
-    if (_invFilter.category !== 'all' && i.category !== _invFilter.category) return false;
-    if (q && !`${i.name} ${i.notes || ''} ${i.location}`.toLowerCase().includes(q)) return false;
+    if (_invFilter.type === 'auto' && !i.auto) return false;
+    if (_invFilter.type === 'mem' && !i.mem) return false;
+    if (_invFilter.type === 'numbered' && !String(i.printRun || '').trim()) return false;
+    if (q && !`${i.name} ${i.printRun || ''} ${i.location}`.toLowerCase().includes(q)) return false;
     return true;
   }).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
@@ -12548,20 +12580,25 @@ function renderInventory() {
     listEl.innerHTML = inv.items.length === 0
       ? `<div class="inv-empty">
            <p><strong>Nothing documented yet.</strong></p>
-           <p>Add your boxes, supplies and show stock with <strong>+ Add Item</strong>, set up your spots under <strong>Locations</strong>, then use <strong>Move</strong> whenever stuff changes places — every move is logged below.</p>
+           <p>Add a card with <strong>+ Add Item</strong> — just the name, print run, whether it's an auto or memorabilia, and a photo. Set up your spots under <strong>Locations</strong>, then use <strong>Move</strong> whenever a card changes places — every move is logged below.</p>
          </div>`
-      : '<div class="inv-empty"><p>No items match the current filters.</p></div>';
+      : '<div class="inv-empty"><p>No cards match the current filters.</p></div>';
   } else {
     listEl.innerHTML = items.map(i => {
-      const lineValue = (Number(i.qty) || 0) * (Number(i.value) || 0);
+      const pr = _invFmtPrintRun(i.printRun);
+      const photo = photos[i.id];
       return `<div class="inv-item" data-id="${escHtml(i.id)}">
+        <div class="inv-item-thumb">
+          ${photo
+            ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" onclick="openInvPhotoViewer('${escHtml(i.id)}')" />`
+            : '<div class="inv-thumb-placeholder">&#127183;</div>'}
+        </div>
         <div class="inv-item-main">
-          <div class="inv-item-name">${escHtml(i.name)}</div>
+          <div class="inv-item-name">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
           <div class="inv-item-meta">
-            <span class="inv-badge inv-badge-cat">${escHtml(i.category || 'Other')}</span>
+            ${i.auto ? '<span class="inv-badge inv-badge-auto">AUTO</span>' : ''}
+            ${i.mem ? '<span class="inv-badge inv-badge-mem">MEM</span>' : ''}
             <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
-            ${Number(i.value) > 0 ? `<span class="inv-badge">${_invMoney(i.value)}/ea &middot; ${_invMoney(lineValue)}</span>` : ''}
-            ${i.notes ? `<span class="inv-item-notes">${escHtml(i.notes)}</span>` : ''}
           </div>
         </div>
         <div class="inv-item-qty">
@@ -12599,26 +12636,30 @@ function renderInventory() {
 function openInvItemModal(id) {
   const inv = getInventory();
   const item = id ? inv.items.find(i => i.id === id) : null;
-  document.getElementById('inv-item-modal-title').textContent = item ? 'Edit Inventory Item' : 'Add Inventory Item';
+  document.getElementById('inv-item-modal-title').textContent = item ? 'Edit Card' : 'Add Card';
   document.getElementById('inv-item-submit').textContent = item ? 'Save Changes' : 'Add Item';
   document.getElementById('inv-item-id').value = item ? item.id : '';
   document.getElementById('inv-item-name').value = item ? item.name : '';
-  document.getElementById('inv-item-qty').value = item ? item.qty : '';
-  document.getElementById('inv-item-value').value = item && item.value ? item.value : '';
-  document.getElementById('inv-item-notes').value = item ? (item.notes || '') : '';
-  _invFillSelect(document.getElementById('inv-item-category'),
-    INV_CATEGORIES.map(c => ({ value: c, label: c })),
-    item ? item.category : INV_CATEGORIES[0]);
+  document.getElementById('inv-item-printrun').value = item ? (item.printRun || '') : '';
+  document.getElementById('inv-item-auto').checked = !!(item && item.auto);
+  document.getElementById('inv-item-mem').checked = !!(item && item.mem);
   const defaultLoc = _invFilter.location !== 'all' ? _invFilter.location : inv.locations[0];
   _invFillSelect(document.getElementById('inv-item-location'),
     inv.locations.map(l => ({ value: l, label: l })),
     item ? item.location : defaultLoc);
+  // Photo: start from the item's stored photo (edit) or blank (add).
+  _invPhotoDraft = undefined;
+  const existingPhoto = item ? getInvPhotos()[item.id] : null;
+  _showInvPhotoPreview(existingPhoto || null);
+  const fileInput = document.getElementById('inv-item-photo-input');
+  if (fileInput) fileInput.value = '';
   document.getElementById('inv-item-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById('inv-item-name').focus(), 50);
 }
 
 function closeInvItemModal() {
   document.getElementById('inv-item-modal').classList.add('hidden');
+  _invPhotoDraft = undefined;
 }
 
 function handleInvItemSubmit(e) {
@@ -12626,25 +12667,63 @@ function handleInvItemSubmit(e) {
   const inv = getInventory();
   const id = document.getElementById('inv-item-id').value;
   const name = document.getElementById('inv-item-name').value.trim();
-  const qty = Math.max(0, Math.floor(Number(document.getElementById('inv-item-qty').value) || 0));
-  const valueRaw = document.getElementById('inv-item-value').value;
-  const value = valueRaw === '' ? 0 : Math.max(0, Number(valueRaw) || 0);
-  const category = document.getElementById('inv-item-category').value || 'Other';
+  const printRun = document.getElementById('inv-item-printrun').value.trim().slice(0, 20);
+  const auto = document.getElementById('inv-item-auto').checked;
+  const mem = document.getElementById('inv-item-mem').checked;
   const location = document.getElementById('inv-item-location').value || inv.locations[0];
-  const notes = document.getElementById('inv-item-notes').value.trim();
   if (!name) return false;
 
   const now = Date.now();
   const existing = id ? inv.items.find(i => i.id === id) : null;
+  let itemId;
   if (existing) {
-    Object.assign(existing, { name, qty, value, category, location, notes, updatedAt: now });
+    Object.assign(existing, { name, printRun, auto, mem, location, updatedAt: now });
+    itemId = existing.id;
   } else {
-    inv.items.push({ id: _invId(), name, qty, value, category, location, notes, addedAt: now, updatedAt: now });
+    itemId = _invId();
+    // New cards default to a single copy; the +/- steppers adjust from there.
+    inv.items.push({ id: itemId, name, printRun, auto, mem, qty: 1, location, addedAt: now, updatedAt: now });
   }
+  // Commit the photo draft. undefined = leave as-is; string/null = set/clear.
+  if (_invPhotoDraft !== undefined) setInvPhoto(itemId, _invPhotoDraft);
   saveInventory(inv);
   closeInvItemModal();
   renderInventory();
   return false;
+}
+
+// ---- Photo attach (modal draft) ----
+function _showInvPhotoPreview(url) {
+  const wrap = document.getElementById('inv-item-photo-preview');
+  const img = document.getElementById('inv-item-photo-img');
+  if (!wrap || !img) return;
+  if (url) { img.src = url; wrap.classList.remove('hidden'); }
+  else { img.src = ''; wrap.classList.add('hidden'); }
+}
+
+async function handleInvPhotoPick(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  try {
+    // Downscale hard — photos are device-local, but keep localStorage lean.
+    const url = await readImageFileAsDataUrl(file, 600, 0.72);
+    _invPhotoDraft = url;
+    _showInvPhotoPreview(url);
+  } catch (_) {
+    alert('Could not read that image. Try a different photo.');
+  }
+  e.target.value = '';
+}
+
+function clearInvPhotoDraft() {
+  _invPhotoDraft = null;
+  _showInvPhotoPreview(null);
+}
+
+// Full-size photo viewer from a tile thumbnail.
+function openInvPhotoViewer(id) {
+  const url = getInvPhotos()[id];
+  if (url) window.open(url, '_blank');
 }
 
 function adjustInvQty(id, delta) {
@@ -12663,6 +12742,7 @@ function deleteInvItem(id) {
   if (!item) return;
   if (!confirm(`Delete "${item.name}" from your inventory?`)) return;
   inv.items = inv.items.filter(i => i.id !== id);
+  setInvPhoto(id, null); // drop its photo too
   saveInventory(inv);
   renderInventory();
 }
@@ -12707,16 +12787,19 @@ function handleInvMoveSubmit(e) {
 
   const now = Date.now();
   const from = item.location;
-  // Merge into an identical stack at the destination when one exists,
-  // otherwise relocate (full move) or split off a new stack (partial move).
+  // Merge into an identical card at the destination when one exists, otherwise
+  // relocate (full move) or split off a new stack (partial move). Identity is
+  // name + print run + auto/mem — the same fields that define the card.
   const twin = inv.items.find(i =>
     i.id !== item.id && i.location === dest &&
-    i.name === item.name && i.category === item.category);
+    i.name === item.name && (i.printRun || '') === (item.printRun || '') &&
+    !!i.auto === !!item.auto && !!i.mem === !!item.mem);
   if (qty >= have) {
     if (twin) {
       twin.qty = (Number(twin.qty) || 0) + qty;
       twin.updatedAt = now;
       inv.items = inv.items.filter(i => i.id !== item.id);
+      setInvPhoto(item.id, null); // absorbed — keep the twin's photo, drop this one's
     } else {
       item.location = dest;
       item.updatedAt = now;
@@ -12728,7 +12811,10 @@ function handleInvMoveSubmit(e) {
       twin.qty = (Number(twin.qty) || 0) + qty;
       twin.updatedAt = now;
     } else {
-      inv.items.push({ ...item, id: _invId(), qty, location: dest, addedAt: now, updatedAt: now });
+      const newId = _invId();
+      inv.items.push({ ...item, id: newId, qty, location: dest, addedAt: now, updatedAt: now });
+      const photo = getInvPhotos()[item.id];
+      if (photo) setInvPhoto(newId, photo); // split copies keep the same photo
     }
   }
 
@@ -12804,12 +12890,11 @@ function exportInventoryCSV() {
   const inv = getInventory();
   if (inv.items.length === 0) { alert('No inventory items to export.'); return; }
   const esc = (s) => `"${String(s == null ? '' : s).replace(/"/g, '""')}"`;
-  const headers = ['Name', 'Category', 'Quantity', 'Location', 'Est Value Per Unit', 'Est Total', 'Notes', 'Added'];
+  const headers = ['Name', 'Print Run', 'Auto', 'Memorabilia', 'Quantity', 'Location', 'Added'];
   const rows = inv.items.map(i => [
-    esc(i.name), esc(i.category || ''), Number(i.qty) || 0, esc(i.location),
-    (Number(i.value) || 0).toFixed(2),
-    ((Number(i.qty) || 0) * (Number(i.value) || 0)).toFixed(2),
-    esc(i.notes || ''),
+    esc(i.name), esc(_invFmtPrintRun(i.printRun)),
+    i.auto ? 'Yes' : '', i.mem ? 'Yes' : '',
+    Number(i.qty) || 0, esc(i.location),
     i.addedAt ? new Date(i.addedAt).toISOString().slice(0, 10) : '',
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

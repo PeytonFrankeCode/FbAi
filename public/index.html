@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=116" />
+  <link rel="stylesheet" href="style.css?v=117" />
 
 
 </head>
@@ -555,8 +555,8 @@
           <span class="portfolio-stat-value" id="inv-stat-units">0</span>
         </div>
         <div class="portfolio-stat-card">
-          <span class="portfolio-stat-label">Est. Value</span>
-          <span class="portfolio-stat-value" id="inv-stat-value">$0.00</span>
+          <span class="portfolio-stat-label">Autos / Mem</span>
+          <span class="portfolio-stat-value" id="inv-stat-hits">0</span>
         </div>
         <div class="portfolio-stat-card">
           <span class="portfolio-stat-label">Locations</span>
@@ -573,7 +573,7 @@
       <div class="inv-filter-row">
         <input type="text" id="inv-search" class="inv-search" placeholder="Search inventory..." oninput="setInvFilter('q', this.value)" />
         <select id="inv-filter-location" class="inv-select" onchange="setInvFilter('location', this.value)"></select>
-        <select id="inv-filter-category" class="inv-select" onchange="setInvFilter('category', this.value)"></select>
+        <select id="inv-filter-type" class="inv-select" onchange="setInvFilter('type', this.value)"></select>
       </div>
 
       <div id="inventory-list" class="inv-list"></div>
@@ -590,12 +590,21 @@
       <h2 id="inv-item-modal-title">Add Inventory Item</h2>
       <form id="inv-item-form" onsubmit="return handleInvItemSubmit(event)">
         <input type="hidden" id="inv-item-id" />
-        <input type="text" id="inv-item-name" placeholder="Item (e.g. 2024 Prizm Hobby Box, 35pt Toploaders)" required />
-        <select id="inv-item-category" title="Category"></select>
-        <input type="number" id="inv-item-qty" placeholder="Quantity" min="0" step="1" required />
+        <input type="text" id="inv-item-name" placeholder="Card name (e.g. Patrick Mahomes 2017 Prizm Silver)" required />
+        <input type="text" id="inv-item-printrun" placeholder="Print run (e.g. 25 or 1/1) — optional" />
+        <div class="inv-check-row">
+          <label class="inv-check"><input type="checkbox" id="inv-item-auto" /> Auto</label>
+          <label class="inv-check"><input type="checkbox" id="inv-item-mem" /> Memorabilia</label>
+        </div>
         <select id="inv-item-location" title="Location"></select>
-        <input type="number" id="inv-item-value" placeholder="Est. value per unit ($, optional)" min="0" step="0.01" />
-        <input type="text" id="inv-item-notes" placeholder="Notes (optional)" />
+        <div class="inv-photo-field">
+          <label class="inv-photo-btn" for="inv-item-photo-input">&#128247; Attach photo</label>
+          <input type="file" id="inv-item-photo-input" accept="image/*" class="inv-photo-input" onchange="handleInvPhotoPick(event)" />
+          <div id="inv-item-photo-preview" class="inv-photo-preview hidden">
+            <img id="inv-item-photo-img" alt="Card photo" />
+            <button type="button" class="inv-photo-remove" onclick="clearInvPhotoDraft()">Remove photo</button>
+          </div>
+        </div>
         <button type="submit" id="inv-item-submit">Add Item</button>
       </form>
     </div>
@@ -1714,7 +1723,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=151"></script>
+  <script src="app.js?v=152"></script>
   <script type="importmap">
   {
     "imports": {
