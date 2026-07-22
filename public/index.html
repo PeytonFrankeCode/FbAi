@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=118" />
+  <link rel="stylesheet" href="style.css?v=119" />
 
 
 </head>
@@ -542,17 +542,36 @@
     <div class="collection-container">
       <div class="collection-header">
         <h2 class="collection-title">Inventory</h2>
-        <p class="collection-subtitle">Document your boxes, supplies and show stock — and log what moves where</p>
+        <p class="collection-subtitle">Track your cards and their value, log every sale and trade, and keep a wallet as your budget</p>
+      </div>
+
+      <!-- Wallet / budget -->
+      <div class="inv-wallet">
+        <div class="inv-wallet-top">
+          <div class="inv-wallet-headline">
+            <span class="inv-wallet-label">Wallet &middot; Budget</span>
+            <span class="inv-wallet-balance" id="inv-wallet-balance">$0.00</span>
+          </div>
+          <div class="inv-wallet-actions">
+            <button class="inv-wallet-btn" onclick="openWalletModal()">Add / adjust money</button>
+            <button class="inv-wallet-btn inv-wallet-btn-primary" onclick="openSaleTradeModal()">&#128176; Log sale / trade</button>
+          </div>
+        </div>
+        <div id="inv-wallet-log" class="inv-wallet-log"></div>
       </div>
 
       <div class="portfolio-stats">
         <div class="portfolio-stat-card">
-          <span class="portfolio-stat-label">Items</span>
+          <span class="portfolio-stat-label">Cards</span>
           <span class="portfolio-stat-value" id="inv-stat-items">0</span>
         </div>
         <div class="portfolio-stat-card">
           <span class="portfolio-stat-label">Total Units</span>
           <span class="portfolio-stat-value" id="inv-stat-units">0</span>
+        </div>
+        <div class="portfolio-stat-card">
+          <span class="portfolio-stat-label">Est. Value</span>
+          <span class="portfolio-stat-value" id="inv-stat-value">$0.00</span>
         </div>
         <div class="portfolio-stat-card">
           <span class="portfolio-stat-label">Autos / Mem</span>
@@ -565,7 +584,8 @@
       </div>
 
       <div class="portfolio-actions">
-        <button class="portfolio-action-btn portfolio-action-primary" onclick="openInvItemModal()">+ Add Item</button>
+        <button class="portfolio-action-btn portfolio-action-primary" onclick="openInvItemModal()">+ Add Card</button>
+        <button class="portfolio-action-btn" onclick="openSaleTradeModal()">&#128176; Log Sale / Trade</button>
         <button class="portfolio-action-btn" onclick="openInvLocationsModal()">&#128205; Locations</button>
         <button class="portfolio-action-btn" onclick="exportInventoryCSV()">Export CSV</button>
       </div>
@@ -580,6 +600,9 @@
 
       <h3 class="inv-moves-title">Recent moves</h3>
       <div id="inventory-moves" class="inv-moves"></div>
+
+      <h3 class="inv-moves-title">Sold &amp; traded history</h3>
+      <div id="inventory-history" class="inv-history"></div>
     </div>
   </div>
 
@@ -592,6 +615,7 @@
         <input type="hidden" id="inv-item-id" />
         <input type="text" id="inv-item-name" placeholder="Card name (e.g. Patrick Mahomes 2017 Prizm Silver)" required />
         <input type="text" id="inv-item-printrun" placeholder="Print run (e.g. 25 or 1/1) — optional" />
+        <input type="number" id="inv-item-value" placeholder="Card value ($) — optional" min="0" step="0.01" />
         <div class="inv-check-row">
           <label class="inv-check"><input type="checkbox" id="inv-item-auto" /> Auto</label>
           <label class="inv-check"><input type="checkbox" id="inv-item-mem" /> Memorabilia</label>
@@ -635,6 +659,93 @@
       <form id="inv-location-add-form" onsubmit="return handleInvLocationAdd(event)">
         <input type="text" id="inv-location-name" placeholder="New location (e.g. Storage Unit B)" required />
         <button type="submit">Add Location</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inventory: wallet add/adjust modal -->
+  <div id="inv-wallet-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:400px">
+      <button class="login-close" aria-label="Close" onclick="closeWalletModal()">&times;</button>
+      <h2>Wallet</h2>
+      <p class="inv-move-desc">Your wallet is a running cash balance — a budget guideline. Sales add to it automatically; add or adjust it by hand here.</p>
+      <form id="inv-wallet-form" onsubmit="return handleWalletSubmit(event)">
+        <div class="inv-check-row">
+          <label class="inv-check"><input type="radio" name="wallet-dir" value="add" checked /> Add money</label>
+          <label class="inv-check"><input type="radio" name="wallet-dir" value="sub" /> Subtract</label>
+        </div>
+        <input type="number" id="inv-wallet-amount" placeholder="Amount ($)" min="0" step="0.01" required />
+        <input type="text" id="inv-wallet-note" placeholder="Note (optional, e.g. Set budget, Bought a card)" />
+        <button type="submit">Update Wallet</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inventory: log sale / trade modal -->
+  <div id="inv-sale-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:480px">
+      <button class="login-close" aria-label="Close" onclick="closeSaleTradeModal()">&times;</button>
+      <h2>Log a Sale or Trade</h2>
+      <form id="inv-sale-form" onsubmit="return handleSaleTradeSubmit(event)">
+
+        <!-- Step 1: the card you gave / sold -->
+        <h3 class="inv-sale-step">1 &middot; The card you gave or sold</h3>
+        <select id="inv-sale-card" onchange="onSaleCardPick()" title="Card you gave"></select>
+        <div id="inv-sale-gave-fresh" class="hidden">
+          <input type="text" id="inv-sale-gave-name" placeholder="Card name" />
+          <input type="text" id="inv-sale-gave-printrun" placeholder="Print run (optional)" />
+          <div class="inv-photo-field">
+            <label class="inv-photo-btn" for="inv-sale-gave-photo-input">&#128247; Photo of the card you gave</label>
+            <input type="file" id="inv-sale-gave-photo-input" accept="image/*" class="inv-photo-input" onchange="handleSalePhotoPick(event, 'gave')" />
+            <div id="inv-sale-gave-photo-preview" class="inv-photo-preview hidden">
+              <img id="inv-sale-gave-photo-img" alt="Card given" />
+              <button type="button" class="inv-photo-remove" onclick="clearSalePhoto('gave')">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: what you got back -->
+        <h3 class="inv-sale-step">2 &middot; What you got</h3>
+        <div class="inv-sale-toggle">
+          <button type="button" id="inv-sale-mode-cash" class="inv-sale-tab active" onclick="setSaleMode('cash')">&#128176; Cash</button>
+          <button type="button" id="inv-sale-mode-card" class="inv-sale-tab" onclick="setSaleMode('card')">&#127183; A card</button>
+        </div>
+
+        <!-- Cash branch -->
+        <div id="inv-sale-cash">
+          <input type="number" id="inv-sale-cash-amount" placeholder="Cash received ($)" min="0" step="0.01" />
+          <select id="inv-sale-cash-source" title="Where">
+            <option value="eBay">eBay</option>
+            <option value="Fanatics">Fanatics</option>
+            <option value="Whatnot">Whatnot</option>
+            <option value="COMC">COMC</option>
+            <option value="In person">In person</option>
+            <option value="Other">Other</option>
+          </select>
+          <label class="inv-sale-wallet-note"><input type="checkbox" id="inv-sale-to-wallet" checked /> Add this cash to my wallet</label>
+        </div>
+
+        <!-- Card branch -->
+        <div id="inv-sale-card-got" class="hidden">
+          <input type="text" id="inv-sale-got-name" placeholder="Card you received" />
+          <input type="text" id="inv-sale-got-printrun" placeholder="Print run (optional)" />
+          <div class="inv-check-row">
+            <label class="inv-check"><input type="checkbox" id="inv-sale-got-auto" /> Auto</label>
+            <label class="inv-check"><input type="checkbox" id="inv-sale-got-mem" /> Memorabilia</label>
+          </div>
+          <input type="number" id="inv-sale-got-value" placeholder="Its value ($) — optional" min="0" step="0.01" />
+          <div class="inv-photo-field">
+            <label class="inv-photo-btn" for="inv-sale-got-photo-input">&#128247; Photo of the card you got</label>
+            <input type="file" id="inv-sale-got-photo-input" accept="image/*" class="inv-photo-input" onchange="handleSalePhotoPick(event, 'got')" />
+            <div id="inv-sale-got-photo-preview" class="inv-photo-preview hidden">
+              <img id="inv-sale-got-photo-img" alt="Card received" />
+              <button type="button" class="inv-photo-remove" onclick="clearSalePhoto('got')">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <input type="text" id="inv-sale-note" placeholder="Note (optional)" />
+        <button type="submit" id="inv-sale-submit">Log it</button>
       </form>
     </div>
   </div>
@@ -1723,7 +1834,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=153"></script>
+  <script src="app.js?v=154"></script>
   <script type="importmap">
   {
     "imports": {
