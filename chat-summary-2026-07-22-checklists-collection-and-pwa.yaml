@@ -1,0 +1,218 @@
+session:
+  date: "2026-07-22"
+  branch: claude/2024-checklists-completion-92l1cf
+  repo: peytonfrankecode/fbai
+  topic: >
+    Two threads. (1) Checklist data: rebuilt 2022 Panini Spectra with full
+    parallels, added three 2025 Topps products (Chrome, Chrome Sapphire, Cosmic
+    Chrome), fixed EVERY 2023 checklist (parser bugs that merged cards and
+    corrupted print runs/card numbers), and added the first 2017 product
+    (Panini Certified). (2) Collection feature work: added a "minimum price"
+    field, a branded PDF export, a manual market-value override, and finally
+    turned the whole site into an installable, offline-capable PWA for card
+    shows.
+  note: >
+    All work on branch claude/2024-checklists-completion-92l1cf and pushed
+    (branch merged to main via several PRs mid-session; main merged back into
+    the branch twice, rebased cleanly each time). Deploy fires on push to MAIN.
+    Final asset cache versions app.js?v=150 / style.css?v=114. Checklist
+    index.json is at 158 products after this session.
+
+commits_this_session:
+  - "Rebuild 2022 Panini Spectra Football checklist with full parallels/inserts (1f72ce3)"
+  - "Add 2025 Topps Cosmic Chrome Football checklist (4b234e0)"
+  - "Add 2025 Topps Chrome Football checklist (05a6a8d)"
+  - "Add 2025 Topps Chrome Sapphire Football checklist (4fb5fd7)"
+  - "Fix 2023 checklist parsing - merged cards, wrong print runs, junk sets (5757432)"
+  - "Add 2017 Panini Certified Football checklist (f533ee1)"
+  - "Collection - add minimum-price field and PDF export (2ae86e2)"
+  - "Collection - wrap portfolio money row into 2x2 grid on mobile (14a1627)"
+  - "Fix collection PDF export - hidden iframe + bump asset versions (3493434)"
+  - "Redesign collection PDF export with Card Huddle branding (982dde7)"
+  - "Collection - allow a manual market-value override (c653349)"
+  - "PWA - offline support + installable app for card shows (a45b7d2)"
+
+checklist_data_model:
+  location: "public/data/checklists/<product-id>.json + index.json"
+  shape: >
+    Each product = { id, name, year, brand, sport, sets:[ { id, name, category,
+    totalCards, parallels:[{name, printRun|null}], cards:[{number, player,
+    team?, printRun?}] } ] }. category is base | autograph | memorabilia |
+    insert. team is optional (some sources list no teams). parse-2022 /
+    parse-2023 / parse-2024-checklist.js parse the Beckett DOCX exports; new
+    products this session were hand-parsed with one-off Node builders (in
+    scratch) then written directly.
+  audit: >
+    node audit-checklists.js flags garbled players, bad card numbers, duplicate
+    set ids, junk set names, and totalCards mismatches. Target is 0 high / 0
+    medium. Remaining "low" findings are legit multi-player / multi-team cards
+    that appear on two pages.
+
+checklists_added_or_fixed:
+  2022_spectra_rebuild: >
+    2022-panini-spectra-football.json. Was 33 sets / 937 cards, docx-scraped
+    and garbled (merged names, generic "Base" parallel placeholder, a junk
+    "want to know what cards..." set). Now 34 sets / 991 cards from the pasted
+    team-split checklist: correct print runs, RC stripped, AUTO PATCH kept,
+    dual-player autos preserved, historical-team overrides (Marcus Allen ->
+    Los Angeles Raiders). CAVEAT - source was the TEAM-SET tab which excludes
+    parallels, so most sets still only carry a "Base" parallel (see
+    parallels_gap).
+  2025_topps_chrome: >
+    2025-topps-chrome-football.json - 40 sets, 1972 cards. 400-card base (300
+    vets + 100 rookies) with the full ~55-parallel rainbow + serial numbers;
+    etch / image / full-set variations; 13 auto sets (incl. Rookie PREM1ERE
+    Patch, 98x 1/1); relics; 17 inserts. Fixed source typos (DA-HM, "Chris PAUL
+    JR."). Omitted Hidden Gems (source said "Checklist TBA") and the numberless
+    Fanatics Authentics Redemption list (user's paste was cut off).
+  2025_topps_chrome_sapphire: >
+    2025-topps-chrome-sapphire-football.json - 14 sets, 732 cards. Same base /
+    roster as Chrome; Sapphire 5-parallel rainbow (Gold/Orange/Black/Red/
+    Padparadscha). Built by sed-cloning the Chrome builder script.
+  2025_topps_cosmic_chrome: >
+    2025-topps-cosmic-chrome-football.json - 17 sets, 773 cards. Modeled
+    Planetary Pursuit as ONE 10-card set with the 9 planet tiers as parallels.
+    NOTE the existing 2024 Cosmic Chrome file has a BUG here - it triplicated
+    the same 10 cards into planetary-pursuit + sun + mercury + ... as separate
+    sets. Flagged to user, NOT fixed.
+  2017_panini_certified: >
+    2017-panini-certified-football.json - 16 sets, 685 cards. FIRST 2017
+    product in the DB (was 2022-2025 only). Base #1-200 in base-set (#101-200
+    numbered /999); Freshman Fabric signatures (#201-240) split into their own
+    autograph set; colour variants captured as each set's `parallels` (matches
+    the 2023/2024 Certified convention). Source lists NO team names, so cards
+    carry number/player/printRun only (faithful to source, teams not
+    fabricated).
+
+2023_parser_fix:
+  file: parse-2023-checklist.js
+  source_doc: "Document (13).docx"
+  problem: >
+    ~292 flagged issues. Root causes in the card-splitting regex: (1) the
+    card-boundary only matched a Capital+lowercase name start, so players like
+    BJ Ojulari, DJ Moore, T.J. Watt, DK Metcalf, C.J. Stroud got MERGED into
+    the previous card ("Kyler Murray105 BJ Ojulari /999"). (2) the glued
+    print-run splitter was lazy / shortest-first, so "/350128" became "/3" +
+    card #50128 - silently corrupting BOTH print runs and card numbers on cards
+    that otherwise looked fine.
+  fixes:
+    - "Widened NAME_START to cover double-capital, initialed (C.J.) and apostrophe (L'Jarius) names."
+    - "ungluePrintRuns() - resolve a glued digit run against print runs seen elsewhere on the same line, then a KNOWN_PRS table (longest-first)."
+    - "Handled slash-less print runs (36 Clayton Tune 299), historical-team dash-overrides (TEAM_OVERRIDES set), mid-string print runs before subset annotations, and set names embedding a year (Retro 1993 / 2003)."
+    - "Filtered Beckett page chrome from set names + card rows (TAGS footer, Previous Article, pack-odds, hockey/basketball cross-links, THIS INSERT IS NUMBERED TO /4000...)."
+    - "mergeDuplicateIdSets() - merge same-id sets within a product (e.g. Ticket Stub under two sections)."
+    - "Stopped category markers (Relics Autographs Checklist) being swallowed as bare section headers - recovered the Alabama Relics sets."
+  result: >
+    Regenerated all 46 2023 products. +1,286 cards recovered (39,205 ->
+    40,491). audit-checklists.js reports 0 high / 0 medium. Base sets now hit
+    true counts (Donruss/Score/Prizm 383->400, Mosaic 386->400, etc.).
+
+parallels_gap:
+  problem: >
+    ~21 of the 2022/2023 team-split products (Donruss, Score, Prizm, Mosaic,
+    Spectra, Absolute, Black, Certified, Gold Standard, Illusions, Impeccable,
+    Legacy, Luminance, Origins, Phoenix, Plates & Patches, Prestige, Rookies &
+    Stars, plus Leaf Exotic/Metal/Trinity) only carry a "Base" parallel because
+    the source doc only had the TEAM-SET tab, which excludes parallel data. The
+    14 master-list products DO have per-set Parallels blocks and were captured
+    correctly.
+  cant_fetch_online: >
+    Tried WebFetch of Beckett, Cardboard Connection, cardsmithsbreaks, TCDB,
+    checklistinsider, gogts, WaxZone, Cardboard Glory - ALL HTTP 403 (Cloudflare
+    bot protection; the agent proxy passes through, the sites themselves block).
+    WebSearch works but only returns AI summaries - reliable for base-parallel
+    NAMES, but it hallucinates / guesses per-set print runs (invented "Hyper
+    /75, Astral /40" then contradicted itself), even constrained to
+    allowed_domains beckett.com. Decision - do NOT write search-guessed print
+    runs as fact.
+  resolution: >
+    The reliable path is the user pasting the "Master Card List" tab (set name +
+    Parallels block + numbered cards), same format that worked for the 2025
+    Topps sets. User pivoted to adding 2017 products instead. Parallels backfill
+    for the team-split products remains OPEN.
+
+collection_feature_work:
+  file_scope: "public/app.js, public/index.html, public/style.css"
+  data_model: >
+    Cards live in localStorage 'cardHuddleCollection'. Fields - name OR
+    structured (player/year/brand/setName/parallel/printRun/cardNumber/team/
+    category); purchasePrice (Paid); estValue (Market); minPrice (NEW);
+    manualValue + locked (NEW override); condition, notes, comps, estimate,
+    isEstimate, soldValue, scanned. `locked` already existed and means skip
+    auto-refresh - valueCardAt() and both refresh paths bail on locked cards.
+  minimum_price: >
+    New "minimum price you'll accept" field in the Add Card modal
+    (#add-card-min) and Edit Card form (#ec-min), stored as card.minPrice. The
+    portfolio tile gained a Min column; cards whose market value drops BELOW
+    minPrice show a red border + "below min" flag (belowFloor in _pfCardHtml;
+    CSS .pf-below-floor / .pf-floor-flag).
+  mobile_money_row_fix: >
+    Adding the Min column made 4 money columns (Paid/Market/Min/Gain) which
+    OVERFLOWED off the right edge on phones (clipped Gain) - caught via a 360px
+    Chromium screenshot. Fix - @media (max-width:560px) wraps .pf-card-money
+    into a 2x2 grid; desktop keeps one row.
+  manual_market_value: >
+    Edit form + Add modal gained a "Market $" field. A number there sets
+    estValue, marks card.manualValue + card.locked (refresh won't overwrite),
+    and disables the "re-price from comps" checkbox (_ecMarketChanged). Clearing
+    it reverts to auto-pricing. Manually-valued cards show a green MANUAL badge
+    instead of the comp-confidence dot (_cardValueMetaInline).
+
+pdf_export:
+  goal: "On-brand Save-as-PDF of the collection (CSV stays for Excel)."
+  history_of_bugs: >
+    v1 opened a popup window + inline auto-print script - popup-blocked (esp.
+    mobile) and unreliable. AND the ?v= asset version wasn't bumped, so browsers
+    served the OLD cached app.js WITHOUT exportCollectionPDF -> "does not work".
+    BOTH fixed - print via a HIDDEN IFRAME (srcdoc, no popup, focus()+print() on
+    load, HTML-download fallback) + bumped versions. Then redesigned from a
+    plain light table into a branded dark report.
+  final_design: >
+    exportCollectionPDF() (async) - near-black #0c0e14 bg + green radial glow,
+    Inter font, gradient "The Card Huddle" wordmark. Logo fetched at export time
+    and inlined as a data URI so it renders in the srcdoc iframe with no base
+    URL. Five stat cards (Total Cards / Invested / Market Value / Total Minimum
+    / Gain-Loss+ROI). Portfolio-style rows with AUTO/BASE/INSERT/MEMO badges,
+    num/parallel/printrun/condition tags, Paid/Market/Min/Gain columns, red
+    "below min" flags. Verified by rendering the real srcdoc in Chromium. CSV
+    export also updated - added a Min Price column and uses _cardDisplayName()
+    (structured name) instead of only the free-text name.
+
+pwa_offline:
+  why: "Bad venue wifi at card shows; works-at-the-show as a selling point."
+  scope_chosen_by_user: "Full PWA + pre-download packs (most complete option)."
+  what_works_offline: >
+    App shell (instant load), viewed + pre-downloaded checklists, and the whole
+    collection (localStorage). What CANNOT - live eBay/scrape.do prices; they
+    degrade gracefully behind an offline banner.
+  files_added:
+    - "public/manifest.json - standalone display, theme/bg #0c0e14, icons 192+512 (any+maskable). Linked in <head> with apple/mobile-web-app meta. Makes it installable (Add to Home Screen, full-screen)."
+    - "public/icon-192.png / icon-512.png - generated with Pillow (pip-installed ad hoc): dark brand bg + centered logo.png."
+    - "public/sw.js - service worker. VERSION const drives chuddle-shell-vN / chuddle-data-vN caches, cleaned on activate. Strategy is SAME-ORIGIN ONLY (never intercepts third-party/blocking scripts or /api, so it can't stall the page on slow wifi - a real bug caught in testing where the SW hung on Chart.js / Google-Fonts fetches, leaving readyState=loading). Navigation = network-first with a 4s timeout then cached shell. /data/* + static = stale-while-revalidate. Message API - CACHE_URLS (with progress), UNCACHE_URLS, CHECK_CACHED, SKIP_WAITING."
+  files_changed:
+    - "public/_headers - /sw.js no-cache + Service-Worker-Allowed:/, /manifest.json no-cache."
+    - "public/app.js (appended) - SW registration with SAFE auto-update (skipWaiting + reload ONLY on a genuine update, guarded by hadController so first-time visitors get no reload flash); offline-year packs (initOfflinePanel / downloadYearOffline / removeYearOffline via postMessage, tracked in localStorage 'cardHuddleOfflineYears'); offline banner (_updateOnlineStatus on online/offline events). Hooked initOfflinePanel() into showSettings()."
+    - "public/index.html - #offline-banner element; Offline-at-the-show settings row (#settings-offline-row -> #offline-packs) with per-year Download/Update/Remove buttons."
+    - "public/style.css - .offline-banner, .offline-packs / .op-row / .op-btn etc."
+  verification: >
+    End-to-end in Chromium over a local http server - SW registers and controls
+    the page, manifest valid, downloading the 2017 pack cached 2/2 URLs, the
+    2017 checklist (16 sets) is served from cache with the NETWORK OFF, and
+    offline navigation returns the cached shell (200). Screenshotted the
+    settings panel (per-year rows) and the amber offline banner.
+
+verification_general: >
+  No automated test suite. Checklist JSON validated with python json +
+  audit-checklists.js. Front-end changes (portfolio tiles, PDF output, offline
+  packs, banner, mobile money-row) verified by rendering the real functions/HTML
+  in the pre-installed Chromium via Playwright
+  (/opt/node22/lib/node_modules/playwright,
+  /opt/pw-browsers/chromium-1194/chrome-linux/chrome) and reading screenshots.
+
+open_threads:
+  - "PARALLELS BACKFILL (biggest) - ~21 team-split 2022/2023 products still only have a Base parallel. Needs the user to paste each product's Master Card List (set + Parallels block). Can't be scraped (Cloudflare 403); search summaries aren't trustworthy for print runs."
+  - "Keep adding 2017 products (only Certified done) - user feeds them as pasted Beckett master checklists."
+  - "2024 Cosmic Chrome Planetary Pursuit triplication bug (10 cards duplicated into sun/mercury/... sets) - flagged, not fixed."
+  - "Offered but not built - an in-app Install-app button (custom beforeinstallprompt) for a one-tap booth demo."
+  - "iOS caveat - Safari caps offline storage (~50MB) and can evict it; lean on the per-year download packs shortly before a show on iPhones."
+  - "Cache-version discipline - MUST bump app.js?v= / style.css?v= in index.html on every front-end change or browsers serve stale bundles (this bit us on the PDF export). Now at app.js v=150 / style.css v=114."
