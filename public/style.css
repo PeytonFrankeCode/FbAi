@@ -9307,3 +9307,101 @@ footer {
 .op-btn.op-dl:hover { background: var(--accent-hover); }
 .op-btn.op-dl:disabled { opacity: 0.7; cursor: default; }
 .op-btn.op-remove:hover { border-color: #f87171; color: #f87171; }
+
+/* ==================== Inventory (/inventory) ==================== */
+
+/* Modal <select>s (inventory modals are the first to use them) — mirror the
+   .modal-box input styling so the forms read as one piece. */
+.modal-box select {
+  width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--bg-input); color: var(--text-primary);
+  font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box;
+}
+
+.inv-filter-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.75rem 0 1rem; }
+.inv-search {
+  flex: 1 1 14rem; min-width: 10rem; padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg-input); color: var(--text-primary); font-size: 0.85rem;
+}
+.inv-select {
+  padding: 0.5rem 0.6rem; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg-input); color: var(--text-primary); font-size: 0.85rem;
+}
+
+.inv-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.inv-empty {
+  background: var(--card-gradient); border: 1px dashed var(--border);
+  border-radius: 10px; padding: 1.25rem 1rem; text-align: center;
+  color: var(--text-secondary); font-size: 0.9rem;
+}
+.inv-empty p { margin: 0.25rem 0; }
+
+.inv-item {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  background: var(--card-gradient); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.65rem 0.85rem;
+}
+.inv-item-main { flex: 1 1 14rem; min-width: 0; }
+.inv-item-name { font-weight: 600; color: var(--text-primary); font-size: 0.95rem; }
+.inv-item-meta {
+  display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+  margin-top: 0.3rem; font-size: 0.75rem; color: var(--text-secondary);
+}
+.inv-badge {
+  display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-input);
+  color: var(--text-secondary); font-size: 0.72rem; white-space: nowrap;
+}
+.inv-badge-cat { border-color: var(--accent-border); color: var(--accent); background: var(--accent-bg); }
+.inv-badge-loc { font-weight: 600; }
+.inv-item-notes { font-style: italic; overflow: hidden; text-overflow: ellipsis; max-width: 24rem; }
+
+.inv-item-qty { display: flex; align-items: center; gap: 0.35rem; }
+.inv-qty-btn {
+  width: 1.7rem; height: 1.7rem; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg-input); color: var(--text-primary); font-size: 0.95rem;
+  line-height: 1; cursor: pointer;
+}
+.inv-qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+.inv-qty-num { min-width: 2rem; text-align: center; font-weight: 700; color: var(--text-primary); }
+
+.inv-item-actions { display: flex; align-items: center; gap: 0.35rem; }
+.inv-act-btn {
+  padding: 0.35rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg-input); color: var(--text-secondary); font-size: 0.75rem;
+  cursor: pointer; white-space: nowrap;
+}
+.inv-act-btn:hover { border-color: var(--accent); color: var(--accent); }
+.inv-act-move { border-color: var(--accent-border); color: var(--accent); background: var(--accent-bg); font-weight: 600; }
+.inv-act-del:hover { border-color: #e0655f; color: #e0655f; }
+
+.inv-moves-title { margin: 1.5rem 0 0.5rem; font-size: 1rem; color: var(--text-primary); }
+.inv-moves { display: flex; flex-direction: column; gap: 0.35rem; }
+.inv-moves-empty { color: var(--text-secondary); font-size: 0.85rem; }
+.inv-move-row {
+  display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
+  padding: 0.45rem 0.75rem; border-left: 3px solid var(--accent);
+  background: var(--bg-secondary); border-radius: 0 8px 8px 0;
+  font-size: 0.82rem; color: var(--text-secondary);
+}
+.inv-move-what { color: var(--text-primary); }
+.inv-move-note { font-style: italic; }
+.inv-move-when { margin-left: auto; font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+
+.inv-move-desc { color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0.75rem; }
+
+.inv-locations-list { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.9rem; }
+.inv-loc-row {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.45rem 0.6rem; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--bg-input);
+}
+.inv-loc-name { font-weight: 600; color: var(--text-primary); font-size: 0.85rem; }
+.inv-loc-count { margin-left: auto; font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .inv-item { padding: 0.6rem 0.7rem; }
+  .inv-item-actions { margin-left: auto; }
+  .inv-move-when { flex-basis: 100%; margin-left: 0; }
+}

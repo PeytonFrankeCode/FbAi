@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=115" />
+  <link rel="stylesheet" href="style.css?v=116" />
 
 
 </head>
@@ -182,6 +182,7 @@
       <button class="nav-tab" data-view="rainbow" onclick="switchView('rainbow')">Rainbow</button>
       <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
       <button class="nav-tab" data-view="collection" onclick="switchView('collection')">My Cards</button>
+      <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')">Inventory</button>
       <button class="nav-tab" data-view="floor" onclick="switchView('floor')">The Floor</button>
       <button class="nav-tab" data-view="seller" onclick="switchView('seller')">Sell</button>
       <button class="nav-tab" data-view="proplus" onclick="switchView('proplus')">Tools</button>
@@ -534,6 +535,99 @@
 
     </div>
     </div><!-- /collection-content -->
+  </div>
+
+  <!-- Inventory View (/inventory) -->
+  <div id="inventory-view" class="collection-view hidden">
+    <div class="collection-container">
+      <div class="collection-header">
+        <h2 class="collection-title">Inventory</h2>
+        <p class="collection-subtitle">Document your boxes, supplies and show stock — and log what moves where</p>
+      </div>
+
+      <div class="portfolio-stats">
+        <div class="portfolio-stat-card">
+          <span class="portfolio-stat-label">Items</span>
+          <span class="portfolio-stat-value" id="inv-stat-items">0</span>
+        </div>
+        <div class="portfolio-stat-card">
+          <span class="portfolio-stat-label">Total Units</span>
+          <span class="portfolio-stat-value" id="inv-stat-units">0</span>
+        </div>
+        <div class="portfolio-stat-card">
+          <span class="portfolio-stat-label">Est. Value</span>
+          <span class="portfolio-stat-value" id="inv-stat-value">$0.00</span>
+        </div>
+        <div class="portfolio-stat-card">
+          <span class="portfolio-stat-label">Locations</span>
+          <span class="portfolio-stat-value" id="inv-stat-locations">0</span>
+        </div>
+      </div>
+
+      <div class="portfolio-actions">
+        <button class="portfolio-action-btn portfolio-action-primary" onclick="openInvItemModal()">+ Add Item</button>
+        <button class="portfolio-action-btn" onclick="openInvLocationsModal()">&#128205; Locations</button>
+        <button class="portfolio-action-btn" onclick="exportInventoryCSV()">Export CSV</button>
+      </div>
+
+      <div class="inv-filter-row">
+        <input type="text" id="inv-search" class="inv-search" placeholder="Search inventory..." oninput="setInvFilter('q', this.value)" />
+        <select id="inv-filter-location" class="inv-select" onchange="setInvFilter('location', this.value)"></select>
+        <select id="inv-filter-category" class="inv-select" onchange="setInvFilter('category', this.value)"></select>
+      </div>
+
+      <div id="inventory-list" class="inv-list"></div>
+
+      <h3 class="inv-moves-title">Recent moves</h3>
+      <div id="inventory-moves" class="inv-moves"></div>
+    </div>
+  </div>
+
+  <!-- Inventory: add / edit item modal -->
+  <div id="inv-item-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:440px">
+      <button class="login-close" aria-label="Close" onclick="closeInvItemModal()">&times;</button>
+      <h2 id="inv-item-modal-title">Add Inventory Item</h2>
+      <form id="inv-item-form" onsubmit="return handleInvItemSubmit(event)">
+        <input type="hidden" id="inv-item-id" />
+        <input type="text" id="inv-item-name" placeholder="Item (e.g. 2024 Prizm Hobby Box, 35pt Toploaders)" required />
+        <select id="inv-item-category" title="Category"></select>
+        <input type="number" id="inv-item-qty" placeholder="Quantity" min="0" step="1" required />
+        <select id="inv-item-location" title="Location"></select>
+        <input type="number" id="inv-item-value" placeholder="Est. value per unit ($, optional)" min="0" step="0.01" />
+        <input type="text" id="inv-item-notes" placeholder="Notes (optional)" />
+        <button type="submit" id="inv-item-submit">Add Item</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inventory: move item modal -->
+  <div id="inv-move-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:420px">
+      <button class="login-close" aria-label="Close" onclick="closeInvMoveModal()">&times;</button>
+      <h2>Move Item</h2>
+      <p id="inv-move-desc" class="inv-move-desc"></p>
+      <form id="inv-move-form" onsubmit="return handleInvMoveSubmit(event)">
+        <input type="hidden" id="inv-move-id" />
+        <input type="number" id="inv-move-qty" placeholder="Quantity to move" min="1" step="1" required />
+        <select id="inv-move-dest" title="Destination"></select>
+        <input type="text" id="inv-move-note" placeholder="Note (optional, e.g. for Saturday's show)" />
+        <button type="submit">Move</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inventory: manage locations modal -->
+  <div id="inv-locations-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:420px">
+      <button class="login-close" aria-label="Close" onclick="closeInvLocationsModal()">&times;</button>
+      <h2>Locations</h2>
+      <div id="inv-locations-list" class="inv-locations-list"></div>
+      <form id="inv-location-add-form" onsubmit="return handleInvLocationAdd(event)">
+        <input type="text" id="inv-location-name" placeholder="New location (e.g. Storage Unit B)" required />
+        <button type="submit">Add Location</button>
+      </form>
+    </div>
   </div>
 
   <!-- Grading Advisor View -->
@@ -1620,7 +1714,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=150"></script>
+  <script src="app.js?v=151"></script>
   <script type="importmap">
   {
     "imports": {
