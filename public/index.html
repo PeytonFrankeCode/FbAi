@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=124" />
+  <link rel="stylesheet" href="style.css?v=125" />
 
 
 </head>
@@ -702,23 +702,45 @@
   <div id="inv-sale-modal" class="modal-overlay hidden" role="dialog">
     <div class="modal-box" style="max-width:480px">
       <button class="login-close" aria-label="Close" onclick="closeSaleTradeModal()">&times;</button>
-      <h2>Log a Sale or Trade</h2>
+      <h2>Log a Sale, Trade or Purchase</h2>
       <form id="inv-sale-form" onsubmit="return handleSaleTradeSubmit(event)">
 
-        <!-- Step 1: the card you gave / sold -->
-        <h3 class="inv-sale-step">1 &middot; The card you gave or sold</h3>
-        <select id="inv-sale-card" onchange="onSaleCardPick()" title="Card you gave"></select>
-        <div id="inv-sale-gave-fresh" class="hidden">
-          <input type="text" id="inv-sale-gave-name" placeholder="Card name" />
-          <input type="text" id="inv-sale-gave-printrun" placeholder="Print run (optional)" />
-          <div class="inv-photo-field">
-            <label class="inv-photo-btn" for="inv-sale-gave-photo-input">&#128247; Photo of the card you gave</label>
-            <input type="file" id="inv-sale-gave-photo-input" accept="image/*" class="inv-photo-input" onchange="handleSalePhotoPick(event, 'gave')" />
-            <div id="inv-sale-gave-photo-preview" class="inv-photo-preview hidden">
-              <img id="inv-sale-gave-photo-img" alt="Card given" />
-              <button type="button" class="inv-photo-remove" onclick="clearSalePhoto('gave')">Remove</button>
+        <!-- Step 1: what you gave -->
+        <h3 class="inv-sale-step">1 &middot; What you gave</h3>
+        <div class="inv-sale-toggle">
+          <button type="button" id="inv-sale-gave-mode-card" class="inv-sale-tab active" onclick="setSaleGaveMode('card')">&#127183; A card</button>
+          <button type="button" id="inv-sale-gave-mode-cash" class="inv-sale-tab" onclick="setSaleGaveMode('cash')">&#128176; Cash</button>
+        </div>
+
+        <!-- gave: a card -->
+        <div id="inv-sale-gave-card">
+          <select id="inv-sale-card" onchange="onSaleCardPick()" title="Card you gave"></select>
+          <div id="inv-sale-gave-fresh" class="hidden">
+            <input type="text" id="inv-sale-gave-name" placeholder="Card name" />
+            <input type="text" id="inv-sale-gave-printrun" placeholder="Print run (optional)" />
+            <div class="inv-photo-field">
+              <label class="inv-photo-btn" for="inv-sale-gave-photo-input">&#128247; Photo of the card you gave</label>
+              <input type="file" id="inv-sale-gave-photo-input" accept="image/*" class="inv-photo-input" onchange="handleSalePhotoPick(event, 'gave')" />
+              <div id="inv-sale-gave-photo-preview" class="inv-photo-preview hidden">
+                <img id="inv-sale-gave-photo-img" alt="Card given" />
+                <button type="button" class="inv-photo-remove" onclick="clearSalePhoto('gave')">Remove</button>
+              </div>
             </div>
           </div>
+        </div>
+
+        <!-- gave: cash (a purchase) -->
+        <div id="inv-sale-gave-cash" class="hidden">
+          <input type="number" id="inv-sale-gave-cash-amount" placeholder="Cash you paid ($)" min="0" step="0.01" />
+          <select id="inv-sale-gave-cash-source" title="Where">
+            <option value="eBay">eBay</option>
+            <option value="Fanatics">Fanatics</option>
+            <option value="Whatnot">Whatnot</option>
+            <option value="COMC">COMC</option>
+            <option value="In person">In person</option>
+            <option value="Other">Other</option>
+          </select>
+          <label class="inv-sale-wallet-note"><input type="checkbox" id="inv-sale-from-wallet" checked /> Take this cash from my wallet</label>
         </div>
 
         <!-- Step 2: what you got back -->
@@ -1829,7 +1851,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=160"></script>
+  <script src="app.js?v=161"></script>
   <script type="importmap">
   {
     "imports": {
