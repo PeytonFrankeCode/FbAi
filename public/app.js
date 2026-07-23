@@ -9785,6 +9785,109 @@ function readImageFileAsDataUrl(file, maxDim = 800, quality = 0.82) {
   });
 }
 
+// ---- Card auto-crop (dependency-free) ----
+// Finds the card's bounding box within a photo by trimming a roughly-uniform
+// background — the common "card on a desk/table" shot. Returns the box in the
+// analysis canvas's own coordinates, or null when detection isn't confident
+// (card fills the frame, busy background, etc.) so the caller keeps the full
+// frame rather than mangling it. Pure function → unit-testable.
+function _cardBoxFromPixels(data, aw, ah) {
+  const px = (x, y) => { const i = (y * aw + x) * 4; return [data[i], data[i + 1], data[i + 2]]; };
+  // Background = median of samples from the four corners.
+  const m = Math.max(2, Math.round(Math.min(aw, ah) * 0.06));
+  const samples = [];
+  for (let y = 0; y < m; y++) {
+    for (let x = 0; x < m; x++) {
+      samples.push(px(x, y), px(aw - 1 - x, y), px(x, ah - 1 - y), px(aw - 1 - x, ah - 1 - y));
+    }
+  }
+  const med = (k) => { const s = samples.map(v => v[k]).sort((a, b) => a - b); return s[s.length >> 1]; };
+  const bg = [med(0), med(1), med(2)];
+  const dist = (p) => Math.abs(p[0] - bg[0]) + Math.abs(p[1] - bg[1]) + Math.abs(p[2] - bg[2]);
+  const THRESH = 60; // sum of per-channel abs diff — needs a contrasting surface
+
+  const rowCount = new Array(ah).fill(0);
+  const colCount = new Array(aw).fill(0);
+  let fgTotal = 0;
+  for (let y = 0; y < ah; y++) {
+    for (let x = 0; x < aw; x++) {
+      if (dist(px(x, y)) > THRESH) { rowCount[y]++; colCount[x]++; fgTotal++; }
+    }
+  }
+  if (fgTotal < aw * ah * 0.03) return null; // nothing stood out from the background
+
+  // A row/col belongs to the card when a meaningful fraction is foreground
+  // (ignores stray specks/glare on the surface).
+  const rowMin = Math.max(2, Math.round(aw * 0.10));
+  const colMin = Math.max(2, Math.round(ah * 0.10));
+  let top = 0, bot = ah - 1, left = 0, right = aw - 1;
+  while (top < bot && rowCount[top] < rowMin) top++;
+  while (bot > top && rowCount[bot] < rowMin) bot--;
+  while (left < right && colCount[left] < colMin) left++;
+  while (right > left && colCount[right] < colMin) right--;
+
+  const bw = right - left + 1, bh = bot - top + 1;
+  const areaFrac = (bw * bh) / (aw * ah);
+  // Reject unconfident boxes: too small, or basically the whole frame already.
+  if (bw < aw * 0.12 || bh < ah * 0.12 || areaFrac > 0.95) return null;
+  return { left, top, right, bot };
+}
+
+// Map the detected box onto source-image pixels with a small margin.
+function _detectCardRect(img) {
+  const full = { sx: 0, sy: 0, sw: img.width, sh: img.height };
+  try {
+    const AN = 200; // analysis dimension cap (keeps this fast)
+    const scale = Math.min(1, AN / Math.max(img.width, img.height));
+    const aw = Math.max(1, Math.round(img.width * scale));
+    const ah = Math.max(1, Math.round(img.height * scale));
+    const c = document.createElement('canvas');
+    c.width = aw; c.height = ah;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(img, 0, 0, aw, ah);
+    const data = cx.getImageData(0, 0, aw, ah).data;
+    const box = _cardBoxFromPixels(data, aw, ah);
+    if (!box) return full;
+    const bw = box.right - box.left + 1, bh = box.bot - box.top + 1;
+    const padX = bw * 0.03, padY = bh * 0.03;
+    const sx = Math.max(0, (box.left - padX) / scale);
+    const sy = Math.max(0, (box.top - padY) / scale);
+    const sw = Math.min(img.width - sx, (bw + 2 * padX) / scale);
+    const sh = Math.min(img.height - sy, (bh + 2 * padY) / scale);
+    if (sw < 8 || sh < 8) return full;
+    return { sx, sy, sw, sh };
+  } catch (_) { return full; }
+}
+
+// Read a card photo, auto-crop to the card, and downscale to a JPEG data URL.
+// Falls back to the full (downscaled) frame whenever the crop isn't confident.
+function readCardPhotoAsDataUrl(file, maxDim = 600, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    if (!file || !file.type.startsWith('image/')) { reject(new Error('File is not an image')); return; }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not decode image'));
+      img.onload = () => {
+        try {
+          const r = _detectCardRect(img);
+          const scale = Math.min(1, maxDim / Math.max(r.sw, r.sh));
+          const w = Math.max(1, Math.round(r.sw * scale));
+          const h = Math.max(1, Math.round(r.sh * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch (err) { reject(err); }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function handlePromoteImageFile(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
@@ -12538,7 +12641,7 @@ async function handleInvPhotoPick(e) {
   if (!file) return;
   try {
     // Downscale hard — photos are device-local, but keep localStorage lean.
-    const url = await readImageFileAsDataUrl(file, 600, 0.72);
+    const url = await readCardPhotoAsDataUrl(file, 600, 0.72);
     _invPhotoDraft = url;
     _showInvPhotoPreview(url);
   } catch (_) {
@@ -12885,7 +12988,7 @@ async function handleSalePhotoPick(e, which) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   try {
-    const url = await readImageFileAsDataUrl(file, 600, 0.72);
+    const url = await readCardPhotoAsDataUrl(file, 600, 0.72);
     _salePhotoDraft[which] = url;
     _showSalePhoto(which, url);
   } catch (_) {
