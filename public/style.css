@@ -9459,3 +9459,7 @@ footer {
 .inv-crop-handle.br { right: -10px; bottom: -10px; cursor: nwse-resize; }
 .inv-crop-actions { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
 .inv-crop-actions button { flex: 1; margin: 0; }
+
+/* Purchase (cash → card) history badge + disabled got-cash tab */
+.inv-hist-bought { color: #e0a85f; background: rgba(224, 168, 95, 0.12); border: 1px solid rgba(224, 168, 95, 0.35); }
+.inv-sale-tab-disabled { opacity: 0.4; cursor: not-allowed; }
