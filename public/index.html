@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=122" />
+  <link rel="stylesheet" href="style.css?v=123" />
 
 
 </head>
@@ -1639,37 +1639,6 @@
           <div id="settings-sub-action"></div>
         </div>
 
-        <!-- Per-user scrape.do API keys for sold searches. Users can save
-             multiple keys to combine the monthly quotas of multiple
-             scrape.do accounts — requests round-robin across them and
-             fall back automatically when one hits its limit. -->
-        <div class="settings-row settings-row--stacked" id="settings-scrapedo-row">
-          <div class="settings-label">
-            <span class="settings-label-text">scrape.do API keys</span>
-            <span class="settings-label-desc" id="settings-scrapedo-desc">Used for your Sold searches. Add multiple keys to combine quotas. <a href="https://scrape.do" target="_blank" rel="noopener">Get a key</a>.</span>
-            <button type="button" class="settings-video-toggle" id="settings-scrapedo-video-toggle" onclick="toggleScrapeDoVideo()">&#9654; Watch: how to get your API key</button>
-            <div class="settings-video-wrap hidden" id="settings-scrapedo-video-wrap">
-              <video id="settings-scrapedo-video" controls playsinline preload="none" src="media/scrapedo-key-tutorial.mp4"></video>
-            </div>
-          </div>
-          <div id="settings-scrapedo-action" class="settings-scrapedo-action">
-            <div id="settings-scrapedo-loading" class="settings-scrapedo-loading">Loading…</div>
-            <ul id="settings-scrapedo-list" class="settings-scrapedo-list hidden"></ul>
-            <div id="settings-scrapedo-empty" class="settings-scrapedo-empty hidden">No keys yet — add one below to enable Sold searches.</div>
-            <div id="settings-scrapedo-add" class="settings-scrapedo-add hidden">
-              <input type="text" id="settings-scrapedo-label" class="settings-scrapedo-label-input"
-                     placeholder="Label (optional, e.g. 'Main account')" maxlength="60" />
-              <input type="password" id="settings-scrapedo-input" class="settings-scrapedo-input"
-                     placeholder="Paste your scrape.do token" autocomplete="off" spellcheck="false" />
-              <div class="settings-scrapedo-add-buttons">
-                <button class="settings-sub-btn" id="settings-scrapedo-save" onclick="saveScrapeDoKey()">Add Key</button>
-                <button class="settings-sub-btn" id="settings-scrapedo-test-all" onclick="testScrapeDoKey()" style="display:none">Test All</button>
-              </div>
-            </div>
-            <div id="settings-scrapedo-test-result" class="settings-scrapedo-test-result hidden"></div>
-          </div>
-        </div>
-
       </div>
 
     </div>
@@ -1685,7 +1654,6 @@
         <button class="footer-btn fund-footer-btn" onclick="showFund()">&#9829; Fund The Card Huddle</button>
         <button class="footer-btn feedback-btn" onclick="openFeedbackModal('feedback')">&#128172; Feedback</button>
         <button class="footer-btn bug-btn" onclick="openFeedbackModal('bug')">&#128027; Report Bug</button>
-        <a class="footer-btn petition-btn" href="https://c.org/JNKMfjdfFj" target="_blank" rel="noopener noreferrer">&#9997;&#65039; Sign the Petition for Sold Data</a>
       </div>
       <!-- Monthly funding-goal progress — populated by renderFundGoal() from
            /api/fund-goal. -->
@@ -1773,26 +1741,6 @@
   </div>
 
   <!-- Feedback / Report Bug Modal -->
-  <!-- Shown after a scrape.do key is saved: a quick "all set" beat that
-       transitions into the sold-data petition ask. -->
-  <div id="apikey-success-modal" class="feedback-modal hidden" onclick="if(event.target===this)closeApiKeySuccessModal()">
-    <div class="feedback-modal-box apikey-success-box">
-      <button class="feedback-close" onclick="closeApiKeySuccessModal()">&times;</button>
-      <div id="apikey-success-step1" class="apikey-success-step">
-        <div class="apikey-success-emoji">&#127881;</div>
-        <h2>You're all set!</h2>
-        <p>Your API key was added — Sold searches are ready to go.</p>
-      </div>
-      <div id="apikey-success-step2" class="apikey-success-step apikey-success-step--hidden">
-        <div class="apikey-success-emoji">&#9997;&#65039;</div>
-        <h2>One more thing&hellip;</h2>
-        <p>Real sold prices shouldn't be locked behind paid APIs and 90-day windows. Help us push for open sold data for every collector &mdash; it takes 30 seconds.</p>
-        <a class="apikey-petition-btn" href="https://c.org/JNKMfjdfFj" target="_blank" rel="noopener noreferrer" onclick="closeApiKeySuccessModal()">Sign the Petition</a>
-        <button class="apikey-petition-skip" onclick="closeApiKeySuccessModal()">Maybe later</button>
-      </div>
-    </div>
-  </div>
-
   <div id="feedback-modal" class="feedback-modal hidden" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="feedback-modal-box">
       <button class="feedback-close" onclick="closeFeedbackModal()">&times;</button>
@@ -1859,7 +1807,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=157"></script>
+  <script src="app.js?v=158"></script>
   <script type="importmap">
   {
     "imports": {

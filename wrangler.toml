@@ -67,9 +67,6 @@ new_sqlite_classes = ["UserInbox"]
 # After deploying, hit GET /api/health to confirm what's actually loaded. Run:
 #
 #   wrangler secret put EBAY_CERT_ID            # eBay OAuth client secret (For Sale search)
-#   wrangler secret put SCRAPE_DO_KEY           # shared scrape.do key (paid plan) — powers
-#                                               # sold search for ALL visitors. Responses are
-#                                               # KV-cached (SOLD_KV_TTL) to stretch the quota.
 #                                               # Users may still add their own key in Settings,
 #                                               # which takes precedence and spends their quota.
 #   wrangler secret put EBAY_VERIFICATION_TOKEN # eBay marketplace deletion notifications

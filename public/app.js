@@ -101,306 +101,10 @@ function toggleTheme() {
 
 function showSettings() {
   updateSettingsSubscription();
-  loadScrapeDoStatus();
   if (typeof initOfflinePanel === 'function') initOfflinePanel();
   document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
-// ---- scrape.do API keys (per-user, server-stored, multi-key) ----
-// Sold-data searches require the user's own scrape.do token. Users can
-// save multiple keys to combine the monthly quotas of multiple scrape.do
-// accounts — the server round-robins across them and falls back when one
-// hits a quota. We never display the full token; the API only ever
-// returns a masked hint per key.
-
-async function loadScrapeDoStatus() {
-  const loading = document.getElementById('settings-scrapedo-loading');
-  const listEl = document.getElementById('settings-scrapedo-list');
-  const emptyEl = document.getElementById('settings-scrapedo-empty');
-  const addEl = document.getElementById('settings-scrapedo-add');
-  const testBtn = document.getElementById('settings-scrapedo-test-all');
-  const testResult = document.getElementById('settings-scrapedo-test-result');
-  if (!loading || !listEl || !emptyEl || !addEl) return;
-  loading.style.display = '';
-  listEl.classList.add('hidden');
-  emptyEl.classList.add('hidden');
-  addEl.classList.add('hidden');
-  if (testBtn) testBtn.style.display = 'none';
-  if (testResult) testResult.classList.add('hidden');
-
-  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-  if (!user) {
-    loading.style.display = 'none';
-    emptyEl.classList.remove('hidden');
-    emptyEl.textContent = 'Log in to add your scrape.do keys.';
-    return;
-  }
-
-  try {
-    const token = getSessionToken();
-    const res = await fetch('/api/user/scrape-do-key', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      cache: 'no-store',
-    });
-    const data = await safeJson(res);
-    loading.style.display = 'none';
-    addEl.classList.remove('hidden');
-
-    const keys = (data && Array.isArray(data.keys)) ? data.keys : [];
-    if (keys.length === 0) {
-      emptyEl.classList.remove('hidden');
-      emptyEl.textContent = 'No keys yet — add one below to enable Sold searches.';
-    } else {
-      listEl.classList.remove('hidden');
-      listEl.innerHTML = '';
-      keys.forEach(k => {
-        const li = document.createElement('li');
-        li.className = 'settings-scrapedo-row';
-        const added = k.addedAt ? new Date(k.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-        li.innerHTML = `
-          <div class="settings-scrapedo-row-info">
-            <div class="settings-scrapedo-row-label">${escHtml(k.label || 'Untitled')}</div>
-            <div class="settings-scrapedo-row-hint">${escHtml(k.hint || '••••••••')}${added ? ' &middot; added ' + escHtml(added) : ''}</div>
-          </div>
-          <button class="settings-sub-btn settings-sub-cancel settings-scrapedo-row-remove"
-                  data-label="${escHtml(k.label || '')}" onclick="removeScrapeDoKey(this.dataset.label)">Remove</button>`;
-        listEl.appendChild(li);
-      });
-      if (testBtn) testBtn.style.display = '';
-    }
-  } catch (err) {
-    loading.style.display = 'none';
-    emptyEl.classList.remove('hidden');
-    emptyEl.textContent = `Couldn't load: ${(err && err.message) || err}`;
-  }
-}
-
-async function saveScrapeDoKey() {
-  const input = document.getElementById('settings-scrapedo-input');
-  const labelEl = document.getElementById('settings-scrapedo-label');
-  const saveBtn = document.getElementById('settings-scrapedo-save');
-  const value = (input && input.value || '').trim();
-  const label = (labelEl && labelEl.value || '').trim();
-  if (!value) { alert('Paste your scrape.do token first.'); return; }
-  if (value.length < 8) { alert('That token looks too short. Double-check and try again.'); return; }
-  const token = getSessionToken();
-  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Adding…'; }
-  try {
-    const res = await fetch('/api/user/scrape-do-key', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ apiKey: value, label }),
-    });
-    const data = await safeJson(res);
-    if (!res.ok) throw new Error((data && (data.error || data.detail)) || `HTTP ${res.status}`);
-    input.value = '';
-    if (labelEl) labelEl.value = '';
-    await loadScrapeDoStatus();
-    showApiKeySuccessModal();
-  } catch (err) {
-    alert(`Couldn't save your scrape.do key:\n\n${(err && err.message) || err}`);
-  } finally {
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Add Key'; }
-  }
-}
-
-function toggleScrapeDoVideo() {
-  const wrap = document.getElementById('settings-scrapedo-video-wrap');
-  const btn = document.getElementById('settings-scrapedo-video-toggle');
-  if (!wrap) return;
-  const opening = wrap.classList.contains('hidden');
-  wrap.classList.toggle('hidden');
-  if (btn) btn.innerHTML = opening ? '&#9660; Hide video' : '&#9654; Watch: how to get your API key';
-  const video = document.getElementById('settings-scrapedo-video');
-  if (!opening && video) video.pause();
-}
-
-// "You're all set" beat after saving a key, then fade into the
-// sold-data petition ask.
-let apiKeySuccessTimer = null;
-function showApiKeySuccessModal() {
-  const modal = document.getElementById('apikey-success-modal');
-  const step1 = document.getElementById('apikey-success-step1');
-  const step2 = document.getElementById('apikey-success-step2');
-  if (!modal || !step1 || !step2) return;
-  step1.classList.remove('apikey-success-step--hidden');
-  step2.classList.add('apikey-success-step--hidden');
-  modal.classList.remove('hidden');
-  clearTimeout(apiKeySuccessTimer);
-  apiKeySuccessTimer = setTimeout(() => {
-    step1.classList.add('apikey-success-step--hidden');
-    step2.classList.remove('apikey-success-step--hidden');
-  }, 2000);
-}
-
-function closeApiKeySuccessModal() {
-  clearTimeout(apiKeySuccessTimer);
-  const modal = document.getElementById('apikey-success-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-async function removeScrapeDoKey(label) {
-  if (!confirm(`Remove the scrape.do key "${label || 'this key'}"?`)) return;
-  const token = getSessionToken();
-  try {
-    const res = await fetch('/api/user/scrape-do-key?label=' + encodeURIComponent(label || ''), {
-      method: 'DELETE',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) {
-      const data = await safeJson(res);
-      throw new Error((data && data.error) || `HTTP ${res.status}`);
-    }
-    await loadScrapeDoStatus();
-  } catch (err) {
-    alert(`Couldn't remove the key:\n\n${(err && err.message) || err}`);
-  }
-}
-
-// Hit /api/debug/sold and render a per-key health summary so users can
-// see at a glance which of their saved keys are working and which are
-// out of quota or bad.
-async function testScrapeDoKey() {
-  const btn = document.getElementById('settings-scrapedo-test-all');
-  const out = document.getElementById('settings-scrapedo-test-result');
-  if (!btn || !out) return;
-  const origText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Testing…';
-  out.classList.remove('hidden');
-  out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--pending';
-  out.textContent = 'Asking scrape.do for sold listings of "Patrick Mahomes 2017 Prizm"…';
-  try {
-    const token = getSessionToken();
-    const res = await fetch('/api/debug/sold?q=' + encodeURIComponent('Patrick Mahomes 2017 Prizm'), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      cache: 'no-store',
-    });
-    const data = await safeJson(res);
-    if (res.status === 401 && data && data.noKey) {
-      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
-      out.textContent = 'No keys on file — add one above first.';
-      return;
-    }
-    const perKey = Array.isArray(data && data.perKey) ? data.perKey : null;
-    if (!perKey) {
-      out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
-      out.textContent = `✗ ${(data && data.error) || 'Unexpected response from debug endpoint.'}`;
-      return;
-    }
-    const anyOk = perKey.some(r => r.itemCount > 0);
-    out.className = 'settings-scrapedo-test-result ' + (anyOk
-      ? 'settings-scrapedo-test-result--ok'
-      : 'settings-scrapedo-test-result--bad');
-    const rows = perKey.map((r, i) => {
-      const label = escHtml(r.label || 'Key');
-      if (r.badKey) return `<div>✗ <strong>${label}</strong> &mdash; rejected by scrape.do</div>`;
-      if (r.quotaExceeded) return `<div>⚠ <strong>${label}</strong> &mdash; quota / rate-limit hit</div>`;
-      if (r.error) return `<div>✗ <strong>${label}</strong> &mdash; ${escHtml(r.error)}</div>`;
-      if (r.itemCount > 0) {
-        const sample = r.firstItem || {};
-        const title = (sample.title || '').slice(0, 60);
-        const price = sample.price ? `$${parseFloat(sample.price).toFixed(2)}` : '?';
-        return `<div>✓ <strong>${label}</strong> &mdash; ${r.itemCount} listings (sample: "${escHtml(title)}" at ${escHtml(price)})</div>`;
-      }
-      // 0 listings — surface diagnostics so we can see *why*.
-      const d = r.debug || {};
-      const diagBits = [];
-      if (d.httpStatus) diagBits.push(`HTTP ${d.httpStatus}`);
-      if (typeof d.bytes === 'number') diagBits.push(`${d.bytes.toLocaleString()} bytes`);
-      const cc = d.classCounts || {};
-      const counts = [];
-      if (cc.sItem)    counts.push(`${cc.sItem} s-item`);
-      if (cc.sCard)    counts.push(`${cc.sCard} s-card`);
-      if (cc.srpItem)  counts.push(`${cc.srpItem} srp-results__item`);
-      if (cc.srpRiver) counts.push(`${cc.srpRiver} srp-river`);
-      if (counts.length) diagBits.push(counts.join(' / '));
-      else if (cc.sItem === 0 && cc.sCard === 0 && cc.srpItem === 0)
-        diagBits.push('no listing markup at all');
-      if (d.looksLikeJson) diagBits.push('response is JSON, not HTML');
-      if (d.looksLikeBlock) diagBits.push('looks like a bot-check / block page');
-      const detail = diagBits.length ? ' (' + diagBits.join(' · ') + ')' : '';
-      const titleLine = d.title ? `<div class="settings-scrapedo-subline">page title: <em>${escHtml(d.title)}</em></div>` : '';
-      const canonicalLine = d.canonical ? `<div class="settings-scrapedo-subline">canonical: <code>${escHtml(d.canonical)}</code></div>` : '';
-      const fc = d.firstCardExtract;
-      const extractLine = fc
-        ? `<div class="settings-scrapedo-subline">first card &mdash; `
-          + `link: ${fc.link ? '✓' : '✗'} · title: ${fc.title ? '✓ <em>' + escHtml(fc.title) + '</em>' : '✗'} · `
-          + `price: ${fc.price ? '✓ <code>' + escHtml(fc.price) + '</code>' : '✗'} · img: ${fc.hasImg ? '✓' : '✗'}`
-          + (Array.isArray(fc.classes) && fc.classes.length
-              ? `<br>classes: <code>${escHtml(fc.classes.join(' '))}</code>`
-              : '')
-          + `</div>`
-        : '';
-      const blockBlock = d.firstBlock
-        ? `<details class="settings-scrapedo-snippet"><summary>Show first matched card block</summary><div class="settings-scrapedo-snippet-bar"><button type="button" class="settings-scrapedo-copy" onclick="copyDiagSnippet(this)">Copy all</button></div><pre>${escHtml(d.firstBlock)}</pre></details>`
-        : '';
-      const snippet = d.snippet
-        ? `<details class="settings-scrapedo-snippet"><summary>Show page-head snippet</summary><div class="settings-scrapedo-snippet-bar"><button type="button" class="settings-scrapedo-copy" onclick="copyDiagSnippet(this)">Copy all</button></div><pre>${escHtml(d.snippet)}</pre></details>`
-        : '';
-      return `<div>✗ <strong>${label}</strong> &mdash; parsed 0 listings${detail}.${titleLine}${canonicalLine}${extractLine}${blockBlock}${snippet}</div>`;
-    });
-    out.innerHTML = rows.join('');
-  } catch (err) {
-    out.className = 'settings-scrapedo-test-result settings-scrapedo-test-result--bad';
-    out.textContent = `✗ ${(err && err.message) || err}`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = origText;
-  }
-}
-
-// Copy the full text of a diagnostic snippet's <pre> to the clipboard. The
-// <pre> is visually capped/scrollable so users can't always select all of it
-// by hand — this grabs the complete (server-truncated) block in one click.
-async function copyDiagSnippet(btn) {
-  const details = btn.closest('details');
-  const pre = details && details.querySelector('pre');
-  if (!pre) return;
-  const text = pre.textContent || '';
-  const orig = btn.textContent;
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      // Fallback for non-secure contexts / older browsers.
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-    btn.textContent = 'Copied!';
-  } catch (_) {
-    btn.textContent = 'Copy failed';
-  }
-  setTimeout(() => { btn.textContent = orig; }, 1500);
-}
-
-// Backward-compat shim — old call sites delegate here. Clears all keys.
-async function clearScrapeDoKey() {
-  if (!confirm('Remove ALL of your scrape.do API keys? Sold searches will stop working until you add one again.')) return;
-  const token = getSessionToken();
-  try {
-    const res = await fetch('/api/user/scrape-do-key', {
-      method: 'DELETE',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!res.ok) {
-      const data = await safeJson(res);
-      throw new Error((data && data.error) || `HTTP ${res.status}`);
-    }
-    await loadScrapeDoStatus();
-  } catch (err) {
-    alert(`Couldn't remove your keys:\n\n${(err && err.message) || err}`);
-  }
-}
 
 function updateSettingsSubscription() {
   const desc = document.getElementById('settings-sub-desc');
@@ -1410,7 +1114,7 @@ async function fetchVariants(query) {
         setLoading(false);
         hideSkeleton();
         errorMsg.classList.remove('hidden');
-        errorMsg.innerHTML = `${escHtml(data.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.')}`;
         return;
       }
       showLogin();
@@ -1580,7 +1284,7 @@ async function fetchDirectSearch(query) {
         setLoading(false);
         hideSkeleton();
         errorMsg.classList.remove('hidden');
-        errorMsg.innerHTML = `${escHtml(data.error || 'Sold searches need a scrape.do API key.')} <button class="error-action-btn" onclick="showSettings()">Open Settings</button>`;
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.')}`;
         return;
       }
       showLogin();
@@ -1874,7 +1578,7 @@ function renderStatsBar(results, isSold) {
 
 // ---- Search (fetch individual sales for a specific variant) ----
 // opts.fallback = true means "sold data is unavailable for this user (no/bad
-// scrape.do key), so quietly search live For-Sale listings instead and show a
+// sold data is unavailable), so quietly search live For-Sale listings instead and show a
 // soft note" — never a dead-end error wall.
 async function performSearch(query, opts = {}) {
   setLoading(true);
@@ -1907,7 +1611,7 @@ async function performSearch(query, opts = {}) {
       if (f.min != null) params.set('minPrice', String(f.min));
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
-    // Sold searches need the user's scrape.do key — server reads it from
+    // Sold data is retired — the server returns a soldUnavailable response and
     // the authenticated user record. Pass the session token along.
     const token = getSessionToken();
     const response = await fetch(`/api/search?${params}`, {
@@ -2061,7 +1765,7 @@ async function performSearch(query, opts = {}) {
     if (fallback) {
       const note = document.createElement('div');
       note.className = 'sold-fallback-note';
-      note.innerHTML = `<span class="sold-fallback-icon">&#128161;</span> <span>Showing <strong>live asking prices</strong> for &ldquo;${escHtml(query)}&rdquo;. Sold price history needs a scrape.do API key &mdash; <button type="button" class="sold-fallback-link" onclick="showSettings()">add yours</button> to see exact sold comps by grade.</span>`;
+      note.innerHTML = `<span class="sold-fallback-icon">&#128161;</span> <span>Showing <strong>live asking prices</strong> for &ldquo;${escHtml(query)}&rdquo;. Sold price history is temporarily unavailable while we connect eBay’s official sold-data API.</span>`;
       grid.insertBefore(note, grid.firstChild);
     }
 
@@ -3236,44 +2940,11 @@ function hasPro() { return false; }
 function isProPlus() { return false; }
 function isProOrPlus() { return true; }
 
-// Sold data is free for everyone but capped per day to protect the shared
-// scrape.do quota while we're community-funded. The pill shows how many are
-// left today and routes to the Fund modal — the cap lifts as funding grows.
-let _soldUsage = null;
+// Sold-search metering retired along with the sold-data source. Kept as a
+// no-op so the existing call sites need no changes; the usage pill is hidden.
 async function refreshSoldUsage() {
-  try {
-    const token = getSessionToken();
-    const res = await fetch('/api/sold-usage', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-    if (!res.ok) return;
-    _soldUsage = await res.json();
-  } catch { return; }
-  renderSoldUsagePill();
-}
-
-function renderSoldUsagePill() {
-  let pill = document.getElementById('sold-usage-pill');
-  const u = _soldUsage;
-  // Hide for own-key users (unlimited) or when usage is unknown.
-  if (!u || u.unlimited || typeof u.remaining !== 'number') {
-    if (pill) pill.style.display = 'none';
-    return;
-  }
-  if (!pill) {
-    pill = document.createElement('button');
-    pill.id = 'sold-usage-pill';
-    pill.type = 'button';
-    pill.onclick = () => showFund(`You have ${(_soldUsage && _soldUsage.remaining) || 0} free sold searches left today. The cap protects our shared data costs — fund us to help lift it.`);
-    pill.style.cssText = 'display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border,#ddd);'
-      + 'background:var(--bg-secondary,#f4f4f6);color:var(--text-secondary,#555);border-radius:999px;'
-      + 'padding:4px 12px;font-size:.78rem;cursor:pointer;margin:6px auto 0;font-family:inherit';
-    const form = document.getElementById('search-form');
-    if (form && form.parentNode) form.parentNode.insertBefore(pill, form.nextSibling);
-    else document.body.appendChild(pill);
-  }
-  pill.style.display = 'inline-flex';
-  pill.textContent = u.remaining > 0
-    ? `${u.remaining} free sold searches left today · ♥ Fund to lift the cap`
-    : 'Daily sold-search limit reached · ♥ Fund to help lift it';
+  const pill = document.getElementById('sold-usage-pill');
+  if (pill) pill.style.display = 'none';
 }
 
 // Still pull /api/auth/me so a legacy subscriber can reach the billing portal to
@@ -4237,8 +3908,8 @@ async function selectScannerMatch(index) {
     loading.classList.add('hidden');
 
     if (!res.ok) {
-      errEl.textContent = data.noKey
-        ? 'Add a scrape.do API key in Settings → scrape.do API key to see sold prices.'
+      errEl.textContent = (data.soldUnavailable || data.noKey)
+        ? 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.'
         : (data.error || 'Search failed.');
       errEl.classList.remove('hidden');
       return;
@@ -5779,15 +5450,14 @@ async function scanValueLookup() {
   }
 }
 
-// Shown when we can't pull live comps (no/invalid scrape.do key).
+// Shown when we can't pull live comps (sold data temporarily unavailable).
 function _scanValueLocked(q, data) {
   const est = _lastGradeAnalysis ? _lastGradeAnalysis.overall : 9;
   const tier = _TIER_LABEL[_gradeToTier(est)];
   return `<div class="gradescan-value-card gradescan-value-locked">
-    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Add your free scrape.do API key to see the exact live swing for “${escHtml(q)}”.</p>
+    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Live sold-price data for “${escHtml(q)}” is temporarily unavailable while we connect eBay’s official sold-data API.</p>
     <div class="gradescan-cta-card">
-      <button class="gradescan-track-btn" onclick="showSettings()">Add your scrape.do key in Settings</button>
-      <p class="gradescan-track-msg">It's free and unlocks live sold-price lookups everywhere.</p>
+      <p class="gradescan-track-msg">Sold comps will return once the official API is connected.</p>
     </div>
   </div>` + _scanLeadBlock();
 }
@@ -7430,7 +7100,7 @@ function _cardValueMetaInline(c) {
   return parts.length ? `<span class="pf-val-meta">${parts.join(' ')}</span>` : '';
 }
 
-// Fetch fresh sold comps for one card (authenticated — needs the scrape.do key).
+// Fetch fresh sold comps for one card (sold data may be temporarily unavailable).
 // Comp time window: Pro members value off all-time comps; Free members are
 // All-time comp depth is free for everyone now.
 const COMP_WINDOW_DAYS_FREE = 60;
@@ -7442,7 +7112,8 @@ async function _fetchCardComps(c) {
   if (!q) return null;
   const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(q)}&limit=25`);
   const data = await res.json();
-  if (!res.ok) return { error: data.error || `Error ${res.status}`, noKey: data.noKey };
+  if (data && data.soldUnavailable) return { soldUnavailable: true };
+  if (!res.ok) return { error: data.error || `Error ${res.status}` };
   // Trust the server's keyword engine (matchSoldListings): it already extracts
   // the card's keywords, keeps the listings sharing the most of them, and trims
   // price outliers. So the comps it returns ARE the comps used — we no longer
@@ -7485,7 +7156,7 @@ async function valueCardAt(idx, { silent = false } = {}) {
   if (!c || c.locked) return;
   const r = await _fetchCardComps(c);
   if (!r || r.error) {
-    if (!silent && r && r.noKey) showPortfolioToast('Add your scrape.do API key in Settings to value cards.');
+    if (!silent && r && r.soldUnavailable) showPortfolioToast('Sold price data is temporarily unavailable, so cards can’t be re-valued right now.');
     return;
   }
   c.comps = r.comps;
@@ -7517,12 +7188,12 @@ async function refreshPortfolioValues() {
   const targets = coll.filter(c => !c.locked && buildCardSoldQuery(c));
   if (!targets.length) { showPortfolioToast('No cards to value, or all are locked.'); return; }
 
-  let done = 0, refreshed = 0, noKey = false;
+  let done = 0, refreshed = 0, soldOff = false;
   for (const c of coll) {
     if (c.locked || !buildCardSoldQuery(c)) continue;
     if (btn) { btn.disabled = true; btn.innerHTML = `&#8635; Valuing ${++done}/${targets.length}…`; }
     const r = await _fetchCardComps(c);
-    if (r && r.noKey) { noKey = true; break; }
+    if (r && r.soldUnavailable) { soldOff = true; break; }
     if (r && !r.error) {
       c.comps = r.comps;
       c.estimate = r.estimate || null;
@@ -7540,8 +7211,8 @@ async function refreshPortfolioValues() {
   saveCollection(coll);
   renderPortfolio();
   if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
-  showPortfolioToast(noKey
-    ? 'Add your scrape.do API key in Settings to value cards.'
+  showPortfolioToast(soldOff
+    ? 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.'
     : refreshed > 0
       ? `Valued ${refreshed} card${refreshed !== 1 ? 's' : ''} from live sold comps.`
       : 'No sold comps found. Try more specific card details.');

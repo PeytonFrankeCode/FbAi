@@ -51,7 +51,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   // Only ever handle our OWN origin. Third-party resources (fonts, Chart.js,
-  // analytics, eBay/scrape.do) are left to the browser — intercepting them
+  // analytics, eBay) are left to the browser — intercepting them
   // risks stalling the page when a blocking script is slow on bad venue wifi,
   // which is the exact opposite of what we want.
   if (url.origin !== self.location.origin) return;
