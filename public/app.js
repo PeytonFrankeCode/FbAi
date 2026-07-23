@@ -9859,33 +9859,144 @@ function _detectCardRect(img) {
   } catch (_) { return full; }
 }
 
-// Read a card photo, auto-crop to the card, and downscale to a JPEG data URL.
-// Falls back to the full (downscaled) frame whenever the crop isn't confident.
-function readCardPhotoAsDataUrl(file, maxDim = 600, quality = 0.72) {
-  return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith('image/')) { reject(new Error('File is not an image')); return; }
+// ---- Interactive card cropper ----
+// Opens a modal showing the photo with a draggable/resizable crop box, pre-set
+// to the auto-detected card. Returns a Promise resolving to the cropped JPEG
+// data URL, or null if the user cancels. All coordinates in `rect` are DISPLAY
+// pixels (relative to the on-screen image); we map back to source pixels on
+// apply using the display scale.
+let _invCropState = null;
+
+function openInvCropper(file) {
+  return new Promise((resolve) => {
+    if (!file || !file.type || !file.type.startsWith('image/')) { resolve(null); return; }
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.onerror = () => resolve(null);
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error('Could not decode image'));
+      img.onerror = () => resolve(null);
       img.onload = () => {
-        try {
-          const r = _detectCardRect(img);
-          const scale = Math.min(1, maxDim / Math.max(r.sw, r.sh));
-          const w = Math.max(1, Math.round(r.sw * scale));
-          const h = Math.max(1, Math.round(r.sh * scale));
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, r.sx, r.sy, r.sw, r.sh, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        } catch (err) { reject(err); }
+        const maxW = Math.min(480, (window.innerWidth || 480) - 72);
+        const maxH = (window.innerHeight || 640) * 0.55;
+        const disp = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1) || 1;
+        const dw = Math.max(1, Math.round(img.naturalWidth * disp));
+        const dh = Math.max(1, Math.round(img.naturalHeight * disp));
+        const r = _detectCardRect(img); // source-px auto box (or full frame)
+        const rect = {
+          x: Math.round(r.sx * disp), y: Math.round(r.sy * disp),
+          w: Math.round(r.sw * disp), h: Math.round(r.sh * disp),
+        };
+        _invCropState = { img, disp, dw, dh, rect, resolve, drag: null };
+        const stage = document.getElementById('inv-crop-stage');
+        const imgEl = document.getElementById('inv-crop-img');
+        if (stage) { stage.style.width = dw + 'px'; stage.style.height = dh + 'px'; }
+        if (imgEl) { imgEl.src = img.src; imgEl.style.width = dw + 'px'; imgEl.style.height = dh + 'px'; }
+        _invCropRenderBox();
+        document.getElementById('inv-crop-modal').classList.remove('hidden');
       };
       img.src = reader.result;
     };
     reader.readAsDataURL(file);
   });
+}
+
+function _invCropRenderBox() {
+  const s = _invCropState;
+  const box = document.getElementById('inv-crop-box');
+  if (!s || !box) return;
+  box.style.left = s.rect.x + 'px';
+  box.style.top = s.rect.y + 'px';
+  box.style.width = s.rect.w + 'px';
+  box.style.height = s.rect.h + 'px';
+}
+
+function _invCropStart(e, mode) {
+  e.preventDefault(); e.stopPropagation();
+  const s = _invCropState;
+  if (!s) return;
+  s.drag = { mode, startX: e.clientX, startY: e.clientY, orig: { ...s.rect } };
+  window.addEventListener('pointermove', _invCropMove);
+  window.addEventListener('pointerup', _invCropEnd);
+  window.addEventListener('pointercancel', _invCropEnd);
+}
+
+function _invCropMove(e) {
+  const s = _invCropState;
+  if (!s || !s.drag) return;
+  const dx = e.clientX - s.drag.startX, dy = e.clientY - s.drag.startY;
+  const o = s.drag.orig, m = s.drag.mode, MIN = 24;
+  if (m === 'move') {
+    // Slide the whole box within bounds — size unchanged.
+    const x = Math.max(0, Math.min(o.x + dx, s.dw - o.w));
+    const y = Math.max(0, Math.min(o.y + dy, s.dh - o.h));
+    s.rect = { x, y, w: o.w, h: o.h };
+  } else {
+    // Resize from a corner: the OPPOSITE edge stays anchored.
+    let x = o.x, y = o.y, w = o.w, h = o.h;
+    if (m.includes('l')) { x = o.x + dx; w = o.w - dx; }
+    if (m.includes('r')) { w = o.w + dx; }
+    if (m.includes('t')) { y = o.y + dy; h = o.h - dy; }
+    if (m.includes('b')) { h = o.h + dy; }
+    if (w < MIN) { if (m.includes('l')) x = o.x + o.w - MIN; w = MIN; }
+    if (h < MIN) { if (m.includes('t')) y = o.y + o.h - MIN; h = MIN; }
+    // Clamp to image bounds without moving the anchored edge.
+    if (x < 0) { w += x; x = 0; }
+    if (y < 0) { h += y; y = 0; }
+    if (x + w > s.dw) w = s.dw - x;
+    if (y + h > s.dh) h = s.dh - y;
+    s.rect = { x, y, w, h };
+  }
+  _invCropRenderBox();
+}
+
+function _invCropEnd() {
+  const s = _invCropState;
+  if (s) s.drag = null;
+  window.removeEventListener('pointermove', _invCropMove);
+  window.removeEventListener('pointerup', _invCropEnd);
+  window.removeEventListener('pointercancel', _invCropEnd);
+}
+
+// Crop a source region and downscale to a JPEG data URL.
+function _invCropExport(img, sx, sy, sw, sh, maxDim = 600, quality = 0.72) {
+  const scale = Math.min(1, maxDim / Math.max(sw, sh)) || 1;
+  const w = Math.max(1, Math.round(sw * scale)), h = Math.max(1, Math.round(sh * scale));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+  return c.toDataURL('image/jpeg', quality);
+}
+
+function applyInvCrop() {
+  const s = _invCropState;
+  if (!s) { _closeInvCropper(null); return; }
+  const inv = 1 / s.disp;
+  const sx = Math.max(0, s.rect.x * inv);
+  const sy = Math.max(0, s.rect.y * inv);
+  const sw = Math.min(s.img.naturalWidth - sx, s.rect.w * inv);
+  const sh = Math.min(s.img.naturalHeight - sy, s.rect.h * inv);
+  let url = null;
+  try { url = _invCropExport(s.img, sx, sy, sw, sh); } catch (_) { url = null; }
+  _closeInvCropper(url);
+}
+
+function useInvCropFull() {
+  const s = _invCropState;
+  if (!s) { _closeInvCropper(null); return; }
+  let url = null;
+  try { url = _invCropExport(s.img, 0, 0, s.img.naturalWidth, s.img.naturalHeight); } catch (_) { url = null; }
+  _closeInvCropper(url);
+}
+
+function cancelInvCrop() { _closeInvCropper(null); }
+
+function _closeInvCropper(url) {
+  _invCropEnd();
+  const modal = document.getElementById('inv-crop-modal');
+  if (modal) modal.classList.add('hidden');
+  const s = _invCropState;
+  _invCropState = null;
+  if (s && s.resolve) s.resolve(url);
 }
 
 async function handlePromoteImageFile(e) {
@@ -12638,16 +12749,13 @@ function _showInvPhotoPreview(url) {
 
 async function handleInvPhotoPick(e) {
   const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // allow re-picking the same file
   if (!file) return;
-  try {
-    // Downscale hard — photos are device-local, but keep localStorage lean.
-    const url = await readCardPhotoAsDataUrl(file, 600, 0.72);
-    _invPhotoDraft = url;
-    _showInvPhotoPreview(url);
-  } catch (_) {
-    alert('Could not read that image. Try a different photo.');
-  }
-  e.target.value = '';
+  // Opens the cropper (auto-framed to the card) → cropped, downscaled JPEG.
+  const url = await openInvCropper(file);
+  if (!url) return; // cancelled
+  _invPhotoDraft = url;
+  _showInvPhotoPreview(url);
 }
 
 function clearInvPhotoDraft() {
@@ -12986,15 +13094,12 @@ function _showSalePhoto(which, url) {
 }
 async function handleSalePhotoPick(e, which) {
   const file = e.target.files && e.target.files[0];
+  e.target.value = ''; // allow re-picking the same file
   if (!file) return;
-  try {
-    const url = await readCardPhotoAsDataUrl(file, 600, 0.72);
-    _salePhotoDraft[which] = url;
-    _showSalePhoto(which, url);
-  } catch (_) {
-    alert('Could not read that image. Try a different photo.');
-  }
-  e.target.value = '';
+  const url = await openInvCropper(file);
+  if (!url) return; // cancelled
+  _salePhotoDraft[which] = url;
+  _showSalePhoto(which, url);
 }
 function clearSalePhoto(which) {
   _salePhotoDraft[which] = null;

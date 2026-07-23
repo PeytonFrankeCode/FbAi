@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=123" />
+  <link rel="stylesheet" href="style.css?v=124" />
 
 
 </head>
@@ -772,6 +772,28 @@
     <div class="modal-box" style="max-width:520px">
       <button class="login-close" aria-label="Close" onclick="closeInvDetail()">&times;</button>
       <div id="inv-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- Inventory: photo crop / adjust modal -->
+  <div id="inv-crop-modal" class="modal-overlay hidden" role="dialog">
+    <div class="modal-box" style="max-width:540px">
+      <button class="login-close" aria-label="Close" onclick="cancelInvCrop()">&times;</button>
+      <h2>Crop photo</h2>
+      <p class="inv-crop-hint">We framed the card for you — drag the box or its corners to adjust.</p>
+      <div id="inv-crop-stage" class="inv-crop-stage">
+        <img id="inv-crop-img" alt="Photo to crop" />
+        <div id="inv-crop-box" class="inv-crop-box" onpointerdown="_invCropStart(event, 'move')">
+          <span class="inv-crop-handle tl" onpointerdown="_invCropStart(event, 'tl')"></span>
+          <span class="inv-crop-handle tr" onpointerdown="_invCropStart(event, 'tr')"></span>
+          <span class="inv-crop-handle bl" onpointerdown="_invCropStart(event, 'bl')"></span>
+          <span class="inv-crop-handle br" onpointerdown="_invCropStart(event, 'br')"></span>
+        </div>
+      </div>
+      <div class="inv-crop-actions">
+        <button type="button" class="portfolio-action-btn" onclick="useInvCropFull()">Use full photo</button>
+        <button type="button" class="portfolio-action-btn portfolio-action-primary" onclick="applyInvCrop()">Use crop</button>
+      </div>
     </div>
   </div>
 
@@ -1807,7 +1829,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=159"></script>
+  <script src="app.js?v=160"></script>
   <script type="importmap">
   {
     "imports": {

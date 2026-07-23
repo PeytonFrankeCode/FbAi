@@ -9435,3 +9435,27 @@ footer {
   vertical-align: middle; white-space: nowrap;
 }
 .cl-item-info .card-pr-badge { margin-left: 0; font-size: 0.66rem; padding: 0.02rem 0.35rem; }
+
+/* ---- Inventory: photo crop / adjust modal ---- */
+.inv-crop-hint { color: var(--text-secondary); font-size: 0.82rem; text-align: center; margin: 0 0 0.5rem; }
+.inv-crop-stage {
+  position: relative; margin: 0 auto; max-width: 100%; overflow: hidden;
+  border-radius: 8px; background: #000; touch-action: none; user-select: none;
+  -webkit-user-select: none;
+}
+.inv-crop-stage img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
+.inv-crop-box {
+  position: absolute; box-sizing: border-box; cursor: move;
+  border: 2px solid var(--accent); box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+}
+.inv-crop-handle {
+  position: absolute; width: 18px; height: 18px; background: var(--accent);
+  border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  touch-action: none;
+}
+.inv-crop-handle.tl { left: -10px; top: -10px; cursor: nwse-resize; }
+.inv-crop-handle.tr { right: -10px; top: -10px; cursor: nesw-resize; }
+.inv-crop-handle.bl { left: -10px; bottom: -10px; cursor: nesw-resize; }
+.inv-crop-handle.br { right: -10px; bottom: -10px; cursor: nwse-resize; }
+.inv-crop-actions { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
+.inv-crop-actions button { flex: 1; margin: 0; }
