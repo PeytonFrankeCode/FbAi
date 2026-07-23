@@ -11,15 +11,6 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto
 // the window costs 1 eBay call, not 100), short enough that listings stay fresh.
 const FORSALE_CACHE_TTL = 1800; // 30 minutes
 
-// How long (seconds) to cache an eBay Sold (scrape.do) response in KV. Sold/
-// completed listings change slowly, so a few hours is plenty fresh — and because
-// results are identical for every user, one scrape covers everyone who searches
-// that card in the window, stretching the scrape.do plan a long way. (Distinct
-// from the in-memory SOLD_CACHE_TTL below, which is per-isolate and in ms.)
-const SOLD_KV_TTL = 10800; // 3 hours
-
-// scrape.do plan size, for the usage counter (sold calls used vs remaining).
-const SCRAPE_DO_MONTHLY_QUOTA = 250000;
 const { moderateText, moderateImage, stripBidi } = require('./moderation');
 
 // __dirname is supplied by Node's CJS module wrapper but NOT by Cloudflare
@@ -37,10 +28,8 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 
 // ---- Sold-listings provider ----
-// Sold data now comes from scrape.do using each user's own API key (stored
-// on their account). There is no server-wide sold provider — sold searches
-// require a logged-in user with a key, and return { noKey: true } otherwise.
-const SCRAPE_DO_BASE = 'https://api.scrape.do';
+// Sold data is retired pending eBay's official Marketplace Insights API. Sold
+// searches return a clear "unavailable" state; For Sale uses the Browse API.
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true';
@@ -413,7 +402,7 @@ app.get('/api/health', (req, res) => {
       ebaySold: {
         // Per-user keys now — server doesn't hold a sold-data secret.
         configured: true,
-        provider: 'scrape.do (per-user key)',
+        provider: 'retired (awaiting official eBay sold-data API)',
       },
       stripe: {
         configured: !!stripeEnabled,
@@ -457,7 +446,7 @@ function saveApiCallLog(log) {
 }
 
 function emptyDay() {
-  return { total: 0, finding: 0, browse: 0, insights: 0, scrapedo: 0, soldCacheHits: 0, forsaleCacheHits: 0 };
+  return { total: 0, finding: 0, browse: 0, insights: 0, soldCacheHits: 0, forsaleCacheHits: 0 };
 }
 
 // Cache hits are the common case, so we DON'T write one KV entry per hit — we
@@ -490,7 +479,6 @@ function trackApiCall(apiName, endpoint, keywords, source) {
   if (apiName === 'finding') log.daily[today].finding++;
   else if (apiName === 'browse') log.daily[today].browse++;
   else if (apiName === 'insights') log.daily[today].insights++;
-  else if (apiName === 'scrapedo') log.daily[today].scrapedo = (log.daily[today].scrapedo || 0) + 1;
   // Free ride: fold any buffered cache hits into this write.
   if (pendingSoldHits + pendingForsaleHits > 0) {
     log.daily[today].soldCacheHits = (log.daily[today].soldCacheHits || 0) + pendingSoldHits;
@@ -523,12 +511,6 @@ function getApiCallStats() {
     forsaleCacheHits: (base.forsaleCacheHits || 0) + pendingForsaleHits,
   };
 
-  // Month-to-date scrape.do usage (the metric to watch against the plan).
-  const month = today.slice(0, 7);
-  let monthScrapedo = 0;
-  for (const [d, s] of Object.entries(log.daily || {})) {
-    if (d.startsWith(month)) monthScrapedo += (s.scrapedo || 0);
-  }
   const rate = (h, m) => (h + m) > 0 ? Math.round((h / (h + m)) * 100) : null;
 
   // Last 24h calls grouped by source
@@ -545,14 +527,6 @@ function getApiCallStats() {
     last24hBySource: bySource,
     last24hTotal: recent.length,
     recentCalls: (log.calls || []).slice(-20),
-    scrapeDo: {
-      callsToday: todayStats.scrapedo || 0,
-      cacheHitsToday: todayStats.soldCacheHits || 0,
-      cacheHitRatePct: rate(todayStats.soldCacheHits || 0, todayStats.scrapedo || 0),
-      monthUsed: monthScrapedo,
-      monthQuota: SCRAPE_DO_MONTHLY_QUOTA,
-      monthRemaining: Math.max(0, SCRAPE_DO_MONTHLY_QUOTA - monthScrapedo),
-    },
     forsale: {
       callsToday: todayStats.browse || 0,
       cacheHitsToday: todayStats.forsaleCacheHits || 0,
@@ -691,493 +665,6 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 }
 
 
-// ---- scrape.do (sold listings, per-user API keys) ----
-// Targets eBay's hosted sold-search HTML and parses the listings out of
-// the response. Each user supplies one or more scrape.do tokens (so they
-// can combine the monthly quotas of multiple scrape.do accounts). We
-// round-robin across the user's keys and fall back to the next key when
-// scrape.do reports a quota or rate-limit failure.
-async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown', opts = {}) {
-  trackApiCall('scrapedo', 'ebay-sold', keywords, source);
-  // eBay's sold-listings URL. The _from=R40 token + Showsold=1 mirror what
-  // a normal browser sends and seem to be needed for scrape.do's data-
-  // center proxies to actually land on the sold page (without them, eBay
-  // bounces us to the active-listings page silently).
-  const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodeURIComponent(keywords)}&_sacat=0&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
-  // scrape.do params:
-  //   render=true        run JS so eBay's React shell hydrates and the
-  //                      listings markup actually exists in the response
-  //   super=true         residential proxies — eBay blocks datacenter IPs
-  //                      with a "Pardon Our Interruption" page
-  //   geoCode=us         stay on US eBay; otherwise eBay redirects to
-  //                      the visitor's local site (.co.uk etc.)
-  const params = new URLSearchParams({
-    token: apiKey,
-    url: ebayUrl,
-    render: 'true',
-    super: 'true',
-    geoCode: 'us',
-  });
-  const scrapeUrl = `${SCRAPE_DO_BASE}/?${params.toString()}`;
-  console.log(`[scrape.do] Searching sold: "${keywords}"`);
-  try {
-    const res = await axios.get(scrapeUrl, { timeout: 60000, responseType: 'text', transformResponse: [x => x] });
-    const html = typeof res.data === 'string' ? res.data : String(res.data || '');
-    const items = parseEbaySoldHtml(html);
-    console.log(`[scrape.do] parsed ${items.length} items (response was ${html.length} bytes)`);
-    const out = { results: items.slice(0, limit), total: items.length };
-    if (opts.includeDebug) {
-      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-      const canonicalMatch = html.match(/<link[^>]+rel=["']?canonical["']?[^>]+href=["']([^"']+)["']/i);
-      // Grab the first matched container block (whichever layout
-      // matches) so the frontend can show us the actual markup
-      // structure when our extractor returns nothing.
-      let firstBlock = null;
-      const sample = splitBlocks(html, CARD_CONTAINER_RE());
-      if (sample.length > 0) firstBlock = sample[0].slice(0, 8000);
-      out._debug = {
-        httpStatus: res.status,
-        contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
-        bytes: html.length,
-        title: titleMatch ? decodeHtmlEntities(titleMatch[1]).trim() : null,
-        canonical: canonicalMatch ? canonicalMatch[1] : null,
-        looksLikeSoldPage: /Sold\s+items|LH_Sold=1/i.test(html) && /sold/i.test(titleMatch ? titleMatch[1] : ''),
-        classCounts: {
-          sItem: (html.match(/class="[^"]*\bs-item\b[^"]*"/g) || []).length,
-          sCard: (html.match(/class="[^"]*\bs-card\b[^"]*"/g) || []).length,
-          srpItem: (html.match(/class="[^"]*\bsrp-results__item\b[^"]*"/g) || []).length,
-          srpRiver: (html.match(/class="[^"]*\bsrp-river\b[^"]*"/g) || []).length,
-        },
-        looksLikeJson: /^\s*[{[]/.test(html),
-        looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
-        snippet: html.slice(0, 4000),
-        firstBlock,
-        firstCardExtract: debugFirstCard(firstBlock),
-        targetUrl: ebayUrl,
-      };
-    }
-    return out;
-  } catch (err) {
-    const status = err.response && err.response.status;
-    console.error(`[scrape.do] Error${status ? ` HTTP ${status}` : ''}: ${err.message}`);
-    const errBody = err.response && err.response.data ? String(err.response.data).slice(0, 600) : null;
-    // 401/403 = bad token. 402/429 = quota or rate-limit on this key.
-    // Surface both distinctly so the rotation layer can fall back instead
-    // of giving up.
-    if (status === 401 || status === 403) {
-      return { results: [], total: 0, error: 'scrape.do rejected your API key (HTTP ' + status + '). Update it in Settings.', badKey: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
-    }
-    if (status === 402 || status === 429) {
-      return { results: [], total: 0, error: 'scrape.do quota/rate-limit hit (HTTP ' + status + ') for this key.', quotaExceeded: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
-    }
-    return { results: [], total: 0, error: err.message, status, _debug: opts.includeDebug ? { httpStatus: status || null, errBody, exception: err.message } : undefined };
-  }
-}
-
-// In-memory round-robin index per (username|anon). Resets on cold start;
-// that's fine — the rotation just picks up from the top.
-const _scrapeDoRotation = new Map();
-
-// Drive a sold search through up to N user keys: pick a starting key via
-// per-user round-robin, then walk in order. Any key that returns badKey
-// (bogus token) or quotaExceeded (HTTP 402/429) is skipped to the next
-// one. Bubbles up the last error if every key fails.
-async function fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey) {
-  if (!keys || keys.length === 0) {
-    return { results: [], total: 0, error: 'no scrape.do keys configured', noProvider: true, noKey: true };
-  }
-  const start = ((_scrapeDoRotation.get(rotationKey) || 0)) % keys.length;
-  _scrapeDoRotation.set(rotationKey, start + 1);
-  let lastErr = null;
-  const badKeyLabels = [];
-  for (let i = 0; i < keys.length; i++) {
-    const idx = (start + i) % keys.length;
-    const k = keys[idx];
-    const r = await fetchViaScrapeDo(keywords, k.key, limit, source);
-    if (!r.badKey && !r.quotaExceeded) return r;
-    lastErr = r;
-    if (r.badKey) badKeyLabels.push(k.label || `Key ${idx + 1}`);
-    console.log(`[scrape.do rotation] key "${k.label || idx + 1}" failed (${r.badKey ? 'bad key' : 'quota'}), trying next`);
-  }
-  // All keys exhausted. If every failure was a bad key, surface that;
-  // otherwise surface the quota-exhaustion message.
-  if (lastErr && lastErr.badKey && badKeyLabels.length === keys.length) {
-    return { results: [], total: 0, error: 'All your scrape.do keys were rejected. Check them in Settings.', badKey: true };
-  }
-  return lastErr || { results: [], total: 0, error: 'All scrape.do keys failed for this request.' };
-}
-
-// Normalize whatever the legacy users record holds into a clean array of
-// `{ key, label }`. Supports both the old single-string `scrapeDoKey`
-// field and the new `scrapeDoKeys` array — so the migration is implicit
-// and a user record only needs to be rewritten when the user changes
-// their keys.
-function getUserScrapeDoKeys(userRec) {
-  if (!userRec) return [];
-  if (Array.isArray(userRec.scrapeDoKeys) && userRec.scrapeDoKeys.length > 0) {
-    return userRec.scrapeDoKeys
-      .filter(k => k && typeof k.key === 'string' && k.key.length > 0)
-      .map((k, i) => ({ key: k.key, label: k.label || `Key ${i + 1}`, addedAt: k.addedAt || null }));
-  }
-  if (typeof userRec.scrapeDoKey === 'string' && userRec.scrapeDoKey.length > 0) {
-    return [{ key: userRec.scrapeDoKey, label: 'Default', addedAt: null }];
-  }
-  return [];
-}
-
-// Lightweight eBay-search HTML parser. eBay's been A/B-testing three
-// layouts in 2024-25:
-//   1. legacy `<li class="s-item s-item__pl-on-bottom">` (older Browse)
-//   2. `<li class="srp-results__item">` (newer SRP)
-//   3. `<div class="s-card ...">` (newest card-grid rollout)
-// We try each container shape and a per-shape field extractor.
-function parseEbaySoldHtml(html) {
-  if (!html || html.length < 500) return [];
-  const items = [];
-  const seen = new Set();
-  const push = (it) => {
-    if (!it) return;
-    const k = it.itemUrl || `${it.title}|${it.price}`;
-    if (seen.has(k)) return;
-    seen.add(k);
-    items.push(it);
-  };
-
-  // Layout 1: legacy <li class="s-item">
-  const reLegacy = /<li[^>]*class="[^"]*\bs-item\b[^"]*"[\s\S]*?<\/li>/gi;
-  let m;
-  while ((m = reLegacy.exec(html)) !== null) push(extractLegacySItem(m[0]));
-
-  // Layout 2/3: newer s-card / srp-results__item — eBay no longer
-  // wraps each card in a simple <li>...</li>. Slice between
-  // consecutive container-opening positions instead of trying to
-  // match nested </div> closers. We split ONLY on the top-level card
-  // containers (s-card / srp-results__item); the inner
-  // `su-card-container` wrapper appears once *inside* every card, so
-  // splitting on it would fragment each card right after its opening
-  // tag and strip away the title/price/link.
-  for (const block of splitBlocks(html, CARD_CONTAINER_RE())) {
-    push(extractCardLayout(block));
-  }
-
-  // Fallback for older A/B variants that wrap each result directly in
-  // <div class="su-card-container"> with no enclosing s-card. Only try
-  // this if the primary split produced nothing.
-  if (items.length === 0) {
-    for (const block of splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\bsu-card-container\b[^"]*"/gi)) {
-      push(extractCardLayout(block));
-    }
-  }
-
-  return items;
-}
-
-// Fresh RegExp per call — these carry the /g flag and a mutable lastIndex,
-// so sharing one instance across splitBlocks calls would skip matches.
-function CARD_CONTAINER_RE() {
-  return /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item)\b[^"]*"/gi;
-}
-
-// Slice `html` into blocks where each block runs from the start of a
-// container match to the start of the next match (or end of document).
-// Robust against arbitrary nesting depth inside each card — we don't
-// have to guess where the closing tag is.
-function splitBlocks(html, openerRe) {
-  const starts = [];
-  let m;
-  openerRe.lastIndex = 0;
-  while ((m = openerRe.exec(html)) !== null) starts.push(m.index);
-  const blocks = [];
-  for (let i = 0; i < starts.length; i++) {
-    const s = starts[i];
-    const e = i + 1 < starts.length ? starts[i + 1] : Math.min(html.length, s + 8000);
-    blocks.push(html.slice(s, e));
-  }
-  return blocks;
-}
-
-// Strip tags from a captured HTML fragment and return clean text. eBay's
-// newer cards nest the real text one or two <span>s deep, so a naive
-// `>([^<]+)` capture grabs an empty string — pull the fragment and flatten it.
-function stripTags(s) {
-  if (s == null) return '';
-  return decodeHtmlEntities(String(s).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
-}
-
-// eBay mixes quoted AND unquoted HTML attributes in the same tag — e.g.
-// `<a class=s-card__link ... href=https://ebay.com/itm/123?...>`. These
-// helpers match attribute values regardless of quoting style, which is the
-// crux of parsing the current card markup (selectors that assumed `href="…"`
-// or `class="…"` silently matched nothing).
-
-// Return the value of attribute `attr` from the first tag in `block` that has
-// it. If `mustContain` is given, skip values that don't include that substring.
-function getAttr(block, attr, mustContain) {
-  const re = new RegExp(
-    '\\b' + attr + '\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\'|([^\\s"\'>]+))',
-    'gi'
-  );
-  let m;
-  while ((m = re.exec(block)) !== null) {
-    const v = m[1] != null ? m[1] : (m[2] != null ? m[2] : m[3]);
-    if (v && (!mustContain || v.indexOf(mustContain) !== -1)) return v;
-  }
-  return null;
-}
-
-// Inner text of the first element whose class contains `cls`, quoting-agnostic.
-// Uses a tag-name backreference so we close on the right tag.
-function classInner(block, cls) {
-  const c = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(
-    '<([a-zA-Z][\\w-]*)\\b[^>]*\\bclass\\s*=\\s*' +
-      '(?:"[^"]*' + c + '[^"]*"|\'[^\']*' + c + '[^\']*\'|[^\\s"\'>]*' + c + '[^\\s"\'>]*)' +
-      '[^>]*>([\\s\\S]*?)<\\/\\1>',
-    'i'
-  );
-  const m = block.match(re);
-  return m ? stripTags(m[2]) : '';
-}
-
-// Same matcher as classInner but returns the element's RAW inner HTML (tags
-// intact) so the price parser can see eBay's separate dollars/cents nodes.
-function classInnerRaw(block, cls) {
-  const c = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(
-    '<([a-zA-Z][\\w-]*)\\b[^>]*\\bclass\\s*=\\s*' +
-      '(?:"[^"]*' + c + '[^"]*"|\'[^\']*' + c + '[^\']*\'|[^\\s"\'>]*' + c + '[^\\s"\'>]*)' +
-      '[^>]*>([\\s\\S]*?)<\\/\\1>',
-    'i'
-  );
-  const m = block.match(re);
-  return m ? m[2] : '';
-}
-
-// Parse a sold price (number) from a price element's RAW inner HTML. Robust to:
-//  • eBay rendering cents in a separate node with no literal decimal point
-//    ("$152" <sup>10</sup>), which a naive digit-strip reads as 15210;
-//  • thousands separators ("$1,250.00");
-//  • more than one price in the element (a struck "was" price beside the sold
-//    price) — takes the first well-formed value.
-function parsePriceHtml(rawHtml) {
-  if (!rawHtml) return 0;
-  const raw = String(rawHtml);
-  const flat = raw.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ');
-
-  // 1) First well-formed money value WITH cents (1,234.56 or 50.00).
-  const cents = flat.match(/\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+\.\d{2}/);
-  if (cents) {
-    const n = parseFloat(cents[0].replace(/,/g, ''));
-    if (isFinite(n) && n > 0) return n;
-  }
-
-  // 2) Cents rendered in a separate node, no literal decimal: "$152<sup>10</sup>"
-  //    → 152.10. Dollars, then tag(s), then exactly two cents digits.
-  const split = raw.match(/\$\s*([\d,]+)\s*(?:<[^>]+>\s*)+(\d{2})(?!\d)/);
-  if (split) {
-    const dollars = parseInt(split[1].replace(/,/g, ''), 10);
-    if (isFinite(dollars)) return dollars + parseInt(split[2], 10) / 100;
-  }
-
-  // 3) Whole-dollar listing (no cents anywhere): first integer value.
-  const intMatch = flat.match(/\$?\s*([\d,]{1,9})(?!\d)/);
-  if (intMatch) {
-    const n = parseFloat(intMatch[1].replace(/,/g, ''));
-    if (isFinite(n) && n > 0) return n;
-  }
-  return 0;
-}
-
-// Pick the best image URL in a card, tolerating unquoted attrs and lazy-load
-// placeholders. eBay defers the real image via data-defer-load and shows a
-// gray ebaystatic placeholder in src; prefer the real i.ebayimg.com asset.
-function pickImage(block) {
-  const urls = [];
-  const re = /(?:src|data-defer-load|data-src)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'>]+))/gi;
-  let m;
-  while ((m = re.exec(block)) !== null) {
-    const v = m[1] || m[2] || m[3];
-    if (v && /^https?:/i.test(v)) urls.push(v);
-  }
-  return urls.find(u => /i\.ebayimg\.com/i.test(u)) ||
-         urls.find(u => !/ebaystatic\.com/i.test(u)) ||
-         urls[0] || null;
-}
-
-function extractLegacySItem(block) {
-  if (/s-item--placeholder/i.test(block)) return null;
-  return assembleListing(resolveCard(block));
-}
-
-// Field extractor for eBay's card layouts (s-card / srp-results__item) and the
-// older s-item layout. Class names and quoting keep shifting, so we lean on
-// structural signals — any /itm/ link, the title element's text, any element
-// whose class mentions "price" — all matched quote-agnostically.
-function resolveCard(block) {
-  // Link: any /itm/ href, quoted or bare.
-  const link = getAttr(block, 'href', '/itm/');
-
-  // Title: the card/item title element, else any heading element, else the
-  // thumbnail alt text (eBay mirrors the listing title into alt).
-  let title =
-    classInner(block, 's-card__title') ||
-    classInner(block, 's-item__title');
-  if (!title) {
-    const h = block.match(/<([a-zA-Z][\w-]*)\b[^>]*\brole\s*=\s*["']?heading["']?[^>]*>([\s\S]*?)<\/\1>/i);
-    if (h) title = stripTags(h[2]);
-  }
-  if (!title) title = (getAttr(block, 'alt') || '').trim();
-
-  // Price: parse from the price element's RAW HTML so split dollars/cents nodes
-  // and thousands commas don't get mangled into a giant number. Fall back to the
-  // first dollars-and-cents value anywhere in the card.
-  const rawPrice =
-    classInnerRaw(block, 's-card__price') ||
-    classInnerRaw(block, 's-item__price') ||
-    classInnerRaw(block, 'price');
-  let priceNum = parsePriceHtml(rawPrice);
-  if (!priceNum) {
-    const dollar = block.match(/\$\s?[\d,]+(?:\.\d{2})?/);
-    if (dollar) priceNum = parsePriceHtml(dollar[0]);
-  }
-  const priceStr = priceNum ? priceNum.toFixed(2) : '';
-
-  const img = pickImage(block);
-  const dateMatch = block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\.?\s+\d{1,2},?\s+\d{4})/i);
-  const cond =
-    classInner(block, 's-card__subtitle') ||
-    classInner(block, 'SECONDARY_INFO') ||
-    '';
-
-  return {
-    link: link || null,
-    title,
-    priceStr,
-    img,
-    date: dateMatch ? dateMatch[1] : null,
-    cond: cond || null,
-  };
-}
-
-function extractCardLayout(block) {
-  // Promo "Shop on eBay" placeholder cards resolve to that title and are
-  // dropped by assembleListing, so no special-casing needed here.
-  return assembleListing(resolveCard(block));
-}
-
-// Compact per-field report for the FIRST matched card, surfaced in the debug
-// endpoint so we can see exactly which field extraction fails (and on what
-// markup) without pasting the whole multi-KB block.
-function debugFirstCard(block) {
-  if (!block) return null;
-  const r = resolveCard(block);
-  const classes = (block.match(/class="([^"]*)"/gi) || [])
-    .map(c => c.replace(/^class="/i, '').replace(/"$/, ''))
-    .join(' ')
-    .split(/\s+/)
-    .filter(Boolean);
-  const uniqClasses = [...new Set(classes)].slice(0, 40);
-  return {
-    link: r.link ? r.link.slice(0, 120) : null,
-    title: r.title ? r.title.slice(0, 120) : null,
-    price: r.priceStr || null,
-    hasImg: !!r.img,
-    soldDate: r.date || null,
-    classes: uniqClasses,
-  };
-}
-
-function assembleListing({ link, title, priceStr, img, date, cond }) {
-  if (!title || !priceStr || !link) return null;
-  title = decodeHtmlEntities(title).trim();
-  if (!title || /shop on ebay/i.test(title)) return null;
-  const price = parseFloat(String(priceStr).replace(/[^0-9.]/g, '')) || 0;
-  if (!price) return null;
-  const itemUrl = link.split('?')[0];
-  const itemIdMatch = itemUrl.match(/\/itm\/(?:[^/]+\/)?(\d{8,})/);
-  let soldDate = '';
-  if (date) {
-    const raw = String(date).trim();
-    const parsed = new Date(raw);
-    soldDate = isNaN(parsed.getTime()) ? raw : parsed.toISOString();
-  }
-  return {
-    itemId: itemIdMatch ? itemIdMatch[1] : `sdo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    title,
-    price: String(price),
-    currency: 'USD',
-    soldDate,
-    imageUrl: img || null,
-    itemUrl,
-    condition: cond ? decodeHtmlEntities(cond).trim() : 'Unknown',
-  };
-}
-
-function decodeHtmlEntities(s) {
-  if (s == null) return '';
-  return String(s)
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#0?39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)));
-}
-
-// Look up the current request's user and pull every scrape.do key off
-// their record. Returns `{ username, keys: Array<{key,label}> }` so the
-// rotation layer below can scope its round-robin per user.
-// The shared, server-wide scrape.do key (a paid plan) so sold search works for
-// every visitor — logged in or not — without each person bringing their own
-// key. Set via `wrangler secret put SCRAPE_DO_KEY`.
-function getServerScrapeDoKeys() {
-  const k = (process.env.SCRAPE_DO_KEY || '').trim();
-  return k ? [{ key: k, label: 'Server', addedAt: null }] : [];
-}
-
-// ---- Free-tier metering for sold-price search ----
-// Sold-price lookups are the ONE action that spends our shared scrape.do quota,
-// so they're the only metered action. Browsing (For Sale), the card scanner,
-// checklists, and the collection stay unlimited and free for everyone.
-//
-// Only LIVE shared-key scrapes count toward the daily allowance:
-//   - KV cache hits are free to us, so they never count (a user re-checking a
-//     popular card all day never burns their allowance).
-//   - Users on their OWN scrape.do key spend their own quota, so they're never
-//     metered.
-//   - Pro / Pro+ subscribers (and permanent grants) get unlimited lookups.
-//
-// The counter lives in the short-TTL KV cache (one key per user/IP per day) and
-// self-expires, so it needs no cleanup. cachePut is fire-and-forget and KV is
-// eventually consistent, so under bursts the count may lag low — we
-// deliberately err on the generous side.
-const SOLD_FREE_DAILY = parseInt(process.env.SOLD_FREE_DAILY, 10) || 25;
-
-function soldMeterIdFor(username, req) {
-  if (username) return 'u:' + String(username).toLowerCase();
-  const ipRaw = req && (req.headers['cf-connecting-ip']
-    || (req.headers['x-forwarded-for'] || '').split(',')[0]
-    || req.ip);
-  const ip = String(ipRaw || 'anon').trim() || 'anon';
-  return 'ip:' + ip;
-}
-
-function soldMeterKeyFor(id) {
-  return `soldmeter:v1:${new Date().toISOString().slice(0, 10)}:${id}`;
-}
-
-async function getSoldUsage(id) {
-  const rec = await cacheGet(soldMeterKeyFor(id));
-  return (rec && typeof rec.count === 'number') ? rec.count : 0;
-}
-
-function bumpSoldUsage(id, current) {
-  // 2-day TTL so the key outlives the calendar day but still self-expires.
-  cachePut(soldMeterKeyFor(id), { count: (current || 0) + 1 }, 172800);
-}
 
 // True when a user has an active paid plan (Pro / Pro+) or a permanent grant.
 // The single source of truth for every Pro feature gate (bulk pricer, promote,
@@ -1188,87 +675,29 @@ function isProUser(username) {
   return !!(sub && sub.status === 'active' && (sub.plan === 'pro' || sub.plan === 'proplus'));
 }
 
-// Bypass the free sold-search meter when on an unlimited plan. (Same check as
-// isProUser; kept as a named alias so the metering code reads clearly.)
-function hasUnlimitedSold(username) {
-  return isProUser(username);
-}
-
-function getScrapeDoKeysForRequest(req) {
-  const username = getSessionUser(req);
-  let userKeys = [];
-  if (username) {
-    const users = loadServerUsers();
-    userKeys = getUserScrapeDoKeys(users[username]);
-  }
-  // Prefer the user's own key(s) — it spends their quota, not ours — and fall
-  // back to the shared server key so sold search works for everyone, including
-  // logged-out visitors.
-  const usingShared = userKeys.length === 0;
-  const keys = usingShared ? getServerScrapeDoKeys() : userKeys;
-  // Sold data is free for everyone (no paywall), but capped per day to protect
-  // the shared scrape.do quota while we're community-funded — the cap is a
-  // temporary guardrail that lifts as funding grows, not a Pro gate. Users on
-  // their own scrape.do key spend their own quota, so they're never capped.
-  const meter = usingShared
-    ? { id: soldMeterIdFor(username, req), limit: SOLD_FREE_DAILY }
-    : null;
-  return { username, keys, shared: usingShared, meter };
+// Sold price data is retired pending eBay's official Marketplace Insights API.
+// Every sold-based endpoint funnels through this single helper so the app
+// degrades gracefully — no crashes, one consistent message — instead of
+// pretending sold search still works.
+const SOLD_UNAVAILABLE_MSG = 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API. Use For Sale mode for live listings in the meantime.';
+function sendSoldUnavailable(res) {
+  // HTTP 200 (not an error status) so the frontend's graceful "sold unavailable"
+  // handlers run — they read the body after an `if (!res.ok) throw` guard, the
+  // same way the old rateLimited path was delivered.
+  return res.json({ results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG });
 }
 
 // ---- Shared fetch function ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (scrape.do, per-user key)
+// mode: 'forsale' (eBay Browse API) or 'sold' (retired — returns unavailable)
 // Cache disabled for both modes per user request — every search hits the
 // upstream APIs fresh so users always see current listings/prices. The
 // in-memory ebayCache + getCached/setCache helpers stay in the file for
 // the unrelated marketplace endpoint to use.
-async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, scrapeDoCtx = null) {
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0) {
   if (mode === 'sold') {
-    // Backward compat: accept either the new {keys,username} context or a
-    // raw single key string (legacy callers like the alert worker).
-    let keys = [], rotationKey = 'anon';
-    if (scrapeDoCtx && Array.isArray(scrapeDoCtx.keys)) {
-      keys = scrapeDoCtx.keys;
-      rotationKey = scrapeDoCtx.username || 'anon';
-    } else if (typeof scrapeDoCtx === 'string' && scrapeDoCtx.length > 0) {
-      keys = [{ key: scrapeDoCtx, label: 'legacy' }];
-    }
-    if (keys.length === 0) {
-      return { results: [], total: 0, noProvider: true, noKey: true };
-    }
-    // KV cache: sold results are identical for every user, so one scrape covers
-    // everyone searching that card within the TTL — the main lever that keeps
-    // the scrape.do plan from being drained by repeat/viral searches.
-    const soldCacheKey = `sold:v1:${limit}:${String(keywords).toLowerCase().trim()}`;
-    const cachedSold = await cacheGet(soldCacheKey);
-    if (cachedSold && Array.isArray(cachedSold.results)) {
-      console.log(`[scrape.do] KV cache hit for "${keywords}" (${cachedSold.results.length} items)`);
-      trackCacheHit('sold');
-      return cachedSold;  // cache hits are free — never metered
-    }
-    // Cache miss → this will spend the shared quota. Enforce the free daily
-    // allowance here (after the cache check, so cached lookups stay free even
-    // for users who are over their limit). meter is null for Pro / own-key.
-    const meter = scrapeDoCtx && scrapeDoCtx.meter;
-    let meterUsed = 0;
-    if (meter) {
-      meterUsed = await getSoldUsage(meter.id);
-      if (meterUsed >= meter.limit) {
-        return { results: [], total: 0, limitReached: true, freeLimit: meter.limit, used: meterUsed };
-      }
-    }
-    const response = await fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey);
-    const filtered = { ...response, results: filterJunkListings(response.results) };
-    filtered.total = filtered.results.length;
-    // Only cache genuine hits — never cache key/quota/rate-limit errors or empty
-    // misses, so a transient failure can't poison the cache for hours.
-    if (filtered.results.length > 0 && !filtered.badKey && !filtered.rateLimited && !filtered.quotaExceeded && !filtered.error) {
-      cachePut(soldCacheKey, filtered, SOLD_KV_TTL);
-      // Count this live scrape against the free allowance only on a genuine
-      // success — a failed/empty scrape never costs the user an allowance unit.
-      if (meter) bumpSoldUsage(meter.id, meterUsed);
-    }
-    return filtered;
+    // Sold data source retired. Sold-based features return a clear "unavailable"
+    // state until eBay's official sold-data (Marketplace Insights) API is wired in.
+    return { results: [], total: 0, soldUnavailable: true };
   }
 
   // For sale mode — eBay Browse API. Apply the same junk filter the sold path
@@ -1307,100 +736,16 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  // Sold mode needs the requesting user's scrape.do API key. Bail with a
-  // distinctive error code the frontend can recognize so it can prompt the
-  // user to add the key in Settings instead of showing a generic failure.
-  const scrapeDoCtx = (mode === 'sold') ? getScrapeDoKeysForRequest(req) : { username: null, keys: [] };
-  if (mode === 'sold' && scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({
-      error: 'Sold searches need your scrape.do API key. Add one in Settings → scrape.do API key.',
-      noKey: true,
-    });
-  }
+  // Sold data is retired pending eBay's official Marketplace Insights API.
+  // Bail early with a clear unavailable state; For Sale (Browse API) continues.
+  if (mode === 'sold') return sendSoldUnavailable(res);
 
-  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
+  if (USE_MOCK_FORSALE) {
     return res.json(getMockData(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
-
-    // Sold mode — scrape.do (per-user key)
-    if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, limit, mode, 'search', 0, scrapeDoCtx);
-      if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
-      if (searchData.limitReached) {
-        return res.status(402).json({
-          error: `You've hit today's free sold-search limit (${searchData.freeLimit}). The Card Huddle is community-funded — chip in to help us lift the cap, or add your own scrape.do key in Settings.`,
-          limitReached: true, freeLimit: searchData.freeLimit, fund: true,
-        });
-      }
-      // Keyword match: keep the listings sharing the most keywords with the
-      // query (all → all-but-one → all-but-two …), then trim price outliers.
-      const matched = matchSoldListings(searchData.results, query);
-      const variantFiltered = filterPriceOutliers(matched.results);
-      const exactExists = hasExactCardSales(query, searchData.results);
-
-      // Serial requested but nothing sold AT that print run? The first search
-      // was constrained to "/serial", so it can't surface other print runs on
-      // its own. Run a second broad search with the serial stripped to pull the
-      // nearest print runs (a /5 with no sales still gets /20, /60 …) — used
-      // both as displayable comps and to power the print-run-adjusted estimate.
-      let similarResults = [];
-      let estimatePool = searchData.results;
-      if (serial && !exactExists) {
-        const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
-        let broad = null;
-        try {
-          broad = await fetchEbayItems(baseQuery, limit, mode, 'search-serial-broad', 0, scrapeDoCtx);
-        } catch (_) { /* best-effort — fall back to what the exact search returned */ }
-        if (broad && Array.isArray(broad.results) && broad.results.length) {
-          const seen = new Set(searchData.results.map(r => r.itemId));
-          estimatePool = searchData.results.concat(broad.results.filter(r => !seen.has(r.itemId)));
-          // Keep the same card at OTHER print runs (base query minus the serial),
-          // sorted by how close each print run is to the one requested.
-          const reqSerial = parseInt(serial, 10);
-          const numberedRe = /\/(\d{1,4})(?![0-9])/;
-          const exactRe = new RegExp(`\\/${serial}(?![0-9])`);
-          const shownIds = new Set(variantFiltered.map(r => r.itemId));
-          similarResults = matchSoldListings(estimatePool, baseQuery).results
-            .filter(r => !shownIds.has(r.itemId) && numberedRe.test(r.title || '') && !exactRe.test(r.title || ''))
-            .sort((a, b) => {
-              const an = parseInt((String(a.title).match(numberedRe) || [])[1] || 9999, 10);
-              const bn = parseInt((String(b.title).match(numberedRe) || [])[1] || 9999, 10);
-              return (Math.abs(an - reqSerial) - Math.abs(bn - reqSerial)) || (an - bn);
-            })
-            .slice(0, 20);
-        }
-      }
-
-      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
-      const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
-        ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
-        : null;
-      // No sale of the exact card (e.g. a /5, or this set)? Estimate its value
-      // from the same player's similar sales (now including the broad-search
-      // print runs), adjusted for print run and set, and surface the comps used.
-      const estimate = exactExists
-        ? null
-        : buildSimilarCardEstimate(query, estimatePool);
-      return res.json({
-        results: variantFiltered,
-        total: variantFiltered.length,
-        mock: false,
-        mode,
-        serial: serial || null,
-        similarResults,
-        searchType: matched.searchType,
-        broadenedQuery: null,
-        approximateValue: approx,
-        estimate,
-        keywordsTotal: matched.keywordsTotal,
-        keywordsMatched: matched.keywordsMatched,
-        relaxedBy: matched.relaxedBy,
-        relaxedNote,
-      });
-    }
 
     if (!serial || offset > 0) {
       // No serial, OR a paginated request — standard search.
@@ -2203,396 +1548,19 @@ function computeApproxValue(results, label) {
 // ---- /api/grading-advisor ----
 // Returns sold price stats for raw, PSA 8, PSA 9, PSA 10 for a given card query.
 app.get('/api/grading-advisor', async (req, res) => {
-  const query = req.query.q;
-  if (!query || query.trim().length < 2) {
-    return res.status(400).json({ error: 'Query parameter "q" is required' });
-  }
-
-  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
-  if (scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({
-      error: 'Grading Advisor needs your scrape.do API key. Add one in Settings → scrape.do API key.',
-      noKey: true,
-    });
-  }
-
-  const GRADING_COST = { economy: 25, express: 50 };
-
-  try {
-    const baseQ = query.trim();
-    const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
-      fetchEbayItems(baseQ, 20, 'sold', 'grading-raw', 0, scrapeDoCtx),
-      fetchEbayItems(`${baseQ} PSA 8`, 20, 'sold', 'grading-psa8', 0, scrapeDoCtx),
-      fetchEbayItems(`${baseQ} PSA 9`, 20, 'sold', 'grading-psa9', 0, scrapeDoCtx),
-      fetchEbayItems(`${baseQ} PSA 10`, 20, 'sold', 'grading-psa10', 0, scrapeDoCtx),
-    ]);
-    if (rawData.badKey || psa8Data.badKey || psa9Data.badKey || psa10Data.badKey) {
-      return res.status(401).json({ error: 'scrape.do rejected your API key. Update it in Settings.', badKey: true });
-    }
-    if (rawData.limitReached || psa8Data.limitReached || psa9Data.limitReached || psa10Data.limitReached) {
-      return res.status(402).json({
-        error: `You've hit today's free sold-search limit (${SOLD_FREE_DAILY}). The Card Huddle is community-funded — chip in to help us lift the cap, or add your own scrape.do key in Settings.`,
-        limitReached: true, freeLimit: SOLD_FREE_DAILY, fund: true,
-      });
-    }
-
-    // Apply the same variant-strict filter used elsewhere so each grade's
-    // sold comps reflect the actual card searched (excludes wrong colors,
-    // wrong sets, auto/relic when the user didn't ask for one).
-    const filterFor = (items, q) => filterPriceOutliers(filterByVariant(items, q));
-    const rawItems   = filterFor(rawData.results,   baseQ);
-    const psa8Items  = filterFor(psa8Data.results,  `${baseQ} PSA 8`);
-    const psa9Items  = filterFor(psa9Data.results,  `${baseQ} PSA 9`);
-    const psa10Items = filterFor(psa10Data.results, `${baseQ} PSA 10`);
-
-    const summarize = (items, label) => {
-      const v = computeApproxValue(items, label);
-      return v ? { avg: v.avgPrice, median: v.medianPrice, min: v.priceRange.min, max: v.priceRange.max, sales: v.sampleSize } : null;
-    };
-
-    const raw   = summarize(rawItems,   'Raw');
-    const psa8  = summarize(psa8Items,  'PSA 8');
-    const psa9  = summarize(psa9Items,  'PSA 9');
-    const psa10 = summarize(psa10Items, 'PSA 10');
-
-    // Calculate grade premiums over raw median
-    const calcPremium = (graded, rawVal) => {
-      if (!graded || !rawVal) return null;
-      const net = graded.median - rawVal.median - GRADING_COST.economy;
-      return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
-    };
-
-    // Return the actual comps behind each grade's numbers so the UI can show
-    // exactly which sold listings drove the recommendation. Trimmed to the
-    // fields the comp viewer needs and capped to keep the payload small.
-    const trimComps = (items) => (items || []).slice(0, 24).map(it => ({
-      title: it.title,
-      price: it.price,
-      itemUrl: it.itemUrl,
-      imageUrl: it.imageUrl,
-      soldDate: it.soldDate,
-      condition: it.condition,
-    }));
-
-    res.json({
-      query: query.trim(),
-      grades: { raw, psa8, psa9, psa10 },
-      premiums: {
-        psa8:  calcPremium(psa8,  raw),
-        psa9:  calcPremium(psa9,  raw),
-        psa10: calcPremium(psa10, raw),
-      },
-      gradingCost: GRADING_COST,
-      comps: {
-        raw:   trimComps(rawItems),
-        psa8:  trimComps(psa8Items),
-        psa9:  trimComps(psa9Items),
-        psa10: trimComps(psa10Items),
-      },
-    });
-  } catch (err) {
-    console.error('Grading advisor error:', err.message);
-    res.status(500).json({ error: 'Failed to fetch grading data', detail: err.message });
-  }
+  return sendSoldUnavailable(res);
 });
 
 // ---- /api/direct-search ----
 app.get('/api/direct-search', async (req, res) => {
-  const query = req.query.q;
-  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
-  const minPrice = parseFloat(req.query.minPrice);
-  const maxPrice = parseFloat(req.query.maxPrice);
-  const applyPriceFilter = (items) => mode === 'forsale'
-    ? filterByPriceRange(items, minPrice, maxPrice)
-    : items;
-  // Mirror /api/search: For Sale results get the strict variant filter so the
-  // user only sees listings that actually match the searched card.
-  const applyVariantFilter = (items) => mode === 'forsale'
-    ? filterByVariant(items, query, { strict: true })
-    : items;
-  if (!query || query.trim().length < 2) {
-    return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
-  }
-
-  const scrapeDoCtx = (mode === 'sold') ? getScrapeDoKeysForRequest(req) : { username: null, keys: [] };
-  if (mode === 'sold' && scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({
-      error: 'Sold searches need your scrape.do API key. Add one in Settings → scrape.do API key.',
-      noKey: true,
-    });
-  }
-
-  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    return res.json(getMockDirectSearch(query, mode));
-  }
-
-  try {
-    const serial = extractSerial(query);
-
-    // Sold mode — scrape.do (per-user key)
-    if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, 20, mode, 'direct-search', 0, scrapeDoCtx);
-      if (searchData.badKey) return res.status(401).json({ error: searchData.error, badKey: true });
-      if (searchData.limitReached) {
-        return res.status(402).json({
-          error: `You've hit today's free sold-search limit (${searchData.freeLimit}). The Card Huddle is community-funded — chip in to help us lift the cap, or add your own scrape.do key in Settings.`,
-          limitReached: true, freeLimit: searchData.freeLimit, fund: true,
-        });
-      }
-      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
-      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
-      // No sale of the exact card? Estimate from the same player's similar
-      // sales, adjusted for print run and set (see /api/search).
-      const estimate = hasExactCardSales(query, searchData.results)
-        ? null
-        : buildSimilarCardEstimate(query, searchData.results);
-      return res.json({ results: variantFiltered, total: variantFiltered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, estimate, mode, serial: serial || null, similarResults: [] });
-    }
-
-    if (serial) {
-      // Serial search (e.g. /5 = print run of 5)
-      // Dual search: targeted with serial + broad without, then filter
-      const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
-      const [targetedResults, broadResults] = await Promise.all([
-        fetchEbayItems(query, 50, mode, 'variants-serial'),
-        fetchEbayItems(baseQuery, 50, mode, 'variants-serial-broad'),
-      ]);
-
-      // Merge and dedup
-      const seen = new Set();
-      const allResults = [];
-      for (const item of [...targetedResults.results, ...broadResults.results]) {
-        if (!seen.has(item.itemId)) {
-          seen.add(item.itemId);
-          allResults.push(item);
-        }
-      }
-
-      // Exact: print run matches (e.g. /5, 1/5, 3/5 but not /50 or 5/125)
-      const printRunPattern = new RegExp(`\\/${serial}(?![0-9])`);
-      const exactMatches = allResults.filter(item => printRunPattern.test(item.title || ''));
-
-      // Similar: other numbered cards sorted by print run proximity
-      const numberedPattern = /\/(\d{1,4})(?![0-9])/;
-      const requestedSerial = parseInt(serial, 10);
-      const exactIds = new Set(exactMatches.map(r => r.itemId));
-      const similarMatches = allResults
-        .filter(item => !exactIds.has(item.itemId) && numberedPattern.test(item.title || ''))
-        .sort((a, b) => {
-          const aNum = parseInt((a.title.match(numberedPattern) || [])[1], 10) || 9999;
-          const bNum = parseInt((b.title.match(numberedPattern) || [])[1], 10) || 9999;
-          const aDiff = Math.abs(aNum - requestedSerial);
-          const bDiff = Math.abs(bNum - requestedSerial);
-          return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
-        });
-
-      // Return exact matches first, then similar (price + strict variant filter applied in forsale)
-      const combined = applyVariantFilter(applyPriceFilter([...exactMatches, ...similarMatches]));
-      if (combined.length > 0) {
-        const approx = computeApproxValue(exactMatches.length > 0 ? exactMatches : combined.slice(0, 10), 'serial');
-        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: applyVariantFilter(applyPriceFilter(similarMatches)).slice(0, 20) });
-      }
-
-      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [] });
-    }
-
-    // No serial — standard search: try exact first
-    const exact = await fetchEbayItems(query, 20, mode, 'variants');
-    if (exact.results.length > 0) {
-      const filtered = applyVariantFilter(applyPriceFilter(exact.results));
-      return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
-    }
-
-    // No exact results — try broadening
-    const parsed = parseCardQuery(query);
-    const broader = buildBroadenedQueries(parsed);
-
-    for (const level of broader) {
-      const broadResult = await fetchEbayItems(level.query, 20, mode, 'variants-broadened');
-      if (broadResult.rateLimited) {
-        return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, rateLimited: true, rateLimitMessage: 'eBay sold search is temporarily unavailable. Please try again later.' });
-      }
-      if (broadResult.results.length > 0) {
-        const filtered = applyPriceFilter(broadResult.results);
-        const approx = computeApproxValue(filtered, level.label);
-        return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
-      }
-    }
-
-    // Nothing found at any level
-    res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
-
-  } catch (err) {
-    if (err.isEbayError) {
-      console.error('eBay direct-search ack failure:', err.message);
-      return res.status(502).json({ error: 'eBay API error', detail: err.message });
-    }
-    console.error('eBay direct-search error:', err.message);
-    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
-    const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to fetch from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
-  }
+  return sendSoldUnavailable(res);
 });
 
 // ---- /api/variants ----
 app.get('/api/variants', async (req, res) => {
-  const query = req.query.q;
-  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
-  const minPrice = parseFloat(req.query.minPrice);
-  const maxPrice = parseFloat(req.query.maxPrice);
-  if (!query || query.trim().length < 2) {
-    return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
-  }
-
-  const scrapeDoCtx = (mode === 'sold') ? getScrapeDoKeysForRequest(req) : { username: null, keys: [] };
-  if (mode === 'sold' && scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({
-      error: 'Sold searches need your scrape.do API key. Add one in Settings → scrape.do API key.',
-      noKey: true,
-    });
-  }
-
-  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
-    return res.json(getMockVariants(query, mode));
-  }
-
-  try {
-    // Extract serial number (e.g. /5 = print run of 5)
-    const serial = extractSerial(query);
-    const baseQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
-
-    let rawResults;
-    let upstreamError = null;
-
-    // Sold mode
-    if (mode === 'sold') {
-      const result = await fetchEbayItems(query, 50, mode, 'variants', 0, scrapeDoCtx);
-      if (result.badKey) return res.status(401).json({ error: result.error, badKey: true });
-      rawResults = result.results;
-      if (result.error) upstreamError = result.error;
-    } else if (serial) {
-      // Dual search when serial present: targeted + broad for better coverage
-      const [targeted, broad] = await Promise.all([
-        fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
-        fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
-      ]);
-      const seen = new Set();
-      rawResults = [];
-      for (const item of [...targeted.results, ...broad.results]) {
-        if (!seen.has(item.itemId)) {
-          seen.add(item.itemId);
-          rawResults.push(item);
-        }
-      }
-    } else {
-      const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
-      rawResults = result.results;
-    }
-    // Drop listings outside the user's price range before grouping into variants
-    if (mode === 'forsale') {
-      rawResults = filterByPriceRange(rawResults, minPrice, maxPrice);
-    }
-    const playerName = extractPlayerName(query);
-
-    const variantMap = {};
-    rawResults.forEach(item => {
-      const title = item.title || '';
-      const year = extractYear(title);
-      const set = extractSet(title);
-      const parallel = extractParallel(title) || 'Base';
-
-      if (!year && !set) return;
-
-      const displayName = [year, set && `Panini ${set}`, parallel].filter(Boolean).join(' ').trim()
-        || [year, set, parallel].filter(Boolean).join(' ').trim();
-      const key = displayName.toLowerCase();
-      if (!key) return;
-
-      const price = parseFloat(item.price) || 0;
-
-      if (!variantMap[key]) {
-        variantMap[key] = { displayName, year, set, parallel, prices: [], imageUrl: null };
-      }
-      if (price > 0) variantMap[key].prices.push(price);
-      if (!variantMap[key].imageUrl && item.imageUrl) variantMap[key].imageUrl = item.imageUrl;
-    });
-
-    const variants = Object.entries(variantMap)
-      .map(([key, v]) => {
-        const prices = v.prices;
-        const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-        // Build a specific search query using player name + variant's actual year/set/parallel
-        // Append serial number (e.g. /4) so it flows through to /api/search for filtering
-        const searchParts = [playerName, v.year, v.set, v.parallel].filter(Boolean);
-        if (serial) searchParts.push(`/${serial}`);
-        return {
-          id: key.replace(/[^a-z0-9]+/g, '-'),
-          displayName: v.displayName,
-          searchQuery: searchParts.join(' '),
-          salesCount: prices.length,
-          avgPrice: avg,
-          priceRange: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
-          imageUrl: v.imageUrl,
-        };
-      })
-      .filter(v => v.displayName)
-      .sort((a, b) => b.salesCount - a.salesCount)
-      .slice(0, 12);
-
-    // If sold's upstream errored AND we got nothing, return 502 with detail
-    // so the frontend renders a real message instead of "no results".
-    if (upstreamError && variants.length === 0) {
-      return res.status(502).json({
-        error: 'Sold listings provider returned no data',
-        detail: upstreamError,
-      });
-    }
-    res.json({ variants, mock: false, mode, serial: serial || null });
-
-  } catch (err) {
-    if (err.isEbayError) {
-      console.error('eBay variants ack failure:', err.message);
-      return res.status(502).json({ error: 'eBay API error', detail: err.message });
-    }
-    console.error('eBay variants API error:', err.message);
-    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
-    const status = err.response?.status || 500;
-    res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
-  }
+  return sendSoldUnavailable(res);
 });
 
-// ---- Sold provider debug endpoint ----
-// Tests the current user's scrape.do keys with a small sold-search. With
-// no ?label= specified, tests every saved key in parallel and reports
-// per-key status (✓ count or ✗ reason) so users can see which of their
-// keys are healthy. With ?label=X, only tests that key.
-app.get('/api/debug/sold', async (req, res) => {
-  const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
-  const label = (req.query.label || '').toString();
-  const ctx = getScrapeDoKeysForRequest(req);
-  if (ctx.keys.length === 0) return res.status(401).json({ error: 'No scrape.do key on file for this user', noKey: true });
-  const targets = label ? ctx.keys.filter(k => k.label === label) : ctx.keys;
-  if (label && targets.length === 0) {
-    return res.status(404).json({ error: `No key with label "${label}"` });
-  }
-  try {
-    const perKey = await Promise.all(targets.map(async k => {
-      const r = await fetchViaScrapeDo(q, k.key, 5, 'debug', { includeDebug: true });
-      return {
-        label: k.label,
-        itemCount: r.results.length,
-        firstItem: r.results[0] || null,
-        error: r.error || null,
-        badKey: !!r.badKey,
-        quotaExceeded: !!r.quotaExceeded,
-        debug: r._debug || null,
-      };
-    }));
-    res.json({ provider: 'scrape.do', query: q, perKey });
-  } catch (err) {
-    res.json({ provider: 'scrape.do', error: err.message });
-  }
-});
 
 // ---- Health check for Render ----
 app.get('/api/health', (req, res) => {
@@ -2633,7 +1601,6 @@ app.get('/api/stats/api-calls', (req, res) => {
         browseRemaining: null, // Browse API uses OAuth, different limits
       },
       daily: stats.daily,
-      scrapeDo: stats.scrapeDo,   // sold calls today, cache-hit rate, month used vs 250k
       forsale: stats.forsale,     // browse calls today + cache-hit rate
       last24h: {
         total: stats.last24hTotal,
@@ -3144,21 +2111,10 @@ async function checkAlerts() {
   const usersTable = loadServerUsers();
   for (const alert of data.alerts) {
     try {
-      let searchResult;
-      if (USE_MOCK) {
-        searchResult = getMockData(alert.query, 'sold');
-      } else {
-        // Each alert is owned by a user; use that user's scrape.do keys
-        // (round-robin across however many they've saved). Skip if they
-        // haven't set any rather than failing the whole alerts run.
-        const owner = (alert.username || '').toLowerCase();
-        const keys = getUserScrapeDoKeys(owner && usersTable[owner]);
-        if (keys.length === 0) {
-          console.log(`[Alerts] skipping ${owner || '(no user)'} alert — no scrape.do key on file`);
-          continue;
-        }
-        searchResult = await fetchEbayItems(alert.query, 10, 'sold', 'alerts', 0, { username: owner, keys });
-      }
+      // Sold data source retired — price alerts pause until eBay's official
+      // sold-data API is connected. With no results, alerts simply never fire
+      // (the loop below is a no-op) rather than failing the whole run.
+      let searchResult = USE_MOCK ? getMockData(alert.query, 'sold') : { results: [] };
 
       const currentIds = searchResult.results.map(r => r.itemId);
       const previousIds = new Set(alert.lastSeenIds || []);
@@ -3723,23 +2679,6 @@ app.get('/api/auth/me', (req, res) => {
   res.json({ username, email: user.email || '', subscription: getEffectiveSubscription(username) });
 });
 
-// GET /api/sold-usage — today's free sold-search allowance for this caller.
-// Drives the "X searches left today" hint and the upgrade nudge. Works for
-// logged-out visitors too (metered per IP). `unlimited` is true for Pro / Pro+,
-// permanent grants, and users on their own scrape.do key.
-app.get('/api/sold-usage', async (req, res) => {
-  const ctx = getScrapeDoKeysForRequest(req);
-  if (!ctx.meter) {
-    return res.json({ unlimited: true, limit: SOLD_FREE_DAILY, used: 0, remaining: null });
-  }
-  const used = await getSoldUsage(ctx.meter.id);
-  res.json({
-    unlimited: false,
-    limit: ctx.meter.limit,
-    used,
-    remaining: Math.max(0, ctx.meter.limit - used),
-  });
-});
 
 // PUT /api/auth/email
 app.put('/api/auth/email', async (req, res) => {
@@ -3751,100 +2690,6 @@ app.put('/api/auth/email', async (req, res) => {
   res.json({ ok: true });
 });
 
-// ---- Per-user scrape.do API keys (multiple allowed) ----
-// Stored on the user record (server-side only — never returned to the
-// client in full, only `{ label, hint, addedAt }` per key). Users can
-// register multiple keys to combine the monthly quotas of multiple
-// scrape.do accounts; the sold-search path rotates across them and
-// falls back on quota-exhausted errors.
-const MAX_KEYS_PER_USER = 10;
-
-function maskKey(key) {
-  if (!key) return '';
-  const last4 = key.slice(-4);
-  return '••••••••' + last4;
-}
-
-// Read the user record and return both the storage form (array) and the
-// safe public view (no raw keys). Migrates legacy single-string field on
-// first write — never silently rewrites without an explicit user action.
-function readKeysFromRecord(rec) {
-  const list = getUserScrapeDoKeys(rec || {});
-  return list.map((k, i) => ({
-    label: k.label || `Key ${i + 1}`,
-    hint: maskKey(k.key),
-    addedAt: k.addedAt || null,
-  }));
-}
-
-app.get('/api/user/scrape-do-key', (req, res) => {
-  const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const users = loadServerUsers();
-  const keys = readKeysFromRecord(users[username]);
-  res.json({ configured: keys.length > 0, count: keys.length, keys });
-});
-
-// POST adds a key (preferred). PUT also calls into this path so the
-// previous single-key clients keep working — the PUT just replaces the
-// whole list with a single key.
-function addKeyHandler(req, res, { replace = false } = {}) {
-  const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const { apiKey, label } = req.body || {};
-  if (typeof apiKey !== 'string' || apiKey.trim().length < 8) {
-    return res.status(400).json({ error: 'apiKey must be at least 8 characters' });
-  }
-  const trimmedKey = apiKey.trim();
-  if (trimmedKey.length > 200) return res.status(400).json({ error: 'apiKey too long' });
-  const cleanLabel = typeof label === 'string' ? label.trim().slice(0, 60) : '';
-
-  const users = loadServerUsers();
-  if (!users[username]) return res.status(404).json({ error: 'User record missing' });
-
-  const existing = replace ? [] : getUserScrapeDoKeys(users[username]);
-  if (existing.length >= MAX_KEYS_PER_USER) {
-    return res.status(409).json({ error: `Max ${MAX_KEYS_PER_USER} keys per account` });
-  }
-  if (existing.some(k => k.key === trimmedKey)) {
-    return res.status(409).json({ error: 'You already have this key on file' });
-  }
-  const next = existing.concat({
-    key: trimmedKey,
-    label: cleanLabel || `Key ${existing.length + 1}`,
-    addedAt: new Date().toISOString(),
-  });
-
-  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
-  // Clear the legacy field so we have a single source of truth going forward.
-  delete users[username].scrapeDoKey;
-  saveServerUsers(users);
-  res.json({ ok: true, configured: true, count: next.length, keys: readKeysFromRecord(users[username]) });
-}
-
-app.post('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: false }));
-app.put('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: true }));
-
-// DELETE removes by label. Without `?label=` it clears everything
-// (preserves the historical "clear my key" behavior of the old endpoint).
-app.delete('/api/user/scrape-do-key', (req, res) => {
-  const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const label = (req.query.label || '').toString();
-  const users = loadServerUsers();
-  if (!users[username]) return res.json({ ok: true, configured: false, count: 0 });
-  const existing = getUserScrapeDoKeys(users[username]);
-  let next;
-  if (label) {
-    next = existing.filter(k => k.label !== label);
-  } else {
-    next = [];
-  }
-  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
-  delete users[username].scrapeDoKey;
-  saveServerUsers(users);
-  res.json({ ok: true, configured: next.length > 0, count: next.length, keys: readKeysFromRecord(users[username]) });
-});
 
 // Per-user data sync — single JSON blob per user containing the things that
 // used to live in localStorage only (collection, watchlist, completion,
@@ -4857,289 +3702,32 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
 // ---- Flip Finder (Pro+) ----
 // Finds live eBay listings priced significantly below their recent sold median.
 app.get('/api/flip-finder', requirePlan('pro'), async (req, res) => {
-  const query = req.query.q;
-  const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
-  const minProfit = parseFloat(req.query.minProfit) || 10;
-  const limit = Math.min(parseInt(req.query.limit) || 20, 40);
-  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
-  if (scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({ error: 'Flip Finder needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
-  }
-
-  try {
-    const [soldData, forsaleData] = await Promise.all([
-      fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 50, 'flip-finder', scrapeDoCtx.username),
-      fetchEbayItems(query, 50, 'forsale', 'flip-finder'),
-    ]);
-    if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-
-    const soldPrices = (soldData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0);
-    if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough sold data for this query' });
-
-    const sorted = [...soldPrices].sort((a, b) => a - b);
-    const soldMedian = sorted.length % 2 ? sorted[Math.floor(sorted.length / 2)] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
-    const threshold = soldMedian * (1 - minDiscount / 100);
-
-    const opportunities = (forsaleData.results || [])
-      .map(item => {
-        const price = parseFloat(item.price) || 0;
-        if (!price || price >= threshold) return null;
-        const profit = soldMedian - price;
-        if (profit < minProfit) return null;
-        return {
-          title: item.title,
-          listingPrice: price,
-          soldMedian: Math.round(soldMedian * 100) / 100,
-          potentialProfit: Math.round(profit * 100) / 100,
-          discountPct: Math.round((1 - price / soldMedian) * 100),
-          itemUrl: item.itemUrl || '',
-          imageUrl: item.imageUrl || null,
-          condition: item.condition || 'Unknown',
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.potentialProfit - a.potentialProfit)
-      .slice(0, limit);
-
-    res.json({ results: opportunities, soldMedian: Math.round(soldMedian * 100) / 100, soldSampleSize: soldPrices.length });
-  } catch (err) {
-    console.error('[FlipFinder]', err.message);
-    res.status(500).json({ error: err.message });
-  }
+  return sendSoldUnavailable(res);
 });
 
 // ---- Market Movers (Pro+) ----
 // Identifies cards with prices trending up significantly in recent sales.
 app.get('/api/market-movers', requirePlan('pro'), async (req, res) => {
-  const query = req.query.q;
-  const limit = Math.min(parseInt(req.query.limit) || 10, 20);
-  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
-  if (scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({ error: 'Market Movers needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
-  }
-
-  try {
-    const soldData = await fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 50, 'market-movers', scrapeDoCtx.username);
-    if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-    const items = (soldData.results || [])
-      .map(i => ({ price: parseFloat(i.price), date: i.soldDate ? new Date(i.soldDate) : null, title: i.title, imageUrl: i.imageUrl }))
-      .filter(i => i.price > 0 && i.date && !isNaN(i.date));
-
-    if (items.length < 6) return res.json({ results: [], message: 'Not enough data' });
-
-    items.sort((a, b) => b.date - a.date);
-    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const recent = items.filter(i => i.date >= cutoff).map(i => i.price);
-    const older = items.filter(i => i.date < cutoff).map(i => i.price);
-
-    if (recent.length < 2 || older.length < 2) return res.json({ results: [], message: 'Insufficient data to detect trend' });
-
-    const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
-    const recentAvg = avg(recent);
-    const olderAvg = avg(older);
-    const changePct = ((recentAvg - olderAvg) / olderAvg) * 100;
-
-    res.json({
-      query,
-      recentAvg: Math.round(recentAvg * 100) / 100,
-      olderAvg: Math.round(olderAvg * 100) / 100,
-      changePct: Math.round(changePct * 10) / 10,
-      trending: changePct >= 10 ? 'up' : changePct <= -10 ? 'down' : 'stable',
-      recentSales: recent.length,
-      olderSales: older.length,
-      recentItems: items.filter(i => i.date >= cutoff).slice(0, 5).map(i => ({ price: i.price, date: i.date.toISOString().slice(0, 10), title: i.title, imageUrl: i.imageUrl })),
-    });
-  } catch (err) {
-    console.error('[MarketMovers]', err.message);
-    res.status(500).json({ error: err.message });
-  }
+  return sendSoldUnavailable(res);
 });
 
 // ---- Auto-Pricer: Comp Search (Pro+) ----
 // Returns raw sold listings for the user to pick the closest match before pricing.
 app.get('/api/auto-price/search', async (req, res) => {
-  const query = req.query.q;
-  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
-  if (scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({ error: 'Auto-Pricer needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
-  }
-  try {
-    let soldData = await fetchViaScrapeDoRotated(query, scrapeDoCtx.keys, 24, 'ap-search', scrapeDoCtx.username);
-    if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-
-    // Progressively drop trailing words until we get results
-    if (!soldData.results || soldData.results.length === 0) {
-      const words = query.trim().split(/\s+/);
-      for (let len = words.length - 1; len >= 2; len--) {
-        soldData = await fetchViaScrapeDoRotated(words.slice(0, len).join(' '), scrapeDoCtx.keys, 24, 'ap-search-fallback', scrapeDoCtx.username);
-        if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-        if (soldData.results && soldData.results.length > 0) break;
-      }
-    }
-
-    // Only keep sold listings for the SAME player as the search — the
-    // progressive word-dropping fallback above can otherwise pull in other
-    // players, polluting the comps. Anchor on the surname (the most stable
-    // token). If the surname can't be found, leave the pool untouched.
-    let pool = soldData.results || [];
-    const playerName = extractPlayerName(query);
-    const nameToks = playerName
-      ? playerName.toLowerCase().split(' ').filter(w => w.length > 1 && !NON_NAME_WORDS.has(w))
-      : [];
-    const surname = nameToks[nameToks.length - 1];
-    if (surname) {
-      pool = pool.filter(i => (' ' + String(i.title || '').toLowerCase() + ' ').includes(surname));
-    }
-
-    const items = pool
-      .map(i => ({
-        title: i.title,
-        price: parseFloat(i.price),
-        image: i.imageUrl || '',
-        soldDate: i.soldDate,
-        url: i.itemUrl || '',
-      }))
-      .filter(i => i.price > 0)
-      .slice(0, 10); // cap the comps shown in the Auto-Pricer at 10
-    res.json({ items });
-  } catch (err) {
-    console.error('[APSearch]', err.message);
-    res.status(500).json({ error: err.message });
-  }
+  return sendSoldUnavailable(res);
 });
 
 // ---- Auto-Pricer (Pro+) ----
 // Smart pricing: tries exact query first, falls back to progressively broader queries.
 // Handles missing year/card# by using what's available. Returns confidence level.
 app.get('/api/auto-price', async (req, res) => {
-  const query = req.query.q;
-  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
-  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
-  if (scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({ error: 'Auto-Pricer needs your scrape.do API key. Add one in Settings → scrape.do API key.', noKey: true });
-  }
-
-  const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
-
-  try {
-    // Build a list of queries to try: exact first, then drop one word at a time from the end
-    const words = query.trim().split(/\s+/);
-    const attempts = [query];
-    for (let len = words.length - 1; len >= 2; len--) {
-      attempts.push(words.slice(0, len).join(' '));
-    }
-
-    let soldData, usedQuery = query, attemptIndex = 0;
-    for (let i = 0; i < attempts.length; i++) {
-      soldData = await fetchViaScrapeDoRotated(attempts[i], scrapeDoCtx.keys, 30, 'auto-price', scrapeDoCtx.username);
-      if (soldData.badKey) return res.status(401).json({ error: soldData.error, badKey: true });
-      const prices = (soldData.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
-      if (prices.length >= 3) { usedQuery = attempts[i]; attemptIndex = i; break; }
-      if (i === attempts.length - 1) { usedQuery = attempts[i]; attemptIndex = i; }
-    }
-
-    const rawPrices = (soldData.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
-    const cleanPrices = removeOutliers(rawPrices);
-    const finalPrices = (cleanPrices.length >= 2 ? cleanPrices : rawPrices).sort((a, b) => a - b);
-
-    if (finalPrices.length < 2) {
-      return res.json({ error: 'Not enough sold data found. Try selecting a different comp card.', soldCount: rawPrices.length });
-    }
-
-    // Confidence: high = 5+ exact sales, medium = 3-4 or minor fallback, low = significant fallback
-    let confidence, fallbackNote = null;
-    if (attemptIndex === 0) {
-      confidence = finalPrices.length >= 5 ? 'high' : 'medium';
-    } else if (attemptIndex <= 2) {
-      confidence = 'medium';
-      fallbackNote = `Priced using similar cards: "${usedQuery}"`;
-    } else {
-      confidence = 'low';
-      fallbackNote = `Limited exact data — broadened to: "${usedQuery}"`;
-    }
-
-    const soldMedian = med(finalPrices);
-    const soldLow = finalPrices[0];
-    const soldHigh = finalPrices[finalPrices.length - 1];
-    const soldAvg = finalPrices.reduce((a, b) => a + b, 0) / finalPrices.length;
-
-    const forsaleData = await fetchEbayItems(usedQuery, 20, 'forsale', 'auto-price');
-    const forsalePrices = (forsaleData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0).sort((a, b) => a - b);
-    const competitionLow = forsalePrices[0] || null;
-
-    const aggressive = competitionLow ? Math.max(soldLow, competitionLow * 0.95) : soldLow * 1.05;
-    const optimal = soldMedian * 0.95;
-    const premium = soldMedian * 1.10;
-
-    res.json({
-      soldMedian: Math.round(soldMedian * 100) / 100,
-      soldAvg: Math.round(soldAvg * 100) / 100,
-      soldLow: Math.round(soldLow * 100) / 100,
-      soldHigh: Math.round(soldHigh * 100) / 100,
-      soldCount: finalPrices.length,
-      confidence,
-      fallbackNote,
-      usedQuery,
-      competitionLow: competitionLow ? Math.round(competitionLow * 100) / 100 : null,
-      competitionCount: forsalePrices.length,
-      recommendations: {
-        aggressive: { price: Math.round(aggressive * 100) / 100, label: 'Fast Sale', description: 'Price to sell quickly — slightly below competition' },
-        optimal:    { price: Math.round(optimal * 100) / 100,    label: 'Optimal',   description: 'Best balance of speed and return — just below sold median' },
-        premium:    { price: Math.round(premium * 100) / 100,    label: 'Premium',   description: 'Max return — 10% above median for patient sellers' },
-      }
-    });
-  } catch (err) {
-    console.error('[AutoPrice]', err.message);
-    res.status(500).json({ error: err.message });
-  }
+  return sendSoldUnavailable(res);
 });
 
 // ---- Bulk Price (Pro+) ----
 // Prices up to 20 cards at once, returning median sold price for each.
 app.post('/api/bulk-price', async (req, res) => {
-  const { queries } = req.body;
-  if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
-  if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
-
-  const scrapeDoCtx = getScrapeDoKeysForRequest(req);
-  if (scrapeDoCtx.keys.length === 0) {
-    return res.status(401).json({
-      error: 'Bulk Pricer needs your scrape.do API key. Add one in Settings → scrape.do API key.',
-      noKey: true,
-    });
-  }
-
-  const results = [];
-  for (const q of queries) {
-    try {
-      const query = q.trim();
-      const response = await fetchEbayItems(query, 25, 'sold', 'bulk-price', 0, scrapeDoCtx);
-      if (response.badKey) {
-        return res.status(401).json({ error: response.error, badKey: true });
-      }
-      // Use the same pipeline as the main Sold search so the comps actually
-      // match the card: variant filter (right player/set/parallel, exclude
-      // autos/relics/wrong colors) then drop mis-listed price outliers.
-      const matched = filterPriceOutliers(filterByVariant(response.results, query));
-      const prices = matched.map(r => parseFloat(r.price)).filter(p => p > 0);
-      prices.sort((a, b) => a - b);
-      const median = prices.length ? (prices.length % 2 ? prices[Math.floor(prices.length / 2)] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
-      // Return the matched comps (highest first) so the UI can show them and
-      // let the user exclude the random high ones.
-      const comps = matched
-        .map(r => ({ title: r.title || '', price: parseFloat(r.price), url: r.itemUrl || '', soldDate: r.soldDate || '', image: r.imageUrl || '' }))
-        .filter(c => c.price > 0)
-        .sort((a, b) => b.price - a.price);
-      results.push({ query: q, median: median ? Math.round(median * 100) / 100 : null, count: prices.length, low: prices[0] || null, high: prices[prices.length - 1] || null, comps });
-    } catch {
-      results.push({ query: q, median: null, count: 0, error: 'Failed' });
-    }
-    await new Promise(r => setTimeout(r, 300));
-  }
-  res.json({ results });
+  return sendSoldUnavailable(res);
 });
 
 // Create checkout session for extra promote slot
@@ -5427,7 +4015,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, parsePriceHtml, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
@@ -5436,7 +4024,7 @@ if (!process.env.CF_WORKER) {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`For-sale mode: ${USE_MOCK_FORSALE ? 'MOCK' : 'LIVE (eBay Browse API)'}`);
-      console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'LIVE (scrape.do, per-user keys)'}`);
+      console.log(`Sold mode: ${USE_MOCK_SOLD ? 'MOCK' : 'RETIRED (awaiting official eBay sold-data API)'}`);
       console.log(`EBAY_APP_ID: ${EBAY_APP_ID ? EBAY_APP_ID.slice(0, 10) + '...' : 'NOT SET'}`);
       console.log(`EBAY_CERT_ID: ${EBAY_CERT_ID ? '***set***' : 'NOT SET (Browse API will fail)'}`);
       console.log(`Stripe: ${stripeEnabled ? 'ENABLED' : 'NOT CONFIGURED — add keys to .env'}`);

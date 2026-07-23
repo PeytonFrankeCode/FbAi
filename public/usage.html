@@ -29,26 +29,7 @@
 <body>
   <div class="wrap">
     <h1>📊 Usage</h1>
-    <p class="sub">scrape.do (sold) &amp; eBay Browse (for-sale) — live counters. <span id="auto"></span></p>
-
-    <div class="grid">
-      <div class="card">
-        <div class="label">scrape.do — this month</div>
-        <div class="big"><span id="m-used" class="accent">—</span> <span class="muted" style="font-size:1rem">/ <span id="m-quota">250,000</span></span></div>
-        <div class="bar"><div id="m-bar"></div></div>
-        <div class="muted" style="font-size:.85rem;margin-top:.5rem"><span id="m-remaining">—</span> calls remaining</div>
-      </div>
-      <div class="card">
-        <div class="label">Sold calls today</div>
-        <div class="big" id="s-today">—</div>
-        <div class="muted" style="font-size:.85rem;margin-top:.5rem">cache hit rate: <span id="s-rate" class="accent">—</span></div>
-      </div>
-      <div class="card">
-        <div class="label">Sold cache hits today</div>
-        <div class="big accent" id="s-hits">—</div>
-        <div class="muted" style="font-size:.85rem;margin-top:.5rem">scrapes saved by caching</div>
-      </div>
-    </div>
+    <p class="sub">eBay Browse (for-sale) — live counters. <span id="auto"></span></p>
 
     <div class="section-title">For-Sale (eBay Browse API)</div>
     <div class="card">
@@ -68,17 +49,7 @@
       try {
         const r = await fetch('/api/stats/api-calls', { cache: 'no-store' });
         const d = await r.json();
-        const sd = d.scrapeDo || {}, fs = d.forsale || {};
-        document.getElementById('m-used').textContent = fmt(sd.monthUsed);
-        document.getElementById('m-quota').textContent = fmt(sd.monthQuota);
-        document.getElementById('m-remaining').textContent = fmt(sd.monthRemaining);
-        const usedPct = sd.monthQuota ? Math.min(100, (sd.monthUsed / sd.monthQuota) * 100) : 0;
-        const bar = document.getElementById('m-bar');
-        bar.style.width = usedPct + '%';
-        bar.style.background = usedPct > 90 ? 'var(--red)' : usedPct > 70 ? 'var(--amber)' : 'var(--accent)';
-        document.getElementById('s-today').textContent = fmt(sd.callsToday);
-        document.getElementById('s-hits').textContent = fmt(sd.cacheHitsToday);
-        document.getElementById('s-rate').textContent = pct(sd.cacheHitRatePct);
+        const fs = d.forsale || {};
         document.getElementById('f-today').textContent = fmt(fs.callsToday);
         document.getElementById('f-hits').textContent = fmt(fs.cacheHitsToday);
         document.getElementById('f-rate').textContent = pct(fs.cacheHitRatePct);
