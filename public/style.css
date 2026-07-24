@@ -9475,3 +9475,5 @@ footer {
 .inv-hist-side { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
 .inv-hist-cardcell { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
 .inv-hist-plus { color: var(--text-muted); font-weight: 700; }
+
+.inv-networth-now.inv-networth-neg { color: #e0655f; }
