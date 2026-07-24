@@ -12931,6 +12931,31 @@ function removeInvLocation(name) {
 }
 
 // ---- Export ----
+// Wipe the whole inventory back to an empty default state — cards, moves,
+// sale/trade history, wallet balance + log, the value graph, and every photo
+// (local cache + server copies). Not reversible.
+function resetInventory() {
+  if (!confirm('Reset your ENTIRE inventory?\n\nThis permanently clears every card, all sale/trade history, your wallet balance and log, the value-over-time graph, and all photos. It cannot be undone.')) return;
+  const inv = getInventory();
+  // Gather every photo id (items + history + local cache) and delete server-side.
+  const ids = new Set(Object.keys(getInvPhotos()));
+  inv.items.forEach(i => { if (i.hasPhoto) ids.add(i.id); });
+  inv.history.forEach(h => { if (h.gavePhotoId) ids.add(h.gavePhotoId); if (h.gotPhotoId) ids.add(h.gotPhotoId); });
+  ids.forEach(id => _invServerDeletePhoto(id));
+  try { localStorage.setItem(INV_PHOTOS_KEY, '{}'); } catch (_) {}
+
+  // Persist a fresh, empty inventory directly (bypassing saveInventory so the
+  // net-worth graph starts truly empty rather than seeding a $0 point).
+  const fresh = { items: [], locations: INV_DEFAULT_LOCATIONS.slice(), moves: [], wallet: 0, walletLog: [], history: [], netWorthHistory: [] };
+  localStorage.setItem('cardHuddleInventory', JSON.stringify(fresh));
+  schedulePushUserData();
+
+  _invFilter = { q: '', location: 'all', type: 'all' };
+  const sEl = document.getElementById('inv-search'); if (sEl) sEl.value = '';
+  if (_invNetWorthChart) { try { _invNetWorthChart.destroy(); } catch (_) {} _invNetWorthChart = null; }
+  renderInventory();
+}
+
 function exportInventoryCSV() {
   const inv = getInventory();
   if (inv.items.length === 0) { alert('No inventory items to export.'); return; }
