@@ -9463,3 +9463,6 @@ footer {
 /* Purchase (cash → card) history badge + disabled got-cash tab */
 .inv-hist-bought { color: #e0a85f; background: rgba(224, 168, 95, 0.12); border: 1px solid rgba(224, 168, 95, 0.35); }
 .inv-sale-tab-disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Inventory reset (destructive) */
+.inv-reset-btn:hover { border-color: #e0655f; color: #e0655f; }
