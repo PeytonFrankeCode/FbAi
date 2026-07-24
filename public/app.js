@@ -13017,9 +13017,16 @@ function renderWallet() {
 // (no load/save). Callers that already hold an inv snapshot use this so their
 // own saveInventory doesn't clobber the change. Positive delta = money in.
 function _walletApplyTo(inv, delta, note) {
-  const d = Number(delta) || 0;
-  if (!d) return;
-  inv.wallet = Math.round(((Number(inv.wallet) || 0) + d) * 100) / 100;
+  let d = Number(delta) || 0;
+  const cur = Number(inv.wallet) || 0;
+  // The wallet is a budget guideline — it never goes below $0. When a debit
+  // (e.g. buying a card) is more than the balance, only take what's there; the
+  // card's value shows up in the collection/net worth instead, so nothing is
+  // "lost" — the money just became a card.
+  if (d < 0 && cur + d < 0) d = -cur;
+  d = Math.round(d * 100) / 100;
+  if (!d) return; // nothing to apply (already empty, or a no-op delta)
+  inv.wallet = Math.round((cur + d) * 100) / 100;
   inv.walletLog.unshift({ id: _invId(), at: Date.now(), delta: d, note: String(note || '').slice(0, 80) });
   if (inv.walletLog.length > INV_WALLET_LOG_CAP) inv.walletLog.length = INV_WALLET_LOG_CAP;
 }
@@ -13363,7 +13370,8 @@ function removeWalletEntry(ref) {
   const delta = Number(entry.delta) || 0;
   const verb = delta >= 0 ? 'add' : 'subtraction';
   if (!confirm(`Remove this wallet ${verb}? Your balance will be adjusted by ${delta >= 0 ? '−' : '+'}${_invMoney(Math.abs(delta)).replace('-', '')} to stay consistent.`)) return;
-  inv.wallet = Math.round(((Number(inv.wallet) || 0) - delta) * 100) / 100;
+  // Reverse the entry's effect, but keep the budget from going below $0.
+  inv.wallet = Math.max(0, Math.round(((Number(inv.wallet) || 0) - delta) * 100) / 100);
   inv.walletLog.splice(idx, 1);
   saveInventory(inv);
   renderInventory();
