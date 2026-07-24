@@ -9466,3 +9466,12 @@ footer {
 
 /* Inventory reset (destructive) */
 .inv-reset-btn:hover { border-color: #e0655f; color: #e0655f; }
+
+/* Sale/trade: card+cash checkbox rows + multi-part history sides */
+.inv-sale-substep { font-weight: 500; font-size: 0.72rem; color: var(--text-muted); }
+.inv-sale-checks { display: flex; gap: 1.25rem; margin: 0.15rem 0 0.6rem; }
+.inv-sale-check { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.9rem; color: var(--text-primary); }
+.inv-sale-check input { width: auto; margin: 0; accent-color: var(--accent); }
+.inv-hist-side { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
+.inv-hist-cardcell { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.inv-hist-plus { color: var(--text-muted); font-weight: 700; }

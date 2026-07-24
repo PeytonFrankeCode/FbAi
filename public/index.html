@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=126" />
+  <link rel="stylesheet" href="style.css?v=127" />
 
 
 </head>
@@ -707,10 +707,10 @@
       <form id="inv-sale-form" onsubmit="return handleSaleTradeSubmit(event)">
 
         <!-- Step 1: what you gave -->
-        <h3 class="inv-sale-step">1 &middot; What you gave</h3>
-        <div class="inv-sale-toggle">
-          <button type="button" id="inv-sale-gave-mode-card" class="inv-sale-tab active" onclick="setSaleGaveMode('card')">&#127183; A card</button>
-          <button type="button" id="inv-sale-gave-mode-cash" class="inv-sale-tab" onclick="setSaleGaveMode('cash')">&#128176; Cash</button>
+        <h3 class="inv-sale-step">1 &middot; What you gave <span class="inv-sale-substep">(pick one or both)</span></h3>
+        <div class="inv-sale-checks">
+          <label class="inv-sale-check"><input type="checkbox" id="inv-sale-gave-has-card" checked onchange="updateSaleGaveUI()"> &#127183; A card</label>
+          <label class="inv-sale-check"><input type="checkbox" id="inv-sale-gave-has-cash" onchange="updateSaleGaveUI()"> &#128176; Cash</label>
         </div>
 
         <!-- gave: a card -->
@@ -745,10 +745,10 @@
         </div>
 
         <!-- Step 2: what you got back -->
-        <h3 class="inv-sale-step">2 &middot; What you got</h3>
-        <div class="inv-sale-toggle">
-          <button type="button" id="inv-sale-mode-cash" class="inv-sale-tab active" onclick="setSaleMode('cash')">&#128176; Cash</button>
-          <button type="button" id="inv-sale-mode-card" class="inv-sale-tab" onclick="setSaleMode('card')">&#127183; A card</button>
+        <h3 class="inv-sale-step">2 &middot; What you got <span class="inv-sale-substep">(pick one or both)</span></h3>
+        <div class="inv-sale-checks">
+          <label class="inv-sale-check"><input type="checkbox" id="inv-sale-got-has-cash" checked onchange="updateSaleGotUI()"> &#128176; Cash</label>
+          <label class="inv-sale-check"><input type="checkbox" id="inv-sale-got-has-card" onchange="updateSaleGotUI()"> &#127183; A card</label>
         </div>
 
         <!-- Cash branch -->
@@ -1852,7 +1852,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=162"></script>
+  <script src="app.js?v=163"></script>
   <script type="importmap">
   {
     "imports": {
