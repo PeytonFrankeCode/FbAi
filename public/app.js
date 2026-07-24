@@ -12378,10 +12378,13 @@ function getInventory() {
   return inv;
 }
 
-// Current collection value: wallet balance + market value of every card held.
+// Current collection value = wallet cash + (card market value − what you paid).
+// The card term is the unrealized gain/loss, so buying at fair value is a wash
+// and the line only moves with cash and with cards appreciating/depreciating.
 function _invNetWorth(inv) {
-  const cards = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
-  return Math.round(((Number(inv.wallet) || 0) + cards) * 100) / 100;
+  const value = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
+  const cost = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.paid) || 0), 0);
+  return Math.round(((Number(inv.wallet) || 0) + value - cost) * 100) / 100;
 }
 
 // Upsert today's collection-value snapshot (one point per day, last write wins)
@@ -13477,7 +13480,11 @@ let _invNetWorthChart = null;
 function renderNetWorthChart() {
   const inv = getInventory();
   const nowEl = document.getElementById('inv-networth-now');
-  if (nowEl) nowEl.textContent = _invMoney(_invNetWorth(inv));
+  if (nowEl) {
+    const nw = _invNetWorth(inv);
+    nowEl.textContent = _invMoney(nw);
+    nowEl.classList.toggle('inv-networth-neg', nw < 0);
+  }
 
   const canvas = document.getElementById('inv-networth-chart');
   const empty = document.getElementById('inv-networth-empty');
