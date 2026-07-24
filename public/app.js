@@ -13062,8 +13062,8 @@ function handleWalletSubmit(e) {
 // Record a card leaving (sold or traded) and what came back — cash (optionally
 // credited to the wallet) or another card (added to active inventory). The card
 // given moves out of active cards into the sold/traded history.
-let _saleMode = 'cash';          // what you GOT: 'cash' | 'card'
-let _saleGaveMode = 'card';      // what you GAVE: 'card' | 'cash'
+// Each side of a transaction can include a card, cash, or both — driven by the
+// four checkboxes (gave-has-card/cash, got-has-card/cash) read at submit time.
 let _salePhotoDraft = { gave: undefined, got: undefined };
 
 function openSaleTradeModal() {
@@ -13084,8 +13084,13 @@ function openSaleTradeModal() {
   ];
   _invFillSelect(document.getElementById('inv-sale-card'), opts, opts[0] ? opts[0].value : '__fresh__');
   onSaleCardPick();
-  setSaleGaveMode('card');
-  setSaleMode('cash');
+  // Default to a sale: gave a card, got cash.
+  document.getElementById('inv-sale-gave-has-card').checked = true;
+  document.getElementById('inv-sale-gave-has-cash').checked = false;
+  document.getElementById('inv-sale-got-has-cash').checked = true;
+  document.getElementById('inv-sale-got-has-card').checked = false;
+  updateSaleGaveUI();
+  updateSaleGotUI();
   document.getElementById('inv-sale-modal').classList.remove('hidden');
 }
 function closeSaleTradeModal() {
@@ -13102,39 +13107,31 @@ function onSaleCardPick() {
   if (fresh) fresh.classList.toggle('hidden', !isFresh);
 }
 
-function setSaleMode(mode) {
-  _saleMode = mode === 'card' ? 'card' : 'cash';
-  document.getElementById('inv-sale-mode-cash').classList.toggle('active', _saleMode === 'cash');
-  document.getElementById('inv-sale-mode-card').classList.toggle('active', _saleMode === 'card');
-  document.getElementById('inv-sale-cash').classList.toggle('hidden', _saleMode !== 'cash');
-  document.getElementById('inv-sale-card-got').classList.toggle('hidden', _saleMode !== 'card');
+function _saleChk(id) { const el = document.getElementById(id); return !!(el && el.checked); }
+
+function updateSaleGaveUI() {
+  document.getElementById('inv-sale-gave-card').classList.toggle('hidden', !_saleChk('inv-sale-gave-has-card'));
+  document.getElementById('inv-sale-gave-cash').classList.toggle('hidden', !_saleChk('inv-sale-gave-has-cash'));
   _updateSaleSubmitLabel();
 }
 
-// What you GAVE — a card (sale/trade) or cash (a purchase). Giving cash only
-// makes sense when getting a card, so it forces the "got" side to a card and
-// disables the got-cash tab; switching back re-enables it.
-function setSaleGaveMode(mode) {
-  _saleGaveMode = mode === 'cash' ? 'cash' : 'card';
-  document.getElementById('inv-sale-gave-mode-card').classList.toggle('active', _saleGaveMode === 'card');
-  document.getElementById('inv-sale-gave-mode-cash').classList.toggle('active', _saleGaveMode === 'cash');
-  document.getElementById('inv-sale-gave-card').classList.toggle('hidden', _saleGaveMode !== 'card');
-  document.getElementById('inv-sale-gave-cash').classList.toggle('hidden', _saleGaveMode !== 'cash');
-  const gotCashTab = document.getElementById('inv-sale-mode-cash');
-  if (_saleGaveMode === 'cash') {
-    if (_saleMode === 'cash') setSaleMode('card');      // cash-for-cash isn't a thing
-    if (gotCashTab) { gotCashTab.disabled = true; gotCashTab.classList.add('inv-sale-tab-disabled'); }
-  } else if (gotCashTab) {
-    gotCashTab.disabled = false; gotCashTab.classList.remove('inv-sale-tab-disabled');
-  }
+function updateSaleGotUI() {
+  document.getElementById('inv-sale-cash').classList.toggle('hidden', !_saleChk('inv-sale-got-has-cash'));
+  document.getElementById('inv-sale-card-got').classList.toggle('hidden', !_saleChk('inv-sale-got-has-card'));
   _updateSaleSubmitLabel();
 }
 
+// Name the button by the dominant shape: card→card = trade, cash→card = buy,
+// card→cash = sale, anything else = a generic log.
 function _updateSaleSubmitLabel() {
   const submit = document.getElementById('inv-sale-submit');
   if (!submit) return;
-  submit.textContent = _saleGaveMode === 'cash' ? 'Log purchase'
-    : _saleMode === 'cash' ? 'Log sale' : 'Log trade';
+  const gaveCard = _saleChk('inv-sale-gave-has-card'), gotCard = _saleChk('inv-sale-got-has-card');
+  const gotCash = _saleChk('inv-sale-got-has-cash');
+  submit.textContent = (gaveCard && gotCard) ? 'Log trade'
+    : (!gaveCard && gotCard) ? 'Log purchase'
+    : (gaveCard && gotCash && !gotCard) ? 'Log sale'
+    : 'Log it';
 }
 
 function _showSalePhoto(which, url) {
@@ -13162,78 +13159,88 @@ function handleSaleTradeSubmit(e) {
   e.preventDefault();
   const inv = getInventory();
   const now = Date.now();
-  const gaveMode = _saleGaveMode; // 'card' | 'cash'
-  const gotMode = _saleMode;      // 'cash' | 'card'
+  const gaveCard = _saleChk('inv-sale-gave-has-card');
+  const gaveCash = _saleChk('inv-sale-gave-has-cash');
+  const gotCard = _saleChk('inv-sale-got-has-card');
+  const gotCash = _saleChk('inv-sale-got-has-cash');
 
-  // Cash for cash isn't a sale/trade — the UI prevents it, but guard anyway.
-  if (gaveMode === 'cash' && gotMode === 'cash') {
+  if (!gaveCard && !gaveCash) { alert('Pick what you gave — a card, cash, or both.'); return false; }
+  if (!gotCard && !gotCash) { alert('Pick what you got — a card, cash, or both.'); return false; }
+  if (!gaveCard && !gotCard) {
     alert('Cash for cash isn’t a sale or trade — use "Add / adjust money" on the wallet instead.');
     return false;
   }
 
-  const note = document.getElementById('inv-sale-note').value.trim().slice(0, 120);
-  const entry = { id: _invId(), at: now, note };
-
-  // ---- What you GAVE ----
-  let givenItem = null;
-  let paidAmount = 0, paidSource = '', fromWallet = false;
-  if (gaveMode === 'card') {
+  // ---- Phase 1: read + validate everything BEFORE mutating (so a bad field
+  // never leaves an orphan photo or half-saved item behind). ----
+  const g = {}; // gave-card, resolved
+  if (gaveCard) {
     const sel = document.getElementById('inv-sale-card');
     const givenId = sel ? sel.value : '__fresh__';
-    givenItem = (givenId && givenId !== '__fresh__') ? inv.items.find(i => i.id === givenId) : null;
-    let gaveName, gavePrintRun, gavePhotoId = null;
-    if (givenItem) {
-      gaveName = givenItem.name;
-      gavePrintRun = givenItem.printRun || '';
-      if (getInvPhotos()[givenItem.id] || givenItem.hasPhoto) gavePhotoId = givenItem.id;
+    g.item = (givenId && givenId !== '__fresh__') ? inv.items.find(i => i.id === givenId) : null;
+    if (g.item) {
+      g.name = g.item.name;
+      g.printRun = g.item.printRun || '';
     } else {
-      gaveName = document.getElementById('inv-sale-gave-name').value.trim();
-      gavePrintRun = document.getElementById('inv-sale-gave-printrun').value.trim().slice(0, 20);
-      if (_salePhotoDraft.gave) {
-        gavePhotoId = _invId();
-        setInvPhotoLocal(gavePhotoId, _salePhotoDraft.gave);
-        _invServerPutPhoto(gavePhotoId, _salePhotoDraft.gave);
-      }
+      g.name = document.getElementById('inv-sale-gave-name').value.trim();
+      g.printRun = document.getElementById('inv-sale-gave-printrun').value.trim().slice(0, 20);
     }
-    if (!gaveName) { alert('Add the name of the card you gave.'); return false; }
-    entry.gaveName = gaveName;
-    entry.gavePrintRun = gavePrintRun;
-    entry.gavePhotoId = gavePhotoId;
-  } else {
-    paidAmount = Math.max(0, Number(document.getElementById('inv-sale-gave-cash-amount').value) || 0);
-    if (!paidAmount) { alert('Enter the cash amount you paid.'); return false; }
-    paidSource = document.getElementById('inv-sale-gave-cash-source').value || 'Other';
-    fromWallet = document.getElementById('inv-sale-from-wallet').checked;
-    entry.gaveCash = paidAmount;
-    entry.gaveSource = paidSource;
-    entry.fromWallet = fromWallet;
+    if (!g.name) { alert('Add the name of the card you gave.'); return false; }
+  }
+  const gc = {}; // gave-cash
+  if (gaveCash) {
+    gc.amount = Math.max(0, Number(document.getElementById('inv-sale-gave-cash-amount').value) || 0);
+    if (!gc.amount) { alert('Enter the cash amount you paid.'); return false; }
+    gc.source = document.getElementById('inv-sale-gave-cash-source').value || 'Other';
+    gc.fromWallet = document.getElementById('inv-sale-from-wallet').checked;
+  }
+  const r = {}; // got-card, resolved
+  if (gotCard) {
+    r.name = document.getElementById('inv-sale-got-name').value.trim();
+    if (!r.name) { alert('Add the name of the card you received.'); return false; }
+    r.printRun = document.getElementById('inv-sale-got-printrun').value.trim().slice(0, 20);
+    r.auto = document.getElementById('inv-sale-got-auto').checked;
+    r.mem = document.getElementById('inv-sale-got-mem').checked;
+    const raw = document.getElementById('inv-sale-got-value').value;
+    r.value = raw === '' ? 0 : Math.max(0, Number(raw) || 0);
+  }
+  const rc = {}; // got-cash
+  if (gotCash) {
+    rc.amount = Math.max(0, Number(document.getElementById('inv-sale-cash-amount').value) || 0);
+    if (!rc.amount) { alert('Enter the cash amount you received.'); return false; }
+    rc.source = document.getElementById('inv-sale-cash-source').value || 'Other';
+    rc.toWallet = document.getElementById('inv-sale-to-wallet').checked;
   }
 
-  // ---- What you GOT ----
-  if (gotMode === 'cash') {
-    // A sale: card out → cash in.
-    const amount = Math.max(0, Number(document.getElementById('inv-sale-cash-amount').value) || 0);
-    if (!amount) { alert('Enter the cash amount you received.'); return false; }
-    const source = document.getElementById('inv-sale-cash-source').value || 'Other';
-    const toWallet = document.getElementById('inv-sale-to-wallet').checked;
-    entry.kind = 'sold';
-    entry.cashAmount = amount;
-    entry.cashSource = source;
-    entry.toWallet = toWallet;
-    if (toWallet) _walletApplyTo(inv, amount, `Sold ${entry.gaveName} on ${source}`);
-  } else {
-    // Got a card — either a trade (gave a card) or a purchase (gave cash).
-    const gotName = document.getElementById('inv-sale-got-name').value.trim();
-    if (!gotName) { alert('Add the name of the card you received.'); return false; }
-    const gotPrintRun = document.getElementById('inv-sale-got-printrun').value.trim().slice(0, 20);
-    const gotAuto = document.getElementById('inv-sale-got-auto').checked;
-    const gotMem = document.getElementById('inv-sale-got-mem').checked;
-    const gotValRaw = document.getElementById('inv-sale-got-value').value;
-    let gotValue = gotValRaw === '' ? 0 : Math.max(0, Number(gotValRaw) || 0);
-    // Buying sets the new card's cost basis to what you paid; if you didn't
-    // enter a market value, default it to the price paid.
-    const boughtCost = gaveMode === 'cash' ? paidAmount : 0;
-    if (gotValue === 0 && boughtCost > 0) gotValue = boughtCost;
+  // ---- Phase 2: commit ----
+  // Classify: card↔card = trade, cash→card = purchase, card→cash = sale.
+  const kind = (gaveCard && gotCard) ? 'traded' : (gotCard ? 'bought' : 'sold');
+  const note = document.getElementById('inv-sale-note').value.trim().slice(0, 120);
+  const entry = { id: _invId(), at: now, kind, note };
+
+  if (gaveCard) {
+    let gavePhotoId = null;
+    if (g.item) {
+      if (getInvPhotos()[g.item.id] || g.item.hasPhoto) gavePhotoId = g.item.id;
+    } else if (_salePhotoDraft.gave) {
+      gavePhotoId = _invId();
+      setInvPhotoLocal(gavePhotoId, _salePhotoDraft.gave);
+      _invServerPutPhoto(gavePhotoId, _salePhotoDraft.gave);
+    }
+    entry.gaveName = g.name;
+    entry.gavePrintRun = g.printRun;
+    entry.gavePhotoId = gavePhotoId;
+  }
+  if (gaveCash) {
+    entry.gaveCash = gc.amount;
+    entry.gaveSource = gc.source;
+    entry.fromWallet = gc.fromWallet;
+  }
+  if (gotCard) {
+    // Cost basis = the cash you put into the deal; default value to it if blank.
+    const boughtCost = gaveCash ? gc.amount : 0;
+    let value = r.value;
+    if (value === 0 && boughtCost > 0) value = boughtCost;
     const newId = _invId();
     const hasPhoto = !!_salePhotoDraft.got;
     if (hasPhoto) {
@@ -13241,29 +13248,36 @@ function handleSaleTradeSubmit(e) {
       _invServerPutPhoto(newId, _salePhotoDraft.got);
     }
     inv.items.push({
-      id: newId, name: gotName, printRun: gotPrintRun, paid: boughtCost, value: gotValue,
-      auto: gotAuto, mem: gotMem, qty: 1, location: inv.locations[0],
-      valueHistory: gotValue > 0 ? [{ at: now, value: gotValue }] : [],
+      id: newId, name: r.name, printRun: r.printRun, paid: boughtCost, value,
+      auto: r.auto, mem: r.mem, qty: 1, location: inv.locations[0],
+      valueHistory: value > 0 ? [{ at: now, value }] : [],
       hasPhoto, addedAt: now, updatedAt: now,
     });
-    entry.kind = gaveMode === 'cash' ? 'bought' : 'traded';
-    entry.gotName = gotName;
-    entry.gotPrintRun = gotPrintRun;
-    entry.gotAuto = gotAuto;
-    entry.gotMem = gotMem;
-    entry.gotValue = gotValue;
+    entry.gotName = r.name;
+    entry.gotPrintRun = r.printRun;
+    entry.gotAuto = r.auto;
+    entry.gotMem = r.mem;
+    entry.gotValue = value;
     entry.gotItemId = newId;
     entry.gotPhotoId = hasPhoto ? newId : null;
-    // Debit the wallet for a purchase (now that we know the card's name).
-    if (gaveMode === 'cash' && fromWallet) _walletApplyTo(inv, -paidAmount, `Bought ${gotName} on ${paidSource}`);
+  }
+  if (gotCash) {
+    entry.cashAmount = rc.amount;
+    entry.cashSource = rc.source;
+    entry.toWallet = rc.toWallet;
+    if (rc.toWallet) {
+      _walletApplyTo(inv, rc.amount, entry.gaveName ? `Sold ${entry.gaveName} on ${rc.source}` : `Cash received (${rc.source})`);
+    }
+  }
+  if (gaveCash && gc.fromWallet) {
+    _walletApplyTo(inv, -gc.amount, entry.gotName ? `Bought ${entry.gotName} on ${gc.source}` : `Cash paid (${gc.source})`);
   }
 
-  // ---- Retire the given card (only when a card was given) ----
-  if (givenItem) {
-    const left = (Number(givenItem.qty) || 1) - 1;
-    if (left > 0) { givenItem.qty = left; givenItem.updatedAt = now; }
-    else { inv.items = inv.items.filter(i => i.id !== givenItem.id); }
-    // Photo is intentionally kept — the history entry still references it.
+  // ---- Retire the given card (one unit) ----
+  if (gaveCard && g.item) {
+    const left = (Number(g.item.qty) || 1) - 1;
+    if (left > 0) { g.item.qty = left; g.item.updatedAt = now; }
+    else { inv.items = inv.items.filter(i => i.id !== g.item.id); }
   }
 
   inv.history.unshift(entry);
@@ -13290,24 +13304,26 @@ function renderInvHistory() {
       ? `<img src="${escHtml(photos[photoId])}" alt="${escHtml(name)}" />`
       : '<div class="inv-thumb-placeholder">&#127183;</div>';
     const pr = _invFmtPrintRun(printRun);
-    return `<div class="inv-hist-thumb">${thumb}</div>
-      <span class="inv-hist-name">${escHtml(name || '')}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</span>`;
+    return `<div class="inv-hist-cardcell"><div class="inv-hist-thumb">${thumb}</div>
+      <span class="inv-hist-name">${escHtml(name || '')}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</span></div>`;
   };
   const cashCell = (amount, source, tag) => `<div class="inv-hist-cash">
       <span class="inv-hist-amount">${_invMoney(amount)}</span>
       <span class="inv-hist-src">${escHtml(source || '')}${tag ? ` · ${tag}` : ''}</span>
     </div>`;
   const KIND_LABEL = { sold: 'SOLD', traded: 'TRADED', bought: 'BOUGHT' };
+  // A side can hold a card, cash, or both (a card + cash boot).
+  const side = (parts) => `<div class="inv-hist-side">${parts.filter(Boolean).join('<span class="inv-hist-plus">+</span>')}</div>`;
 
   el.innerHTML = inv.history.slice(0, INV_HISTORY_SHOWN).map(h => {
-    // Left = what you gave (a card, or cash for a purchase).
-    const gaveHtml = (h.gaveCash != null)
-      ? cashCell(h.gaveCash, h.gaveSource, h.fromWallet ? 'from wallet' : '')
-      : `<div class="inv-hist-gave">${cardCell(h.gaveName, h.gavePrintRun, h.gavePhotoId)}</div>`;
-    // Right = what you got (cash for a sale, otherwise a card).
-    const gotHtml = (h.kind === 'sold')
-      ? cashCell(h.cashAmount, h.cashSource, h.toWallet ? 'to wallet' : '')
-      : `<div class="inv-hist-card">${cardCell(h.gotName, h.gotPrintRun, h.gotPhotoId)}</div>`;
+    const gaveHtml = side([
+      h.gaveName != null ? cardCell(h.gaveName, h.gavePrintRun, h.gavePhotoId) : '',
+      h.gaveCash != null ? cashCell(h.gaveCash, h.gaveSource, h.fromWallet ? 'from wallet' : '') : '',
+    ]);
+    const gotHtml = side([
+      h.gotName != null ? cardCell(h.gotName, h.gotPrintRun, h.gotPhotoId) : '',
+      h.cashAmount != null ? cashCell(h.cashAmount, h.cashSource, h.toWallet ? 'to wallet' : '') : '',
+    ]);
     return `<div class="inv-hist-row">
       <span class="inv-hist-kind inv-hist-${h.kind}">${KIND_LABEL[h.kind] || 'LOGGED'}</span>
       ${gaveHtml}
