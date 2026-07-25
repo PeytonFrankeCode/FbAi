@@ -3405,7 +3405,9 @@ function switchView(view) {
   let collSub = null;
   let proplusSub = null;
   if (view === 'grading') { view = 'search'; searchSub = 'grading'; }
-  else if (view === 'tracked') { view = 'collection'; collSub = 'tracked'; }
+  // My Cards (collection / tracked) was replaced by Inventory — send any
+  // legacy links or deep-links there instead of a page that no longer exists.
+  else if (view === 'collection' || view === 'tracked') { view = 'inventory'; }
 
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
@@ -3419,8 +3421,8 @@ function switchView(view) {
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
-  trackedView.classList.add('hidden');
-  collectionView.classList.add('hidden');
+  if (trackedView) trackedView.classList.add('hidden');
+  if (collectionView) collectionView.classList.add('hidden');
   sellerView.classList.add('hidden');
   gradingView.classList.add('hidden');
   if (rainbowPage) rainbowPage.classList.add('hidden');
@@ -3440,10 +3442,6 @@ function switchView(view) {
     if (rainbowPage) { rainbowPage.classList.remove('hidden'); initRainbowPage(); }
   } else if (view === 'browse') {
     if (browseView) { browseView.classList.remove('hidden'); initBrowseView(); }
-  } else if (view === 'collection') {
-    collectionView.classList.remove('hidden');
-    initCollectionView();
-    if (collSub) switchCollectionTab(collSub);
   } else if (view === 'seller') {
     sellerView.classList.remove('hidden');
     initShowcase();
@@ -6536,6 +6534,9 @@ function switchChecklistSubtab(tab) {
 }
 
 function renderPortfolio() {
+  // My Cards was removed (Inventory replaced it). This survives only for the
+  // account-sync rerender hook; no-op when its DOM is gone.
+  if (!document.getElementById('portfolio-total-cards')) return;
   const coll = getCollection();
   document.getElementById('portfolio-total-cards').textContent = coll.length;
   const totalCost = coll.reduce((s, c) => s + (c.purchasePrice || 0), 0);
@@ -8814,7 +8815,7 @@ function renderShowcase() {
         <h3>Your showcase is empty</h3>
         <p>Build your virtual table in three steps:</p>
         <ol>
-          <li>Add cards from <strong>My Cards</strong> (or add one manually).</li>
+          <li>Add cards from your <strong>Inventory</strong> (or add one manually).</li>
           <li>Mark each card <strong>For sale</strong> or <strong>For trade</strong>.</li>
           <li>Buyers tap through to <strong>eBay</strong>; traders tap through to <strong>Veriswap</strong>.</li>
         </ol>
@@ -8859,23 +8860,28 @@ function removeShowcaseCard(id) {
   renderShowcase();
 }
 
-// --- Add from My Cards picker ---
+// --- Add from Inventory picker ---
+// Pulls the card's name (+ print run), price (market value) and photo from the
+// Inventory tab, which replaced the old My Cards collection.
 function openShowcasePicker() {
   const modal = document.getElementById('showcase-picker-modal');
   const body = document.getElementById('showcase-picker-body');
   if (!modal || !body) return;
-  const coll = getCollection();
-  if (!coll.length) {
-    body.innerHTML = `<p class="seller-empty">You don't have any cards in My Cards yet. Add some there first, or use <strong>+ Add Manually</strong>.</p>`;
+  const invItems = getInventory().items;
+  const photos = getInvPhotos();
+  if (!invItems.length) {
+    body.innerHTML = `<p class="seller-empty">You don't have any cards in your Inventory yet. Add some on the <strong>Inventory</strong> tab first, or use <strong>+ Add Manually</strong>.</p>`;
   } else {
     body.innerHTML = `
       <div class="sc-picker-list">
-        ${coll.map((c, i) => {
-          const name = _scCollName(c);
-          const img = c.imageUrl
-            ? `<img src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
+        ${invItems.map((it, i) => {
+          const pr = _invFmtPrintRun(it.printRun);
+          const name = `${it.name}${pr ? ' ' + pr : ''}`;
+          const photo = photos[it.id];
+          const img = photo
+            ? `<img src="${escHtml(photo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
             : '<span class="sc-picker-noimg"></span>';
-          const val = (c.estValue > 0) ? `$${c.estValue.toFixed(2)}` : '';
+          const val = (Number(it.value) > 0) ? _invMoney(it.value) : '';
           return `<label class="sc-picker-row">
             <input type="checkbox" class="sc-picker-check" value="${i}" />
             ${img}
@@ -8892,18 +8898,20 @@ function closeShowcasePicker() {
   document.getElementById('showcase-picker-modal')?.classList.add('hidden');
 }
 function addSelectedToShowcase() {
-  const coll = getCollection();
-  const items = getShowcase();
+  const invItems = getInventory().items;
+  const photos = getInvPhotos();
+  const showcase = getShowcase();
   const checks = document.querySelectorAll('.sc-picker-check:checked');
   let added = 0;
   checks.forEach(ch => {
-    const c = coll[parseInt(ch.value, 10)];
-    if (!c) return;
-    items.push({
+    const it = invItems[parseInt(ch.value, 10)];
+    if (!it) return;
+    const pr = _invFmtPrintRun(it.printRun);
+    showcase.push({
       id: 'sc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-      title: _scCollName(c),
-      imageUrl: c.imageUrl || '',
-      price: (typeof c.estValue === 'number' && c.estValue > 0) ? c.estValue : null,
+      title: `${it.name}${pr ? ' ' + pr : ''}`,
+      imageUrl: photos[it.id] || '',
+      price: (Number(it.value) > 0) ? it.value : null,
       status: 'showcase',
       ebayUrl: '',
       veriswapUrl: '',
@@ -8911,7 +8919,7 @@ function addSelectedToShowcase() {
     });
     added++;
   });
-  if (added) saveShowcase(items);
+  if (added) saveShowcase(showcase);
   closeShowcasePicker();
   renderShowcase();
 }
