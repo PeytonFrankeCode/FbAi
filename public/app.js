@@ -6382,6 +6382,7 @@ const USER_SYNC_DEBOUNCE_MS = 800;
 let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
 let _userSyncTimer = null;
 let _userSyncing = false;
+let _syncTooBigWarned = false;    // one-shot notice when the account blob is over the cap
 
 function _userSyncPayload() {
   const data = {};
@@ -6420,11 +6421,24 @@ async function pushUserDataNow() {
   if (!token) return;
   _userSyncing = true;
   try {
-    await fetch('/api/user/data', {
+    const res = await fetch('/api/user/data', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ data: _userSyncPayload() }),
     });
+    if (res && res.ok) {
+      _syncTooBigWarned = false; // healthy again
+    } else if (res && res.status === 413) {
+      // Blob over the 1MB cap — sync is silently failing for EVERYTHING
+      // (inventory included). Tell the user once so it's not a mystery.
+      console.warn('[sync] push rejected (413): account data over the size cap');
+      if (!_syncTooBigWarned && typeof showPortfolioToast === 'function') {
+        _syncTooBigWarned = true;
+        showPortfolioToast('Your data got too large to sync across devices. Remove some photos, or Reset inventory, to restore syncing.');
+      }
+    } else {
+      console.warn('[sync] push failed HTTP', res && res.status);
+    }
   } catch (err) {
     console.warn('[sync] push failed:', err && err.message);
   } finally {
@@ -8860,6 +8874,26 @@ function removeShowcaseCard(id) {
   renderShowcase();
 }
 
+// Re-encode a data-URL image at a smaller size. Used to store a lean showcase
+// thumbnail instead of the full inventory photo, keeping the synced account
+// blob well under its cap.
+function _downscaleDataUrl(dataUrl, maxDim = 240, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onerror = () => reject(new Error('decode failed'));
+    img.onload = () => {
+      const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight)) || 1;
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      try { resolve(c.toDataURL('image/jpeg', quality)); } catch (e) { reject(e); }
+    };
+    img.src = dataUrl;
+  });
+}
+
 // --- Add from Inventory picker ---
 // Pulls the card's name (+ print run), price (market value) and photo from the
 // Inventory tab, which replaced the old My Cards collection.
@@ -8897,20 +8931,26 @@ function openShowcasePicker() {
 function closeShowcasePicker() {
   document.getElementById('showcase-picker-modal')?.classList.add('hidden');
 }
-function addSelectedToShowcase() {
+async function addSelectedToShowcase() {
   const invItems = getInventory().items;
   const photos = getInvPhotos();
   const showcase = getShowcase();
-  const checks = document.querySelectorAll('.sc-picker-check:checked');
+  const checks = [...document.querySelectorAll('.sc-picker-check:checked')];
   let added = 0;
-  checks.forEach(ch => {
+  for (const ch of checks) {
     const it = invItems[parseInt(ch.value, 10)];
-    if (!it) return;
+    if (!it) continue;
     const pr = _invFmtPrintRun(it.printRun);
+    // Store a small thumbnail rather than the full inventory photo — the
+    // showcase syncs in the 1MB account blob, so keeping it lean protects
+    // sync (inventory included) from ever hitting the cap.
+    let img = '';
+    const full = photos[it.id];
+    if (full) { try { img = await _downscaleDataUrl(full, 240, 0.7); } catch (_) { img = full; } }
     showcase.push({
       id: 'sc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
       title: `${it.name}${pr ? ' ' + pr : ''}`,
-      imageUrl: photos[it.id] || '',
+      imageUrl: img,
       price: (Number(it.value) > 0) ? it.value : null,
       status: 'showcase',
       ebayUrl: '',
@@ -8918,7 +8958,7 @@ function addSelectedToShowcase() {
       note: '',
     });
     added++;
-  });
+  }
   if (added) saveShowcase(showcase);
   closeShowcasePicker();
   renderShowcase();
