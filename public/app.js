@@ -1114,7 +1114,7 @@ async function fetchVariants(query) {
         setLoading(false);
         hideSkeleton();
         errorMsg.classList.remove('hidden');
-        errorMsg.innerHTML = `${escHtml(data.error || 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.')}`;
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold price data is temporarily unavailable.')}`;
         return;
       }
       showLogin();
@@ -1130,7 +1130,7 @@ async function fetchVariants(query) {
       variantsTitle.innerHTML = '';
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>Sold price search is temporarily unavailable. In the meantime, use For Sale mode to search active listings.</p>';
       variantsGrid.appendChild(msg);
       variantsSection.classList.remove('hidden');
       return;
@@ -1284,7 +1284,7 @@ async function fetchDirectSearch(query) {
         setLoading(false);
         hideSkeleton();
         errorMsg.classList.remove('hidden');
-        errorMsg.innerHTML = `${escHtml(data.error || 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.')}`;
+        errorMsg.innerHTML = `${escHtml(data.error || 'Sold price data is temporarily unavailable.')}`;
         return;
       }
       showLogin();
@@ -1305,7 +1305,7 @@ async function fetchDirectSearch(query) {
       meta.classList.add('hidden');
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>Sold price search is temporarily unavailable. In the meantime, use For Sale mode to search active listings.</p>';
       grid.appendChild(msg);
       backBtn.classList.remove('hidden');
       return;
@@ -1673,7 +1673,7 @@ async function performSearch(query, opts = {}) {
       meta.classList.add('hidden');
       const msg = document.createElement('div');
       msg.className = 'no-listings-box';
-      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Currently Unavailable</h3><p>eBay retired the Finding API and we are awaiting approval for the Marketplace Insights API. Sold search will return once approved. In the meantime, use For Sale mode to search active listings.</p>';
+      msg.innerHTML = '<div class="no-listings-icon">&#9888;&#65039;</div><h3>Sold Search Temporarily Unavailable</h3><p>Sold price search is temporarily unavailable. In the meantime, use For Sale mode to search active listings.</p>';
       grid.appendChild(msg);
       return;
     }
@@ -1765,7 +1765,7 @@ async function performSearch(query, opts = {}) {
     if (fallback) {
       const note = document.createElement('div');
       note.className = 'sold-fallback-note';
-      note.innerHTML = `<span class="sold-fallback-icon">&#128161;</span> <span>Showing <strong>live asking prices</strong> for &ldquo;${escHtml(query)}&rdquo;. Sold price history is temporarily unavailable while we connect eBay’s official sold-data API.</span>`;
+      note.innerHTML = `<span class="sold-fallback-icon">&#128161;</span> <span>Showing <strong>live asking prices</strong> for &ldquo;${escHtml(query)}&rdquo;. Sold price history is temporarily unavailable.</span>`;
       grid.insertBefore(note, grid.firstChild);
     }
 
@@ -3907,7 +3907,7 @@ async function selectScannerMatch(index) {
 
     if (!res.ok) {
       errEl.textContent = (data.soldUnavailable || data.noKey)
-        ? 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.'
+        ? 'Sold price data is temporarily unavailable.'
         : (data.error || 'Search failed.');
       errEl.classList.remove('hidden');
       return;
@@ -5453,9 +5453,9 @@ function _scanValueLocked(q, data) {
   const est = _lastGradeAnalysis ? _lastGradeAnalysis.overall : 9;
   const tier = _TIER_LABEL[_gradeToTier(est)];
   return `<div class="gradescan-value-card gradescan-value-locked">
-    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Live sold-price data for “${escHtml(q)}” is temporarily unavailable while we connect eBay’s official sold-data API.</p>
+    <p class="gradescan-value-swing">A <strong>${tier}</strong> often sells for several times its raw price. Live sold-price data for “${escHtml(q)}” is temporarily unavailable.</p>
     <div class="gradescan-cta-card">
-      <p class="gradescan-track-msg">Sold comps will return once the official API is connected.</p>
+      <p class="gradescan-track-msg">Sold comps are temporarily unavailable.</p>
     </div>
   </div>` + _scanLeadBlock();
 }
@@ -7227,7 +7227,7 @@ async function refreshPortfolioValues() {
   renderPortfolio();
   if (btn) { btn.disabled = false; btn.innerHTML = origHTML; }
   showPortfolioToast(soldOff
-    ? 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API.'
+    ? 'Sold price data is temporarily unavailable.'
     : refreshed > 0
       ? `Valued ${refreshed} card${refreshed !== 1 ? 's' : ''} from live sold comps.`
       : 'No sold comps found. Try more specific card details.');
