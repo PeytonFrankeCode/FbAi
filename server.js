@@ -679,7 +679,7 @@ function isProUser(username) {
 // Every sold-based endpoint funnels through this single helper so the app
 // degrades gracefully — no crashes, one consistent message — instead of
 // pretending sold search still works.
-const SOLD_UNAVAILABLE_MSG = 'Sold price data is temporarily unavailable while we connect eBay’s official sold-data API. Use For Sale mode for live listings in the meantime.';
+const SOLD_UNAVAILABLE_MSG = 'Sold price data is temporarily unavailable. Use For Sale mode for live listings in the meantime.';
 function sendSoldUnavailable(res) {
   // HTTP 200 (not an error status) so the frontend's graceful "sold unavailable"
   // handlers run — they read the body after an `if (!res.ok) throw` guard, the
