@@ -1552,13 +1552,218 @@ app.get('/api/grading-advisor', async (req, res) => {
 });
 
 // ---- /api/direct-search ----
+// Primary search endpoint for the main Search button. For Sale mode runs live
+// off the eBay Browse API; Sold mode is retired and returns "unavailable".
 app.get('/api/direct-search', async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
+  const minPrice = parseFloat(req.query.minPrice);
+  const maxPrice = parseFloat(req.query.maxPrice);
+  const applyPriceFilter = (items) => filterByPriceRange(items, minPrice, maxPrice);
+  // Mirror /api/search: For Sale results get the strict variant filter so the
+  // user only sees listings that actually match the searched card.
+  const applyVariantFilter = (items) => filterByVariant(items, query, { strict: true });
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
+  }
+
+  // Sold data retired — bail with the unavailable state. For Sale continues.
+  if (mode === 'sold') return sendSoldUnavailable(res);
+
+  if (USE_MOCK_FORSALE) {
+    return res.json(getMockDirectSearch(query, mode));
+  }
+
+  try {
+    const serial = extractSerial(query);
+
+    if (serial) {
+      // Serial search (e.g. /5 = print run of 5)
+      // Dual search: targeted with serial + broad without, then filter
+      const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
+      const [targetedResults, broadResults] = await Promise.all([
+        fetchEbayItems(query, 50, mode, 'variants-serial'),
+        fetchEbayItems(baseQuery, 50, mode, 'variants-serial-broad'),
+      ]);
+
+      // Merge and dedup
+      const seen = new Set();
+      const allResults = [];
+      for (const item of [...targetedResults.results, ...broadResults.results]) {
+        if (!seen.has(item.itemId)) {
+          seen.add(item.itemId);
+          allResults.push(item);
+        }
+      }
+
+      // Exact: print run matches (e.g. /5, 1/5, 3/5 but not /50 or 5/125)
+      const printRunPattern = new RegExp(`\\/${serial}(?![0-9])`);
+      const exactMatches = allResults.filter(item => printRunPattern.test(item.title || ''));
+
+      // Similar: other numbered cards sorted by print run proximity
+      const numberedPattern = /\/(\d{1,4})(?![0-9])/;
+      const requestedSerial = parseInt(serial, 10);
+      const exactIds = new Set(exactMatches.map(r => r.itemId));
+      const similarMatches = allResults
+        .filter(item => !exactIds.has(item.itemId) && numberedPattern.test(item.title || ''))
+        .sort((a, b) => {
+          const aNum = parseInt((a.title.match(numberedPattern) || [])[1], 10) || 9999;
+          const bNum = parseInt((b.title.match(numberedPattern) || [])[1], 10) || 9999;
+          const aDiff = Math.abs(aNum - requestedSerial);
+          const bDiff = Math.abs(bNum - requestedSerial);
+          return aDiff !== bDiff ? aDiff - bDiff : aNum - bNum;
+        });
+
+      // Return exact matches first, then similar (price + strict variant filter applied)
+      const combined = applyVariantFilter(applyPriceFilter([...exactMatches, ...similarMatches]));
+      if (combined.length > 0) {
+        const approx = computeApproxValue(exactMatches.length > 0 ? exactMatches : combined.slice(0, 10), 'serial');
+        return res.json({ results: combined.slice(0, 40), total: combined.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: approx, mode, serial, similarResults: applyVariantFilter(applyPriceFilter(similarMatches)).slice(0, 20) });
+      }
+
+      return res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode, serial, similarResults: [] });
+    }
+
+    // No serial — standard search: try exact first
+    const exact = await fetchEbayItems(query, 20, mode, 'variants');
+    if (exact.results.length > 0) {
+      const filtered = applyVariantFilter(applyPriceFilter(exact.results));
+      return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
+    }
+
+    // No exact results — try broadening
+    const parsed = parseCardQuery(query);
+    const broader = buildBroadenedQueries(parsed);
+
+    for (const level of broader) {
+      const broadResult = await fetchEbayItems(level.query, 20, mode, 'variants-broadened');
+      if (broadResult.results.length > 0) {
+        const filtered = applyPriceFilter(broadResult.results);
+        const approx = computeApproxValue(filtered, level.label);
+        return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'broadened', broadenedQuery: level.query, approximateValue: approx, mode });
+      }
+    }
+
+    // Nothing found at any level
+    res.json({ results: [], total: 0, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
+
+  } catch (err) {
+    if (err.isEbayError) {
+      console.error('eBay direct-search ack failure:', err.message);
+      return res.status(502).json({ error: 'eBay API error', detail: err.message });
+    }
+    console.error('eBay direct-search error:', err.message);
+    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
+    const status = err.response?.status || 500;
+    res.status(status).json({ error: 'Failed to fetch from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
+  }
 });
 
 // ---- /api/variants ----
+// The main Search button hits this to group listings into card variants.
+// For Sale mode runs live off the eBay Browse API; Sold mode is retired and
+// returns the shared "temporarily unavailable" state.
 app.get('/api/variants', async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
+  const minPrice = parseFloat(req.query.minPrice);
+  const maxPrice = parseFloat(req.query.maxPrice);
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
+  }
+
+  // Sold data retired — bail with the unavailable state. For Sale continues.
+  if (mode === 'sold') return sendSoldUnavailable(res);
+
+  if (USE_MOCK_FORSALE) {
+    return res.json(getMockVariants(query, mode));
+  }
+
+  try {
+    // Extract serial number (e.g. /5 = print run of 5)
+    const serial = extractSerial(query);
+    const baseQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
+
+    let rawResults;
+    if (serial) {
+      // Dual search when serial present: targeted + broad for better coverage
+      const [targeted, broad] = await Promise.all([
+        fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
+        fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
+      ]);
+      const seen = new Set();
+      rawResults = [];
+      for (const item of [...targeted.results, ...broad.results]) {
+        if (!seen.has(item.itemId)) {
+          seen.add(item.itemId);
+          rawResults.push(item);
+        }
+      }
+    } else {
+      const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
+      rawResults = result.results;
+    }
+    // Drop listings outside the user's price range before grouping into variants
+    rawResults = filterByPriceRange(rawResults, minPrice, maxPrice);
+    const playerName = extractPlayerName(query);
+
+    const variantMap = {};
+    rawResults.forEach(item => {
+      const title = item.title || '';
+      const year = extractYear(title);
+      const set = extractSet(title);
+      const parallel = extractParallel(title) || 'Base';
+
+      if (!year && !set) return;
+
+      const displayName = [year, set && `Panini ${set}`, parallel].filter(Boolean).join(' ').trim()
+        || [year, set, parallel].filter(Boolean).join(' ').trim();
+      const key = displayName.toLowerCase();
+      if (!key) return;
+
+      const price = parseFloat(item.price) || 0;
+
+      if (!variantMap[key]) {
+        variantMap[key] = { displayName, year, set, parallel, prices: [], imageUrl: null };
+      }
+      if (price > 0) variantMap[key].prices.push(price);
+      if (!variantMap[key].imageUrl && item.imageUrl) variantMap[key].imageUrl = item.imageUrl;
+    });
+
+    const variants = Object.entries(variantMap)
+      .map(([key, v]) => {
+        const prices = v.prices;
+        const avg = prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+        // Build a specific search query using player name + variant's actual year/set/parallel
+        // Append serial number (e.g. /4) so it flows through to /api/search for filtering
+        const searchParts = [playerName, v.year, v.set, v.parallel].filter(Boolean);
+        if (serial) searchParts.push(`/${serial}`);
+        return {
+          id: key.replace(/[^a-z0-9]+/g, '-'),
+          displayName: v.displayName,
+          searchQuery: searchParts.join(' '),
+          salesCount: prices.length,
+          avgPrice: avg,
+          priceRange: prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null,
+          imageUrl: v.imageUrl,
+        };
+      })
+      .filter(v => v.displayName)
+      .sort((a, b) => b.salesCount - a.salesCount)
+      .slice(0, 12);
+
+    res.json({ variants, mock: false, mode, serial: serial || null });
+
+  } catch (err) {
+    if (err.isEbayError) {
+      console.error('eBay variants ack failure:', err.message);
+      return res.status(502).json({ error: 'eBay API error', detail: err.message });
+    }
+    console.error('eBay variants API error:', err.message);
+    const ebayDetail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
+    const status = err.response?.status || 500;
+    res.status(status).json({ error: 'Failed to fetch variants from eBay', detail: `HTTP ${status}: ${ebayDetail}` });
+  }
 });
 
 
