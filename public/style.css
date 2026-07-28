@@ -9425,7 +9425,28 @@ footer {
 .inv-networth-label { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
 .inv-networth-sub { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 0.35rem; }
 .inv-networth-now { font-size: 1.25rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
-.inv-networth-wrap { position: relative; height: 170px; }
+.inv-networth-wrap { position: relative; height: 200px; }
+/* Two headline figures: collection value (wallet + cards) and profit (after cost).
+   Each is keyed by a dot matching its line on the chart. */
+.inv-networth-nums { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+.inv-nw-stat { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+.inv-nw-key {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.66rem; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+}
+.inv-nw-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.inv-nw-dot-total { background: #5ece99; }
+.inv-nw-dot-profit { background: #a06ff0; }
+.inv-nw-stat .inv-networth-now { font-size: 1.1rem; }
+/* Narrow screens: label on its own row, then the two figures side by side
+   (stacking them vertically wastes the width and buries the chart). */
+@media (max-width: 560px) {
+  .inv-networth-head { flex-wrap: wrap; }
+  .inv-networth-label { flex: 1 0 100%; }
+  .inv-networth-nums { flex: 1 0 100%; gap: 1.75rem; margin-top: 0.35rem; }
+  .inv-nw-stat { align-items: flex-start; }
+}
 
 /* Print-run badge on similar comps (main sold popup + checklist panels) */
 .card-pr-badge {
