@@ -12426,25 +12426,35 @@ function getInventory() {
   return inv;
 }
 
-// Current collection value = wallet cash + (card market value − what you paid).
-// The card term is the unrealized gain/loss, so buying at fair value is a wash
-// and the line only moves with cash and with cards appreciating/depreciating.
-function _invNetWorth(inv) {
+// Collection value = wallet cash + total card market value. Nothing subtracted —
+// this is "what the whole pile is worth right now" regardless of what it cost.
+function _invGrossValue(inv) {
   const value = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.value) || 0), 0);
-  const cost = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.paid) || 0), 0);
-  return Math.round(((Number(inv.wallet) || 0) + value - cost) * 100) / 100;
+  return Math.round(((Number(inv.wallet) || 0) + value) * 100) / 100;
 }
 
-// Upsert today's collection-value snapshot (one point per day, last write wins)
-// so the "collection value over time" chart builds day by day. Called from
-// saveInventory so every mutation keeps the running total current.
+// Profit value = collection value − what you paid for the cards. The card term
+// becomes unrealized gain/loss, so buying at fair value is a wash and the line
+// only moves with cash and with cards appreciating/depreciating.
+function _invNetWorth(inv) {
+  const cost = inv.items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.paid) || 0), 0);
+  return Math.round((_invGrossValue(inv) - cost) * 100) / 100;
+}
+
+// Upsert today's snapshot (one point per day, last write wins) so the chart
+// builds day by day. Each point carries both series: `g` = collection value
+// (wallet + cards) and `v` = profit value (after cost). Called from
+// saveInventory so every mutation keeps the running totals current.
+// Points written before the two-series split have `v` only; the chart renders
+// their missing `g` as a gap rather than inventing a number.
 function _invRecordNetWorth(inv) {
   if (!Array.isArray(inv.netWorthHistory)) inv.netWorthHistory = [];
+  const gross = _invGrossValue(inv);
   const total = _invNetWorth(inv);
   const d = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const last = inv.netWorthHistory[inv.netWorthHistory.length - 1];
-  if (last && last.d === d) last.v = total;
-  else inv.netWorthHistory.push({ d, v: total });
+  if (last && last.d === d) { last.v = total; last.g = gross; }
+  else inv.netWorthHistory.push({ d, v: total, g: gross });
   if (inv.netWorthHistory.length > INV_VALUE_HISTORY_CAP) {
     inv.netWorthHistory.splice(0, inv.netWorthHistory.length - INV_VALUE_HISTORY_CAP);
   }
@@ -13522,16 +13532,25 @@ function _invDateStr(ts) {
 }
 
 // ==================== Inventory: Collection value over time ====================
-// One combined line — wallet balance + total card value — from the daily
-// snapshots recorded in saveInventory (_invRecordNetWorth).
+// Two lines off the same daily snapshots (_invRecordNetWorth):
+//   Collection — wallet + total card value, nothing subtracted
+//   Profit     — the same figure minus what you paid for the cards
+// Chart.js legend entries toggle their line, so you can show either one alone
+// or both together by clicking the legend.
+const INV_NW_COLOR_TOTAL = '#5ece99';  // brand green — collection value
+const INV_NW_COLOR_PROFIT = '#a06ff0'; // purple — validated ΔE 24 vs green under CVD
 let _invNetWorthChart = null;
 function renderNetWorthChart() {
   const inv = getInventory();
   const nowEl = document.getElementById('inv-networth-now');
   if (nowEl) {
-    const nw = _invNetWorth(inv);
-    nowEl.textContent = _invMoney(nw);
-    nowEl.classList.toggle('inv-networth-neg', nw < 0);
+    nowEl.textContent = _invMoney(_invGrossValue(inv));
+  }
+  const profitEl = document.getElementById('inv-networth-profit');
+  if (profitEl) {
+    const pv = _invNetWorth(inv);
+    profitEl.textContent = _invMoney(pv);
+    profitEl.classList.toggle('inv-networth-neg', pv < 0);
   }
 
   const canvas = document.getElementById('inv-networth-chart');
@@ -13548,21 +13567,49 @@ function renderNetWorthChart() {
   canvas.classList.remove('hidden');
   if (empty) empty.classList.add('hidden');
 
+  // Text/grid pull from the theme so the chart reads in both light and dark.
+  const css = getComputedStyle(document.body);
+  const ink = (css.getPropertyValue('--text-secondary') || '#94a3b8').trim();
+  const grid = (css.getPropertyValue('--border') || 'rgba(148,163,184,0.15)').trim();
+
+  const line = (label, color, pick) => ({
+    label,
+    data: hist.map(p => { const n = pick(p); return typeof n === 'number' && isFinite(n) ? n : null; }),
+    borderColor: color,
+    backgroundColor: color,
+    pointBackgroundColor: color,
+    fill: false,
+    tension: 0.25,
+    borderWidth: 2,
+    pointRadius: 0,
+    pointHoverRadius: 4,
+    spanGaps: true, // older points predate the collection-value series
+  });
+
   if (_invNetWorthChart) { try { _invNetWorthChart.destroy(); } catch (_) {} }
   _invNetWorthChart = new Chart(canvas, {
     type: 'line',
     data: {
       labels: hist.map(p => (p.d || '').slice(5)), // MM-DD
-      datasets: [{
-        data: hist.map(p => Number(p.v) || 0),
-        borderColor: '#5ece99',
-        backgroundColor: 'rgba(94,206,153,0.14)',
-        fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2,
-      }],
+      datasets: [
+        line('Collection', INV_NW_COLOR_TOTAL, p => Number(p.g)),
+        line('Profit', INV_NW_COLOR_PROFIT, p => Number(p.v)),
+      ],
     },
     options: {
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y } } },
-      scales: { x: { display: false }, y: { ticks: { callback: (v) => '$' + v } } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 14 },
+        },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${_invMoney(c.parsed.y)}` } },
+      },
+      scales: {
+        x: { display: false },
+        y: { ticks: { color: ink, callback: (v) => '$' + v }, grid: { color: grid } },
+      },
       maintainAspectRatio: false,
     },
   });
