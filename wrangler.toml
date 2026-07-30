@@ -71,8 +71,20 @@ new_sqlite_classes = ["UserInbox"]
 #                                               # which takes precedence and spends their quota.
 #   wrangler secret put CARD_API_KEY            # thecardapi.com key (Sold search). Free tier is
 #                                               # 5,000 sale rows/day with a 3-day lookback, so
-#                                               # sold lookups are KV-cached for 6h. Without this
+#                                               # sold lookups are KV-cached for 24h. Without this
 #                                               # secret, sold search degrades to "unavailable".
+#
+# Optional — sold-sale archive:
+#   Every sale we fetch is written to KV permanently (key prefix soldarch:),
+#   turning the provider's rolling lookback into history that deepens a day
+#   per day. Read it at /api/sold-history?q=<card>.
+#
+#   wrangler secret put SOLD_ARCHIVE_RETENTION_DAYS  # Optional. Unset/0 = keep
+#                                               # forever. Set this only if the
+#                                               # provider's terms cap how long
+#                                               # fetched records may be stored —
+#                                               # older sales are then pruned on
+#                                               # the next write, no code change.
 #   wrangler secret put EBAY_VERIFICATION_TOKEN # eBay marketplace deletion notifications
 #   wrangler secret put STRIPE_PUBLISHABLE_KEY  # pk_live_... or pk_test_...
 #   wrangler secret put STRIPE_SECRET_KEY       # sk_live_... or sk_test_...
