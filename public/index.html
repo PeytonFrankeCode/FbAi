@@ -1464,12 +1464,12 @@
         <div class="settings-row settings-row--stacked" id="settings-scrapedo-row">
           <div class="settings-label">
             <span class="settings-label-text">scrape.do API keys <span class="settings-label-tag">optional</span></span>
-            <span class="settings-label-desc" id="settings-scrapedo-desc">Optional. Adds your own source for Sold searches, using your quota instead of the shared one &mdash; with no per-day cap or lookback limit. Add multiple keys to combine quotas. <a href="https://scrape.do" target="_blank" rel="noopener">Get a key</a>.</span>
+            <span class="settings-label-desc" id="settings-scrapedo-desc">Optional backup for Sold search. Searches use the built-in provider first; if a card has no recent sales there, we fall back to your key &mdash; your quota, and no lookback limit, so it reaches older sales. Add multiple keys to combine quotas. <a href="https://scrape.do" target="_blank" rel="noopener">Get a key</a>.</span>
           </div>
           <div id="settings-scrapedo-action" class="settings-scrapedo-action">
             <div id="settings-scrapedo-loading" class="settings-scrapedo-loading">Loading&hellip;</div>
             <ul id="settings-scrapedo-list" class="settings-scrapedo-list hidden"></ul>
-            <div id="settings-scrapedo-empty" class="settings-scrapedo-empty hidden">No keys added &mdash; Sold search is using the built-in provider.</div>
+            <div id="settings-scrapedo-empty" class="settings-scrapedo-empty hidden">No keys added &mdash; Sold search uses the built-in provider only.</div>
             <div id="settings-scrapedo-add" class="settings-scrapedo-add hidden">
               <input type="text" id="settings-scrapedo-label" class="settings-scrapedo-label-input"
                      placeholder="Label (optional, e.g. 'Main account')" maxlength="60" />
@@ -1661,7 +1661,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=171"></script>
+  <script src="app.js?v=172"></script>
   <script type="importmap">
   {
     "imports": {
