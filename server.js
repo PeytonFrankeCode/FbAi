@@ -1433,24 +1433,38 @@ function sendIfSoldBlocked(res, ...responses) {
 // the unrelated marketplace endpoint to use.
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, opts = {}) {
   if (mode === 'sold') {
-    // A user who supplied their own scrape.do key takes that path: it's their
-    // quota and it isn't bound by our plan's lookback window. Everyone else
-    // gets The Card API. Falls through to The Card API if every key fails, so
-    // a dead token degrades instead of dead-ending.
+    // The Card API is the primary source: it's the licensed feed, and because
+    // billing is per row RETURNED, a search that finds nothing costs ~nothing.
+    // So trying it first is close to free and keeps scrape.do to gap cases.
+    const response = await fetchViaCardApi(keywords, limit, source, opts);
+    const primary = Array.isArray(response.results) ? filterJunkListings(response.results) : [];
+    if (primary.length > 0) return { ...response, results: primary, provider: 'cardapi' };
+
+    // Nothing came back — either genuinely no sales inside our lookback
+    // window, or the provider is blocked (no key / daily cap spent). Either
+    // way, a user who added their own scrape.do key can cover the gap: their
+    // quota, and no lookback limit, so it reaches sales we simply can't see.
     const sdKeys = (opts.scrapeDo && Array.isArray(opts.scrapeDo.keys)) ? opts.scrapeDo.keys : [];
     if (sdKeys.length > 0) {
+      const why = response.rateLimited ? 'daily cap reached'
+        : response.soldUnavailable ? 'provider unavailable' : 'no results in lookback window';
+      console.log(`[sold] Card API: ${why} — trying the user's scrape.do key`);
       const sd = await fetchViaScrapeDoRotated(keywords, sdKeys, limit, source, opts.scrapeDo.username || 'anon');
-      if (Array.isArray(sd.results) && sd.results.length > 0) {
-        return { ...sd, results: filterJunkListings(sd.results), provider: 'scrapedo' };
+      const sdResults = Array.isArray(sd.results) ? filterJunkListings(sd.results) : [];
+      if (sdResults.length > 0) {
+        // scrape.do has no lookback ceiling, so these are often sales older
+        // than our plan can reach — exactly the history worth keeping.
+        const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
+        const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
+        _archiveSales(_soldArchiveKey(cleaned, filterKey), sdResults);
+        return { ...sd, results: sdResults, provider: 'scrapedo' };
       }
-      console.warn('[sold] scrape.do returned nothing, falling back to The Card API');
     }
-    // Sold prices via The Card API. Provider states (no key, daily cap) come
-    // back flagged rather than thrown — pass them straight through so callers
-    // can surface them; only real result sets get the junk filter.
-    const response = await fetchViaCardApi(keywords, limit, source, opts);
-    if (response.soldUnavailable || response.rateLimited) return response;
-    return { ...response, results: filterJunkListings(response.results || []) };
+
+    // No fallback available or it also came up empty. Return the primary
+    // response untouched so its soldUnavailable / rateLimited flags survive
+    // and callers surface the right state instead of a bare empty list.
+    return { ...response, results: primary };
   }
 
   // For sale mode — eBay Browse API. Apply the same junk filter the sold path
