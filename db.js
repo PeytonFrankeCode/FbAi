@@ -257,4 +257,26 @@ function cachePut(key, value, ttlSeconds) {
   } catch (_) { /* cache write is best-effort */ }
 }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut };
+// ---- Durable archive storage (Cloudflare KV, no TTL) ----
+// Deliberately separate from cacheGet/cachePut above: those always attach an
+// expirationTtl, which is right for a cache and fatal for an archive. These
+// write without expiry so records survive indefinitely. Same no-op behaviour
+// when KV isn't bound.
+async function archiveGet(key) {
+  if (!kv) return null;
+  try { return await kv.get(key, 'json'); } catch (_) { return null; }
+}
+async function archivePut(key, value) {
+  if (!kv) return false;
+  try {
+    const p = kv.put(key, JSON.stringify(value)); // no expirationTtl — permanent
+    if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
+    else await p; // outside a request context, make sure it lands
+    return true;
+  } catch (err) {
+    console.error(`[DB] archive write ${key} failed:`, err && err.message);
+    return false;
+  }
+}
+
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut };

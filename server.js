@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut } = require('./db');
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -693,10 +693,117 @@ const SOLD_API_CACHE_TTL = 24 * 3600;
 // mahomes 2017" are one card typed three ways, and without this they'd be
 // three separate paid lookups.
 function _soldCacheKey(cleaned, filterKey) {
-  const norm = String(cleaned).toLowerCase()
+  return `soldapi:v2:${filterKey}:${_soldNormalize(cleaned)}`;
+}
+
+function _soldNormalize(cleaned) {
+  return String(cleaned).toLowerCase()
     .replace(/[^a-z0-9 ]+/g, ' ')
     .split(/\s+/).filter(Boolean).sort().join(' ');
-  return `soldapi:v2:${filterKey}:${norm}`;
+}
+
+// ==================== Sold-sale archive ====================
+// The provider's lookback is a rolling window — 3 days on the free tier — so
+// any sale older than that becomes unreachable, permanently. Every lookup we
+// pay for is therefore written to KV and kept, which turns a 3-day window into
+// history that deepens by a day per day at no extra cost.
+//
+// Keyed by the same normalised query as the cache, so all phrasings of a card
+// accumulate into one archive. Sales dedupe on the provider's sale id, so
+// re-fetching overlapping windows never double-counts.
+const SOLD_ARCHIVE_MAX = 5000; // per card; ~1.5MB, well inside KV's 25MB limit
+// 0 = keep forever. Set SOLD_ARCHIVE_RETENTION_DAYS if the provider's terms
+// ever cap retention — no code change needed, just the secret.
+const SOLD_ARCHIVE_RETENTION_DAYS = parseInt(process.env.SOLD_ARCHIVE_RETENTION_DAYS, 10) || 0;
+
+function _soldArchiveKey(cleaned, filterKey) {
+  return `soldarch:v1:${filterKey}:${_soldNormalize(cleaned)}`;
+}
+
+// Merge freshly-fetched sales into the stored history for a card.
+// Best-effort by design: an archive failure must never break a live search.
+async function _archiveSales(archiveKey, sales) {
+  if (!Array.isArray(sales) || sales.length === 0) return null;
+  try {
+    const prior = await archiveGet(archiveKey);
+    const existing = (prior && Array.isArray(prior.sales)) ? prior.sales : [];
+
+    // Dedupe on sale id; a re-fetch of an overlapping window is the normal case.
+    const byId = new Map();
+    for (const s of existing) if (s && s.itemId) byId.set(s.itemId, s);
+    let added = 0;
+    for (const s of sales) {
+      if (!s || !s.itemId || byId.has(s.itemId)) continue;
+      byId.set(s.itemId, s);
+      added++;
+    }
+    if (added === 0) return prior; // nothing new — skip the write entirely
+
+    let merged = Array.from(byId.values())
+      .sort((a, b) => new Date(b.soldDate || 0) - new Date(a.soldDate || 0));
+
+    if (SOLD_ARCHIVE_RETENTION_DAYS > 0) {
+      const cutoff = Date.now() - SOLD_ARCHIVE_RETENTION_DAYS * 86400000;
+      merged = merged.filter(s => {
+        const t = new Date(s.soldDate || 0).getTime();
+        return !isFinite(t) || t >= cutoff;
+      });
+    }
+    if (merged.length > SOLD_ARCHIVE_MAX) merged = merged.slice(0, SOLD_ARCHIVE_MAX);
+
+    const record = { sales: merged, updatedAt: new Date().toISOString(), count: merged.length };
+    await archivePut(archiveKey, record);
+    console.log(`[Archive] +${added} new sales for "${archiveKey}" (${merged.length} total)`);
+    return record;
+  } catch (err) {
+    console.error('[Archive] write failed:', err && err.message);
+    return null;
+  }
+}
+
+// Stored history for a card, newest first. Returns [] when nothing is archived.
+async function getArchivedSales(keywords, opts = {}) {
+  const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
+  const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
+  try {
+    const rec = await archiveGet(_soldArchiveKey(cleaned, filterKey));
+    return (rec && Array.isArray(rec.sales)) ? rec.sales : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+// Summary of a card's archived history — the shape a value-over-time chart
+// wants, without shipping thousands of rows to the browser.
+function summarizeArchive(sales) {
+  const priced = (sales || [])
+    .map(s => ({ price: parseFloat(s.price), date: String(s.soldDate || '').slice(0, 10) }))
+    .filter(s => s.price > 0 && s.date);
+  if (!priced.length) return null;
+
+  // One point per day: the median of that day's sales, so a single outlier
+  // doesn't put a spike in the line.
+  const byDay = new Map();
+  for (const p of priced) {
+    if (!byDay.has(p.date)) byDay.set(p.date, []);
+    byDay.get(p.date).push(p.price);
+  }
+  const points = Array.from(byDay.entries())
+    .map(([date, prices]) => {
+      prices.sort((a, b) => a - b);
+      const mid = Math.floor(prices.length / 2);
+      const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+      return { date, median: Math.round(median * 100) / 100, sales: prices.length };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    totalSales: priced.length,
+    days: points.length,
+    firstSale: points[0].date,
+    lastSale: points[points.length - 1].date,
+    points,
+  };
 }
 
 // Requests currently in flight, keyed the same way as the cache. The KV cache
@@ -794,6 +901,9 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = 
         fetchedLimit: params.limit, // lets a later smaller request reuse this
       };
       cachePut(cacheKey, out, SOLD_API_CACHE_TTL); // best-effort, fire-and-forget
+      // Keep every sale we just paid for. Not awaited — the archive must never
+      // add latency to a search, and a failed write is logged, not fatal.
+      _archiveSales(_soldArchiveKey(cleaned, filterKey), out.results);
       return out;
     } catch (err) {
       const status = err.response?.status;
@@ -2123,6 +2233,41 @@ app.get('/api/variants', async (req, res) => {
 });
 
 
+// ---- /api/sold-history ----
+// A card's accumulated sale history from our own archive. Reads only what we
+// already stored — never calls the provider, so it costs nothing and works
+// past the plan's lookback window. Empty until searches have built it up.
+app.get('/api/sold-history', async (req, res) => {
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
+  }
+  const opts = {};
+  if (req.query.grader) opts.grader = req.query.grader;
+  if (req.query.grade) opts.grade = req.query.grade;
+  try {
+    const sales = await getArchivedSales(query, opts);
+    const summary = summarizeArchive(sales);
+    if (!summary) {
+      return res.json({ query, totalSales: 0, days: 0, points: [], sales: [] });
+    }
+    // Raw sales are capped in the response; the summary carries the shape a
+    // chart needs without shipping thousands of rows to the browser.
+    res.json({
+      query,
+      ...summary,
+      sales: sales.slice(0, 100).map(s => ({
+        title: s.title, price: s.price, soldDate: s.soldDate,
+        itemUrl: s.itemUrl, imageUrl: s.imageUrl, condition: s.condition,
+        printRun: s.printRun, platform: s.platform,
+      })),
+    });
+  } catch (err) {
+    console.error('[SoldHistory]', err.message);
+    res.status(500).json({ error: 'Failed to read sold history' });
+  }
+});
+
 // ---- Health check for Render ----
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -2160,6 +2305,12 @@ app.get('/api/debug/sold-test', async (req, res) => {
     out.dailyLimit = r.headers?.['x-ratelimit-limit'] ?? null;
     out.coverage = r.data?.meta || null; // lookback window the plan actually grants
     out.sample = rows[0] ? { title: rows[0].title, price: rows[0].price, sale_date: rows[0].sale_date } : null;
+    // How much history we've accumulated for this query beyond the plan window.
+    const archived = await getArchivedSales(q);
+    const summary = summarizeArchive(archived);
+    out.archive = summary
+      ? { totalSales: summary.totalSales, days: summary.days, firstSale: summary.firstSale, lastSale: summary.lastSale }
+      : { totalSales: 0, days: 0, note: 'Nothing archived yet for this query — it fills as searches run.' };
   } catch (err) {
     const status = err.response?.status || null;
     out.status = status === 429 ? 'DAILY_LIMIT_REACHED' : status === 401 ? 'KEY_REJECTED' : 'FAILED';
