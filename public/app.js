@@ -1340,7 +1340,9 @@ async function fetchDirectSearch(query) {
     if (results.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'no-results';
-      empty.textContent = isSold ? 'No sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
+      // "Recent" is deliberate: the sold feed only covers a rolling window, so
+      // a card with no hits may simply not have traded inside it.
+      empty.textContent = isSold ? 'No recent sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
     } else {
       if (isSold) {
@@ -1706,7 +1708,7 @@ async function performSearch(query, opts = {}) {
       noBox.innerHTML = `
         <div class="no-listings-icon">&#128269;</div>
         <h3>No Listings Found</h3>
-        <p>No ${isSold ? 'sold listings' : 'listings'} found for &ldquo;${escHtml(query)}&rdquo;${serialLabel ? ` numbered <strong>${escHtml(serialLabel.trim())}</strong>` : ''}.</p>
+        <p>No ${isSold ? 'recent sold listings' : 'listings'} found for &ldquo;${escHtml(query)}&rdquo;${serialLabel ? ` numbered <strong>${escHtml(serialLabel.trim())}</strong>` : ''}.</p>
       `;
       grid.appendChild(noBox);
 

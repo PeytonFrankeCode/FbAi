@@ -69,6 +69,10 @@ new_sqlite_classes = ["UserInbox"]
 #   wrangler secret put EBAY_CERT_ID            # eBay OAuth client secret (For Sale search)
 #                                               # Users may still add their own key in Settings,
 #                                               # which takes precedence and spends their quota.
+#   wrangler secret put CARD_API_KEY            # thecardapi.com key (Sold search). Free tier is
+#                                               # 5,000 sale rows/day with a 3-day lookback, so
+#                                               # sold lookups are KV-cached for 6h. Without this
+#                                               # secret, sold search degrades to "unavailable".
 #   wrangler secret put EBAY_VERIFICATION_TOKEN # eBay marketplace deletion notifications
 #   wrangler secret put STRIPE_PUBLISHABLE_KEY  # pk_live_... or pk_test_...
 #   wrangler secret put STRIPE_SECRET_KEY       # sk_live_... or sk_test_...

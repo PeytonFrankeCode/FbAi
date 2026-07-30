@@ -28,8 +28,15 @@ const EBAY_CERT_ID = process.env.EBAY_CERT_ID; // Client secret for eBay OAuth (
 const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 
 // ---- Sold-listings provider ----
-// Sold data is retired pending eBay's official Marketplace Insights API. Sold
-// searches return a clear "unavailable" state; For Sale uses the Browse API.
+// Sold prices come from The Card API (thecardapi.com) — a licensed sold-price
+// feed covering eBay plus the major auction houses. eBay's own sold data is not
+// available to us (Marketplace Insights is partner-gated), so this is the
+// supported path. For Sale still uses eBay's Browse API directly.
+//
+// Set the key with: wrangler secret put CARD_API_KEY
+// Without it, sold searches degrade to the "unavailable" state rather than error.
+const CARD_API_KEY = process.env.CARD_API_KEY;
+const CARD_API_BASE = 'https://thecardapi.com/api/v1/market';
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true';
@@ -399,10 +406,12 @@ app.get('/api/health', (req, res) => {
         hasAppId: !!EBAY_APP_ID,
         hasCertId: !!process.env.EBAY_CERT_ID,
       },
-      ebaySold: {
-        // Per-user keys now — server doesn't hold a sold-data secret.
-        configured: true,
-        provider: 'retired (awaiting official eBay sold-data API)',
+      sold: {
+        // Sold prices come from The Card API, not eBay (Marketplace Insights
+        // is partner-gated). Hit this after deploying to confirm the secret
+        // landed — false here means sold search will show "unavailable".
+        configured: !!CARD_API_KEY,
+        provider: 'thecardapi.com',
       },
       stripe: {
         configured: !!stripeEnabled,
@@ -666,6 +675,95 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 
 
 
+// ---- The Card API (sold prices) ----
+// Free tier is 5,000 sale rows/day with a 3-day lookback, and CSV + API draw
+// from the same pool — so every row we pull is scarce. Cache hard: the lookback
+// window barely moves within a day, and a cached comp is as good as a fresh one.
+const SOLD_API_CACHE_TTL = 6 * 3600; // 6 hours
+
+// Map a Card API sale record onto the internal listing shape the rest of the
+// app already speaks (same fields fetchViaBrowseAPI emits), so every existing
+// filter, stats bar, chart, and card renderer works unchanged. Extra structured
+// fields the API gives us — print run, grader/grade — ride along for callers
+// that want them instead of re-parsing the title.
+function mapCardApiSale(s) {
+  const grade = s.grade ? `${s.grader || ''} ${s.grade}`.trim() : null;
+  return {
+    itemId: String(s.id || ''),
+    title: s.title || '',
+    price: String(s.price != null ? s.price : '0'),
+    currency: s.currency || 'USD',
+    soldDate: s.sold_at || s.sale_date || '',
+    imageUrl: s.thumbnail_url || s.image_url || null,
+    itemUrl: s.listing_url || '',
+    condition: grade || s.condition || 'Ungraded',
+    buyingOptions: s.listing_type === 'auction' ? ['AUCTION'] : ['FIXED_PRICE'],
+    // Structured extras (no title regex needed)
+    printRun: Number.isFinite(s.print_run) ? s.print_run : null,
+    grader: s.grader || null,
+    grade: s.grade || null,
+    listingType: s.listing_type || null,
+    platform: s.platform || null,
+  };
+}
+
+// Search sold sales. Returns { results, total } on success, or a flagged object
+// ({ soldUnavailable } / { rateLimited }) that callers surface to the user —
+// never throws for an expected provider state.
+async function fetchViaCardApi(keywords, limit = 50, source = 'unknown') {
+  if (!CARD_API_KEY) {
+    return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
+  }
+
+  // The API's `q` is full-text over the listing title, so a "/5" serial stamp
+  // is noise there — strip it and let the caller's print-run logic do that job.
+  // The negative terms drop obvious junk upstream so it never costs us a row.
+  const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
+  const q = `${cleaned} -(lot,reprint,digital)`;
+
+  const cacheKey = `soldapi:v1:${limit}:${cleaned.toLowerCase()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached && Array.isArray(cached.results)) {
+    console.log(`[Card API] KV cache hit for "${cleaned}" (${cached.results.length} sales)`);
+    trackCacheHit('sold');
+    return cached;
+  }
+
+  trackApiCall('insights', 'cardapi/sales', keywords, source);
+  try {
+    const res = await axios.get(`${CARD_API_BASE}/sales`, {
+      params: { q, limit: Math.min(limit, 1000), sort: 'date_desc' },
+      headers: { 'x-market-api-key': CARD_API_KEY },
+      timeout: 15000,
+    });
+
+    const remaining = res.headers?.['x-ratelimit-remaining'];
+    if (remaining != null) console.log(`[Card API] ${remaining} sale rows left today`);
+
+    const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+    const out = { results: rows.map(mapCardApiSale), total: res.data?.pagination?.total || rows.length };
+    cachePut(cacheKey, out, SOLD_API_CACHE_TTL); // best-effort, fire-and-forget
+    return out;
+  } catch (err) {
+    const status = err.response?.status;
+    if (status === 429) {
+      // Daily row budget spent — resets 00:00 UTC. The frontend already has a
+      // graceful path for `rateLimited`, so reuse it rather than erroring out.
+      console.warn('[Card API] daily sale-row limit reached');
+      return {
+        results: [], total: 0, rateLimited: true,
+        rateLimitMessage: "Sold search has hit today's data limit. It resets at midnight UTC — try again then, or use For Sale mode in the meantime.",
+      };
+    }
+    if (status === 401 || status === 403) {
+      console.error(`[Card API] auth/plan error ${status} — check CARD_API_KEY`);
+      return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
+    }
+    console.error('[Card API] request failed:', err.message);
+    return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
+  }
+}
+
 // True when a user has an active paid plan (Pro / Pro+) or a permanent grant.
 // The single source of truth for every Pro feature gate (bulk pricer, promote,
 // unlimited alerts, unlimited sold search, all-time comps).
@@ -695,9 +793,12 @@ function sendSoldUnavailable(res) {
 // the unrelated marketplace endpoint to use.
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0) {
   if (mode === 'sold') {
-    // Sold data source retired. Sold-based features return a clear "unavailable"
-    // state until eBay's official sold-data (Marketplace Insights) API is wired in.
-    return { results: [], total: 0, soldUnavailable: true };
+    // Sold prices via The Card API. Provider states (no key, daily cap) come
+    // back flagged rather than thrown — pass them straight through so callers
+    // can surface them; only real result sets get the junk filter.
+    const response = await fetchViaCardApi(keywords, limit, source);
+    if (response.soldUnavailable || response.rateLimited) return response;
+    return { ...response, results: filterJunkListings(response.results || []) };
   }
 
   // For sale mode — eBay Browse API. Apply the same junk filter the sold path
@@ -736,16 +837,93 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  // Sold data is retired pending eBay's official Marketplace Insights API.
-  // Bail early with a clear unavailable state; For Sale (Browse API) continues.
-  if (mode === 'sold') return sendSoldUnavailable(res);
-
-  if (USE_MOCK_FORSALE) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     return res.json(getMockData(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
+
+    // ---- Sold mode (The Card API) ----
+    if (mode === 'sold') {
+      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      if (searchData.soldUnavailable) return sendSoldUnavailable(res);
+      if (searchData.rateLimited) {
+        return res.json({
+          results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [],
+          searchType: 'exact', broadenedQuery: null, approximateValue: null,
+          rateLimited: true, rateLimitMessage: searchData.rateLimitMessage,
+        });
+      }
+      // Keyword match: keep the listings sharing the most keywords with the
+      // query (all → all-but-one → all-but-two …), then trim price outliers.
+      const matched = matchSoldListings(searchData.results, query);
+      const variantFiltered = filterPriceOutliers(matched.results);
+      const exactExists = hasExactCardSales(query, searchData.results);
+
+      // Serial requested but nothing sold AT that print run? Run a second broad
+      // search with the serial stripped to pull the nearest print runs (a /5
+      // with no sales still gets /20, /60 …) — used both as displayable comps
+      // and to power the print-run-adjusted estimate.
+      let similarResults = [];
+      let estimatePool = searchData.results;
+      if (serial && !exactExists) {
+        const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
+        let broad = null;
+        try {
+          broad = await fetchEbayItems(baseQuery, limit, mode, 'search-serial-broad');
+        } catch (_) { /* best-effort — fall back to what the exact search returned */ }
+        if (broad && Array.isArray(broad.results) && broad.results.length) {
+          const seen = new Set(searchData.results.map(r => r.itemId));
+          estimatePool = searchData.results.concat(broad.results.filter(r => !seen.has(r.itemId)));
+          // Keep the same card at OTHER print runs, sorted by how close each
+          // print run is to the one requested. Prefer the API's structured
+          // print_run and fall back to the serial stamped in the title.
+          const reqSerial = parseInt(serial, 10);
+          const numberedRe = /\/(\d{1,4})(?![0-9])/;
+          const runOf = (r) => {
+            if (Number.isFinite(r.printRun)) return r.printRun;
+            const m = String(r.title || '').match(numberedRe);
+            return m ? parseInt(m[1], 10) : null;
+          };
+          const shownIds = new Set(variantFiltered.map(r => r.itemId));
+          similarResults = matchSoldListings(estimatePool, baseQuery).results
+            .filter(r => {
+              const run = runOf(r);
+              return !shownIds.has(r.itemId) && run != null && run !== reqSerial;
+            })
+            .sort((a, b) => {
+              const an = runOf(a), bn = runOf(b);
+              return (Math.abs(an - reqSerial) - Math.abs(bn - reqSerial)) || (an - bn);
+            })
+            .slice(0, 20);
+        }
+      }
+
+      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
+      const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
+        ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
+        : null;
+      // No sale of the exact card (e.g. a /5, or this set)? Estimate its value
+      // from the same player's similar sales, adjusted for print run and set.
+      const estimate = exactExists ? null : buildSimilarCardEstimate(query, estimatePool);
+      return res.json({
+        results: variantFiltered,
+        total: variantFiltered.length,
+        mock: false,
+        mode,
+        serial: serial || null,
+        similarResults,
+        searchType: matched.searchType,
+        broadenedQuery: null,
+        approximateValue: approx,
+        estimate,
+        keywordsTotal: matched.keywordsTotal,
+        keywordsMatched: matched.keywordsMatched,
+        relaxedBy: matched.relaxedBy,
+        relaxedNote,
+      });
+    }
 
     if (!serial || offset > 0) {
       // No serial, OR a paginated request — standard search.
@@ -1553,7 +1731,7 @@ app.get('/api/grading-advisor', async (req, res) => {
 
 // ---- /api/direct-search ----
 // Primary search endpoint for the main Search button. For Sale mode runs live
-// off the eBay Browse API; Sold mode is retired and returns "unavailable".
+// off the eBay Browse API; Sold mode runs off The Card API.
 app.get('/api/direct-search', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
@@ -1567,15 +1745,37 @@ app.get('/api/direct-search', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  // Sold data retired — bail with the unavailable state. For Sale continues.
-  if (mode === 'sold') return sendSoldUnavailable(res);
-
-  if (USE_MOCK_FORSALE) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     return res.json(getMockDirectSearch(query, mode));
   }
 
   try {
     const serial = extractSerial(query);
+
+    // ---- Sold mode (The Card API) ----
+    if (mode === 'sold') {
+      const searchData = await fetchEbayItems(query, 50, mode, 'direct-search');
+      if (searchData.soldUnavailable) return sendSoldUnavailable(res);
+      if (searchData.rateLimited) {
+        return res.json({
+          results: [], total: 0, mock: false, mode, serial: serial || null, similarResults: [],
+          searchType: 'exact', broadenedQuery: null, approximateValue: null,
+          rateLimited: true, rateLimitMessage: searchData.rateLimitMessage,
+        });
+      }
+      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
+      const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
+      // No sale of the exact card? Estimate from the same player's similar
+      // sales, adjusted for print run and set (see /api/search).
+      const estimate = hasExactCardSales(query, searchData.results)
+        ? null
+        : buildSimilarCardEstimate(query, searchData.results);
+      return res.json({
+        results: variantFiltered, total: variantFiltered.length, mock: false,
+        searchType: 'exact', broadenedQuery: null, approximateValue: approx,
+        estimate, mode, serial: serial || null, similarResults: [],
+      });
+    }
 
     if (serial) {
       // Serial search (e.g. /5 = print run of 5)
@@ -1661,8 +1861,8 @@ app.get('/api/direct-search', async (req, res) => {
 
 // ---- /api/variants ----
 // The main Search button hits this to group listings into card variants.
-// For Sale mode runs live off the eBay Browse API; Sold mode is retired and
-// returns the shared "temporarily unavailable" state.
+// For Sale mode runs live off the eBay Browse API; Sold mode runs off
+// The Card API. The variant grouping itself is identical for both.
 app.get('/api/variants', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
@@ -1672,10 +1872,7 @@ app.get('/api/variants', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required (min 2 chars)' });
   }
 
-  // Sold data retired — bail with the unavailable state. For Sale continues.
-  if (mode === 'sold') return sendSoldUnavailable(res);
-
-  if (USE_MOCK_FORSALE) {
+  if (mode === 'sold' ? USE_MOCK_SOLD : USE_MOCK_FORSALE) {
     return res.json(getMockVariants(query, mode));
   }
 
@@ -1691,6 +1888,13 @@ app.get('/api/variants', async (req, res) => {
         fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
         fetchEbayItems(baseQuery, 50, mode, 'direct-search-serial-broad'),
       ]);
+      // Either leg may come back flagged (no key / daily cap) instead of with
+      // results — surface that rather than rendering an empty variant grid.
+      const flagged = [targeted, broad].find(r => r.soldUnavailable || r.rateLimited);
+      if (flagged) {
+        if (flagged.soldUnavailable) return sendSoldUnavailable(res);
+        return res.json({ variants: [], mock: false, mode, serial: serial || null, rateLimited: true, rateLimitMessage: flagged.rateLimitMessage });
+      }
       const seen = new Set();
       rawResults = [];
       for (const item of [...targeted.results, ...broad.results]) {
@@ -1701,6 +1905,10 @@ app.get('/api/variants', async (req, res) => {
       }
     } else {
       const result = await fetchEbayItems(baseQuery, 50, mode, 'direct-search');
+      if (result.soldUnavailable) return sendSoldUnavailable(res);
+      if (result.rateLimited) {
+        return res.json({ variants: [], mock: false, mode, serial: null, rateLimited: true, rateLimitMessage: result.rateLimitMessage });
+      }
       rawResults = result.results;
     }
     // Drop listings outside the user's price range before grouping into variants
