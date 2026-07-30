@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  # Manual trigger, so secrets can be pushed to the Worker without inventing a
+  # commit — rotating a key doesn't otherwise change anything in the repo.
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
