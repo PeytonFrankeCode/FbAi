@@ -2806,11 +2806,22 @@ app.get('/api/health', (req, res) => {
 // key itself — only whether one is present and how long it is.
 app.get('/api/debug/sold-test', async (req, res) => {
   const q = req.query.q || 'patrick mahomes prizm';
+  const serverScrapeKeys = getServerScrapeDoKeys();
   const out = {
     query: q,
     soldProvider: SOLD_PROVIDER, // auto | cardapi | scrapedo
     keyPresent: !!CARD_API_KEY,
     keyLength: CARD_API_KEY ? String(CARD_API_KEY).length : 0,
+    // Whether the server-wide scrape.do fallback is configured. Reported on
+    // every path so a deploy can be verified in one request without needing
+    // a logged-in session. Never echoes the key itself.
+    scrapeDo: {
+      serverKeyPresent: serverScrapeKeys.length > 0,
+      serverKeyLength: serverScrapeKeys.length > 0 ? String(serverScrapeKeys[0].key).length : 0,
+      note: serverScrapeKeys.length > 0
+        ? 'Server-wide scrape.do key is set — sold search can fall back to it for any visitor.'
+        : 'No server-wide key. Only users who added their own key in Settings can use scrape.do.',
+    },
   };
   if (SOLD_PROVIDER === 'scrapedo') {
     out.status = 'CARD_API_DISABLED';
