@@ -38,6 +38,13 @@ const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const CARD_API_KEY = process.env.CARD_API_KEY;
 const CARD_API_BASE = 'https://thecardapi.com/api/v1/market';
 
+// ---- Optional per-user sold provider (scrape.do) ----
+// Opt-in only: a user who adds their own scrape.do key in Settings has sold
+// searches routed through it instead of The Card API, spending their own quota
+// and reaching past our plan's lookback window. There is no shared server key,
+// so nobody is scraping on our behalf by default.
+const SCRAPE_DO_BASE = 'https://api.scrape.do';
+
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true';
 const USE_MOCK = USE_MOCK_FORSALE && USE_MOCK_SOLD;
@@ -932,6 +939,456 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = 
   return work;
 }
 
+// ---- scrape.do (sold listings, per-user API keys) ----
+// Targets eBay's hosted sold-search HTML and parses the listings out of
+// the response. Each user supplies one or more scrape.do tokens (so they
+// can combine the monthly quotas of multiple scrape.do accounts). We
+// round-robin across the user's keys and fall back to the next key when
+// scrape.do reports a quota or rate-limit failure.
+async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown', opts = {}) {
+  trackApiCall('scrapedo', 'ebay-sold', keywords, source);
+  // eBay's sold-listings URL. The _from=R40 token + Showsold=1 mirror what
+  // a normal browser sends and seem to be needed for scrape.do's data-
+  // center proxies to actually land on the sold page (without them, eBay
+  // bounces us to the active-listings page silently).
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodeURIComponent(keywords)}&_sacat=0&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
+  // scrape.do params:
+  //   render=true        run JS so eBay's React shell hydrates and the
+  //                      listings markup actually exists in the response
+  //   super=true         residential proxies — eBay blocks datacenter IPs
+  //                      with a "Pardon Our Interruption" page
+  //   geoCode=us         stay on US eBay; otherwise eBay redirects to
+  //                      the visitor's local site (.co.uk etc.)
+  const params = new URLSearchParams({
+    token: apiKey,
+    url: ebayUrl,
+    render: 'true',
+    super: 'true',
+    geoCode: 'us',
+  });
+  const scrapeUrl = `${SCRAPE_DO_BASE}/?${params.toString()}`;
+  console.log(`[scrape.do] Searching sold: "${keywords}"`);
+  try {
+    const res = await axios.get(scrapeUrl, { timeout: 60000, responseType: 'text', transformResponse: [x => x] });
+    const html = typeof res.data === 'string' ? res.data : String(res.data || '');
+    const items = parseEbaySoldHtml(html);
+    console.log(`[scrape.do] parsed ${items.length} items (response was ${html.length} bytes)`);
+    const out = { results: items.slice(0, limit), total: items.length };
+    if (opts.includeDebug) {
+      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+      const canonicalMatch = html.match(/<link[^>]+rel=["']?canonical["']?[^>]+href=["']([^"']+)["']/i);
+      // Grab the first matched container block (whichever layout
+      // matches) so the frontend can show us the actual markup
+      // structure when our extractor returns nothing.
+      let firstBlock = null;
+      const sample = splitBlocks(html, CARD_CONTAINER_RE());
+      if (sample.length > 0) firstBlock = sample[0].slice(0, 8000);
+      out._debug = {
+        httpStatus: res.status,
+        contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
+        bytes: html.length,
+        title: titleMatch ? decodeHtmlEntities(titleMatch[1]).trim() : null,
+        canonical: canonicalMatch ? canonicalMatch[1] : null,
+        looksLikeSoldPage: /Sold\s+items|LH_Sold=1/i.test(html) && /sold/i.test(titleMatch ? titleMatch[1] : ''),
+        classCounts: {
+          sItem: (html.match(/class="[^"]*\bs-item\b[^"]*"/g) || []).length,
+          sCard: (html.match(/class="[^"]*\bs-card\b[^"]*"/g) || []).length,
+          srpItem: (html.match(/class="[^"]*\bsrp-results__item\b[^"]*"/g) || []).length,
+          srpRiver: (html.match(/class="[^"]*\bsrp-river\b[^"]*"/g) || []).length,
+        },
+        looksLikeJson: /^\s*[{[]/.test(html),
+        looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
+        snippet: html.slice(0, 4000),
+        firstBlock,
+        firstCardExtract: debugFirstCard(firstBlock),
+        targetUrl: ebayUrl,
+      };
+    }
+    return out;
+  } catch (err) {
+    const status = err.response && err.response.status;
+    console.error(`[scrape.do] Error${status ? ` HTTP ${status}` : ''}: ${err.message}`);
+    const errBody = err.response && err.response.data ? String(err.response.data).slice(0, 600) : null;
+    // 401/403 = bad token. 402/429 = quota or rate-limit on this key.
+    // Surface both distinctly so the rotation layer can fall back instead
+    // of giving up.
+    if (status === 401 || status === 403) {
+      return { results: [], total: 0, error: 'scrape.do rejected your API key (HTTP ' + status + '). Update it in Settings.', badKey: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
+    }
+    if (status === 402 || status === 429) {
+      return { results: [], total: 0, error: 'scrape.do quota/rate-limit hit (HTTP ' + status + ') for this key.', quotaExceeded: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
+    }
+    return { results: [], total: 0, error: err.message, status, _debug: opts.includeDebug ? { httpStatus: status || null, errBody, exception: err.message } : undefined };
+  }
+}
+
+// In-memory round-robin index per (username|anon). Resets on cold start;
+// that's fine — the rotation just picks up from the top.
+const _scrapeDoRotation = new Map();
+
+// Drive a sold search through up to N user keys: pick a starting key via
+// per-user round-robin, then walk in order. Any key that returns badKey
+// (bogus token) or quotaExceeded (HTTP 402/429) is skipped to the next
+// one. Bubbles up the last error if every key fails.
+async function fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey) {
+  if (!keys || keys.length === 0) {
+    return { results: [], total: 0, error: 'no scrape.do keys configured', noProvider: true, noKey: true };
+  }
+  const start = ((_scrapeDoRotation.get(rotationKey) || 0)) % keys.length;
+  _scrapeDoRotation.set(rotationKey, start + 1);
+  let lastErr = null;
+  const badKeyLabels = [];
+  for (let i = 0; i < keys.length; i++) {
+    const idx = (start + i) % keys.length;
+    const k = keys[idx];
+    const r = await fetchViaScrapeDo(keywords, k.key, limit, source);
+    if (!r.badKey && !r.quotaExceeded) return r;
+    lastErr = r;
+    if (r.badKey) badKeyLabels.push(k.label || `Key ${idx + 1}`);
+    console.log(`[scrape.do rotation] key "${k.label || idx + 1}" failed (${r.badKey ? 'bad key' : 'quota'}), trying next`);
+  }
+  // All keys exhausted. If every failure was a bad key, surface that;
+  // otherwise surface the quota-exhaustion message.
+  if (lastErr && lastErr.badKey && badKeyLabels.length === keys.length) {
+    return { results: [], total: 0, error: 'All your scrape.do keys were rejected. Check them in Settings.', badKey: true };
+  }
+  return lastErr || { results: [], total: 0, error: 'All scrape.do keys failed for this request.' };
+}
+
+// Normalize whatever the legacy users record holds into a clean array of
+// `{ key, label }`. Supports both the old single-string `scrapeDoKey`
+// field and the new `scrapeDoKeys` array — so the migration is implicit
+// and a user record only needs to be rewritten when the user changes
+// their keys.
+function getUserScrapeDoKeys(userRec) {
+  if (!userRec) return [];
+  if (Array.isArray(userRec.scrapeDoKeys) && userRec.scrapeDoKeys.length > 0) {
+    return userRec.scrapeDoKeys
+      .filter(k => k && typeof k.key === 'string' && k.key.length > 0)
+      .map((k, i) => ({ key: k.key, label: k.label || `Key ${i + 1}`, addedAt: k.addedAt || null }));
+  }
+  if (typeof userRec.scrapeDoKey === 'string' && userRec.scrapeDoKey.length > 0) {
+    return [{ key: userRec.scrapeDoKey, label: 'Default', addedAt: null }];
+  }
+  return [];
+}
+
+// Lightweight eBay-search HTML parser. eBay's been A/B-testing three
+// layouts in 2024-25:
+//   1. legacy `<li class="s-item s-item__pl-on-bottom">` (older Browse)
+//   2. `<li class="srp-results__item">` (newer SRP)
+//   3. `<div class="s-card ...">` (newest card-grid rollout)
+// We try each container shape and a per-shape field extractor.
+function parseEbaySoldHtml(html) {
+  if (!html || html.length < 500) return [];
+  const items = [];
+  const seen = new Set();
+  const push = (it) => {
+    if (!it) return;
+    const k = it.itemUrl || `${it.title}|${it.price}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    items.push(it);
+  };
+
+  // Layout 1: legacy <li class="s-item">
+  const reLegacy = /<li[^>]*class="[^"]*\bs-item\b[^"]*"[\s\S]*?<\/li>/gi;
+  let m;
+  while ((m = reLegacy.exec(html)) !== null) push(extractLegacySItem(m[0]));
+
+  // Layout 2/3: newer s-card / srp-results__item — eBay no longer
+  // wraps each card in a simple <li>...</li>. Slice between
+  // consecutive container-opening positions instead of trying to
+  // match nested </div> closers. We split ONLY on the top-level card
+  // containers (s-card / srp-results__item); the inner
+  // `su-card-container` wrapper appears once *inside* every card, so
+  // splitting on it would fragment each card right after its opening
+  // tag and strip away the title/price/link.
+  for (const block of splitBlocks(html, CARD_CONTAINER_RE())) {
+    push(extractCardLayout(block));
+  }
+
+  // Fallback for older A/B variants that wrap each result directly in
+  // <div class="su-card-container"> with no enclosing s-card. Only try
+  // this if the primary split produced nothing.
+  if (items.length === 0) {
+    for (const block of splitBlocks(html, /<(?:li|div)[^>]*class="[^"]*\bsu-card-container\b[^"]*"/gi)) {
+      push(extractCardLayout(block));
+    }
+  }
+
+  return items;
+}
+
+// Fresh RegExp per call — these carry the /g flag and a mutable lastIndex,
+// so sharing one instance across splitBlocks calls would skip matches.
+function CARD_CONTAINER_RE() {
+  return /<(?:li|div)[^>]*class="[^"]*\b(?:s-card|srp-results__item)\b[^"]*"/gi;
+}
+
+// Slice `html` into blocks where each block runs from the start of a
+// container match to the start of the next match (or end of document).
+// Robust against arbitrary nesting depth inside each card — we don't
+// have to guess where the closing tag is.
+function splitBlocks(html, openerRe) {
+  const starts = [];
+  let m;
+  openerRe.lastIndex = 0;
+  while ((m = openerRe.exec(html)) !== null) starts.push(m.index);
+  const blocks = [];
+  for (let i = 0; i < starts.length; i++) {
+    const s = starts[i];
+    const e = i + 1 < starts.length ? starts[i + 1] : Math.min(html.length, s + 8000);
+    blocks.push(html.slice(s, e));
+  }
+  return blocks;
+}
+
+// Strip tags from a captured HTML fragment and return clean text. eBay's
+// newer cards nest the real text one or two <span>s deep, so a naive
+// `>([^<]+)` capture grabs an empty string — pull the fragment and flatten it.
+function stripTags(s) {
+  if (s == null) return '';
+  return decodeHtmlEntities(String(s).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+}
+
+// eBay mixes quoted AND unquoted HTML attributes in the same tag — e.g.
+// `<a class=s-card__link ... href=https://ebay.com/itm/123?...>`. These
+// helpers match attribute values regardless of quoting style, which is the
+// crux of parsing the current card markup (selectors that assumed `href="…"`
+// or `class="…"` silently matched nothing).
+
+// Return the value of attribute `attr` from the first tag in `block` that has
+// it. If `mustContain` is given, skip values that don't include that substring.
+function getAttr(block, attr, mustContain) {
+  const re = new RegExp(
+    '\\b' + attr + '\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\'|([^\\s"\'>]+))',
+    'gi'
+  );
+  let m;
+  while ((m = re.exec(block)) !== null) {
+    const v = m[1] != null ? m[1] : (m[2] != null ? m[2] : m[3]);
+    if (v && (!mustContain || v.indexOf(mustContain) !== -1)) return v;
+  }
+  return null;
+}
+
+// Inner text of the first element whose class contains `cls`, quoting-agnostic.
+// Uses a tag-name backreference so we close on the right tag.
+function classInner(block, cls) {
+  const c = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(
+    '<([a-zA-Z][\\w-]*)\\b[^>]*\\bclass\\s*=\\s*' +
+      '(?:"[^"]*' + c + '[^"]*"|\'[^\']*' + c + '[^\']*\'|[^\\s"\'>]*' + c + '[^\\s"\'>]*)' +
+      '[^>]*>([\\s\\S]*?)<\\/\\1>',
+    'i'
+  );
+  const m = block.match(re);
+  return m ? stripTags(m[2]) : '';
+}
+
+// Same matcher as classInner but returns the element's RAW inner HTML (tags
+// intact) so the price parser can see eBay's separate dollars/cents nodes.
+function classInnerRaw(block, cls) {
+  const c = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(
+    '<([a-zA-Z][\\w-]*)\\b[^>]*\\bclass\\s*=\\s*' +
+      '(?:"[^"]*' + c + '[^"]*"|\'[^\']*' + c + '[^\']*\'|[^\\s"\'>]*' + c + '[^\\s"\'>]*)' +
+      '[^>]*>([\\s\\S]*?)<\\/\\1>',
+    'i'
+  );
+  const m = block.match(re);
+  return m ? m[2] : '';
+}
+
+// Parse a sold price (number) from a price element's RAW inner HTML. Robust to:
+//  • eBay rendering cents in a separate node with no literal decimal point
+//    ("$152" <sup>10</sup>), which a naive digit-strip reads as 15210;
+//  • thousands separators ("$1,250.00");
+//  • more than one price in the element (a struck "was" price beside the sold
+//    price) — takes the first well-formed value.
+function parsePriceHtml(rawHtml) {
+  if (!rawHtml) return 0;
+  const raw = String(rawHtml);
+  const flat = raw.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ');
+
+  // 1) First well-formed money value WITH cents (1,234.56 or 50.00).
+  const cents = flat.match(/\d{1,3}(?:,\d{3})+(?:\.\d{2})?|\d+\.\d{2}/);
+  if (cents) {
+    const n = parseFloat(cents[0].replace(/,/g, ''));
+    if (isFinite(n) && n > 0) return n;
+  }
+
+  // 2) Cents rendered in a separate node, no literal decimal: "$152<sup>10</sup>"
+  //    → 152.10. Dollars, then tag(s), then exactly two cents digits.
+  const split = raw.match(/\$\s*([\d,]+)\s*(?:<[^>]+>\s*)+(\d{2})(?!\d)/);
+  if (split) {
+    const dollars = parseInt(split[1].replace(/,/g, ''), 10);
+    if (isFinite(dollars)) return dollars + parseInt(split[2], 10) / 100;
+  }
+
+  // 3) Whole-dollar listing (no cents anywhere): first integer value.
+  const intMatch = flat.match(/\$?\s*([\d,]{1,9})(?!\d)/);
+  if (intMatch) {
+    const n = parseFloat(intMatch[1].replace(/,/g, ''));
+    if (isFinite(n) && n > 0) return n;
+  }
+  return 0;
+}
+
+// Pick the best image URL in a card, tolerating unquoted attrs and lazy-load
+// placeholders. eBay defers the real image via data-defer-load and shows a
+// gray ebaystatic placeholder in src; prefer the real i.ebayimg.com asset.
+function pickImage(block) {
+  const urls = [];
+  const re = /(?:src|data-defer-load|data-src)\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'>]+))/gi;
+  let m;
+  while ((m = re.exec(block)) !== null) {
+    const v = m[1] || m[2] || m[3];
+    if (v && /^https?:/i.test(v)) urls.push(v);
+  }
+  return urls.find(u => /i\.ebayimg\.com/i.test(u)) ||
+         urls.find(u => !/ebaystatic\.com/i.test(u)) ||
+         urls[0] || null;
+}
+
+function extractLegacySItem(block) {
+  if (/s-item--placeholder/i.test(block)) return null;
+  return assembleListing(resolveCard(block));
+}
+
+// Field extractor for eBay's card layouts (s-card / srp-results__item) and the
+// older s-item layout. Class names and quoting keep shifting, so we lean on
+// structural signals — any /itm/ link, the title element's text, any element
+// whose class mentions "price" — all matched quote-agnostically.
+function resolveCard(block) {
+  // Link: any /itm/ href, quoted or bare.
+  const link = getAttr(block, 'href', '/itm/');
+
+  // Title: the card/item title element, else any heading element, else the
+  // thumbnail alt text (eBay mirrors the listing title into alt).
+  let title =
+    classInner(block, 's-card__title') ||
+    classInner(block, 's-item__title');
+  if (!title) {
+    const h = block.match(/<([a-zA-Z][\w-]*)\b[^>]*\brole\s*=\s*["']?heading["']?[^>]*>([\s\S]*?)<\/\1>/i);
+    if (h) title = stripTags(h[2]);
+  }
+  if (!title) title = (getAttr(block, 'alt') || '').trim();
+
+  // Price: parse from the price element's RAW HTML so split dollars/cents nodes
+  // and thousands commas don't get mangled into a giant number. Fall back to the
+  // first dollars-and-cents value anywhere in the card.
+  const rawPrice =
+    classInnerRaw(block, 's-card__price') ||
+    classInnerRaw(block, 's-item__price') ||
+    classInnerRaw(block, 'price');
+  let priceNum = parsePriceHtml(rawPrice);
+  if (!priceNum) {
+    const dollar = block.match(/\$\s?[\d,]+(?:\.\d{2})?/);
+    if (dollar) priceNum = parsePriceHtml(dollar[0]);
+  }
+  const priceStr = priceNum ? priceNum.toFixed(2) : '';
+
+  const img = pickImage(block);
+  const dateMatch = block.match(/Sold\s+(?:on\s+)?([A-Za-z]+\.?\s+\d{1,2},?\s+\d{4})/i);
+  const cond =
+    classInner(block, 's-card__subtitle') ||
+    classInner(block, 'SECONDARY_INFO') ||
+    '';
+
+  return {
+    link: link || null,
+    title,
+    priceStr,
+    img,
+    date: dateMatch ? dateMatch[1] : null,
+    cond: cond || null,
+  };
+}
+
+function extractCardLayout(block) {
+  // Promo "Shop on eBay" placeholder cards resolve to that title and are
+  // dropped by assembleListing, so no special-casing needed here.
+  return assembleListing(resolveCard(block));
+}
+
+// Compact per-field report for the FIRST matched card, surfaced in the debug
+// endpoint so we can see exactly which field extraction fails (and on what
+// markup) without pasting the whole multi-KB block.
+function debugFirstCard(block) {
+  if (!block) return null;
+  const r = resolveCard(block);
+  const classes = (block.match(/class="([^"]*)"/gi) || [])
+    .map(c => c.replace(/^class="/i, '').replace(/"$/, ''))
+    .join(' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  const uniqClasses = [...new Set(classes)].slice(0, 40);
+  return {
+    link: r.link ? r.link.slice(0, 120) : null,
+    title: r.title ? r.title.slice(0, 120) : null,
+    price: r.priceStr || null,
+    hasImg: !!r.img,
+    soldDate: r.date || null,
+    classes: uniqClasses,
+  };
+}
+
+function assembleListing({ link, title, priceStr, img, date, cond }) {
+  if (!title || !priceStr || !link) return null;
+  title = decodeHtmlEntities(title).trim();
+  if (!title || /shop on ebay/i.test(title)) return null;
+  const price = parseFloat(String(priceStr).replace(/[^0-9.]/g, '')) || 0;
+  if (!price) return null;
+  const itemUrl = link.split('?')[0];
+  const itemIdMatch = itemUrl.match(/\/itm\/(?:[^/]+\/)?(\d{8,})/);
+  let soldDate = '';
+  if (date) {
+    const raw = String(date).trim();
+    const parsed = new Date(raw);
+    soldDate = isNaN(parsed.getTime()) ? raw : parsed.toISOString();
+  }
+  return {
+    itemId: itemIdMatch ? itemIdMatch[1] : `sdo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title,
+    price: String(price),
+    currency: 'USD',
+    soldDate,
+    imageUrl: img || null,
+    itemUrl,
+    condition: cond ? decodeHtmlEntities(cond).trim() : 'Unknown',
+  };
+}
+
+function decodeHtmlEntities(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+}
+
+// Resolve this request's scrape.do keys. Deliberately user-keys-only: with no
+// shared server key there's no quota of ours to meter and no scraping done on
+// anyone's behalf by default. A user without a key just gets The Card API.
+function getScrapeDoKeysForRequest(req) {
+  try {
+    const username = getSessionUser(req);
+    if (!username) return { username: null, keys: [] };
+    const users = loadServerUsers();
+    return { username, keys: getUserScrapeDoKeys(users[username]) };
+  } catch (_) {
+    return { username: null, keys: [] };
+  }
+}
+
 // True when a user has an active paid plan (Pro / Pro+) or a permanent grant.
 // The single source of truth for every Pro feature gate (bulk pricer, promote,
 // unlimited alerts, unlimited sold search, all-time comps).
@@ -976,6 +1433,18 @@ function sendIfSoldBlocked(res, ...responses) {
 // the unrelated marketplace endpoint to use.
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, opts = {}) {
   if (mode === 'sold') {
+    // A user who supplied their own scrape.do key takes that path: it's their
+    // quota and it isn't bound by our plan's lookback window. Everyone else
+    // gets The Card API. Falls through to The Card API if every key fails, so
+    // a dead token degrades instead of dead-ending.
+    const sdKeys = (opts.scrapeDo && Array.isArray(opts.scrapeDo.keys)) ? opts.scrapeDo.keys : [];
+    if (sdKeys.length > 0) {
+      const sd = await fetchViaScrapeDoRotated(keywords, sdKeys, limit, source, opts.scrapeDo.username || 'anon');
+      if (Array.isArray(sd.results) && sd.results.length > 0) {
+        return { ...sd, results: filterJunkListings(sd.results), provider: 'scrapedo' };
+      }
+      console.warn('[sold] scrape.do returned nothing, falling back to The Card API');
+    }
     // Sold prices via The Card API. Provider states (no key, daily cap) come
     // back flagged rather than thrown — pass them straight through so callers
     // can surface them; only real result sets get the junk filter.
@@ -1029,7 +1498,7 @@ app.get('/api/search', async (req, res) => {
 
     // ---- Sold mode (The Card API) ----
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, limit, mode, 'search');
+      const searchData = await fetchEbayItems(query, limit, mode, 'search', 0, { scrapeDo: getScrapeDoKeysForRequest(req) });
       if (searchData.soldUnavailable) return sendSoldUnavailable(res);
       if (searchData.rateLimited) {
         return res.json({
@@ -2005,7 +2474,7 @@ app.get('/api/direct-search', async (req, res) => {
 
     // ---- Sold mode (The Card API) ----
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, 50, mode, 'direct-search');
+      const searchData = await fetchEbayItems(query, 50, mode, 'direct-search', 0, { scrapeDo: getScrapeDoKeysForRequest(req) });
       if (searchData.soldUnavailable) return sendSoldUnavailable(res);
       if (searchData.rateLimited) {
         return res.json({
@@ -2137,7 +2606,7 @@ app.get('/api/variants', async (req, res) => {
     // so the targeted and broad legs below would send identical requests — and
     // in parallel neither warms the cache for the other, so both get billed.
     if (serial && mode === 'sold') {
-      const one = await fetchEbayItems(baseQuery, 50, mode, 'variants-serial');
+      const one = await fetchEbayItems(baseQuery, 50, mode, 'variants-serial', 0, { scrapeDo: getScrapeDoKeysForRequest(req) });
       if (sendIfSoldBlocked(res, one)) return;
       rawResults = one.results;
     } else if (serial) {
@@ -3446,6 +3915,97 @@ app.put('/api/auth/email', async (req, res) => {
   res.json({ ok: true });
 });
 
+
+// scrape.do accounts; the sold-search path rotates across them and
+// falls back on quota-exhausted errors.
+const MAX_KEYS_PER_USER = 10;
+
+function maskKey(key) {
+  if (!key) return '';
+  const last4 = key.slice(-4);
+  return '••••••••' + last4;
+}
+
+// Read the user record and return both the storage form (array) and the
+// safe public view (no raw keys). Migrates legacy single-string field on
+// first write — never silently rewrites without an explicit user action.
+function readKeysFromRecord(rec) {
+  const list = getUserScrapeDoKeys(rec || {});
+  return list.map((k, i) => ({
+    label: k.label || `Key ${i + 1}`,
+    hint: maskKey(k.key),
+    addedAt: k.addedAt || null,
+  }));
+}
+
+app.get('/api/user/scrape-do-key', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const users = loadServerUsers();
+  const keys = readKeysFromRecord(users[username]);
+  res.json({ configured: keys.length > 0, count: keys.length, keys });
+});
+
+// POST adds a key (preferred). PUT also calls into this path so the
+// previous single-key clients keep working — the PUT just replaces the
+// whole list with a single key.
+function addKeyHandler(req, res, { replace = false } = {}) {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const { apiKey, label } = req.body || {};
+  if (typeof apiKey !== 'string' || apiKey.trim().length < 8) {
+    return res.status(400).json({ error: 'apiKey must be at least 8 characters' });
+  }
+  const trimmedKey = apiKey.trim();
+  if (trimmedKey.length > 200) return res.status(400).json({ error: 'apiKey too long' });
+  const cleanLabel = typeof label === 'string' ? label.trim().slice(0, 60) : '';
+
+  const users = loadServerUsers();
+  if (!users[username]) return res.status(404).json({ error: 'User record missing' });
+
+  const existing = replace ? [] : getUserScrapeDoKeys(users[username]);
+  if (existing.length >= MAX_KEYS_PER_USER) {
+    return res.status(409).json({ error: `Max ${MAX_KEYS_PER_USER} keys per account` });
+  }
+  if (existing.some(k => k.key === trimmedKey)) {
+    return res.status(409).json({ error: 'You already have this key on file' });
+  }
+  const next = existing.concat({
+    key: trimmedKey,
+    label: cleanLabel || `Key ${existing.length + 1}`,
+    addedAt: new Date().toISOString(),
+  });
+
+  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
+  // Clear the legacy field so we have a single source of truth going forward.
+  delete users[username].scrapeDoKey;
+  saveServerUsers(users);
+  res.json({ ok: true, configured: true, count: next.length, keys: readKeysFromRecord(users[username]) });
+}
+
+app.post('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: false }));
+app.put('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: true }));
+
+// DELETE removes by label. Without `?label=` it clears everything
+// (preserves the historical "clear my key" behavior of the old endpoint).
+app.delete('/api/user/scrape-do-key', (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const label = (req.query.label || '').toString();
+  const users = loadServerUsers();
+  if (!users[username]) return res.json({ ok: true, configured: false, count: 0 });
+  const existing = getUserScrapeDoKeys(users[username]);
+  let next;
+  if (label) {
+    next = existing.filter(k => k.label !== label);
+  } else {
+    next = [];
+  }
+  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
+  delete users[username].scrapeDoKey;
+  saveServerUsers(users);
+  res.json({ ok: true, configured: next.length > 0, count: next.length, keys: readKeysFromRecord(users[username]) });
+});
 
 // Per-user data sync — single JSON blob per user containing the things that
 // used to live in localStorage only (collection, watchlist, completion,
