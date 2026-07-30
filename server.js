@@ -1390,14 +1390,30 @@ function decodeHtmlEntities(s) {
 // Resolve this request's scrape.do keys. Deliberately user-keys-only: with no
 // shared server key there's no quota of ours to meter and no scraping done on
 // anyone's behalf by default. A user without a key just gets The Card API.
+// An optional server-wide scrape.do key. Set it and sold search can fall back
+// to scraping for ANY visitor, logged in or not — no Settings UI involved.
+// Unset (the default) keeps the opt-in posture where only users with their own
+// key ever hit scrape.do.
+//   wrangler secret put SCRAPE_DO_KEY   (or set it as a GitHub Actions secret)
+function getServerScrapeDoKeys() {
+  const k = (process.env.SCRAPE_DO_KEY || '').trim();
+  return k ? [{ key: k, label: 'Server', addedAt: null }] : [];
+}
+
 function getScrapeDoKeysForRequest(req) {
+  const server = getServerScrapeDoKeys();
   try {
     const username = getSessionUser(req);
-    if (!username) return { username: null, keys: [] };
+    if (!username) return { username: null, keys: server, shared: server.length > 0 };
     const users = loadServerUsers();
-    return { username, keys: getUserScrapeDoKeys(users[username]) };
+    const own = getUserScrapeDoKeys(users[username]);
+    // A user's own key wins — it spends their quota, not ours. The server key
+    // is the fallback so the feature works without anyone configuring anything.
+    return own.length > 0
+      ? { username, keys: own, shared: false }
+      : { username, keys: server, shared: server.length > 0 };
   } catch (_) {
-    return { username: null, keys: [] };
+    return { username: null, keys: server, shared: server.length > 0 };
   }
 }
 
@@ -2839,6 +2855,40 @@ app.get('/api/debug/sold-test', async (req, res) => {
   res.json(out);
 });
 
+// ---- Debug endpoint: test scrape.do keys ----
+// Backs the "Test All" button in Settings. Runs a real scrape per key and
+// reports per-key status so a user can see which of their tokens is healthy.
+// With ?label=X only that key is tested.
+app.get('/api/debug/sold', async (req, res) => {
+  const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
+  const label = (req.query.label || '').toString();
+  const ctx = getScrapeDoKeysForRequest(req);
+  if (!ctx.keys || ctx.keys.length === 0) {
+    return res.status(401).json({ error: 'No scrape.do key on file for this account', noKey: true });
+  }
+  const targets = label ? ctx.keys.filter(k => k.label === label) : ctx.keys;
+  if (label && targets.length === 0) {
+    return res.status(404).json({ error: `No key with label "${label}"` });
+  }
+  try {
+    const perKey = await Promise.all(targets.map(async k => {
+      const r = await fetchViaScrapeDo(q, k.key, 5, 'debug', { includeDebug: true });
+      return {
+        label: k.label,
+        itemCount: (r.results || []).length,
+        firstItem: (r.results || [])[0] || null,
+        error: r.error || null,
+        badKey: !!r.badKey,
+        quotaExceeded: !!r.quotaExceeded,
+        debug: r._debug || null,
+      };
+    }));
+    res.json({ provider: 'scrape.do', query: q, shared: !!ctx.shared, perKey });
+  } catch (err) {
+    res.json({ provider: 'scrape.do', error: err.message });
+  }
+});
+
 // ---- Debug endpoint: test eBay Browse API ----
 app.get('/api/debug/browse-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
@@ -3990,7 +4040,14 @@ app.get('/api/user/scrape-do-key', (req, res) => {
   if (!username) return res.status(401).json({ error: 'Not authenticated' });
   const users = loadServerUsers();
   const keys = readKeysFromRecord(users[username]);
-  res.json({ configured: keys.length > 0, count: keys.length, keys });
+  // serverKey tells the UI a built-in key is available, so "no keys of your
+  // own" doesn't read as "sold search is switched off".
+  res.json({
+    configured: keys.length > 0,
+    count: keys.length,
+    keys,
+    serverKey: getServerScrapeDoKeys().length > 0,
+  });
 });
 
 // POST adds a key (preferred). PUT also calls into this path so the

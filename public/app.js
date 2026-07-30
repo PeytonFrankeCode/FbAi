@@ -148,9 +148,16 @@ async function loadScrapeDoStatus() {
     addEl.classList.remove('hidden');
 
     const keys = (data && Array.isArray(data.keys)) ? data.keys : [];
+    // A server-wide key can be configured, in which case scrape.do works
+    // without the account having its own — surface that instead of implying
+    // nothing is set up, and still allow testing it.
+    const serverKey = !!(data && data.serverKey);
     if (keys.length === 0) {
       emptyEl.classList.remove('hidden');
-      emptyEl.textContent = 'No keys yet — add one below to enable Sold searches.';
+      emptyEl.textContent = serverKey
+        ? 'Using the built-in scrape.do key. Add your own to use your quota instead.'
+        : 'No keys yet — add one below to enable Sold searches.';
+      if (testBtn && serverKey) testBtn.style.display = '';
     } else {
       listEl.classList.remove('hidden');
       listEl.innerHTML = '';

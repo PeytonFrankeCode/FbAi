@@ -41,8 +41,11 @@ jobs:
           secrets: |
             ${{ secrets.CARD_API_KEY != '' && 'CARD_API_KEY' || '' }}
             ${{ secrets.SOLD_PROVIDER != '' && 'SOLD_PROVIDER' || '' }}
+            ${{ secrets.SCRAPE_DO_KEY != '' && 'SCRAPE_DO_KEY' || '' }}
         env:
           # Read by wrangler-action for the names listed in `secrets` above.
           CARD_API_KEY: ${{ secrets.CARD_API_KEY }}
           # auto (default) | cardapi | scrapedo — switches the sold source.
           SOLD_PROVIDER: ${{ secrets.SOLD_PROVIDER }}
+          # Optional server-wide scrape.do key; works without the Settings UI.
+          SCRAPE_DO_KEY: ${{ secrets.SCRAPE_DO_KEY }}
