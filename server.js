@@ -681,6 +681,12 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 // window barely moves within a day, and a cached comp is as good as a fresh one.
 const SOLD_API_CACHE_TTL = 6 * 3600; // 6 hours
 
+// Requests currently in flight, keyed the same way as the cache. The KV cache
+// only dedupes calls that are sequential — two identical lookups fired in
+// parallel both miss it and both get billed. Sharing the in-flight promise
+// makes concurrent duplicates cost one request instead of N.
+const _soldInFlight = new Map();
+
 // Map a Card API sale record onto the internal listing shape the rest of the
 // app already speaks (same fields fetchViaBrowseAPI emits), so every existing
 // filter, stats bar, chart, and card renderer works unchanged. Extra structured
@@ -737,39 +743,56 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = 
     return cached;
   }
 
-  trackApiCall('insights', 'cardapi/sales', keywords, source);
-  try {
-    const res = await axios.get(`${CARD_API_BASE}/sales`, {
-      params,
-      headers: { 'x-market-api-key': CARD_API_KEY },
-      timeout: 15000,
-    });
-
-    const remaining = res.headers?.['x-ratelimit-remaining'];
-    if (remaining != null) console.log(`[Card API] ${remaining} sale rows left today`);
-
-    const rows = Array.isArray(res.data?.data) ? res.data.data : [];
-    const out = { results: rows.map(mapCardApiSale), total: res.data?.pagination?.total || rows.length };
-    cachePut(cacheKey, out, SOLD_API_CACHE_TTL); // best-effort, fire-and-forget
-    return out;
-  } catch (err) {
-    const status = err.response?.status;
-    if (status === 429) {
-      // Daily row budget spent — resets 00:00 UTC. The frontend already has a
-      // graceful path for `rateLimited`, so reuse it rather than erroring out.
-      console.warn('[Card API] daily sale-row limit reached');
-      return {
-        results: [], total: 0, rateLimited: true,
-        rateLimitMessage: "Sold search has hit today's data limit. It resets at midnight UTC — try again then, or use For Sale mode in the meantime.",
-      };
-    }
-    if (status === 401 || status === 403) {
-      console.error(`[Card API] auth/plan error ${status} — check CARD_API_KEY`);
-      return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
-    }
-    console.error('[Card API] request failed:', err.message);
-    return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
+  // An identical lookup already on the wire? Ride along on it instead of
+  // paying for the same rows twice.
+  const pending = _soldInFlight.get(cacheKey);
+  if (pending) {
+    console.log(`[Card API] joining in-flight request for "${cleaned}"`);
+    trackCacheHit('sold');
+    return pending;
   }
+
+  trackApiCall('insights', 'cardapi/sales', keywords, source);
+  const work = (async () => {
+    try {
+      const res = await axios.get(`${CARD_API_BASE}/sales`, {
+        params,
+        headers: { 'x-market-api-key': CARD_API_KEY },
+        timeout: 15000,
+      });
+
+      const remaining = res.headers?.['x-ratelimit-remaining'];
+      if (remaining != null) console.log(`[Card API] ${remaining} sale rows left today`);
+
+      const rows = Array.isArray(res.data?.data) ? res.data.data : [];
+      const out = { results: rows.map(mapCardApiSale), total: res.data?.pagination?.total || rows.length };
+      cachePut(cacheKey, out, SOLD_API_CACHE_TTL); // best-effort, fire-and-forget
+      return out;
+    } catch (err) {
+      const status = err.response?.status;
+      if (status === 429) {
+        // Daily row budget spent — resets 00:00 UTC. The frontend already has a
+        // graceful path for `rateLimited`, so reuse it rather than erroring out.
+        console.warn('[Card API] daily sale-row limit reached');
+        return {
+          results: [], total: 0, rateLimited: true,
+          rateLimitMessage: "Sold search has hit today's data limit. It resets at midnight UTC — try again then, or use For Sale mode in the meantime.",
+        };
+      }
+      if (status === 401 || status === 403) {
+        console.error(`[Card API] auth/plan error ${status} — check CARD_API_KEY`);
+        return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
+      }
+      console.error('[Card API] request failed:', err.message);
+      return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
+    } finally {
+      // Always clear, or a failed request would pin its rejection forever.
+      _soldInFlight.delete(cacheKey);
+    }
+  })();
+
+  _soldInFlight.set(cacheKey, work);
+  return work;
 }
 
 // True when a user has an active paid plan (Pro / Pro+) or a permanent grant.
@@ -884,43 +907,36 @@ app.get('/api/search', async (req, res) => {
       const variantFiltered = filterPriceOutliers(matched.results);
       const exactExists = hasExactCardSales(query, searchData.results);
 
-      // Serial requested but nothing sold AT that print run? Run a second broad
-      // search with the serial stripped to pull the nearest print runs (a /5
-      // with no sales still gets /20, /60 …) — used both as displayable comps
-      // and to power the print-run-adjusted estimate.
+      // Serial requested but nothing sold AT that print run? The nearest print
+      // runs are already in hand: the provider query has the serial stripped
+      // before it's sent, so this one response covers every print run of the
+      // card. A second "broad" call would re-request byte-identical data and
+      // be billed for it, so pull the similar runs out of what we have.
       let similarResults = [];
-      let estimatePool = searchData.results;
-      if (serial && !exactExists) {
+      const estimatePool = searchData.results;
+      if (serial && !exactExists && estimatePool.length) {
         const baseQuery = query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim();
-        let broad = null;
-        try {
-          broad = await fetchEbayItems(baseQuery, limit, mode, 'search-serial-broad');
-        } catch (_) { /* best-effort — fall back to what the exact search returned */ }
-        if (broad && Array.isArray(broad.results) && broad.results.length) {
-          const seen = new Set(searchData.results.map(r => r.itemId));
-          estimatePool = searchData.results.concat(broad.results.filter(r => !seen.has(r.itemId)));
-          // Keep the same card at OTHER print runs, sorted by how close each
-          // print run is to the one requested. Prefer the API's structured
-          // print_run and fall back to the serial stamped in the title.
-          const reqSerial = parseInt(serial, 10);
-          const numberedRe = /\/(\d{1,4})(?![0-9])/;
-          const runOf = (r) => {
-            if (Number.isFinite(r.printRun)) return r.printRun;
-            const m = String(r.title || '').match(numberedRe);
-            return m ? parseInt(m[1], 10) : null;
-          };
-          const shownIds = new Set(variantFiltered.map(r => r.itemId));
-          similarResults = matchSoldListings(estimatePool, baseQuery).results
-            .filter(r => {
-              const run = runOf(r);
-              return !shownIds.has(r.itemId) && run != null && run !== reqSerial;
-            })
-            .sort((a, b) => {
-              const an = runOf(a), bn = runOf(b);
-              return (Math.abs(an - reqSerial) - Math.abs(bn - reqSerial)) || (an - bn);
-            })
-            .slice(0, 20);
-        }
+        // Keep the same card at OTHER print runs, sorted by how close each print
+        // run is to the one requested. Prefer the API's structured print_run and
+        // fall back to the serial stamped in the title.
+        const reqSerial = parseInt(serial, 10);
+        const numberedRe = /\/(\d{1,4})(?![0-9])/;
+        const runOf = (r) => {
+          if (Number.isFinite(r.printRun)) return r.printRun;
+          const m = String(r.title || '').match(numberedRe);
+          return m ? parseInt(m[1], 10) : null;
+        };
+        const shownIds = new Set(variantFiltered.map(r => r.itemId));
+        similarResults = matchSoldListings(estimatePool, baseQuery).results
+          .filter(r => {
+            const run = runOf(r);
+            return !shownIds.has(r.itemId) && run != null && run !== reqSerial;
+          })
+          .sort((a, b) => {
+            const an = runOf(a), bn = runOf(b);
+            return (Math.abs(an - reqSerial) - Math.abs(bn - reqSerial)) || (an - bn);
+          })
+          .slice(0, 20);
       }
 
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
@@ -1980,7 +1996,14 @@ app.get('/api/variants', async (req, res) => {
     const baseQuery = serial ? query.replace(/\/\d{1,4}/, '').replace(/\s+/g, ' ').trim() : query;
 
     let rawResults;
-    if (serial) {
+    // Sold: one call covers it. The provider strips the serial before querying,
+    // so the targeted and broad legs below would send identical requests — and
+    // in parallel neither warms the cache for the other, so both get billed.
+    if (serial && mode === 'sold') {
+      const one = await fetchEbayItems(baseQuery, 50, mode, 'variants-serial');
+      if (sendIfSoldBlocked(res, one)) return;
+      rawResults = one.results;
+    } else if (serial) {
       // Dual search when serial present: targeted + broad for better coverage
       const [targeted, broad] = await Promise.all([
         fetchEbayItems(`${baseQuery} /${serial}`, 50, mode, 'direct-search-serial'),
