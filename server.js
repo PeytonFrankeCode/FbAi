@@ -710,7 +710,9 @@ function mapCardApiSale(s) {
 // Search sold sales. Returns { results, total } on success, or a flagged object
 // ({ soldUnavailable } / { rateLimited }) that callers surface to the user —
 // never throws for an expected provider state.
-async function fetchViaCardApi(keywords, limit = 50, source = 'unknown') {
+// `opts` maps onto the API's structured filters — notably grader/grade, which
+// are far more reliable than hoping "PSA 10" appears in the listing title.
+async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = {}) {
   if (!CARD_API_KEY) {
     return { results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG };
   }
@@ -719,9 +721,15 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown') {
   // is noise there — strip it and let the caller's print-run logic do that job.
   // The negative terms drop obvious junk upstream so it never costs us a row.
   const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
-  const q = `${cleaned} -(lot,reprint,digital)`;
+  const params = { q: `${cleaned} -(lot,reprint,digital)`, limit: Math.min(limit, 1000), sort: 'date_desc' };
+  if (opts.grader) params.grader = opts.grader;
+  if (opts.grade) params.grade = opts.grade;
+  if (opts.graded != null) params.graded = opts.graded;
 
-  const cacheKey = `soldapi:v1:${limit}:${cleaned.toLowerCase()}`;
+  // Filters must be part of the cache key or a graded lookup would serve the
+  // raw result set (or vice versa) for the same query text.
+  const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
+  const cacheKey = `soldapi:v1:${limit}:${filterKey}:${cleaned.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached && Array.isArray(cached.results)) {
     console.log(`[Card API] KV cache hit for "${cleaned}" (${cached.results.length} sales)`);
@@ -732,7 +740,7 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown') {
   trackApiCall('insights', 'cardapi/sales', keywords, source);
   try {
     const res = await axios.get(`${CARD_API_BASE}/sales`, {
-      params: { q, limit: Math.min(limit, 1000), sort: 'date_desc' },
+      params,
       headers: { 'x-market-api-key': CARD_API_KEY },
       timeout: 15000,
     });
@@ -785,18 +793,33 @@ function sendSoldUnavailable(res) {
   return res.json({ results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG });
 }
 
+// Every sold-backed feature shares two provider states: no usable key, and the
+// daily row budget being spent. Responds and returns true when one applies, so
+// callers can guard with a single `if (sendIfSoldBlocked(res, data)) return;`.
+function sendIfSoldBlocked(res, ...responses) {
+  const blocked = responses.find(r => r && (r.soldUnavailable || r.rateLimited));
+  if (!blocked) return false;
+  if (blocked.soldUnavailable) { sendSoldUnavailable(res); return true; }
+  res.json({
+    results: [], total: 0, rateLimited: true,
+    error: blocked.rateLimitMessage,
+    rateLimitMessage: blocked.rateLimitMessage,
+  });
+  return true;
+}
+
 // ---- Shared fetch function ----
-// mode: 'forsale' (eBay Browse API) or 'sold' (retired — returns unavailable)
+// mode: 'forsale' (eBay Browse API) or 'sold' (The Card API)
 // Cache disabled for both modes per user request — every search hits the
 // upstream APIs fresh so users always see current listings/prices. The
 // in-memory ebayCache + getCached/setCache helpers stay in the file for
 // the unrelated marketplace endpoint to use.
-async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0) {
+async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, opts = {}) {
   if (mode === 'sold') {
     // Sold prices via The Card API. Provider states (no key, daily cap) come
     // back flagged rather than thrown — pass them straight through so callers
     // can surface them; only real result sets get the junk filter.
-    const response = await fetchViaCardApi(keywords, limit, source);
+    const response = await fetchViaCardApi(keywords, limit, source, opts);
     if (response.soldUnavailable || response.rateLimited) return response;
     return { ...response, results: filterJunkListings(response.results || []) };
   }
@@ -1726,7 +1749,82 @@ function computeApproxValue(results, label) {
 // ---- /api/grading-advisor ----
 // Returns sold price stats for raw, PSA 8, PSA 9, PSA 10 for a given card query.
 app.get('/api/grading-advisor', async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) {
+    return res.status(400).json({ error: 'Query parameter "q" is required' });
+  }
+
+  const GRADING_COST = { economy: 25, express: 50 };
+
+  try {
+    const baseQ = query.trim();
+    // Grade comes from the provider's structured grader/grade filters rather
+    // than hoping "PSA 10" shows up in the listing title — and `graded: false`
+    // gives a genuinely raw pool instead of "the query minus a grade word".
+    const [rawData, psa8Data, psa9Data, psa10Data] = await Promise.all([
+      fetchEbayItems(baseQ, 20, 'sold', 'grading-raw',   0, { graded: false }),
+      fetchEbayItems(baseQ, 20, 'sold', 'grading-psa8',  0, { grader: 'PSA', grade: '8' }),
+      fetchEbayItems(baseQ, 20, 'sold', 'grading-psa9',  0, { grader: 'PSA', grade: '9' }),
+      fetchEbayItems(baseQ, 20, 'sold', 'grading-psa10', 0, { grader: 'PSA', grade: '10' }),
+    ]);
+    if (sendIfSoldBlocked(res, rawData, psa8Data, psa9Data, psa10Data)) return;
+
+    // Variant-strict filter so each grade's comps reflect the actual card
+    // searched (excludes wrong colors, wrong sets, autos/relics not asked for).
+    const filterFor = (items) => filterPriceOutliers(filterByVariant(items, baseQ));
+    const rawItems   = filterFor(rawData.results);
+    const psa8Items  = filterFor(psa8Data.results);
+    const psa9Items  = filterFor(psa9Data.results);
+    const psa10Items = filterFor(psa10Data.results);
+
+    const summarize = (items, label) => {
+      const v = computeApproxValue(items, label);
+      return v ? { avg: v.avgPrice, median: v.medianPrice, min: v.priceRange.min, max: v.priceRange.max, sales: v.sampleSize } : null;
+    };
+
+    const raw   = summarize(rawItems,   'Raw');
+    const psa8  = summarize(psa8Items,  'PSA 8');
+    const psa9  = summarize(psa9Items,  'PSA 9');
+    const psa10 = summarize(psa10Items, 'PSA 10');
+
+    // Grade premium over the raw median, net of grading cost.
+    const calcPremium = (graded, rawVal) => {
+      if (!graded || !rawVal) return null;
+      const net = graded.median - rawVal.median - GRADING_COST.economy;
+      return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
+    };
+
+    // Return the comps behind each grade so the UI can show exactly which sold
+    // listings drove the recommendation. Trimmed to keep the payload small.
+    const trimComps = (items) => (items || []).slice(0, 24).map(it => ({
+      title: it.title,
+      price: it.price,
+      itemUrl: it.itemUrl,
+      imageUrl: it.imageUrl,
+      soldDate: it.soldDate,
+      condition: it.condition,
+    }));
+
+    res.json({
+      query: baseQ,
+      grades: { raw, psa8, psa9, psa10 },
+      premiums: {
+        psa8:  calcPremium(psa8,  raw),
+        psa9:  calcPremium(psa9,  raw),
+        psa10: calcPremium(psa10, raw),
+      },
+      gradingCost: GRADING_COST,
+      comps: {
+        raw:   trimComps(rawItems),
+        psa8:  trimComps(psa8Items),
+        psa9:  trimComps(psa9Items),
+        psa10: trimComps(psa10Items),
+      },
+    });
+  } catch (err) {
+    console.error('Grading advisor error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch grading data', detail: err.message });
+  }
 });
 
 // ---- /api/direct-search ----
@@ -4115,32 +4213,277 @@ app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
 // ---- Flip Finder (Pro+) ----
 // Finds live eBay listings priced significantly below their recent sold median.
 app.get('/api/flip-finder', requirePlan('pro'), async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  const minDiscount = Math.max(10, Math.min(50, parseInt(req.query.minDiscount) || 30));
+  const minProfit = parseFloat(req.query.minProfit) || 10;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 40);
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+
+  try {
+    const [soldData, forsaleData] = await Promise.all([
+      fetchEbayItems(query, 50, 'sold', 'flip-finder'),
+      fetchEbayItems(query, 50, 'forsale', 'flip-finder'),
+    ]);
+    if (sendIfSoldBlocked(res, soldData)) return;
+
+    const soldPrices = (soldData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0);
+    if (soldPrices.length < 3) return res.json({ results: [], message: 'Not enough recent sold data for this query' });
+
+    const sorted = [...soldPrices].sort((a, b) => a - b);
+    const soldMedian = sorted.length % 2 ? sorted[Math.floor(sorted.length / 2)] : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2;
+    const threshold = soldMedian * (1 - minDiscount / 100);
+
+    const opportunities = (forsaleData.results || [])
+      .map(item => {
+        const price = parseFloat(item.price) || 0;
+        if (!price || price >= threshold) return null;
+        const profit = soldMedian - price;
+        if (profit < minProfit) return null;
+        return {
+          title: item.title,
+          listingPrice: price,
+          soldMedian: Math.round(soldMedian * 100) / 100,
+          potentialProfit: Math.round(profit * 100) / 100,
+          discountPct: Math.round((1 - price / soldMedian) * 100),
+          itemUrl: item.itemUrl || '',
+          imageUrl: item.imageUrl || null,
+          condition: item.condition || 'Unknown',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.potentialProfit - a.potentialProfit)
+      .slice(0, limit);
+
+    res.json({ results: opportunities, soldMedian: Math.round(soldMedian * 100) / 100, soldSampleSize: soldPrices.length });
+  } catch (err) {
+    console.error('[FlipFinder]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ---- Market Movers (Pro+) ----
 // Identifies cards with prices trending up significantly in recent sales.
 app.get('/api/market-movers', requirePlan('pro'), async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+
+  try {
+    const soldData = await fetchEbayItems(query, 50, 'sold', 'market-movers');
+    if (sendIfSoldBlocked(res, soldData)) return;
+    const items = (soldData.results || [])
+      .map(i => ({ price: parseFloat(i.price), date: i.soldDate ? new Date(i.soldDate) : null, title: i.title, imageUrl: i.imageUrl }))
+      .filter(i => i.price > 0 && i.date && !isNaN(i.date));
+
+    if (items.length < 6) return res.json({ results: [], message: 'Not enough recent sold data to detect a trend' });
+
+    items.sort((a, b) => b.date - a.date);
+    // Split at the midpoint of the data we actually have rather than a fixed
+    // 7-day cutoff: the sold feed's lookback window depends on the plan (as
+    // little as 3 days), and a hardcoded cutoff would leave the "older" bucket
+    // permanently empty and report "insufficient data" forever.
+    const newest = items[0].date.getTime();
+    const oldest = items[items.length - 1].date.getTime();
+    const spanDays = Math.max(1, Math.round((newest - oldest) / 86400000));
+    const cutoff = new Date((newest + oldest) / 2);
+    const recent = items.filter(i => i.date >= cutoff).map(i => i.price);
+    const older = items.filter(i => i.date < cutoff).map(i => i.price);
+
+    if (recent.length < 2 || older.length < 2) return res.json({ results: [], message: 'Insufficient data to detect trend' });
+
+    const avg = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+    const recentAvg = avg(recent);
+    const olderAvg = avg(older);
+    const changePct = ((recentAvg - olderAvg) / olderAvg) * 100;
+
+    res.json({
+      query,
+      recentAvg: Math.round(recentAvg * 100) / 100,
+      olderAvg: Math.round(olderAvg * 100) / 100,
+      changePct: Math.round(changePct * 10) / 10,
+      trending: changePct >= 10 ? 'up' : changePct <= -10 ? 'down' : 'stable',
+      recentSales: recent.length,
+      olderSales: older.length,
+      // How much history this verdict actually rests on — a swing measured
+      // across 3 days means something very different from one across 30.
+      windowDays: spanDays,
+      recentItems: items.filter(i => i.date >= cutoff).slice(0, 5).map(i => ({ price: i.price, date: i.date.toISOString().slice(0, 10), title: i.title, imageUrl: i.imageUrl })),
+    });
+  } catch (err) {
+    console.error('[MarketMovers]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ---- Auto-Pricer: Comp Search (Pro+) ----
 // Returns raw sold listings for the user to pick the closest match before pricing.
 app.get('/api/auto-price/search', async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+  try {
+    let soldData = await fetchEbayItems(query, 24, 'sold', 'ap-search');
+    if (sendIfSoldBlocked(res, soldData)) return;
+
+    // Progressively drop trailing words until we get results
+    if (!soldData.results || soldData.results.length === 0) {
+      const words = query.trim().split(/\s+/);
+      for (let len = words.length - 1; len >= 2; len--) {
+        soldData = await fetchEbayItems(words.slice(0, len).join(' '), 24, 'sold', 'ap-search-fallback');
+        if (sendIfSoldBlocked(res, soldData)) return;
+        if (soldData.results && soldData.results.length > 0) break;
+      }
+    }
+
+    // Only keep sold listings for the SAME player as the search — the
+    // progressive word-dropping fallback above can otherwise pull in other
+    // players, polluting the comps. Anchor on the surname (the most stable
+    // token). If the surname can't be found, leave the pool untouched.
+    let pool = soldData.results || [];
+    const playerName = extractPlayerName(query);
+    const nameToks = playerName
+      ? playerName.toLowerCase().split(' ').filter(w => w.length > 1 && !NON_NAME_WORDS.has(w))
+      : [];
+    const surname = nameToks[nameToks.length - 1];
+    if (surname) {
+      pool = pool.filter(i => (' ' + String(i.title || '').toLowerCase() + ' ').includes(surname));
+    }
+
+    const items = pool
+      .map(i => ({
+        title: i.title,
+        price: parseFloat(i.price),
+        image: i.imageUrl || '',
+        soldDate: i.soldDate,
+        url: i.itemUrl || '',
+      }))
+      .filter(i => i.price > 0)
+      .slice(0, 10); // cap the comps shown in the Auto-Pricer at 10
+    res.json({ items });
+  } catch (err) {
+    console.error('[APSearch]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ---- Auto-Pricer (Pro+) ----
 // Smart pricing: tries exact query first, falls back to progressively broader queries.
 // Handles missing year/card# by using what's available. Returns confidence level.
 app.get('/api/auto-price', async (req, res) => {
-  return sendSoldUnavailable(res);
+  const query = req.query.q;
+  if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query required' });
+
+  const med = arr => arr.length % 2 ? arr[Math.floor(arr.length / 2)] : (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
+
+  try {
+    // Build a list of queries to try: exact first, then drop one word at a time from the end
+    const words = query.trim().split(/\s+/);
+    const attempts = [query];
+    for (let len = words.length - 1; len >= 2; len--) {
+      attempts.push(words.slice(0, len).join(' '));
+    }
+
+    let soldData, usedQuery = query, attemptIndex = 0;
+    for (let i = 0; i < attempts.length; i++) {
+      soldData = await fetchEbayItems(attempts[i], 30, 'sold', 'auto-price');
+      if (sendIfSoldBlocked(res, soldData)) return;
+      const prices = (soldData.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
+      if (prices.length >= 3) { usedQuery = attempts[i]; attemptIndex = i; break; }
+      if (i === attempts.length - 1) { usedQuery = attempts[i]; attemptIndex = i; }
+    }
+
+    const rawPrices = (soldData.results || []).map(r => parseFloat(r.price)).filter(p => p > 0);
+    const cleanPrices = removeOutliers(rawPrices);
+    const finalPrices = (cleanPrices.length >= 2 ? cleanPrices : rawPrices).sort((a, b) => a - b);
+
+    if (finalPrices.length < 2) {
+      return res.json({ error: 'Not enough recent sold data found. Try selecting a different comp card.', soldCount: rawPrices.length });
+    }
+
+    // Confidence: high = 5+ exact sales, medium = 3-4 or minor fallback, low = significant fallback
+    let confidence, fallbackNote = null;
+    if (attemptIndex === 0) {
+      confidence = finalPrices.length >= 5 ? 'high' : 'medium';
+    } else if (attemptIndex <= 2) {
+      confidence = 'medium';
+      fallbackNote = `Priced using similar cards: "${usedQuery}"`;
+    } else {
+      confidence = 'low';
+      fallbackNote = `Limited exact data — broadened to: "${usedQuery}"`;
+    }
+
+    const soldMedian = med(finalPrices);
+    const soldLow = finalPrices[0];
+    const soldHigh = finalPrices[finalPrices.length - 1];
+    const soldAvg = finalPrices.reduce((a, b) => a + b, 0) / finalPrices.length;
+
+    const forsaleData = await fetchEbayItems(usedQuery, 20, 'forsale', 'auto-price');
+    const forsalePrices = (forsaleData.results || []).map(i => parseFloat(i.price)).filter(p => p > 0).sort((a, b) => a - b);
+    const competitionLow = forsalePrices[0] || null;
+
+    const aggressive = competitionLow ? Math.max(soldLow, competitionLow * 0.95) : soldLow * 1.05;
+    const optimal = soldMedian * 0.95;
+    const premium = soldMedian * 1.10;
+
+    res.json({
+      soldMedian: Math.round(soldMedian * 100) / 100,
+      soldAvg: Math.round(soldAvg * 100) / 100,
+      soldLow: Math.round(soldLow * 100) / 100,
+      soldHigh: Math.round(soldHigh * 100) / 100,
+      soldCount: finalPrices.length,
+      confidence,
+      fallbackNote,
+      usedQuery,
+      competitionLow: competitionLow ? Math.round(competitionLow * 100) / 100 : null,
+      competitionCount: forsalePrices.length,
+      recommendations: {
+        aggressive: { price: Math.round(aggressive * 100) / 100, label: 'Fast Sale', description: 'Price to sell quickly — slightly below competition' },
+        optimal:    { price: Math.round(optimal * 100) / 100,    label: 'Optimal',   description: 'Best balance of speed and return — just below sold median' },
+        premium:    { price: Math.round(premium * 100) / 100,    label: 'Premium',   description: 'Max return — 10% above median for patient sellers' },
+      }
+    });
+  } catch (err) {
+    console.error('[AutoPrice]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ---- Bulk Price (Pro+) ----
 // Prices up to 20 cards at once, returning median sold price for each.
 app.post('/api/bulk-price', async (req, res) => {
-  return sendSoldUnavailable(res);
+  const { queries } = req.body;
+  if (!Array.isArray(queries) || queries.length === 0) return res.status(400).json({ error: 'queries array required' });
+  if (queries.length > 20) return res.status(400).json({ error: 'Maximum 20 cards per bulk request' });
+
+  const results = [];
+  for (const q of queries) {
+    try {
+      const query = q.trim();
+      const response = await fetchEbayItems(query, 25, 'sold', 'bulk-price');
+      // A blocked provider won't recover mid-run, so stop rather than grinding
+      // through the rest of the batch returning nulls.
+      if (response.soldUnavailable) return sendSoldUnavailable(res);
+      if (response.rateLimited) {
+        return res.json({ results, rateLimited: true, error: response.rateLimitMessage, rateLimitMessage: response.rateLimitMessage });
+      }
+      // Same pipeline as the main Sold search so the comps actually match the
+      // card: variant filter (right player/set/parallel, exclude autos/relics/
+      // wrong colors) then drop mis-listed price outliers.
+      const matched = filterPriceOutliers(filterByVariant(response.results, query));
+      const prices = matched.map(r => parseFloat(r.price)).filter(p => p > 0);
+      prices.sort((a, b) => a - b);
+      const median = prices.length ? (prices.length % 2 ? prices[Math.floor(prices.length / 2)] : (prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2) : null;
+      // Return the matched comps (highest first) so the UI can show them and
+      // let the user exclude the random high ones.
+      const comps = matched
+        .map(r => ({ title: r.title || '', price: parseFloat(r.price), url: r.itemUrl || '', soldDate: r.soldDate || '', image: r.imageUrl || '' }))
+        .filter(c => c.price > 0)
+        .sort((a, b) => b.price - a.price);
+      results.push({ query: q, median: median ? Math.round(median * 100) / 100 : null, count: prices.length, low: prices[0] || null, high: prices[prices.length - 1] || null, comps });
+    } catch {
+      results.push({ query: q, median: null, count: 0, error: 'Failed' });
+    }
+    await new Promise(r => setTimeout(r, 300));
+  }
+  res.json({ results });
 });
 
 // Create checkout session for extra promote slot
