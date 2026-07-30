@@ -679,7 +679,25 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 // Free tier is 5,000 sale rows/day with a 3-day lookback, and CSV + API draw
 // from the same pool — so every row we pull is scarce. Cache hard: the lookback
 // window barely moves within a day, and a cached comp is as good as a fresh one.
-const SOLD_API_CACHE_TTL = 6 * 3600; // 6 hours
+// 24h. The feed's lookback is measured in days, so a comp set barely moves
+// within one — and a longer TTL is the single cheapest way to cut row spend.
+const SOLD_API_CACHE_TTL = 24 * 3600;
+
+// Cache key for a sold lookup. Deliberately NOT keyed on the request limit —
+// see the reuse check in fetchViaCardApi, which slices a larger cached result
+// down for a smaller caller.
+//
+// Tokens are sorted because `q` is full-text over the listing title, so word
+// order doesn't change what comes back — but it does change a naive key.
+// "Patrick Mahomes 2017 Prizm", "2017 Prizm Patrick Mahomes" and "prizm
+// mahomes 2017" are one card typed three ways, and without this they'd be
+// three separate paid lookups.
+function _soldCacheKey(cleaned, filterKey) {
+  const norm = String(cleaned).toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, ' ')
+    .split(/\s+/).filter(Boolean).sort().join(' ');
+  return `soldapi:v2:${filterKey}:${norm}`;
+}
 
 // Requests currently in flight, keyed the same way as the cache. The KV cache
 // only dedupes calls that are sequential — two identical lookups fired in
@@ -735,12 +753,17 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = 
   // Filters must be part of the cache key or a graded lookup would serve the
   // raw result set (or vice versa) for the same query text.
   const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
-  const cacheKey = `soldapi:v1:${limit}:${filterKey}:${cleaned.toLowerCase()}`;
+  const cacheKey = _soldCacheKey(cleaned, filterKey);
   const cached = await cacheGet(cacheKey);
-  if (cached && Array.isArray(cached.results)) {
-    console.log(`[Card API] KV cache hit for "${cleaned}" (${cached.results.length} sales)`);
+  // A cached entry satisfies this request when it already holds enough rows,
+  // or when it wasn't truncated (fewer rows came back than were asked for, so
+  // that IS the whole result set). Lets a 50-row search serve a later 25-row
+  // inventory valuation of the same card for free.
+  if (cached && Array.isArray(cached.results)
+      && (cached.results.length >= limit || cached.results.length < (cached.fetchedLimit || 0))) {
+    console.log(`[Card API] KV cache hit for "${cleaned}" (${cached.results.length} sales, need ${limit})`);
     trackCacheHit('sold');
-    return cached;
+    return { ...cached, results: cached.results.slice(0, limit) };
   }
 
   // An identical lookup already on the wire? Ride along on it instead of
@@ -765,7 +788,11 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = 
       if (remaining != null) console.log(`[Card API] ${remaining} sale rows left today`);
 
       const rows = Array.isArray(res.data?.data) ? res.data.data : [];
-      const out = { results: rows.map(mapCardApiSale), total: res.data?.pagination?.total || rows.length };
+      const out = {
+        results: rows.map(mapCardApiSale),
+        total: res.data?.pagination?.total || rows.length,
+        fetchedLimit: params.limit, // lets a later smaller request reuse this
+      };
       cachePut(cacheKey, out, SOLD_API_CACHE_TTL); // best-effort, fire-and-forget
       return out;
     } catch (err) {
