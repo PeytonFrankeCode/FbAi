@@ -2078,6 +2078,50 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ---- Debug endpoint: test the sold-price provider ----
+// Sold search failing looks identical from the outside whether the secret is
+// missing, the key is rejected, or the daily budget is spent. This says which,
+// bypassing the cache so it always reflects the live state. Never echoes the
+// key itself — only whether one is present and how long it is.
+app.get('/api/debug/sold-test', async (req, res) => {
+  const q = req.query.q || 'patrick mahomes prizm';
+  const out = {
+    query: q,
+    keyPresent: !!CARD_API_KEY,
+    keyLength: CARD_API_KEY ? String(CARD_API_KEY).length : 0,
+  };
+  if (!CARD_API_KEY) {
+    out.status = 'NO_KEY';
+    out.fix = 'Run: wrangler secret put CARD_API_KEY — then redeploy.';
+    return res.json(out);
+  }
+  try {
+    const r = await axios.get(`${CARD_API_BASE}/sales`, {
+      params: { q, limit: 3, sort: 'date_desc' },
+      headers: { 'x-market-api-key': CARD_API_KEY },
+      timeout: 15000,
+    });
+    const rows = Array.isArray(r.data?.data) ? r.data.data : [];
+    out.status = 'OK';
+    out.httpStatus = r.status;
+    out.rowsReturned = rows.length;
+    out.totalMatching = r.data?.pagination?.total ?? null;
+    out.rowsLeftToday = r.headers?.['x-ratelimit-remaining'] ?? null;
+    out.dailyLimit = r.headers?.['x-ratelimit-limit'] ?? null;
+    out.coverage = r.data?.meta || null; // lookback window the plan actually grants
+    out.sample = rows[0] ? { title: rows[0].title, price: rows[0].price, sale_date: rows[0].sale_date } : null;
+  } catch (err) {
+    const status = err.response?.status || null;
+    out.status = status === 429 ? 'DAILY_LIMIT_REACHED' : status === 401 ? 'KEY_REJECTED' : 'FAILED';
+    out.httpStatus = status;
+    out.error = err.message;
+    out.detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 300) : null;
+    if (status === 401) out.fix = 'The key was rejected. Re-check it and re-run: wrangler secret put CARD_API_KEY';
+    if (status === 429) out.fix = 'Daily sale-row budget spent. Resets 00:00 UTC.';
+  }
+  res.json(out);
+});
+
 // ---- Debug endpoint: test eBay Browse API ----
 app.get('/api/debug/browse-test', async (req, res) => {
   const q = req.query.q || 'mahomes prizm';
