@@ -45,6 +45,18 @@ const CARD_API_BASE = 'https://thecardapi.com/api/v1/market';
 // so nobody is scraping on our behalf by default.
 const SCRAPE_DO_BASE = 'https://api.scrape.do';
 
+// Which sold provider(s) to use. A switch rather than a code change so it can
+// be flipped from a secret and flipped straight back:
+//   auto     (default) The Card API first, scrape.do fills gaps
+//   cardapi  The Card API only — never scrape
+//   scrapedo scrape.do only — bypass The Card API entirely
+// Note `scrapedo` only serves users who added their own key in Settings;
+// everyone else gets the unavailable state, since there's no shared key.
+const SOLD_PROVIDER = (() => {
+  const v = String(process.env.SOLD_PROVIDER || 'auto').trim().toLowerCase();
+  return ['auto', 'cardapi', 'scrapedo'].includes(v) ? v : 'auto';
+})();
+
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
 const USE_MOCK_SOLD = process.env.USE_MOCK_DATA === 'true';
 const USE_MOCK = USE_MOCK_FORSALE && USE_MOCK_SOLD;
@@ -1436,7 +1448,10 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     // The Card API is the primary source: it's the licensed feed, and because
     // billing is per row RETURNED, a search that finds nothing costs ~nothing.
     // So trying it first is close to free and keeps scrape.do to gap cases.
-    const response = await fetchViaCardApi(keywords, limit, source, opts);
+    // Skipped entirely when SOLD_PROVIDER pins us to scrape.do.
+    const response = SOLD_PROVIDER === 'scrapedo'
+      ? { results: [], total: 0, skipped: 'SOLD_PROVIDER=scrapedo' }
+      : await fetchViaCardApi(keywords, limit, source, opts);
     const primary = Array.isArray(response.results) ? filterJunkListings(response.results) : [];
     if (primary.length > 0) return { ...response, results: primary, provider: 'cardapi' };
 
@@ -1444,7 +1459,9 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     // window, or the provider is blocked (no key / daily cap spent). Either
     // way, a user who added their own scrape.do key can cover the gap: their
     // quota, and no lookback limit, so it reaches sales we simply can't see.
-    const sdKeys = (opts.scrapeDo && Array.isArray(opts.scrapeDo.keys)) ? opts.scrapeDo.keys : [];
+    const sdKeys = (SOLD_PROVIDER === 'cardapi' || !opts.scrapeDo || !Array.isArray(opts.scrapeDo.keys))
+      ? []
+      : opts.scrapeDo.keys;
     if (sdKeys.length > 0) {
       const why = response.rateLimited ? 'daily cap reached'
         : response.soldUnavailable ? 'provider unavailable' : 'no results in lookback window';
@@ -1459,6 +1476,16 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
         _archiveSales(_soldArchiveKey(cleaned, filterKey), sdResults);
         return { ...sd, results: sdResults, provider: 'scrapedo' };
       }
+    }
+
+    // Pinned to scrape.do but this user has no working key — there's no shared
+    // key to fall back on, so say so plainly rather than implying the card has
+    // never sold.
+    if (SOLD_PROVIDER === 'scrapedo' && primary.length === 0) {
+      return {
+        results: [], total: 0, soldUnavailable: true,
+        error: 'Sold search is set to use your own scrape.do key. Add one in Settings to enable it.',
+      };
     }
 
     // No fallback available or it also came up empty. Return the primary
@@ -2765,9 +2792,15 @@ app.get('/api/debug/sold-test', async (req, res) => {
   const q = req.query.q || 'patrick mahomes prizm';
   const out = {
     query: q,
+    soldProvider: SOLD_PROVIDER, // auto | cardapi | scrapedo
     keyPresent: !!CARD_API_KEY,
     keyLength: CARD_API_KEY ? String(CARD_API_KEY).length : 0,
   };
+  if (SOLD_PROVIDER === 'scrapedo') {
+    out.status = 'CARD_API_DISABLED';
+    out.note = 'SOLD_PROVIDER=scrapedo — The Card API is switched off. Sold search uses each user\'s own scrape.do key. Set SOLD_PROVIDER=auto to re-enable.';
+    return res.json(out);
+  }
   if (!CARD_API_KEY) {
     out.status = 'NO_KEY';
     out.fix = 'Run: wrangler secret put CARD_API_KEY — then redeploy.';

@@ -35,10 +35,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # Pushes Worker secrets on deploy, so they can be managed from GitHub
-          # instead of the Cloudflare dashboard. The conditional matters: when
-          # the GitHub secret is unset this resolves to an empty list and the
-          # step is skipped, rather than failing the whole deploy.
-          secrets: ${{ secrets.CARD_API_KEY != '' && 'CARD_API_KEY' || '' }}
+          # instead of the Cloudflare dashboard. Each name is added only when
+          # that GitHub secret is actually set — naming an unset one would fail
+          # the whole deploy.
+          secrets: |
+            ${{ secrets.CARD_API_KEY != '' && 'CARD_API_KEY' || '' }}
+            ${{ secrets.SOLD_PROVIDER != '' && 'SOLD_PROVIDER' || '' }}
         env:
           # Read by wrangler-action for the names listed in `secrets` above.
           CARD_API_KEY: ${{ secrets.CARD_API_KEY }}
+          # auto (default) | cardapi | scrapedo — switches the sold source.
+          SOLD_PROVIDER: ${{ secrets.SOLD_PROVIDER }}

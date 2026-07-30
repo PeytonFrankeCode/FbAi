@@ -74,6 +74,19 @@ new_sqlite_classes = ["UserInbox"]
 #                                               # sold lookups are KV-cached for 24h. Without this
 #                                               # secret, sold search degrades to "unavailable".
 #
+# Optional — switch the sold source without a code change:
+#   wrangler secret put SOLD_PROVIDER        # auto (default) | cardapi | scrapedo
+#                                            #   auto     = The Card API first,
+#                                            #             scrape.do fills gaps
+#                                            #   cardapi  = The Card API only
+#                                            #   scrapedo = scrape.do only. Serves
+#                                            #             only users who added
+#                                            #             their own key in
+#                                            #             Settings — there is no
+#                                            #             shared key.
+#   Also settable as a GitHub Actions secret; the deploy workflow pushes it.
+#   /api/debug/sold-test reports the active mode.
+#
 # Optional — sold-sale archive:
 #   Every sale we fetch is written to KV permanently (key prefix soldarch:),
 #   turning the provider's rolling lookback into history that deepens a day
