@@ -39,6 +39,28 @@ USE_MOCK_DATA = "false"
 binding = "KV"
 id = "5cc96b5126ec4e57960b945fb810481f"
 
+# NflCardDB — our own dataset of eBay sold football-card listings, queried
+# directly from the Worker. Same account, so there's no API, no key and no
+# quota; it's the first sold source tried, and the paid providers only see
+# what it misses.
+#
+# This block is commented out until the database exists — an unresolvable
+# database_id fails every deploy. To enable:
+#
+#   npx wrangler d1 create nflcarddb        # paste the returned id below
+#   npx wrangler d1 execute nflcarddb --remote --file=api/schema.sql
+#   nflcarddb export-api                    # from the NflCardDB repo
+#   npx wrangler d1 execute nflcarddb --remote --file=api/import.sql
+#
+# then uncomment, fill in database_id, and deploy. The code already handles
+# the binding being absent by falling through to the other providers, so
+# nothing breaks in the meantime.
+#
+# [[d1_databases]]
+# binding = "NFLDB"
+# database_name = "nflcarddb"
+# database_id = "PASTE-THE-ID-FROM-WRANGLER-D1-CREATE"
+
 # Durable Object that powers live presence on The Floor — one global room
 # instance tracks who's connected and relays avatar positions over
 # WebSockets. SQLite-backed class so it's eligible on every plan tier

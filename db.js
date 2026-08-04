@@ -22,9 +22,18 @@ const KNOWN_KEYS = ['users', 'sessions', 'subscriptions', 'alerts', 'priceHistor
 
 const cache = {};
 let kv = null;          // Cloudflare KV namespace binding (set by connectDB)
+let nflDb = null;      // NflCardDB Cloudflare D1 binding (set by connectDB)
 let kvReady = false;    // true after preload completes
 
 async function connectDB(env) {
+  // Stash the NflCardDB D1 binding if present. Unlike secrets, bindings are
+  // objects, so worker.js's string-only copy into process.env never sees them —
+  // they have to be captured here, off the env object itself.
+  if (env && env.NFLDB) {
+    nflDb = env.NFLDB;
+    console.log('[DB] NflCardDB D1 binding attached');
+  }
+
   // Stash the KV binding if present. env is only available on Workers.
   if (env && env.KV) {
     kv = env.KV;
@@ -279,4 +288,9 @@ async function archivePut(key, value) {
   }
 }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut };
+// The NflCardDB D1 handle, or null when the binding is absent (local dev, or
+// before the database has been created). Callers must treat null as "source
+// unavailable" and fall through to another provider rather than erroring.
+function getNflDb() { return nflDb; }
+
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb };
