@@ -53,8 +53,12 @@ const SCRAPE_DO_BASE = 'https://api.scrape.do';
 //   scrapedo scrape.do only — bypass The Card API entirely
 // Note `scrapedo` only serves users who added their own key in Settings;
 // everyone else gets the unavailable state, since there's no shared key.
+// TEMPORARY: default flipped to 'nflcarddb' to test our own dataset in
+// isolation — the paid providers are not called at all while this stands.
+// Revert this default to 'auto' to restore the full fallback chain, or set the
+// SOLD_PROVIDER secret to 'auto', which overrides it without a code change.
 const SOLD_PROVIDER = (() => {
-  const v = String(process.env.SOLD_PROVIDER || 'auto').trim().toLowerCase();
+  const v = String(process.env.SOLD_PROVIDER || 'nflcarddb').trim().toLowerCase();
   return ['auto', 'cardapi', 'scrapedo', 'nflcarddb'].includes(v) ? v : 'auto';
 })();
 
@@ -771,6 +775,24 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     // paid providers instead.
     console.error('[NflCardDB] query failed:', err && err.message);
     return { results: [], total: 0, unavailable: true };
+  }
+}
+
+// True when the sales table exists but holds no priced rows — i.e. the import
+// hasn't run. Cached for a minute so a run of misses doesn't re-count on every
+// search. Returns false on any error so an unrelated fault never gets reported
+// to users as "the database is empty".
+let _nflEmptyCheck = { at: 0, empty: false };
+async function _nflDbIsEmpty() {
+  const db = getNflDb();
+  if (!db) return false;
+  if (Date.now() - _nflEmptyCheck.at < 60000) return _nflEmptyCheck.empty;
+  try {
+    const row = await db.prepare('SELECT 1 AS n FROM sales WHERE price_cents IS NOT NULL LIMIT 1').first();
+    _nflEmptyCheck = { at: Date.now(), empty: !row };
+    return !row;
+  } catch (_) {
+    return false;
   }
 }
 
@@ -1559,9 +1581,20 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
       // Pinned to our own dataset: stop here rather than silently spending a
       // paid provider's quota on the miss.
       if (SOLD_PROVIDER === 'nflcarddb') {
-        return own.unavailable
-          ? { results: [], total: 0, soldUnavailable: true, error: 'The football sold-price database is not connected yet.' }
-          : { results: [], total: 0, provider: 'nflcarddb' };
+        if (own.unavailable) {
+          return { results: [], total: 0, soldUnavailable: true, error: 'The football sold-price database is not connected yet.' };
+        }
+        // The query worked but matched nothing. That reads identically whether
+        // the card genuinely has no sales or the import never ran, so check
+        // whether the table holds anything at all and say which it is.
+        const empty = await _nflDbIsEmpty();
+        if (empty) {
+          return {
+            results: [], total: 0, soldUnavailable: true,
+            error: 'The football sold-price database is connected but has no rows yet — run the import.',
+          };
+        }
+        return { results: [], total: 0, provider: 'nflcarddb' };
       }
     }
 
