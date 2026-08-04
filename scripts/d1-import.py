@@ -75,6 +75,46 @@ def d1_query(account_id, database_id, token, sql, params=None):
     return payload.get("result")
 
 
+def split_schema(sql_text):
+    """Split a schema file into individual statements.
+
+    Strips `--` comments first: the D1 dashboard console rejects input it reads
+    as comment-only ("Requests without any query are not supported"), and
+    sending statements one at a time avoids that entirely.
+
+    Naive `;` splitting is safe here because a schema file contains only DDL —
+    no free-text string literals that could hold a semicolon. Do NOT reuse this
+    for data; that is exactly why the row import binds parameters instead.
+    """
+    lines = []
+    for line in sql_text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("--") or not stripped:
+            continue
+        lines.append(line)
+    joined = "\n".join(lines)
+    return [s.strip() for s in joined.split(";") if s.strip()]
+
+
+def apply_schema(account_id, database_id, token, path, dry_run=False):
+    """Run each statement in a .sql schema file against D1."""
+    with open(path, "r", encoding="utf-8") as fh:
+        statements = split_schema(fh.read())
+
+    if not statements:
+        sys.exit(f"{path} contains no SQL statements (only comments?).")
+
+    print(f"Applying {len(statements)} statement(s) from {path}")
+    for i, stmt in enumerate(statements, 1):
+        first = " ".join(stmt.split()[:4])
+        if dry_run:
+            print(f"  [{i}/{len(statements)}] would run: {first} ...")
+            continue
+        d1_query(account_id, database_id, token, stmt)
+        print(f"  [{i}/{len(statements)}] {first} ... ok")
+    print("Schema applied.")
+
+
 def batched(cursor, size):
     """Yield lists of rows so the whole table never has to sit in memory."""
     while True:
@@ -86,7 +126,8 @@ def batched(cursor, size):
 
 def main():
     ap = argparse.ArgumentParser(description="Import NflCardDB sales into Cloudflare D1.")
-    ap.add_argument("--db", required=True, help="path to the local SQLite file")
+    ap.add_argument("--db", help="path to the local SQLite file (omit with --schema to only create tables)")
+    ap.add_argument("--schema", help="apply this .sql schema file first (e.g. api/schema.sql)")
     ap.add_argument("--account-id", required=True, help="Cloudflare account id")
     ap.add_argument("--database-id", required=True, help="D1 database id")
     ap.add_argument("--since", help="only rows with sold_date >= this (YYYY-MM-DD)")
@@ -101,6 +142,16 @@ def main():
     if not token and not args.dry_run:
         sys.exit("CLOUDFLARE_API_TOKEN is not set. Create a token with D1:Edit "
                  "at https://dash.cloudflare.com/profile/api-tokens")
+
+    if not args.db and not args.schema:
+        sys.exit("Nothing to do — pass --schema to create tables, --db to load rows, or both.")
+
+    if args.schema:
+        if not os.path.exists(args.schema):
+            sys.exit(f"No such schema file: {args.schema}")
+        apply_schema(args.account_id, args.database_id, token, args.schema, args.dry_run)
+        if not args.db:
+            return
 
     if not os.path.exists(args.db):
         sys.exit(f"No such database file: {args.db}")
