@@ -45,16 +45,26 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 # what it misses.
 #
 # This block is commented out until the database exists — an unresolvable
-# database_id fails every deploy. To enable:
+# database_id fails every deploy. The code treats an absent binding as a miss
+# and falls through to the other providers, so nothing breaks in the meantime.
 #
-#   npx wrangler d1 create nflcarddb        # paste the returned id below
-#   npx wrangler d1 execute nflcarddb --remote --file=api/schema.sql
-#   nflcarddb export-api                    # from the NflCardDB repo
-#   npx wrangler d1 execute nflcarddb --remote --file=api/import.sql
+# No Node, npm or wrangler needed locally — CI already runs wrangler on deploy:
 #
-# then uncomment, fill in database_id, and deploy. The code already handles
-# the binding being absent by falling through to the other providers, so
-# nothing breaks in the meantime.
+#   1. Create the database: Cloudflare dashboard -> Storage & Databases -> D1
+#      -> Create. Copy the database ID it shows you.
+#   2. Apply the schema: same page, Console tab, paste api/schema.sql from the
+#      NflCardDB repo and run it. It's only a handful of CREATE statements.
+#   3. Uncomment this block, paste the ID into database_id, commit. The binding
+#      MUST live here rather than in the dashboard — CI deploys from this file,
+#      so a dashboard-only binding gets dropped on the next deploy.
+#   4. Load the data with scripts/d1-import.py (pure Python, standard library):
+#
+#        export CLOUDFLARE_API_TOKEN=...    # token with D1:Edit
+#        python3 scripts/d1-import.py --db <local.sqlite> \
+#            --account-id <id> --database-id <id>
+#
+#      Re-run any time; item_id is the primary key so every write is an upsert.
+#      Use --since YYYY-MM-DD for fast incremental loads after the first.
 #
 # [[d1_databases]]
 # binding = "NFLDB"
