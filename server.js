@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb } = require('./db');
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -47,14 +47,15 @@ const SCRAPE_DO_BASE = 'https://api.scrape.do';
 
 // Which sold provider(s) to use. A switch rather than a code change so it can
 // be flipped from a secret and flipped straight back:
-//   auto     (default) The Card API first, scrape.do fills gaps
+//   auto      (default) NflCardDB, then The Card API, then scrape.do
+//   nflcarddb our own D1 dataset only - no paid provider is called
 //   cardapi  The Card API only — never scrape
 //   scrapedo scrape.do only — bypass The Card API entirely
 // Note `scrapedo` only serves users who added their own key in Settings;
 // everyone else gets the unavailable state, since there's no shared key.
 const SOLD_PROVIDER = (() => {
   const v = String(process.env.SOLD_PROVIDER || 'auto').trim().toLowerCase();
-  return ['auto', 'cardapi', 'scrapedo'].includes(v) ? v : 'auto';
+  return ['auto', 'cardapi', 'scrapedo', 'nflcarddb'].includes(v) ? v : 'auto';
 })();
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
@@ -693,6 +694,85 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 }
 
 
+
+// ---- NflCardDB (sold prices, own D1 database) ----
+// Our own dataset: eBay sold football-card listings collected daily and parsed
+// into structured columns. Same Cloudflare account, so it's a direct D1 query —
+// no HTTP hop, no key, no quota, no lookback window. That makes it the first
+// source we try; the paid providers only cover what it misses.
+//
+// Two things the dataset's own brief flags, both enforced below:
+//   1. price_cents is NULL on ~46% of rows and that is CORRECT — those are
+//      best-offer sales where eBay publishes the seller's ask, not what the
+//      buyer paid. Averaging an ask into a comp would silently inflate it, so
+//      unpriced rows are excluded outright.
+//   2. Titles are seller-written, so `confidence` (0-1) is how much of a title
+//      the parser explained. Below ~0.5 the player field may be wrong, so
+//      player-driven filtering uses that floor.
+// `team` is populated opportunistically and often NULL — never filtered on.
+const NFLDB_MIN_CONFIDENCE = 0.5;
+
+// The schema has no image or listing URL. item_id is the eBay item id, so the
+// listing link is reconstructable; images simply aren't available and the card
+// renderer already tolerates a null imageUrl.
+function mapNflDbSale(r) {
+  const grade = r.grade != null ? `${r.grader || ''} ${r.grade}`.replace(/\.0$/, '').trim() : null;
+  return {
+    itemId: String(r.item_id || ''),
+    title: r.title || '',
+    price: String((Number(r.price_cents) || 0) / 100),
+    currency: r.currency || 'USD',
+    soldDate: r.sold_date || '',
+    imageUrl: null, // not collected
+    itemUrl: r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '',
+    condition: grade || 'Ungraded',
+    buyingOptions: r.listing_format === 'auction' ? ['AUCTION'] : ['FIXED_PRICE'],
+    // No print_run column — callers fall back to parsing it out of the title.
+    printRun: null,
+    grader: r.grader || null,
+    grade: r.grade != null ? String(r.grade).replace(/\.0$/, '') : null,
+    platform: 'eBay',
+    source: 'nflcarddb',
+  };
+}
+
+// Turn a free-text card query into a LIKE-matched D1 lookup. Every term must
+// appear somewhere in the title, which mirrors how the other providers behave
+// and keeps the existing downstream filters meaningful.
+async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
+  const db = getNflDb();
+  if (!db) return { results: [], total: 0, unavailable: true };
+
+  // Serial stamps are handled by the callers' print-run logic, not by matching
+  // "/5" as a title substring.
+  const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
+  const terms = cleaned.split(/\s+/).filter(t => t.length > 1).slice(0, 8);
+  if (terms.length === 0) return { results: [], total: 0 };
+
+  const where = [
+    'price_cents IS NOT NULL', // exclude best-offer rows — see note above
+    'confidence >= ?',
+    ...terms.map(() => 'title LIKE ?'),
+  ].join(' AND ');
+  const binds = [NFLDB_MIN_CONFIDENCE, ...terms.map(t => `%${t}%`)];
+
+  try {
+    const stmt = db.prepare(
+      `SELECT item_id, sold_date, title, price_cents, currency, listing_format, grader, grade
+       FROM sales WHERE ${where}
+       ORDER BY sold_date DESC LIMIT ?`
+    ).bind(...binds, Math.min(limit, 500));
+    const out = await stmt.all();
+    const rows = (out && Array.isArray(out.results)) ? out.results : [];
+    console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales (${source})`);
+    return { results: rows.map(mapNflDbSale), total: rows.length };
+  } catch (err) {
+    // A query failure must never take sold search down — fall through to the
+    // paid providers instead.
+    console.error('[NflCardDB] query failed:', err && err.message);
+    return { results: [], total: 0, unavailable: true };
+  }
+}
 
 // ---- The Card API (sold prices) ----
 // Free tier is 5,000 sale rows/day with a 3-day lookback, and CSV + API draw
@@ -1461,9 +1541,33 @@ function sendIfSoldBlocked(res, ...responses) {
 // the unrelated marketplace endpoint to use.
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, opts = {}) {
   if (mode === 'sold') {
-    // The Card API is the primary source: it's the licensed feed, and because
-    // billing is per row RETURNED, a search that finds nothing costs ~nothing.
-    // So trying it first is close to free and keeps scrape.do to gap cases.
+    // Our own D1 dataset first — no key, no quota, no lookback window, no
+    // network hop. Anything it answers costs nothing, so the paid providers
+    // only ever see what it misses. Football-only, and absent until the D1
+    // binding exists, so a miss here is the normal case rather than an error.
+    if (SOLD_PROVIDER !== 'scrapedo' && SOLD_PROVIDER !== 'cardapi') {
+      const own = await fetchViaNflCardDb(keywords, limit, source);
+      const ownResults = Array.isArray(own.results) ? filterJunkListings(own.results) : [];
+      if (ownResults.length > 0) {
+        // Archive these too: they're ours, but the archive is what survives if
+        // the dataset is ever rebuilt, and it dedupes on the same item ids.
+        const c = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
+        const fk = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
+        _archiveSales(_soldArchiveKey(c, fk), ownResults);
+        return { ...own, results: ownResults, provider: 'nflcarddb' };
+      }
+      // Pinned to our own dataset: stop here rather than silently spending a
+      // paid provider's quota on the miss.
+      if (SOLD_PROVIDER === 'nflcarddb') {
+        return own.unavailable
+          ? { results: [], total: 0, soldUnavailable: true, error: 'The football sold-price database is not connected yet.' }
+          : { results: [], total: 0, provider: 'nflcarddb' };
+      }
+    }
+
+    // The Card API is next: it's the licensed feed, and because billing is per
+    // row RETURNED, a search that finds nothing costs ~nothing. So trying it
+    // before scraping is close to free and keeps scrape.do to gap cases.
     // Skipped entirely when SOLD_PROVIDER pins us to scrape.do.
     const response = SOLD_PROVIDER === 'scrapedo'
       ? { results: [], total: 0, skipped: 'SOLD_PROVIDER=scrapedo' }
@@ -2809,7 +2913,20 @@ app.get('/api/debug/sold-test', async (req, res) => {
   const serverScrapeKeys = getServerScrapeDoKeys();
   const out = {
     query: q,
-    soldProvider: SOLD_PROVIDER, // auto | cardapi | scrapedo
+    soldProvider: SOLD_PROVIDER, // auto | nflcarddb | cardapi | scrapedo
+    // Our own D1 dataset — reported first because it's the first source tried.
+    nflCardDb: await (async () => {
+      const db = getNflDb();
+      if (!db) return { bound: false, note: 'No NFLDB binding — create the D1 database and uncomment the block in wrangler.toml.' };
+      try {
+        const r = await db.prepare(
+          'SELECT COUNT(*) AS n, MIN(sold_date) AS first, MAX(sold_date) AS last FROM sales WHERE price_cents IS NOT NULL'
+        ).first();
+        return { bound: true, pricedSales: r ? r.n : 0, firstSale: r ? r.first : null, lastSale: r ? r.last : null };
+      } catch (err) {
+        return { bound: true, error: err && err.message, note: 'Binding exists but the query failed — has schema.sql been applied?' };
+      }
+    })(),
     keyPresent: !!CARD_API_KEY,
     keyLength: CARD_API_KEY ? String(CARD_API_KEY).length : 0,
     // Whether the server-wide scrape.do fallback is configured. Reported on
