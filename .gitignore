@@ -8,3 +8,7 @@ public/sets/
 public/players/
 public/teams/
 public/sitemap.xml
+
+# Python bytecode
+__pycache__/
+*.pyc
