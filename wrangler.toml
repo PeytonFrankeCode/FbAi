@@ -66,10 +66,10 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 #      Re-run any time; item_id is the primary key so every write is an upsert.
 #      Use --since YYYY-MM-DD for fast incremental loads after the first.
 #
-# [[d1_databases]]
-# binding = "NFLDB"
-# database_name = "nflcarddb"
-# database_id = "PASTE-THE-ID-FROM-WRANGLER-D1-CREATE"
+[[d1_databases]]
+binding = "NFLDB"
+database_name = "nflcarddb"
+database_id = "a887dd0e-d852-4ebc-98f0-0e01bc82ad0b"
 
 # Durable Object that powers live presence on The Floor — one global room
 # instance tracks who's connected and relays avatar positions over
