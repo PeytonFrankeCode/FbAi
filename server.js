@@ -716,9 +716,27 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
 // `team` is populated opportunistically and often NULL — never filtered on.
 const NFLDB_MIN_CONFIDENCE = 0.5;
 
-// The schema has no image or listing URL. item_id is the eBay item id, so the
-// listing link is reconstructable; images simply aren't available and the card
-// renderer already tolerates a null imageUrl.
+// The schema has no listing URL, but item_id is the eBay item id so the link
+// is reconstructable. Images aren't collected today — the renderer falls back
+// to a placeholder — but the collector has them at scrape time, so this reads
+// an `image_url` column opportunistically. Add it upstream and photos start
+// appearing here with no change needed on this side.
+//
+// Probed once rather than assumed: selecting a column that doesn't exist makes
+// D1 throw, which would take the whole provider down.
+let _nflImageCol = null; // null = not yet determined
+async function _nflHasImageColumn(db) {
+  if (_nflImageCol !== null) return _nflImageCol;
+  try {
+    await db.prepare('SELECT image_url FROM sales LIMIT 1').first();
+    _nflImageCol = true;
+    console.log('[NflCardDB] image_url column present — serving photos');
+  } catch (_) {
+    _nflImageCol = false;
+  }
+  return _nflImageCol;
+}
+
 function mapNflDbSale(r) {
   const grade = r.grade != null ? `${r.grader || ''} ${r.grade}`.replace(/\.0$/, '').trim() : null;
   return {
@@ -727,7 +745,7 @@ function mapNflDbSale(r) {
     price: String((Number(r.price_cents) || 0) / 100),
     currency: r.currency || 'USD',
     soldDate: r.sold_date || '',
-    imageUrl: null, // not collected
+    imageUrl: r.image_url || null, // absent until the collector stores one
     itemUrl: r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '',
     condition: grade || 'Ungraded',
     buyingOptions: r.listing_format === 'auction' ? ['AUCTION'] : ['FIXED_PRICE'],
@@ -761,8 +779,10 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const binds = [NFLDB_MIN_CONFIDENCE, ...terms.map(t => `%${t}%`)];
 
   try {
+    const cols = 'item_id, sold_date, title, price_cents, currency, listing_format, grader, grade'
+      + (await _nflHasImageColumn(db) ? ', image_url' : '');
     const stmt = db.prepare(
-      `SELECT item_id, sold_date, title, price_cents, currency, listing_format, grader, grade
+      `SELECT ${cols}
        FROM sales WHERE ${where}
        ORDER BY sold_date DESC LIMIT ?`
     ).bind(...binds, Math.min(limit, 500));
