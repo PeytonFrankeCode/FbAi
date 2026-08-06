@@ -1072,6 +1072,98 @@ function renderRecentSearches() {
 // Show recent on load
 renderRecentSearches();
 
+// ---- Market pulse (sold-sales snapshot under the search bar) ----
+// Reads our own dataset via /api/sold-stats. Stays hidden unless there's real
+// data behind it — an empty stats panel is worse than no stats panel.
+const _mpLoaded = {}; // days -> payload, so switching back to a tab is instant
+
+function _mpMoney(n) {
+  return '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
+}
+
+async function loadMarketPulse(days) {
+  const period = Number(days) || 30;
+  const wrap = document.getElementById('market-pulse');
+  const body = document.getElementById('mp-body');
+  if (!wrap || !body) return;
+
+  document.querySelectorAll('.mp-period').forEach(b => {
+    const on = Number(b.dataset.days) === period;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+
+  let data = _mpLoaded[period];
+  if (!data) {
+    body.innerHTML = '<div class="mp-loading">Loading…</div>';
+    try {
+      const res = await fetch(`/api/sold-stats?days=${period}`, { cache: 'no-store' });
+      data = await safeJson(res);
+      if (data && data.available) _mpLoaded[period] = data;
+    } catch (_) {
+      wrap.classList.add('hidden');
+      return;
+    }
+  }
+
+  if (!data || !data.available) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+
+  const t = data.topSale;
+  const label = period === 365 ? 'the last year' : `the last ${period} days`;
+  const parts = [];
+
+  if (t) {
+    parts.push(
+      '<a class="mp-grail" href="' + escHtml(t.itemUrl) + '" target="_blank" rel="noopener">' +
+      '<span class="mp-grail-tag">Biggest sale &middot; ' + escHtml(label) + '</span>' +
+      '<span class="mp-grail-price">' + _mpMoney(t.price) + '</span>' +
+      '<span class="mp-grail-title">' + escHtml(String(t.title).slice(0, 90)) + '</span>' +
+      (t.grade ? '<span class="mp-grail-grade">' + escHtml(t.grade) + '</span>' : '') +
+      '</a>');
+  }
+
+  parts.push(
+    '<div class="mp-figures">' +
+    '<div class="mp-figure"><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span><span class="mp-figure-k">sales tracked</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.totalValue) + '</span><span class="mp-figure-k">total value</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span><span class="mp-figure-k">average sale</span></div>' +
+    '</div>');
+
+  const list = (title, rows) => (rows && rows.length)
+    ? '<div class="mp-list"><span class="mp-list-title">' + escHtml(title) + '</span>' +
+      rows.map(p =>
+        '<button class="mp-row" data-query="' + escHtml(p.player) + '">' +
+        '<span class="mp-row-name">' + escHtml(p.player) + '</span>' +
+        '<span class="mp-row-meta">' + p.sales.toLocaleString('en-US') + ' sales &middot; ' + _mpMoney(p.avgPrice) + ' avg</span>' +
+        '</button>').join('') +
+      '</div>'
+    : '';
+
+  parts.push('<div class="mp-lists">' +
+    list('Most traded', data.topPlayers) +
+    list('Priciest', data.priciestPlayers) +
+    '</div>');
+
+  body.innerHTML = parts.join('');
+
+  // Clicking a player runs that search — the stats are a way in, not a dead end.
+  body.querySelectorAll('.mp-row').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = btn.dataset.query;
+      if (!q) return;
+      input.value = q;
+      addRecentSearch(q);
+      fetchDirectSearch(q);
+    });
+  });
+}
+
+document.querySelectorAll('.mp-period').forEach(btn => {
+  btn.addEventListener('click', () => loadMarketPulse(btn.dataset.days));
+});
+loadMarketPulse(30);
+
 // ---- Mode Tabs ----
 function updatePriceFilterVisibility() {
   const wrap = document.getElementById('price-filter');

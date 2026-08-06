@@ -2896,6 +2896,92 @@ app.get('/api/variants', async (req, res) => {
 });
 
 
+// ---- /api/sold-stats ----
+// Market snapshot for the strip under the search bar. Reads our own D1 dataset
+// only — no paid provider, no quota — and is football-only because the dataset
+// is, which the UI says plainly rather than implying whole-hobby coverage.
+//
+// Period totals come from the pre-aggregated `daily` table (at most ~90 rows)
+// rather than scanning millions of sales. Only the headline lookups touch
+// `sales`, and those ride the sold_date / player indexes.
+const SOLD_STATS_TTL = 3600; // 1h — this is identical for every visitor
+const SOLD_STATS_PERIODS = [7, 30, 90, 365];
+
+app.get('/api/sold-stats', async (req, res) => {
+  const days = SOLD_STATS_PERIODS.includes(parseInt(req.query.days, 10))
+    ? parseInt(req.query.days, 10)
+    : 30;
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, days });
+
+  const cacheKey = `soldstats:v1:${days}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+
+  try {
+    const [totals, top, players, grails] = await Promise.all([
+      // Pre-aggregated: cheap regardless of how many sales the period holds.
+      db.prepare('SELECT SUM(sales) AS sales, SUM(priced) AS priced, SUM(total_cents) AS total FROM daily WHERE sold_date >= ?')
+        .bind(since).first(),
+      // The headline: priciest single sale in the window.
+      db.prepare(`SELECT item_id, title, price_cents, sold_date, grader, grade
+                  FROM sales WHERE price_cents IS NOT NULL AND sold_date >= ?
+                  ORDER BY price_cents DESC LIMIT 1`).bind(since).first(),
+      // Most-traded players. confidence floor because `player` is parsed from
+      // seller-written titles and is unreliable below it.
+      db.prepare(`SELECT player, COUNT(*) AS n, AVG(price_cents) AS avg_cents
+                  FROM sales
+                  WHERE price_cents IS NOT NULL AND sold_date >= ?
+                    AND confidence >= ? AND player IS NOT NULL AND player != ''
+                  GROUP BY player ORDER BY n DESC LIMIT 5`).bind(since, NFLDB_MIN_CONFIDENCE).all(),
+      // Priciest players by average, with a volume floor so one big sale
+      // can't crown a player nobody trades.
+      db.prepare(`SELECT player, COUNT(*) AS n, AVG(price_cents) AS avg_cents
+                  FROM sales
+                  WHERE price_cents IS NOT NULL AND sold_date >= ?
+                    AND confidence >= ? AND player IS NOT NULL AND player != ''
+                  GROUP BY player HAVING n >= 10
+                  ORDER BY avg_cents DESC LIMIT 5`).bind(since, NFLDB_MIN_CONFIDENCE).all(),
+    ]);
+
+    const priced = (totals && totals.priced) || 0;
+    const totalCents = (totals && totals.total) || 0;
+    const payload = {
+      available: priced > 0,
+      days,
+      since,
+      // `sales` counts every tracked sale; `priced` excludes best-offer rows,
+      // where eBay publishes the ask rather than what was actually paid.
+      totalSales: (totals && totals.sales) || 0,
+      pricedSales: priced,
+      totalValue: Math.round(totalCents / 100),
+      avgPrice: priced > 0 ? Math.round(totalCents / priced) / 100 : null,
+      topSale: top ? {
+        title: top.title,
+        price: (top.price_cents || 0) / 100,
+        soldDate: top.sold_date,
+        grade: top.grade != null ? `${top.grader || ''} ${String(top.grade).replace(/\.0$/, '')}`.trim() : null,
+        itemUrl: top.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(top.item_id)}` : '',
+      } : null,
+      topPlayers: ((players && players.results) || []).map(p => ({
+        player: p.player, sales: p.n, avgPrice: Math.round((p.avg_cents || 0) / 100),
+      })),
+      priciestPlayers: ((grails && grails.results) || []).map(p => ({
+        player: p.player, sales: p.n, avgPrice: Math.round((p.avg_cents || 0) / 100),
+      })),
+    };
+
+    if (payload.available) cachePut(cacheKey, payload, SOLD_STATS_TTL);
+    res.json(payload);
+  } catch (err) {
+    // A stats widget must never break the page it sits on.
+    console.error('[SoldStats]', err && err.message);
+    res.json({ available: false, days, error: 'stats unavailable' });
+  }
+});
+
 // ---- /api/sold-history ----
 // A card's accumulated sale history from our own archive. Reads only what we
 // already stored — never calls the provider, so it costs nothing and works
