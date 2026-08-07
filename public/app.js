@@ -3581,7 +3581,9 @@ checkPrefillParam();
 // the visitor straight on the Inventory page. Deferred to DOMContentLoaded so
 // the view-element consts below switchView are initialized before it runs.
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname === '/inventory') {
+  // /inventory is retired from the navigation. switchView redirects it to
+  // Search anyway; skipping the call avoids a pointless view swap on load.
+  if (window.location.pathname === '/inventory' && !RETIRED_VIEWS.has('inventory')) {
     try { switchView('inventory'); } catch (_) {}
   }
 });
@@ -3747,6 +3749,13 @@ const sellerView = document.getElementById('seller-view');
 const gradingView = document.getElementById('grading-view');
 const rainbowPage = document.getElementById('rainbow-page');
 
+// Views retired from the navigation. The code and markup are all still here —
+// only the way in is gone — so re-listing a tab in index.html brings the
+// feature straight back. Anything routing to one lands on Search instead of a
+// blank screen: saved deep links, restored last-view state, and the legacy
+// aliases below all funnel through here.
+const RETIRED_VIEWS = new Set(['inventory', 'seller', 'proplus']);
+
 function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
   // any deep links / older code paths still route somewhere sensible.
@@ -3759,6 +3768,10 @@ function switchView(view) {
   // My Cards (collection / tracked) was replaced by Inventory — send any
   // legacy links or deep-links there instead of a page that no longer exists.
   else if (view === 'collection' || view === 'tracked') { view = 'inventory'; }
+
+  // Applied after the aliases above resolve, so 'collection' -> 'inventory'
+  // -> 'search' rather than slipping through to a view with no way back.
+  if (RETIRED_VIEWS.has(view)) view = 'search';
 
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
@@ -9086,12 +9099,15 @@ function loadHotCold(days) {
 // moved to their own Tools (proplus) tab. Old sub-tab names are routed to
 // wherever those features live now so any remaining callers keep working.
 function switchSellerTab(tab) {
-  if (tab === 'autopricer' || tab === 'bulkpricer' || tab === 'promote') {
-    switchView('proplus');
-    switchProPlusTab(tab === 'bulkpricer' ? 'bulkprice' : tab === 'promote' ? 'promote' : 'autoprices');
+  // Promote moved under Browse Cards; the Sell and Tools tabs are retired.
+  // Route the one destination that still exists, and let switchView send
+  // everything else to Search rather than a view with no navigation back.
+  if (tab === 'promote') {
+    switchView('browse');
+    switchBrowseTab('promote');
     return;
   }
-  switchView('seller');
+  switchView('seller'); // retired -> redirected to Search by switchView
 }
 
 // =====================================================================
@@ -10691,7 +10707,7 @@ function renderBrowseCards() {
         <div class="browse-empty" style="grid-column:1/-1">
           <div class="browse-empty-icon">&#11088;</div>
           <h3>No promoted cards yet</h3>
-          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('proplus');switchProPlusTab('promote');return false;">Tools &rarr; Promote Cards</a>.</p>
+          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('browse');switchBrowseTab('promote');return false;">Browse Cards &rarr; Promote a Card</a>.</p>
         </div>`;
     } else {
       grid.innerHTML = `
@@ -10722,9 +10738,13 @@ function switchBrowseTab(sub) {
     b.classList.toggle('active', b.dataset.browseSub === sub));
   const cardsPanel = document.getElementById('browse-panel-cards');
   const communityPanel = document.getElementById('browse-panel-community');
+  const promotePanel = document.getElementById('browse-panel-promote');
   if (cardsPanel) cardsPanel.classList.toggle('hidden', sub !== 'cards');
   if (communityPanel) communityPanel.classList.toggle('hidden', sub !== 'community');
+  if (promotePanel) promotePanel.classList.toggle('hidden', sub !== 'promote');
   if (sub === 'community') initCommunityView();
+  // Promote moved here from Tools; it still needs the same init the old tab ran.
+  if (sub === 'promote' && typeof initPromoteTab === 'function') initPromoteTab();
 }
 
 function initCommunityView() {
