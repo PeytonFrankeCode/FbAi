@@ -7429,10 +7429,19 @@ const USER_SYNC_KEYS = [
   'cardHuddlePortfolioHistory',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
-let _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
-let _userSyncTimer = null;
-let _userSyncing = false;
-let _syncTooBigWarned = false;    // one-shot notice when the account blob is over the cap
+// `var`, not `let`, for the same reason _globalPromotedCache uses it:
+// enableUserSync() is called at the top level thousands of lines ABOVE these
+// declarations. With `let` that call hit the temporal dead zone and threw
+// `Cannot access '_userSyncEnabled' before initialization` on every page load
+// for a signed-in user — killing the pull, leaving _userSyncEnabled false
+// forever, and making every schedulePushUserData() a no-op. Nothing synced:
+// not promoted cards, not inventory, not watchlists. Hoisted declarations
+// can't land in a dead zone.
+var _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
+var _syncPushOk = null;           // outcome of the last push, for callers that must know
+var _userSyncTimer = null;
+var _userSyncing = false;
+var _syncTooBigWarned = false;    // one-shot notice when the account blob is over the cap
 
 function _userSyncPayload() {
   const data = {};
@@ -7477,23 +7486,43 @@ async function pushUserDataNow() {
       body: JSON.stringify({ data: _userSyncPayload() }),
     });
     if (res && res.ok) {
+      _syncPushOk = true;
       _syncTooBigWarned = false; // healthy again
     } else if (res && res.status === 413) {
       // Blob over the 1MB cap — sync is silently failing for EVERYTHING
       // (inventory included). Tell the user once so it's not a mystery.
+      _syncPushOk = false;
       console.warn('[sync] push rejected (413): account data over the size cap');
       if (!_syncTooBigWarned && typeof showPortfolioToast === 'function') {
         _syncTooBigWarned = true;
         showPortfolioToast('Your data got too large to sync across devices. Remove some photos, or Reset inventory, to restore syncing.');
       }
     } else {
+      _syncPushOk = false;
       console.warn('[sync] push failed HTTP', res && res.status);
     }
   } catch (err) {
+    _syncPushOk = false;
     console.warn('[sync] push failed:', err && err.message);
   } finally {
     _userSyncing = false;
   }
+}
+
+// Push right now, skipping the debounce, and report whether the server
+// actually took it. For writes that other people are meant to see, "probably
+// synced in a second" isn't good enough — the caller needs to know.
+async function flushPushUserData() {
+  if (_userSyncTimer) { clearTimeout(_userSyncTimer); _userSyncTimer = null; }
+  if (!_userSyncEnabled) return false;
+  if (!getSessionToken()) return false;
+  // pushUserDataNow bails while another push is in flight; wait it out rather
+  // than reporting a failure that didn't happen.
+  for (let i = 0; i < 20 && _userSyncing; i++) await new Promise(r => setTimeout(r, 100));
+  const before = _syncPushOk;
+  await pushUserDataNow();
+  void before;
+  return _syncPushOk === true;
 }
 
 // Save-paths call this on every mutation. Coalesces a burst of writes
@@ -10740,6 +10769,44 @@ function savePromotedCards(cards) {
   schedulePushUserData();
 }
 
+// Promoted cards are the one thing here that other people are meant to see, so
+// saving locally isn't finishing the job. Three things have to happen:
+//
+//   1. the server has to take the write (it builds the public feed from it),
+//   2. this tab's cached copy of that feed has to be refreshed, or the person
+//      who just added a card won't see it in search or Browse until a reload,
+//   3. if it can't be published, the user has to be told — silently keeping a
+//      card that nobody will ever see is the worst of the three outcomes.
+//
+// This is what was broken: the local list updated, so it looked like it worked.
+async function publishPromotedCards(cards) {
+  savePromotedCards(cards);
+  renderPromotedCards();
+
+  if (!getSessionToken()) {
+    // A local-only account. getCurrentUser() reads a different key than the
+    // session token, so someone can be "logged in" here and still have nothing
+    // to authenticate a push with.
+    if (typeof showPortfolioToast === 'function') {
+      showPortfolioToast('Saved on this device. Sign in to publish your promoted cards so other collectors see them.');
+    }
+    return false;
+  }
+
+  const ok = await flushPushUserData();
+  if (!ok) {
+    if (typeof showPortfolioToast === 'function') {
+      showPortfolioToast("Saved here, but we couldn't publish it just now. It'll go out next time your data syncs.");
+    }
+    return false;
+  }
+
+  // Re-read the authoritative feed rather than patching the cache by hand, so
+  // what we show is what everyone else will get.
+  await fetchGlobalPromotedCards(true).catch(() => {});
+  return true;
+}
+
 // Everyone gets 5 promoted-listing slots, free.
 function getPromoteSlotCount() {
   return 5;
@@ -11175,8 +11242,7 @@ async function handleAddPromotedCard(e) {
     createdAt: new Date().toISOString()
   });
 
-  savePromotedCards(cards);
-  renderPromotedCards();
+  await publishPromotedCards(cards);
 
   // Reset form
   document.getElementById('promote-card-form').reset();
@@ -11184,13 +11250,13 @@ async function handleAddPromotedCard(e) {
   return false;
 }
 
-function removePromotedCard(id) {
-  const cards = getPromotedCards().filter(c => c.id !== id);
-  savePromotedCards(cards);
-  renderPromotedCards();
+async function removePromotedCard(id) {
+  // Same round trip as adding: a card removed here but left in the public feed
+  // keeps sending people to a listing the seller has pulled.
+  await publishPromotedCards(getPromotedCards().filter(c => c.id !== id));
 }
 
-function markPromotedCardSold(id) {
+async function markPromotedCardSold(id) {
   const cards = getPromotedCards();
   const card = cards.find(c => c.id === id);
   if (!card) return;
@@ -11208,9 +11274,7 @@ function markPromotedCardSold(id) {
     }
   }
 
-  const remaining = cards.filter(c => c.id !== id);
-  savePromotedCards(remaining);
-  renderPromotedCards();
+  publishPromotedCards(cards.filter(c => c.id !== id));
 }
 
 function renderPromotedCards() {
