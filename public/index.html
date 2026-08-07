@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=133" />
+  <link rel="stylesheet" href="style.css?v=134" />
 
 
 </head>
@@ -1066,7 +1066,14 @@
               <span id="ca-summary" class="ca-summary"></span>
             </div>
             <div id="ca-grades" class="ca-grades"></div>
-            <div class="ca-chart-wrap"><canvas id="ca-chart" height="150"></canvas></div>
+            <div class="ca-chart-head">
+              <span class="ca-chart-label">Price history</span>
+              <select id="ca-grade-select" class="ca-grade-select" aria-label="Which grade to chart"></select>
+            </div>
+            <div class="ca-chart-wrap">
+              <canvas id="ca-chart" height="150"></canvas>
+              <p id="ca-chart-empty" class="ca-chart-empty hidden"></p>
+            </div>
             <p class="ca-note">Each grade is tracked separately — a graded copy and a raw one are the same card but different markets.</p>
           </div>
         </div>
@@ -1690,7 +1697,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=178"></script>
+  <script src="app.js?v=179"></script>
   <script type="importmap">
   {
     "imports": {

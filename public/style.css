@@ -9752,3 +9752,18 @@ footer {
 
 .ca-chart-wrap { position: relative; height: 190px; }
 .ca-note { font-size: 0.64rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4; }
+
+/* ---- Card analysis: grade selector ---- */
+.ca-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.4rem; }
+.ca-chart-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+.ca-grade-select {
+  background: var(--bg-secondary); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.25rem 0.5rem; font-size: 0.74rem; font-weight: 600;
+  cursor: pointer; width: auto; flex: 0 0 auto; max-width: 60%;
+}
+.ca-grade-select:focus { outline: none; border-color: var(--accent); }
+.ca-chart-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  text-align: center; font-size: 0.72rem; color: var(--text-muted); margin: 0; padding: 0 1rem;
+}
