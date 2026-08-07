@@ -13995,6 +13995,7 @@ function renderNetWorthChart() {
 // leaves the modal exactly as it was.
 let _caChart = null;
 let _caData = null;   // last payload, so the grade dropdown re-renders without refetching
+let _caSelectedGrade = null;
 // Distinct per grade series. Raw and the common grades get fixed hues so a
 // grade keeps its colour between cards; anything else cycles the tail.
 const CA_COLORS = {
@@ -14008,10 +14009,19 @@ function _caReset() {
   if (wrap) wrap.classList.add('hidden');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
   _caData = null; // don't let one card's series render under the next card
-  const salesEl = document.getElementById('ca-sales');
-  const forsaleEl = document.getElementById('ca-forsale');
-  if (salesEl) salesEl.innerHTML = '';
-  if (forsaleEl) forsaleEl.innerHTML = '';
+  _caForSale = null;
+  _caSelectedGrade = null;
+  // Always reopen on Sold rather than the last card's tab — and move the
+  // highlight with it, or the next card opens showing Sold content with the
+  // For Sale button lit.
+  _caTab = 'sold';
+  document.querySelectorAll('.ca-tab').forEach(b => {
+    const on = b.dataset.catab === 'sold';
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  const listEl = document.getElementById('ca-list-body');
+  if (listEl) listEl.innerHTML = '';
 }
 
 async function loadCardAnalysis(item) {
@@ -14078,7 +14088,9 @@ function _caRenderChart(label) {
     }
   }
 
-  _caRenderSales(g);
+  _caSelectedGrade = g ? g.label : null;
+  _caSyncTabLabels();
+  if (_caTab === 'sold') _caRenderList();
 
   // A line through one or two points is noise pretending to be a trend — say
   // so rather than drawing something misleading.
@@ -14151,36 +14163,82 @@ function _caRow(r, right) {
   </a>`;
 }
 
-// The individual sales behind the selected grade's figure.
-function _caRenderSales(g) {
-  const el = document.getElementById('ca-sales');
+// Which list the box is showing, and the for-sale payload once it lands.
+// Sold is the default: the section is card history, and it's data we already
+// hold, so it paints immediately rather than waiting on eBay.
+let _caTab = 'sold';
+let _caForSale = null;
+
+function _caSetTab(tab) {
+  _caTab = tab;
+  document.querySelectorAll('.ca-tab').forEach(b => {
+    const on = b.dataset.catab === tab;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  _caRenderList();
+}
+
+// Keep the tab labels honest about what's behind them, so switching to an
+// empty tab is never a surprise.
+function _caSyncTabLabels() {
+  const g = _caData && _caData.grades.find(x => x.label === _caSelectedGrade);
+  const soldBtn = document.getElementById('ca-tab-sold');
+  const fsBtn = document.getElementById('ca-tab-forsale');
+  if (soldBtn) soldBtn.textContent = g ? `Sold (${g.sales.toLocaleString('en-US')})` : 'Sold';
+  if (fsBtn) {
+    fsBtn.textContent = _caForSale === null
+      ? 'For Sale…'
+      : `For Sale (${_caForSale.results.length})`;
+  }
+}
+
+function _caRenderList() {
+  const el = document.getElementById('ca-list-body');
   if (!el) return;
+
+  if (_caTab === 'forsale') {
+    if (_caForSale === null) { el.innerHTML = '<p class="ca-list-empty">Checking eBay for active listings…</p>'; return; }
+    const rows = _caForSale.results || [];
+    el.innerHTML = rows.length
+      ? rows.map(r => _caRow(r,
+          `<span class="ca-row-price">$${Number(r.price).toFixed(2)}</span>` +
+          (r.condition ? `<span class="ca-row-date">${escHtml(r.condition)}</span>` : ''))).join('')
+      : '<p class="ca-list-empty">No active listings for this card right now.</p>';
+    return;
+  }
+
+  const g = _caData && _caData.grades.find(x => x.label === _caSelectedGrade);
   const rows = (g && Array.isArray(g.recent)) ? g.recent : [];
-  if (!rows.length) { el.innerHTML = ''; return; }
+  if (!rows.length) {
+    el.innerHTML = `<p class="ca-list-empty">No ${g ? escHtml(g.label) : ''} sales on record.</p>`;
+    return;
+  }
   const more = g.sales > rows.length
-    ? `<span class="ca-list-more">showing ${rows.length} of ${g.sales.toLocaleString('en-US')}</span>` : '';
-  el.innerHTML = `<div class="ca-list-head"><span class="ca-list-title">${escHtml(g.label)} sales</span>${more}</div>` +
-    rows.map(r => _caRow(r,
-      `<span class="ca-row-price">$${Number(r.price).toLocaleString('en-US')}</span>` +
-      `<span class="ca-row-date">${escHtml(_caDate(r.soldDate))}</span>`)).join('');
+    ? `<p class="ca-list-more">Showing the ${rows.length} most recent of ${g.sales.toLocaleString('en-US')}.</p>` : '';
+  el.innerHTML = rows.map(r => _caRow(r,
+    `<span class="ca-row-price">$${Number(r.price).toLocaleString('en-US')}</span>` +
+    `<span class="ca-row-date">${escHtml(_caDate(r.soldDate))}</span>`)).join('') + more;
 }
 
 // Active listings for the same card. Loaded once per card, after the history —
 // it's an eBay round-trip and the history shouldn't wait on it.
 async function _caLoadForSale(itemId) {
-  const el = document.getElementById('ca-forsale');
-  if (!el) return;
-  el.innerHTML = '';
+  _caForSale = null;
+  _caSyncTabLabels();
+  if (_caTab === 'forsale') _caRenderList();
   let data;
   try {
     const res = await fetch(`/api/card-forsale?itemId=${encodeURIComponent(itemId)}`, { cache: 'no-store' });
     data = await safeJson(res);
-  } catch (_) { return; }
-  // Nothing listed right now is a normal state, not an error — stay silent.
-  if (!data || !data.available || !data.results.length) return;
-  el.innerHTML = `<div class="ca-list-head"><span class="ca-list-title">For sale now</span>` +
-    `<span class="ca-list-more">${data.results.length} listing${data.results.length === 1 ? '' : 's'}</span></div>` +
-    data.results.map(r => _caRow(r,
-      `<span class="ca-row-price">$${Number(r.price).toFixed(2)}</span>` +
-      (r.condition ? `<span class="ca-row-date">${escHtml(r.condition)}</span>` : ''))).join('');
+  } catch (_) { data = null; }
+  // A failed lookup and no listings look the same to the user; both mean
+  // "nothing to show here", not an error worth surfacing.
+  _caForSale = { results: (data && Array.isArray(data.results)) ? data.results : [] };
+  _caSyncTabLabels();
+  if (_caTab === 'forsale') _caRenderList();
 }
+
+document.querySelectorAll('.ca-tab').forEach(btn => {
+  btn.addEventListener('click', () => _caSetTab(btn.dataset.catab));
+});
