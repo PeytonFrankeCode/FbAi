@@ -14379,6 +14379,61 @@ const CA_COLORS = {
 };
 const CA_FALLBACK = ['#5ece99', '#a06ff0', '#f2b544', '#7fb3ff', '#e0655f', '#94a3b8'];
 
+// ---- Recommended price ----
+// Renders the estimate for the selected grade. How the number was reached is
+// always shown: a price built on last week's comps and one built on two-year-old
+// comps nudged by a player trend are different claims, and the UI shouldn't
+// make them look the same.
+const CA_PRICE_METHODS = {
+  'recent-sales': { label: 'Recent sales', how: (e) => `Median of ${e.basedOn} sale${e.basedOn === 1 ? '' : 's'} in the last ${_caDaysWord(e.newestSaleDays)}.` },
+  'trend-adjusted': { label: 'Estimated', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
+  'stale-sales': { label: 'Last sold', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}, and not enough of this player's other sales to judge how prices have moved since. This is the old price, unadjusted.` },
+  'similar-cards': { label: 'Ballpark', how: (e) => `This exact card hasn't sold. Based on ${e.basedOn} sales across ${e.variantCount} other version${e.variantCount === 1 ? '' : 's'} of it — parallels vary a lot, so treat the range as the answer.` },
+};
+
+function _caNum(n) {
+  const v = Number(n) || 0;
+  return v >= 1000 ? v.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                   : v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+function _caDaysWord(d) {
+  const n = Math.max(0, Math.round(Number(d) || 0));
+  if (n <= 1) return 'a day';
+  if (n < 31) return `${n} days`;
+  if (n < 365) return `${Math.round(n / 30)} months`;
+  const y = n / 365;
+  return y < 1.6 ? 'over a year' : `over ${Math.floor(y)} years`;
+}
+
+function _caRenderPrice(estimate) {
+  const el = document.getElementById('ca-price');
+  if (!el) return;
+  if (!estimate || estimate.price == null) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+
+  const m = CA_PRICE_METHODS[estimate.method] || { label: 'Estimated', how: () => '' };
+  const conf = estimate.confidence || 'low';
+  // A range is the honest headline when the estimate isn't built on this card.
+  const rangeFirst = estimate.method === 'similar-cards';
+
+  const range = (estimate.low != null && estimate.high != null && estimate.low !== estimate.high)
+    ? `<span class="ca-price-range">$${_caNum(estimate.low)} – $${_caNum(estimate.high)}</span>` : '';
+
+  el.innerHTML = `
+    <div class="ca-price-head">
+      <span class="ca-price-label">Recommended price</span>
+      <span class="ca-price-conf ${conf}" title="How much to lean on this">${conf} confidence</span>
+    </div>
+    <div class="ca-price-main">
+      ${rangeFirst
+        ? `${range}<span class="ca-price-mid">around $${_caNum(estimate.price)}</span>`
+        : `<span class="ca-price-value">$${_caNum(estimate.price)}</span>${range}`}
+    </div>
+    <p class="ca-price-how"><strong>${m.label}.</strong> ${m.how(estimate)}</p>
+  `;
+  el.classList.remove('hidden');
+}
+
 function _caReset() {
   const wrap = document.getElementById('card-analysis');
   if (wrap) wrap.classList.add('hidden');
@@ -14397,6 +14452,8 @@ function _caReset() {
   });
   const listEl = document.getElementById('ca-list-body');
   if (listEl) listEl.innerHTML = '';
+  const priceEl = document.getElementById('ca-price');
+  if (priceEl) { priceEl.classList.add('hidden'); priceEl.innerHTML = ''; }
 }
 
 async function loadCardAnalysis(item) {
@@ -14422,6 +14479,17 @@ async function loadCardAnalysis(item) {
     const res = await fetch(`/api/card-analysis?itemId=${encodeURIComponent(item.itemId)}`, { cache: 'no-store' });
     data = await safeJson(res);
   } catch (_) { _caReset(); return; }
+
+  // A card with no sales of its own can still carry a similar-variants
+  // estimate. Show that alone rather than hiding the section — a ballpark
+  // with its reasoning attached beats nothing at all.
+  if (data && !data.available && data.estimate) {
+    _caReset();
+    wrap.classList.remove('hidden');
+    if (summaryEl) summaryEl.textContent = 'No sales on record for this exact card';
+    _caRenderPrice(data.estimate);
+    return;
+  }
   if (!data || !data.available || !Array.isArray(data.grades) || data.grades.length === 0) { _caReset(); return; }
 
   wrap.classList.remove('hidden');
@@ -14470,6 +14538,8 @@ function _caRenderChart(label) {
         `<span class="ca-stat-n">${g.sales} sale${g.sales === 1 ? '' : 's'}</span>`;
     }
   }
+
+  _caRenderPrice(g && g.estimate);
 
   _caSelectedGrade = g ? g.label : null;
   _caSyncTabLabels();

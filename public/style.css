@@ -10031,3 +10031,30 @@ footer {
   font-size: 0.74rem; font-weight: 700; cursor: pointer; padding: 2px 4px;
 }
 .market-scope-back:hover { text-decoration: underline; }
+
+/* ---- Recommended price (card modal) ---- */
+.ca-price {
+  border: 1px solid var(--accent-border); border-radius: 12px;
+  background: rgba(94, 206, 153, 0.06);
+  padding: 0.8rem 0.9rem; margin-bottom: 0.85rem;
+}
+.ca-price.hidden { display: none; }
+.ca-price-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+.ca-price-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; }
+/* Confidence is colour-coded, but never green for a low-confidence number —
+   the palette shouldn't imply more certainty than the method supports. */
+.ca-price-conf {
+  font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.04em;
+  font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap;
+}
+.ca-price-conf.high { background: rgba(94, 206, 153, 0.18); color: var(--accent); }
+.ca-price-conf.medium { background: rgba(240, 173, 78, 0.16); color: #f0ad4e; }
+.ca-price-conf.low { background: rgba(139, 148, 158, 0.16); color: var(--text-muted); }
+
+.ca-price-main { display: flex; align-items: baseline; gap: 0.55rem; flex-wrap: wrap; }
+.ca-price-value { font-size: 1.65rem; font-weight: 800; color: var(--text-primary); line-height: 1.1; }
+.ca-price-range { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+.ca-price-mid { font-size: 0.74rem; color: var(--text-muted); }
+.ca-price-value + .ca-price-range { font-size: 0.74rem; font-weight: 600; color: var(--text-muted); }
+.ca-price-how { font-size: 0.68rem; color: var(--text-muted); line-height: 1.45; margin: 0.4rem 0 0; }
+.ca-price-how strong { color: var(--text-secondary); }
