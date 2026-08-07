@@ -738,7 +738,12 @@ async function _nflHasImageColumn(db) {
 }
 
 function mapNflDbSale(r) {
-  const grade = r.grade != null ? `${r.grader || ''} ${r.grade}`.replace(/\.0$/, '').trim() : null;
+  // Same rule as the analysis buckets: an unparsed grade isn't proof a card
+  // was raw, so don't label a likely slab "Ungraded".
+  const bucket = _gradeBucket(r);
+  const grade = r.grade != null
+    ? `${r.grader || ''} ${r.grade}`.replace(/\.0$/, '').trim()
+    : (bucket === 'Raw' ? null : 'Graded');
   return {
     itemId: String(r.item_id || ''),
     title: r.title || '',
@@ -3041,10 +3046,34 @@ app.get('/api/sold-stats', async (req, res) => {
 // sell that week, so each grade gets its own series and its own stats.
 const CARD_ANALYSIS_TTL = 1800; // 30m
 
+// Grading companies, as they appear in listing titles. Word-bounded so
+// "PSA" can't match inside another word.
+const GRADER_RE = /\b(PSA|BGS|BCCG|BECKETT|SGC|CGC|CSG|HGA|TAG|ISA|GMA|KSA|AGS|RCG|MNT)\b/i;
+// Phrases that only appear on encapsulated cards. Deliberately excludes bare
+// "mint" and "gem mint", which raw listings use constantly as condition claims.
+const SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|ificate|ified)?\s*#?\s*\d)/i;
+// An explicit raw claim outranks a grader mention, so "raw, PSA 10 candidate"
+// and "ungraded — would grade BGS 9.5" stay where they belong.
+const RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
+
+// Which price series a sale belongs to.
+//
+// A null grade does NOT mean raw — it means the collector's parser didn't
+// extract one, which happens both for genuinely raw cards and for slabs whose
+// titles it couldn't read. Treating the whole null set as "Raw" drags slab
+// prices into the raw median, which is exactly the failure this guards
+// against: graded buckets stay clean because they only ever contain
+// successfully parsed rows, so every miss lands in Raw.
 function _gradeBucket(r) {
-  if (r.grade == null || r.grade === '') return 'Raw';
-  const g = String(r.grade).replace(/\.0$/, '');
-  return `${(r.grader || '').toUpperCase()} ${g}`.trim();
+  if (r.grade != null && r.grade !== '') {
+    const g = String(r.grade).replace(/\.0$/, '');
+    return `${(r.grader || '').toUpperCase()} ${g}`.trim();
+  }
+  const title = String(r.title || '');
+  if (RAW_RE.test(title)) return 'Raw';
+  // A grader column with no grade is still unambiguously a slab.
+  if (r.grader || GRADER_RE.test(title) || SLAB_RE.test(title)) return 'Graded (ungraded number)';
+  return 'Raw';
 }
 
 function _median(sorted) {
