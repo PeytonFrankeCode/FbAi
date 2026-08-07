@@ -10072,3 +10072,20 @@ footer {
 .chart-readout-value { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
 .chart-readout-note { font-size: 0.66rem; color: var(--text-muted); }
 .chart-readout-hint { font-size: 0.62rem; color: var(--text-muted); margin: 0.35rem 0 0; opacity: 0.75; }
+
+/* ---- Estimated price on an empty search ---- */
+.qe-loading { font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 0.5rem 0 0; }
+.qe-card {
+  max-width: 460px; margin: 0.5rem auto 0;
+  border: 1px solid var(--accent-border); border-radius: 12px;
+  background: rgba(94, 206, 153, 0.06); padding: 0.9rem 1rem;
+}
+.qe-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+.qe-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; }
+.qe-main { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.qe-value { font-size: 1.55rem; font-weight: 800; color: var(--text-primary); }
+.qe-range { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+.qe-value + .qe-range { font-size: 0.74rem; font-weight: 600; color: var(--text-muted); }
+.qe-mid { font-size: 0.74rem; color: var(--text-muted); }
+.qe-how { font-size: 0.7rem; color: var(--text-muted); line-height: 1.45; margin: 0.4rem 0 0; }
+.qe-grades { font-size: 0.66rem; color: var(--text-muted); margin: 0.35rem 0 0; opacity: 0.85; }
