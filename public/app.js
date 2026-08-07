@@ -14016,10 +14016,9 @@ async function loadCardAnalysis(item) {
   if (!item || item.source !== 'nflcarddb' || !item.itemId) return;
 
   const wrap = document.getElementById('card-analysis');
-  const gradesEl = document.getElementById('ca-grades');
   const summaryEl = document.getElementById('ca-summary');
   const canvas = document.getElementById('ca-chart');
-  if (!wrap || !gradesEl || !canvas) return;
+  if (!wrap || !canvas) return;
 
   let data;
   try {
@@ -14034,19 +14033,6 @@ async function loadCardAnalysis(item) {
     ? ` · ${_caDate(data.firstSale)} – ${_caDate(data.lastSale)}`
     : '';
   summaryEl.textContent = `${data.totalSales.toLocaleString('en-US')} sale${data.totalSales === 1 ? '' : 's'} on record${span}`;
-
-  gradesEl.innerHTML = data.grades.map((g, i) => {
-    const color = CA_COLORS[g.label] || CA_FALLBACK[i % CA_FALLBACK.length];
-    const chg = g.changePct == null ? ''
-      : `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}%</span>`;
-    return `<div class="ca-grade">
-      <span class="ca-grade-dot" style="background:${color}"></span>
-      <span class="ca-grade-label">${escHtml(g.label)}</span>
-      <span class="ca-grade-median">$${g.median.toLocaleString('en-US')}</span>
-      ${chg}
-      <span class="ca-grade-n">${g.sales} sale${g.sales === 1 ? '' : 's'}</span>
-    </div>`;
-  }).join('');
 
   // One grade at a time. Raw is the default because it's the widest market and
   // the baseline people reason from; everything else is a click away.
@@ -14070,6 +14056,22 @@ function _caRenderChart(label) {
   if (!canvas || !_caData) return;
   const g = _caData.grades.find(x => x.label === label) || _caData.grades[0];
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
+
+  // Headline figure for the selected grade only. Median rather than mean:
+  // card sales carry big outliers (one graded copy in a raw run drags a mean
+  // well above what a typical copy actually sells for).
+  const statEl = document.getElementById('ca-stat');
+  if (statEl) {
+    if (!g) { statEl.innerHTML = ''; }
+    else {
+      const chg = g.changePct == null ? ''
+        : `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}%</span>`;
+      statEl.innerHTML =
+        `<span class="ca-stat-price">$${g.median.toLocaleString('en-US')}</span>` +
+        chg +
+        `<span class="ca-stat-n">${g.sales} sale${g.sales === 1 ? '' : 's'}</span>`;
+    }
+  }
 
   // A line through one or two points is noise pretending to be a trend — say
   // so rather than drawing something misleading.
