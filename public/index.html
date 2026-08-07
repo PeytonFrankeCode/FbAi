@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=140" />
+  <link rel="stylesheet" href="style.css?v=141" />
 
 
 </head>
@@ -180,6 +180,7 @@
       <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
       <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
       <button class="nav-tab" data-view="rainbow" onclick="switchView('rainbow')">Rainbow</button>
+      <button class="nav-tab" data-view="market" onclick="switchView('market')">Market</button>
       <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
       <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')">Inventory</button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
@@ -461,6 +462,23 @@
         <p class="rainbow-empty-hint">Every parallel shows as a tile alongside the card it belongs to. Tap a tile to mark it owned; double-tap (or long-press) for recent sales.</p>
       </div>
       <div id="rainbow-page-cards" class="rainbow-page-cards"></div>
+    </div>
+  </div>
+
+  <!-- Market View — the overall-market index built from our own sold data -->
+  <div id="market-view" class="market-view hidden">
+    <div class="market-container">
+      <div class="market-header">
+        <div>
+          <h2 class="market-h2">Market Index</h2>
+          <p class="market-sub">How the football-card market is moving, from the sales we track.</p>
+        </div>
+        <div id="market-periods" class="market-periods" role="group" aria-label="Time period"></div>
+      </div>
+
+      <div id="market-body" class="market-body">
+        <p class="market-loading">Loading the market…</p>
+      </div>
     </div>
   </div>
 
@@ -1708,7 +1726,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=184"></script>
+  <script src="app.js?v=185"></script>
   <script type="importmap">
   {
     "imports": {

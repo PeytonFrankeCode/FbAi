@@ -3811,6 +3811,7 @@ function switchView(view) {
   const scannerView = document.getElementById('scanner-view');
   const floorView = document.getElementById('floor-view');
   const inventoryView = document.getElementById('inventory-view');
+  const marketView = document.getElementById('market-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -3824,6 +3825,7 @@ function switchView(view) {
   if (scannerView) scannerView.classList.add('hidden');
   if (floorView) floorView.classList.add('hidden');
   if (inventoryView) inventoryView.classList.add('hidden');
+  if (marketView) marketView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
   // The Floor runs an animation loop; pause it whenever we leave the tab.
   if (typeof stopFloor === 'function') stopFloor();
@@ -3854,6 +3856,11 @@ function switchView(view) {
       inventoryView.classList.remove('hidden');
       initInventoryView();
     }
+  } else if (view === 'market') {
+    if (marketView) {
+      marketView.classList.remove('hidden');
+      initMarketView();
+    }
   } else {
     // Search top-tab. Show the subtab strip and either the main search
     // panel or the Grading Advisor panel based on the (optional) sub.
@@ -3872,6 +3879,224 @@ function switchView(view) {
       window.history.replaceState({}, '', '/' + window.location.search);
     }
   } catch (_) { /* history API unavailable */ }
+}
+
+
+// ---- Market Index ----
+// Reads /api/market-index. The score is an index against the market's own
+// previous period: 100 = unchanged. Everything on the page exists to make that
+// number auditable — the two components that built it are always shown, so a
+// move can be attributed rather than believed.
+const MARKET_VIEW_PERIODS = [7, 30, 90];
+let _mkDays = 30;
+let _mkChart = null;
+let _mkLoading = false;
+
+function initMarketView() {
+  const strip = document.getElementById('market-periods');
+  if (strip && !strip.dataset.built) {
+    strip.innerHTML = MARKET_VIEW_PERIODS
+      .map(d => `<button type="button" class="market-period${d === _mkDays ? ' active' : ''}" data-days="${d}" onclick="setMarketPeriod(${d})">${d}d</button>`)
+      .join('');
+    strip.dataset.built = '1';
+  }
+  loadMarketIndex();
+}
+
+function setMarketPeriod(days) {
+  if (!MARKET_VIEW_PERIODS.includes(days) || days === _mkDays) return;
+  _mkDays = days;
+  document.querySelectorAll('.market-period').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.days, 10) === days);
+  });
+  loadMarketIndex();
+}
+
+// Score -> plain-language read. The bands are deliberately wide: this is built
+// on a few weeks of sales, and narrow bands would imply a precision the data
+// can't support.
+function _mkVerdict(score) {
+  if (score >= 130) return { label: 'Running hot', cls: 'hot' };
+  if (score >= 110) return { label: 'Heating up', cls: 'warm' };
+  if (score > 90) return { label: 'Steady', cls: 'flat' };
+  if (score > 70) return { label: 'Cooling off', cls: 'cool' };
+  return { label: 'Cold', cls: 'cold' };
+}
+
+function _mkMoney(n) {
+  const v = Number(n) || 0;
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + 'M';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(v >= 1e4 ? 0 : 1) + 'k';
+  return '$' + v.toLocaleString('en-US');
+}
+
+function _mkPct(n) {
+  const v = Number(n) || 0;
+  return (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+}
+
+function _mkDateLabel(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00Z');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+async function loadMarketIndex() {
+  const body = document.getElementById('market-body');
+  if (!body || _mkLoading) return;
+  _mkLoading = true;
+  if (_mkChart) { _mkChart.destroy(); _mkChart = null; }
+  body.innerHTML = '<p class="market-loading">Loading the market…</p>';
+
+  let data;
+  try {
+    const res = await fetch(`/api/market-index?days=${_mkDays}`, { cache: 'no-store' });
+    data = await safeJson(res);
+  } catch (_) { data = null; }
+  _mkLoading = false;
+
+  if (!data || !data.available) {
+    // Say which of the two reasons it is. "Not enough sales yet" is a real
+    // state that resolves itself as the dataset grows, and reads very
+    // differently from the feature being broken.
+    const thin = data && data.reason === 'not enough sales yet';
+    body.innerHTML = `<div class="market-empty">
+      <p class="market-empty-title">${thin ? 'Not enough sales yet' : 'Market index unavailable'}</p>
+      <p class="market-empty-text">${thin
+        ? `The index needs at least ${data.minSales} priced sales in each ${_mkDays}-day period before it means anything. Try a longer period, or check back as more sales are collected.`
+        : 'We couldn\'t read the sales data just now. Try again shortly.'}</p>
+    </div>`;
+    return;
+  }
+
+  const v = _mkVerdict(data.score);
+  const c = data.components || {};
+  const dollars = c.dollars || {};
+  const units = c.units || {};
+  const gaps = (data.current && data.current.emptyDays) || 0;
+
+  body.innerHTML = `
+    <div class="market-score-card ${v.cls}">
+      <div class="market-score-main">
+        <div class="market-score-num">${data.score}</div>
+        <div class="market-score-side">
+          <div class="market-verdict">${v.label}</div>
+          <div class="market-score-note">vs the previous ${data.days} days${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
+        </div>
+      </div>
+      <p class="market-score-explain">100 means the market matched its own previous ${data.days} days. Higher means more money and more cards moving than the period before.</p>
+    </div>
+
+    <div class="market-components">
+      <div class="market-comp">
+        <div class="market-comp-head">
+          <span class="market-comp-label">Money sold</span>
+          <span class="market-comp-weight">${Math.round((data.weights && data.weights.dollars || 0) * 100)}% of score</span>
+        </div>
+        <div class="market-comp-value">${_mkMoney(dollars.current)}</div>
+        <div class="market-comp-change ${(dollars.changePct || 0) >= 0 ? 'up' : 'down'}">${_mkPct(dollars.changePct)}</div>
+        <div class="market-comp-prev">was ${_mkMoney(dollars.baseline)}</div>
+      </div>
+      <div class="market-comp">
+        <div class="market-comp-head">
+          <span class="market-comp-label">Cards sold</span>
+          <span class="market-comp-weight">${Math.round((data.weights && data.weights.units || 0) * 100)}% of score</span>
+        </div>
+        <div class="market-comp-value">${(units.current || 0).toLocaleString('en-US')}</div>
+        <div class="market-comp-change ${(units.changePct || 0) >= 0 ? 'up' : 'down'}">${_mkPct(units.changePct)}</div>
+        <div class="market-comp-prev">was ${(units.baseline || 0).toLocaleString('en-US')}</div>
+      </div>
+      <div class="market-comp">
+        <div class="market-comp-head">
+          <span class="market-comp-label">Average sale</span>
+          <span class="market-comp-weight">not scored</span>
+        </div>
+        <div class="market-comp-value">${data.avgPrice && data.avgPrice.current != null ? _mkMoney(data.avgPrice.current) : '—'}</div>
+        <div class="market-comp-change neutral">${data.avgPrice && data.avgPrice.baseline != null ? `was ${_mkMoney(data.avgPrice.baseline)}` : ''}</div>
+        <div class="market-comp-prev">shown for context</div>
+      </div>
+    </div>
+
+    <div class="market-chart-card">
+      <div class="market-chart-head">
+        <span class="market-chart-title">Index over the last ${data.days} days</span>
+      </div>
+      <div class="market-chart-wrap"><canvas id="market-chart" height="150"></canvas></div>
+      <p id="market-chart-empty" class="market-chart-empty hidden"></p>
+    </div>
+
+    <div class="market-notes">
+      <p><strong>What this covers.</strong> Football cards sold on eBay that we track and could price. ${data.coverage != null ? `${data.coverage}% of tracked sales carried a price this period — the rest were best-offer, where eBay publishes the asking price rather than what was actually paid, so they're counted nowhere in the score.` : ''}</p>
+      <p><strong>How it's built.</strong> ${Math.round((data.weights && data.weights.dollars || 0) * 100)}% money sold, ${Math.round((data.weights && data.weights.units || 0) * 100)}% cards sold, each measured against the ${data.days} days before. Money is weighted higher because it's what most people mean by "the market", but a single huge sale can swing it — card count is the steadier signal, so it holds the score down to earth.</p>
+      ${gaps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${gaps} day${gaps === 1 ? '' : 's'} in this period ${gaps === 1 ? 'has' : 'have'} no sales recorded. If that's a collection gap rather than a quiet market, the score is understated.</p>` : ''}
+      ${data.dataLagDays > 1 ? `<p class="market-warn"><strong>Data is ${data.dataLagDays} days behind.</strong> The newest sales we hold are from ${_mkDateLabel(data.through)}, so this reflects the market up to then.</p>` : ''}
+    </div>
+  `;
+
+  _mkRenderChart(data);
+}
+
+function _mkRenderChart(data) {
+  const canvas = document.getElementById('market-chart');
+  const empty = document.getElementById('market-chart-empty');
+  if (!canvas) return;
+  const series = Array.isArray(data.series) ? data.series : [];
+
+  // Chart.js loads from a CDN. If it didn't, say so plainly instead of
+  // leaving an empty rectangle that looks like missing data.
+  if (typeof Chart === 'undefined') {
+    canvas.classList.add('hidden');
+    if (empty) { empty.textContent = 'Chart unavailable right now — the numbers above are unaffected.'; empty.classList.remove('hidden'); }
+    return;
+  }
+  if (series.length < 2) {
+    canvas.classList.add('hidden');
+    if (empty) { empty.textContent = 'Not enough history yet to draw a trend.'; empty.classList.remove('hidden'); }
+    return;
+  }
+  canvas.classList.remove('hidden');
+  if (empty) empty.classList.add('hidden');
+
+  if (_mkChart) { _mkChart.destroy(); _mkChart = null; }
+  const accent = '#5ece99';
+  _mkChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: series.map(p => _mkDateLabel(p.date)),
+      datasets: [{
+        label: 'Index',
+        data: series.map(p => p.score),
+        borderColor: accent,
+        backgroundColor: 'rgba(94, 206, 153, 0.12)',
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.25,
+        fill: true,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: (ctx) => `Index ${ctx.parsed.y}` },
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 6, color: '#8b949e', font: { size: 10 } } },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          ticks: { color: '#8b949e', font: { size: 10 } },
+          // Always keep 100 in frame — the whole chart is read relative to it.
+          suggestedMin: Math.min(90, ...series.map(p => p.score)),
+          suggestedMax: Math.max(110, ...series.map(p => p.score)),
+        },
+      },
+    },
+  });
 }
 
 // ---- Search top-tab subtabs ----
