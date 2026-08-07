@@ -9676,34 +9676,12 @@ footer {
 .mp-loading { color: var(--text-muted); font-size: 0.8rem; padding: 0.5rem 0; }
 
 /* Headline sale — the fun bit, so it gets the visual weight */
-.mp-grail {
-  display: grid; grid-template-columns: 1fr auto; align-items: baseline;
-  gap: 0.15rem 0.75rem; text-decoration: none; padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.7rem;
-  background: rgba(94, 206, 153, 0.06); transition: border-color 0.15s ease;
-}
-.mp-grail:hover { border-color: var(--accent); }
-.mp-grail-tag { grid-column: 1; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-.mp-grail-price { grid-column: 2; grid-row: 1 / span 2; font-size: 1.4rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
-.mp-grail-title { grid-column: 1; font-size: 0.78rem; color: var(--text-primary); line-height: 1.3; }
-.mp-grail-grade { grid-column: 1; font-size: 0.66rem; font-weight: 700; color: var(--text-secondary); }
 
 .mp-figures { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .mp-figure { display: flex; flex-direction: column; }
 .mp-figure-n { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
 .mp-figure-k { font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
 
-.mp-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.mp-list { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-.mp-list-title { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 0.15rem; }
-.mp-row {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 0.05rem;
-  background: transparent; border: none; border-radius: 6px; padding: 0.25rem 0.35rem;
-  cursor: pointer; text-align: left; width: 100%; min-width: 0;
-}
-.mp-row:hover { background: rgba(148, 163, 184, 0.1); }
-.mp-row-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.mp-row-meta { font-size: 0.66rem; color: var(--text-muted); }
 
 @media (max-width: 560px) {
   .mp-lists { grid-template-columns: 1fr; gap: 0.75rem; }
@@ -9713,4 +9691,45 @@ footer {
   .mp-grail { grid-template-columns: 1fr; gap: 0.1rem; }
   .mp-grail-price { grid-column: 1; grid-row: auto; font-size: 1.45rem; order: -1; }
   .mp-grail-tag { order: -2; }
+}
+
+/* ---- Market pulse: card tiles ---- */
+.mp-section { margin-top: 0.85rem; }
+.mp-section-head { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.45rem; }
+.mp-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
+.mp-section-sub { font-size: 0.64rem; color: var(--text-muted); }
+
+.mp-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+.mp-tile {
+  display: flex; flex-direction: column; gap: 0.15rem; min-width: 0;
+  background: rgba(148, 163, 184, 0.05); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.5rem; text-decoration: none;
+  cursor: pointer; text-align: left; transition: border-color 0.15s ease, transform 0.15s ease;
+  font: inherit; color: inherit;
+}
+.mp-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+.mp-tile-img {
+  width: 100%; aspect-ratio: 3 / 4; max-height: 160px; object-fit: cover;
+  border-radius: 6px; background: rgba(0,0,0,0.25); margin-bottom: 0.3rem;
+}
+/* No photo: a short strip, not a card-shaped void. Reserving full card height
+   for an image that doesn't exist reads as broken rather than as "no photo". */
+.mp-tile-noimg {
+  aspect-ratio: auto; height: 44px; max-height: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; opacity: 0.3;
+}
+.mp-tile-price { font-size: 0.95rem; font-weight: 800; color: var(--accent); }
+.mp-tile-name {
+  font-size: 0.7rem; color: var(--text-primary); line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.mp-tile-meta { font-size: 0.63rem; color: var(--text-muted); }
+
+@media (max-width: 560px) {
+  .mp-tiles { gap: 0.45rem; }
+  .mp-tile { padding: 0.4rem; }
+  .mp-tile-price { font-size: 0.82rem; }
+  .mp-tile-name { font-size: 0.65rem; }
+  .mp-figures { gap: 1.1rem; }
 }
