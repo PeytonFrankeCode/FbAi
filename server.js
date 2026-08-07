@@ -760,6 +760,9 @@ function mapNflDbSale(r) {
     grade: r.grade != null ? String(r.grade).replace(/\.0$/, '') : null,
     platform: 'eBay',
     source: 'nflcarddb',
+    // The query already enforces the confidence floor, so a player name is the
+    // only remaining condition for /api/card-analysis to return something.
+    hasAnalysis: !!r.player,
   };
 }
 
@@ -784,7 +787,10 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const binds = [NFLDB_MIN_CONFIDENCE, ...terms.map(t => `%${t}%`)];
 
   try {
-    const cols = 'item_id, sold_date, title, price_cents, currency, listing_format, grader, grade'
+    // `player` isn't displayed — it's how we know up front whether this row can
+    // resolve to a card identity, so the UI can advertise the history rather
+    // than making people click to discover it isn't there.
+    const cols = 'item_id, sold_date, title, price_cents, currency, listing_format, grader, grade, player'
       + (await _nflHasImageColumn(db) ? ', image_url' : '');
     const stmt = db.prepare(
       `SELECT ${cols}
