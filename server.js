@@ -2993,14 +2993,85 @@ function _marketWindow(map, endDay, days) {
 }
 
 // null when the baseline can't support a ratio — the caller decides what to say.
-function _marketScore(cur, base) {
+// `minSales` is a parameter rather than a constant because one player's market
+// is a fraction of the whole one: holding a single player to the whole-market
+// threshold would refuse to score all but a handful of names.
+function _marketScore(cur, base, minSales = MARKET_MIN_SALES) {
   if (!cur || !base) return null;
   if (base.dollars <= 0 || base.units <= 0) return null;
-  if (cur.units < MARKET_MIN_SALES || base.units < MARKET_MIN_SALES) return null;
+  if (cur.units < minSales || base.units < minSales) return null;
   const dollarRatio = cur.dollars / base.dollars;
   const unitRatio = cur.units / base.units;
   const raw = 100 * (MARKET_WEIGHTS.dollars * dollarRatio + MARKET_WEIGHTS.units * unitRatio);
   return { raw, dollarRatio, unitRatio };
+}
+
+// Turn a dense day map into the index payload. Shared by the whole-market and
+// per-player endpoints so the two can never drift apart — a player's index has
+// to be computed the same way as the market's for the comparison to mean
+// anything.
+function _buildIndexPayload(map, maxDay, days, minSales) {
+  const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
+  const current = _marketWindow(map, through, days);
+  const baseline = _marketWindow(map, through - days, days);
+  const scored = _marketScore(current, baseline, minSales);
+
+  if (!scored) {
+    return {
+      available: false, days,
+      reason: 'not enough sales yet',
+      minSales,
+      through: _mkIso(through),
+      current, baseline,
+    };
+  }
+
+  // Trend: the same score computed at each earlier anchor, so the line shows
+  // how the index moved rather than how raw volume moved.
+  const series = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const end = through - i;
+    const s = _marketScore(_marketWindow(map, end, days), _marketWindow(map, end - days, days), minSales);
+    if (s) series.push({ date: _mkIso(end), score: Math.round(s.raw * 10) / 10 });
+  }
+
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const pct = (r) => round1((r - 1) * 100);
+  return {
+    available: true,
+    days,
+    through: _mkIso(through),
+    // How stale the dataset is, so a flat line reads as "no new data"
+    // rather than "no movement".
+    dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - maxDay),
+    score: Math.round(Math.min(MARKET_SCORE_MAX, Math.max(MARKET_SCORE_MIN, scored.raw))),
+    rawScore: round1(scored.raw),
+    minSales,
+    weights: MARKET_WEIGHTS,
+    current,
+    baseline,
+    components: {
+      dollars: {
+        current: current.dollars, baseline: baseline.dollars,
+        changePct: pct(scored.dollarRatio),
+        // What this component pushed the score by, in points.
+        points: round1(100 * MARKET_WEIGHTS.dollars * scored.dollarRatio),
+      },
+      units: {
+        current: current.units, baseline: baseline.units,
+        changePct: pct(scored.unitRatio),
+        points: round1(100 * MARKET_WEIGHTS.units * scored.unitRatio),
+      },
+    },
+    avgPrice: {
+      current: current.units > 0 ? round1(current.dollars / current.units) : null,
+      baseline: baseline.units > 0 ? round1(baseline.dollars / baseline.units) : null,
+    },
+    // Share of tracked sales that carried a price. The rest are best-offer,
+    // where eBay publishes the ask rather than what was paid.
+    coverage: current.sales > 0 ? Math.round((current.units / current.sales) * 100) : null,
+    series,
+  };
 }
 
 app.get('/api/market-index', async (req, res) => {
@@ -3052,74 +3123,148 @@ app.get('/api/market-index', async (req, res) => {
     }
     if (!Number.isFinite(maxDay)) return res.json({ available: false, days, reason: 'no data in range' });
 
-    const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
-    const current = _marketWindow(map, through, days);
-    const baseline = _marketWindow(map, through - days, days);
-    const scored = _marketScore(current, baseline);
-
-    if (!scored) {
-      return res.json({
-        available: false, days,
-        reason: 'not enough sales yet',
-        minSales: MARKET_MIN_SALES,
-        through: _mkIso(through),
-        current, baseline,
-      });
-    }
-
-    // Trend: the same score computed at each earlier anchor, so the line shows
-    // how the index moved rather than how raw volume moved.
-    const series = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const end = through - i;
-      const c = _marketWindow(map, end, days);
-      const b = _marketWindow(map, end - days, days);
-      const s = _marketScore(c, b);
-      if (s) series.push({ date: _mkIso(end), score: Math.round(s.raw * 10) / 10 });
-    }
-
-    const round1 = (n) => Math.round(n * 10) / 10;
-    const pct = (r) => round1((r - 1) * 100);
-    const payload = {
-      available: true,
-      days,
-      through: _mkIso(through),
-      // How stale the dataset is, so a flat line reads as "no new data"
-      // rather than "no movement".
-      dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - maxDay),
-      score: Math.round(Math.min(MARKET_SCORE_MAX, Math.max(MARKET_SCORE_MIN, scored.raw))),
-      rawScore: round1(scored.raw),
-      weights: MARKET_WEIGHTS,
-      current,
-      baseline,
-      components: {
-        dollars: {
-          current: current.dollars, baseline: baseline.dollars,
-          changePct: pct(scored.dollarRatio),
-          // What this component pushed the score by, in points.
-          points: round1(100 * MARKET_WEIGHTS.dollars * scored.dollarRatio),
-        },
-        units: {
-          current: current.units, baseline: baseline.units,
-          changePct: pct(scored.unitRatio),
-          points: round1(100 * MARKET_WEIGHTS.units * scored.unitRatio),
-        },
-      },
-      avgPrice: {
-        current: current.units > 0 ? round1(current.dollars / current.units) : null,
-        baseline: baseline.units > 0 ? round1(baseline.dollars / baseline.units) : null,
-      },
-      // Share of tracked sales that carried a price. The rest are best-offer,
-      // where eBay publishes the ask rather than what was paid.
-      coverage: current.sales > 0 ? Math.round((current.units / current.sales) * 100) : null,
-      series,
-    };
-
-    cachePut(cacheKey, payload, MARKET_TTL);
+    const payload = _buildIndexPayload(map, maxDay, days, MARKET_MIN_SALES);
+    if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
     res.json(payload);
   } catch (err) {
     console.error('[MarketIndex]', err && err.message);
     res.json({ available: false, days, reason: 'index unavailable' });
+  }
+});
+
+// ---- Player market index ----
+// The same index as /api/market-index, scoped to one player. Identical maths
+// and identical payload shape, so a player's number can be read against the
+// market's — that comparison is the whole point, and it only holds if both
+// sides are computed the same way.
+//
+// Two things differ, both forced by scale:
+//
+//  - There's no pre-aggregated table per player, so the daily rollup is done
+//    in SQL against `sales`, filtered on the player index.
+//  - The sample gate is lower. One player is a small slice of the market;
+//    holding them to the whole-market threshold would refuse to score all but
+//    a handful of names. It's still a gate — thin players are declined rather
+//    than given a number built on four sales.
+const PLAYER_MIN_SALES = 8;
+const PLAYER_INDEX_TTL = 3600;      // 1h, same as the market index
+const PLAYER_LIST_TTL = 6 * 3600;   // 6h — the roster of active players barely moves
+// Cap on the cached roster. Players outside it are, by definition, ones with
+// too few sales to clear the gate anyway, so this isn't a coverage limit.
+const PLAYER_LIST_MAX = 1000;
+const PLAYER_LIST_WINDOW_DAYS = 220;
+
+// Cached roster of players with enough recent activity to be worth offering.
+// Built once per PLAYER_LIST_TTL and filtered in JS, so typing in the search
+// box never runs a LIKE scan over the sales table.
+async function _playerRoster(db) {
+  const cached = await cacheGet('playerroster:v1');
+  if (cached) return cached;
+  const since = _mkIso(_mkDay(new Date().toISOString()) - PLAYER_LIST_WINDOW_DAYS);
+  const rows = await db.prepare(
+    `SELECT player, COUNT(*) AS n
+       FROM sales
+      WHERE player IS NOT NULL AND player != ''
+        AND confidence >= ? AND sold_date >= ?
+      GROUP BY player
+      ORDER BY n DESC
+      LIMIT ?`
+  ).bind(NFLDB_MIN_CONFIDENCE, since, PLAYER_LIST_MAX).all();
+  const list = ((rows && rows.results) || []).map(r => ({ player: r.player, sales: r.n }));
+  if (list.length) cachePut('playerroster:v1', list, PLAYER_LIST_TTL);
+  return list;
+}
+
+// Typeahead for the Market tab's player search.
+app.get('/api/player-search', async (req, res) => {
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, players: [] });
+  try {
+    const roster = await _playerRoster(db);
+    // Substring, not prefix — people search "Nix" as often as "Bo".
+    // Names that START with the query rank first, since that's the stronger
+    // match, and sale count breaks ties.
+    const hits = q ? roster.filter(p => p.player.toLowerCase().includes(q)) : roster.slice(0, 12);
+    hits.sort((a, b) => {
+      const ap = a.player.toLowerCase().startsWith(q) ? 0 : 1;
+      const bp = b.player.toLowerCase().startsWith(q) ? 0 : 1;
+      return ap !== bp ? ap - bp : b.sales - a.sales;
+    });
+    res.json({ available: true, players: hits.slice(0, 12) });
+  } catch (err) {
+    console.error('[PlayerSearch]', err && err.message);
+    res.json({ available: false, players: [] });
+  }
+});
+
+app.get('/api/player-index', async (req, res) => {
+  const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10))
+    ? parseInt(req.query.days, 10)
+    : 30;
+  const player = String(req.query.player || '').trim();
+  if (!player) return res.json({ available: false, days, reason: 'no player' });
+
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, days, player, reason: 'no dataset' });
+
+  const cacheKey = `playerindex:v1:${days}:${player.toLowerCase()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    // Anchored to this player's newest sale, not to today and not to the
+    // market's newest day — a player who stopped selling three weeks ago
+    // should say so, not be scored against windows that are empty for them.
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ?'
+    ).bind(player, NFLDB_MIN_CONFIDENCE).first();
+    if (!newest || !newest.d) {
+      return res.json({ available: false, days, player, reason: 'no sales for this player' });
+    }
+
+    const need = days * 3 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+    const since = _mkIso(_mkDay(newest.d) - need);
+
+    // Same three numbers per day the `daily` table holds for the whole market,
+    // rolled up here instead. `priced` and `total_cents` must come from the
+    // same rows for the two score components to measure the same sales.
+    const rows = await db.prepare(
+      `SELECT sold_date,
+              COUNT(*) AS sales,
+              SUM(CASE WHEN price_cents IS NOT NULL THEN 1 ELSE 0 END) AS priced,
+              SUM(COALESCE(price_cents, 0)) AS total_cents
+         FROM sales
+        WHERE player = ? AND confidence >= ? AND sold_date >= ?
+        GROUP BY sold_date
+        ORDER BY sold_date`
+    ).bind(player, NFLDB_MIN_CONFIDENCE, since).all();
+
+    const list = (rows && rows.results) || [];
+    if (list.length === 0) {
+      return res.json({ available: false, days, player, reason: 'no sales for this player' });
+    }
+
+    const map = new Map();
+    let maxDay = -Infinity;
+    for (const r of list) {
+      const d = _mkDay(r.sold_date);
+      if (!Number.isFinite(d)) continue;
+      map.set(d, { dollars: r.total_cents || 0, units: r.priced || 0, sales: r.sales || 0 });
+      if (d > maxDay) maxDay = d;
+    }
+    if (!Number.isFinite(maxDay)) {
+      return res.json({ available: false, days, player, reason: 'no sales for this player' });
+    }
+
+    const payload = _buildIndexPayload(map, maxDay, days, PLAYER_MIN_SALES);
+    payload.player = player;
+    payload.scope = 'player';
+    if (payload.available) cachePut(cacheKey, payload, PLAYER_INDEX_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[PlayerIndex]', err && err.message);
+    res.json({ available: false, days, player, reason: 'index unavailable' });
   }
 });
 

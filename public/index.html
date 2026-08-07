@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=141" />
+  <link rel="stylesheet" href="style.css?v=142" />
 
 
 </head>
@@ -475,6 +475,21 @@
         </div>
         <div id="market-periods" class="market-periods" role="group" aria-label="Time period"></div>
       </div>
+
+      <!-- Player search. The same index, scoped to one player — so the whole
+           market acts as the baseline you read a player against. -->
+      <div class="market-search">
+        <div class="market-search-box">
+          <input type="text" id="market-player-input" class="market-player-input"
+                 placeholder="Search a player to see their market…"
+                 autocomplete="off" aria-label="Search a player" />
+          <button type="button" id="market-clear-player" class="market-clear-player hidden"
+                  onclick="clearMarketPlayer()" aria-label="Back to the whole market">&times;</button>
+        </div>
+        <div id="market-suggest" class="market-suggest hidden"></div>
+      </div>
+
+      <div id="market-scope" class="market-scope hidden"></div>
 
       <div id="market-body" class="market-body">
         <p class="market-loading">Loading the market…</p>
@@ -1726,7 +1741,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=185"></script>
+  <script src="app.js?v=186"></script>
   <script type="importmap">
   {
     "imports": {
