@@ -2671,6 +2671,8 @@ function openCardModal(item) {
   // Everything we hold on this card, when the sale came from our own dataset.
   loadCardAnalysis(item);
 
+  renderCardModalPromo();
+
   // Show modal
   cardModal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -3661,6 +3663,28 @@ function _bcwScanCalloutHtml() {
     + `<span class="bcw-callout-arrow">&rarr;</span>`
     + `<span class="bcw-callout-aff">affiliate</span>`
     + `</a>`;
+}
+
+// Vertical BCW treatment for the card modal's left column, under the photo.
+// Same link, coupon and disclosure as everywhere else — only the shape differs,
+// because that column is ~220px wide and the other treatments are horizontal.
+function renderCardModalPromo() {
+  const el = document.getElementById('card-modal-promo');
+  if (!el) return;
+  // Honours the same dismissal as the results banner: someone who closed it
+  // there shouldn't meet it again in the modal.
+  if (bcwBannerDismissed()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  const b = BCW_AFFILIATE;
+  const brand = b.logo
+    ? `<img class="cm-promo-logo" src="${escHtml(b.logo)}" alt="${escHtml(b.name)}" loading="lazy" />`
+    : `<span class="cm-promo-icon">&#128737;&#65039;</span>`;
+  el.innerHTML = `<a class="cm-promo-link" href="${escHtml(b.url)}" target="_blank" rel="noopener sponsored">`
+    + brand
+    + `<span class="cm-promo-text"><strong>Protect this card</strong>Sleeves, toploaders &amp; binders</span>`
+    + `<span class="cm-promo-code">${escHtml(b.discount)} &middot; code ${escHtml(b.coupon)}</span>`
+    + `<span class="cm-promo-cta">Shop BCW &rarr;</span>`
+    + `</a><span class="cm-promo-aff">affiliate</span>`;
+  el.classList.remove('hidden');
 }
 
 // ---- BCW affiliate banner (under search results, dismissible) ----
