@@ -3581,9 +3581,7 @@ checkPrefillParam();
 // the visitor straight on the Inventory page. Deferred to DOMContentLoaded so
 // the view-element consts below switchView are initialized before it runs.
 document.addEventListener('DOMContentLoaded', () => {
-  // /inventory is retired from the navigation. switchView redirects it to
-  // Search anyway; skipping the call avoids a pointless view swap on load.
-  if (window.location.pathname === '/inventory' && !RETIRED_VIEWS.has('inventory')) {
+  if (window.location.pathname === '/inventory') {
     try { switchView('inventory'); } catch (_) {}
   }
 });
@@ -3754,7 +3752,7 @@ const rainbowPage = document.getElementById('rainbow-page');
 // feature straight back. Anything routing to one lands on Search instead of a
 // blank screen: saved deep links, restored last-view state, and the legacy
 // aliases below all funnel through here.
-const RETIRED_VIEWS = new Set(['inventory', 'seller', 'proplus']);
+const RETIRED_VIEWS = new Set(['floor', 'seller', 'proplus']);
 
 function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
