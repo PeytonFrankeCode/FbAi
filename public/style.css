@@ -3860,6 +3860,11 @@ footer::before {
 
 .card-modal-image {
   flex: 0 0 220px;
+  /* Don't stretch to the details column. That column is now much taller than
+     the photo (it holds the card-history chart and list), and a stretched
+     height overrides aspect-ratio — leaving the photo floating in the middle
+     of a tall empty box. Sizing from the ratio keeps it locked to the top. */
+  align-self: flex-start;
   aspect-ratio: 2.5 / 3.5;
   background: var(--bg-primary);
   border-radius: 10px;
@@ -3976,6 +3981,10 @@ footer::before {
     flex: none;
     max-width: 200px;
     margin: 0 auto;
+    /* Column layout here, so the cross axis is horizontal — flex-start would
+       shrink the photo's width instead of its height. Nothing stretches it
+       vertically once stacked, so plain stretch is what we want. */
+    align-self: stretch;
   }
 
   .card-modal-content {
