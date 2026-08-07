@@ -3140,6 +3140,15 @@ app.get('/api/card-analysis', async (req, res) => {
       return {
         label,
         sales: list.length,
+        // The individual sales behind the figure. Capped because a busy grade
+        // can run to hundreds and the whole payload is cached in KV.
+        recent: list.slice(0, 25).map(r => ({
+          title: String(r.title || '').slice(0, 110),
+          price: (r.price_cents || 0) / 100,
+          soldDate: r.sold_date,
+          imageUrl: r.image_url || null,
+          itemUrl: r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '',
+        })),
         median: Math.round(_median(prices) * 100) / 100,
         low: prices[0] ?? null,
         high: prices[prices.length - 1] ?? null,
@@ -3170,6 +3179,57 @@ app.get('/api/card-analysis', async (req, res) => {
   } catch (err) {
     console.error('[CardAnalysis]', err && err.message);
     res.json({ available: false, reason: 'error' });
+  }
+});
+
+// ---- /api/card-forsale ----
+// Active listings for the same card, resolved from a sold row's identity.
+// Deliberately its own endpoint: this is an eBay round-trip, while
+// /api/card-analysis is a local D1 read, and one shouldn't wait on the other.
+const CARD_FORSALE_TTL = 1800; // 30m
+
+app.get('/api/card-forsale', async (req, res) => {
+  const itemId = String(req.query.itemId || '').trim();
+  if (!itemId) return res.status(400).json({ error: 'itemId is required' });
+
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, results: [] });
+
+  const cacheKey = `cardforsale:v1:${itemId}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const seed = await db.prepare(
+      `SELECT player, year, set_name, parallel, card_number, confidence
+       FROM sales WHERE item_id = ?`
+    ).bind(itemId).first();
+    if (!seed || !seed.player || (seed.confidence || 0) < NFLDB_MIN_CONFIDENCE) {
+      return res.json({ available: false, results: [] });
+    }
+
+    // Card number is left out of the search text: sellers write it
+    // inconsistently ("#12", "12", omitted), and including it costs more
+    // matches than it buys. The variant filter below does the tightening.
+    const query = [seed.year, seed.set_name, seed.player, seed.parallel]
+      .filter(Boolean).join(' ').trim();
+    if (!query) return res.json({ available: false, results: [] });
+
+    const data = await fetchEbayItems(query, 24, 'forsale', 'card-forsale');
+    const results = filterByVariant(data.results || [], query, { strict: true })
+      .slice(0, 12)
+      .map(r => ({
+        title: r.title, price: r.price, imageUrl: r.imageUrl,
+        itemUrl: r.itemUrl, condition: r.condition,
+      }));
+
+    const payload = { available: results.length > 0, query, results };
+    cachePut(cacheKey, payload, CARD_FORSALE_TTL);
+    res.json(payload);
+  } catch (err) {
+    // Live listings are a bonus on top of the history — never an error state.
+    console.error('[CardForSale]', err && err.message);
+    res.json({ available: false, results: [] });
   }
 });
 
