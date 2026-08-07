@@ -13994,6 +13994,7 @@ function renderNetWorthChart() {
 // Only fires for sold results that came from our dataset — everything else
 // leaves the modal exactly as it was.
 let _caChart = null;
+let _caData = null;   // last payload, so the grade dropdown re-renders without refetching
 // Distinct per grade series. Raw and the common grades get fixed hues so a
 // grade keeps its colour between cards; anything else cycles the tail.
 const CA_COLORS = {
@@ -14006,6 +14007,7 @@ function _caReset() {
   const wrap = document.getElementById('card-analysis');
   if (wrap) wrap.classList.add('hidden');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
+  _caData = null; // don't let one card's series render under the next card
 }
 
 async function loadCardAnalysis(item) {
@@ -14046,43 +14048,73 @@ async function loadCardAnalysis(item) {
     </div>`;
   }).join('');
 
-  // A chart through one or two points is noise pretending to be a trend, so
-  // only plot series with enough days behind them.
-  const plottable = data.grades.filter(g => g.points.length >= 3);
-  if (!plottable.length || typeof Chart === 'undefined') {
+  // One grade at a time. Raw is the default because it's the widest market and
+  // the baseline people reason from; everything else is a click away.
+  _caData = data;
+  const sel = document.getElementById('ca-grade-select');
+  if (sel) {
+    sel.innerHTML = data.grades.map(g =>
+      `<option value="${escHtml(g.label)}">${escHtml(g.label)} (${g.sales})</option>`).join('');
+    const preferred = data.grades.find(g => g.label === 'Raw') || data.grades[0];
+    sel.value = preferred.label;
+    sel.onchange = () => _caRenderChart(sel.value);
+  }
+  _caRenderChart((data.grades.find(g => g.label === 'Raw') || data.grades[0]).label);
+}
+
+// Draw one grade's price history. Kept separate from the fetch so switching
+// grades re-renders from data already in hand.
+function _caRenderChart(label) {
+  const canvas = document.getElementById('ca-chart');
+  const empty = document.getElementById('ca-chart-empty');
+  if (!canvas || !_caData) return;
+  const g = _caData.grades.find(x => x.label === label) || _caData.grades[0];
+  if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
+
+  // A line through one or two points is noise pretending to be a trend — say
+  // so rather than drawing something misleading.
+  if (!g || g.points.length < 3 || typeof Chart === 'undefined') {
     canvas.classList.add('hidden');
+    if (empty) {
+      empty.classList.remove('hidden');
+      empty.textContent = g
+        ? `Only ${g.sales} sale${g.sales === 1 ? '' : 's'} on record for ${g.label} — not enough to chart yet.`
+        : 'No sales to chart.';
+    }
     return;
   }
   canvas.classList.remove('hidden');
+  if (empty) empty.classList.add('hidden');
 
+  const color = CA_COLORS[g.label] || CA_FALLBACK[0];
   const css = getComputedStyle(document.body);
   const ink = (css.getPropertyValue('--text-secondary') || '#94a3b8').trim();
   const grid = (css.getPropertyValue('--border') || 'rgba(148,163,184,0.15)').trim();
-  const labels = Array.from(new Set(plottable.flatMap(g => g.points.map(p => p.date)))).sort();
 
-  if (_caChart) { try { _caChart.destroy(); } catch (_) {} }
   _caChart = new Chart(canvas, {
     type: 'line',
     data: {
-      labels: labels.map(d => d.slice(5)),
-      datasets: plottable.map((g, i) => {
-        const byDate = new Map(g.points.map(p => [p.date, p.median]));
-        return {
-          label: g.label,
-          data: labels.map(d => byDate.has(d) ? byDate.get(d) : null),
-          borderColor: CA_COLORS[g.label] || CA_FALLBACK[i % CA_FALLBACK.length],
-          backgroundColor: CA_COLORS[g.label] || CA_FALLBACK[i % CA_FALLBACK.length],
-          fill: false, tension: 0.25, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
-          spanGaps: true, // a grade doesn't sell every day
-        };
-      }),
+      labels: g.points.map(p => p.date.slice(5)),
+      datasets: [{
+        label: g.label,
+        data: g.points.map(p => p.median),
+        borderColor: color,
+        backgroundColor: color.replace(')', ', 0.12)').replace('rgb', 'rgba'),
+        fill: false, tension: 0.25, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
+      }],
     },
     options: {
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: true, position: 'bottom',
-          labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 12, font: { size: 10 } } },
-        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: $${c.parsed.y}` } },
+        legend: { display: false }, // the dropdown already names the series
+        tooltip: {
+          callbacks: {
+            label: (c) => {
+              const pt = g.points[c.dataIndex];
+              return `$${c.parsed.y} · ${pt.sales} sale${pt.sales === 1 ? '' : 's'}`;
+            },
+          },
+        },
       },
       scales: {
         x: { ticks: { color: ink, maxTicksLimit: 6, font: { size: 9 } }, grid: { display: false } },
