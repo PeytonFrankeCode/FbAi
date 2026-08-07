@@ -1548,6 +1548,177 @@ async function loadQueryEstimate(query) {
     </div>`;
 }
 
+// ---- First-run guided tour ----
+// Runs once for a new visitor and is replayable from Settings. Each step
+// points at a real element; a step whose element isn't on the page is skipped
+// rather than shown pointing at nothing, so the tour survives the nav changing
+// without needing to be rewritten alongside it.
+const TOUR_KEY = 'cardHuddleTourDone';
+const TOUR_STEPS = [
+  {
+    el: '#search-input',
+    title: 'Start with a search',
+    body: 'Type a player, year, set or card number — "2024 Prizm Bo Nix" works as well as "Bo Nix". This is the main way in.',
+  },
+  {
+    el: '#mode-tabs',
+    title: 'Sold or For Sale',
+    body: 'Sold shows what cards actually went for. For Sale shows what people are asking right now. The gap between them is usually the interesting part.',
+  },
+  {
+    el: '#market-pulse',
+    title: "What's moving",
+    body: 'The priciest cards and the most-traded ones, over 7, 30, 90 days or a year. Click any of them to run that search.',
+  },
+  {
+    el: '.nav-tab[data-view="market"]',
+    title: 'The Market tab',
+    body: 'A single score for how the football-card market is moving — 100 means it matched its own previous period. You can search a player to see just their market.',
+    view: 'market',
+  },
+  {
+    el: '.nav-tab[data-view="checklist"]',
+    title: 'Checklists',
+    body: 'Every card in a set, so you can see what exists before you go looking for it.',
+  },
+  {
+    el: '.nav-tab[data-view="rainbow"]',
+    title: 'Rainbow',
+    body: "Every parallel of one card side by side. Tap a tile to mark it owned and track a rainbow you're chasing.",
+  },
+  {
+    el: '.nav-tab[data-view="inventory"]',
+    title: 'Your inventory',
+    body: 'Track what you own, what you paid, and what it\'s worth now. The chart shows collection value and profit separately.',
+  },
+];
+
+let _tourStep = 0;
+let _tourList = [];
+let _tourKeyHandler = null;
+let _tourResize = null;
+
+function tourSeen() {
+  try { return localStorage.getItem(TOUR_KEY) === '1'; } catch { return true; }
+}
+
+function markTourSeen() {
+  try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {}
+}
+
+// A step is only usable if its element is actually on the page and visible —
+// nav changes shouldn't leave the tour pointing at a gap.
+function _tourVisible(sel) {
+  const el = document.querySelector(sel);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.width <= 0 || r.height <= 0) return null;
+  if (el.closest('.hidden')) return null;
+  return el;
+}
+
+function startTour(force) {
+  if (!force && tourSeen()) return;
+  _tourList = TOUR_STEPS.filter(s => _tourVisible(s.el));
+  const wrap = document.getElementById('tour');
+  if (!wrap || _tourList.length === 0) return;
+
+  _tourStep = 0;
+  wrap.classList.remove('hidden');
+  document.body.classList.add('tour-open');
+
+  _tourKeyHandler = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); endTour(false); }
+    else if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); tourGo(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); tourGo(-1); }
+  };
+  document.addEventListener('keydown', _tourKeyHandler);
+  // The spotlight is positioned in page coordinates, so it has to follow a
+  // resize or a scroll or it drifts off the thing it's pointing at.
+  _tourResize = () => _tourRender();
+  window.addEventListener('resize', _tourResize);
+  window.addEventListener('scroll', _tourResize, { passive: true });
+
+  _tourRender();
+}
+
+function tourGo(delta) {
+  const next = _tourStep + delta;
+  if (next < 0) return;
+  if (next >= _tourList.length) { endTour(true); return; }
+  _tourStep = next;
+  _tourRender();
+}
+
+function endTour(completed) {
+  const wrap = document.getElementById('tour');
+  if (wrap) wrap.classList.add('hidden');
+  document.body.classList.remove('tour-open');
+  if (_tourKeyHandler) { document.removeEventListener('keydown', _tourKeyHandler); _tourKeyHandler = null; }
+  if (_tourResize) {
+    window.removeEventListener('resize', _tourResize);
+    window.removeEventListener('scroll', _tourResize);
+    _tourResize = null;
+  }
+  // Skipping counts as seen. Someone who dismissed it doesn't want it back
+  // every visit — Settings has it if they change their mind.
+  markTourSeen();
+  void completed;
+}
+
+function _tourRender() {
+  const step = _tourList[_tourStep];
+  if (!step) return;
+  const el = _tourVisible(step.el);
+  if (!el) { tourGo(1); return; }
+
+  const spot = document.getElementById('tour-spot');
+  const pop = document.getElementById('tour-pop');
+  if (!spot || !pop) return;
+
+  const r = el.getBoundingClientRect();
+  const pad = 6;
+  spot.style.top = `${r.top - pad}px`;
+  spot.style.left = `${r.left - pad}px`;
+  spot.style.width = `${r.width + pad * 2}px`;
+  spot.style.height = `${r.height + pad * 2}px`;
+
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-body').textContent = step.body;
+  document.getElementById('tour-step').textContent = `Step ${_tourStep + 1} of ${_tourList.length}`;
+  const back = document.getElementById('tour-back');
+  const next = document.getElementById('tour-next');
+  if (back) back.style.visibility = _tourStep === 0 ? 'hidden' : 'visible';
+  if (next) next.textContent = _tourStep === _tourList.length - 1 ? 'Done' : 'Next';
+
+  const dots = document.getElementById('tour-dots');
+  if (dots) {
+    dots.innerHTML = _tourList.map((_, i) =>
+      `<span class="tour-dot${i === _tourStep ? ' on' : ''}"></span>`).join('');
+  }
+
+  // Place the bubble below the target, or above when there isn't room, then
+  // clamp both axes so it can never sit off screen on a narrow phone.
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const pr = pop.getBoundingClientRect();
+  const w = pr.width || 320, h = pr.height || 180;
+  let top = r.bottom + 14;
+  if (top + h > vh - 10) top = Math.max(10, r.top - h - 14);
+  let left = r.left + r.width / 2 - w / 2;
+  left = Math.max(10, Math.min(left, vw - w - 10));
+  pop.style.top = `${top}px`;
+  pop.style.left = `${left}px`;
+
+  if (next) next.focus({ preventScroll: true });
+}
+
+// First visit only. Deferred so it never competes with the page's own startup
+// work, and skipped entirely for anyone who has seen it.
+function maybeStartTour() {
+  if (tourSeen()) return;
+  setTimeout(() => { if (!document.querySelector('.modal:not(.hidden), .login-overlay:not(.hidden)')) startTour(false); }, 1200);
+}
+
 // ---- Display Variants ----
 function displayVariants(variants, query, mock, serial) {
   variantsGrid.innerHTML = '';
@@ -3687,6 +3858,9 @@ initDonateButton();
 //   e.g. { name: 'BCW Supplies', img: '/sponsors/bcw.png', url: 'https://www.bcwsupplies.com/?aff=...' }
 // Show the monthly funding-goal bar in the footer on load.
 loadFundGoal();
+
+// First-run walkthrough. No-ops for anyone who has already seen it.
+maybeStartTour();
 
 // Affiliate / sponsor config. BCW Supplies — card storage & protection.
 // Uses the exact ShareASale tracking link (no edits); we deliberately DON'T use
