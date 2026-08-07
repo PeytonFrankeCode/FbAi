@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=136" />
+  <link rel="stylesheet" href="style.css?v=137" />
 
 
 </head>
@@ -1075,8 +1075,11 @@
             </div>
             <p class="ca-note">Each grade is tracked separately — a graded copy and a raw one are the same card but different markets.</p>
 
-            <div id="ca-sales" class="ca-list"></div>
-            <div id="ca-forsale" class="ca-list"></div>
+            <div class="ca-tabs" role="tablist">
+              <button type="button" class="ca-tab active" id="ca-tab-sold" data-catab="sold" role="tab" aria-selected="true">Sold</button>
+              <button type="button" class="ca-tab" id="ca-tab-forsale" data-catab="forsale" role="tab" aria-selected="false">For Sale</button>
+            </div>
+            <div id="ca-list-body" class="ca-list-body"></div>
           </div>
         </div>
       </div>
@@ -1699,7 +1702,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=181"></script>
+  <script src="app.js?v=182"></script>
   <script type="importmap">
   {
     "imports": {

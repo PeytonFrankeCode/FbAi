@@ -9784,14 +9784,6 @@ footer {
 .ca-stat-n { font-size: 0.68rem; color: var(--text-muted); }
 
 /* ---- Card analysis: sold + for-sale listing rows ---- */
-.ca-list { margin-top: 0.9rem; }
-.ca-list:empty { margin-top: 0; }
-.ca-list-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
-  padding-bottom: 0.35rem; margin-bottom: 0.35rem; border-bottom: 1px solid var(--border);
-}
-.ca-list-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
-.ca-list-more { font-size: 0.64rem; color: var(--text-muted); }
 
 .ca-row {
   display: grid; grid-template-columns: 34px 1fr auto; align-items: center;
@@ -9808,3 +9800,29 @@ footer {
 .ca-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; white-space: nowrap; }
 .ca-row-price { font-size: 0.82rem; font-weight: 800; color: var(--accent); }
 .ca-row-date { font-size: 0.62rem; color: var(--text-muted); }
+
+/* ---- Card analysis: Sold / For Sale tabs + scrolling list ---- */
+.ca-tabs { display: flex; gap: 0.3rem; margin: 0.9rem 0 0.5rem; }
+.ca-tab {
+  background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+  border-radius: 999px; padding: 0.24rem 0.7rem;
+  font: inherit; font-size: 0.72rem; font-weight: 700;
+  cursor: pointer; transition: all 0.15s ease;
+}
+.ca-tab:hover { color: var(--text-primary); border-color: var(--accent); }
+.ca-tab.active { background: var(--accent); border-color: var(--accent); color: #0b1120; }
+
+/* Fixed height so the modal can't grow without bound as sale counts rise —
+   the list scrolls inside instead of pushing the page. */
+.ca-list-body {
+  max-height: 260px; overflow-y: auto; overscroll-behavior: contain;
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.3rem; background: rgba(0, 0, 0, 0.12);
+}
+.ca-list-body::-webkit-scrollbar { width: 8px; }
+.ca-list-body::-webkit-scrollbar-track { background: transparent; }
+.ca-list-body::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+.ca-list-body::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+.ca-list-empty { font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 1.4rem 0.8rem; margin: 0; }
+.ca-list-more { font-size: 0.64rem; color: var(--text-muted); text-align: center; padding: 0.5rem 0 0.25rem; margin: 0; }
