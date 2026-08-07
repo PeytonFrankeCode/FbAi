@@ -3029,6 +3029,150 @@ app.get('/api/sold-stats', async (req, res) => {
   }
 });
 
+// ---- /api/card-analysis ----
+// Everything we hold on ONE card, reached by clicking a sold result. Identity
+// is derived server-side from the clicked sale so the client only passes an
+// item id — no key encoding to get wrong, and the definition of "same card"
+// lives in one place.
+//
+// Grade is a separate series rather than a filter: a PSA 10 and a raw copy are
+// the same card but different markets, often an order of magnitude apart.
+// Averaging them produces a line that mostly tracks which copies happened to
+// sell that week, so each grade gets its own series and its own stats.
+const CARD_ANALYSIS_TTL = 1800; // 30m
+
+function _gradeBucket(r) {
+  if (r.grade == null || r.grade === '') return 'Raw';
+  const g = String(r.grade).replace(/\.0$/, '');
+  return `${(r.grader || '').toUpperCase()} ${g}`.trim();
+}
+
+function _median(sorted) {
+  if (!sorted.length) return null;
+  const m = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
+}
+
+app.get('/api/card-analysis', async (req, res) => {
+  const itemId = String(req.query.itemId || '').trim();
+  if (!itemId) return res.status(400).json({ error: 'itemId is required' });
+
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no-dataset' });
+
+  const cacheKey = `cardanalysis:v1:${itemId}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const seed = await db.prepare(
+      `SELECT player, year, set_name, parallel, card_number, confidence, title
+       FROM sales WHERE item_id = ?`
+    ).bind(itemId).first();
+
+    // Not our row, or parsed too loosely to group on — either way there's no
+    // trustworthy card identity to gather sales under.
+    if (!seed || !seed.player || (seed.confidence || 0) < NFLDB_MIN_CONFIDENCE) {
+      const out = { available: false, reason: seed ? 'low-confidence' : 'unknown-item' };
+      return res.json(out);
+    }
+
+    // NULL-safe matching: `parallel IS NULL` and `card_number IS NULL` are
+    // ordinary states (base cards, unnumbered), and `= NULL` never matches.
+    const eq = (col, val) => val == null || val === '' ? `${col} IS NULL OR ${col} = ''` : `${col} = ?`;
+    const where = [
+      'price_cents IS NOT NULL',
+      `confidence >= ?`,
+      'player = ?',
+      `(${eq('year', seed.year)})`,
+      `(${eq('set_name', seed.set_name)})`,
+      `(${eq('parallel', seed.parallel)})`,
+      `(${eq('card_number', seed.card_number)})`,
+    ].join(' AND ');
+    const binds = [NFLDB_MIN_CONFIDENCE, seed.player];
+    for (const v of [seed.year, seed.set_name, seed.parallel, seed.card_number]) {
+      if (v != null && v !== '') binds.push(v);
+    }
+
+    const img = await _nflHasImageColumn(db);
+    const rows = await db.prepare(
+      `SELECT item_id, sold_date, title, price_cents, grader, grade${img ? ', image_url' : ''}
+       FROM sales WHERE ${where}
+       ORDER BY sold_date DESC LIMIT 2000`
+    ).bind(...binds).all();
+
+    const all = (rows && rows.results) || [];
+    if (all.length === 0) return res.json({ available: false, reason: 'no-sales' });
+
+    // Split into per-grade series, then reduce each to one point per day so a
+    // busy day doesn't outweigh a quiet one on the chart.
+    const byGrade = new Map();
+    for (const r of all) {
+      const k = _gradeBucket(r);
+      if (!byGrade.has(k)) byGrade.set(k, []);
+      byGrade.get(k).push(r);
+    }
+
+    const grades = Array.from(byGrade.entries()).map(([label, list]) => {
+      const prices = list.map(r => (r.price_cents || 0) / 100).filter(p => p > 0).sort((a, b) => a - b);
+      const byDay = new Map();
+      for (const r of list) {
+        const d = String(r.sold_date || '').slice(0, 10);
+        const p = (r.price_cents || 0) / 100;
+        if (!d || p <= 0) continue;
+        if (!byDay.has(d)) byDay.set(d, []);
+        byDay.get(d).push(p);
+      }
+      const points = Array.from(byDay.entries())
+        .map(([date, ps]) => { ps.sort((a, b) => a - b); return { date, median: Math.round(_median(ps) * 100) / 100, sales: ps.length }; })
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Trend: latest point against the median of everything before it, which
+      // is steadier on thin data than comparing two fixed windows.
+      let changePct = null;
+      if (points.length >= 2) {
+        const prior = points.slice(0, -1).map(p => p.median).sort((a, b) => a - b);
+        const base = _median(prior);
+        const last = points[points.length - 1].median;
+        if (base > 0) changePct = Math.round(((last - base) / base) * 1000) / 10;
+      }
+
+      return {
+        label,
+        sales: list.length,
+        median: Math.round(_median(prices) * 100) / 100,
+        low: prices[0] ?? null,
+        high: prices[prices.length - 1] ?? null,
+        lastSale: list[0] ? { price: (list[0].price_cents || 0) / 100, date: list[0].sold_date } : null,
+        changePct,
+        points,
+      };
+    }).sort((a, b) => b.sales - a.sales);
+
+    const dates = all.map(r => r.sold_date).filter(Boolean).sort();
+    const payload = {
+      available: true,
+      card: {
+        name: [seed.year, seed.set_name, seed.player, seed.parallel, seed.card_number ? `#${seed.card_number}` : '']
+          .filter(Boolean).join(' ').trim() || seed.title,
+        player: seed.player, year: seed.year, set: seed.set_name,
+        parallel: seed.parallel, cardNumber: seed.card_number,
+        imageUrl: (all.find(r => r.image_url) || {}).image_url || null,
+      },
+      totalSales: all.length,
+      firstSale: dates[0] || null,
+      lastSale: dates[dates.length - 1] || null,
+      grades,
+    };
+
+    cachePut(cacheKey, payload, CARD_ANALYSIS_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[CardAnalysis]', err && err.message);
+    res.json({ available: false, reason: 'error' });
+  }
+});
+
 // ---- /api/sold-history ----
 // A card's accumulated sale history from our own archive. Reads only what we
 // already stored — never calls the provider, so it costs nothing and works

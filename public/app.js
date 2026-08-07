@@ -2667,6 +2667,9 @@ function openCardModal(item) {
     : epnUrl(item.itemUrl || '#');
   cardModalLink.textContent = isSoldModal ? 'View sold listings on eBay ↗' : 'View on eBay ↗';
 
+  // Everything we hold on this card, when the sale came from our own dataset.
+  loadCardAnalysis(item);
+
   // Show modal
   cardModal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -2675,6 +2678,9 @@ function openCardModal(item) {
 function closeCardModal() {
   cardModal.classList.add('hidden');
   document.body.style.overflow = '';
+  // Destroy the analysis chart — Chart.js keeps a live canvas registration,
+  // and reopening on another card would otherwise collide with it.
+  if (typeof _caReset === 'function') _caReset();
 }
 
 // Close on overlay click
@@ -13982,4 +13988,112 @@ function renderNetWorthChart() {
       maintainAspectRatio: false,
     },
   });
+}
+
+// ---- Card analysis (our own sale history for one card) ----
+// Only fires for sold results that came from our dataset — everything else
+// leaves the modal exactly as it was.
+let _caChart = null;
+// Distinct per grade series. Raw and the common grades get fixed hues so a
+// grade keeps its colour between cards; anything else cycles the tail.
+const CA_COLORS = {
+  'Raw': '#94a3b8', 'PSA 10': '#5ece99', 'PSA 9': '#a06ff0',
+  'BGS 9.5': '#f2b544', 'SGC 10': '#7fb3ff', 'BGS 9': '#e0655f',
+};
+const CA_FALLBACK = ['#5ece99', '#a06ff0', '#f2b544', '#7fb3ff', '#e0655f', '#94a3b8'];
+
+function _caReset() {
+  const wrap = document.getElementById('card-analysis');
+  if (wrap) wrap.classList.add('hidden');
+  if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
+}
+
+async function loadCardAnalysis(item) {
+  _caReset();
+  // Only our own rows carry an item id we can resolve to a card identity.
+  if (!item || item.source !== 'nflcarddb' || !item.itemId) return;
+
+  const wrap = document.getElementById('card-analysis');
+  const gradesEl = document.getElementById('ca-grades');
+  const summaryEl = document.getElementById('ca-summary');
+  const canvas = document.getElementById('ca-chart');
+  if (!wrap || !gradesEl || !canvas) return;
+
+  let data;
+  try {
+    const res = await fetch(`/api/card-analysis?itemId=${encodeURIComponent(item.itemId)}`, { cache: 'no-store' });
+    data = await safeJson(res);
+  } catch (_) { return; }
+  if (!data || !data.available || !Array.isArray(data.grades) || data.grades.length === 0) return;
+
+  wrap.classList.remove('hidden');
+
+  const span = (data.firstSale && data.lastSale && data.firstSale !== data.lastSale)
+    ? ` · ${_caDate(data.firstSale)} – ${_caDate(data.lastSale)}`
+    : '';
+  summaryEl.textContent = `${data.totalSales.toLocaleString('en-US')} sale${data.totalSales === 1 ? '' : 's'} on record${span}`;
+
+  gradesEl.innerHTML = data.grades.map((g, i) => {
+    const color = CA_COLORS[g.label] || CA_FALLBACK[i % CA_FALLBACK.length];
+    const chg = g.changePct == null ? ''
+      : `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}%</span>`;
+    return `<div class="ca-grade">
+      <span class="ca-grade-dot" style="background:${color}"></span>
+      <span class="ca-grade-label">${escHtml(g.label)}</span>
+      <span class="ca-grade-median">$${g.median.toLocaleString('en-US')}</span>
+      ${chg}
+      <span class="ca-grade-n">${g.sales} sale${g.sales === 1 ? '' : 's'}</span>
+    </div>`;
+  }).join('');
+
+  // A chart through one or two points is noise pretending to be a trend, so
+  // only plot series with enough days behind them.
+  const plottable = data.grades.filter(g => g.points.length >= 3);
+  if (!plottable.length || typeof Chart === 'undefined') {
+    canvas.classList.add('hidden');
+    return;
+  }
+  canvas.classList.remove('hidden');
+
+  const css = getComputedStyle(document.body);
+  const ink = (css.getPropertyValue('--text-secondary') || '#94a3b8').trim();
+  const grid = (css.getPropertyValue('--border') || 'rgba(148,163,184,0.15)').trim();
+  const labels = Array.from(new Set(plottable.flatMap(g => g.points.map(p => p.date)))).sort();
+
+  if (_caChart) { try { _caChart.destroy(); } catch (_) {} }
+  _caChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels.map(d => d.slice(5)),
+      datasets: plottable.map((g, i) => {
+        const byDate = new Map(g.points.map(p => [p.date, p.median]));
+        return {
+          label: g.label,
+          data: labels.map(d => byDate.has(d) ? byDate.get(d) : null),
+          borderColor: CA_COLORS[g.label] || CA_FALLBACK[i % CA_FALLBACK.length],
+          backgroundColor: CA_COLORS[g.label] || CA_FALLBACK[i % CA_FALLBACK.length],
+          fill: false, tension: 0.25, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
+          spanGaps: true, // a grade doesn't sell every day
+        };
+      }),
+    },
+    options: {
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'bottom',
+          labels: { color: ink, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 12, font: { size: 10 } } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: $${c.parsed.y}` } },
+      },
+      scales: {
+        x: { ticks: { color: ink, maxTicksLimit: 6, font: { size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: ink, callback: (v) => '$' + v, font: { size: 9 } }, grid: { color: grid } },
+      },
+      maintainAspectRatio: false,
+    },
+  });
+}
+
+function _caDate(d) {
+  const t = new Date(d);
+  return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
