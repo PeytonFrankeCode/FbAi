@@ -3900,6 +3900,8 @@ function initMarketView() {
       .join('');
     strip.dataset.built = '1';
   }
+  _mkBindSearch();
+  _mkRenderScope();
   loadMarketIndex();
 }
 
@@ -3950,21 +3952,40 @@ async function loadMarketIndex() {
 
   let data;
   try {
-    const res = await fetch(`/api/market-index?days=${_mkDays}`, { cache: 'no-store' });
+    // One renderer for both scopes. The player index returns the same payload
+    // shape on purpose, so a player's number is directly comparable with the
+    // market's rather than being a different measure that looks similar.
+    const url = _mkPlayer
+      ? `/api/player-index?player=${encodeURIComponent(_mkPlayer)}&days=${_mkDays}`
+      : `/api/market-index?days=${_mkDays}`;
+    const res = await fetch(url, { cache: 'no-store' });
     data = await safeJson(res);
   } catch (_) { data = null; }
   _mkLoading = false;
+  _mkRenderScope();
 
   if (!data || !data.available) {
     // Say which of the two reasons it is. "Not enough sales yet" is a real
     // state that resolves itself as the dataset grows, and reads very
     // differently from the feature being broken.
     const thin = data && data.reason === 'not enough sales yet';
+    const noPlayer = data && data.reason === 'no sales for this player';
+    const who = _mkPlayer ? escHtml(_mkPlayer) : 'the market';
+    let title, text;
+    if (thin) {
+      title = 'Not enough sales yet';
+      text = `The index needs at least ${data.minSales} priced sales in each ${_mkDays}-day period before it means anything`
+           + `${_mkPlayer ? `, and ${who} hasn't had that many` : ''}. Try a longer period, or check back as more sales are collected.`;
+    } else if (noPlayer) {
+      title = 'No sales on record';
+      text = `We don't hold any priced sales for ${who} yet.`;
+    } else {
+      title = 'Market index unavailable';
+      text = 'We couldn\'t read the sales data just now. Try again shortly.';
+    }
     body.innerHTML = `<div class="market-empty">
-      <p class="market-empty-title">${thin ? 'Not enough sales yet' : 'Market index unavailable'}</p>
-      <p class="market-empty-text">${thin
-        ? `The index needs at least ${data.minSales} priced sales in each ${_mkDays}-day period before it means anything. Try a longer period, or check back as more sales are collected.`
-        : 'We couldn\'t read the sales data just now. Try again shortly.'}</p>
+      <p class="market-empty-title">${title}</p>
+      <p class="market-empty-text">${text}</p>
     </div>`;
     return;
   }
@@ -3984,7 +4005,7 @@ async function loadMarketIndex() {
           <div class="market-score-note">vs the previous ${data.days} days${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
         </div>
       </div>
-      <p class="market-score-explain">100 means the market matched its own previous ${data.days} days. Higher means more money and more cards moving than the period before.</p>
+      <p class="market-score-explain">100 means ${_mkPlayer ? escHtml(_mkPlayer) + "'s market" : 'the market'} matched its own previous ${data.days} days. Higher means more money and more cards moving than the period before.</p>
     </div>
 
     <div class="market-components">
@@ -4026,7 +4047,7 @@ async function loadMarketIndex() {
     </div>
 
     <div class="market-notes">
-      <p><strong>What this covers.</strong> Football cards sold on eBay that we track and could price. ${data.coverage != null ? `${data.coverage}% of tracked sales carried a price this period — the rest were best-offer, where eBay publishes the asking price rather than what was actually paid, so they're counted nowhere in the score.` : ''}</p>
+      <p><strong>What this covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + ' cards' : 'Football cards'} sold on eBay that we track and could price. ${data.coverage != null ? `${data.coverage}% of tracked sales carried a price this period — the rest were best-offer, where eBay publishes the asking price rather than what was actually paid, so they're counted nowhere in the score.` : ''}</p>
       <p><strong>How it's built.</strong> ${Math.round((data.weights && data.weights.dollars || 0) * 100)}% money sold, ${Math.round((data.weights && data.weights.units || 0) * 100)}% cards sold, each measured against the ${data.days} days before. Money is weighted higher because it's what most people mean by "the market", but a single huge sale can swing it — card count is the steadier signal, so it holds the score down to earth.</p>
       ${gaps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${gaps} day${gaps === 1 ? '' : 's'} in this period ${gaps === 1 ? 'has' : 'have'} no sales recorded. If that's a collection gap rather than a quiet market, the score is understated.</p>` : ''}
       ${data.dataLagDays > 1 ? `<p class="market-warn"><strong>Data is ${data.dataLagDays} days behind.</strong> The newest sales we hold are from ${_mkDateLabel(data.through)}, so this reflects the market up to then.</p>` : ''}
@@ -4096,6 +4117,110 @@ function _mkRenderChart(data) {
         },
       },
     },
+  });
+}
+
+// ---- Market: player search ----
+// Selecting a player re-scopes the same index to them. Nothing else about the
+// page changes, which is the point — the layout you already read for the whole
+// market is the layout you read for a player.
+let _mkPlayer = null;
+let _mkSuggestTimer = null;
+let _mkSuggestSeq = 0;
+
+function _mkRenderScope() {
+  const el = document.getElementById('market-scope');
+  const clear = document.getElementById('market-clear-player');
+  if (clear) clear.classList.toggle('hidden', !_mkPlayer);
+  if (!el) return;
+  if (!_mkPlayer) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  el.innerHTML = `<span class="market-scope-label">Showing</span>`
+    + `<strong class="market-scope-name">${escHtml(_mkPlayer)}</strong>`
+    + `<button type="button" class="market-scope-back" onclick="clearMarketPlayer()">&larr; Whole market</button>`;
+  el.classList.remove('hidden');
+}
+
+function clearMarketPlayer() {
+  _mkPlayer = null;
+  const input = document.getElementById('market-player-input');
+  if (input) input.value = '';
+  _mkHideSuggest();
+  _mkRenderScope();
+  loadMarketIndex();
+}
+
+function selectMarketPlayer(name) {
+  _mkPlayer = name;
+  const input = document.getElementById('market-player-input');
+  if (input) input.value = name;
+  _mkHideSuggest();
+  _mkRenderScope();
+  loadMarketIndex();
+}
+
+function _mkHideSuggest() {
+  const box = document.getElementById('market-suggest');
+  if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
+}
+
+async function _mkFetchSuggest(q) {
+  const box = document.getElementById('market-suggest');
+  if (!box) return;
+  // Sequence guard: a slow response for an earlier keystroke must not
+  // overwrite the list for what's currently typed.
+  const seq = ++_mkSuggestSeq;
+  let data;
+  try {
+    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+    data = await safeJson(res);
+  } catch (_) { data = null; }
+  if (seq !== _mkSuggestSeq) return;
+
+  const players = (data && data.players) || [];
+  if (!players.length) {
+    box.innerHTML = `<div class="market-suggest-empty">No players match “${escHtml(q)}”.</div>`;
+    box.classList.remove('hidden');
+    return;
+  }
+  box.innerHTML = players.map(p =>
+    `<button type="button" class="market-suggest-item" onclick="selectMarketPlayer(${JSON.stringify(p.player).replace(/"/g, '&quot;')})">`
+    + `<span class="market-suggest-name">${escHtml(p.player)}</span>`
+    + `<span class="market-suggest-count">${(p.sales || 0).toLocaleString('en-US')} sales</span>`
+    + `</button>`).join('');
+  box.classList.remove('hidden');
+}
+
+function _mkBindSearch() {
+  const input = document.getElementById('market-player-input');
+  if (!input || input.dataset.bound) return;
+  input.dataset.bound = '1';
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearTimeout(_mkSuggestTimer);
+    if (q.length < 2) { _mkHideSuggest(); return; }
+    _mkSuggestTimer = setTimeout(() => _mkFetchSuggest(q), 180);
+  });
+
+  input.addEventListener('focus', () => {
+    const q = input.value.trim();
+    if (q.length >= 2) _mkFetchSuggest(q);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { _mkHideSuggest(); input.blur(); }
+    if (e.key === 'Enter') {
+      // Enter takes the first suggestion rather than the raw text — the index
+      // needs an exact player name, and a near-miss would read as "no sales"
+      // when the player is right there in the list.
+      const first = document.querySelector('.market-suggest-item');
+      if (first) first.click();
+    }
+  });
+
+  // Clicking away closes the list, but not when the click is a suggestion.
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.market-search')) _mkHideSuggest();
   });
 }
 
