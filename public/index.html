@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=139" />
+  <link rel="stylesheet" href="style.css?v=140" />
 
 
 </head>
@@ -1048,7 +1048,13 @@
       <button class="card-modal-close" aria-label="Close">&times;</button>
       <div id="card-modal-showing" class="card-modal-showing"></div>
       <div class="card-modal-layout">
-        <div id="card-modal-image" class="card-modal-image"></div>
+        <!-- Left column. The photo sizes to the card ratio, so on a card with
+             history there's real space beneath it — the affiliate promo fills
+             that rather than adding a new slot elsewhere in the modal. -->
+        <div class="card-modal-side">
+          <div id="card-modal-image" class="card-modal-image"></div>
+          <div id="card-modal-promo" class="card-modal-promo hidden"></div>
+        </div>
         <div class="card-modal-details">
           <p id="card-modal-title" class="card-modal-title"></p>
           <p id="card-modal-price" class="card-modal-price"></p>
@@ -1702,7 +1708,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=183"></script>
+  <script src="app.js?v=184"></script>
   <script type="importmap">
   {
     "imports": {
