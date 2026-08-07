@@ -2927,6 +2927,202 @@ app.get('/api/variants', async (req, res) => {
 });
 
 
+
+// ---- /api/market-index ----
+// A single number for "how is the football-card market doing right now",
+// built from the two things the dataset can measure honestly: how much money
+// changed hands, and how many cards changed hands.
+//
+// The score is an INDEX, not an absolute rating: 100 means the window matches
+// the equivalent window immediately before it. 115 means the market moved 15%
+// above its own recent pace. An absolute 0-100 rating would need a fixed
+// anchor, and any anchor we picked would drift as the dataset grows — an index
+// re-bases itself every day and can't be inflated by simply collecting more.
+//
+//   score = 100 * (Wd * (dollars_now / dollars_prev) + Wu * (units_now / units_prev))
+//
+// Weights are deliberate. Dollars carry more (0.6) because "the market" in a
+// collector's sense is where money moves, but they're heavy-tailed — one
+// six-figure sale can swing a day — so unit count acts as ballast (0.4): it
+// tracks participation, which moves slowly and is hard to distort. Both
+// components are returned so a move can always be attributed to one or other
+// rather than taken on faith.
+//
+// Reads the pre-aggregated `daily` table only (one row per day), so this stays
+// cheap no matter how many millions of sales sit behind it.
+const MARKET_PERIODS = [7, 30, 90];
+const MARKET_TTL = 3600; // 1h — identical for every visitor
+const MARKET_WEIGHTS = { dollars: 0.6, units: 0.4 };
+// Below this many priced sales in a window, ratios are noise: a baseline of
+// nine sales turns one good day into a "+300% market". Better to say we don't
+// know yet than to publish a number that swings on a single listing.
+const MARKET_MIN_SALES = 25;
+// The most recent day in the table is usually still being collected, and a
+// half-collected day reads as a crash. Anchor one day back so every window is
+// made of complete days. Set to 0 if the collector ever backfills whole days
+// only.
+const MARKET_EXCLUDE_TRAILING_DAYS = 1;
+// Even past the sample gate a thin baseline can produce a silly multiple.
+// Clamp for display; rawScore keeps the true value.
+const MARKET_SCORE_MIN = 0;
+const MARKET_SCORE_MAX = 200;
+
+// Whole days since epoch — integer day arithmetic, no timezone drift.
+function _mkDay(iso) { return Math.floor(Date.parse(String(iso).slice(0, 10) + 'T00:00:00Z') / 86400000); }
+function _mkIso(day) { return new Date(day * 86400000).toISOString().slice(0, 10); }
+
+// Sum one window out of the dense day map.
+// `emptyDays` counts days with no row at all. A day with no sales and a day
+// the collector missed look identical here, so we surface the count and let
+// the UI warn rather than silently scoring an outage as a market collapse.
+function _marketWindow(map, endDay, days) {
+  let dollars = 0, units = 0, sales = 0, emptyDays = 0;
+  for (let d = endDay - days + 1; d <= endDay; d++) {
+    const row = map.get(d);
+    if (!row) { emptyDays++; continue; }
+    dollars += row.dollars;
+    units += row.units;
+    sales += row.sales;
+  }
+  return {
+    dollars: Math.round(dollars / 100), // cents -> dollars
+    units, sales, emptyDays,
+    from: _mkIso(endDay - days + 1),
+    to: _mkIso(endDay),
+  };
+}
+
+// null when the baseline can't support a ratio — the caller decides what to say.
+function _marketScore(cur, base) {
+  if (!cur || !base) return null;
+  if (base.dollars <= 0 || base.units <= 0) return null;
+  if (cur.units < MARKET_MIN_SALES || base.units < MARKET_MIN_SALES) return null;
+  const dollarRatio = cur.dollars / base.dollars;
+  const unitRatio = cur.units / base.units;
+  const raw = 100 * (MARKET_WEIGHTS.dollars * dollarRatio + MARKET_WEIGHTS.units * unitRatio);
+  return { raw, dollarRatio, unitRatio };
+}
+
+app.get('/api/market-index', async (req, res) => {
+  const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10))
+    ? parseInt(req.query.days, 10)
+    : 30;
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, days, reason: 'no dataset' });
+
+  const cacheKey = `marketindex:v1:${days}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    // Anchor the fetch to the newest day we hold, NOT to today. If the dataset
+    // lags — the collector paused, an import is late — counting back from today
+    // would stop short of the oldest baseline window and the trend line would
+    // read low for reasons that have nothing to do with the market.
+    const newest = await db.prepare('SELECT MAX(sold_date) AS d FROM daily').first();
+    if (!newest || !newest.d) return res.json({ available: false, days, reason: 'no data in range' });
+
+    // Current window + baseline needs 2x days; the trend line walks the score
+    // back another `days`, so 3x plus the excluded tail.
+    const need = days * 3 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+    const since = _mkIso(_mkDay(newest.d) - need);
+    const rows = await db.prepare(
+      'SELECT sold_date, sales, priced, total_cents FROM daily WHERE sold_date >= ? ORDER BY sold_date'
+    ).bind(since).all();
+
+    const list = (rows && rows.results) || [];
+    if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });
+
+    const map = new Map();
+    let maxDay = -Infinity;
+    for (const r of list) {
+      const d = _mkDay(r.sold_date);
+      if (!Number.isFinite(d)) continue;
+      // `priced` is the unit count, not `sales`. Dollars can only come from
+      // rows that carry a price, so counting units off the same population
+      // keeps the two components measuring the same sales — otherwise a drift
+      // in how many listings are best-offer (price withheld) would show up as
+      // a market move that never happened.
+      map.set(d, {
+        dollars: r.total_cents || 0,
+        units: r.priced || 0,
+        sales: r.sales || 0,
+      });
+      if (d > maxDay) maxDay = d;
+    }
+    if (!Number.isFinite(maxDay)) return res.json({ available: false, days, reason: 'no data in range' });
+
+    const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
+    const current = _marketWindow(map, through, days);
+    const baseline = _marketWindow(map, through - days, days);
+    const scored = _marketScore(current, baseline);
+
+    if (!scored) {
+      return res.json({
+        available: false, days,
+        reason: 'not enough sales yet',
+        minSales: MARKET_MIN_SALES,
+        through: _mkIso(through),
+        current, baseline,
+      });
+    }
+
+    // Trend: the same score computed at each earlier anchor, so the line shows
+    // how the index moved rather than how raw volume moved.
+    const series = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const end = through - i;
+      const c = _marketWindow(map, end, days);
+      const b = _marketWindow(map, end - days, days);
+      const s = _marketScore(c, b);
+      if (s) series.push({ date: _mkIso(end), score: Math.round(s.raw * 10) / 10 });
+    }
+
+    const round1 = (n) => Math.round(n * 10) / 10;
+    const pct = (r) => round1((r - 1) * 100);
+    const payload = {
+      available: true,
+      days,
+      through: _mkIso(through),
+      // How stale the dataset is, so a flat line reads as "no new data"
+      // rather than "no movement".
+      dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - maxDay),
+      score: Math.round(Math.min(MARKET_SCORE_MAX, Math.max(MARKET_SCORE_MIN, scored.raw))),
+      rawScore: round1(scored.raw),
+      weights: MARKET_WEIGHTS,
+      current,
+      baseline,
+      components: {
+        dollars: {
+          current: current.dollars, baseline: baseline.dollars,
+          changePct: pct(scored.dollarRatio),
+          // What this component pushed the score by, in points.
+          points: round1(100 * MARKET_WEIGHTS.dollars * scored.dollarRatio),
+        },
+        units: {
+          current: current.units, baseline: baseline.units,
+          changePct: pct(scored.unitRatio),
+          points: round1(100 * MARKET_WEIGHTS.units * scored.unitRatio),
+        },
+      },
+      avgPrice: {
+        current: current.units > 0 ? round1(current.dollars / current.units) : null,
+        baseline: baseline.units > 0 ? round1(baseline.dollars / baseline.units) : null,
+      },
+      // Share of tracked sales that carried a price. The rest are best-offer,
+      // where eBay publishes the ask rather than what was paid.
+      coverage: current.sales > 0 ? Math.round((current.units / current.sales) * 100) : null,
+      series,
+    };
+
+    cachePut(cacheKey, payload, MARKET_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[MarketIndex]', err && err.message);
+    res.json({ available: false, days, reason: 'index unavailable' });
+  }
+});
+
 // ---- /api/sold-stats ----
 // Market snapshot for the strip under the search bar. Reads our own D1 dataset
 // only — no paid provider, no quota — and is football-only because the dataset
