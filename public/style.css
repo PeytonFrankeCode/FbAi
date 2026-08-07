@@ -9740,30 +9740,45 @@ footer {
 .ca-title { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); }
 .ca-summary { font-size: 0.68rem; color: var(--text-muted); }
 
-.ca-grades { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.75rem; }
-.ca-grade { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
-.ca-grade-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.ca-grade-label { font-size: 0.74rem; font-weight: 700; color: var(--text-primary); min-width: 62px; }
-.ca-grade-median { font-size: 0.86rem; font-weight: 800; color: var(--accent); }
 .ca-chg { font-size: 0.68rem; font-weight: 700; padding: 0.02rem 0.3rem; border-radius: 4px; }
 .ca-chg.up { color: #5ece99; background: rgba(94,206,153,0.12); }
 .ca-chg.down { color: #e0655f; background: rgba(224,101,95,0.12); }
-.ca-grade-n { font-size: 0.66rem; color: var(--text-muted); margin-left: auto; }
 
 .ca-chart-wrap { position: relative; height: 190px; }
 .ca-note { font-size: 0.64rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4; }
 
 /* ---- Card analysis: grade selector ---- */
-.ca-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.4rem; }
-.ca-chart-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-.ca-grade-select {
-  background: var(--bg-secondary); color: var(--text-primary);
-  border: 1px solid var(--border); border-radius: 8px;
-  padding: 0.25rem 0.5rem; font-size: 0.74rem; font-weight: 600;
-  cursor: pointer; width: auto; flex: 0 0 auto; max-width: 60%;
-}
-.ca-grade-select:focus { outline: none; border-color: var(--accent); }
 .ca-chart-empty {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   text-align: center; font-size: 0.72rem; color: var(--text-muted); margin: 0; padding: 0 1rem;
 }
+
+/* ---- Card analysis: grade selector + selected-grade headline ---- */
+.ca-chart-head {
+  display: flex; align-items: center; gap: 0.6rem;
+  flex-wrap: wrap; margin-bottom: 0.7rem;
+}
+
+/* Native select, restyled: appearance:none plus our own chevron, so it matches
+   the app instead of inheriting the OS control. */
+.ca-grade-select {
+  appearance: none; -webkit-appearance: none;
+  background-color: rgba(148, 163, 184, 0.08);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%2394a3b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.6rem center;
+  color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 0.34rem 1.9rem 0.34rem 0.8rem;
+  font: inherit; font-size: 0.78rem; font-weight: 700;
+  cursor: pointer; width: auto; flex: 0 0 auto;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.ca-grade-select:hover { border-color: var(--accent); background-color: rgba(94, 206, 153, 0.08); }
+.ca-grade-select:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(94, 206, 153, 0.18); }
+/* Options render in the OS menu, so give them explicit colors — otherwise
+   dark-on-dark makes them unreadable on some platforms. */
+.ca-grade-select option { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
+
+.ca-stat { display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
+.ca-stat-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
+.ca-stat-n { font-size: 0.68rem; color: var(--text-muted); }
