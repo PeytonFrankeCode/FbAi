@@ -9733,3 +9733,22 @@ footer {
   .mp-tile-name { font-size: 0.65rem; }
   .mp-figures { gap: 1.1rem; }
 }
+
+/* ---- Card analysis: our own sale history inside the card modal ---- */
+.card-analysis { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+.ca-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.ca-title { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); }
+.ca-summary { font-size: 0.68rem; color: var(--text-muted); }
+
+.ca-grades { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.75rem; }
+.ca-grade { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.ca-grade-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ca-grade-label { font-size: 0.74rem; font-weight: 700; color: var(--text-primary); min-width: 62px; }
+.ca-grade-median { font-size: 0.86rem; font-weight: 800; color: var(--accent); }
+.ca-chg { font-size: 0.68rem; font-weight: 700; padding: 0.02rem 0.3rem; border-radius: 4px; }
+.ca-chg.up { color: #5ece99; background: rgba(94,206,153,0.12); }
+.ca-chg.down { color: #e0655f; background: rgba(224,101,95,0.12); }
+.ca-grade-n { font-size: 0.66rem; color: var(--text-muted); margin-left: auto; }
+
+.ca-chart-wrap { position: relative; height: 190px; }
+.ca-note { font-size: 0.64rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4; }
