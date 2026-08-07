@@ -1109,20 +1109,10 @@ async function loadMarketPulse(days) {
   if (!data || !data.available) { wrap.classList.add('hidden'); return; }
   wrap.classList.remove('hidden');
 
-  const t = data.topSale;
   const label = period === 365 ? 'the last year' : `the last ${period} days`;
   const parts = [];
 
-  if (t) {
-    parts.push(
-      '<a class="mp-grail" href="' + escHtml(t.itemUrl) + '" target="_blank" rel="noopener">' +
-      '<span class="mp-grail-tag">Biggest sale &middot; ' + escHtml(label) + '</span>' +
-      '<span class="mp-grail-price">' + _mpMoney(t.price) + '</span>' +
-      '<span class="mp-grail-title">' + escHtml(String(t.title).slice(0, 90)) + '</span>' +
-      (t.grade ? '<span class="mp-grail-grade">' + escHtml(t.grade) + '</span>' : '') +
-      '</a>');
-  }
-
+  // Compact context line — the card grids are the point, this is background.
   parts.push(
     '<div class="mp-figures">' +
     '<div class="mp-figure"><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span><span class="mp-figure-k">sales tracked</span></div>' +
@@ -1130,25 +1120,39 @@ async function loadMarketPulse(days) {
     '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span><span class="mp-figure-k">average sale</span></div>' +
     '</div>');
 
-  const list = (title, rows) => (rows && rows.length)
-    ? '<div class="mp-list"><span class="mp-list-title">' + escHtml(title) + '</span>' +
-      rows.map(p =>
-        '<button class="mp-row" data-query="' + escHtml(p.player) + '">' +
-        '<span class="mp-row-name">' + escHtml(p.player) + '</span>' +
-        '<span class="mp-row-meta">' + p.sales.toLocaleString('en-US') + ' sales &middot; ' + _mpMoney(p.avgPrice) + ' avg</span>' +
-        '</button>').join('') +
-      '</div>'
+  // Photo when we have one, the existing placeholder when we don't, so a card
+  // with no image still occupies the same footprint and the grid stays even.
+  const thumb = (url, alt) => url
+    ? '<img class="mp-tile-img" src="' + escHtml(url) + '" alt="' + escHtml(alt) + '" loading="lazy" />'
+    : '<div class="mp-tile-img mp-tile-noimg"><span>&#127183;</span></div>';
+
+  const tiles = (title, sub, rows, render) => (rows && rows.length)
+    ? '<div class="mp-section">' +
+      '<div class="mp-section-head"><span class="mp-section-title">' + escHtml(title) + '</span>' +
+      '<span class="mp-section-sub">' + escHtml(sub) + '</span></div>' +
+      '<div class="mp-tiles">' + rows.map(render).join('') + '</div></div>'
     : '';
 
-  parts.push('<div class="mp-lists">' +
-    list('Most traded', data.topPlayers) +
-    list('Priciest', data.priciestPlayers) +
-    '</div>');
+  parts.push(tiles('Most expensive', label, data.priciest, (r) =>
+    '<a class="mp-tile" href="' + escHtml(r.itemUrl) + '" target="_blank" rel="noopener">' +
+    thumb(r.imageUrl, r.title) +
+    '<span class="mp-tile-price">' + _mpMoney(r.price) + '</span>' +
+    '<span class="mp-tile-name">' + escHtml(String(r.title).slice(0, 70)) + '</span>' +
+    (r.grade ? '<span class="mp-tile-meta">' + escHtml(r.grade) + '</span>' : '') +
+    '</a>'));
+
+  parts.push(tiles('Most sold', label, data.mostSold, (r) =>
+    '<button class="mp-tile" data-query="' + escHtml(r.query) + '">' +
+    thumb(r.imageUrl, r.name) +
+    '<span class="mp-tile-price">' + r.sales.toLocaleString('en-US') + ' sold</span>' +
+    '<span class="mp-tile-name">' + escHtml(String(r.name).slice(0, 70)) + '</span>' +
+    '<span class="mp-tile-meta">' + _mpMoney(r.avgPrice) + ' avg &middot; ' + _mpMoney(r.topPrice) + ' high</span>' +
+    '</button>'));
 
   body.innerHTML = parts.join('');
 
-  // Clicking a player runs that search — the stats are a way in, not a dead end.
-  body.querySelectorAll('.mp-row').forEach(btn => {
+  // Most-sold tiles run that search — the panel is a way in, not a dead end.
+  body.querySelectorAll('.mp-tile[data-query]').forEach(btn => {
     btn.addEventListener('click', () => {
       const q = btn.dataset.query;
       if (!q) return;
