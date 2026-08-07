@@ -14008,6 +14008,10 @@ function _caReset() {
   if (wrap) wrap.classList.add('hidden');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
   _caData = null; // don't let one card's series render under the next card
+  const salesEl = document.getElementById('ca-sales');
+  const forsaleEl = document.getElementById('ca-forsale');
+  if (salesEl) salesEl.innerHTML = '';
+  if (forsaleEl) forsaleEl.innerHTML = '';
 }
 
 async function loadCardAnalysis(item) {
@@ -14046,6 +14050,7 @@ async function loadCardAnalysis(item) {
     sel.onchange = () => _caRenderChart(sel.value);
   }
   _caRenderChart((data.grades.find(g => g.label === 'Raw') || data.grades[0]).label);
+  _caLoadForSale(item.itemId);
 }
 
 // Draw one grade's price history. Kept separate from the fetch so switching
@@ -14072,6 +14077,8 @@ function _caRenderChart(label) {
         `<span class="ca-stat-n">${g.sales} sale${g.sales === 1 ? '' : 's'}</span>`;
     }
   }
+
+  _caRenderSales(g);
 
   // A line through one or two points is noise pretending to be a trend — say
   // so rather than drawing something misleading.
@@ -14130,4 +14137,50 @@ function _caRenderChart(label) {
 function _caDate(d) {
   const t = new Date(d);
   return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
+}
+
+// One row per listing. Shared by both lists so sold and for-sale look alike.
+function _caRow(r, right) {
+  const thumb = r.imageUrl
+    ? `<img class="ca-row-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />`
+    : `<div class="ca-row-img ca-row-noimg"><span>&#127183;</span></div>`;
+  return `<a class="ca-row" href="${escHtml(r.itemUrl || '#')}" target="_blank" rel="noopener">
+    ${thumb}
+    <span class="ca-row-title">${escHtml(String(r.title || '').slice(0, 95))}</span>
+    <span class="ca-row-right">${right}</span>
+  </a>`;
+}
+
+// The individual sales behind the selected grade's figure.
+function _caRenderSales(g) {
+  const el = document.getElementById('ca-sales');
+  if (!el) return;
+  const rows = (g && Array.isArray(g.recent)) ? g.recent : [];
+  if (!rows.length) { el.innerHTML = ''; return; }
+  const more = g.sales > rows.length
+    ? `<span class="ca-list-more">showing ${rows.length} of ${g.sales.toLocaleString('en-US')}</span>` : '';
+  el.innerHTML = `<div class="ca-list-head"><span class="ca-list-title">${escHtml(g.label)} sales</span>${more}</div>` +
+    rows.map(r => _caRow(r,
+      `<span class="ca-row-price">$${Number(r.price).toLocaleString('en-US')}</span>` +
+      `<span class="ca-row-date">${escHtml(_caDate(r.soldDate))}</span>`)).join('');
+}
+
+// Active listings for the same card. Loaded once per card, after the history —
+// it's an eBay round-trip and the history shouldn't wait on it.
+async function _caLoadForSale(itemId) {
+  const el = document.getElementById('ca-forsale');
+  if (!el) return;
+  el.innerHTML = '';
+  let data;
+  try {
+    const res = await fetch(`/api/card-forsale?itemId=${encodeURIComponent(itemId)}`, { cache: 'no-store' });
+    data = await safeJson(res);
+  } catch (_) { return; }
+  // Nothing listed right now is a normal state, not an error — stay silent.
+  if (!data || !data.available || !data.results.length) return;
+  el.innerHTML = `<div class="ca-list-head"><span class="ca-list-title">For sale now</span>` +
+    `<span class="ca-list-more">${data.results.length} listing${data.results.length === 1 ? '' : 's'}</span></div>` +
+    data.results.map(r => _caRow(r,
+      `<span class="ca-row-price">$${Number(r.price).toFixed(2)}</span>` +
+      (r.condition ? `<span class="ca-row-date">${escHtml(r.condition)}</span>` : ''))).join('');
 }
