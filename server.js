@@ -3762,6 +3762,193 @@ app.get('/api/card-analysis', async (req, res) => {
   }
 });
 
+// ---- /api/price-estimate ----
+// Price a card from a search query rather than from a sold row we already
+// hold. This is the "I searched and nothing came up" path: no comps to click
+// means no card modal, which means the auto-pricer never ran — even when we
+// hold plenty of sales that could answer the question.
+//
+// Works down a ladder, widening only as far as it has to and always saying
+// how far it went:
+//
+//   1. title      every search term appears in a sale title
+//   2. player+year   that player's cards from that year
+//   3. player     anything of that player's
+//
+// Each rung is a weaker claim than the one above, so `matchedOn` comes back
+// with the estimate and the UI states it rather than implying an exact comp.
+const PRICE_ESTIMATE_TTL = 3600;
+const PRICE_ESTIMATE_MIN_ROWS = 3;
+
+// Longest roster name contained in the query. Longest wins so "Marvin
+// Harrison Jr" beats "Marvin Harrison" when both are real players.
+function _playerFromQuery(roster, q) {
+  const hay = ` ${String(q).toLowerCase()} `;
+  let best = null;
+  for (const p of roster) {
+    const name = String(p.player || '').toLowerCase();
+    if (name.length < 4) continue;
+    if (hay.includes(` ${name} `) || hay.includes(name)) {
+      if (!best || name.length > best.length) best = p.player;
+    }
+  }
+  return best;
+}
+
+function _yearFromQuery(q) {
+  const m = String(q).match(/\b(19[5-9]\d|20[0-4]\d)\b/);
+  return m ? m[1] : null;
+}
+
+app.get('/api/price-estimate', async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (!q || q.length < 3) return res.json({ available: false, reason: 'no query' });
+
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+
+  const cacheKey = `priceest:v1:${q.toLowerCase().replace(/\s+/g, ' ').slice(0, 120)}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  const fail = (reason) => res.json({ available: false, reason, query: q });
+
+  try {
+    const newest = await db.prepare('SELECT MAX(sold_date) AS d FROM sales').first();
+    if (!newest || !newest.d) return fail('no sales data');
+    const todayDay = _mkDay(newest.d);
+
+    const cols = 'sold_date, price_cents, title, grader, grade';
+    let rows = null;
+    let matchedOn = null;
+    let player = null, year = null;
+
+    // 1. Every term in the title. Same shape as the sold search, so a query
+    //    that returns nothing there can still land here when the terms are
+    //    present but the sale is outside the search's window or grouping.
+    const terms = q.split(/\s+/).map(t => t.trim()).filter(t => t.length > 1).slice(0, 8);
+    if (terms.length) {
+      const where = ['price_cents IS NOT NULL', ...terms.map(() => 'title LIKE ?')].join(' AND ');
+      const r = await db.prepare(
+        `SELECT ${cols} FROM sales WHERE ${where} ORDER BY sold_date DESC LIMIT 400`
+      ).bind(...terms.map(t => `%${t}%`)).all();
+      const list = ((r && r.results) || []).filter(x => (x.price_cents || 0) > 0);
+      if (list.length >= PRICE_ESTIMATE_MIN_ROWS) { rows = list; matchedOn = 'title'; }
+    }
+
+    // 2/3. Fall back to the player, narrowed by year when the query names one.
+    if (!rows) {
+      const roster = await _playerRoster(db);
+      player = _playerFromQuery(roster, q);
+      if (!player) return fail('no match');
+      year = _yearFromQuery(q);
+
+      if (year) {
+        const r = await db.prepare(
+          `SELECT ${cols} FROM sales
+            WHERE price_cents IS NOT NULL AND confidence >= ? AND player = ? AND year = ?
+            ORDER BY sold_date DESC LIMIT 400`
+        ).bind(NFLDB_MIN_CONFIDENCE, player, year).all();
+        const list = ((r && r.results) || []).filter(x => (x.price_cents || 0) > 0);
+        if (list.length >= PRICE_ESTIMATE_MIN_ROWS) { rows = list; matchedOn = 'player-year'; }
+      }
+
+      if (!rows) {
+        const r = await db.prepare(
+          `SELECT ${cols} FROM sales
+            WHERE price_cents IS NOT NULL AND confidence >= ? AND player = ?
+            ORDER BY sold_date DESC LIMIT 400`
+        ).bind(NFLDB_MIN_CONFIDENCE, player).all();
+        const list = ((r && r.results) || []).filter(x => (x.price_cents || 0) > 0);
+        if (list.length >= PRICE_ESTIMATE_MIN_ROWS) { rows = list; matchedOn = 'player'; year = null; }
+      }
+    }
+
+    if (!rows) return fail('no match');
+
+    // Price the grade bucket the query actually asked about when it named one
+    // ("psa 10"), otherwise the best-supported bucket. Mixing raw and slabbed
+    // sales into one median would describe neither.
+    const buckets = new Map();
+    for (const r of rows) {
+      const k = _gradeBucket(r);
+      if (!buckets.has(k)) buckets.set(k, []);
+      buckets.get(k).push(r);
+    }
+    const asked = _gradeBucket({ grade: null, grader: null, title: q });
+    const askedExplicit = /\b(psa|bgs|sgc|cgc|beckett)\s*\d/i.test(q);
+    let label = null;
+    if (askedExplicit) {
+      const m = q.match(/\b(psa|bgs|sgc|cgc)\s*(\d+(?:\.\d)?)/i);
+      if (m) {
+        const want = `${m[1].toUpperCase()} ${m[2].replace(/\.0$/, '')}`;
+        if (buckets.has(want)) label = want;
+      }
+    } else if (asked === 'Raw' && buckets.has('Raw')) {
+      label = 'Raw';
+    }
+    if (!label) {
+      label = Array.from(buckets.entries()).sort((a, b) => b[1].length - a[1].length)[0][0];
+    }
+    const list = buckets.get(label);
+
+    // A title match is the same card, so the full ladder applies. A player
+    // match is explicitly other cards, so it's a range and never better than
+    // low confidence — the same treatment tier 3 gets in the card modal.
+    let estimate;
+    if (matchedOn === 'title') {
+      let trend = null;
+      const gradeNewest = Math.max(...list.map(r => _mkDay(r.sold_date)).filter(Number.isFinite));
+      if (Number.isFinite(gradeNewest) && (todayDay - gradeNewest) > PRICE_FRESH_DAYS) {
+        const roster = await _playerRoster(db);
+        const p = _playerFromQuery(roster, q);
+        if (p) {
+          const tr = await db.prepare(
+            `SELECT sold_date, price_cents FROM sales
+              WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL AND sold_date >= ?
+              ORDER BY sold_date DESC LIMIT 4000`
+          ).bind(p, NFLDB_MIN_CONFIDENCE, _mkIso(gradeNewest - 180)).all();
+          trend = _playerTrendRatio((tr && tr.results) || [], gradeNewest, todayDay);
+        }
+      }
+      estimate = _estimateGrade(list, todayDay, trend);
+    } else {
+      const ps = list.map(r => r.price_cents / 100).sort((a, b) => a - b);
+      const pick = (f) => ps[Math.min(ps.length - 1, Math.max(0, Math.floor(f * (ps.length - 1))))];
+      const round2 = (n) => Math.round(n * 100) / 100;
+      estimate = {
+        price: round2(_median(ps)),
+        method: 'similar-cards',
+        confidence: 'low',
+        basedOn: ps.length,
+        low: round2(pick(0.25)),
+        high: round2(pick(0.75)),
+      };
+    }
+    if (!estimate) return fail('no match');
+
+    const payload = {
+      available: true,
+      query: q,
+      estimate,
+      grade: label,
+      matchedOn,
+      player: player || null,
+      year: year || null,
+      // Every bucket we saw, so the UI can say what else exists rather than
+      // implying the one we priced is all there is.
+      grades: Array.from(buckets.entries())
+        .map(([l, v]) => ({ label: l, sales: v.length }))
+        .sort((a, b) => b.sales - a.sales).slice(0, 6),
+    };
+    cachePut(cacheKey, payload, PRICE_ESTIMATE_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[PriceEstimate]', err && err.message);
+    return fail('estimate unavailable');
+  }
+});
+
 // ---- /api/card-forsale ----
 // Active listings for the same card, resolved from a sold row's identity.
 // Deliberately its own endpoint: this is an eBay round-trip, while
