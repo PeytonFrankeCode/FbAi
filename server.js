@@ -3429,6 +3429,168 @@ function _median(sorted) {
   return sorted.length % 2 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
 }
 
+// ---- Auto-pricer ----
+// A recommended price for a card, from three sources in order of how much we
+// trust them. Which one was used is always returned, because a price built on
+// two-year-old comps and one built on last week's are not the same claim and
+// shouldn't look the same.
+//
+//   1. recent-sales   Comps for this exact card, recent enough to stand alone.
+//   2. trend-adjusted Older comps for this exact card, moved by how this
+//                     player's prices have shifted since.
+//   3. similar-cards  No comps at all, so other parallels of the same base
+//                     card, reported as a range rather than a point.
+//
+// Everything uses medians, never means: card sales are heavy-tailed and one
+// autographed variant in the wrong bucket would drag an average badly.
+const PRICE_FRESH_DAYS = 60;      // a comp this recent needs no adjustment
+const PRICE_STALE_CLUSTER = 120;  // window around the last sale to median over
+const PRICE_TREND_MIN_SALES = 12; // per side, before a player trend is usable
+// Cap on how far a player trend may move a stale comp. The trend is a median
+// over ALL that player's cards, so a shift in which of their cards are selling
+// moves it without any single card changing value. Clamping keeps that error
+// bounded instead of letting it produce a confident-looking absurdity.
+const PRICE_TREND_MAX_ADJ = 0.5;  // +/- 50%
+
+// Median sale price for a player inside a date range. Returns null rather than
+// a guess when the sample is too thin to be a median of anything.
+function _playerMedianIn(prices) {
+  if (!prices || prices.length < PRICE_TREND_MIN_SALES) return null;
+  const s = prices.slice().sort((a, b) => a - b);
+  return _median(s);
+}
+
+// How this player's prices have moved between two windows, as a multiplier.
+// NOTE: deliberately NOT the market index. That index measures volume — money
+// and cards moving — and a market can double in volume with completely flat
+// prices. Adjusting a stale comp needs a price level, so this is a median of
+// prices, not of activity.
+function _playerTrendRatio(rows, fromDay, toDay) {
+  const half = Math.max(30, Math.round((toDay - fromDay) / 2));
+  const oldPrices = [], newPrices = [];
+  for (const r of rows) {
+    const d = _mkDay(r.sold_date);
+    if (!Number.isFinite(d)) continue;
+    const p = (r.price_cents || 0) / 100;
+    if (p <= 0) continue;
+    if (d >= fromDay - half && d <= fromDay + half) oldPrices.push(p);
+    if (d >= toDay - half) newPrices.push(p);
+  }
+  const before = _playerMedianIn(oldPrices);
+  const after = _playerMedianIn(newPrices);
+  if (!before || !after || before <= 0) return null;
+  const raw = after / before;
+  const lo = 1 - PRICE_TREND_MAX_ADJ, hi = 1 + PRICE_TREND_MAX_ADJ;
+  return {
+    ratio: Math.min(hi, Math.max(lo, raw)),
+    rawRatio: Math.round(raw * 1000) / 1000,
+    clamped: raw < lo || raw > hi,
+    sampleBefore: oldPrices.length,
+    sampleAfter: newPrices.length,
+  };
+}
+
+// Estimate for one grade of one card.
+// `list` is that grade's sales, newest first. `todayDay` anchors "recent".
+function _estimateGrade(list, todayDay, trend) {
+  const priced = list
+    .map(r => ({ day: _mkDay(r.sold_date), price: (r.price_cents || 0) / 100 }))
+    .filter(r => Number.isFinite(r.day) && r.price > 0)
+    .sort((a, b) => b.day - a.day);
+  if (!priced.length) return null;
+
+  const fresh = priced.filter(r => todayDay - r.day <= PRICE_FRESH_DAYS);
+  const round2 = (n) => Math.round(n * 100) / 100;
+
+  if (fresh.length) {
+    const ps = fresh.map(r => r.price).sort((a, b) => a - b);
+    return {
+      price: round2(_median(ps)),
+      method: 'recent-sales',
+      // Three comps is where a median starts describing a market rather than
+      // an accident. Below that it's still the best number available, just not
+      // one to lean on.
+      confidence: fresh.length >= 5 ? 'high' : fresh.length >= 3 ? 'medium' : 'low',
+      basedOn: fresh.length,
+      low: round2(ps[0]),
+      high: round2(ps[ps.length - 1]),
+      newestSaleDays: todayDay - priced[0].day,
+    };
+  }
+
+  // Nothing fresh: median the cluster around the last sale, then move it by
+  // the player's price trend since.
+  const newestDay = priced[0].day;
+  const cluster = priced.filter(r => newestDay - r.day <= PRICE_STALE_CLUSTER);
+  const ps = cluster.map(r => r.price).sort((a, b) => a - b);
+  const base = _median(ps);
+  if (!base) return null;
+
+  const staleDays = todayDay - newestDay;
+  if (!trend) {
+    // No usable player trend, so the old price is reported as-is rather than
+    // adjusted by a number we don't have.
+    return {
+      price: round2(base),
+      method: 'stale-sales',
+      confidence: 'low',
+      basedOn: cluster.length,
+      low: round2(ps[0]), high: round2(ps[ps.length - 1]),
+      newestSaleDays: staleDays,
+    };
+  }
+  return {
+    price: round2(base * trend.ratio),
+    method: 'trend-adjusted',
+    confidence: staleDays > 365 ? 'low' : 'medium',
+    basedOn: cluster.length,
+    unadjustedPrice: round2(base),
+    trendPct: Math.round((trend.ratio - 1) * 1000) / 10,
+    trendClamped: !!trend.clamped,
+    low: round2(ps[0] * trend.ratio), high: round2(ps[ps.length - 1] * trend.ratio),
+    newestSaleDays: staleDays,
+  };
+}
+
+// Tier 3: this exact card has never sold, so price it off its siblings — the
+// same base card in other parallels. Returns a RANGE, not a point: parallels
+// of one card can differ by two orders of magnitude, and a single number here
+// would imply a precision that doesn't exist.
+async function _similarVariantEstimate(db, seed) {
+  const eq = (col, val) => val == null || val === '' ? `(${col} IS NULL OR ${col} = '')` : `${col} = ?`;
+  const binds = [NFLDB_MIN_CONFIDENCE, seed.player];
+  const parts = ['price_cents IS NOT NULL', 'confidence >= ?', 'player = ?'];
+  for (const [col, val] of [['year', seed.year], ['set_name', seed.set_name], ['card_number', seed.card_number]]) {
+    parts.push(eq(col, val));
+    if (val != null && val !== '') binds.push(val);
+  }
+  const rows = await db.prepare(
+    `SELECT price_cents, parallel, sold_date FROM sales
+      WHERE ${parts.join(' AND ')}
+      ORDER BY sold_date DESC LIMIT 400`
+  ).bind(...binds).all();
+
+  const list = ((rows && rows.results) || []).filter(r => (r.price_cents || 0) > 0);
+  if (list.length < 3) return null;
+
+  const ps = list.map(r => r.price_cents / 100).sort((a, b) => a - b);
+  const q = (f) => ps[Math.min(ps.length - 1, Math.max(0, Math.floor(f * (ps.length - 1))))];
+  const round2 = (n) => Math.round(n * 100) / 100;
+  const variants = new Set(list.map(r => r.parallel || 'Base'));
+  return {
+    price: round2(_median(ps)),
+    method: 'similar-cards',
+    // Never above low. It's a different card by definition.
+    confidence: 'low',
+    basedOn: list.length,
+    variantCount: variants.size,
+    // Interquartile range: the outer parallels of a set are exactly the ones
+    // that would make a min/max meaningless.
+    low: round2(q(0.25)),
+    high: round2(q(0.75)),
+  };
+}
+
 app.get('/api/card-analysis', async (req, res) => {
   const itemId = String(req.query.itemId || '').trim();
   if (!itemId) return res.status(400).json({ error: 'itemId is required' });
@@ -3436,7 +3598,9 @@ app.get('/api/card-analysis', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no-dataset' });
 
-  const cacheKey = `cardanalysis:v1:${itemId}`;
+  // v2: the payload now carries price estimates, so a warm v1 entry
+    // would serve the new UI a shape with no estimate in it.
+    const cacheKey = `cardanalysis:v2:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -3478,7 +3642,41 @@ app.get('/api/card-analysis', async (req, res) => {
     ).bind(...binds).all();
 
     const all = (rows && rows.results) || [];
-    if (all.length === 0) return res.json({ available: false, reason: 'no-sales' });
+    if (all.length === 0) {
+      // This exact card has never sold. It can still be priced off its
+      // siblings, so the modal has something useful to show rather than a
+      // dead end — flagged as an estimate from other cards, not this one.
+      const similar = await _similarVariantEstimate(db, seed);
+      const out = similar
+        ? { available: false, reason: 'no-sales', estimate: similar }
+        : { available: false, reason: 'no-sales' };
+      if (similar) cachePut(cacheKey, out, CARD_ANALYSIS_TTL);
+      return res.json(out);
+    }
+
+    // The dataset's own "now" — using the wall clock would make every card
+    // look stale whenever the collector falls behind.
+    const newestDay = _mkDay(all.map(r => r.sold_date).filter(Boolean).sort().slice(-1)[0]);
+
+    // One read of the player's price history, reused for every grade that
+    // needs trend-adjusting. Skipped entirely when every grade has fresh
+    // comps, which is the common case.
+    let trend = null;
+    const oldestNeeded = Math.min(...all.map(r => _mkDay(r.sold_date)).filter(Number.isFinite));
+    const anyStale = Array.from(new Set(all.map(r => _gradeBucket(r)))).some(k => {
+      const newest = Math.max(...all.filter(r => _gradeBucket(r) === k)
+        .map(r => _mkDay(r.sold_date)).filter(Number.isFinite));
+      return Number.isFinite(newest) && (newestDay - newest) > PRICE_FRESH_DAYS;
+    });
+    if (anyStale) {
+      const trendRows = await db.prepare(
+        `SELECT sold_date, price_cents FROM sales
+          WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL
+            AND sold_date >= ?
+          ORDER BY sold_date DESC LIMIT 4000`
+      ).bind(seed.player, NFLDB_MIN_CONFIDENCE, _mkIso(oldestNeeded - 180)).all();
+      trend = _playerTrendRatio((trendRows && trendRows.results) || [], oldestNeeded, newestDay);
+    }
 
     // Split into per-grade series, then reduce each to one point per day so a
     // busy day doesn't outweigh a quiet one on the chart.
@@ -3513,9 +3711,15 @@ app.get('/api/card-analysis', async (req, res) => {
         if (base > 0) changePct = Math.round(((last - base) / base) * 1000) / 10;
       }
 
+      // Trend is anchored to THIS grade's own last sale, not the card's, so a
+      // grade that stopped selling long ago isn't adjusted by the wrong span.
+      const gradeNewest = Math.max(...list.map(r => _mkDay(r.sold_date)).filter(Number.isFinite));
+      const gradeTrend = (trend && Number.isFinite(gradeNewest)) ? trend : null;
+
       return {
         label,
         sales: list.length,
+        estimate: _estimateGrade(list, newestDay, gradeTrend),
         // The individual sales behind the figure. Capped because a busy grade
         // can run to hundreds and the whole payload is cached in KV.
         recent: list.slice(0, 25).map(r => ({
