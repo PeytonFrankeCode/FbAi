@@ -10058,3 +10058,17 @@ footer {
 .ca-price-value + .ca-price-range { font-size: 0.74rem; font-weight: 600; color: var(--text-muted); }
 .ca-price-how { font-size: 0.68rem; color: var(--text-muted); line-height: 1.45; margin: 0.4rem 0 0; }
 .ca-price-how strong { color: var(--text-secondary); }
+
+/* ---- Chart point readout ---- */
+/* Pinned value for a tapped data point, shared by every chart that has one. */
+.chart-readout {
+  display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  margin-top: 0.55rem; padding: 0.45rem 0.7rem;
+  border: 1px solid var(--accent-border); border-radius: 8px;
+  background: rgba(94, 206, 153, 0.07);
+}
+.chart-readout.hidden { display: none; }
+.chart-readout-date { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); font-weight: 700; }
+.chart-readout-value { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
+.chart-readout-note { font-size: 0.66rem; color: var(--text-muted); }
+.chart-readout-hint { font-size: 0.62rem; color: var(--text-muted); margin: 0.35rem 0 0; opacity: 0.75; }

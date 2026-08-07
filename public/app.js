@@ -3882,6 +3882,70 @@ function switchView(view) {
 }
 
 
+// ---- Chart interaction defaults ----
+// Every chart in the app shows its points and responds to a tap, not just a
+// hover — a mouse-only readout is unusable on a phone, which is where most of
+// this gets looked at. hitRadius is generous because a fingertip is nowhere
+// near as precise as a cursor.
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.elements.point.hitRadius = 14;
+  Chart.defaults.elements.point.hoverRadius = 6;
+  Chart.defaults.interaction.mode = 'index';
+  Chart.defaults.interaction.intersect = false;
+  Chart.defaults.plugins.tooltip.displayColors = false;
+  Chart.defaults.plugins.tooltip.padding = 8;
+}
+
+// Which data index sits under a screen coordinate.
+//
+// Deliberately NOT Chart.js's onClick + getElementsAtEventForMode: that path
+// only runs for real `click` events, so a finger tap — touchstart/touchend,
+// with a synthesized click only sometimes following — can miss it entirely.
+// Reading the pixel off the x scale behaves identically for a mouse, a finger
+// and a stylus.
+function chartIndexAt(chart, clientX) {
+  if (!chart || !chart.canvas || !chart.scales || !chart.scales.x || !chart.chartArea) return null;
+  const rect = chart.canvas.getBoundingClientRect();
+  if (!rect.width) return null;
+  const x = clientX - rect.left;
+  // Outside the plotting area (axis labels, padding) isn't a point.
+  if (x < chart.chartArea.left - 12 || x > chart.chartArea.right + 12) return null;
+  const raw = chart.scales.x.getValueForPixel(x);
+  if (raw == null || Number.isNaN(raw)) return null;
+  const n = (chart.data.labels || []).length;
+  if (!n) return null;
+  return Math.min(n - 1, Math.max(0, Math.round(raw)));
+}
+
+// Wire a chart so tapping or clicking pins the value under the finger.
+// `format(index)` returns the readout HTML, or falsy to leave it as it was.
+function attachPointReadout(chart, elId, format) {
+  if (!chart || !chart.canvas) return;
+  const handler = (clientX) => {
+    const i = chartIndexAt(chart, clientX);
+    if (i == null) return;
+    const html = format(i);
+    if (html) renderChartReadout(elId, html);
+  };
+  chart.canvas.addEventListener('click', (e) => handler(e.clientX));
+  // passive: this only reads a coordinate, it never blocks scrolling.
+  chart.canvas.addEventListener('touchend', (e) => {
+    const t = e.changedTouches && e.changedTouches[0];
+    if (t) handler(t.clientX);
+  }, { passive: true });
+}
+
+// Show a clicked point's value in a readout under the chart. Tooltips vanish
+// the moment a finger lifts, so on touch the tooltip alone answers the
+// question and then immediately takes the answer away.
+function renderChartReadout(elId, html) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!html) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  el.innerHTML = html;
+  el.classList.remove('hidden');
+}
+
 // ---- Market Index ----
 // Reads /api/market-index. The score is an index against the market's own
 // previous period: 100 = unchanged. Everything on the page exists to make that
@@ -3948,6 +4012,7 @@ async function loadMarketIndex() {
   if (!body || _mkLoading) return;
   _mkLoading = true;
   if (_mkChart) { _mkChart.destroy(); _mkChart = null; }
+  renderChartReadout('market-point', '');
   body.innerHTML = '<p class="market-loading">Loading the market…</p>';
 
   let data;
@@ -4044,6 +4109,8 @@ async function loadMarketIndex() {
       </div>
       <div class="market-chart-wrap"><canvas id="market-chart" height="150"></canvas></div>
       <p id="market-chart-empty" class="market-chart-empty hidden"></p>
+      <div id="market-point" class="chart-readout hidden"></div>
+      <p class="chart-readout-hint">Tap any point to see that day's score.</p>
     </div>
 
     <div class="market-notes">
@@ -4090,8 +4157,8 @@ function _mkRenderChart(data) {
         borderColor: accent,
         backgroundColor: 'rgba(94, 206, 153, 0.12)',
         borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
+        pointRadius: 3,
+        pointHoverRadius: 6,
         tension: 0.25,
         fill: true,
       }],
@@ -4117,6 +4184,15 @@ function _mkRenderChart(data) {
         },
       },
     },
+  });
+
+  attachPointReadout(_mkChart, 'market-point', (i) => {
+    const pt = series[i];
+    if (!pt) return '';
+    const vs = pt.score >= 100 ? 'above' : 'below';
+    return `<span class="chart-readout-date">${_mkDateLabel(pt.date)}</span>`
+      + `<span class="chart-readout-value">Index ${pt.score}</span>`
+      + `<span class="chart-readout-note">${Math.abs(Math.round((pt.score - 100) * 10) / 10)}% ${vs} its previous ${data.days} days</span>`;
   });
 }
 
@@ -7424,7 +7500,7 @@ function renderPortfolioAnalytics(coll, totalValue) {
         type: 'line',
         data: {
           labels: hist.map(h => h.d.slice(5)),
-          datasets: [{ data: hist.map(h => h.v), borderColor: '#5ece99', backgroundColor: 'rgba(94,206,153,0.12)', fill: true, tension: 0.25, pointRadius: 0, borderWidth: 2 }],
+          datasets: [{ data: hist.map(h => h.v), borderColor: '#5ece99', backgroundColor: 'rgba(94,206,153,0.12)', fill: true, tension: 0.25, pointRadius: 3, borderWidth: 2 }],
         },
         options: {
           plugins: { legend: { display: false } },
@@ -14331,8 +14407,8 @@ function renderNetWorthChart() {
     fill: false,
     tension: 0.25,
     borderWidth: 2,
-    pointRadius: 0,
-    pointHoverRadius: 4,
+    pointRadius: 3,
+    pointHoverRadius: 6,
     spanGaps: true, // older points predate the collection-value series
   });
 
@@ -14454,6 +14530,7 @@ function _caReset() {
   if (listEl) listEl.innerHTML = '';
   const priceEl = document.getElementById('ca-price');
   if (priceEl) { priceEl.classList.add('hidden'); priceEl.innerHTML = ''; }
+  renderChartReadout('ca-point', '');
 }
 
 async function loadCardAnalysis(item) {
@@ -14574,7 +14651,7 @@ function _caRenderChart(label) {
         data: g.points.map(p => p.median),
         borderColor: color,
         backgroundColor: color.replace(')', ', 0.12)').replace('rgb', 'rgba'),
-        fill: false, tension: 0.25, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4,
+        fill: false, tension: 0.25, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6,
       }],
     },
     options: {
@@ -14596,6 +14673,18 @@ function _caRenderChart(label) {
       },
       maintainAspectRatio: false,
     },
+  });
+
+  attachPointReadout(_caChart, 'ca-point', (i) => {
+    const pt = g.points[i];
+    if (!pt) return '';
+    // "median of N sales" rather than "sold for" when the day had more than
+    // one — the point is a day's median, not a single sale.
+    return `<span class="chart-readout-date">${_caDate(pt.date)}</span>`
+      + `<span class="chart-readout-value">$${pt.median.toLocaleString('en-US')}</span>`
+      + `<span class="chart-readout-note">${pt.sales === 1
+          ? `one ${escHtml(g.label)} sale`
+          : `median of ${pt.sales} ${escHtml(g.label)} sales`}</span>`;
   });
 }
 
