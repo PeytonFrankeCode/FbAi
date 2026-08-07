@@ -9826,3 +9826,17 @@ footer {
 
 .ca-list-empty { font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 1.4rem 0.8rem; margin: 0; }
 .ca-list-more { font-size: 0.64rem; color: var(--text-muted); text-align: center; padding: 0.5rem 0 0.25rem; margin: 0; }
+
+/* ---- "View price history" cue on results that have card analytics ---- */
+/* Not a separate control: the whole card already opens the modal that holds
+   the history. This exists so the feature is discoverable rather than found
+   by accident, so it reads as a cue and inherits the card's own click. */
+.card-analytics-cue {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  margin-top: 0.4rem; padding: 0.16rem 0.45rem;
+  background: rgba(94, 206, 153, 0.12); border: 1px solid rgba(94, 206, 153, 0.3);
+  border-radius: 999px;
+  font-size: 0.62rem; font-weight: 700; color: var(--accent);
+  letter-spacing: 0.01em; white-space: nowrap;
+}
+.card:hover .card-analytics-cue { background: rgba(94, 206, 153, 0.2); border-color: var(--accent); }

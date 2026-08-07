@@ -2605,6 +2605,7 @@ function buildCard(item, opts = {}) {
         <span class="card-condition">${escHtml(item.condition)}</span>
         ${!isSold ? buyingOptionBadgeHtml(item) : ''}
       </div>
+      ${item.hasAnalysis ? '<span class="card-analytics-cue">&#128200; View price history</span>' : ''}
       ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
     </div>
   `;
@@ -14034,12 +14035,20 @@ async function loadCardAnalysis(item) {
   const canvas = document.getElementById('ca-chart');
   if (!wrap || !canvas) return;
 
+  // The result card advertised price history, so show the section straight
+  // away rather than leaving a gap where the promised thing should be. It
+  // hides again below if the lookup comes back with nothing.
+  if (item.hasAnalysis) {
+    wrap.classList.remove('hidden');
+    if (summaryEl) summaryEl.textContent = 'Loading…';
+  }
+
   let data;
   try {
     const res = await fetch(`/api/card-analysis?itemId=${encodeURIComponent(item.itemId)}`, { cache: 'no-store' });
     data = await safeJson(res);
-  } catch (_) { return; }
-  if (!data || !data.available || !Array.isArray(data.grades) || data.grades.length === 0) return;
+  } catch (_) { _caReset(); return; }
+  if (!data || !data.available || !Array.isArray(data.grades) || data.grades.length === 0) { _caReset(); return; }
 
   wrap.classList.remove('hidden');
 
