@@ -10089,3 +10089,58 @@ footer {
 .qe-mid { font-size: 0.74rem; color: var(--text-muted); }
 .qe-how { font-size: 0.7rem; color: var(--text-muted); line-height: 1.45; margin: 0.4rem 0 0; }
 .qe-grades { font-size: 0.66rem; color: var(--text-muted); margin: 0.35rem 0 0; opacity: 0.85; }
+
+/* ---- First-run guided tour ---- */
+.tour { position: fixed; inset: 0; z-index: 4000; }
+.tour.hidden { display: none; }
+body.tour-open { overflow: hidden; }
+
+/* The backdrop is a huge outward shadow cast by the spotlight, so the hole
+   tracks the target exactly without needing an SVG mask or four separate
+   panels around it. */
+.tour-backdrop { position: absolute; inset: 0; background: transparent; }
+.tour-spot {
+  position: fixed; border-radius: 10px; pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(3, 7, 12, 0.78), 0 0 0 2px var(--accent);
+  transition: top 0.22s ease, left 0.22s ease, width 0.22s ease, height 0.22s ease;
+}
+
+.tour-pop {
+  position: fixed; width: min(340px, calc(100vw - 20px));
+  background: var(--bg-secondary); border: 1px solid var(--border-primary);
+  border-radius: 14px; padding: 1rem 1.1rem;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  transition: top 0.22s ease, left 0.22s ease;
+}
+.tour-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.4rem; }
+.tour-step { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); font-weight: 700; }
+.tour-skip { border: 0; background: transparent; color: var(--text-muted); font-size: 0.72rem; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+.tour-skip:hover { color: var(--text-primary); text-decoration: underline; }
+.tour-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.3rem; }
+.tour-body { font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary); margin: 0 0 0.9rem; }
+
+.tour-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.tour-dots { display: flex; gap: 0.3rem; }
+.tour-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-primary); }
+.tour-dot.on { background: var(--accent); }
+.tour-btns { display: flex; gap: 0.4rem; }
+.tour-btn {
+  border: 0; border-radius: 8px; padding: 0.4rem 0.9rem;
+  background: var(--accent); color: #0b1f16;
+  font-size: 0.78rem; font-weight: 700; cursor: pointer;
+}
+.tour-btn:hover { filter: brightness(1.08); }
+.tour-btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); }
+.tour-btn-ghost:hover { color: var(--text-primary); border-color: var(--accent-border); filter: none; }
+
+.tour-replay-btn {
+  border: 1px solid var(--accent-border); border-radius: 8px;
+  background: rgba(94, 206, 153, 0.08); color: var(--accent);
+  padding: 0.45rem 0.9rem; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  white-space: nowrap;
+}
+.tour-replay-btn:hover { background: rgba(94, 206, 153, 0.16); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-spot, .tour-pop { transition: none; }
+}

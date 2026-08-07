@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=145" />
+  <link rel="stylesheet" href="style.css?v=146" />
 
 
 </head>
@@ -1514,6 +1514,14 @@
       <div class="settings-group">
         <div class="settings-row">
           <div class="settings-label">
+            <span class="settings-label-text">Site tour</span>
+            <span class="settings-label-desc">A quick walkthrough of what's here and how to use it</span>
+          </div>
+          <button type="button" class="tour-replay-btn" onclick="closeSettings(); startTour(true);">Take the tour</button>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label">
             <span class="settings-label-text">Appearance</span>
             <span class="settings-label-desc">Switch between dark and light mode</span>
           </div>
@@ -1749,8 +1757,30 @@
     </div>
   </div>
 
+  <!-- First-run guided tour. Injected here rather than built in JS so the
+       markup is inspectable and the styles are static. -->
+  <div id="tour" class="tour hidden" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+    <div class="tour-backdrop"></div>
+    <div id="tour-spot" class="tour-spot" aria-hidden="true"></div>
+    <div id="tour-pop" class="tour-pop" role="document">
+      <div class="tour-pop-head">
+        <span id="tour-step" class="tour-step"></span>
+        <button type="button" class="tour-skip" onclick="endTour(false)">Skip</button>
+      </div>
+      <h3 id="tour-title" class="tour-title"></h3>
+      <p id="tour-body" class="tour-body"></p>
+      <div class="tour-nav">
+        <div id="tour-dots" class="tour-dots"></div>
+        <div class="tour-btns">
+          <button type="button" id="tour-back" class="tour-btn tour-btn-ghost" onclick="tourGo(-1)">Back</button>
+          <button type="button" id="tour-next" class="tour-btn" onclick="tourGo(1)">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=189"></script>
+  <script src="app.js?v=190"></script>
   <script type="importmap">
   {
     "imports": {
