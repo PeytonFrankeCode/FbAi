@@ -5522,11 +5522,19 @@ function updateGlobalPromotedIndex(username, cards) {
 }
 
 // ---- Demo seed for Browse Cards ----
-// While the global promoted feed is still small, top it up with curated
-// for-sale listings pulled live from the eBay Browse API. Keeps the Browse
-// Cards page populated so the empty state never greets a first-time visitor.
-// Cached in KV under 'promotedDemo' with a TTL so we don't hit eBay every
-// request. Real promoted cards always rank first; demo is filler.
+// Originally topped the global promoted feed up with curated for-sale listings
+// pulled live from eBay, so a first-time visitor never met an empty Browse
+// page.
+//
+// OFF. The filler ran to 24 listings against a feed that only tops up below
+// 12, so a seller who promoted a card couldn't find it among the demos — and
+// the search injection shuffles the feed and places one card per 10 results,
+// which made a single real listing effectively invisible. A seller not seeing
+// their own listing is worse than an empty page, and the empty state already
+// explains itself and links to the form.
+//
+// The generator below is left intact: flip this back to true to restore it.
+const PROMOTED_DEMO_ENABLED = false;
 const PROMOTED_DEMO_FILE = path.join(APP_ROOT, 'data', 'promoted-demo.json');
 const PROMOTED_DEMO_TTL_MS = 12 * 60 * 60 * 1000;   // 12h
 const PROMOTED_DEMO_MIN_FEED = 12;                  // top up below this size
@@ -5605,7 +5613,7 @@ app.get('/api/promoted-cards/all', async (req, res) => {
   real.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 
   let demo = [];
-  if (real.length < PROMOTED_DEMO_MIN_FEED) {
+  if (PROMOTED_DEMO_ENABLED && real.length < PROMOTED_DEMO_MIN_FEED) {
     try { demo = await getDemoPromotedCards(); }
     catch (err) { console.error('[promoted-cards] demo top-up failed:', err && err.message); }
   }

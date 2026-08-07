@@ -7454,13 +7454,36 @@ function _userSyncPayload() {
   return data;
 }
 
+function _syncValueEmpty(v) {
+  if (v == null) return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.keys(v).length === 0;
+  return false;
+}
+
+// Returns true when a key was deliberately kept from the local copy, so the
+// caller knows it needs to push that back up.
 function _userSyncApply(data) {
-  if (!data || typeof data !== 'object') return;
+  if (!data || typeof data !== 'object') return false;
+  let keptLocal = false;
   for (const key of USER_SYNC_KEYS) {
-    if (Object.prototype.hasOwnProperty.call(data, key)) {
-      localStorage.setItem(key, JSON.stringify(data[key]));
+    if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
+    // An empty value from the server is far more likely to mean "never
+    // written" than "the user cleared it on purpose" — pushes were broken for
+    // a long time, so accounts exist whose blob is missing data this device
+    // still holds. Letting empty win there destroys the only copy.
+    //
+    // The cost of getting this wrong the other way is a deletion made on
+    // another device not propagating, which the user can simply repeat.
+    // Unrecoverable loss beats a repeatable annoyance, so local wins.
+    if (_syncValueEmpty(data[key])) {
+      let local = null;
+      try { local = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
+      if (!_syncValueEmpty(local)) { keptLocal = true; continue; }
     }
+    localStorage.setItem(key, JSON.stringify(data[key]));
   }
+  return keptLocal;
 }
 
 function _userSyncHasContent(data) {
@@ -7556,8 +7579,12 @@ async function enableUserSync() {
       if (_userSyncHasContent(server)) {
         // Server wins on a device with no local data, or whenever the server
         // already has something for this account. Last-write-wins per key.
-        _userSyncApply(server);
+        const keptLocal = _userSyncApply(server);
         _userSyncRerender();
+        // We held onto local data the server didn't have. Get it up there now,
+        // or it stays a single-device copy and the next pull faces the same
+        // decision again.
+        if (keptLocal) { _userSyncEnabled = true; await pushUserDataNow(); }
       } else if (_userSyncHasContent(_userSyncPayload())) {
         // Fresh account on the server but the user already has local data
         // (e.g. logged in for the first time after using anon on this device).
