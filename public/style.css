@@ -4649,7 +4649,7 @@ footer::before {
 .checklist-table td {
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
-  border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .cl-num {
@@ -4790,11 +4790,11 @@ footer::before {
 
 .cl-listings-cell {
   padding: 0 !important;
-  border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .cl-listings-panel {
-  background: rgba(20, 25, 35, 0.8);
+  background: var(--bg-secondary);
   border: 1px solid rgba(82, 183, 136, 0.2);
   border-radius: 8px;
   margin: 0.5rem 0.75rem;
@@ -4844,7 +4844,7 @@ footer::before {
 }
 
 .cl-listings-tab {
-  background: rgba(45, 55, 72, 0.5);
+  background: var(--bg-tertiary);
   border: 1px solid rgba(82, 183, 136, 0.15);
   border-radius: 6px;
   color: var(--text-secondary);
@@ -4945,7 +4945,7 @@ footer::before {
 
 .cl-similar-section {
   margin-top: 0.75rem;
-  border-top: 1px solid rgba(45, 55, 72, 0.5);
+  border-top: 1px solid var(--border-primary);
   padding-top: 0.5rem;
 }
 
@@ -4965,7 +4965,7 @@ footer::before {
   padding: 0.4rem 0 0.75rem;
   font-size: 0.75rem;
   color: var(--text-secondary);
-  border-bottom: 1px solid rgba(45, 55, 72, 0.5);
+  border-bottom: 1px solid var(--border-primary);
   margin-bottom: 0.75rem;
   flex-wrap: wrap;
 }
@@ -5030,8 +5030,8 @@ footer::before {
 .cl-listing-item {
   display: flex;
   flex-direction: column;
-  background: rgba(30, 36, 50, 0.8);
-  border: 1px solid rgba(45, 55, 72, 0.6);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   overflow: hidden;
   text-decoration: none;
@@ -5048,7 +5048,7 @@ footer::before {
   width: 100%;
   aspect-ratio: 1;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6811,7 +6811,7 @@ tr:hover .cl-alert-btn {
    above now cover this surface. */
 
 /* Completion Player Groups */
-.completion-player-group { padding: 0.6rem 0; border-bottom: 1px solid rgba(45, 55, 72, 0.3); }
+.completion-player-group { padding: 0.6rem 0; border-bottom: 1px solid var(--border-primary); }
 .completion-player-group:last-child { border-bottom: none; }
 .completion-player-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
 .completion-player-num { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; min-width: 40px; }
