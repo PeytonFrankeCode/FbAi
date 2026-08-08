@@ -201,8 +201,22 @@ function main() {
   }
 
   // ---- Write ----
+  // A product this source covers replaces whatever is on disk for the same
+  // id. That is intended — a re-run should pick up parser fixes — but it can
+  // also quietly overwrite a product that came from somewhere else entirely
+  // (Panini Certified predates these files), so any replacement that changes
+  // the totals says so.
   for (const p of products) {
-    fs.writeFileSync(path.join(CHECKLISTS_DIR, `${p.id}.json`), JSON.stringify(p));
+    const out = path.join(CHECKLISTS_DIR, `${p.id}.json`);
+    if (fs.existsSync(out)) {
+      const prev = JSON.parse(fs.readFileSync(out, 'utf8'));
+      const before = prev.sets.reduce((s, x) => s + x.cards.length, 0);
+      const after = p.sets.reduce((s, x) => s + x.cards.length, 0);
+      if (before !== after || prev.sets.length !== p.sets.length) {
+        console.log(`  replacing ${p.id}: ${prev.sets.length} sets/${before} cards -> ${p.sets.length} sets/${after} cards`);
+      }
+    }
+    fs.writeFileSync(out, JSON.stringify(p));
   }
   console.log(`\nWrote ${products.length} product files`);
 
