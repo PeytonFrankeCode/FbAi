@@ -60,17 +60,22 @@ const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Footbal
 //
 // Rejoin those before the header matcher runs, or every section article in an
 // OCR'd source is invisible and its sets land under the previous product.
+// The break lands wherever the render ran out of width, so the tail is not
+// always the bare word — "…Football Memorabilia" / "Cards Checklists" splits
+// mid-suffix. Rather than enumerate where it can break, join the two halves
+// and keep the join only when the result is a title the matcher accepts.
 function rejoinWrappedTitles(lines) {
-  const stem = /^20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football(?:\s+(?:Autographs?|Memorabilia Cards?|Relics?|Inserts?|Base Cards?|Base Set|Rookie Cards?|Parallels?))?\s*$/;
   for (let i = 0; i + 1 < lines.length; i++) {
     const cur = lines[i].trim();
-    if (!stem.test(cur)) continue;
+    if (!/^20\d{2}\s/.test(cur) || !/\sFootball\b/.test(cur)) continue;
+    if (isProductHeaderLine(cur)) continue;   // already whole
     // Skip blanks the render leaves between the two halves.
     let j = i + 1;
     while (j < lines.length && !lines[j].trim()) j++;
     if (j >= lines.length) continue;
-    if (!/^Checklists?\s*$/i.test(lines[j].trim())) continue;
-    lines[i] = `${cur} ${lines[j].trim()}`;
+    const joined = `${cur} ${lines[j].trim()}`;
+    if (!isProductHeaderLine(joined)) continue;
+    lines[i] = joined;
     lines[j] = '';
   }
 }
@@ -242,6 +247,7 @@ function parseProduct(productName, productBlocks, lines) {
     // category for every set inside the block.
     let category = categoryForSuffix(block.suffix);
     let i = 0;
+    let orphan = null;
     while (i < slice.length) {
       const line = slice[i].trim();
       if (!line) { i++; continue; }
@@ -249,7 +255,15 @@ function parseProduct(productName, productBlocks, lines) {
       if (marker) { category = marker; i++; continue; }
       if (isSetHeader(line, slice, i)) {
         const res = parseSet(slice, i, category);
-        if (res && res.set.cards.length > 0) { product.sets.push(res.set); i = res.nextLine; continue; }
+        if (res && res.set.cards.length > 0) {
+          product.sets.push(reclaimStolenName(res.set, orphan));
+          orphan = null;
+          i = res.nextLine;
+          continue;
+        }
+        // A header that captured nothing is usually the real one, cut off
+        // from its cards by page noise sitting between them.
+        if (res) orphan = res.set.name;
       }
       i++;
     }
@@ -273,6 +287,44 @@ function openImplicitBaseSet(slice) {
   const out = slice.slice();
   out.splice(first, 0, 'Base Set');
   return out;
+}
+
+// Some page noise survives the word-shape check because it is shaped like a
+// caption — "EST. 1967" off a ticket-stub graphic, "PGA EAS IEE" off a card
+// photo. It sits between a set's real header and its cards, so the real
+// header parses to nothing and the caption inherits the cards.
+//
+// Both halves of that signature have to hold before the name is taken back:
+// the set that captured the cards is titled in full caps the way a graphic
+// is, and the header immediately before it captured nothing while being
+// titled like a real set. "PEN PALS" is genuinely printed in caps, and
+// keeps its name because no empty header precedes it.
+// Graphics on the page are set in capitals, so OCR of one comes back
+// shouting. A Title Case set name never does — even an acronym-heavy one
+// like "NFL Shields" stays well under the bar, while a stray lowercase
+// letter in "KANSAS CITY CHIEFS Ss" no longer buys the caption a pass.
+function looksShouted(name) {
+  const letters = name.replace(/[^A-Za-z]/g, '');
+  if (letters.length < 3) return false;
+  const upper = (name.match(/[A-Z]/g) || []).length;
+  return upper / letters.length >= 0.7;
+}
+
+function reclaimStolenName(set, orphanName) {
+  if (!orphanName) return set;
+  if (!looksShouted(set.name) || looksShouted(orphanName)) return set;
+  set.name = orphanName;
+  set.id = idify(orphanName);
+  set.category = categoryForSetName(orphanName, set.category);
+  return set;
+}
+
+// A set's own name overrides the category its article implies — an
+// autograph set listed in the base article is still an autograph.
+function categoryForSetName(setName, fallback) {
+  if (/auto(graph)?|signature|penmanship|scripts|ink\b/i.test(setName)) return 'autograph';
+  if (/relic|jersey|patch|memorabilia|material|swatch/i.test(setName)) return 'memorabilia';
+  return fallback;
 }
 
 function cutAtFooter(slice) {
@@ -347,9 +399,7 @@ function parseSet(slice, startIdx, category) {
     i++;
   }
 
-  let cat = category;
-  if (/auto(graph)?|signature|penmanship|scripts|ink\b/i.test(setName)) cat = 'autograph';
-  else if (/relic|jersey|patch|memorabilia|material|swatch/i.test(setName)) cat = 'memorabilia';
+  const cat = categoryForSetName(setName, category);
 
   return {
     set: {
@@ -380,7 +430,7 @@ function isCardLine(line) {
   // Team-less. Capped at 3 digits so a stray year ("2017 Panini …") can't
   // pose as a card number, and the name has to read like a name — mixed
   // case, no bracket/pipe soup from OCR'd ad art.
-  const m = line.match(/^\d{1,3}\s+([A-Z][A-Za-z.'’\-\/ ]{2,80}?)(\s+\/?\d+(\/\d+)?)?\s*$/);
+  const m = line.match(/^\d{1,3}\s+([A-Z][A-Za-z.'’\-\/ ]{2,220}?)(\s+\/?\d+(\/\d+)?)?\s*$/);
   if (m && /[a-z]/.test(m[1])) return true;
   return false;
 }
@@ -586,11 +636,15 @@ function idify(s) {
 }
 
 function deriveBrand(productName) {
-  return productName
+  const brand = productName
     .replace(/^20\d{2}\s+/, '')
     .replace(/^Panini\s+/, '')
     .replace(/\s+Football$/, '')
     .trim();
+  // The flagship is just "2017 Panini Football", so stripping the
+  // manufacturer leaves nothing to name it by.
+  if (!brand || /^Football$/i.test(brand)) return 'Panini';
+  return brand;
 }
 
 function mergeDuplicateIdSets(sets) {
