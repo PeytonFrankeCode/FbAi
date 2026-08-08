@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Parse the 2017 NFL checklists into per-product JSON files.
+ * Parse a year's NFL checklists into per-product JSON files.
  *
- * Source: the "2017 Checklists - Part N" text files at the repo root. Unlike
- * the 2023 DOCX source, these are already one record per line:
+ * Source: the "<year> Checklists - Part N" text files at the repo root.
+ * Unlike the 2023 DOCX source, these are already one record per line:
  *
  *   2017 Panini Preferred Football Checklist    <- article title
  *   Base Set Checklist                          <- set header
@@ -21,8 +21,13 @@
  * arrives as an image PDF, so the noise tolerance here (bullet glyphs
  * read back as ¢/¥/e/°/*, gibberish scraped off card photos) is kept.
  *
- * This ADDS to the existing checklists — 2017 products already on disk that
- * this source doesn't cover, such as Panini Certified, are left alone.
+ * This ADDS to the existing checklists — products already on disk that a
+ * source doesn't cover, such as 2017 Panini Certified, are left alone.
+ *
+ * Each year is parsed on its own, because a compilation carries articles
+ * about neighbouring years (updates to an earlier product, stray
+ * cross-references) and those are only recognisable as off-year against the
+ * year the rest of the file is about.
  */
 
 const fs = require('fs');
@@ -32,17 +37,36 @@ const ROOT = path.join(__dirname, '..');
 const CHECKLISTS_DIR = path.join(ROOT, 'public', 'data', 'checklists');
 const INDEX_PATH = path.join(CHECKLISTS_DIR, 'index.json');
 
-// Every 2017 source text at the repo root, in name order, unless explicit
-// paths are passed. Globbing rather than a fixed list so that dropping in a
-// later part picks it up with no edit here. The uploaded names are
-// percent-encoded ("2017%20Checklists%20-%20Part%202_AI_optimized.txt"),
-// which the pattern tolerates.
-const TEXT_PATHS = process.argv.slice(2).length
-  ? process.argv.slice(2)
-  : fs.readdirSync(ROOT)
-      .filter(f => /^2017(%20|\s)*Checklists.*\.txt$/i.test(f))
-      .sort()
-      .map(f => path.join(ROOT, f));
+// Usage:
+//   parse-checklists.js 2018        every "2018 Checklists…" text at the root
+//   parse-checklists.js a.txt b.txt those files
+//   parse-checklists.js             every year's sources found at the root
+//
+// Globbing rather than a fixed list so dropping in a later part picks it up
+// with no edit here. Uploaded names come back percent-encoded
+// ("2018%20Checklists%20-%20Part%201_AI_optimized.txt"), which the pattern
+// tolerates. One year at a time — each compilation is parsed on its own so
+// its dominant year can be worked out.
+const ARGS = process.argv.slice(2);
+const YEAR_ARG = ARGS.length === 1 && /^20\d{2}$/.test(ARGS[0]) ? ARGS[0] : null;
+
+function sourcesForYear(year) {
+  const re = new RegExp(`^${year}(%20|\\s)*Checklists.*\\.txt$`, 'i');
+  return fs.readdirSync(ROOT).filter(f => re.test(f)).sort().map(f => path.join(ROOT, f));
+}
+
+function allSourceYears() {
+  const years = new Set();
+  for (const f of fs.readdirSync(ROOT)) {
+    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists.*\.txt$/i);
+    if (m) years.add(m[1]);
+  }
+  return [...years].sort();
+}
+
+const TEXT_PATHS = YEAR_ARG ? sourcesForYear(YEAR_ARG)
+  : ARGS.length ? ARGS
+  : null;   // null means "every year", handled in main
 
 // Each article in the source starts with its title on its own line:
 //   "2017 Panini Preferred Football Checklist"
@@ -189,8 +213,18 @@ const FOOTER_RE = /^(Checklist Top|Comments\?|SHARE:|Previous Article|Next Artic
 const CHROME_RE = /^(Here'?s|Next Article|Previous Article|Cheap Wax|Ryan Cracknell|THE BECKETT|Beckett|Subscribe|Shop Now|RELATED|LEAVE|Top of|Bottom of|Stay in|LATEST|NEW CHECK|\d+ COMMENTS?|Collecting|What does|Copyright|SUBJECT|Please reach|Check out|View |Buy on|Refer to|Highest print|Want to know|Second Look|Click here|Share|Tweet|Print|Email|Advertisement|When you click|https?:|www\.)/i;
 
 function main() {
+  if (!TEXT_PATHS) {
+    const years = allSourceYears();
+    if (!years.length) { console.error('no "<year> Checklists….txt" sources at the repo root'); process.exit(1); }
+    for (const y of years) { console.log(`\n===== ${y} =====`); parseSources(sourcesForYear(y)); }
+    return;
+  }
+  parseSources(TEXT_PATHS);
+}
+
+function parseSources(paths) {
   let text = '';
-  for (const p of TEXT_PATHS) {
+  for (const p of paths) {
     if (!fs.existsSync(p)) { console.error(`missing source: ${p}`); process.exit(1); }
     const t = fs.readFileSync(p, 'utf8');
     console.log(`Loaded ${t.length} chars from ${path.basename(p)}`);
@@ -211,6 +245,7 @@ function main() {
     headers.push({ lineIdx: i, product: normalizeProduct(m[1]), suffix: (m[2] || '').trim() });
   }
   console.log(`Found ${headers.length} header occurrences`);
+  dropOffYearArticles(headers);
   canonicalizeProductNames(headers);
 
   // ---- Pass 2: group blocks by product ----
@@ -405,6 +440,16 @@ function bareCategoryMarker(line, slice, idx) {
   return null;
 }
 
+// True when the very next thing under a header is its card count.
+function declaresCardCount(slice, idx) {
+  for (let j = idx + 1; j < slice.length; j++) {
+    const n = slice[j].trim();
+    if (!n) continue;
+    return /^\d+\s+cards?\b/i.test(n);
+  }
+  return false;
+}
+
 function parseSet(slice, startIdx, category) {
   const setName = cleanSetName(slice[startIdx].trim());
   if (!setName) return null;
@@ -503,7 +548,13 @@ function isSetHeader(line, slice, idx) {
   // Judge the name the set would actually get. "AKA Checklist" reads as two
   // plausible words, but the set it produces is "AKA" — the trailing word
   // was carrying the line.
-  if (!looksLikeTitle(line) || !looksLikeTitle(cleanSetName(line))) return false;
+  const name = cleanSetName(line);
+  if (!looksLikeTitle(line) || !looksLikeTitle(name)) return false;
+  // A short one-word name is either a real set ("Ink" in Luminance) or a
+  // scrap of page noise ("Pre", "AKA"). What separates them is that the real
+  // one declares its size: the source puts "N cards." directly under every
+  // genuine set header.
+  if (/^\S{1,4}$/.test(name) && !declaresCardCount(slice, idx)) return false;
   // Must be followed within a few lines by a card count, a parallels block,
   // or actual card data — otherwise it's stray prose.
   for (let j = idx + 1; j < Math.min(idx + 8, slice.length); j++) {
@@ -537,8 +588,6 @@ const TITLE_STOPWORDS = new Set(['of', 'the', 'and', 'in', 'for', 'on', 'to', 'a
 function wordsLookLikeATitle(line) {
   const words = line.split(/\s+/).filter(Boolean);
   if (!words.length) return false;
-  // A one-word title is a real word, not a three-letter fragment ("Pre").
-  if (words.length === 1 && words[0].replace(/[^A-Za-z0-9]/g, '').length < 5) return false;
   // "NFL MVP" is legitimately all caps; "CHIEFS" and "BO JACKSON DEREK
   // CARR" are photo captions. Length of the longest word tells them apart.
   if (line === line.toUpperCase() && words.some(w => w.length > 5)) return false;
@@ -688,8 +737,15 @@ function parseParallel(line) {
 // ============================================================
 //   Shared helpers (same conventions as the 2023/2024 parsers)
 // ============================================================
+// Brand names that are acronyms, which the source sometimes title-cases.
+// 2017's articles say "Panini XR", 2018's say "Panini Xr" — the same product
+// reading two ways across the catalogue.
+const ACRONYM_BRANDS = [[/\bXr\b/g, 'XR']];
+
 function normalizeProduct(s) {
-  return s.replace(/\s+/g, ' ').trim();
+  let out = s.replace(/\s+/g, ' ').trim();
+  for (const [pat, rep] of ACRONYM_BRANDS) out = out.replace(pat, rep);
+  return out;
 }
 
 // The source is inconsistent about the manufacturer prefix: Select's base
@@ -701,6 +757,34 @@ function normalizeProduct(s) {
 // titled "2017 Panini Encased Football" and its autographs article "2018
 // Panini Encased Football". Left alone that splits one product across two
 // years; the year carrying more articles wins.
+// A year's compilation carries articles about other years: updates to an
+// earlier product ("2016 Panini Impeccable Football Updates", "2017 Panini
+// Majestic Football Updates") and the odd stray cross-reference. They are
+// about that other product, not this one, so folding them in files an
+// earlier year's cards under this one — and letting them stand alone is
+// worse, because the file for that year already exists and would be
+// replaced by a fragment of itself. Drop them; whichever year's own
+// compilation covers those products carries the cards properly.
+function dropOffYearArticles(headers) {
+  const counts = new Map();
+  for (const h of headers) {
+    const y = yearOf(h.product);
+    counts.set(y, (counts.get(y) || 0) + 1);
+  }
+  let dominant = null;
+  for (const [y, n] of counts) if (dominant === null || n > counts.get(dominant)) dominant = y;
+  if (dominant === null) return;
+  const dropped = [];
+  for (let i = headers.length - 1; i >= 0; i--) {
+    if (yearOf(headers[i].product) === dominant) continue;
+    dropped.push(headers[i].product);
+    headers.splice(i, 1);
+  }
+  if (dropped.length) {
+    console.log(`  dropped ${dropped.length} off-year article(s): ${[...new Set(dropped)].join(', ')}`);
+  }
+}
+
 // True when some article titled `name` neighbours an article titled
 // `target` in document order.
 function isAdjacentTo(headers, name, target) {
@@ -736,13 +820,7 @@ function canonicalizeProductNames(headers) {
     const merged = [];
     for (const n of names) {
       if (n === pick) continue;
-      // A differently-yeared title is only the same product when it sits
-      // inside that product's run of articles — Flawless Collegiate's 2016
-      // article is the fifth in an unbroken Flawless Collegiate run, so it
-      // belongs to it. A 2016 product appearing on its own elsewhere in the
-      // file would not, and must not be absorbed.
-      const sameYear = yearOf(n) === yearOf(pick);
-      if (!sameYear && !isAdjacentTo(headers, n, pick)) continue;
+      if (yearOf(n) !== yearOf(pick)) continue;
       canonical.set(n, pick);
       merged.push(n);
     }
