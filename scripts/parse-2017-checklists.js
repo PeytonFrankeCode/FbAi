@@ -50,7 +50,11 @@ const TEXT_PATHS = process.argv.slice(2).length
 //   "2017 Panini Preferred Football Memorabilia Cards"
 // i.e. "<year> <product> Football <section>". The section tells us the
 // default category for every set in that article.
-const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:(Autographs?|Memorabilia Cards?|Relics?|Inserts?|Base Cards?|Base Set|Rookie Cards?|Parallels?)\s+)?Checklists?\s*$/;
+// The section names are not a closed set — alongside "Autographs" and
+// "Memorabilia Cards" the source has "Inserts", "Base Set", "Update", and
+// "Rookie Ticket Autograph Parallels" — so the suffix is matched by shape
+// (a few words before "Checklists") rather than by enumeration.
+const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:([A-Z][A-Za-z]*(?:\s+[A-Za-z]+){0,4})\s+)?Checklists?\s*$/;
 
 // The article title is one line in the text sources, but a page render wraps
 // it, so OCR puts the trailing "Checklists" on a line of its own:
@@ -133,9 +137,15 @@ function rejoinWrappedSetHeaders(lines) {
 // "previous/next article" rail truncates its titles with an ellipsis.
 // Neither is a real article title.
 function isProductHeaderLine(line) {
-  if (!PRODUCT_HEADER_RE.test(line)) return false;
+  const m = line.match(PRODUCT_HEADER_RE);
+  if (!m) return false;
   if (/\.\.\.\s*$/.test(line)) return false;
   if (line === line.toUpperCase()) return false;
+  // "Team Set" articles repeat the same cards broken down by team, in the
+  // squashed team-split layout the 2023 parser deals with. The product's
+  // master articles already carry every card, so this one only adds a
+  // second, worse copy.
+  if (/\bTeam Set\b/i.test(m[2] || '')) return false;
   return true;
 }
 
@@ -600,20 +610,56 @@ function normalizeProduct(s) {
 // memorabilia articles are "2017 Select Football". Left alone that ships as
 // two half-products. Group names that differ only by the prefix and keep the
 // prefixed form, matching the rest of the catalog (2017 Panini Certified …).
+// Also merges year variants. Encased shipped late, so its base article is
+// titled "2017 Panini Encased Football" and its autographs article "2018
+// Panini Encased Football". Left alone that splits one product across two
+// years; the year carrying more articles wins.
+// True when some article titled `name` neighbours an article titled
+// `target` in document order.
+function isAdjacentTo(headers, name, target) {
+  for (let i = 0; i < headers.length; i++) {
+    if (headers[i].product !== name) continue;
+    if (headers[i - 1] && headers[i - 1].product === target) return true;
+    if (headers[i + 1] && headers[i + 1].product === target) return true;
+  }
+  return false;
+}
+
 function canonicalizeProductNames(headers) {
   const byKey = new Map();
+  const articleCount = new Map();
   for (const h of headers) {
-    const key = h.product.replace(/^(20\d{2})\s+Panini\s+/, '$1 ');
+    const key = h.product.replace(/^20\d{2}\s+/, '').replace(/^Panini\s+/, '');
     if (!byKey.has(key)) byKey.set(key, new Set());
     byKey.get(key).add(h.product);
+    articleCount.set(h.product, (articleCount.get(h.product) || 0) + 1);
   }
   const canonical = new Map();
-  for (const [key, names] of byKey) {
+  for (const [, names] of byKey) {
     if (names.size < 2) continue;
-    const prefixed = [...names].find(n => /^20\d{2}\s+Panini\s/.test(n));
-    const pick = prefixed || [...names][0];
-    for (const n of names) if (n !== pick) canonical.set(n, pick);
-    console.log(`  merged ${[...names].filter(n => n !== pick).join(', ')} -> ${pick}`);
+    // The manufacturer prefix decides first — Select's base article says
+    // "Panini Select" while its other two say plain "Select", and the
+    // catalogue spells the rest of the year's Panini products out in full.
+    // Article count only breaks ties, which is where the year variants land.
+    const hasPanini = (n) => (/^20\d{2}\s+Panini\s/.test(n) ? 1 : 0);
+    const ranked = [...names].sort((a, b) =>
+      (hasPanini(b) - hasPanini(a)) ||
+      (articleCount.get(b) - articleCount.get(a)));
+    const pick = ranked[0];
+    const merged = [];
+    for (const n of names) {
+      if (n === pick) continue;
+      // A differently-yeared title is only the same product when it sits
+      // inside that product's run of articles — Flawless Collegiate's 2016
+      // article is the fifth in an unbroken Flawless Collegiate run, so it
+      // belongs to it. A 2016 product appearing on its own elsewhere in the
+      // file would not, and must not be absorbed.
+      const sameYear = yearOf(n) === yearOf(pick);
+      if (!sameYear && !isAdjacentTo(headers, n, pick)) continue;
+      canonical.set(n, pick);
+      merged.push(n);
+    }
+    if (merged.length) console.log(`  merged ${merged.join(', ')} -> ${pick}`);
   }
   for (const h of headers) {
     if (canonical.has(h.product)) h.product = canonical.get(h.product);
