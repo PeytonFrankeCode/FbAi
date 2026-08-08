@@ -545,13 +545,27 @@ function looksLikeTitle(line) {
 
 function parseCard(line) {
   let printRun = null;
-  let clean = line
-    // "n/a" is the source's way of saying this card has no print run.
-    .replace(/\s+n\/a\s*$/i, '')
-    .replace(/\s+\/(\d+)\s*$/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
-    .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (printRun == null) printRun = parseInt(d, 10); return ''; })
-    .replace(/\s*[–—-]\s*no base version\s*$/i, '')
-    .trim();
+  // "n/a" is the source's way of saying this card has no print run.
+  let clean = line.replace(/\s+n\/a\s*$/i, '').replace(/\s*[–—-]\s*no base version\s*$/i, '').trim();
+
+  // The tail is a stack, not a sequence: "Haason Reddick, Arizona Cardinals
+  // /79 RC" puts the rookie marker outside the print run, so stripping the
+  // print run first never matches and "/79" survives to be read as a second
+  // player. Peel whichever kind of tail is currently outermost, and keep
+  // going until nothing more comes off.
+  let prev;
+  do {
+    prev = clean;
+    clean = clean
+      .replace(/\s+(RC|SP|SSP|VAR|RPS|RR|AUTO|Auto|Mem|Jersey|Patch|Relic|Memorabilia|Dual|Triple|Quad|Jumbo|Rookie)\s*$/i, '')
+      .replace(/\s*[–—]\s*(?:Rookie|Jersey|Auto|Dual|Triple|Jumbo|Redemption)[A-Za-z ]*$/i, '')
+      // "(all Favre Team Variations combined)"
+      .replace(/\s*\([^)]*\)\s*$/, '')
+      .replace(/\s+\/(\d+)\s*$/, (_, pr) => { if (printRun == null) printRun = parseInt(pr, 10); return ''; })
+      .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (printRun == null) printRun = parseInt(d, 10); return ''; })
+      .trim();
+  } while (clean !== prev);
+
   // The source drops the slash on a handful of print runs — "32 Louis Lipps
   // 194" sits between "/199" and "/149". Player names never end in digits,
   // so a trailing number here is always the print run.
@@ -561,15 +575,7 @@ function parseCard(line) {
       return rest;
     });
   }
-  // Rookie / short-print / autograph markers are annotations, not part of
-  // the team, and they stack: "Chicago Bears RC SP AUTO". Left on, each
-  // combination forks the franchise into another team — Part 1 produced 672
-  // distinct "teams" before this was applied, against 88 real ones.
-  let prev;
-  do {
-    prev = clean;
-    clean = clean.replace(/\s+(RC|SP|SSP|AUTO|RPS|VAR)\s*$/i, '').trim();
-  } while (clean !== prev);
+
   const m = clean.match(/^(\S+)\s+(.+?)$/);
   if (!m) return null;
 
@@ -590,11 +596,18 @@ function parseCard(line) {
   }
   if (!players.length) return null;
 
-  const card = { number: m[1], player: players.join('/') };
+  const card = { number: m[1], player: fixOcrSuffix(players.join('/')) };
   // Only a team every player shares belongs on the card.
   if (teams.length === players.length && teams.every(t => t === teams[0])) card.team = teams[0];
   if (printRun) card.printRun = printRun;
   return card;
+}
+
+// OCR reads the generational suffix "III" as "Ill" — "John Ross Ill". No
+// surname is "Ill", so the correction is unambiguous, and leaving it in
+// means the card never matches a search for the real player.
+function fixOcrSuffix(player) {
+  return player.replace(/\bIll\b/g, 'III');
 }
 
 // Everything a team field picks up after the franchise name. These stack
