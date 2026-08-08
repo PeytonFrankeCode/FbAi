@@ -469,7 +469,10 @@ function isSetHeader(line, slice, idx) {
   if (/^Checklists?\s*$/i.test(line)) return false; // the article's own section label
   if (/^Parallels?\b/i.test(line)) return false;
   if (/^Versions?\b/i.test(line)) return false;
-  if (!looksLikeTitle(line)) return false;
+  // Judge the name the set would actually get. "AKA Checklist" reads as two
+  // plausible words, but the set it produces is "AKA" — the trailing word
+  // was carrying the line.
+  if (!looksLikeTitle(line) || !looksLikeTitle(cleanSetName(line))) return false;
   // Must be followed within a few lines by a card count, a parallels block,
   // or actual card data — otherwise it's stray prose.
   for (let j = idx + 1; j < Math.min(idx + 8, slice.length); j++) {
@@ -513,7 +516,9 @@ function wordsLookLikeATitle(line) {
     if (!w) continue;
     if (/^\d+(st|nd|rd|th)?$/i.test(w)) continue;        // "Year 2", "1st Down"
     if (/^[A-Z]{2,5}s?$/.test(w)) continue;              // NFL, MVPs, RPS, XR
-    if (/^[A-Z][A-Za-z0-9’'-]*$/.test(w)) continue;      // Rookie, X-Alted, Activ8
+    // Two characters minimum: a lone capital is page noise ("L Patriots",
+    // "Y Res"), never part of a set name.
+    if (/^[A-Z][A-Za-z0-9’'-]+$/.test(w)) continue;      // Rookie, X-Alted, Activ8
     if (TITLE_STOPWORDS.has(w.toLowerCase())) continue;  // Hall of Fame
     return false;
   }
@@ -556,21 +561,59 @@ function parseCard(line) {
       return rest;
     });
   }
-  // "RC" (rookie card) and "SP" (short print) are annotations, not part of
-  // the team — left on, they fork "Cleveland Browns" into a second team.
-  clean = clean.replace(/\s+(RC|SP|RC\s+SP|SP\s+RC)\s*$/i, '').trim();
-  const withTeam = clean.match(/^(\S+)\s+([^,]+),\s*(.+?)$/);
-  if (withTeam) {
-    const card = { number: withTeam[1], player: withTeam[2].trim(), team: withTeam[3].trim() };
-    if (printRun) card.printRun = printRun;
-    return card;
+  // Rookie / short-print / autograph markers are annotations, not part of
+  // the team, and they stack: "Chicago Bears RC SP AUTO". Left on, each
+  // combination forks the franchise into another team — Part 1 produced 672
+  // distinct "teams" before this was applied, against 88 real ones.
+  let prev;
+  do {
+    prev = clean;
+    clean = clean.replace(/\s+(RC|SP|SSP|AUTO|RPS|VAR)\s*$/i, '').trim();
+  } while (clean !== prev);
+  const m = clean.match(/^(\S+)\s+(.+?)$/);
+  if (!m) return null;
+
+  // A card can name one player with a team ("Dan Marino, Miami Dolphins"),
+  // several players with none (Activ8's eight-rookie cards), or several
+  // players each with their own team ("Richard Sherman, Seattle Seahawks/
+  // Michael Crabtree, Oakland Raiders"). All three are slash-separated
+  // "player[, team]" segments, so one pass covers them.
+  const players = [];
+  const teams = [];
+  for (const seg of m[2].split('/').map(s => s.trim()).filter(Boolean)) {
+    const pair = seg.match(/^(.+?),\s*(.+)$/);
+    if (!pair) { players.push(seg); continue; }
+    players.push(pair[1].trim());
+    const t = cleanTeam(pair[2]);
+    if (printRun == null && t.printRun != null) printRun = t.printRun;
+    if (t.team) teams.push(t.team);
   }
-  // Parallel checklists list the player without a team.
-  const noTeam = clean.match(/^(\S+)\s+(.+?)$/);
-  if (!noTeam) return null;
-  const card = { number: noTeam[1], player: noTeam[2].trim() };
+  if (!players.length) return null;
+
+  const card = { number: m[1], player: players.join('/') };
+  // Only a team every player shares belongs on the card.
+  if (teams.length === players.length && teams.every(t => t === teams[0])) card.team = teams[0];
   if (printRun) card.printRun = printRun;
   return card;
+}
+
+// Everything a team field picks up after the franchise name. These stack
+// freely — "Chicago Bears /49 RC Auto Jersey", "San Francisco 49ers AUTO —
+// Redemption", "Philadelphia Eagles VAR AUTO[/column]" — and each new
+// combination forks the franchise into another distinct team. Part 1's
+// first 1,700 pages produced 561 "teams" before this ran.
+const TEAM_ANNOTATION = /\s+(RC|SP|SSP|VAR|RPS|AUTO|Auto|Autographs?|Jersey|Patch|Relic|Memorabilia|Redemption)\s*$/i;
+
+function cleanTeam(raw) {
+  let printRun = null;
+  let team = raw
+    .replace(/\[[^\]]*\]/g, '')                 // "[/column]" left by the page markup
+    .replace(/\s*[–—]\s*[A-Za-z ]+$/, '')       // "— Redemption"
+    .replace(/\s*\/(\d+)\b/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
+    .trim();
+  let prev;
+  do { prev = team; team = team.replace(TEAM_ANNOTATION, '').trim(); } while (team !== prev);
+  return { team, printRun };
 }
 
 // OCR renders the source's • bullet as ¢, ¥, e, °, or *.
