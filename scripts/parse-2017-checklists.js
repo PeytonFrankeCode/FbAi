@@ -52,6 +52,78 @@ const TEXT_PATHS = process.argv.slice(2).length
 // default category for every set in that article.
 const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:(Autographs?|Memorabilia Cards?|Relics?|Inserts?|Base Cards?|Base Set|Rookie Cards?|Parallels?)\s+)?Checklists?\s*$/;
 
+// The article title is one line in the text sources, but a page render wraps
+// it, so OCR puts the trailing "Checklists" on a line of its own:
+//
+//   2017 Panini Preferred Football Autographs
+//   Checklists
+//
+// Rejoin those before the header matcher runs, or every section article in an
+// OCR'd source is invisible and its sets land under the previous product.
+function rejoinWrappedTitles(lines) {
+  const stem = /^20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football(?:\s+(?:Autographs?|Memorabilia Cards?|Relics?|Inserts?|Base Cards?|Base Set|Rookie Cards?|Parallels?))?\s*$/;
+  for (let i = 0; i + 1 < lines.length; i++) {
+    const cur = lines[i].trim();
+    if (!stem.test(cur)) continue;
+    // Skip blanks the render leaves between the two halves.
+    let j = i + 1;
+    while (j < lines.length && !lines[j].trim()) j++;
+    if (j >= lines.length) continue;
+    if (!/^Checklists?\s*$/i.test(lines[j].trim())) continue;
+    lines[i] = `${cur} ${lines[j].trim()}`;
+    lines[j] = '';
+  }
+}
+
+// A long set name wraps in a page render the same way the article title
+// does, and only the tail survives as the header:
+//
+//   Radiant Rookie Patch Signatures Gold Laundry Tags NFL
+//   Shield
+//   20 cards.
+//
+// which ships the set as "Shield". A real set header is always followed by
+// its card count, parallels, or cards — so a title-shaped line whose only
+// follower is another title-shaped line is a wrap fragment, and the two
+// belong together.
+// Shortest observed wrapped fragment is 46 chars; the shortest false
+// positive ("Y.A. Tittle") is 11.
+const WRAP_MIN_WIDTH = 35;
+
+function rejoinWrappedSetHeaders(lines) {
+  const opensBody = (t) => /^\d+\s+cards?\b/i.test(t) || /^Parallels?\b/i.test(t) || isCardLine(t);
+  const nextContent = (from) => {
+    for (let j = from; j < lines.length; j++) if (lines[j].trim()) return j;
+    return -1;
+  };
+  for (let i = 0; i < lines.length; i++) {
+    const cur = lines[i].trim();
+    if (!cur || !looksLikeTitle(cur)) continue;
+    if (isProductHeaderLine(cur) || CHROME_RE.test(cur) || FOOTER_RE.test(cur)) continue;
+    if (/^Checklists?\s*$/i.test(cur)) continue;
+    if (opensBody(cur)) continue;
+    const j = nextContent(i + 1);
+    if (j === -1) continue;
+    // A line only wraps once it has filled the render width, so a short
+    // line followed by a set header is two separate things — "Y.A. Tittle"
+    // ending a name list, then "Jumbo Rookie Signature Swatches Checklist"
+    // starting a set. Without the length floor those get glued together.
+    if (cur.length < WRAP_MIN_WIDTH) continue;
+    // The tail is judged loosely — it is only the remainder of a name, so
+    // it can be a single short word ("Logo", "Shield") that would not stand
+    // as a title on its own.
+    const tail = lines[j].trim();
+    if (!/^[A-Z][A-Za-z0-9’'\- ]*$/.test(tail)) continue;
+    if (isProductHeaderLine(tail) || opensBody(tail)) continue;
+    if (tail.length > cur.length || cur.length + tail.length > 120) continue;
+    // Only a fragment if the tail is the half that actually opens a set.
+    const k = nextContent(j + 1);
+    if (k === -1 || !opensBody(lines[k].trim())) continue;
+    lines[i] = `${cur} ${tail}`;
+    lines[j] = '';
+  }
+}
+
 // Ad tiles OCR'd off the page render come through as ALL CAPS, and the
 // "previous/next article" rail truncates its titles with an ellipsis.
 // Neither is a real article title.
@@ -81,6 +153,8 @@ function main() {
   }
   const lines = text.split('\n').map(l => l.replace(/\s+$/, ''));
   console.log(`Loaded ${lines.length} lines total`);
+  rejoinWrappedTitles(lines);
+  rejoinWrappedSetHeaders(lines);
 
   // ---- Pass 1: locate every product header ----
   const headers = [];
@@ -339,6 +413,39 @@ function isSetHeader(line, slice, idx) {
 // "Parallels:" block, so without a plausibility check the LAST scrap of
 // noise wins the set name and the real header ends up with zero cards.
 // A genuine set title is mostly letters and has at least one real word.
+// The lowercase words a real set name is allowed to contain — everything
+// else in a title is capitalised, an acronym, or a number.
+// No bare "a"/"an": they let photo-caption noise like "OAKLAND RAIDERS a)"
+// pass, and no set in the source needs them.
+const TITLE_STOPWORDS = new Set(['of', 'the', 'and', 'in', 'for', 'on', 'to', 'at', 'is', 'or', 'with', 'vs']);
+
+// OCR reads the card photos on the page as letter salad that is otherwise
+// indistinguishable from a title — "ces Pry et", "ae See", "WNP ay ea erp
+// eee", "picasa PEYTON MANNING", "eS) SaaS" — and it lands between a real
+// set header and its card count, so the noise wins the set name and the
+// real header is left with nothing. Word shape is what separates them:
+// titles are made of capitalised words, acronyms, numbers and a handful of
+// lowercase connectors, and nothing else.
+function wordsLookLikeATitle(line) {
+  const words = line.split(/\s+/).filter(Boolean);
+  if (!words.length) return false;
+  // A one-word title is a real word, not a three-letter fragment ("Pre").
+  if (words.length === 1 && words[0].replace(/[^A-Za-z0-9]/g, '').length < 5) return false;
+  // "NFL MVP" is legitimately all caps; "CHIEFS" and "BO JACKSON DEREK
+  // CARR" are photo captions. Length of the longest word tells them apart.
+  if (line === line.toUpperCase() && words.some(w => w.length > 5)) return false;
+  for (const raw of words) {
+    const w = raw.replace(/^[(]|[),.]+$/g, '');
+    if (!w) continue;
+    if (/^\d+(st|nd|rd|th)?$/i.test(w)) continue;        // "Year 2", "1st Down"
+    if (/^[A-Z]{2,5}s?$/.test(w)) continue;              // NFL, MVPs, RPS, XR
+    if (/^[A-Z][A-Za-z0-9’'-]*$/.test(w)) continue;      // Rookie, X-Alted, Activ8
+    if (TITLE_STOPWORDS.has(w.toLowerCase())) continue;  // Hall of Fame
+    return false;
+  }
+  return true;
+}
+
 function looksLikeTitle(line) {
   if (line.length < 3) return false;
   if (!/[A-Za-z]{3}/.test(line)) return false;
@@ -351,6 +458,8 @@ function looksLikeTitle(line) {
   // and its one-off notes ("Kizer has only a Black Prizm … parallels.") do,
   // and both sit exactly where a set header would.
   if (/[:.]\s*$/.test(line)) return false;
+  if (/[^A-Za-z0-9 \-'’.&(),]/.test(line)) return false;
+  if (!wordsLookLikeATitle(line)) return false;
   const letters = (line.match(/[A-Za-z0-9 ]/g) || []).length;
   return letters / line.length >= 0.7;
 }
