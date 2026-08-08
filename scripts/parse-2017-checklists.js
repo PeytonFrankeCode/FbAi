@@ -133,6 +133,36 @@ function rejoinWrappedSetHeaders(lines) {
   }
 }
 
+// A card naming several players, each with a team, is long enough to wrap:
+//
+//   1 Christian McCaffrey, Stanford Cardinal/Dalvin Cook, Florida State
+//   Seminoles/Leonard
+//   Fournette, LSU Tigers /25
+//
+// leaving "Leonard" as a player with no surname. The tell is precise — the
+// last slash-segment names a player with no team while earlier segments have
+// one — so this cannot fire on an ordinary team-less card and swallow the
+// set header that follows it.
+function rejoinWrappedCards(lines) {
+  for (let i = 0; i + 1 < lines.length; i++) {
+    const cur = lines[i].trim();
+    if (!cur || !isCardLine(cur)) continue;
+    if (/\/\d+\s*$/.test(cur)) continue;              // print run already reached
+    const segs = cur.split('/');
+    if (segs.length < 2) continue;
+    // The wrap can also land just after the comma, leaving "O.J. Howard,"
+    // with its team on the next line — so what matters is whether anything
+    // follows the comma, not whether one is present.
+    if (/,\s*\S/.test(segs[segs.length - 1])) continue;
+    if (!segs.slice(0, -1).some(s => s.includes(','))) continue;
+    const next = lines[i + 1].trim();
+    if (!next || isCardLine(next) || CHROME_RE.test(next) || FOOTER_RE.test(next)) continue;
+    if (/^[¢•°¥*]/.test(next) || /^\d+\s+cards?\b/i.test(next)) continue;
+    lines[i] = `${cur} ${next}`;
+    lines[i + 1] = '';
+  }
+}
+
 // Ad tiles OCR'd off the page render come through as ALL CAPS, and the
 // "previous/next article" rail truncates its titles with an ellipsis.
 // Neither is a real article title.
@@ -170,6 +200,7 @@ function main() {
   console.log(`Loaded ${lines.length} lines total`);
   rejoinWrappedTitles(lines);
   rejoinWrappedSetHeaders(lines);
+  rejoinWrappedCards(lines);
 
   // ---- Pass 1: locate every product header ----
   const headers = [];
