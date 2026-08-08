@@ -483,12 +483,22 @@ function parseSet(slice, startIdx, category) {
     // "Parallels:" is the usual opener, but some sets introduce the same
     // bullet list with prose ("Each card has four versions:"). Any line
     // ending in a colon that a bullet follows opens the list.
-    if (/^Parallels?\s*:?\s*$/i.test(cl) || (/:\s*$/.test(cl) && startsBulletList(slice, i + 1))) {
+    if (isParallelsOpener(cl) || (/:\s*$/.test(cl) && startsBulletList(slice, i + 1))) {
       i++;
       while (i < slice.length) {
         const pl = stripBullet(slice[i].trim());
         if (!pl) { i++; continue; }
-        if (isCardLine(pl) || isSetHeader(pl, slice, i) || /^Parallels?\s*:?\s*$/i.test(pl)) break;
+        // A parallel list runs until the set's cards start. Asking
+        // isSetHeader here ends it early, because a plain parallel name a
+        // few lines above the cards looks exactly like a header: 2019's
+        // lists carry no bullets, so "Yellow Press Proof" broke out of
+        // Donruss's Veterans block and took its 300 cards with it. Only
+        // things that cannot be a parallel end the list.
+        if (isCardLine(pl)) break;
+        if (isParallelsOpener(pl)) break;
+        if (/Check[l]?ists?\s*$/i.test(pl)) break;          // an explicit set header
+        if (bareCategoryMarker(pl, slice, i)) break;
+        if (isProductHeaderLine(pl)) break;
         const par = parseParallel(pl);
         if (par) parallels.push(par);
         i++;
@@ -660,19 +670,28 @@ function parseCard(line) {
   if (!m) return null;
 
   // A card can name one player with a team ("Dan Marino, Miami Dolphins"),
-  // several players with none (Activ8's eight-rookie cards), or several
-  // players each with their own team ("Richard Sherman, Seattle Seahawks/
-  // Michael Crabtree, Oakland Raiders"). All three are slash-separated
-  // "player[, team]" segments, so one pass covers them.
+  // several players with none, several players each with their own team
+  // ("Richard Sherman, Seattle Seahawks/Michael Crabtree, Oakland Raiders"),
+  // or — 2019 only — several players separated by commas rather than
+  // slashes ("Mecole Hardman Jr., Patrick Mahomes II, Travis Kelce, Tyreek
+  // Hill"). The last shape is why the text after a comma cannot simply be
+  // taken for a team: it has to be recognised as one.
   const players = [];
   const teams = [];
   for (const seg of m[2].split('/').map(s => s.trim()).filter(Boolean)) {
     const pair = seg.match(/^(.+?),\s*(.+)$/);
     if (!pair) { players.push(seg); continue; }
-    players.push(pair[1].trim());
     const t = cleanTeam(pair[2]);
     if (printRun == null && t.printRun != null) printRun = t.printRun;
-    if (t.team) teams.push(t.team);
+    if (t.team && isKnownTeam(t.team)) {
+      players.push(pair[1].trim());
+      teams.push(t.team);
+    } else {
+      // Not a team, so the commas are separating players.
+      for (const nm of seg.split(',').map(x => x.trim()).filter(Boolean)) {
+        players.push(cleanTeam(nm).team || nm);
+      }
+    }
   }
   if (!players.length) return null;
 
@@ -690,6 +709,41 @@ function fixOcrSuffix(player) {
   return player.replace(/\bIll\b/g, 'III');
 }
 
+// Whether a comma is followed by a team or by another player can only be
+// answered by knowing the teams. The 32 franchises plus the ones that have
+// moved or renamed are fixed and worth stating; college programmes are not,
+// so they come from the checklists already on disk, whose team fields have
+// been through this same validation.
+const NFL_TEAMS = new Set([
+  'Arizona Cardinals', 'Atlanta Falcons', 'Baltimore Ravens', 'Buffalo Bills',
+  'Carolina Panthers', 'Chicago Bears', 'Cincinnati Bengals', 'Cleveland Browns',
+  'Dallas Cowboys', 'Denver Broncos', 'Detroit Lions', 'Green Bay Packers',
+  'Houston Texans', 'Indianapolis Colts', 'Jacksonville Jaguars', 'Kansas City Chiefs',
+  'Las Vegas Raiders', 'Los Angeles Chargers', 'Los Angeles Rams', 'Miami Dolphins',
+  'Minnesota Vikings', 'New England Patriots', 'New Orleans Saints', 'New York Giants',
+  'New York Jets', 'Oakland Raiders', 'Philadelphia Eagles', 'Pittsburgh Steelers',
+  'San Diego Chargers', 'San Francisco 49ers', 'Seattle Seahawks', 'St. Louis Rams',
+  'Tampa Bay Buccaneers', 'Tennessee Titans', 'Washington Redskins',
+  'Washington Football Team', 'Washington Commanders', 'Baltimore Colts',
+  'Houston Oilers', 'Tennessee Oilers', 'Los Angeles Raiders', 'Phoenix Cardinals',
+  'St. Louis Cardinals', 'Boston Patriots', 'New York Titans',
+]);
+
+let _knownTeams = null;
+function isKnownTeam(name) {
+  if (NFL_TEAMS.has(name)) return true;
+  if (_knownTeams === null) {
+    _knownTeams = new Set();
+    for (const f of fs.readdirSync(CHECKLISTS_DIR)) {
+      if (!/\.json$/.test(f) || f === 'index.json') continue;
+      let d;
+      try { d = JSON.parse(fs.readFileSync(path.join(CHECKLISTS_DIR, f), 'utf8')); } catch { continue; }
+      for (const set of d.sets || []) for (const c of set.cards || []) if (c.team) _knownTeams.add(c.team);
+    }
+  }
+  return _knownTeams.has(name);
+}
+
 // Everything a team field picks up after the franchise name. These stack
 // freely — "Chicago Bears /49 RC Auto Jersey", "San Francisco 49ers AUTO —
 // Redemption", "Philadelphia Eagles VAR AUTO[/column]" — and each new
@@ -701,7 +755,10 @@ function cleanTeam(raw) {
   let printRun = null;
   let team = raw
     .replace(/\[[^\]]*\]/g, '')                 // "[/column]" left by the page markup
-    .replace(/\s*[–—]\s*[A-Za-z ]+$/, '')       // "— Redemption"
+    // "— Redemption", "– All-Americans", and the OCR'd "—- Legends" where
+    // the dash came back doubled.
+    .replace(/\s+[–—-]+\s*[A-Za-z][A-Za-z \-]*$/, '')
+    .replace(/\s+[–—-]+\s*$/, '')
     .replace(/\s*\/(\d+)\b/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
     .trim();
   let prev;
@@ -712,6 +769,15 @@ function cleanTeam(raw) {
 // OCR renders the source's • bullet as ¢, ¥, e, °, or *.
 function stripBullet(s) {
   return s.replace(/^[¢•°¥*e]\s+/, '').trim();
+}
+
+// The list is not always introduced by a bare "Parallels:" — Prizm labels
+// its by finish ("Prizms Parallels:"), and without matching that the names
+// underneath fall through to the card loop, where the last one before the
+// cards is taken for a set header.
+function isParallelsOpener(line) {
+  if (line.length > 60) return false;
+  return /(^|\s)(Parallels?|Versions?)\s*:\s*$/i.test(line) || /^(Parallels?|Versions?)\s*$/i.test(line);
 }
 
 function startsBulletList(slice, idx) {
@@ -899,11 +965,17 @@ function mergeDuplicateIdSets(sets) {
 // as its parallel.
 const VARIANT_WORDS = 'Red|Blue|Green|Gold|Silver|Purple|Orange|Pink|Black|White|Bronze|Yellow|Aqua|Teal|Platinum|Neon|Holo|Chrome|Shimmer|Sparkle|Press Proof|Die-Cut|Canvas|Camo|Finite|Vinyl|Foil|Hyper|Pandora|Velocity|Prizm|Mojo|Scope|Fluorescent|Reactive|Cracked Ice|Ruby|Sapphire|Emerald|Diamond|Tiger Stripe|Kaboom|Nebula|Peacock|Pulsar|Lazer|Disco|Snakeskin|Mosaic|Color Blast|Lava|Fractor|X-Fractor|Refractor|Stained Glass|Supernova|Interstellar|Splatter';
 const VARIANT_RE = new RegExp(`\\s+(${VARIANT_WORDS})(\\s+(${VARIANT_WORDS}))*\\s*$`, 'i');
+const ONE_VARIANT_WORD = new RegExp(`^(${VARIANT_WORDS})$`, 'i');
 
 function consolidateSets(sets) {
   const groups = new Map();
   for (const set of sets) {
-    const baseName = set.name.replace(VARIANT_RE, '').trim();
+    const stripped = set.name.replace(VARIANT_RE, '').trim();
+    // "White Gold" is a Gold Standard set in its own right, not a gold
+    // parallel of some set called "White". When stripping the finish word
+    // leaves nothing but another finish word, the name was never a base
+    // plus a variant, so it stays whole.
+    const baseName = ONE_VARIANT_WORD.test(stripped) ? set.name : stripped;
     const variantName = (set.name === baseName) ? null : set.name.substring(baseName.length).trim();
     const key = `${set.category}:${baseName}`;
     if (!variantName) {
