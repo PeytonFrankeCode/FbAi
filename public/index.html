@@ -142,7 +142,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=146" />
+  <link rel="stylesheet" href="style.css?v=147" />
 
 
 </head>
@@ -154,6 +154,17 @@
 </div>
 <!-- Layout: auto-detected via window width on first visit; user can switch
      manually from Settings → Layout. (Was a first-visit modal popup.) -->
+
+<!-- Site-wide announcement. Keyed by id so a future announcement shows again
+     for people who dismissed the last one, rather than staying hidden forever. -->
+<div id="site-banner" class="site-banner hidden" role="region" aria-label="Announcement">
+  <button type="button" class="site-banner-link" onclick="openBannerTarget()">
+    <span class="site-banner-tag">New</span>
+    <span class="site-banner-text"><strong>2026 Topps Flagship Football</strong> checklist is live &mdash; all 72 sets and 4,037 cards.</span>
+    <span class="site-banner-cta">View checklist &rarr;</span>
+  </button>
+  <button type="button" class="site-banner-x" onclick="dismissSiteBanner()" aria-label="Dismiss announcement">&times;</button>
+</div>
 
 <header>
     <div class="header-inner">
@@ -1780,7 +1791,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=192"></script>
+  <script src="app.js?v=193"></script>
   <script type="importmap">
   {
     "imports": {

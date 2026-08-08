@@ -1548,6 +1548,50 @@ async function loadQueryEstimate(query) {
     </div>`;
 }
 
+// ---- Site announcement banner ----
+// One announcement at a time, defined here rather than fetched: it changes
+// when we ship, not at runtime, and a fetch would mean a network round trip
+// before the page can settle.
+//
+// Dismissal is keyed by BANNER.id, not a single flag, so shipping the next
+// announcement shows it to everyone again instead of staying hidden for
+// anyone who ever dismissed one.
+const BANNER = {
+  id: '2026-topps-flagship',
+  // What clicking it does. A checklist deep-link, so this stays in the SPA
+  // rather than reloading the page.
+  productId: '2026-topps-football',
+};
+
+function bannerDismissed() {
+  try { return localStorage.getItem('cardHuddleBannerDismissed') === BANNER.id; }
+  catch { return false; }
+}
+
+function dismissSiteBanner() {
+  try { localStorage.setItem('cardHuddleBannerDismissed', BANNER.id); } catch (_) {}
+  const el = document.getElementById('site-banner');
+  if (el) el.classList.add('hidden');
+}
+
+// Opens the announced checklist. Goes through switchView + loadProduct rather
+// than an href so it doesn't reload the app to land two clicks away.
+function openBannerTarget() {
+  try {
+    switchView('checklist');
+    if (typeof loadProduct === 'function') loadProduct(BANNER.productId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    console.warn('[banner] could not open target:', err && err.message);
+  }
+}
+
+function initSiteBanner() {
+  const el = document.getElementById('site-banner');
+  if (!el || bannerDismissed()) return;
+  el.classList.remove('hidden');
+}
+
 // ---- First-run guided tour ----
 // Runs once for a new visitor and is replayable from Settings. Each step
 // points at a real element; a step whose element isn't on the page is skipped
@@ -3861,6 +3905,7 @@ loadFundGoal();
 
 // First-run walkthrough. No-ops for anyone who has already seen it.
 maybeStartTour();
+initSiteBanner();
 
 // Affiliate / sponsor config. BCW Supplies — card storage & protection.
 // Uses the exact ShareASale tracking link (no edits); we deliberately DON'T use
