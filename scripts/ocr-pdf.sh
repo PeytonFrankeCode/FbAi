@@ -13,6 +13,12 @@ PDF="$1"; OUT="$2"; DPI="${3:-200}"; BATCH="${4:-100}"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 PAGES=$(pdfinfo "$PDF" 2>/dev/null | awk '/^Pages/{print $2}')
 JOBS=$(nproc)
+# One OpenMP thread per tesseract. Left at the default, each of the JOBS
+# processes spawns its own thread pool and they fight over the same cores:
+# a page that takes 1.4s alone took 14.2s under contention. Output is
+# byte-identical either way. Exported AFTER nproc on purpose — nproc
+# reports min(cores, OMP_THREAD_LIMIT), so exporting first pins JOBS to 1.
+export OMP_THREAD_LIMIT=1
 : > "$OUT"
 echo "pages=$PAGES dpi=$DPI batch=$BATCH jobs=$JOBS -> $OUT"
 for ((s=1; s<=PAGES; s+=BATCH)); do
