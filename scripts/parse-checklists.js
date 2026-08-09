@@ -37,6 +37,23 @@ const ROOT = path.join(__dirname, '..');
 const CHECKLISTS_DIR = path.join(ROOT, 'public', 'data', 'checklists');
 const INDEX_PATH = path.join(CHECKLISTS_DIR, 'index.json');
 
+// A .docx source is read through mammoth rather than converted by hand, so
+// the file the user uploaded stays the source of truth and no derived copy
+// has to be kept in step with it. Word drops the line breaks inside a
+// checklist, which splitGluedCardRuns puts back.
+function readSource(p) {
+  if (!/\.docx$/i.test(p)) return fs.readFileSync(p, 'utf8');
+  const { execFileSync } = require('child_process');
+  // mammoth is async; this script is otherwise synchronous, so the
+  // extraction runs in a child process rather than colouring everything.
+  return execFileSync(process.execPath, ['-e', `
+    const mammoth = require(${JSON.stringify(require.resolve('mammoth'))});
+    mammoth.extractRawText({ path: process.argv[1] })
+      .then(r => process.stdout.write(r.value))
+      .catch(e => { console.error(e); process.exit(1); });
+  `, p], { maxBuffer: 512 * 1024 * 1024, encoding: 'utf8' });
+}
+
 // Usage:
 //   parse-checklists.js 2018        every "2018 Checklists…" text at the root
 //   parse-checklists.js a.txt b.txt those files
@@ -51,14 +68,14 @@ const ARGS = process.argv.slice(2);
 const YEAR_ARG = ARGS.length === 1 && /^20\d{2}$/.test(ARGS[0]) ? ARGS[0] : null;
 
 function sourcesForYear(year) {
-  const re = new RegExp(`^${year}(%20|\\s)*Checklists.*\\.txt$`, 'i');
+  const re = new RegExp(`^${year}(%20|\\s)*Checklists.*\\.(txt|docx)$`, 'i');
   return fs.readdirSync(ROOT).filter(f => re.test(f)).sort().map(f => path.join(ROOT, f));
 }
 
 function allSourceYears() {
   const years = new Set();
   for (const f of fs.readdirSync(ROOT)) {
-    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists.*\.txt$/i);
+    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists.*\.(?:txt|docx)$/i);
     if (m) years.add(m[1]);
   }
   return [...years].sort();
@@ -157,6 +174,61 @@ function rejoinWrappedSetHeaders(lines) {
   }
 }
 
+
+// A .docx source loses the line breaks inside a checklist, so a whole set
+// arrives as one line:
+//
+//   1 A.J. Green2 Joe Mixon3 Tyler Boyd4 Terry McLaurin…
+//   201 Joe Burrow /149202 Tua Tagovailoa /149203 Justin Herbert /149204…
+//
+// Splitting on "<digits> <capital>" alone cannot tell the print run in
+// "/149202" from the card number that follows it. The card numbers run in
+// sequence though, so the next one is predictable: look for the number this
+// card should be followed by, and the boundary falls where it starts.
+const GLUE_LOOKAHEAD = 6;
+
+function splitGluedCardRuns(lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (!/^\d+\s+[A-Z]/.test(t)) continue;
+    if (!/\d\s+[A-Z]/.test(t.slice(t.indexOf(' ') + 1))) continue;  // only one card
+    const parts = splitGluedCardRun(t);
+    if (parts.length < 2) continue;
+    lines.splice(i, 1, ...parts);
+    i += parts.length - 1;
+  }
+}
+
+function splitGluedCardRun(line) {
+  const out = [];
+  let rest = line;
+  for (;;) {
+    const head = rest.match(/^(\d+)\s+/);
+    if (!head) break;
+    const num = parseInt(head[1], 10);
+    let cut = -1;
+    // The next card's number, allowing for a few skipped in the checklist.
+    // The nearest candidate wins, not the lowest: when a checklist skips
+    // number 5, "5 " still turns up much further along inside "/29915", and
+    // taking it would swallow every card in between.
+    for (let n = num + 1; n <= num + GLUE_LOOKAHEAD; n++) {
+      const at = rest.indexOf(`${n} `, head[0].length);
+      if (at === -1 || !/^[A-Z]/.test(rest.slice(at + `${n} `.length))) continue;
+      if (cut === -1 || at < cut) cut = at;
+    }
+    // No sequential match — fall back to any boundary that isn't inside a
+    // print run, so an out-of-order or lettered checklist still splits.
+    if (cut === -1) {
+      const m = rest.slice(head[0].length).match(/(?<![\/\d])\d+\s+[A-Z]/);
+      if (m) cut = head[0].length + m.index;
+    }
+    if (cut === -1) { out.push(rest.trim()); break; }
+    out.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut);
+  }
+  return out.filter(Boolean);
+}
+
 // A card naming several players, each with a team, is long enough to wrap:
 //
 //   1 Christian McCaffrey, Stanford Cardinal/Dalvin Cook, Florida State
@@ -226,7 +298,7 @@ function parseSources(paths) {
   let text = '';
   for (const p of paths) {
     if (!fs.existsSync(p)) { console.error(`missing source: ${p}`); process.exit(1); }
-    const t = fs.readFileSync(p, 'utf8');
+    const t = readSource(p);
     console.log(`Loaded ${t.length} chars from ${path.basename(p)}`);
     text += t + '\n';
   }
@@ -235,6 +307,7 @@ function parseSources(paths) {
   rejoinWrappedTitles(lines);
   rejoinWrappedSetHeaders(lines);
   rejoinWrappedCards(lines);
+  splitGluedCardRuns(lines);
 
   // ---- Pass 1: locate every product header ----
   const headers = [];
@@ -535,6 +608,10 @@ function parseSet(slice, startIdx, category) {
 function isCardLine(line) {
   if (!line || line.length < 6) return false;
   if (/^\d+\s+cards?\b/i.test(line)) return false;
+  // A dash annotation is parseCard's business, but it has to get there
+  // first: "239 Van Jefferson – no base version" was failing this test on
+  // the dash alone and the card was dropped before anything could strip it.
+  line = line.replace(/\s+[–—]\s+\S.*$/, '').trim();
   if (/^\d{1,4}\s+[A-Z][^,]{1,80},\s*[A-Z]/.test(line)) return true;
   if (/^[A-Z]{1,5}-[A-Z0-9]{1,6}\s+[A-Z]/.test(line)) return true;
   // Team-less. Capped at 3 digits so a stray year ("2017 Panini …") can't
@@ -648,9 +725,17 @@ function parseCard(line) {
     prev = clean;
     clean = clean
       .replace(/\s+(RC|SP|SSP|VAR|RPS|RR|AUTO|Auto|Mem|Jersey|Patch|Relic|Memorabilia|Dual|Triple|Quad|Jumbo|Rookie)\s*$/i, '')
-      .replace(/\s*[–—]\s*(?:Rookie|Jersey|Auto|Dual|Triple|Jumbo|Redemption)[A-Za-z ]*$/i, '')
+      // Any trailing dash note — "— Retired", "– Variation", "– no base
+      // version" — unless it is a team override, which belongs on the card.
+      .replace(/\s+[–—]\s+([A-Za-z][A-Za-z' ]*)$/, (whole, note) => (isKnownTeam(note.trim()) ? whole : ''))
+      // "101 Joe Burrow /9 – RPS" runs its marker into the next card's
+      // number, so peeling the marker leaves the dash hanging.
+      .replace(/\s+[–—]\s*$/, '')
       // "(all Favre Team Variations combined)"
       .replace(/\s*\([^)]*\)\s*$/, '')
+      // "103 Sam Darnold SP – 225" writes the print run after a dash rather
+      // than a slash, with the short-print marker outside it.
+      .replace(/\s+[–—]\s+\/?(\d+)\s*$/, (_, pr) => { if (printRun == null) printRun = parseInt(pr, 10); return ''; })
       .replace(/\s+\/(\d+)\s*$/, (_, pr) => { if (printRun == null) printRun = parseInt(pr, 10); return ''; })
       .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (printRun == null) printRun = parseInt(d, 10); return ''; })
       .trim();
