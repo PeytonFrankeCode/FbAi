@@ -37,6 +37,23 @@ const ROOT = path.join(__dirname, '..');
 const CHECKLISTS_DIR = path.join(ROOT, 'public', 'data', 'checklists');
 const INDEX_PATH = path.join(CHECKLISTS_DIR, 'index.json');
 
+// A .docx source is read through mammoth rather than converted by hand, so
+// the file the user uploaded stays the source of truth and no derived copy
+// has to be kept in step with it. Word drops the line breaks inside a
+// checklist, which splitGluedCardRuns puts back.
+function readSource(p) {
+  if (!/\.docx$/i.test(p)) return fs.readFileSync(p, 'utf8');
+  const { execFileSync } = require('child_process');
+  // mammoth is async; this script is otherwise synchronous, so the
+  // extraction runs in a child process rather than colouring everything.
+  return execFileSync(process.execPath, ['-e', `
+    const mammoth = require(${JSON.stringify(require.resolve('mammoth'))});
+    mammoth.extractRawText({ path: process.argv[1] })
+      .then(r => process.stdout.write(r.value))
+      .catch(e => { console.error(e); process.exit(1); });
+  `, p], { maxBuffer: 512 * 1024 * 1024, encoding: 'utf8' });
+}
+
 // Usage:
 //   parse-checklists.js 2018        every "2018 Checklists…" text at the root
 //   parse-checklists.js a.txt b.txt those files
@@ -50,15 +67,17 @@ const INDEX_PATH = path.join(CHECKLISTS_DIR, 'index.json');
 const ARGS = process.argv.slice(2);
 const YEAR_ARG = ARGS.length === 1 && /^20\d{2}$/.test(ARGS[0]) ? ARGS[0] : null;
 
+// "Checklist" and "Checklists" both turn up — 2021's two parts disagree with
+// each other — so the plural is optional.
 function sourcesForYear(year) {
-  const re = new RegExp(`^${year}(%20|\\s)*Checklists.*\\.txt$`, 'i');
+  const re = new RegExp(`^${year}(%20|\\s)*Checklists?.*\\.(txt|docx)$`, 'i');
   return fs.readdirSync(ROOT).filter(f => re.test(f)).sort().map(f => path.join(ROOT, f));
 }
 
 function allSourceYears() {
   const years = new Set();
   for (const f of fs.readdirSync(ROOT)) {
-    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists.*\.txt$/i);
+    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists?.*\.(?:txt|docx)$/i);
     if (m) years.add(m[1]);
   }
   return [...years].sort();
@@ -78,7 +97,14 @@ const TEXT_PATHS = YEAR_ARG ? sourcesForYear(YEAR_ARG)
 // "Memorabilia Cards" the source has "Inserts", "Base Set", "Update", and
 // "Rookie Ticket Autograph Parallels" — so the suffix is matched by shape
 // (a few words before "Checklists") rather than by enumeration.
-const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:([A-Z][A-Za-z]*(?:\s+[A-Za-z]+){0,4})\s+)?Checklists?\s*$/;
+// Two title shapes. Up to 2020 the section comes before the word:
+//   "2020 Panini Absolute Football Autographs Checklists"
+// 2021 puts it after, behind a dash:
+//   "2021 Panini Eminence Football Checklist – Autographs"
+// Either group can hold the section; whichever matched is the one to read.
+const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:([A-Z][A-Za-z]*(?:\s+[A-Za-z]+){0,4})\s+)?Checklists?(?:\s*[–—]\s*([A-Z][A-Za-z ]{0,40}?))?\s*$/;
+
+function headerSuffix(m) { return (m[2] || m[3] || '').trim(); }
 
 // The article title is one line in the text sources, but a page render wraps
 // it, so OCR puts the trailing "Checklists" on a line of its own:
@@ -157,6 +183,61 @@ function rejoinWrappedSetHeaders(lines) {
   }
 }
 
+
+// A .docx source loses the line breaks inside a checklist, so a whole set
+// arrives as one line:
+//
+//   1 A.J. Green2 Joe Mixon3 Tyler Boyd4 Terry McLaurin…
+//   201 Joe Burrow /149202 Tua Tagovailoa /149203 Justin Herbert /149204…
+//
+// Splitting on "<digits> <capital>" alone cannot tell the print run in
+// "/149202" from the card number that follows it. The card numbers run in
+// sequence though, so the next one is predictable: look for the number this
+// card should be followed by, and the boundary falls where it starts.
+const GLUE_LOOKAHEAD = 6;
+
+function splitGluedCardRuns(lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const t = lines[i].trim();
+    if (!/^\d+\s+[A-Z]/.test(t)) continue;
+    if (!/\d\s+[A-Z]/.test(t.slice(t.indexOf(' ') + 1))) continue;  // only one card
+    const parts = splitGluedCardRun(t);
+    if (parts.length < 2) continue;
+    lines.splice(i, 1, ...parts);
+    i += parts.length - 1;
+  }
+}
+
+function splitGluedCardRun(line) {
+  const out = [];
+  let rest = line;
+  for (;;) {
+    const head = rest.match(/^(\d+)\s+/);
+    if (!head) break;
+    const num = parseInt(head[1], 10);
+    let cut = -1;
+    // The next card's number, allowing for a few skipped in the checklist.
+    // The nearest candidate wins, not the lowest: when a checklist skips
+    // number 5, "5 " still turns up much further along inside "/29915", and
+    // taking it would swallow every card in between.
+    for (let n = num + 1; n <= num + GLUE_LOOKAHEAD; n++) {
+      const at = rest.indexOf(`${n} `, head[0].length);
+      if (at === -1 || !/^[A-Z]/.test(rest.slice(at + `${n} `.length))) continue;
+      if (cut === -1 || at < cut) cut = at;
+    }
+    // No sequential match — fall back to any boundary that isn't inside a
+    // print run, so an out-of-order or lettered checklist still splits.
+    if (cut === -1) {
+      const m = rest.slice(head[0].length).match(/(?<![\/\d])\d+\s+[A-Z]/);
+      if (m) cut = head[0].length + m.index;
+    }
+    if (cut === -1) { out.push(rest.trim()); break; }
+    out.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut);
+  }
+  return out.filter(Boolean);
+}
+
 // A card naming several players, each with a team, is long enough to wrap:
 //
 //   1 Christian McCaffrey, Stanford Cardinal/Dalvin Cook, Florida State
@@ -199,7 +280,10 @@ function isProductHeaderLine(line) {
   // squashed team-split layout the 2023 parser deals with. The product's
   // master articles already carry every card, so this one only adds a
   // second, worse copy.
-  if (/\bTeam Set\b/i.test(m[2] || '')) return false;
+  if (/\bTeam Set\b/i.test(headerSuffix(m))) return false;
+  // "… Football Checklist – XLSX File" is the spreadsheet download link that
+  // sits under every article title, not an article of its own.
+  if (/XLSX/i.test(headerSuffix(m))) return false;
   return true;
 }
 
@@ -226,7 +310,7 @@ function parseSources(paths) {
   let text = '';
   for (const p of paths) {
     if (!fs.existsSync(p)) { console.error(`missing source: ${p}`); process.exit(1); }
-    const t = fs.readFileSync(p, 'utf8');
+    const t = readSource(p);
     console.log(`Loaded ${t.length} chars from ${path.basename(p)}`);
     text += t + '\n';
   }
@@ -235,6 +319,7 @@ function parseSources(paths) {
   rejoinWrappedTitles(lines);
   rejoinWrappedSetHeaders(lines);
   rejoinWrappedCards(lines);
+  splitGluedCardRuns(lines);
 
   // ---- Pass 1: locate every product header ----
   const headers = [];
@@ -242,7 +327,7 @@ function parseSources(paths) {
     const t = lines[i].trim();
     if (!isProductHeaderLine(t)) continue;
     const m = t.match(PRODUCT_HEADER_RE);
-    headers.push({ lineIdx: i, product: normalizeProduct(m[1]), suffix: (m[2] || '').trim() });
+    headers.push({ lineIdx: i, product: normalizeProduct(m[1]), suffix: headerSuffix(m) });
   }
   console.log(`Found ${headers.length} header occurrences`);
   dropOffYearArticles(headers);
@@ -483,12 +568,22 @@ function parseSet(slice, startIdx, category) {
     // "Parallels:" is the usual opener, but some sets introduce the same
     // bullet list with prose ("Each card has four versions:"). Any line
     // ending in a colon that a bullet follows opens the list.
-    if (/^Parallels?\s*:?\s*$/i.test(cl) || (/:\s*$/.test(cl) && startsBulletList(slice, i + 1))) {
+    if (isParallelsOpener(cl) || (/:\s*$/.test(cl) && startsBulletList(slice, i + 1))) {
       i++;
       while (i < slice.length) {
         const pl = stripBullet(slice[i].trim());
         if (!pl) { i++; continue; }
-        if (isCardLine(pl) || isSetHeader(pl, slice, i) || /^Parallels?\s*:?\s*$/i.test(pl)) break;
+        // A parallel list runs until the set's cards start. Asking
+        // isSetHeader here ends it early, because a plain parallel name a
+        // few lines above the cards looks exactly like a header: 2019's
+        // lists carry no bullets, so "Yellow Press Proof" broke out of
+        // Donruss's Veterans block and took its 300 cards with it. Only
+        // things that cannot be a parallel end the list.
+        if (isCardLine(pl)) break;
+        if (isParallelsOpener(pl)) break;
+        if (/Check[l]?ists?\s*$/i.test(pl)) break;          // an explicit set header
+        if (bareCategoryMarker(pl, slice, i)) break;
+        if (isProductHeaderLine(pl)) break;
         const par = parseParallel(pl);
         if (par) parallels.push(par);
         i++;
@@ -525,6 +620,10 @@ function parseSet(slice, startIdx, category) {
 function isCardLine(line) {
   if (!line || line.length < 6) return false;
   if (/^\d+\s+cards?\b/i.test(line)) return false;
+  // A dash annotation is parseCard's business, but it has to get there
+  // first: "239 Van Jefferson – no base version" was failing this test on
+  // the dash alone and the card was dropped before anything could strip it.
+  line = line.replace(/\s+[–—]\s+\S.*$/, '').trim();
   if (/^\d{1,4}\s+[A-Z][^,]{1,80},\s*[A-Z]/.test(line)) return true;
   if (/^[A-Z]{1,5}-[A-Z0-9]{1,6}\s+[A-Z]/.test(line)) return true;
   // Team-less. Capped at 3 digits so a stray year ("2017 Panini …") can't
@@ -638,9 +737,17 @@ function parseCard(line) {
     prev = clean;
     clean = clean
       .replace(/\s+(RC|SP|SSP|VAR|RPS|RR|AUTO|Auto|Mem|Jersey|Patch|Relic|Memorabilia|Dual|Triple|Quad|Jumbo|Rookie)\s*$/i, '')
-      .replace(/\s*[–—]\s*(?:Rookie|Jersey|Auto|Dual|Triple|Jumbo|Redemption)[A-Za-z ]*$/i, '')
+      // Any trailing dash note — "— Retired", "– Variation", "– no base
+      // version" — unless it is a team override, which belongs on the card.
+      .replace(/\s+[–—]\s+([A-Za-z][A-Za-z' ]*)$/, (whole, note) => (isKnownTeam(note.trim()) ? whole : ''))
+      // "101 Joe Burrow /9 – RPS" runs its marker into the next card's
+      // number, so peeling the marker leaves the dash hanging.
+      .replace(/\s+[–—]\s*$/, '')
       // "(all Favre Team Variations combined)"
       .replace(/\s*\([^)]*\)\s*$/, '')
+      // "103 Sam Darnold SP – 225" writes the print run after a dash rather
+      // than a slash, with the short-print marker outside it.
+      .replace(/\s+[–—]\s+\/?(\d+)\s*$/, (_, pr) => { if (printRun == null) printRun = parseInt(pr, 10); return ''; })
       .replace(/\s+\/(\d+)\s*$/, (_, pr) => { if (printRun == null) printRun = parseInt(pr, 10); return ''; })
       .replace(/\s+(\d+)\/(\d+)\s*$/, (_, n, d) => { if (printRun == null) printRun = parseInt(d, 10); return ''; })
       .trim();
@@ -660,19 +767,28 @@ function parseCard(line) {
   if (!m) return null;
 
   // A card can name one player with a team ("Dan Marino, Miami Dolphins"),
-  // several players with none (Activ8's eight-rookie cards), or several
-  // players each with their own team ("Richard Sherman, Seattle Seahawks/
-  // Michael Crabtree, Oakland Raiders"). All three are slash-separated
-  // "player[, team]" segments, so one pass covers them.
+  // several players with none, several players each with their own team
+  // ("Richard Sherman, Seattle Seahawks/Michael Crabtree, Oakland Raiders"),
+  // or — 2019 only — several players separated by commas rather than
+  // slashes ("Mecole Hardman Jr., Patrick Mahomes II, Travis Kelce, Tyreek
+  // Hill"). The last shape is why the text after a comma cannot simply be
+  // taken for a team: it has to be recognised as one.
   const players = [];
   const teams = [];
   for (const seg of m[2].split('/').map(s => s.trim()).filter(Boolean)) {
     const pair = seg.match(/^(.+?),\s*(.+)$/);
     if (!pair) { players.push(seg); continue; }
-    players.push(pair[1].trim());
     const t = cleanTeam(pair[2]);
     if (printRun == null && t.printRun != null) printRun = t.printRun;
-    if (t.team) teams.push(t.team);
+    if (t.team && isKnownTeam(t.team)) {
+      players.push(pair[1].trim());
+      teams.push(t.team);
+    } else {
+      // Not a team, so the commas are separating players.
+      for (const nm of seg.split(',').map(x => x.trim()).filter(Boolean)) {
+        players.push(cleanTeam(nm).team || nm);
+      }
+    }
   }
   if (!players.length) return null;
 
@@ -690,6 +806,41 @@ function fixOcrSuffix(player) {
   return player.replace(/\bIll\b/g, 'III');
 }
 
+// Whether a comma is followed by a team or by another player can only be
+// answered by knowing the teams. The 32 franchises plus the ones that have
+// moved or renamed are fixed and worth stating; college programmes are not,
+// so they come from the checklists already on disk, whose team fields have
+// been through this same validation.
+const NFL_TEAMS = new Set([
+  'Arizona Cardinals', 'Atlanta Falcons', 'Baltimore Ravens', 'Buffalo Bills',
+  'Carolina Panthers', 'Chicago Bears', 'Cincinnati Bengals', 'Cleveland Browns',
+  'Dallas Cowboys', 'Denver Broncos', 'Detroit Lions', 'Green Bay Packers',
+  'Houston Texans', 'Indianapolis Colts', 'Jacksonville Jaguars', 'Kansas City Chiefs',
+  'Las Vegas Raiders', 'Los Angeles Chargers', 'Los Angeles Rams', 'Miami Dolphins',
+  'Minnesota Vikings', 'New England Patriots', 'New Orleans Saints', 'New York Giants',
+  'New York Jets', 'Oakland Raiders', 'Philadelphia Eagles', 'Pittsburgh Steelers',
+  'San Diego Chargers', 'San Francisco 49ers', 'Seattle Seahawks', 'St. Louis Rams',
+  'Tampa Bay Buccaneers', 'Tennessee Titans', 'Washington Redskins',
+  'Washington Football Team', 'Washington Commanders', 'Baltimore Colts',
+  'Houston Oilers', 'Tennessee Oilers', 'Los Angeles Raiders', 'Phoenix Cardinals',
+  'St. Louis Cardinals', 'Boston Patriots', 'New York Titans',
+]);
+
+let _knownTeams = null;
+function isKnownTeam(name) {
+  if (NFL_TEAMS.has(name)) return true;
+  if (_knownTeams === null) {
+    _knownTeams = new Set();
+    for (const f of fs.readdirSync(CHECKLISTS_DIR)) {
+      if (!/\.json$/.test(f) || f === 'index.json') continue;
+      let d;
+      try { d = JSON.parse(fs.readFileSync(path.join(CHECKLISTS_DIR, f), 'utf8')); } catch { continue; }
+      for (const set of d.sets || []) for (const c of set.cards || []) if (c.team) _knownTeams.add(c.team);
+    }
+  }
+  return _knownTeams.has(name);
+}
+
 // Everything a team field picks up after the franchise name. These stack
 // freely — "Chicago Bears /49 RC Auto Jersey", "San Francisco 49ers AUTO —
 // Redemption", "Philadelphia Eagles VAR AUTO[/column]" — and each new
@@ -701,7 +852,10 @@ function cleanTeam(raw) {
   let printRun = null;
   let team = raw
     .replace(/\[[^\]]*\]/g, '')                 // "[/column]" left by the page markup
-    .replace(/\s*[–—]\s*[A-Za-z ]+$/, '')       // "— Redemption"
+    // "— Redemption", "– All-Americans", and the OCR'd "—- Legends" where
+    // the dash came back doubled.
+    .replace(/\s+[–—-]+\s*[A-Za-z][A-Za-z \-]*$/, '')
+    .replace(/\s+[–—-]+\s*$/, '')
     .replace(/\s*\/(\d+)\b/, (_, pr) => { printRun = parseInt(pr, 10); return ''; })
     .trim();
   let prev;
@@ -712,6 +866,15 @@ function cleanTeam(raw) {
 // OCR renders the source's • bullet as ¢, ¥, e, °, or *.
 function stripBullet(s) {
   return s.replace(/^[¢•°¥*e]\s+/, '').trim();
+}
+
+// The list is not always introduced by a bare "Parallels:" — Prizm labels
+// its by finish ("Prizms Parallels:"), and without matching that the names
+// underneath fall through to the card loop, where the last one before the
+// cards is taken for a set header.
+function isParallelsOpener(line) {
+  if (line.length > 60) return false;
+  return /(^|\s)(Parallels?|Versions?)\s*:\s*$/i.test(line) || /^(Parallels?|Versions?)\s*$/i.test(line);
 }
 
 function startsBulletList(slice, idx) {
@@ -899,11 +1062,17 @@ function mergeDuplicateIdSets(sets) {
 // as its parallel.
 const VARIANT_WORDS = 'Red|Blue|Green|Gold|Silver|Purple|Orange|Pink|Black|White|Bronze|Yellow|Aqua|Teal|Platinum|Neon|Holo|Chrome|Shimmer|Sparkle|Press Proof|Die-Cut|Canvas|Camo|Finite|Vinyl|Foil|Hyper|Pandora|Velocity|Prizm|Mojo|Scope|Fluorescent|Reactive|Cracked Ice|Ruby|Sapphire|Emerald|Diamond|Tiger Stripe|Kaboom|Nebula|Peacock|Pulsar|Lazer|Disco|Snakeskin|Mosaic|Color Blast|Lava|Fractor|X-Fractor|Refractor|Stained Glass|Supernova|Interstellar|Splatter';
 const VARIANT_RE = new RegExp(`\\s+(${VARIANT_WORDS})(\\s+(${VARIANT_WORDS}))*\\s*$`, 'i');
+const ONE_VARIANT_WORD = new RegExp(`^(${VARIANT_WORDS})$`, 'i');
 
 function consolidateSets(sets) {
   const groups = new Map();
   for (const set of sets) {
-    const baseName = set.name.replace(VARIANT_RE, '').trim();
+    const stripped = set.name.replace(VARIANT_RE, '').trim();
+    // "White Gold" is a Gold Standard set in its own right, not a gold
+    // parallel of some set called "White". When stripping the finish word
+    // leaves nothing but another finish word, the name was never a base
+    // plus a variant, so it stays whole.
+    const baseName = ONE_VARIANT_WORD.test(stripped) ? set.name : stripped;
     const variantName = (set.name === baseName) ? null : set.name.substring(baseName.length).trim();
     const key = `${set.category}:${baseName}`;
     if (!variantName) {

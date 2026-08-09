@@ -79,6 +79,11 @@ const JSONLD_ITEM_CAP = 50;
 const MIN_CARDS = 5;
 const MIN_SETS = 2;
 
+// A set inside a product earns its own page once it is substantial enough to
+// stand alone. Below this it says little the product page doesn't already,
+// and a few dozen near-empty pages are worth less than none.
+const MIN_SUBSET_CARDS = 25;
+
 // ---- Small helpers --------------------------------------------------------
 function esc(s) {
   return String(s == null ? '' : s)
@@ -230,7 +235,9 @@ function faqSection(items) {
 }
 
 // ---- Per-set page ---------------------------------------------------------
-function buildSetPage(cl, related, playerSlug) {
+function buildSetPage(cl, related, playerSlug, subsets) {
+  // name -> slug for the sets of this product that got their own page.
+  const subsetSlug = new Map((subsets || []).map(x => [x.set.name, x.slug]));
   const title = `${cl.name} Checklist & Card Prices | The Card Huddle`;
   const canonical = `${SITE}/sets/${cl.id}/`;
   const setLabel = cl.name.replace(/\s+Football$/i, '');
@@ -299,7 +306,11 @@ function buildSetPage(cl, related, playerSlug) {
     if (!cards.length) continue;
     const parallels = Array.isArray(s.parallels) ? s.parallels : [];
     html += `    <section class="lp-subset">\n`;
-    html += `      <h2>${esc(s.name || 'Set')} <span class="lp-count">${cards.length} ${cards.length === 1 ? 'card' : 'cards'}</span></h2>\n`;
+    const ownPage = subsetSlug.get(s.name);
+    const heading = ownPage
+      ? `<a href="/sets/${cl.id}/${ownPage}/">${esc(s.name || 'Set')}</a>`
+      : esc(s.name || 'Set');
+    html += `      <h2>${heading} <span class="lp-count">${cards.length} ${cards.length === 1 ? 'card' : 'cards'}</span></h2>\n`;
     if (parallels.length) {
       const shown = parallels.slice(0, PARALLEL_CAP).map(p => {
         const pr = (p && p.printRun) ? ` /${p.printRun}` : '';
@@ -332,6 +343,196 @@ function buildSetPage(cl, related, playerSlug) {
     html += `    <section class="lp-related">\n      <h2>More checklists</h2>\n      <ul class="lp-related-list">\n`;
     for (const r of related) html += `        <li><a href="/sets/${r.id}/">${esc(r.name)}</a></li>\n`;
     html += `      </ul>\n      <p><a href="/sets/">&larr; Browse all football card checklists</a></p>\n    </section>\n`;
+  }
+  html += faq.html;
+  html += `  </main>\n` + footer();
+  return html;
+}
+
+// ---- Sets inside a product ------------------------------------------------
+// A product page lists every set it contains, but the searches are for the
+// set: "2020 donruss optic rated rookies checklist", not the product. Those
+// get their own page — except where a set's card list is identical to one
+// already published, which is common because a parallel repeats its parent's
+// list verbatim ("Signatures", "Signatures Gold", "Signatures Blue"). Three
+// pages of the same names would be near-duplicates competing with each
+// other, so only the first is published and the rest stay on the product
+// page where they read as what they are: parallels.
+function subsetCardKey(cards) {
+  return cards.map(c => `${c.number}|${c.player}`).join(',');
+}
+
+function eligibleSubsets(cl) {
+  const out = [];
+  const seenKey = new Map();
+  const usedSlug = new Set();
+  for (const s of cl.sets) {
+    const cards = Array.isArray(s.cards) ? s.cards : [];
+    if (cards.length < MIN_SUBSET_CARDS) continue;
+    const key = subsetCardKey(cards);
+    if (seenKey.has(key)) continue;
+    seenKey.set(key, s.name);
+    let base = slugify(s.name || 'set') || 'set', slug = base, i = 2;
+    while (usedSlug.has(slug)) slug = `${base}-${i++}`;
+    usedSlug.add(slug);
+    out.push({ set: s, slug });
+  }
+  return out;
+}
+
+function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
+  const cards = Array.isArray(s.cards) ? s.cards : [];
+  const parallels = Array.isArray(s.parallels) ? s.parallels : [];
+  const productLabel = cl.name.replace(/\s+Football$/i, '');
+  const setName = (s.name || 'Set').replace(/\s+/g, ' ').trim();
+  const fullLabel = `${productLabel} ${setName}`;
+  const canonical = `${SITE}/sets/${cl.id}/${slug}/`;
+  const title = `${fullLabel} Checklist & Card Prices | The Card Huddle`;
+  const description =
+    `Complete ${fullLabel} checklist — all ${cards.length} cards` +
+    (parallels.length ? ` and ${parallels.length} parallels` : '') +
+    `. Check real eBay sold prices by grade (Raw, PSA 10, PSA 9) for every card. Free.`;
+
+  const crumbs = [
+    { label: 'Home', href: '/', absUrl: SITE + '/' },
+    { label: 'Checklists', href: '/sets/', absUrl: SITE + '/sets/' },
+    { label: productLabel, href: `/sets/${cl.id}/`, absUrl: `${SITE}/sets/${cl.id}/` },
+    { label: setName, absUrl: canonical },
+  ];
+
+  const names = cards.map(c => (c.player || '').trim()).filter(Boolean);
+  const collectionLd = ldScript({
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: jsonText(fullLabel + ' Checklist'), url: canonical, description: jsonText(description),
+    isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
+    mainEntity: {
+      '@type': 'ItemList', numberOfItems: cards.length,
+      itemListElement: names.slice(0, JSONLD_ITEM_CAP).map((p, i) => ({
+        '@type': 'ListItem', position: i + 1, name: jsonText(p + ' — ' + fullLabel) })),
+    },
+  });
+
+  const numbered = parallels.filter(p => p && p.printRun).sort((a, b) => a.printRun - b.printRun);
+  const rarest = numbered.slice(0, 4).map(p => `${(p.name || '').replace(/\s+/g, ' ').trim()} /${p.printRun}`);
+  const faq = faqSection([
+    { q: `How many cards are in ${fullLabel}?`,
+      aHtml: `${cards.length} cards${parallels.length ? `, plus ${parallels.length} parallel ${parallels.length === 1 ? 'version' : 'versions'}` : ''}. The full checklist is listed above.` },
+    { q: `How much is a ${fullLabel} card worth?`,
+      aHtml: `It depends on the player, the parallel and the grade${names.length ? ` — a ${esc(names[0])} sells for very different money to a common` : ''}. Tap any card above to see real eBay sold prices broken down by grade.` },
+    ...(rarest.length ? [{ q: `What are the rarest ${setName} parallels?`,
+      aHtml: `The lowest-numbered are ${esc(rarest.join(', '))}. Printing plates and one-of-ones are rarer still.` }] : []),
+    { q: `Where does ${setName} fit in ${productLabel}?`,
+      aHtml: `It is one of ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} in <a href="/sets/${cl.id}/">${esc(cl.name)}</a>, which has ${cl.cardCount.toLocaleString()} cards in total.` },
+  ]);
+
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  html += `
+  <main class="lp-main">
+    ${breadcrumb(crumbs)}
+    <h1>${esc(fullLabel)} Checklist &amp; Prices</h1>
+    <p class="lp-lede">All <strong>${cards.length}</strong> cards in <strong>${esc(fullLabel)}</strong>${parallels.length ? `, with ${parallels.length} ${parallels.length === 1 ? 'parallel' : 'parallels'}` : ''}. Tap any card for real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more.</p>
+    <p class="lp-cta-row">
+      <a class="lp-btn" href="${prefillHref(`${cl.year || ''} ${cl.brand} ${setName}`.replace(/\s+/g, ' ').trim())}">&#128270; Check live prices for ${esc(setName)}</a>
+    </p>
+`;
+  if (parallels.length) {
+    const shown = parallels.slice(0, PARALLEL_CAP).map(p => {
+      const pr = (p && p.printRun) ? ` /${p.printRun}` : '';
+      return esc((p && p.name ? p.name : '').replace(/\s+/g, ' ').trim()) + pr;
+    }).filter(Boolean);
+    const more = parallels.length > PARALLEL_CAP ? ` <span class="lp-muted">+${parallels.length - PARALLEL_CAP} more</span>` : '';
+    html += `    <p class="lp-parallels"><strong>Parallels:</strong> ${shown.join(' &bull; ')}${more}</p>\n`;
+  }
+  html += `    <ul class="lp-cards">\n`;
+  let rendered = 0;
+  for (const c of cards) {
+    if (rendered >= CARD_CAP) break;
+    const player = (c.player || '').toString().trim();
+    if (!player) continue;
+    const num = c.number != null ? `#${esc(c.number)} ` : '';
+    const team = c.team ? ` <span class="lp-team">${esc(c.team)}</span>` : '';
+    const pslug = playerSlug.get(player);
+    const href = pslug ? `/players/${pslug}/` : prefillHref([player, cl.year, cl.brand, setName].filter(Boolean).join(' '));
+    html += `      <li><a href="${href}">${num}${esc(player)}${team}</a></li>\n`;
+    rendered++;
+  }
+  html += `    </ul>\n`;
+  if (rendered < cards.length) {
+    html += `    <p class="lp-truncate">Showing the first ${rendered.toLocaleString()} of ${cards.length.toLocaleString()} cards. <a href="${prefillHref(`${cl.year || ''} ${cl.brand} ${setName}`.replace(/\s+/g, ' ').trim())}">Search the rest in the live tool &rarr;</a></p>\n`;
+  }
+  if (siblings && siblings.length) {
+    html += `    <section class="lp-related">\n      <h2>Other sets in ${esc(productLabel)}</h2>\n      <ul class="lp-related-list">\n`;
+    for (const sib of siblings) {
+      html += `        <li><a href="/sets/${cl.id}/${sib.slug}/">${esc((sib.set.name || '').replace(/\s+/g, ' ').trim())}</a></li>\n`;
+    }
+    html += `      </ul>\n      <p><a href="/sets/${cl.id}/">&larr; Full ${esc(cl.name)} checklist</a></p>\n    </section>\n`;
+  }
+  html += faq.html;
+  html += `  </main>\n` + footer();
+  return html;
+}
+
+// ---- Per-year hub ---------------------------------------------------------
+// The all-years hub competes for every "<year> football card checklist" search
+// at once. A page per year answers one of them properly.
+function buildYearHub(year, products, subsetIndex) {
+  const canonical = `${SITE}/sets/${year}/`;
+  const cards = products.reduce((n, p) => n + p.cardCount, 0);
+  const title = `${year} Football Card Checklists — Every Set & Prices | The Card Huddle`;
+  const description =
+    `Every ${year} football card checklist — ${products.length} products, ` +
+    `${cards.toLocaleString()} cards. Check real eBay sold prices by grade for any card. Free.`;
+  const crumbs = [
+    { label: 'Home', href: '/', absUrl: SITE + '/' },
+    { label: 'Checklists', href: '/sets/', absUrl: SITE + '/sets/' },
+    { label: String(year), absUrl: canonical },
+  ];
+  const listLd = ldScript({
+    '@context': 'https://schema.org', '@type': 'CollectionPage',
+    name: jsonText(`${year} Football Card Checklists`), url: canonical, description: jsonText(description),
+    isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
+    mainEntity: {
+      '@type': 'ItemList', numberOfItems: products.length,
+      itemListElement: products.slice(0, JSONLD_ITEM_CAP).map((p, i) => ({
+        '@type': 'ListItem', position: i + 1, name: jsonText(p.name), url: `${SITE}/sets/${p.id}/` })),
+    },
+  });
+  const faq = faqSection([
+    { q: `How many ${year} football card sets are there?`,
+      aHtml: `${products.length} products are listed here, ${cards.toLocaleString()} cards in total. Every one links to its full checklist.` },
+    { q: `What is the best ${year} football card set to collect?`,
+      aHtml: `It depends what you are after — flagship sets like Donruss and Prizm are the most affordable, while Immaculate and National Treasures carry the low-numbered patch autographs. Open any checklist to see what its cards actually sell for.` },
+    { q: `How do I check what my ${year} card is worth?`,
+      aHtml: `Find it in the checklist below and tap it. You will get real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more — rather than asking prices.` },
+  ]);
+
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + listLd + faq.jsonLd });
+  html += `
+  <main class="lp-main">
+    ${breadcrumb(crumbs)}
+    <h1>${year} Football Card Checklists</h1>
+    <p class="lp-lede">All <strong>${products.length}</strong> ${year} football card products — <strong>${cards.toLocaleString()}</strong> cards in total. Tap any set for the full checklist and real eBay sold prices by grade.</p>
+    <ul class="lp-set-list">
+`;
+  for (const p of products) {
+    html += `      <li><a href="/sets/${p.id}/"><span class="lp-set-name">${esc(p.name)}</span><span class="lp-set-meta">${p.cardCount.toLocaleString()} cards</span></a></li>\n`;
+  }
+  html += `    </ul>\n`;
+  // Deepest-value internal links: the biggest individual sets of the year.
+  const topSubsets = [];
+  for (const p of products) {
+    for (const sub of (subsetIndex.get(p.id) || [])) {
+      topSubsets.push({ product: p, sub, n: (sub.set.cards || []).length });
+    }
+  }
+  topSubsets.sort((a, b) => b.n - a.n);
+  if (topSubsets.length) {
+    html += `    <section class="lp-related">\n      <h2>Popular ${year} sets</h2>\n      <ul class="lp-related-list">\n`;
+    for (const t of topSubsets.slice(0, 24)) {
+      const label = `${t.product.brand || t.product.name} ${(t.sub.set.name || '').replace(/\s+/g, ' ').trim()}`;
+      html += `        <li><a href="/sets/${t.product.id}/${t.sub.slug}/">${esc(label)}</a></li>\n`;
+    }
+    html += `      </ul>\n    </section>\n`;
   }
   html += faq.html;
   html += `  </main>\n` + footer();
@@ -470,7 +671,12 @@ function buildSetsHub(list) {
 `;
   for (const y of years) {
     const group = byYear.get(y);
-    html += `    <section class="lp-year">\n      <h2>${esc(String(y))} Football Sets <span class="lp-count">${group.length}</span></h2>\n      <ul class="lp-set-list">\n`;
+    // The heading links to the year's own hub, so crawlers reach it from
+    // here rather than only from the sitemap.
+    const yHead = (y === 'Other')
+      ? `${esc(String(y))} Football Sets`
+      : `<a href="/sets/${y}/">${esc(String(y))} Football Sets</a>`;
+    html += `    <section class="lp-year">\n      <h2>${yHead} <span class="lp-count">${group.length}</span></h2>\n      <ul class="lp-set-list">\n`;
     for (const cl of group)
       html += `        <li><a href="/sets/${cl.id}/"><span class="lp-set-name">${esc(cl.name.replace(/\s+Football$/i, ''))}</span><span class="lp-set-meta">${cl.cardCount.toLocaleString()} cards</span></a></li>\n`;
     html += `      </ul>\n    </section>\n`;
@@ -705,7 +911,7 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 `;
 
 // ---- Sitemap --------------------------------------------------------------
-function buildSitemap(list, players, teams) {
+function buildSitemap(list, players, teams, years, subsetIndex) {
   const urls = [];
   const push = (loc, priority, changefreq) =>
     urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${TODAY}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
@@ -713,7 +919,11 @@ function buildSitemap(list, players, teams) {
   push(`${SITE}/sets/`, '0.9', 'weekly');
   push(`${SITE}/players/`, '0.9', 'weekly');
   push(`${SITE}/teams/`, '0.9', 'weekly');
-  for (const cl of list) push(`${SITE}/sets/${cl.id}/`, '0.7', 'weekly');
+  for (const y of years) push(`${SITE}/sets/${y}/`, '0.8', 'weekly');
+  for (const cl of list) {
+    push(`${SITE}/sets/${cl.id}/`, '0.7', 'weekly');
+    for (const sub of (subsetIndex.get(cl.id) || [])) push(`${SITE}/sets/${cl.id}/${sub.slug}/`, '0.6', 'weekly');
+  }
   for (const p of players) push(`${SITE}/players/${p.slug}/`, '0.6', 'weekly');
   for (const t of teams) push(`${SITE}/teams/${t.slug}/`, '0.7', 'weekly');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
@@ -759,7 +969,15 @@ function main() {
   const teams = [...teamIndex.values()].sort((a, b) => a.name.localeCompare(b.name));
   const teamSlug = new Map(teams.map(t => [t.name, t.slug]));
 
+  // Sets inside each product that earn their own page, and the years present.
+  const subsetIndex = new Map(checklists.map(cl => [cl.id, eligibleSubsets(cl)]));
+  const subsetTotal = [...subsetIndex.values()].reduce((n, a) => n + a.length, 0);
+  const years = [...new Set(checklists.map(c => c.year).filter(Boolean))].sort((a, b) => b - a);
+  const byYear = new Map(years.map(y => [y, checklists.filter(c => c.year === y)]));
+
   console.log(`  ${checklists.length} sets (${checklists.reduce((n, c) => n + c.cardCount, 0).toLocaleString()} cards)`);
+  console.log(`  ${subsetTotal} set pages inside them (>= ${MIN_SUBSET_CARDS} cards, duplicates of a sibling skipped)`);
+  console.log(`  ${years.length} year hubs`);
   console.log(`  ${eligible.length} eligible players (>= ${MIN_CARDS} cards in >= ${MIN_SETS} sets)`);
   console.log(`  ${teams.length} NFL team pages`);
 
@@ -774,8 +992,22 @@ function main() {
   for (const cl of checklists) {
     const dir = path.join(SETS_DIR, cl.id);
     fs.mkdirSync(dir, { recursive: true });
-    const html = buildSetPage(cl, relatedSets(cl, checklists), playerSlug);
+    const subs = subsetIndex.get(cl.id) || [];
+    const html = buildSetPage(cl, relatedSets(cl, checklists), playerSlug, subs);
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
+    for (const sub of subs) {
+      const siblings = subs.filter(x => x.slug !== sub.slug).slice(0, 12);
+      const sdir = path.join(dir, sub.slug);
+      fs.mkdirSync(sdir, { recursive: true });
+      const shtml = buildSubsetPage(cl, sub.set, sub.slug, siblings, playerSlug);
+      fs.writeFileSync(path.join(sdir, 'index.html'), shtml); bytes += Buffer.byteLength(shtml);
+    }
+  }
+  for (const y of years) {
+    const ydir = path.join(SETS_DIR, String(y));
+    fs.mkdirSync(ydir, { recursive: true });
+    const yhtml = buildYearHub(y, byYear.get(y), subsetIndex);
+    fs.writeFileSync(path.join(ydir, 'index.html'), yhtml); bytes += Buffer.byteLength(yhtml);
   }
   for (const p of eligible) {
     const sorted = [...p.cards].sort((a, b) => (b.year || 0) - (a.year || 0));
@@ -797,9 +1029,9 @@ function main() {
   fs.writeFileSync(path.join(SETS_DIR, 'index.html'), buildSetsHub(checklists));
   fs.writeFileSync(path.join(PLAYERS_DIR, 'index.html'), buildPlayersHub(eligible));
   fs.writeFileSync(path.join(TEAMS_DIR, 'index.html'), buildTeamsHub(teams));
-  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), buildSitemap(checklists, eligible, teams));
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), buildSitemap(checklists, eligible, teams, years, subsetIndex));
 
-  console.log(`  wrote ${checklists.length} set + ${eligible.length} player + ${teams.length} team pages + 3 hubs + sitemap`);
+  console.log(`  wrote ${checklists.length} product + ${subsetTotal} set + ${eligible.length} player + ${teams.length} team pages + ${years.length} year hubs + 3 hubs + sitemap`);
   console.log(`  total generated HTML: ${(bytes / 1024 / 1024).toFixed(1)} MB`);
   console.log('  done.');
 }
