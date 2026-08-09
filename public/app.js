@@ -9207,21 +9207,31 @@ async function loadVariantPage(container) {
     s.loadMoreBtn.textContent = 'Loading…';
   }
   try {
-    const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
-    const res = await fetch(`/api/search?${params}`);
-    const data = await safeJson(res);
-    if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
-    const raw = data.results || [];
-    let items = (s.mode === 'strict' && s.variantName)
-      ? filterStrictVariant(raw, s.variantName, s.printRun)
-      : raw;
-    if (s.offset === 0 && items.length === 0 && raw.length > 0 && s.mode === 'strict') {
-      s.mode = 'similar';
-      items = raw;
+    // A fetched page can be entirely discarded by the strict variant filter,
+    // which would leave the button appearing to "do nothing" on that click.
+    // Keep pulling pages until we have listings to append or run out (capped so
+    // a long run of non-matching pages can't spin forever).
+    let added = 0;
+    let pages = 0;
+    while (s.hasMore && added === 0 && pages < 10) {
+      pages++;
+      const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
+      const res = await fetch(`/api/search?${params}`);
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+      const raw = data.results || [];
+      let items = (s.mode === 'strict' && s.variantName)
+        ? filterStrictVariant(raw, s.variantName, s.printRun)
+        : raw;
+      if (s.offset === 0 && items.length === 0 && raw.length > 0 && s.mode === 'strict') {
+        s.mode = 'similar';
+        items = raw;
+      }
+      s.offset += s.pageSize;
+      if (raw.length < s.pageSize) s.hasMore = false;
+      added += items.length;
+      renderVariantPage(container, items);
     }
-    s.offset += s.pageSize;
-    if (raw.length < s.pageSize) s.hasMore = false;
-    renderVariantPage(container, items);
   } catch (err) {
     if (s.totalShown === 0) {
       container.innerHTML = `<div class="cl-listings-empty">Error: ${escHtml(err.message)}</div>`;
@@ -12289,12 +12299,25 @@ async function searchMarketplace(loadMore) {
     const data = await res.json();
 
     if (data.error) {
-      resultsEl.innerHTML = `<p class="marketplace-empty">Error: ${escHtml(data.detail || data.error)}</p>`;
+      // On a "load more" click keep the results already on screen and just
+      // re-enable the button, rather than wiping everything with an error.
+      if (loadMore) {
+        const btn = document.getElementById('marketplace-load-more');
+        if (btn) { btn.disabled = false; btn.textContent = 'Load More'; }
+      } else {
+        resultsEl.innerHTML = `<p class="marketplace-empty">Error: ${escHtml(data.detail || data.error)}</p>`;
+      }
       return;
     }
 
     if (!data.results || data.results.length === 0) {
-      if (!loadMore) resultsEl.innerHTML = '<p class="marketplace-empty">No listings found. Try a different search.</p>';
+      if (loadMore) {
+        // No further pages — retire the button instead of leaving it stuck on "Loading…".
+        const btn = document.getElementById('marketplace-load-more');
+        if (btn) btn.remove();
+      } else {
+        resultsEl.innerHTML = '<p class="marketplace-empty">No listings found. Try a different search.</p>';
+      }
       return;
     }
 
@@ -12340,7 +12363,13 @@ async function searchMarketplace(loadMore) {
       }
     }
   } catch (err) {
-    if (!loadMore) resultsEl.innerHTML = `<p class="marketplace-empty">Error: ${escHtml(err.message)}</p>`;
+    if (loadMore) {
+      // Keep loaded results; just reset the button so the user can retry.
+      const btn = document.getElementById('marketplace-load-more');
+      if (btn) { btn.disabled = false; btn.textContent = 'Load More'; }
+    } else {
+      resultsEl.innerHTML = `<p class="marketplace-empty">Error: ${escHtml(err.message)}</p>`;
+    }
   }
 }
 
