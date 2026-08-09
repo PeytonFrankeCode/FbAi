@@ -199,6 +199,16 @@ const GLUE_LOOKAHEAD = 6;
 function splitGluedCardRuns(lines) {
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
+    // Insert and autograph checklists number their cards by code rather than
+    // in sequence — "FA-AJS Aaron Jones Sr., Minnesota VikingsFA-AR Anthony
+    // Richardson, …" — so there is no next number to look for. The code
+    // itself marks each boundary. Requiring capitals before the hyphen keeps
+    // it off hyphenated names like Amon-Ra or Smith-Schuster.
+    if (/^[A-Z]{1,5}-[A-Z0-9]{1,8}\s+[A-Z]/.test(t)) {
+      const coded = t.split(/(?=[A-Z]{1,5}-[A-Z0-9]{1,8}\s+[A-Z])/).map(x => x.trim()).filter(Boolean);
+      if (coded.length > 1) { lines.splice(i, 1, ...coded); i += coded.length - 1; }
+      continue;
+    }
     if (!/^\d+\s+[A-Z]/.test(t)) continue;
     if (!/\d\s+[A-Z]/.test(t.slice(t.indexOf(' ') + 1))) continue;  // only one card
     const parts = splitGluedCardRun(t);
@@ -236,6 +246,18 @@ function splitGluedCardRun(line) {
     rest = rest.slice(cut);
   }
   return out.filter(Boolean);
+}
+
+// Word also runs the card count into whatever follows it, so a set opens
+// with "100 cardsParallels" — neither a count the parser recognises nor a
+// parallels block, which cost Topps Finest every card it had.
+function splitGluedCountLines(lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].trim().match(/^(\d+\s+cards?)([A-Z].*)$/);
+    if (!m) continue;
+    lines.splice(i, 1, `${m[1]}.`, m[2]);
+    i++;
+  }
 }
 
 // A card naming several players, each with a team, is long enough to wrap:
@@ -319,6 +341,7 @@ function parseSources(paths) {
   rejoinWrappedTitles(lines);
   rejoinWrappedSetHeaders(lines);
   rejoinWrappedCards(lines);
+  splitGluedCountLines(lines);
   splitGluedCardRuns(lines);
 
   // ---- Pass 1: locate every product header ----
@@ -693,6 +716,7 @@ function wordsLookLikeATitle(line) {
   for (const raw of words) {
     const w = raw.replace(/^[(]|[),.]+$/g, '');
     if (!w) continue;
+    if (/^[–—-]+$/.test(w)) continue;                    // "Base – Common"
     if (/^\d+(st|nd|rd|th)?$/i.test(w)) continue;        // "Year 2", "1st Down"
     if (/^[A-Z]{2,5}s?$/.test(w)) continue;              // NFL, MVPs, RPS, XR
     // Two characters minimum: a lone capital is page noise ("L Patriots",
@@ -716,7 +740,10 @@ function looksLikeTitle(line) {
   // and its one-off notes ("Kizer has only a Black Prizm … parallels.") do,
   // and both sit exactly where a set header would.
   if (/[:.]\s*$/.test(line)) return false;
-  if (/[^A-Za-z0-9 \-'’.&(),]/.test(line)) return false;
+  // En/em dashes belong in set names ("Base – Common"). The characters that
+  // actually mark page noise are slashes, brackets and arrows, which the
+  // rest of the checks below and above still catch.
+  if (/[^A-Za-z0-9 \-–—'’.&(),]/.test(line)) return false;
   if (!wordsLookLikeATitle(line)) return false;
   const letters = (line.match(/[A-Za-z0-9 ]/g) || []).length;
   return letters / line.length >= 0.7;
@@ -852,6 +879,10 @@ function cleanTeam(raw) {
   let printRun = null;
   let team = raw
     .replace(/\[[^\]]*\]/g, '')                 // "[/column]" left by the page markup
+    // "Green Bay Packers (NO BASE, BRONZE OR HOLO SILVER))" — the note holds
+    // a comma, so leaving it on stops the team being recognised and the
+    // whole thing gets read as a list of players instead.
+    .replace(/\s*\([^)]*\)+\s*$/, '')
     // "— Redemption", "– All-Americans", and the OCR'd "—- Legends" where
     // the dash came back doubled.
     .replace(/\s+[–—-]+\s*[A-Za-z][A-Za-z \-]*$/, '')
@@ -1068,12 +1099,16 @@ function consolidateSets(sets) {
   const groups = new Map();
   for (const set of sets) {
     const stripped = set.name.replace(VARIANT_RE, '').trim();
+    // "Rookie Class – Chrome" leaves the dash behind once the finish word
+    // comes off, so the base would be named "Rookie Class –".
+    const trimmed = stripped.replace(/\s*[–—-]\s*$/, '').trim();
     // "White Gold" is a Gold Standard set in its own right, not a gold
     // parallel of some set called "White". When stripping the finish word
     // leaves nothing but another finish word, the name was never a base
     // plus a variant, so it stays whole.
-    const baseName = ONE_VARIANT_WORD.test(stripped) ? set.name : stripped;
-    const variantName = (set.name === baseName) ? null : set.name.substring(baseName.length).trim();
+    const baseName = ONE_VARIANT_WORD.test(stripped) ? set.name : trimmed;
+    // Measured against the untrimmed prefix so the variant is still "Chrome".
+    const variantName = (set.name === baseName) ? null : set.name.substring(stripped.length).trim();
     const key = `${set.category}:${baseName}`;
     if (!variantName) {
       if (groups.has(key)) {
