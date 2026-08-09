@@ -67,15 +67,17 @@ function readSource(p) {
 const ARGS = process.argv.slice(2);
 const YEAR_ARG = ARGS.length === 1 && /^20\d{2}$/.test(ARGS[0]) ? ARGS[0] : null;
 
+// "Checklist" and "Checklists" both turn up — 2021's two parts disagree with
+// each other — so the plural is optional.
 function sourcesForYear(year) {
-  const re = new RegExp(`^${year}(%20|\\s)*Checklists.*\\.(txt|docx)$`, 'i');
+  const re = new RegExp(`^${year}(%20|\\s)*Checklists?.*\\.(txt|docx)$`, 'i');
   return fs.readdirSync(ROOT).filter(f => re.test(f)).sort().map(f => path.join(ROOT, f));
 }
 
 function allSourceYears() {
   const years = new Set();
   for (const f of fs.readdirSync(ROOT)) {
-    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists.*\.(?:txt|docx)$/i);
+    const m = f.match(/^(20\d{2})(?:%20|\s)*Checklists?.*\.(?:txt|docx)$/i);
     if (m) years.add(m[1]);
   }
   return [...years].sort();
@@ -95,7 +97,14 @@ const TEXT_PATHS = YEAR_ARG ? sourcesForYear(YEAR_ARG)
 // "Memorabilia Cards" the source has "Inserts", "Base Set", "Update", and
 // "Rookie Ticket Autograph Parallels" — so the suffix is matched by shape
 // (a few words before "Checklists") rather than by enumeration.
-const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:([A-Z][A-Za-z]*(?:\s+[A-Za-z]+){0,4})\s+)?Checklists?\s*$/;
+// Two title shapes. Up to 2020 the section comes before the word:
+//   "2020 Panini Absolute Football Autographs Checklists"
+// 2021 puts it after, behind a dash:
+//   "2021 Panini Eminence Football Checklist – Autographs"
+// Either group can hold the section; whichever matched is the one to read.
+const PRODUCT_HEADER_RE = /^(20\d{2}\s+[A-Za-z][A-Za-z0-9 .'’&\/-]*?\s+Football)\s+(?:([A-Z][A-Za-z]*(?:\s+[A-Za-z]+){0,4})\s+)?Checklists?(?:\s*[–—]\s*([A-Z][A-Za-z ]{0,40}?))?\s*$/;
+
+function headerSuffix(m) { return (m[2] || m[3] || '').trim(); }
 
 // The article title is one line in the text sources, but a page render wraps
 // it, so OCR puts the trailing "Checklists" on a line of its own:
@@ -271,7 +280,10 @@ function isProductHeaderLine(line) {
   // squashed team-split layout the 2023 parser deals with. The product's
   // master articles already carry every card, so this one only adds a
   // second, worse copy.
-  if (/\bTeam Set\b/i.test(m[2] || '')) return false;
+  if (/\bTeam Set\b/i.test(headerSuffix(m))) return false;
+  // "… Football Checklist – XLSX File" is the spreadsheet download link that
+  // sits under every article title, not an article of its own.
+  if (/XLSX/i.test(headerSuffix(m))) return false;
   return true;
 }
 
@@ -315,7 +327,7 @@ function parseSources(paths) {
     const t = lines[i].trim();
     if (!isProductHeaderLine(t)) continue;
     const m = t.match(PRODUCT_HEADER_RE);
-    headers.push({ lineIdx: i, product: normalizeProduct(m[1]), suffix: (m[2] || '').trim() });
+    headers.push({ lineIdx: i, product: normalizeProduct(m[1]), suffix: headerSuffix(m) });
   }
   console.log(`Found ${headers.length} header occurrences`);
   dropOffYearArticles(headers);
