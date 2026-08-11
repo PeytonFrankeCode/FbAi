@@ -12,3 +12,7 @@ public/sitemap.xml
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Runtime state the server writes as people search — not source. It was
+# committed once by accident carrying test-stub prices.
+data/price-history.json
