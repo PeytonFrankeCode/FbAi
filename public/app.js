@@ -2875,7 +2875,7 @@ function buildCard(item, opts = {}) {
       <div class="card-meta">
         ${dateHtml}
         <span class="card-condition">${escHtml(item.condition)}</span>
-        ${!isSold ? buyingOptionBadgeHtml(item) : ''}
+        ${isSold ? saleTypeNoteHtml(item) : buyingOptionBadgeHtml(item)}
       </div>
       ${item.hasAnalysis ? '<span class="card-analytics-cue">&#128200; View price history</span>' : ''}
       ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
@@ -2931,6 +2931,7 @@ function openCardModal(item) {
   let metaHtml = `<span class="modal-badge ${badgeClass}">${badgeText}</span>`;
   if (dateStr) metaHtml += `<span>${dateLabel}: ${dateStr}</span>`;
   if (item.condition) metaHtml += `<span class="modal-condition">${escHtml(item.condition)}</span>`;
+  if (isSold) metaHtml += saleTypeNoteHtml(item);
   cardModalMeta.innerHTML = metaHtml;
 
   // eBay link — sold items link to completed listings search, not the (possibly relisted) item page
@@ -9160,6 +9161,22 @@ function classifyBuyingOption(item) {
   if (hasAuction) return 'AUCTION';
   if (hasFixed) return 'BUY_IT_NOW';
   return 'UNKNOWN';
+}
+
+// How a sale closed, for sold results. Worth saying because the three mean
+// different things when you're reading a comp: an auction price is what the
+// market bid that day, a listing price is the seller's number met in full,
+// and a best offer settled somewhere under an asking price eBay doesn't
+// publish. Silent when the provider didn't tell us, rather than guessing.
+function saleTypeNoteHtml(item) {
+  const t = item && item.saleType;
+  if (t === 'offer')  return '<span class="sale-type sale-type-offer" title="Sold below the asking price — eBay does not publish accepted offer amounts">Best offer</span>';
+  if (t === 'auction') {
+    const bids = Number(item.bids) > 0 ? ` &middot; ${Number(item.bids)} bid${Number(item.bids) === 1 ? '' : 's'}` : '';
+    return `<span class="sale-type sale-type-auction" title="Closed at auction">Auction${bids}</span>`;
+  }
+  if (t === 'fixed')  return '<span class="sale-type sale-type-fixed" title="Sold at the seller\'s asking price">Listing price</span>';
+  return '';
 }
 
 function buyingOptionBadgeHtml(item) {

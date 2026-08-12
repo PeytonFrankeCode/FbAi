@@ -724,6 +724,22 @@ const NFLDB_MIN_CONFIDENCE = 0.5;
 //
 // Probed once rather than assumed: selecting a column that doesn't exist makes
 // D1 throw, which would take the whole provider down.
+// Same probe as image_url below: the sales schema has grown over time, and a
+// SELECT naming a column the table doesn't have fails the whole query, so a
+// missing sale-type column would take sold search down with it.
+let _nflSaleTypeCols = null;
+async function _nflHasSaleTypeColumns(db) {
+  if (_nflSaleTypeCols !== null) return _nflSaleTypeCols;
+  try {
+    await db.prepare('SELECT best_offer, bids FROM sales LIMIT 1').first();
+    _nflSaleTypeCols = true;
+    console.log('[NflCardDB] best_offer/bids present — labelling how each sale closed');
+  } catch (_) {
+    _nflSaleTypeCols = false;
+  }
+  return _nflSaleTypeCols;
+}
+
 let _nflImageCol = null; // null = not yet determined
 async function _nflHasImageColumn(db) {
   if (_nflImageCol !== null) return _nflImageCol;
@@ -735,6 +751,20 @@ async function _nflHasImageColumn(db) {
     _nflImageCol = false;
   }
   return _nflImageCol;
+}
+
+// How a sale actually closed. eBay settles a listing three ways and they mean
+// very different things to someone reading a comp: an auction result is what
+// the market bid on the day, a fixed-price sale is the seller's number met in
+// full, and an accepted best offer is under an asking price we cannot see.
+// Returns null when the source doesn't say — better to show nothing than to
+// label a sale wrongly.
+function saleTypeOf({ bestOffer, listingFormat }) {
+  if (bestOffer === 1 || bestOffer === true || /^(1|y|yes|true)$/i.test(String(bestOffer || ''))) return 'offer';
+  const fmt = String(listingFormat || '').toLowerCase();
+  if (!fmt) return null;
+  if (fmt.includes('auction')) return 'auction';
+  return 'fixed';
 }
 
 function mapNflDbSale(r) {
@@ -754,6 +784,8 @@ function mapNflDbSale(r) {
     itemUrl: r.item_id ? `https://www.ebay.com/itm/${encodeURIComponent(r.item_id)}` : '',
     condition: grade || 'Ungraded',
     buyingOptions: r.listing_format === 'auction' ? ['AUCTION'] : ['FIXED_PRICE'],
+    saleType: saleTypeOf({ bestOffer: r.best_offer, listingFormat: r.listing_format }),
+    bids: Number.isFinite(Number(r.bids)) && Number(r.bids) > 0 ? Number(r.bids) : null,
     // No print_run column — callers fall back to parsing it out of the title.
     printRun: null,
     grader: r.grader || null,
@@ -791,6 +823,7 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     // resolve to a card identity, so the UI can advertise the history rather
     // than making people click to discover it isn't there.
     const cols = 'item_id, sold_date, title, price_cents, currency, listing_format, grader, grade, player'
+      + (await _nflHasSaleTypeColumns(db) ? ', best_offer, bids' : '')
       + (await _nflHasImageColumn(db) ? ', image_url' : '');
     const stmt = db.prepare(
       `SELECT ${cols}
@@ -981,6 +1014,8 @@ function mapCardApiSale(s) {
     itemUrl: s.listing_url || '',
     condition: grade || s.condition || 'Ungraded',
     buyingOptions: s.listing_type === 'auction' ? ['AUCTION'] : ['FIXED_PRICE'],
+    saleType: saleTypeOf({ bestOffer: s.best_offer, listingFormat: s.listing_type }),
+    bids: Number.isFinite(Number(s.bids)) && Number(s.bids) > 0 ? Number(s.bids) : null,
     // Structured extras (no title regex needed)
     printRun: Number.isFinite(s.print_run) ? s.print_run : null,
     grader: s.grader || null,

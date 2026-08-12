@@ -3961,6 +3961,14 @@ footer::before {
   align-self: flex-start;
 }
 
+/* Both meta lists this badge lands in — the card's and the modal's — are
+   columns, so it stretches the full width unless it opts out the way its
+   siblings (.card-condition, .modal-condition) already do. */
+.card-meta .sale-type,
+.card-modal-meta .sale-type {
+  align-self: flex-start;
+}
+
 .card-modal-ebay-link {
   display: block;
   margin-top: auto;
@@ -5026,6 +5034,34 @@ footer::before {
 .cl-buyopt-auction { background: rgba(244, 162, 97, 0.18); color: #f4a261; border: 1px solid rgba(244, 162, 97, 0.45); }
 .cl-buyopt-bin     { background: rgba(82, 183, 136, 0.18); color: #52b788; border: 1px solid rgba(82, 183, 136, 0.45); }
 .cl-buyopt-both    { background: rgba(125, 142, 217, 0.18); color: #9aa9e6; border: 1px solid rgba(125, 142, 217, 0.45); }
+
+/* How a sold listing closed. Same shape as the buy-option badges above but
+   quieter — on a sold card the price is the headline and this qualifies it,
+   so it should read as a footnote rather than compete. */
+.sale-type {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.sale-type-auction { background: rgba(244, 162, 97, 0.14); color: #f4a261; border: 1px solid rgba(244, 162, 97, 0.35); }
+.sale-type-fixed   { background: rgba(82, 183, 136, 0.14); color: #52b788; border: 1px solid rgba(82, 183, 136, 0.35); }
+/* Best offer gets the warning-ish tone: the number shown is not the whole
+   story, because eBay never publishes what the offer actually was. */
+.sale-type-offer   { background: rgba(233, 196, 106, 0.16); color: #e9c46a; border: 1px solid rgba(233, 196, 106, 0.40); }
+
+/* Those three hues are tuned for a dark card and fall to roughly 1.5-2.2:1
+   on the white light-mode surface, which is unreadable. Light mode keeps the
+   same colour families but takes the text far darker so the badge stays
+   legible against white. */
+[data-theme="light"] .sale-type-auction { background: rgba(166, 84, 8, 0.12);  color: #8a4408; border-color: rgba(166, 84, 8, 0.35); }
+[data-theme="light"] .sale-type-fixed   { background: rgba(21, 106, 66, 0.12); color: #14603c; border-color: rgba(21, 106, 66, 0.35); }
+[data-theme="light"] .sale-type-offer   { background: rgba(140, 100, 12, 0.12); color: #7a560a; border-color: rgba(140, 100, 12, 0.35); }
 
 .cl-listing-item {
   display: flex;
