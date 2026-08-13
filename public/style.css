@@ -9753,8 +9753,18 @@ footer {
 .mp-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
 .mp-section-sub { font-size: 0.64rem; color: var(--text-muted); }
 
-.mp-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+/* minmax(0, 1fr), not 1fr: a bare 1fr floors each column at its content's
+   min-content width, so a long card name pushes the columns wider than the
+   grid and the tiles spill past their neighbours — at 320px it took the
+   whole page into horizontal scroll. */
+.mp-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; }
 .mp-tile {
+  /* Most-expensive tiles are <a>, most-sold are <button>, and the UA gives a
+     button align-items:center and non-wrapping text. That stopped the name
+     stretching to the tile and stopped it wrapping, so on a phone it ran
+     straight over the neighbouring tile. Both are reset here so the two tile
+     types lay out identically. */
+  align-items: stretch; white-space: normal;
   display: flex; flex-direction: column; gap: 0.15rem; min-width: 0;
   background: rgba(148, 163, 184, 0.05); border: 1px solid var(--border);
   border-radius: 10px; padding: 0.5rem; text-decoration: none;
@@ -9777,8 +9787,12 @@ footer {
 .mp-tile-name {
   font-size: 0.7rem; color: var(--text-primary); line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  /* Card names carry unbreakable runs like "#257" and "$57,500"; without a
+     break opportunity they set the tile's minimum width. */
+  min-width: 0; overflow-wrap: anywhere;
 }
-.mp-tile-meta { font-size: 0.63rem; color: var(--text-muted); }
+.mp-tile-meta { font-size: 0.63rem; color: var(--text-muted); min-width: 0; overflow-wrap: anywhere; }
+.mp-tile-price { min-width: 0; overflow-wrap: anywhere; }
 
 @media (max-width: 560px) {
   .mp-tiles { gap: 0.45rem; }
