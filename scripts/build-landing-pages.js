@@ -37,6 +37,23 @@ const SETS_DIR = path.join(PUBLIC_DIR, 'sets');
 const PLAYERS_DIR = path.join(PUBLIC_DIR, 'players');
 const TEAMS_DIR = path.join(PUBLIC_DIR, 'teams');
 const SITE = 'https://thecardhuddle.com';
+
+// AdSense on the ~8,000 generated pages, off by default.
+//
+// The tag pulls in the ad auction, which costs LCP and — unless every slot
+// has a reserved height — CLS, both of which feed page-experience ranking.
+// These pages exist to rank, and Google is still forming its first
+// assessment of them, so the trade is bad right now: a few dollars a month
+// against the asset the whole build was for. Ownership verification doesn't
+// need it either; public/ads.txt covers that.
+//
+// Set this to the pub id ('ca-pub-…') once the pages have traffic worth
+// monetising, and reserve a fixed height on every slot when you do.
+const ADSENSE_CLIENT = null;
+
+const adsenseTag = () => ADSENSE_CLIENT
+  ? `  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
+  : '';
 const TODAY = new Date().toISOString().slice(0, 10);
 
 // The 32 current NFL franchises (clean, high-volume team values). Relocated /
@@ -161,6 +178,7 @@ function head({ title, description, canonical, extraJsonLd }) {
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#5ece99" />
   <link rel="canonical" href="${esc(canonical)}" />
+${adsenseTag()}
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="The Card Huddle" />
