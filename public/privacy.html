@@ -9,6 +9,36 @@
   <meta name="theme-color" content="#5ece99" />
   <link rel="canonical" href="https://thecardhuddle.com/privacy.html" />
   <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+
+  <!-- Consent Mode v2 defaults, kept in step with the copy in index.html.
+       This page loads the AdSense tag purely to pull in Google's consent
+       management platform, so the "Manage cookie choices" button below has
+       something to reopen — no ad slots are placed on this page. As in
+       index.html, these defaults must stay above the tag they govern. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+      region: [
+        'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE',
+        'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
+        'IS','LI','NO','GB','CH'
+      ]
+    });
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -41,6 +71,13 @@
     .legal th { color: var(--text-primary); font-weight: 600; }
     .legal .back { display: inline-block; margin-bottom: 1.5rem; font-size: .9rem; }
     .legal .note { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 10px; padding: .9rem 1rem; margin: 1.25rem 0; }
+    .consent-btn { font: inherit; font-size: .9rem; font-weight: 600; color: var(--text-primary);
+      background: var(--bg-secondary); border: 1px solid var(--border-primary);
+      border-radius: 8px; padding: .55rem 1rem; cursor: pointer; }
+    .consent-btn:hover { border-color: var(--accent); }
+    .consent-note { display: block; margin-top: .5rem; color: var(--text-secondary); font-size: .88rem; }
+    /* display:block above outranks the UA rule for [hidden], so restate it. */
+    .consent-note[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -69,7 +106,7 @@
     <p>You can use the price search, the checklists, the player and team guides and the market pages
     with no account. In that case what we hold is:</p>
     <ul>
-      <li><strong>Analytics data</strong> — pages visited, roughly where in the world you are, and what kind of device and browser you use. Collected through Google Analytics, described below.</li>
+      <li><strong>Analytics data</strong> — pages visited, roughly where in the world you are, and what kind of device and browser you use. Collected through Google Analytics and a simple page counter from Borealis Software, both described below.</li>
       <li><strong>Things saved in your own browser</strong> — your theme choice, your recent searches, which banners you have dismissed, and any collection or watchlist you build. This lives in your browser's local storage. It is on your device, not our server, and clearing your browser data removes it.</li>
       <li><strong>Ordinary server logs</strong> — our host, Cloudflare, records requests including IP address, for security and to keep the site running.</li>
     </ul>
@@ -103,6 +140,7 @@
       <tr><td>Stripe</td><td>Payments and fraud prevention.</td><td><a href="https://stripe.com/privacy" rel="nofollow noopener" target="_blank">Stripe Privacy</a></td></tr>
       <tr><td>eBay Partner Network</td><td>Credits us if you buy after clicking through to eBay.</td><td><a href="https://www.ebay.com/help/policies/member-behaviour-policies/user-privacy-notice-privacy-policy" rel="nofollow noopener" target="_blank">eBay Privacy</a></td></tr>
       <tr><td>Cloudflare</td><td>Hosting, security and delivery.</td><td><a href="https://www.cloudflare.com/privacypolicy/" rel="nofollow noopener" target="_blank">Cloudflare Privacy</a></td></tr>
+      <tr><td>Borealis Software</td><td>A second, simpler visit counter. It records the page path you opened; it sets no cookie and stores nothing on your device.</td><td>&mdash;</td></tr>
       <tr><td>Google Fonts, jsDelivr</td><td>Serve fonts and code libraries. They see your IP address when your browser fetches those files.</td><td>&mdash;</td></tr>
     </table>
 
@@ -112,6 +150,20 @@
       <li>Google's use of advertising cookies enables it and its partners to serve ads to you based on your visits to our site and other sites on the internet.</li>
       <li>You can opt out of personalised advertising at <a href="https://www.google.com/settings/ads" rel="nofollow noopener" target="_blank">Google Ads Settings</a>, or opt out of third-party vendors' use of cookies for personalised advertising at <a href="https://www.aboutads.info/choices/" rel="nofollow noopener" target="_blank">aboutads.info/choices</a>.</li>
     </ul>
+
+    <h2>Your consent choices in the EEA, UK and Switzerland</h2>
+    <p>If you are visiting from the European Economic Area, the United Kingdom or
+    Switzerland, you will see a consent prompt the first time you arrive. Until you answer it,
+    advertising and analytics cookies are switched <strong>off</strong> — the site loads with
+    ad storage, ad personalisation and analytics storage all denied, and nothing is written to
+    your device for those purposes. If you decline, you still get the whole site; ads simply
+    become non-personalised.</p>
+    <p>You can change your mind at any time:</p>
+    <p><button type="button" id="manage-consent" class="consent-btn">Manage cookie choices</button>
+      <span id="consent-fallback" class="consent-note" hidden>The consent prompt is only shown
+      to visitors in the regions listed above, so there is nothing to change from here.</span></p>
+    <p>Outside those regions, the opt-out links in the advertising section above are the way to
+    turn off personalised ads.</p>
 
     <h2>Affiliate links</h2>
     <p>Links to eBay carry a tracking code, and our BCW links carry a discount code. If you buy after
@@ -136,6 +188,7 @@
     <ul>
       <li><strong>See or delete your data.</strong> Email us and we will send you what we hold on your account, or delete it.</li>
       <li><strong>Delete it yourself.</strong> Clearing your browser data removes everything stored on your device.</li>
+      <li><strong>Change your consent choice</strong> if you are in the EEA, UK or Switzerland, using the button in the consent section above.</li>
       <li><strong>Opt out of ad personalisation</strong> using the links in the advertising section.</li>
       <li><strong>Opt out of analytics</strong> with Google's <a href="https://tools.google.com/dlpage/gaoptout" rel="nofollow noopener" target="_blank">opt-out browser add-on</a>.</li>
     </ul>
@@ -159,7 +212,28 @@
 
     <h2>Contact</h2>
     <p>Questions, or want your data sent to you or deleted? Use the <strong>Feedback</strong> button
-    in the site footer, or email <a href="mailto:support@thecardhuddle.com">support@thecardhuddle.com</a>.</p>
+    in the site footer, or email
+    <a href="mailto:thecardhuddleoffical@gmail.com">thecardhuddleoffical@gmail.com</a>.</p>
   </main>
+
+  <script>
+    // Reopens Google's consent prompt. googlefc is only defined once the CMP
+    // has decided this visitor is in a region it serves, so outside the EEA,
+    // UK and Switzerland there is genuinely nothing to reopen — say so rather
+    // than leaving a button that appears broken.
+    (function () {
+      var btn = document.getElementById('manage-consent');
+      var fallback = document.getElementById('consent-fallback');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var fc = window.googlefc;
+        if (fc && typeof fc.showRevocationMessage === 'function') {
+          fc.showRevocationMessage();
+        } else if (fallback) {
+          fallback.hidden = false;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

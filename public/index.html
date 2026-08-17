@@ -10,6 +10,39 @@
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#5ece99" />
 
+  <!-- Google Consent Mode v2 defaults.
+       MUST stay above the AdSense and Analytics tags below: consent defaults
+       only apply to tags that load after them, so moving this down silently
+       turns it off. Storage is denied by default in the EEA, UK and
+       Switzerland, so no ad or analytics cookie is written there until the
+       consent management platform reports a choice. Everywhere else keeps
+       the previous behaviour. wait_for_update gives the CMP 500ms to answer
+       before tags fall back to the denied default.
+       The banner itself is served by Google's certified CMP, configured in
+       AdSense under Privacy & messaging — it is not in this repo. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+      region: [
+        'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE',
+        'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
+        'IS','LI','NO','GB','CH'
+      ]
+    });
+  </script>
+
   <!-- AdSense. Deliberately only on the app shell, not on the generated
        landing pages under /sets, /players and /teams — see ADSENSE_CLIENT in
        scripts/build-landing-pages.js for why and how to switch those on. -->
@@ -32,8 +65,7 @@
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    // dataLayer and gtag() are already defined by the consent block above.
     gtag('js', new Date());
     gtag('config', 'G-37RKDTRBCH');
   </script>
