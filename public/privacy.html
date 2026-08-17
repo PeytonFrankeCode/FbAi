@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy | The Card Huddle</title>
+  <meta name="description" content="What The Card Huddle collects, why, who it is shared with, and how to get it deleted." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#5ece99" />
+  <link rel="canonical" href="https://thecardhuddle.com/privacy.html" />
+  <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css?v=150" />
+  <script>
+    // Same theme bootstrap as app.js. This page doesn't load app.js, so
+    // without it a light-mode user would get a dark legal page.
+    (function () {
+      try {
+        if (localStorage.getItem('cardHuddleTheme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) { /* storage blocked — dark theme is the default anyway */ }
+    })();
+  </script>
+  <style>
+    .legal { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .legal h1 { font-size: 2rem; font-weight: 800; margin: 0 0 .35rem; }
+    .legal .updated { color: var(--text-secondary); font-size: .85rem; margin: 0 0 2rem; }
+    .legal h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 .6rem; }
+    .legal h3 { font-size: .98rem; font-weight: 600; margin: 1.25rem 0 .4rem; }
+    .legal p, .legal li { color: var(--text-secondary); line-height: 1.65; font-size: .95rem; }
+    .legal ul { padding-left: 1.15rem; margin: .5rem 0 1rem; }
+    .legal li { margin: .3rem 0; }
+    .legal a { color: var(--accent); }
+    .legal table { width: 100%; border-collapse: collapse; margin: .75rem 0 1.25rem; font-size: .9rem; table-layout: fixed; }
+    /* Policy URLs are long unbroken strings; without this they push the page
+       past the viewport on phones instead of wrapping. */
+    .legal th, .legal td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--border-primary); vertical-align: top; overflow-wrap: anywhere; }
+    .legal th { color: var(--text-primary); font-weight: 600; }
+    .legal .back { display: inline-block; margin-bottom: 1.5rem; font-size: .9rem; }
+    .legal .note { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 10px; padding: .9rem 1rem; margin: 1.25rem 0; }
+  </style>
+</head>
+<body>
+  <main class="legal">
+    <a class="back" href="/">&larr; Back to The Card Huddle</a>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated 17 August 2026</p>
+
+    <p>The Card Huddle (<a href="https://thecardhuddle.com">thecardhuddle.com</a>) is a free tool for
+    looking up what football cards actually sell for. This page explains what we collect, why, who
+    it goes to, and how to get rid of it. It describes what the site genuinely does — if something
+    here does not match your experience, please tell us.</p>
+
+    <h2>The short version</h2>
+    <ul>
+      <li>You can search card prices and browse every checklist without an account and without telling us anything about yourself.</li>
+      <li>If you make an account, we store a username, a password we cannot read, and optionally an email address.</li>
+      <li>Your collection, inventory and watchlist are yours. They stay in your browser unless you are signed in, in which case we also store a copy so your devices match.</li>
+      <li>We do not sell your personal information.</li>
+      <li>We use Google Analytics, Google AdSense, Stripe, and affiliate links to eBay and BCW. Each is described below.</li>
+    </ul>
+
+    <h2>What we collect</h2>
+
+    <h3>If you never make an account</h3>
+    <p>You can use the price search, the checklists, the player and team guides and the market pages
+    with no account. In that case what we hold is:</p>
+    <ul>
+      <li><strong>Analytics data</strong> — pages visited, roughly where in the world you are, and what kind of device and browser you use. Collected through Google Analytics, described below.</li>
+      <li><strong>Things saved in your own browser</strong> — your theme choice, your recent searches, which banners you have dismissed, and any collection or watchlist you build. This lives in your browser's local storage. It is on your device, not our server, and clearing your browser data removes it.</li>
+      <li><strong>Ordinary server logs</strong> — our host, Cloudflare, records requests including IP address, for security and to keep the site running.</li>
+    </ul>
+
+    <h3>If you make an account</h3>
+    <table>
+      <tr><th>What</th><th>Why</th></tr>
+      <tr><td>Username</td><td>Identifies you on the site, including on community posts and messages.</td></tr>
+      <tr><td>Password</td><td>Stored only as a cryptographic hash. We cannot read it, and neither can anyone who obtained the stored value.</td></tr>
+      <tr><td>Email address (optional)</td><td>Only if you give one. Used for card alerts and account email. You can use the site without one.</td></tr>
+      <tr><td>Sign-in session token</td><td>Keeps you signed in. Expires on its own and on sign-out.</td></tr>
+      <tr><td>Your collection, inventory, watchlist and portfolio history</td><td>So the same data appears on every device you sign in from.</td></tr>
+      <tr><td>Card alerts you set</td><td>To tell you when a card you are watching sells.</td></tr>
+      <tr><td>Community posts, comments, reactions and reports</td><td>To run the community area.</td></tr>
+      <tr><td>Direct messages</td><td>To deliver them. They are not end-to-end encrypted — treat them as private-ish, not secret.</td></tr>
+      <tr><td>Feedback and bug reports</td><td>To fix things. Whatever you type in the box is what we get.</td></tr>
+    </table>
+
+    <h3>If you fund the site or subscribe</h3>
+    <p>Payments are handled by <strong>Stripe</strong>. Card numbers go to Stripe, never to us — we
+    never see or store them. We keep a record that a payment or subscription exists and its status.
+    See <a href="https://stripe.com/privacy" rel="nofollow noopener" target="_blank">Stripe's privacy policy</a>.</p>
+
+    <h2>Cookies and similar technology</h2>
+    <p>We use browser local storage for your own settings and saved cards, as described above. Third
+    parties we embed set their own cookies:</p>
+    <table>
+      <tr><th>Who</th><th>What for</th><th>Their policy</th></tr>
+      <tr><td>Google Analytics</td><td>Counts visits and pages so we know what to improve.</td><td><a href="https://policies.google.com/privacy" rel="nofollow noopener" target="_blank">Google Privacy</a></td></tr>
+      <tr><td>Google AdSense</td><td>Shows ads. See the advertising section below.</td><td><a href="https://policies.google.com/technologies/ads" rel="nofollow noopener" target="_blank">Google Ads</a></td></tr>
+      <tr><td>Stripe</td><td>Payments and fraud prevention.</td><td><a href="https://stripe.com/privacy" rel="nofollow noopener" target="_blank">Stripe Privacy</a></td></tr>
+      <tr><td>eBay Partner Network</td><td>Credits us if you buy after clicking through to eBay.</td><td><a href="https://www.ebay.com/help/policies/member-behaviour-policies/user-privacy-notice-privacy-policy" rel="nofollow noopener" target="_blank">eBay Privacy</a></td></tr>
+      <tr><td>Cloudflare</td><td>Hosting, security and delivery.</td><td><a href="https://www.cloudflare.com/privacypolicy/" rel="nofollow noopener" target="_blank">Cloudflare Privacy</a></td></tr>
+      <tr><td>Google Fonts, jsDelivr</td><td>Serve fonts and code libraries. They see your IP address when your browser fetches those files.</td><td>&mdash;</td></tr>
+    </table>
+
+    <h2>Advertising</h2>
+    <ul>
+      <li>Third-party vendors, including Google, use cookies to serve ads based on your prior visits to this and other websites.</li>
+      <li>Google's use of advertising cookies enables it and its partners to serve ads to you based on your visits to our site and other sites on the internet.</li>
+      <li>You can opt out of personalised advertising at <a href="https://www.google.com/settings/ads" rel="nofollow noopener" target="_blank">Google Ads Settings</a>, or opt out of third-party vendors' use of cookies for personalised advertising at <a href="https://www.aboutads.info/choices/" rel="nofollow noopener" target="_blank">aboutads.info/choices</a>.</li>
+    </ul>
+
+    <h2>Affiliate links</h2>
+    <p>Links to eBay carry a tracking code, and our BCW links carry a discount code. If you buy after
+    clicking one, we may earn a commission at no extra cost to you. This does not change which
+    listings or prices we show you — sold prices come from real completed sales, and nothing about
+    what we display is influenced by whether we would earn on it.</p>
+
+    <h2>Who we share with</h2>
+    <p><strong>We do not sell your personal information.</strong> We share only with the service
+    providers listed above, each doing a specific job for the site. We will also disclose information
+    where the law requires it, or where it is necessary to protect the site or its users.</p>
+
+    <h2>How long we keep things</h2>
+    <ul>
+      <li>Account data and your saved cards: until you ask us to delete them.</li>
+      <li>Sign-in sessions: they expire on their own, and immediately when you sign out.</li>
+      <li>Analytics: retained under Google Analytics' own retention settings.</li>
+      <li>Anything kept only in your browser: until you clear your browser data.</li>
+    </ul>
+
+    <h2>Your choices and rights</h2>
+    <ul>
+      <li><strong>See or delete your data.</strong> Email us and we will send you what we hold on your account, or delete it.</li>
+      <li><strong>Delete it yourself.</strong> Clearing your browser data removes everything stored on your device.</li>
+      <li><strong>Opt out of ad personalisation</strong> using the links in the advertising section.</li>
+      <li><strong>Opt out of analytics</strong> with Google's <a href="https://tools.google.com/dlpage/gaoptout" rel="nofollow noopener" target="_blank">opt-out browser add-on</a>.</li>
+    </ul>
+    <p>Depending on where you live, you may have additional rights — for example under the UK and EU
+    GDPR, or the California Consumer Privacy Act — including the right to access, correct, delete or
+    port your data, and to object to some processing. Ask us and we will honour those requests
+    regardless of where you live.</p>
+
+    <h2>Children</h2>
+    <p>The Card Huddle is not directed at children under 13, and we do not knowingly collect personal
+    information from them. If you believe a child has given us information, contact us and we will
+    delete it.</p>
+
+    <h2>Security</h2>
+    <p>Passwords are stored hashed, never in plain text. Traffic is served over HTTPS. No site can
+    promise perfect security, and we would rather say that plainly than imply otherwise.</p>
+
+    <h2>Changes</h2>
+    <p>If this policy changes, the date at the top changes with it. Material changes will be
+    announced on the site.</p>
+
+    <h2>Contact</h2>
+    <p>Questions, or want your data sent to you or deleted? Use the <strong>Feedback</strong> button
+    in the site footer, or email <a href="mailto:support@thecardhuddle.com">support@thecardhuddle.com</a>.</p>
+  </main>
+</body>
+</html>

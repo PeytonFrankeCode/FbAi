@@ -210,7 +210,7 @@ function footer() {
   return `
   <footer class="lp-footer">
     <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>
-    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; Data sourced from eBay &bull; Not affiliated with eBay Inc.</p>
+    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/privacy.html">Privacy</a> &bull; Data sourced from eBay &bull; Not affiliated with eBay Inc.</p>
   </footer>
 </body>
 </html>`;
