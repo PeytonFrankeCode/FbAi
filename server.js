@@ -106,16 +106,9 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     case 'checkout.session.completed': {
       const session = event.data.object;
 
-      // Donations / monthly supporters grant NO perks — record them toward the
-      // monthly funding goal and stop, so a supporter is never mislabeled as a
-      // paid plan.
-      if (session.metadata?.type === 'donation' || session.metadata?.type === 'supporter') {
-        const isRecurring = session.metadata.type === 'supporter';
-        recordDonation(session.amount_total, isRecurring);
-        const amt = (session.amount_total != null) ? `$${(session.amount_total / 100).toFixed(2)}` : 'unknown';
-        console.log(`[fund] ${session.metadata.type} received: ${amt} (${session.metadata.username || 'anon'})`);
-        break;
-      }
+      // Donations were removed. Any such event now is a historical webhook
+      // replay, so acknowledge and ignore rather than treating it as a plan.
+      if (session.metadata?.type === 'donation' || session.metadata?.type === 'supporter') break;
 
       const username = session.metadata?.username;
       if (!username) break;
@@ -159,17 +152,6 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
         }
       }
       saveSubscriptions(subs);
-      break;
-    }
-    case 'invoice.payment_succeeded': {
-      // Count recurring monthly-Supporter renewals toward the funding goal. The
-      // first invoice (billing_reason 'subscription_create') is already counted
-      // at checkout, so only count subsequent cycles to avoid double-counting.
-      const invoice = event.data.object;
-      if (invoice.billing_reason === 'subscription_cycle') {
-        recordDonation(invoice.amount_paid, false);
-        console.log(`[fund] supporter renewal: $${((invoice.amount_paid || 0) / 100).toFixed(2)}`);
-      }
       break;
     }
   }
@@ -6090,86 +6072,10 @@ app.get('/api/stripe/config', (req, res) => {
   res.json({
     publishableKey: stripeEnabled ? STRIPE_PUBLISHABLE_KEY : null,
     enabled: stripeEnabled,
-    // Whether donations ("Fund the Card Huddle") can be collected right now.
     checkoutEnabled: !!CHECKOUT_ENABLED,
   });
 });
 
-// ---- Fund the Card Huddle: monthly goal + progress ----
-// The visible "$X of $Y this month" bar. Goal is configurable via env; raised
-// is accumulated by the Stripe webhook as donations come in, bucketed by
-// calendar month so it resets cleanly on the 1st. Persisted via the normal
-// loadData/saveData (KV) pipeline — 'fundStats' is in KNOWN_KEYS so it survives
-// cold starts instead of being overwritten.
-const FUND_GOAL_MONTHLY = parseFloat(process.env.FUND_GOAL_MONTHLY) || 50;
-const FUND_STATS_FILE = path.join(APP_ROOT, 'data', 'fund-stats.json');
-function _fundMonth() { return new Date().toISOString().slice(0, 7); } // YYYY-MM
-function loadFundStats() {
-  const s = loadData('fundStats', FUND_STATS_FILE, { month: _fundMonth(), raised: 0, supporters: 0, allTime: 0 });
-  // Roll over to a fresh bucket when the calendar month changes.
-  if (s.month !== _fundMonth()) {
-    return { month: _fundMonth(), raised: 0, supporters: 0, allTime: s.allTime || 0 };
-  }
-  return s;
-}
-function recordDonation(amountCents, isRecurring) {
-  const dollars = (amountCents || 0) / 100;
-  if (dollars <= 0) return;
-  const s = loadFundStats();
-  s.raised = Math.round((s.raised + dollars) * 100) / 100;
-  s.allTime = Math.round(((s.allTime || 0) + dollars) * 100) / 100;
-  if (isRecurring) s.supporters = (s.supporters || 0) + 1;
-  saveData('fundStats', FUND_STATS_FILE, s);
-}
-
-// GET /api/fund-goal — drives the progress bar. Public, cache-light.
-app.get('/api/fund-goal', (req, res) => {
-  const s = loadFundStats();
-  const goal = FUND_GOAL_MONTHLY;
-  res.json({
-    goal,
-    raised: s.raised || 0,
-    supporters: s.supporters || 0,
-    month: s.month,
-    pct: goal > 0 ? Math.min(100, Math.round(((s.raised || 0) / goal) * 100)) : 0,
-    currency: 'usd',
-  });
-});
-
-// ---- Fund the Card Huddle (donations) ----
-// The Card Huddle is free for everyone and community-funded. This creates a
-// Stripe Checkout session for either a one-time donation (mode: payment) or a
-// recurring monthly "Supporter" (mode: subscription). Donations grant NO perks
-// — every feature is free regardless. Ad-hoc price_data so no pre-created
-// product/price IDs are needed.
-app.post('/api/stripe/create-donation', async (req, res) => {
-  if (!stripeEnabled) return res.status(503).json({ error: 'Donations are not configured on this server yet.' });
-  const { amount, recurring } = req.body || {};
-  const dollars = parseFloat(amount);
-  if (!dollars || isNaN(dollars)) return res.status(400).json({ error: 'Please choose an amount.' });
-  const cents = Math.round(dollars * 100);
-  if (cents < 100 || cents > 100000) return res.status(400).json({ error: 'Amount must be between $1 and $1000.' });
-  const username = getSessionUser(req) || '';
-  const isRecurring = !!recurring;
-  try {
-    const priceData = isRecurring
-      ? { currency: 'usd', unit_amount: cents, recurring: { interval: 'month' }, product_data: { name: 'The Card Huddle — Monthly Supporter' } }
-      : { currency: 'usd', unit_amount: cents, product_data: { name: 'The Card Huddle — Donation' } };
-    const session = await stripe.checkout.sessions.create({
-      mode: isRecurring ? 'subscription' : 'payment',
-      line_items: [{ price_data: priceData, quantity: 1 }],
-      metadata: { type: isRecurring ? 'supporter' : 'donation', username: username.toLowerCase() },
-      success_url: `${siteOrigin(req)}/?funded=${isRecurring ? 'monthly' : 'once'}`,
-      cancel_url: `${siteOrigin(req)}/?funded=cancel`,
-    });
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error('Stripe donation error:', err);
-    res.status(500).json({ error: 'Could not start the donation checkout.', detail: String(err && err.message || err) });
-  }
-});
-
-// Create checkout session for Pro subscription
 app.post('/api/stripe/create-checkout', async (req, res) => {
   if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
