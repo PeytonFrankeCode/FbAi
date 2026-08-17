@@ -199,7 +199,6 @@ async function confirmDeleteAccount() {
   }
 }
 
-
 function closeSettings() {
   document.getElementById('settings-overlay').classList.add('hidden');
 }
@@ -2096,10 +2095,10 @@ async function performSearch(query, opts = {}) {
       return;
     }
     if (response.status === 402 && data && data.limitReached) {
-      // Hit today's free sold-search cap → invite them to fund / lift the cap.
+      // Hit today's sold-search cap. Nothing to sell them — it resets tomorrow.
       setLoading(false);
       refreshSoldUsage();
-      showFund(data.error || `You've hit today's free sold-search limit (${data.freeLimit || 25}).`);
+      alert(data.error || `You've hit today's sold-search limit (${data.freeLimit || 25}). It resets tomorrow.`);
       return;
     }
     if (!response.ok) {
@@ -2252,8 +2251,7 @@ async function loadGradePanel(query) {
     if (res.status === 402 && data && data.limitReached) {
       loading.classList.add('hidden');
       refreshSoldUsage();
-      showFund(data.error || `You've hit today's free sold-search limit (${data.freeLimit || 25}).`);
-      body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Daily sold-search limit reached — ♥ Fund to help lift it.</span>';
+      body.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem">Daily sold-search limit reached &mdash; resets tomorrow.</span>';
       return;
     }
     if (!res.ok) throw new Error(data.error);
@@ -2877,7 +2875,6 @@ function setCurrentUser(username) {
     localStorage.removeItem('cardHuddleCurrentUser');
   }
   updateAuthButton();
-  if (typeof updateProButton === 'function') updateProButton();
   if (username) { if (typeof startDmPoller === 'function') startDmPoller(); }
   else { if (typeof updateDmBadge === 'function') updateDmBadge(0); if (typeof disconnectDmSocket === 'function') disconnectDmSocket(); }
 }
@@ -3093,7 +3090,6 @@ async function handleGoogleCredential(response) {
       localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
     }
     closeLogin();
-    syncSubscriptionStatus().catch(() => {});
     enableUserSync().catch(() => {});
   } catch (err) {
     loginError.textContent = describeAuthError(err);
@@ -3164,7 +3160,6 @@ async function handleAppleSignIn() {
       localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
     }
     closeLogin();
-    syncSubscriptionStatus().catch(() => {});
     enableUserSync().catch(() => {});
   } catch (err) {
     // popup_closed_by_user is a normal cancellation — don't show as an error
@@ -3293,7 +3288,6 @@ async function handleAuth(e) {
       // so a slow subscription/sync fetch must not block the modal closing
       // or the submit button re-enabling. Any earlier `await` here is what
       // made the screen feel "frozen" after a cold-start register.
-      syncSubscriptionStatus().catch(err => console.warn('[auth] sub sync failed:', err && err.message || err));
       enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
     } else {
       const { res, data } = await authFetchJson('/api/auth/login', { username, password });
@@ -3336,7 +3330,6 @@ async function handleAuth(e) {
           }
           if (!migrated) setCurrentUser(localUser.username);
           closeLogin();
-          syncSubscriptionStatus().catch(() => {});
           if (migrated) enableUserSync().catch(() => {});
           return false;
         }
@@ -3360,7 +3353,6 @@ async function handleAuth(e) {
         localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
       }
       closeLogin();
-      syncSubscriptionStatus().catch(err => console.warn('[auth] sub sync failed:', err && err.message || err));
       enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
     }
   } catch (err) {
@@ -3395,216 +3387,6 @@ document.addEventListener('keydown', (e) => {
 
 // Init auth state on load
 updateAuthButton();
-
-// ---- Fund The Card Huddle ----
-// No memberships, no paywalls — every feature is free for everyone. The site is
-// community-funded: eBay Partner Network affiliate links on every listing,
-// optional sponsors, and voluntary donations collected here via Stripe (one-time
-// or a recurring monthly "Supporter"). Donations unlock NO extra features.
-let _subscription = null;     // legacy: only set for pre-existing real subs
-let _fundAmount = 5;          // selected donation amount in dollars
-let _fundRecurring = false;   // monthly supporter vs one-time
-let _checkoutEnabled = true;
-
-function getUserSubscription() { return _subscription; }
-// Memberships removed — nothing is gated. Kept so any legacy caller stays safe.
-function hasPro() { return false; }
-function isProPlus() { return false; }
-function isProOrPlus() { return true; }
-
-// Sold-search metering retired along with the sold-data source. Kept as a
-// no-op so the existing call sites need no changes; the usage pill is hidden.
-async function refreshSoldUsage() {
-  const pill = document.getElementById('sold-usage-pill');
-  if (pill) pill.style.display = 'none';
-}
-
-// Still pull /api/auth/me so a legacy subscriber can reach the billing portal to
-// cancel now that the site is free; refreshes the Fund button either way.
-async function syncSubscriptionStatus() {
-  const user = getCurrentUser();
-  if (!user) { _subscription = null; updateProButton(); return; }
-  try {
-    const token = getSessionToken();
-    const res = await fetch('/api/auth/me', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-    if (res.ok) { const data = await res.json(); _subscription = data.subscription || null; }
-  } catch { /* offline — keep last-known */ }
-  updateProButton();
-}
-
-// ---- Fund modal (self-contained: injects its own DOM + styles) ----
-function _ensureFundModal() {
-  if (document.getElementById('fund-overlay')) return;
-  const style = document.createElement('style');
-  style.textContent = `
-    #fund-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
-    #fund-overlay.hidden{display:none}
-    .fund-card{background:var(--bg-card,#1a2133);color:var(--text-primary,#edf0f7);border:1px solid var(--border-primary,#232d42);border-radius:16px;max-width:430px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.45);position:relative;font-family:inherit}
-    .fund-card h2{margin:0 0 6px;font-size:1.4rem;color:var(--text-primary,#edf0f7)}
-    .fund-sub{color:var(--text-secondary,#9aa4bf);font-size:.9rem;margin:0 0 18px;line-height:1.5}
-    .fund-amounts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-    .fund-amt{box-sizing:border-box;text-align:center;border:1px solid var(--border-primary,#2b3650);background:var(--bg-secondary,#161b28);color:var(--text-primary,#edf0f7);padding:11px 4px;border-radius:10px;cursor:pointer;font-weight:700;font-size:.95rem;font-family:inherit}
-    .fund-amt.active{background:var(--accent,#5ece99);color:#06281b;border-color:var(--accent,#5ece99)}
-    .fund-custom{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-primary,#2b3650);border-radius:10px;margin-bottom:14px;font-size:.95rem;font-family:inherit;background:var(--bg-secondary,#161b28);color:var(--text-primary,#edf0f7)}
-    .fund-recurring{display:flex;align-items:center;gap:8px;font-size:.9rem;margin-bottom:16px;cursor:pointer;color:var(--text-secondary,#9aa4bf)}
-    .fund-cta{width:100%;border:0;background:var(--accent,#5ece99);color:#06281b;padding:13px;border-radius:10px;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit}
-    .fund-cta:disabled{opacity:.5;cursor:not-allowed}
-    .fund-x{position:absolute;top:14px;right:16px;border:0;background:transparent;font-size:1.4rem;line-height:1;cursor:pointer;color:var(--text-secondary,#9aa4bf)}
-    .fund-foot{margin-top:14px;font-size:.74rem;color:var(--text-muted,#6b7488);text-align:center;line-height:1.5}
-  `;
-  document.head.appendChild(style);
-  const overlay = document.createElement('div');
-  overlay.id = 'fund-overlay';
-  overlay.className = 'hidden';
-  overlay.innerHTML = `
-    <div class="fund-card" role="dialog" aria-modal="true" aria-label="Fund The Card Huddle">
-      <button class="fund-x" aria-label="Close" onclick="closeFund()">&times;</button>
-      <h2>&#9829; Fund The Card Huddle</h2>
-      <p class="fund-sub" id="fund-reason">The Card Huddle is free for everyone — no paywalls, ever. It runs on community support. Chip in to help cover sold-data costs and keep it growing.</p>
-      <div class="fund-goal" id="fund-goal" style="display:none">
-        <div class="fund-goal-row"><span id="fund-goal-text">—</span><span id="fund-goal-supporters"></span></div>
-        <div class="fund-goal-track"><div class="fund-goal-fill" id="fund-goal-fill"></div></div>
-      </div>
-      <div class="fund-amounts" id="fund-amounts">
-        ${[3, 5, 10, 25].map(a => `<button type="button" class="fund-amt${a === 5 ? ' active' : ''}" data-amt="${a}" onclick="selectFundAmount(${a})">$${a}</button>`).join('')}
-      </div>
-      <input class="fund-custom" id="fund-custom" type="number" min="1" max="1000" step="1" placeholder="Custom amount ($)" oninput="setFundCustom(this.value)" />
-      <label class="fund-recurring"><input type="checkbox" id="fund-recurring" onchange="toggleFundRecurring(this.checked)" /> Make it monthly (become a Supporter)</label>
-      <button class="fund-cta" id="fund-cta" onclick="submitDonation()">Donate $5</button>
-      <p class="fund-foot">Secure checkout via Stripe &middot; Donations are voluntary and unlock no extra features — everything's free.</p>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeFund(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeFund(); });
-}
-
-function showFund(reason) {
-  _ensureFundModal();
-  const r = document.getElementById('fund-reason');
-  if (r && reason) r.textContent = reason;
-  _updateFundCta();
-  loadFundGoal();
-  document.getElementById('fund-overlay').classList.remove('hidden');
-}
-
-// ---- Funding goal progress ("$X of $Y this month") ----
-let _fundGoal = null;
-async function loadFundGoal() {
-  try {
-    const res = await fetch('/api/fund-goal');
-    if (!res.ok) return;
-    _fundGoal = await res.json();
-  } catch { return; }
-  renderFundGoal();
-}
-function renderFundGoal() {
-  const g = _fundGoal;
-  if (!g) return;
-  const pct = typeof g.pct === 'number' ? g.pct : 0;
-  const reached = pct >= 100;
-  const width = Math.min(100, pct);
-  const raised = Math.round(g.raised || 0);
-  const goal = Math.round(g.goal || 0);
-  const supText = g.supporters ? `${g.supporters} monthly supporter${g.supporters !== 1 ? 's' : ''}` : '';
-  // Modal bar
-  const box = document.getElementById('fund-goal');
-  if (box) {
-    box.style.display = 'block';
-    box.classList.toggle('goal-reached', reached);
-    const t = document.getElementById('fund-goal-text');
-    if (t) t.textContent = reached ? `🎉 $${raised} raised — this month's goal is met!` : `$${raised} of $${goal} this month`;
-    const s = document.getElementById('fund-goal-supporters'); if (s) s.textContent = supText;
-    const fill = document.getElementById('fund-goal-fill'); if (fill) fill.style.width = width + '%';
-  }
-  // Footer bar (always visible passive nudge)
-  const foot = document.getElementById('fund-goal-footer');
-  if (foot) {
-    foot.classList.remove('hidden');
-    foot.classList.toggle('goal-reached', reached);
-    const label = reached
-      ? `&#127881; <strong>$${raised}</strong> raised — this month's goal is met. Thank you! &#128153;`
-      : `Monthly goal: <strong>$${raised}</strong> of $${goal}${supText ? ' &middot; ' + escHtml(supText) : ''}`;
-    foot.innerHTML = `<div class="fund-goal-foot-label">${label}</div>`
-      + `<div class="fund-goal-track"><div class="fund-goal-fill" style="width:${width}%"></div></div>`
-      + `<button type="button" class="fund-goal-foot-btn" onclick="showFund()">${reached ? '&#9829; Keep it going' : '&#9829; Chip in'}</button>`;
-  }
-}
-// Back-compat: plenty of code still calls showUpgrade()/showPricing(). With
-// memberships gone these all become a gentle "support us" nudge.
-function showUpgrade(reason) { showFund(reason); }
-function showPricing() { showFund(); }
-function setPricingPeriod() {}
-function handleSubscribe() { showFund(); }
-function closeFund() { const o = document.getElementById('fund-overlay'); if (o) o.classList.add('hidden'); }
-function closePricing() { closeFund(); }
-
-function selectFundAmount(a) {
-  _fundAmount = a;
-  const custom = document.getElementById('fund-custom'); if (custom) custom.value = '';
-  document.querySelectorAll('#fund-amounts .fund-amt').forEach(b => b.classList.toggle('active', Number(b.dataset.amt) === a));
-  _updateFundCta();
-}
-function setFundCustom(val) {
-  const n = parseFloat(val);
-  if (n > 0) { _fundAmount = n; document.querySelectorAll('#fund-amounts .fund-amt').forEach(b => b.classList.remove('active')); }
-  _updateFundCta();
-}
-function toggleFundRecurring(on) { _fundRecurring = !!on; _updateFundCta(); }
-function _updateFundCta() {
-  const cta = document.getElementById('fund-cta');
-  if (!cta) return;
-  const amt = _fundAmount > 0 ? _fundAmount : 0;
-  cta.textContent = _fundRecurring ? `Support $${amt}/mo` : `Donate $${amt}`;
-}
-
-async function submitDonation() {
-  const amt = _fundAmount;
-  if (!(amt >= 1)) { alert('Please choose an amount of at least $1.'); return; }
-  const cta = document.getElementById('fund-cta');
-  if (cta) { cta.disabled = true; cta.textContent = 'Redirecting…'; }
-  try {
-    const res = await fetch('/api/stripe/create-donation', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: amt, recurring: _fundRecurring }),
-    });
-    const data = await safeJson(res);
-    if (res.ok && data.url) { window.location.href = data.url; return; }
-    alert(`Couldn't start the donation:\n\n${(data && (data.detail || data.error)) || `HTTP ${res.status}`}`);
-  } catch (err) {
-    alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
-  } finally {
-    if (cta) { cta.disabled = false; _updateFundCta(); }
-  }
-}
-
-// Header button → opens the Fund modal.
-function updateProButton() {
-  const btn = document.getElementById('pro-btn');
-  if (!btn) return;
-  btn.textContent = '♥ Fund';
-  btn.classList.remove('subscribed');
-  btn.onclick = () => showFund();
-}
-
-// Kept for any legacy subscriber who wants to cancel from Settings.
-async function openBillingPortal() {
-  const token = getSessionToken();
-  try {
-    const res = await fetch('/api/stripe/create-portal-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify({ username: getCurrentUser() }),
-    });
-    const data = await safeJson(res);
-    if (res.ok && data.url) { window.location.href = data.url; return; }
-    alert(`Couldn't open the billing portal:\n\n${(data && (data.detail || data.error)) || `HTTP ${res.status}`}`);
-  } catch (err) {
-    alert(`Couldn't reach Stripe:\n\n${(err && err.message) || err}`);
-  }
-}
-
-// Donations aren't gated by the old tax-pause switch; this just records state.
-function applyCheckoutState(enabled) { _checkoutEnabled = !!enabled; }
 
 // ---- Soft Limits (Free tier) ----
 // Free users get a generous but capped slice of every feature. Pro
@@ -3658,91 +3440,34 @@ function checkDailyLimit() { return true; }
 function checkCapLimit() { return true; }
 function proGate() { return true; }
 
-// syncSubscriptionStatus / updateProButton are defined above (real impls).
+// hasPro() used to return false, which left the Monthly Market Report locked
+// for everyone and sent the click to the donation modal. With that modal gone
+// the gate had nowhere to send anyone, so it now matches the gates above and
+// the feature is simply open.
+function hasPro() { return true; }
+function showPricing() { /* nothing to sell — every feature is already open */ }
 
-// Stripe redirects back with ?payment=success|cancelled. On success, confirm
-// the new plan, refresh subscription + allowance, then clean the URL.
-function checkPaymentReturn() {
-  const params = new URLSearchParams(window.location.search);
-  // Donation return: ?funded=once|monthly|cancel
-  const funded = params.get('funded');
-  if (funded === 'once' || funded === 'monthly') {
-    alert(funded === 'monthly'
-      ? 'Thank you for becoming a Supporter! 💚 Your monthly contribution keeps The Card Huddle free for everyone.'
-      : 'Thank you for your support! 💚 Every dollar helps keep The Card Huddle free and growing.');
-  }
-  if (params.has('funded') || params.has('payment')) {
-    window.history.replaceState({}, '', window.location.pathname);
-  }
+// Only reachable if the server still reports a plan-gated error. Surface what
+// it said rather than silently doing nothing.
+function showUpgrade(reason) {
+  if (reason) alert(reason);
 }
 
-// Drip/email deep-link: ?prefill=<card> drops the visitor straight into a sold
-// search for that card, closing the loop from the nurture emails to the value
-// they were promised.
-function checkPrefillParam() {
-  const params = new URLSearchParams(window.location.search);
-  const prefill = params.get('prefill');
-  if (!prefill) return;
-  const inp = document.getElementById('search-input');
-  const frm = document.getElementById('search-form');
-  if (!inp || !frm) return;
-  try { switchView('search'); } catch {}
-  inp.value = prefill.slice(0, 120);
-  // Strip params so a refresh doesn't re-run the search.
-  window.history.replaceState({}, '', window.location.pathname);
-  // Let the view switch settle before submitting.
-  setTimeout(() => { frm.dispatchEvent(new Event('submit')); }, 60);
+// The usage pill it used to update belonged to the free/paid split. Kept as a
+// no-op because the sold-search paths still call it on every search.
+async function refreshSoldUsage() {
+  const pill = document.getElementById('sold-usage-pill');
+  if (pill) pill.style.display = 'none';
 }
 
-// updateProButton is defined above (real impl).
-
-// Email-drip deep links (?prefill=<card>) → run that card's sold search.
-checkPrefillParam();
-// /inventory deep link — the SPA fallback serves index.html for it, so land
-// the visitor straight on the Inventory page. Deferred to DOMContentLoaded so
-// the view-element consts below switchView are initialized before it runs.
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname === '/inventory') {
-    try { switchView('inventory'); } catch (_) {}
-  }
-});
-// Pull this account's collection/watchlist/etc. from the server so they show
-// up here even if the user signed in on a different device. No-op if not
-// logged in (no session token).
-enableUserSync();
-checkPaymentReturn();
-
-// Membership: sync the signed-in user's plan + today's free-search allowance,
-// and learn whether paid checkout is currently open (server kill-switch).
-syncSubscriptionStatus().catch(() => {});
+// Today's free-search allowance.
 refreshSoldUsage().catch(() => {});
-fetch(`/api/stripe/config?_=${Date.now()}`, { cache: 'no-store' })
-  .then(r => r.json())
-  .then(cfg => { if (cfg && typeof cfg.checkoutEnabled === 'boolean') applyCheckoutState(cfg.checkoutEnabled); })
-  .catch(() => {});
-
-// ---- Donate / Support button ----
-// The header heart button opens the in-app "Fund The Card Huddle" modal
-// (Stripe). Always shown — funding is how the free site stays alive.
-function initDonateButton() {
-  const btn = document.getElementById('donate-btn');
-  if (!btn) return;
-  btn.classList.remove('hidden');
-  btn.href = '#';
-  btn.onclick = (e) => { e.preventDefault(); showFund(); };
-  const label = btn.querySelector('span');
-  if (label) label.textContent = 'Fund';
-}
-initDonateButton();
 
 // ---- Sponsors ----
 // Add sponsors here as they come on board (BCW, card shops, breakers, etc.).
 // Each: { name, img (logo URL), url (affiliate/landing link) }. The strip stays
 // hidden until at least one is configured, so it never ships empty.
 //   e.g. { name: 'BCW Supplies', img: '/sponsors/bcw.png', url: 'https://www.bcwsupplies.com/?aff=...' }
-// Show the monthly funding-goal bar in the footer on load.
-loadFundGoal();
-
 // First-run walkthrough. No-ops for anyone who has already seen it.
 maybeStartTour();
 initSiteBanner();
@@ -3996,7 +3721,6 @@ function switchView(view) {
     }
   } catch (_) { /* history API unavailable */ }
 }
-
 
 // ---- Chart interaction defaults ----
 // Every chart in the app shows its points and responds to a tap, not just a
