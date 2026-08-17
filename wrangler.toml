@@ -106,31 +106,14 @@ new_sqlite_classes = ["UserInbox"]
 #                                               # sold lookups are KV-cached for 24h. Without this
 #                                               # secret, sold search degrades to "unavailable".
 #
-# Optional — server-wide scrape.do key for Sold search:
-#   wrangler secret put SCRAPE_DO_KEY        # Optional. With this set, sold
-#                                            # search can fall back to scraping
-#                                            # for ANY visitor, logged in or
-#                                            # not, with no Settings UI
-#                                            # involved. A user's own key (added
-#                                            # in Settings) still takes
-#                                            # precedence — it spends their
-#                                            # quota rather than this one.
-#                                            # Unset = opt-in only: nobody is
-#                                            # scraped for unless they added
-#                                            # their own key.
-#   Also settable as a GitHub Actions secret; the deploy workflow pushes it.
-#   Verify per-key health at /api/debug/sold (backs Settings → "Test All").
-#
 # Optional — switch the sold source without a code change:
-#   wrangler secret put SOLD_PROVIDER        # auto (default) | cardapi | scrapedo
-#                                            #   auto     = The Card API first,
-#                                            #             scrape.do fills gaps
-#                                            #   cardapi  = The Card API only
-#                                            #   scrapedo = scrape.do only. Serves
-#                                            #             only users who added
-#                                            #             their own key in
-#                                            #             Settings — there is no
-#                                            #             shared key.
+#   wrangler secret put SOLD_PROVIDER        # auto (default) | cardapi | nflcarddb
+#                                            #   auto      = our own dataset
+#                                            #               first, then The
+#                                            #               Card API
+#                                            #   cardapi   = The Card API only
+#                                            #   nflcarddb = our own D1 dataset
+#                                            #               only
 #   Also settable as a GitHub Actions secret; the deploy workflow pushes it.
 #   /api/debug/sold-test reports the active mode.
 #
