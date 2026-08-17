@@ -29,6 +29,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const CHECKLIST_DIR = path.join(ROOT, 'public', 'data', 'checklists');
@@ -55,6 +56,55 @@ const adsenseTag = () => ADSENSE_CLIENT
   ? `  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
   : '';
 const TODAY = new Date().toISOString().slice(0, 10);
+
+// ---- Sitemap <lastmod> -----------------------------------------------------
+// Every URL used to claim it changed today, on every deploy. That is both
+// untrue and a signal search engines discount, so each page now inherits the
+// date of the last commit that actually touched the checklist behind it.
+//
+// One `git log` pass over the checklist directory, newest commit first: the
+// first time a file appears is its most recent change. Needs full history —
+// see fetch-depth in .github/workflows/deploy.yml. Falls back to file mtime,
+// then to today, so a shallow clone or a missing git still builds.
+function checklistCommitDates() {
+  const dates = new Map(); // basename -> YYYY-MM-DD
+  try {
+    const out = execFileSync(
+      'git', ['log', '--name-only', '--format=%cI', '--', 'public/data/checklists/'],
+      { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+    );
+    let current = null;
+    for (const line of out.split('\n')) {
+      const t = line.trim();
+      if (!t) continue;
+      if (/^\d{4}-\d{2}-\d{2}T/.test(t)) { current = t.slice(0, 10); continue; }
+      if (!current) continue;
+      const base = path.basename(t);
+      if (!dates.has(base)) dates.set(base, current); // first hit = newest
+    }
+  } catch (e) {
+    console.warn('  ! git history unavailable, falling back to file mtimes:', e.message);
+  }
+  return dates;
+}
+
+const COMMIT_DATES = checklistCommitDates();
+
+function fileLastmod(fileName) {
+  if (!fileName) return TODAY;
+  const fromGit = COMMIT_DATES.get(fileName);
+  if (fromGit) return fromGit;
+  try {
+    return fs.statSync(path.join(CHECKLIST_DIR, fileName)).mtime.toISOString().slice(0, 10);
+  } catch { return TODAY; }
+}
+
+// Newest of a set of dates, for pages that aggregate several checklists.
+function newestDate(dates) {
+  let best = null;
+  for (const d of dates) if (d && (!best || d > best)) best = d;
+  return best || TODAY;
+}
 
 // The 32 current NFL franchises (clean, high-volume team values). Relocated /
 // renamed franchises are merged into their current name so e.g. "Oakland
@@ -101,6 +151,19 @@ const MIN_SETS = 2;
 // and a few dozen near-empty pages are worth less than none.
 const MIN_SUBSET_CARDS = 25;
 
+// Thin-content thresholds. Pages below these still get built and stay linked —
+// they are useful to someone who navigates to them — but they carry
+// "noindex, follow" and are left out of the sitemap. The point is to keep the
+// indexed set substantial: a page listing six cards from a template is exactly
+// the shape Google's scaled-content policy targets, and a few thousand of them
+// drag down the pages that do deserve to rank. "follow" keeps their internal
+// links flowing PageRank to the pages that stay indexed.
+// Raising these de-indexes more; lowering them re-indexes. Build output prints
+// the counts so the effect is visible before deploying.
+const INDEX_MIN_PLAYER_CARDS = 10;
+const INDEX_MIN_SUBSET_CARDS = 30;
+const INDEX_MIN_PRODUCT_CARDS = 50;
+
 // ---- Small helpers --------------------------------------------------------
 function esc(s) {
   return String(s == null ? '' : s)
@@ -131,6 +194,7 @@ function loadChecklists() {
     if (!j.id || cardCount === 0) continue;
     const parallelCount = sets.reduce((n, s) => n + (Array.isArray(s.parallels) ? s.parallels.length : 0), 0);
     list.push({
+      file: f,
       id: j.id,
       name: j.name || ([j.year, j.brand].filter(Boolean).join(' ') + ' Football'),
       year: Number.isFinite(j.year) ? j.year : null,
@@ -167,7 +231,7 @@ function buildPlayerIndex(checklists) {
 }
 
 // ---- Shared chrome --------------------------------------------------------
-function head({ title, description, canonical, extraJsonLd }) {
+function head({ title, description, canonical, extraJsonLd, noindex }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,7 +239,7 @@ function head({ title, description, canonical, extraJsonLd }) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(description)}" />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content="${noindex ? 'noindex, follow' : 'index, follow'}" />
   <meta name="theme-color" content="#5ece99" />
   <link rel="canonical" href="${esc(canonical)}" />
 ${adsenseTag()}
@@ -210,7 +274,8 @@ function footer() {
   return `
   <footer class="lp-footer">
     <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>
-    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/privacy.html">Privacy</a> &bull; Data sourced from eBay &bull; Not affiliated with eBay Inc.</p>
+    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
+    <p class="lp-muted">Prices are historical sale records, not appraisals or financial advice. As an eBay Partner Network affiliate we may earn a commission on qualifying purchases made through links on this site, at no extra cost to you.</p>
   </footer>
 </body>
 </html>`;
@@ -307,7 +372,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
       aHtml: `Right here — every card links to real eBay sold prices broken down by grade (Raw, PSA 10, PSA 9, BGS and more), so you see what collectors actually paid, not asking prices.` },
   ]);
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: cl.cardCount < INDEX_MIN_PRODUCT_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -443,7 +508,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
       aHtml: `It is one of ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} in <a href="/sets/${cl.id}/">${esc(cl.name)}</a>, which has ${cl.cardCount.toLocaleString()} cards in total.` },
   ]);
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: cards.length < INDEX_MIN_SUBSET_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -613,7 +678,7 @@ function buildPlayerPage(p, related, teamSlug) {
       aHtml: `His earliest cards in our database are from ${minYear}. Rookie-year cards are usually the most sought-after — check their sold prices by grade above.` }] : []),
   ]);
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: p.cards.length < INDEX_MIN_PLAYER_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -931,19 +996,48 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 // ---- Sitemap --------------------------------------------------------------
 function buildSitemap(list, players, teams, years, subsetIndex) {
   const urls = [];
-  const push = (loc, priority, changefreq) =>
-    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${TODAY}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
-  push(`${SITE}/`, '1.0', 'daily');
-  push(`${SITE}/sets/`, '0.9', 'weekly');
-  push(`${SITE}/players/`, '0.9', 'weekly');
-  push(`${SITE}/teams/`, '0.9', 'weekly');
-  for (const y of years) push(`${SITE}/sets/${y}/`, '0.8', 'weekly');
-  for (const cl of list) {
-    push(`${SITE}/sets/${cl.id}/`, '0.7', 'weekly');
-    for (const sub of (subsetIndex.get(cl.id) || [])) push(`${SITE}/sets/${cl.id}/${sub.slug}/`, '0.6', 'weekly');
+  const push = (loc, priority, changefreq, lastmod) =>
+    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`);
+
+  // Product id -> date of the last commit that touched its checklist.
+  const setDate = new Map(list.map(cl => [cl.id, fileLastmod(cl.file)]));
+  const siteDate = newestDate(setDate.values());
+
+  // Hubs move whenever anything under them moves.
+  push(`${SITE}/`, '1.0', 'daily', siteDate);
+  push(`${SITE}/sets/`, '0.9', 'weekly', siteDate);
+  push(`${SITE}/players/`, '0.9', 'weekly', siteDate);
+  push(`${SITE}/teams/`, '0.9', 'weekly', siteDate);
+
+  for (const y of years) {
+    push(`${SITE}/sets/${y}/`, '0.8', 'weekly',
+      newestDate(list.filter(c => c.year === y).map(c => setDate.get(c.id))));
   }
-  for (const p of players) push(`${SITE}/players/${p.slug}/`, '0.6', 'weekly');
-  for (const t of teams) push(`${SITE}/teams/${t.slug}/`, '0.7', 'weekly');
+  // Anything carrying noindex is left out: listing a page in the sitemap while
+  // telling crawlers not to index it is a contradictory signal.
+  let skipped = 0;
+  for (const cl of list) {
+    const d = setDate.get(cl.id);
+    if (cl.cardCount >= INDEX_MIN_PRODUCT_CARDS) push(`${SITE}/sets/${cl.id}/`, '0.7', 'weekly', d);
+    else skipped++;
+    // A set page is carved out of its product's file, so it shares the date.
+    for (const sub of (subsetIndex.get(cl.id) || [])) {
+      if ((sub.set.cards || []).length >= INDEX_MIN_SUBSET_CARDS) {
+        push(`${SITE}/sets/${cl.id}/${sub.slug}/`, '0.6', 'weekly', d);
+      } else skipped++;
+    }
+  }
+  // Player and team pages are assembled from every checklist they appear in.
+  for (const p of players) {
+    if (p.cards.length < INDEX_MIN_PLAYER_CARDS) { skipped++; continue; }
+    push(`${SITE}/players/${p.slug}/`, '0.6', 'weekly',
+      newestDate([...p.setIds].map(id => setDate.get(id))));
+  }
+  for (const t of teams) {
+    push(`${SITE}/teams/${t.slug}/`, '0.7', 'weekly',
+      newestDate([...(t.setIds || [])].map(id => setDate.get(id))));
+  }
+  console.log(`  sitemap: ${urls.length} indexable URLs (${skipped} thin pages built but noindexed)`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
 }
 

@@ -2952,6 +2952,20 @@ main {
   border-color: var(--accent);
 }
 
+/* FTC affiliate disclosure. Deliberately not as faint as the older BCW
+   labels: a disclosure only counts if it is actually legible, so this stays
+   at --text-secondary rather than --text-muted with reduced opacity. */
+.aff-tag {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+.card-link:hover .aff-tag { color: var(--accent-on); }
+
 /* ---- Price Chart ---- */
 .chart-section {
   margin-bottom: 2rem;
@@ -10245,3 +10259,69 @@ body.tour-open { overflow: hidden; }
   .site-banner-tag { flex: 0 0 auto; }
   .site-banner-link { padding: 0.5rem 0.4rem 0.5rem 0.75rem; gap: 0.45rem; }
 }
+
+/* ---- Your data: export + account deletion ------------------------------- */
+.settings-data-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+.settings-data-btn {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.5rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--bg-tertiary, var(--bg-secondary));
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+.settings-data-btn:hover { border-color: var(--accent); color: var(--accent); }
+.settings-data-btn:disabled { opacity: 0.6; cursor: default; }
+.settings-data-btn.danger { color: #f87171; border-color: rgba(248, 113, 113, 0.45); }
+.settings-data-btn.danger:hover { color: #fff; background: #dc2626; border-color: #dc2626; }
+[data-theme="light"] .settings-data-btn.danger { color: #b91c1c; border-color: rgba(185, 28, 28, 0.4); }
+[data-theme="light"] .settings-data-btn.danger:hover { color: #fff; background: #b91c1c; }
+
+.delete-account-modal { max-width: 480px; }
+.da-warn { color: var(--text-primary); font-weight: 600; margin: 0 0 0.5rem; font-size: 0.92rem; }
+.da-list { margin: 0 0 1rem; padding-left: 1.15rem; color: var(--text-secondary); font-size: 0.88rem; line-height: 1.55; }
+.da-list li { margin: 0.2rem 0; }
+.da-note { color: var(--text-secondary); font-size: 0.83rem; line-height: 1.55; margin: 0 0 1.25rem; }
+.da-label { display: block; color: var(--text-secondary); font-size: 0.82rem; margin: 0 0 0.3rem; }
+.da-input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 0.6rem 0.7rem;
+  margin: 0 0 0.9rem;
+  border-radius: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+.da-input:focus { outline: none; border-color: var(--accent); }
+.da-error {
+  color: #f87171;
+  font-size: 0.85rem;
+  margin: 0 0 0.9rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+[data-theme="light"] .da-error { color: #b91c1c; background: rgba(185, 28, 28, 0.08); border-color: rgba(185, 28, 28, 0.25); }
+.da-error.hidden { display: none; }
+.da-actions { display: flex; gap: 0.6rem; justify-content: flex-end; }
+.da-cancel, .da-confirm-btn {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border-primary);
+}
+.da-cancel { background: transparent; color: var(--text-secondary); }
+.da-cancel:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.da-confirm-btn { background: #dc2626; color: #fff; border-color: #dc2626; }
+.da-confirm-btn:hover { background: #b91c1c; border-color: #b91c1c; }
+.da-confirm-btn:disabled { opacity: 0.6; cursor: default; }

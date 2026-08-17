@@ -178,6 +178,25 @@ async function saveUserData(username, data) {
   }
 }
 
+// Erase a user's synced blob entirely. Used by account deletion, which has to
+// actually remove the data rather than blank it — a stored empty object is
+// still a record of the account.
+async function deleteUserData(username) {
+  if (!username) return;
+  const safe = String(username).toLowerCase();
+  if (!/^[a-z0-9_.-]+$/.test(safe)) return;
+  const key = `userdata:${safe}`;
+  if (kv) {
+    try { await kv.delete(key); }
+    catch (err) { console.error(`[DB] KV delete ${key} failed:`, err && err.message); }
+  }
+  if (fs) {
+    const filePath = path.join(_userDataDir(), `${safe}.json`);
+    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); }
+    catch (e) { console.error(`[DB] Error deleting ${key} from file:`, e.message); }
+  }
+}
+
 // ---- Per-user inventory photos ----
 // Card photos are too big for the 1MB userdata blob, so each one gets its own
 // KV key: `invphoto:<username>:<photoId>`. Async, no preload (a collector may
@@ -293,4 +312,4 @@ async function archivePut(key, value) {
 // unavailable" and fall through to another provider rather than erroring.
 function getNflDb() { return nflDb; }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb };
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb };

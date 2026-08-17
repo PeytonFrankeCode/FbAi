@@ -17,6 +17,12 @@ jobs:
     name: Deploy
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: build:pages derives each sitemap <lastmod>
+          # from the last commit that touched the underlying
+          # checklist file. A shallow clone would date every page to
+          # the deploy instead, which is the thing we are fixing.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
