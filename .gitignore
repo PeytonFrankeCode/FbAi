@@ -16,3 +16,14 @@ __pycache__/
 # Runtime state the server writes as people search — not source. It was
 # committed once by accident carrying test-stub prices.
 data/price-history.json
+
+# Runtime user state. These are written by the running server and would leak
+# real accounts, sessions and private messages into the repo if committed —
+# data/price-history.json below was already caught doing exactly that.
+data/users.json
+data/sessions.json
+data/community.json
+data/dms.json
+data/feedback.json
+data/userdata/
+data/userphotos/

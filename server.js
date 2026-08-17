@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb } = require('./db');
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -4766,7 +4766,21 @@ async function checkAlerts() {
     }
   }
 
-  saveAlerts(data);
+  // Merge rather than overwrite. This loop is long-running and awaits between
+  // alerts, so alerts can be deleted while it works — by the owner, or by an
+  // account deletion. Writing back the snapshot we loaded at the top would
+  // resurrect them, which for account deletion means undoing an erasure we
+  // told the user was permanent. Re-read, and only carry over the check state
+  // for alerts that still exist.
+  const fresh = loadAlerts();
+  const checked = new Map(data.alerts.map(a => [a.id, a]));
+  for (const a of fresh.alerts) {
+    const c = checked.get(a.id);
+    if (!c) continue;
+    a.lastChecked = c.lastChecked;
+    a.lastSeenIds = c.lastSeenIds;
+  }
+  saveAlerts(fresh);
   console.log('[Alerts] Check complete.');
 }
 
@@ -5416,6 +5430,171 @@ app.delete('/api/user/scrape-do-key', (req, res) => {
 // seller listings, promoted cards). Client pulls on login and pushes
 // (debounced) on every change so the account is portable across devices.
 const USER_DATA_MAX_BYTES = 1024 * 1024; // 1MB — generous; rejects runaway payloads.
+
+// ---- Account export + deletion (GDPR / CCPA self-serve) --------------------
+// The privacy policy promises access and erasure. Doing that only by email put
+// the burden on a human replying; these two routes let the person do it
+// themselves, which is also what "as easy to withdraw as to give" means.
+
+// Everything we hold that is keyed to a username, gathered in one place so
+// export and delete can never drift apart: if a store is added here it is both
+// returned by the export and removed by the delete.
+async function collectAccountData(username) {
+  const key = String(username).toLowerCase();
+  const users = loadServerUsers();
+  const account = users[key] ? { ...users[key] } : null;
+  if (account) delete account.passwordHash; // never hand back the hash
+  if (account && account.scrapeDoKeys) account.scrapeDoKeys = '[redacted]';
+
+  const posts = loadCommunityPosts();
+  const dms = loadDMs();
+  const myConvos = {};
+  for (const [ck, convo] of Object.entries(dms.convos || {})) {
+    if (ck.split('|').includes(key)) myConvos[ck] = convo;
+  }
+
+  return {
+    account,
+    subscription: loadSubscriptions()[key] || null,
+    syncedData: await loadUserData(key),
+    alerts: (loadAlerts().alerts || []).filter(a => String(a.username || '').toLowerCase() === key),
+    communityPosts: posts.filter(p => String(p.author || '').toLowerCase() === key),
+    communityComments: posts.flatMap(p => (p.comments || [])
+      .filter(c => String(c.author || '').toLowerCase() === key)
+      .map(c => ({ ...c, postId: p.id }))),
+    directMessages: myConvos,
+    promotedCards: loadGlobalPromotedIndex()[key] || null,
+    booth: loadGlobalFloorIndex()[key] || null,
+    feedback: loadData('feedback', FEEDBACK_FILE, [])
+      .filter(f => String(f.author || f.username || '').toLowerCase() === key),
+  };
+}
+
+// GET /api/account/export — everything we hold, as a JSON download.
+app.get('/api/account/export', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  try {
+    const payload = await collectAccountData(username);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition',
+      `attachment; filename="cardhuddle-${username}-${new Date().toISOString().slice(0, 10)}.json"`);
+    res.send(JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      username,
+      note: 'Everything The Card Huddle holds for this account. Passwords are '
+          + 'stored only as a hash and are deliberately not included.',
+      ...payload,
+    }, null, 2));
+  } catch (err) {
+    console.error('[account/export]', err && err.stack || err);
+    res.status(500).json({ error: 'Could not build export' });
+  }
+});
+
+// POST /api/account/delete — irreversible. Requires the password again, so a
+// stolen or borrowed session cannot nuke someone's collection.
+app.post('/api/account/delete', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const key = String(username).toLowerCase();
+  const { password, confirm } = req.body || {};
+  if (confirm !== 'DELETE') {
+    return res.status(400).json({ error: 'Type DELETE to confirm' });
+  }
+  try {
+    const users = loadServerUsers();
+    const user = users[key];
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+
+    // OAuth accounts have no password to check; the live session is the proof.
+    if (user.passwordHash) {
+      if (!password) return res.status(400).json({ error: 'Password required' });
+      if (!(await verifyPassword(password, user.passwordHash))) {
+        return res.status(403).json({ error: 'Incorrect password' });
+      }
+    }
+
+    const removed = [];
+
+    // 1. Synced collection / inventory / watchlist blob, and its photos. Read
+    //    the inventory first — once the blob is gone the photo ids are lost.
+    const synced = await loadUserData(key);
+    const photoIds = new Set();
+    for (const item of (Array.isArray(synced.cardHuddleInventory) ? synced.cardHuddleInventory : [])) {
+      for (const pid of (Array.isArray(item && item.photoIds) ? item.photoIds : [])) photoIds.add(pid);
+      if (item && item.photoId) photoIds.add(item.photoId);
+    }
+    for (const pid of photoIds) { try { await deleteUserPhoto(key, pid); } catch {} }
+    await deleteUserData(key);
+    removed.push('collection, inventory, watchlist and portfolio history', `${photoIds.size} card photos`);
+
+    // 2. Community posts, plus this user's comments, reactions and reports on
+    //    everyone else's posts.
+    const posts = loadCommunityPosts();
+    const before = posts.length;
+    let kept = posts.filter(p => String(p.author || '').toLowerCase() !== key);
+    for (const p of kept) {
+      if (Array.isArray(p.comments)) p.comments = p.comments.filter(c => String(c.author || '').toLowerCase() !== key);
+      if (Array.isArray(p.reports)) p.reports = p.reports.filter(r => String(r.by || '').toLowerCase() !== key);
+      if (p.reactions && typeof p.reactions === 'object') {
+        for (const emoji of Object.keys(p.reactions)) {
+          if (Array.isArray(p.reactions[emoji])) {
+            p.reactions[emoji] = p.reactions[emoji].filter(u => String(u || '').toLowerCase() !== key);
+          }
+        }
+      }
+    }
+    saveCommunityPosts(kept);
+    removed.push(`${before - kept.length} community posts and all comments, reactions and reports`);
+
+    // 3. Direct messages — both sides of every conversation this user was in.
+    const dms = loadDMs();
+    let convoCount = 0;
+    for (const ck of Object.keys(dms.convos || {})) {
+      if (ck.split('|').includes(key)) { delete dms.convos[ck]; convoCount++; }
+    }
+    saveDMs(dms);
+    removed.push(`${convoCount} message threads`);
+
+    // 4. Alerts.
+    const alertData = loadAlerts();
+    const alertsBefore = (alertData.alerts || []).length;
+    alertData.alerts = (alertData.alerts || []).filter(a => String(a.username || '').toLowerCase() !== key);
+    saveAlerts(alertData);
+    removed.push(`${alertsBefore - alertData.alerts.length} card alerts`);
+
+    // 5. Public indexes this user appears in.
+    updateGlobalPromotedIndex(key, []);
+    const floor = loadGlobalFloorIndex();
+    if (floor[key]) { delete floor[key]; saveData('floorIndex', FLOOR_INDEX_FILE, floor); }
+    removed.push('promoted cards and show booth');
+
+    // 6. Subscription record. Stripe keeps its own billing records, which we
+    //    cannot and should not delete — they are required for tax and
+    //    accounting. This only removes our copy of the link.
+    const subs = loadSubscriptions();
+    if (subs[key]) { delete subs[key]; saveSubscriptions(subs); removed.push('subscription record'); }
+
+    // 7. Every session, so the account is signed out everywhere at once.
+    const sessions = loadSessions();
+    for (const [tok, sess] of Object.entries(sessions)) {
+      if (String(sess && sess.username || '').toLowerCase() === key) delete sessions[tok];
+    }
+    saveSessions(sessions);
+
+    // 8. The account itself. Last, so a failure above leaves it recoverable.
+    delete users[key];
+    saveServerUsers(users);
+    removed.push('username, email and password hash');
+
+    console.log(`[account/delete] ${key} deleted`);
+    res.json({ ok: true, removed });
+  } catch (err) {
+    console.error('[account/delete]', err && err.stack || err);
+    res.status(500).json({ error: 'Could not delete account' });
+  }
+});
 
 // GET /api/user/data
 app.get('/api/user/data', async (req, res) => {

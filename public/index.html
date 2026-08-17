@@ -10,6 +10,44 @@
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#5ece99" />
 
+  <!-- Google Consent Mode v2 defaults.
+       MUST stay above the AdSense and Analytics tags below: consent defaults
+       only apply to tags that load after them, so moving this down silently
+       turns it off. Storage is denied by default in the EEA, UK and
+       Switzerland, so no ad or analytics cookie is written there until the
+       consent management platform reports a choice. Everywhere else keeps
+       the previous behaviour. wait_for_update gives the CMP 500ms to answer
+       before tags fall back to the denied default.
+       The banner itself is served by Google's certified CMP, configured in
+       AdSense under Privacy & messaging — it is not in this repo. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+      region: [
+        'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE',
+        'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
+        'IS','LI','NO','GB','CH'
+      ]
+    });
+  </script>
+
+  <!-- AdSense. Deliberately only on the app shell, not on the generated
+       landing pages under /sets, /players and /teams — see ADSENSE_CLIENT in
+       scripts/build-landing-pages.js for why and how to switch those on. -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>
+
   <!-- Favicon (logo mark) -->
   <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=1" />
@@ -27,21 +65,9 @@
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    // dataLayer and gtag() are already defined by the consent block above.
     gtag('js', new Date());
     gtag('config', 'G-37RKDTRBCH');
-  </script>
-
-  <!-- Borealis Software analytics -->
-  <script>
-  (function(){
-    var SITE_ID = "83a792c9";
-    var img = new Image();
-    img.src = "https://borealissoftwares.com/collect?site=" + SITE_ID +
-              "&path=" + encodeURIComponent(location.pathname) +
-              "&t=" + Date.now();
-  })();
   </script>
 
   <!-- Open Graph -->
@@ -142,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=149" />
+  <link rel="stylesheet" href="style.css?v=151" />
 
 
 </head>
@@ -1601,8 +1627,52 @@
           <div id="settings-sub-action"></div>
         </div>
 
+        <!-- Your data: the self-serve half of the access and erasure rights in
+             the privacy policy. Hidden until signed in — both endpoints need a
+             session. Wired up in app.js (downloadMyData / openDeleteAccount). -->
+        <div class="settings-row settings-data-row hidden" id="settings-data-row">
+          <div class="settings-label">
+            <span class="settings-label-text">Your data</span>
+            <span class="settings-label-desc">Download everything we hold, or delete your account</span>
+          </div>
+          <div class="settings-data-actions">
+            <button class="settings-data-btn" id="btn-export-data" onclick="downloadMyData()">Download my data</button>
+            <button class="settings-data-btn danger" id="btn-delete-account" onclick="openDeleteAccount()">Delete account</button>
+          </div>
+        </div>
+
       </div>
 
+    </div>
+  </div>
+
+  <!-- Delete-account confirmation. Deliberately high friction: irreversible,
+       so it asks for the password again and a typed confirmation. -->
+  <div id="delete-account-overlay" class="settings-overlay hidden" role="dialog" aria-label="Delete account">
+    <div class="settings-box delete-account-modal">
+      <button class="login-close" aria-label="Close" onclick="closeDeleteAccount()">&times;</button>
+      <h2 class="settings-heading">Delete your account</h2>
+      <p class="da-warn">This cannot be undone. We will permanently delete:</p>
+      <ul class="da-list">
+        <li>Your collection, inventory, watchlist and portfolio history</li>
+        <li>Your card photos</li>
+        <li>Your community posts, comments and reactions</li>
+        <li>Your direct messages, on both sides of every conversation</li>
+        <li>Your card alerts, promoted cards and show booth</li>
+        <li>Your username, email and password</li>
+      </ul>
+      <p class="da-note">Want a copy first? Close this and choose
+        <strong>Download my data</strong>. Stripe keeps its own billing records,
+        which we cannot delete &mdash; they are required for tax and accounting.</p>
+      <label class="da-label" for="da-password">Your password</label>
+      <input type="password" id="da-password" class="da-input" autocomplete="current-password" placeholder="Password" />
+      <label class="da-label" for="da-confirm">Type <strong>DELETE</strong> to confirm</label>
+      <input type="text" id="da-confirm" class="da-input" placeholder="DELETE" autocapitalize="characters" />
+      <div class="da-error hidden" id="da-error"></div>
+      <div class="da-actions">
+        <button class="da-cancel" onclick="closeDeleteAccount()">Cancel</button>
+        <button class="da-confirm-btn" id="da-submit" onclick="confirmDeleteAccount()">Delete my account</button>
+      </div>
     </div>
   </div>
 
@@ -1630,11 +1700,19 @@
         <span class="footer-sep">&bull;</span>
         <a href="/teams/">NFL Team Guides</a>
         <span class="footer-sep">&bull;</span>
+        <a href="/privacy.html">Privacy Policy</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="/terms.html">Terms</a>
+        <span class="footer-sep">&bull;</span>
         <span>Data sourced from eBay</span>
         <span class="footer-sep">&bull;</span>
         <span>Prices in USD</span>
       </div>
-      <p class="footer-copy">&copy; 2025 The Card Huddle. Not affiliated with eBay Inc.</p>
+      <p class="footer-copy">&copy; 2025 The Card Huddle. Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
+      <p class="footer-copy">As an eBay Partner Network affiliate and a BCW affiliate, we may earn a
+        commission on qualifying purchases made through links on this site, at no extra cost to you.
+        This never affects which sales or prices we show &mdash; see our
+        <a href="/privacy.html">Privacy Policy</a> and <a href="/terms.html">Terms</a>.</p>
       <p class="footer-verse">&ldquo;For all have sinned and fall short of the glory of God, and all are justified freely by his grace through the redemption that came by Christ Jesus.&rdquo; &mdash; Romans 3:23&ndash;24</p>
     </div>
   </footer>
@@ -1791,7 +1869,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=194"></script>
+  <script src="app.js?v=195"></script>
   <script type="importmap">
   {
     "imports": {

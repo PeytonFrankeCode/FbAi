@@ -103,7 +103,102 @@ function showSettings() {
   updateSettingsSubscription();
   if (typeof initOfflinePanel === 'function') initOfflinePanel();
   loadScrapeDoStatus();
+  // Export and deletion both need a session, so the row only appears signed in.
+  const dataRow = document.getElementById('settings-data-row');
+  if (dataRow) dataRow.classList.toggle('hidden', !getSessionToken());
   document.getElementById('settings-overlay').classList.remove('hidden');
+}
+
+// ---- Your data: export and account deletion ----
+// The privacy policy grants access and erasure; these are the buttons that
+// actually honour them without a human in the loop.
+
+async function downloadMyData() {
+  const btn = document.getElementById('btn-export-data');
+  const token = getSessionToken();
+  if (!token) return;
+  const original = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+  try {
+    const res = await fetch('/api/account/export', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error(`Export failed (${res.status})`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cardhuddle-${getCurrentUser() || 'account'}-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // Revoking immediately can cancel the download in some browsers.
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    if (btn) btn.textContent = 'Downloaded ✓';
+    setTimeout(() => { if (btn) { btn.textContent = original; btn.disabled = false; } }, 2500);
+  } catch (err) {
+    console.error('[export]', err);
+    if (btn) { btn.textContent = 'Failed — try again'; btn.disabled = false; }
+    setTimeout(() => { if (btn) btn.textContent = original; }, 3000);
+  }
+}
+
+function openDeleteAccount() {
+  const overlay = document.getElementById('delete-account-overlay');
+  if (!overlay) return;
+  const pw = document.getElementById('da-password');
+  const cf = document.getElementById('da-confirm');
+  const err = document.getElementById('da-error');
+  if (pw) pw.value = '';
+  if (cf) cf.value = '';
+  if (err) { err.classList.add('hidden'); err.textContent = ''; }
+  overlay.classList.remove('hidden');
+}
+
+function closeDeleteAccount() {
+  const overlay = document.getElementById('delete-account-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+async function confirmDeleteAccount() {
+  const token = getSessionToken();
+  const err = document.getElementById('da-error');
+  const btn = document.getElementById('da-submit');
+  const password = (document.getElementById('da-password') || {}).value || '';
+  const confirm = ((document.getElementById('da-confirm') || {}).value || '').trim().toUpperCase();
+  const fail = (msg) => {
+    if (err) { err.textContent = msg; err.classList.remove('hidden'); }
+    if (btn) { btn.disabled = false; btn.textContent = 'Delete my account'; }
+  };
+  if (!token) return fail('You are not signed in.');
+  if (confirm !== 'DELETE') return fail('Type DELETE to confirm.');
+  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+  try {
+    const res = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ password, confirm: 'DELETE' }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return fail(body.error || `Could not delete account (${res.status}).`);
+
+    // Server side is gone; clear this device too, including the local-only
+    // copies that never left the browser.
+    try {
+      disableUserSync();
+      for (const k of Object.keys(localStorage)) {
+        if (k.startsWith('cardHuddle')) localStorage.removeItem(k);
+      }
+      localStorage.removeItem('recentSearches');
+    } catch (e) { /* storage blocked — nothing local to clear */ }
+    setSessionToken(null);
+    setCurrentUser(null);
+    closeDeleteAccount();
+    closeSettings();
+    alert('Your account and data have been deleted.');
+    location.href = '/';
+  } catch (e) {
+    console.error('[delete account]', e);
+    fail('Network error — please try again.');
+  }
 }
 
 
@@ -2878,7 +2973,7 @@ function buildCard(item, opts = {}) {
         ${isSold ? saleTypeNoteHtml(item) : buyingOptionBadgeHtml(item)}
       </div>
       ${item.hasAnalysis ? '<span class="card-analytics-cue">&#128200; View price history</span>' : ''}
-      ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener noreferrer">View on eBay &#8599;</a>` : ''}
+      ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener sponsored noreferrer">View on eBay &#8599;<span class="aff-tag">affiliate link</span></a>` : ''}
     </div>
   `;
 
@@ -2939,7 +3034,12 @@ function openCardModal(item) {
   cardModalLink.href = isSoldModal
     ? epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(item.title)}&LH_Sold=1&LH_Complete=1`)
     : epnUrl(item.itemUrl || '#');
-  cardModalLink.textContent = isSoldModal ? 'View sold listings on eBay ↗' : 'View on eBay ↗';
+  // rel=sponsored marks these as paid links for search engines; the visible
+  // tag is the FTC-facing disclosure, which has to sit next to the link
+  // itself rather than only in the footer or the privacy policy.
+  cardModalLink.rel = 'noopener sponsored noreferrer';
+  cardModalLink.innerHTML = (isSoldModal ? 'View sold listings on eBay ↗' : 'View on eBay ↗')
+    + '<span class="aff-tag">affiliate link</span>';
 
   // Everything we hold on this card, when the sale came from our own dataset.
   loadCardAnalysis(item);
