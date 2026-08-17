@@ -38,28 +38,18 @@ const EBAY_VERIFICATION_TOKEN = process.env.EBAY_VERIFICATION_TOKEN;
 const CARD_API_KEY = process.env.CARD_API_KEY;
 const CARD_API_BASE = 'https://thecardapi.com/api/v1/market';
 
-// ---- Optional per-user sold provider (scrape.do) ----
-// Opt-in only: a user who adds their own scrape.do key in Settings has sold
-// searches routed through it instead of The Card API, spending their own quota
-// and reaching past our plan's lookback window. There is no shared server key,
-// so nobody is scraping on our behalf by default.
-const SCRAPE_DO_BASE = 'https://api.scrape.do';
-
 // Which sold provider(s) to use. A switch rather than a code change so it can
 // be flipped from a secret and flipped straight back:
-//   auto      (default) NflCardDB, then The Card API, then scrape.do
-//   nflcarddb our own D1 dataset only - no paid provider is called
-//   cardapi  The Card API only — never scrape
-//   scrapedo scrape.do only — bypass The Card API entirely
-// Note `scrapedo` only serves users who added their own key in Settings;
-// everyone else gets the unavailable state, since there's no shared key.
+//   auto      (default) NflCardDB, then The Card API
+//   nflcarddb our own D1 dataset only — no paid provider is called
+//   cardapi   The Card API only
 // TEMPORARY: default flipped to 'nflcarddb' to test our own dataset in
-// isolation — the paid providers are not called at all while this stands.
-// Revert this default to 'auto' to restore the full fallback chain, or set the
+// isolation — the paid provider is not called at all while this stands.
+// Revert this default to 'auto' to restore the fallback chain, or set the
 // SOLD_PROVIDER secret to 'auto', which overrides it without a code change.
 const SOLD_PROVIDER = (() => {
   const v = String(process.env.SOLD_PROVIDER || 'nflcarddb').trim().toLowerCase();
-  return ['auto', 'cardapi', 'scrapedo', 'nflcarddb'].includes(v) ? v : 'auto';
+  return ['auto', 'cardapi', 'nflcarddb'].includes(v) ? v : 'auto';
 })();
 
 const USE_MOCK_FORSALE = process.env.USE_MOCK_DATA === 'true' || !EBAY_APP_ID || EBAY_APP_ID === 'your-ebay-app-id-here';
@@ -718,7 +708,7 @@ const NFLDB_MIN_CONFIDENCE = 0.5;
 
 // The schema has no listing URL, but item_id is the eBay item id so the link
 // is reconstructable. Images aren't collected today — the renderer falls back
-// to a placeholder — but the collector has them at scrape time, so this reads
+// to a placeholder — but the collector has them at capture time, so this reads
 // an `image_url` column opportunistically. Add it upstream and photos start
 // appearing here with no change needed on this side.
 //
@@ -1119,145 +1109,6 @@ async function fetchViaCardApi(keywords, limit = 50, source = 'unknown', opts = 
   return work;
 }
 
-// ---- scrape.do (sold listings, per-user API keys) ----
-// Targets eBay's hosted sold-search HTML and parses the listings out of
-// the response. Each user supplies one or more scrape.do tokens (so they
-// can combine the monthly quotas of multiple scrape.do accounts). We
-// round-robin across the user's keys and fall back to the next key when
-// scrape.do reports a quota or rate-limit failure.
-async function fetchViaScrapeDo(keywords, apiKey, limit = 20, source = 'unknown', opts = {}) {
-  trackApiCall('scrapedo', 'ebay-sold', keywords, source);
-  // eBay's sold-listings URL. The _from=R40 token + Showsold=1 mirror what
-  // a normal browser sends and seem to be needed for scrape.do's data-
-  // center proxies to actually land on the sold page (without them, eBay
-  // bounces us to the active-listings page silently).
-  const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodeURIComponent(keywords)}&_sacat=0&LH_Sold=1&LH_Complete=1&_ipg=120&_sop=13`;
-  // scrape.do params:
-  //   render=true        run JS so eBay's React shell hydrates and the
-  //                      listings markup actually exists in the response
-  //   super=true         residential proxies — eBay blocks datacenter IPs
-  //                      with a "Pardon Our Interruption" page
-  //   geoCode=us         stay on US eBay; otherwise eBay redirects to
-  //                      the visitor's local site (.co.uk etc.)
-  const params = new URLSearchParams({
-    token: apiKey,
-    url: ebayUrl,
-    render: 'true',
-    super: 'true',
-    geoCode: 'us',
-  });
-  const scrapeUrl = `${SCRAPE_DO_BASE}/?${params.toString()}`;
-  console.log(`[scrape.do] Searching sold: "${keywords}"`);
-  try {
-    const res = await axios.get(scrapeUrl, { timeout: 60000, responseType: 'text', transformResponse: [x => x] });
-    const html = typeof res.data === 'string' ? res.data : String(res.data || '');
-    const items = parseEbaySoldHtml(html);
-    console.log(`[scrape.do] parsed ${items.length} items (response was ${html.length} bytes)`);
-    const out = { results: items.slice(0, limit), total: items.length };
-    if (opts.includeDebug) {
-      const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-      const canonicalMatch = html.match(/<link[^>]+rel=["']?canonical["']?[^>]+href=["']([^"']+)["']/i);
-      // Grab the first matched container block (whichever layout
-      // matches) so the frontend can show us the actual markup
-      // structure when our extractor returns nothing.
-      let firstBlock = null;
-      const sample = splitBlocks(html, CARD_CONTAINER_RE());
-      if (sample.length > 0) firstBlock = sample[0].slice(0, 8000);
-      out._debug = {
-        httpStatus: res.status,
-        contentType: (res.headers && (res.headers['content-type'] || res.headers['Content-Type'])) || null,
-        bytes: html.length,
-        title: titleMatch ? decodeHtmlEntities(titleMatch[1]).trim() : null,
-        canonical: canonicalMatch ? canonicalMatch[1] : null,
-        looksLikeSoldPage: /Sold\s+items|LH_Sold=1/i.test(html) && /sold/i.test(titleMatch ? titleMatch[1] : ''),
-        classCounts: {
-          sItem: (html.match(/class="[^"]*\bs-item\b[^"]*"/g) || []).length,
-          sCard: (html.match(/class="[^"]*\bs-card\b[^"]*"/g) || []).length,
-          srpItem: (html.match(/class="[^"]*\bsrp-results__item\b[^"]*"/g) || []).length,
-          srpRiver: (html.match(/class="[^"]*\bsrp-river\b[^"]*"/g) || []).length,
-        },
-        looksLikeJson: /^\s*[{[]/.test(html),
-        looksLikeBlock: /Pardon Our Interruption|Are you a robot|Access to this page has been denied|Just a moment/i.test(html),
-        snippet: html.slice(0, 4000),
-        firstBlock,
-        firstCardExtract: debugFirstCard(firstBlock),
-        targetUrl: ebayUrl,
-      };
-    }
-    return out;
-  } catch (err) {
-    const status = err.response && err.response.status;
-    console.error(`[scrape.do] Error${status ? ` HTTP ${status}` : ''}: ${err.message}`);
-    const errBody = err.response && err.response.data ? String(err.response.data).slice(0, 600) : null;
-    // 401/403 = bad token. 402/429 = quota or rate-limit on this key.
-    // Surface both distinctly so the rotation layer can fall back instead
-    // of giving up.
-    if (status === 401 || status === 403) {
-      return { results: [], total: 0, error: 'scrape.do rejected your API key (HTTP ' + status + '). Update it in Settings.', badKey: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
-    }
-    if (status === 402 || status === 429) {
-      return { results: [], total: 0, error: 'scrape.do quota/rate-limit hit (HTTP ' + status + ') for this key.', quotaExceeded: true, status, _debug: opts.includeDebug ? { httpStatus: status, errBody } : undefined };
-    }
-    return { results: [], total: 0, error: err.message, status, _debug: opts.includeDebug ? { httpStatus: status || null, errBody, exception: err.message } : undefined };
-  }
-}
-
-// In-memory round-robin index per (username|anon). Resets on cold start;
-// that's fine — the rotation just picks up from the top.
-const _scrapeDoRotation = new Map();
-
-// Drive a sold search through up to N user keys: pick a starting key via
-// per-user round-robin, then walk in order. Any key that returns badKey
-// (bogus token) or quotaExceeded (HTTP 402/429) is skipped to the next
-// one. Bubbles up the last error if every key fails.
-async function fetchViaScrapeDoRotated(keywords, keys, limit, source, rotationKey) {
-  if (!keys || keys.length === 0) {
-    return { results: [], total: 0, error: 'no scrape.do keys configured', noProvider: true, noKey: true };
-  }
-  const start = ((_scrapeDoRotation.get(rotationKey) || 0)) % keys.length;
-  _scrapeDoRotation.set(rotationKey, start + 1);
-  let lastErr = null;
-  const badKeyLabels = [];
-  for (let i = 0; i < keys.length; i++) {
-    const idx = (start + i) % keys.length;
-    const k = keys[idx];
-    const r = await fetchViaScrapeDo(keywords, k.key, limit, source);
-    if (!r.badKey && !r.quotaExceeded) return r;
-    lastErr = r;
-    if (r.badKey) badKeyLabels.push(k.label || `Key ${idx + 1}`);
-    console.log(`[scrape.do rotation] key "${k.label || idx + 1}" failed (${r.badKey ? 'bad key' : 'quota'}), trying next`);
-  }
-  // All keys exhausted. If every failure was a bad key, surface that;
-  // otherwise surface the quota-exhaustion message.
-  if (lastErr && lastErr.badKey && badKeyLabels.length === keys.length) {
-    return { results: [], total: 0, error: 'All your scrape.do keys were rejected. Check them in Settings.', badKey: true };
-  }
-  return lastErr || { results: [], total: 0, error: 'All scrape.do keys failed for this request.' };
-}
-
-// Normalize whatever the legacy users record holds into a clean array of
-// `{ key, label }`. Supports both the old single-string `scrapeDoKey`
-// field and the new `scrapeDoKeys` array — so the migration is implicit
-// and a user record only needs to be rewritten when the user changes
-// their keys.
-function getUserScrapeDoKeys(userRec) {
-  if (!userRec) return [];
-  if (Array.isArray(userRec.scrapeDoKeys) && userRec.scrapeDoKeys.length > 0) {
-    return userRec.scrapeDoKeys
-      .filter(k => k && typeof k.key === 'string' && k.key.length > 0)
-      .map((k, i) => ({ key: k.key, label: k.label || `Key ${i + 1}`, addedAt: k.addedAt || null }));
-  }
-  if (typeof userRec.scrapeDoKey === 'string' && userRec.scrapeDoKey.length > 0) {
-    return [{ key: userRec.scrapeDoKey, label: 'Default', addedAt: null }];
-  }
-  return [];
-}
-
-// Lightweight eBay-search HTML parser. eBay's been A/B-testing three
-// layouts in 2024-25:
-//   1. legacy `<li class="s-item s-item__pl-on-bottom">` (older Browse)
-//   2. `<li class="srp-results__item">` (newer SRP)
-//   3. `<div class="s-card ...">` (newest card-grid rollout)
 // We try each container shape and a per-shape field extractor.
 function parseEbaySoldHtml(html) {
   if (!html || html.length < 500) return [];
@@ -1555,38 +1406,6 @@ function decodeHtmlEntities(s) {
     .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)));
 }
 
-// Resolve this request's scrape.do keys. Deliberately user-keys-only: with no
-// shared server key there's no quota of ours to meter and no scraping done on
-// anyone's behalf by default. A user without a key just gets The Card API.
-// An optional server-wide scrape.do key. Set it and sold search can fall back
-// to scraping for ANY visitor, logged in or not — no Settings UI involved.
-// Unset (the default) keeps the opt-in posture where only users with their own
-// key ever hit scrape.do.
-//   wrangler secret put SCRAPE_DO_KEY   (or set it as a GitHub Actions secret)
-function getServerScrapeDoKeys() {
-  const k = (process.env.SCRAPE_DO_KEY || '').trim();
-  return k ? [{ key: k, label: 'Server', addedAt: null }] : [];
-}
-
-function getScrapeDoKeysForRequest(req) {
-  const server = getServerScrapeDoKeys();
-  try {
-    const username = getSessionUser(req);
-    if (!username) return { username: null, keys: server, shared: server.length > 0 };
-    const users = loadServerUsers();
-    const own = getUserScrapeDoKeys(users[username]);
-    // A user's own key wins — it spends their quota, not ours. The server key
-    // is the fallback so the feature works without anyone configuring anything.
-    return own.length > 0
-      ? { username, keys: own, shared: false }
-      : { username, keys: server, shared: server.length > 0 };
-  } catch (_) {
-    return { username: null, keys: server, shared: server.length > 0 };
-  }
-}
-
-// True when a user has an active paid plan (Pro / Pro+) or a permanent grant.
-// The single source of truth for every Pro feature gate (bulk pricer, promote,
 // unlimited alerts, unlimited sold search, all-time comps).
 function isProUser(username) {
   if (!username) return false;
@@ -1633,7 +1452,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     // network hop. Anything it answers costs nothing, so the paid providers
     // only ever see what it misses. Football-only, and absent until the D1
     // binding exists, so a miss here is the normal case rather than an error.
-    if (SOLD_PROVIDER !== 'scrapedo' && SOLD_PROVIDER !== 'cardapi') {
+    if (SOLD_PROVIDER !== 'cardapi') {
       const own = await fetchViaNflCardDb(keywords, limit, source);
       const ownResults = Array.isArray(own.results) ? filterJunkListings(own.results) : [];
       if (ownResults.length > 0) {
@@ -1665,47 +1484,10 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     }
 
     // The Card API is next: it's the licensed feed, and because billing is per
-    // row RETURNED, a search that finds nothing costs ~nothing. So trying it
-    // before scraping is close to free and keeps scrape.do to gap cases.
-    // Skipped entirely when SOLD_PROVIDER pins us to scrape.do.
-    const response = SOLD_PROVIDER === 'scrapedo'
-      ? { results: [], total: 0, skipped: 'SOLD_PROVIDER=scrapedo' }
-      : await fetchViaCardApi(keywords, limit, source, opts);
+    // row RETURNED, a search that finds nothing costs ~nothing.
+    const response = await fetchViaCardApi(keywords, limit, source, opts);
     const primary = Array.isArray(response.results) ? filterJunkListings(response.results) : [];
     if (primary.length > 0) return { ...response, results: primary, provider: 'cardapi' };
-
-    // Nothing came back — either genuinely no sales inside our lookback
-    // window, or the provider is blocked (no key / daily cap spent). Either
-    // way, a user who added their own scrape.do key can cover the gap: their
-    // quota, and no lookback limit, so it reaches sales we simply can't see.
-    const sdKeys = (SOLD_PROVIDER === 'cardapi' || !opts.scrapeDo || !Array.isArray(opts.scrapeDo.keys))
-      ? []
-      : opts.scrapeDo.keys;
-    if (sdKeys.length > 0) {
-      const why = response.rateLimited ? 'daily cap reached'
-        : response.soldUnavailable ? 'provider unavailable' : 'no results in lookback window';
-      console.log(`[sold] Card API: ${why} — trying the user's scrape.do key`);
-      const sd = await fetchViaScrapeDoRotated(keywords, sdKeys, limit, source, opts.scrapeDo.username || 'anon');
-      const sdResults = Array.isArray(sd.results) ? filterJunkListings(sd.results) : [];
-      if (sdResults.length > 0) {
-        // scrape.do has no lookback ceiling, so these are often sales older
-        // than our plan can reach — exactly the history worth keeping.
-        const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
-        const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
-        _archiveSales(_soldArchiveKey(cleaned, filterKey), sdResults);
-        return { ...sd, results: sdResults, provider: 'scrapedo' };
-      }
-    }
-
-    // Pinned to scrape.do but this user has no working key — there's no shared
-    // key to fall back on, so say so plainly rather than implying the card has
-    // never sold.
-    if (SOLD_PROVIDER === 'scrapedo' && primary.length === 0) {
-      return {
-        results: [], total: 0, soldUnavailable: true,
-        error: 'Sold search is set to use your own scrape.do key. Add one in Settings to enable it.',
-      };
-    }
 
     // No fallback available or it also came up empty. Return the primary
     // response untouched so its soldUnavailable / rateLimited flags survive
@@ -1758,7 +1540,7 @@ app.get('/api/search', async (req, res) => {
 
     // ---- Sold mode (The Card API) ----
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, limit, mode, 'search', 0, { scrapeDo: getScrapeDoKeysForRequest(req) });
+      const searchData = await fetchEbayItems(query, limit, mode, 'search', 0);
       if (searchData.soldUnavailable) return sendSoldUnavailable(res);
       if (searchData.rateLimited) {
         return res.json({
@@ -2734,7 +2516,7 @@ app.get('/api/direct-search', async (req, res) => {
 
     // ---- Sold mode (The Card API) ----
     if (mode === 'sold') {
-      const searchData = await fetchEbayItems(query, 50, mode, 'direct-search', 0, { scrapeDo: getScrapeDoKeysForRequest(req) });
+      const searchData = await fetchEbayItems(query, 50, mode, 'direct-search', 0);
       if (searchData.soldUnavailable) return sendSoldUnavailable(res);
       if (searchData.rateLimited) {
         return res.json({
@@ -2866,7 +2648,7 @@ app.get('/api/variants', async (req, res) => {
     // so the targeted and broad legs below would send identical requests — and
     // in parallel neither warms the cache for the other, so both get billed.
     if (serial && mode === 'sold') {
-      const one = await fetchEbayItems(baseQuery, 50, mode, 'variants-serial', 0, { scrapeDo: getScrapeDoKeysForRequest(req) });
+      const one = await fetchEbayItems(baseQuery, 50, mode, 'variants-serial', 0);
       if (sendIfSoldBlocked(res, one)) return;
       rawResults = one.results;
     } else if (serial) {
@@ -4082,10 +3864,9 @@ app.get('/api/health', (req, res) => {
 // key itself — only whether one is present and how long it is.
 app.get('/api/debug/sold-test', async (req, res) => {
   const q = req.query.q || 'patrick mahomes prizm';
-  const serverScrapeKeys = getServerScrapeDoKeys();
   const out = {
     query: q,
-    soldProvider: SOLD_PROVIDER, // auto | nflcarddb | cardapi | scrapedo
+    soldProvider: SOLD_PROVIDER, // auto | nflcarddb | cardapi
     // Our own D1 dataset — reported first because it's the first source tried.
     nflCardDb: await (async () => {
       const db = getNflDb();
@@ -4101,22 +3882,7 @@ app.get('/api/debug/sold-test', async (req, res) => {
     })(),
     keyPresent: !!CARD_API_KEY,
     keyLength: CARD_API_KEY ? String(CARD_API_KEY).length : 0,
-    // Whether the server-wide scrape.do fallback is configured. Reported on
-    // every path so a deploy can be verified in one request without needing
-    // a logged-in session. Never echoes the key itself.
-    scrapeDo: {
-      serverKeyPresent: serverScrapeKeys.length > 0,
-      serverKeyLength: serverScrapeKeys.length > 0 ? String(serverScrapeKeys[0].key).length : 0,
-      note: serverScrapeKeys.length > 0
-        ? 'Server-wide scrape.do key is set — sold search can fall back to it for any visitor.'
-        : 'No server-wide key. Only users who added their own key in Settings can use scrape.do.',
-    },
   };
-  if (SOLD_PROVIDER === 'scrapedo') {
-    out.status = 'CARD_API_DISABLED';
-    out.note = 'SOLD_PROVIDER=scrapedo — The Card API is switched off. Sold search uses each user\'s own scrape.do key. Set SOLD_PROVIDER=auto to re-enable.';
-    return res.json(out);
-  }
   if (!CARD_API_KEY) {
     out.status = 'NO_KEY';
     out.fix = 'Run: wrangler secret put CARD_API_KEY — then redeploy.';
@@ -4153,40 +3919,6 @@ app.get('/api/debug/sold-test', async (req, res) => {
     if (status === 429) out.fix = 'Daily sale-row budget spent. Resets 00:00 UTC.';
   }
   res.json(out);
-});
-
-// ---- Debug endpoint: test scrape.do keys ----
-// Backs the "Test All" button in Settings. Runs a real scrape per key and
-// reports per-key status so a user can see which of their tokens is healthy.
-// With ?label=X only that key is tested.
-app.get('/api/debug/sold', async (req, res) => {
-  const q = req.query.q || 'Patrick Mahomes 2017 Prizm';
-  const label = (req.query.label || '').toString();
-  const ctx = getScrapeDoKeysForRequest(req);
-  if (!ctx.keys || ctx.keys.length === 0) {
-    return res.status(401).json({ error: 'No scrape.do key on file for this account', noKey: true });
-  }
-  const targets = label ? ctx.keys.filter(k => k.label === label) : ctx.keys;
-  if (label && targets.length === 0) {
-    return res.status(404).json({ error: `No key with label "${label}"` });
-  }
-  try {
-    const perKey = await Promise.all(targets.map(async k => {
-      const r = await fetchViaScrapeDo(q, k.key, 5, 'debug', { includeDebug: true });
-      return {
-        label: k.label,
-        itemCount: (r.results || []).length,
-        firstItem: (r.results || [])[0] || null,
-        error: r.error || null,
-        badKey: !!r.badKey,
-        quotaExceeded: !!r.quotaExceeded,
-        debug: r._debug || null,
-      };
-    }));
-    res.json({ provider: 'scrape.do', query: q, shared: !!ctx.shared, perKey });
-  } catch (err) {
-    res.json({ provider: 'scrape.do', error: err.message });
-  }
 });
 
 // ---- Debug endpoint: test eBay Browse API ----
@@ -5327,104 +5059,6 @@ app.put('/api/auth/email', async (req, res) => {
 });
 
 
-// scrape.do accounts; the sold-search path rotates across them and
-// falls back on quota-exhausted errors.
-const MAX_KEYS_PER_USER = 10;
-
-function maskKey(key) {
-  if (!key) return '';
-  const last4 = key.slice(-4);
-  return '••••••••' + last4;
-}
-
-// Read the user record and return both the storage form (array) and the
-// safe public view (no raw keys). Migrates legacy single-string field on
-// first write — never silently rewrites without an explicit user action.
-function readKeysFromRecord(rec) {
-  const list = getUserScrapeDoKeys(rec || {});
-  return list.map((k, i) => ({
-    label: k.label || `Key ${i + 1}`,
-    hint: maskKey(k.key),
-    addedAt: k.addedAt || null,
-  }));
-}
-
-app.get('/api/user/scrape-do-key', (req, res) => {
-  const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const users = loadServerUsers();
-  const keys = readKeysFromRecord(users[username]);
-  // serverKey tells the UI a built-in key is available, so "no keys of your
-  // own" doesn't read as "sold search is switched off".
-  res.json({
-    configured: keys.length > 0,
-    count: keys.length,
-    keys,
-    serverKey: getServerScrapeDoKeys().length > 0,
-  });
-});
-
-// POST adds a key (preferred). PUT also calls into this path so the
-// previous single-key clients keep working — the PUT just replaces the
-// whole list with a single key.
-function addKeyHandler(req, res, { replace = false } = {}) {
-  const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const { apiKey, label } = req.body || {};
-  if (typeof apiKey !== 'string' || apiKey.trim().length < 8) {
-    return res.status(400).json({ error: 'apiKey must be at least 8 characters' });
-  }
-  const trimmedKey = apiKey.trim();
-  if (trimmedKey.length > 200) return res.status(400).json({ error: 'apiKey too long' });
-  const cleanLabel = typeof label === 'string' ? label.trim().slice(0, 60) : '';
-
-  const users = loadServerUsers();
-  if (!users[username]) return res.status(404).json({ error: 'User record missing' });
-
-  const existing = replace ? [] : getUserScrapeDoKeys(users[username]);
-  if (existing.length >= MAX_KEYS_PER_USER) {
-    return res.status(409).json({ error: `Max ${MAX_KEYS_PER_USER} keys per account` });
-  }
-  if (existing.some(k => k.key === trimmedKey)) {
-    return res.status(409).json({ error: 'You already have this key on file' });
-  }
-  const next = existing.concat({
-    key: trimmedKey,
-    label: cleanLabel || `Key ${existing.length + 1}`,
-    addedAt: new Date().toISOString(),
-  });
-
-  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
-  // Clear the legacy field so we have a single source of truth going forward.
-  delete users[username].scrapeDoKey;
-  saveServerUsers(users);
-  res.json({ ok: true, configured: true, count: next.length, keys: readKeysFromRecord(users[username]) });
-}
-
-app.post('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: false }));
-app.put('/api/user/scrape-do-key', (req, res) => addKeyHandler(req, res, { replace: true }));
-
-// DELETE removes by label. Without `?label=` it clears everything
-// (preserves the historical "clear my key" behavior of the old endpoint).
-app.delete('/api/user/scrape-do-key', (req, res) => {
-  const username = getSessionUser(req);
-  if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const label = (req.query.label || '').toString();
-  const users = loadServerUsers();
-  if (!users[username]) return res.json({ ok: true, configured: false, count: 0 });
-  const existing = getUserScrapeDoKeys(users[username]);
-  let next;
-  if (label) {
-    next = existing.filter(k => k.label !== label);
-  } else {
-    next = [];
-  }
-  users[username].scrapeDoKeys = next.map(k => ({ key: k.key, label: k.label, addedAt: k.addedAt }));
-  delete users[username].scrapeDoKey;
-  saveServerUsers(users);
-  res.json({ ok: true, configured: next.length > 0, count: next.length, keys: readKeysFromRecord(users[username]) });
-});
-
 // Per-user data sync — single JSON blob per user containing the things that
 // used to live in localStorage only (collection, watchlist, completion,
 // seller listings, promoted cards). Client pulls on login and pushes
@@ -5444,7 +5078,8 @@ async function collectAccountData(username) {
   const users = loadServerUsers();
   const account = users[key] ? { ...users[key] } : null;
   if (account) delete account.passwordHash; // never hand back the hash
-  if (account && account.scrapeDoKeys) account.scrapeDoKeys = '[redacted]';
+  // Legacy field on old records; never hand back a stored credential.
+  if (account) { delete account.scrapeDoKeys; delete account.scrapeDoKey; }
 
   const posts = loadCommunityPosts();
   const dms = loadDMs();

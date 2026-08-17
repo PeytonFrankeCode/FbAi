@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=151" />
+  <link rel="stylesheet" href="style.css?v=152" />
 
 
 </head>
@@ -1591,42 +1591,6 @@
           <div id="offline-packs" class="offline-packs"><p class="op-note">Open to load…</p></div>
         </div>
 
-        <!-- Optional per-user scrape.do API keys for Sold searches. Opt-in:
-             with no key, Sold search uses the default provider. With one,
-             searches route through the user's own key and quota. Multiple
-             keys round-robin and fall back when one hits its limit. -->
-        <div class="settings-row settings-row--stacked" id="settings-scrapedo-row">
-          <div class="settings-label">
-            <span class="settings-label-text">scrape.do API keys <span class="settings-label-tag">optional</span></span>
-            <span class="settings-label-desc" id="settings-scrapedo-desc">Optional backup for Sold search. Searches use the built-in provider first; if a card has no recent sales there, we fall back to your key &mdash; your quota, and no lookback limit, so it reaches older sales. Add multiple keys to combine quotas. <a href="https://scrape.do" target="_blank" rel="noopener">Get a key</a>.</span>
-          </div>
-          <div id="settings-scrapedo-action" class="settings-scrapedo-action">
-            <div id="settings-scrapedo-loading" class="settings-scrapedo-loading">Loading&hellip;</div>
-            <ul id="settings-scrapedo-list" class="settings-scrapedo-list hidden"></ul>
-            <div id="settings-scrapedo-empty" class="settings-scrapedo-empty hidden">No keys added &mdash; Sold search uses the built-in provider only.</div>
-            <div id="settings-scrapedo-add" class="settings-scrapedo-add hidden">
-              <input type="text" id="settings-scrapedo-label" class="settings-scrapedo-label-input"
-                     placeholder="Label (optional, e.g. 'Main account')" maxlength="60" />
-              <input type="password" id="settings-scrapedo-input" class="settings-scrapedo-input"
-                     placeholder="Paste your scrape.do token" autocomplete="off" spellcheck="false" />
-              <div class="settings-scrapedo-add-buttons">
-                <button class="settings-sub-btn" id="settings-scrapedo-save" onclick="saveScrapeDoKey()">Add Key</button>
-                <button class="settings-sub-btn" id="settings-scrapedo-test-all" onclick="testScrapeDoKey()" style="display:none">Test All</button>
-              </div>
-            </div>
-            <div id="settings-scrapedo-test-result" class="settings-scrapedo-test-result hidden"></div>
-          </div>
-        </div>
-
-        <!-- Subscription Management -->
-        <div class="settings-row" id="settings-sub-row">
-          <div class="settings-label">
-            <span class="settings-label-text">Subscription</span>
-            <span class="settings-label-desc" id="settings-sub-desc">Manage your plan</span>
-          </div>
-          <div id="settings-sub-action"></div>
-        </div>
-
         <!-- Your data: the self-serve half of the access and erasure rights in
              the privacy policy. Hidden until signed in — both endpoints need a
              session. Wired up in app.js (downloadMyData / openDeleteAccount). -->
@@ -1869,7 +1833,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=195"></script>
+  <script src="app.js?v=196"></script>
   <script type="importmap">
   {
     "imports": {
