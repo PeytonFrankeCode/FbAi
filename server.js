@@ -2866,28 +2866,40 @@ function _rsiPayloadAt(byCard, throughIso, days, bucketDays, points, tier, extra
   const round1 = (n) => Math.round(n * 10) / 10;
   const through = _mkDay(throughIso);
 
-  // Headline: the oldest bucket against the newest, in one comparison.
-  const overall = _rsiLink(byCard, 0, points, tier.minMatched);
-  if (overall.thin) {
+  // The headline is the chained path, not a single bucket-0-against-bucket-N
+  // comparison. That direct form demanded a card trade in those two exact
+  // windows, and on sparse data almost none do — cards resell on their own
+  // schedule, not on the index's. Chaining adjacent steps only ever asks
+  // whether a card traded in two NEIGHBOURING buckets, which is a far easier
+  // thing to satisfy and is how a chained index is built in any case.
+  const steps = [];
+  for (let i = points - 1; i >= 0; i--) steps.push(_rsiLink(byCard, i, i + 1, tier.minMatched));
+
+  const solid = steps.filter(s => !s.thin);
+  // At least half the steps have to stand on real matches. Below that the line
+  // is mostly carried-forward flat and the level means little.
+  if (solid.length === 0 || solid.length * 2 < steps.length) {
     return {
       available: false, days, reason: 'not enough repeat sales yet',
-      minCards: tier.minMatched, matchedCards: overall.matched, tier: tier.label,
-      bucketDays, through: throughIso, method: 'repeat-sales', ...extra,
+      minCards: tier.minMatched,
+      matchedCards: Math.max(0, ...steps.map(s => s.matched)),
+      tier: tier.label, bucketDays, through: throughIso, method: 'repeat-sales', ...extra,
     };
   }
 
-  // Trend: chain each adjacent pair, oldest first, so the line shows the path
-  // rather than a series of independent comparisons against one fixed base.
   const series = [{ date: _mkIso(through - points * bucketDays), score: 100 }];
-  let level = 100, thinSteps = 0;
-  for (let i = points - 1; i >= 0; i--) {
-    const link = _rsiLink(byCard, i, i + 1, tier.minMatched);
-    if (link.thin) thinSteps++;
-    level *= link.ratio;
-    series.push({ date: _mkIso(through - i * bucketDays), score: round1(level), matched: link.matched });
+  let level = 100;
+  for (let i = 0; i < steps.length; i++) {
+    level *= steps[i].ratio;
+    series.push({
+      date: _mkIso(through - (points - 1 - i) * bucketDays),
+      score: round1(level),
+      matched: steps[i].matched,
+    });
   }
 
-  const score = round1(100 * overall.ratio);
+  const score = round1(level);
+  const matchedCounts = solid.map(s => s.matched).sort((a, b) => a - b);
   return {
     available: true,
     days,
@@ -2897,32 +2909,65 @@ function _rsiPayloadAt(byCard, throughIso, days, bucketDays, points, tier, extra
     dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - through),
     score: Math.round(score),
     rawScore: score,
-    changePct: round1((overall.ratio - 1) * 100),
-    matchedCards: overall.matched,
+    changePct: round1(score - 100),
+    // The typical per-step sample, and the weakest one. The weakest link is
+    // what the chain actually rests on, so it is not hidden.
+    matchedCards: _rsiMedian(matchedCounts),
+    minMatchedInAnyStep: matchedCounts[0],
     minCards: tier.minMatched,
     bucketDays,
     trackedCards: byCard.size,
-    thinSteps,
+    thinSteps: steps.length - solid.length,
     series,
     ...extra,
   };
 }
 
-// The one query every index runs. Grouping in SQL is what keeps this inside the
-// Worker's CPU budget: the result is one row per card per bucket, not one per
-// sale. `extraWhere` scopes it to a player without duplicating the statement.
+// The one query every index runs, and the reason the whole-market view works.
+//
+// The first version grouped by (bucket, card) and capped the result at a row
+// count. On one player that was fine. Across the whole market it asked for
+// ~195,000 rows against a 40,000 cap, and because a GROUP BY comes back ordered
+// by its grouping columns — bucket first — the cap kept ONLY the newest bucket.
+// No card could appear in two buckets, so nothing ever matched and the market
+// index reported "not enough repeat sales" on a dataset with 14,000 of them.
+//
+// Two changes fix it for good:
+//   1. Cards that sold in fewer than two buckets are dropped in SQL. They can
+//      never form a pair, and on this dataset they are the large majority of
+//      rows — 150,000 of the 175,000 cards in the reproduction were singles.
+//   2. What remains is capped by CARD, not by row, taking the most actively
+//      traded first. A card is therefore always returned whole, with every
+//      bucket it traded in, so truncation can never again silently delete a
+//      period. Selecting the most-traded cards is also the better index: it is
+//      what a published basket like the CL50 does, for the same reason — liquid
+//      cards carry a cleaner price signal than one-off sales.
 function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = []) {
-  const { bucketDays, spanDays } = _rsiGeometry(days);
+  const { bucketDays, points, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays);
+  // Budget the row cap across the buckets a card can occupy, so the query
+  // cannot exceed it however the data falls.
+  const cardCap = Math.max(500, Math.floor(RSI_ROW_CAP / (points + 1)));
+  const KEY = 'year, set_name, player, parallel, grader, grade';
   return db.prepare(
-    `SELECT CAST((julianday(?) - julianday(sold_date)) / ? AS INTEGER) AS bucket,
-            year, set_name, player, parallel, grader, grade,
-            SUM(price_cents) AS cents, COUNT(*) AS n
-       FROM sales
-      WHERE price_cents IS NOT NULL
-        AND sold_date > ? AND sold_date <= ?${extraWhere}
-      GROUP BY bucket, year, set_name, player, parallel, grader, grade
-      LIMIT ${RSI_ROW_CAP}`
+    `WITH b AS (
+       SELECT CAST((julianday(?) - julianday(sold_date)) / ? AS INTEGER) AS bucket,
+              ${KEY}, SUM(price_cents) AS cents, COUNT(*) AS n
+         FROM sales
+        WHERE price_cents IS NOT NULL
+          AND sold_date > ? AND sold_date <= ?${extraWhere}
+        GROUP BY bucket, ${KEY}
+     ),
+     picked AS (
+       SELECT ${KEY}, SUM(n) AS sales
+         FROM b
+        GROUP BY ${KEY}
+       HAVING COUNT(*) >= 2
+        ORDER BY sales DESC
+        LIMIT ${cardCap}
+     )
+     SELECT b.bucket, b.${KEY.split(', ').join(', b.')}, b.cents, b.n
+       FROM b JOIN picked USING (${KEY})`
   ).bind(throughIso, bucketDays, sinceIso, throughIso, ...extraBinds);
 }
 
