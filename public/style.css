@@ -8816,6 +8816,10 @@ footer {
 .market-comp-label { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); }
 .market-comp-weight { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); white-space: nowrap; }
 .market-comp-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); line-height: 1.1; }
+/* The headline price move is the one figure worth colouring. */
+.market-comp-value.up { color: var(--accent); }
+.market-comp-value.down { color: #f87171; }
+[data-theme="light"] .market-comp-value.down { color: #b91c1c; }
 .market-comp-change { font-size: 0.8rem; font-weight: 700; margin-top: 0.2rem; }
 .market-comp-change.up { color: var(--accent); }
 .market-comp-change.down { color: #e56a6a; }

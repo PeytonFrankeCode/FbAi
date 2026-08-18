@@ -2746,125 +2746,166 @@ app.get('/api/variants', async (req, res) => {
 // cheap no matter how many millions of sales sit behind it.
 const MARKET_PERIODS = [7, 30, 90];
 const MARKET_TTL = 3600; // 1h — identical for every visitor
-const MARKET_WEIGHTS = { dollars: 0.6, units: 0.4 };
-// Below this many priced sales in a window, ratios are noise: a baseline of
-// nine sales turns one good day into a "+300% market". Better to say we don't
-// know yet than to publish a number that swings on a single listing.
-const MARKET_MIN_SALES = 25;
-// The most recent day in the table is usually still being collected, and a
-// half-collected day reads as a crash. Anchor one day back so every window is
-// made of complete days. Set to 0 if the collector ever backfills whole days
-// only.
-const MARKET_EXCLUDE_TRAILING_DAYS = 1;
-// Even past the sample gate a thin baseline can produce a silly multiple.
-// Clamp for display; rawScore keeps the true value.
-const MARKET_SCORE_MIN = 0;
-const MARKET_SCORE_MAX = 200;
+// ---- Repeat-sales price index -----------------------------------------------
+// The old index scored total dollars and total units sold against the previous
+// window. That measures eBay activity, not what cards are worth: double the
+// volume at identical prices read as "+100%", and a market where every card
+// doubled while half as many sold read as "-20%". Football volume also collapses
+// every offseason, so the number fell each spring for reasons that had nothing
+// to do with prices.
+//
+// This replaces it with a repeat-sales index — the technique behind
+// Case-Shiller. Each card is only ever compared with ITSELF at an earlier date,
+// and the index moves by the MEDIAN of those per-card changes. Consequences:
+//
+//   * Volume cannot move it. Twice as many sales at the same prices is a
+//     median ratio of 1.0, which is flat, which is the truth.
+//   * Mix cannot move it. A $40k one-of-one entering the window is one card
+//     contributing one ratio, not a spike in a dollar total.
+//   * Seasonality cannot move it. A quiet month has fewer pairs, not a crash.
+//   * One weird sale cannot move it. The median ignores the tails by
+//     construction, and ratios are trimmed before it is taken.
+//
+// The cost is that a card has to sell at least twice to say anything, so the
+// index needs repeat sales rather than raw volume. That is the correct trade:
+// a number built on fewer, better observations beats a precise number that is
+// measuring the wrong quantity.
+const RSI_VALUE_WINDOW = 30;      // days of sales that define a card's value at a date
+const RSI_MIN_MATCHED = 12;       // matched cards needed before a step is trusted
+const RSI_RATIO_FLOOR = 0.25;     // trim ratios outside [floor, ceil] before the
+const RSI_RATIO_CEIL = 4;         // median — those are mis-keyed rows, not moves
+const RSI_TARGET_POINTS = 30;     // chart points across the requested period
+// Hard ceiling on rows pulled per index build. D1 has a response size limit and
+// this endpoint is public, so a runaway dataset degrades to a truncated (and
+// flagged) index rather than a failed request.
+const RSI_ROW_CAP = 200000;
 
-// Whole days since epoch — integer day arithmetic, no timezone drift.
-function _mkDay(iso) { return Math.floor(Date.parse(String(iso).slice(0, 10) + 'T00:00:00Z') / 86400000); }
-function _mkIso(day) { return new Date(day * 86400000).toISOString().slice(0, 10); }
+// Identity of a single card. Two sales share a key only if they are the same
+// card in the same grade — that is what makes a price ratio meaningful.
+// Anything missing collapses to an empty segment rather than being dropped, so
+// raw ungraded commons still form a (coarser) comparable group.
+function _rsiCardKey(r) {
+  const norm = (v) => String(v == null ? '' : v).toLowerCase().replace(/\s+/g, ' ').trim();
+  return [norm(r.year), norm(r.set_name), norm(r.player), norm(r.parallel),
+          norm(r.grader), norm(r.grade)].join('|');
+}
 
-// Sum one window out of the dense day map.
-// `emptyDays` counts days with no row at all. A day with no sales and a day
-// the collector missed look identical here, so we surface the count and let
-// the UI warn rather than silently scoring an outage as a market collapse.
-function _marketWindow(map, endDay, days) {
-  let dollars = 0, units = 0, sales = 0, emptyDays = 0;
-  for (let d = endDay - days + 1; d <= endDay; d++) {
-    const row = map.get(d);
-    if (!row) { emptyDays++; continue; }
-    dollars += row.dollars;
-    units += row.units;
-    sales += row.sales;
+function _rsiMedian(sorted) {
+  const n = sorted.length;
+  if (n === 0) return null;
+  const mid = n >> 1;
+  return n % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// A card's value on `endDay`: the median of its sales in the trailing window.
+// Median rather than mean because a single fat-fingered listing should not
+// become the card's price, and because most cards have few sales — where a
+// trimmed mean has nothing to trim.
+function _rsiCardValue(days, endDay, window) {
+  const prices = [];
+  for (let d = endDay - window + 1; d <= endDay; d++) {
+    const p = days.get(d);
+    if (p) for (const cents of p) prices.push(cents);
   }
-  return {
-    dollars: Math.round(dollars / 100), // cents -> dollars
-    units, sales, emptyDays,
-    from: _mkIso(endDay - days + 1),
-    to: _mkIso(endDay),
-  };
+  if (prices.length === 0) return null;
+  prices.sort((a, b) => a - b);
+  return { value: _rsiMedian(prices), sales: prices.length };
 }
 
-// null when the baseline can't support a ratio — the caller decides what to say.
-// `minSales` is a parameter rather than a constant because one player's market
-// is a fraction of the whole one: holding a single player to the whole-market
-// threshold would refuse to score all but a handful of names.
-function _marketScore(cur, base, minSales = MARKET_MIN_SALES) {
-  if (!cur || !base) return null;
-  if (base.dollars <= 0 || base.units <= 0) return null;
-  if (cur.units < minSales || base.units < minSales) return null;
-  const dollarRatio = cur.dollars / base.dollars;
-  const unitRatio = cur.units / base.units;
-  const raw = 100 * (MARKET_WEIGHTS.dollars * dollarRatio + MARKET_WEIGHTS.units * unitRatio);
-  return { raw, dollarRatio, unitRatio };
+// One step of the chain: the median price change among cards that actually
+// traded in both windows. Cards that did not sell recently are excluded rather
+// than carried forward — a carried value would contribute a ratio of exactly
+// 1.0 and drag every step toward "no change", which is a bias, not a signal.
+function _rsiStep(byCard, endDay, prevEndDay, window) {
+  const ratios = [];
+  for (const days of byCard.values()) {
+    const cur = _rsiCardValue(days, endDay, window);
+    if (!cur) continue;
+    const prev = _rsiCardValue(days, prevEndDay, window);
+    if (!prev || !prev.value) continue;
+    const ratio = cur.value / prev.value;
+    if (!Number.isFinite(ratio) || ratio < RSI_RATIO_FLOOR || ratio > RSI_RATIO_CEIL) continue;
+    ratios.push(ratio);
+  }
+  if (ratios.length < RSI_MIN_MATCHED) return { ratio: 1, matched: ratios.length, thin: true };
+  ratios.sort((a, b) => a - b);
+  return { ratio: _rsiMedian(ratios), matched: ratios.length, thin: false };
 }
 
-// Turn a dense day map into the index payload. Shared by the whole-market and
-// per-player endpoints so the two can never drift apart — a player's index has
-// to be computed the same way as the market's for the comparison to mean
-// anything.
-function _buildIndexPayload(map, maxDay, days, minSales) {
+// Group raw sale rows into { cardKey -> Map(day -> [cents, ...]) }.
+function _rsiGroup(rows) {
+  const byCard = new Map();
+  for (const r of rows) {
+    const cents = Number(r.price_cents);
+    if (!Number.isFinite(cents) || cents <= 0) continue;
+    const day = _mkDay(r.sold_date);
+    if (!Number.isFinite(day)) continue;
+    const key = _rsiCardKey(r);
+    let days = byCard.get(key);
+    if (!days) { days = new Map(); byCard.set(key, days); }
+    const list = days.get(day);
+    if (list) list.push(cents); else days.set(day, [cents]);
+  }
+  return byCard;
+}
+
+// Chain the steps into a level series rebased to 100 at the start of the
+// period, so `score` reads the same way the old one did: 100 is flat, 110 is
+// up ten percent — except it now means prices rather than turnover.
+function _buildRepeatSalesPayload(rows, maxDay, days, extra = {}) {
   const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
-  const current = _marketWindow(map, through, days);
-  const baseline = _marketWindow(map, through - days, days);
-  const scored = _marketScore(current, baseline, minSales);
+  const byCard = _rsiGroup(rows);
 
-  if (!scored) {
+  const step = Math.max(1, Math.round(days / RSI_TARGET_POINTS));
+  const anchors = [];
+  for (let d = through - days; d <= through; d += step) anchors.push(d);
+  if (anchors[anchors.length - 1] !== through) anchors.push(through);
+
+  const series = [];
+  let level = 100;
+  let matchedTotal = 0, thinSteps = 0;
+  series.push({ date: _mkIso(anchors[0]), score: 100, matched: null });
+  for (let i = 1; i < anchors.length; i++) {
+    const s = _rsiStep(byCard, anchors[i], anchors[i - 1], RSI_VALUE_WINDOW);
+    level *= s.ratio;
+    if (s.thin) thinSteps++;
+    matchedTotal = Math.max(matchedTotal, s.matched);
+    series.push({ date: _mkIso(anchors[i]), score: Math.round(level * 10) / 10, matched: s.matched });
+  }
+
+  // Headline: the whole period in one comparison rather than the product of the
+  // steps, so the number cannot drift from compounding rounding.
+  const overall = _rsiStep(byCard, through, through - days, RSI_VALUE_WINDOW);
+  if (overall.thin) {
     return {
-      available: false, days,
-      reason: 'not enough sales yet',
-      minSales,
-      through: _mkIso(through),
-      current, baseline,
+      available: false, days, reason: 'not enough repeat sales yet',
+      minCards: RSI_MIN_MATCHED, matchedCards: overall.matched,
+      through: _mkIso(through), method: 'repeat-sales', ...extra,
     };
   }
 
-  // Trend: the same score computed at each earlier anchor, so the line shows
-  // how the index moved rather than how raw volume moved.
-  const series = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const end = through - i;
-    const s = _marketScore(_marketWindow(map, end, days), _marketWindow(map, end - days, days), minSales);
-    if (s) series.push({ date: _mkIso(end), score: Math.round(s.raw * 10) / 10 });
-  }
-
   const round1 = (n) => Math.round(n * 10) / 10;
-  const pct = (r) => round1((r - 1) * 100);
+  const score = round1(100 * overall.ratio);
   return {
     available: true,
     days,
+    method: 'repeat-sales',
     through: _mkIso(through),
-    // How stale the dataset is, so a flat line reads as "no new data"
-    // rather than "no movement".
     dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - maxDay),
-    score: Math.round(Math.min(MARKET_SCORE_MAX, Math.max(MARKET_SCORE_MIN, scored.raw))),
-    rawScore: round1(scored.raw),
-    minSales,
-    weights: MARKET_WEIGHTS,
-    current,
-    baseline,
-    components: {
-      dollars: {
-        current: current.dollars, baseline: baseline.dollars,
-        changePct: pct(scored.dollarRatio),
-        // What this component pushed the score by, in points.
-        points: round1(100 * MARKET_WEIGHTS.dollars * scored.dollarRatio),
-      },
-      units: {
-        current: current.units, baseline: baseline.units,
-        changePct: pct(scored.unitRatio),
-        points: round1(100 * MARKET_WEIGHTS.units * scored.unitRatio),
-      },
-    },
-    avgPrice: {
-      current: current.units > 0 ? round1(current.dollars / current.units) : null,
-      baseline: baseline.units > 0 ? round1(baseline.dollars / baseline.units) : null,
-    },
-    // Share of tracked sales that carried a price. The rest are best-offer,
-    // where eBay publishes the ask rather than what was paid.
-    coverage: current.sales > 0 ? Math.round((current.units / current.sales) * 100) : null,
+    score: Math.round(score),
+    rawScore: score,
+    changePct: round1((overall.ratio - 1) * 100),
+    // How many distinct cards traded in both windows. This is the sample size
+    // the whole number rests on, so it is surfaced rather than buried.
+    matchedCards: overall.matched,
+    minCards: RSI_MIN_MATCHED,
+    valueWindow: RSI_VALUE_WINDOW,
+    trackedCards: byCard.size,
+    // Steps with too few matched cards to trust; those are held flat, so a
+    // large count means the line is smoother than the market really was.
+    thinSteps,
     series,
+    ...extra,
   };
 }
 
@@ -2875,49 +2916,39 @@ app.get('/api/market-index', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, reason: 'no dataset' });
 
-  const cacheKey = `marketindex:v1:${days}`;
+  // v2: repeat-sales. The cache key carries the version so the old volume
+  // scores cannot be served alongside the new ones during a rollout.
+  const cacheKey = `marketindex:v2:${days}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
   try {
-    // Anchor the fetch to the newest day we hold, NOT to today. If the dataset
-    // lags — the collector paused, an import is late — counting back from today
-    // would stop short of the oldest baseline window and the trend line would
-    // read low for reasons that have nothing to do with the market.
-    const newest = await db.prepare('SELECT MAX(sold_date) AS d FROM daily').first();
+    // Anchor to the newest day we hold, not to today: if the collector paused,
+    // counting back from today would walk off the end of the data and read as
+    // a crash that never happened.
+    const newest = await db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
     if (!newest || !newest.d) return res.json({ available: false, days, reason: 'no data in range' });
 
-    // Current window + baseline needs 2x days; the trend line walks the score
-    // back another `days`, so 3x plus the excluded tail.
-    const need = days * 3 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
-    const since = _mkIso(_mkDay(newest.d) - need);
+    const maxDay = _mkDay(newest.d);
+    // The oldest value window sits `days` back from the start anchor, which is
+    // itself `days` back from `through`.
+    const need = days * 2 + RSI_VALUE_WINDOW + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+    const since = _mkIso(maxDay - need);
+
+    // Grouped in SQL so what crosses the wire is one row per card per day, not
+    // one per sale. Without the GROUP BY this pulls every sale in the span.
     const rows = await db.prepare(
-      'SELECT sold_date, sales, priced, total_cents FROM daily WHERE sold_date >= ? ORDER BY sold_date'
+      `SELECT sold_date, year, set_name, player, parallel, grader, grade,
+              price_cents
+         FROM sales
+        WHERE price_cents IS NOT NULL AND sold_date >= ?
+        LIMIT ${RSI_ROW_CAP}`
     ).bind(since).all();
 
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });
 
-    const map = new Map();
-    let maxDay = -Infinity;
-    for (const r of list) {
-      const d = _mkDay(r.sold_date);
-      if (!Number.isFinite(d)) continue;
-      // `priced` is the unit count, not `sales`. Dollars can only come from
-      // rows that carry a price, so counting units off the same population
-      // keeps the two components measuring the same sales — otherwise a drift
-      // in how many listings are best-offer (price withheld) would show up as
-      // a market move that never happened.
-      map.set(d, {
-        dollars: r.total_cents || 0,
-        units: r.priced || 0,
-        sales: r.sales || 0,
-      });
-      if (d > maxDay) maxDay = d;
-    }
-    if (!Number.isFinite(maxDay)) return res.json({ available: false, days, reason: 'no data in range' });
-
-    const payload = _buildIndexPayload(map, maxDay, days, MARKET_MIN_SALES);
+    const payload = _buildRepeatSalesPayload(list, maxDay, days, { truncated: list.length >= RSI_ROW_CAP });
     if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
     res.json(payload);
   } catch (err) {
@@ -3002,59 +3033,39 @@ app.get('/api/player-index', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, player, reason: 'no dataset' });
 
-  const cacheKey = `playerindex:v1:${days}:${player.toLowerCase()}`;
+  const cacheKey = `playerindex:v2:${days}:${player.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
   try {
-    // Anchored to this player's newest sale, not to today and not to the
-    // market's newest day — a player who stopped selling three weeks ago
-    // should say so, not be scored against windows that are empty for them.
+    // Anchored to this player's newest sale rather than the market's, so a
+    // player who stopped selling three weeks ago says so instead of being
+    // scored against windows that are empty for them.
     const newest = await db.prepare(
-      'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ?'
+      'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
     ).bind(player, NFLDB_MIN_CONFIDENCE).first();
     if (!newest || !newest.d) {
       return res.json({ available: false, days, player, reason: 'no sales for this player' });
     }
 
-    const need = days * 3 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
-    const since = _mkIso(_mkDay(newest.d) - need);
+    const maxDay = _mkDay(newest.d);
+    const need = days * 2 + RSI_VALUE_WINDOW + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+    const since = _mkIso(maxDay - need);
 
-    // Same three numbers per day the `daily` table holds for the whole market,
-    // rolled up here instead. `priced` and `total_cents` must come from the
-    // same rows for the two score components to measure the same sales.
     const rows = await db.prepare(
-      `SELECT sold_date,
-              COUNT(*) AS sales,
-              SUM(CASE WHEN price_cents IS NOT NULL THEN 1 ELSE 0 END) AS priced,
-              SUM(COALESCE(price_cents, 0)) AS total_cents
+      `SELECT sold_date, year, set_name, player, parallel, grader, grade, price_cents
          FROM sales
-        WHERE player = ? AND confidence >= ? AND sold_date >= ?
-        GROUP BY sold_date
-        ORDER BY sold_date`
+        WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL AND sold_date >= ?
+        LIMIT ${RSI_ROW_CAP}`
     ).bind(player, NFLDB_MIN_CONFIDENCE, since).all();
 
     const list = (rows && rows.results) || [];
-    if (list.length === 0) {
-      return res.json({ available: false, days, player, reason: 'no sales for this player' });
-    }
+    if (list.length === 0) return res.json({ available: false, days, player, reason: 'no sales for this player' });
 
-    const map = new Map();
-    let maxDay = -Infinity;
-    for (const r of list) {
-      const d = _mkDay(r.sold_date);
-      if (!Number.isFinite(d)) continue;
-      map.set(d, { dollars: r.total_cents || 0, units: r.priced || 0, sales: r.sales || 0 });
-      if (d > maxDay) maxDay = d;
-    }
-    if (!Number.isFinite(maxDay)) {
-      return res.json({ available: false, days, player, reason: 'no sales for this player' });
-    }
-
-    const payload = _buildIndexPayload(map, maxDay, days, PLAYER_MIN_SALES);
-    payload.player = player;
-    payload.scope = 'player';
-    if (payload.available) cachePut(cacheKey, payload, PLAYER_INDEX_TTL);
+    // Identical maths to the market index on purpose: a player's number is only
+    // worth showing next to the market's if the two are the same measurement.
+    const payload = _buildRepeatSalesPayload(list, maxDay, days, { player });
+    if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
     res.json(payload);
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);

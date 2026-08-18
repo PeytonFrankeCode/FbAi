@@ -3817,11 +3817,14 @@ function setMarketPeriod(days) {
 // Score -> plain-language read. The bands are deliberately wide: this is built
 // on a few weeks of sales, and narrow bands would imply a precision the data
 // can't support.
+// Bands are much tighter than the old volume score used. Prices move far less
+// than turnover does: a 10% shift in what cards actually sell for is a big
+// move, where a 10% shift in weekly volume is a quiet week.
 function _mkVerdict(score) {
-  if (score >= 130) return { label: 'Running hot', cls: 'hot' };
-  if (score >= 110) return { label: 'Heating up', cls: 'warm' };
-  if (score > 90) return { label: 'Steady', cls: 'flat' };
-  if (score > 70) return { label: 'Cooling off', cls: 'cool' };
+  if (score >= 112) return { label: 'Running hot', cls: 'hot' };
+  if (score >= 104) return { label: 'Heating up', cls: 'warm' };
+  if (score > 96) return { label: 'Steady', cls: 'flat' };
+  if (score > 88) return { label: 'Cooling off', cls: 'cool' };
   return { label: 'Cold', cls: 'cold' };
 }
 
@@ -3869,14 +3872,16 @@ async function loadMarketIndex() {
     // Say which of the two reasons it is. "Not enough sales yet" is a real
     // state that resolves itself as the dataset grows, and reads very
     // differently from the feature being broken.
-    const thin = data && data.reason === 'not enough sales yet';
+    const thin = data && data.reason === 'not enough repeat sales yet';
     const noPlayer = data && data.reason === 'no sales for this player';
     const who = _mkPlayer ? escHtml(_mkPlayer) : 'the market';
     let title, text;
     if (thin) {
-      title = 'Not enough sales yet';
-      text = `The index needs at least ${data.minSales} priced sales in each ${_mkDays}-day period before it means anything`
-           + `${_mkPlayer ? `, and ${who} hasn't had that many` : ''}. Try a longer period, or check back as more sales are collected.`;
+      title = 'Not enough repeat sales yet';
+      text = `The index compares each card against its own earlier sales, so it needs at least ${data.minCards} cards that sold in both halves of the period`
+           + `${_mkPlayer ? `, and ${who} hasn't had that many` : ''}.`
+           + `${data.matchedCards != null ? ` Right now there ${data.matchedCards === 1 ? 'is' : 'are'} ${data.matchedCards}.` : ''}`
+           + ` Try a longer period, or check back as more sales are collected.`;
     } else if (noPlayer) {
       title = 'No sales on record';
       text = `We don't hold any priced sales for ${who} yet.`;
@@ -3892,10 +3897,8 @@ async function loadMarketIndex() {
   }
 
   const v = _mkVerdict(data.score);
-  const c = data.components || {};
-  const dollars = c.dollars || {};
-  const units = c.units || {};
-  const gaps = (data.current && data.current.emptyDays) || 0;
+  const who = _mkPlayer ? escHtml(_mkPlayer) : 'the market';
+  const up = (data.changePct || 0) >= 0;
 
   body.innerHTML = `
     <div class="market-score-card ${v.cls}">
@@ -3903,39 +3906,27 @@ async function loadMarketIndex() {
         <div class="market-score-num">${data.score}</div>
         <div class="market-score-side">
           <div class="market-verdict">${v.label}</div>
-          <div class="market-score-note">vs the previous ${data.days} days${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
+          <div class="market-score-note">${up ? '+' : ''}${data.changePct}% over ${data.days} days${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
         </div>
       </div>
-      <p class="market-score-explain">100 means ${_mkPlayer ? escHtml(_mkPlayer) + "'s market" : 'the market'} matched its own previous ${data.days} days. Higher means more money and more cards moving than the period before.</p>
+      <p class="market-score-explain">100 means ${who} is flat. This tracks what cards are <strong>worth</strong>, not how many changed hands &mdash; each card is compared only against its own earlier sales.</p>
     </div>
 
     <div class="market-components">
       <div class="market-comp">
-        <div class="market-comp-head">
-          <span class="market-comp-label">Money sold</span>
-          <span class="market-comp-weight">${Math.round((data.weights && data.weights.dollars || 0) * 100)}% of score</span>
-        </div>
-        <div class="market-comp-value">${_mkMoney(dollars.current)}</div>
-        <div class="market-comp-change ${(dollars.changePct || 0) >= 0 ? 'up' : 'down'}">${_mkPct(dollars.changePct)}</div>
-        <div class="market-comp-prev">was ${_mkMoney(dollars.baseline)}</div>
+        <div class="market-comp-head"><span class="market-comp-label">Price change</span></div>
+        <div class="market-comp-value ${up ? 'up' : 'down'}">${up ? '+' : ''}${data.changePct}%</div>
+        <div class="market-comp-prev">median across matched cards</div>
       </div>
       <div class="market-comp">
-        <div class="market-comp-head">
-          <span class="market-comp-label">Cards sold</span>
-          <span class="market-comp-weight">${Math.round((data.weights && data.weights.units || 0) * 100)}% of score</span>
-        </div>
-        <div class="market-comp-value">${(units.current || 0).toLocaleString('en-US')}</div>
-        <div class="market-comp-change ${(units.changePct || 0) >= 0 ? 'up' : 'down'}">${_mkPct(units.changePct)}</div>
-        <div class="market-comp-prev">was ${(units.baseline || 0).toLocaleString('en-US')}</div>
+        <div class="market-comp-head"><span class="market-comp-label">Cards compared</span></div>
+        <div class="market-comp-value">${(data.matchedCards || 0).toLocaleString('en-US')}</div>
+        <div class="market-comp-prev">sold in both halves</div>
       </div>
       <div class="market-comp">
-        <div class="market-comp-head">
-          <span class="market-comp-label">Average sale</span>
-          <span class="market-comp-weight">not scored</span>
-        </div>
-        <div class="market-comp-value">${data.avgPrice && data.avgPrice.current != null ? _mkMoney(data.avgPrice.current) : '—'}</div>
-        <div class="market-comp-change neutral">${data.avgPrice && data.avgPrice.baseline != null ? `was ${_mkMoney(data.avgPrice.baseline)}` : ''}</div>
-        <div class="market-comp-prev">shown for context</div>
+        <div class="market-comp-head"><span class="market-comp-label">Cards tracked</span></div>
+        <div class="market-comp-value">${(data.trackedCards || 0).toLocaleString('en-US')}</div>
+        <div class="market-comp-prev">seen in the window</div>
       </div>
     </div>
 
@@ -3946,13 +3937,14 @@ async function loadMarketIndex() {
       <div class="market-chart-wrap"><canvas id="market-chart" height="150"></canvas></div>
       <p id="market-chart-empty" class="market-chart-empty hidden"></p>
       <div id="market-point" class="chart-readout hidden"></div>
-      <p class="chart-readout-hint">Tap any point to see that day's score.</p>
+      <p class="chart-readout-hint">Tap any point to see that day's level.</p>
     </div>
 
     <div class="market-notes">
-      <p><strong>What this covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + ' cards' : 'Football cards'} sold on eBay that we track and could price. ${data.coverage != null ? `${data.coverage}% of tracked sales carried a price this period — the rest were best-offer, where eBay publishes the asking price rather than what was actually paid, so they're counted nowhere in the score.` : ''}</p>
-      <p><strong>How it's built.</strong> ${Math.round((data.weights && data.weights.dollars || 0) * 100)}% money sold, ${Math.round((data.weights && data.weights.units || 0) * 100)}% cards sold, each measured against the ${data.days} days before. Money is weighted higher because it's what most people mean by "the market", but a single huge sale can swing it — card count is the steadier signal, so it holds the score down to earth.</p>
-      ${gaps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${gaps} day${gaps === 1 ? '' : 's'} in this period ${gaps === 1 ? 'has' : 'have'} no sales recorded. If that's a collection gap rather than a quiet market, the score is understated.</p>` : ''}
+      <p><strong>How it works.</strong> We take every card that sold both recently and earlier in the period, work out how much its price changed, and use the <strong>middle</strong> of those changes. A card only ever competes with itself, so the number cannot be moved by how busy eBay was, by which cards happened to sell, or by one spectacular sale.</p>
+      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + ' cards' : 'Football cards'} we track and could price, matched on year, set, parallel and grade. ${data.matchedCards} card${data.matchedCards === 1 ? '' : 's'} had sales on both sides of the comparison${data.trackedCards ? ` out of ${data.trackedCards.toLocaleString('en-US')} seen in the window` : ''}. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
+      ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had too few matched cards to measure, so the line is held flat there. It is smoother than the market actually was.</p>` : ''}
+      ${data.truncated ? '<p class="market-warn"><strong>Partial sample.</strong> This period holds more sales than one pass reads, so the index is built from a subset.</p>' : ''}
       ${data.dataLagDays > 1 ? `<p class="market-warn"><strong>Data is ${data.dataLagDays} days behind.</strong> The newest sales we hold are from ${_mkDateLabel(data.through)}, so this reflects the market up to then.</p>` : ''}
     </div>
   `;
