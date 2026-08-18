@@ -2988,9 +2988,14 @@ app.get('/api/debug/index-health', async (req, res) => {
     const periods = {};
     for (const days of MARKET_PERIODS) {
       const g = _rsiGeometry(days);
-      const recentFrom = _mkIso(_mkDay(throughIso) - g.bucketDays);
-      const priorTo    = recentFrom;
-      const priorFrom  = _mkIso(_mkDay(throughIso) - g.bucketDays * (g.points + 1));
+      // Exactly the two buckets the headline compares: the newest, and the one
+      // `points` steps back. An earlier version measured the whole span behind
+      // the recent bucket, which reported thousands of matched cards for a
+      // period the index could not score at all.
+      const t = _mkDay(throughIso);
+      const recentFrom = _mkIso(t - g.bucketDays);
+      const priorTo    = _mkIso(t - g.bucketDays * g.points);
+      const priorFrom  = _mkIso(t - g.bucketDays * (g.points + 1));
       const row = await db.prepare(
         `SELECT COUNT(*) AS matched FROM (
            SELECT year, set_name, player, parallel, grader, grade FROM sales
@@ -3070,6 +3075,28 @@ app.get('/api/market-index', async (req, res) => {
     if (!newest || !newest.d) return res.json({ available: false, days, reason: 'no data in range' });
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+
+    // "We haven't been collecting long enough" is not the same as "cards don't
+    // resell", and only one of them resolves on its own. Check it explicitly so
+    // the page can say which, rather than blaming the data density.
+    const oldest = await db.prepare(
+      'SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    // The gate is where the oldest bucket STARTS, not where it ends. A period
+    // whose last bucket is only partly covered still scores fine off the sales
+    // it does have; one whose last bucket is entirely before the first sale we
+    // hold has nothing to compare against and would report zero matched cards
+    // as if cards never resold.
+    const { bucketDays, points, spanDays } = _rsiGeometry(days);
+    const haveDays = oldest && oldest.d ? _mkDay(throughIso) - _mkDay(oldest.d) + 1 : 0;
+    if (haveDays < points * bucketDays) {
+      return res.json({
+        available: false, days, reason: 'not enough history yet',
+        daysOfHistory: haveDays, daysNeeded: points * bucketDays, fullSpanDays: spanDays,
+        through: throughIso, method: 'repeat-sales',
+      });
+    }
+
     const rows = await _rsiQuery(db, throughIso, days).all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });

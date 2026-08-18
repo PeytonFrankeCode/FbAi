@@ -3873,10 +3873,16 @@ async function loadMarketIndex() {
     // state that resolves itself as the dataset grows, and reads very
     // differently from the feature being broken.
     const thin = data && data.reason === 'not enough repeat sales yet';
+    const shortHistory = data && data.reason === 'not enough history yet';
     const noPlayer = data && data.reason === 'no sales for this player';
     const who = _mkPlayer ? escHtml(_mkPlayer) : 'the market';
     let title, text;
-    if (thin) {
+    if (shortHistory) {
+      // Distinct from thin repeat sales, and the only one of the two that
+      // fixes itself: it just needs more days in the dataset.
+      title = 'Not enough history yet';
+      text = `This view compares ${_mkDays} days against the ${_mkDays} before them, which needs about ${data.daysNeeded} days of sales on record. We have ${data.daysOfHistory}. Try a shorter period &mdash; it will unlock here as the dataset grows.`;
+    } else if (thin) {
       title = 'Not enough repeat sales yet';
       text = `The index compares each card against its own earlier sales, so it needs cards that sold twice &mdash; once recently and once earlier`
            + `${_mkPlayer ? `, and ${who} hasn't had enough of those` : ''}.`
