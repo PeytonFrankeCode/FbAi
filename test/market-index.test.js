@@ -138,6 +138,13 @@ const check = (label, ok, detail) => {
         dbl.body.available && dbl.body.score >= 180,
         dbl.body.available ? `score=${dbl.body.score}` : dbl.body.reason);
 
+  // A period the dataset cannot cover must say so, and must not be confused
+  // with cards failing to resell — only one of the two resolves on its own.
+  const long = await call('/api/market-index?days=90');
+  check('long period on short history names the right reason',
+        long.body.available || long.body.reason === 'not enough history yet',
+        long.body.available ? 'available (fixture covers it)' : `reason="${long.body.reason}"`);
+
   const player = await call('/api/player-index?player=Player%201&days=30');
   check('player-index runs without throwing', player.body.available !== undefined,
         player.body.available ? `score=${player.body.score}` : `reason=${player.body.reason}`);
