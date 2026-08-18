@@ -32,6 +32,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Runs the index endpoints against a real in-memory SQLite dataset. The
+      # index once shipped with a helper deleted out from under it — a syntax
+      # check passes on a missing global, so the code path has to be executed.
+      - name: Test
+        run: npm test
+
       - name: Build SEO landing pages
         run: npm run build:pages
 
