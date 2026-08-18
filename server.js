@@ -113,12 +113,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
       const username = session.metadata?.username;
       if (!username) break;
 
-      if (session.metadata?.type === 'extra_slot') {
-        // One-time purchase for extra promote slot
-        if (!subs[username]) subs[username] = {};
-        subs[username].extraPromoteSlots = (subs[username].extraPromoteSlots || 0) + 1;
-        subs[username].lastPayment = { type: 'extra_slot', amount: 299, date: new Date().toISOString(), sessionId: session.id };
-      } else if (session.subscription) {
+      if (session.subscription) {
         // Pro or Pro+ subscription started
         if (!subs[username]) subs[username] = {};
         subs[username].plan = session.metadata?.plan || 'pro';
@@ -5043,7 +5038,7 @@ app.put('/api/auth/email', async (req, res) => {
 
 // Per-user data sync — single JSON blob per user containing the things that
 // used to live in localStorage only (collection, watchlist, completion,
-// seller listings, promoted cards). Client pulls on login and pushes
+// seller listings). Client pulls on login and pushes
 // (debounced) on every change so the account is portable across devices.
 const USER_DATA_MAX_BYTES = 1024 * 1024; // 1MB — generous; rejects runaway payloads.
 
@@ -5080,7 +5075,6 @@ async function collectAccountData(username) {
       .filter(c => String(c.author || '').toLowerCase() === key)
       .map(c => ({ ...c, postId: p.id }))),
     directMessages: myConvos,
-    promotedCards: loadGlobalPromotedIndex()[key] || null,
     booth: loadGlobalFloorIndex()[key] || null,
     feedback: loadData('feedback', FEEDBACK_FILE, [])
       .filter(f => String(f.author || f.username || '').toLowerCase() === key),
@@ -5182,10 +5176,9 @@ app.post('/api/account/delete', async (req, res) => {
     removed.push(`${alertsBefore - alertData.alerts.length} card alerts`);
 
     // 5. Public indexes this user appears in.
-    updateGlobalPromotedIndex(key, []);
     const floor = loadGlobalFloorIndex();
     if (floor[key]) { delete floor[key]; saveData('floorIndex', FLOOR_INDEX_FILE, floor); }
-    removed.push('promoted cards and show booth');
+    removed.push('show booth');
 
     // 6. Subscription record. Stripe keeps its own billing records, which we
     //    cannot and should not delete — they are required for tax and
@@ -5240,11 +5233,6 @@ app.put('/api/user/data', async (req, res) => {
   }
   try {
     await saveUserData(username, data);
-    // Mirror this user's promoted cards into the global index so the Browse
-    // Cards page and search injection can show cards from everyone — free for all.
-    const promos = Array.isArray(data.cardHuddlePromotedCards)
-      ? data.cardHuddlePromotedCards : [];
-    updateGlobalPromotedIndex(username, promos);
     // Mirror this user's booth (character + showcase) into the global floor
     // index so other collectors can visit it on The Floor.
     updateGlobalFloorIndex(username, data);
@@ -5316,152 +5304,12 @@ app.delete('/api/inventory/photo/:id', async (req, res) => {
   }
 });
 
-// ---- Global Promoted Cards Index ----
-// Single KV-backed map { username: [card, ...] }. Read by /api/promoted-cards/all
-// and updated whenever a user PUTs their data blob. Stored under the existing
-// loadData/saveData pipeline so it persists on Cloudflare KV the same way
-// subscriptions/users/etc. do.
-const PROMOTED_INDEX_FILE = path.join(APP_ROOT, 'data', 'promoted-index.json');
-
-function loadGlobalPromotedIndex() {
-  return loadData('promotedIndex', PROMOTED_INDEX_FILE, {});
-}
-
-function updateGlobalPromotedIndex(username, cards) {
-  if (!username) return;
-  const key = String(username).toLowerCase();
-  const index = loadGlobalPromotedIndex();
-  if (!Array.isArray(cards) || cards.length === 0) {
-    if (index[key]) {
-      delete index[key];
-      saveData('promotedIndex', PROMOTED_INDEX_FILE, index);
-    }
-    return;
-  }
-  // Strip any local-only fields so the public feed never leaks raw IDs etc.
-  index[key] = cards.map(c => ({
-    id: String(c.id || ''),
-    title: String(c.title || ''),
-    itemUrl: String(c.itemUrl || ''),
-    price: parseFloat(c.price) || 0,
-    imageUrl: String(c.imageUrl || ''),
-    condition: String(c.condition || 'Used'),
-    promotedBy: key,
-    createdAt: c.createdAt || new Date().toISOString(),
-  })).filter(c => c.title && c.itemUrl);
-  saveData('promotedIndex', PROMOTED_INDEX_FILE, index);
-}
-
-// ---- Demo seed for Browse Cards ----
-// Originally topped the global promoted feed up with curated for-sale listings
-// pulled live from eBay, so a first-time visitor never met an empty Browse
-// page.
-//
-// OFF. The filler ran to 24 listings against a feed that only tops up below
-// 12, so a seller who promoted a card couldn't find it among the demos — and
-// the search injection shuffles the feed and places one card per 10 results,
-// which made a single real listing effectively invisible. A seller not seeing
-// their own listing is worse than an empty page, and the empty state already
-// explains itself and links to the form.
-//
-// The generator below is left intact: flip this back to true to restore it.
-const PROMOTED_DEMO_ENABLED = false;
-const PROMOTED_DEMO_FILE = path.join(APP_ROOT, 'data', 'promoted-demo.json');
-const PROMOTED_DEMO_TTL_MS = 12 * 60 * 60 * 1000;   // 12h
-const PROMOTED_DEMO_MIN_FEED = 12;                  // top up below this size
-const PROMOTED_DEMO_QUERIES = [
-  'Patrick Mahomes Prizm',
-  'Caleb Williams Prizm Rookie',
-  'Jayden Daniels Prizm Rookie',
-  'Joe Burrow Prizm',
-  'Josh Allen Optic',
-  'Bijan Robinson Mosaic',
-  'Marvin Harrison Jr Prizm Rookie',
-  'CJ Stroud Prizm Rookie',
-  'Justin Jefferson Prizm',
-  'Lamar Jackson Select',
-  'Drake Maye Prizm Rookie',
-  'Brock Bowers Prizm Rookie',
-];
-let _demoPromotedInFlight = null;
-
-async function getDemoPromotedCards() {
-  // KV-cached: return immediately while fresh.
-  const cached = loadData('promotedDemo', PROMOTED_DEMO_FILE, null);
-  const fresh = cached && cached.cachedAt && (Date.now() - cached.cachedAt) < PROMOTED_DEMO_TTL_MS;
-  if (fresh && Array.isArray(cached.cards) && cached.cards.length > 0) {
-    return cached.cards;
-  }
-  // No upstream available — return whatever we last had (possibly nothing).
-  if (USE_MOCK_FORSALE || !EBAY_APP_ID) {
-    return (cached && Array.isArray(cached.cards)) ? cached.cards : [];
-  }
-  // Coalesce concurrent first-request refreshes so we don't fire the eBay
-  // Browse API a dozen times in parallel from cold start.
-  if (_demoPromotedInFlight) return _demoPromotedInFlight;
-
-  _demoPromotedInFlight = (async () => {
-    const settled = await Promise.allSettled(
-      PROMOTED_DEMO_QUERIES.map(q => fetchViaBrowseAPI(q, 2, 'promoted-demo'))
-    );
-    const out = [];
-    settled.forEach((s, qi) => {
-      if (s.status !== 'fulfilled') return;
-      const results = (s.value && s.value.results) || [];
-      for (const r of results.slice(0, 2)) {
-        if (!r.title || !r.itemUrl || !r.imageUrl) continue;
-        out.push({
-          id: 'demo-' + (r.itemId || `${qi}-${out.length}`),
-          title: r.title,
-          itemUrl: r.itemUrl,
-          price: parseFloat(r.price) || 0,
-          imageUrl: r.imageUrl,
-          condition: r.condition || 'Used',
-          promotedBy: 'demo',
-          isDemo: true,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    });
-    if (out.length > 0) {
-      saveData('promotedDemo', PROMOTED_DEMO_FILE, { cachedAt: Date.now(), cards: out });
-      return out;
-    }
-    return (cached && Array.isArray(cached.cards)) ? cached.cards : [];
-  })().finally(() => { _demoPromotedInFlight = null; });
-
-  return _demoPromotedInFlight;
-}
-
-// Public endpoint — anyone can fetch the global promoted card feed.
-app.get('/api/promoted-cards/all', async (req, res) => {
-  const index = loadGlobalPromotedIndex();
-  const real = [];
-  for (const [user, cards] of Object.entries(index)) {
-    if (!Array.isArray(cards)) continue;
-    for (const c of cards) real.push({ ...c, promotedBy: user });
-  }
-  real.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-
-  let demo = [];
-  if (PROMOTED_DEMO_ENABLED && real.length < PROMOTED_DEMO_MIN_FEED) {
-    try { demo = await getDemoPromotedCards(); }
-    catch (err) { console.error('[promoted-cards] demo top-up failed:', err && err.message); }
-  }
-  // De-dupe by itemUrl in case a real seller already listed something we pulled
-  // for the demo seed — real listings always win.
-  const seen = new Set(real.map(c => c.itemUrl));
-  const filler = demo.filter(c => !seen.has(c.itemUrl));
-  const all = real.concat(filler);
-  res.json({ cards: all, total: all.length, real: real.length, demo: filler.length });
-});
-
 // ---- Global Floor (Showcase booths) Index ----
 // Mirrors each user's public booth — their collector character plus the
 // showcase cards they've put out — into a single KV map { username: booth }
 // so The Floor can render everyone's table. Updated whenever a user PUTs
 // their data blob; read by GET /api/floor/booths. Same loadData/saveData
-// (Cloudflare KV) pipeline as the promoted index.
+// (Cloudflare KV) pipeline as the other global indexes.
 const FLOOR_INDEX_FILE = path.join(APP_ROOT, 'data', 'floor-index.json');
 const FLOOR_MAX_BOOTHS = 60;       // bound the public list (and the KV blob)
 const FLOOR_MAX_CARDS = 24;        // cards shown per booth
@@ -5711,7 +5559,7 @@ app.get('/api/dm/unread', (req, res) => {
 // A shared feed under Browse Cards where any signed-in member can post a
 // message, optional card photo, and optional price/link. Stored as a single
 // global array under the 'community' key via the same loadData/saveData
-// pipeline as the promoted index, so it persists on Cloudflare KV.
+// pipeline as the other global indexes, so it persists on Cloudflare KV.
 const COMMUNITY_FILE = path.join(APP_ROOT, 'data', 'community.json');
 const COMMUNITY_MAX_POSTS = 300;          // keep the feed (and the KV blob) bounded
 const COMMUNITY_MAX_MESSAGE = 1000;       // chars
@@ -6423,53 +6271,6 @@ app.post('/api/bulk-price', async (req, res) => {
   res.json({ results });
 });
 
-// Create checkout session for extra promote slot
-app.post('/api/stripe/buy-slot', async (req, res) => {
-  if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
-  if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
-
-  const { username } = req.body;
-  if (!username) return res.status(400).json({ error: 'Username required' });
-
-  const userSub = getEffectiveSubscription(username);
-  if (!userSub || userSub.status !== 'active') {
-    return res.status(403).json({ error: 'Pro subscription required' });
-  }
-
-  const currentExtra = userSub.extraPromoteSlots || 0;
-  if (currentExtra >= 10) {
-    return res.status(400).json({ error: 'Maximum extra slots reached (10)' });
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product: STRIPE_PRODUCT_SLOT,
-          unit_amount: 299
-        },
-        quantity: 1
-      }],
-      metadata: { username: username.toLowerCase(), type: 'extra_slot' },
-      success_url: `${siteOrigin(req)}/?payment=success&type=slot`,
-      cancel_url: `${siteOrigin(req)}/?payment=cancelled`
-    });
-
-    res.json({ url: session.url, sessionId: session.id });
-  } catch (err) {
-    console.error('Stripe slot purchase error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Get subscription status for a user. Also pulls live billing details from
-// Stripe (next-bill date, amount, cancel-at-period-end) when the user has a
-// real Stripe-backed subscription, so Settings can render a "Next bill" line
-// without needing the Customer Portal round-trip. Falls back gracefully if
-// Stripe is unreachable or the subscription is legacy/permanent.
 app.get('/api/stripe/subscription', async (req, res) => {
   const username = req.query.username;
   if (!username) return res.status(400).json({ error: 'Username required' });
