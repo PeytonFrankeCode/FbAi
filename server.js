@@ -2746,6 +2746,15 @@ app.get('/api/variants', async (req, res) => {
 // cheap no matter how many millions of sales sit behind it.
 const MARKET_PERIODS = [7, 30, 90];
 const MARKET_TTL = 3600; // 1h — identical for every visitor
+// The most recent day in the table is usually still being collected, and a
+// half-collected day reads as a crash. Anchor one day back so every window is
+// made of complete days.
+const MARKET_EXCLUDE_TRAILING_DAYS = 1;
+
+// Whole days since epoch — integer day arithmetic, no timezone drift.
+function _mkDay(iso) { return Math.floor(Date.parse(String(iso).slice(0, 10) + 'T00:00:00Z') / 86400000); }
+function _mkIso(day) { return new Date(day * 86400000).toISOString().slice(0, 10); }
+
 // ---- Repeat-sales price index -----------------------------------------------
 // The old index scored total dollars and total units sold against the previous
 // window. That measures eBay activity, not what cards are worth: double the
