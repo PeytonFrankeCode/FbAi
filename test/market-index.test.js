@@ -8,7 +8,17 @@
 //
 // So this stubs the D1 binding with a real in-memory SQLite database and calls
 // the endpoints for real. Anything undefined on those paths now throws here.
-const { DatabaseSync } = require('node:sqlite');
+let DatabaseSync;
+try {
+  ({ DatabaseSync } = require('node:sqlite'));
+} catch (err) {
+  // Fail loudly rather than skipping. A test that quietly no-ops on an older
+  // runtime is worse than no test — it reports success over untested code,
+  // which is the exact failure mode this file exists to prevent.
+  console.error('FAIL  node:sqlite unavailable on ' + process.version +
+                ' — this test needs Node 22.5+. Update the runtime, do not skip it.');
+  process.exit(1);
+}
 const path = require('path');
 
 const db = new DatabaseSync(':memory:');
