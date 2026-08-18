@@ -1101,7 +1101,6 @@ function applySortToResults(sortType) {
       grid.appendChild(card);
     });
   }
-  injectPromotedCards(grid);
 
   // For Sale keeps its "Load more" pager after a re-sort, so paging still works
   // once the user has changed the order. (Sorting used to wipe the button.)
@@ -1815,7 +1814,6 @@ async function fetchDirectSearch(query) {
           addForsaleLoadMore(grid);
         }
       }
-      injectPromotedCards(grid);
       if (isSold) { updatePriceChart(results); buildGradeFilter(); }
     }
 
@@ -1881,7 +1879,7 @@ async function loadMoreForsaleResults(grid) {
         return;
       }
       const wrap = grid.querySelector('.load-more-wrap');
-      let baseIdx = grid.querySelectorAll('.card:not(.promoted-card)').length;
+      let baseIdx = grid.querySelectorAll('.card').length;
       items.forEach(item => {
         const card = buildCard(item);
         card.style.animationDelay = `${baseIdx * 0.05}s`;
@@ -2196,7 +2194,6 @@ async function performSearch(query, opts = {}) {
         };
         if (_forsalePaging.hasMore) addForsaleLoadMore(grid);
       }
-      injectPromotedCards(grid);
       if (isSold) {
         updatePriceChart(results);
         loadGradePanel(query);
@@ -2626,7 +2623,7 @@ async function fetchMoreFromServer(grid) {
 
 function loadMoreCards(grid) {
   let remaining = 20;
-  let cardIndex = grid.querySelectorAll('.card:not(.promoted-card)').length;
+  let cardIndex = grid.querySelectorAll('.card').length;
 
   for (const group of _gradeGroups) {
     if (remaining <= 0) break;
@@ -3400,11 +3397,10 @@ updateAuthButton();
 // it — much higher conversion than a generic "upgrade now".
 
 // Everything is free and uncapped now. Kept only so the (always-passing) limit
-// helpers still have values to reference. Promoted listings are capped at 5.
+// helpers still have values to reference.
 const FREE_LIMITS = {
   collection: Infinity,
   watchlist: Infinity,
-  promotedSlots: 5,
   dailyGrading: Infinity,
   dailyAutoPricer: Infinity,
 };
@@ -3630,7 +3626,7 @@ function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
   // any deep links / older code paths still route somewhere sensible.
   // grading -> Search subtab, tracked -> My Cards subtab.
-  // Tools (Auto-Pricer / Bulk Pricer / Promote Cards) is its own 'proplus' tab.
+  // Tools (Auto-Pricer / Bulk Pricer) is its own 'proplus' tab.
   let searchSub = null;
   let collSub = null;
   let proplusSub = null;
@@ -3648,7 +3644,7 @@ function switchView(view) {
   if (activeTab) activeTab.classList.add('active');
 
   const proplusView = document.getElementById('proplus-view');
-  const browseView = document.getElementById('browse-view');
+  const communityView = document.getElementById('community-view');
   const scannerView = document.getElementById('scanner-view');
   const floorView = document.getElementById('floor-view');
   const inventoryView = document.getElementById('inventory-view');
@@ -3662,7 +3658,7 @@ function switchView(view) {
   gradingView.classList.add('hidden');
   if (rainbowPage) rainbowPage.classList.add('hidden');
   if (proplusView) proplusView.classList.add('hidden');
-  if (browseView) browseView.classList.add('hidden');
+  if (communityView) communityView.classList.add('hidden');
   if (scannerView) scannerView.classList.add('hidden');
   if (floorView) floorView.classList.add('hidden');
   if (inventoryView) inventoryView.classList.add('hidden');
@@ -3676,8 +3672,8 @@ function switchView(view) {
     if (!checklistData) loadChecklistProducts();
   } else if (view === 'rainbow') {
     if (rainbowPage) { rainbowPage.classList.remove('hidden'); initRainbowPage(); }
-  } else if (view === 'browse') {
-    if (browseView) { browseView.classList.remove('hidden'); initBrowseView(); }
+  } else if (view === 'community') {
+    if (communityView) { communityView.classList.remove('hidden'); initCommunityView(); }
   } else if (view === 'seller') {
     sellerView.classList.remove('hidden');
     initShowcase();
@@ -4964,7 +4960,6 @@ function initProPlusView() {
 function switchProPlusTab(tab) {
   document.querySelectorAll('.proplus-tab').forEach(t => t.classList.toggle('active', t.dataset.pptab === tab));
   document.querySelectorAll('.pptab-panel').forEach(p => p.classList.toggle('hidden', p.id !== `pptab-${tab}`));
-  if (tab === 'promote') initPromoteTab();
 }
 
 async function runFlipFinder() {
@@ -7029,7 +7024,6 @@ const USER_SYNC_KEYS = [
   'cardHuddleWatchlist',
   'cardHuddleCompletion',
   'cardHuddleSellerListings',
-  'cardHuddlePromotedCards',
   'cardHuddleShowcase',
   'cardHuddleShowcaseSettings',
   'cardHuddleCharacter',
@@ -7038,13 +7032,13 @@ const USER_SYNC_KEYS = [
   'cardHuddlePortfolioHistory',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
-// `var`, not `let`, for the same reason _globalPromotedCache uses it:
+// `var`, not `let`, deliberately:
 // enableUserSync() is called at the top level thousands of lines ABOVE these
 // declarations. With `let` that call hit the temporal dead zone and threw
 // `Cannot access '_userSyncEnabled' before initialization` on every page load
 // for a signed-in user — killing the pull, leaving _userSyncEnabled false
 // forever, and making every schedulePushUserData() a no-op. Nothing synced:
-// not promoted cards, not inventory, not watchlists. Hoisted declarations
+// not inventory, not watchlists. Hoisted declarations
 // can't land in a dead zone.
 var _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
 var _syncPushOk = null;           // outcome of the last push, for callers that must know
@@ -7171,7 +7165,6 @@ function _userSyncRerender() {
   try { if (typeof renderPortfolio === 'function') renderPortfolio(); } catch (_) {}
   try { if (typeof renderWatchlist === 'function') renderWatchlist(); } catch (_) {}
   try { if (typeof renderMyListings === 'function') renderMyListings(); } catch (_) {}
-  try { if (typeof renderPromotedCards === 'function') renderPromotedCards(); } catch (_) {}
   try { if (typeof refreshRainbowPageFromSync === 'function') refreshRainbowPageFromSync(); } catch (_) {}
   try { if (typeof renderInventory === 'function') renderInventory(); } catch (_) {}
 }
@@ -9462,19 +9455,11 @@ function loadHotCold(days) {
 // ---- eBay Seller Section ----
 
 // Seller sub-tab switching
-// Legacy shim. The Sell tab is now the Showcase; the pricing/promote tools
-// moved to their own Tools (proplus) tab. Old sub-tab names are routed to
-// wherever those features live now so any remaining callers keep working.
-function switchSellerTab(tab) {
-  // Promote moved under Browse Cards; the Sell and Tools tabs are retired.
-  // Route the one destination that still exists, and let switchView send
-  // everything else to Search rather than a view with no navigation back.
-  if (tab === 'promote') {
-    switchView('browse');
-    switchBrowseTab('promote');
-    return;
-  }
-  switchView('seller'); // retired -> redirected to Search by switchView
+// Legacy shim. The Sell tab is retired; old callers are routed onward.
+function switchSellerTab() {
+  // Every destination this used to route to is retired; switchView sends
+  // 'seller' on to Search rather than a view with no navigation back.
+  switchView('seller');
 }
 
 // =====================================================================
@@ -10370,209 +10355,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (afInput) afInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchAutofillTitles(); });
 });
 
-// ---- Promoted Cards ----
-
-function getPromotedCards() {
-  try { return JSON.parse(localStorage.getItem('cardHuddlePromotedCards') || '[]'); }
-  catch { return []; }
-}
-
-// Promoted cards from every seller across The Card Huddle. Cached in memory
-// after the first GET so the Browse page and search injection can use it
-// synchronously. Falls back to the local user's cards when the global feed
-// hasn't loaded yet (first paint).
-// `var` (not `let`) so these are hoisted and can never land in a temporal
-// dead zone — any code path that reads them before this line just sees
-// `undefined`, which the Array.isArray() guards below handle gracefully.
-var _globalPromotedCache = null;
-var _globalPromotedLoading = null;
-
-function getGlobalPromotedCards() {
-  if (Array.isArray(_globalPromotedCache)) return _globalPromotedCache;
-  // Fire-and-forget warm-up so future calls have the global feed ready.
-  fetchGlobalPromotedCards().catch(() => {});
-  return getPromotedCards();
-}
-
-async function fetchGlobalPromotedCards(force) {
-  if (!force && Array.isArray(_globalPromotedCache)) return _globalPromotedCache;
-  if (_globalPromotedLoading) return _globalPromotedLoading;
-  _globalPromotedLoading = (async () => {
-    try {
-      const res = await fetch('/api/promoted-cards/all');
-      const data = await safeJson(res);
-      _globalPromotedCache = Array.isArray(data && data.cards) ? data.cards : [];
-    } catch (_) {
-      _globalPromotedCache = _globalPromotedCache || [];
-    } finally {
-      _globalPromotedLoading = null;
-    }
-    return _globalPromotedCache;
-  })();
-  return _globalPromotedLoading;
-}
-
-// Warm the cache once the page is ready so the first search shows promoted
-// cards from across the platform, not just this user's.
-fetchGlobalPromotedCards().catch(() => {});
-
-function savePromotedCards(cards) {
-  localStorage.setItem('cardHuddlePromotedCards', JSON.stringify(cards));
-  schedulePushUserData();
-}
-
-// Promoted cards are the one thing here that other people are meant to see, so
-// saving locally isn't finishing the job. Three things have to happen:
-//
-//   1. the server has to take the write (it builds the public feed from it),
-//   2. this tab's cached copy of that feed has to be refreshed, or the person
-//      who just added a card won't see it in search or Browse until a reload,
-//   3. if it can't be published, the user has to be told — silently keeping a
-//      card that nobody will ever see is the worst of the three outcomes.
-//
-// This is what was broken: the local list updated, so it looked like it worked.
-async function publishPromotedCards(cards) {
-  savePromotedCards(cards);
-  renderPromotedCards();
-
-  if (!getSessionToken()) {
-    // A local-only account. getCurrentUser() reads a different key than the
-    // session token, so someone can be "logged in" here and still have nothing
-    // to authenticate a push with.
-    if (typeof showPortfolioToast === 'function') {
-      showPortfolioToast('Saved on this device. Sign in to publish your promoted cards so other collectors see them.');
-    }
-    return false;
-  }
-
-  const ok = await flushPushUserData();
-  if (!ok) {
-    if (typeof showPortfolioToast === 'function') {
-      showPortfolioToast("Saved here, but we couldn't publish it just now. It'll go out next time your data syncs.");
-    }
-    return false;
-  }
-
-  // Re-read the authoritative feed rather than patching the cache by hand, so
-  // what we show is what everyone else will get.
-  await fetchGlobalPromotedCards(true).catch(() => {});
-  return true;
-}
-
-// Everyone gets 5 promoted-listing slots, free.
-function getPromoteSlotCount() {
-  return 5;
-}
-
-// Paid extra slots removed — inert.
-function handleBuyExtraSlot() {}
-
-// Shared "this is a Pro feature" gate panel. featureKey is passed to showUpgrade
-// as the modal reason.
-function _proGateHtml(title, desc) {
-  const safeTitle = escHtml(title);
-  return `
-    <div class="pro-gate-box">
-      <span class="pro-gate-badge">★ PRO</span>
-      <h3>${safeTitle} is a Pro feature</h3>
-      <p>${escHtml(desc)}</p>
-      <button class="pro-btn" onclick="showUpgrade('${safeTitle.replace(/'/g, '')} is a Pro feature.')">★ Go Pro — $4.99/mo</button>
-    </div>`;
-}
-
-function initPromoteTab() {
-  const gate = document.getElementById('promote-pro-gate');
-  const content = document.getElementById('promote-content');
-  // Promote Cards is free for everyone.
-  if (gate) gate.classList.add('hidden');
-  if (content) content.classList.remove('hidden');
-  populatePromoteAutofill();
-  renderPromotedCards();
-}
-
-// Populate the autofill dropdown with current seller listings
-function populatePromoteAutofill() {
-  const select = document.getElementById('promote-autofill-select');
-  if (!select) return;
-  const listings = getSellerListings();
-  select.innerHTML = '<option value="">-- Select a listing to autofill --</option>';
-  listings.forEach(l => {
-    const price = l.price ? ` - $${l.price.toFixed(2)}` : '';
-    const opt = document.createElement('option');
-    opt.value = l.id;
-    opt.textContent = l.title + price;
-    select.appendChild(opt);
-  });
-}
-
-// Autofill the promote form from a seller listing
-function autofillPromoteFromListing(listingId) {
-  if (!listingId) return;
-  const listing = getSellerListings().find(l => l.id === listingId);
-  if (!listing) return;
-
-  // Map seller condition values to promote condition values
-  const conditionMap = {
-    'ungraded-nm': 'Ungraded - Near Mint',
-    'ungraded-ex': 'Ungraded - Excellent',
-    'psa10': 'PSA 10',
-    'psa9': 'PSA 9',
-    'bgs10': 'BGS 10',
-    'bgs9.5': 'BGS 9.5',
-    'sgc10': 'SGC 10'
-  };
-
-  document.getElementById('promote-title').value = listing.title || '';
-  document.getElementById('promote-price').value = listing.price || '';
-  const mappedCondition = conditionMap[listing.condition] || 'Ungraded - Near Mint';
-  document.getElementById('promote-condition').value = mappedCondition;
-
-  // Reset the select back to placeholder
-  document.getElementById('promote-autofill-select').value = '';
-}
-
-// Auto-fill promote form from an eBay listing URL
-async function autoFillFromEbayUrl() {
-  const urlInput = document.getElementById('promote-url');
-  const url = urlInput.value.trim();
-  if (!url.includes('ebay.com/itm/')) return;
-
-  const titleEl = document.getElementById('promote-title');
-  const priceEl = document.getElementById('promote-price');
-  const imageEl = document.getElementById('promote-image');
-  const conditionEl = document.getElementById('promote-condition');
-  const submitBtn = document.getElementById('promote-submit-btn');
-
-  // Show loading state
-  const origText = submitBtn.textContent;
-  submitBtn.textContent = 'Fetching listing...';
-  submitBtn.disabled = true;
-
-  try {
-    const resp = await fetch(`/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
-    const data = await resp.json();
-
-    if (data.title && !titleEl.value.trim()) titleEl.value = data.title;
-    if (data.price && !priceEl.value) priceEl.value = data.price;
-    if (data.imageUrl && !imageEl.value.trim()) imageEl.value = data.imageUrl;
-
-    // Try to map eBay condition to our dropdown options
-    if (data.condition) {
-      const raw = data.condition.toLowerCase();
-      const options = Array.from(conditionEl.options);
-      const match = options.find(o => raw.includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(raw));
-      if (match) conditionEl.value = match.value;
-    }
-  } catch (err) {
-    console.warn('Could not auto-fetch eBay listing details:', err);
-  } finally {
-    submitBtn.textContent = origText;
-    submitBtn.disabled = false;
-  }
-}
-
-// Read a File and downscale via canvas to keep localStorage payload small.
-// Returns a JPEG data URL (~50–120KB at default quality).
+// ---- Community ----
+// Shared image helpers. They lived beside the promoted-card uploader, but
+// the community composer and the inventory cropper use them too, so they
+// stay now that promoted cards are gone.
 function readImageFileAsDataUrl(file, maxDim = 800, quality = 0.82) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith('image/')) {
@@ -10605,12 +10391,18 @@ function readImageFileAsDataUrl(file, maxDim = 800, quality = 0.82) {
   });
 }
 
-// ---- Card auto-crop (dependency-free) ----
-// Finds the card's bounding box within a photo by trimming a roughly-uniform
-// background — the common "card on a desk/table" shot. Returns the box in the
-// analysis canvas's own coordinates, or null when detection isn't confident
-// (card fills the frame, busy background, etc.) so the caller keeps the full
-// frame rather than mangling it. Pure function → unit-testable.
+let _invCropState = null;
+
+function _invCropRenderBox() {
+  const s = _invCropState;
+  const box = document.getElementById('inv-crop-box');
+  if (!s || !box) return;
+  box.style.left = s.rect.x + 'px';
+  box.style.top = s.rect.y + 'px';
+  box.style.width = s.rect.w + 'px';
+  box.style.height = s.rect.h + 'px';
+}
+
 function _cardBoxFromPixels(data, aw, ah) {
   const px = (x, y) => { const i = (y * aw + x) * 4; return [data[i], data[i + 1], data[i + 2]]; };
   // Background = median of samples from the four corners.
@@ -10654,6 +10446,7 @@ function _cardBoxFromPixels(data, aw, ah) {
 }
 
 // Map the detected box onto source-image pixels with a small margin.
+
 function _detectCardRect(img) {
   const full = { sx: 0, sy: 0, sw: img.width, sh: img.height };
   try {
@@ -10678,14 +10471,6 @@ function _detectCardRect(img) {
     return { sx, sy, sw, sh };
   } catch (_) { return full; }
 }
-
-// ---- Interactive card cropper ----
-// Opens a modal showing the photo with a draggable/resizable crop box, pre-set
-// to the auto-detected card. Returns a Promise resolving to the cropped JPEG
-// data URL, or null if the user cancels. All coordinates in `rect` are DISPLAY
-// pixels (relative to the on-screen image); we map back to source pixels on
-// apply using the display scale.
-let _invCropState = null;
 
 function openInvCropper(file) {
   return new Promise((resolve) => {
@@ -10720,434 +10505,9 @@ function openInvCropper(file) {
   });
 }
 
-function _invCropRenderBox() {
-  const s = _invCropState;
-  const box = document.getElementById('inv-crop-box');
-  if (!s || !box) return;
-  box.style.left = s.rect.x + 'px';
-  box.style.top = s.rect.y + 'px';
-  box.style.width = s.rect.w + 'px';
-  box.style.height = s.rect.h + 'px';
-}
-
-function _invCropStart(e, mode) {
-  e.preventDefault(); e.stopPropagation();
-  const s = _invCropState;
-  if (!s) return;
-  s.drag = { mode, startX: e.clientX, startY: e.clientY, orig: { ...s.rect } };
-  window.addEventListener('pointermove', _invCropMove);
-  window.addEventListener('pointerup', _invCropEnd);
-  window.addEventListener('pointercancel', _invCropEnd);
-}
-
-function _invCropMove(e) {
-  const s = _invCropState;
-  if (!s || !s.drag) return;
-  const dx = e.clientX - s.drag.startX, dy = e.clientY - s.drag.startY;
-  const o = s.drag.orig, m = s.drag.mode, MIN = 24;
-  if (m === 'move') {
-    // Slide the whole box within bounds — size unchanged.
-    const x = Math.max(0, Math.min(o.x + dx, s.dw - o.w));
-    const y = Math.max(0, Math.min(o.y + dy, s.dh - o.h));
-    s.rect = { x, y, w: o.w, h: o.h };
-  } else {
-    // Resize from a corner: the OPPOSITE edge stays anchored.
-    let x = o.x, y = o.y, w = o.w, h = o.h;
-    if (m.includes('l')) { x = o.x + dx; w = o.w - dx; }
-    if (m.includes('r')) { w = o.w + dx; }
-    if (m.includes('t')) { y = o.y + dy; h = o.h - dy; }
-    if (m.includes('b')) { h = o.h + dy; }
-    if (w < MIN) { if (m.includes('l')) x = o.x + o.w - MIN; w = MIN; }
-    if (h < MIN) { if (m.includes('t')) y = o.y + o.h - MIN; h = MIN; }
-    // Clamp to image bounds without moving the anchored edge.
-    if (x < 0) { w += x; x = 0; }
-    if (y < 0) { h += y; y = 0; }
-    if (x + w > s.dw) w = s.dw - x;
-    if (y + h > s.dh) h = s.dh - y;
-    s.rect = { x, y, w, h };
-  }
-  _invCropRenderBox();
-}
-
-function _invCropEnd() {
-  const s = _invCropState;
-  if (s) s.drag = null;
-  window.removeEventListener('pointermove', _invCropMove);
-  window.removeEventListener('pointerup', _invCropEnd);
-  window.removeEventListener('pointercancel', _invCropEnd);
-}
-
-// Crop a source region and downscale to a JPEG data URL.
-function _invCropExport(img, sx, sy, sw, sh, maxDim = 600, quality = 0.72) {
-  const scale = Math.min(1, maxDim / Math.max(sw, sh)) || 1;
-  const w = Math.max(1, Math.round(sw * scale)), h = Math.max(1, Math.round(sh * scale));
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
-  return c.toDataURL('image/jpeg', quality);
-}
-
-function applyInvCrop() {
-  const s = _invCropState;
-  if (!s) { _closeInvCropper(null); return; }
-  const inv = 1 / s.disp;
-  const sx = Math.max(0, s.rect.x * inv);
-  const sy = Math.max(0, s.rect.y * inv);
-  const sw = Math.min(s.img.naturalWidth - sx, s.rect.w * inv);
-  const sh = Math.min(s.img.naturalHeight - sy, s.rect.h * inv);
-  let url = null;
-  try { url = _invCropExport(s.img, sx, sy, sw, sh); } catch (_) { url = null; }
-  _closeInvCropper(url);
-}
-
-function useInvCropFull() {
-  const s = _invCropState;
-  if (!s) { _closeInvCropper(null); return; }
-  let url = null;
-  try { url = _invCropExport(s.img, 0, 0, s.img.naturalWidth, s.img.naturalHeight); } catch (_) { url = null; }
-  _closeInvCropper(url);
-}
-
-function cancelInvCrop() { _closeInvCropper(null); }
-
-function _closeInvCropper(url) {
-  _invCropEnd();
-  const modal = document.getElementById('inv-crop-modal');
-  if (modal) modal.classList.add('hidden');
-  const s = _invCropState;
-  _invCropState = null;
-  if (s && s.resolve) s.resolve(url);
-}
-
-async function handlePromoteImageFile(e) {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const status = document.getElementById('promote-image-status');
-  status.textContent = 'Processing…';
-  try {
-    if (file.size > 8 * 1024 * 1024) throw new Error('Image is too large (max 8MB)');
-    const dataUrl = await readImageFileAsDataUrl(file);
-    document.getElementById('promote-image').value = dataUrl;
-    const previewWrap = document.getElementById('promote-image-preview-wrap');
-    const preview = document.getElementById('promote-image-preview');
-    preview.src = dataUrl;
-    previewWrap.classList.remove('hidden');
-    const kb = Math.round(dataUrl.length * 0.75 / 1024);
-    status.textContent = `${file.name} — ${kb}KB ready`;
-  } catch (err) {
-    status.textContent = err.message || 'Could not load image';
-    e.target.value = '';
-  }
-}
-
-function clearPromoteImage() {
-  document.getElementById('promote-image').value = '';
-  document.getElementById('promote-image-file').value = '';
-  document.getElementById('promote-image-status').textContent = '';
-  const wrap = document.getElementById('promote-image-preview-wrap');
-  const preview = document.getElementById('promote-image-preview');
-  preview.removeAttribute('src');
-  wrap.classList.add('hidden');
-}
-
-async function handleAddPromotedCard(e) {
-  e.preventDefault();
-  if (!getCurrentUser()) { showLogin(); return false; }
-
-  const cards = getPromotedCards();
-  const maxSlots = getPromoteSlotCount();
-  if (cards.length >= maxSlots) {
-    alert(`You've used all ${maxSlots} promotion slots. Remove one to add another.`);
-    return false;
-  }
-
-  const title = document.getElementById('promote-title').value.trim();
-  const url = document.getElementById('promote-url').value.trim();
-  const price = document.getElementById('promote-price').value;
-  let imageUrl = document.getElementById('promote-image').value.trim();
-  const condition = document.getElementById('promote-condition').value;
-
-  if (!title || !url || !price) return false;
-
-  // Last-resort: auto-fetch image if still empty at submission time
-  if (!imageUrl && url.includes('ebay.com/itm/')) {
-    try {
-      const resp = await fetch(`/api/ebay-listing-details?url=${encodeURIComponent(url)}`);
-      const data = await resp.json();
-      if (data.imageUrl) imageUrl = data.imageUrl;
-    } catch (err) {
-      console.warn('Could not auto-fetch eBay listing image:', err);
-    }
-  }
-
-  // If this card fills a slot beyond the base 5, mark it as using an extra slot
-  const usedExtraSlot = cards.length >= 5;
-
-  cards.push({
-    id: Date.now().toString(),
-    title,
-    itemUrl: url,
-    price: parseFloat(price),
-    imageUrl: imageUrl || '',
-    condition,
-    usedExtraSlot,
-    createdAt: new Date().toISOString()
-  });
-
-  await publishPromotedCards(cards);
-
-  // Reset form
-  document.getElementById('promote-card-form').reset();
-  clearPromoteImage();
-  return false;
-}
-
-async function removePromotedCard(id) {
-  // Same round trip as adding: a card removed here but left in the public feed
-  // keeps sending people to a listing the seller has pulled.
-  await publishPromotedCards(getPromotedCards().filter(c => c.id !== id));
-}
-
-async function markPromotedCardSold(id) {
-  const cards = getPromotedCards();
-  const card = cards.find(c => c.id === id);
-  if (!card) return;
-
-  // If this card used an extra slot, expire that slot
-  if (card.usedExtraSlot) {
-    const user = getCurrentUser();
-    if (user) {
-      const users = getUsers();
-      const key = user.toLowerCase();
-      if (users[key] && (users[key].extraPromoteSlots || 0) > 0) {
-        users[key].extraPromoteSlots -= 1;
-        localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-      }
-    }
-  }
-
-  publishPromotedCards(cards.filter(c => c.id !== id));
-}
-
-function renderPromotedCards() {
-  const cards = getPromotedCards();
-  const listEl = document.getElementById('promoted-cards-list');
-  const countEl = document.getElementById('promote-card-count');
-  const maxEl = document.getElementById('promote-max-count');
-  const submitBtn = document.getElementById('promote-submit-btn');
-
-  const maxSlots = getPromoteSlotCount();
-  countEl.textContent = cards.length;
-  if (maxEl) maxEl.textContent = maxSlots;
-  submitBtn.disabled = cards.length >= maxSlots;
-
-  if (cards.length === 0) {
-    listEl.innerHTML = '<p class="seller-empty">No promoted cards yet. Add your first listing above!</p>';
-    return;
-  }
-
-  listEl.innerHTML = cards.map(c => {
-    const imgHtml = c.imageUrl
-      ? `<img src="${escHtml(c.imageUrl)}" alt="" style="width:50px;height:50px;object-fit:cover;border-radius:6px;" />`
-      : '<div style="width:50px;height:50px;background:var(--surface);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">&#127183;</div>';
-    const extraBadge = c.usedExtraSlot ? '<span class="promote-extra-badge">Extra Slot</span>' : '';
-    return `<div class="seller-listing-card" style="display:flex;align-items:center;gap:12px;">
-      ${imgHtml}
-      <div style="flex:1;min-width:0;">
-        <p class="seller-listing-title" style="margin:0 0 4px;">${escHtml(c.title)} ${extraBadge}</p>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <span style="font-weight:600;color:var(--accent);">$${parseFloat(c.price).toFixed(2)}</span>
-          <span style="font-size:0.75rem;opacity:0.7;">${escHtml(c.condition)}</span>
-          <a href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem;color:var(--accent);">View on eBay &#8599;</a>
-        </div>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="promote-sold-btn" onclick="markPromotedCardSold('${c.id}')" title="Mark as Sold">Sold</button>
-        <button class="seller-delete-btn" onclick="removePromotedCard('${c.id}')" title="Remove">&times;</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// Build a promoted card element for injection into search results
-function buildPromotedCard(promo) {
-  const card = document.createElement('div');
-  card.className = 'card promoted-card';
-
-  const teamColor = getTeamColor(promo.title);
-  card.style.setProperty('--team-color', teamColor);
-
-  const price = `$${parseFloat(promo.price).toFixed(2)}`;
-
-  const imageHtml = promo.imageUrl
-    ? `<img src="${escHtml(promo.imageUrl)}" alt="${escHtml(promo.title)}" loading="lazy" />`
-    : `<div class="no-image"><span class="no-image-icon">&#127183;</span><span>No image</span></div>`;
-
-  const parsed = parseCardTitle(promo.title);
-  const tagParts = [parsed.year, parsed.set, parsed.parallel].filter(Boolean);
-  const cardTag = tagParts.length >= 2 ? tagParts.join(' ') : '';
-  const cardTagHtml = cardTag ? `<p class="card-tag">${escHtml(cardTag)}</p>` : '';
-
-  card.innerHTML = `
-    <div class="card-accent"></div>
-    <div class="promoted-badge">PROMOTED</div>
-    <div class="card-image-wrap">${imageHtml}</div>
-    <div class="card-body">
-      ${cardTagHtml}
-      <p class="card-title">${escHtml(promo.title)}</p>
-      <p class="card-price">${price}</p>
-      <div class="card-meta">
-        <span class="card-condition">${escHtml(promo.condition)}</span>
-      </div>
-      <a class="card-link"
-         href="${escHtml(epnUrl(promo.itemUrl))}"
-         target="_blank"
-         rel="noopener noreferrer">
-        View on eBay &#8599;
-      </a>
-    </div>
-  `;
-
-  return card;
-}
-
-// Inject promoted cards into a results grid every ~10 cards. If a promoted
-// slot falls past the last result we drop it — promoted cards aren't allowed
-// to stack at the bottom of the grid when the search runs out.
-function injectPromotedCards(grid) {
-  const promos = getGlobalPromotedCards();
-  if (promos.length === 0) return;
-
-  const shuffled = [...promos].sort(() => Math.random() - 0.5);
-
-  const existingCards = grid.querySelectorAll('.card:not(.promoted-card)');
-  const count = existingCards.length;
-  if (count < 2) return; // too few results to interleave
-
-  const spacing = 10;
-
-  shuffled.forEach((promo, i) => {
-    const insertIndex = spacing * (i + 1);
-    const refCards = grid.querySelectorAll('.card:not(.promoted-card)');
-    if (insertIndex >= refCards.length) return; // results ran out; skip the rest
-    const promoCard = buildPromotedCard(promo);
-    promoCard.style.animationDelay = `${insertIndex * 0.05}s`;
-    refCards[insertIndex].before(promoCard);
-  });
-}
-
-// ---- Browse Cards View ----
-// Public page that lists every promoted card on The Card Huddle. Pulls the
-// aggregated feed from /api/promoted-cards/all and supports a quick text
-// filter + price sort. No login required.
-let _browseSearchWired = false;
-
-function initBrowseView() {
-  const grid = document.getElementById('browse-grid');
-  const meta = document.getElementById('browse-meta');
-  if (!grid) return;
-  if (!_browseSearchWired) {
-    const search = document.getElementById('browse-search');
-    const sort = document.getElementById('browse-sort');
-    if (search) search.addEventListener('input', () => renderBrowseCards());
-    if (sort) sort.addEventListener('change', () => renderBrowseCards());
-    _browseSearchWired = true;
-  }
-  if (!Array.isArray(_globalPromotedCache)) {
-    grid.innerHTML = `
-      <div class="browse-empty" style="grid-column:1/-1">
-        <div class="browse-empty-icon">&#9203;</div>
-        <h3>Loading promoted cards…</h3>
-        <p>Pulling listings from sellers across The Card Huddle.</p>
-      </div>`;
-    if (meta) { meta.textContent = ''; meta.classList.add('hidden'); }
-  }
-  loadBrowseCards(false);
-}
-
-async function loadBrowseCards(force) {
-  await fetchGlobalPromotedCards(!!force);
-  renderBrowseCards();
-}
-
-function renderBrowseCards() {
-  const grid = document.getElementById('browse-grid');
-  const meta = document.getElementById('browse-meta');
-  if (!grid) return;
-  const cards = Array.isArray(_globalPromotedCache) ? _globalPromotedCache : [];
-  const search = (document.getElementById('browse-search')?.value || '').toLowerCase().trim();
-  const sort = document.getElementById('browse-sort')?.value || 'newest';
-
-  let filtered = cards;
-  if (search) {
-    filtered = cards.filter(c => (c.title || '').toLowerCase().includes(search));
-  }
-  if (sort === 'price-low') {
-    filtered = [...filtered].sort((a, b) => (a.price || 0) - (b.price || 0));
-  } else if (sort === 'price-high') {
-    filtered = [...filtered].sort((a, b) => (b.price || 0) - (a.price || 0));
-  } else {
-    filtered = [...filtered].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-  }
-
-  // The empty-state card carries its own messaging; suppress the meta line so
-  // it doesn't double up on "No promoted cards yet" copy.
-  if (meta) {
-    if (cards.length === 0) {
-      meta.textContent = '';
-      meta.classList.add('hidden');
-    } else {
-      meta.classList.remove('hidden');
-      meta.textContent = `${filtered.length} of ${cards.length} card${cards.length !== 1 ? 's' : ''}${search ? ` matching “${search}”` : ''}`;
-    }
-  }
-
-  grid.innerHTML = '';
-  if (filtered.length === 0) {
-    if (cards.length === 0) {
-      grid.innerHTML = `
-        <div class="browse-empty" style="grid-column:1/-1">
-          <div class="browse-empty-icon">&#11088;</div>
-          <h3>No promoted cards yet</h3>
-          <p>Promoted listings added by sellers show up here. Be the first — head to <a href="#" onclick="switchView('browse');switchBrowseTab('promote');return false;">Browse Cards &rarr; Promote a Card</a>.</p>
-        </div>`;
-    } else {
-      grid.innerHTML = `
-        <div class="browse-empty" style="grid-column:1/-1">
-          <div class="browse-empty-icon">&#128269;</div>
-          <h3>No matches</h3>
-          <p>Try a different player, set, or year.</p>
-        </div>`;
-    }
-    return;
-  }
-  filtered.forEach((promo, i) => {
-    const card = buildPromotedCard(promo);
-    card.style.animationDelay = `${Math.min(i, 20) * 0.04}s`;
-    grid.appendChild(card);
-  });
-}
-
-// ---- Community Board (Browse Cards subtab) ----
-// A shared feed where members post messages, card photos, and prices/links.
-// Reads are public; posting requires a signed-in account (Bearer token).
-let _communityImageDataUrl = null;
-let _communityPostsCache = null;
 let _communityWired = false;
-
-function switchBrowseTab(sub) {
-  document.querySelectorAll('.browse-subtab').forEach(b =>
-    b.classList.toggle('active', b.dataset.browseSub === sub));
-  const cardsPanel = document.getElementById('browse-panel-cards');
-  const communityPanel = document.getElementById('browse-panel-community');
-  const promotePanel = document.getElementById('browse-panel-promote');
-  if (cardsPanel) cardsPanel.classList.toggle('hidden', sub !== 'cards');
-  if (communityPanel) communityPanel.classList.toggle('hidden', sub !== 'community');
-  if (promotePanel) promotePanel.classList.toggle('hidden', sub !== 'promote');
-  if (sub === 'community') initCommunityView();
-  // Promote moved here from Tools; it still needs the same init the old tab ran.
-  if (sub === 'promote' && typeof initPromoteTab === 'function') initPromoteTab();
-}
+let _communityPostsCache = null;
+let _communityImageDataUrl = null;
 
 function initCommunityView() {
   if (!_communityWired) {

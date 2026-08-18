@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=153" />
+  <link rel="stylesheet" href="style.css?v=155" />
 
 
 </head>
@@ -212,7 +212,7 @@
       <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
       <button class="nav-tab" data-view="rainbow" onclick="switchView('rainbow')">Rainbow</button>
       <button class="nav-tab" data-view="market" onclick="switchView('market')">Market</button>
-      <button class="nav-tab" data-view="browse" onclick="switchView('browse')">Browse Cards</button>
+      <button class="nav-tab" data-view="community" onclick="switchView('community')">Community</button>
       <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')">Inventory</button>
       <button class="nav-tab settings-tab" onclick="showSettings()" title="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1166,97 +1166,9 @@
   </div>
 
   <!-- Browse Cards View -->
-  <div id="browse-view" class="browse-view hidden">
+  <div id="community-view" class="browse-view hidden">
     <div class="browse-container">
-      <div class="browse-header">
-        <h2 class="browse-title">Browse Cards</h2>
-        <p class="browse-subtitle">Promoted listings and the community board, all in one place.</p>
-        <div class="browse-subtabs">
-          <button class="browse-subtab active" data-browse-sub="cards" onclick="switchBrowseTab('cards')">Promoted Cards</button>
-          <button class="browse-subtab" data-browse-sub="community" onclick="switchBrowseTab('community')">Community</button>
-          <button class="browse-subtab" data-browse-sub="promote" onclick="switchBrowseTab('promote')">Promote a Card</button>
-        </div>
-      </div>
-
-      <!-- Promote a Card: moved here from the old Tools tab, so managing
-           a promotion sits beside browsing promoted cards. -->
-      <div id="browse-panel-promote" class="browse-panel hidden">
-          <div id="promote-pro-gate" class="promote-gate hidden"></div>
-          <div id="promote-content">
-            <p class="pp-desc">Add up to 5 eBay listings to promote in search results. Your cards will appear between results when other users search.</p>
-            <div class="promote-count"><span id="promote-card-count">0</span> / <span id="promote-max-count">5</span> slots used</div>
-            <form id="promote-card-form" onsubmit="return handleAddPromotedCard(event)" class="promote-form">
-              <div class="seller-form-grid">
-                <div class="seller-form-group seller-form-full">
-                  <label>Card Title</label>
-                  <input type="text" id="promote-title" placeholder="e.g. 2023 Prizm Justin Jefferson #1 Silver Prizm" required />
-                </div>
-                <div class="seller-form-group">
-                  <label>eBay Listing URL</label>
-                  <input type="url" id="promote-url" placeholder="https://www.ebay.com/itm/..." required onchange="autoFillFromEbayUrl()" onpaste="setTimeout(autoFillFromEbayUrl, 100)" />
-                </div>
-                <div class="seller-form-group">
-                  <label>Price ($)</label>
-                  <input type="number" id="promote-price" placeholder="0.00" step="0.01" min="0.01" required />
-                </div>
-                <div class="seller-form-group">
-                  <label>Image URL (optional)</label>
-                  <input type="url" id="promote-image" placeholder="https://i.ebayimg.com/..." />
-                  <div class="promote-upload-row">
-                    <label for="promote-image-file" class="promote-upload-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      Upload from device
-                    </label>
-                    <input type="file" id="promote-image-file" accept="image/*" onchange="handlePromoteImageFile(event)" hidden />
-                    <span id="promote-image-status" class="promote-upload-status"></span>
-                  </div>
-                  <div id="promote-image-preview-wrap" class="promote-image-preview-wrap hidden">
-                    <img id="promote-image-preview" alt="Preview" />
-                    <button type="button" class="promote-image-clear" onclick="clearPromoteImage()" aria-label="Remove image">&times;</button>
-                  </div>
-                </div>
-                <div class="seller-form-group">
-                  <label>Condition</label>
-                  <select id="promote-condition">
-                    <option value="Ungraded - Near Mint">Ungraded - Near Mint</option>
-                    <option value="Ungraded - Excellent">Ungraded - Excellent</option>
-                    <option value="PSA 10">PSA 10</option>
-                    <option value="PSA 9">PSA 9</option>
-                    <option value="BGS 10">BGS 10</option>
-                    <option value="BGS 9.5">BGS 9.5</option>
-                    <option value="SGC 10">SGC 10</option>
-                  </select>
-                </div>
-              </div>
-              <div class="seller-form-actions">
-                <button type="submit" class="seller-save-btn" id="promote-submit-btn">Add Promoted Card</button>
-              </div>
-            </form>
-            <div id="promoted-cards-list" class="seller-listings-list">
-              <p class="seller-empty">No promoted cards yet. Add your first listing above!</p>
-            </div>
-          </div>
-        </div>
-
-      <!-- Promoted Cards panel -->
-      <div id="browse-panel-cards" class="browse-panel">
-        <div class="browse-controls">
-          <div class="browse-search-wrap">
-            <input type="text" id="browse-search" class="browse-search" placeholder="Filter by player, set, year…" />
-          </div>
-          <select id="browse-sort" class="browse-sort">
-            <option value="newest">Newest first</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-          </select>
-          <button class="browse-refresh-btn" onclick="loadBrowseCards(true)">&#8635; Refresh</button>
-        </div>
-        <p id="browse-meta" class="browse-meta"></p>
-        <div id="browse-grid" class="results-grid"></div>
-      </div>
-
-      <!-- Community panel -->
-      <div id="browse-panel-community" class="browse-panel hidden">
+      <div id="community-panel" class="browse-panel">
         <!-- Hero banner -->
         <div class="community-hero">
           <div class="community-hero-glow"></div>
@@ -1329,7 +1241,6 @@
         <div class="proplus-tabs">
           <button class="proplus-tab active" data-pptab="autoprices" onclick="switchProPlusTab('autoprices')">&#127991;&#65039; Auto-Pricer</button>
           <button class="proplus-tab" data-pptab="bulkprice" onclick="switchProPlusTab('bulkprice')">&#128196; Bulk Pricer</button>
-          <button class="proplus-tab" data-pptab="promote" onclick="switchProPlusTab('promote')">&#11088; Promote Cards</button>
         </div>
 
         <!-- Auto-Pricer -->
@@ -1616,7 +1527,7 @@
         <li>Your card photos</li>
         <li>Your community posts, comments and reactions</li>
         <li>Your direct messages, on both sides of every conversation</li>
-        <li>Your card alerts, promoted cards and show booth</li>
+        <li>Your card alerts and show booth</li>
         <li>Your username, email and password</li>
       </ul>
       <p class="da-note">Want a copy first? Close this and choose
@@ -1822,7 +1733,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=197"></script>
+  <script src="app.js?v=199"></script>
   <script type="importmap">
   {
     "imports": {
