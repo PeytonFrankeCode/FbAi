@@ -26,7 +26,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 22, not 20: the index test builds its fixture with node:sqlite,
+          # which does not exist before 22.5. Node 20 is also past deprecation
+          # on GitHub runners.
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
