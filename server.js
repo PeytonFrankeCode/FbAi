@@ -2770,8 +2770,24 @@ const MARKET_TTL = 3600; // 1h — identical for every visitor
 // index needs repeat sales rather than raw volume. That is the correct trade:
 // a number built on fewer, better observations beats a precise number that is
 // measuring the wrong quantity.
-const RSI_VALUE_WINDOW = 30;      // days of sales that define a card's value at a date
-const RSI_MIN_MATCHED = 12;       // matched cards needed before a step is trusted
+const RSI_VALUE_WINDOW = 30;      // ceiling on the value window; see _rsiWindowFor
+// The value window must never exceed the period being measured, or the two
+// windows overlap and the card is partly compared against itself. At days=7 a
+// fixed 30-day window shared 23 of its 30 days with the baseline, which pinned
+// every short-period reading near 100 no matter what prices did.
+function _rsiWindowFor(days) { return Math.max(7, Math.min(days, RSI_VALUE_WINDOW)); }
+
+// Progressive relaxation. A strict card key and a tight sample gate give the
+// most honest number, but on a thin dataset they give no number at all. Rather
+// than print "not enough" at every period, walk down these tiers until one
+// produces a usable sample and report which tier was used, so the UI can say
+// how hard it had to look.
+const RSI_TIERS = [
+  { label: 'strict',  windowMul: 1,   minMatched: 12 },
+  { label: 'wider',   windowMul: 1.5, minMatched: 10 },
+  { label: 'widest',  windowMul: 2,   minMatched: 6  },
+];
+// Per-tier gates live in RSI_TIERS above.
 const RSI_RATIO_FLOOR = 0.25;     // trim ratios outside [floor, ceil] before the
 const RSI_RATIO_CEIL = 4;         // median — those are mis-keyed rows, not moves
 const RSI_TARGET_POINTS = 30;     // chart points across the requested period
@@ -2816,7 +2832,7 @@ function _rsiCardValue(days, endDay, window) {
 // traded in both windows. Cards that did not sell recently are excluded rather
 // than carried forward — a carried value would contribute a ratio of exactly
 // 1.0 and drag every step toward "no change", which is a bias, not a signal.
-function _rsiStep(byCard, endDay, prevEndDay, window) {
+function _rsiStep(byCard, endDay, prevEndDay, window, minMatched) {
   const ratios = [];
   for (const days of byCard.values()) {
     const cur = _rsiCardValue(days, endDay, window);
@@ -2827,7 +2843,7 @@ function _rsiStep(byCard, endDay, prevEndDay, window) {
     if (!Number.isFinite(ratio) || ratio < RSI_RATIO_FLOOR || ratio > RSI_RATIO_CEIL) continue;
     ratios.push(ratio);
   }
-  if (ratios.length < RSI_MIN_MATCHED) return { ratio: 1, matched: ratios.length, thin: true };
+  if (ratios.length < minMatched) return { ratio: 1, matched: ratios.length, thin: true };
   ratios.sort((a, b) => a - b);
   return { ratio: _rsiMedian(ratios), matched: ratios.length, thin: false };
 }
@@ -2853,8 +2869,22 @@ function _rsiGroup(rows) {
 // period, so `score` reads the same way the old one did: 100 is flat, 110 is
 // up ten percent — except it now means prices rather than turnover.
 function _buildRepeatSalesPayload(rows, maxDay, days, extra = {}) {
-  const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
   const byCard = _rsiGroup(rows);
+  // Try each tier in turn and keep the first that clears its own gate. The
+  // returned payload names the tier so the page can be honest about how wide a
+  // net produced the number.
+  let last = null;
+  for (const t of RSI_TIERS) {
+    const window = Math.round(_rsiWindowFor(days) * t.windowMul);
+    const out = _rsiPayloadAt(byCard, maxDay, days, window, t.minMatched, t.label, extra);
+    if (out.available) return out;
+    last = out;
+  }
+  return last;
+}
+
+function _rsiPayloadAt(byCard, maxDay, days, window, minMatched, tier, extra = {}) {
+  const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
 
   const step = Math.max(1, Math.round(days / RSI_TARGET_POINTS));
   const anchors = [];
@@ -2866,7 +2896,7 @@ function _buildRepeatSalesPayload(rows, maxDay, days, extra = {}) {
   let matchedTotal = 0, thinSteps = 0;
   series.push({ date: _mkIso(anchors[0]), score: 100, matched: null });
   for (let i = 1; i < anchors.length; i++) {
-    const s = _rsiStep(byCard, anchors[i], anchors[i - 1], RSI_VALUE_WINDOW);
+    const s = _rsiStep(byCard, anchors[i], anchors[i - 1], window, minMatched);
     level *= s.ratio;
     if (s.thin) thinSteps++;
     matchedTotal = Math.max(matchedTotal, s.matched);
@@ -2875,11 +2905,11 @@ function _buildRepeatSalesPayload(rows, maxDay, days, extra = {}) {
 
   // Headline: the whole period in one comparison rather than the product of the
   // steps, so the number cannot drift from compounding rounding.
-  const overall = _rsiStep(byCard, through, through - days, RSI_VALUE_WINDOW);
+  const overall = _rsiStep(byCard, through, through - days, window, minMatched);
   if (overall.thin) {
     return {
       available: false, days, reason: 'not enough repeat sales yet',
-      minCards: RSI_MIN_MATCHED, matchedCards: overall.matched,
+      minCards: minMatched, matchedCards: overall.matched, tier, valueWindow: window,
       through: _mkIso(through), method: 'repeat-sales', ...extra,
     };
   }
@@ -2898,8 +2928,9 @@ function _buildRepeatSalesPayload(rows, maxDay, days, extra = {}) {
     // How many distinct cards traded in both windows. This is the sample size
     // the whole number rests on, so it is surfaced rather than buried.
     matchedCards: overall.matched,
-    minCards: RSI_MIN_MATCHED,
-    valueWindow: RSI_VALUE_WINDOW,
+    minCards: minMatched,
+    valueWindow: window,
+    tier,
     trackedCards: byCard.size,
     // Steps with too few matched cards to trust; those are held flat, so a
     // large count means the line is smoother than the market really was.
@@ -2908,6 +2939,123 @@ function _buildRepeatSalesPayload(rows, maxDay, days, extra = {}) {
     ...extra,
   };
 }
+
+// ---- Index health -----------------------------------------------------------
+// Why the index says "not enough repeat sales". There are only three possible
+// causes and they need different fixes, so this reports all three rather than
+// leaving it to guesswork:
+//   1. Not enough history — the dataset does not span the period being asked for
+//   2. Not enough repeat sales — cards sell once and never again
+//   3. Key fragmentation — the same card is recorded under many spellings, so
+//      its repeat sales never line up as repeats
+app.get('/api/debug/index-health', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    const span = await db.prepare(
+      `SELECT COUNT(*) AS priced, MIN(sold_date) AS first, MAX(sold_date) AS last
+         FROM sales WHERE price_cents IS NOT NULL`
+    ).first();
+    const all = await db.prepare('SELECT COUNT(*) AS n FROM sales').first();
+    if (!span || !span.last) return res.json({ available: false, reason: 'no priced sales' });
+
+    const maxDay = _mkDay(span.last);
+    const daysHeld = _mkDay(span.last) - _mkDay(span.first) + 1;
+
+    // How often each key column is actually populated. A column that is mostly
+    // empty is not fragmenting anything; a column with thousands of distinct
+    // values for the same card is.
+    const fill = await db.prepare(
+      `SELECT
+         SUM(CASE WHEN year      IS NULL OR year      = '' THEN 0 ELSE 1 END) AS year_set,
+         SUM(CASE WHEN set_name  IS NULL OR set_name  = '' THEN 0 ELSE 1 END) AS set_set,
+         SUM(CASE WHEN player    IS NULL OR player    = '' THEN 0 ELSE 1 END) AS player_set,
+         SUM(CASE WHEN parallel  IS NULL OR parallel  = '' THEN 0 ELSE 1 END) AS parallel_set,
+         SUM(CASE WHEN grader    IS NULL OR grader    = '' THEN 0 ELSE 1 END) AS grader_set,
+         SUM(CASE WHEN grade     IS NULL OR grade     = '' THEN 0 ELSE 1 END) AS grade_set,
+         COUNT(*) AS n
+       FROM sales WHERE price_cents IS NOT NULL`
+    ).first();
+
+    const distinctSets = await db.prepare(
+      `SELECT COUNT(DISTINCT set_name) AS n FROM sales WHERE price_cents IS NOT NULL`
+    ).first();
+    const distinctPlayers = await db.prepare(
+      `SELECT COUNT(DISTINCT player) AS n FROM sales WHERE price_cents IS NOT NULL`
+    ).first();
+
+    // Repeat-sale density on the strict key, over the last 180 days.
+    const since = _mkIso(maxDay - 180);
+    const repeats = await db.prepare(
+      `SELECT n, COUNT(*) AS keys FROM (
+         SELECT COUNT(*) AS n
+           FROM sales
+          WHERE price_cents IS NOT NULL AND sold_date >= ?
+          GROUP BY year, set_name, player, parallel, grader, grade
+       ) GROUP BY n ORDER BY n LIMIT 12`
+    ).bind(since).all();
+
+    const totals = await db.prepare(
+      `SELECT COUNT(*) AS keys, SUM(CASE WHEN n >= 2 THEN 1 ELSE 0 END) AS repeat_keys FROM (
+         SELECT COUNT(*) AS n
+           FROM sales
+          WHERE price_cents IS NOT NULL AND sold_date >= ?
+          GROUP BY year, set_name, player, parallel, grader, grade
+       )`
+    ).bind(since).first();
+
+    // What the index would actually find, per period, at each tier.
+    const periods = {};
+    for (const days of MARKET_PERIODS) {
+      const need = days * 2 + RSI_VALUE_WINDOW * 2 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+      const rows = await db.prepare(
+        `SELECT sold_date, year, set_name, player, parallel, grader, grade, price_cents
+           FROM sales WHERE price_cents IS NOT NULL AND sold_date >= ? LIMIT ${RSI_ROW_CAP}`
+      ).bind(_mkIso(maxDay - need)).all();
+      const byCard = _rsiGroup((rows && rows.results) || []);
+      const through = maxDay - MARKET_EXCLUDE_TRAILING_DAYS;
+      periods[days] = {
+        rowsRead: ((rows && rows.results) || []).length,
+        distinctCards: byCard.size,
+        historyCovers: daysHeld >= need,
+        tiers: RSI_TIERS.map(t => {
+          const w = Math.round(_rsiWindowFor(days) * t.windowMul);
+          const step = _rsiStep(byCard, through, through - days, w, t.minMatched);
+          return { tier: t.label, valueWindow: w, needs: t.minMatched, matched: step.matched, passes: !step.thin };
+        }),
+      };
+    }
+
+    res.json({
+      available: true,
+      generatedAt: new Date().toISOString(),
+      dataset: {
+        totalRows: all ? all.n : null,
+        pricedSales: span.priced,
+        pricedShare: all && all.n ? Math.round((span.priced / all.n) * 100) + '%' : null,
+        firstSale: span.first, lastSale: span.last,
+        daysOfHistory: daysHeld,
+        dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - maxDay),
+      },
+      keyColumns: fill ? {
+        year: fill.year_set, set_name: fill.set_set, player: fill.player_set,
+        parallel: fill.parallel_set, grader: fill.grader_set, grade: fill.grade_set,
+        of: fill.n,
+        distinctSetNames: distinctSets ? distinctSets.n : null,
+        distinctPlayers: distinctPlayers ? distinctPlayers.n : null,
+      } : null,
+      repeatSales180d: {
+        distinctCards: totals ? totals.keys : null,
+        cardsSoldTwiceOrMore: totals ? totals.repeat_keys : null,
+        salesPerCardHistogram: ((repeats && repeats.results) || []).map(r => ({ salesPerCard: r.n, cards: r.keys })),
+      },
+      periods,
+    });
+  } catch (err) {
+    console.error('[index-health]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
 
 app.get('/api/market-index', async (req, res) => {
   const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10))
@@ -2932,7 +3080,7 @@ app.get('/api/market-index', async (req, res) => {
     const maxDay = _mkDay(newest.d);
     // The oldest value window sits `days` back from the start anchor, which is
     // itself `days` back from `through`.
-    const need = days * 2 + RSI_VALUE_WINDOW + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+    const need = days * 2 + RSI_VALUE_WINDOW * 2 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
     const since = _mkIso(maxDay - need);
 
     // Grouped in SQL so what crosses the wire is one row per card per day, not
@@ -3049,7 +3197,7 @@ app.get('/api/player-index', async (req, res) => {
     }
 
     const maxDay = _mkDay(newest.d);
-    const need = days * 2 + RSI_VALUE_WINDOW + MARKET_EXCLUDE_TRAILING_DAYS + 1;
+    const need = days * 2 + RSI_VALUE_WINDOW * 2 + MARKET_EXCLUDE_TRAILING_DAYS + 1;
     const since = _mkIso(maxDay - need);
 
     const rows = await db.prepare(

@@ -3878,9 +3878,9 @@ async function loadMarketIndex() {
     let title, text;
     if (thin) {
       title = 'Not enough repeat sales yet';
-      text = `The index compares each card against its own earlier sales, so it needs at least ${data.minCards} cards that sold in both halves of the period`
-           + `${_mkPlayer ? `, and ${who} hasn't had that many` : ''}.`
-           + `${data.matchedCards != null ? ` Right now there ${data.matchedCards === 1 ? 'is' : 'are'} ${data.matchedCards}.` : ''}`
+      text = `The index compares each card against its own earlier sales, so it needs cards that sold twice &mdash; once recently and once earlier`
+           + `${_mkPlayer ? `, and ${who} hasn't had enough of those` : ''}.`
+           + `${data.matchedCards != null ? ` It found ${data.matchedCards} and needs ${data.minCards}.` : ''}`
            + ` Try a longer period, or check back as more sales are collected.`;
     } else if (noPlayer) {
       title = 'No sales on record';
@@ -3944,6 +3944,7 @@ async function loadMarketIndex() {
       <p><strong>How it works.</strong> We take every card that sold both recently and earlier in the period, work out how much its price changed, and use the <strong>middle</strong> of those changes. A card only ever competes with itself, so the number cannot be moved by how busy eBay was, by which cards happened to sell, or by one spectacular sale.</p>
       <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + ' cards' : 'Football cards'} we track and could price, matched on year, set, parallel and grade. ${data.matchedCards} card${data.matchedCards === 1 ? '' : 's'} had sales on both sides of the comparison${data.trackedCards ? ` out of ${data.trackedCards.toLocaleString('en-US')} seen in the window` : ''}. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
       ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had too few matched cards to measure, so the line is held flat there. It is smoother than the market actually was.</p>` : ''}
+      ${data.tier && data.tier !== 'strict' ? `<p class="market-warn"><strong>Wider sample.</strong> There weren't enough exact repeat sales in this period, so the index looked back over a ${data.valueWindow}-day window per card to find them. Treat it as directional.</p>` : ''}
       ${data.truncated ? '<p class="market-warn"><strong>Partial sample.</strong> This period holds more sales than one pass reads, so the index is built from a subset.</p>' : ''}
       ${data.dataLagDays > 1 ? `<p class="market-warn"><strong>Data is ${data.dataLagDays} days behind.</strong> The newest sales we hold are from ${_mkDateLabel(data.through)}, so this reflects the market up to then.</p>` : ''}
     </div>
