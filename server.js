@@ -2983,6 +2983,83 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = []) {
 // Every question below is answered by an aggregate query. The first version
 // built the whole index three times over raw rows and tripped the Worker CPU
 // limit, which is exactly the failure it was written to diagnose.
+// ---- Player field quality ---------------------------------------------------
+// 96,445 distinct player values across 297,027 sales is roughly fifteen times
+// the number of real footballers who appear on cards, which means the field is
+// carrying junk parsed out of listing titles. Every junk value splits one real
+// card into several that can never match as repeats, so this is the single
+// biggest lever on how many cards the index can pair.
+//
+// The fix has to be written against what the data actually contains — case
+// variants, trailing noise, whole-lot listings and multi-player cards all look
+// the same from outside and need different handling. So this samples the field
+// rather than guessing. Aggregates plus two small samples; no heavy work.
+app.get('/api/debug/player-quality', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    const shape = await db.prepare(
+      `SELECT COUNT(*) AS players,
+              SUM(CASE WHEN n = 1 THEN 1 ELSE 0 END) AS once,
+              SUM(CASE WHEN n BETWEEN 2 AND 3 THEN 1 ELSE 0 END) AS few,
+              SUM(CASE WHEN n BETWEEN 4 AND 20 THEN 1 ELSE 0 END) AS some,
+              SUM(CASE WHEN n > 20 THEN 1 ELSE 0 END) AS many
+         FROM (SELECT player, COUNT(*) AS n FROM sales
+                WHERE price_cents IS NOT NULL AND player IS NOT NULL AND player <> ''
+                GROUP BY player)`
+    ).first();
+
+    // The busiest values should be recognisable footballers. If they are not,
+    // the parser is failing on common listings rather than on odd ones.
+    const top = await db.prepare(
+      `SELECT player, COUNT(*) AS sales FROM sales
+        WHERE price_cents IS NOT NULL AND player IS NOT NULL AND player <> ''
+        GROUP BY player ORDER BY sales DESC LIMIT 40`
+    ).all();
+
+    // The long tail is where the junk lives. Ordering by a hash of the rowid
+    // spreads the sample across the table instead of returning sixty values
+    // that all start with the same letter — and unlike a modulus filter it
+    // always returns rows, however the ids happen to fall.
+    const tail = await db.prepare(
+      `SELECT player FROM (
+         SELECT player, COUNT(*) AS n, MIN(rowid) AS r FROM sales
+          WHERE price_cents IS NOT NULL AND player IS NOT NULL AND player <> ''
+          GROUP BY player HAVING n = 1
+       ) ORDER BY (r * 2654435761) % 1000003 LIMIT 60`
+    ).all();
+
+    // Cheap structural tests. Each points at a different repair.
+    const shapes = await db.prepare(
+      `SELECT
+         SUM(CASE WHEN player LIKE '% / %' OR player LIKE '%/%' THEN 1 ELSE 0 END) AS has_slash,
+         SUM(CASE WHEN player LIKE '%  %' THEN 1 ELSE 0 END) AS double_space,
+         SUM(CASE WHEN player <> TRIM(player) THEN 1 ELSE 0 END) AS untrimmed,
+         SUM(CASE WHEN player <> UPPER(SUBSTR(player,1,1)) || SUBSTR(player,2) THEN 1 ELSE 0 END) AS lower_first,
+         SUM(CASE WHEN LENGTH(player) > 40 THEN 1 ELSE 0 END) AS very_long,
+         SUM(CASE WHEN LENGTH(player) < 4 THEN 1 ELSE 0 END) AS very_short,
+         SUM(CASE WHEN player GLOB '*[0-9]*' THEN 1 ELSE 0 END) AS has_digit,
+         COUNT(*) AS of
+       FROM (SELECT DISTINCT player FROM sales
+              WHERE price_cents IS NOT NULL AND player IS NOT NULL AND player <> '')`
+    ).first();
+
+    res.json({
+      available: true,
+      distinctPlayers: shape ? shape.players : null,
+      salesPerPlayer: shape ? {
+        exactlyOnce: shape.once, twoOrThree: shape.few, fourToTwenty: shape.some, over20: shape.many,
+      } : null,
+      distinctValueShapes: shapes,
+      topBySales: ((top && top.results) || []).map(r => `${r.player}  (${r.sales})`),
+      longTailSample: ((tail && tail.results) || []).map(r => r.player),
+    });
+  } catch (err) {
+    console.error('[player-quality]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 app.get('/api/debug/index-health', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
