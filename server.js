@@ -2755,234 +2755,210 @@ const MARKET_EXCLUDE_TRAILING_DAYS = 1;
 function _mkDay(iso) { return Math.floor(Date.parse(String(iso).slice(0, 10) + 'T00:00:00Z') / 86400000); }
 function _mkIso(day) { return new Date(day * 86400000).toISOString().slice(0, 10); }
 
-// ---- Repeat-sales price index -----------------------------------------------
-// The old index scored total dollars and total units sold against the previous
-// window. That measures eBay activity, not what cards are worth: double the
-// volume at identical prices read as "+100%", and a market where every card
-// doubled while half as many sold read as "-20%". Football volume also collapses
-// every offseason, so the number fell each spring for reasons that had nothing
-// to do with prices.
+// ---- Paired-sales price index -----------------------------------------------
+// Card Ladder's published equation is: sum every card's last sold price,
+// divide by the number of cards, normalise to 1000. Their good idea is
+// carry-forward — a card that has ever sold has a value, so every sale becomes
+// a usable observation and the index does not need a card to sell twice inside
+// the window. That matters here: only 13% of cards in this dataset resell
+// within 30 days.
 //
-// This is a repeat-sales index — the technique behind Case-Shiller. Each card
-// is only ever compared with ITSELF at an earlier date, and the index moves by
-// the MEDIAN of those per-card changes. Volume, mix, seasonality and single
-// freak sales therefore cannot move it.
+// Four things in that equation are wrong for this data, and this fixes each:
 //
-// SHAPE OF THE COMPUTATION. The first version pulled raw sale rows and grouped
-// them in JavaScript. That is fine locally and fatal on Workers: a large
-// dataset meant hundreds of thousands of rows crossing the boundary and a
-// per-request grouping loop, which tripped the CPU limit and returned
-// Cloudflare's 1102. All grouping now happens in SQL — one GROUP BY per index —
-// so what arrives is one row per card per time bucket, and the JavaScript left
-// here is a median over a few thousand ratios.
-// Chart points across the period. Deliberately low: each point is a separate
-// bucket, and a bucket has to be wide enough that cards actually sell twice
-// inside it, or every step is thin and the line goes flat.
+//   1. PRICE-WEIGHTED. Summing dollars means a $50,000 card counts ten
+//      thousand times a $5 card, so the index is really tracking a handful of
+//      expensive cards. Here every observation counts once, so the number is a
+//      typical card's move, not the top card's move.
+//
+//   2. TIME MIS-ATTRIBUTED. Their index applies the whole change since a card
+//      last sold on the day it resells. A card quiet for 200 days that comes
+//      back 50% higher is not a 50% market move that day. Each observation is
+//      converted to a per-day rate over its own gap and rescaled to the bucket,
+//      which is why the raw ratios below converge once normalised.
+//
+//   3. MEAN, AND A SAMPLE OF ONE. They average a card's same-day sales, so one
+//      shill or fat-fingered sale sets its value until it next trades. Medians
+//      throughout, and ratios outside a sane band are dropped before the median
+//      is taken.
+//
+//   4. UNBOUNDED STALENESS. Nothing stops a years-old price being carried as
+//      though current. Priors older than the lookback are ignored.
+//
+// Card Ladder can afford (1) and (3) because a research team vets their sales
+// by hand. These inputs are unvetted listing parses, so the robustness has to
+// be in the maths.
+//
+// COST OF THE COMPUTATION. The median is taken in SQL and one row comes back
+// per bucket — about a dozen rows, whatever the dataset size. An earlier
+// version shipped raw sales to the Worker and grouped them in JavaScript,
+// which tripped the CPU limit; this cannot.
+// Chart points across the period, and the floor on how wide a bucket may be.
 const RSI_TARGET_POINTS = 10;
-// Floor on bucket width. Below about a week a card rarely trades twice, so
-// narrow buckets buy chart resolution at the cost of having anything to plot.
 const RSI_MIN_BUCKET_DAYS = 7;
-// Ceiling on grouped rows per index build. These are already aggregated, so
-// this is generous; if it ever bites, the payload says so rather than failing.
-const RSI_ROW_CAP = 40000;
-// Ratios outside this band are mis-keyed rows rather than price moves.
+// A prior sale older than this is too stale to compare against, even after
+// time-normalising: the card may be a different thing by then (re-grade,
+// re-slab, market regime change).
+const RSI_MAX_GAP_DAYS = 180;
+// Below this many paired sales a bucket is noise rather than signal.
+const RSI_MIN_OBS = 20;
+// Ratios outside this band are mis-keyed rows, not price moves.
 const RSI_RATIO_FLOOR = 0.25;
 const RSI_RATIO_CEIL = 4;
-// Progressive relaxation: a strict gate gives the most honest number and, on a
-// thin dataset, no number at all. Walk down until one tier produces a usable
-// sample, and report which tier was used.
+// Guard against a single observation whose gap is so short that rescaling it
+// to a bucket explodes it. One day of gap rescaled to a 7-day bucket is a
+// seventh power; clamp what any one bucket may contribute.
+const RSI_BUCKET_MOVE_FLOOR = 0.5;
+const RSI_BUCKET_MOVE_CEIL = 2;
+
 const RSI_TIERS = [
-  { label: 'strict', minMatched: 12 },
-  { label: 'wider',  minMatched: 8  },
-  { label: 'widest', minMatched: 5  },
+  { label: 'strict', minObs: RSI_MIN_OBS },
+  { label: 'wider',  minObs: 10 },
+  { label: 'widest', minObs: 5 },
 ];
 
-// Bucket geometry for a requested period. `points` comparisons of `bucketDays`
-// each, plus one extra bucket at the back to compare the oldest point against.
 function _rsiGeometry(days) {
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
   const points = Math.max(1, Math.round(days / bucketDays));
   return { bucketDays, points, spanDays: (points + 1) * bucketDays };
 }
 
-function _rsiMedian(sorted) {
-  const n = sorted.length;
-  if (n === 0) return null;
-  const mid = n >> 1;
-  return n % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-}
-
-// Fold the SQL result into { cardKey -> Map(bucket -> mean price) }. Bucket 0
-// is the most recent window and the index counts backwards from there.
-function _rsiFold(rows) {
-  const byCard = new Map();
-  for (const r of rows) {
-    const n = Number(r.n) || 0;
-    const cents = Number(r.cents) || 0;
-    if (n <= 0 || cents <= 0) continue;
-    const bucket = Number(r.bucket);
-    if (!Number.isInteger(bucket) || bucket < 0) continue;
-    const key = `${r.year}|${r.set_name}|${r.player}|${r.parallel}|${r.grader}|${r.grade}`;
-    let b = byCard.get(key);
-    if (!b) { b = new Map(); byCard.set(key, b); }
-    b.set(bucket, cents / n);
-  }
-  return byCard;
-}
-
-// One link of the chain: the median price change among cards that traded in
-// both buckets. Cards absent from either are skipped rather than carried
-// forward — a carried value contributes a ratio of exactly 1.0 and would drag
-// every step toward "no change", which is a bias, not a signal.
-function _rsiLink(byCard, newer, older, minMatched) {
-  const ratios = [];
-  for (const b of byCard.values()) {
-    const a = b.get(newer);
-    if (a === undefined) continue;
-    const c = b.get(older);
-    if (c === undefined || !(c > 0)) continue;
-    const ratio = a / c;
-    if (!Number.isFinite(ratio) || ratio < RSI_RATIO_FLOOR || ratio > RSI_RATIO_CEIL) continue;
-    ratios.push(ratio);
-  }
-  if (ratios.length < minMatched) return { ratio: 1, matched: ratios.length, thin: true };
-  ratios.sort((a, b) => a - b);
-  return { ratio: _rsiMedian(ratios), matched: ratios.length, thin: false };
+// Every sale paired with that card's previous sale at ANY earlier date, then
+// reduced to one row per bucket: the median price ratio, the median gap those
+// ratios were measured over, and how many observations stand behind them.
+//
+// The median is computed by ranking and taking the middle row(s), because
+// SQLite has no percentile function. Only arithmetic, julianday and window
+// functions are used — no math extensions, which may not be present on D1.
+// The exponentiation happens in JavaScript on a dozen rows.
+function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = []) {
+  const { bucketDays, spanDays } = _rsiGeometry(days);
+  // Reach back past the window for priors, so a sale early in the window can
+  // still be paired with the sale before it.
+  const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
+  const windowEnd = throughIso;
+  return db.prepare(
+    `WITH paired AS (
+       SELECT sold_date,
+              CAST((julianday(?) - julianday(sold_date)) / ? AS INTEGER) AS bucket,
+              price_cents AS now_cents,
+              LAG(price_cents) OVER w AS prev_cents,
+              julianday(sold_date) - julianday(LAG(sold_date) OVER w) AS gap
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?${extraWhere}
+       WINDOW w AS (PARTITION BY year, set_name, player, parallel, grader, grade
+                    ORDER BY sold_date)
+     ),
+     usable AS (
+       SELECT bucket, (now_cents * 1.0) / prev_cents AS ratio, gap
+         FROM paired
+        WHERE prev_cents IS NOT NULL AND prev_cents > 0
+          AND bucket >= 0
+          AND gap >= 1 AND gap <= ${RSI_MAX_GAP_DAYS}
+          AND (now_cents * 1.0) / prev_cents BETWEEN ${RSI_RATIO_FLOOR} AND ${RSI_RATIO_CEIL}
+     ),
+     ranked AS (
+       SELECT bucket, ratio, gap,
+              ROW_NUMBER() OVER (PARTITION BY bucket ORDER BY ratio) AS rr,
+              ROW_NUMBER() OVER (PARTITION BY bucket ORDER BY gap)   AS rg,
+              COUNT(*)     OVER (PARTITION BY bucket)                AS cnt
+         FROM usable
+     )
+     SELECT bucket, cnt AS n,
+            AVG(CASE WHEN rr IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN ratio END) AS med_ratio,
+            AVG(CASE WHEN rg IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN gap   END) AS med_gap
+       FROM ranked
+      GROUP BY bucket, cnt
+      ORDER BY bucket`
+  ).bind(throughIso, bucketDays, sinceIso, windowEnd, ...extraBinds);
 }
 
 function _buildRepeatSalesPayload(rows, throughIso, days, extra = {}) {
-  const byCard = _rsiFold(rows);
   const { bucketDays, points } = _rsiGeometry(days);
+  const byBucket = new Map();
+  for (const r of rows) {
+    const b = Number(r.bucket);
+    if (Number.isInteger(b) && b >= 0) byBucket.set(b, r);
+  }
   let last = null;
   for (const tier of RSI_TIERS) {
-    const out = _rsiPayloadAt(byCard, throughIso, days, bucketDays, points, tier, extra);
+    const out = _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, extra);
     if (out.available) return out;
     last = out;
   }
   return last;
 }
 
-function _rsiPayloadAt(byCard, throughIso, days, bucketDays, points, tier, extra = {}) {
+function _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, extra = {}) {
   const round1 = (n) => Math.round(n * 10) / 10;
   const through = _mkDay(throughIso);
 
-  // The headline is the chained path, not a single bucket-0-against-bucket-N
-  // comparison. That direct form demanded a card trade in those two exact
-  // windows, and on sparse data almost none do — cards resell on their own
-  // schedule, not on the index's. Chaining adjacent steps only ever asks
-  // whether a card traded in two NEIGHBOURING buckets, which is a far easier
-  // thing to satisfy and is how a chained index is built in any case.
+  // Turn each bucket's median ratio into what that bucket is worth, by
+  // rescaling from the gap it was actually measured over.
   const steps = [];
-  for (let i = points - 1; i >= 0; i--) steps.push(_rsiLink(byCard, i, i + 1, tier.minMatched));
+  for (let b = points - 1; b >= 0; b--) {
+    const r = byBucket.get(b);
+    const n = r ? Number(r.n) || 0 : 0;
+    if (!r || n < tier.minObs || !(r.med_ratio > 0) || !(r.med_gap > 0)) {
+      steps.push({ bucket: b, growth: 1, n, thin: true });
+      continue;
+    }
+    let growth = Math.pow(r.med_ratio, bucketDays / r.med_gap);
+    if (!Number.isFinite(growth)) growth = 1;
+    growth = Math.min(RSI_BUCKET_MOVE_CEIL, Math.max(RSI_BUCKET_MOVE_FLOOR, growth));
+    steps.push({ bucket: b, growth, n, thin: false, medRatio: r.med_ratio, medGap: r.med_gap });
+  }
 
   const solid = steps.filter(s => !s.thin);
-  // At least half the steps have to stand on real matches. Below that the line
-  // is mostly carried-forward flat and the level means little.
   if (solid.length === 0 || solid.length * 2 < steps.length) {
     return {
-      available: false, days, reason: 'not enough repeat sales yet',
-      minCards: tier.minMatched,
-      matchedCards: Math.max(0, ...steps.map(s => s.matched)),
-      tier: tier.label, bucketDays, through: throughIso, method: 'repeat-sales', ...extra,
+      available: false, days, reason: 'not enough paired sales yet',
+      minObs: tier.minObs,
+      observations: Math.max(0, ...steps.map(s => s.n)),
+      tier: tier.label, bucketDays, through: throughIso, method: 'paired-sales', ...extra,
     };
   }
 
   const series = [{ date: _mkIso(through - points * bucketDays), score: 100 }];
   let level = 100;
-  for (let i = 0; i < steps.length; i++) {
-    level *= steps[i].ratio;
+  for (const s of steps) {
+    level *= s.growth;
     series.push({
-      date: _mkIso(through - (points - 1 - i) * bucketDays),
+      date: _mkIso(through - s.bucket * bucketDays),
       score: round1(level),
-      matched: steps[i].matched,
+      matched: s.n,
     });
   }
 
   const score = round1(level);
-  const matchedCounts = solid.map(s => s.matched).sort((a, b) => a - b);
+  const counts = solid.map(s => s.n).sort((a, b) => a - b);
+  const gaps = solid.map(s => s.medGap).sort((a, b) => a - b);
   return {
     available: true,
     days,
-    method: 'repeat-sales',
+    method: 'paired-sales',
     tier: tier.label,
     through: throughIso,
     dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - through),
     score: Math.round(score),
     rawScore: score,
     changePct: round1(score - 100),
-    // The typical per-step sample, and the weakest one. The weakest link is
-    // what the chain actually rests on, so it is not hidden.
-    matchedCards: _rsiMedian(matchedCounts),
-    minMatchedInAnyStep: matchedCounts[0],
-    minCards: tier.minMatched,
+    // Paired sales behind the typical bucket, and behind the weakest one. The
+    // chain is only as good as its thinnest link, so that is not hidden.
+    matchedCards: counts[Math.floor(counts.length / 2)],
+    minMatchedInAnyStep: counts[0],
+    totalObservations: steps.reduce((a, s) => a + s.n, 0),
+    minObs: tier.minObs,
+    // How far apart the compared sales typically were. Large gaps mean the
+    // reading leans on older prices even after normalising.
+    typicalGapDays: gaps.length ? Math.round(gaps[Math.floor(gaps.length / 2)]) : null,
     bucketDays,
-    trackedCards: byCard.size,
     thinSteps: steps.length - solid.length,
     series,
     ...extra,
   };
 }
 
-// The one query every index runs, and the reason the whole-market view works.
-//
-// The first version grouped by (bucket, card) and capped the result at a row
-// count. On one player that was fine. Across the whole market it asked for
-// ~195,000 rows against a 40,000 cap, and because a GROUP BY comes back ordered
-// by its grouping columns — bucket first — the cap kept ONLY the newest bucket.
-// No card could appear in two buckets, so nothing ever matched and the market
-// index reported "not enough repeat sales" on a dataset with 14,000 of them.
-//
-// Two changes fix it for good:
-//   1. Cards that sold in fewer than two buckets are dropped in SQL. They can
-//      never form a pair, and on this dataset they are the large majority of
-//      rows — 150,000 of the 175,000 cards in the reproduction were singles.
-//   2. What remains is capped by CARD, not by row, taking the most actively
-//      traded first. A card is therefore always returned whole, with every
-//      bucket it traded in, so truncation can never again silently delete a
-//      period. Selecting the most-traded cards is also the better index: it is
-//      what a published basket like the CL50 does, for the same reason — liquid
-//      cards carry a cleaner price signal than one-off sales.
-function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = []) {
-  const { bucketDays, points, spanDays } = _rsiGeometry(days);
-  const sinceIso = _mkIso(_mkDay(throughIso) - spanDays);
-  // Budget the row cap across the buckets a card can occupy, so the query
-  // cannot exceed it however the data falls.
-  const cardCap = Math.max(500, Math.floor(RSI_ROW_CAP / (points + 1)));
-  const KEY = 'year, set_name, player, parallel, grader, grade';
-  return db.prepare(
-    `WITH b AS (
-       SELECT CAST((julianday(?) - julianday(sold_date)) / ? AS INTEGER) AS bucket,
-              ${KEY}, SUM(price_cents) AS cents, COUNT(*) AS n
-         FROM sales
-        WHERE price_cents IS NOT NULL
-          AND sold_date > ? AND sold_date <= ?${extraWhere}
-        GROUP BY bucket, ${KEY}
-     ),
-     picked AS (
-       SELECT ${KEY}, SUM(n) AS sales
-         FROM b
-        GROUP BY ${KEY}
-       HAVING COUNT(*) >= 2
-        ORDER BY sales DESC
-        LIMIT ${cardCap}
-     )
-     SELECT b.bucket, b.${KEY.split(', ').join(', b.')}, b.cents, b.n
-       FROM b JOIN picked USING (${KEY})`
-  ).bind(throughIso, bucketDays, sinceIso, throughIso, ...extraBinds);
-}
-
-// ---- Index health -----------------------------------------------------------
-// Why the index says "not enough repeat sales". There are only three possible
-// causes, they need different fixes, and they cannot be told apart from
-// outside:
-//   1. Not enough history — the dataset does not span the period being asked for
-//   2. Not enough repeat sales — cards sell once and never again
-//   3. Key fragmentation — the same card is recorded under many spellings, so
-//      its repeat sales never line up as repeats
-//
-// Every question below is answered by an aggregate query. The first version
-// built the whole index three times over raw rows and tripped the Worker CPU
-// limit, which is exactly the failure it was written to diagnose.
 // ---- Player field quality ---------------------------------------------------
 // 96,445 distinct player values across 297,027 sales is roughly fifteen times
 // the number of real footballers who appear on cards, which means the field is
@@ -3223,8 +3199,7 @@ app.get('/api/market-index', async (req, res) => {
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });
 
-    const payload = _buildRepeatSalesPayload(list, throughIso, days,
-      { truncated: list.length >= RSI_ROW_CAP });
+    const payload = _buildRepeatSalesPayload(list, throughIso, days);
     if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
     res.json(payload);
   } catch (err) {
