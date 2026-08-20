@@ -2816,6 +2816,36 @@ const RSI_TIERS = [
   { label: 'widest', minObs: 5 },
 ];
 
+// Normalise a key column inside SQL, so the grouping that builds the index
+// treats spelling variants of one card as that card.
+//
+// The player column carries 96,445 distinct values across 297,027 sales, about
+// fifteen times the number of footballers who appear on cards, because it is
+// parsed out of listing titles. Every variant splits one real card into several
+// that can never pair, which is the largest constraint on the index's sample.
+//
+// This is deliberately mechanical — case, punctuation and whitespace only. It
+// cannot repair a value that is not a name at all; that needs a roster match,
+// which is a separate change.
+//
+// Generational suffixes are NOT stripped. Removing them would merge Marvin
+// Harrison Jr with Marvin Harrison Sr, and Odell Beckham Jr with his father —
+// different players with separate markets. Dropping punctuation already folds
+// "Jr." and "JR" onto "jr", which is the variance worth collapsing; the suffix
+// itself is identity.
+function _normCol(col) {
+  let e = col;
+  for (const ch of ["''", '.', ',', '"', '`', '’', '-']) e = `REPLACE(${e}, '${ch}', '')`;
+  e = `LOWER(TRIM(${e}))`;
+  for (let i = 0; i < 4; i++) e = `REPLACE(${e}, '  ', ' ')`;
+  return `TRIM(${e})`;
+}
+
+// The card identity used by every index query. Normalised so that grouping is
+// done on the cleaned form rather than the raw text.
+const RSI_KEY_COLS = ['year', 'set_name', 'player', 'parallel', 'grader', 'grade'];
+const RSI_KEY_SQL = RSI_KEY_COLS.map(_normCol).join(', ');
+
 function _rsiGeometry(days) {
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
   const points = Math.max(1, Math.round(days / bucketDays));
@@ -2846,7 +2876,7 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = []) {
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?${extraWhere}
-       WINDOW w AS (PARTITION BY year, set_name, player, parallel, grader, grade
+       WINDOW w AS (PARTITION BY ${RSI_KEY_SQL}
                     ORDER BY sold_date)
      ),
      usable AS (
@@ -3020,9 +3050,28 @@ app.get('/api/debug/player-quality', async (req, res) => {
               WHERE price_cents IS NOT NULL AND player IS NOT NULL AND player <> '')`
     ).first();
 
+    // What the normalisation actually buys on this dataset. Raw distinct
+    // values against normalised ones, for the player column and for the whole
+    // card key — the second is the number that decides how many cards can pair.
+    const collapse = await db.prepare(
+      `SELECT
+         COUNT(DISTINCT player) AS raw_players,
+         COUNT(DISTINCT ${_normCol('player')}) AS norm_players,
+         COUNT(DISTINCT year || '|' || set_name || '|' || player || '|' || parallel || '|' || grader || '|' || grade) AS raw_cards,
+         COUNT(DISTINCT ${RSI_KEY_COLS.map(c => _normCol(c)).join(" || '|' || ")}) AS norm_cards
+       FROM sales WHERE price_cents IS NOT NULL`
+    ).first();
+
     res.json({
       available: true,
       distinctPlayers: shape ? shape.players : null,
+      normalisation: collapse ? {
+        players: { raw: collapse.raw_players, normalised: collapse.norm_players,
+                   merged: collapse.raw_players - collapse.norm_players },
+        cardKeys: { raw: collapse.raw_cards, normalised: collapse.norm_cards,
+                    merged: collapse.raw_cards - collapse.norm_cards },
+        note: 'Case, punctuation and whitespace only. Values that are not names at all still need a roster match.',
+      } : null,
       salesPerPlayer: shape ? {
         exactlyOnce: shape.once, twoOrThree: shape.few, fourToTwenty: shape.some, over20: shape.many,
       } : null,

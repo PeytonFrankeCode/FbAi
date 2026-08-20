@@ -57,7 +57,12 @@ function buildDb(driftPct) {
 let active = null;
 const d1 = {
   prepare(sql) {
-    const clean = sql.replace(/\s+/g, ' ').trim();
+    // Deliberately NOT collapsing whitespace. An earlier version did, for
+    // readability, and it rewrote the two-space literal inside
+    // REPLACE(col, '  ', ' ') into a single space — silently disabling the
+    // key normalisation this suite is meant to verify. D1 does not rewrite
+    // SQL, so neither may the stub.
+    const clean = sql;
     let bound = [];
     const api = {
       bind(...a) { bound = a; return api; },
@@ -139,6 +144,43 @@ const check = (label, ok, detail) => {
   const spread = Math.abs(readings['fast resales'] - readings['slow resales']);
   check('same drift reads the same whether cards resell fast or slowly', spread <= 3,
         `fast=${readings['fast resales']}%  slow=${readings['slow resales']}%  spread=${spread.toFixed(1)}pp`);
+
+  // Name fragmentation. The live player column holds ~15x more distinct values
+  // than there are footballers, because it is parsed from listing titles. Each
+  // variant splits one card into several that can never pair, so the index
+  // groups on a normalised key. This writes the same 4,000 cards under six
+  // spellings each and checks they come back together.
+  {
+    const dbF = new DatabaseSync(':memory:');
+    dbF.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    const spellings = (n) => [n, n.toLowerCase(), n.toUpperCase(), ' ' + n + ' ', n + '.', n.replace(/ /g, '  ')];
+    dbF.exec('BEGIN');
+    const insF = dbF.prepare(`INSERT INTO sales
+      (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?)`);
+    let f = 0;
+    for (let c = 0; c < 4000; c++) {
+      const name = `Player ${c}`;
+      for (let k = 0; k < 6; k++) {
+        insF.run(`f${f++}`, iso(-Math.floor(Math.random() * 60) - 1), 10000 + c,
+                 spellings(name)[Math.floor(Math.random() * 6)],
+                 '2023', 'Prizm', 'Base', 'PSA', '10', 0.9);
+      }
+    }
+    dbF.exec('COMMIT');
+    active = dbF;
+    const q = await (await fetch(`http://127.0.0.1:${PORT}/api/debug/player-quality`)).json();
+    const norm = q.normalisation;
+    check('spelling variants collapse to one card each',
+          !!norm && norm.players.normalised === 4000,
+          norm ? `${norm.players.raw} raw -> ${norm.players.normalised} normalised (merged ${norm.players.merged})`
+               : 'no normalisation block returned');
+    const idx = await (await fetch(`http://127.0.0.1:${PORT}/api/market-index?days=30`)).json();
+    check('  ...and the index pairs them', idx.available && idx.matchedCards > 0,
+          idx.available ? `obs/bucket=${idx.matchedCards} total=${idx.totalObservations}` : idx.reason);
+  }
 
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall accuracy checks passed');

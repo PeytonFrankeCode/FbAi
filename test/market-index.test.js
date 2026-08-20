@@ -71,7 +71,12 @@ scenario('Price Double', (d) => 100 * Math.pow(2, (d + 200) / 200), (d) => (d > 
 // Minimal D1 shim over SQLite: prepare().bind().all()/.first().
 const d1 = {
   prepare(sql) {
-    const clean = sql.replace(/\s+/g, ' ').trim();
+    // Deliberately NOT collapsing whitespace. An earlier version did, for
+    // readability, and it rewrote the two-space literal inside
+    // REPLACE(col, '  ', ' ') into a single space — silently disabling the
+    // key normalisation this suite is meant to verify. D1 does not rewrite
+    // SQL, so neither may the stub.
+    const clean = sql;
     let bound = [];
     const api = {
       bind(...args) { bound = args; return api; },
