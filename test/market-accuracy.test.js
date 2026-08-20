@@ -93,10 +93,53 @@ const check = (label, ok, detail) => {
                       : `FAILED: ${r.reason}`);
     // The bug this file exists for: a market full of single-sale cards must
     // still pair up.
-    check(`  ...and pairs cards despite 40k single-sale cards`,
+    check(`  ...and pairs sales despite 40k single-sale cards`,
           r.available && r.matchedCards >= 500,
-          r.available ? `matched=${r.matchedCards} weakest step=${r.minMatchedInAnyStep}` : 'n/a');
+          r.available ? `obs/bucket=${r.matchedCards} weakest=${r.minMatchedInAnyStep} gap=${r.typicalGapDays}d` : 'n/a');
   }
+  // The specific fix for Card Ladder's time-attribution error. Two markets
+  // drift by the same amount; in one, cards resell quickly, in the other they
+  // resell slowly. Their raw price ratios differ a lot — a card reappearing
+  // after 20 days has moved further than one reappearing after 4 — so an index
+  // that applies the whole change on the day of resale would read them very
+  // differently. Normalising each observation to a per-day rate should make
+  // them agree.
+  const readings = {};
+  for (const [label, gapDays] of [['fast resales', 4], ['slow resales', 20]]) {
+    const db2 = new DatabaseSync(':memory:');
+    db2.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    const priceAt = (d, base) => base * Math.pow(1.15, (d + 100) / 30);  // +15%/30d in both
+    db2.exec('BEGIN');
+    const ins2 = db2.prepare(`INSERT INTO sales
+      (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?)`);
+    let m = 0;
+    for (let c = 0; c < 15000; c++) {
+      const base = 5000 + (c % 40) * 300;
+      // Sales spaced gapDays apart, so every pair is measured over that gap.
+      // The span is the same for both so the only difference is the spacing —
+      // it has to be long enough that the slow case still clears the history
+      // guard, or the comparison tests nothing.
+      // Stagger each card's schedule, or every card sells on the same dates and
+      // whole buckets come back empty — which is a fixture artefact, not
+      // something a real market does.
+      for (let d = -95 + (c % gapDays); d <= -1; d += gapDays) {
+        ins2.run(`g${m++}`, iso(d), Math.round(priceAt(d, base)), `Gap ${c}`,
+                 '2023', 'Prizm', 'Base', 'PSA', '10', 0.9);
+      }
+    }
+    db2.exec('COMMIT');
+    active = db2;
+    const r = await (await fetch(`http://127.0.0.1:${PORT}/api/market-index?days=30`)).json();
+    readings[label] = r.available ? r.changePct : null;
+    console.log(`      ${label} (${gapDays}d apart): index ${r.available ? (r.changePct > 0 ? '+' : '') + r.changePct + '%' : r.reason}, median gap seen ${r.typicalGapDays}d`);
+  }
+  const spread = Math.abs(readings['fast resales'] - readings['slow resales']);
+  check('same drift reads the same whether cards resell fast or slowly', spread <= 3,
+        `fast=${readings['fast resales']}%  slow=${readings['slow resales']}%  spread=${spread.toFixed(1)}pp`);
+
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall accuracy checks passed');
   process.exit(failures ? 1 : 0);
