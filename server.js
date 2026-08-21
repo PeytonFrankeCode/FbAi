@@ -2799,8 +2799,6 @@ const RSI_MIN_BUCKET_DAYS = 7;
 // time-normalising: the card may be a different thing by then (re-grade,
 // re-slab, market regime change).
 const RSI_MAX_GAP_DAYS = 180;
-// Below this many paired sales a bucket is noise rather than signal.
-const RSI_MIN_OBS = 20;
 // Ratios outside this band are mis-keyed rows, not price moves.
 const RSI_RATIO_FLOOR = 0.25;
 const RSI_RATIO_CEIL = 4;
@@ -2810,10 +2808,20 @@ const RSI_RATIO_CEIL = 4;
 const RSI_BUCKET_MOVE_FLOOR = 0.5;
 const RSI_BUCKET_MOVE_CEIL = 2;
 
+// How many of the 125 basket players must report in a bucket for that step to
+// count. Relaxed in turn so a quiet week degrades rather than disappears.
 const RSI_TIERS = [
-  { label: 'strict', minObs: RSI_MIN_OBS },
-  { label: 'wider',  minObs: 10 },
-  { label: 'widest', minObs: 5 },
+  { label: 'strict', minPlayers: 30 },
+  { label: 'wider',  minPlayers: 15 },
+  { label: 'widest', minPlayers: 6  },
+];
+// Scoped to one player the contributors are that player's cards, of which
+// there are at most MARKET_CARDS_PER_PLAYER, so the market's gates would never
+// be met however healthy the data.
+const RSI_TIERS_PLAYER = [
+  { label: 'strict', minPlayers: 5 },
+  { label: 'wider',  minPlayers: 3 },
+  { label: 'widest', minPlayers: 2 },
 ];
 
 // Normalise a key column inside SQL, so the grouping that builds the index
@@ -2860,59 +2868,119 @@ function _rsiGeometry(days) {
 // SQLite has no percentile function. Only arithmetic, julianday and window
 // functions are used — no math extensions, which may not be present on D1.
 // The exponentiation happens in JavaScript on a dozen rows.
-function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = []) {
+// The basket. Rather than every card that ever traded, the index tracks the
+// cards that actually carry the market: the busiest players, and within each,
+// the handful of cards of theirs that trade most — in practice their base
+// rookie, the Prizm/Silver, and a few close variants. Both lists are chosen by
+// sales volume rather than hand-picked, so the basket maintains itself as
+// players rise and fade, and the pick can never reflect an opinion.
+//
+// This replaces an index computed over every card in the dataset. That version
+// was dominated by the long tail: 200,115 distinct cards from 297,027 sales,
+// most of them commons that trade once. Their prices are noisy and nobody
+// tracks them, so they added variance without adding signal.
+const MARKET_TOP_PLAYERS = 125;
+const MARKET_CARDS_PER_PLAYER = 10;
+// A player needs this many priced comparisons inside a bucket to contribute.
+// One is enough: that player then casts a single vote among the basket, and
+// the robustness comes from the tier gate on how many players report, not from
+// insisting each has several sales. Requiring two silently emptied the index
+// wherever players hold few cards — a player with one card can never have two
+// comparisons in the same bucket.
+const MARKET_MIN_OBS_PER_PLAYER = 1;
+
+// One query builds the whole basket and returns one row per player per bucket:
+// their median price ratio and the median gap it was measured over. That is
+// about 125 x 11 rows whatever the dataset size, so the Worker does arithmetic
+// on a small table rather than grouping hundreds of thousands of sales.
+// `unit` is what one contributor to a bucket is. For the whole market that is
+// a player, so no single name can speak for the market however many of their
+// cards traded. Scoped to one player there is only ever one player, so the
+// contributor is a card instead — otherwise every bucket has a sample of one
+// and the index can never report.
+function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player') {
   const { bucketDays, spanDays } = _rsiGeometry(days);
-  // Reach back past the window for priors, so a sale early in the window can
-  // still be paired with the sale before it.
+  // Reach back beyond the window so a sale early in it still has a prior.
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
-  const windowEnd = throughIso;
+  const P = _normCol('player');
+  const CARD = RSI_KEY_COLS.map(_normCol).join(" || '|' || ");
   return db.prepare(
-    `WITH paired AS (
-       SELECT sold_date,
-              CAST((julianday(?) - julianday(sold_date)) / ? AS INTEGER) AS bucket,
-              price_cents AS now_cents,
-              LAG(price_cents) OVER w AS prev_cents,
-              julianday(sold_date) - julianday(LAG(sold_date) OVER w) AS gap
+    `WITH base AS (
+       SELECT sold_date, price_cents, ${P} AS player_n, ${CARD} AS card
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?${extraWhere}
-       WINDOW w AS (PARTITION BY ${RSI_KEY_SQL}
-                    ORDER BY sold_date)
+          AND sold_date > ? AND sold_date <= ?
+          AND ${P} <> ''${extraWhere}
+     ),
+     top_players AS (
+       SELECT player_n FROM base GROUP BY player_n
+        ORDER BY COUNT(*) DESC LIMIT ${MARKET_TOP_PLAYERS}
+     ),
+     card_counts AS (
+       SELECT b.player_n, b.card, COUNT(*) AS sales,
+              ROW_NUMBER() OVER (PARTITION BY b.player_n ORDER BY COUNT(*) DESC, b.card) AS rn
+         FROM base b JOIN top_players t ON t.player_n = b.player_n
+        GROUP BY b.player_n, b.card
+     ),
+     picked AS (SELECT player_n, card FROM card_counts WHERE rn <= ${MARKET_CARDS_PER_PLAYER}),
+     paired AS (
+       SELECT ${unit === 'card' ? 'b.card' : 'b.player_n'} AS p,
+              CAST((julianday(?) - julianday(b.sold_date)) / ? AS INTEGER) AS bucket,
+              b.price_cents AS now_c,
+              LAG(b.price_cents) OVER w AS prev_c,
+              julianday(b.sold_date) - julianday(LAG(b.sold_date) OVER w) AS gap
+         FROM base b JOIN picked k ON k.card = b.card
+       WINDOW w AS (PARTITION BY b.card ORDER BY b.sold_date)
      ),
      usable AS (
-       SELECT bucket, (now_cents * 1.0) / prev_cents AS ratio, gap
+       SELECT p, bucket, (now_c * 1.0) / prev_c AS ratio, gap
          FROM paired
-        WHERE prev_cents IS NOT NULL AND prev_cents > 0
-          AND bucket >= 0
+        WHERE prev_c IS NOT NULL AND prev_c > 0 AND bucket >= 0
           AND gap >= 1 AND gap <= ${RSI_MAX_GAP_DAYS}
-          AND (now_cents * 1.0) / prev_cents BETWEEN ${RSI_RATIO_FLOOR} AND ${RSI_RATIO_CEIL}
+          AND (now_c * 1.0) / prev_c BETWEEN ${RSI_RATIO_FLOOR} AND ${RSI_RATIO_CEIL}
      ),
      ranked AS (
-       SELECT bucket, ratio, gap,
-              ROW_NUMBER() OVER (PARTITION BY bucket ORDER BY ratio) AS rr,
-              ROW_NUMBER() OVER (PARTITION BY bucket ORDER BY gap)   AS rg,
-              COUNT(*)     OVER (PARTITION BY bucket)                AS cnt
+       SELECT p, bucket, ratio, gap,
+              ROW_NUMBER() OVER (PARTITION BY p, bucket ORDER BY ratio) AS rr,
+              ROW_NUMBER() OVER (PARTITION BY p, bucket ORDER BY gap)   AS rg,
+              COUNT(*)     OVER (PARTITION BY p, bucket)                AS cnt
          FROM usable
      )
-     SELECT bucket, cnt AS n,
+     SELECT bucket, p, cnt AS n,
             AVG(CASE WHEN rr IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN ratio END) AS med_ratio,
             AVG(CASE WHEN rg IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN gap   END) AS med_gap
        FROM ranked
-      GROUP BY bucket, cnt
-      ORDER BY bucket`
-  ).bind(throughIso, bucketDays, sinceIso, windowEnd, ...extraBinds);
+      WHERE cnt >= ${MARKET_MIN_OBS_PER_PLAYER}
+      GROUP BY bucket, p, cnt
+      ORDER BY bucket, p`
+    // Bind order follows the order the placeholders appear in the statement:
+    // the base CTE's date range, then any scope filter appended to it, then the
+    // bucket arithmetic further down. Passing extraBinds last silently fed the
+    // player name into the julianday() slot and returned nothing.
+  ).bind(sinceIso, throughIso, ...extraBinds, throughIso, bucketDays);
 }
 
-function _buildRepeatSalesPayload(rows, throughIso, days, extra = {}) {
+function _buildRepeatSalesPayload(rows, throughIso, days, extra = {}, tiers = RSI_TIERS) {
   const { bucketDays, points } = _rsiGeometry(days);
+  // bucket -> [{ growth, n }] — one entry per player in that bucket.
   const byBucket = new Map();
+  const players = new Set();
   for (const r of rows) {
     const b = Number(r.bucket);
-    if (Number.isInteger(b) && b >= 0) byBucket.set(b, r);
+    const ratio = Number(r.med_ratio);
+    const gap = Number(r.med_gap);
+    if (!Number.isInteger(b) || b < 0 || !(ratio > 0) || !(gap > 0)) continue;
+    let growth = Math.pow(ratio, bucketDays / gap);
+    if (!Number.isFinite(growth) || growth <= 0) continue;
+    growth = Math.min(RSI_BUCKET_MOVE_CEIL, Math.max(RSI_BUCKET_MOVE_FLOOR, growth));
+    if (!byBucket.has(b)) byBucket.set(b, []);
+    byBucket.get(b).push({ growth, n: Number(r.n) || 0, gap });
+    players.add(r.p);
   }
   let last = null;
-  for (const tier of RSI_TIERS) {
-    const out = _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, extra);
+  for (const tier of tiers) {
+    const out = _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier,
+      { basketPlayers: players.size, ...extra });
     if (out.available) return out;
     last = out;
   }
@@ -2923,29 +2991,48 @@ function _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, ext
   const round1 = (n) => Math.round(n * 10) / 10;
   const through = _mkDay(throughIso);
 
-  // Turn each bucket's median ratio into what that bucket is worth, by
-  // rescaling from the gap it was actually measured over.
   const steps = [];
   for (let b = points - 1; b >= 0; b--) {
-    const r = byBucket.get(b);
-    const n = r ? Number(r.n) || 0 : 0;
-    if (!r || n < tier.minObs || !(r.med_ratio > 0) || !(r.med_gap > 0)) {
-      steps.push({ bucket: b, growth: 1, n, thin: true });
+    const list = byBucket.get(b) || [];
+    if (list.length < tier.minPlayers) {
+      steps.push({ bucket: b, growth: 1, players: list.length, obs: 0, thin: true });
       continue;
     }
-    let growth = Math.pow(r.med_ratio, bucketDays / r.med_gap);
-    if (!Number.isFinite(growth)) growth = 1;
-    growth = Math.min(RSI_BUCKET_MOVE_CEIL, Math.max(RSI_BUCKET_MOVE_FLOOR, growth));
-    steps.push({ bucket: b, growth, n, thin: false, medRatio: r.med_ratio, medGap: r.med_gap });
+    // Geometric mean across players, not arithmetic. Averaging growth FACTORS
+    // arithmetically overstates compound growth — 0.5 and 2.0 average to 1.25
+    // where the honest answer is 1.0 — so the mean is taken over their logs.
+    // Each player counts once however many of their cards traded, which stops
+    // a heavily-printed name from speaking for the market.
+    const growth = Math.exp(list.reduce((a, x) => a + Math.log(x.growth), 0) / list.length);
+    steps.push({
+      bucket: b,
+      growth: Number.isFinite(growth) ? growth : 1,
+      players: list.length,
+      obs: list.reduce((a, x) => a + x.n, 0),
+      gaps: list.map(x => x.gap),
+      thin: false,
+    });
   }
 
   const solid = steps.filter(s => !s.thin);
+  // A bucket nobody reported in is unmeasured, not flat. Holding it at 1.0
+  // asserts the market stood still, which drags the whole chain toward zero
+  // wherever trading is sparse — the same drift read 3.6 points lower when
+  // cards resold every 20 days instead of every 4. An unmeasured bucket now
+  // inherits the typical growth of the buckets that did report, so gaps in
+  // coverage neither invent movement nor suppress it.
+  if (solid.length > 0) {
+    const rates = solid.map(x => x.growth).sort((a, b) => a - b);
+    const typical = rates[Math.floor(rates.length / 2)];
+    for (const st of steps) if (st.thin) st.growth = typical;
+  }
+
   if (solid.length === 0 || solid.length * 2 < steps.length) {
     return {
       available: false, days, reason: 'not enough paired sales yet',
-      minObs: tier.minObs,
-      observations: Math.max(0, ...steps.map(s => s.n)),
-      tier: tier.label, bucketDays, through: throughIso, method: 'paired-sales', ...extra,
+      minPlayers: tier.minPlayers,
+      playersInBestStep: Math.max(0, ...steps.map(s => s.players)),
+      tier: tier.label, bucketDays, through: throughIso, method: 'player-basket', ...extra,
     };
   }
 
@@ -2956,32 +3043,33 @@ function _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, ext
     series.push({
       date: _mkIso(through - s.bucket * bucketDays),
       score: round1(level),
-      matched: s.n,
+      matched: s.players,
     });
   }
 
   const score = round1(level);
-  const counts = solid.map(s => s.n).sort((a, b) => a - b);
-  const gaps = solid.map(s => s.medGap).sort((a, b) => a - b);
+  const counts = solid.map(s => s.players).sort((a, b) => a - b);
+  // How far apart the compared sales typically were. A large number means the
+  // reading leans on older prices even after they are time-normalised.
+  const allGaps = solid.flatMap(s => s.gaps || []).sort((a, b) => a - b);
   return {
     available: true,
     days,
-    method: 'paired-sales',
+    method: 'player-basket',
     tier: tier.label,
     through: throughIso,
     dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - through),
     score: Math.round(score),
     rawScore: score,
     changePct: round1(score - 100),
-    // Paired sales behind the typical bucket, and behind the weakest one. The
-    // chain is only as good as its thinnest link, so that is not hidden.
+    // Players standing behind a typical point, and behind the weakest one.
     matchedCards: counts[Math.floor(counts.length / 2)],
     minMatchedInAnyStep: counts[0],
-    totalObservations: steps.reduce((a, s) => a + s.n, 0),
-    minObs: tier.minObs,
-    // How far apart the compared sales typically were. Large gaps mean the
-    // reading leans on older prices even after normalising.
-    typicalGapDays: gaps.length ? Math.round(gaps[Math.floor(gaps.length / 2)]) : null,
+    totalObservations: steps.reduce((a, s) => a + s.obs, 0),
+    topPlayers: MARKET_TOP_PLAYERS,
+    cardsPerPlayer: MARKET_CARDS_PER_PLAYER,
+    minPlayers: tier.minPlayers,
+    typicalGapDays: allGaps.length ? Math.round(allGaps[Math.floor(allGaps.length / 2)]) : null,
     bucketDays,
     thinSteps: steps.length - solid.length,
     series,
@@ -3352,11 +3440,11 @@ app.get('/api/player-index', async (req, res) => {
     // Identical maths to the market index on purpose: a player's number is only
     // worth showing beside the market's if the two are the same measurement.
     const rows = await _rsiQuery(db, throughIso, days,
-      ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE]).all();
+      ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card').all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, player, reason: 'no sales for this player' });
 
-    const payload = _buildRepeatSalesPayload(list, throughIso, days, { player });
+    const payload = _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
     if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
     res.json(payload);
   } catch (err) {
