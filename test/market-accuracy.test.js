@@ -34,21 +34,24 @@ function buildDb(driftPct) {
     (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence)
     VALUES (?,?,?,?,?,?,?,?,?,?)`);
   let n = 0;
-  // Cards that sell once and never again. These are the majority of a real
-  // dataset and the rows that used to flood the query's row cap.
-  for (let c = 0; c < 40000; c++) {
+  // A real card market has a concentrated head and a very long tail, and the
+  // index is built to track the head. So: 200 traded players with a dozen cards
+  // each, and 20,000 names that sold once and never again. The basket should
+  // find the head and ignore the tail entirely.
+  for (let p = 0; p < 200; p++) {
+    for (let c = 0; c < 12; c++) {
+      const base = 2000 + (c === 0 ? 20000 : 0) + c * 400;   // card 0 is the key rookie
+      const times = c < 10 ? 14 : 4;
+      for (let k = 0; k < times; k++) {
+        const d = -Math.floor(Math.random() * 34) - 1;
+        ins.run(`h${n++}`, iso(d), Math.round(priceAt(d, base)), `Star ${p}`,
+                '2023', 'Prizm', `Var${c}`, 'PSA', '10', 0.9);
+      }
+    }
+  }
+  for (let c = 0; c < 20000; c++) {
     ins.run(`s${n++}`, iso(-Math.floor(Math.random() * 35)), 5000, `Junk ${c}`,
             '2023', 'Prizm', 'Base', '', '', 0.9);
-  }
-  // Cards that resell, priced off the trend at whatever date they sold.
-  for (let c = 0; c < 20000; c++) {
-    const base = 5000 + (c % 50) * 200;
-    const times = 2 + Math.floor(Math.random() * 3);
-    for (let k = 0; k < times; k++) {
-      const d = -Math.floor(Math.random() * 34) - 1;
-      ins.run(`r${n++}`, iso(d), Math.round(priceAt(d, base)), `Real ${c}`,
-              '2023', 'Prizm', 'Base', 'PSA', '10', 0.9);
-    }
   }
   db.exec('COMMIT');
   return { db, sales: n };
@@ -98,9 +101,10 @@ const check = (label, ok, detail) => {
                       : `FAILED: ${r.reason}`);
     // The bug this file exists for: a market full of single-sale cards must
     // still pair up.
-    check(`  ...and pairs sales despite 40k single-sale cards`,
-          r.available && r.matchedCards >= 500,
-          r.available ? `obs/bucket=${r.matchedCards} weakest=${r.minMatchedInAnyStep} gap=${r.typicalGapDays}d` : 'n/a');
+    // The basket must find the head and ignore the 20,000 one-sale names.
+    check(`  ...and builds its basket from the traded head, not the tail`,
+          r.available && r.matchedCards >= 30,
+          r.available ? `players/bucket=${r.matchedCards} weakest=${r.minMatchedInAnyStep} gap=${r.typicalGapDays}d obs=${r.totalObservations}` : 'n/a');
   }
   // The specific fix for Card Ladder's time-attribution error. Two markets
   // drift by the same amount; in one, cards resell quickly, in the other they

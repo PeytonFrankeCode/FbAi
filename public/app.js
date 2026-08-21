@@ -3886,7 +3886,7 @@ async function loadMarketIndex() {
       title = 'Not enough paired sales yet';
       text = `The index compares each sale with what that same card last sold for, so it needs cards that have sold more than once`
            + `${_mkPlayer ? `, and ${who} hasn't had enough of those` : ''}.`
-           + `${data.observations != null ? ` It found ${data.observations} and needs ${data.minObs}.` : ''}`
+           + `${data.playersInBestStep != null ? ` It found ${data.playersInBestStep} of the ${data.topPlayers || 125} tracked players and needs ${data.minPlayers}.` : ''}`
            + ` Try a longer period, or check back as more sales are collected.`;
     } else if (noPlayer) {
       title = 'No sales on record';
@@ -3925,9 +3925,9 @@ async function loadMarketIndex() {
         <div class="market-comp-prev">median across matched cards</div>
       </div>
       <div class="market-comp">
-        <div class="market-comp-head"><span class="market-comp-label">Sales compared</span></div>
+        <div class="market-comp-head"><span class="market-comp-label">Players reporting</span></div>
         <div class="market-comp-value">${(data.matchedCards || 0).toLocaleString('en-US')}</div>
-        <div class="market-comp-prev">each against that card's own last sale</div>
+        <div class="market-comp-prev">of the ${data.topPlayers || 125} tracked</div>
       </div>
       <div class="market-comp">
         <div class="market-comp-head"><span class="market-comp-label">Resale gap</span></div>
@@ -3947,8 +3947,8 @@ async function loadMarketIndex() {
     </div>
 
     <div class="market-notes">
-      <p><strong>How it works.</strong> Every sale is compared with what that same card last sold for, however long ago. Each comparison is converted to a per-day rate over its own gap, so a card that reappears after months isn't mistaken for a one-day move. The index then follows the <strong>middle</strong> of those rates. Every sale counts once regardless of price, so the number is a typical card's move, not the most expensive card's.</p>
-      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + ' cards' : 'Football cards'} we track and could price, matched on year, set, parallel and grade. A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} paired sales${data.totalObservations ? `, ${data.totalObservations.toLocaleString('en-US')} across the whole period` : ''}. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
+      <p><strong>How it works.</strong> The index tracks the ${data.topPlayers || 125} most actively traded players, and for each of them the ${data.cardsPerPlayer || 10} cards of theirs that trade most &mdash; in practice the base rookie, the Prizm or Silver, and a few close variants. Every sale of those cards is compared with what that same card last sold for, converted to a per-day rate over its own gap so a card reappearing after months isn't mistaken for a one-day move. Each player contributes one number however many of their cards sold, and the market is the average across players.</p>
+      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded cards, matched on year, set, parallel and grade. A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}. Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
       ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had too few matched cards to measure, so the line is held flat there. It is smoother than the market actually was.</p>` : ''}
       ${data.tier && data.tier !== 'strict' ? `<p class="market-warn"><strong>Wider sample.</strong> There weren't enough exact repeat sales in this period, so the index looked back over a ${data.valueWindow}-day window per card to find them. Treat it as directional.</p>` : ''}
       ${data.dataLagDays > 1 ? `<p class="market-warn"><strong>Data is ${data.dataLagDays} days behind.</strong> The newest sales we hold are from ${_mkDateLabel(data.through)}, so this reflects the market up to then.</p>` : ''}
