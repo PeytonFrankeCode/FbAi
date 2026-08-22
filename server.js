@@ -2882,14 +2882,18 @@ const ALIAS_BACKFILL_BATCH = 1200;  // variants resolved per cron run
 // not break the index, it would quietly shrink the market to whatever had been
 // processed so far, which is worse because nothing looks wrong.
 //
-// Measured over SALES, not distinct names. Counting names was the first
-// version and it was badly wrong: there are 106,074 distinct name strings in
-// the window, nearly all of them junk that appeared once, so covering 95% of
-// them meant 84 cron runs — 21 hours — before the index would switch. The
-// backfill works head-first by volume, so 95% of the sales are covered within a
-// few batches. Each alias row already records how many sales its variant
-// carried, which makes this a cheap sum rather than a join.
-const ALIAS_MIN_COVERAGE = 0.95;
+// Measured over SALES, not distinct names, and now only a "is this worth
+// joining against" gate rather than a correctness threshold.
+//
+// It was 95% when the join was an inner one, because anything less silently
+// shrank the market. Two corrections later: counting distinct names was wrong
+// (106,074 of them, nearly all junk that traded once), and then sales-weighting
+// turned out not to help much either, because 95% of sales is deep enough into
+// a tail averaging 1.4 sales per name that it converges with name coverage — 20
+// hours either way. The fix was the join, not the measure. With a fallback to
+// the raw name, any coverage at all is an improvement, so this just avoids
+// paying for a join that would do almost nothing.
+const ALIAS_MIN_COVERAGE = 0.25;
 const ALIAS_MIN_ROWS = 25;          // guards the degenerate 0-of-0 case
 const ALIAS_WINDOW_DAYS = 400;      // how far back to look for names to resolve
 const ALIAS_READY_TTL = 300;        // 5 min — the readiness check is cached
@@ -3062,8 +3066,8 @@ app.get('/api/debug/alias-status', async (req, res) => {
     res.json({
       available: true,
       state: have === 0 ? 'table created, empty — run with ?run=1 or wait for the cron'
-           : share < ALIAS_MIN_COVERAGE ? 'filling'
-           : 'ready',
+           : share < ALIAS_MIN_COVERAGE ? 'filling — index still on raw names'
+           : 'in use, still filling — merges apply as names are reached',
       requestedRun: req.query.run == null ? null : String(req.query.run),
       ranNow: ran,
       coverage: {
@@ -3072,7 +3076,7 @@ app.get('/api/debug/alias-status', async (req, res) => {
         // the 100k+ distinct strings are junk that traded once.
         salesCovered: covered, salesInWindow: total,
         share: total ? Math.round(share * 1000) / 10 + '%' : null,
-        neededToSwitch: Math.round(ALIAS_MIN_COVERAGE * 100) + '%',
+        neededToStart: Math.round(ALIAS_MIN_COVERAGE * 100) + '%',
         aliasRows: have, resolvedRows: (cov && cov.resolved) || 0,
         distinctNamesInWindow: want,
       },
@@ -3232,10 +3236,19 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
   // "Cdt All", "Signature Class", "Complete Your Set" — and those strings
   // currently outrank real players, because a parse failure stays whole while
   // Tom Brady is split eighty ways.
-  const PLAYER = useAlias ? 'al.canonical' : P;
-  const JOIN = useAlias
-    ? `JOIN ${ALIAS_TABLE} al ON al.variant = ${P} AND al.resolved = 1`
-    : '';
+  // LEFT, not INNER. An inner join drops every sale whose name has no alias row
+  // yet, which made the table all-or-nothing: it could only be used once nearly
+  // every name was covered, and the tail is 103,674 names averaging 1.4 sales
+  // apiece, so that was twenty hours of waiting for a result that improves
+  // monotonically anyway.
+  //
+  // Falling back to the raw name makes every level of coverage strictly better
+  // than none: aliased names merge, names not yet reached behave exactly as
+  // they did before, and a variant known to contain no player is dropped. The
+  // junk that matters is high-volume by definition, so it is aliased first.
+  const PLAYER = useAlias ? `COALESCE(al.canonical, ${P})` : P;
+  const JOIN = useAlias ? `LEFT JOIN ${ALIAS_TABLE} al ON al.variant = ${P}` : '';
+  const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
   const CARD = _cardKeySql(PLAYER);
   return db.prepare(
     `WITH base AS (
@@ -3243,7 +3256,7 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${RSI_RAW_ONLY}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -3327,10 +3340,9 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
   const P = _normCol('player');
   // Same substitution as the index. The basket has to select from exactly the
   // same population or the list stops explaining the number above it.
-  const PLAYER = useAlias ? 'al.canonical' : P;
-  const JOIN = useAlias
-    ? `JOIN ${ALIAS_TABLE} al ON al.variant = ${P} AND al.resolved = 1`
-    : '';
+  const PLAYER = useAlias ? `COALESCE(al.canonical, ${P})` : P;
+  const JOIN = useAlias ? `LEFT JOIN ${ALIAS_TABLE} al ON al.variant = ${P}` : '';
+  const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
   const CARD = _cardKeySql(PLAYER);
   // The photo comes from the newest sale of that card that carried one. Dates
   // are ISO, so their lexical maximum is also their chronological one — the
@@ -3342,12 +3354,12 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
   return db.prepare(
     `WITH base AS (
        SELECT sold_date, price_cents, ${PLAYER} AS player_n, ${CARD} AS card,
-              ${useAlias ? 'al.display' : 'player'} AS player,
+              ${useAlias ? 'COALESCE(al.display, player)' : 'player'} AS player,
               year, set_name, parallel, grader, grade${hasImage ? ', image_url' : ''}
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${RSI_RAW_ONLY}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
