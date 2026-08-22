@@ -3959,7 +3959,6 @@ async function loadMarketIndex() {
       <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded cards, matched on year, set, parallel and grade. A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}. Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
       ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had too few matched cards to measure, so the line is held flat there. It is smoother than the market actually was.</p>` : ''}
       ${data.tier && data.tier !== 'strict' ? `<p class="market-warn"><strong>Wider sample.</strong> There weren't enough exact repeat sales in this period, so the index looked back over a ${data.valueWindow}-day window per card to find them. Treat it as directional.</p>` : ''}
-      ${data.dataLagDays > 1 ? `<p class="market-warn"><strong>Data is ${data.dataLagDays} days behind.</strong> The newest sales we hold are from ${_mkDateLabel(data.through)}, so this reflects the market up to then.</p>` : ''}
     </div>
   `;
 
