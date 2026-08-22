@@ -9123,3 +9123,58 @@ body.tour-open { overflow: hidden; }
 .da-confirm-btn { background: #dc2626; color: #fff; border-color: #dc2626; }
 .da-confirm-btn:hover { background: #b91c1c; border-color: #b91c1c; }
 .da-confirm-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* ---- Market basket: the cards behind the index ------------------------- */
+.market-basket {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 1rem 1.1rem 0.9rem;
+  margin: 0 0 1rem;
+}
+.market-basket-head { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.market-basket-title { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+.market-basket-sub { color: var(--text-secondary); font-size: 0.8rem; }
+.market-basket-list { list-style: none; margin: 0; padding: 0; }
+.market-basket-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 0.5rem 0.85rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+.market-basket-row:last-child { border-bottom: 0; }
+.mb-card { min-width: 0; }
+.mb-name {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.mb-detail { display: block; color: var(--text-secondary); font-size: 0.76rem; margin-top: 0.1rem; }
+.mb-sales, .mb-price { color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap; }
+.mb-price { font-variant-numeric: tabular-nums; }
+.mb-change {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  min-width: 4.2ch;
+  text-align: right;
+}
+.mb-change.up { color: var(--accent); }
+.mb-change.down { color: #f87171; }
+.mb-change.flat { color: var(--text-muted); }
+[data-theme="light"] .mb-change.down { color: #b91c1c; }
+.market-basket-note { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.5; margin: 0.7rem 0 0; }
+
+/* Stack the numbers under the card name on narrow screens rather than
+   squeezing four columns into 320px. */
+@media (max-width: 560px) {
+  .market-basket-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .mb-card { grid-column: 1 / -1; }
+  .mb-price { text-align: right; }
+  .mb-change { grid-column: 2; }
+}

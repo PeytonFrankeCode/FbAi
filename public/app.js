@@ -3936,6 +3936,14 @@ async function loadMarketIndex() {
       </div>
     </div>
 
+    <div class="market-basket" id="market-basket">
+      <div class="market-basket-head">
+        <span class="market-basket-title">What's driving it</span>
+        <span class="market-basket-sub">most-traded cards in the basket</span>
+      </div>
+      <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
+    </div>
+
     <div class="market-chart-card">
       <div class="market-chart-head">
         <span class="market-chart-title">Index over the last ${data.days} days</span>
@@ -3956,6 +3964,47 @@ async function loadMarketIndex() {
   `;
 
   _mkRenderChart(data);
+  loadMarketBasket();
+}
+
+// The basket is fetched separately from the index so a slow constituent query
+// never holds up the headline number.
+let _mkBasketSeq = 0;
+async function loadMarketBasket() {
+  const wrap = document.getElementById('market-basket');
+  if (!wrap) return;
+  const seq = ++_mkBasketSeq;
+  let data;
+  try {
+    const url = `/api/market-basket?days=${_mkDays}` + (_mkPlayer ? `&player=${encodeURIComponent(_mkPlayer)}` : '');
+    const res = await fetch(url, { cache: 'no-store' });
+    data = await safeJson(res);
+  } catch (_) { data = null; }
+  // A later request has already been issued; this answer is stale.
+  if (seq !== _mkBasketSeq) return;
+
+  const cards = data && data.available && Array.isArray(data.cards) ? data.cards : [];
+  if (!cards.length) { wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = `
+    <div class="market-basket-head">
+      <span class="market-basket-title">What's driving it</span>
+      <span class="market-basket-sub">${cards.length} most-traded card${cards.length === 1 ? '' : 's'} in the basket</span>
+    </div>
+    <ul class="market-basket-list">
+      ${cards.map(c => `
+        <li class="market-basket-row">
+          <div class="mb-card">
+            <span class="mb-name">${escHtml(c.label)}</span>
+            ${c.detail ? `<span class="mb-detail">${escHtml(c.detail)}</span>` : ''}
+          </div>
+          <span class="mb-sales">${(c.sales || 0).toLocaleString('en-US')} sold</span>
+          <span class="mb-price">${c.avgPrice != null ? _mkMoney(c.avgPrice) : '—'}</span>
+          <span class="mb-change ${c.changePct == null ? 'flat' : c.changePct >= 0 ? 'up' : 'down'}">${
+            c.changePct == null ? '—' : (c.changePct >= 0 ? '+' : '') + c.changePct + '%'}</span>
+        </li>`).join('')}
+    </ul>
+    <p class="market-basket-note">Each card's move is measured the same way as the index, over the same ${_mkDays} days. A dash means the card traded but never twice, so it has no move to report.</p>`;
 }
 
 function _mkRenderChart(data) {
