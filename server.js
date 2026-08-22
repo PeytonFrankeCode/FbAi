@@ -2880,9 +2880,15 @@ const ALIAS_BACKFILL_BATCH = 1200;  // variants resolved per cron run
 // Coverage, not a row count. The join is an inner one, so a name with no alias
 // row drops out of the index entirely — grouping on a half-filled table would
 // not break the index, it would quietly shrink the market to whatever had been
-// processed so far, which is worse because nothing looks wrong. The backfill
-// works head-first by volume, so by the time this share of distinct NAMES is
-// covered, very nearly all of the sales are.
+// processed so far, which is worse because nothing looks wrong.
+//
+// Measured over SALES, not distinct names. Counting names was the first
+// version and it was badly wrong: there are 106,074 distinct name strings in
+// the window, nearly all of them junk that appeared once, so covering 95% of
+// them meant 84 cron runs — 21 hours — before the index would switch. The
+// backfill works head-first by volume, so 95% of the sales are covered within a
+// few batches. Each alias row already records how many sales its variant
+// carried, which makes this a cheap sum rather than a join.
 const ALIAS_MIN_COVERAGE = 0.95;
 const ALIAS_MIN_ROWS = 25;          // guards the degenerate 0-of-0 case
 const ALIAS_WINDOW_DAYS = 400;      // how far back to look for names to resolve
@@ -2962,39 +2968,52 @@ async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH } = {}) {
            hit ? hit.how : 'none', ok ? 1 : 0, r.n, now));
   }
 
+  // Chunked. D1 caps how much one batch may carry, and a single oversized call
+  // fails whole rather than partially — which would mean the table never fills
+  // and the index never switches, with one log line to show for it.
+  const CHUNK = 50;
+  let written = 0;
   try {
-    if (typeof db.batch === 'function') await db.batch(stmts);
-    else for (const st of stmts) await st.run();
+    for (let i = 0; i < stmts.length; i += CHUNK) {
+      const slice = stmts.slice(i, i + CHUNK);
+      if (typeof db.batch === 'function') await db.batch(slice);
+      else for (const st of slice) await st.run();
+      written += slice.length;
+    }
   } catch (err) {
-    console.error('[alias] backfill write failed:', err && err.message);
-    return { ok: false, reason: 'write failed' };
+    // Partial progress is kept: every chunk already written stays, and the next
+    // run picks up from there because the query skips variants that have a row.
+    console.error(`[alias] write failed after ${written}/${stmts.length}:`, err && err.message);
+    return { ok: false, reason: 'write failed', written };
   }
-  console.log(`[alias] +${stmts.length} variants (${resolved} resolved)`);
-  return { ok: true, inserted: stmts.length, resolved };
+  console.log(`[alias] +${written} variants (${resolved} resolved)`);
+  return { ok: true, inserted: written, resolved };
 }
 
 // Is the table filled enough to group on? Cached, because every index build
 // would otherwise pay for the check.
 async function _aliasReady(db) {
-  const cached = await cacheGet('aliasready:v1');
+  const cached = await cacheGet('aliasready:v2');
   if (cached && typeof cached.ready === 'boolean') return cached.ready;
   if (_aliasTableReady === false) return false;
   const P = _normCol('player');
   const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
-  let ready = false, have = 0, want = 0;
+  let ready = false, rows = 0, covered = 0, total = 0;
   try {
     const r = await db.prepare(
-      `SELECT (SELECT COUNT(*) FROM ${ALIAS_TABLE}) AS have,
-              (SELECT COUNT(DISTINCT ${P}) FROM sales
-                WHERE player IS NOT NULL AND player <> '' AND sold_date > ?) AS want`
+      `SELECT (SELECT COUNT(*) FROM ${ALIAS_TABLE})   AS rows_,
+              (SELECT COALESCE(SUM(n), 0) FROM ${ALIAS_TABLE}) AS covered,
+              (SELECT COUNT(*) FROM sales
+                WHERE player IS NOT NULL AND player <> '' AND sold_date > ?) AS total`
     ).bind(since).first();
-    have = (r && r.have) || 0;
-    want = (r && r.want) || 0;
-    ready = have >= ALIAS_MIN_ROWS && want > 0 && (have / want) >= ALIAS_MIN_COVERAGE;
+    rows = (r && r.rows_) || 0;
+    covered = (r && r.covered) || 0;
+    total = (r && r.total) || 0;
+    ready = rows >= ALIAS_MIN_ROWS && total > 0 && (covered / total) >= ALIAS_MIN_COVERAGE;
   } catch (_) {
     ready = false;   // table not created yet — old path, no error to the reader
   }
-  cachePut('aliasready:v1', { ready, have, want }, ALIAS_READY_TTL);
+  cachePut('aliasready:v2', { ready, rows, covered, total }, ALIAS_READY_TTL);
   return ready;
 }
 
@@ -3020,31 +3039,42 @@ app.get('/api/debug/alias-status', async (req, res) => {
   }
   // ?run=1 fills a batch on demand rather than waiting for the next cron tick.
   let ran = null;
-  if (req.query.run === '1') ran = await backfillPlayerAliases({ limit: ALIAS_BACKFILL_BATCH });
+  const wantRun = req.query.run != null && !['0', 'false', ''].includes(String(req.query.run));
+  if (wantRun) ran = await backfillPlayerAliases({ limit: ALIAS_BACKFILL_BATCH });
 
   try {
     const cov = await db.prepare(
       `SELECT (SELECT COUNT(*) FROM ${ALIAS_TABLE}) AS have,
               (SELECT COUNT(*) FROM ${ALIAS_TABLE} WHERE resolved = 1) AS resolved,
+              (SELECT COALESCE(SUM(n), 0) FROM ${ALIAS_TABLE}) AS covered,
+              (SELECT COUNT(*) FROM sales
+                WHERE player IS NOT NULL AND player <> '' AND sold_date > ?) AS total,
               (SELECT COUNT(DISTINCT ${P}) FROM sales
                 WHERE player IS NOT NULL AND player <> '' AND sold_date > ?) AS want`
-    ).bind(since).first();
+    ).bind(since, since).first();
     const top = await db.prepare(
       `SELECT display, COUNT(*) AS spellings, SUM(n) AS sales
          FROM ${ALIAS_TABLE} WHERE resolved = 1
         GROUP BY canonical ORDER BY spellings DESC LIMIT 15`).all();
     const have = (cov && cov.have) || 0, want = (cov && cov.want) || 0;
+    const covered = (cov && cov.covered) || 0, total = (cov && cov.total) || 0;
+    const share = total ? covered / total : 0;
     res.json({
       available: true,
-      state: have === 0 ? 'table created, empty — waiting for the cron'
-           : (have / (want || 1)) < ALIAS_MIN_COVERAGE ? 'filling'
+      state: have === 0 ? 'table created, empty — run with ?run=1 or wait for the cron'
+           : share < ALIAS_MIN_COVERAGE ? 'filling'
            : 'ready',
+      requestedRun: req.query.run == null ? null : String(req.query.run),
       ranNow: ran,
       coverage: {
-        aliasRows: have, distinctNamesInWindow: want,
-        share: want ? Math.round((have / want) * 1000) / 10 + '%' : null,
+        // What the switchover is judged on: the share of SALES whose name has
+        // an alias row. Names are reported too, but only for context — most of
+        // the 100k+ distinct strings are junk that traded once.
+        salesCovered: covered, salesInWindow: total,
+        share: total ? Math.round(share * 1000) / 10 + '%' : null,
         neededToSwitch: Math.round(ALIAS_MIN_COVERAGE * 100) + '%',
-        resolvedRows: (cov && cov.resolved) || 0,
+        aliasRows: have, resolvedRows: (cov && cov.resolved) || 0,
+        distinctNamesInWindow: want,
       },
       indexIsUsingIt: await _aliasReady(db),
       biggestMerges: ((top && top.results) || [])

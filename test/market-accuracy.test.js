@@ -599,6 +599,15 @@ const check = (label, ok, detail) => {
           fill.ok ? `${fill.inserted} variants written, ${fill.resolved} resolved`
                   : `FAILED: ${fill.reason}`);
 
+    // Resumability is what makes chunked writes safe: if a chunk fails midway,
+    // the next run must pick up from there rather than redo everything or
+    // duplicate it. The backfill skips variants that already have a row, so a
+    // second pass over the same data has nothing left to do.
+    const again = await backfillPlayerAliases({ limit: 500 });
+    check('  ...and running it again has nothing left to do',
+          again.ok && again.inserted === 0,
+          again.ok ? `${again.inserted} inserted on the second pass` : `FAILED: ${again.reason}`);
+
     const after = await call('/api/market-index?days=30');
     const bres = await call('/api/market-basket?days=30');
     const names = ((bres.body && bres.body.cards) || []).map(c => c.label);
