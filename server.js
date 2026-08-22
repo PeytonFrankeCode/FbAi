@@ -2842,7 +2842,13 @@ const RSI_TIERS_PLAYER = [
 // "Jr." and "JR" onto "jr", which is the variance worth collapsing; the suffix
 // itself is identity.
 function _normCol(col) {
-  let e = col;
+  // COALESCE first, and it is load-bearing. REPLACE(NULL, ...) is NULL in
+  // SQLite, and the card key concatenates six of these — so one NULL column
+  // makes the whole key NULL, and NULL = NULL is false, so every join on it
+  // matches nothing. It took the market index off the site: raw cards are
+  // exactly the rows where grader and grade are NULL, so the moment the index
+  // stopped looking at slabs, every surviving row had a NULL key.
+  let e = `COALESCE(${col}, '')`;
   for (const ch of ["''", '.', ',', '"', '`', '’', '-']) e = `REPLACE(${e}, '${ch}', '')`;
   e = `LOWER(TRIM(${e}))`;
   for (let i = 0; i < 4; i++) e = `REPLACE(${e}, '  ', ' ')`;
@@ -2887,12 +2893,24 @@ const RSI_SLAB_WORDS = ['slab', 'encapsulated', 'cert'];
 // conservative: _gradeBucket's rule that an explicit "raw" claim outranks a
 // grader mention is NOT reproduced here, and a listing reading "raw, PSA 10
 // candidate" is excluded rather than trusted.
+// What a grader or grade column looks like when the card was never graded.
+// Empty is the convention this was first written against, but a collector can
+// just as reasonably write "Raw" or "None", and assuming one convention means
+// matching NOTHING under the other — which does not degrade the index, it takes
+// it off the page entirely. Accepting both costs nothing: no value here can
+// belong to a slab.
+const RSI_UNGRADED_VALUES = ['', 'raw', 'none', 'ungraded', 'not graded', 'n/a', 'na', '-', '--'];
+function _rsiUngradedCol(col) {
+  const v = `LOWER(COALESCE(TRIM(${col}), ''))`;
+  return `${v} IN (${RSI_UNGRADED_VALUES.map(x => `'${x}'`).join(', ')})`;
+}
+
 function _rsiRawOnlySql(titleCol = 'title') {
   const T = `LOWER(COALESCE(${titleCol}, ''))`;
   const any = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
   return `
-          AND COALESCE(TRIM(grade), '') = ''
-          AND COALESCE(TRIM(grader), '') = ''
+          AND ${_rsiUngradedCol('grade')}
+          AND ${_rsiUngradedCol('grader')}
           AND NOT ( ${any(RSI_GRADER_WORDS)}
                  OR ${any(RSI_SLAB_WORDS)}
                  -- "graded" minus the two words that contain it. Cheaper than
@@ -3312,6 +3330,87 @@ function _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, ext
 // variants, trailing noise, whole-lot listings and multi-player cards all look
 // the same from outside and need different handling. So this samples the field
 // rather than guessing. Aggregates plus two small samples; no heavy work.
+// Where the raw-only filter loses rows, one stage at a time.
+//
+// The filter reads two columns and a title, and any one of the three can empty
+// the index on its own — a grader column using a sentinel this doesn't know
+// about takes every row, silently, and the page just says the market is
+// unavailable. This says which stage did it, and shows the column values it
+// actually found so a wrong assumption is visible rather than inferred.
+app.get('/api/debug/raw-filter', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const sinceIso = _mkIso(_mkDay(throughIso) - 30);
+    const T = "LOWER(COALESCE(title, ''))";
+    const anyWord = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
+    const titleClean =
+      `NOT ( ${anyWord(RSI_GRADER_WORDS)} OR ${anyWord(RSI_SLAB_WORDS)}
+          OR ( ${T} LIKE '%graded%' AND ${T} NOT LIKE '%ungraded%'
+               AND ${T} NOT LIKE '%upgraded%' ) )`;
+
+    const funnel = await db.prepare(
+      `SELECT COUNT(*) AS priced,
+              SUM(CASE WHEN ${_rsiUngradedCol('grade')} THEN 1 ELSE 0 END) AS grade_ok,
+              SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+                       THEN 1 ELSE 0 END) AS grader_ok,
+              SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+                        AND ${titleClean} THEN 1 ELSE 0 END) AS raw_final,
+              SUM(CASE WHEN title IS NULL OR title = '' THEN 1 ELSE 0 END) AS no_title
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?`
+    ).bind(sinceIso, throughIso).first();
+
+    const top = async (col) => {
+      const r = await db.prepare(
+        `SELECT LOWER(COALESCE(TRIM(${col}), '')) AS v, COUNT(*) AS n
+           FROM sales
+          WHERE price_cents IS NOT NULL AND sold_date > ? AND sold_date <= ?
+          GROUP BY v ORDER BY n DESC LIMIT 12`
+      ).bind(sinceIso, throughIso).all();
+      return ((r && r.results) || []).map(x => ({ value: x.v === '' ? '(empty)' : x.v, sales: x.n }));
+    };
+
+    const survivors = await db.prepare(
+      `SELECT title, player, COUNT(*) AS n
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?
+          AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')} AND ${titleClean}
+        GROUP BY title ORDER BY n DESC LIMIT 5`
+    ).bind(sinceIso, throughIso).all();
+
+    const p = funnel || {};
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
+    res.json({
+      available: true,
+      window: { since: sinceIso, through: throughIso },
+      funnel: {
+        pricedSales: p.priced,
+        afterGradeCheck: p.grade_ok, afterGradeCheckShare: pct(p.grade_ok, p.priced),
+        afterGraderCheck: p.grader_ok, afterGraderCheckShare: pct(p.grader_ok, p.priced),
+        rawFinal: p.raw_final, rawFinalShare: pct(p.raw_final, p.priced),
+        salesWithNoTitle: p.no_title,
+      },
+      // If the biggest loss is at a column stage, the values below say why.
+      graderValues: await top('grader'),
+      gradeValues: await top('grade'),
+      sampleRawTitles: ((survivors && survivors.results) || [])
+        .map(r => ({ title: r.title, player: r.player, sales: r.n })),
+      ungradedTreatedAs: RSI_UNGRADED_VALUES.map(v => v === '' ? '(empty)' : v),
+    });
+  } catch (err) {
+    console.error('[raw-filter]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 app.get('/api/debug/player-quality', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
