@@ -2997,7 +2997,12 @@ async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH } = {}) {
 // Is the table filled enough to group on? Cached, because every index build
 // would otherwise pay for the check.
 async function _aliasReady(db) {
-  const cached = await cacheGet('aliasready:v2');
+  // The threshold is part of the key. A cached decision must not outlive the
+  // rule that produced it: changing the gate from 95% to 25% otherwise left a
+  // stale "not ready" being served for five minutes after the deploy, which
+  // reads exactly like the change not having shipped.
+  const readyKey = `aliasready:v3:${ALIAS_MIN_COVERAGE}`;
+  const cached = await cacheGet(readyKey);
   if (cached && typeof cached.ready === 'boolean') return cached.ready;
   if (_aliasTableReady === false) return false;
   const P = _normCol('player');
@@ -3017,7 +3022,7 @@ async function _aliasReady(db) {
   } catch (_) {
     ready = false;   // table not created yet — old path, no error to the reader
   }
-  cachePut('aliasready:v2', { ready, rows, covered, total }, ALIAS_READY_TTL);
+  cachePut(readyKey, { ready, rows, covered, total }, ALIAS_READY_TTL);
   return ready;
 }
 
