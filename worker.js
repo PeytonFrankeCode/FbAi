@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -46,7 +46,10 @@ async function init(env) {
   // first request — preload happens once, subsequent saves use the cached
   // binding stored inside db.js.
   await connectDB(env);
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip };
+  // Anything the scheduled handler needs must be listed here as well as
+  // exported from server.js. This is a whitelist, and forgetting a name here
+  // does not fail — the cron just never calls it.
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases };
   return serverInit;
 }
 
@@ -541,6 +544,12 @@ export default {
         // stays on its old grouping until the table is populated.
         if (typeof backfillPlayerAliases === 'function') {
           await backfillPlayerAliases().catch(err => console.error('[Cron] alias backfill failed:', err && err.message || err));
+        } else {
+          // Silence here once cost a day of the alias table never being
+          // created: the job was exported from server.js and called below, but
+          // init()'s whitelist did not pass it through, and the guard turned
+          // that into a no-op with no trace anywhere.
+          console.error('[Cron] backfillPlayerAliases missing from init() — not wired through');
         }
         if (typeof checkAlerts === 'function') {
           await checkAlerts().catch(err => console.error('[Cron] checkAlerts failed:', err && err.message || err));
