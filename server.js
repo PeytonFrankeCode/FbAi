@@ -3005,6 +3005,23 @@ app.get('/api/debug/alias-status', async (req, res) => {
   if (!db) return res.json({ available: false, reason: 'no dataset' });
   const P = _normCol('player');
   const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
+
+  // Create the table here too. Querying a table that may not exist yet made
+  // this endpoint report a raw SQL error, which reads as "the write was
+  // refused" when the real answer was "the cron has not run". Creating it is
+  // idempotent, so the diagnostic can answer the question it was built for.
+  const canWrite = await _aliasEnsure(db);
+  if (!canWrite) {
+    return res.json({
+      available: false,
+      reason: 'cannot create the alias table — the D1 binding may be read-only',
+      indexIsUsingIt: false,
+    });
+  }
+  // ?run=1 fills a batch on demand rather than waiting for the next cron tick.
+  let ran = null;
+  if (req.query.run === '1') ran = await backfillPlayerAliases({ limit: ALIAS_BACKFILL_BATCH });
+
   try {
     const cov = await db.prepare(
       `SELECT (SELECT COUNT(*) FROM ${ALIAS_TABLE}) AS have,
@@ -3019,6 +3036,10 @@ app.get('/api/debug/alias-status', async (req, res) => {
     const have = (cov && cov.have) || 0, want = (cov && cov.want) || 0;
     res.json({
       available: true,
+      state: have === 0 ? 'table created, empty — waiting for the cron'
+           : (have / (want || 1)) < ALIAS_MIN_COVERAGE ? 'filling'
+           : 'ready',
+      ranNow: ran,
       coverage: {
         aliasRows: have, distinctNamesInWindow: want,
         share: want ? Math.round((have / want) * 1000) / 10 + '%' : null,

@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "build:pages": "node scripts/build-landing-pages.js",
     "build:card-index": "node scripts/build-card-index.js",
-    "test": "node test/card-index.test.js && node test/market-index.test.js && node test/market-accuracy.test.js",
+    "test": "node test/cron-wiring.test.js && node test/card-index.test.js && node test/market-index.test.js && node test/market-accuracy.test.js",
     "predeploy": "node scripts/build-landing-pages.js",
     "deploy": "wrangler deploy",
     "cf:dev": "wrangler dev"
