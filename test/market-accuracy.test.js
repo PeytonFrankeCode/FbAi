@@ -81,6 +81,11 @@ const { app } = require(path.join(__dirname, '..', 'server.js'));
 const PORT = 3196;
 const server = app.listen(PORT);
 
+const call = async (url) => {
+  const r = await fetch(`http://127.0.0.1:${PORT}${url}`);
+  return { status: r.status, body: await r.json() };
+};
+
 let failures = 0;
 const check = (label, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? '  — ' + detail : ''}`);
@@ -101,6 +106,23 @@ const check = (label, ok, detail) => {
                       : `FAILED: ${r.reason}`);
     // The bug this file exists for: a market full of single-sale cards must
     // still pair up.
+    // The itemised basket is what makes the number auditable, so it has to
+    // arrive populated, labelled, and consistent with the index. It is its own
+    // endpoint — see the comment on /api/market-basket for why.
+    const bres = await call(`/api/market-basket?days=30`);
+    const basket = bres.body && bres.body.available && Array.isArray(bres.body.cards) ? bres.body.cards : [];
+    check(`  ...and itemises the cards behind it`,
+          basket.length >= 10 && basket.every(c => c.label && c.label !== 'Unknown card' && c.sales > 0),
+          basket.length ? `${basket.length} cards, top: "${basket[0].label}" ${basket[0].sales} sold ${basket[0].changePct}%` : 'empty');
+    // Card moves should point the same way as the index, not contradict it.
+    if (basket.length && drift !== 0) {
+      const withMove = basket.filter(c => c.changePct != null);
+      const agreeing = withMove.filter(c => (c.changePct > 0) === (drift > 0)).length;
+      check(`  ...and those cards agree with the index direction`,
+            withMove.length > 0 && agreeing / withMove.length >= 0.8,
+            `${agreeing}/${withMove.length} moved the same way as the ${drift > 0 ? 'rising' : 'falling'} index`);
+    }
+
     // The basket must find the head and ignore the 20,000 one-sale names.
     check(`  ...and builds its basket from the traded head, not the tail`,
           r.available && r.matchedCards >= 30,

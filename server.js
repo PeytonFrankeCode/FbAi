@@ -2960,6 +2960,117 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
   ).bind(sinceIso, throughIso, ...extraBinds, throughIso, bucketDays);
 }
 
+// The basket, itemised. Same selection as the index — busiest players, their
+// most-traded cards — but returned card by card with the move each one made,
+// computed the same way the index computes it. This is what the number is
+// actually built from, so it can be read rather than taken on trust.
+//
+// A representative raw spelling of each field is carried through with MAX(),
+// because grouping happens on the normalised form and the normalised form is
+// lower-cased and stripped of punctuation — no use as a label.
+function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = []) {
+  const { bucketDays, spanDays } = _rsiGeometry(days);
+  const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
+  const P = _normCol('player');
+  const CARD = RSI_KEY_COLS.map(_normCol).join(" || '|' || ");
+  return db.prepare(
+    `WITH base AS (
+       SELECT sold_date, price_cents, ${P} AS player_n, ${CARD} AS card,
+              player, year, set_name, parallel, grader, grade
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?
+          AND ${P} <> ''${extraWhere}
+     ),
+     top_players AS (
+       SELECT player_n FROM base GROUP BY player_n
+        ORDER BY COUNT(*) DESC LIMIT ${MARKET_TOP_PLAYERS}
+     ),
+     card_counts AS (
+       SELECT b.player_n, b.card, COUNT(*) AS sales,
+              ROW_NUMBER() OVER (PARTITION BY b.player_n ORDER BY COUNT(*) DESC, b.card) AS rn
+         FROM base b JOIN top_players t ON t.player_n = b.player_n
+        GROUP BY b.player_n, b.card
+     ),
+     picked AS (SELECT player_n, card, sales FROM card_counts WHERE rn <= ${MARKET_CARDS_PER_PLAYER}),
+     -- Shortlist BEFORE pairing. The basket holds around 1,250 cards and only
+     -- the busiest few are shown, so pairing all of them and discarding the
+     -- rest doubled the cost of building the index — 2.4s against a 2s budget
+     -- on the test dataset. Narrowing here does the window function over a few
+     -- dozen cards instead.
+     shortlist AS (
+       SELECT card FROM picked ORDER BY sales DESC, card LIMIT ${limit}
+     ),
+     paired AS (
+       SELECT b.card, b.price_cents AS now_c,
+              LAG(b.price_cents) OVER w AS prev_c,
+              julianday(b.sold_date) - julianday(LAG(b.sold_date) OVER w) AS gap
+         FROM base b JOIN shortlist k ON k.card = b.card
+       WINDOW w AS (PARTITION BY b.card ORDER BY b.sold_date)
+     ),
+     usable AS (
+       SELECT card, (now_c * 1.0) / prev_c AS ratio, gap FROM paired
+        WHERE prev_c IS NOT NULL AND prev_c > 0 AND gap >= 1 AND gap <= ${RSI_MAX_GAP_DAYS}
+          AND (now_c * 1.0) / prev_c BETWEEN ${RSI_RATIO_FLOOR} AND ${RSI_RATIO_CEIL}
+     ),
+     ranked AS (
+       SELECT card, ratio, gap,
+              ROW_NUMBER() OVER (PARTITION BY card ORDER BY ratio) AS rr,
+              ROW_NUMBER() OVER (PARTITION BY card ORDER BY gap)   AS rg,
+              COUNT(*)     OVER (PARTITION BY card)                AS cnt
+         FROM usable
+     ),
+     moves AS (
+       SELECT card, cnt AS pairs,
+              AVG(CASE WHEN rr IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN ratio END) AS med_ratio,
+              AVG(CASE WHEN rg IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN gap   END) AS med_gap
+         FROM ranked GROUP BY card, cnt
+     ),
+     labels AS (
+       SELECT b.card,
+              MAX(b.player) AS player, MAX(b.year) AS year, MAX(b.set_name) AS set_name,
+              MAX(b.parallel) AS parallel, MAX(b.grader) AS grader, MAX(b.grade) AS grade,
+              COUNT(*) AS sales,
+              AVG(b.price_cents) AS avg_cents
+         FROM base b JOIN shortlist k ON k.card = b.card
+        GROUP BY b.card
+     )
+     SELECT l.player, l.year, l.set_name, l.parallel, l.grader, l.grade,
+            l.sales, l.avg_cents, m.pairs, m.med_ratio, m.med_gap
+       FROM labels l
+       LEFT JOIN moves m ON m.card = l.card
+      ORDER BY l.sales DESC`
+  ).bind(sinceIso, throughIso, ...extraBinds);
+}
+
+// Turn basket rows into something displayable: a label, how much it traded,
+// its typical price, and the move over the period on the same time-normalised
+// footing the index uses, so a card's number and the index's agree.
+function _rsiBasketRows(rows, days, bucketDays, points) {
+  const out = [];
+  for (const r of (rows || [])) {
+    const parts = [r.year, r.set_name, r.player].filter(Boolean).map(String);
+    const extras = [r.parallel, [r.grader, r.grade].filter(Boolean).join(' ')]
+      .map(x => String(x || '').trim()).filter(Boolean);
+    let changePct = null;
+    const ratio = Number(r.med_ratio), gap = Number(r.med_gap);
+    if (ratio > 0 && gap > 0) {
+      const perBucket = Math.pow(ratio, bucketDays / gap);
+      const overPeriod = Math.pow(perBucket, points);
+      if (Number.isFinite(overPeriod)) changePct = Math.round((overPeriod - 1) * 1000) / 10;
+    }
+    out.push({
+      label: parts.join(' ') || 'Unknown card',
+      detail: extras.join(' · '),
+      sales: Number(r.sales) || 0,
+      pairs: Number(r.pairs) || 0,
+      avgPrice: r.avg_cents != null ? Math.round(Number(r.avg_cents)) / 100 : null,
+      changePct,
+    });
+  }
+  return out;
+}
+
 function _buildRepeatSalesPayload(rows, throughIso, days, extra = {}, tiers = RSI_TIERS) {
   const { bucketDays, points } = _rsiGeometry(days);
   // bucket -> [{ growth, n }] — one entry per player in that bucket.
@@ -3170,6 +3281,49 @@ app.get('/api/debug/player-quality', async (req, res) => {
   } catch (err) {
     console.error('[player-quality]', err && err.stack || err);
     res.json({ available: false, error: err && err.message });
+  }
+});
+
+// The basket behind the index, itemised. A separate endpoint rather than part
+// of the index payload: both queries scan and normalise the same sales, and
+// running them in one request took the build to 2.2s against a 2s budget. The
+// page shows the number as soon as it has it and fills the card list in after.
+app.get('/api/market-basket', async (req, res) => {
+  const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10))
+    ? parseInt(req.query.days, 10)
+    : 30;
+  const player = String(req.query.player || '').trim();
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, days, reason: 'no dataset' });
+
+  const cacheKey = `marketbasket:v1:${days}:${player.toLowerCase()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const newest = player
+      ? await db.prepare(
+          'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
+        ).bind(player, NFLDB_MIN_CONFIDENCE).first()
+      : await db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+    if (!newest || !newest.d) return res.json({ available: false, days, reason: 'no data in range' });
+
+    const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const g = _rsiGeometry(days);
+    const rows = player
+      ? await _rsiBasketQuery(db, throughIso, days, 12,
+          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE]).all()
+      : await _rsiBasketQuery(db, throughIso, days, 24).all();
+
+    const payload = {
+      available: true, days, player: player || null, through: throughIso,
+      cards: _rsiBasketRows((rows && rows.results) || [], days, g.bucketDays, g.points),
+    };
+    cachePut(cacheKey, payload, MARKET_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[MarketBasket]', err && err.message);
+    res.json({ available: false, days, reason: 'basket unavailable' });
   }
 });
 
