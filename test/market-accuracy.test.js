@@ -31,8 +31,8 @@ function buildDb(driftPct) {
   const priceAt = (d, base) => base * Math.pow(1 + driftPct / 100, (d + 35) / 30);
   db.exec('BEGIN');
   const ins = db.prepare(`INSERT INTO sales
-    (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence)
-    VALUES (?,?,?,?,?,?,?,?,?,?)`);
+    (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence, image_url)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
   let n = 0;
   // A real card market has a concentrated head and a very long tail, and the
   // index is built to track the head. So: 200 traded players with a dozen cards
@@ -44,14 +44,17 @@ function buildDb(driftPct) {
       const times = c < 10 ? 14 : 4;
       for (let k = 0; k < times; k++) {
         const d = -Math.floor(Math.random() * 34) - 1;
+        // The photo URL carries its own sale date so the "newest sale that had
+        // a photo wins" rule can be checked from the outside.
         ins.run(`h${n++}`, iso(d), Math.round(priceAt(d, base)), `Star ${p}`,
-                '2023', 'Prizm', `Var${c}`, 'PSA', '10', 0.9);
+                '2023', 'Prizm', `Var${c}`, 'PSA', '10', 0.9,
+                `https://img.test/${iso(d)}.jpg`);
       }
     }
   }
   for (let c = 0; c < 20000; c++) {
     ins.run(`s${n++}`, iso(-Math.floor(Math.random() * 35)), 5000, `Junk ${c}`,
-            '2023', 'Prizm', 'Base', '', '', 0.9);
+            '2023', 'Prizm', 'Base', '', '', 0.9, null);
   }
   db.exec('COMMIT');
   return { db, sales: n };
@@ -114,6 +117,12 @@ const check = (label, ok, detail) => {
     check(`  ...and itemises the cards behind it`,
           basket.length >= 10 && basket.every(c => c.label && c.label !== 'Unknown card' && c.sales > 0),
           basket.length ? `${basket.length} cards, top: "${basket[0].label}" ${basket[0].sales} sold ${basket[0].changePct}%` : 'empty');
+    // Photos have to arrive as usable URLs. The date the query prefixes to sort
+    // by must be gone: leaving it on yields "2026-08-01|https://..." in a src.
+    const withPhoto = basket.filter(c => typeof c.imageUrl === 'string' && c.imageUrl.startsWith('https://img.test/'));
+    check(`  ...and carries a photo for each, sort key stripped`,
+          withPhoto.length === basket.length && !basket.some(c => String(c.imageUrl).includes('|')),
+          `${withPhoto.length}/${basket.length} usable, e.g. ${basket[0] && basket[0].imageUrl}`);
     // Card moves should point the same way as the index, not contradict it.
     if (basket.length && drift !== 0) {
       const withMove = basket.filter(c => c.changePct != null);
@@ -206,6 +215,33 @@ const check = (label, ok, detail) => {
     const idx = await (await fetch(`http://127.0.0.1:${PORT}/api/market-index?days=30`)).json();
     check('  ...and the index pairs them', idx.available && idx.matchedCards > 0,
           idx.available ? `obs/bucket=${idx.matchedCards} total=${idx.totalObservations}` : idx.reason);
+  }
+
+  // Which photo represents a card. Listings are relisted constantly and old
+  // eBay image URLs go dead, so the newest one wins — but a sale that carried
+  // no photo must not win by being newest, or the card shows a placeholder
+  // while perfectly good images sit one row down.
+  {
+    const dbP = new DatabaseSync(':memory:');
+    dbP.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    const insP = dbP.prepare(`INSERT INTO sales
+      (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence, image_url)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+    // -2 is the newest sale, so it sets `through` and is itself excluded by the
+    // one-day trailing guard. In range: -30 (old photo), -20 (the one we want),
+    // -10 (newest in range, but no photo).
+    insP.run('p1', iso(-30), 10000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, 'https://img.test/old.jpg');
+    insP.run('p2', iso(-20), 11000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, 'https://img.test/want.jpg');
+    insP.run('p3', iso(-10), 12000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, '');
+    insP.run('p4', iso(-2),  13000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, null);
+    active = dbP;
+    const b = await call('/api/market-basket?days=30');
+    const card = ((b.body && b.body.cards) || [])[0];
+    check('the newest sale that had a photo supplies it',
+          !!card && card.imageUrl === 'https://img.test/want.jpg',
+          card ? `got ${card.imageUrl}` : `no card (${b.body && b.body.reason})`);
   }
 
   server.close();

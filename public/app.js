@@ -3993,6 +3993,10 @@ async function loadMarketBasket() {
     <ul class="market-basket-list">
       ${cards.map(c => `
         <li class="market-basket-row">
+          ${c.imageUrl
+            ? `<img class="mb-thumb" src="${escHtml(c.imageUrl)}" alt="" loading="lazy"
+                    onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'mb-thumb mb-noimg',textContent:'\u{1F0CF}'}))" />`
+            : '<span class="mb-thumb mb-noimg">&#127183;</span>'}
           <div class="mb-card">
             <span class="mb-name">${escHtml(c.label)}</span>
             ${c.detail ? `<span class="mb-detail">${escHtml(c.detail)}</span>` : ''}

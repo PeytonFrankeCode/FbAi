@@ -25,9 +25,13 @@ const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (
   item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT,
   listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-  year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER,
-  image_url TEXT
+  year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER
 )`);
+// Deliberately no image_url. The sales schema grew over time and naming a
+// column the table lacks fails the whole query, so the basket probes for it —
+// this fixture is what exercises the branch where the probe comes back false.
+// (market-accuracy.test.js runs the with-photos branch, in its own process,
+// because the probe result is cached for the life of the module.)
 
 // 400 cards over 200 days — big enough that a per-sale JavaScript grouping
 // pass would be visibly slow, which is what tripped the Worker CPU limit.
@@ -157,6 +161,16 @@ const check = (label, ok, detail) => {
   const player = await call('/api/player-index?player=Player%201&days=30');
   check('player-index runs without throwing', player.body.available !== undefined,
         player.body.available ? `score=${player.body.score}` : `reason=${player.body.reason}`);
+
+  // Against a table with no image_url the basket must still build; a broken
+  // fallback would surface as available:false, not as a missing photo.
+  const noimg = await call('/api/market-basket?days=30');
+  const noimgCards = (noimg.body && noimg.body.cards) || [];
+  check('basket builds on a schema without image_url',
+        noimg.body.available === true && noimgCards.length > 0
+          && noimgCards.every(c => c.imageUrl === null),
+        noimg.body.available ? `${noimgCards.length} cards, all imageUrl=null`
+                             : `reason=${noimg.body.reason}`);
 
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');

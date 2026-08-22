@@ -2968,15 +2968,22 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
 // A representative raw spelling of each field is carried through with MAX(),
 // because grouping happens on the normalised form and the normalised form is
 // lower-cased and stripped of punctuation — no use as a label.
-function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = []) {
+function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false) {
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
   const P = _normCol('player');
   const CARD = RSI_KEY_COLS.map(_normCol).join(" || '|' || ");
+  // The photo comes from the newest sale of that card that carried one. Dates
+  // are ISO, so their lexical maximum is also their chronological one — the
+  // date is glued on only to rank by, and stripped off again on the way out.
+  const imgLabel = hasImage
+    ? `MAX(CASE WHEN b.image_url IS NOT NULL AND b.image_url <> ''
+                THEN b.sold_date || '|' || b.image_url END)`
+    : 'NULL';
   return db.prepare(
     `WITH base AS (
        SELECT sold_date, price_cents, ${P} AS player_n, ${CARD} AS card,
-              player, year, set_name, parallel, grader, grade
+              player, year, set_name, parallel, grader, grade${hasImage ? ', image_url' : ''}
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
@@ -3031,12 +3038,13 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
               MAX(b.player) AS player, MAX(b.year) AS year, MAX(b.set_name) AS set_name,
               MAX(b.parallel) AS parallel, MAX(b.grader) AS grader, MAX(b.grade) AS grade,
               COUNT(*) AS sales,
-              AVG(b.price_cents) AS avg_cents
+              AVG(b.price_cents) AS avg_cents,
+              ${imgLabel} AS dated_image
          FROM base b JOIN shortlist k ON k.card = b.card
         GROUP BY b.card
      )
      SELECT l.player, l.year, l.set_name, l.parallel, l.grader, l.grade,
-            l.sales, l.avg_cents, m.pairs, m.med_ratio, m.med_gap
+            l.sales, l.avg_cents, l.dated_image, m.pairs, m.med_ratio, m.med_gap
        FROM labels l
        LEFT JOIN moves m ON m.card = l.card
       ORDER BY l.sales DESC`
@@ -3059,6 +3067,12 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
       const overPeriod = Math.pow(perBucket, points);
       if (Number.isFinite(overPeriod)) changePct = Math.round((overPeriod - 1) * 1000) / 10;
     }
+    // Drop the sort-key date the query prefixed to the photo URL.
+    let imageUrl = null;
+    if (r.dated_image) {
+      const bar = String(r.dated_image).indexOf('|');
+      if (bar >= 0) imageUrl = String(r.dated_image).slice(bar + 1) || null;
+    }
     out.push({
       label: parts.join(' ') || 'Unknown card',
       detail: extras.join(' · '),
@@ -3066,6 +3080,7 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
       pairs: Number(r.pairs) || 0,
       avgPrice: r.avg_cents != null ? Math.round(Number(r.avg_cents)) / 100 : null,
       changePct,
+      imageUrl,
     });
   }
   return out;
@@ -3310,10 +3325,13 @@ app.get('/api/market-basket', async (req, res) => {
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     const g = _rsiGeometry(days);
+    // Probed, never assumed: naming a column the table lacks fails the whole
+    // query, and image_url arrived late enough that not every deployment has it.
+    const hasImage = await _nflHasImageColumn(db);
     const rows = player
       ? await _rsiBasketQuery(db, throughIso, days, 12,
-          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE]).all()
-      : await _rsiBasketQuery(db, throughIso, days, 24).all();
+          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage).all()
+      : await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage).all();
 
     const payload = {
       available: true, days, player: player || null, through: throughIso,
