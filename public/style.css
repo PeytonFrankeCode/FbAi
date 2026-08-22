@@ -9138,13 +9138,31 @@ body.tour-open { overflow: hidden; }
 .market-basket-list { list-style: none; margin: 0; padding: 0; }
 .market-basket-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   gap: 0.5rem 0.85rem;
-  align-items: baseline;
+  align-items: center;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--border-primary);
 }
 .market-basket-row:last-child { border-bottom: 0; }
+/* Card proportions (2.5 x 3.5in) so a photo sits in its box without cropping
+   the top and bottom off the card. */
+.mb-thumb {
+  width: 44px;
+  height: 62px;
+  flex: none;
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+}
+.mb-noimg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
 .mb-card { min-width: 0; }
 .mb-name {
   display: block;
@@ -9173,8 +9191,8 @@ body.tour-open { overflow: hidden; }
 /* Stack the numbers under the card name on narrow screens rather than
    squeezing four columns into 320px. */
 @media (max-width: 560px) {
-  .market-basket-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .mb-card { grid-column: 1 / -1; }
-  .mb-price { text-align: right; }
-  .mb-change { grid-column: 2; }
+  .market-basket-row { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+  .mb-thumb { grid-row: 1 / span 2; }
+  .mb-card { grid-column: 2 / -1; }
+  .mb-change { text-align: right; }
 }
