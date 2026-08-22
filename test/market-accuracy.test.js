@@ -349,6 +349,107 @@ const check = (label, ok, detail) => {
                              : `reason=${idx.body.reason}`);
   }
 
+  // The noise floor. Every other accuracy check prices sales exactly on the
+  // trend, which no real comp does — raw cards carry condition variance, and
+  // two copies of the same card sell days apart at different money for no
+  // reason the index can see. So: a market whose true price never moves, priced
+  // with lognormal noise. Whatever the index reports is entirely noise.
+  //
+  // This is what the basket size was chosen against. At 125 players the same
+  // fixture read a standard deviation of 5.76pp and printed 8.6% on a market
+  // that did nothing; at 600 it reads about 1pp. A single draw is asserted
+  // rather than a distribution, so the bound is set several sigma wide — it is
+  // here to catch the basket being narrowed back, not to measure sigma.
+  {
+    const dbN = new DatabaseSync(':memory:');
+    dbN.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    // Seeded, so a failure here is a real regression and not an unlucky day.
+    let s = 20260822;
+    const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    const noise = (sigma) => Math.exp(sigma * Math.sqrt(-2 * Math.log(Math.max(rand(), 1e-9)))
+                                            * Math.cos(2 * Math.PI * rand()));
+    dbN.exec('BEGIN');
+    const insN = dbN.prepare(`INSERT INTO sales
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+    let k = 0;
+    // A head-and-tail market to select from, so "top 600" is a real choice out
+    // of 1,500 rather than a list that happens to include everyone.
+    for (let p = 0; p < 1500; p++) {
+      const heat = 400 / (1 + p / 25);
+      for (let c = 0; c < 12; c++) {
+        const base = 2000 + c * 500;
+        const times = Math.max(0, Math.round(heat / (1 + c * 0.8)));
+        for (let t = 0; t < times; t++) {
+          const d = -1 - Math.floor(rand() * 34);
+          insN.run(`n${k++}`, iso(d), '2023 Prizm Base', Math.round(base * noise(0.25)),
+                   `Star ${p}`, '2023', 'Prizm', `Var${c}`, '', '', 0.9);
+        }
+      }
+    }
+    dbN.exec('COMMIT');
+    active = dbN;
+    const t0 = Date.now();
+    const r = await call('/api/market-index?days=30');
+    const ms = Date.now() - t0;
+    check('a market that did nothing reads close to nothing',
+          r.body.available && Math.abs(r.body.changePct) <= 4,
+          r.body.available ? `${r.body.changePct}% on ${k.toLocaleString('en-US')} noisy sales, `
+                           + `${r.body.matchedCards} players, ${r.body.totalObservations} comparisons, ${ms}ms`
+                           : `reason=${r.body.reason}`);
+  }
+
+  // The same sales in a different order must give the same number.
+  //
+  // Sales sharing a date have no defined order inside the pairing window, and
+  // pairs are dropped at gap < 1, so which same-day sale survives to pair across
+  // a date boundary was decided by whatever order rows happened to arrive in.
+  // On a busy card that is most of the pairs. It was found by adding
+  // MATERIALIZED to a CTE — a change that alters row order and nothing else —
+  // and watching a flat market go from -0.9% to -67.5%.
+  //
+  // Collapsing each card's day to one price fixes it at the source. This asserts
+  // the property directly instead of the fix, by loading identical data in
+  // opposite orders: two sales every trading day, at prices far enough apart
+  // that picking the wrong one cannot hide in rounding.
+  {
+    const readAt = async (reverse) => {
+      const dbO = new DatabaseSync(':memory:');
+      dbO.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      const rows = [];
+      for (let p = 0; p < 200; p++) {
+        for (let c = 0; c < 4; c++) {
+          for (let d = -30; d <= -2; d += 4) {
+            const mid = 10000 * Math.pow(1.1, (d + 30) / 30);
+            // A cheap copy and a dear one on the same day, 40% apart.
+            rows.push([iso(d), Math.round(mid * 0.8), `Star ${p}`, `Var${c}`]);
+            rows.push([iso(d), Math.round(mid * 1.2), `Star ${p}`, `Var${c}`]);
+          }
+        }
+      }
+      if (reverse) rows.reverse();
+      dbO.exec('BEGIN');
+      const insO = dbO.prepare(`INSERT INTO sales
+        (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+      rows.forEach(([d, cents, player, parallel], i) =>
+        insO.run(`o${i}`, d, '2023 Prizm Base', cents, player, '2023', 'Prizm', parallel, '', '', 0.9));
+      dbO.exec('COMMIT');
+      active = dbO;
+      const r = await call('/api/market-index?days=30');
+      return r.body.available ? r.body.changePct : `unavailable: ${r.body.reason}`;
+    };
+    const forward = await readAt(false);
+    const backward = await readAt(true);
+    check('the same sales in a different order read the same',
+          forward === backward && typeof forward === 'number',
+          `forward=${forward}  reversed=${backward}`);
+  }
+
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall accuracy checks passed');
   process.exit(failures ? 1 : 0);

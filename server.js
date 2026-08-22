@@ -2928,7 +2928,26 @@ function _rsiGeometry(days) {
 // was dominated by the long tail: 200,115 distinct cards from 297,027 sales,
 // most of them commons that trade once. Their prices are noisy and nobody
 // tracks them, so they added variance without adding signal.
-const MARKET_TOP_PLAYERS = 125;
+// 600 players, not 125, and the number was measured rather than picked. Against
+// a flat market — true prices that never move, sales priced with lognormal noise
+// because raw comps carry real condition variance — the index should read 0%.
+// What it actually reads is its noise floor, and widening the basket lowers it:
+//
+//   125 players   21,174 comparisons   sd 5.76pp   worst reading  8.6%
+//   400 players   41,906 comparisons   sd 1.80pp   worst reading  3.1%
+//   600 players   50,127 comparisons   sd 1.06pp   worst reading  2.5%
+//   900 players   58,181 comparisons   sd 1.59pp   worst reading  4.8%
+//
+// 600 is an optimum, not a ceiling reached for lack of trying. Past it the
+// players being added trade too thinly to steady anything, and since every
+// player casts an equal vote they bring more noise than the wider average
+// removes — 900 is measurably worse than 600.
+//
+// Cards per player stays at 10 because raising it does nothing: at 250 players,
+// 10 -> 20 moved the noise floor from 2.31pp to 2.38pp. A player's 11th-to-20th
+// busiest cards barely trade, so they add comparisons without adding an
+// independent read on that player. Depth is spent on players, not on cards.
+const MARKET_TOP_PLAYERS = 600;
 const MARKET_CARDS_PER_PLAYER = 10;
 // A player needs this many priced comparisons inside a bucket to contribute.
 // One is enough: that player then casts a single vote among the basket, and
@@ -2972,14 +2991,34 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
         GROUP BY b.player_n, b.card
      ),
      picked AS (SELECT player_n, card FROM card_counts WHERE rn <= ${MARKET_CARDS_PER_PLAYER}),
-     paired AS (
-       SELECT ${unit === 'card' ? 'b.card' : 'b.player_n'} AS p,
-              CAST((julianday(?) - julianday(b.sold_date)) / ? AS INTEGER) AS bucket,
-              b.price_cents AS now_c,
-              LAG(b.price_cents) OVER w AS prev_c,
-              julianday(b.sold_date) - julianday(LAG(b.sold_date) OVER w) AS gap
+     -- One price per card per day before anything is paired.
+     --
+     -- Without this the window function below orders sales by date alone, and
+     -- sales sharing a date have no defined order. That would not matter if
+     -- same-day pairs were used, but they are dropped for gap < 1, so which
+     -- same-day sale survives to pair across a date boundary is decided by
+     -- whatever order the rows happen to arrive in. On a busy card that is most
+     -- of the pairs. It is not hypothetical: adding MATERIALIZED to the CTE
+     -- above, which changes row order and nothing else, moved a flat market's
+     -- reading from -0.9% to -67.5%.
+     --
+     -- Averaging the day also does what it does for Card Ladder — several comps
+     -- on one day are several reads on one price, and using their mean instead
+     -- of an arbitrary one of them is both steadier and better evidence.
+     daily AS (
+       SELECT b.card, MAX(b.player_n) AS player_n, b.sold_date,
+              AVG(b.price_cents) AS price
          FROM base b JOIN picked k ON k.card = b.card
-       WINDOW w AS (PARTITION BY b.card ORDER BY b.sold_date)
+        GROUP BY b.card, b.sold_date
+     ),
+     paired AS (
+       SELECT ${unit === 'card' ? 'd.card' : 'd.player_n'} AS p,
+              CAST((julianday(?) - julianday(d.sold_date)) / ? AS INTEGER) AS bucket,
+              d.price AS now_c,
+              LAG(d.price) OVER w AS prev_c,
+              julianday(d.sold_date) - julianday(LAG(d.sold_date) OVER w) AS gap
+         FROM daily d
+       WINDOW w AS (PARTITION BY d.card ORDER BY d.sold_date)
      ),
      usable AS (
        SELECT p, bucket, (now_c * 1.0) / prev_c AS ratio, gap
@@ -3049,7 +3088,7 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
         GROUP BY b.player_n, b.card
      ),
      picked AS (SELECT player_n, card, sales FROM card_counts WHERE rn <= ${MARKET_CARDS_PER_PLAYER}),
-     -- Shortlist BEFORE pairing. The basket holds around 1,250 cards and only
+     -- Shortlist BEFORE pairing. The basket holds thousands of cards and only
      -- the busiest few are shown, so pairing all of them and discarding the
      -- rest doubled the cost of building the index — 2.4s against a 2s budget
      -- on the test dataset. Narrowing here does the window function over a few
@@ -3057,12 +3096,22 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
      shortlist AS (
        SELECT card FROM picked ORDER BY sales DESC, card LIMIT ${limit}
      ),
-     paired AS (
-       SELECT b.card, b.price_cents AS now_c,
-              LAG(b.price_cents) OVER w AS prev_c,
-              julianday(b.sold_date) - julianday(LAG(b.sold_date) OVER w) AS gap
+     -- One price per card per day, for the reason given on the index query's
+     -- own daily CTE: sales sharing a date have no defined order, and pairs are
+     -- dropped at gap < 1, so without this the surviving pairs depend on row
+     -- order. A card's move here must be computed exactly as the index computes
+     -- it or the list stops reconciling with the number above it.
+     daily AS (
+       SELECT b.card, b.sold_date, AVG(b.price_cents) AS price
          FROM base b JOIN shortlist k ON k.card = b.card
-       WINDOW w AS (PARTITION BY b.card ORDER BY b.sold_date)
+        GROUP BY b.card, b.sold_date
+     ),
+     paired AS (
+       SELECT d.card, d.price AS now_c,
+              LAG(d.price) OVER w AS prev_c,
+              julianday(d.sold_date) - julianday(LAG(d.sold_date) OVER w) AS gap
+         FROM daily d
+       WINDOW w AS (PARTITION BY d.card ORDER BY d.sold_date)
      ),
      usable AS (
        SELECT card, (now_c * 1.0) / prev_c AS ratio, gap FROM paired
