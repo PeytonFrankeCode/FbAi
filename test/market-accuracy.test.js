@@ -93,6 +93,7 @@ const d1 = {
 require(path.join(__dirname, '..', 'db.js')).getNflDb = () => d1;
 process.env.CF_WORKER = '1';
 const { app, backfillPlayerAliases } = require(path.join(__dirname, '..', 'server.js'));
+const { resolvePlayer, norm: normPlayer } = require(path.join(__dirname, '..', 'card-index.js'));
 const PORT = 3196;
 const server = app.listen(PORT);
 
@@ -618,6 +619,64 @@ const check = (label, ok, detail) => {
           names.length > 0 && !names.some(l => JUNK.some(j => l.includes(j))),
           names.length ? `basket: ${[...new Set(names.map(l => l.replace(/^\d+ \w+ /, '')))].slice(0, 4).join(', ')}`
                        : 'empty');
+  
+    // Partial coverage is the normal state, not an edge case: the backfill
+    // reaches names head-first over hours. Every level of it must be an
+    // improvement on none, so a name with no alias row yet has to keep working
+    // exactly as it did before rather than dropping out of the market.
+    {
+      const dbP2 = new DatabaseSync(':memory:');
+      dbP2.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      dbP2.exec(`CREATE TABLE player_alias (variant TEXT PRIMARY KEY, canonical TEXT NOT NULL,
+        display TEXT NOT NULL, how TEXT, resolved INTEGER NOT NULL DEFAULT 1, n INTEGER, updated_at TEXT)`);
+      dbP2.exec('BEGIN');
+      const insP2 = dbP2.prepare(`INSERT INTO sales
+        (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+      let q = 0;
+      const sell2 = (name, parallel, cents, d) =>
+        insP2.run(`q${q++}`, iso(d), '2023 Prizm Base', cents, name, '2023', 'Prizm', parallel, '', '', 0.9);
+      const COVERED = ['Justin Jefferson', 'Patrick Mahomes', 'Josh Allen', 'Joe Burrow'];
+      const NOT_YET = ['Kyler Murray', 'Travis Kelce', 'Tyreek Hill', 'Bijan Robinson'];
+      for (const p2 of [...COVERED, ...NOT_YET]) {
+        for (const spelling of [p2, `${p2} RC`, `2023 Prizm ${p2}`]) {
+          for (let c = 0; c < 4; c++) {
+            for (let d = -30; d <= -2; d += 4) {
+              sell2(spelling, `Var${c}`, Math.round(10000 * Math.pow(1.1, (d + 30) / 30)), d);
+            }
+          }
+        }
+      }
+      sell2('Cdt All', 'Var0', 50000, -10);   // junk, and aliased as unresolved
+      dbP2.exec('COMMIT');
+      // Only half the roster has been reached, exactly as mid-backfill looks.
+      const insAl = dbP2.prepare(`INSERT INTO player_alias
+        (variant, canonical, display, how, resolved, n) VALUES (?,?,?,?,?,?)`);
+      for (const p2 of COVERED) {
+        for (const spelling of [p2, `${p2} RC`, `2023 Prizm ${p2}`]) {
+          const hit = resolvePlayer(spelling);
+          insAl.run(normPlayer(spelling), hit.key, hit.canonical, hit.how, 1, 100);
+        }
+      }
+      insAl.run(normPlayer('Cdt All'), 'cdt all', 'Cdt All', 'none', 0, 500);
+      use(dbP2);
+
+      const r2 = await call('/api/market-index?days=30');
+      const b2 = await call('/api/market-basket?days=30&days=30');
+      const labels = ((b2.body && b2.body.cards) || []).map(c => c.label);
+      const coveredSeen = COVERED.filter(p2 => labels.some(l => l.includes(p2)));
+      const uncoveredSeen = NOT_YET.filter(p2 => labels.some(l => l.includes(p2)));
+      check('  ...and a half-filled table still counts the names it has not reached',
+            r2.body.available === true && uncoveredSeen.length > 0,
+            r2.body.available
+              ? `${coveredSeen.length}/${COVERED.length} aliased and ${uncoveredSeen.length}/${NOT_YET.length} not-yet-aliased players present`
+              : `BROKE: ${r2.body.reason}`);
+      check('  ...while junk already marked unresolved stays out',
+            !labels.some(l => l.includes('Cdt All')),
+            labels.length ? `${labels.length} cards, no junk` : 'empty');
+    }
   }
 
   server.close();
