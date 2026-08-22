@@ -5,6 +5,10 @@ const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
 const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb } = require('./db');
+// Canonical player names from the checklists. Bundled rather than fetched: it
+// is derived from public/data/checklists at build time by
+// scripts/build-card-index.js, so it changes only when the catalogue does.
+const { resolvePlayer, stats: cardIndexStats } = require('./card-index');
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -3330,6 +3334,81 @@ function _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, ext
 // variants, trailing noise, whole-lot listings and multi-player cards all look
 // the same from outside and need different handling. So this samples the field
 // rather than guessing. Aggregates plus two small samples; no heavy work.
+// How much of the player-name mess the checklist dictionary can actually clean
+// up, measured on live data rather than on my fixtures.
+//
+// The sales table holds ~96,000 distinct values in a column that should hold
+// about 16,000. This takes the busiest of those strings, runs them through the
+// resolver, and reports two numbers that mean different things: the share of
+// distinct STRINGS it can place, and the share of SALES those strings carry.
+// The second is the one that matters — resolving the head is most of the value,
+// and the tail is long by definition.
+app.get('/api/debug/player-resolve', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const limit = Math.min(5000, Math.max(100, parseInt(req.query.limit, 10) || 3000));
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const sinceIso = _mkIso(_mkDay(newest.d) - 30);
+
+    const rows = await db.prepare(
+      `SELECT player, COUNT(*) AS n
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND player IS NOT NULL AND player <> ''
+          AND sold_date > ?
+        GROUP BY player ORDER BY n DESC LIMIT ?`
+    ).bind(sinceIso, limit).all();
+    const list = (rows && rows.results) || [];
+
+    const byCanonical = new Map();
+    const unresolved = [];
+    let strings = 0, sales = 0, resolvedStrings = 0, resolvedSales = 0, lowConfidence = 0;
+    for (const r of list) {
+      strings++; sales += r.n;
+      const hit = resolvePlayer(r.player);
+      if (!hit || !hit.confident) {
+        if (hit) lowConfidence++;
+        unresolved.push({ player: r.player, sales: r.n, nearest: hit ? hit.canonical : null });
+        continue;
+      }
+      resolvedStrings++; resolvedSales += r.n;
+      if (!byCanonical.has(hit.key)) byCanonical.set(hit.key, { canonical: hit.canonical, variants: 0, sales: 0 });
+      const e = byCanonical.get(hit.key);
+      e.variants++; e.sales += r.n;
+    }
+
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
+    const merged = [...byCanonical.values()].filter(e => e.variants > 1)
+      .sort((a, b) => b.variants - a.variants).slice(0, 15);
+
+    res.json({
+      available: true,
+      window: { since: sinceIso, through: newest.d },
+      dictionary: cardIndexStats,
+      sample: { distinctStrings: strings, salesCovered: sales, cappedAt: limit },
+      resolved: {
+        strings: resolvedStrings, stringShare: pct(resolvedStrings, strings),
+        sales: resolvedSales, salesShare: pct(resolvedSales, sales),
+        canonicalPlayers: byCanonical.size,
+        // The headline: how many names the mess collapses to.
+        collapseRatio: byCanonical.size ? Math.round((resolvedStrings / byCanonical.size) * 100) / 100 : null,
+        declinedButNearlyMatched: lowConfidence,
+      },
+      // Where the win is: one player, many spellings, now one group.
+      biggestMerges: merged.map(e => ({ player: e.canonical, spellings: e.variants, sales: e.sales })),
+      // Where the dictionary still fails. This is the to-do list.
+      topUnresolved: unresolved.sort((a, b) => b.sales - a.sales).slice(0, 25),
+    });
+  } catch (err) {
+    console.error('[player-resolve]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // Where the raw-only filter loses rows, one stage at a time.
 //
 // The filter reads two columns and a title, and any one of the three can empty
