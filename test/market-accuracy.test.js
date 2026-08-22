@@ -439,6 +439,52 @@ const check = (label, ok, detail) => {
           `${width} players, ${obs.toLocaleString('en-US')} comparisons per point`);
   }
 
+  // Ungraded is not always spelled the same way.
+  //
+  // The raw filter first assumed one convention: grader and grade empty. A
+  // collector can just as reasonably write "Raw" or "None", and under that
+  // convention the filter matched NOTHING — which does not thin the index, it
+  // takes it off the page, because zero rows reads as "market unavailable".
+  // That is what happened in production. Both spellings must work.
+  {
+    const spellings = [
+      ['empty string', '', ''],
+      ['NULL',         null, null],
+      ['Raw',          'Raw', 'Raw'],
+      ['None',         'None', ''],
+      ['N/A',          'n/a', 'N/A'],
+      ['Ungraded',     'Ungraded', ''],
+    ];
+    const missed = [];
+    for (const [label, grader, grade] of spellings) {
+      const dbS = new DatabaseSync(':memory:');
+      dbS.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      dbS.exec('BEGIN');
+      const insS = dbS.prepare(`INSERT INTO sales
+        (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+      let j = 0;
+      for (let p = 0; p < 40; p++) {
+        for (let c = 0; c < 4; c++) {
+          for (let d = -30; d <= -2; d += 4) {
+            insS.run(`w${j++}`, iso(d), '2023 Prizm Base', Math.round(10000 * Math.pow(1.1, (d + 30) / 30)),
+                     `Star ${p}`, '2023', 'Prizm', `Var${c}`, grader, grade, 0.9);
+          }
+        }
+      }
+      dbS.exec('COMMIT');
+      use(dbS);
+      const r = await call('/api/market-index?days=30');
+      if (!r.body.available) missed.push(`${label} -> ${r.body.reason}`);
+    }
+    check('ungraded reaches the index however the column spells it',
+          missed.length === 0,
+          missed.length ? `NOT MATCHED: ${missed.join('; ')}`
+                        : `all ${spellings.length} spellings scored`);
+  }
+
   // The same sales in a different order must give the same number.
   //
   // Sales sharing a date have no defined order inside the pairing window, and
