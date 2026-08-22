@@ -61,6 +61,14 @@ function buildDb(driftPct) {
 }
 
 let active = null;
+// Each scenario builds its own in-memory database, and several hold six figures
+// of rows. Handing over without closing the previous one leaves that native
+// memory held for the rest of the run, which is fine on a workstation and not
+// fine on a CI runner. Always swap through here.
+function use(db) {
+  if (active && active !== db) { try { active.close(); } catch (_) { /* already gone */ } }
+  active = db;
+}
 const d1 = {
   prepare(sql) {
     // Deliberately NOT collapsing whitespace. An earlier version did, for
@@ -98,7 +106,7 @@ const check = (label, ok, detail) => {
 (async () => {
   for (const drift of [10, 0, -20]) {
     const built = buildDb(drift);
-    active = built.db;
+    use(built.db);
     // No KV binding in this harness, so cacheGet always misses and each
     // scenario really is recomputed against its own dataset.
     const r = await (await fetch(`http://127.0.0.1:${PORT}/api/market-index?days=30`)).json();
@@ -171,7 +179,7 @@ const check = (label, ok, detail) => {
       }
     }
     db2.exec('COMMIT');
-    active = db2;
+    use(db2);
     const r = await (await fetch(`http://127.0.0.1:${PORT}/api/market-index?days=30`)).json();
     readings[label] = r.available ? r.changePct : null;
     console.log(`      ${label} (${gapDays}d apart): index ${r.available ? (r.changePct > 0 ? '+' : '') + r.changePct + '%' : r.reason}, median gap seen ${r.typicalGapDays}d`);
@@ -205,7 +213,7 @@ const check = (label, ok, detail) => {
       }
     }
     dbF.exec('COMMIT');
-    active = dbF;
+    use(dbF);
     const q = await (await fetch(`http://127.0.0.1:${PORT}/api/debug/player-quality`)).json();
     const norm = q.normalisation;
     check('spelling variants collapse to one card each',
@@ -236,7 +244,7 @@ const check = (label, ok, detail) => {
     insP.run('p2', iso(-20), 11000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, 'https://img.test/want.jpg');
     insP.run('p3', iso(-10), 12000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, '');
     insP.run('p4', iso(-2),  13000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, null);
-    active = dbP;
+    use(dbP);
     const b = await call('/api/market-basket?days=30');
     const card = ((b.body && b.body.cards) || [])[0];
     check('the newest sale that had a photo supplies it',
@@ -316,7 +324,7 @@ const check = (label, ok, detail) => {
     for (const [name, title] of CONSERVATIVE) spread(name, title, 10000, 11000, '', '');
     for (const [name, title, grader, grade] of SLAB) spread(name, title, 100000, 200000, grader, grade);
     sale('Anchor', 'Base', '2023 Prizm Base', 10000, '', '', -2);   // sets `through`
-    active = dbG;
+    use(dbG);
 
     // A name is in the index iff its own scoped basket returns cards.
     const present = async (name) => {
@@ -352,53 +360,83 @@ const check = (label, ok, detail) => {
   // The noise floor. Every other accuracy check prices sales exactly on the
   // trend, which no real comp does — raw cards carry condition variance, and
   // two copies of the same card sell days apart at different money for no
-  // reason the index can see. So: a market whose true price never moves, priced
+  // reason the index can see. So: markets whose true price never moves, priced
   // with lognormal noise. Whatever the index reports is entirely noise.
   //
-  // This is what the basket size was chosen against. At 125 players the same
-  // fixture read a standard deviation of 5.76pp and printed 8.6% on a market
-  // that did nothing; at 600 it reads about 1pp. A single draw is asserted
-  // rather than a distribution, so the bound is set several sigma wide — it is
-  // here to catch the basket being narrowed back, not to measure sigma.
+  // Two checks, because the interesting property is not cheaply assertable.
+  //
+  // The reading is averaged over several draws rather than asserted on one: a
+  // single draw cannot tell the basket sizes apart, which was checked rather
+  // than assumed — at 125 players one draw of this fixture reads 1.0%, inside
+  // any sane bound, despite that basket's spread being some five times wider.
+  // Averaging helps but does not settle it either (125 players gives a mean
+  // absolute of 2.7pp against 1.0pp here, which a bound loose enough not to
+  // flake still lets through), so that check is a sanity bound and no more.
+  //
+  // What actually catches the basket being narrowed is the width assertion
+  // below. It is deterministic, and the sweep in server.js is what ties width
+  // to the noise floor. Verified both ways: at 125 players the width check
+  // fails and the reading check passes.
   {
-    const dbN = new DatabaseSync(':memory:');
-    dbN.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
-    // Seeded, so a failure here is a real regression and not an unlucky day.
-    let s = 20260822;
-    const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-    const noise = (sigma) => Math.exp(sigma * Math.sqrt(-2 * Math.log(Math.max(rand(), 1e-9)))
-                                            * Math.cos(2 * Math.PI * rand()));
-    dbN.exec('BEGIN');
-    const insN = dbN.prepare(`INSERT INTO sales
-      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
-    let k = 0;
-    // A head-and-tail market to select from, so "top 600" is a real choice out
-    // of 1,500 rather than a list that happens to include everyone.
-    for (let p = 0; p < 1500; p++) {
-      const heat = 400 / (1 + p / 25);
-      for (let c = 0; c < 12; c++) {
-        const base = 2000 + c * 500;
-        const times = Math.max(0, Math.round(heat / (1 + c * 0.8)));
-        for (let t = 0; t < times; t++) {
-          const d = -1 - Math.floor(rand() * 34);
-          insN.run(`n${k++}`, iso(d), '2023 Prizm Base', Math.round(base * noise(0.25)),
-                   `Star ${p}`, '2023', 'Prizm', `Var${c}`, '', '', 0.9);
+    // Half the trading volume the basket was tuned against, to keep CI quick.
+    // The floor rises with the square root of that; the bound has room for it.
+    const flatMarket = (seed) => {
+      const dbN = new DatabaseSync(':memory:');
+      dbN.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      let s = seed;
+      const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+      const noise = (sigma) => Math.exp(sigma * Math.sqrt(-2 * Math.log(Math.max(rand(), 1e-9)))
+                                              * Math.cos(2 * Math.PI * rand()));
+      dbN.exec('BEGIN');
+      const insN = dbN.prepare(`INSERT INTO sales
+        (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+      let k = 0;
+      // A head-and-tail market to select from, so "top 600" is a real choice out
+      // of 1,500 rather than a list that happens to include everyone.
+      for (let p = 0; p < 1500; p++) {
+        const heat = 200 / (1 + p / 25);
+        for (let c = 0; c < 12; c++) {
+          const base = 2000 + c * 500;
+          const times = Math.max(0, Math.round(heat / (1 + c * 0.8)));
+          for (let t = 0; t < times; t++) {
+            const d = -1 - Math.floor(rand() * 34);
+            insN.run(`n${k++}`, iso(d), '2023 Prizm Base', Math.round(base * noise(0.25)),
+                     `Star ${p}`, '2023', 'Prizm', `Var${c}`, '', '', 0.9);
+          }
         }
       }
+      dbN.exec('COMMIT');
+      return { db: dbN, sales: k };
+    };
+
+    // Seeded, so a failure is a regression rather than an unlucky day.
+    const draws = [];
+    let width = 0, obs = 0, sales = 0;
+    for (const seed of [20260822, 19870401, 20240915]) {
+      const built = flatMarket(seed);
+      sales = built.sales;
+      use(built.db);
+      const r = await call('/api/market-index?days=30');
+      if (!r.body.available) { draws.length = 0; break; }
+      draws.push(r.body.changePct);
+      width = r.body.matchedCards;
+      obs = r.body.totalObservations;
     }
-    dbN.exec('COMMIT');
-    active = dbN;
-    const t0 = Date.now();
-    const r = await call('/api/market-index?days=30');
-    const ms = Date.now() - t0;
+    const meanAbs = draws.length
+      ? draws.reduce((a, b) => a + Math.abs(b), 0) / draws.length : Infinity;
     check('a market that did nothing reads close to nothing',
-          r.body.available && Math.abs(r.body.changePct) <= 4,
-          r.body.available ? `${r.body.changePct}% on ${k.toLocaleString('en-US')} noisy sales, `
-                           + `${r.body.matchedCards} players, ${r.body.totalObservations} comparisons, ${ms}ms`
-                           : `reason=${r.body.reason}`);
+          draws.length === 3 && meanAbs <= 3,
+          draws.length ? `mean |reading| ${meanAbs.toFixed(1)}pp over ${draws.join('%, ')}% `
+                       + `on ${sales.toLocaleString('en-US')} noisy sales each`
+                       : 'index unavailable');
+    // The width the noise floor depends on, asserted directly because it is
+    // deterministic where the floor is not.
+    check('  ...because the basket really is that wide',
+          width >= 500 && obs >= 15000,
+          `${width} players, ${obs.toLocaleString('en-US')} comparisons per point`);
   }
 
   // The same sales in a different order must give the same number.
@@ -439,7 +477,7 @@ const check = (label, ok, detail) => {
       rows.forEach(([d, cents, player, parallel], i) =>
         insO.run(`o${i}`, d, '2023 Prizm Base', cents, player, '2023', 'Prizm', parallel, '', '', 0.9));
       dbO.exec('COMMIT');
-      active = dbO;
+      use(dbO);
       const r = await call('/api/market-index?days=30');
       return r.body.available ? r.body.changePct : `unavailable: ${r.body.reason}`;
     };
