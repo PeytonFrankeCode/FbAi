@@ -85,10 +85,14 @@ const d1 = {
     const api = {
       bind(...args) { bound = args; return api; },
       all() { return { results: db.prepare(clean).all(...bound) }; },
+      // D1's write API. The index only reads, but the alias backfill writes,
+      // and a stub without these silently skips the code path under test.
+      run() { return { success: true, meta: db.prepare(clean).run(...bound) }; },
       first() { return db.prepare(clean).get(...bound) || null; },
     };
     return api;
   },
+  batch(stmts) { return stmts.map(st => st.run()); },
 };
 
 // Patch the binding BEFORE server.js destructures it off the module.

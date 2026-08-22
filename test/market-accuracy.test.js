@@ -81,14 +81,18 @@ const d1 = {
     const api = {
       bind(...a) { bound = a; return api; },
       all() { return { results: active.prepare(clean).all(...bound) }; },
+      // D1's write API. The index only reads, but the alias backfill writes,
+      // and a stub without these silently skips the code path under test.
+      run() { return { success: true, meta: active.prepare(clean).run(...bound) }; },
       first() { return active.prepare(clean).get(...bound) || null; },
     };
     return api;
   },
+  batch(stmts) { return stmts.map(st => st.run()); },
 };
 require(path.join(__dirname, '..', 'db.js')).getNflDb = () => d1;
 process.env.CF_WORKER = '1';
-const { app } = require(path.join(__dirname, '..', 'server.js'));
+const { app, backfillPlayerAliases } = require(path.join(__dirname, '..', 'server.js'));
 const PORT = 3196;
 const server = app.listen(PORT);
 
@@ -532,6 +536,79 @@ const check = (label, ok, detail) => {
     check('the same sales in a different order read the same',
           forward === backward && typeof forward === 'number',
           `forward=${forward}  reversed=${backward}`);
+  }
+
+  // Canonical names, end to end: fixture -> backfill -> index.
+  //
+  // On live data Tom Brady arrives under 80 different spellings and the index
+  // treats each as a different player, so his 5,365 sales become fragments of
+  // about 67 apiece. Meanwhile parse failures like "Cdt All" stay whole at 796,
+  // outranking every real player and taking basket slots. The fixture below is
+  // that shape in miniature.
+  //
+  // Also asserted here, and it is the more important half: an EMPTY alias table
+  // must leave the index working. Grouping on a table the backfill has not
+  // filled yet would return nothing, which is exactly how the NULL-key outage
+  // read to a user.
+  {
+    const REAL = ['Justin Jefferson', 'Patrick Mahomes', 'Josh Allen', 'Joe Burrow',
+                  'Kyler Murray', 'Travis Kelce', 'Tyreek Hill', 'Bijan Robinson'];
+    const JUNK = ['Cdt All', 'Signature Class', 'Complete Your Set', 'Or Better'];
+    const spellings = (p) => [p, p.toUpperCase(), `${p} RC`, `2023 Prizm ${p}`,
+                              `${p} #331`, `${p} PSA 10`];
+
+    const dbA = new DatabaseSync(':memory:');
+    dbA.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    dbA.exec('BEGIN');
+    const insA = dbA.prepare(`INSERT INTO sales
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+    let a = 0;
+    const sell = (name, parallel, cents, d) =>
+      insA.run(`a${a++}`, iso(d), '2023 Prizm Base', cents, name, '2023', 'Prizm', parallel, '', '', 0.9);
+    // Each real player: six spellings x four cards, rising 10% over the window.
+    for (const p of REAL) {
+      for (const spelling of spellings(p)) {
+        for (let c = 0; c < 4; c++) {
+          for (let d = -30; d <= -2; d += 4) {
+            sell(spelling, `Var${c}`, Math.round(10000 * Math.pow(1.1, (d + 30) / 30)), d);
+          }
+        }
+      }
+    }
+    // Junk strings stay whole and trade heavily, as they do in the real data.
+    for (const j of JUNK) {
+      for (let c = 0; c < 4; c++) {
+        for (let d = -30; d <= -2; d += 2) sell(j, `Var${c}`, 50000, d);
+      }
+    }
+    dbA.exec('COMMIT');
+    use(dbA);
+
+    const before = await call('/api/market-index?days=30');
+    check('an empty alias table leaves the index working',
+          before.body.available === true,
+          before.body.available ? `${before.body.matchedCards} players (fragmented), ${before.body.changePct}%`
+                                : `BROKE: ${before.body.reason}`);
+
+    const fill = await backfillPlayerAliases({ limit: 500 });
+    check('  ...then the backfill resolves the variants',
+          fill.ok && fill.resolved >= REAL.length,
+          fill.ok ? `${fill.inserted} variants written, ${fill.resolved} resolved`
+                  : `FAILED: ${fill.reason}`);
+
+    const after = await call('/api/market-index?days=30');
+    const bres = await call('/api/market-basket?days=30');
+    const names = ((bres.body && bres.body.cards) || []).map(c => c.label);
+    check('  ...and the index then groups on canonical names',
+          after.body.available === true && after.body.matchedCards < before.body.matchedCards,
+          `${before.body.matchedCards} player strings -> ${after.body.matchedCards} canonical players`);
+    check('  ...with the parse failures no longer taking basket slots',
+          names.length > 0 && !names.some(l => JUNK.some(j => l.includes(j))),
+          names.length ? `basket: ${[...new Set(names.map(l => l.replace(/^\d+ \w+ /, '')))].slice(0, 4).join(', ')}`
+                       : 'empty');
   }
 
   server.close();

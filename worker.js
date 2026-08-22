@@ -535,7 +535,13 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases } = await init(env);
+        // Fills the canonical-name table a slice at a time. Isolated like the
+        // others: if it fails the alert checks still run, and the index simply
+        // stays on its old grouping until the table is populated.
+        if (typeof backfillPlayerAliases === 'function') {
+          await backfillPlayerAliases().catch(err => console.error('[Cron] alias backfill failed:', err && err.message || err));
+        }
         if (typeof checkAlerts === 'function') {
           await checkAlerts().catch(err => console.error('[Cron] checkAlerts failed:', err && err.message || err));
         }
