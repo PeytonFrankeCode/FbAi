@@ -46,7 +46,7 @@ for (let c = 0; c < 400; c++) {
     if ((c + d) % 3) continue;
     const drift = 1 + 0.08 * (d + 200) / 200;
     ins.run(`i${n++}`, iso(d), Math.round(10000 * drift), `Player ${c}`, '2020',
-            'Prizm', 'Base', 'PSA', '10', 0.9);
+            'Prizm', 'Base', '', '', 0.9);
   }
 }
 
@@ -58,7 +58,7 @@ function scenario(player, priceFor, salesFor) {
       if (d % 3) continue;
       for (let k = 0; k < salesFor(d); k++) {
         ins.run(`s${n++}`, iso(d), Math.round(priceFor(d) * 100), player, '2021',
-                'Select', `P${c}`, 'PSA', '10', 0.9);
+                'Select', `P${c}`, '', '', 0.9);
       }
     }
   }

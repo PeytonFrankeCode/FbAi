@@ -47,7 +47,7 @@ function buildDb(driftPct) {
         // The photo URL carries its own sale date so the "newest sale that had
         // a photo wins" rule can be checked from the outside.
         ins.run(`h${n++}`, iso(d), Math.round(priceAt(d, base)), `Star ${p}`,
-                '2023', 'Prizm', `Var${c}`, 'PSA', '10', 0.9,
+                '2023', 'Prizm', `Var${c}`, '', '', 0.9,
                 `https://img.test/${iso(d)}.jpg`);
       }
     }
@@ -167,7 +167,7 @@ const check = (label, ok, detail) => {
       // something a real market does.
       for (let d = -95 + (c % gapDays); d <= -1; d += gapDays) {
         ins2.run(`g${m++}`, iso(d), Math.round(priceAt(d, base)), `Gap ${c}`,
-                 '2023', 'Prizm', 'Base', 'PSA', '10', 0.9);
+                 '2023', 'Prizm', 'Base', '', '', 0.9);
       }
     }
     db2.exec('COMMIT');
@@ -201,7 +201,7 @@ const check = (label, ok, detail) => {
       for (let k = 0; k < 6; k++) {
         insF.run(`f${f++}`, iso(-Math.floor(Math.random() * 60) - 1), 10000 + c,
                  spellings(name)[Math.floor(Math.random() * 6)],
-                 '2023', 'Prizm', 'Base', 'PSA', '10', 0.9);
+                 '2023', 'Prizm', 'Base', '', '', 0.9);
       }
     }
     dbF.exec('COMMIT');
@@ -232,16 +232,121 @@ const check = (label, ok, detail) => {
     // -2 is the newest sale, so it sets `through` and is itself excluded by the
     // one-day trailing guard. In range: -30 (old photo), -20 (the one we want),
     // -10 (newest in range, but no photo).
-    insP.run('p1', iso(-30), 10000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, 'https://img.test/old.jpg');
-    insP.run('p2', iso(-20), 11000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, 'https://img.test/want.jpg');
-    insP.run('p3', iso(-10), 12000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, '');
-    insP.run('p4', iso(-2),  13000, 'Photo Guy', '2023', 'Prizm', 'Base', 'PSA', '10', 0.9, null);
+    insP.run('p1', iso(-30), 10000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, 'https://img.test/old.jpg');
+    insP.run('p2', iso(-20), 11000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, 'https://img.test/want.jpg');
+    insP.run('p3', iso(-10), 12000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, '');
+    insP.run('p4', iso(-2),  13000, 'Photo Guy', '2023', 'Prizm', 'Base', '', '', 0.9, null);
     active = dbP;
     const b = await call('/api/market-basket?days=30');
     const card = ((b.body && b.body.cards) || [])[0];
     check('the newest sale that had a photo supplies it',
           !!card && card.imageUrl === 'https://img.test/want.jpg',
           card ? `got ${card.imageUrl}` : `no card (${b.body && b.body.reason})`);
+  }
+
+  // Raw only. The index measures ungraded cards, so slabs must not reach it —
+  // and the hard half of that is the slab whose grade the collector failed to
+  // parse, which looks exactly like a raw card in the columns and can only be
+  // caught in the title.
+  //
+  // Each name below is one player whose cards trade at a price that identifies
+  // the group: raw names run 100 -> 110 across the period, slab names 1000 ->
+  // 2000. Presence is checked per name with a player-scoped basket rather than
+  // by reading the whole-market basket, because that list is capped at 24 rows
+  // ordered by volume then key, so one name can fill every slot and hide the
+  // rest — a display artefact that would look exactly like a filter bug.
+  {
+    const dbG = new DatabaseSync(':memory:');
+    dbG.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    const insG = dbG.prepare(`INSERT INTO sales
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+    let g = 0;
+    const sale = (name, parallel, title, cents, grader, grade, d) =>
+      insG.run(`g${g++}`, iso(d), title, cents, name, '2023', 'Prizm', parallel, grader, grade, 0.9);
+
+    const RAW = [
+      ['Raw Plain',      '2023 Prizm Base'],
+      // "ungraded" contains "graded"; it is a raw claim, not a slab.
+      ['Raw Claimed',    '2023 Prizm Base RAW ungraded'],
+      // Grader abbreviations that live inside ordinary words. ISA/TAG/AGS are
+      // left out of the token list precisely so these survive — a filter that
+      // discarded every Isaiah would cost far more than those graders are worth.
+      ['Isaiah Vintage', '2023 Prizm Isaiah vintage flags mint'],
+      // "gem mint" and "mint" are condition claims raw listings make constantly;
+      // treating them as slab language would gut the sample.
+      ['Raw Mint',       '2023 Prizm Base gem mint sharp corners'],
+      ['Raw Pack',       '2023 Prizm Base fresh out of pack'],
+      ['Raw Centered',   '2023 Prizm Base well centered nice'],
+    ];
+    const SLAB = [
+      // Fully parsed slab — the easy case.
+      ['Slab Parsed',    '2023 Prizm Base PSA 10',        'PSA', '10'],
+      // Grade column empty, grader column empty: indistinguishable from raw
+      // except in the title. This is the leak the filter exists to stop.
+      ['Slab Unparsed',  '2023 Prizm Base PSA 10 GEM MT', '',    ''],
+      ['Slab Parens',    '2023 Prizm Base (BGS 9.5)',     '',    ''],
+      ['Slab Hyphen',    '2023 Prizm Base SGC-9',         '',    ''],
+      ['Slab Worded',    '2023 Prizm Base graded gem',    '',    ''],
+      ['Slab Certed',    '2023 Prizm Base cert 12345678', '',    ''],
+      // Grader column set but no grade parsed — still unambiguously a slab.
+      ['Slab NoNumber',  '2023 Prizm Base',               'CGC', ''],
+    ];
+    // Genuinely raw listings the filter drops anyway, because their titles name
+    // a grader. Pinned deliberately: erring this way costs a little sample,
+    // erring the other way puts slab money in a raw index.
+    const CONSERVATIVE = [
+      ['Raw Candidate',  '2023 Prizm Base raw, PSA 10 candidate'],
+      ['Raw Worthy',     '2023 Prizm Base ungraded, BGS 9.5 worthy'],
+    ];
+    // Each name gets 4 cards selling 5 times across the window, so pairs land in
+    // every bucket the 30-day geometry asks for rather than piling into one.
+    const DAYS = [-33, -26, -19, -12, -5];
+    const spread = (name, title, lo, hi, grader, grade) => {
+      for (let c = 0; c < 4; c++) {
+        DAYS.forEach((d, i) => {
+          const price = Math.round(lo * Math.pow(hi / lo, i / (DAYS.length - 1)));
+          sale(name, `Var${c}`, title, price, grader, grade, d);
+        });
+      }
+    };
+    for (const [name, title] of RAW) spread(name, title, 10000, 11000, '', '');
+    for (const [name, title] of CONSERVATIVE) spread(name, title, 10000, 11000, '', '');
+    for (const [name, title, grader, grade] of SLAB) spread(name, title, 100000, 200000, grader, grade);
+    sale('Anchor', 'Base', '2023 Prizm Base', 10000, '', '', -2);   // sets `through`
+    active = dbG;
+
+    // A name is in the index iff its own scoped basket returns cards.
+    const present = async (name) => {
+      const r = await call(`/api/market-basket?days=30&player=${encodeURIComponent(name)}`);
+      return !!(r.body && r.body.available && (r.body.cards || []).length);
+    };
+    const leaked = [];
+    for (const [name] of SLAB) if (await present(name)) leaked.push(name);
+    const kept = [];
+    for (const [name] of RAW) if (await present(name)) kept.push(name);
+    const trusted = [];
+    for (const [name] of CONSERVATIVE) if (await present(name)) trusted.push(name);
+
+    check('no graded sale reaches the index',
+          leaked.length === 0,
+          leaked.length ? `LEAKED: ${leaked.join(', ')}` : `all ${SLAB.length} slab variants excluded`);
+    check('  ...and raw cards are not thrown out with them',
+          kept.length === RAW.length,
+          `kept ${kept.length}/${RAW.length}${kept.length < RAW.length
+            ? ' — missing ' + RAW.map(r => r[0]).filter(n => !kept.includes(n)).join(', ') : ''}`);
+    check('  ...while a raw listing naming a grader is dropped, not trusted',
+          trusted.length === 0,
+          trusted.length ? `admitted: ${trusted.join(', ')}` : `both grader-naming raw listings excluded`);
+    // Raw names double-sell 100 -> 110; slabs 1000 -> 2000. A leak would drag
+    // the index far above the raw trend, so the magnitude is the real assertion.
+    const idx = await call('/api/market-index?days=30');
+    check('  ...so the index reads the raw trend, not the slab trend',
+          idx.body.available && idx.body.changePct > 0 && idx.body.changePct < 30,
+          idx.body.available ? `changePct=${idx.body.changePct}% (a slab leak reads far higher)`
+                             : `reason=${idx.body.reason}`);
   }
 
   server.close();
