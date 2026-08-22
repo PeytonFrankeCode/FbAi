@@ -539,6 +539,81 @@ const check = (label, ok, detail) => {
           `forward=${forward}  reversed=${backward}`);
   }
 
+  // A card is not a card without its set and its parallel.
+  //
+  // A blank parallel means the collector could not read one, not "base". It is
+  // part of the card key, so every unreadable sale for a player lands in one
+  // bucket holding base cards, refractors, autos and patches together — and
+  // that bucket then prices a $5 base against a $500 patch and reports the
+  // difference as a price move. Live, it put "2025 Topps Chrome Jaxson Dart"
+  // with no parallel and +7,127% on the page, and listed the same card twice at
+  // two different averages.
+  {
+    const dbI = new DatabaseSync(':memory:');
+    dbI.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
+      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
+      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    dbI.exec('BEGIN');
+    const insI = dbI.prepare(`INSERT INTO sales
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+    let z = 0;
+    const sellI = (player, year, set_, parallel, cents, d) =>
+      insI.run(`z${z++}`, iso(d), '2025 Topps Chrome Base', cents, player, year, set_, parallel, '', '', 0.9);
+
+    for (let p2 = 0; p2 < 40; p2++) {
+      const who = `Star ${p2}`;
+      for (let c = 0; c < 3; c++) {
+        for (let d = -30; d <= -2; d += 4) {
+          const px = Math.round(10000 * Math.pow(1.1, (d + 30) / 30));
+          sellI(who, '2025', 'Topps Chrome', `Var${c}`, px, d);          // identified
+          // The same player, parallel unreadable, wildly mixed prices — a base
+          // one day and a patch the next. Nothing here is a comparison.
+          sellI(who, '2025', 'Topps Chrome', '', d % 8 === 0 ? 500 : 50000, d);
+          sellI(who, '2025', '', 'Refractor', 30000, d);                 // no set
+          sellI(who, '', 'Topps Chrome', 'Refractor', 30000, d);         // no year
+        }
+      }
+    }
+    // A fully identified card, running hard and reselling fast. Deliberately
+    // extreme — 1.5x every two days — because that is where the arithmetic
+    // bites: converting a ratio to a per-day rate divides by the gap, so a
+    // short gap raises the move to a large power before it is compounded across
+    // every bucket. Each individual ratio still sits inside the pair filter, so
+    // nothing upstream discards these; only the clamp bounds them.
+    //
+    // Alternating cheap and dear prices does NOT test this — ratios of 100 and
+    // 0.01 fall outside the pair filter and never reach the clamp at all.
+    for (let p2 = 0; p2 < 12; p2++) {
+      const who = `Rocket ${p2}`;
+      for (let d = -30; d <= -2; d += 2) {
+        sellI(who, '2025', 'Topps Chrome', 'Refractor',
+              Math.round(500 * Math.pow(1.5, (d + 30) / 2)), d);
+      }
+    }
+    dbI.exec('COMMIT');
+    use(dbI);
+
+    const b3 = await call('/api/market-basket?days=30');
+    const cards = (b3.body && b3.body.cards) || [];
+    check('every card in the basket is fully identified',
+          cards.length > 0 && cards.every(c => c.detail && c.detail.trim() !== ''),
+          cards.length
+            ? `${cards.length} cards, ${cards.filter(c => !c.detail || !c.detail.trim()).length} missing a parallel`
+            : 'empty');
+    check('  ...so no card is listed twice under one label',
+          new Set(cards.map(c => `${c.label} | ${c.detail}`)).size === cards.length,
+          `${new Set(cards.map(c => c.label)).size} distinct labels, `
+          + `${new Set(cards.map(c => `${c.label} | ${c.detail}`)).size} distinct label+parallel, of ${cards.length}`);
+    // The clamp. Unbounded, the mixed bucket above compounds into thousands of
+    // percent; the index has always bounded a bucket move and the list must too.
+    const moves = cards.map(c => c.changePct).filter(v => v != null);
+    const worst = moves.length ? Math.max(...moves.map(Math.abs)) : 0;
+    check('  ...and no card reports an impossible move',
+          worst <= 1600,
+          `largest move ${worst}% across ${moves.length} cards`);
+  }
+
   // Canonical names, end to end: fixture -> backfill -> index.
   //
   // On live data Tom Brady arrives under 80 different spellings and the index

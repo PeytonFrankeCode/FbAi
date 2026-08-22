@@ -3168,6 +3168,25 @@ function _rsiRawOnlySql(titleCol = 'title') {
 }
 const RSI_RAW_ONLY = _rsiRawOnlySql();
 
+// A sale can only be compared against another sale of the SAME card, and a card
+// is not identified by its player alone. A blank parallel does not mean "base"
+// — it means the collector could not read one — and because the parallel is
+// part of the card key, every unreadable sale for a player collapses into a
+// single bucket holding base cards, refractors, autos and patches together.
+//
+// That bucket then prices a $5 base against a $500 patch and calls the
+// difference a price move. It is where "2025 Topps Chrome Jaxson Dart" with no
+// parallel and a +7,127% move came from, and it is also why the same card
+// appeared twice in the basket at $59 and $233.
+//
+// So a sale needs a year, a set and a parallel to be indexed at all. That costs
+// sample, and it is the same trade as the raw-only filter: a card we cannot
+// identify is not a comparison, it is a coincidence.
+const RSI_IDENTIFIED = `
+          AND COALESCE(TRIM(year), '') <> ''
+          AND COALESCE(TRIM(set_name), '') <> ''
+          AND COALESCE(TRIM(parallel), '') <> ''`;
+
 function _rsiGeometry(days) {
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
   const points = Math.max(1, Math.round(days / bucketDays));
@@ -3261,7 +3280,7 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -3364,7 +3383,7 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -3450,7 +3469,15 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
     let changePct = null;
     const ratio = Number(r.med_ratio), gap = Number(r.med_gap);
     if (ratio > 0 && gap > 0) {
-      const perBucket = Math.pow(ratio, bucketDays / gap);
+      // Clamped the same way the index clamps a bucket. This was missing, and
+      // the omission is what put +7,127% and +78,067% on the page: converting a
+      // ratio to a per-day rate divides by the gap, so a card that resold two
+      // days later has its move raised to a large power, and then compounded
+      // across every bucket in the period. The index has always bounded that;
+      // the list underneath it, which claims to show the same arithmetic, did
+      // not.
+      let perBucket = Math.pow(ratio, bucketDays / gap);
+      perBucket = Math.min(RSI_BUCKET_MOVE_CEIL, Math.max(RSI_BUCKET_MOVE_FLOOR, perBucket));
       const overPeriod = Math.pow(perBucket, points);
       if (Number.isFinite(overPeriod)) changePct = Math.round((overPeriod - 1) * 1000) / 10;
     }
@@ -3707,7 +3734,12 @@ app.get('/api/debug/raw-filter', async (req, res) => {
                        THEN 1 ELSE 0 END) AS grader_ok,
               SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
                         AND ${titleClean} THEN 1 ELSE 0 END) AS raw_final,
-              SUM(CASE WHEN title IS NULL OR title = '' THEN 1 ELSE 0 END) AS no_title
+              SUM(CASE WHEN title IS NULL OR title = '' THEN 1 ELSE 0 END) AS no_title,
+              SUM(CASE WHEN COALESCE(TRIM(year), '') <> '' THEN 1 ELSE 0 END) AS has_year,
+              SUM(CASE WHEN COALESCE(TRIM(set_name), '') <> '' THEN 1 ELSE 0 END) AS has_set,
+              SUM(CASE WHEN COALESCE(TRIM(parallel), '') <> '' THEN 1 ELSE 0 END) AS has_parallel,
+              SUM(CASE WHEN COALESCE(TRIM(year), '') <> '' AND COALESCE(TRIM(set_name), '') <> ''
+                        AND COALESCE(TRIM(parallel), '') <> '' THEN 1 ELSE 0 END) AS identified
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?`
@@ -3743,6 +3775,15 @@ app.get('/api/debug/raw-filter', async (req, res) => {
         afterGraderCheck: p.grader_ok, afterGraderCheckShare: pct(p.grader_ok, p.priced),
         rawFinal: p.raw_final, rawFinalShare: pct(p.raw_final, p.priced),
         salesWithNoTitle: p.no_title,
+      },
+      // What the card-identity rule costs. A sale needs all three to be
+      // indexable, because a blank parallel is not "base" — it is unreadable,
+      // and pooling unreadable sales prices a base against a patch.
+      cardIdentity: {
+        hasYear: p.has_year, hasYearShare: pct(p.has_year, p.priced),
+        hasSet: p.has_set, hasSetShare: pct(p.has_set, p.priced),
+        hasParallel: p.has_parallel, hasParallelShare: pct(p.has_parallel, p.priced),
+        fullyIdentified: p.identified, fullyIdentifiedShare: pct(p.identified, p.priced),
       },
       // If the biggest loss is at a column stage, the values below say why.
       graderValues: await top('grader'),
