@@ -27,6 +27,9 @@ function norm(s) {
 const NOISE = new Set(INDEX.noise);
 const PLAYERS = INDEX.players;
 const SURNAMES = INDEX.uniqueSurnames;
+// "Luther Burden" -> "luther burden iii". Only populated where one player has
+// that base name and the base is not itself somebody's full name.
+const SUFFIXLESS = INDEX.suffixless || {};
 
 // Stored as 1 when the canonical spelling is just the normalised key with each
 // word capitalised, which is true of most names.
@@ -81,7 +84,15 @@ function resolvePlayer(raw) {
     return { canonical: display(cleaned), key: cleaned, how: 'cleaned', confident: true };
   }
 
-  // 3. A canonical name sitting inside a longer string. Longest window wins;
+  // 3. The same name without its generational suffix. Sellers drop the III far
+  //    more often than they include it, and the build only offers a base name
+  //    here when it is unambiguous.
+  if (SUFFIXLESS[cleaned]) {
+    const key = SUFFIXLESS[cleaned];
+    return { canonical: display(key), key, how: 'suffix', confident: true };
+  }
+
+  // 4. A canonical name sitting inside a longer string. Longest window wins;
   //    two different players in one string is a lot (or a mis-parse), so it is
   //    declined rather than arbitrated.
   let found = null;
@@ -96,7 +107,7 @@ function resolvePlayer(raw) {
     return { canonical: display(found), key: found, how: 'embedded', confident: true };
   }
 
-  // 4. Surname only, and only when exactly one player in the whole catalogue
+  // 5. Surname only, and only when exactly one player in the whole catalogue
   //    has it. 1,260 surnames are shared and every one of them is declined —
   //    picking between two Harrisons would merge two markets into one wrong one.
   for (const t of kept) {

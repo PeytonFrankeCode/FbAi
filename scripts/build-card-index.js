@@ -145,13 +145,35 @@ function collect() {
     surnames.get(sur).add(n);
   }
 
+  // Rookies are listed both ways: the checklist says "Luther Burden III", the
+  // seller writes "Luther Burden". A base name maps to its suffixed player only
+  // when exactly one player has that base AND the base is not itself somebody's
+  // full name — "Marvin Harrison" is a real player, so it must never be treated
+  // as shorthand for "Marvin Harrison Jr".
+  const baseNames = new Map();
+  for (const n of players.keys()) {
+    const parts = n.split(' ');
+    if (parts.length < 3) continue;
+    if (!/^(jr|sr|ii|iii|iv|v)$/.test(parts[parts.length - 1])) continue;
+    const base = parts.slice(0, -1).join(' ');
+    if (players.has(base)) continue;             // the base is its own player
+    if (!baseNames.has(base)) baseNames.set(base, new Set());
+    baseNames.get(base).add(n);
+  }
+  const suffixless = {};
+  let baseAmbiguous = 0;
+  for (const [base, set] of baseNames) {
+    if (set.size === 1) suffixless[base] = [...set][0];
+    else baseAmbiguous++;
+  }
+
   // A player's own name tokens must never count as noise, or "Green" the
   // surname disappears because "Green" is also a parallel.
   const nameTokens = new Set();
   for (const n of players.keys()) for (const w of n.split(' ')) nameTokens.add(w);
 
   return { players, playerTeams, surnames, parallelsByProduct, noise, products,
-           cardCount, nameTokens, teamNames, droppedTeams };
+           cardCount, nameTokens, teamNames, droppedTeams, suffixless, baseAmbiguous };
 }
 
 // Restores the display spelling for the common case where a canonical name is
@@ -192,6 +214,7 @@ function main() {
     source: { products: c.products.length, cards: c.cardCount },
     players,
     uniqueSurnames,
+    suffixless: c.suffixless,
     noise: safeNoise,
   };
 
@@ -210,6 +233,7 @@ function main() {
   console.log(`  catalogued cards    ${c.cardCount.toLocaleString('en-US')}`);
   console.log(`  canonical players   ${c.players.size.toLocaleString('en-US')} (${c.droppedTeams} team cards dropped)`);
   console.log(`  unique surnames     ${Object.keys(uniqueSurnames).length.toLocaleString('en-US')} usable, ${ambiguous} ambiguous (declined)`);
+  console.log(`  suffix-optional     ${Object.keys(c.suffixless).length.toLocaleString('en-US')} names ("Luther Burden" -> "Luther Burden III"), ${c.baseAmbiguous} ambiguous (declined)`);
   console.log(`  noise vocabulary    ${safeNoise.length.toLocaleString('en-US')} words, ${collides} dropped for colliding with real names`);
   console.log(`  parallel sets       ${Object.keys(c.parallelsByProduct).length} (${pkb} KB, separate artifact)`);
 }

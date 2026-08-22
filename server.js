@@ -2859,10 +2859,193 @@ function _normCol(col) {
   return `TRIM(${e})`;
 }
 
+// ---- Canonical player names, applied in SQL ----
+//
+// The dictionary in card-index.js can merge 80 spellings of Tom Brady into one
+// player, but the index groups inside SQL over hundreds of thousands of rows,
+// and a resolver written in JavaScript cannot reach in there. So the mapping is
+// materialised: one small table, variant string in, canonical name out, joined
+// on the same normalised key the index already computes.
+//
+// This is the only thing in this app that writes to NFLDB. It is strictly
+// additive — it creates its own table and never touches `sales`.
+//
+// The safety property that matters: an EMPTY alias table must not take the
+// index down. That is exactly how the NULL-key bug played out, and an inner
+// join against a table the backfill has not filled yet would reproduce it
+// precisely. So the index asks whether the table is populated first and keeps
+// its old behaviour until it is. The table earns its way in.
+const ALIAS_TABLE = 'player_alias';
+const ALIAS_BACKFILL_BATCH = 1200;  // variants resolved per cron run
+// Coverage, not a row count. The join is an inner one, so a name with no alias
+// row drops out of the index entirely — grouping on a half-filled table would
+// not break the index, it would quietly shrink the market to whatever had been
+// processed so far, which is worse because nothing looks wrong. The backfill
+// works head-first by volume, so by the time this share of distinct NAMES is
+// covered, very nearly all of the sales are.
+const ALIAS_MIN_COVERAGE = 0.95;
+const ALIAS_MIN_ROWS = 25;          // guards the degenerate 0-of-0 case
+const ALIAS_WINDOW_DAYS = 400;      // how far back to look for names to resolve
+const ALIAS_READY_TTL = 300;        // 5 min — the readiness check is cached
+
+let _aliasTableReady = null;        // null = unknown, false = cannot write
+async function _aliasEnsure(db) {
+  if (_aliasTableReady !== null) return _aliasTableReady;
+  try {
+    await db.prepare(
+      `CREATE TABLE IF NOT EXISTS ${ALIAS_TABLE} (
+         variant   TEXT PRIMARY KEY,
+         canonical TEXT NOT NULL,
+         display   TEXT NOT NULL,
+         how       TEXT,
+         resolved  INTEGER NOT NULL DEFAULT 1,
+         n         INTEGER,
+         updated_at TEXT
+       )`).run();
+    _aliasTableReady = true;
+  } catch (err) {
+    // A read-only binding, or a database we may not alter. Say so once and
+    // leave the index on its old path rather than failing every request.
+    console.error('[alias] table unavailable, index will not use it:', err && err.message);
+    _aliasTableReady = false;
+  }
+  return _aliasTableReady;
+}
+
+// Resolve the busiest player strings that have no alias row yet, and record
+// them — including the ones that resolve to nothing, so they are not
+// reconsidered on every run. Time-boxed by row count, not by clock: the cron
+// fires every 15 minutes and the head of the distribution is covered in the
+// first few passes.
+async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH } = {}) {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no dataset' };
+  if (!await _aliasEnsure(db)) return { ok: false, reason: 'table unavailable' };
+
+  const P = _normCol('player');
+  const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
+  let rows;
+  try {
+    rows = await db.prepare(
+      `SELECT ${P} AS v, COUNT(*) AS n
+         FROM sales s
+        WHERE s.player IS NOT NULL AND s.player <> '' AND ${P} <> ''
+          AND s.sold_date > ?
+          AND NOT EXISTS (SELECT 1 FROM ${ALIAS_TABLE} a WHERE a.variant = ${P})
+        GROUP BY v
+        ORDER BY n DESC
+        LIMIT ?`
+    ).bind(since, limit).all();
+  } catch (err) {
+    console.error('[alias] backfill query failed:', err && err.message);
+    return { ok: false, reason: 'query failed' };
+  }
+
+  const list = (rows && rows.results) || [];
+  if (!list.length) return { ok: true, done: true, inserted: 0 };
+
+  const now = new Date().toISOString();
+  const stmts = [];
+  let resolved = 0;
+  for (const r of list) {
+    const hit = resolvePlayer(r.v);
+    // Unresolved variants are still recorded, mapped to themselves. Without a
+    // row they would be re-resolved every run forever, and the index needs to
+    // be able to tell "no player in this string" from "not looked at yet".
+    const ok = !!(hit && hit.confident);
+    if (ok) resolved++;
+    stmts.push(db.prepare(
+      `INSERT OR REPLACE INTO ${ALIAS_TABLE}
+         (variant, canonical, display, how, resolved, n, updated_at)
+       VALUES (?,?,?,?,?,?,?)`
+    ).bind(r.v, ok ? hit.key : r.v, ok ? hit.canonical : r.v,
+           hit ? hit.how : 'none', ok ? 1 : 0, r.n, now));
+  }
+
+  try {
+    if (typeof db.batch === 'function') await db.batch(stmts);
+    else for (const st of stmts) await st.run();
+  } catch (err) {
+    console.error('[alias] backfill write failed:', err && err.message);
+    return { ok: false, reason: 'write failed' };
+  }
+  console.log(`[alias] +${stmts.length} variants (${resolved} resolved)`);
+  return { ok: true, inserted: stmts.length, resolved };
+}
+
+// Is the table filled enough to group on? Cached, because every index build
+// would otherwise pay for the check.
+async function _aliasReady(db) {
+  const cached = await cacheGet('aliasready:v1');
+  if (cached && typeof cached.ready === 'boolean') return cached.ready;
+  if (_aliasTableReady === false) return false;
+  const P = _normCol('player');
+  const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
+  let ready = false, have = 0, want = 0;
+  try {
+    const r = await db.prepare(
+      `SELECT (SELECT COUNT(*) FROM ${ALIAS_TABLE}) AS have,
+              (SELECT COUNT(DISTINCT ${P}) FROM sales
+                WHERE player IS NOT NULL AND player <> '' AND sold_date > ?) AS want`
+    ).bind(since).first();
+    have = (r && r.have) || 0;
+    want = (r && r.want) || 0;
+    ready = have >= ALIAS_MIN_ROWS && want > 0 && (have / want) >= ALIAS_MIN_COVERAGE;
+  } catch (_) {
+    ready = false;   // table not created yet — old path, no error to the reader
+  }
+  cachePut('aliasready:v1', { ready, have, want }, ALIAS_READY_TTL);
+  return ready;
+}
+
+// Progress and effect of the alias table, for watching the backfill ramp and
+// for confirming the index actually switched over.
+app.get('/api/debug/alias-status', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const P = _normCol('player');
+  const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
+  try {
+    const cov = await db.prepare(
+      `SELECT (SELECT COUNT(*) FROM ${ALIAS_TABLE}) AS have,
+              (SELECT COUNT(*) FROM ${ALIAS_TABLE} WHERE resolved = 1) AS resolved,
+              (SELECT COUNT(DISTINCT ${P}) FROM sales
+                WHERE player IS NOT NULL AND player <> '' AND sold_date > ?) AS want`
+    ).bind(since).first();
+    const top = await db.prepare(
+      `SELECT display, COUNT(*) AS spellings, SUM(n) AS sales
+         FROM ${ALIAS_TABLE} WHERE resolved = 1
+        GROUP BY canonical ORDER BY spellings DESC LIMIT 15`).all();
+    const have = (cov && cov.have) || 0, want = (cov && cov.want) || 0;
+    res.json({
+      available: true,
+      coverage: {
+        aliasRows: have, distinctNamesInWindow: want,
+        share: want ? Math.round((have / want) * 1000) / 10 + '%' : null,
+        neededToSwitch: Math.round(ALIAS_MIN_COVERAGE * 100) + '%',
+        resolvedRows: (cov && cov.resolved) || 0,
+      },
+      indexIsUsingIt: await _aliasReady(db),
+      biggestMerges: ((top && top.results) || [])
+        .map(r => ({ player: r.display, spellings: r.spellings, sales: r.sales })),
+    });
+  } catch (err) {
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // The card identity used by every index query. Normalised so that grouping is
 // done on the cleaned form rather than the raw text.
 const RSI_KEY_COLS = ['year', 'set_name', 'player', 'parallel', 'grader', 'grade'];
 const RSI_KEY_SQL = RSI_KEY_COLS.map(_normCol).join(', ');
+// The card key, with the player component swappable. When the alias table is
+// in play the canonical name goes in that slot, which is the whole point: two
+// spellings of one player stop being two different cards.
+function _cardKeySql(playerExpr) {
+  return RSI_KEY_COLS
+    .map(c => (c === 'player' ? playerExpr : _normCol(c)))
+    .join(" || '|' || ");
+}
 
 // The index measures raw (ungraded) cards only.
 //
@@ -2988,16 +3171,25 @@ const MARKET_MIN_OBS_PER_PLAYER = 1;
 // cards traded. Scoped to one player there is only ever one player, so the
 // contributor is a card instead — otherwise every bucket has a sample of one
 // and the index can never report.
-function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player') {
+function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false) {
   const { bucketDays, spanDays } = _rsiGeometry(days);
   // Reach back beyond the window so a sale early in it still has a prior.
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
   const P = _normCol('player');
-  const CARD = RSI_KEY_COLS.map(_normCol).join(" || '|' || ");
+  // With aliases the player is the canonical name and the join doubles as a
+  // filter: a variant marked unresolved carries no player we could identify —
+  // "Cdt All", "Signature Class", "Complete Your Set" — and those strings
+  // currently outrank real players, because a parse failure stays whole while
+  // Tom Brady is split eighty ways.
+  const PLAYER = useAlias ? 'al.canonical' : P;
+  const JOIN = useAlias
+    ? `JOIN ${ALIAS_TABLE} al ON al.variant = ${P} AND al.resolved = 1`
+    : '';
+  const CARD = _cardKeySql(PLAYER);
   return db.prepare(
     `WITH base AS (
-       SELECT sold_date, price_cents, ${P} AS player_n, ${CARD} AS card
-         FROM sales
+       SELECT sold_date, price_cents, ${PLAYER} AS player_n, ${CARD} AS card
+         FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
           AND ${P} <> ''${RSI_RAW_ONLY}${extraWhere}
@@ -3078,11 +3270,17 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
 // A representative raw spelling of each field is carried through with MAX(),
 // because grouping happens on the normalised form and the normalised form is
 // lower-cased and stripped of punctuation — no use as a label.
-function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false) {
+function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false) {
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
   const P = _normCol('player');
-  const CARD = RSI_KEY_COLS.map(_normCol).join(" || '|' || ");
+  // Same substitution as the index. The basket has to select from exactly the
+  // same population or the list stops explaining the number above it.
+  const PLAYER = useAlias ? 'al.canonical' : P;
+  const JOIN = useAlias
+    ? `JOIN ${ALIAS_TABLE} al ON al.variant = ${P} AND al.resolved = 1`
+    : '';
+  const CARD = _cardKeySql(PLAYER);
   // The photo comes from the newest sale of that card that carried one. Dates
   // are ISO, so their lexical maximum is also their chronological one — the
   // date is glued on only to rank by, and stripped off again on the way out.
@@ -3092,9 +3290,10 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
     : 'NULL';
   return db.prepare(
     `WITH base AS (
-       SELECT sold_date, price_cents, ${P} AS player_n, ${CARD} AS card,
-              player, year, set_name, parallel, grader, grade${hasImage ? ', image_url' : ''}
-         FROM sales
+       SELECT sold_date, price_cents, ${PLAYER} AS player_n, ${CARD} AS card,
+              ${useAlias ? 'al.display' : 'player'} AS player,
+              year, set_name, parallel, grader, grade${hasImage ? ', image_url' : ''}
+         FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
           AND ${P} <> ''${RSI_RAW_ONLY}${extraWhere}
@@ -3604,10 +3803,11 @@ app.get('/api/market-basket', async (req, res) => {
     // Probed, never assumed: naming a column the table lacks fails the whole
     // query, and image_url arrived late enough that not every deployment has it.
     const hasImage = await _nflHasImageColumn(db);
+    const useAlias = await _aliasReady(db);
     const rows = player
       ? await _rsiBasketQuery(db, throughIso, days, 12,
-          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage).all()
-      : await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage).all();
+          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, useAlias).all()
+      : await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage, useAlias).all();
 
     const payload = {
       available: true, days, player: player || null, through: throughIso,
@@ -3780,7 +3980,9 @@ app.get('/api/market-index', async (req, res) => {
       });
     }
 
-    const rows = await _rsiQuery(db, throughIso, days).all();
+    // Only groups on canonical names once the table is actually filled.
+    const useAlias = await _aliasReady(db);
+    const rows = await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias).all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });
 
@@ -7348,7 +7550,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
