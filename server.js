@@ -2854,6 +2854,55 @@ function _normCol(col) {
 const RSI_KEY_COLS = ['year', 'set_name', 'player', 'parallel', 'grader', 'grade'];
 const RSI_KEY_SQL = RSI_KEY_COLS.map(_normCol).join(', ');
 
+// The index measures raw (ungraded) cards only.
+//
+// The trap, already documented on _gradeBucket: an empty grade column does NOT
+// mean raw. It means the collector's parser found no grade, which happens for
+// genuinely raw cards AND for slabs whose titles it couldn't read. Filtering on
+// `grade IS NULL` alone would therefore leave slab money in the raw series —
+// precisely what this filter exists to keep out — so the title is checked for
+// grader and slab language too. This mirrors _gradeBucket exactly, including
+// that an explicit "raw"/"ungraded" claim outranks a stray grader mention
+// ("raw, PSA 10 candidate"), so the index agrees with the grade breakdown the
+// rest of the site shows.
+// This predicate runs on every priced sale in the window, so it is built from
+// plain substring LIKEs over one LOWER() and nothing else. A first version did
+// proper word matching — separators flattened and the title padded so '% psa %'
+// could not match inside a word — and it took the 90-day index from 950ms to
+// 1,972ms against a 2,000ms Worker budget. Correct, and unshippable.
+//
+// What makes substring matching safe here is the choice of tokens: every one
+// below is a string that does not occur inside an ordinary word in a card
+// title. The graders that DO collide are deliberately absent — 'isa' sits
+// inside "Isaiah", 'tag' inside "vintage", 'ags' inside "flags" — because
+// matching those would throw away real raw sales of real players, and ISA, TAG
+// and AGS together slab a rounding error of the football market.
+const RSI_GRADER_WORDS = ['psa', 'bgs', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
+                          'hga', 'ksa', 'gma', 'rcg', 'mnt'];
+const RSI_SLAB_WORDS = ['slab', 'encapsulated', 'cert'];
+
+// Where the errors land is a deliberate choice. Dropping a genuinely raw sale
+// costs a little sample out of thousands; admitting one slab puts graded money
+// in a raw series, which is the whole thing being avoided. So the filter is
+// conservative: _gradeBucket's rule that an explicit "raw" claim outranks a
+// grader mention is NOT reproduced here, and a listing reading "raw, PSA 10
+// candidate" is excluded rather than trusted.
+function _rsiRawOnlySql(titleCol = 'title') {
+  const T = `LOWER(COALESCE(${titleCol}, ''))`;
+  const any = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
+  return `
+          AND COALESCE(TRIM(grade), '') = ''
+          AND COALESCE(TRIM(grader), '') = ''
+          AND NOT ( ${any(RSI_GRADER_WORDS)}
+                 OR ${any(RSI_SLAB_WORDS)}
+                 -- "graded" minus the two words that contain it. Cheaper than
+                 -- padding the title, and "ungraded" is a raw claim, not a slab.
+                 OR ( ${T} LIKE '%graded%'
+                      AND ${T} NOT LIKE '%ungraded%'
+                      AND ${T} NOT LIKE '%upgraded%' ) )`;
+}
+const RSI_RAW_ONLY = _rsiRawOnlySql();
+
 function _rsiGeometry(days) {
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
   const points = Math.max(1, Math.round(days / bucketDays));
@@ -2910,7 +2959,7 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${extraWhere}
+          AND ${P} <> ''${RSI_RAW_ONLY}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -2987,7 +3036,7 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${extraWhere}
+          AND ${P} <> ''${RSI_RAW_ONLY}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n

@@ -3939,7 +3939,7 @@ async function loadMarketIndex() {
     <div class="market-basket" id="market-basket">
       <div class="market-basket-head">
         <span class="market-basket-title">What's driving it</span>
-        <span class="market-basket-sub">most-traded cards in the basket</span>
+        <span class="market-basket-sub">most-traded raw cards in the basket</span>
       </div>
       <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
     </div>
@@ -3956,7 +3956,8 @@ async function loadMarketIndex() {
 
     <div class="market-notes">
       <p><strong>How it works.</strong> The index tracks the ${data.topPlayers || 125} most actively traded players, and for each of them the ${data.cardsPerPlayer || 10} cards of theirs that trade most &mdash; in practice the base rookie, the Prizm or Silver, and a few close variants. Every sale of those cards is compared with what that same card last sold for, converted to a per-day rate over its own gap so a card reappearing after months isn't mistaken for a one-day move. Each player contributes one number however many of their cards sold, and the market is the average across players.</p>
-      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded cards, matched on year, set, parallel and grade. A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}. Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
+      <p><strong>Raw cards only.</strong> Graded sales are left out entirely. A slab's price is partly the grade's price &mdash; a PSA 10 and a PSA 9 of the same card are different assets that move on population reports and grading turnaround as much as on the card itself &mdash; so mixing them in blurs what the card did. Listings whose grade we couldn't read are excluded too if anything in the title suggests a slab, which means the odd genuinely raw card is dropped. That is the safer error: a lost sale costs a little sample, a stray slab costs the number.</p>
+      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded raw cards, matched on year, set and parallel. A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}. Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
       ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had too few matched cards to measure, so the line is held flat there. It is smoother than the market actually was.</p>` : ''}
       ${data.tier && data.tier !== 'strict' ? `<p class="market-warn"><strong>Wider sample.</strong> There weren't enough exact repeat sales in this period, so the index looked back over a ${data.valueWindow}-day window per card to find them. Treat it as directional.</p>` : ''}
     </div>
@@ -3988,7 +3989,7 @@ async function loadMarketBasket() {
   wrap.innerHTML = `
     <div class="market-basket-head">
       <span class="market-basket-title">What's driving it</span>
-      <span class="market-basket-sub">${cards.length} most-traded card${cards.length === 1 ? '' : 's'} in the basket</span>
+      <span class="market-basket-sub">${cards.length} most-traded raw card${cards.length === 1 ? '' : 's'} in the basket</span>
     </div>
     <ul class="market-basket-list">
       ${cards.map(c => `
