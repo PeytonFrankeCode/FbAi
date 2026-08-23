@@ -3877,7 +3877,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     const noReadBy = { base: 0, unmatched: 0, 'no-number': 0 };
     const noReadSalesBy = { base: 0, unmatched: 0, 'no-number': 0 };
     let filledSales = 0;
-    const falseBase = [];
+    const falseBaseByKind = {};
     const falseBaseBy = {};
     const falseBaseSalesBy = {};
     const conflicts = [];
@@ -3897,7 +3897,11 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
           const kind = pi.classify(r.parallel);
           falseBaseBy[kind] = (falseBaseBy[kind] || 0) + 1;
           falseBaseSalesBy[kind] = (falseBaseSalesBy[kind] || 0) + r.n;
-          if (falseBase.length < 15) falseBase.push({ column: r.parallel, columnIs: kind, sales: r.n, title: r.title });
+          // Keep a few of EACH kind. One kind swamps the list otherwise —
+          // Downtown alone filled all 15 slots — which hides the only bucket
+          // worth acting on behind the one that is already explained.
+          const bucket = falseBaseByKind[kind] || (falseBaseByKind[kind] = []);
+          if (bucket.length < 8) bucket.push({ column: r.parallel, sales: r.n, title: r.title });
         }
         continue;
       }
@@ -3963,7 +3967,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
       },
       // Concrete examples of that mistake, worth more than the rate alone —
       // they show whether it is one broken title shape or a scattering.
-      falseBaseExamples: falseBase,
+      falseBaseExamples: falseBaseByKind,
       conflicts,
       topUnreadable: unmatched.sort((a, b) => b.sales - a.sales).slice(0, 20),
     });
