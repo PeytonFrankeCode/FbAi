@@ -64,6 +64,44 @@ check('  ...and a parallel word before the card number is not',
         `${a.parallel} / ${b.parallel}`);
 }
 
+// The cases the live conflict report exposed. Every one of these was a WRONG
+// match before — a rarer card silently merged into a commoner one, which
+// nothing downstream can detect.
+{
+  const cases = [
+    // "&" broke the token run, so the reader settled for the "Blue Prizm" inside.
+    ['2024 Panini Prizm - Rookies Caleb Williams #301 Red White & Blue Prizm (RC)',
+     'matched', 'red white and blue'],
+    // Matched the bare "White" — a real but different parallel — because the
+    // full name was not in the vocabulary. Must refuse instead.
+    ['2025 Panini Prizm - Rookies Jaxson Dart #332 White Disco Prizm (RC)',
+     'unmatched', null],
+    // Trailing junk, and "Rookie" happens to be a parallel in some product.
+    ['2025 Topps Chrome Jaxson Dart RC Refractor #306 Giants Rookie',
+     'unmatched', null],
+    // Only a team follows the number. That looks like a base card, and is not
+    // claimed as one: the sibling case below shows why filler-only cannot mean
+    // base, since some title formats put the parallel BEFORE the number.
+    ['2025 Topps Cosmic Chrome Cam Skattebo Stars In The Night RC Rookie #STN-5 Giants',
+     'unmatched', null],
+    // Only a grade follows — same reasoning.
+    ['2024 Panini Prizm - Rookies Jayden Daniels #347 (RC) PSA 10 GEM MINT',
+     'unmatched', null],
+  ];
+  const wrong = [];
+  for (const [title, how, contains] of cases) {
+    const r = resolveParallel(title);
+    const okHow = r.how === how;
+    const okVal = contains == null
+      ? true
+      : String(r.parallel || '').toLowerCase().replace(/[^a-z ]/g, '').includes(contains);
+    if (!okHow || !okVal) wrong.push(`"${title.slice(0, 48)}..." -> ${r.how} ${r.parallel || ''}`);
+  }
+  check('the live conflicts are read correctly or refused',
+        wrong.length === 0,
+        wrong.length ? wrong.join('; ') : `all ${cases.length} correct`);
+}
+
 // A title with no card number gives no segment to read, so nothing is claimed.
 {
   const junk = resolveParallel('SEE SCAN For The Exact Card Up For Auction! NFL READ FREE SHIPPING');
