@@ -3874,6 +3874,95 @@ app.get('/api/debug/player-resolve', async (req, res) => {
 // filled? And where the column DOES have a value, does the title agree with it?
 // A reader that recovers a lot and agrees with nothing is reading the wrong
 // thing.
+// Does eBay already know the parallel, on the sales where our column is blank?
+//
+// A question worth settling before spending anything on image recognition. The
+// parallel column is filled on 48% of sales and that data came from eBay's item
+// specifics — the structured field a seller picks when listing. If it survives
+// on the other 52%, the answer is free and authoritative and nothing needs to
+// look at a picture.
+//
+// Asked through the API, not by reading listing pages. Scraping them from CI
+// returned 403 on all 150 attempts, which is eBay saying no to datacenter
+// traffic; the API is the sanctioned route and the credentials for it already
+// live here.
+//
+// The likely answer is that Browse cannot see ended items at all — it is an
+// active-listings API. That is worth knowing precisely rather than assuming,
+// because "sold data has no aspects" and "we are asking the wrong endpoint"
+// call for completely different next steps.
+app.get('/api/debug/ebay-aspects', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const limit = Math.min(20, Math.max(1, parseInt(req.query.limit, 10) || 8));
+  try {
+    const r = await db.prepare(
+      `SELECT item_id, title FROM sales
+        WHERE item_id IS NOT NULL AND item_id <> ''
+          AND price_cents IS NOT NULL AND price_cents > 0
+          AND COALESCE(TRIM(parallel), '') = ''
+        ORDER BY sold_date DESC LIMIT ?`).bind(limit).all();
+    const rows = (r && r.results) || [];
+    if (!rows.length) return res.json({ available: false, reason: 'no blank-parallel sales with an item_id' });
+
+    let token;
+    try { token = await getOAuthToken(); }
+    catch (err) { return res.json({ available: false, reason: `no eBay token: ${err && err.message}` }); }
+
+    const out = [];
+    for (const row of rows) {
+      const id = String(row.item_id).startsWith('v1|') ? row.item_id : `v1|${row.item_id}|0`;
+      try {
+        const resp = await axios.get(
+          `https://api.ebay.com/buy/browse/v1/item/${encodeURIComponent(id)}`,
+          { headers: { Authorization: `Bearer ${token}` }, timeout: 8000, validateStatus: () => true });
+        if (resp.status !== 200) {
+          out.push({ itemId: row.item_id, status: resp.status,
+                     error: (resp.data && resp.data.errors && resp.data.errors[0] &&
+                             resp.data.errors[0].message) || null });
+          continue;
+        }
+        const aspects = {};
+        for (const grp of (resp.data.localizedAspects || [])) {
+          if (grp && grp.name) aspects[grp.name] = grp.value;
+        }
+        out.push({
+          itemId: row.item_id, status: 200,
+          title: String(row.title || '').slice(0, 70),
+          aspectCount: Object.keys(aspects).length,
+          // The one that matters, under whichever label eBay used.
+          parallelAspect: aspects['Parallel/Variety'] || aspects['Parallel'] ||
+                          aspects['Variety'] || aspects['Features'] || null,
+          aspects,
+        });
+      } catch (err) {
+        out.push({ itemId: row.item_id, error: String(err && err.message).slice(0, 80) });
+      }
+    }
+
+    const ok = out.filter(x => x.status === 200);
+    const withParallel = ok.filter(x => x.parallelAspect);
+    res.json({
+      available: true,
+      sampled: out.length,
+      // If this is 0, Browse cannot see ended listings and the question needs
+      // eBay's Marketplace Insights API (restricted, application required)
+      // rather than a different parse.
+      reachable: ok.length,
+      carryingAParallelAspect: withParallel.length,
+      verdict: !ok.length
+        ? 'Browse cannot see these items — sold listings need Marketplace Insights'
+        : withParallel.length
+          ? 'eBay HAS the parallel for blank rows — recoverable without any image work'
+          : 'reachable, but no parallel aspect — sellers did not fill it in',
+      items: out,
+    });
+  } catch (err) {
+    console.error('[ebay-aspects]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // How far along is the fingerprint library, and is the pipeline even working?
 //
 // The one thing that cannot be verified from a laptop is whether Cloudflare's
