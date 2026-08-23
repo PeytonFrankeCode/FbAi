@@ -3874,6 +3874,79 @@ app.get('/api/debug/player-resolve', async (req, res) => {
 // filled? And where the column DOES have a value, does the title agree with it?
 // A reader that recovers a lot and agrees with nothing is reading the wrong
 // thing.
+// How many identifications would actually have to be bought?
+//
+// The instinctive figure is 189,586 — the blank-parallel sales in a month — and
+// it is wrong by an order of magnitude in two separate ways.
+//
+// A card's identity does not change. Once something is known to be a Silver
+// Prizm, it is a Silver Prizm forever, so the unit of cost is the distinct CARD
+// and not the sale. And most of those distinct cards barely trade: the index
+// runs on 600 players and the cards people actually look at are the ones that
+// sell repeatedly, so identifying the head fixes what is visible while the tail
+// contributes almost nothing.
+//
+// That distinction is the whole negotiating position with a vendor. "We need
+// 190,000 calls a month" and "we need N thousand once, then a trickle as new
+// products release" are different conversations with different prices.
+app.get('/api/debug/id-volume', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const since = _mkIso(_mkDay(through) - 30);
+
+    // A card, not a sale. Same normalisation the index groups on, minus the
+    // parallel — that is the unknown being priced.
+    const CARD = `${_normCol('year')} || '|' || ${_normCol('set_name')} || '|' || ${_normCol('player')}`;
+    const WINDOW = `price_cents IS NOT NULL AND price_cents > 0
+                      AND sold_date > ? AND sold_date <= ?
+                      AND COALESCE(TRIM(parallel), '') = ''`;
+
+    const r = await db.prepare(
+      `WITH blank AS (
+         SELECT ${CARD} AS card, COUNT(*) AS n
+           FROM sales WHERE ${WINDOW} GROUP BY ${CARD})
+       SELECT COUNT(*) AS cards, SUM(n) AS sales,
+              SUM(CASE WHEN n >= 2  THEN 1 ELSE 0 END) AS cards2,
+              SUM(CASE WHEN n >= 2  THEN n ELSE 0 END) AS sales2,
+              SUM(CASE WHEN n >= 5  THEN 1 ELSE 0 END) AS cards5,
+              SUM(CASE WHEN n >= 5  THEN n ELSE 0 END) AS sales5,
+              SUM(CASE WHEN n >= 10 THEN 1 ELSE 0 END) AS cards10,
+              SUM(CASE WHEN n >= 10 THEN n ELSE 0 END) AS sales10
+         FROM blank`).bind(since, through).first();
+
+    const sales = Number(r.sales) || 0;
+    const pct = (a) => (sales ? Math.round((Number(a) / sales) * 1000) / 10 + '%' : null);
+    const tier = (cards, covered) => ({
+      identificationsNeeded: Number(cards) || 0,
+      salesFixed: Number(covered) || 0,
+      shareOfBlankSalesFixed: pct(covered),
+    });
+
+    res.json({
+      available: true,
+      window: { since, through },
+      blankParallelSales: sales,
+      // Buy identifications for cards, not for sales — the same card resells
+      // all month and the answer does not expire.
+      everyCard: tier(r.cards, sales),
+      // And the tail is not worth buying. These are the tiers to quote.
+      soldTwiceOrMore: tier(r.cards2, r.sales2),
+      soldFiveOrMore: tier(r.cards5, r.sales5),
+      soldTenOrMore: tier(r.cards10, r.sales10),
+      note: 'a card identity is permanent, so this is a one-off cost per card plus '
+          + 'new releases — not a recurring per-sale charge',
+    });
+  } catch (err) {
+    console.error('[id-volume]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // Does eBay already know the parallel, on the sales where our column is blank?
 //
 // A question worth settling before spending anything on image recognition. The

@@ -13,21 +13,20 @@ name: Fingerprint card photos
 # the only limit is wall-clock.
 
 on:
-  # Also on every merge to main. The manual "Run workflow" button does not exist
-  # on GitHub's mobile site, so requiring a click to try a fix meant the fix
-  # could only be tried from a desktop — and re-running an old run from a phone
-  # replays the old commit, which silently reproduced a bug that had already
-  # been fixed. Merging is the action that already happens; hang the job off
-  # that instead. It exits in seconds when there is nothing left to fetch.
-  push:
-    branches: [main]
-    paths:
-      - 'scripts/fingerprint-photos.js'
-      - 'scripts/build-photo-refs.js'
-      - 'scripts/probe-ebay-aspects.js'
-      - 'photo-signature.js'
-      - '.github/workflows/fingerprint.yml'
-  schedule:
+  # Merge trigger removed along with the schedule. Left in place it would fire
+  # one last 4,000-image run on the very commit that stops the job, which is a
+  # silly way to say goodbye to eBay's bandwidth.
+  # Schedule disabled. Colour fingerprinting reached 37% accuracy on the cards
+  # it committed to, against 95.6% for reading the title, and the remaining
+  # confusions are refractor-against-refractor -- distinguished by pattern and
+  # texture, which is exactly what averaging a photo down to 16 pixels of colour
+  # throws away. Continuing to pull 4,000 images an hour from eBay to feed a
+  # method that will not be used is not something to leave running.
+  #
+  # Everything is kept rather than deleted: the fingerprints already collected,
+  # the hold-out harness, and the schedule below. If a texture signature or a
+  # vendor API changes the picture, uncommenting one line resumes it.
+  # schedule:
     # Hourly. The repository is public, so Actions minutes are free and there is
     # no reason to ration them: at 1,500 photos every six hours the backfill of
     # ~149,000 references would have taken 25 days. At 4,000 hourly it is closer
@@ -39,7 +38,7 @@ on:
     # anyway: a 429 is classed transient, left unwritten, and retried.
     #
     # Once the backfill is done these runs find nothing and exit in seconds.
-    - cron: '17 * * * *'
+  #   - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       probe_aspects:
