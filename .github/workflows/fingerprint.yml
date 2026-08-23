@@ -23,6 +23,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/fingerprint-photos.js'
+      - 'scripts/build-photo-refs.js'
       - 'photo-signature.js'
       - '.github/workflows/fingerprint.yml'
   schedule:
@@ -68,6 +69,17 @@ jobs:
 
       - name: Fetch and fingerprint
         run: node scripts/fingerprint-photos.js --limit=${{ github.event.inputs.limit || '4000' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Rebuild the references and re-measure every run. The hold-out accuracy
+      # is the number that decides whether any of this may touch a blank card,
+      # and it moves as the library grows -- a verdict from 1,500 photos is not
+      # the verdict from 149,000, so it is worth recomputing rather than
+      # deciding once and trusting it forever.
+      - name: Build references and measure accuracy
+        run: node scripts/build-photo-refs.js --write
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
