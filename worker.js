@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, backfillPhotoSignatures } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, backfillPhotoSignatures };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases };
   return serverInit;
 }
 
@@ -538,7 +538,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, backfillPhotoSignatures } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -550,15 +550,6 @@ export default {
           // init()'s whitelist did not pass it through, and the guard turned
           // that into a no-op with no trace anywhere.
           console.error('[Cron] backfillPlayerAliases missing from init() — not wired through');
-        }
-        // Fingerprints a slice of card photos. Same isolation: the titles keep
-        // working if this fails, and the reference library simply fills more
-        // slowly. Runs after the alias job because both are grinding backfills
-        // and the alerts below are the time-sensitive ones.
-        if (typeof backfillPhotoSignatures === 'function') {
-          await backfillPhotoSignatures().catch(err => console.error('[Cron] photo backfill failed:', err && err.message || err));
-        } else {
-          console.error('[Cron] backfillPhotoSignatures missing from init() — not wired through');
         }
         if (typeof checkAlerts === 'function') {
           await checkAlerts().catch(err => console.error('[Cron] checkAlerts failed:', err && err.message || err));

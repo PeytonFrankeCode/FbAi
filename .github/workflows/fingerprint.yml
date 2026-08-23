@@ -1,0 +1,53 @@
+name: Fingerprint card photos
+
+# The photo work runs here rather than in the Worker, and that is the point.
+# A Worker cannot decode a JPEG, so the first attempt asked Cloudflare's image
+# service to shrink each photo to a PNG — which failed on every row in
+# production, because the resizer is a paid zone feature. At ~340,000 images
+# the per-image billing is not small either.
+#
+# None of it was necessary. This is a batch backfill, not a request: it has no
+# business running somewhere with a 30-second CPU ceiling, no image libraries,
+# and a bundle size that can take the whole site down. A runner is a plain Node
+# machine, the decoder is one devDependency that never reaches the Worker, and
+# the only limit is wall-clock.
+
+on:
+  schedule:
+    # Every six hours. ~1,500 photos a run against ~149,000 references is a bit
+    # over a week — the same grind that took the alias table to 88% of sales.
+    # Faster would mostly mean hammering eBay for no reason.
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'How many photos to fetch this run'
+        required: false
+        default: '1500'
+
+# One at a time. Two runs would fetch the same rows, since a row is only
+# excluded once it has been written.
+concurrency:
+  group: fingerprint-photos
+  cancel-in-progress: false
+
+jobs:
+  fingerprint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch and fingerprint
+        run: node scripts/fingerprint-photos.js --limit=${{ github.event.inputs.limit || '1500' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
