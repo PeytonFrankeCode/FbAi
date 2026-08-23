@@ -3876,19 +3876,18 @@ app.get('/api/debug/player-resolve', async (req, res) => {
 // thing.
 // How many identifications would actually have to be bought?
 //
-// The instinctive figure is 189,586 — the blank-parallel sales in a month — and
-// it is wrong by an order of magnitude in two separate ways.
+// One per SALE, and there is no way around it. The tempting answer is one per
+// distinct card, on the reasoning that a card's identity never changes — but
+// that is exactly backwards here. Two sales of 2025 Prizm Jaxson Dart #332 can
+// be a Silver and a Gold: the parallel is the thing that VARIES between sales
+// of the same card, which is why it is the thing being asked about. There is
+// nothing to cache.
 //
-// A card's identity does not change. Once something is known to be a Silver
-// Prizm, it is a Silver Prizm forever, so the unit of cost is the distinct CARD
-// and not the sale. And most of those distinct cards barely trade: the index
-// runs on 600 players and the cards people actually look at are the ones that
-// sell repeatedly, so identifying the head fixes what is visible while the tail
-// contributes almost nothing.
-//
-// That distinction is the whole negotiating position with a vendor. "We need
-// 190,000 calls a month" and "we need N thousand once, then a trickle as new
-// products release" are different conversations with different prices.
+// What can be cut is which sales are worth asking about. The index runs on 600
+// players, and a card that sold once all month moves nothing in it. So the
+// question for a vendor is not "can we afford 190,000 calls" but "how far down
+// the tail do we need to go before the answer stops mattering" — and the tiers
+// below price exactly that.
 app.get('/api/debug/id-volume', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
@@ -3899,8 +3898,8 @@ app.get('/api/debug/id-volume', async (req, res) => {
     const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     const since = _mkIso(_mkDay(through) - 30);
 
-    // A card, not a sale. Same normalisation the index groups on, minus the
-    // parallel — that is the unknown being priced.
+    // Grouped by card, but only to rank which cards matter. The cost is
+    // measured in sales, because every sale needs its own identification.
     const CARD = `${_normCol('year')} || '|' || ${_normCol('set_name')} || '|' || ${_normCol('player')}`;
     const WINDOW = `price_cents IS NOT NULL AND price_cents > 0
                       AND sold_date > ? AND sold_date <= ?
@@ -3922,8 +3921,11 @@ app.get('/api/debug/id-volume', async (req, res) => {
     const sales = Number(r.sales) || 0;
     const pct = (a) => (sales ? Math.round((Number(a) / sales) * 1000) / 10 + '%' : null);
     const tier = (cards, covered) => ({
-      identificationsNeeded: Number(cards) || 0,
-      salesFixed: Number(covered) || 0,
+      // The number to quote a vendor. One call per sale — there is no reuse.
+      callsPerMonth: Number(covered) || 0,
+      callsPerDay: Math.round((Number(covered) || 0) / 30),
+      // Context only: how many distinct cards those sales cover.
+      distinctCards: Number(cards) || 0,
       shareOfBlankSalesFixed: pct(covered),
     });
 
@@ -3931,15 +3933,15 @@ app.get('/api/debug/id-volume', async (req, res) => {
       available: true,
       window: { since, through },
       blankParallelSales: sales,
-      // Buy identifications for cards, not for sales — the same card resells
-      // all month and the answer does not expire.
-      everyCard: tier(r.cards, sales),
-      // And the tail is not worth buying. These are the tiers to quote.
-      soldTwiceOrMore: tier(r.cards2, r.sales2),
-      soldFiveOrMore: tier(r.cards5, r.sales5),
-      soldTenOrMore: tier(r.cards10, r.sales10),
-      note: 'a card identity is permanent, so this is a one-off cost per card plus '
-          + 'new releases — not a recurring per-sale charge',
+      // Every blank sale, i.e. the full bill.
+      everything: tier(r.cards, sales),
+      // Cutting the tail. A card that sold once in a month cannot move an index
+      // built on repeat sales, so these are the tiers actually worth pricing.
+      cardsThatSold2OrMore: tier(r.cards2, r.sales2),
+      cardsThatSold5OrMore: tier(r.cards5, r.sales5),
+      cardsThatSold10OrMore: tier(r.cards10, r.sales10),
+      note: 'one identification per SALE — the parallel is what differs between '
+          + 'sales of the same card, so nothing can be cached and reused',
     });
   } catch (err) {
     console.error('[id-volume]', err && err.stack || err);
