@@ -18,7 +18,7 @@
 //
 // Run: node scripts/fingerprint-photos.js [--limit N] [--dry]
 const { execFileSync } = require('node:child_process');
-const jpeg = require('jpeg-js');
+const sharp = require('sharp');
 const { signatureFromPixels } = require('../photo-signature.js');
 
 const DB = 'nflcarddb';
@@ -38,6 +38,12 @@ const dry = args.includes('--dry');
 // the whole difference. A 64px thumbnail is all a colour fingerprint needs, and
 // asking for it moves perhaps 3 KB instead of 300 — kinder to eBay and a great
 // deal faster across thousands of rows.
+//
+// The extension in that filename is a suggestion, incidentally. The first run
+// asked for .jpg 100 times and got image/webp 100 times, because eBay serves
+// whatever format it likes. Hence sharp rather than a JPEG-only decoder: the
+// point is not to be clever about formats, it is to stop caring which one
+// arrives.
 function thumbnail(url) {
   return url.replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, '/s-l64.$1');
 }
@@ -91,24 +97,49 @@ function d1(sql, { json = true } = {}) {
 
 const esc = (s) => String(s).replace(/'/g, "''");
 
+// Is this failure worth remembering?
+//
+// It matters more than it sounds. A remembered failure is never retried, so
+// recording a TRANSIENT one throws the photo away permanently. The first run
+// did exactly that: a wrong content-type check marked 100 perfectly good
+// photos as failed, and without this distinction they would have stayed dead
+// for good, silently, while the table looked like it was making progress.
+//
+// So only failures that will still be failures tomorrow get written. Anything
+// that might succeed on a retry is simply left alone, and the next run picks it
+// up again because the scan skips only rows that exist.
+function isPermanent(why) {
+  return /^http-40[0-9]/.test(why)      // gone, forbidden, malformed
+      || /^http-41[0-9]/.test(why)
+      || /^decode/.test(why);            // the bytes are not a picture
+}
+
 async function fetchSignature(url) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {
     const resp = await fetch(thumbnail(url), {
       signal: ctl.signal,
-      headers: { 'user-agent': 'thecardhuddle-fingerprint/1.0 (+https://thecardhuddle.com)' },
+      headers: {
+        'user-agent': 'thecardhuddle-fingerprint/1.0 (+https://thecardhuddle.com)',
+        accept: 'image/jpeg,image/webp,image/png,image/*;q=0.8',
+      },
     });
     if (!resp.ok) return { ok: 0, why: `http-${resp.status}` };
-    const type = resp.headers.get('content-type') || '';
-    if (!/jpe?g/i.test(type)) return { ok: 0, why: `not-jpeg (${type || 'unknown'})` };
     const buf = Buffer.from(await resp.arrayBuffer());
-    // Guard against a decoder blowing up memory on a hostile or corrupt file.
-    const raw = jpeg.decode(buf, { useTArray: true, maxMemoryUsageInMB: 64 });
-    if (!raw || !raw.width) return { ok: 0, why: 'decode-empty' };
-    return { ok: 1, sig: signatureFromPixels(raw.data, 4), px: `${raw.width}x${raw.height}` };
+    if (!buf.length) return { ok: 0, why: 'decode-empty' };
+    // sharp resizes and hands back raw pixels in one pass, so nothing decodes
+    // a full-size image just to average it. 16x16 is what the fingerprint wants
+    // anyway, and downscaling IS the averaging.
+    const { data, info } = await sharp(buf, { failOn: 'error' })
+      .resize(16, 16, { fit: 'cover' })
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    if (!data || !info || !info.width) return { ok: 0, why: 'decode-empty' };
+    return { ok: 1, sig: signatureFromPixels(data, info.channels), px: `${info.width}x${info.height}` };
   } catch (err) {
-    return { ok: 0, why: (err && err.name === 'AbortError') ? 'timeout' : `error: ${String(err && err.message).slice(0, 60)}` };
+    const msg = String((err && err.message) || err).slice(0, 60);
+    return { ok: 0, why: (err && err.name === 'AbortError') ? 'timeout' : `decode-error: ${msg}` };
   } finally {
     clearTimeout(timer);
   }
@@ -128,6 +159,17 @@ async function main() {
         why        TEXT,
         updated_at TEXT
       )`, { json: false });
+
+  // Release photos wrongly condemned by an earlier run. A failure row means
+  // "never look at this again", so a systematic bug — the wrong content-type
+  // check that rejected 100 WebP photos as not-JPEG — quietly destroys good
+  // data while the progress count keeps rising. Anything not permanently
+  // broken goes back in the queue.
+  d1(`DELETE FROM ${TABLE}
+       WHERE ok = 0 AND (why IS NULL
+          OR why LIKE 'not-jpeg%' OR why LIKE 'not-resized%'
+          OR why LIKE 'timeout%'  OR why LIKE 'error:%'
+          OR why LIKE 'http-5%'   OR why = 'http-429')`, { json: false });
 
   // Reference photos first: sales whose parallel is already known. Those are
   // what everything else gets matched against, so identifying blank cards
@@ -171,17 +213,22 @@ async function main() {
 
   if (dry) { console.log('  --dry: nothing written'); return; }
 
-  // Failures are written too. A dead link recorded once is not re-fetched every
-  // run forever, and the scan above skips anything with a row.
+  // Successes, plus failures that will still be failures tomorrow. Transient
+  // ones are deliberately NOT written: a row means "never retry", and spending
+  // that on a timeout or a 503 discards a good photo for good.
+  const keep = done.filter(r => r.ok || isPermanent(r.why || ''));
+  const retry = done.length - keep.length;
+  if (retry) console.log(`  ${retry} left unwritten to retry next run`);
+
   const now = new Date().toISOString();
   let written = 0;
-  for (let i = 0; i < done.length; i += WRITE_CHUNK) {
-    const values = done.slice(i, i + WRITE_CHUNK).map(r =>
+  for (let i = 0; i < keep.length; i += WRITE_CHUNK) {
+    const values = keep.slice(i, i + WRITE_CHUNK).map(r =>
       `('${esc(r.url)}', ${r.sig ? `'${esc(JSON.stringify(r.sig))}'` : 'NULL'}, ${r.ok}, `
       + `${r.why ? `'${esc(r.why).slice(0, 80)}'` : 'NULL'}, '${now}')`).join(',');
     d1(`INSERT OR REPLACE INTO ${TABLE} (url, sig, ok, why, updated_at) VALUES ${values}`, { json: false });
-    written += Math.min(WRITE_CHUNK, done.length - i);
-    console.log(`  wrote ${written}/${done.length}`);
+    written += Math.min(WRITE_CHUNK, keep.length - i);
+    console.log(`  wrote ${written}/${keep.length}`);
   }
   console.log(`fingerprint-photos: ${written} rows, ${good} usable`);
 }
