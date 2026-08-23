@@ -3826,6 +3826,102 @@ app.get('/api/debug/player-resolve', async (req, res) => {
 // filled? And where the column DOES have a value, does the title agree with it?
 // A reader that recovers a lot and agrees with nothing is reading the wrong
 // thing.
+// Could photos do what the titles cannot?
+//
+// A parallel is a visual thing by definition — Silver, Gold and Red Prizm are
+// the same card printed in different foil — so a photo carries the signal the
+// text keeps losing. But matching photos only works if two conditions hold, and
+// neither is obvious from the outside:
+//
+//   1. The sales we want to identify actually carry a photo.
+//   2. The sales we would match them AGAINST carry one too, and there are
+//      enough per parallel to be a reference rather than a coin flip. A
+//      parallel known from two photos is not a reference.
+//
+// This measures both before anything is built. It reads no images — it only
+// counts what exists, which is the cheap question that decides whether the
+// expensive one is worth asking.
+app.get('/api/debug/photo-coverage', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    if (!(await _nflHasImageColumn(db))) {
+      return res.json({ available: false, reason: 'this deployment has no image_url column' });
+    }
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const since = _mkIso(_mkDay(through) - 30);
+
+    const HASPIC = `image_url IS NOT NULL AND image_url <> ''`;
+    const WINDOW = `price_cents IS NOT NULL AND price_cents > 0
+                      AND sold_date > ? AND sold_date <= ?`;
+    const HASPAR = `COALESCE(TRIM(parallel), '') <> ''`;
+
+    // How much of each side carries a photo at all.
+    const cov = await db.prepare(
+      `SELECT
+         COUNT(*) AS total,
+         SUM(CASE WHEN ${HASPIC} THEN 1 ELSE 0 END) AS withPhoto,
+         SUM(CASE WHEN ${HASPAR} THEN 1 ELSE 0 END) AS withParallel,
+         SUM(CASE WHEN ${HASPAR} AND ${HASPIC} THEN 1 ELSE 0 END) AS referenceable,
+         SUM(CASE WHEN NOT (${HASPAR}) AND ${HASPIC} THEN 1 ELSE 0 END) AS matchable
+       FROM sales WHERE ${WINDOW}`
+    ).bind(since, through).first();
+
+    // The part that actually decides it: how many distinct reference photos
+    // exist per (product, set, parallel). A group with one or two photos cannot
+    // anchor a match no matter how good the comparison is.
+    const groups = await db.prepare(
+      `SELECT year, set_name, parallel, COUNT(DISTINCT image_url) AS photos
+         FROM sales
+        WHERE ${WINDOW} AND ${HASPAR} AND ${HASPIC}
+          AND COALESCE(TRIM(year), '') <> '' AND COALESCE(TRIM(set_name), '') <> ''
+        GROUP BY LOWER(TRIM(year)), LOWER(TRIM(set_name)), LOWER(TRIM(parallel))`
+    ).bind(since, through).all();
+    const g = (groups && groups.results) || [];
+    const buckets = { '1': 0, '2-4': 0, '5-9': 0, '10+': 0 };
+    let usable = 0;
+    for (const r of g) {
+      const p = Number(r.photos) || 0;
+      if (p >= 10) { buckets['10+']++; usable += p; }
+      else if (p >= 5) { buckets['5-9']++; usable += p; }
+      else if (p >= 2) buckets['2-4']++;
+      else buckets['1']++;
+    }
+
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
+    res.json({
+      available: true,
+      window: { since, through },
+      photos: {
+        sales: cov.total,
+        withPhoto: cov.withPhoto, withPhotoShare: pct(cov.withPhoto, cov.total),
+        // The two sides of the idea.
+        referenceSet: cov.referenceable,   // known parallel + photo: what we match against
+        toIdentify: cov.matchable,         // blank parallel + photo: what we could fix
+        toIdentifyShare: pct(cov.matchable, cov.total),
+      },
+      // A reference group needs several photos to be a reference at all. If
+      // most groups sit in the 1 bucket, photo matching cannot work here however
+      // good the comparison is, and that is worth knowing before building it.
+      referenceGroups: {
+        distinct: g.length,
+        byPhotoCount: buckets,
+        anchored: buckets['5-9'] + buckets['10+'],
+        anchoredShare: pct(buckets['5-9'] + buckets['10+'], g.length),
+        photosInAnchoredGroups: usable,
+      },
+      note: 'counts only — no images are fetched or compared here',
+    });
+  } catch (err) {
+    console.error('[photo-coverage]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 app.get('/api/debug/parallel-resolve', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
