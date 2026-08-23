@@ -76,17 +76,18 @@ check('  ...nor the Node wrappers that would drag them in',
         : 'server.js uses card-index-core / parallel-index-core');
 
 // The image decoder is a devDependency and must stay one. The photo work runs
-// in CI precisely BECAUSE a Worker cannot decode a JPEG, and pulling the
-// decoder in here would put ~40 KB of it into the compile to serve a job that
-// does not run in the Worker at all — paying the startup cost for nothing, in
-// the exact place that already caused one outage today.
+// in CI precisely BECAUSE a Worker cannot decode an image, and sharp could not
+// run there anyway — it is a native binary. Requiring it from server.js would
+// break the build rather than merely bloat it, which is the good case; the bad
+// case is a pure-JS decoder like jpeg-js quietly compiling into every cold
+// start to serve a job that does not run in the Worker at all.
 {
   const bundled = new Set(Object.keys(require(path.join(ROOT, 'package.json')).dependencies || {}));
-  const NODE_ONLY = ['jpeg-js'];
+  const NODE_ONLY = ['sharp', 'jpeg-js'];
   const wrong = NODE_ONLY.filter(m => bundled.has(m));
-  check('the JPEG decoder stays a devDependency',
+  check('the image decoder stays a devDependency',
         wrong.length === 0,
-        wrong.length ? `PROMOTED TO dependencies: ${wrong.join(', ')}` : 'jpeg-js is CI-only');
+        wrong.length ? `PROMOTED TO dependencies: ${wrong.join(', ')}` : 'image decoding is CI-only');
 
   // And nothing the Worker compiles may reach for it, however it got installed.
   const reaches = [...graph].filter(f => {
