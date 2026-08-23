@@ -13,6 +13,18 @@ name: Fingerprint card photos
 # the only limit is wall-clock.
 
 on:
+  # Also on every merge to main. The manual "Run workflow" button does not exist
+  # on GitHub's mobile site, so requiring a click to try a fix meant the fix
+  # could only be tried from a desktop — and re-running an old run from a phone
+  # replays the old commit, which silently reproduced a bug that had already
+  # been fixed. Merging is the action that already happens; hang the job off
+  # that instead. It exits in seconds when there is nothing left to fetch.
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/fingerprint-photos.js'
+      - 'photo-signature.js'
+      - '.github/workflows/fingerprint.yml'
   schedule:
     # Every six hours. ~1,500 photos a run against ~149,000 references is a bit
     # over a week — the same grind that took the alias table to 88% of sales.
