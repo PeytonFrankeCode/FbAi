@@ -23,6 +23,7 @@ const KNOWN_KEYS = ['users', 'sessions', 'subscriptions', 'alerts', 'priceHistor
 const cache = {};
 let kv = null;          // Cloudflare KV namespace binding (set by connectDB)
 let nflDb = null;      // NflCardDB Cloudflare D1 binding (set by connectDB)
+let assets = null;     // Cloudflare ASSETS binding (set by connectDB)
 let kvReady = false;    // true after preload completes
 
 async function connectDB(env) {
@@ -33,6 +34,12 @@ async function connectDB(env) {
     nflDb = env.NFLDB;
     console.log('[DB] NflCardDB D1 binding attached');
   }
+
+  // The assets binding, so large read-only data can be fetched rather than
+  // bundled. A Worker compiles its whole script before serving anything, so a
+  // megabyte of JSON reachable from server.js is a megabyte compiled on every
+  // cold start — that took the site down with error 1102.
+  if (env && env.ASSETS) assets = env.ASSETS;
 
   // Stash the KV binding if present. env is only available on Workers.
   if (env && env.KV) {
@@ -311,5 +318,6 @@ async function archivePut(key, value) {
 // before the database has been created). Callers must treat null as "source
 // unavailable" and fall through to another provider rather than erroring.
 function getNflDb() { return nflDb; }
+function getAssets() { return assets; }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb };
+module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets };
