@@ -16,10 +16,26 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserDat
 // Nothing on the request path needs them: the index reads canonical names from
 // D1, which is the whole point of the alias table. Only the cron backfill and
 // the two diagnostics do, and they can afford the parse once per isolate.
-let _cardIndex = null;
-const cardIndex = () => (_cardIndex || (_cardIndex = require('./card-index')));
-let _parallelIndex = null;
-const parallelIndex = () => (_parallelIndex || (_parallelIndex = require('./parallel-index')));
+// NOT bundled into the Worker.
+//
+// Together they are 1.26 MB of JSON, and a Worker must compile its entire
+// script before serving anything — so the cost is paid on every cold isolate
+// whether or not a request touches them. It took the whole site down with
+// error 1102 on every request, not just the market. Deferring the work inside
+// the modules was not enough, because compilation happens regardless of when
+// the code runs.
+//
+// Nothing user-facing needs them. The index groups on canonical names read from
+// D1, which is what the alias table exists for; only the cron backfill and two
+// diagnostics use the dictionaries directly, and those degrade to a clear
+// message rather than taking the site with them.
+//
+// scripts/build-card-index.js still writes them, and they are still committed —
+// they belong in the bundle again only once they are served from the assets
+// binding and fetched on demand.
+const DICTIONARIES_BUNDLED = false;
+const cardIndex = () => null;
+const parallelIndex = () => null;
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -2938,7 +2954,7 @@ async function _aliasEnsure(db) {
 // reconsidered on every run. Time-boxed by row count, not by clock: the cron
 // fires every 15 minutes and the head of the distribution is covered in the
 // first few passes.
-async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH } = {}) {
+async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = null } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   if (!await _aliasEnsure(db)) return { ok: false, reason: 'table unavailable' };
@@ -2964,12 +2980,17 @@ async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH } = {}) {
 
   const list = (rows && rows.results) || [];
   if (!list.length) return { ok: true, done: true, inserted: 0 };
+  // Injected by the caller, because the dictionary is not in the Worker bundle.
+  // Tests pass the real resolver so the whole path is still exercised; the cron
+  // has none to give and says so rather than writing rows it cannot fill.
+  const resolveOne = resolve || (cardIndex() && cardIndex().resolvePlayer);
+  if (!resolveOne) return { ok: false, reason: 'dictionary not in this build' };
 
   const now = new Date().toISOString();
   const stmts = [];
   let resolved = 0;
   for (const r of list) {
-    const hit = cardIndex().resolvePlayer(r.v);
+    const hit = resolveOne(r.v);
     // Unresolved variants are still recorded, mapped to themselves. Without a
     // row they would be re-resolved every run forever, and the index needs to
     // be able to tell "no player in this string" from "not looked at yet".
@@ -3679,6 +3700,11 @@ app.get('/api/debug/player-resolve', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
   const limit = Math.min(5000, Math.max(100, parseInt(req.query.limit, 10) || 3000));
+  if (!cardIndex()) return res.json({
+    available: false,
+    reason: 'the player dictionary is not bundled into the Worker — it is 918 KB '
+          + 'and compiling it on every cold start exceeded the resource limit',
+  });
   try {
     const newest = await db.prepare(
       'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
@@ -3756,6 +3782,11 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
   const limit = Math.min(5000, Math.max(100, parseInt(req.query.limit, 10) || 3000));
+  if (!parallelIndex()) return res.json({
+    available: false,
+    reason: 'the parallel dictionary is not bundled into the Worker — it is 347 KB '
+          + 'and compiling it on every cold start exceeded the resource limit',
+  });
   try {
     const newest = await db.prepare(
       'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'

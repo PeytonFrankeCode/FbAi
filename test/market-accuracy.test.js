@@ -669,7 +669,7 @@ const check = (label, ok, detail) => {
           before.body.available ? `${before.body.matchedCards} players (fragmented), ${before.body.changePct}%`
                                 : `BROKE: ${before.body.reason}`);
 
-    const fill = await backfillPlayerAliases({ limit: 500 });
+    const fill = await backfillPlayerAliases({ limit: 500, resolve: resolvePlayer });
     check('  ...then the backfill resolves the variants',
           fill.ok && fill.resolved >= REAL.length,
           fill.ok ? `${fill.inserted} variants written, ${fill.resolved} resolved`
@@ -679,7 +679,7 @@ const check = (label, ok, detail) => {
     // the next run must pick up from there rather than redo everything or
     // duplicate it. The backfill skips variants that already have a row, so a
     // second pass over the same data has nothing left to do.
-    const again = await backfillPlayerAliases({ limit: 500 });
+    const again = await backfillPlayerAliases({ limit: 500, resolve: resolvePlayer });
     check('  ...and running it again has nothing left to do',
           again.ok && again.inserted === 0,
           again.ok ? `${again.inserted} inserted on the second pass` : `FAILED: ${again.reason}`);
