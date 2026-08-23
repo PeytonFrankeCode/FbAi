@@ -71,15 +71,36 @@ function variants(name) {
 // would be tighter, but the year and set in the sales row are themselves
 // unreliable — that is the problem being solved — and a parallel name is
 // specific enough on its own that "Refractor" is never a Prizm.
-const LOOKUP = new Map();   // normalised variant -> canonical parallel name
+// Built on first use, not at module scope.
+//
+// This is 47ms of Map, Set and sort work over 3,751 parallels and 4,522 subset
+// names, and at module scope it ran during Worker startup on every cold isolate
+// — for every request, including the ones that never read a title. Together
+// with the rest of startup it was enough to trip the Worker resource limit.
+// esbuild hoists the module body regardless of where the require() sits, so
+// deferring has to happen in here.
+let LOOKUP = null;
 let maxWords = 1;
-for (const list of Object.values(PARALLELS.parallelsByProduct || {})) {
-  for (const name of list) {
-    for (const v of variants(name)) {
-      if (!LOOKUP.has(v)) LOOKUP.set(v, name);
-      maxWords = Math.max(maxWords, v.split(' ').length);
+let PRODUCT_NAMES = null;
+let SUBSETS = null;
+
+function build() {
+  if (LOOKUP) return;
+  LOOKUP = new Map();
+  for (const list of Object.values(PARALLELS.parallelsByProduct || {})) {
+    for (const name of list) {
+      for (const v of variants(name)) {
+        if (!LOOKUP.has(v)) LOOKUP.set(v, name);
+        maxWords = Math.max(maxWords, v.split(' ').length);
+      }
     }
   }
+  PRODUCT_NAMES = [...new Set((PARALLELS.productNames || [])
+    .map(n => norm(n).replace(/^(19|20)\d{2}\s+/, '').replace(/\s+(football|basketball|baseball)$/, '').trim())
+    .filter(Boolean))].sort((a, b) => b.length - a.length);
+  SUBSETS = (PARALLELS.setNames || [])
+    .map(norm).filter(n => n && !LOOKUP.has(n))
+    .sort((a, b) => b.length - a.length);
 }
 
 // Words that may trail a parallel without being part of it. Stripping them is
@@ -118,18 +139,6 @@ function parallelSegment(title) {
 // blind is what turned "A.J. Green" into a Green parallel. Removing the known
 // parts instead leaves the parallel standing alone, with nothing to collide
 // with.
-// Normalised the same way the title is: the year comes off (the residual strips
-// it first) and so does the trailing sport word. Stored as "2025 Topps Chrome
-// Football", an unmodified product name matches no title at all, which left the
-// product sitting in the residual and "Chrome" being read as the parallel.
-const PRODUCT_NAMES = [...new Set((PARALLELS.productNames || [])
-  .map(n => norm(n).replace(/^(19|20)\d{2}\s+/, '').replace(/\s+(football|basketball|baseball)$/, '').trim())
-  .filter(Boolean))].sort((a, b) => b.length - a.length);
-// A subset is only strippable if it is not also a parallel name. "Gold" is
-// both in places, and removing it would delete the answer.
-const SUBSETS = (PARALLELS.setNames || [])
-  .map(norm).filter(n => n && n.split(' ').length >= 1 && !LOOKUP.has(n))
-  .sort((a, b) => b.length - a.length);
 
 // Filler for the residual: things that are never a parallel under any product.
 // Narrower than FILLER on purpose.
@@ -150,6 +159,7 @@ function stripPhrase(text, phrase) {
 }
 
 function residual(title, playerHint) {
+  build();
   let t = norm(String(title || '').replace(/\([^)]*\)/g, ' '));
   t = t.replace(/#\s*[a-z0-9-]+/gi, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');
   t = t.replace(/\s+/g, ' ').trim();
@@ -177,6 +187,7 @@ function residual(title, playerHint) {
 // further there is what turned "chrome refractor" into "Chrome" by discarding
 // the actual answer as though it were noise.
 function coverMatch(segment, strict = false) {
+  build();
   const isFiller = (t) => FILLER.has(t) || /^\d+(\.\d+)?$/.test(t);
   let toks = segment.split(' ').filter(Boolean);
   while (toks.length) {
@@ -249,10 +260,11 @@ module.exports = {
   resolveParallel,
   norm,
   stats: {
-    products: (PARALLELS.products || []).length,
-    distinctParallels: new Set(
-      Object.values(PARALLELS.parallelsByProduct || {}).flat()).size,
-    lookupEntries: LOOKUP.size,
-    longestName: maxWords,
+    get products() { return (PARALLELS.products || []).length; },
+    get distinctParallels() {
+      return new Set(Object.values(PARALLELS.parallelsByProduct || {}).flat()).size;
+    },
+    get lookupEntries() { build(); return LOOKUP.size; },
+    get longestName() { build(); return maxWords; },
   },
 };
