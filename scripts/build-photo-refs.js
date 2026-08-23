@@ -21,7 +21,7 @@
 //
 // Run: node scripts/build-photo-refs.js [--holdout N] [--write]
 const { execFileSync } = require('node:child_process');
-const { centroid, bestMatch, distance } = require('../photo-signature.js');
+const { centroid, bestMatch, residual } = require('../photo-signature.js');
 
 const DB = 'nflcarddb';
 const SIG_TABLE = 'photo_sig';
@@ -61,14 +61,18 @@ const norm = (s) => String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' '
 // rather than thousands, which is what makes it both safer and affordable.
 const productKey = (r) => `${norm(r.year)}|${norm(r.set_name)}`;
 const cardKey = (r) => `${productKey(r)}|${norm(r.parallel)}`;
+// The portrait key. Every photo sharing this shows the same player on the same
+// card front, so whatever those photos have in common is the picture, not the
+// parallel — which is precisely what has to be subtracted away.
+const playerKey = (r) => `${productKey(r)}|${norm(r.player)}`;
 
 function loadAll() {
   const rows = [];
   for (let offset = 0; ; offset += PAGE) {
     const page = d1(
-      `SELECT s.url, s.sig, x.year, x.set_name, x.parallel
+      `SELECT s.url, s.sig, x.year, x.set_name, x.parallel, x.player
          FROM ${SIG_TABLE} s
-         JOIN (SELECT DISTINCT image_url, year, set_name, parallel FROM sales
+         JOIN (SELECT DISTINCT image_url, year, set_name, parallel, player FROM sales
                 WHERE image_url IS NOT NULL AND image_url <> ''
                   AND COALESCE(TRIM(parallel), '') <> ''
                   AND COALESCE(TRIM(year), '') <> '' AND COALESCE(TRIM(set_name), '') <> ''
@@ -114,54 +118,105 @@ function main() {
     byProduct.get(g.product).push(g);
   }
 
+  // The portrait average, per player per set. Subtracting it is the whole
+  // point of the residual method: the first hold-out on real photos matched
+  // Green to Red Pandora, which is impossible if the foil dominates the
+  // picture. It does not — most pixels are the player's portrait and their
+  // team's colours, so the fingerprint was measuring WHICH PLAYER the card
+  // shows. That is the one thing already known and the one thing not being
+  // asked. What every copy of a card has in common is the portrait; what
+  // differs is the parallel.
+  const playerMean = new Map();
+  {
+    const byPlayer = new Map();
+    for (const r of rows) {
+      const k = playerKey(r);
+      if (!byPlayer.has(k)) byPlayer.set(k, []);
+      byPlayer.get(k).push(r.sig);
+    }
+    // Two photos is not an average worth subtracting — it would mostly encode
+    // whichever parallels happened to sell first.
+    for (const [k, sigs] of byPlayer) if (sigs.length >= 3) playerMean.set(k, centroid(sigs));
+  }
+  console.log(`  ${playerMean.size.toLocaleString('en-US')} player portraits with 3+ photos to subtract`);
+
   // --- Does it work? ---------------------------------------------------------
   // Leave-one-out. The held-out photo is removed from its own reference before
   // being matched, so nothing can be recognised merely because it helped define
   // the thing it is being compared against.
+  //
+  // Run BOTH ways. The raw signature is the method that scored 5 of 400; the
+  // residual is the proposed fix, and printing them side by side is the only
+  // way to know whether subtracting the portrait actually helped or merely
+  // sounded like it would.
   const testable = anchored.filter(g => g.rows.length > MIN_SAMPLES
                                      && (byProduct.get(g.product) || []).length > 1);
-  let right = 0, wrong = 0, refused = 0;
-  const errors = [];
-  let tested = 0;
-  outer:
-  for (const g of testable) {
-    for (const held of g.rows) {
-      if (tested >= holdout) break outer;
-      tested++;
-      const cands = byProduct.get(g.product).map(c => ({
-        key: c.key,
-        centroid: centroid(c === g ? c.rows.filter(r => r.url !== held.url).map(r => r.sig)
-                                   : c.rows.map(r => r.sig)),
-      })).filter(c => c.centroid);
-      const hit = bestMatch(held.sig, cands);
-      if (hit.key === g.key) right++;
-      else if (hit.key === null) refused++;
-      else {
-        wrong++;
-        if (errors.length < 10) errors.push(`${g.parallel} -> ${(groups.get(hit.key) || {}).parallel} (d=${hit.distance})`);
+
+  function runHoldout(metric) {
+    const prep = (r) => {
+      if (metric !== 'residual') return r.sig;
+      const mean = playerMean.get(playerKey(r));
+      return mean ? residual(r.sig, mean) : null;   // no portrait to subtract
+    };
+    let right = 0, wrong = 0, refused = 0, skipped = 0, tested = 0;
+    const errors = [];
+    outer:
+    for (const g of testable) {
+      for (const held of g.rows) {
+        if (tested >= holdout) break outer;
+        const probe = prep(held);
+        if (!probe) { skipped++; continue; }
+        tested++;
+        const cands = byProduct.get(g.product).map(c => {
+          const src = (c === g ? c.rows.filter(r => r.url !== held.url) : c.rows)
+            .map(prep).filter(Boolean);
+          return { key: c.key, centroid: src.length ? centroid(src) : null };
+        }).filter(c => c.centroid);
+        const hit = bestMatch(probe, cands, { metric });
+        if (hit.key === g.key) right++;
+        else if (hit.key === null) refused++;
+        else {
+          wrong++;
+          if (errors.length < 6) errors.push(`${g.parallel} -> ${(groups.get(hit.key) || {}).parallel} (d=${hit.distance})`);
+        }
       }
     }
+    return { right, wrong, refused, skipped, tested, errors };
   }
 
   const pct = (a, b) => (b ? (a / b * 100).toFixed(1) + '%' : 'n/a');
+  const results = {};
+  for (const metric of ['raw', 'residual']) {
+    const r = results[metric] = runHoldout(metric);
+    const answered = r.right + r.wrong;
+    console.log('');
+    console.log(`  HOLD-OUT (${metric}) on ${r.tested} real card photos, answer hidden:`);
+    console.log(`    correct   ${String(r.right).padStart(5)}  ${pct(r.right, r.tested)}`);
+    console.log(`    refused   ${String(r.refused).padStart(5)}  ${pct(r.refused, r.tested)}   (costs sample, harmless)`);
+    console.log(`    WRONG     ${String(r.wrong).padStart(5)}  ${pct(r.wrong, r.tested)}   (merges two cards — the number that matters)`);
+    console.log(`    of the ones it answered, ${pct(r.right, answered)} were right`);
+    if (r.skipped) console.log(`    ${r.skipped} skipped (no portrait average yet)`);
+    for (const e of r.errors) console.log(`      miss: ${e}`);
+  }
+
+  // The verdict follows whichever method is actually better, and says which.
+  const score = (r) => (r.right + r.wrong) ? r.wrong / (r.right + r.wrong) : 1;
+  const best = score(results.residual) < score(results.raw) ? 'residual' : 'raw';
+  const r = results[best];
+  const answered = r.right + r.wrong;
+  const wrongRate = score(r);
   console.log('');
-  console.log(`  HOLD-OUT TEST on ${tested} real card photos, answer hidden:`);
-  console.log(`    correct   ${String(right).padStart(5)}  ${pct(right, tested)}`);
-  console.log(`    refused   ${String(refused).padStart(5)}  ${pct(refused, tested)}   (costs sample, harmless)`);
-  console.log(`    WRONG     ${String(wrong).padStart(5)}  ${pct(wrong, tested)}   (merges two cards — the number that matters)`);
-  const answered = right + wrong;
-  console.log(`    of the ones it answered, ${pct(right, answered)} were right`);
-  for (const e of errors) console.log(`      miss: ${e}`);
+  console.log(`  BETTER METHOD: ${best}`
+            + (best === 'residual' ? '  (subtracting the portrait helped)'
+                                   : '  (subtracting the portrait did NOT help)'));
 
   // The gate for using this on blank cards at all. Text parsing sits at 4.4%
   // false-base; a photo matcher that is wrong more often than that would be a
   // step backwards, however much coverage it buys.
-  const wrongRate = answered ? wrong / answered : 1;
-  console.log('');
   console.log(`  VERDICT: ${wrongRate <= 0.02 ? 'safe to apply to blank cards'
                           : wrongRate <= 0.05 ? 'borderline — tighten the margin before applying'
                           : 'NOT safe to apply — wrong too often'}`
-            + `  (${pct(wrong, answered)} wrong of answered)`);
+            + `  (${pct(r.wrong, answered)} wrong of answered, via ${best})`);
 
   if (!write) { console.log('\n  --write not given: no references stored'); return; }
 
