@@ -3241,6 +3241,33 @@ const MARKET_CARDS_PER_PLAYER = 10;
 // comparisons in the same bucket.
 const MARKET_MIN_OBS_PER_PLAYER = 1;
 
+// A fingerprint of everything that changes the answer, folded into the cache
+// key. The index is cached for an hour, and the key used to name only the
+// period — so a deploy that corrected the arithmetic kept serving the old
+// arithmetic until the hour was up, which reads exactly like the fix not
+// working. Every correction today was invisible for up to an hour after it
+// shipped.
+//
+// Listing the inputs by hand would rot; this hashes the actual values, so
+// changing a clamp, a filter, the basket size or the card key retires the old
+// entries by itself.
+const MARKET_CALC_SIG = (() => {
+  const parts = [
+    MARKET_TOP_PLAYERS, MARKET_CARDS_PER_PLAYER, MARKET_MIN_OBS_PER_PLAYER,
+    MARKET_EXCLUDE_TRAILING_DAYS, RSI_TARGET_POINTS, RSI_MIN_BUCKET_DAYS,
+    RSI_MAX_GAP_DAYS, RSI_RATIO_FLOOR, RSI_RATIO_CEIL,
+    RSI_BUCKET_MOVE_FLOOR, RSI_BUCKET_MOVE_CEIL,
+    RSI_KEY_COLS.join(','), RSI_RAW_ONLY, RSI_IDENTIFIED,
+    JSON.stringify(RSI_TIERS), JSON.stringify(RSI_TIERS_PLAYER),
+  ].join('|');
+  let h = 2166136261;                       // FNV-1a, enough to separate builds
+  for (let i = 0; i < parts.length; i++) {
+    h ^= parts.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36);
+})();
+
 // One query builds the whole basket and returns one row per player per bucket:
 // their median price ratio and the median gap it was measured over. That is
 // about 125 x 11 rows whatever the dataset size, so the Worker does arithmetic
@@ -3895,7 +3922,7 @@ app.get('/api/market-basket', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, reason: 'no dataset' });
 
-  const cacheKey = `marketbasket:v1:${days}:${player.toLowerCase()}`;
+  const cacheKey = `marketbasket:v2:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -4053,7 +4080,7 @@ app.get('/api/market-index', async (req, res) => {
 
   // v3: grouping moved into SQL. v2 keys are left behind deliberately — they
   // hold payloads from the build that tripped the Worker CPU limit.
-  const cacheKey = `marketindex:v3:${days}`;
+  const cacheKey = `marketindex:v4:${MARKET_CALC_SIG}:${days}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
