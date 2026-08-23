@@ -112,6 +112,35 @@ check('  ...and a parallel word before the card number is not',
         `${junk.how}`);
 }
 
+// Cost per title, which is a correctness concern here rather than a nicety.
+//
+// residual() strips every known product and subset off a title. Done naively
+// that is ~4,900 substring scans over two freshly allocated strings each, per
+// title — and /api/debug/parallel-resolve runs it across 6,000 titles, so about
+// 58 million allocations in a single request. That was enough to exhaust the
+// Worker: the endpoint returned nothing while the rest of the site was fine.
+//
+// Phrases are indexed by first word so only real candidates are tested. The
+// budget below is ~5x the measured cost of that version and ~2x under the
+// version it replaced, so it fails if the full scan is reintroduced without
+// tripping on a slow CI box.
+{
+  const players = ['Jaxson Dart', 'Caleb Williams', 'A.J. Green', 'John Elway'];
+  const titles = [];
+  for (let i = 0; i < 3000; i++) {
+    const p = players[i % players.length];
+    titles.push(`2025 Panini Prizm - Rookies ${p} #${300 + (i % 99)} Wibblesnorf Foil (RC)`);
+  }
+  resolveParallel(titles[0]);                       // pay for build() first
+  const t0 = Date.now();
+  for (const t of titles) resolveParallel(t);
+  const ms = Date.now() - t0;
+  const per = ms / titles.length;
+  check('reading a title stays cheap enough for the diagnostics to run',
+        per < 0.2,
+        `${per.toFixed(3)}ms/title over ${titles.length} (budget 0.2ms)`);
+}
+
 // Base is reported as its own answer, not as a failure to read. The two mean
 // different things and only one of them is safe to act on.
 {
