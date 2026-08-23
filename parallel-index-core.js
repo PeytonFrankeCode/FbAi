@@ -89,8 +89,8 @@ let PRODUCT_NAMES = null;
 let SUBSETS = null;
 let PRODUCTS_BY_FIRST = null;
 let SUBSETS_BY_FIRST = null;
-let SUBSET_SET = null;
-let SUBSET_BARE = null;
+let SUBSET_ALL = null;
+let SUBSET_ALL_BARE = null;
 
 function build() {
   if (LOOKUP) return;
@@ -127,8 +127,11 @@ function build() {
   PRODUCTS_BY_FIRST = groupByFirstWord(PRODUCT_NAMES);
   SUBSETS_BY_FIRST = groupByFirstWord(SUBSETS);
 
-  SUBSET_SET = new Set(SUBSETS);
-  SUBSET_BARE = new Set(SUBSETS.map(s => s.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()).filter(Boolean));
+  // Every catalogued set name, including the ones SUBSETS drops for also being
+  // parallels — classify() needs to see that overlap, not have it hidden.
+  const allSets = (PARALLELS.setNames || []).map(norm).filter(Boolean);
+  SUBSET_ALL = new Set(allSets);
+  SUBSET_ALL_BARE = new Set(allSets.map(s => s.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()).filter(Boolean));
 }
 
 function groupByFirstWord(phrases) {
@@ -197,6 +200,12 @@ function parallelSegment(title) {
 const RESIDUAL_FILLER = new Set([
   'rc', 'rookie', 'rookies', 'ssp', 'sp', 'insert', 'card', 'variation',
   'psa', 'bgs', 'sgc', 'cgc', 'gem', 'mint', 'mt', 'nm', 'lot', 'the',
+  // Manufacturer names. The catalogue's product names are the line, not the
+  // maker -- "Donruss Optic", not "Panini Donruss Optic" -- so stripping the
+  // product leaves the maker behind, and one stray word is enough to stop the
+  // residual covering a parallel. It left "panini purple shock prizm" where
+  // "purple shock" was sitting in plain sight. A maker is never a parallel.
+  'panini', 'topps', 'bowman', 'leaf', 'fleer', 'donruss', 'score', 'upper', 'deck',
   'cardinals', 'falcons', 'ravens', 'bills', 'panthers', 'bears', 'bengals',
   'browns', 'cowboys', 'broncos', 'lions', 'packers', 'texans', 'colts',
   'jaguars', 'chiefs', 'raiders', 'chargers', 'rams', 'dolphins', 'vikings',
@@ -238,6 +247,13 @@ function residual(title, playerHint) {
 // removed, so everything left is meant to be the parallel — and stripping
 // further there is what turned "chrome refractor" into "Chrome" by discarding
 // the actual answer as though it were noise.
+// Product words a seller appends that the catalogue leaves off. The checklist
+// says "Purple Shock"; the listing says "Purple Shock Prizm". This is the
+// mirror of what variants() handles (the catalogue's "Silver Prizms" against a
+// seller's "Silver Prizm") and it needs the opposite trim.
+const APPENDED_PRODUCT = new Set(['prizm', 'prizms', 'refractor', 'refractors',
+                                  'mosaic', 'optic', 'parallel', 'parallels']);
+
 function coverMatch(segment, strict = false) {
   build();
   const isFiller = (t) => FILLER.has(t) || /^\d+(\.\d+)?$/.test(t);
@@ -245,7 +261,21 @@ function coverMatch(segment, strict = false) {
   while (toks.length) {
     const hit = LOOKUP.get(toks.join(' '));
     if (hit) return hit;
-    if (strict || !isFiller(toks[toks.length - 1])) return null;
+    if (strict) {
+      // One concession inside strict mode: drop a trailing product word, but
+      // only while at least two words remain. That is what separates this from
+      // the trimming strict mode exists to forbid -- "chrome refractor" must
+      // NOT become "Chrome", because a one-word remainder is the rest of the
+      // sentence rather than a parallel, and that mistake made every Topps
+      // title a Refractor. "purple shock prizm" -> "Purple Shock" keeps two
+      // words and stays specific enough to be an answer.
+      if (toks.length > 2 && APPENDED_PRODUCT.has(toks[toks.length - 1])) {
+        toks = toks.slice(0, -1);
+        continue;
+      }
+      return null;
+    }
+    if (!isFiller(toks[toks.length - 1])) return null;
     toks = toks.slice(0, -1);
   }
   return null;
@@ -320,13 +350,23 @@ function resolveParallel(title, opts = {}) {
     build();
     const n = norm(name);
     if (!n) return 'empty';
-    if (LOOKUP.has(n)) return 'parallel';
-    if (SUBSET_SET.has(n)) return 'subset';
     // The column drops the punctuation the checklist keeps: "Downtown" for
-    // "Downtown!". Compare on letters and digits alone before giving up.
+    // "Downtown!". Compare on letters and digits alone as well.
     const bare = n.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
-    if (bare && SUBSET_BARE.has(bare)) return 'subset';
-    if (bare && LOOKUP.has(bare)) return 'parallel';
+    const isParallel = LOOKUP.has(n) || (bare && LOOKUP.has(bare));
+    // SUBSET_SET excludes anything already in LOOKUP, so a name that is both
+    // only ever appears there under its raw catalogue spelling — check the
+    // set names directly instead.
+    const isSubset = SUBSET_ALL.has(n) || (bare && SUBSET_ALL_BARE.has(bare));
+    // Both, and it matters. "Kaboom" is a parallel in one product and the name
+    // of an insert set in seven others, so asking which one it "is" has no
+    // answer — and answering 'parallel' because that test ran first counted
+    // every Kaboom! Horizontal card as a reader defect when the reader had
+    // correctly read it as a set with no parallel. That inflated the one number
+    // the wiring decision turns on.
+    if (isParallel && isSubset) return 'both';
+    if (isParallel) return 'parallel';
+    if (isSubset) return 'subset';
     return 'unknown';
   },
   stats: {

@@ -104,6 +104,34 @@ check('  ...and a parallel word before the card number is not',
         wrong.length ? wrong.join('; ') : `all ${cases.length} correct`);
 }
 
+// The two halves of the seller-vs-catalogue spelling gap. variants() covers the
+// catalogue being more verbose ("Silver Prizms" for a listing's "Silver Prizm");
+// this is the other direction, a seller appending a product word the checklist
+// leaves off. Both must work without reopening the hole strict mode exists to
+// close — a one-word remainder is the rest of the sentence, not a parallel.
+{
+  const shock = resolveParallel('2025 Panini Donruss Optic Jaxson Dart Rated Rookie Purple Shock Prizm #273');
+  const chrome = resolveParallel('2025 Topps Chrome Cam Ward #14 Chrome Refractor Thing');
+  check('a product word the checklist omits is trimmed',
+        eq(shock.parallel, 'Purple Shock'),
+        `${shock.how} ${shock.parallel || '-'}`);
+  check('  ...but never down to a single generic word',
+        !/^chrome$/i.test(String(chrome.parallel || '')),
+        `"Chrome Refractor" -> ${chrome.parallel || 'refused'} (Chrome would make every Topps title a Refractor)`);
+}
+
+// classify() has to admit when a name is both. "Kaboom" is a parallel in one
+// product and an insert set in seven others; answering 'parallel' because that
+// test ran first counted correctly-read set cards as reader defects and
+// inflated the one number the wiring decision turns on.
+{
+  const { classify } = require('../parallel-index.js');
+  const got = ['Kaboom', 'Downtown', 'Purple Shock', 'Wibblesnorf'].map(classify);
+  check('a name that is both a set and a parallel is reported as both',
+        got[0] === 'both' && got[1] === 'subset' && got[2] === 'parallel' && got[3] === 'unknown',
+        `Kaboom=${got[0]} Downtown=${got[1]} Purple Shock=${got[2]} Wibblesnorf=${got[3]}`);
+}
+
 // A title with no card number gives no segment to read, so nothing is claimed.
 {
   const junk = resolveParallel('SEE SCAN For The Exact Card Up For Auction! NFL READ FREE SHIPPING');
