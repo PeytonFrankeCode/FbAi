@@ -132,6 +132,23 @@ check('  ...and a parallel word before the card number is not',
         `Kaboom=${got[0]} Downtown=${got[1]} Purple Shock=${got[2]} Wibblesnorf=${got[3]}`);
 }
 
+// Words that sit NEXT to the answer rather than being it. The residual has to
+// cover the whole remainder, so one unstripped word is as fatal as a wrong one:
+// each of these read as base — a real parallel silently demoted — because a
+// signature word or the sport was still standing beside it.
+{
+  const cases = [
+    ['WILL HOWARD Rookie 2025 Topps Resurgence Refractor Auto Steelers RC #182', 'refractor'],
+    ['Topps 2026 Chrome Football Mojo Caleb Downs Cowboys RC 35 Anniversary #91TRC-49', 'mojo'],
+  ];
+  const missed = cases.filter(([t, want]) =>
+    !String(resolveParallel(t).parallel || '').toLowerCase().includes(want));
+  check('a parallel is still found with a signature word or the sport beside it',
+        missed.length === 0,
+        missed.length ? missed.map(([t]) => `"${t.slice(0, 40)}..." -> ${resolveParallel(t).how}`).join('; ')
+                      : `${cases.length} recovered that previously read as base`);
+}
+
 // A title with no card number gives no segment to read, so nothing is claimed.
 {
   const junk = resolveParallel('SEE SCAN For The Exact Card Up For Auction! NFL READ FREE SHIPPING');
