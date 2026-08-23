@@ -1,6 +1,11 @@
 .env
 node_modules/
 
+# Local wrangler state: the esbuild cache and the miniflare KV/D1/DO stores that
+# `wrangler dev --local` writes. Machine-local scratch, several MB of it, and
+# the local D1 copy would carry whatever rows a dev session happened to create.
+.wrangler/
+
 # Generated SEO landing pages — build artifacts produced from
 # public/data/checklists by scripts/build-landing-pages.js (npm run build:pages).
 # Regenerated in CI before every deploy; no need to track ~tens of MB of HTML.

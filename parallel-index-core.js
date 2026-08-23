@@ -87,6 +87,8 @@ let LOOKUP = null;
 let maxWords = 1;
 let PRODUCT_NAMES = null;
 let SUBSETS = null;
+let PRODUCTS_BY_FIRST = null;
+let SUBSETS_BY_FIRST = null;
 
 function build() {
   if (LOOKUP) return;
@@ -105,6 +107,47 @@ function build() {
   SUBSETS = (PARALLELS.setNames || [])
     .map(norm).filter(n => n && !LOOKUP.has(n))
     .sort((a, b) => b.length - a.length);
+
+  // Indexed by first word, which is what makes residual() affordable.
+  //
+  // It used to test every phrase against every title: 361 products + 4,522
+  // subsets, each an indexOf over two freshly allocated strings. That is ~4,900
+  // scans and ~9,800 allocations PER TITLE, and the diagnostics run it over
+  // 6,000 titles — about 58 million allocations in one request, which is enough
+  // to exhaust a Worker on GC pressure alone even when the CPU budget holds.
+  //
+  // A phrase can only occur in a title if its first word does, so grouping by
+  // that word turns the scan into a lookup over the handful of candidates that
+  // could possibly match. Nothing about the ANSWER changes — stripPhrase can
+  // only remove text and never fuses two words together, so no phrase becomes
+  // newly matchable partway through, and the candidates drawn from the original
+  // title stay a superset of everything the old loop could have stripped.
+  PRODUCTS_BY_FIRST = groupByFirstWord(PRODUCT_NAMES);
+  SUBSETS_BY_FIRST = groupByFirstWord(SUBSETS);
+}
+
+function groupByFirstWord(phrases) {
+  const m = new Map();
+  for (const p of phrases) {
+    const first = p.split(' ', 1)[0];
+    if (!first) continue;
+    let list = m.get(first);
+    if (!list) m.set(first, list = []);
+    list.push(p);
+  }
+  // Longest first, so "Stars In The Night" is stripped before "Stars".
+  for (const list of m.values()) list.sort((a, b) => b.length - a.length);
+  return m;
+}
+
+// The phrases that could possibly appear in `text`, longest first.
+function candidates(index, text) {
+  const out = [];
+  for (const tok of new Set(text.split(' '))) {
+    const list = index.get(tok);
+    if (list) for (const p of list) out.push(p);
+  }
+  return out.sort((a, b) => b.length - a.length);
 }
 
 // Words that may trail a parallel without being part of it. Stripping them is
@@ -167,8 +210,8 @@ function residual(title, playerHint) {
   let t = norm(String(title || '').replace(/\([^)]*\)/g, ' '));
   t = t.replace(/#\s*[a-z0-9-]+/gi, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');
   t = t.replace(/\s+/g, ' ').trim();
-  for (const p of PRODUCT_NAMES) { const n = stripPhrase(t, p); if (n !== t) { t = n; break; } }
-  for (const sub of SUBSETS) { const n = stripPhrase(t, sub); if (n !== t) t = n; }
+  for (const p of candidates(PRODUCTS_BY_FIRST, t)) { const n = stripPhrase(t, p); if (n !== t) { t = n; break; } }
+  for (const sub of candidates(SUBSETS_BY_FIRST, t)) { const n = stripPhrase(t, sub); if (n !== t) t = n; }
   const hit = resolvePlayer(playerHint || t);
   if (hit && hit.key) for (const w of hit.key.split(' ')) t = stripPhrase(t, w);
   // Deliberately NOT the FILLER set. That contains "refractor" and "prizm",
