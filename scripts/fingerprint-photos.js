@@ -146,7 +146,14 @@ async function fetchSignature(url) {
 }
 
 async function main() {
-  console.log(`fingerprint-photos: up to ${limit} reference photos${dry ? ' (dry run)' : ''}`);
+  // Which commit is this? A re-run of an old workflow run replays the commit
+  // that run started from, not current main — so a fix can be merged, the job
+  // re-run, and the identical failure appear again with nothing to indicate
+  // the new code never executed. Printing the SHA makes that visible in one
+  // line instead of one round trip.
+  const sha = process.env.GITHUB_SHA;
+  console.log(`fingerprint-photos: up to ${limit} reference photos${dry ? ' (dry run)' : ''}`
+            + (sha ? `  [commit ${sha.slice(0, 7)}]` : ''));
 
   // Create the table here rather than relying on the Worker having done it.
   // The Worker does create it, but only when someone happens to load the status
