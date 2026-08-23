@@ -5,14 +5,21 @@ const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
 const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb } = require('./db');
-// Canonical player names from the checklists. Bundled rather than fetched: it
-// is derived from public/data/checklists at build time by
-// scripts/build-card-index.js, so it changes only when the catalogue does.
-const { resolvePlayer, stats: cardIndexStats } = require('./card-index');
-// Parallel names, also from the checklists. Only 48.4% of priced sales carry a
-// parallel in the column, and the index cannot compare a card whose parallel is
-// unknown against one whose parallel is known.
-const { resolveParallel, stats: parallelStats } = require('./parallel-index');
+// Canonical player and parallel names from the checklists, derived from
+// public/data/checklists at build time by scripts/build-card-index.js.
+//
+// Loaded on first use, NOT at module scope. Together the two artifacts are
+// 1.26 MB of JSON, and requiring them at the top parses all of it during
+// startup — on every cold isolate, for every request, including the ones that
+// never touch the market. That is what tripped the Worker resource limit.
+//
+// Nothing on the request path needs them: the index reads canonical names from
+// D1, which is the whole point of the alias table. Only the cron backfill and
+// the two diagnostics do, and they can afford the parse once per isolate.
+let _cardIndex = null;
+const cardIndex = () => (_cardIndex || (_cardIndex = require('./card-index')));
+let _parallelIndex = null;
+const parallelIndex = () => (_parallelIndex || (_parallelIndex = require('./parallel-index')));
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -2962,7 +2969,7 @@ async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH } = {}) {
   const stmts = [];
   let resolved = 0;
   for (const r of list) {
-    const hit = resolvePlayer(r.v);
+    const hit = cardIndex().resolvePlayer(r.v);
     // Unresolved variants are still recorded, mapped to themselves. Without a
     // row they would be re-resolved every run forever, and the index needs to
     // be able to tell "no player in this string" from "not looked at yet".
@@ -3694,7 +3701,7 @@ app.get('/api/debug/player-resolve', async (req, res) => {
     let strings = 0, sales = 0, resolvedStrings = 0, resolvedSales = 0, lowConfidence = 0;
     for (const r of list) {
       strings++; sales += r.n;
-      const hit = resolvePlayer(r.player);
+      const hit = cardIndex().resolvePlayer(r.player);
       if (!hit || !hit.confident) {
         if (hit) lowConfidence++;
         unresolved.push({ player: r.player, sales: r.n, nearest: hit ? hit.canonical : null });
@@ -3713,7 +3720,7 @@ app.get('/api/debug/player-resolve', async (req, res) => {
     res.json({
       available: true,
       window: { since: sinceIso, through: newest.d },
-      dictionary: cardIndexStats,
+      dictionary: cardIndex().stats,
       sample: { distinctStrings: strings, salesCovered: sales, cappedAt: limit },
       resolved: {
         strings: resolvedStrings, stringShare: pct(resolvedStrings, strings),
@@ -3777,7 +3784,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     const unmatched = [];
     let blankSales = 0;
     for (const r of blanks) {
-      const hit = resolveParallel(r.title);
+      const hit = parallelIndex().resolveParallel(r.title);
       by[hit.how]++; bySales[hit.how] += r.n; blankSales += r.n;
       if (hit.how === 'unmatched') unmatched.push({ segment: hit.segment, sales: r.n, title: r.title });
     }
@@ -3787,7 +3794,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     let agree = 0, agreeStrict = 0, disagree = 0, noRead = 0;
     const conflicts = [];
     for (const r of filled) {
-      const hit = resolveParallel(r.title);
+      const hit = parallelIndex().resolveParallel(r.title);
       if (hit.how !== 'matched') { noRead++; continue; }
       // Two comparisons, because the strict one lies. The column writes "Lazer"
       // where the checklist writes "Lazer Prizms" — the same parallel, counted
@@ -3809,7 +3816,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     res.json({
       available: true,
       window: { since: sinceIso, through: throughIso },
-      vocabulary: parallelStats,
+      vocabulary: parallelIndex().stats,
       blankParallels: {
         titlesSampled: blanks.length, salesCovered: blankSales,
         recoverable: by.matched, recoverableSales: bySales.matched,
