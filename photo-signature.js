@@ -141,9 +141,13 @@ function bestMatch(sig, candidates, opts = {}) {
   // markets invisibly; refusals only cost sample.
   const maxDistance = opts.maxDistance == null ? 0.45 : opts.maxDistance;
   const minMargin = opts.minMargin == null ? 0.06 : opts.minMargin;
+  // Which yardstick. Raw signatures compare with distance(); player-subtracted
+  // residuals need residualDistance(), because a residual is a signed deviation
+  // rather than a distribution.
+  const measure = opts.metric === 'residual' ? residualDistance : distance;
   const scored = (candidates || [])
     .filter(c => c && c.centroid)
-    .map(c => ({ key: c.key, distance: distance(sig, c.centroid) }))
+    .map(c => ({ key: c.key, distance: measure(sig, c.centroid) }))
     .sort((a, b) => a.distance - b.distance);
 
   if (!scored.length) return { key: null, why: 'no-candidates' };
@@ -159,4 +163,49 @@ function bestMatch(sig, candidates, opts = {}) {
            margin: next ? Math.round((next.distance - top.distance) * 1000) / 1000 : null };
 }
 
-module.exports = { signatureFromPixels, distance, centroid, bestMatch, HUE_BINS };
+// What is left of a photo once the CARD is subtracted from it.
+//
+// The first hold-out test on real photos got 5 of 400 right, and the misses
+// said why: Green was matched to Red Pandora. Confusing green with red is
+// impossible if the foil dominates the picture — so it does not. Most pixels in
+// a card photo are the player's portrait and their team's colours. The parallel
+// is a border, an edge, a sheen. The fingerprint was faithfully measuring WHICH
+// PLAYER the card shows, which is exactly the thing that is already known and
+// exactly not the thing being asked.
+//
+// Subtracting the average of every photo of that same player in that same set
+// cancels the portrait, because it is common to all of them. What remains is
+// what makes one copy differ from another — which is the parallel.
+//
+// It also costs nothing already spent: this reuses the fingerprints the
+// backfill is collecting rather than needing every photo re-fetched at a
+// different crop.
+function residual(sig, mean) {
+  if (!sig || !mean) return null;
+  const hues = new Array(HUE_BINS);
+  for (let i = 0; i < HUE_BINS; i++) hues[i] = (sig.hues[i] || 0) - (mean.hues[i] || 0);
+  return {
+    hues,
+    grey: sig.grey - mean.grey,
+    sat: sig.sat - mean.sat,
+    light: sig.light - mean.light,
+    satSpread: sig.satSpread - mean.satSpread,
+  };
+}
+
+// Residuals are signed deviations, not distributions, so the weighting that
+// distance() applies to hue would be meaningless here — there is no "how
+// colourful is this" to weigh by once the colour has been subtracted out.
+// Plain mean-absolute-difference over the whole vector, scaled so typical
+// values land in roughly the same 0..1 range the thresholds were tuned on.
+function residualDistance(a, b) {
+  if (!a || !b) return 1;
+  let sum = 0;
+  for (let i = 0; i < HUE_BINS; i++) sum += Math.abs((a.hues[i] || 0) - (b.hues[i] || 0));
+  sum += Math.abs(a.grey - b.grey) + Math.abs(a.sat - b.sat)
+       + Math.abs(a.light - b.light) + Math.abs(a.satSpread - b.satSpread);
+  return Math.min(1, sum / (HUE_BINS + 4) * 4);
+}
+
+module.exports = { signatureFromPixels, distance, centroid, bestMatch, residual,
+                   residualDistance, HUE_BINS };
