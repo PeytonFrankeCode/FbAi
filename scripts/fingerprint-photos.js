@@ -23,9 +23,11 @@ const { signatureFromPixels } = require('../photo-signature.js');
 
 const DB = 'nflcarddb';
 const TABLE = 'photo_sig';
-// One run's worth. Big enough to make progress against ~149k reference photos,
-// small enough that a failure loses minutes rather than an afternoon.
-const DEFAULT_LIMIT = 1500;
+// One run's worth. Big enough to clear ~149k references in a day and a half at
+// hourly, small enough that a failure loses three minutes rather than an
+// afternoon — and the work is resumable regardless, since the scan skips rows
+// that already exist.
+const DEFAULT_LIMIT = 4000;
 const CONCURRENCY = 12;
 const WRITE_CHUNK = 100;
 const TIMEOUT_MS = 8000;
