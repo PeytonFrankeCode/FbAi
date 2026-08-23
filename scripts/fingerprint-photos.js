@@ -42,12 +42,46 @@ function thumbnail(url) {
   return url.replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, '/s-l64.$1');
 }
 
+// Cloudflare's failures come back as JSON on stdout with a numeric code, and
+// the codes mean genuinely different things — a missing permission is a token
+// setting, a missing table is a migration, a bad id is a typo. Left as a raw
+// execFileSync throw they all arrive as the same wall of stack trace with the
+// one useful line buried in the middle of it.
+function explain(stdout) {
+  let code = null, text = '', notes = '';
+  try {
+    const j = JSON.parse(stdout.slice(stdout.indexOf('{')));
+    code = j && j.error && j.error.code;
+    text = (j && j.error && j.error.text) || '';
+    notes = ((j && j.error && j.error.notes) || []).map(n => n.text).join('; ');
+  } catch { /* not JSON — fall through to the raw text */ }
+
+  if (code === 7403 || /not authorized to access this service/i.test(notes)) {
+    return 'CLOUDFLARE_API_TOKEN cannot access D1.\n'
+         + '  The deploy token only carries Workers permissions; this job also writes to the\n'
+         + '  database. Cloudflare dashboard -> My Profile -> API Tokens -> edit the token ->\n'
+         + '  add Account | D1 | Edit. (Or mint a new token with Workers Scripts:Edit AND\n'
+         + '  D1:Edit and update the CLOUDFLARE_API_TOKEN secret in GitHub.)';
+  }
+  if (/authentication|10000|unauthorized/i.test(notes + text)) {
+    return 'CLOUDFLARE_API_TOKEN was rejected. Check the secret is set and has not expired.';
+  }
+  return `${text || 'wrangler failed'}${notes ? `\n  ${notes}` : ''}`;
+}
+
 function d1(sql, { json = true } = {}) {
-  const out = execFileSync('npx', [
-    'wrangler', 'd1', 'execute', DB, '--remote',
-    ...(json ? ['--json'] : []),
-    '--command', sql,
-  ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+  let out;
+  try {
+    out = execFileSync('npx', [
+      'wrangler', 'd1', 'execute', DB, '--remote',
+      ...(json ? ['--json'] : []),
+      '--command', sql,
+    ], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (err) {
+    const stdout = String((err && err.stdout) || '');
+    console.error(`\nD1 request failed.\n\n  ${explain(stdout).replace(/\n/g, '\n  ')}\n`);
+    process.exit(1);
+  }
   if (!json) return null;
   // wrangler prints progress lines around the JSON payload.
   const start = out.indexOf('[');
@@ -82,6 +116,18 @@ async function fetchSignature(url) {
 
 async function main() {
   console.log(`fingerprint-photos: up to ${limit} reference photos${dry ? ' (dry run)' : ''}`);
+
+  // Create the table here rather than relying on the Worker having done it.
+  // The Worker does create it, but only when someone happens to load the status
+  // endpoint — which makes whether this job runs depend on whether a page was
+  // visited, and that is not a dependency worth having.
+  d1(`CREATE TABLE IF NOT EXISTS ${TABLE} (
+        url        TEXT PRIMARY KEY,
+        sig        TEXT,
+        ok         INTEGER NOT NULL DEFAULT 0,
+        why        TEXT,
+        updated_at TEXT
+      )`, { json: false });
 
   // Reference photos first: sales whose parallel is already known. Those are
   // what everything else gets matched against, so identifying blank cards
