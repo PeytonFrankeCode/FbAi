@@ -9,6 +9,10 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserDat
 // is derived from public/data/checklists at build time by
 // scripts/build-card-index.js, so it changes only when the catalogue does.
 const { resolvePlayer, stats: cardIndexStats } = require('./card-index');
+// Parallel names, also from the checklists. Only 48.4% of priced sales carry a
+// parallel in the column, and the index cannot compare a card whose parallel is
+// unknown against one whose parallel is known.
+const { resolveParallel, stats: parallelStats } = require('./parallel-index');
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -3726,6 +3730,97 @@ app.get('/api/debug/player-resolve', async (req, res) => {
     });
   } catch (err) {
     console.error('[player-resolve]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
+// How much of the missing parallel is recoverable from the title.
+//
+// 48.4% of priced sales have a parallel; 38.9% have a full card identity. That
+// is the ceiling on the index, and the titles suggest most of the rest is
+// readable — "2025 Panini Prizm - Rookies Jaxson Dart #332 Silver Prizm (RC)"
+// names the parallel plainly while the column is blank.
+//
+// Two questions, and the second matters more. How many blank parallels can be
+// filled? And where the column DOES have a value, does the title agree with it?
+// A reader that recovers a lot and agrees with nothing is reading the wrong
+// thing.
+app.get('/api/debug/parallel-resolve', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const limit = Math.min(5000, Math.max(100, parseInt(req.query.limit, 10) || 3000));
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const sinceIso = _mkIso(_mkDay(throughIso) - 30);
+
+    const sample = async (blank) => {
+      const r = await db.prepare(
+        `SELECT title, parallel, COUNT(*) AS n
+           FROM sales
+          WHERE price_cents IS NOT NULL AND price_cents > 0
+            AND sold_date > ? AND sold_date <= ?
+            AND title IS NOT NULL AND title <> ''
+            AND COALESCE(TRIM(parallel), '') ${blank ? '=' : '<>'} ''
+          GROUP BY title ORDER BY n DESC LIMIT ?`
+      ).bind(sinceIso, throughIso, limit).all();
+      return (r && r.results) || [];
+    };
+
+    // 1. What can be filled in.
+    const blanks = await sample(true);
+    const by = { matched: 0, base: 0, unmatched: 0, 'no-number': 0 };
+    const bySales = { matched: 0, base: 0, unmatched: 0, 'no-number': 0 };
+    const unmatched = [];
+    let blankSales = 0;
+    for (const r of blanks) {
+      const hit = resolveParallel(r.title);
+      by[hit.how]++; bySales[hit.how] += r.n; blankSales += r.n;
+      if (hit.how === 'unmatched') unmatched.push({ segment: hit.segment, sales: r.n, title: r.title });
+    }
+
+    // 2. Where the column already has a value, does the title agree?
+    const filled = await sample(false);
+    let agree = 0, disagree = 0, noRead = 0;
+    const conflicts = [];
+    for (const r of filled) {
+      const hit = resolveParallel(r.title);
+      if (hit.how !== 'matched') { noRead++; continue; }
+      const a = String(hit.parallel).toLowerCase().replace(/s$/, '');
+      const b = String(r.parallel).toLowerCase().replace(/s$/, '');
+      if (a === b) agree++;
+      else { disagree++; if (conflicts.length < 15) conflicts.push({ column: r.parallel, fromTitle: hit.parallel, sales: r.n, title: r.title }); }
+    }
+
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
+    res.json({
+      available: true,
+      window: { since: sinceIso, through: throughIso },
+      vocabulary: parallelStats,
+      blankParallels: {
+        titlesSampled: blanks.length, salesCovered: blankSales,
+        recoverable: by.matched, recoverableSales: bySales.matched,
+        recoverableSalesShare: pct(bySales.matched, blankSales),
+        looksLikeBase: by.base, looksLikeBaseSales: bySales.base,
+        looksLikeBaseSalesShare: pct(bySales.base, blankSales),
+        unreadable: by.unmatched, unreadableSales: bySales.unmatched,
+        noCardNumber: by['no-number'], noCardNumberSales: bySales['no-number'],
+      },
+      // The validation. Reading a lot while agreeing with nothing would mean
+      // the segment rule is picking up the wrong part of the title.
+      agreementWhereColumnIsSet: {
+        titlesSampled: filled.length,
+        agree, disagree, titleCouldNotRead: noRead,
+        agreementRate: pct(agree, agree + disagree),
+      },
+      conflicts,
+      topUnreadable: unmatched.sort((a, b) => b.sales - a.sales).slice(0, 20),
+    });
+  } catch (err) {
+    console.error('[parallel-resolve]', err && err.stack || err);
     res.json({ available: false, error: err && err.message });
   }
 });
