@@ -25,10 +25,17 @@ const fs = require('fs');
 const path = require('path');
 
 const CHECKLIST_DIR = path.join(__dirname, '..', 'public', 'data', 'checklists');
-const OUT = path.join(__dirname, '..', 'data', 'card-index.json');
-// Parallels ship separately. They are only needed by the second stage, and
-// folding them in nearly doubles an artifact that gets bundled into the Worker.
-const OUT_PARALLELS = path.join(__dirname, '..', 'data', 'parallel-index.json');
+// Emitted into public/, because that is how the Worker reads them: fetched over
+// the assets binding at runtime rather than compiled into the script. A Worker
+// compiles its whole bundle before serving anything, so 1.26 MB of JSON
+// reachable from server.js cost CPU on every cold start whether or not the
+// request touched it — which is what tripped the resource limit and took the
+// site down. Node (tests, scripts) requires these same files, so there is one
+// copy and it cannot drift from the one that ships.
+const OUT = path.join(__dirname, '..', 'public', 'data', 'card-index.json');
+// Parallels ship separately: they are only needed by the second stage, and
+// folding them in nearly doubles the artifact.
+const OUT_PARALLELS = path.join(__dirname, '..', 'public', 'data', 'parallel-index.json');
 
 // Same normalisation the SQL side uses, so a name that matches here matches
 // there. Punctuation goes, case goes, runs of spaces collapse — and generational

@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets } = require('./db');
 // Canonical player and parallel names from the checklists, derived from
 // public/data/checklists at build time by scripts/build-card-index.js.
 //
@@ -33,9 +33,59 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserDat
 // scripts/build-card-index.js still writes them, and they are still committed —
 // they belong in the bundle again only once they are served from the assets
 // binding and fetched on demand.
-const DICTIONARIES_BUNDLED = false;
-const cardIndex = () => null;
-const parallelIndex = () => null;
+// Fetched from the assets binding on first use, never bundled. Only the logic
+// is compiled into the Worker; the data arrives over a subrequest and is held
+// for the life of the isolate.
+//
+// In Node there is no assets binding, so the committed files are read directly
+// and the same resolvers are built from them — which is what the tests drive.
+const { createCardIndex } = require('./card-index-core');
+const { createParallelIndex } = require('./parallel-index-core');
+
+const _dict = { card: null, parallel: null };
+async function _loadJson(name) {
+  const assets = getAssets();
+  if (assets) {
+    // The binding wants an absolute URL; the origin is not used for lookup.
+    const resp = await assets.fetch(new Request(`https://assets.local/data/${name}`));
+    if (!resp || !resp.ok) throw new Error(`assets.fetch /data/${name} -> ${resp && resp.status}`);
+    // A 200 is not proof the file exists. not_found_handling is
+    // single-page-application, so a missing asset comes back as index.html with
+    // a 200 — and "unexpected token <" is a poor way to learn the artifact was
+    // never uploaded. Check what actually arrived.
+    const ct = resp.headers.get('content-type') || '';
+    if (!/json/i.test(ct)) throw new Error(`/data/${name} served as ${ct || 'unknown'} — not uploaded?`);
+    return await resp.json();
+  }
+  // Node only, and deliberately hidden from the bundler. A plain require here —
+  // even with a computed path — is resolved by esbuild at build time, which put
+  // the whole 1.26 MB back into the compiled script and undid the point of
+  // this. Verified against the built bundle both ways.
+  const nodeRequire = eval('require');
+  return nodeRequire('./public/data/' + name);
+}
+
+async function cardIndex() {
+  if (_dict.card === null) {
+    try { _dict.card = createCardIndex(await _loadJson('card-index.json')); }
+    catch (err) { console.error('[dict] card index unavailable:', err && err.message); _dict.card = false; }
+  }
+  return _dict.card || null;
+}
+async function parallelIndex() {
+  if (_dict.parallel === null) {
+    try {
+      const ci = await cardIndex();
+      _dict.parallel = createParallelIndex(
+        await _loadJson('parallel-index.json'),
+        ci ? ci.resolvePlayer : () => null);
+    } catch (err) {
+      console.error('[dict] parallel index unavailable:', err && err.message);
+      _dict.parallel = false;
+    }
+  }
+  return _dict.parallel || null;
+}
 
 // How long to cache an eBay For-Sale (Browse API) response in KV. Light by
 // design: long enough to absorb a traffic spike (a viral card searched 100x in
@@ -2983,7 +3033,8 @@ async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = n
   // Injected by the caller, because the dictionary is not in the Worker bundle.
   // Tests pass the real resolver so the whole path is still exercised; the cron
   // has none to give and says so rather than writing rows it cannot fill.
-  const resolveOne = resolve || (cardIndex() && cardIndex().resolvePlayer);
+  const ci = resolve ? null : await cardIndex();
+  const resolveOne = resolve || (ci && ci.resolvePlayer);
   if (!resolveOne) return { ok: false, reason: 'dictionary not in this build' };
 
   const now = new Date().toISOString();
@@ -3700,11 +3751,8 @@ app.get('/api/debug/player-resolve', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
   const limit = Math.min(5000, Math.max(100, parseInt(req.query.limit, 10) || 3000));
-  if (!cardIndex()) return res.json({
-    available: false,
-    reason: 'the player dictionary is not bundled into the Worker — it is 918 KB '
-          + 'and compiling it on every cold start exceeded the resource limit',
-  });
+  const ci = await cardIndex();
+  if (!ci) return res.json({ available: false, reason: 'player dictionary unavailable' });
   try {
     const newest = await db.prepare(
       'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
@@ -3727,7 +3775,7 @@ app.get('/api/debug/player-resolve', async (req, res) => {
     let strings = 0, sales = 0, resolvedStrings = 0, resolvedSales = 0, lowConfidence = 0;
     for (const r of list) {
       strings++; sales += r.n;
-      const hit = cardIndex().resolvePlayer(r.player);
+      const hit = ci.resolvePlayer(r.player);
       if (!hit || !hit.confident) {
         if (hit) lowConfidence++;
         unresolved.push({ player: r.player, sales: r.n, nearest: hit ? hit.canonical : null });
@@ -3746,7 +3794,7 @@ app.get('/api/debug/player-resolve', async (req, res) => {
     res.json({
       available: true,
       window: { since: sinceIso, through: newest.d },
-      dictionary: cardIndex().stats,
+      dictionary: ci.stats,
       sample: { distinctStrings: strings, salesCovered: sales, cappedAt: limit },
       resolved: {
         strings: resolvedStrings, stringShare: pct(resolvedStrings, strings),
@@ -3782,11 +3830,8 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
   const limit = Math.min(5000, Math.max(100, parseInt(req.query.limit, 10) || 3000));
-  if (!parallelIndex()) return res.json({
-    available: false,
-    reason: 'the parallel dictionary is not bundled into the Worker — it is 347 KB '
-          + 'and compiling it on every cold start exceeded the resource limit',
-  });
+  const pi = await parallelIndex();
+  if (!pi) return res.json({ available: false, reason: 'parallel dictionary unavailable' });
   try {
     const newest = await db.prepare(
       'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
@@ -3815,7 +3860,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     const unmatched = [];
     let blankSales = 0;
     for (const r of blanks) {
-      const hit = parallelIndex().resolveParallel(r.title);
+      const hit = pi.resolveParallel(r.title);
       by[hit.how]++; bySales[hit.how] += r.n; blankSales += r.n;
       if (hit.how === 'unmatched') unmatched.push({ segment: hit.segment, sales: r.n, title: r.title });
     }
@@ -3825,7 +3870,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     let agree = 0, agreeStrict = 0, disagree = 0, noRead = 0;
     const conflicts = [];
     for (const r of filled) {
-      const hit = parallelIndex().resolveParallel(r.title);
+      const hit = pi.resolveParallel(r.title);
       if (hit.how !== 'matched') { noRead++; continue; }
       // Two comparisons, because the strict one lies. The column writes "Lazer"
       // where the checklist writes "Lazer Prizms" — the same parallel, counted
@@ -3847,7 +3892,7 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     res.json({
       available: true,
       window: { since: sinceIso, through: throughIso },
-      vocabulary: parallelIndex().stats,
+      vocabulary: pi.stats,
       blankParallels: {
         titlesSampled: blanks.length, salesCovered: blankSales,
         recoverable: by.matched, recoverableSales: bySales.matched,
