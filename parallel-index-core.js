@@ -196,10 +196,28 @@ function parallelSegment(title) {
 // with.
 
 // Filler for the residual: things that are never a parallel under any product.
-// Narrower than FILLER on purpose.
+// Narrower than FILLER on purpose — FILLER holds "refractor" and "prizm", which
+// are real parallel names, so using it here deletes the answer.
+//
+// "variation" is absent for that same reason and must stay absent. It is a
+// parallel in its own right ("Image Variation"), and stripping it turned that
+// card's residual into the bare word "image", which matches nothing, so a real
+// parallel was read as base. Full coverage already stops it being claimed
+// wrongly: "variation silver prizm" has to match end to end, so leaving the
+// word in cannot promote a Silver Prizm to a Variation.
 const RESIDUAL_FILLER = new Set([
-  'rc', 'rookie', 'rookies', 'ssp', 'sp', 'insert', 'card', 'variation',
+  'rc', 'rookie', 'rookies', 'ssp', 'sp', 'insert', 'card',
   'psa', 'bgs', 'sgc', 'cgc', 'gem', 'mint', 'mt', 'nm', 'lot', 'the',
+  // Signature words. Left in, they sat next to the answer and stopped the
+  // residual covering it: "Refractor Auto" is a Refractor that happens to be
+  // signed, but the pair matches no vocabulary entry and the card fell through
+  // to base. Whether a card is autographed is a different fact from which
+  // parallel it is.
+  'auto', 'autos', 'autograph', 'autographs', 'autographed', 'au', 'signed',
+  // The sport. Sellers write it, the catalogue puts it in the product name
+  // where it is already stripped, and one leftover word is enough to block a
+  // match — "football mojo" instead of "mojo".
+  'football', 'basketball', 'baseball', 'hockey', 'soccer',
   // Manufacturer names. The catalogue's product names are the line, not the
   // maker -- "Donruss Optic", not "Panini Donruss Optic" -- so stripping the
   // product leaves the maker behind, and one stray word is enough to stop the
