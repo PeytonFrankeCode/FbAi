@@ -2952,6 +2952,138 @@ function _normCol(col) {
 // join against a table the backfill has not filled yet would reproduce it
 // precisely. So the index asks whether the table is populated first and keeps
 // its old behaviour until it is. The table earns its way in.
+// ---------------------------------------------------------------------------
+// Photo fingerprints.
+//
+// The titles have gone as far as they go: 4.4% of cards that carry a parallel
+// still read as base, and what remains is increasingly cards absent from the
+// checklists entirely. Photos carry the signal directly — a Gold Prizm is gold
+// whatever the seller typed — and every sale has one.
+//
+// Two tables. photo_sig is one row per image URL, so an image is fetched once
+// ever and a failure is remembered rather than retried forever. photo_ref is
+// the reference: the average fingerprint of each (year, set, parallel) built
+// from sales that already know their parallel.
+const PHOTO_SIG_TABLE = 'photo_sig';
+const PHOTO_REF_TABLE = 'photo_ref';
+// Small on purpose. Each row is a subrequest to fetch an image, and a cron tick
+// has a fixed budget — overrunning it loses the whole tick's work rather than
+// part of it. The alias backfill reached 88% of sales by grinding at this size.
+const PHOTO_BATCH = 120;
+// Fetches run concurrently; this bounds how many are in flight at once so a
+// tick cannot open hundreds of sockets against one host.
+const PHOTO_CONCURRENCY = 8;
+// A reference built from fewer photos than this is not a reference. The
+// coverage probe found 5,921 parallels with a single photo, and matching
+// against one example is guessing with extra steps.
+const PHOTO_MIN_SAMPLES = 5;
+
+let _photoTablesReady = null;
+async function _photoEnsure(db) {
+  if (_photoTablesReady !== null) return _photoTablesReady;
+  try {
+    await db.prepare(
+      `CREATE TABLE IF NOT EXISTS ${PHOTO_SIG_TABLE} (
+         url        TEXT PRIMARY KEY,
+         sig        TEXT,
+         ok         INTEGER NOT NULL DEFAULT 0,
+         why        TEXT,
+         updated_at TEXT
+       )`).run();
+    await db.prepare(
+      `CREATE TABLE IF NOT EXISTS ${PHOTO_REF_TABLE} (
+         card_key   TEXT PRIMARY KEY,
+         parallel   TEXT NOT NULL,
+         product    TEXT NOT NULL,
+         centroid   TEXT NOT NULL,
+         samples    INTEGER NOT NULL,
+         updated_at TEXT
+       )`).run();
+    _photoTablesReady = true;
+  } catch (err) {
+    console.error('[photo] tables unavailable:', err && err.message);
+    _photoTablesReady = false;
+  }
+  return _photoTablesReady;
+}
+
+/**
+ * Fetch and fingerprint a batch of photos that have not been seen yet.
+ *
+ * Reference sales first — the ones whose parallel is already known. Without
+ * references there is nothing to match against, so identifying blank cards
+ * before the library exists would be pure guesswork.
+ */
+async function backfillPhotoSignatures({ limit = PHOTO_BATCH } = {}) {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no dataset' };
+  if (!await _photoEnsure(db)) return { ok: false, reason: 'tables unavailable' };
+  if (!await _nflHasImageColumn(db)) return { ok: false, reason: 'no image_url column' };
+
+  const { fetchTinyPixels } = require('./photo-fetch');
+  const { signatureFromPixels } = require('./photo-signature');
+
+  let rows;
+  try {
+    const r = await db.prepare(
+      `SELECT DISTINCT image_url AS url
+         FROM sales
+        WHERE image_url IS NOT NULL AND image_url <> ''
+          AND price_cents IS NOT NULL AND price_cents > 0
+          AND COALESCE(TRIM(parallel), '') <> ''
+          AND COALESCE(TRIM(year), '') <> '' AND COALESCE(TRIM(set_name), '') <> ''
+          AND NOT EXISTS (SELECT 1 FROM ${PHOTO_SIG_TABLE} s WHERE s.url = sales.image_url)
+        LIMIT ?`).bind(limit).all();
+    rows = (r && r.results) || [];
+  } catch (err) {
+    console.error('[photo] scan failed:', err && err.message);
+    return { ok: false, reason: 'scan failed' };
+  }
+  if (!rows.length) return { ok: true, inserted: 0, done: true };
+
+  // Bounded concurrency. Serial would spend the whole tick waiting on network
+  // latency; unbounded would open one socket per row at once.
+  const out = [];
+  let cursor = 0;
+  async function worker() {
+    for (;;) {
+      const i = cursor++;
+      if (i >= rows.length) return;
+      const url = rows[i].url;
+      const got = await fetchTinyPixels(url);
+      out.push(got.ok
+        ? { url, sig: signatureFromPixels(got.px, got.channels), ok: 1, why: null }
+        : { url, sig: null, ok: 0, why: String(got.why || 'failed').slice(0, 80) });
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(PHOTO_CONCURRENCY, rows.length) }, worker));
+
+  const now = new Date().toISOString();
+  const stmts = out.map(r => db.prepare(
+    `INSERT OR REPLACE INTO ${PHOTO_SIG_TABLE} (url, sig, ok, why, updated_at) VALUES (?,?,?,?,?)`
+  ).bind(r.url, r.sig ? JSON.stringify(r.sig) : null, r.ok, r.why, now));
+
+  const CHUNK = 50;
+  let written = 0;
+  try {
+    for (let i = 0; i < stmts.length; i += CHUNK) {
+      const slice = stmts.slice(i, i + CHUNK);
+      if (typeof db.batch === 'function') await db.batch(slice);
+      else for (const st of slice) await st.run();
+      written += slice.length;
+    }
+  } catch (err) {
+    // Failures are written too, so a dead link is not re-fetched every tick
+    // forever. Partial progress survives: the scan skips URLs that have a row.
+    console.error(`[photo] write failed after ${written}/${stmts.length}:`, err && err.message);
+    return { ok: false, reason: 'write failed', written };
+  }
+
+  const good = out.filter(r => r.ok).length;
+  console.log(`[photo] +${written} signatures (${good} decoded, ${written - good} failed)`);
+  return { ok: true, inserted: written, decoded: good, failed: written - good };
+}
+
 const ALIAS_TABLE = 'player_alias';
 const ALIAS_BACKFILL_BATCH = 1200;  // variants resolved per cron run
 // Coverage, not a row count. The join is an inner one, so a name with no alias
@@ -3826,6 +3958,64 @@ app.get('/api/debug/player-resolve', async (req, res) => {
 // filled? And where the column DOES have a value, does the title agree with it?
 // A reader that recovers a lot and agrees with nothing is reading the wrong
 // thing.
+// How far along is the fingerprint library, and is the pipeline even working?
+//
+// The one thing that cannot be verified from a laptop is whether Cloudflare's
+// image resizer is enabled on this zone. Without it the fetch returns the
+// original JPEG, which cannot be decoded here, and every row would fail with
+// the same reason — so the failure breakdown is the first thing to read, not
+// the progress count. ?run=1 processes a batch immediately instead of waiting
+// for the cron.
+app.get('/api/debug/photo-status', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    if (!await _photoEnsure(db)) return res.json({ available: false, reason: 'tables unavailable' });
+    let ranNow = null;
+    if (req.query.run === '1') ranNow = await backfillPhotoSignatures({ limit: 40 });
+
+    const tot = await db.prepare(
+      `SELECT COUNT(*) AS rows_,
+              SUM(CASE WHEN ok = 1 THEN 1 ELSE 0 END) AS decoded
+         FROM ${PHOTO_SIG_TABLE}`).first();
+    // Grouped, because one dominant reason is diagnostic in a way a count is
+    // not: all-"not-resized" means the zone feature is off, all-"http-404"
+    // means the URLs have expired, a spread means ordinary attrition.
+    const why = await db.prepare(
+      `SELECT why, COUNT(*) AS n FROM ${PHOTO_SIG_TABLE}
+        WHERE ok = 0 AND why IS NOT NULL
+        GROUP BY why ORDER BY n DESC LIMIT 8`).all();
+    const remaining = await db.prepare(
+      `SELECT COUNT(*) AS n FROM (
+         SELECT DISTINCT image_url FROM sales
+          WHERE image_url IS NOT NULL AND image_url <> ''
+            AND price_cents IS NOT NULL AND price_cents > 0
+            AND COALESCE(TRIM(parallel), '') <> ''
+            AND COALESCE(TRIM(year), '') <> '' AND COALESCE(TRIM(set_name), '') <> ''
+            AND NOT EXISTS (SELECT 1 FROM ${PHOTO_SIG_TABLE} s WHERE s.url = sales.image_url))`
+    ).first();
+
+    const rows = Number(tot && tot.rows_) || 0;
+    const decoded = Number(tot && tot.decoded) || 0;
+    res.json({
+      available: true,
+      fingerprints: {
+        stored: rows, decoded,
+        decodeRate: rows ? Math.round((decoded / rows) * 1000) / 10 + '%' : null,
+        referencePhotosLeft: Number(remaining && remaining.n) || 0,
+      },
+      // Read this before the progress numbers.
+      failures: ((why && why.results) || []).map(r => ({ why: r.why, n: r.n })),
+      batchSize: PHOTO_BATCH,
+      minSamplesForReference: PHOTO_MIN_SAMPLES,
+      ranNow,
+    });
+  } catch (err) {
+    console.error('[photo-status]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // Could photos do what the titles cannot?
 //
 // A parallel is a visual thing by definition — Silver, Gold and Red Prizm are
@@ -8029,7 +8219,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, backfillPlayerAliases, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, backfillPhotoSignatures, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
