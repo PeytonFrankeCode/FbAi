@@ -2966,13 +2966,6 @@ function _normCol(col) {
 // from sales that already know their parallel.
 const PHOTO_SIG_TABLE = 'photo_sig';
 const PHOTO_REF_TABLE = 'photo_ref';
-// Small on purpose. Each row is a subrequest to fetch an image, and a cron tick
-// has a fixed budget — overrunning it loses the whole tick's work rather than
-// part of it. The alias backfill reached 88% of sales by grinding at this size.
-const PHOTO_BATCH = 120;
-// Fetches run concurrently; this bounds how many are in flight at once so a
-// tick cannot open hundreds of sockets against one host.
-const PHOTO_CONCURRENCY = 8;
 // A reference built from fewer photos than this is not a reference. The
 // coverage probe found 5,921 parallels with a single photo, and matching
 // against one example is guessing with extra steps.
@@ -3005,83 +2998,6 @@ async function _photoEnsure(db) {
     _photoTablesReady = false;
   }
   return _photoTablesReady;
-}
-
-/**
- * Fetch and fingerprint a batch of photos that have not been seen yet.
- *
- * Reference sales first — the ones whose parallel is already known. Without
- * references there is nothing to match against, so identifying blank cards
- * before the library exists would be pure guesswork.
- */
-async function backfillPhotoSignatures({ limit = PHOTO_BATCH } = {}) {
-  const db = getNflDb();
-  if (!db) return { ok: false, reason: 'no dataset' };
-  if (!await _photoEnsure(db)) return { ok: false, reason: 'tables unavailable' };
-  if (!await _nflHasImageColumn(db)) return { ok: false, reason: 'no image_url column' };
-
-  const { fetchTinyPixels } = require('./photo-fetch');
-  const { signatureFromPixels } = require('./photo-signature');
-
-  let rows;
-  try {
-    const r = await db.prepare(
-      `SELECT DISTINCT image_url AS url
-         FROM sales
-        WHERE image_url IS NOT NULL AND image_url <> ''
-          AND price_cents IS NOT NULL AND price_cents > 0
-          AND COALESCE(TRIM(parallel), '') <> ''
-          AND COALESCE(TRIM(year), '') <> '' AND COALESCE(TRIM(set_name), '') <> ''
-          AND NOT EXISTS (SELECT 1 FROM ${PHOTO_SIG_TABLE} s WHERE s.url = sales.image_url)
-        LIMIT ?`).bind(limit).all();
-    rows = (r && r.results) || [];
-  } catch (err) {
-    console.error('[photo] scan failed:', err && err.message);
-    return { ok: false, reason: 'scan failed' };
-  }
-  if (!rows.length) return { ok: true, inserted: 0, done: true };
-
-  // Bounded concurrency. Serial would spend the whole tick waiting on network
-  // latency; unbounded would open one socket per row at once.
-  const out = [];
-  let cursor = 0;
-  async function worker() {
-    for (;;) {
-      const i = cursor++;
-      if (i >= rows.length) return;
-      const url = rows[i].url;
-      const got = await fetchTinyPixels(url);
-      out.push(got.ok
-        ? { url, sig: signatureFromPixels(got.px, got.channels), ok: 1, why: null }
-        : { url, sig: null, ok: 0, why: String(got.why || 'failed').slice(0, 80) });
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(PHOTO_CONCURRENCY, rows.length) }, worker));
-
-  const now = new Date().toISOString();
-  const stmts = out.map(r => db.prepare(
-    `INSERT OR REPLACE INTO ${PHOTO_SIG_TABLE} (url, sig, ok, why, updated_at) VALUES (?,?,?,?,?)`
-  ).bind(r.url, r.sig ? JSON.stringify(r.sig) : null, r.ok, r.why, now));
-
-  const CHUNK = 50;
-  let written = 0;
-  try {
-    for (let i = 0; i < stmts.length; i += CHUNK) {
-      const slice = stmts.slice(i, i + CHUNK);
-      if (typeof db.batch === 'function') await db.batch(slice);
-      else for (const st of slice) await st.run();
-      written += slice.length;
-    }
-  } catch (err) {
-    // Failures are written too, so a dead link is not re-fetched every tick
-    // forever. Partial progress survives: the scan skips URLs that have a row.
-    console.error(`[photo] write failed after ${written}/${stmts.length}:`, err && err.message);
-    return { ok: false, reason: 'write failed', written };
-  }
-
-  const good = out.filter(r => r.ok).length;
-  console.log(`[photo] +${written} signatures (${good} decoded, ${written - good} failed)`);
-  return { ok: true, inserted: written, decoded: good, failed: written - good };
 }
 
 const ALIAS_TABLE = 'player_alias';
@@ -3964,16 +3880,18 @@ app.get('/api/debug/player-resolve', async (req, res) => {
 // image resizer is enabled on this zone. Without it the fetch returns the
 // original JPEG, which cannot be decoded here, and every row would fail with
 // the same reason — so the failure breakdown is the first thing to read, not
-// the progress count. ?run=1 processes a batch immediately instead of waiting
-// for the cron.
+// the progress count.
+//
+// The Worker does not fill this table. It cannot: there is no JPEG decoder
+// here, and the attempt to have Cloudflare's image service supply a PNG
+// instead failed on every row in production because the resizer is a paid zone
+// feature. The fingerprinting runs in CI, where Node is complete; this endpoint
+// only reads what that job has written.
 app.get('/api/debug/photo-status', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
   try {
     if (!await _photoEnsure(db)) return res.json({ available: false, reason: 'tables unavailable' });
-    let ranNow = null;
-    if (req.query.run === '1') ranNow = await backfillPhotoSignatures({ limit: 40 });
-
     const tot = await db.prepare(
       `SELECT COUNT(*) AS rows_,
               SUM(CASE WHEN ok = 1 THEN 1 ELSE 0 END) AS decoded
@@ -4006,9 +3924,8 @@ app.get('/api/debug/photo-status', async (req, res) => {
       },
       // Read this before the progress numbers.
       failures: ((why && why.results) || []).map(r => ({ why: r.why, n: r.n })),
-      batchSize: PHOTO_BATCH,
       minSamplesForReference: PHOTO_MIN_SAMPLES,
-      ranNow,
+      filledBy: 'the "Fingerprint card photos" GitHub Action, not the Worker cron',
     });
   } catch (err) {
     console.error('[photo-status]', err && err.stack || err);
@@ -8219,7 +8136,7 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
-module.exports = { app, connectDB, backfillPlayerAliases, backfillPhotoSignatures, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
