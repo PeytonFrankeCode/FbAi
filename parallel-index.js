@@ -20,6 +20,7 @@
 // separately rather than assumed, because guessing "Base" wrongly merges a
 // $400 parallel into a $3 card.
 const PARALLELS = require('./data/parallel-index.json');
+const { resolvePlayer } = require('./card-index');
 
 function norm(s) {
   return String(s == null ? '' : s)
@@ -50,9 +51,18 @@ function variants(name) {
   // "White Disco Prizms" is also written "White Disco". Without the shortened
   // form the reader cannot cover the whole segment and falls back to the bare
   // "White", which is a different parallel.
+  // Only when what remains is still a name. "Topps Refractor" shortened to
+  // "topps" made every Topps title match a Refractor — including a 1984 Elway
+  // base card. A one-word remainder that is a brand or generic word is not a
+  // parallel, it is the rest of the sentence.
+  const GENERIC = new Set(['topps', 'panini', 'bowman', 'leaf', 'donruss', 'score',
+                           'upper', 'deck', 'chrome', 'select', 'mosaic', 'optic',
+                           'prizm', 'prizms', 'refractor', 'refractors', 'base']);
   for (const v of [...out]) {
-    const short = v.replace(/\s+(prizms?|refractors?|parallels?)$/,'').trim();
-    if (short && short !== v) out.add(short);
+    const short = v.replace(/\s+(prizms?|refractors?|parallels?)$/, '').trim();
+    if (!short || short === v) continue;
+    if (short.split(' ').length < 2 && GENERIC.has(short)) continue;
+    out.add(short);
   }
   return [...out].filter(Boolean);
 }
@@ -101,6 +111,60 @@ function parallelSegment(title) {
   return norm(seg);
 }
 
+// Everything in a title that is known NOT to be a parallel: the product, the
+// subset, the year, the card number, the player, and the filler. Half the
+// titles put the parallel before the card number — "Jaxson Dart RC Refractor
+// #306 Giants" — where the after-number rule cannot see it, and searching there
+// blind is what turned "A.J. Green" into a Green parallel. Removing the known
+// parts instead leaves the parallel standing alone, with nothing to collide
+// with.
+// Normalised the same way the title is: the year comes off (the residual strips
+// it first) and so does the trailing sport word. Stored as "2025 Topps Chrome
+// Football", an unmodified product name matches no title at all, which left the
+// product sitting in the residual and "Chrome" being read as the parallel.
+const PRODUCT_NAMES = [...new Set((PARALLELS.productNames || [])
+  .map(n => norm(n).replace(/^(19|20)\d{2}\s+/, '').replace(/\s+(football|basketball|baseball)$/, '').trim())
+  .filter(Boolean))].sort((a, b) => b.length - a.length);
+// A subset is only strippable if it is not also a parallel name. "Gold" is
+// both in places, and removing it would delete the answer.
+const SUBSETS = (PARALLELS.setNames || [])
+  .map(norm).filter(n => n && n.split(' ').length >= 1 && !LOOKUP.has(n))
+  .sort((a, b) => b.length - a.length);
+
+// Filler for the residual: things that are never a parallel under any product.
+// Narrower than FILLER on purpose.
+const RESIDUAL_FILLER = new Set([
+  'rc', 'rookie', 'rookies', 'ssp', 'sp', 'insert', 'card', 'variation',
+  'psa', 'bgs', 'sgc', 'cgc', 'gem', 'mint', 'mt', 'nm', 'lot', 'the',
+  'cardinals', 'falcons', 'ravens', 'bills', 'panthers', 'bears', 'bengals',
+  'browns', 'cowboys', 'broncos', 'lions', 'packers', 'texans', 'colts',
+  'jaguars', 'chiefs', 'raiders', 'chargers', 'rams', 'dolphins', 'vikings',
+  'patriots', 'saints', 'giants', 'jets', 'eagles', 'steelers', 'niners',
+  '49ers', 'seahawks', 'buccaneers', 'titans', 'commanders',
+]);
+
+function stripPhrase(text, phrase) {
+  const i = (' ' + text + ' ').indexOf(' ' + phrase + ' ');
+  if (i < 0) return text;
+  return (' ' + text + ' ').slice(0, i) + ' ' + (' ' + text + ' ').slice(i + phrase.length + 1);
+}
+
+function residual(title, playerHint) {
+  let t = norm(String(title || '').replace(/\([^)]*\)/g, ' '));
+  t = t.replace(/#\s*[a-z0-9-]+/gi, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');
+  t = t.replace(/\s+/g, ' ').trim();
+  for (const p of PRODUCT_NAMES) { const n = stripPhrase(t, p); if (n !== t) { t = n; break; } }
+  for (const sub of SUBSETS) { const n = stripPhrase(t, sub); if (n !== t) t = n; }
+  const hit = resolvePlayer(playerHint || t);
+  if (hit && hit.key) for (const w of hit.key.split(' ')) t = stripPhrase(t, w);
+  // Deliberately NOT the FILLER set. That contains "refractor" and "prizm",
+  // which are real parallel names — stripping them here deletes the very thing
+  // being looked for, and is why "RC Refractor #306 Giants" read as nothing.
+  return t.split(' ')
+    .filter(w => w && !RESIDUAL_FILLER.has(w) && !/^\d+(\.\d+)?$/.test(w))
+    .join(' ');
+}
+
 /**
  * @returns {{parallel: string|null, how: string, segment: string}}
  *   how: 'matched'    a known parallel name was found
@@ -108,12 +172,35 @@ function parallelSegment(title) {
  *        'unmatched'  something is there but it is not a parallel we know
  *        'no-number'  no card number, so the segment cannot be located
  */
-function resolveParallel(title) {
+// strict: no trailing-filler stripping. The residual has already had its filler
+// removed, so everything left is meant to be the parallel — and stripping
+// further there is what turned "chrome refractor" into "Chrome" by discarding
+// the actual answer as though it were noise.
+function coverMatch(segment, strict = false) {
+  const isFiller = (t) => FILLER.has(t) || /^\d+(\.\d+)?$/.test(t);
+  let toks = segment.split(' ').filter(Boolean);
+  while (toks.length) {
+    const hit = LOOKUP.get(toks.join(' '));
+    if (hit) return hit;
+    if (strict || !isFiller(toks[toks.length - 1])) return null;
+    toks = toks.slice(0, -1);
+  }
+  return null;
+}
+
+function resolveParallel(title, opts = {}) {
   const t = String(title || '');
   if (!CARD_NUMBER.test(t)) return { parallel: null, how: 'no-number', segment: '' };
 
   const segment = parallelSegment(t);
-  if (!segment) return { parallel: null, how: 'base', segment: '' };
+  if (!segment) {
+    // Nothing after the number. Before concluding base, check whether the
+    // parallel is stated earlier in the title instead.
+    const res = residual(t, opts.player);
+    const early = res ? coverMatch(res, true) : null;
+    if (early) return { parallel: early, how: 'matched-before-number', segment: res };
+    return { parallel: null, how: 'base', segment: '' };
+  }
 
   // Anchored at the start of the segment, longest first.
   //
@@ -134,14 +221,21 @@ function resolveParallel(title) {
   // is a real but different parallel, and merging those two is exactly the harm
   // this is meant to avoid. Covering everything means the reader either
   // understands the segment or admits it does not.
-  const isFiller = (t) => FILLER.has(t) || /^\d+(\.\d+)?$/.test(t);
-  let toks = segment.split(' ');
-  while (toks.length) {
-    const hit = LOOKUP.get(toks.join(' '));
-    if (hit) return { parallel: hit, how: 'matched', segment };
-    if (!isFiller(toks[toks.length - 1])) break;
-    toks = toks.slice(0, -1);
-  }
+  const after = coverMatch(segment);
+  if (after) return { parallel: after, how: 'matched', segment };
+
+  // Not after the number. Strip everything known and see what stands alone.
+  const res = residual(t, opts.player);
+  const early = res ? coverMatch(res, true) : null;
+  if (early) return { parallel: early, how: 'matched-before-number', segment: res };
+
+  // Nothing but filler followed the number, and nothing before it named a
+  // parallel either. Now base is a safe reading: the earlier objection was
+  // that a parallel might be stated before the number, and that has just been
+  // checked.
+  const onlyFiller = segment.split(' ').every(
+    w => FILLER.has(w) || /^\d+(\.\d+)?$/.test(w));
+  if (onlyFiller) return { parallel: null, how: 'base', segment };
   // Filler-only is NOT the same evidence as an empty segment, and treating it
   // as base asserts something false. "Jaxson Dart RC Refractor #306 Giants
   // Rookie" leaves only "giants rookie" after the number, but the card is a
