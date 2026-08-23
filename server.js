@@ -3868,10 +3868,28 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     // 2. Where the column already has a value, does the title agree?
     const filled = await sample(false);
     let agree = 0, agreeStrict = 0, disagree = 0, noRead = 0;
+    // Every row in this sample HAS a parallel, so the reader calling one of
+    // them "base" is a known-wrong answer — and the only one of its mistakes
+    // that is actionable downstream, which makes it the dangerous one. Reading
+    // nothing costs sample; reading base merges a $400 parallel into a $3 card.
+    // Lumping it into a single noRead count hid exactly the rate that decides
+    // whether the base verdict can be trusted at all.
+    const noReadBy = { base: 0, unmatched: 0, 'no-number': 0 };
+    const noReadSalesBy = { base: 0, unmatched: 0, 'no-number': 0 };
+    let filledSales = 0;
+    const falseBase = [];
     const conflicts = [];
     for (const r of filled) {
       const hit = pi.resolveParallel(r.title);
-      if (hit.how !== 'matched') { noRead++; continue; }
+      filledSales += r.n;
+      if (hit.how !== 'matched') {
+        noRead++;
+        if (noReadBy[hit.how] !== undefined) { noReadBy[hit.how]++; noReadSalesBy[hit.how] += r.n; }
+        if (hit.how === 'base' && falseBase.length < 15) {
+          falseBase.push({ column: r.parallel, sales: r.n, title: r.title });
+        }
+        continue;
+      }
       // Two comparisons, because the strict one lies. The column writes "Lazer"
       // where the checklist writes "Lazer Prizms" — the same parallel, counted
       // as a disagreement, which dragged the measured rate down and hid which
@@ -3913,7 +3931,20 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
         // Character-identical, which no one should expect and which is here
         // only so the lenient number cannot quietly become the flattering one.
         exactSpellingRate: pct(agreeStrict, agree + disagree),
+        // Why the rest could not be read. Every row here has a parallel, so
+        // "base" is the reader being confidently wrong, and its share is the
+        // number that decides whether the 46% of blank sales it calls base can
+        // be believed. The other two are honest refusals.
+        couldNotReadBecause: noReadBy,
+        couldNotReadSalesBecause: noReadSalesBy,
+        // The one to judge on: of sales that definitely carry a parallel, how
+        // often does the reader claim base? Wiring base in writes this rate as
+        // wrong labels straight into the index.
+        falseBaseSalesShare: pct(noReadSalesBy.base, filledSales),
       },
+      // Concrete examples of that mistake, worth more than the rate alone —
+      // they show whether it is one broken title shape or a scattering.
+      falseBaseExamples: falseBase,
       conflicts,
       topUnreadable: unmatched.sort((a, b) => b.sales - a.sales).slice(0, 20),
     });
