@@ -26,16 +26,24 @@ on:
       - 'photo-signature.js'
       - '.github/workflows/fingerprint.yml'
   schedule:
-    # Every six hours. ~1,500 photos a run against ~149,000 references is a bit
-    # over a week — the same grind that took the alias table to 88% of sales.
-    # Faster would mostly mean hammering eBay for no reason.
-    - cron: '17 */6 * * *'
+    # Hourly. The repository is public, so Actions minutes are free and there is
+    # no reason to ration them: at 1,500 photos every six hours the backfill of
+    # ~149,000 references would have taken 25 days. At 4,000 hourly it is closer
+    # to a day and a half, and an overnight run gets through ~32,000.
+    #
+    # The ceiling here is politeness to eBay, not GitHub. Twelve concurrent
+    # fetches of a 3 KB thumbnail is roughly 25 a second for about three minutes
+    # per run — a rounding error to an image CDN, and rate limiting is handled
+    # anyway: a 429 is classed transient, left unwritten, and retried.
+    #
+    # Once the backfill is done these runs find nothing and exit in seconds.
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       limit:
         description: 'How many photos to fetch this run'
         required: false
-        default: '1500'
+        default: '4000'
 
 # One at a time. Two runs would fetch the same rows, since a row is only
 # excluded once it has been written.
@@ -59,7 +67,7 @@ jobs:
         run: npm ci
 
       - name: Fetch and fingerprint
-        run: node scripts/fingerprint-photos.js --limit=${{ github.event.inputs.limit || '1500' }}
+        run: node scripts/fingerprint-photos.js --limit=${{ github.event.inputs.limit || '4000' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
