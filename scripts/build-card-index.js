@@ -63,6 +63,7 @@ function collect() {
   const parallelsByProduct = {};  // product id -> [parallel names]
   const noise = new Set(LISTING_JARGON);
   const products = [];
+  const setNames = new Set();   // subset names: "Rookies", "Concourse", "Fearless"
 
   let cardCount = 0;
   const files = fs.readdirSync(CHECKLIST_DIR).filter(f => f.endsWith('.json'));
@@ -89,6 +90,7 @@ function collect() {
 
     const pset = new Set();
     for (const set of sets) {
+      if (set.name) setNames.add(norm(set.name));
       for (const w of norm(set.name).split(' ')) if (w.length > 1) noise.add(w);
       for (const par of (set.parallels || [])) {
         const name = typeof par === 'string' ? par : (par && par.name);
@@ -173,7 +175,8 @@ function collect() {
   for (const n of players.keys()) for (const w of n.split(' ')) nameTokens.add(w);
 
   return { players, playerTeams, surnames, parallelsByProduct, noise, products,
-           cardCount, nameTokens, teamNames, droppedTeams, suffixless, baseAmbiguous };
+           cardCount, nameTokens, teamNames, droppedTeams, suffixless, baseAmbiguous,
+           setNames };
 }
 
 // Restores the display spelling for the common case where a canonical name is
@@ -224,6 +227,12 @@ function main() {
     builtAt: out.builtAt,
     products: c.products,
     parallelsByProduct: c.parallelsByProduct,
+    // Product and subset names, so a reader can strip them off a title and see
+    // what is left. Half the titles put the parallel BEFORE the card number
+    // ("Jaxson Dart RC Refractor #306 Giants"), and the only safe way to find
+    // it there is to remove everything that is known not to be a parallel.
+    productNames: [...new Set(c.products.map(p => p.name).filter(Boolean))].sort(),
+    setNames: [...c.setNames].sort(),
   }));
   const kb = Math.round(fs.statSync(OUT).size / 1024);
   const pkb = Math.round(fs.statSync(OUT_PARALLELS).size / 1024);

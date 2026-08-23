@@ -76,17 +76,19 @@ check('  ...and a parallel word before the card number is not',
     // full name was not in the vocabulary. Must refuse instead.
     ['2025 Panini Prizm - Rookies Jaxson Dart #332 White Disco Prizm (RC)',
      'unmatched', null],
-    // Trailing junk, and "Rookie" happens to be a parallel in some product.
+    // The parallel is stated BEFORE the card number here, and the trailing
+    // "Giants Rookie" is junk. Found by stripping the product, the subset, the
+    // player and the filler and seeing what stands alone.
     ['2025 Topps Chrome Jaxson Dart RC Refractor #306 Giants Rookie',
-     'unmatched', null],
-    // Only a team follows the number. That looks like a base card, and is not
-    // claimed as one: the sibling case below shows why filler-only cannot mean
-    // base, since some title formats put the parallel BEFORE the number.
+     'matched-before-number', 'refractor'],
+    // Only a team follows the number, and nothing before it names a parallel
+    // either. Base is safe to conclude only because the second check ran — it
+    // is what distinguishes this from the Refractor case above.
     ['2025 Topps Cosmic Chrome Cam Skattebo Stars In The Night RC Rookie #STN-5 Giants',
-     'unmatched', null],
+     'base', null],
     // Only a grade follows — same reasoning.
     ['2024 Panini Prizm - Rookies Jayden Daniels #347 (RC) PSA 10 GEM MINT',
-     'unmatched', null],
+     'base', null],
   ];
   const wrong = [];
   for (const [title, how, contains] of cases) {
