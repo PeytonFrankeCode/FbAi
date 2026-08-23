@@ -89,6 +89,8 @@ let PRODUCT_NAMES = null;
 let SUBSETS = null;
 let PRODUCTS_BY_FIRST = null;
 let SUBSETS_BY_FIRST = null;
+let SUBSET_SET = null;
+let SUBSET_BARE = null;
 
 function build() {
   if (LOOKUP) return;
@@ -124,6 +126,9 @@ function build() {
   // title stay a superset of everything the old loop could have stripped.
   PRODUCTS_BY_FIRST = groupByFirstWord(PRODUCT_NAMES);
   SUBSETS_BY_FIRST = groupByFirstWord(SUBSETS);
+
+  SUBSET_SET = new Set(SUBSETS);
+  SUBSET_BARE = new Set(SUBSETS.map(s => s.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()).filter(Boolean));
 }
 
 function groupByFirstWord(phrases) {
@@ -306,6 +311,24 @@ function resolveParallel(title, opts = {}) {
   return {
   resolveParallel,
   norm,
+  // Is this string an insert SET rather than a parallel? The two are different
+  // things in the checklists and the sales column does not distinguish them —
+  // it writes "Downtown" in the parallel field, where the catalogue calls
+  // Downtown! a set. Telling them apart is what separates the reader being
+  // wrong from the column being loose, and they need opposite fixes.
+  classify(name) {
+    build();
+    const n = norm(name);
+    if (!n) return 'empty';
+    if (LOOKUP.has(n)) return 'parallel';
+    if (SUBSET_SET.has(n)) return 'subset';
+    // The column drops the punctuation the checklist keeps: "Downtown" for
+    // "Downtown!". Compare on letters and digits alone before giving up.
+    const bare = n.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+    if (bare && SUBSET_BARE.has(bare)) return 'subset';
+    if (bare && LOOKUP.has(bare)) return 'parallel';
+    return 'unknown';
+  },
   stats: {
     get products() { return (PARALLELS.products || []).length; },
     get distinctParallels() {
