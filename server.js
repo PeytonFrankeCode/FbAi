@@ -3784,14 +3784,24 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
 
     // 2. Where the column already has a value, does the title agree?
     const filled = await sample(false);
-    let agree = 0, disagree = 0, noRead = 0;
+    let agree = 0, agreeStrict = 0, disagree = 0, noRead = 0;
     const conflicts = [];
     for (const r of filled) {
       const hit = resolveParallel(r.title);
       if (hit.how !== 'matched') { noRead++; continue; }
-      const a = String(hit.parallel).toLowerCase().replace(/s$/, '');
-      const b = String(r.parallel).toLowerCase().replace(/s$/, '');
-      if (a === b) agree++;
+      // Two comparisons, because the strict one lies. The column writes "Lazer"
+      // where the checklist writes "Lazer Prizms" — the same parallel, counted
+      // as a disagreement, which dragged the measured rate down and hid which
+      // conflicts were real. Both are reported so neither number can flatter.
+      const tidy = (v) => String(v || '').toLowerCase()
+        .replace(/[.,&]/g, ' ')
+        .replace(/\b(prizms?|refractors?|parallels?|and)\b/g, ' ')
+        .replace(/s\b/g, '').replace(/\s+/g, ' ').trim();
+      const strictEq = String(hit.parallel).toLowerCase().replace(/s$/, '')
+                    === String(r.parallel).toLowerCase().replace(/s$/, '');
+      const sameParallel = tidy(hit.parallel) === tidy(r.parallel);
+      if (strictEq) agreeStrict++;
+      if (sameParallel) agree++;
       else { disagree++; if (conflicts.length < 15) conflicts.push({ column: r.parallel, fromTitle: hit.parallel, sales: r.n, title: r.title }); }
     }
 
@@ -3814,7 +3824,12 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
       agreementWhereColumnIsSet: {
         titlesSampled: filled.length,
         agree, disagree, titleCouldNotRead: noRead,
+        // The one the wiring decision turns on: same parallel, allowing for the
+        // product word the column drops.
         agreementRate: pct(agree, agree + disagree),
+        // Character-identical, which no one should expect and which is here
+        // only so the lenient number cannot quietly become the flattering one.
+        exactSpellingRate: pct(agreeStrict, agree + disagree),
       },
       conflicts,
       topUnreadable: unmatched.sort((a, b) => b.sales - a.sales).slice(0, 20),

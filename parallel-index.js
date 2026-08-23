@@ -25,6 +25,11 @@ function norm(s) {
   return String(s == null ? '' : s)
     .replace(/[.,''`"’]/g, '')
     .replace(/[-/]/g, ' ')
+    // "&" is not punctuation to throw away here. Left in place it split
+    // "Red White & Blue Prizm" into tokens the vocabulary could not span, and
+    // the reader settled for the "Blue Prizm" inside it — a different, commoner
+    // card. Both spellings are indexed, so either can be the canonical one.
+    .replace(/&/g, ' and ')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
@@ -38,6 +43,17 @@ function variants(name) {
   const out = new Set([n]);
   out.add(n.replace(/s$/, ''));
   out.add(n + 's');
+  // Sellers drop the conjunction: "Red White and Blue" and "Red White Blue" are
+  // the same parallel and both appear.
+  const noAnd = n.replace(/\band\b/g, ' ').replace(/\s+/g, ' ').trim();
+  if (noAnd && noAnd !== n) { out.add(noAnd); out.add(noAnd.replace(/s$/, '')); }
+  // "White Disco Prizms" is also written "White Disco". Without the shortened
+  // form the reader cannot cover the whole segment and falls back to the bare
+  // "White", which is a different parallel.
+  for (const v of [...out]) {
+    const short = v.replace(/\s+(prizms?|refractors?|parallels?)$/,'').trim();
+    if (short && short !== v) out.add(short);
+  }
   return [...out].filter(Boolean);
 }
 
@@ -55,6 +71,23 @@ for (const list of Object.values(PARALLELS.parallelsByProduct || {})) {
     }
   }
 }
+
+// Words that may trail a parallel without being part of it. Stripping them is
+// what lets a match cover the WHOLE segment, which is the safety property: a
+// match that covers only part of it is a different card.
+const FILLER = new Set([
+  'prizm', 'prizms', 'refractor', 'refractors', 'parallel', 'parallels',
+  'rc', 'rookie', 'rookies', 'ssp', 'sp', 'insert', 'card', 'variation',
+  'psa', 'bgs', 'sgc', 'cgc', 'gem', 'mint', 'mt', 'nm',
+  // Team nicknames trail constantly in the Cosmic Chrome inserts
+  // ("... #STN-5 Giants"), and one of them would otherwise be read as a
+  // parallel outright.
+  'cardinals', 'falcons', 'ravens', 'bills', 'panthers', 'bears', 'bengals',
+  'browns', 'cowboys', 'broncos', 'lions', 'packers', 'texans', 'colts',
+  'jaguars', 'chiefs', 'raiders', 'chargers', 'rams', 'dolphins', 'vikings',
+  'patriots', 'saints', 'giants', 'jets', 'eagles', 'steelers', 'niners',
+  '49ers', 'seahawks', 'buccaneers', 'titans', 'commanders',
+]);
 
 // The part of the title that can hold a parallel: after the card number, before
 // the trailing designations.
@@ -82,14 +115,39 @@ function resolveParallel(title) {
   const segment = parallelSegment(t);
   if (!segment) return { parallel: null, how: 'base', segment: '' };
 
-  // Longest match wins: "silver prizm" must beat the "prizm" inside it.
-  const words = segment.split(' ');
-  for (let len = Math.min(maxWords, words.length); len >= 1; len--) {
-    for (let i = 0; i + len <= words.length; i++) {
-      const hit = LOOKUP.get(words.slice(i, i + len).join(' '));
-      if (hit) return { parallel: hit, how: 'matched', segment };
-    }
+  // Anchored at the start of the segment, longest first.
+  //
+  // Matching anywhere inside the segment is what made this unsafe. "White Disco
+  // Prizm" is not in the vocabulary, so a floating search found the "Disco
+  // Prizms" inside it; "Red White and Blue Prizm" gave up its "Blue Prizm"; and
+  // a segment of trailing junk like "Giants Rookie" matched "Rookie", which is
+  // a parallel in some product. Each of those merges two different cards and
+  // nothing downstream can notice.
+  //
+  // The parallel begins where the segment begins, so requiring the match to
+  // start at the first word turns all three into an honest "unmatched", which
+  // costs sample and cannot corrupt a price.
+  // The match must cover the ENTIRE segment once trailing filler is removed.
+  //
+  // Partial matches are the whole danger. Anchoring at the first word was not
+  // enough on its own: "White Disco Prizm" then matched the bare "White", which
+  // is a real but different parallel, and merging those two is exactly the harm
+  // this is meant to avoid. Covering everything means the reader either
+  // understands the segment or admits it does not.
+  const isFiller = (t) => FILLER.has(t) || /^\d+(\.\d+)?$/.test(t);
+  let toks = segment.split(' ');
+  while (toks.length) {
+    const hit = LOOKUP.get(toks.join(' '));
+    if (hit) return { parallel: hit, how: 'matched', segment };
+    if (!isFiller(toks[toks.length - 1])) break;
+    toks = toks.slice(0, -1);
   }
+  // Filler-only is NOT the same evidence as an empty segment, and treating it
+  // as base asserts something false. "Jaxson Dart RC Refractor #306 Giants
+  // Rookie" leaves only "giants rookie" after the number, but the card is a
+  // Refractor — the parallel is stated before the number in that title format.
+  // Base is an actionable answer and unmatched is not, so the honest one wins:
+  // a parallel may be named somewhere this reader does not look.
   return { parallel: null, how: 'unmatched', segment };
 }
 
