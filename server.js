@@ -3878,6 +3878,8 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
     const noReadSalesBy = { base: 0, unmatched: 0, 'no-number': 0 };
     let filledSales = 0;
     const falseBase = [];
+    const falseBaseBy = {};
+    const falseBaseSalesBy = {};
     const conflicts = [];
     for (const r of filled) {
       const hit = pi.resolveParallel(r.title);
@@ -3885,8 +3887,17 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
       if (hit.how !== 'matched') {
         noRead++;
         if (noReadBy[hit.how] !== undefined) { noReadBy[hit.how]++; noReadSalesBy[hit.how] += r.n; }
-        if (hit.how === 'base' && falseBase.length < 15) {
-          falseBase.push({ column: r.parallel, sales: r.n, title: r.title });
+        if (hit.how === 'base') {
+          // Split by what the column actually holds. "Downtown" is catalogued
+          // as an insert SET, not a parallel, so the reader calling that card
+          // base is right about parallels and the column is being loose — a
+          // different defect from missing a real parallel, and the two need
+          // opposite fixes. Without this split the false-base rate cannot be
+          // acted on, only worried about.
+          const kind = pi.classify(r.parallel);
+          falseBaseBy[kind] = (falseBaseBy[kind] || 0) + 1;
+          falseBaseSalesBy[kind] = (falseBaseSalesBy[kind] || 0) + r.n;
+          if (falseBase.length < 15) falseBase.push({ column: r.parallel, columnIs: kind, sales: r.n, title: r.title });
         }
         continue;
       }
@@ -3941,6 +3952,14 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
         // often does the reader claim base? Wiring base in writes this rate as
         // wrong labels straight into the index.
         falseBaseSalesShare: pct(noReadSalesBy.base, filledSales),
+        // What the column held on those. 'subset' means the column named an
+        // insert set, which belongs in set_name — the reader is right that
+        // there is no parallel, and the fix is to capture the set. 'parallel'
+        // means it named a real parallel the reader missed, which is the only
+        // bucket that is a reader defect.
+        falseBaseColumnWas: falseBaseBy,
+        falseBaseSalesColumnWas: falseBaseSalesBy,
+        falseBaseFromRealParallelShare: pct(falseBaseSalesBy.parallel || 0, filledSales),
       },
       // Concrete examples of that mistake, worth more than the rate alone —
       // they show whether it is one broken title shape or a scattering.
