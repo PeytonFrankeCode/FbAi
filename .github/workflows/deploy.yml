@@ -61,3 +61,17 @@ jobs:
           CARD_API_KEY: ${{ secrets.CARD_API_KEY }}
           # auto (default) | cardapi | nflcarddb — switches the sold source.
           SOLD_PROVIDER: ${{ secrets.SOLD_PROVIDER }}
+
+      # Tells Bing, DuckDuckGo, Yandex, Naver and Seznam that pages changed
+      # rather than waiting to be crawled. Google ignores IndexNow and has its
+      # own machinery, so this is aimed at the non-Google half of search --
+      # which is also what several AI assistants query.
+      #
+      # Last, and deliberately: submitting a URL before the new content is live
+      # invites a crawl of the page it replaced. continue-on-error because a
+      # search ping is never worth failing a release over, and the script only
+      # submits pages whose sitemap <lastmod> actually moved -- re-submitting
+      # thousands of unchanged URLs every deploy is how a host gets ignored.
+      - name: Notify search engines of changed pages (IndexNow)
+        run: node scripts/indexnow-submit.js
+        continue-on-error: true
