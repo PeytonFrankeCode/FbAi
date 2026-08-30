@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Admin surface: never let a search engine index it. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Articles · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0c0e14;--card:#1a2133;--card2:#111827;--input:#111624;--line:#232d42;
+      --fg:#edf0f7;--fg2:#94a3b8;--fg3:#475569;--ac:#5ece99;--ac-on:#0a1a12;
+      --gold:#facc15;--err:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+     font-family:Inter,'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px}
+a{color:var(--ac);text-decoration:none}
+header{background:linear-gradient(135deg,#131827 0%,#151d33 50%,#141a2d 100%);
+       border-bottom:1px solid var(--line)}
+header .in{max-width:1320px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:14px}
+.brand{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#f59e0b;
+     background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);padding:4px 10px;border-radius:999px}
+.layout{max-width:1320px;margin:0 auto;padding:24px;display:grid;
+        grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+button{font-family:inherit;font-size:13.6px;cursor:pointer;border-radius:8px;min-height:44px;
+       padding:11px 18px;border:1px solid var(--line);background:#161b28;color:var(--fg);font-weight:600}
+button:hover{background:rgba(94,206,153,.08)}
+button.primary{background:var(--ac);color:var(--ac-on);border-color:var(--ac);font-weight:700}
+button.primary:hover{background:#42b883}
+button.danger{color:var(--err);border-color:rgba(248,113,113,.35);background:transparent}
+label{display:block;font-size:12px;font-weight:600;color:var(--fg2);margin-bottom:7px}
+label .hint{color:var(--fg3);font-weight:400}
+input,textarea,select{width:100%;background:var(--input);border:1px solid var(--line);border-radius:8px;
+       color:var(--fg);font-family:inherit;font-size:14px;padding:12px 14px;min-height:44px}
+textarea{resize:vertical;line-height:1.7}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--ac)}
+.panel{background:linear-gradient(160deg,var(--card) 0%,var(--card2) 100%);
+       border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.panel .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;
+       border-bottom:1px solid var(--line);background:rgba(94,206,153,.03)}
+.panel .body{padding:24px;display:flex;flex-direction:column;gap:20px}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.item{background:linear-gradient(160deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--line);
+      border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;width:100%;
+      text-align:left;min-height:0}
+.item:hover{border-color:rgba(94,206,153,.35)}
+.item.on{border-color:var(--ac)}
+.item .top{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+      letter-spacing:.05em;text-transform:uppercase}
+.dot{width:6px;height:6px;border-radius:50%}
+.item h3{margin:0;font-size:13.6px;font-weight:600;line-height:1.4;color:var(--fg)}
+.when{margin-left:auto;font-size:11.5px;color:var(--fg3);font-weight:400;letter-spacing:0;text-transform:none}
+.msg{padding:12px 16px;border-radius:8px;font-size:13.6px;display:none}
+.msg.ok{display:block;background:rgba(94,206,153,.1);border:1px solid rgba(94,206,153,.22);color:var(--ac)}
+.msg.bad{display:block;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:var(--err)}
+.gate{max-width:420px;margin:80px auto;display:flex;flex-direction:column;gap:14px}
+.slug{display:flex;align-items:center;gap:0;background:var(--input);border:1px solid var(--line);border-radius:8px;padding-left:14px}
+.slug span{font-size:13.6px;color:var(--fg3);white-space:nowrap}
+.slug input{border:0;background:transparent;padding-left:2px}
+</style>
+</head>
+<body>
+
+<header><div class="in">
+  <span class="brand">The Card Huddle</span>
+  <span class="tag">Admin</span>
+  <div style="flex-grow:1"></div>
+  <a href="/news" style="font-size:13px">View news →</a>
+</div></header>
+
+<!-- The admin key is held in memory for the session only. Storing it would
+     leave a working credential in localStorage on whatever machine this was
+     opened on, which is not a trade worth making to save one paste. -->
+<div class="gate" id="gate">
+  <h1 style="font-size:22px;margin:0">Articles</h1>
+  <p style="color:var(--fg2);margin:0;line-height:1.6">Enter the admin key. It is kept in memory for this tab only — you will paste it again next time.</p>
+  <input id="key" type="password" placeholder="Admin key" autocomplete="off">
+  <button class="primary" id="unlock">Unlock</button>
+  <div class="msg" id="gateMsg"></div>
+</div>
+
+<div class="layout" id="app" hidden>
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <button class="primary" id="new">+ New article</button>
+    <div id="list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+
+  <div class="panel">
+    <div class="bar">
+      <strong id="mode">New article</strong>
+      <span class="tag" id="state" style="color:var(--gold);background:rgba(250,204,21,.1);border-color:rgba(250,204,21,.28)">Draft</span>
+      <div style="flex-grow:1"></div>
+      <button id="view" hidden>View</button>
+      <button class="danger" id="del" hidden>Delete</button>
+      <button id="saveDraft">Save draft</button>
+      <button class="primary" id="publish">Publish</button>
+    </div>
+    <div class="body">
+      <div class="msg" id="msg"></div>
+
+      <div>
+        <label for="title">Headline</label>
+        <input id="title" placeholder="What actually happened, in one line">
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="slug">URL <span class="hint">— permanent once published</span></label>
+          <div class="slug"><span>/news/</span><input id="slug" placeholder="auto-from-headline"></div>
+        </div>
+        <div>
+          <label for="category">Category</label>
+          <select id="category">
+            <option>Market Moves</option><option>Rookies</option><option>Set Guides</option>
+            <option>Grading</option><option>Collecting</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="standfirst">Standfirst <span class="hint">— the index card and the search-result snippet</span></label>
+        <textarea id="standfirst" rows="2" placeholder="One or two sentences that make someone click."></textarea>
+      </div>
+
+      <div>
+        <label for="body">Body <span class="hint">— Markdown: ## heading, **bold**, *italic*, - list, &gt; quote, [text](/link)</span></label>
+        <textarea id="body" rows="18" placeholder="Write here."></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
+          <button type="button" id="insertTable" style="min-height:38px;padding:8px 14px;font-size:12.4px">Insert sold-data table</button>
+          <span style="font-size:12.4px;color:var(--fg3)">Pulls live comps when the page is served, so the article stays current.</span>
+        </div>
+      </div>
+
+      <div class="row" style="padding-top:18px;border-top:1px solid var(--line)">
+        <div>
+          <label for="author">Author</label>
+          <input id="author" value="The Card Huddle">
+        </div>
+        <div>
+          <label for="publishedAt">Publish date <span class="hint">— a future date holds it back</span></label>
+          <input id="publishedAt" type="datetime-local">
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KEY = null, items = [], editing = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'x-admin-key': KEY }, opts.headers || {});
+    if (opts.body) opts.headers['Content-Type'] = 'application/json';
+    return fetch(path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+        return j;
+      });
+    });
+  }
+
+  function say(el, text, bad) {
+    el.textContent = text;
+    el.className = 'msg ' + (bad ? 'bad' : 'ok');
+    if (!bad) setTimeout(function () { el.className = 'msg'; }, 4000);
+  }
+
+  function slugify(s) {
+    return String(s || '').toLowerCase().replace(/['’]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  }
+
+  function render() {
+    var box = $('list');
+    box.innerHTML = '';
+    if (!items.length) {
+      box.innerHTML = '<p style="color:var(--fg3);font-size:13px;padding:8px 2px">No articles yet.</p>';
+      return;
+    }
+    items.forEach(function (a) {
+      var live = a.status === 'published';
+      var el = document.createElement('button');
+      el.className = 'item' + (editing && editing.slug === a.slug ? ' on' : '');
+      el.innerHTML = '<div class="top" style="color:' + (live ? 'var(--ac)' : 'var(--gold)') + '">'
+        + '<span class="dot" style="background:' + (live ? 'var(--ac)' : 'var(--gold)') + '"></span>'
+        + (live ? 'Live' : 'Draft')
+        + '<span class="when">' + String(a.updatedAt || '').slice(0, 10) + '</span></div>'
+        + '<h3></h3>';
+      el.querySelector('h3').textContent = a.title;
+      el.onclick = function () { edit(a); };
+      box.appendChild(el);
+    });
+  }
+
+  function localValue(iso) {
+    var d = iso ? new Date(iso) : new Date();
+    if (isNaN(d.getTime())) d = new Date();
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+      + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function edit(a) {
+    editing = a || null;
+    $('mode').textContent = a ? 'Edit article' : 'New article';
+    $('title').value = a ? a.title : '';
+    $('slug').value = a ? a.slug : '';
+    $('category').value = a ? a.category : 'Market Moves';
+    $('standfirst').value = a ? (a.standfirst || '') : '';
+    $('body').value = a ? a.body : '';
+    $('author').value = a ? (a.author || 'The Card Huddle') : 'The Card Huddle';
+    $('publishedAt').value = localValue(a && a.publishedAt);
+    var live = a && a.status === 'published';
+    $('state').textContent = live ? 'Live' : 'Draft';
+    $('state').style.color = live ? 'var(--ac)' : 'var(--gold)';
+    $('state').style.background = live ? 'rgba(94,206,153,.1)' : 'rgba(250,204,21,.1)';
+    $('state').style.borderColor = live ? 'rgba(94,206,153,.22)' : 'rgba(250,204,21,.28)';
+    $('del').hidden = !a;
+    $('view').hidden = !(a && live);
+    render();
+  }
+
+  function save(status) {
+    var title = $('title').value.trim();
+    if (!title) { say($('msg'), 'A headline is required.', true); return; }
+    var when = $('publishedAt').value;
+    var payload = {
+      title: title,
+      slug: $('slug').value.trim() || slugify(title),
+      originalSlug: editing ? editing.slug : undefined,
+      category: $('category').value,
+      standfirst: $('standfirst').value.trim(),
+      body: $('body').value,
+      author: $('author').value.trim(),
+      status: status,
+      publishedAt: when ? new Date(when).toISOString() : new Date().toISOString(),
+    };
+    api('/api/admin/news', { method: 'POST', body: JSON.stringify(payload) })
+      .then(function (r) {
+        say($('msg'), status === 'published' ? 'Published to ' + r.url : 'Draft saved.');
+        return load().then(function () {
+          var found = items.filter(function (x) { return x.slug === r.article.slug; })[0];
+          edit(found || null);
+        });
+      })
+      .catch(function (e) { say($('msg'), e.message, true); });
+  }
+
+  function load() {
+    return api('/api/news').then(function (list) { items = list || []; render(); });
+  }
+
+  $('unlock').onclick = function () {
+    KEY = $('key').value;
+    if (!KEY) return;
+    load().then(function () {
+      $('gate').hidden = true;
+      $('app').hidden = false;
+      edit(null);
+    }).catch(function (e) {
+      KEY = null;
+      say($('gateMsg'), 'That key was not accepted.', true);
+    });
+  };
+  $('key').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('unlock').click(); });
+
+  $('new').onclick = function () { edit(null); };
+  $('saveDraft').onclick = function () { save('draft'); };
+  $('publish').onclick = function () { save('published'); };
+  $('view').onclick = function () { if (editing) window.open('/news/' + editing.slug, '_blank'); };
+
+  $('del').onclick = function () {
+    if (!editing) return;
+    if (!confirm('Delete "' + editing.title + '"? The URL /news/' + editing.slug + ' will 404.')) return;
+    api('/api/admin/news/' + encodeURIComponent(editing.slug), { method: 'DELETE' })
+      .then(function () { say($('msg'), 'Deleted.'); editing = null; return load(); })
+      .then(function () { edit(null); })
+      .catch(function (e) { say($('msg'), e.message, true); });
+  };
+
+  $('insertTable').onclick = function () {
+    var ta = $('body');
+    var snippet = '\n\n{{sold-table player="Player Name" set="2025 Panini Prizm" days=30}}\n\n';
+    var at = ta.selectionStart || ta.value.length;
+    ta.value = ta.value.slice(0, at) + snippet + ta.value.slice(at);
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = at + snippet.indexOf('Player Name');
+  };
+
+  // Keep the slug in step with the headline until it has been published once —
+  // after that the URL is load-bearing and editing it is a deliberate act.
+  $('title').addEventListener('input', function () {
+    if (editing && editing.status === 'published') return;
+    if (!$('slug').dataset.touched) $('slug').value = slugify($('title').value);
+  });
+  $('slug').addEventListener('input', function () { $('slug').dataset.touched = '1'; });
+})();
+</script>
+</body>
+</html>
