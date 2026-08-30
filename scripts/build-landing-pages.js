@@ -160,8 +160,26 @@ const MIN_SUBSET_CARDS = 25;
 // links flowing PageRank to the pages that stay indexed.
 // Raising these de-indexes more; lowering them re-indexes. Build output prints
 // the counts so the effect is visible before deploying.
-const INDEX_MIN_PLAYER_CARDS = 10;
-const INDEX_MIN_SUBSET_CARDS = 30;
+// Raised from 10/30/50, which indexed 7,347 pages against roughly 1,000 that
+// earn any impressions at all — about 0.016 clicks per page per day. That ratio
+// is the shape the scaled-content policy describes, and it matters more for
+// AdSense than for rankings: a monetised site made mostly of thin generated
+// pages is a review risk, not merely a slow earner.
+//
+// Set pages were 65% of the index on their own (4,283 of them) and are where
+// almost all of the cut lands. Measured against the checklists:
+//
+//   sets    >=30: 4,283    >=60: 1,021    >=100: 563    >=200: 165
+//   players >=10: 2,659    >=25: 1,802    >=50: 1,227   >=100: 766
+//   products >=50:  360   — already sound, left alone
+//
+// 100/50 lands near 2,200 indexed, roughly double the pages known to earn
+// impressions, so it keeps the earners with headroom rather than cutting to
+// the bone. Card count is only a proxy for quality; the precise version of
+// this prunes on Search Console impressions instead, and is worth doing once
+// there is an export to work from.
+const INDEX_MIN_PLAYER_CARDS = 50;
+const INDEX_MIN_SUBSET_CARDS = 100;
 const INDEX_MIN_PRODUCT_CARDS = 50;
 
 // ---- Small helpers --------------------------------------------------------
