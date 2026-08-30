@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    a { color: #5ece99; text-decoration: none; }
+    a:hover { color: #7edcb0; }
+  </style>
+</helmet>
+
+<div style="background: #0c0e14; background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(94, 206, 153, 0.04) 0%, transparent 60%); color: #edf0f7; min-height: 1100px;">
+
+  <!-- Header band — same gradient and hairline as the live site -->
+  <div style="background: linear-gradient(135deg, #131827 0%, #151d33 50%, #141a2d 100%); border-bottom: 1px solid #232d42;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 28px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(94, 206, 153, 0.12); border: 1px solid rgba(94, 206, 153, 0.22); display: flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5ece99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="13" height="17" rx="2"></rect><path d="M8 21h11a2 2 0 0 0 2-2V7"></path></svg>
+        </div>
+        <span style="font-size: 15px; font-weight: 800; letter-spacing: -0.01em;">The Card Huddle</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px; flex-grow: 1;">
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Search</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Checklists</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Rainbow</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Market</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Community</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Inventory</span>
+        <span style="font-size: 12.8px; font-weight: 600; color: #edf0f7; padding: 7px 14px; border-radius: 10px; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22);">News</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 600; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); padding: 7px 14px; border-radius: 999px;">Go Pro</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width: 1200px; margin: 0 auto; padding: 36px 24px 56px;">
+
+    <!-- Page heading -->
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px;">
+      <div>
+        <h1 style="margin: 0 0 6px; font-size: 34px; font-weight: 800; letter-spacing: -0.02em;">News &amp; Analysis</h1>
+        <p style="margin: 0; font-size: 14.4px; color: #94a3b8; max-width: 560px;">Written from our own sold data — what actually changed hands this week, and what it means for what you hold.</p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span style="font-size: 13.6px; font-weight: 600; color: #5ece99; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22); padding: 7px 16px; border-radius: 999px;">All</span>
+        <span style="font-size: 13.6px; font-weight: 600; color: #94a3b8; background: #161b28; border: 1px solid #232d42; padding: 7px 16px; border-radius: 999px;">Market Moves</span>
+        <span style="font-size: 13.6px; font-weight: 600; color: #94a3b8; background: #161b28; border: 1px solid #232d42; padding: 7px 16px; border-radius: 999px;">Rookies</span>
+        <span style="font-size: 13.6px; font-weight: 600; color: #94a3b8; background: #161b28; border: 1px solid #232d42; padding: 7px 16px; border-radius: 999px;">Set Guides</span>
+      </div>
+    </div>
+
+    <!-- Featured article -->
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 32px;">
+      <div style="background: #111624; border-right: 1px solid #232d42; min-height: 280px; display: flex; align-items: center; justify-content: center; position: relative;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; color: #475569;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>
+          <span style="font-size: 12px; font-weight: 500;">[COVER IMAGE]</span>
+        </div>
+        <span style="position: absolute; top: 14px; left: 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #0a1a12; background: #5ece99; padding: 5px 10px; border-radius: 999px;">Featured</span>
+      </div>
+      <div style="padding: 32px; display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5ece99;">Market Moves</span>
+          <span style="width: 3px; height: 3px; border-radius: 50%; background: #475569;"></span>
+          <span style="font-size: 12.8px; color: #94a3b8;">Aug 28, 2026</span>
+          <span style="width: 3px; height: 3px; border-radius: 50%; background: #475569;"></span>
+          <span style="font-size: 12.8px; color: #94a3b8;">6 min read</span>
+        </div>
+        <h2 style="margin: 0; font-size: 27px; font-weight: 800; line-height: 1.25; letter-spacing: -0.015em; text-wrap: pretty;">Jaxson Dart Silver Prizms cooled 12% while base rookies held flat</h2>
+        <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #94a3b8; text-wrap: pretty;">Two hundred and six paired sales over thirty days show the parallel giving back most of its July run. The base card barely moved — which tells you who was actually buying.</p>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+          <div style="width: 28px; height: 28px; border-radius: 50%; background: #232d42; border: 1px solid #2d6a4f;"></div>
+          <span style="font-size: 13px; color: #94a3b8;">Peyton Franke</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ad slot: after the featured block, above the fold on most screens -->
+    <div style="border: 1px dashed #2d6a4f; border-radius: 10px; background: rgba(94, 206, 153, 0.03); height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; margin-bottom: 32px;">
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2d6a4f;">AdSense — leaderboard 728×90</span>
+      <span style="font-size: 11.5px; color: #475569;">Placed after the lead story, not above it</span>
+    </div>
+
+    <!-- Article grid -->
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;">
+
+      <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+        <div style="height: 148px; background: #111624; border-bottom: 1px solid #232d42; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 11.5px; font-weight: 500;">[COVER IMAGE]</div>
+        <div style="padding: 18px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5ece99;">Set Guides</span>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; text-wrap: pretty;">Downtown! and Kaboom! are inserts, not parallels — and the price gap proves it</h3>
+          <p style="margin: 0; font-size: 13.6px; line-height: 1.55; color: #94a3b8; flex-grow: 1;">Why the same Ashton Jeanty sells for $3 in one listing and $180 in another that looks identical in a thumbnail.</p>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12.4px; color: #475569; padding-top: 4px; border-top: 1px solid #232d42;">
+            <span>Aug 27</span><span style="width: 3px; height: 3px; border-radius: 50%; background: #475569;"></span><span>8 min</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+        <div style="height: 148px; background: #111624; border-bottom: 1px solid #232d42; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 11.5px; font-weight: 500;">[COVER IMAGE]</div>
+        <div style="padding: 18px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5ece99;">Rookies</span>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; text-wrap: pretty;">Cam Ward&#39;s rookie market has split in two, and the raw side is winning</h3>
+          <p style="margin: 0; font-size: 13.6px; line-height: 1.55; color: #94a3b8; flex-grow: 1;">Graded copies flattened in August. Ungraded kept climbing. The spread is now wide enough to matter.</p>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12.4px; color: #475569; padding-top: 4px; border-top: 1px solid #232d42;">
+            <span>Aug 25</span><span style="width: 3px; height: 3px; border-radius: 50%; background: #475569;"></span><span>5 min</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; flex-direction: column;">
+        <div style="height: 148px; background: #111624; border-bottom: 1px solid #232d42; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 11.5px; font-weight: 500;">[COVER IMAGE]</div>
+        <div style="padding: 18px; display: flex; flex-direction: column; gap: 10px; flex-grow: 1;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5ece99;">Market Moves</span>
+          <h3 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; text-wrap: pretty;">The Huddle Index finished August at 104, up 3.5% on the month</h3>
+          <p style="margin: 0; font-size: 13.6px; line-height: 1.55; color: #94a3b8; flex-grow: 1;">Built from 28,954 paired sales across 598 players. Where the gain came from, and the two sets that dragged.</p>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12.4px; color: #475569; padding-top: 4px; border-top: 1px solid #232d42;">
+            <span>Aug 22</span><span style="width: 3px; height: 3px; border-radius: 50%; background: #475569;"></span><span>4 min</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

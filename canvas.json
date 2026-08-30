@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 1120 },
+    { "file": "Article.dc.html", "x": 1560, "y": 0, "w": 1440, "h": 2000 },
+    { "file": "Admin.dc.html", "x": 3120, "y": 0, "w": 1440, "h": 1140 }
+  ],
+  "annotations": [
+    { "id": "ads-note", "x": 1560, "y": -140, "w": 420, "text": "Ad slots are dashed green placeholders. The 300x600 sidebar unit is the earner on a long read; the in-article 336x280 sits after the third paragraph, once someone is committed. Toggle them off with the showAds chip above this artboard." },
+    { "id": "data-note", "x": 0, "y": -140, "w": 420, "text": "Every headline here is the kind only your site can write - built from your own sold data. That is the moat against generic card blogs, and the reason these articles can rank at all." },
+    { "id": "admin-note", "x": 3120, "y": -140, "w": 420, "text": "The {{sold-table}} shortcode in the body pulls live comps from your index at render time, so an article stays current after publish instead of going stale the day you write it." }
+  ],
+  "launch": { "view": "canvas" }
+}

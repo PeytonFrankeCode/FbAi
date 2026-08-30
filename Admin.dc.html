@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    a { color: #5ece99; text-decoration: none; }
+    a:hover { color: #7edcb0; }
+  </style>
+</helmet>
+
+<div style="background: #0c0e14; color: #edf0f7; min-height: 1100px;">
+
+  <div style="background: linear-gradient(135deg, #131827 0%, #151d33 50%, #141a2d 100%); border-bottom: 1px solid #232d42;">
+    <div style="max-width: 1320px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; gap: 16px;">
+      <span style="font-size: 15px; font-weight: 800; letter-spacing: -0.01em;">The Card Huddle</span>
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); padding: 4px 10px; border-radius: 999px;">Admin</span>
+      <div style="flex-grow: 1;"></div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Reports</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Users</span>
+        <span style="font-size: 12.8px; font-weight: 600; color: #edf0f7; padding: 7px 14px; border-radius: 10px; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22);">Articles</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width: 1320px; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start;">
+
+    <!-- Article list -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #5ece99; color: #0a1a12; font-size: 14px; font-weight: 700; padding: 12px 16px; border-radius: 10px; min-height: 44px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        New article
+      </div>
+
+      <div style="display: flex; gap: 6px;">
+        <span style="font-size: 12.4px; font-weight: 600; color: #5ece99; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22); padding: 6px 12px; border-radius: 999px;">All 12</span>
+        <span style="font-size: 12.4px; font-weight: 600; color: #94a3b8; background: #161b28; border: 1px solid #232d42; padding: 6px 12px; border-radius: 999px;">Drafts 3</span>
+        <span style="font-size: 12.4px; font-weight: 600; color: #94a3b8; background: #161b28; border: 1px solid #232d42; padding: 6px 12px; border-radius: 999px;">Live 9</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+
+        <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #5ece99; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #facc15;"></span>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #facc15;">Draft</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11.5px; color: #475569;">edited 2m ago</span>
+          </div>
+          <span style="font-size: 13.6px; font-weight: 600; line-height: 1.4;">Jaxson Dart Silver Prizms cooled 12%</span>
+        </div>
+
+        <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #5ece99;"></span>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5ece99;">Live</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11.5px; color: #475569;">Aug 27</span>
+          </div>
+          <span style="font-size: 13.6px; font-weight: 600; line-height: 1.4; color: #94a3b8;">Downtown! and Kaboom! are inserts</span>
+        </div>
+
+        <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #5ece99;"></span>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5ece99;">Live</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11.5px; color: #475569;">Aug 25</span>
+          </div>
+          <span style="font-size: 13.6px; font-weight: 600; line-height: 1.4; color: #94a3b8;">Cam Ward&#39;s rookie market has split</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; overflow: hidden;">
+
+      <div style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #232d42; background: rgba(94, 206, 153, 0.03);">
+        <span style="font-size: 14px; font-weight: 700;">Edit article</span>
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #facc15; background: rgba(250, 204, 21, 0.1); border: 1px solid rgba(250, 204, 21, 0.28); padding: 4px 10px; border-radius: 999px;">Draft</span>
+        <div style="flex-grow: 1;"></div>
+        <span style="font-size: 12.4px; color: #475569;">Saved 2m ago</span>
+        <div style="display: flex; align-items: center; justify-content: center; background: #161b28; border: 1px solid #232d42; color: #edf0f7; font-size: 13.6px; font-weight: 600; padding: 10px 18px; border-radius: 8px; min-height: 44px;">Preview</div>
+        <div style="display: flex; align-items: center; justify-content: center; background: #5ece99; color: #0a1a12; font-size: 13.6px; font-weight: 700; padding: 10px 20px; border-radius: 8px; min-height: 44px;">Publish</div>
+      </div>
+
+      <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Headline</span>
+          <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 13px 14px; font-size: 16px; font-weight: 600; min-height: 44px; display: flex; align-items: center;">Jaxson Dart Silver Prizms cooled 12% while base rookies held flat</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">URL slug</span>
+            <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 12px 14px; font-size: 13.6px; color: #94a3b8; min-height: 44px; display: flex; align-items: center;">/news/<span style="color: #edf0f7;">jaxson-dart-silver-prizm-august</span></div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Category</span>
+            <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 12px 14px; font-size: 13.6px; min-height: 44px; display: flex; align-items: center; justify-content: space-between;">
+              <span>Market Moves</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round"><path d="m6 9 6 6 6-6"></path></svg>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Standfirst <span style="color: #475569; font-weight: 400;">— shows on the index card and in search results</span></span>
+          <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 13px 14px; font-size: 14px; line-height: 1.55; color: #cbd5e1; min-height: 66px;">Two hundred and six paired sales over thirty days show the parallel giving back most of its July run — while the base card barely moved.</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Cover image</span>
+          <div style="background: #111624; border: 1px dashed #232d42; border-radius: 8px; padding: 22px; display: flex; align-items: center; gap: 14px;">
+            <div style="width: 84px; height: 48px; border-radius: 6px; background: #0c0e14; border: 1px solid #232d42;"></div>
+            <div style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1;">
+              <span style="font-size: 13.6px; font-weight: 500;">dart-silver-prizm.jpg</span>
+              <span style="font-size: 12px; color: #475569;">1200×630 · 148 KB</span>
+            </div>
+            <span style="font-size: 13px; font-weight: 600; color: #5ece99;">Replace</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 7px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Body</span>
+            <div style="flex-grow: 1;"></div>
+            <span style="font-size: 11.5px; font-weight: 600; color: #5ece99; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22); padding: 5px 11px; border-radius: 999px;">Insert sold-data table</span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; background: #161b28; border: 1px solid #232d42; padding: 5px 11px; border-radius: 999px;">Insert card link</span>
+            <span style="font-size: 11.5px; color: #475569;">Markdown</span>
+          </div>
+          <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.7; color: #cbd5e1; min-height: 260px; display: flex; flex-direction: column; gap: 14px;">
+            <span>The Silver Prizm ran hard through July. Between the 1st and the 28th it put on roughly a fifth of its value, mostly on the back of two strong games.</span>
+            <span style="color: #5ece99; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">{{sold-table player="Jaxson Dart" set="2025 Panini Prizm" days=30}}</span>
+            <span>The Gold Ice going the other way is the tell. Ten copies exist.</span>
+            <span style="width: 2px; height: 20px; background: #5ece99;"></span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-top: 18px; border-top: 1px solid #232d42;">
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">SEO title <span style="color: #475569; font-weight: 400;">— 58/60</span></span>
+            <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 12px 14px; font-size: 13.6px; color: #cbd5e1; min-height: 44px; display: flex; align-items: center;">Jaxson Dart Silver Prizm Prices Fell 12% in August</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <span style="font-size: 12px; font-weight: 600; color: #94a3b8;">Publish</span>
+            <div style="display: flex; gap: 10px;">
+              <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 12px 14px; font-size: 13.6px; flex-grow: 1; min-height: 44px; display: flex; align-items: center;">Aug 28, 2026 · 09:00</div>
+              <div style="background: #111624; border: 1px solid #232d42; border-radius: 8px; padding: 12px 14px; font-size: 13.6px; color: #94a3b8; min-height: 44px; display: flex; align-items: center;">Ping IndexNow</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
