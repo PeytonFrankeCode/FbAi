@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    a { color: #5ece99; text-decoration: none; }
+    a:hover { color: #7edcb0; }
+  </style>
+</helmet>
+
+<div style="background: #0c0e14; background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(94, 206, 153, 0.04) 0%, transparent 60%); color: #edf0f7;">
+
+  <div style="background: linear-gradient(135deg, #131827 0%, #151d33 50%, #141a2d 100%); border-bottom: 1px solid #232d42;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 28px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(94, 206, 153, 0.12); border: 1px solid rgba(94, 206, 153, 0.22); display: flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5ece99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="13" height="17" rx="2"></rect><path d="M8 21h11a2 2 0 0 0 2-2V7"></path></svg>
+        </div>
+        <span style="font-size: 15px; font-weight: 800; letter-spacing: -0.01em;">The Card Huddle</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px; flex-grow: 1;">
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Search</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Checklists</span>
+        <span style="font-size: 12.8px; font-weight: 500; color: #94a3b8; padding: 7px 14px; border-radius: 10px;">Market</span>
+        <span style="font-size: 12.8px; font-weight: 600; color: #edf0f7; padding: 7px 14px; border-radius: 10px; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22);">News</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width: 1200px; margin: 0 auto; padding: 28px 24px 64px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 44px; align-items: start;">
+
+    <!-- Reading column -->
+    <div style="display: flex; flex-direction: column; gap: 24px; min-width: 0;">
+
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.8px; color: #475569;">
+        <span style="color: #94a3b8;">News</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m9 18 6-6-6-6"></path></svg>
+        <span style="color: #5ece99;">Market Moves</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <h1 style="margin: 0; font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -0.025em; text-wrap: pretty;">Jaxson Dart Silver Prizms cooled 12% while base rookies held flat</h1>
+        <p style="margin: 0; font-size: 18px; line-height: 1.55; color: #94a3b8; text-wrap: pretty;">Two hundred and six paired sales over thirty days show the parallel giving back most of its July run — while the base card barely moved.</p>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid #232d42; border-bottom: 1px solid #232d42;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: #232d42; border: 1px solid #2d6a4f;"></div>
+          <div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+            <span style="font-size: 13.6px; font-weight: 600;">Peyton Franke</span>
+            <span style="font-size: 12.4px; color: #475569;">Aug 28, 2026 · 6 min read</span>
+          </div>
+          <span style="font-size: 12px; font-weight: 600; color: #5ece99; background: rgba(94, 206, 153, 0.1); border: 1px solid rgba(94, 206, 153, 0.22); padding: 6px 12px; border-radius: 999px;">Built from sold data</span>
+        </div>
+      </div>
+
+      <div style="height: 340px; background: #111624; border: 1px solid #232d42; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #475569;">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>
+        <span style="font-size: 12px; font-weight: 500;">[COVER IMAGE — 1200×630]</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px; font-size: 17px; line-height: 1.7; color: #cbd5e1; max-width: 680px;">
+        <p style="margin: 0;">The Silver Prizm ran hard through July. Between the 1st and the 28th it put on roughly a fifth of its value, mostly on the back of two strong games and a lot of people deciding at once that the rookie class was thinner than they thought.</p>
+        <p style="margin: 0;">August took most of that back. Across the thirty days ending August 21, our index has the card at <strong style="color: #edf0f7; font-weight: 700;">down 12.1%</strong>, on 206 paired sales — meaning 206 times the same card sold twice, which is the only comparison that actually tells you a price moved rather than a different card being sold.</p>
+        <p style="margin: 0;">The base rookie, over exactly the same window, moved 0.4%. That is noise. And that gap is the interesting part of this, because it says the money leaving was speculative money on the scarce version, not a broad loss of interest in the player.</p>
+      </div>
+
+      <sc-if value="{{ showAds }}" hint-placeholder-val="{{ true }}">
+        <div style="border: 1px dashed #2d6a4f; border-radius: 10px; background: rgba(94, 206, 153, 0.03); height: 260px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; max-width: 680px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2d6a4f;">AdSense — in-article 336×280</span>
+          <span style="font-size: 11.5px; color: #475569;">After the third paragraph, once the reader is committed</span>
+        </div>
+      </sc-if>
+
+      <!-- The data table is the thing no other card blog can publish -->
+      <div style="max-width: 680px; display: flex; flex-direction: column; gap: 12px;">
+        <h2 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.015em;">What actually sold</h2>
+        <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 12px 18px; border-bottom: 1px solid #232d42; background: rgba(94, 206, 153, 0.04);">
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8;">Card</span>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8; text-align: right;">Jul avg</span>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8; text-align: right;">Aug avg</span>
+            <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8; text-align: right;">Change</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 14px 18px; border-bottom: 1px solid #232d42; align-items: center;">
+            <span style="font-size: 14px; font-weight: 500;">Silver Prizm</span>
+            <span style="font-size: 14px; text-align: right; color: #94a3b8;">$248</span>
+            <span style="font-size: 14px; text-align: right;">$218</span>
+            <span style="font-size: 14px; font-weight: 700; text-align: right; color: #f87171;">−12.1%</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 14px 18px; border-bottom: 1px solid #232d42; align-items: center;">
+            <span style="font-size: 14px; font-weight: 500;">Base</span>
+            <span style="font-size: 14px; text-align: right; color: #94a3b8;">$26</span>
+            <span style="font-size: 14px; text-align: right;">$26</span>
+            <span style="font-size: 14px; font-weight: 700; text-align: right; color: #94a3b8;">+0.4%</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; padding: 14px 18px; align-items: center;">
+            <span style="font-size: 14px; font-weight: 500;">Gold Ice /10</span>
+            <span style="font-size: 14px; text-align: right; color: #94a3b8;">$1,340</span>
+            <span style="font-size: 14px; text-align: right;">$1,410</span>
+            <span style="font-size: 14px; font-weight: 700; text-align: right; color: #5ece99;">+5.2%</span>
+          </div>
+        </div>
+        <span style="font-size: 12.4px; color: #475569;">206 paired sales, 30 days ending Aug 21. Raw only — graded copies excluded. [SAMPLE FIGURES]</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px; font-size: 17px; line-height: 1.7; color: #cbd5e1; max-width: 680px;">
+        <p style="margin: 0;">The Gold Ice going the other way is the tell. Ten copies exist. When the people buying at that level keep buying while the /199 tier sells off, you are watching two different markets that happen to share a player.</p>
+      </div>
+
+      <div style="border-left: 3px solid #5ece99; padding: 4px 0 4px 20px; max-width: 680px;">
+        <p style="margin: 0; font-size: 20px; line-height: 1.5; font-weight: 500; color: #edf0f7; text-wrap: pretty;">A parallel selling off while its base card sits still is not the player losing value. It is the speculation leaving.</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 20px; font-size: 17px; line-height: 1.7; color: #cbd5e1; max-width: 680px;">
+        <p style="margin: 0;">If you are holding the Silver, the thing to watch through September is whether paired volume holds up. Price falling on thin volume is a different signal from price falling on heavy volume, and only one of them means the market has actually repriced the card.</p>
+      </div>
+
+      <sc-if value="{{ showAds }}" hint-placeholder-val="{{ true }}">
+        <div style="border: 1px dashed #2d6a4f; border-radius: 10px; background: rgba(94, 206, 153, 0.03); height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; max-width: 680px;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2d6a4f;">AdSense — end of article 728×90</span>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; max-width: 680px;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em;">Keep reading</h2>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
+          <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5ece99;">Rookies</span>
+            <span style="font-size: 15px; font-weight: 600; line-height: 1.35; text-wrap: pretty;">Cam Ward&#39;s rookie market has split in two</span>
+          </div>
+          <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+            <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5ece99;">Set Guides</span>
+            <span style="font-size: 15px; font-weight: 600; line-height: 1.35; text-wrap: pretty;">Downtown! and Kaboom! are inserts, not parallels</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid rgba(94, 206, 153, 0.22); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5ece99;">Track this card</span>
+        <span style="font-size: 14px; line-height: 1.5; color: #94a3b8;">Get an alert when the Silver Prizm moves more than 10% in a week.</span>
+        <div style="display: flex; align-items: center; justify-content: center; background: #5ece99; color: #0a1a12; font-size: 14px; font-weight: 700; padding: 12px 16px; border-radius: 10px; min-height: 44px;">Add to watchlist</div>
+      </div>
+
+      <sc-if value="{{ showAds }}" hint-placeholder-val="{{ true }}">
+        <div style="border: 1px dashed #2d6a4f; border-radius: 10px; background: rgba(94, 206, 153, 0.03); height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 16px; text-align: center;">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #2d6a4f;">AdSense — 300×600</span>
+          <span style="font-size: 11.5px; color: #475569; line-height: 1.5;">Sticky through the scroll — the highest-earning slot on a long read</span>
+        </div>
+      </sc-if>
+
+      <div style="background: linear-gradient(160deg, #1a2133 0%, #111827 100%); border: 1px solid #232d42; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #94a3b8;">Most read</span>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <span style="font-size: 20px; font-weight: 800; color: #232d42; line-height: 1;">01</span>
+            <span style="font-size: 13.6px; font-weight: 500; line-height: 1.4;">The Huddle Index finished August at 104</span>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <span style="font-size: 20px; font-weight: 800; color: #232d42; line-height: 1;">02</span>
+            <span style="font-size: 13.6px; font-weight: 500; line-height: 1.4;">Why the same card shows two prices</span>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: flex-start;">
+            <span style="font-size: 20px; font-weight: 800; color: #232d42; line-height: 1;">03</span>
+            <span style="font-size: 13.6px; font-weight: 500; line-height: 1.4;">Reading a rainbow: every Prizm tier ranked</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"showAds":{"editor":"boolean","default":true,"section":"Layout"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { showAds: this.props.showAds ?? true };
+  }
+}
+</script>
+</body>
+</html>
