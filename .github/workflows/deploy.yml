@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-  # Manual trigger, so secrets can be pushed to the Worker without inventing a
-  # commit — rotating a key doesn't otherwise change anything in the repo.
+  # Manual trigger, so a deploy can be re-run without inventing a commit.
   workflow_dispatch:
 
 env:
@@ -44,23 +43,34 @@ jobs:
       - name: Build SEO landing pages
         run: npm run build:pages
 
+      # Secrets are NOT pushed from here any more, and that is what unblocked
+      # deploys.
+      #
+      # wrangler-action's `secrets:` input runs `wrangler secret put`, which
+      # first calls "Getting User settings..." to identify the account. That
+      # call needs User -> User Details -> Read on the API token. Adding D1
+      # permissions to the token narrowed it and dropped that scope, so every
+      # deploy from 2026-08-23 onward failed identically:
+      #
+      #   Unable to retrieve email for this user.
+      #   Are you missing the `User->User Details->Read` permission?
+      #   Failed to upload secrets. / Action failed
+      #
+      # Twelve deploys failed that way while the site quietly served August-23
+      # code. Nothing about pushing secrets is needed to ship a Worker, so the
+      # step that requires the extra scope is gone rather than the permission
+      # being chased: deploying now needs only what the token already has.
+      #
+      # CARD_API_KEY and SOLD_PROVIDER are already set on the Worker from
+      # earlier deploys and are untouched by this — a deploy does not clear
+      # secrets it does not mention. To rotate one, either set it in the
+      # Cloudflare dashboard, or add User Details:Read back to the token and
+      # restore the `secrets:`/`env:` block below.
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Pushes Worker secrets on deploy, so they can be managed from GitHub
-          # instead of the Cloudflare dashboard. Each name is added only when
-          # that GitHub secret is actually set — naming an unset one would fail
-          # the whole deploy.
-          secrets: |
-            ${{ secrets.CARD_API_KEY != '' && 'CARD_API_KEY' || '' }}
-            ${{ secrets.SOLD_PROVIDER != '' && 'SOLD_PROVIDER' || '' }}
-        env:
-          # Read by wrangler-action for the names listed in `secrets` above.
-          CARD_API_KEY: ${{ secrets.CARD_API_KEY }}
-          # auto (default) | cardapi | nflcarddb — switches the sold source.
-          SOLD_PROVIDER: ${{ secrets.SOLD_PROVIDER }}
 
       # Tells Bing, DuckDuckGo, Yandex, Naver and Seznam that pages changed
       # rather than waiting to be crawled. Google ignores IndexNow and has its
