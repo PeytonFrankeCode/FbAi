@@ -1389,10 +1389,10 @@ async function loadQueryEstimate(query) {
 // announcement shows it to everyone again instead of staying hidden for
 // anyone who ever dismissed one.
 const BANNER = {
-  id: '2026-topps-flagship',
+  id: '2026-bowman',
   // What clicking it does. A checklist deep-link, so this stays in the SPA
   // rather than reloading the page.
-  productId: '2026-topps-football',
+  productId: '2026-bowman-football',
 };
 
 function bannerDismissed() {
