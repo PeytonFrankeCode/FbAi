@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://thecardhuddle.com/sitemap.xml
+Sitemap: https://thecardhuddle.com/sitemap-news.xml

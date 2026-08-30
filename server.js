@@ -8300,6 +8300,293 @@ app.use((err, req, res, next) => {
 // detect named exports when worker.js does `await import('./server.js')`.
 // Putting this inside the `if (CF_WORKER)` block hid the names from esbuild
 // and surfaced as "connectDB is not a function" at runtime.
+// ---------------------------------------------------------------------------
+// News / articles
+//
+// Server-rendered, not SPA-rendered. That is the entire reason the section
+// exists: articles are a bet on holding attention long enough for an ad to be
+// worth something, and an article delivered as an empty <div id="app"> ranks
+// for nothing and holds no one. Every route here returns finished markup.
+const NEWS_FILE = path.join(APP_ROOT, 'data', 'news.json');
+const NEWS = require('./news');
+const NEWS_SITE = process.env.SITE_URL || 'https://thecardhuddle.com';
+
+function loadNews() {
+  const list = loadData('news', NEWS_FILE, []);
+  return Array.isArray(list) ? list : [];
+}
+function saveNews(list) { saveData('news', NEWS_FILE, list); }
+
+function newsPublished() {
+  const now = Date.now();
+  return loadNews()
+    .filter(a => NEWS.isPublished(a, now))
+    .sort((a, b) => String(b.publishedAt || '').localeCompare(String(a.publishedAt || '')));
+}
+
+// Resolve {{sold-table}} blocks before rendering. The renderer's shortcode hook
+// is synchronous and the sales query is not, so the shortcodes are found and
+// resolved first, then handed over as a ready map. The other order would mean
+// either blocking the renderer or shipping a half-built page.
+async function newsResolveShortcodes(body) {
+  const found = [...String(body || '').matchAll(/\{\{\s*sold-table([^}]*)\}\}/gi)];
+  const map = new Map();
+  if (!found.length) return map;
+  const db = getNflDb();
+  for (const m of found) {
+    const args = NEWS.parseArgs(m[1]);
+    map.set(m[0], db ? await newsSoldTable(db, args) : null);
+  }
+  return map;
+}
+
+// The table an article is written around: what a card actually sold for, by
+// parallel, over a window. Raw only and grouped the way the index groups, so a
+// number quoted in an article is the same number the rest of the site shows.
+async function newsSoldTable(db, args) {
+  const player = String(args.player || '').trim();
+  if (!player) return null;
+  const days = Math.min(365, Math.max(7, parseInt(args.days, 10) || 30));
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+    if (!newest || !newest.d) return null;
+    const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const since = _mkIso(_mkDay(through) - days);
+    const setFilter = args.set ? ' AND ' + _normCol('set_name') + ' = ?' : '';
+    const binds = [player.toLowerCase().replace(/\s+/g, ' ').trim(), since, through];
+    if (args.set) binds.push(String(args.set).toLowerCase().replace(/\s+/g, ' ').trim());
+    const r = await db.prepare(
+      'SELECT COALESCE(NULLIF(TRIM(parallel), \'\'), \'Base\') AS par,'
+      + ' COUNT(*) AS n, AVG(price_cents) AS avg_cents'
+      + ' FROM sales'
+      + ' WHERE ' + _normCol('player') + ' = ?'
+      + '   AND sold_date > ? AND sold_date <= ?'
+      + '   AND price_cents IS NOT NULL AND price_cents > 0'
+      + '   AND ' + _rsiRawOnlySql()
+      + setFilter
+      + ' GROUP BY par HAVING n >= 2'
+      + ' ORDER BY avg_cents DESC LIMIT 12').bind(...binds).all();
+    const rows = (r && r.results) || [];
+    if (!rows.length) return null;
+    const money = (c) => '$' + Math.round(Number(c) / 100).toLocaleString('en-US');
+    const body = rows.map(x => '<tr><td>' + NEWS.esc(x.par) + '</td>'
+      + '<td class="num">' + money(x.avg_cents) + '</td>'
+      + '<td class="num">' + x.n + '</td></tr>').join('');
+    return '<figure class="sold-table"><table><thead><tr><th>Parallel</th>'
+      + '<th class="num">Avg sold</th><th class="num">Sales</th></tr></thead>'
+      + '<tbody>' + body + '</tbody></table>'
+      + '<figcaption>' + NEWS.esc(player) + (args.set ? ' &middot; ' + NEWS.esc(args.set) : '')
+      + ' &middot; raw sales, ' + days + ' days to ' + through
+      + '. Live from The Card Huddle.</figcaption></figure>';
+  } catch (err) {
+    // An article must never fail to render because a table could not be built.
+    console.error('[news] sold-table failed:', err && err.message);
+    return null;
+  }
+}
+
+const NEWS_CSS = [
+  ':root{--bg:#0c0e14;--card:#1a2133;--card2:#111827;--line:#232d42;--fg:#edf0f7;--fg2:#94a3b8;--fg3:#475569;--ac:#5ece99}',
+  '*{box-sizing:border-box}',
+  'body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.6}',
+  'a{color:var(--ac);text-decoration:none}a:hover{color:#7edcb0}',
+  '.wrap{max-width:1200px;margin:0 auto;padding:0 24px}',
+  'header.site{background:linear-gradient(135deg,#131827 0%,#151d33 50%,#141a2d 100%);border-bottom:1px solid var(--line)}',
+  'header.site .wrap{display:flex;align-items:center;gap:24px;padding-top:18px;padding-bottom:18px;flex-wrap:wrap}',
+  '.brand{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--fg)}',
+  'nav.site{display:flex;gap:4px;flex-wrap:wrap}',
+  'nav.site a{font-size:12.8px;font-weight:500;color:var(--fg2);padding:7px 14px;border-radius:10px}',
+  'nav.site a.on{color:var(--fg);background:rgba(94,206,153,.1);border:1px solid rgba(94,206,153,.22)}',
+  'h1{font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-.025em;margin:0;text-wrap:pretty}',
+  '.lede{font-size:18px;line-height:1.55;color:var(--fg2);margin:16px 0 0;text-wrap:pretty}',
+  '.meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.8px;color:var(--fg3);padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:20px 0 28px}',
+  '.kicker{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ac)}',
+  'article{max-width:680px;font-size:17px;color:#cbd5e1}',
+  'article h2{font-size:24px;font-weight:700;letter-spacing:-.015em;color:var(--fg);margin:36px 0 0}',
+  'article h3{font-size:19px;font-weight:700;color:var(--fg);margin:28px 0 0}',
+  'article p{margin:20px 0}',
+  'article strong{color:var(--fg);font-weight:700}',
+  'article blockquote{border-left:3px solid var(--ac);margin:28px 0;padding:4px 0 4px 20px;font-size:20px;line-height:1.5;color:var(--fg);font-weight:500}',
+  'article ul{padding-left:22px}article li{margin:8px 0}',
+  'article code{background:#111624;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:14px}',
+  '.sold-table{margin:28px 0;background:linear-gradient(160deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--line);border-radius:14px;overflow:hidden}',
+  '.sold-table table{width:100%;border-collapse:collapse;font-size:14px}',
+  '.sold-table th{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--fg2);text-align:left;padding:12px 18px;background:rgba(94,206,153,.04);border-bottom:1px solid var(--line)}',
+  '.sold-table td{padding:13px 18px;border-bottom:1px solid var(--line);color:var(--fg)}',
+  '.sold-table tr:last-child td{border-bottom:0}',
+  '.sold-table .num{text-align:right}',
+  '.sold-table figcaption{padding:12px 18px;font-size:12.4px;color:var(--fg3);border-top:1px solid var(--line)}',
+  '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin:28px 0 56px}',
+  '.card{background:linear-gradient(160deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}',
+  '.card h2{margin:0;font-size:17px;font-weight:700;line-height:1.35;letter-spacing:-.01em}',
+  '.card h2 a{color:var(--fg)}',
+  '.card p{margin:0;font-size:13.6px;line-height:1.55;color:var(--fg2);flex-grow:1}',
+  '.card .foot{display:flex;gap:8px;font-size:12.4px;color:var(--fg3);padding-top:4px;border-top:1px solid var(--line)}',
+  '.ad{border:1px dashed #2d6a4f;border-radius:10px;background:rgba(94,206,153,.03);min-height:96px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2d6a4f;margin:32px 0;max-width:680px}',
+  'footer.site{border-top:1px solid var(--line);margin-top:48px;padding:24px 0;font-size:12.8px;color:var(--fg3)}',
+  '@media(max-width:640px){h1{font-size:30px}article{font-size:16px}}',
+].join('\n');
+
+function newsShell(opts) {
+  const jsonLd = opts.jsonLd
+    ? '<script type="application/ld+json">' + opts.jsonLd + '</script>' : '';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+    + '<title>' + NEWS.esc(opts.title) + '</title>'
+    + '<meta name="description" content="' + NEWS.esc(opts.description) + '">'
+    + '<link rel="canonical" href="' + NEWS.esc(opts.canonical) + '">'
+    + '<meta property="og:title" content="' + NEWS.esc(opts.title) + '">'
+    + '<meta property="og:description" content="' + NEWS.esc(opts.description) + '">'
+    + '<meta property="og:type" content="article">'
+    + '<meta property="og:url" content="' + NEWS.esc(opts.canonical) + '">'
+    + '<link rel="preconnect" href="https://fonts.googleapis.com">'
+    + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
+    + '<style>' + NEWS_CSS + '</style>' + jsonLd
+    + '</head><body>'
+    + '<header class="site"><div class="wrap">'
+    + '<a class="brand" href="/">The Card Huddle</a>'
+    + '<nav class="site"><a href="/">Search</a><a href="/sets/">Checklists</a>'
+    + '<a href="/">Market</a><a class="on" href="/news">News</a></nav>'
+    + '</div></header><main class="wrap">' + opts.body + '</main>'
+    + '<footer class="site"><div class="wrap">&copy; ' + new Date().getFullYear()
+    + ' The Card Huddle &middot; <a href="/news">News</a> &middot; <a href="/">Prices</a>'
+    + '</div></footer></body></html>';
+}
+
+app.get('/news', (req, res) => {
+  const list = newsPublished();
+  const cards = list.map(a => '<div class="card">'
+    + '<span class="kicker">' + NEWS.esc(a.category || 'News') + '</span>'
+    + '<h2><a href="/news/' + NEWS.esc(a.slug) + '">' + NEWS.esc(a.title) + '</a></h2>'
+    + '<p>' + NEWS.esc(NEWS.excerpt(a, 140)) + '</p>'
+    + '<div class="foot"><span>' + NEWS.esc(String(a.publishedAt || '').slice(0, 10)) + '</span>'
+    + '<span>&middot;</span><span>' + NEWS.readingMinutes(a.body) + ' min</span></div>'
+    + '</div>').join('');
+  const body = '<div style="padding:36px 0 0"><h1>News &amp; Analysis</h1>'
+    + '<p class="lede">Written from our own sold data &mdash; what actually changed hands, '
+    + 'and what it means for what you hold.</p></div>'
+    + (list.length ? '<div class="grid">' + cards + '</div>'
+                   : '<p class="lede" style="margin:32px 0 56px">No articles yet.</p>');
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300');
+  res.send(newsShell({
+    title: 'News & Analysis · The Card Huddle',
+    description: 'Football card market analysis built from real sold data.',
+    canonical: NEWS_SITE + '/news', body: body,
+  }));
+});
+
+app.get('/news/:slug', async (req, res) => {
+  const slug = String(req.params.slug || '').toLowerCase();
+  const a = newsPublished().find(x => x.slug === slug);
+  if (!a) {
+    res.status(404).set('Content-Type', 'text/html; charset=utf-8');
+    return res.send(newsShell({
+      title: 'Not found · The Card Huddle',
+      description: 'That article does not exist.',
+      canonical: NEWS_SITE + '/news',
+      body: '<div style="padding:56px 0"><h1>Not found</h1>'
+          + '<p class="lede">That article does not exist. <a href="/news">Back to news</a>.</p></div>',
+    }));
+  }
+  let resolved = new Map();
+  try { resolved = await newsResolveShortcodes(a.body); } catch (_) { /* render without it */ }
+  const html = NEWS.renderMarkdown(a.body, (name, args) => {
+    if (name !== 'sold-table') return null;
+    for (const [raw, out] of resolved) {
+      if (!args.player || raw.indexOf(args.player) >= 0) return out;
+    }
+    return null;
+  });
+  const desc = NEWS.excerpt(a);
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'NewsArticle',
+    headline: a.title, description: desc,
+    datePublished: a.publishedAt, dateModified: a.updatedAt || a.publishedAt,
+    author: { '@type': 'Person', name: a.author || 'The Card Huddle' },
+    publisher: { '@type': 'Organization', name: 'The Card Huddle' },
+    mainEntityOfPage: NEWS_SITE + '/news/' + a.slug,
+  });
+  const body = '<div style="padding:28px 0 0">'
+    + '<span class="kicker">' + NEWS.esc(a.category || 'News') + '</span>'
+    + '<h1>' + NEWS.esc(a.title) + '</h1>'
+    + (a.standfirst ? '<p class="lede">' + NEWS.esc(a.standfirst) + '</p>' : '')
+    + '<div class="meta"><span>' + NEWS.esc(a.author || 'The Card Huddle') + '</span>'
+    + '<span>&middot;</span><span>' + NEWS.esc(String(a.publishedAt || '').slice(0, 10)) + '</span>'
+    + '<span>&middot;</span><span>' + NEWS.readingMinutes(a.body) + ' min read</span></div>'
+    + '<article>' + html + '</article>'
+    + '<div class="ad">Ad slot</div></div>';
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300');
+  res.send(newsShell({ title: a.title + ' · The Card Huddle', description: desc,
+                       canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd }));
+});
+
+// Its own sitemap, because articles appear between deploys while the main
+// sitemap is generated at build time from the checklists.
+app.get('/sitemap-news.xml', (req, res) => {
+  const urls = newsPublished().map(a =>
+    '  <url><loc>' + NEWS_SITE + '/news/' + NEWS.esc(a.slug) + '</loc>'
+    + '<lastmod>' + NEWS.esc(String(a.updatedAt || a.publishedAt || '').slice(0, 10)) + '</lastmod>'
+    + '<changefreq>monthly</changefreq><priority>0.7</priority></url>').join('\n');
+  res.set('Content-Type', 'application/xml; charset=utf-8');
+  res.send('<?xml version="1.0" encoding="UTF-8"?>\n'
+    + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + '  <url><loc>' + NEWS_SITE + '/news</loc><changefreq>daily</changefreq>'
+    + '<priority>0.8</priority></url>\n' + urls + '\n</urlset>\n');
+});
+
+// ---- Authoring API (admin key, same scheme as /api/feedback) ---------------
+app.get('/api/news', (req, res) => {
+  // Admins see drafts too; everyone else sees only what is live.
+  res.json(isAdminReq(req) ? loadNews() : newsPublished());
+});
+
+app.post('/api/admin/news', (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const b = req.body || {};
+  const title = String(b.title || '').trim();
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const slug = NEWS.slugify(b.slug || title);
+  if (!slug) return res.status(400).json({ error: 'could not build a slug from that title' });
+
+  const list = loadNews();
+  const i = list.findIndex(x => x.slug === (b.originalSlug || slug));
+  const now = new Date().toISOString();
+  // A slug is a permanent URL. Quietly reusing one would point an existing
+  // link at different writing, so a collision is refused rather than resolved.
+  if (i < 0 && list.some(x => x.slug === slug)) {
+    return res.status(409).json({ error: 'an article already uses /news/' + slug });
+  }
+  const article = {
+    slug: slug,
+    title: title,
+    standfirst: String(b.standfirst || '').trim(),
+    category: NEWS.CATEGORIES.indexOf(b.category) >= 0 ? b.category : 'Market Moves',
+    body: String(b.body || ''),
+    author: String(b.author || 'The Card Huddle').trim(),
+    status: b.status === 'published' ? 'published' : 'draft',
+    publishedAt: b.publishedAt || (i >= 0 ? list[i].publishedAt : null) || now,
+    createdAt: i >= 0 ? list[i].createdAt : now,
+    updatedAt: now,
+  };
+  if (i >= 0) list[i] = article; else list.unshift(article);
+  saveNews(list);
+  res.json({ ok: true, article: article, url: '/news/' + slug });
+});
+
+app.delete('/api/admin/news/:slug', (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const slug = String(req.params.slug || '').toLowerCase();
+  const list = loadNews();
+  const next = list.filter(x => x.slug !== slug);
+  if (next.length === list.length) return res.status(404).json({ error: 'not found' });
+  saveNews(next);
+  res.json({ ok: true, removed: slug });
+});
+
 module.exports = { app, connectDB, backfillPlayerAliases, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.

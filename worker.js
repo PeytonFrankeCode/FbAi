@@ -167,7 +167,18 @@ function expressToFetch(app, request, bodyBuffer) {
           resChunks.push(chunk);
         }
         const body = resChunks.length ? Buffer.concat(resChunks) : null;
-        resolve(new Response(body, { status: statusCode, headers: resHeaders }));
+        // Read the status off the response object, not just the closure.
+        //
+        // Express's res.status(404) assigns this.statusCode directly; only
+        // writeHead() ever touched the closure variable, and res.send()/json()
+        // do not call writeHead. So every error in the Worker was answered
+        // HTTP 200 with the error merely described in the body: 401s that
+        // clients checking `r.ok` read as success, and 404 pages that a
+        // crawler indexes as real content. Verified against three live
+        // endpoints before fixing.
+        const objStatus = (this && Number.isInteger(this.statusCode)) ? this.statusCode : null;
+        const finalStatus = (objStatus && objStatus !== 200) ? objStatus : statusCode;
+        resolve(new Response(body, { status: finalStatus, headers: resHeaders }));
       },
       on() { return this; },
       once() { return this; },
@@ -442,10 +453,16 @@ export default {
         return env.USER_INBOX.get(env.USER_INBOX.idFromName(user)).fetch(request);
       }
 
+      // Server-rendered routes. These are NOT assets: /news pages are built
+      // from stored articles on each request so a crawler is served real
+      // markup rather than the SPA shell, which is the entire point of having
+      // them — an empty <div id="app"> ranks for nothing.
+      const SERVER_RENDERED = /^\/(news(\/|$)|sitemap-news\.xml$)/;
+
       // Static files and SPA fallback — served by Cloudflare ASSETS binding.
-      // ANY non-/api request goes here, including bot scans like /wp-admin/*,
-      // so we never let the Express init path run for them.
-      if (!url.pathname.startsWith('/api/')) {
+      // ANY other non-/api request goes here, including bot scans like
+      // /wp-admin/*, so we never let the Express init path run for them.
+      if (!url.pathname.startsWith('/api/') && !SERVER_RENDERED.test(url.pathname)) {
         if (env.ASSETS) {
           try {
             const resp = await env.ASSETS.fetch(request);
