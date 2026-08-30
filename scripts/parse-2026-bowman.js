@@ -7,12 +7,21 @@
 // in a checklist are the kind nobody notices until a card will not group.
 // Re-running this against a corrected paste is also how a fix gets made later.
 //
-// The parse is deliberately literal. Topps' own file has oddities in it —
-// a duplicated card number, players attributed to teams they do not play for,
-// one row where two columns ran together — and this reports every one of them
-// rather than quietly repairing anything. A checklist that disagrees with the
-// printed cards is worse than one with a visible gap, because the site treats
-// it as ground truth when resolving what a listing is.
+// The parse is deliberately literal: it reports what looks odd and repairs
+// nothing. A checklist that disagrees with the printed cards is worse than one
+// with a visible gap, because the site treats it as ground truth when resolving
+// what a listing is.
+//
+// That literalness matters more than it first appears. The team column here
+// looked wrong on a first read — DJ Moore under Buffalo, Michael Pittman Jr.
+// under Pittsburgh, Kenneth Walker III under Kansas City — and it is not: those
+// are offseason moves, and the checklist is simply more current than whoever is
+// reading it. Anything that "corrects" a roster against outside knowledge will
+// eventually be wrong in exactly this way, so nothing here does.
+//
+// What IS worth flagging is internal inconsistency, which needs no knowledge of
+// football to judge: a card number used twice, or a row whose columns ran
+// together. Those are the only things reported.
 //
 // Run: node scripts/parse-2026-bowman.js <raw.txt> [--write]
 const fs = require('fs');
