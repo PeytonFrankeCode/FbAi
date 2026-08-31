@@ -43,6 +43,63 @@ jobs:
       - name: Build SEO landing pages
         run: npm run build:pages
 
+      # Ask Cloudflare what the token can actually do, before wrangler tries.
+      #
+      # Wrangler reports every rejection as "Authentication error [code: 10000]"
+      # and then prints an unrelated hint about User->User Details->Read. That
+      # one message covers a token that is expired, a token scoped to a
+      # different account, a wrong account ID, and a token missing Workers
+      # permissions — four different fixes behind identical output, which is how
+      # thirteen deploys failed without the cause being visible.
+      #
+      # These three probes separate them. Nothing here prints a secret: the
+      # token is only ever sent in a header, and the account ID is compared
+      # rather than echoed. The step never fails the job, so the deploy still
+      # runs and its own error is still visible underneath.
+      - name: Check the Cloudflare token before deploying
+        continue-on-error: true
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $CF_TOKEN" "https://api.cloudflare.com/client/v4$1"; }
+
+          echo "1. Is the token itself valid?"
+          v=$(api /user/tokens/verify)
+          if [ "$(jq -r .success <<<"$v")" = "true" ]; then
+            echo "   yes — status: $(jq -r .result.status <<<"$v")"
+          else
+            echo "   NO. The token is invalid, expired, or revoked."
+            echo "   $(jq -c '.errors' <<<"$v")"
+            echo "   Fix: issue a new token and update the CLOUDFLARE_API_TOKEN secret."
+            exit 0
+          fi
+
+          echo "2. Can the token see the account in CLOUDFLARE_ACCOUNT_ID?"
+          a=$(api /accounts)
+          if [ "$(jq -r .success <<<"$a")" != "true" ]; then
+            echo "   Could not list accounts: $(jq -c '.errors' <<<"$a")"
+          elif jq -e --arg id "$CF_ACCOUNT" '.result[] | select(.id == $id)' >/dev/null <<<"$a"; then
+            echo "   yes — $(jq -r --arg id "$CF_ACCOUNT" '.result[] | select(.id==$id) | .name' <<<"$a")"
+          else
+            echo "   NO. The token is scoped to $(jq -r '.result | length' <<<"$a") account(s),"
+            echo "   none of which is the one in CLOUDFLARE_ACCOUNT_ID:"
+            jq -r '.result[] | "     - \(.name) (\(.id))"' <<<"$a"
+            echo "   Fix: point the secret at one of those, or widen the token's"
+            echo "   Account Resources to include the account the Worker lives in."
+            exit 0
+          fi
+
+          echo "3. Can the token read Workers scripts on that account?"
+          w=$(api "/accounts/$CF_ACCOUNT/workers/scripts")
+          if [ "$(jq -r .success <<<"$w")" = "true" ]; then
+            echo "   yes — $(jq -r '.result | length' <<<"$w") script(s). The token has Workers access."
+          else
+            echo "   NO: $(jq -c '.errors' <<<"$w")"
+            echo "   Token is valid and scoped to the right account, so this is the"
+            echo "   missing piece: Account -> Workers Scripts -> Edit."
+          fi
+
       # What this step needs from CLOUDFLARE_API_TOKEN:
       #
       #   Account -> Workers Scripts -> Edit
