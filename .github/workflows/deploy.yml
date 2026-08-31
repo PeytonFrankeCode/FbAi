@@ -43,29 +43,31 @@ jobs:
       - name: Build SEO landing pages
         run: npm run build:pages
 
-      # Secrets are NOT pushed from here any more, and that is what unblocked
-      # deploys.
+      # What this step needs from CLOUDFLARE_API_TOKEN:
       #
-      # wrangler-action's `secrets:` input runs `wrangler secret put`, which
-      # first calls "Getting User settings..." to identify the account. That
-      # call needs User -> User Details -> Read on the API token. Adding D1
-      # permissions to the token narrowed it and dropped that scope, so every
-      # deploy from 2026-08-23 onward failed identically:
+      #   Account -> Workers Scripts -> Edit
+      #   Account -> D1 -> Edit
       #
-      #   Unable to retrieve email for this user.
-      #   Are you missing the `User->User Details->Read` permission?
-      #   Failed to upload secrets. / Action failed
+      # Every deploy from 2026-08-23 onward failed because the token lost
+      # Workers Scripts:Edit when D1 was added to it, and a token that cannot
+      # write Workers fails the very first API call:
       #
-      # Twelve deploys failed that way while the site quietly served August-23
-      # code. Nothing about pushing secrets is needed to ship a Worker, so the
-      # step that requires the extra scope is gone rather than the permission
-      # being chased: deploying now needs only what the token already has.
+      #   A request to the Cloudflare API (/accounts/.../workers/services/
+      #   the-card-huddle) failed. Authentication error [code: 10000]
       #
-      # CARD_API_KEY and SOLD_PROVIDER are already set on the Worker from
-      # earlier deploys and are untouched by this — a deploy does not clear
-      # secrets it does not mention. To rotate one, either set it in the
-      # Cloudflare dashboard, or add User Details:Read back to the token and
-      # restore the `secrets:`/`env:` block below.
+      # Read that error, not the line under it. Wrangler follows a 10000 with a
+      # generic "Are you missing the `User->User Details->Read` permission?"
+      # hint, which sent this investigation down the wrong path twice: that
+      # scope identifies the account for `wrangler secret put` and has nothing
+      # to do with why a deploy is rejected. Twelve deploys failed while the
+      # site quietly served August-23 code.
+      #
+      # Secrets are no longer pushed from here — separately worth doing, since
+      # nothing about shipping a Worker requires it, but it was not the fix.
+      # CARD_API_KEY and SOLD_PROVIDER stay set on the Worker from earlier
+      # deploys: a deploy does not clear secrets it does not mention. To rotate
+      # one, set it in the Cloudflare dashboard, or add User Details:Read to the
+      # token and restore a `secrets:`/`env:` block here.
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
