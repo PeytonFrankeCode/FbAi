@@ -69,6 +69,24 @@ const misnamed = files.filter(id => {
 check('each file\'s internal id matches its filename', misnamed.length === 0,
   misnamed.length ? misnamed.join(', ') : '');
 
+// The browser filters sets with `s.category !== checklistFilter` against tabs
+// hardcoded to these four values in index.html, and picks its AUTO/MEMO/INSERT
+// badges the same way. A set with any other category — including one of these
+// words capitalised — loads fine and then cannot be found under any tab, which
+// is what happened to all 46 sets of 2026 Bowman.
+const CATEGORIES = new Set(['base', 'autograph', 'memorabilia', 'insert']);
+const badCategory = [];
+for (const id of files) {
+  const doc = JSON.parse(fs.readFileSync(path.join(DIR, `${id}.json`), 'utf8'));
+  for (const s of doc.sets || []) {
+    if (!CATEGORIES.has(s.category)) badCategory.push(`${id} :: ${s.name} :: ${JSON.stringify(s.category)}`);
+  }
+}
+check('every set has a category the filter tabs recognise', badCategory.length === 0,
+  badCategory.length
+    ? `${badCategory.length} unreachable:\n        ${badCategory.slice(0, 5).join('\n        ')}`
+    : '');
+
 console.log('');
 if (failures) {
   console.log(`${failures} check(s) failed. Run: node scripts/rebuild-checklist-index.js`);

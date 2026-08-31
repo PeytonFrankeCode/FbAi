@@ -8,7 +8,7 @@
     {
       "id": "base",
       "name": "Base",
-      "category": "Base",
+      "category": "base",
       "totalCards": 100,
       "parallels": [
         {
@@ -522,7 +522,7 @@
     {
       "id": "base-rookies",
       "name": "Base Rookies",
-      "category": "Base",
+      "category": "base",
       "totalCards": 100,
       "parallels": [
         {
@@ -1136,7 +1136,7 @@
     {
       "id": "paper-prospects",
       "name": "Paper Prospects",
-      "category": "Prospects",
+      "category": "base",
       "totalCards": 201,
       "parallels": [
         {
@@ -2155,7 +2155,7 @@
     {
       "id": "chrome",
       "name": "Chrome",
-      "category": "Base",
+      "category": "base",
       "totalCards": 100,
       "parallels": [
         {
@@ -2669,7 +2669,7 @@
     {
       "id": "chrome-rookies",
       "name": "Chrome Rookies",
-      "category": "Base",
+      "category": "base",
       "totalCards": 100,
       "parallels": [
         {
@@ -3283,7 +3283,7 @@
     {
       "id": "chrome-prospects",
       "name": "Chrome Prospects",
-      "category": "Prospects",
+      "category": "base",
       "totalCards": 201,
       "parallels": [
         {
@@ -4302,7 +4302,7 @@
     {
       "id": "1955-all-american",
       "name": "1955 All American",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 5,
       "parallels": [
         {
@@ -4341,7 +4341,7 @@
     {
       "id": "anime-nfl",
       "name": "Anime NFL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 15,
       "parallels": [
         {
@@ -4435,7 +4435,7 @@
     {
       "id": "anime-nil",
       "name": "Anime NIL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 9,
       "parallels": [
         {
@@ -4494,7 +4494,7 @@
     {
       "id": "chrome-nfl-etched-in-glass-variation",
       "name": "Chrome NFL Etched in Glass Variation",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 15,
       "parallels": [
         {
@@ -4588,7 +4588,7 @@
     {
       "id": "chrome-nil-etched-in-glass-variation",
       "name": "Chrome NIL Etched in Glass Variation",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 15,
       "parallels": [
         {
@@ -4677,7 +4677,7 @@
     {
       "id": "chrome-retrofractor",
       "name": "Chrome RetroFractor",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 1,
       "parallels": [
         {
@@ -4696,7 +4696,7 @@
     {
       "id": "bowman-gpk-nfl",
       "name": "Bowman GPK NFL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 9,
       "parallels": [
         {
@@ -4757,7 +4757,7 @@
     {
       "id": "bowman-gpk-nil",
       "name": "Bowman GPK NIL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 7,
       "parallels": [
         {
@@ -4806,7 +4806,7 @@
     {
       "id": "bowman-spotlights-nfl",
       "name": "Bowman Spotlights NFL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 15,
       "parallels": [
         {
@@ -4901,7 +4901,7 @@
     {
       "id": "bowman-spotlights-nil",
       "name": "Bowman Spotlights NIL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 15,
       "parallels": [
         {
@@ -4990,7 +4990,7 @@
     {
       "id": "bowman-verified",
       "name": "Bowman Verified",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -5129,7 +5129,7 @@
     {
       "id": "crystallized-nfl",
       "name": "Crystallized NFL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 13,
       "parallels": [
         {
@@ -5213,7 +5213,7 @@
     {
       "id": "crystallized-nil",
       "name": "Crystallized NIL",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 12,
       "parallels": [
         {
@@ -5287,7 +5287,7 @@
     {
       "id": "gen-next",
       "name": "Gen Next",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -5426,7 +5426,7 @@
     {
       "id": "greatness-loading",
       "name": "Greatness Loading",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 20,
       "parallels": [
         {
@@ -5560,7 +5560,7 @@
     {
       "id": "hobby-stars",
       "name": "Hobby Stars",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 15,
       "parallels": [
         {
@@ -5649,7 +5649,7 @@
     {
       "id": "mega-prospects",
       "name": "Mega Prospects",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -5788,7 +5788,7 @@
     {
       "id": "mega-rookies",
       "name": "Mega Rookies",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -5952,7 +5952,7 @@
     {
       "id": "roy-favorites",
       "name": "ROY Favorites",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 20,
       "parallels": [
         {
@@ -6086,7 +6086,7 @@
     {
       "id": "rockstar-rookies",
       "name": "Rockstar Rookies",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 20,
       "parallels": [
         {
@@ -6220,7 +6220,7 @@
     {
       "id": "rookie-red-rc-variation",
       "name": "Rookie Red RC Variation",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 30,
       "parallels": [
         {
@@ -6414,7 +6414,7 @@
     {
       "id": "talent-tracker",
       "name": "Talent Tracker",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -6553,7 +6553,7 @@
     {
       "id": "very-important-prospects",
       "name": "Very Important Prospects",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -6692,7 +6692,7 @@
     {
       "id": "young-kings",
       "name": "Young Kings",
-      "category": "Insert",
+      "category": "insert",
       "totalCards": 25,
       "parallels": [
         {
@@ -6831,7 +6831,7 @@
     {
       "id": "1955-all-american-autograph-variation",
       "name": "1955 All American Autograph Variation",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 5,
       "parallels": [
         {
@@ -6870,7 +6870,7 @@
     {
       "id": "chrome-autographs",
       "name": "Chrome Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 69,
       "parallels": [
         {
@@ -7229,7 +7229,7 @@
     {
       "id": "paper-nfl-autographs",
       "name": "Paper NFL Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 162,
       "parallels": [
         {
@@ -8053,7 +8053,7 @@
     {
       "id": "chrome-rookie-autographs",
       "name": "Chrome Rookie Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 97,
       "parallels": [
         {
@@ -8649,7 +8649,7 @@
     {
       "id": "paper-rookie-autographs",
       "name": "Paper Rookie Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 95,
       "parallels": [
         {
@@ -9233,7 +9233,7 @@
     {
       "id": "chrome-prospect-autographs",
       "name": "Chrome Prospect Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 194,
       "parallels": [
         {
@@ -10217,7 +10217,7 @@
     {
       "id": "paper-prospect-autographs",
       "name": "Paper Prospect Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 193,
       "parallels": [
         {
@@ -11196,7 +11196,7 @@
     {
       "id": "dual-cross-sport-autographs",
       "name": "Dual Cross Sport Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 6,
       "parallels": [
         {
@@ -11240,7 +11240,7 @@
     {
       "id": "dual-nfl-autographs",
       "name": "Dual NFL Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 4,
       "parallels": [
         {
@@ -11276,7 +11276,7 @@
     {
       "id": "dual-nil-autographs",
       "name": "Dual NIL Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 6,
       "parallels": [
         {
@@ -11320,7 +11320,7 @@
     {
       "id": "triple-nfl-autographs",
       "name": "Triple NFL Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 6,
       "parallels": [
         {
@@ -11364,7 +11364,7 @@
     {
       "id": "triple-nil-autographs",
       "name": "Triple NIL Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 9,
       "parallels": [
         {
@@ -11423,7 +11423,7 @@
     {
       "id": "buzz-factor-autographs",
       "name": "Buzz Factor Autographs",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 21,
       "parallels": [
         {
@@ -11542,7 +11542,7 @@
     {
       "id": "future-script",
       "name": "Future Script",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 18,
       "parallels": [
         {
@@ -11646,7 +11646,7 @@
     {
       "id": "opening-statement-signatures",
       "name": "Opening Statement Signatures",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 22,
       "parallels": [
         {
@@ -11792,7 +11792,7 @@
     {
       "id": "timeless-touch-signatures",
       "name": "Timeless Touch Signatures",
-      "category": "Autographs",
+      "category": "autograph",
       "totalCards": 18,
       "parallels": [
         {
