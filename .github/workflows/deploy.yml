@@ -67,7 +67,11 @@ jobs:
           echo "1. Is the token itself valid?"
           v=$(api /user/tokens/verify)
           if [ "$(jq -r .success <<<"$v")" = "true" ]; then
-            echo "   yes — status: $(jq -r .result.status <<<"$v")"
+            # The token ID is an identifier, not a credential — it is what the
+            # dashboard puts in the URL when you open a token to edit it. It is
+            # printed so the token being edited can be matched against the one
+            # this workflow is actually using, which is otherwise unknowable.
+            echo "   yes — status: $(jq -r .result.status <<<"$v"), id: $(jq -r .result.id <<<"$v")"
           else
             echo "   NO. The token is invalid, expired, or revoked."
             echo "   $(jq -c '.errors' <<<"$v")"
@@ -82,22 +86,36 @@ jobs:
           elif jq -e --arg id "$CF_ACCOUNT" '.result[] | select(.id == $id)' >/dev/null <<<"$a"; then
             echo "   yes — $(jq -r --arg id "$CF_ACCOUNT" '.result[] | select(.id==$id) | .name' <<<"$a")"
           else
-            echo "   NO. The token is scoped to $(jq -r '.result | length' <<<"$a") account(s),"
-            echo "   none of which is the one in CLOUDFLARE_ACCOUNT_ID:"
-            jq -r '.result[] | "     - \(.name) (\(.id))"' <<<"$a"
-            echo "   Fix: point the secret at one of those, or widen the token's"
-            echo "   Account Resources to include the account the Worker lives in."
-            exit 0
+            n=$(jq -r '.result | length' <<<"$a")
+            if [ "$n" = "0" ]; then
+              echo "   NO — and it can see no account at all. Account Resources is"
+              echo "   empty, so the token grants no account access and no permission"
+              echo "   ticked on it can take effect."
+            else
+              echo "   NO. The token reaches $n account(s), none of them that one:"
+              jq -r '.result[] | "     - \(.name) (\(.id))"' <<<"$a"
+            fi
+            echo "   Fix: in the token's Account Resources, Include the account the"
+            echo "   Worker lives in — or point CLOUDFLARE_ACCOUNT_ID at one it reaches."
           fi
 
+          # Deliberately not conditional on step 2. An empty /accounts result is
+          # not quite proof on its own — it is also what a token scoped to the
+          # right account but without Account Settings:Read might return — and
+          # the two have different fixes. This call settles it: it is the same
+          # kind of account-scoped Workers request the deploy makes, so if it
+          # succeeds the /accounts result was a red herring.
           echo "3. Can the token read Workers scripts on that account?"
           w=$(api "/accounts/$CF_ACCOUNT/workers/scripts")
           if [ "$(jq -r .success <<<"$w")" = "true" ]; then
             echo "   yes — $(jq -r '.result | length' <<<"$w") script(s). The token has Workers access."
           else
             echo "   NO: $(jq -c '.errors' <<<"$w")"
-            echo "   Token is valid and scoped to the right account, so this is the"
-            echo "   missing piece: Account -> Workers Scripts -> Edit."
+            echo "   This is the call the deploy fails on. Read it together with"
+            echo "   step 2: if the account list was empty, fix the scope there"
+            echo "   first — an empty scope rejects this call whatever permissions"
+            echo "   the token carries. If step 2 passed, the missing piece is"
+            echo "   Account -> Workers Scripts -> Edit."
           fi
 
       # What this step needs from CLOUDFLARE_API_TOKEN:
@@ -105,19 +123,22 @@ jobs:
       #   Account -> Workers Scripts -> Edit
       #   Account -> D1 -> Edit
       #
-      # Every deploy from 2026-08-23 onward failed because the token lost
-      # Workers Scripts:Edit when D1 was added to it, and a token that cannot
-      # write Workers fails the very first API call:
+      # ...but permissions are only half of it. The token also has to be scoped
+      # to the account, under Account Resources. A token can carry every
+      # permission in the list and still be rejected from everything if that
+      # scope is empty, which is what happened here: the preflight above found
+      # an active token that could reach zero accounts.
+      #
+      # Wrangler shows all of it as one line:
       #
       #   A request to the Cloudflare API (/accounts/.../workers/services/
       #   the-card-huddle) failed. Authentication error [code: 10000]
       #
-      # Read that error, not the line under it. Wrangler follows a 10000 with a
-      # generic "Are you missing the `User->User Details->Read` permission?"
-      # hint, which sent this investigation down the wrong path twice: that
-      # scope identifies the account for `wrangler secret put` and has nothing
-      # to do with why a deploy is rejected. Twelve deploys failed while the
-      # site quietly served August-23 code.
+      # and then adds a "Are you missing the `User->User Details->Read`
+      # permission?" hint that is unrelated — that scope is only used by
+      # `wrangler secret put`. Fourteen deploys failed behind that one message
+      # while the site quietly served August-23 code, and the cause was guessed
+      # wrong twice before the preflight was written to just ask.
       #
       # Secrets are no longer pushed from here — separately worth doing, since
       # nothing about shipping a Worker requires it, but it was not the fix.
