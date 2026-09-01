@@ -533,6 +533,23 @@
     </div>
   </div>
 
+  <!-- Leaderboards (/stats) — the full fifty behind each home-page strip.
+       Not a nav tab: it is reached from the "See all" link on the strip it
+       expands, so adding five boards costs the navigation nothing. -->
+  <div id="stats-view" class="stats-view hidden">
+    <div class="stats-container">
+      <button class="checklist-back-btn" onclick="switchView('search')">&larr; Back</button>
+      <div class="stats-header">
+        <h2 class="stats-h2">Market leaderboards</h2>
+        <p class="stats-sub">The top 50 of each, from the eBay sales we track. Football only.</p>
+      </div>
+      <div id="stats-boards" class="stats-boards" role="tablist" aria-label="Leaderboard"></div>
+      <div id="stats-periods" class="stats-periods" role="group" aria-label="Time period"></div>
+      <p id="stats-basis" class="stats-basis"></p>
+      <div id="stats-body" class="stats-body"></div>
+    </div>
+  </div>
+
   <!-- Inventory View (/inventory) -->
   <div id="inventory-view" class="collection-view hidden">
     <div class="collection-container">

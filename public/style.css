@@ -9210,3 +9210,88 @@ body.tour-open { overflow: hidden; }
   .mb-card { grid-column: 2 / -1; }
   .mb-change { text-align: right; }
 }
+
+/* ---- Market pulse: row sections (movers, sets) ----
+   Rows rather than photo tiles. Three sections of identical tiles read as one
+   undifferentiated wall, and for a mover the number is the point, not the
+   picture. minmax(0, ...) on the name column for the same reason .mp-tiles
+   needs it: a long card name must wrap, not widen the grid into page scroll. */
+.mp-rows { display: flex; flex-direction: column; gap: 0.3rem; }
+.mp-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline; gap: 0.5rem; width: 100%; text-align: left;
+  background: rgba(148, 163, 184, 0.05); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.45rem 0.6rem; cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mp-row:hover { border-color: var(--accent); background: rgba(148, 163, 184, 0.09); }
+.mp-row-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
+.mp-row-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
+.mp-row-n { font-size: 0.78rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+
+/* Down is a direction, not an error, so it gets its own colour rather than
+   borrowing whatever the app uses for failure. */
+.mp-change { font-size: 0.8rem; font-weight: 800; white-space: nowrap; }
+.mp-change.up { color: #22c55e; }
+.mp-change.down { color: #f87171; }
+.mp-change.flat { color: var(--text-muted); }
+
+.mp-seeall {
+  margin-left: auto; background: none; border: none; cursor: pointer; padding: 0;
+  font-size: 0.66rem; font-weight: 700; color: var(--accent); white-space: nowrap;
+}
+.mp-seeall:hover { text-decoration: underline; }
+
+@media (max-width: 560px) {
+  /* The meta column is the first thing worth losing: the name and the number
+     are what the row is for. */
+  .mp-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .mp-row-meta { display: none; }
+}
+
+/* ---- Leaderboards (/stats) ---- */
+.stats-view { padding: 1rem 0 3rem; }
+.stats-container { max-width: 900px; margin: 0 auto; padding: 0 1rem; }
+.stats-header { margin: 0.5rem 0 1rem; }
+.stats-h2 { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.2rem; }
+.stats-sub { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+
+.stats-boards, .stats-periods { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
+.st-tab, .st-period {
+  background: rgba(148, 163, 184, 0.06); border: 1px solid var(--border);
+  border-radius: 999px; padding: 0.35rem 0.75rem; cursor: pointer;
+  font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
+}
+.st-tab.active, .st-period.active {
+  background: var(--accent); border-color: var(--accent); color: #0b1020;
+}
+.st-period { padding: 0.25rem 0.6rem; font-size: 0.7rem; }
+
+/* The note explaining what a board filtered out. Small, but it is the
+   difference between a ranking and a ranking you can trust. */
+.stats-basis {
+  font-size: 0.7rem; line-height: 1.5; color: var(--text-muted);
+  margin: 0 0 0.75rem; max-width: 70ch;
+}
+.stats-empty { font-size: 0.85rem; color: var(--text-muted); padding: 1.5rem 0; }
+
+.st-rows { display: flex; flex-direction: column; gap: 0.25rem; }
+.st-row {
+  display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto auto;
+  align-items: baseline; gap: 0.6rem; width: 100%; text-align: left;
+  background: rgba(148, 163, 184, 0.04); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.5rem 0.7rem; cursor: pointer;
+  text-decoration: none; transition: border-color 0.15s ease;
+}
+.st-row:hover { border-color: var(--accent); }
+.st-rank { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); }
+.st-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
+.st-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
+.st-n { font-size: 0.85rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
+
+@media (max-width: 560px) {
+  /* Rank, name and the number survive; the meta line is the one that would
+     force horizontal scroll on a phone. */
+  .st-row { grid-template-columns: 1.4rem minmax(0, 1fr) auto; }
+  .st-meta { display: none; }
+}
