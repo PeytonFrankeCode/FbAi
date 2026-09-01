@@ -4863,6 +4863,54 @@ app.get('/api/player-index', async (req, res) => {
 // `sales`, and those ride the sold_date / player indexes.
 const SOLD_STATS_TTL = 3600; // 1h — this is identical for every visitor
 const SOLD_STATS_PERIODS = [7, 30, 90, 365];
+// The home strip shows three of each; the full leaderboard shows fifty. Both
+// are served from the SAME cached payload — it is computed at fifty and sliced
+// for the strip, so opening the leaderboard costs no extra query and the two
+// views can never disagree about what is top.
+const SOLD_STATS_TOP = 50;
+
+// --- Movers: what makes this list trustworthy rather than merely computable ---
+//
+// "Biggest increase" is the single easiest statistic on this site to get wrong,
+// and it has already been got wrong once: an earlier grouping produced "2025
+// Topps Chrome Jaxson Dart" at +7,127% because sales whose parallel could not
+// be read all collapsed into one bucket, pricing a $5 base against a $500
+// patch and calling the difference a price move.
+//
+// Ranking by percentage change makes that worse, not better, because the top of
+// such a list is exactly where the noisiest estimates land. A card with two
+// sales either side can post +400% from one lucky copy, and it will outrank
+// every real mover. So the ranking is constrained before it is sorted:
+//
+//   raw only        RSI_RAW_ONLY — a PSA 10 among raw copies is not a price
+//                   move, it is a different market. Reuses the index's filter.
+//   identified      RSI_IDENTIFIED — year, set and parallel must all be
+//                   present, which is what the Jaxson Dart case was missing.
+//   both halves     at least MOVERS_MIN_HALF sales in each half of the window,
+//                   so a ratio rests on real samples on both sides.
+//   worth reporting a floor price, so a $1 -> $4 common cannot lead the board.
+//
+// What survives is a smaller list than a naive query returns. That is the point.
+const MOVERS_MIN_HALF = 5;       // sales required in EACH half of the window
+const MOVERS_MIN_CENTS = 500;    // $5 — below this, percentages stop meaning much
+const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
+const MOVERS_MIN_CARDS_PER_PLAYER = 3;
+
+// Player-level movement is NOT the average of a player's sales.
+//
+// A player's mean price moves when their expensive cards happen to trade more
+// often, which is a change in what sold, not a change in what things cost. The
+// index avoids this by comparing a card only against itself, and the same rule
+// applies here: each of the player's cards gets its own change, and the player's
+// figure is the MEDIAN of those. A player needs several qualifying cards before
+// they can appear at all, so one hot card cannot carry a whole name onto the
+// board.
+function _median(xs) {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
 
 app.get('/api/sold-stats', async (req, res) => {
   const days = SOLD_STATS_PERIODS.includes(parseInt(req.query.days, 10))
@@ -4871,26 +4919,31 @@ app.get('/api/sold-stats', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, days });
 
-  // v2: shape changed from player lists to card lists, so the key changes too
-  // rather than serving the old shape to the new UI from a warm cache.
-  const cacheKey = `soldstats:v2:${days}`;
+  // v3: gained top sets and both mover boards, and the lists grew from 3 to 50,
+  // so the key changes rather than serving the old shape to the new UI from a
+  // warm cache.
+  const cacheKey = `soldstats:v3:${days}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  // The split point for "before and after". Half the window each side, so both
+  // halves cover the same span and a ratio between them is comparing like with
+  // like.
+  const mid = new Date(Date.now() - (days / 2) * 86400000).toISOString().slice(0, 10);
   const img = await _nflHasImageColumn(db);
   const imgCol = img ? ', image_url' : '';
 
   try {
-    const [totals, priciest, mostSold] = await Promise.all([
+    const [totals, priciest, mostSold, topSets, movers] = await Promise.all([
       // Pre-aggregated: cheap regardless of how many sales the period holds.
       db.prepare('SELECT SUM(sales) AS sales, SUM(priced) AS priced, SUM(total_cents) AS total FROM daily WHERE sold_date >= ?')
         .bind(since).first(),
 
-      // Three priciest individual sales in the window.
+      // Priciest individual sales in the window.
       db.prepare(`SELECT item_id, title, price_cents, sold_date, grader, grade${imgCol}
                   FROM sales WHERE price_cents IS NOT NULL AND sold_date >= ?
-                  ORDER BY price_cents DESC LIMIT 3`).bind(since).all(),
+                  ORDER BY price_cents DESC LIMIT ?`).bind(since, SOLD_STATS_TOP).all(),
 
       // Three most-traded CARDS — grouped by card identity, not by player, so
       // "Mahomes" doesn't win by aggregating hundreds of different cards.
@@ -4910,7 +4963,44 @@ app.get('/api/sold-stats', async (req, res) => {
                   WHERE price_cents IS NOT NULL AND sold_date >= ?
                     AND confidence >= ? AND player IS NOT NULL AND player != ''
                   GROUP BY player, year, set_name, parallel, card_number
-                  ORDER BY n DESC LIMIT 3`).bind(since, NFLDB_MIN_CONFIDENCE).all(),
+                  ORDER BY n DESC LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, SOLD_STATS_TOP).all(),
+
+      // Highest demand by set: how many cards of it actually changed hands.
+      // Deliberately a count, not a price — "demand" is how much of it the
+      // market is absorbing, and a set of cheap cards trading constantly is in
+      // higher demand than a set of expensive ones that barely move. Both
+      // figures are returned so the tile can say which kind of set it is.
+      db.prepare(`SELECT year, set_name, COUNT(*) AS n,
+                         AVG(price_cents) AS avg_cents, SUM(price_cents) AS total_cents,
+                         COUNT(DISTINCT player) AS players
+                  FROM sales
+                  WHERE price_cents IS NOT NULL AND sold_date >= ?
+                    AND confidence >= ? AND COALESCE(TRIM(set_name), '') <> ''
+                  GROUP BY year, set_name
+                  ORDER BY n DESC LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, SOLD_STATS_TOP).all(),
+
+      // Every card that qualifies for the mover boards, not just the winners.
+      // The player board needs the median across a player's cards, so it needs
+      // that player's flat and falling cards too — pulling only the top gainers
+      // would compute each player's median from their best cards alone and put
+      // every name on the board in the green.
+      db.prepare(`SELECT player, year, set_name, parallel, card_number,
+                         COUNT(*) AS n,
+                         SUM(CASE WHEN sold_date >= ? THEN 1 ELSE 0 END) AS n_recent,
+                         SUM(CASE WHEN sold_date <  ? THEN 1 ELSE 0 END) AS n_older,
+                         AVG(CASE WHEN sold_date >= ? THEN price_cents END) AS recent_cents,
+                         AVG(CASE WHEN sold_date <  ? THEN price_cents END) AS older_cents,
+                         title, item_id${imgCol}
+                  FROM sales
+                  WHERE price_cents IS NOT NULL AND sold_date >= ?
+                    AND confidence >= ?
+                    AND COALESCE(TRIM(player), '') <> ''
+                    ${RSI_RAW_ONLY}${RSI_IDENTIFIED}
+                  GROUP BY player, year, set_name, parallel, card_number
+                  HAVING n_recent >= ? AND n_older >= ? AND older_cents >= ?
+                  ORDER BY n DESC LIMIT ?`)
+        .bind(mid, mid, mid, mid, since, NFLDB_MIN_CONFIDENCE,
+              MOVERS_MIN_HALF, MOVERS_MIN_HALF, MOVERS_MIN_CENTS, MOVERS_MAX_GROUPS).all(),
     ]);
 
     const gradeOf = (r) => r.grade != null
@@ -4920,6 +5010,44 @@ app.get('/api/sold-stats', async (req, res) => {
 
     const priced = (totals && totals.priced) || 0;
     const totalCents = (totals && totals.total) || 0;
+
+    // One change per card, from the halves the query already counted.
+    const moverRows = ((movers && movers.results) || []).map(r => ({
+      player: r.player,
+      name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '']
+        .filter(Boolean).join(' ').trim() || r.title,
+      sales: r.n,
+      recent: Math.round((r.recent_cents || 0) / 100),
+      older: Math.round((r.older_cents || 0) / 100),
+      changePct: Math.round(((r.recent_cents - r.older_cents) / r.older_cents) * 1000) / 10,
+      imageUrl: r.image_url || null,
+      itemUrl: linkOf(r),
+      query: [r.year, r.set_name, r.player, r.parallel].filter(Boolean).join(' ').trim() || r.title,
+    })).filter(m => Number.isFinite(m.changePct));
+
+    const byChange = (a, b) => b.changePct - a.changePct;
+
+    // Player board: median of that player's card changes, and only for players
+    // with enough qualifying cards that the median means something.
+    const byPlayer = new Map();
+    for (const m of moverRows) {
+      if (!byPlayer.has(m.player)) byPlayer.set(m.player, []);
+      byPlayer.get(m.player).push(m);
+    }
+    const playerMovers = [...byPlayer.entries()]
+      .filter(([, cards]) => cards.length >= MOVERS_MIN_CARDS_PER_PLAYER)
+      .map(([player, cards]) => ({
+        player,
+        // The median card, not the mean of the cards: one runaway card should
+        // move a player up the board, not define their number.
+        changePct: Math.round(_median(cards.map(c => c.changePct)) * 10) / 10,
+        cards: cards.length,
+        sales: cards.reduce((n, c) => n + c.sales, 0),
+        // The card carrying them, so the tile can show what actually moved.
+        topCard: cards.slice().sort(byChange)[0],
+        query: player,
+      }))
+      .sort(byChange);
 
     const payload = {
       available: priced > 0,
@@ -4955,6 +5083,30 @@ app.get('/api/sold-stats', async (req, res) => {
         // What to run when the tile is clicked.
         query: [r.year, r.set_name, r.player, r.parallel].filter(Boolean).join(' ').trim() || r.title,
       })),
+
+      topSets: ((topSets && topSets.results) || []).map(r => ({
+        name: [r.year, r.set_name].filter(Boolean).join(' ').trim(),
+        sales: r.n,
+        players: r.players,
+        avgPrice: Math.round((r.avg_cents || 0) / 100),
+        totalValue: Math.round((r.total_cents || 0) / 100),
+        query: [r.year, r.set_name].filter(Boolean).join(' ').trim(),
+      })),
+
+      cardMovers: moverRows.slice().sort(byChange).slice(0, SOLD_STATS_TOP),
+      playerMovers: playerMovers.slice(0, SOLD_STATS_TOP),
+
+      // What the mover boards were allowed to consider, so the page can say so
+      // rather than presenting a filtered ranking as the whole market.
+      moversBasis: {
+        cardsConsidered: moverRows.length,
+        playersConsidered: playerMovers.length,
+        minSalesPerHalf: MOVERS_MIN_HALF,
+        minPrice: MOVERS_MIN_CENTS / 100,
+        minCardsPerPlayer: MOVERS_MIN_CARDS_PER_PLAYER,
+        splitDate: mid,
+        rawOnly: true,
+      },
     };
 
     if (payload.available) cachePut(cacheKey, payload, SOLD_STATS_TTL);

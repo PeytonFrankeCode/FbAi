@@ -914,6 +914,24 @@ function _mpMoney(n) {
   return '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
 }
 
+// Section title -> the board it expands to. One place, so the strip and the
+// leaderboard cannot drift apart about what a section is called.
+const BOARD_OF = {
+  'Most expensive': 'priciest',
+  'Most sold': 'mostSold',
+  'Biggest movers': 'cardMovers',
+  'Players on the move': 'playerMovers',
+  'Highest demand sets': 'topSets',
+};
+
+// A signed percentage, coloured by direction. Down is not an error state, so it
+// gets its own class rather than reusing anything that reads as a failure.
+function _mpChange(pct) {
+  const n = Number(pct) || 0;
+  const cls = n > 0 ? 'up' : n < 0 ? 'down' : 'flat';
+  return '<span class="mp-change ' + cls + '">' + (n > 0 ? '+' : '') + n.toFixed(1) + '%</span>';
+}
+
 async function loadMarketPulse(days) {
   const period = Number(days) || 30;
   const wrap = document.getElementById('market-pulse');
@@ -959,12 +977,28 @@ async function loadMarketPulse(days) {
     ? '<img class="mp-tile-img" src="' + escHtml(url) + '" alt="' + escHtml(alt) + '" loading="lazy" />'
     : '<div class="mp-tile-img mp-tile-noimg"><span>&#127183;</span></div>';
 
-  const tiles = (title, sub, rows, render) => (rows && rows.length)
-    ? '<div class="mp-section">' +
-      '<div class="mp-section-head"><span class="mp-section-title">' + escHtml(title) + '</span>' +
-      '<span class="mp-section-sub">' + escHtml(sub) + '</span></div>' +
-      '<div class="mp-tiles">' + rows.map(render).join('') + '</div></div>'
+  // The strip shows three; the payload holds fifty. Every section head carries
+  // the way through to the rest rather than making the strip the whole story.
+  const HOME_N = 3;
+  const head = (title, sub, board, total) =>
+    '<div class="mp-section-head"><span class="mp-section-title">' + escHtml(title) + '</span>' +
+    '<span class="mp-section-sub">' + escHtml(sub) + '</span>' +
+    (total > HOME_N
+      ? '<button class="mp-seeall" data-board="' + escHtml(board) + '">See all ' + total + ' &rarr;</button>'
+      : '') +
+    '</div>';
+
+  const section = (cls) => (title, sub, board, list, render) => (list && list.length)
+    ? '<div class="mp-section">' + head(title, sub, board, list.length) +
+      '<div class="' + cls + '">' + list.slice(0, HOME_N).map(render).join('') + '</div></div>'
     : '';
+  const tilesFor = section('mp-tiles');
+  const rowsFor = section('mp-rows');
+  // Kept in the original argument order the two existing calls use.
+  const tiles = (title, sub, list, render) =>
+    tilesFor(title, sub, title === 'Most sold' ? 'mostSold' : 'priciest', list, render);
+  const rows = (title, sub, list, render) =>
+    rowsFor(title, sub, BOARD_OF[title], list, render);
 
   parts.push(tiles('Most expensive', label, data.priciest, (r) =>
     '<a class="mp-tile" href="' + escHtml(r.itemUrl) + '" target="_blank" rel="noopener">' +
@@ -982,10 +1016,32 @@ async function loadMarketPulse(days) {
     '<span class="mp-tile-meta">' + _mpMoney(r.avgPrice) + ' avg &middot; ' + _mpMoney(r.topPrice) + ' high</span>' +
     '</button>'));
 
+  // Cards and players that moved. Rows rather than photo tiles: the number is
+  // the point here, and five sections of identical tiles would read as one
+  // undifferentiated wall.
+  parts.push(rows('Biggest movers', 'cards, raw only', data.cardMovers, (r) =>
+    '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
+    '<span class="mp-row-name">' + escHtml(String(r.name).slice(0, 60)) + '</span>' +
+    '<span class="mp-row-meta">' + _mpMoney(r.older) + ' &rarr; ' + _mpMoney(r.recent) + '</span>' +
+    _mpChange(r.changePct) + '</button>'));
+
+  parts.push(rows('Players on the move', 'median of their cards', data.playerMovers, (r) =>
+    '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
+    '<span class="mp-row-name">' + escHtml(r.player) + '</span>' +
+    '<span class="mp-row-meta">' + r.cards + ' cards</span>' +
+    _mpChange(r.changePct) + '</button>'));
+
+  parts.push(rows('Highest demand sets', 'by cards sold', data.topSets, (r) =>
+    '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
+    '<span class="mp-row-name">' + escHtml(r.name) + '</span>' +
+    '<span class="mp-row-meta">' + _mpMoney(r.avgPrice) + ' avg</span>' +
+    '<span class="mp-row-n">' + r.sales.toLocaleString('en-US') + ' sold</span>' +
+    '</button>'));
+
   body.innerHTML = parts.join('');
 
-  // Most-sold tiles run that search — the panel is a way in, not a dead end.
-  body.querySelectorAll('.mp-tile[data-query]').forEach(btn => {
+  // Tiles and rows run that search — the panel is a way in, not a dead end.
+  body.querySelectorAll('[data-query]').forEach(btn => {
     btn.addEventListener('click', () => {
       const q = btn.dataset.query;
       if (!q) return;
@@ -994,6 +1050,130 @@ async function loadMarketPulse(days) {
       fetchDirectSearch(q);
     });
   });
+
+  body.querySelectorAll('.mp-seeall').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // The button sits inside the section head, not inside a tile, but stop
+      // the event anyway so a future layout change cannot turn "see all" into
+      // "run a search".
+      e.stopPropagation();
+      _statsBoard = btn.dataset.board;
+      _statsDays = period;
+      switchView('stats');
+    });
+  });
+}
+
+// ---- Leaderboards (/stats) ----
+// Same payload as the home strip, sliced at fifty instead of three. Nothing is
+// fetched twice: loadMarketPulse caches by period and this reads that cache.
+const STATS_BOARDS = [
+  ['mostSold', 'Most sold'],
+  ['cardMovers', 'Biggest movers'],
+  ['playerMovers', 'Players on the move'],
+  ['topSets', 'Highest demand sets'],
+  ['priciest', 'Most expensive'],
+];
+let _statsBoard = 'mostSold';
+let _statsDays = 30;
+
+function _statsRow(board, r, i) {
+  const rank = '<span class="st-rank">' + (i + 1) + '</span>';
+  const q = r.query ? ' data-query="' + escHtml(r.query) + '"' : '';
+  const open = '<button class="st-row"' + q + '>' + rank;
+
+  if (board === 'priciest') {
+    return '<a class="st-row" href="' + escHtml(r.itemUrl) + '" target="_blank" rel="noopener">' + rank +
+      '<span class="st-name">' + escHtml(String(r.title).slice(0, 90)) + '</span>' +
+      '<span class="st-meta">' + escHtml(r.grade || 'raw') + '</span>' +
+      '<span class="st-n">' + _mpMoney(r.price) + '</span></a>';
+  }
+  if (board === 'mostSold') {
+    return open +
+      '<span class="st-name">' + escHtml(String(r.name).slice(0, 90)) + '</span>' +
+      '<span class="st-meta">' + _mpMoney(r.avgPrice) + ' avg &middot; ' + _mpMoney(r.topPrice) + ' high</span>' +
+      '<span class="st-n">' + r.sales.toLocaleString('en-US') + ' sold</span></button>';
+  }
+  if (board === 'cardMovers') {
+    return open +
+      '<span class="st-name">' + escHtml(String(r.name).slice(0, 90)) + '</span>' +
+      '<span class="st-meta">' + _mpMoney(r.older) + ' &rarr; ' + _mpMoney(r.recent) +
+      ' &middot; ' + r.sales + ' sales</span>' + _mpChange(r.changePct) + '</button>';
+  }
+  if (board === 'playerMovers') {
+    return open +
+      '<span class="st-name">' + escHtml(r.player) + '</span>' +
+      '<span class="st-meta">' + r.cards + ' cards &middot; ' + r.sales.toLocaleString('en-US') + ' sales' +
+      (r.topCard ? ' &middot; top: ' + escHtml(String(r.topCard.name).slice(0, 46)) : '') +
+      '</span>' + _mpChange(r.changePct) + '</button>';
+  }
+  return open +
+    '<span class="st-name">' + escHtml(r.name) + '</span>' +
+    '<span class="st-meta">' + _mpMoney(r.avgPrice) + ' avg &middot; ' + r.players.toLocaleString('en-US') + ' players</span>' +
+    '<span class="st-n">' + r.sales.toLocaleString('en-US') + ' sold</span></button>';
+}
+
+async function initStatsView() {
+  const boardsEl = document.getElementById('stats-boards');
+  const periodsEl = document.getElementById('stats-periods');
+  const bodyEl = document.getElementById('stats-body');
+  const basisEl = document.getElementById('stats-basis');
+  if (!boardsEl || !bodyEl) return;
+
+  boardsEl.innerHTML = STATS_BOARDS.map(([id, label]) =>
+    '<button class="st-tab' + (id === _statsBoard ? ' active' : '') + '" data-board="' + id + '" role="tab"' +
+    ' aria-selected="' + (id === _statsBoard) + '">' + escHtml(label) + '</button>').join('');
+  periodsEl.innerHTML = [7, 30, 90, 365].map(d =>
+    '<button class="st-period' + (d === _statsDays ? ' active' : '') + '" data-days="' + d + '">' +
+    (d === 365 ? '1y' : d + 'd') + '</button>').join('');
+
+  bodyEl.innerHTML = '<div class="mp-loading">Loading…</div>';
+  let data = _mpLoaded[_statsDays];
+  if (!data) {
+    try {
+      const res = await fetch(`/api/sold-stats?days=${_statsDays}`, { cache: 'no-store' });
+      data = await safeJson(res);
+      if (data && data.available) _mpLoaded[_statsDays] = data;
+    } catch (_) { data = null; }
+  }
+
+  const list = (data && data[_statsBoard]) || [];
+  if (!list.length) {
+    bodyEl.innerHTML = '<p class="stats-empty">Nothing to show for this period yet.</p>';
+  } else {
+    bodyEl.innerHTML = '<div class="st-rows">' + list.map((r, i) => _statsRow(_statsBoard, r, i)).join('') + '</div>';
+  }
+
+  // Say what a board measured, so a filtered ranking is not read as the whole
+  // market. Only the mover boards are filtered, so only they carry the note.
+  const b = data && data.moversBasis;
+  if (basisEl) {
+    const movers = _statsBoard === 'cardMovers' || _statsBoard === 'playerMovers';
+    basisEl.textContent = (movers && b)
+      ? `Raw (ungraded) sales only, split at ${b.splitDate}. A card needs ${b.minSalesPerHalf}+ sales `
+        + `on each side and an average above $${b.minPrice} to qualify` +
+        (_statsBoard === 'playerMovers'
+          ? `; a player needs ${b.minCardsPerPlayer}+ such cards, and their figure is the median of them. `
+          : '. ') +
+        `${b.cardsConsidered.toLocaleString('en-US')} cards cleared that bar.`
+      : '';
+    basisEl.classList.toggle('hidden', !basisEl.textContent);
+  }
+
+  bodyEl.querySelectorAll('[data-query]').forEach(el => {
+    el.addEventListener('click', () => {
+      const q = el.dataset.query;
+      if (!q) return;
+      switchView('search');
+      input.value = q;
+      addRecentSearch(q);
+      fetchDirectSearch(q);
+    });
+  });
+  boardsEl.querySelectorAll('.st-tab').forEach(t =>
+    t.addEventListener('click', () => { _statsBoard = t.dataset.board; initStatsView(); }));
+  periodsEl.querySelectorAll('.st-period').forEach(t =>
+    t.addEventListener('click', () => { _statsDays = Number(t.dataset.days); initStatsView(); }));
 }
 
 document.querySelectorAll('.mp-period').forEach(btn => {
@@ -3649,6 +3829,7 @@ function switchView(view) {
   const floorView = document.getElementById('floor-view');
   const inventoryView = document.getElementById('inventory-view');
   const marketView = document.getElementById('market-view');
+  const statsView = document.getElementById('stats-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -3663,6 +3844,7 @@ function switchView(view) {
   if (floorView) floorView.classList.add('hidden');
   if (inventoryView) inventoryView.classList.add('hidden');
   if (marketView) marketView.classList.add('hidden');
+  if (statsView) statsView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
   // The Floor runs an animation loop; pause it whenever we leave the tab.
   if (typeof stopFloor === 'function') stopFloor();
@@ -3698,6 +3880,11 @@ function switchView(view) {
       marketView.classList.remove('hidden');
       initMarketView();
     }
+  } else if (view === 'stats') {
+    if (statsView) {
+      statsView.classList.remove('hidden');
+      initStatsView();
+    }
   } else {
     // Search top-tab. Show the subtab strip and either the main search
     // panel or the Grading Advisor panel based on the (optional) sub.
@@ -3705,15 +3892,17 @@ function switchView(view) {
     switchSearchSub(searchSub || 'search');
   }
 
-  // Keep the URL in sync with the Inventory page (/inventory is a real,
-  // shareable path — the SPA fallback serves index.html for it). Every other
-  // view lives at the root path.
+  // Keep the URL in sync with the views that have a real, shareable path
+  // (/inventory and /stats — the SPA fallback serves index.html for both).
+  // Every other view lives at the root path.
+  const PATH_VIEWS = { inventory: '/inventory', stats: '/stats' };
   try {
     const path = window.location.pathname;
-    if (view === 'inventory' && path !== '/inventory') {
-      window.history.replaceState({}, '', '/inventory' + window.location.search);
-    } else if (view !== 'inventory' && path === '/inventory') {
-      window.history.replaceState({}, '', '/' + window.location.search);
+    const want = PATH_VIEWS[view] || '/';
+    // Only rewrite when leaving or entering one of these, so a deep link into
+    // some other path is not clobbered on every tab switch.
+    if (path !== want && (PATH_VIEWS[view] || Object.values(PATH_VIEWS).includes(path))) {
+      window.history.replaceState({}, '', want + window.location.search);
     }
   } catch (_) { /* history API unavailable */ }
 }
@@ -14148,3 +14337,16 @@ async function _caLoadForSale(itemId) {
 document.querySelectorAll('.ca-tab').forEach(btn => {
   btn.addEventListener('click', () => _caSetTab(btn.dataset.catab));
 });
+
+// ---- Open the view the URL actually asks for ----
+// /inventory and /stats are served index.html by the SPA fallback, so without
+// this the app boots on Search and then rewrites the address bar back to "/" —
+// a shared link silently landing somewhere else. The paths were already
+// described in switchView as "real, shareable"; this is what makes that true.
+(function bootFromPath() {
+  try {
+    const routes = { '/inventory': 'inventory', '/stats': 'stats' };
+    const view = routes[window.location.pathname.replace(/\/+$/, '') || '/'];
+    if (view) switchView(view);
+  } catch (_) { /* leave the default view alone */ }
+})();
