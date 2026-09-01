@@ -559,8 +559,30 @@ export default {
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
+        //
+        // Hourly, not every tick, because D1 bills rows written and the free
+        // tier allows 100,000 a day. This cron fires every 15 minutes, so at
+        // ALIAS_BACKFILL_BATCH = 1200 the backfill alone wrote
+        //
+        //   1200 x 96 = 115,200 rows/day
+        //
+        // which is over the limit before a single sale is ingested — and
+        // Cloudflare counts index updates too, so the real figure was higher
+        // again. That is what took the account over and made D1 refuse writes.
+        // Once an hour is 1200 x 24 = 28,800, which leaves the ingestion the
+        // rest of the budget. The only cost is that the initial fill takes
+        // longer, and the index simply keeps its old grouping until then.
+        //
+        // The gate is the scheduled time rather than stored state: it needs no
+        // read, cannot drift, and a missed tick is picked up an hour later.
+        const scheduledAt = new Date(event.scheduledTime || Date.now());
+        const aliasTick = scheduledAt.getUTCMinutes() < 15;
         if (typeof backfillPlayerAliases === 'function') {
-          await backfillPlayerAliases().catch(err => console.error('[Cron] alias backfill failed:', err && err.message || err));
+          // Skipped ticks are deliberately silent — logging four times an hour
+          // about work not done is how real signal gets lost.
+          if (aliasTick) {
+            await backfillPlayerAliases().catch(err => console.error('[Cron] alias backfill failed:', err && err.message || err));
+          }
         } else {
           // Silence here once cost a day of the alias table never being
           // created: the job was exported from server.js and called below, but
