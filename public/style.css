@@ -3693,6 +3693,20 @@ footer::before {
   color: var(--text-primary);
   margin-bottom: 1rem;
 }
+/* Sits between the product name and the search box, so it is read before
+   anyone starts looking for parallels that are not there yet. Deliberately
+   quiet — an advisory, not an error. */
+.checklist-product-note {
+  margin: -0.5rem 0 1rem;
+  padding: 0.6rem 0.8rem;
+  border-left: 3px solid var(--accent, #d4a017);
+  border-radius: 4px;
+  background: var(--bg-secondary, rgba(212, 160, 23, 0.08));
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  max-width: 70ch;
+}
 .checklist-search-wrap {
   margin-bottom: 1rem;
   max-width: 500px;

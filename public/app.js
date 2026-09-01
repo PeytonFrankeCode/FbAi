@@ -1389,10 +1389,10 @@ async function loadQueryEstimate(query) {
 // announcement shows it to everyone again instead of staying hidden for
 // anyone who ever dismissed one.
 const BANNER = {
-  id: '2026-bowman',
+  id: '2026-bowman-university',
   // What clicking it does. A checklist deep-link, so this stays in the SPA
   // rather than reloading the page.
-  productId: '2026-bowman-football',
+  productId: '2026-bowman-university-football',
 };
 
 function bannerDismissed() {
@@ -6526,6 +6526,12 @@ async function loadProduct(productId) {
   try {
     checklistData = await fetchChecklistProduct(productId);
     checklistProductName.textContent = checklistData.name;
+    // textContent, not innerHTML: the note is data, and data is never markup.
+    const noteEl = document.getElementById('checklist-product-note');
+    if (noteEl) {
+      noteEl.textContent = checklistData.note || '';
+      noteEl.classList.toggle('hidden', !checklistData.note);
+    }
     checklistFilter = 'all';
     checklistTeamFilter = '';
     checklistVariantFilters = {};

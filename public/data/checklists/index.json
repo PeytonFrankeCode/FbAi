@@ -1,17 +1,17 @@
 {
   "products": [
     {
-      "id": "2026-bowman-football",
-      "name": "2026 Bowman Football",
+      "id": "2026-bowman-university-football",
+      "name": "2026 Bowman University Football",
       "year": 2026,
-      "brand": "Bowman",
+      "brand": "Bowman University",
       "sport": "Football",
       "setCount": 46,
       "totalCards": 2138
     },
     {
       "id": "2026-topps-football",
-      "name": "2026 Topps Flagship",
+      "name": "2026 Topps Flagship Football",
       "year": 2026,
       "brand": "Topps",
       "sport": "Football",

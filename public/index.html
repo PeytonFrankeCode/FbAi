@@ -426,6 +426,11 @@
       <div id="checklist-browser" class="checklist-browser hidden">
         <button class="checklist-back-btn" onclick="checklistBack()">&larr; All Checklists</button>
         <h2 id="checklist-product-name" class="checklist-product-name"></h2>
+        <!-- Filled from the product's `note` field, hidden when it has none.
+             For checklists published before the full card details are known —
+             a card that shows no parallels should say why, rather than letting
+             the absence read as "this card has none". -->
+        <p id="checklist-product-note" class="checklist-product-note hidden"></p>
 
         <!-- Search within checklist -->
         <div class="checklist-search-wrap">
