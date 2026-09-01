@@ -45,18 +45,31 @@ check('every index entry has a checklist file', dangling.length === 0,
 // stale one is wrong on screen. totalCards is the sum of each set's declared
 // totalCards, not the number of rows in cards[] — a published checklist is the
 // authority on how big a set is, and a transcription of it may be incomplete.
+// Every field, not only the counts. The first version of this test compared
+// setCount and totalCards alone, and a product renamed in its file but not in
+// the index passed it — the product list would keep showing the old name with
+// no test objecting. Name, year, brand and sport are all rendered from the
+// index before any product file is fetched, so all of them can go stale.
 const wrong = [];
 for (const p of entries) {
   if (!onDisk.has(p.id)) continue;
   const doc = JSON.parse(fs.readFileSync(path.join(DIR, `${p.id}.json`), 'utf8'));
   const sets = doc.sets || [];
-  const setCount = sets.length;
-  const totalCards = sets.reduce((n, s) => n + (Number(s.totalCards) || (s.cards || []).length), 0);
-  if (p.setCount !== setCount || p.totalCards !== totalCards) {
-    wrong.push(`${p.id}: index says ${p.setCount}/${p.totalCards}, file has ${setCount}/${totalCards}`);
+  const expected = {
+    name: doc.name,
+    year: doc.year,
+    brand: doc.brand,
+    sport: doc.sport,
+    setCount: sets.length,
+    totalCards: sets.reduce((n, s) => n + (Number(s.totalCards) || (s.cards || []).length), 0),
+  };
+  for (const [field, want] of Object.entries(expected)) {
+    if (p[field] !== want) {
+      wrong.push(`${p.id}.${field}: index has ${JSON.stringify(p[field])}, file has ${JSON.stringify(want)}`);
+    }
   }
 }
-check('index counts match the files', wrong.length === 0,
+check('index entries match the files field for field', wrong.length === 0,
   wrong.length ? `${wrong.length} stale:\n        ${wrong.slice(0, 5).join('\n        ')}` : '');
 
 // A file whose internal id disagrees with its name would be fetched by name and
