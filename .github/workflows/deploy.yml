@@ -43,6 +43,15 @@ jobs:
       - name: Build SEO landing pages
         run: npm run build:pages
 
+      # Must run after build:pages, which regenerates the checklist index the
+      # stamp hashes. The service worker keys its caches on this version, and it
+      # sat at 'v1' for 137 commits — so returning visitors kept whatever app.js
+      # and checklist index they first downloaded, indefinitely. Computing it
+      # from content rather than trusting someone to remember is the fix; an
+      # unchanged deploy produces the same stamp and evicts nobody.
+      - name: Stamp the service worker cache version
+        run: npm run build:sw
+
       # Ask Cloudflare what the token can actually do, before wrangler tries.
       #
       # Wrangler reports every rejection as "Authentication error [code: 10000]"

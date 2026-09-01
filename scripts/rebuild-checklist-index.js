@@ -77,17 +77,22 @@ function main() {
   for (const id of added) console.log(`  + ${id} — had a file but no index entry`);
   for (const id of dropped) console.log(`  - ${id} — had an index entry but no file`);
 
-  // Counts drift too, quietly: an index entry can name a real file and still
-  // report a stale totalCards if the file was edited without the entry.
+  // Fields drift quietly: an index entry can name a real file and still carry a
+  // stale count, or a stale name after the product was renamed. Every field is
+  // compared, not just the counts — reporting "already correct" after a rename
+  // is how a rename gets believed and never checked.
+  const FIELDS = ['name', 'year', 'brand', 'sport', 'setCount', 'totalCards'];
   const byId = new Map((current && current.products || []).map(p => [p.id, p]));
-  const restated = built.products.filter(p => {
+  const restated = [];
+  for (const p of built.products) {
     const was = byId.get(p.id);
-    return was && (was.setCount !== p.setCount || was.totalCards !== p.totalCards);
-  });
-  for (const p of restated) {
-    const was = byId.get(p.id);
-    console.log(`  ~ ${p.id} — ${was.setCount}/${was.totalCards} counted as `
-      + `${p.setCount}/${p.totalCards}`);
+    if (!was) continue;
+    const diffs = FIELDS.filter(f => was[f] !== p[f]);
+    if (diffs.length) restated.push({ id: p.id, diffs, was, now: p });
+  }
+  for (const r of restated) {
+    const detail = r.diffs.map(f => `${f}: ${JSON.stringify(r.was[f])} -> ${JSON.stringify(r.now[f])}`);
+    console.log(`  ~ ${r.id} — ${detail.join(', ')}`);
   }
 
   const drifted = added.length + dropped.length + restated.length;
