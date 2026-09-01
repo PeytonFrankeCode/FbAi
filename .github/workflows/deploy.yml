@@ -118,6 +118,26 @@ jobs:
             echo "   Account -> Workers Scripts -> Edit."
           fi
 
+          # D1 is not used by this workflow, so this check cannot fail the
+          # deploy and is not here for the deploy's benefit.
+          #
+          # CLOUDFLARE_API_TOKEN is shared: fingerprint.yml runs `wrangler d1
+          # execute --remote` with the same secret. A token rotated to fix a
+          # deploy is easy to create from the "Edit Cloudflare Workers"
+          # template, which covers Workers and not D1 — so the deploy goes green
+          # and the photo job breaks, on a schedule nobody is watching, with the
+          # cause weeks behind by the time it surfaces. Checking it here is the
+          # only moment someone is actually looking.
+          echo "4. Can the token reach D1? (not used here — fingerprint.yml needs it)"
+          d=$(api "/accounts/$CF_ACCOUNT/d1/database")
+          if [ "$(jq -r .success <<<"$d")" = "true" ]; then
+            echo "   yes — $(jq -r '.result | length' <<<"$d") database(s)."
+          else
+            echo "   NO: $(jq -c '.errors' <<<"$d")"
+            echo "   This deploy is unaffected, but fingerprint.yml will fail."
+            echo "   Fix: add Account -> D1 -> Edit to the same token."
+          fi
+
       # What this step needs from CLOUDFLARE_API_TOKEN:
       #
       #   Account -> Workers Scripts -> Edit
