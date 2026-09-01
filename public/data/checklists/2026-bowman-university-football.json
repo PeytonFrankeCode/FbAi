@@ -1,8 +1,8 @@
 {
-  "id": "2026-bowman-football",
-  "name": "2026 Bowman Football",
+  "id": "2026-bowman-university-football",
+  "name": "2026 Bowman University Football",
   "year": 2026,
-  "brand": "Bowman",
+  "brand": "Bowman University",
   "sport": "Football",
   "sets": [
     {
@@ -11893,5 +11893,6 @@
         }
       ]
     }
-  ]
+  ],
+  "note": "Parallels for this product have not been announced yet, and some sets may not have any. Card numbers and names are final; parallel lists will be added as Topps publishes them."
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Turn the 2026 Bowman Football checklist as Topps publishes it into the
-// checklist JSON the site reads.
+// Turn the 2026 Bowman University Football checklist as Topps publishes it into
+// the checklist JSON the site reads.
 //
 // Kept as a script rather than a hand-typed JSON file because the source is
 // ~1,900 rows: transcribing that by hand guarantees silent errors, and errors
@@ -27,7 +27,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const OUT = path.join(__dirname, '..', 'public', 'data', 'checklists', '2026-bowman-football.json');
+const OUT = path.join(__dirname, '..', 'public', 'data', 'checklists', '2026-bowman-university-football.json');
 
 // Section header -> the set it opens. Anything not listed is ignored, which is
 // how the prose header and the odds disclaimer stay out of the data.
@@ -168,11 +168,19 @@ function main() {
   const { sets, notes } = parse(fs.readFileSync(file, 'utf8'));
 
   const doc = {
-    id: '2026-bowman-football',
-    name: '2026 Bowman Football',
+    id: '2026-bowman-university-football',
+    name: '2026 Bowman University Football',
     year: 2026,
-    brand: 'Bowman',
+    brand: 'Bowman University',
     sport: 'Football',
+    // Shown above the set list. Every set here carries a single placeholder
+    // 'Base' parallel because the published checklist does not list parallels
+    // yet — so without this, a card showing no parallels reads as a card that
+    // has none, which is a stronger claim than we can make. Remove it once
+    // Topps publishes the parallel lists and they are parsed in.
+    note: 'Parallels for this product have not been announced yet, and some sets '
+      + 'may not have any. Card numbers and names are final; parallel lists will '
+      + 'be added as Topps publishes them.',
     sets: sets.map(s => ({
       id: s.id,
       name: s.name,
