@@ -851,7 +851,7 @@ function mapNflDbSale(r) {
 // and keeps the existing downstream filters meaningful.
 async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const db = getNflDb();
-  if (!db) return { results: [], total: 0, unavailable: true };
+  if (!db) return { results: [], total: 0, unavailable: true, reason: 'no-d1-binding' };
 
   // Serial stamps are handled by the callers' print-run logic, not by matching
   // "/5" as a title substring.
@@ -886,7 +886,7 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     // A query failure must never take sold search down — fall through to the
     // paid providers instead.
     console.error('[NflCardDB] query failed:', err && err.message);
-    return { results: [], total: 0, unavailable: true };
+    return { results: [], total: 0, unavailable: true, reason: `query-failed: ${err && err.message}` };
   }
 }
 
@@ -1476,11 +1476,23 @@ function isProUser(username) {
 // degrades gracefully — no crashes, one consistent message — instead of
 // pretending sold search still works.
 const SOLD_UNAVAILABLE_MSG = 'Sold price data is temporarily unavailable. Use For Sale mode for live listings in the meantime.';
-function sendSoldUnavailable(res) {
+function sendSoldUnavailable(res, reason) {
   // HTTP 200 (not an error status) so the frontend's graceful "sold unavailable"
   // handlers run — they read the body after an `if (!res.ok) throw` guard, the
   // same way the old rateLimited path was delivered.
-  return res.json({ results: [], total: 0, soldUnavailable: true, error: SOLD_UNAVAILABLE_MSG });
+  //
+  // `reason` carries WHICH of the causes fired, separately from the sentence
+  // shown to users. Three different faults reach this one message — the D1
+  // binding missing, a query throwing, and the table being empty — and each has
+  // a different fix. Collapsing them cost real time when the site reported
+  // "sold unavailable" during a D1 incident and there was no way to tell from
+  // the outside whether the two were related. It is not rendered; it is there
+  // so a single curl can answer the question.
+  return res.json({
+    results: [], total: 0, soldUnavailable: true,
+    error: SOLD_UNAVAILABLE_MSG,
+    reason: reason || 'unspecified',
+  });
 }
 
 // Every sold-backed feature shares two provider states: no usable key, and the
@@ -1489,7 +1501,10 @@ function sendSoldUnavailable(res) {
 function sendIfSoldBlocked(res, ...responses) {
   const blocked = responses.find(r => r && (r.soldUnavailable || r.rateLimited));
   if (!blocked) return false;
-  if (blocked.soldUnavailable) { sendSoldUnavailable(res); return true; }
+  // Pass the specific cause through rather than discarding it here — this
+  // helper is the only thing standing between the caller's diagnosis and the
+  // user, and it used to drop it.
+  if (blocked.soldUnavailable) { sendSoldUnavailable(res, blocked.reason || blocked.error); return true; }
   res.json({
     results: [], total: 0, rateLimited: true,
     error: blocked.rateLimitMessage,
@@ -1525,7 +1540,8 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
       // paid provider's quota on the miss.
       if (SOLD_PROVIDER === 'nflcarddb') {
         if (own.unavailable) {
-          return { results: [], total: 0, soldUnavailable: true, error: 'The football sold-price database is not connected yet.' };
+          return { results: [], total: 0, soldUnavailable: true, reason: own.reason || 'd1-unavailable',
+                   error: 'The football sold-price database is not connected yet.' };
         }
         // The query worked but matched nothing. That reads identically whether
         // the card genuinely has no sales or the import never ran, so check
@@ -1533,7 +1549,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
         const empty = await _nflDbIsEmpty();
         if (empty) {
           return {
-            results: [], total: 0, soldUnavailable: true,
+            results: [], total: 0, soldUnavailable: true, reason: 'sales-table-empty',
             error: 'The football sold-price database is connected but has no rows yet — run the import.',
           };
         }
@@ -3001,7 +3017,15 @@ async function _photoEnsure(db) {
 }
 
 const ALIAS_TABLE = 'player_alias';
-const ALIAS_BACKFILL_BATCH = 1200;  // variants resolved per cron run
+// Variants resolved per cron run. Sized against D1's free-tier write budget,
+// not against how fast the table could fill: the cron runs this hourly, so this
+// number times 24 is the rows/day it costs, and cron-wiring.test.js fails the
+// build if that product leaves the Worker more than a quarter of the 100,000/day
+// allowance. The sales ingestion writes to the same database and needs the rest.
+//
+// It was 1200 on every 15-minute tick — 115,200 rows/day — which exceeded the
+// whole daily allowance on its own and is what took the account over.
+const ALIAS_BACKFILL_BATCH = 1000;
 // Coverage, not a row count. The join is an inner one, so a name with no alias
 // row drops out of the index entirely — grouping on a half-filled table would
 // not break the index, it would quietly shrink the market to whatever had been
