@@ -489,7 +489,7 @@ export default {
           try {
             const resp = await env.ASSETS.fetch(request);
             // Never let HTML (index.html + the SPA fallback) be cached: it
-            // carries the ?v= references to app.js/floor.js/style.css, so a
+            // carries the ?v= references to app.js/style.css, so a
             // stale copy pins the browser to old code and silently swallows
             // every deploy. The public/_headers no-cache rule is NOT reliably
             // applied when assets are fetched through the worker binding
