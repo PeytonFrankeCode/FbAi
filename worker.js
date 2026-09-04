@@ -422,6 +422,28 @@ export default {
     try {
       const url = new URL(request.url);
 
+      // Canonical host: www -> apex, keeping the path and query.
+      //
+      // This is a backstop, not the primary mechanism. Cloudflare Redirect
+      // Rules run ahead of Workers, so when the dashboard rule fires the
+      // request never reaches this line. It exists for when it doesn't:
+      // www.thecardhuddle.com/ads.txt did not serve the file while the apex
+      // did, which is the signature of a redirect that drops the path — every
+      // www URL landing on the homepage. AdSense reads that as a missing
+      // ads.txt, and every deep link shared with a www prefix silently goes to
+      // the front page instead of the thing it named.
+      //
+      // The apex is derived from the request host rather than SITE_URL so this
+      // behaves the same on a preview deployment as in production.
+      //
+      // 301 for GET/HEAD; 308 for anything else, because a 301 lets the client
+      // turn a POST into a GET and silently drop its body.
+      if (url.hostname.startsWith('www.')) {
+        url.hostname = url.hostname.slice(4);
+        const permanent = (request.method === 'GET' || request.method === 'HEAD') ? 301 : 308;
+        return Response.redirect(url.toString(), permanent);
+      }
+
       // Live presence WebSocket for The Floor — upgrade goes straight to the
       // single global FloorRoom Durable Object, bypassing the Express path
       // (Express can't speak the WebSocket upgrade protocol).
