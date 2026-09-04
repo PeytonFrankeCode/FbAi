@@ -75,5 +75,45 @@ if (endBody) {
         shadowed ? 'defines its own status() — Express assigns statusCode, check it propagates' : 'left to Express');
 }
 
+// ---- Canonical host ----
+//
+// www.thecardhuddle.com/ads.txt did not serve the file while the apex did.
+// That is the signature of a redirect that drops the path: every www URL
+// lands on the homepage. AdSense reads that as a missing ads.txt, and any
+// deep link shared with a www prefix goes to the front page instead of the
+// page it named.
+//
+// Cloudflare Redirect Rules run ahead of Workers, so this branch is a backstop
+// for when the dashboard rule does not fire. Two properties matter, and both
+// are easy to break in a rewrite.
+{
+  const start = src.indexOf('url.hostname.startsWith(\'www.\')');
+  check('the worker canonicalises www to the apex', start !== -1,
+        start === -1 ? 'no www branch — www is left to the dashboard rule alone' : '');
+
+  if (start !== -1) {
+    // It must run before anything that answers a request, or it only applies to
+    // whichever paths happen to fall through to it.
+    const assetsAt = src.indexOf('env.ASSETS.fetch(request)');
+    check('  ...before any route is served',
+          assetsAt === -1 || start < assetsAt,
+          start < assetsAt ? 'redirect precedes the ASSETS delegation' : 'runs too late to cover every path');
+
+    const branch = src.slice(start, start + 600);
+    // Redirecting to a bare SITE_URL is the bug this exists to prevent: it
+    // sends every www URL to the homepage, which is what the dashboard rule
+    // appears to be doing.
+    check('  ...preserving the path rather than sending everything to /',
+          /url\.toString\(\)/.test(branch) && !/SITE_URL/.test(branch),
+          /SITE_URL/.test(branch) ? 'redirects to SITE_URL — drops the path' : 'rebuilds the same URL on the apex host');
+
+    // A 301 permits a client to replay a POST as a GET, silently dropping the
+    // body. Non-idempotent methods need 308.
+    check('  ...and not turning a POST into a GET',
+          /308/.test(branch),
+          /308/.test(branch) ? '301 for GET/HEAD, 308 otherwise' : 'no 308 — a 301 lets a POST body vanish');
+  }
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall worker-status checks passed');
 process.exit(failures ? 1 : 0);
