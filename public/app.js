@@ -3791,7 +3791,6 @@ let checklistVariantFilters = {}; // { setIndex: { name, printRun } }
 const trackedView = document.getElementById('tracked-view');
 
 const collectionView = document.getElementById('collection-view');
-const sellerView = document.getElementById('seller-view');
 const gradingView = document.getElementById('grading-view');
 const rainbowPage = document.getElementById('rainbow-page');
 
@@ -3823,10 +3822,8 @@ function switchView(view) {
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
   if (activeTab) activeTab.classList.add('active');
 
-  const proplusView = document.getElementById('proplus-view');
   const communityView = document.getElementById('community-view');
   const scannerView = document.getElementById('scanner-view');
-  const floorView = document.getElementById('floor-view');
   const inventoryView = document.getElementById('inventory-view');
   const marketView = document.getElementById('market-view');
   const statsView = document.getElementById('stats-view');
@@ -3835,19 +3832,14 @@ function switchView(view) {
   checklistView.classList.add('hidden');
   if (trackedView) trackedView.classList.add('hidden');
   if (collectionView) collectionView.classList.add('hidden');
-  sellerView.classList.add('hidden');
   gradingView.classList.add('hidden');
   if (rainbowPage) rainbowPage.classList.add('hidden');
-  if (proplusView) proplusView.classList.add('hidden');
   if (communityView) communityView.classList.add('hidden');
   if (scannerView) scannerView.classList.add('hidden');
-  if (floorView) floorView.classList.add('hidden');
   if (inventoryView) inventoryView.classList.add('hidden');
   if (marketView) marketView.classList.add('hidden');
   if (statsView) statsView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
-  // The Floor runs an animation loop; pause it whenever we leave the tab.
-  if (typeof stopFloor === 'function') stopFloor();
 
   if (view === 'checklist') {
     checklistView.classList.remove('hidden');
@@ -3856,20 +3848,6 @@ function switchView(view) {
     if (rainbowPage) { rainbowPage.classList.remove('hidden'); initRainbowPage(); }
   } else if (view === 'community') {
     if (communityView) { communityView.classList.remove('hidden'); initCommunityView(); }
-  } else if (view === 'seller') {
-    sellerView.classList.remove('hidden');
-    initShowcase();
-  } else if (view === 'proplus') {
-    if (proplusView) {
-      proplusView.classList.remove('hidden');
-      initProPlusView();
-      switchProPlusTab(proplusSub || 'autoprices');
-    }
-  } else if (view === 'floor') {
-    if (floorView) {
-      floorView.classList.remove('hidden');
-      if (typeof initFloor === 'function') initFloor();
-    }
   } else if (view === 'inventory') {
     if (inventoryView) {
       inventoryView.classList.remove('hidden');
@@ -7472,27 +7450,6 @@ function initCollectionView() {
   renderPortfolio();
 }
 
-function switchCollectionTab(tab) {
-  document.querySelectorAll('.coll-tab').forEach(t => t.classList.toggle('active', t.dataset.coll === tab));
-  document.querySelectorAll('.coll-panel').forEach(p => p.classList.add('hidden'));
-
-  // The Tracked Cards UI still lives in its standalone #tracked-view
-  // div for layout reasons; from the user's perspective it's a tab
-  // inside My Cards, so swap which top-level container is visible.
-  if (tab === 'tracked') {
-    collectionView.classList.add('hidden');
-    trackedView.classList.remove('hidden');
-    initTrackedView();
-    return;
-  }
-  // Anything else means we're back inside the collection container.
-  trackedView.classList.add('hidden');
-  collectionView.classList.remove('hidden');
-  const panel = document.getElementById(`coll-${tab}`);
-  if (panel) panel.classList.remove('hidden');
-  if (tab === 'portfolio') renderPortfolio();
-  if (tab === 'watchlist') renderWatchlist();
-}
 
 function switchChecklistSubtab(tab) {
   document.querySelectorAll('.checklist-subtab').forEach(b => b.classList.toggle('active', b.dataset.cltab === tab));
