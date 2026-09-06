@@ -846,6 +846,34 @@ function mapNflDbSale(r) {
   };
 }
 
+// D1 bills rows READ, and this query is the one that reads them.
+//
+// `title LIKE '%term%'` has a leading wildcard, so no index can serve it: every
+// search walks the sales table. The ORDER BY sold_date DESC LIMIT n lets SQLite
+// stop early once it has enough matches, which makes a common player cheap —
+// and a rare term the opposite, because nothing matches and the walk runs to
+// the end of the table.
+//
+// That is the whole cost problem, and it gets worse on its own: ~23,000 sales
+// land per day, so the table this walks grows about 700k rows a month while
+// traffic is meant to be growing too. Nothing here is a crisis today; the point
+// is that the bill scales with the square of success unless the reads are cut.
+//
+// Three things below, cheapest first. None of them changes what a user sees.
+const NFLDB_SEARCH_TTL = 3600;         // 1h — see the cache note in the body
+// A floor on how far back a search may walk. Deliberately generous: three years
+// covers essentially every comp anyone looks up, and the purpose here is to cap
+// the worst case rather than to trim results. Tighten it once
+// /api/debug/d1-usage shows what searches actually cost — with evidence, not a
+// guess. Set to 0 to disable the bound entirely.
+const NFLDB_SEARCH_WINDOW_DAYS = 1095;
+
+// What the D1 reads actually cost, accumulated since the isolate started.
+// D1 returns rows_read on every query's meta, so this is measured rather than
+// modelled — and it is the number that decides whether the window above is too
+// generous. Exposed at /api/debug/d1-usage.
+const _d1Usage = { queries: 0, rowsRead: 0, cacheHits: 0, since: new Date().toISOString() };
+
 // Turn a free-text card query into a LIKE-matched D1 lookup. Every term must
 // appear somewhere in the title, which mirrors how the other providers behave
 // and keeps the existing downstream filters meaningful.
@@ -859,12 +887,40 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const terms = cleaned.split(/\s+/).filter(t => t.length > 1).slice(0, 8);
   if (terms.length === 0) return { results: [], total: 0 };
 
+  // Cache on our own data, which is a different question from caching the paid
+  // providers. fetchEbayItems deliberately does not cache those, because their
+  // listings move minute to minute. These rows only change when the importer
+  // runs, so an hour-old answer is the same answer.
+  //
+  // Empty results are cached too, and that is the case worth having: a search
+  // matching nothing is exactly the search that walks the whole table, and
+  // repeating it is pure waste. The cost is that a card added by the importer
+  // stays invisible for up to an hour after it lands.
+  const cacheKey = `nfldb:v1:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) {
+    _d1Usage.cacheHits++;
+    return cached;
+  }
+
   const where = [
     'price_cents IS NOT NULL', // exclude best-offer rows — see note above
     'confidence >= ?',
     ...terms.map(() => 'title LIKE ?'),
   ].join(' AND ');
   const binds = [NFLDB_MIN_CONFIDENCE, ...terms.map(t => `%${t}%`)];
+
+  // The floor on how far back the walk may go. This only pays off if sold_date
+  // is indexed — without an index SQLite scans regardless and this just filters
+  // — but it costs nothing either way, and with one it turns "walk every row we
+  // have ever stored" into "walk three years".
+  let windowClause = '';
+  if (NFLDB_SEARCH_WINDOW_DAYS > 0) {
+    const floor = new Date(Date.now() - NFLDB_SEARCH_WINDOW_DAYS * 86400000)
+      .toISOString().slice(0, 10);
+    windowClause = ' AND sold_date >= ?';
+    binds.push(floor);
+  }
 
   try {
     // `player` isn't displayed — it's how we know up front whether this row can
@@ -875,13 +931,24 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
       + (await _nflHasImageColumn(db) ? ', image_url' : '');
     const stmt = db.prepare(
       `SELECT ${cols}
-       FROM sales WHERE ${where}
+       FROM sales WHERE ${where}${windowClause}
        ORDER BY sold_date DESC LIMIT ?`
     ).bind(...binds, Math.min(limit, 500));
     const out = await stmt.all();
     const rows = (out && Array.isArray(out.results)) ? out.results : [];
-    console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales (${source})`);
-    return { results: rows.map(mapNflDbSale), total: rows.length };
+
+    // rows_read is what D1 charges for, and it is nothing like rows returned:
+    // a search returning 3 sales can read millions on the way to finding them.
+    // Logging both is what makes the difference visible.
+    const read = (out && out.meta && Number(out.meta.rows_read)) || 0;
+    _d1Usage.queries++;
+    _d1Usage.rowsRead += read;
+    console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales, `
+      + `${read.toLocaleString('en-US')} rows read (${source})`);
+
+    const payload = { results: rows.map(mapNflDbSale), total: rows.length };
+    cachePut(cacheKey, payload, NFLDB_SEARCH_TTL);
+    return payload;
   } catch (err) {
     // A query failure must never take sold search down — fall through to the
     // paid providers instead.
@@ -4593,6 +4660,41 @@ app.get('/api/market-basket', async (req, res) => {
     console.error('[MarketBasket]', err && err.message);
     res.json({ available: false, days, reason: 'basket unavailable' });
   }
+});
+
+// ---- /api/debug/d1-usage ----
+// What the sold-search path is actually costing in D1 rows read.
+//
+// The Workers Paid plan includes 25 billion rows read a month and bills beyond
+// it, and the sold search is the one query that can run away: a leading-wildcard
+// LIKE walks the sales table, so a search returning three rows can read
+// millions. Modelling that is guesswork; D1 reports rows_read on every query,
+// so this reports the real figure.
+//
+// Counters are per isolate and reset when Cloudflare recycles it, which makes
+// this a rate check rather than a monthly total — the useful number is rows per
+// query, and whether the cache is absorbing the repeats.
+app.get('/api/debug/d1-usage', (req, res) => {
+  const served = _d1Usage.queries + _d1Usage.cacheHits;
+  const perQuery = _d1Usage.queries ? Math.round(_d1Usage.rowsRead / _d1Usage.queries) : 0;
+  // 25 billion a month, spread evenly, is the budget a sustained rate is
+  // measured against.
+  const MONTHLY_INCLUDED = 25e9;
+  res.json({
+    since: _d1Usage.since,
+    searchesServed: served,
+    fromCache: _d1Usage.cacheHits,
+    cacheHitRate: served ? Math.round((100 * _d1Usage.cacheHits) / served) + '%' : 'n/a',
+    d1Queries: _d1Usage.queries,
+    rowsRead: _d1Usage.rowsRead,
+    rowsPerQuery: perQuery,
+    // The number that decides whether this is a problem: at this cost per
+    // query, how many searches fit in a month's included reads?
+    searchesPerMonthWithinIncluded: perQuery ? Math.floor(MONTHLY_INCLUDED / perQuery) : null,
+    searchWindowDays: NFLDB_SEARCH_WINDOW_DAYS || 'unbounded',
+    cacheTtlSeconds: NFLDB_SEARCH_TTL,
+    note: 'Counters are per isolate and reset on recycle. rowsPerQuery is the figure to act on.',
+  });
 });
 
 app.get('/api/debug/index-health', async (req, res) => {
