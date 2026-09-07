@@ -147,6 +147,29 @@ jobs:
             echo "   Fix: add Account -> D1 -> Edit to the same token."
           fi
 
+          # Same reasoning as D1 above: this deploy does not need R2, but the
+          # photo backfill does, and a token created from a Workers template
+          # covers neither. Better to learn it here, while someone is reading
+          # the log, than from a job failing on a schedule weeks later.
+          echo "5. Can the token reach R2? (not used here — the photo backfill needs it)"
+          r=$(api "/accounts/$CF_ACCOUNT/r2/buckets")
+          if [ "$(jq -r .success <<<"$r")" = "true" ]; then
+            names=$(jq -r '[.result.buckets[]?.name] | join(", ")' <<<"$r")
+            echo "   yes — bucket(s): ${names:-none yet}"
+            # The binding in wrangler.toml names one specific bucket, and a
+            # deploy succeeds whether or not it exists — the failure would
+            # surface later as writes going nowhere.
+            if jq -e --arg b "ebay-image" '.result.buckets[]? | select(.name == $b)' >/dev/null <<<"$r"; then
+              echo "   and 'ebay-image' exists, which is the bucket wrangler.toml binds."
+            else
+              echo "   BUT 'ebay-image' is not among them — wrangler.toml binds a bucket"
+              echo "   that does not exist. Create it, or change bucket_name to match."
+            fi
+          else
+            echo "   NO: $(jq -c '.errors' <<<"$r")"
+            echo "   Fix: add Account -> Workers R2 Storage -> Edit to the same token."
+          fi
+
       # What this step needs from CLOUDFLARE_API_TOKEN:
       #
       #   Account -> Workers Scripts -> Edit
