@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos };
   return serverInit;
 }
 
@@ -577,7 +577,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -612,6 +612,21 @@ export default {
           // that into a no-op with no trace anywhere.
           console.error('[Cron] backfillPlayerAliases missing from init() — not wired through');
         }
+        // Copy listing photos into R2 before eBay purges them. Every tick,
+        // not hourly like the alias backfill: this one is racing a deadline
+        // (eBay drops images at roughly 90 days, the oldest sales are ~42 days
+        // old) and it writes to R2, which is metered separately from D1 and
+        // nowhere near its limits.
+        //
+        // Isolated like the others. If it throws, the alert checks still run —
+        // photos are worth having, and they are not worth an alert going
+        // unsent for.
+        if (typeof archiveListingPhotos === 'function') {
+          await archiveListingPhotos().catch(err => console.error('[Cron] photo archive failed:', err && err.message || err));
+        } else {
+          console.error('[Cron] archiveListingPhotos missing from init() — not wired through');
+        }
+
         if (typeof checkAlerts === 'function') {
           await checkAlerts().catch(err => console.error('[Cron] checkAlerts failed:', err && err.message || err));
         }

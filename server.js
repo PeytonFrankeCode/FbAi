@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos } = require('./db');
 // Canonical player and parallel names from the checklists, derived from
 // public/data/checklists at build time by scripts/build-card-index.js.
 //
@@ -8865,7 +8865,138 @@ app.delete('/api/admin/news/:slug', (req, res) => {
   res.json({ ok: true, removed: slug });
 });
 
-module.exports = { app, connectDB, backfillPlayerAliases, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+
+// ---- Photo archive ----
+//
+// eBay purges images for long-ended listings, so an image_url on an old sale
+// eventually resolves to nothing. The dataset holds about 42 days of sales and
+// eBay keeps images roughly 90, so the first losses are around seven weeks out.
+// This copies them into R2 before that happens.
+//
+// It runs on the cron rather than in GitHub Actions on purpose. The Worker
+// already holds the R2 binding, so nothing new has to be issued or stored;
+// doing it from Actions would mean creating a separate R2 access key and
+// keeping another long-lived secret in the repo. The cost is throughput —
+// bounded by subrequests per invocation rather than by how fast a runner can
+// go — and at these batch sizes it still clears the backlog well inside the
+// window.
+const {
+  sizedUrl, keyForUrl, isPermanent: photoFailPermanent, nextCursor, summarise,
+} = require('./photo-archive-core');
+
+const PHOTO_ARCHIVE_BATCH = 400;      // images per cron tick; see the note below
+const PHOTO_ARCHIVE_CONCURRENCY = 12; // parallel fetches inside a batch
+const PHOTO_CURSOR_KEY = 'photoarchive:cursor:v1';
+const PHOTO_FETCH_TIMEOUT_MS = 8000;
+
+// Oldest first, always. The whole point is to reach a photo before eBay drops
+// it, so the sale closest to expiry is the one that matters most — and once the
+// backlog is cleared this same order keeps pace with new arrivals.
+//
+// The cursor is (sold_date, item_id) rather than sold_date alone because many
+// sales share a date; a date-only cursor would either re-do a whole day every
+// tick or skip the rest of one.
+async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
+  const db = getNflDb();
+  const bucket = getPhotos();
+  if (!db) return { ok: false, reason: 'no D1 binding' };
+  if (!bucket) return { ok: false, reason: 'no R2 binding' };
+  if (!(await _nflHasImageColumn(db))) return { ok: false, reason: 'sales has no image_url' };
+
+  let cursor = null;
+  try { cursor = await cacheGet(PHOTO_CURSOR_KEY); } catch (_) { /* start from the beginning */ }
+  const from = (cursor && cursor.soldDate) || '0000-00-00';
+  const fromId = (cursor && cursor.itemId) || '';
+
+  let rows;
+  try {
+    const out = await db.prepare(
+      `SELECT item_id, sold_date, image_url
+         FROM sales
+        WHERE image_url IS NOT NULL AND image_url <> ''
+          AND (sold_date > ? OR (sold_date = ? AND item_id > ?))
+        ORDER BY sold_date ASC, item_id ASC
+        LIMIT ?`
+    ).bind(from, from, fromId, Math.max(1, Math.min(limit, 1000))).all();
+    rows = (out && out.results) || [];
+    const read = (out && out.meta && Number(out.meta.rows_read)) || 0;
+    _d1Usage.rowsRead += read;
+    _d1Usage.queries++;
+  } catch (err) {
+    console.error('[photos] query failed:', err && err.message);
+    return { ok: false, reason: 'query failed' };
+  }
+
+  if (!rows.length) return { ok: true, done: true, ...summarise([]) };
+
+  const subtle = (globalThis.crypto && globalThis.crypto.subtle) || null;
+  if (!subtle) return { ok: false, reason: 'no crypto.subtle for key hashing' };
+
+  async function one(row) {
+    const base = { itemId: row.item_id, soldDate: row.sold_date };
+    let key;
+    try { key = await keyForUrl(row.image_url, subtle); }
+    catch (_) { return { ...base, ok: false, permanent: true }; }
+
+    // head() rather than get(): we only need to know whether it is there, and
+    // pulling the bytes back to discard them would double the egress for every
+    // row already done.
+    try {
+      if (await bucket.head(key)) return { ...base, ok: false, alreadyStored: true };
+    } catch (_) { /* treat a head failure as a miss and re-store */ }
+
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), PHOTO_FETCH_TIMEOUT_MS);
+    try {
+      const resp = await fetch(sizedUrl(row.image_url), {
+        signal: ctl.signal,
+        headers: {
+          'user-agent': 'thecardhuddle-photo-archive/1.0 (+https://thecardhuddle.com)',
+          accept: 'image/jpeg,image/webp,image/png,image/*;q=0.8',
+        },
+      });
+      if (!resp.ok) return { ...base, ok: false, permanent: photoFailPermanent(resp.status), status: resp.status };
+      const body = await resp.arrayBuffer();
+      // A "purged" eBay image is often a tiny placeholder rather than a 404,
+      // and storing those is worse than storing nothing: it looks like success.
+      if (body.byteLength < 900) return { ...base, ok: false, permanent: true, status: 'placeholder' };
+      await bucket.put(key, body, {
+        httpMetadata: { contentType: resp.headers.get('content-type') || 'image/jpeg' },
+        customMetadata: { src: String(row.image_url).slice(0, 900), sold: row.sold_date || '' },
+      });
+      return { ...base, ok: true, bytes: body.byteLength };
+    } catch (_) {
+      return { ...base, ok: false, permanent: false };   // transient: retry later
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Results are kept in the row order the cursor depends on, not the order
+  // they happen to finish in.
+  const results = new Array(rows.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(PHOTO_ARCHIVE_CONCURRENCY, rows.length) }, async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= rows.length) return;
+      results[i] = await one(rows[i]);
+    }
+  }));
+
+  const moved = nextCursor(cursor, results);
+  if (moved && (!cursor || moved.itemId !== cursor.itemId || moved.soldDate !== cursor.soldDate)) {
+    cachePut(PHOTO_CURSOR_KEY, moved, 60 * 60 * 24 * 365);
+  }
+
+  const sum = summarise(results);
+  console.log(`[photos] ${sum.stored} stored, ${sum.skipped} already there, `
+    + `${sum.permanent} gone for good, ${sum.retry} to retry, `
+    + `${(sum.bytes / 1048576).toFixed(1)} MB, through ${moved && moved.soldDate}`);
+  return { ok: true, done: false, cursor: moved, ...sum };
+}
+
+module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
