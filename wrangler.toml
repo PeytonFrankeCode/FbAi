@@ -66,6 +66,20 @@ id = "5cc96b5126ec4e57960b945fb810481f"
 #      Re-run any time; item_id is the primary key so every write is an upsert.
 #      Use --since YYYY-MM-DD for fast incremental loads after the first.
 #
+# Copies of eBay listing photos.
+#
+# eBay purges images for long-ended listings, so an image_url on an old sale
+# eventually points at nothing. The dataset currently holds about 42 days of
+# sales and eBay keeps images roughly 90, which puts the first losses about
+# seven weeks out — this exists to get ahead of that.
+#
+# R2 rather than D1: D1 charges $0.75/GB-month and is a database, not a blob
+# store; R2 is $0.015/GB-month with no egress fees and 10 GB free, which covers
+# the backfill outright.
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "ebay-image"
+
 [[d1_databases]]
 binding = "NFLDB"
 database_name = "nflcarddb"
