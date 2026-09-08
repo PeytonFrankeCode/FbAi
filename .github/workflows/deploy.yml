@@ -34,14 +34,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build SEO landing pages
+        run: npm run build:pages
+
       # Runs the index endpoints against a real in-memory SQLite dataset. The
       # index once shipped with a helper deleted out from under it — a syntax
       # check passes on a missing global, so the code path has to be executed.
+      #
+      # After build:pages, not before. The join tests check server.js against
+      # public/sitemap.xml and public/data/players/index.json, and the sitemap
+      # is gitignored — running first would test a stale committed copy on a
+      # fresh clone, or nothing at all. This way the numbers server.js divides
+      # by are checked against the artifacts this very deploy will upload.
       - name: Test
         run: npm test
-
-      - name: Build SEO landing pages
-        run: npm run build:pages
 
       # Must run after build:pages, which regenerates the checklist index the
       # stamp hashes. The service worker keys its caches on this version, and it

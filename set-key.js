@@ -103,18 +103,48 @@ function saleKeys(year, setName) {
   return variants(setName).map(v => `${y}|${v}`);
 }
 
+// ---- players ----
+//
+// Player pages are 1,228 of the 2,173 indexable URLs, so the same question
+// asked of sets has to be asked of them, and the same way it went wrong once
+// already is available here: a name written two ways.
+//
+// The hazard is the generational suffix. The checklist says "Patrick Mahomes
+// II"; plenty of eBay titles say "Patrick Mahomes". Matching only the exact
+// string silently orphans the larger half of a superstar's sales, which is
+// the set-name failure again with a different column.
+const SUFFIXES = ['jr', 'sr', 'ii', 'iii', 'iv', 'v'];
+
+function playerVariants(raw) {
+  const s = norm(raw);   // norm() already drops the period from "Jr."
+  if (!s) return [];
+  const out = [s];
+  const parts = s.split(' ');
+  if (parts.length > 2 && SUFFIXES.includes(parts[parts.length - 1])) {
+    // Same guard as the makers: a bare suffix is not a name. Requiring more
+    // than two parts keeps "Deebo Jr" — were such a name to exist — from
+    // collapsing to "Deebo".
+    out.push(parts.slice(0, -1).join(' '));
+  }
+  return out;
+}
+
+// Keys for a player page, and for the player named on a sale. Unlike sets,
+// both sides are just a name, so one function serves both.
+const playerKeys = (p) => playerVariants(p && p.name);
+
 // Build the lookup, and refuse to guess.
 //
-// A key claimed by two products is dropped rather than handed to whichever
-// came first. Silently picking one is what produced three Donruss products
-// with identical sales figures, and a dropped key shows up honestly as an
-// unmatched sale instead of as confident nonsense. The catalogue currently
-// produces none, and this exists so that a future product that would collide
-// is reported rather than absorbed.
-function buildIndex(products) {
+// A key claimed by two items is dropped rather than handed to whichever came
+// first. Silently picking one is what produced three Donruss products with
+// identical sales figures, and a dropped key shows up honestly as an unmatched
+// sale instead of as confident nonsense. The catalogue currently produces
+// none, and this exists so that a future product — or a second player whose
+// name collides once a suffix is stripped — is reported rather than absorbed.
+function buildIndex(products, keyFn = productKeys) {
   const owners = new Map();
   for (const p of products || []) {
-    for (const k of productKeys(p)) {
+    for (const k of keyFn(p)) {
       if (!owners.has(k)) owners.set(k, []);
       owners.get(k).push(p);
     }
@@ -123,19 +153,31 @@ function buildIndex(products) {
   const ambiguous = [];
   for (const [k, list] of owners) {
     if (list.length === 1) index.set(k, list[0]);
-    else ambiguous.push({ key: k, products: list.map(p => p.id) });
+    // Products are identified by id, player pages by slug. Falling back keeps
+    // this readable for both rather than printing a list of empty strings.
+    else ambiguous.push({ key: k, products: list.map(p => p.id || p.slug || p.name) });
   }
   return { index, ambiguous };
 }
 
-// Which product a sale belongs to, or null. First unambiguous match wins, and
-// the order from variants() puts the more specific name first.
-function matchSale(index, year, setName) {
-  for (const k of saleKeys(year, setName)) {
+// First unambiguous match wins. The order the *Keys functions return matters:
+// the more specific spelling comes first, so "Patrick Mahomes II" is preferred
+// over the suffix-stripped form and "donruss optic" over "optic".
+function matchKeys(index, keys) {
+  for (const k of keys) {
     const hit = index.get(k);
     if (hit) return hit;
   }
   return null;
 }
 
-module.exports = { norm, variants, productKeys, saleKeys, buildIndex, matchSale, MAKERS };
+// Which product a sale belongs to, or null.
+const matchSale = (index, year, setName) => matchKeys(index, saleKeys(year, setName));
+
+// Which player page a sale belongs to, or null.
+const matchPlayer = (index, name) => matchKeys(index, playerVariants(name));
+
+module.exports = {
+  norm, variants, productKeys, saleKeys, buildIndex, matchKeys, matchSale, MAKERS,
+  playerVariants, playerKeys, matchPlayer, SUFFIXES,
+};
