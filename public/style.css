@@ -9295,3 +9295,11 @@ body.tour-open { overflow: hidden; }
   .st-row { grid-template-columns: 1.4rem minmax(0, 1fr) auto; }
   .st-meta { display: none; }
 }
+
+/* Available to assistive technology and to crawlers, absent visually. Used for
+   the homepage <h1>, where the visible heading is a logo image. Clip-based
+   rather than display:none, which screen readers skip entirely. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
