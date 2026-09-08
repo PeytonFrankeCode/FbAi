@@ -12,6 +12,7 @@
 const path = require('path');
 const {
   norm, variants, productKeys, saleKeys, buildIndex, matchSale,
+  playerKeys, playerVariants, matchPlayer,
 } = require(path.join(__dirname, '..', 'set-key.js'));
 const idx = require(path.join(__dirname, '..', 'public', 'data', 'checklists', 'index.json'));
 
@@ -126,6 +127,77 @@ const { index, ambiguous } = buildIndex(products);
     norm('Rookies-Stars') === 'rookiesstars', norm('Rookies-Stars'));
   check('  ...and saleKeys carries the year through it',
     saleKeys('2025', 'Prizm')[0] === '2025|prizm', saleKeys('2025', 'Prizm')[0]);
+}
+
+// ---- players ----
+//
+// Player pages are 1,228 of the 2,173 indexable URLs, so the same join runs
+// against them and can fail the same way. The hazard here is the generational
+// suffix rather than the manufacturer prefix: the checklist says "Patrick
+// Mahomes II" and half of eBay says "Patrick Mahomes".
+{
+  const pidx = require(path.join(__dirname, '..', 'public', 'data', 'players', 'index.json'));
+  const pages = (pidx && pidx.players) || [];
+  check('the player index was built', pages.length > 3000, `${pages.length} pages`);
+
+  const { index: pIndex, ambiguous: pAmb } = buildIndex(pages, playerKeys);
+
+  check('a sale naming the suffix reaches the page',
+    (matchPlayer(pIndex, 'Patrick Mahomes II') || {}).slug === 'patrick-mahomes-ii');
+  check('  ...and so does one that leaves it off',
+    (matchPlayer(pIndex, 'Patrick Mahomes') || {}).slug === 'patrick-mahomes-ii',
+    'this is the half that would otherwise be orphaned');
+  check('  ...and the period in "Jr." is not load-bearing',
+    (matchPlayer(pIndex, 'Odell Beckham Jr.') || {}).slug
+      === (matchPlayer(pIndex, 'Odell Beckham Jr') || {}).slug
+      && matchPlayer(pIndex, 'Odell Beckham Jr') !== null);
+
+  // The refusal that matters. Marvin Harrison and Marvin Harrison Jr. are two
+  // different people with two pages; stripping the suffix makes both answer to
+  // "marvin harrison", and the join must decline rather than pick one.
+  check('a name two different players answer to matches neither',
+    matchPlayer(pIndex, 'Marvin Harrison') === null,
+    'father and son both have pages — guessing would put his sales on the wrong one');
+  check('  ...while the unambiguous spelling still works',
+    (matchPlayer(pIndex, 'Marvin Harrison Jr.') || {}).slug === 'marvin-harrison-jr');
+
+  check('a bare suffix is never treated as a name',
+    playerVariants('Jr').length === 1 && playerVariants('Jr')[0] === 'jr');
+
+  check('an unknown player matches nothing',
+    matchPlayer(pIndex, 'Nobody Whatsoever') === null
+      && matchPlayer(pIndex, '') === null);
+
+  // Reported rather than asserted at a fixed number: this rises when the
+  // catalogue gains a Jr., and that is not a regression.
+  check('ambiguous player names are dropped, not guessed',
+    pAmb.length > 0 && pAmb.every(a => a.products.length > 1 && a.products.every(Boolean)),
+    `${pAmb.length} names dropped, e.g. ${pAmb[0] && pAmb[0].key}`);
+}
+
+// ---- the sitemap constant server.js divides by ----
+//
+// /api/debug/price-coverage reports what share of the site a price block
+// would fill, and the denominator is a hard-coded 2,173. A constant that
+// silently drifts from the real sitemap turns the verdict into a number that
+// looks measured and is not, which is the exact failure this file exists for.
+{
+  const fs = require('fs');
+  const sitemap = path.join(__dirname, '..', 'public', 'sitemap.xml');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const m = src.match(/const INDEXABLE_URLS = (\d+);/);
+
+  // sitemap.xml is gitignored and written by build:pages, which CI runs first.
+  // On a fresh clone it is simply absent, and saying so beats a stack trace —
+  // but it must never be reported as a pass.
+  if (!fs.existsSync(sitemap)) {
+    console.log('SKIP  server.js vs sitemap.xml  — run `npm run build:pages` first (CI does)');
+  } else {
+    const urls = (fs.readFileSync(sitemap, 'utf8').match(/<loc>/g) || []).length;
+    check('server.js knows how many indexable URLs there actually are',
+      m && Number(m[1]) === urls,
+      `server.js says ${m ? m[1] : 'nothing'}, sitemap.xml has ${urls}`);
+  }
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall set-key checks passed');

@@ -32,8 +32,9 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
-const CHECKLIST_DIR = path.join(ROOT, 'public', 'data', 'checklists');
 const PUBLIC_DIR = path.join(ROOT, 'public');
+const DATA_DIR = path.join(PUBLIC_DIR, 'data');
+const CHECKLIST_DIR = path.join(DATA_DIR, 'checklists');
 const SETS_DIR = path.join(PUBLIC_DIR, 'sets');
 const PLAYERS_DIR = path.join(PUBLIC_DIR, 'players');
 const TEAMS_DIR = path.join(PUBLIC_DIR, 'teams');
@@ -1158,6 +1159,27 @@ function main() {
 
   fs.writeFileSync(path.join(SETS_DIR, 'index.html'), buildSetsHub(checklists));
   fs.writeFileSync(path.join(PLAYERS_DIR, 'index.html'), buildPlayersHub(eligible));
+
+  // A machine-readable list of the player pages, for the same reason
+  // checklists/index.json exists: the Worker needs to know what pages there
+  // are without loading 361 checklists to work it out.
+  //
+  // Player pages are 1,228 of the 2,173 indexable URLs — more than half the
+  // site, and far more than the 371 product pages. Whether a price block is
+  // worth building is mostly a question about THESE pages, and it could not
+  // be asked at all until the Worker could see them.
+  //
+  // Names only, no card lists. The point is coverage, not content.
+  fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
+  fs.writeFileSync(path.join(DATA_DIR, 'players', 'index.json'), JSON.stringify({
+    generated: new Date().toISOString().slice(0, 10),
+    minCards: MIN_CARDS, minSets: MIN_SETS, indexMinCards: INDEX_MIN_PLAYER_CARDS,
+    players: eligible.map(p => ({
+      name: p.name, slug: p.slug, cards: p.cards.length, sets: p.setIds.size,
+      // Built either way; only these are in the sitemap.
+      indexable: p.cards.length >= INDEX_MIN_PLAYER_CARDS,
+    })),
+  }) + '\n');
   fs.writeFileSync(path.join(TEAMS_DIR, 'index.html'), buildTeamsHub(teams));
   fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), buildSitemap(checklists, eligible, teams, years, subsetIndex));
 
