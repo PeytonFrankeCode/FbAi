@@ -30,6 +30,10 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+// The same normalisation the sales join uses. Deliberately shared rather than
+// reimplemented: if the builder's idea of "the same name" drifts from the
+// join's, the join starts dropping pages again and nothing says why.
+const { norm: normName } = require(path.join(__dirname, '..', 'set-key.js'));
 
 const ROOT = path.resolve(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -1076,6 +1080,47 @@ function main() {
   const checklists = loadChecklists();
   const playerIndex = buildPlayerIndex(checklists);
 
+  // One player, one page.
+  //
+  // buildPlayerIndex keys on the raw checklist string, so a player spelled two
+  // ways across two checklists became two players with two pages. Twelve did:
+  // "Ja’Marr Chase" (1,215 cards) and "Ja'Marr Chase" (31) differ only by a
+  // curly apostrophe; "D.K. Metcalf" and "DK Metcalf" only by the periods.
+  //
+  // This was found by /api/debug/price-coverage rather than by looking. The
+  // sales join reported "cj stroud" as a name two pages answered to, so it
+  // refused to guess and dropped 2,006 sales on the floor — and the same for
+  // Ja'Marr Chase, J.J. McCarthy and De'Von Achane, all of them star players
+  // on pages that get actual traffic.
+  //
+  // The merge key is punctuation-only — the same norm() the sales join uses.
+  // It must NOT strip suffixes: "Marvin Harrison" and "Marvin Harrison Jr."
+  // are two people with two pages and merging them would be a worse bug than
+  // the one being fixed.
+  const canon = new Map();   // norm(name) -> primary player
+  const merged = [];         // { from, into } for the redirect map
+  for (const p of [...playerIndex.values()].sort((a, b) => b.cards.length - a.cards.length)) {
+    const k = normName(p.name);
+    const prim = canon.get(k);
+    if (!prim) { canon.set(k, p); continue; }
+    // Fold the smaller spelling into the larger, which is already the primary
+    // because the loop runs in card-count order.
+    for (const c of p.cards) prim.cards.push(c);
+    for (const id of p.setIds) prim.setIds.add(id);
+    for (const y of p.years) prim.years.add(y);
+    for (const t of p.teams) prim.teams.add(t);
+    // Whether this spelling had a page of its own BEFORE the merge decides
+    // whether it needs a redirect. Most folded spellings are a handful of
+    // cards and never cleared MIN_CARDS, so no URL ever existed to redirect —
+    // and inventing one would fill the map with slugs nobody has requested.
+    merged.push({
+      from: p.name,
+      into: prim.name,
+      hadPage: p.cards.length >= MIN_CARDS && p.setIds.size >= MIN_SETS && !p.name.includes('/'),
+    });
+    playerIndex.delete(p.name);
+  }
+
   // Eligible players → assign unique slugs (sorted by card count so the most
   // prominent player wins the cleanest slug on collision).
   const eligible = [...playerIndex.values()]
@@ -1087,6 +1132,33 @@ function main() {
     let base = slugify(p.name) || 'player', s = base, i = 2;
     while (usedSlugs.has(s)) s = `${base}-${i++}`;
     usedSlugs.add(s); p.slug = s; playerSlug.set(p.name, s);
+  }
+
+  // The URLs the merge just removed.
+  //
+  // A folded spelling used to get its own page, and because slugify() drops
+  // the punctuation that distinguished it, that page was at <base>-2. Those
+  // URLs have been crawled — one of them, /players/cj-stroud-2/, is in the
+  // current sitemap — so they redirect rather than falling through to the SPA
+  // and returning a 200 for a page that no longer exists.
+  //
+  // A slug a live player legitimately holds is never redirected: after the
+  // merge, a -2 can still be two genuinely different people who happen to
+  // slugify the same, and sending one to the other would be the collision bug
+  // again wearing a different hat.
+  const redirects = {};
+  for (const { from, into, hadPage } of merged) {
+    if (!hadPage) continue;
+    const target = playerSlug.get(into);
+    if (!target) continue;                       // primary is not an eligible page
+    const base = slugify(from) || 'player';
+    for (let i = 2; i <= 9; i++) {
+      const legacy = `${base}-${i}`;
+      if (usedSlugs.has(legacy)) continue;       // a real page owns it
+      if (redirects[legacy]) continue;
+      redirects[legacy] = target;
+      break;
+    }
   }
   // setId -> eligible players (for related-player suggestions), in popularity order.
   const setPlayers = new Map();
@@ -1171,9 +1243,11 @@ function main() {
   //
   // Names only, no card lists. The point is coverage, not content.
   fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
+  fs.writeFileSync(path.join(DATA_DIR, 'players', 'redirects.json'), JSON.stringify(redirects) + '\n');
   fs.writeFileSync(path.join(DATA_DIR, 'players', 'index.json'), JSON.stringify({
     generated: new Date().toISOString().slice(0, 10),
     minCards: MIN_CARDS, minSets: MIN_SETS, indexMinCards: INDEX_MIN_PLAYER_CARDS,
+    mergedSpellings: merged.length,
     players: eligible.map(p => ({
       name: p.name, slug: p.slug, cards: p.cards.length, sets: p.setIds.size,
       // Built either way; only these are in the sitemap.
