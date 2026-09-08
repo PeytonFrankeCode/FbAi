@@ -44,6 +44,9 @@ const { createParallelIndex } = require('./parallel-index-core');
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys,
 } = require('./set-key');
+const {
+  summarise: priceSummarise, render: priceRender, median: priceMedian, keyFor: priceKeyFor,
+} = require('./price-block-core');
 
 const _dict = { card: null, parallel: null };
 async function _loadJson(name) {
@@ -9126,6 +9129,143 @@ const PHOTO_FETCH_TIMEOUT_MS = 8000;
 // The cursor is (sold_date, item_id) rather than sold_date alone because many
 // sales share a date; a date-only cursor would either re-do a whole day every
 // tick or skip the rest of one.
+// ---- the price block map ----
+//
+// Every checklist and player page's price summary, computed once and stored as
+// a single KV value.
+//
+// The alternative was a D1 query per page view behind a cache. This is cheaper
+// by a wide margin and simpler to reason about: the cron does two aggregate
+// passes a day, and a page view costs one KV read that is itself cached in
+// module scope for the life of the isolate. Marginal D1 cost per visitor is
+// zero, which matters because the whole point is to put this on 900+ pages.
+//
+// One value rather than one key per page for the same reason: ~950 pages at a
+// few hundred bytes each is a few hundred KB, well inside KV's 25 MB limit,
+// and it makes the map atomic — a page can never read a summary written
+// against a different day's window than its neighbour.
+const PRICE_BLOCKS_KEY = 'priceblocks:v1';
+const PRICE_BLOCKS_TTL = 172800;   // two days: survives a missed cron
+const PRICE_BLOCK_WINDOW_DAYS = 45;
+
+async function buildPriceBlocks() {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no D1 binding' };
+
+  const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
+  const CARDNO = _normCol('card_number');
+  const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+
+  // The window is a floor on sold_date rather than "all of it". Prices from
+  // three months ago are not this month's prices, and a median that silently
+  // widens as the table grows is a number that means something different every
+  // week without ever saying so.
+  const since = new Date(Date.now() - PRICE_BLOCK_WINDOW_DAYS * 86400000)
+    .toISOString().slice(0, 10);
+
+  let products = [], players = [];
+  try {
+    const idx = await _loadJson('checklists/index.json');
+    products = (idx && idx.products) || [];
+    const pidx = await _loadJson('players/index.json');
+    players = (pidx && pidx.players) || [];
+  } catch (err) {
+    return { ok: false, reason: `page indexes unavailable: ${err && err.message}` };
+  }
+
+  const { index: setIndex } = buildJoinIndex(products);
+  const { index: playerIndex } = buildJoinIndex(players, playerKeys);
+
+  // Per (set, card) and per (player, card). SQLite computes the median for us
+  // via a window function rather than shipping every row here — 473k rows
+  // would not fit in a Worker's memory, and paging them would take longer than
+  // the cron is allowed to run.
+  //
+  // median_price is the middle row of each group by ordinal, which is the same
+  // definition price-block-core.js uses on the small arrays it handles.
+  const cardAgg = (groupCols, labelCols) => `
+    WITH base AS (
+      SELECT ${groupCols} AS g, ${labelCols} AS label, price_cents,
+             ROW_NUMBER() OVER (PARTITION BY ${groupCols}, ${labelCols} ORDER BY price_cents) AS rn,
+             COUNT(*)   OVER (PARTITION BY ${groupCols}, ${labelCols}) AS n
+        FROM sales
+       WHERE ${WHERE} AND sold_date >= ? AND ${groupCols} <> '' AND ${labelCols} <> ''
+    )
+    SELECT g, label, n AS sales, price_cents AS median
+      FROM base WHERE rn = (n + 1) / 2`;
+
+  let setCards, playerCards, span;
+  try {
+    [setCards, playerCards, span] = await Promise.all([
+      db.prepare(cardAgg(`${Y} || '|' || ${S}`, `${P} || ' #' || ${CARDNO}`)).bind(since).all(),
+      db.prepare(cardAgg(P, `${Y} || ' ' || ${S} || ' #' || ${CARDNO}`)).bind(since).all(),
+      db.prepare(`SELECT MIN(sold_date) AS first, MAX(sold_date) AS last
+                    FROM sales WHERE ${WHERE} AND sold_date >= ?`).bind(since).first(),
+    ]);
+  } catch (err) {
+    return { ok: false, reason: `query-failed: ${err && err.message}` };
+  }
+
+  // Fold the card rows onto the pages they belong to. A page can collect rows
+  // from several spellings — the join already knows that — so this accumulates
+  // rather than assigns.
+  const pages = new Map();
+  const collect = (rows, resolve, kind) => {
+    for (const r of (rows && rows.results) || []) {
+      const page = resolve(r.g);
+      if (!page) continue;
+      const id = kind === 'set' ? page.id : page.slug;
+      const key = priceKeyFor(kind, id);
+      let p = pages.get(key);
+      if (!p) { p = { kind, page, sales: 0, prices: [], cards: [] }; pages.set(key, p); }
+      const sales = Number(r.sales || 0), med = Number(r.median || 0);
+      p.sales += sales;
+      p.cards.push({ label: r.label, sales, median: med });
+      // The page-wide median is over CARDS, not over sales: weighting by sale
+      // count would let one heavily-traded base card decide the figure for the
+      // whole set, which is the opposite of what a reader is asking.
+      p.prices.push(med);
+    }
+  };
+  collect(setCards, g => {
+    const i = String(g || '').indexOf('|');
+    return i === -1 ? null : matchSale(setIndex, String(g).slice(0, i), String(g).slice(i + 1));
+  }, 'set');
+  collect(playerCards, g => matchPlayer(playerIndex, g), 'player');
+
+  const out = {};
+  let kept = 0;
+  for (const [key, p] of pages) {
+    p.cards.sort((a, b) => b.sales - a.sales || a.label.localeCompare(b.label));
+    const prices = p.prices.slice().sort((a, b) => a - b);
+    const summary = priceSummarise({
+      sales: p.sales,
+      cards: p.cards.length,
+      median: priceMedian(prices),
+      low: prices[0], high: prices[prices.length - 1],
+    }, p.cards);
+    if (!summary) continue;
+    summary.noun = p.kind === 'set' ? p.page.name : p.page.name;
+    out[key] = summary;
+    kept++;
+  }
+
+  const payload = {
+    built: new Date().toISOString(),
+    from: (span && span.first) || since,
+    to: (span && span.last) || '',
+    pages: out,
+  };
+  try {
+    await cachePut(PRICE_BLOCKS_KEY, payload, PRICE_BLOCKS_TTL);
+  } catch (err) {
+    return { ok: false, reason: `kv-write-failed: ${err && err.message}` };
+  }
+  const bytes = JSON.stringify(payload).length;
+  console.log(`[prices] ${kept} pages priced, ${(bytes / 1024).toFixed(0)} KB, window ${payload.from}..${payload.to}`);
+  return { ok: true, pages: kept, bytes, from: payload.from, to: payload.to };
+}
+
 async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   const db = getNflDb();
   const bucket = getPhotos();
@@ -9226,7 +9366,7 @@ async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

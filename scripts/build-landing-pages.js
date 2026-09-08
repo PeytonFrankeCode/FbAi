@@ -195,6 +195,21 @@ function esc(s) {
 }
 function jsonText(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
 function prefillHref(q) { return '/?prefill=' + encodeURIComponent(jsonText(q)); }
+// Where the Worker injects the sold-price block.
+//
+// An empty element with the page's own key on it, and nothing else. The prices
+// cannot be baked in here: this file runs at build time and the numbers change
+// daily, so a static price would be stale the day after a deploy and there
+// would be no way to tell by looking.
+//
+// It is empty rather than a placeholder with dashes in it. If the injection
+// never happens — no KV value, a cold isolate that failed to load it, a page
+// with too few sales — the reader sees the page exactly as it is today rather
+// than an empty table that reads as broken.
+function priceSlot(kind, id) {
+  return `    <div class="lp-price-slot" data-price-key="${esc(kind)}:${esc(id)}"></div>`;
+}
+
 function slugify(s) {
   return String(s).toLowerCase()
     .replace(/['’.]/g, '')          // drop apostrophes & periods (A.J. -> aj)
@@ -404,6 +419,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(((cl.year ? cl.year + ' ' : '') + cl.brand).trim() || cl.name)}">&#128270; Check live prices for this set</a>
     </p>
+${priceSlot('set', cl.id)}
 `;
 
   let rendered = 0, truncated = false;
@@ -710,6 +726,7 @@ function buildPlayerPage(p, related, teamSlug) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(p.name)}">&#128270; See all ${esc(p.name)} prices now</a>
     </p>
+${priceSlot('player', p.slug)}
 ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a href="/teams/${teamSlug.get(t)}/">${esc(t)}</a>`).join(' ')}</p>\n` : ''}`;
 
   let rendered = 0, truncated = false;
@@ -1003,6 +1020,21 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-aznav a:hover{border-color:var(--accent);text-decoration:none}
 .lp-teamline{margin:-0.75rem 0 1.25rem;font-size:.9rem;color:var(--muted)}
 .lp-teamline a{margin-right:.6rem}
+/* Sold-price block, injected by the Worker into .lp-price-slot. The slot
+   itself gets no styles — an empty div must take up no space on the pages
+   that have too little data to fill it. */
+.lp-prices{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin:1.25rem 0}
+.lp-prices h2{margin:0 0 .5rem;font-size:1.1rem}
+.lp-price-lede{margin:0 0 .9rem}
+.lp-price-table{width:100%;border-collapse:collapse;font-size:.92rem}
+.lp-price-table caption{text-align:left;font-size:.82rem;padding-bottom:.4rem}
+.lp-price-table th,.lp-price-table td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--border)}
+.lp-price-table th:nth-child(2),.lp-price-table td:nth-child(2),
+.lp-price-table th:nth-child(3),.lp-price-table td:nth-child(3){text-align:right;white-space:nowrap}
+.lp-price-table tr:last-child td{border-bottom:none}
+.lp-price-note{font-size:.8rem;margin:.75rem 0 0}
+/* A long card label must not push the page sideways on a phone. */
+@media (max-width:560px){.lp-prices{overflow-x:auto}.lp-price-table{min-width:100%}}
 .lp-faq{border-top:1px solid var(--border);margin-top:2.25rem;padding-top:.5rem}
 .lp-faq-item{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:.5rem 0;padding:.2rem .9rem}
 .lp-faq-item summary{cursor:pointer;font-weight:600;padding:.65rem 0;list-style:none}

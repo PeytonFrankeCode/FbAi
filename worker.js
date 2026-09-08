@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -407,6 +407,60 @@ export class UserInbox {
   }
 }
 
+// The price-block map, loaded once per isolate.
+//
+// Written daily by buildPriceBlocks() on the cron. Held in module scope for
+// the same reason as the redirects: this is consulted on the most-visited
+// pages on the site, and a KV read per request would be both slower and
+// billable for no benefit — the value changes once a day.
+//
+// Deliberately no D1 on this path at all. The alternative design queried the
+// database per page view behind a cache; this one costs a visitor nothing.
+let _priceBlocks = null;
+let _priceBlocksAt = 0;
+const PRICE_BLOCKS_ISOLATE_TTL = 3600000;   // an hour, so a long-lived isolate still refreshes
+
+async function priceBlocks(env) {
+  const now = Date.now();
+  if (_priceBlocks && (now - _priceBlocksAt) < PRICE_BLOCKS_ISOLATE_TTL) return _priceBlocks;
+  let loaded = null;
+  try {
+    const { cacheGet } = await init(env);
+    if (cacheGet) loaded = await cacheGet('priceblocks:v1');
+  } catch (err) {
+    console.error('price blocks unavailable:', err && err.message);
+  }
+  // An empty map on failure, cached like any other result. The page then
+  // renders exactly as it does today — the slot stays empty — rather than the
+  // request paying for a retry on every hit.
+  _priceBlocks = loaded && loaded.pages ? loaded : { pages: {}, from: '', to: '' };
+  _priceBlocksAt = now;
+  return _priceBlocks;
+}
+
+// Fill the empty <div class="lp-price-slot"> the build left behind.
+//
+// HTMLRewriter rather than a string replace on the body: it streams, so the
+// response starts flowing before the whole document is in memory, and it
+// cannot accidentally match the same class name inside a script or an
+// attribute somewhere else on the page.
+class PriceSlotFiller {
+  // The renderer is passed in rather than imported at module scope: it lives
+  // in server.js's dependency graph, which is loaded lazily by init(), and
+  // reaching for it as a global would be undefined on the first request.
+  constructor(blocks, render) { this.blocks = blocks; this.render = render; this.filled = 0; }
+  element(el) {
+    const key = el.getAttribute('data-price-key');
+    if (!key) return;
+    const summary = this.blocks.pages[key];
+    if (!summary) return;               // too little data — leave the slot empty
+    const html = this.render(summary, {
+      noun: summary.noun, from: this.blocks.from, to: this.blocks.to,
+    });
+    if (html) { el.setInnerContent(html, { html: true }); this.filled++; }
+  }
+}
+
 // The retired-player-slug map, loaded once per isolate.
 //
 // Cached in module scope rather than fetched per request: a player page is the
@@ -558,7 +612,34 @@ export default {
               h.set('Cache-Control', 'no-cache, no-store, must-revalidate');
               h.set('Pragma', 'no-cache');
               h.set('Expires', '0');
-              return new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+              let out = new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+
+              // Fill the sold-price block on checklist and player pages.
+              //
+              // Only those two prefixes, and only on a 200: the SPA fallback
+              // answers 200 for unknown paths too, and running the rewriter
+              // over every HTML response on the site would put a parser in
+              // front of the app shell for no gain.
+              //
+              // Wrapped in its own try. A failure here must degrade to the
+              // page as it is today — the slot simply stays empty — rather
+              // than turning a working page into a 502 over a missing price.
+              if (resp.status === 200 && /^\/(sets|players)\//.test(url.pathname)) {
+                try {
+                  const { renderPriceBlock } = await init(env);
+                  if (renderPriceBlock) {
+                    const blocks = await priceBlocks(env);
+                    if (blocks && Object.keys(blocks.pages).length) {
+                      out = new HTMLRewriter()
+                        .on('div[data-price-key]', new PriceSlotFiller(blocks, renderPriceBlock))
+                        .transform(out);
+                    }
+                  }
+                } catch (priceErr) {
+                  console.error('price block injection skipped:', priceErr && priceErr.message);
+                }
+              }
+              return out;
             }
             return resp;
           } catch (assetErr) {
@@ -635,7 +716,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -683,6 +764,30 @@ export default {
           await archiveListingPhotos().catch(err => console.error('[Cron] photo archive failed:', err && err.message || err));
         } else {
           console.error('[Cron] archiveListingPhotos missing from init() — not wired through');
+        }
+
+        // Rebuild the price blocks that ~950 landing pages render from.
+        //
+        // Once a day, not every tick. It is two full aggregate passes over the
+        // sales table — the most expensive thing this cron does in D1 rows
+        // read — and the numbers it produces are medians over a 45-day window,
+        // which do not visibly move in fifteen minutes. Four times an hour
+        // would cost ~96x the rows read to publish the same figures.
+        //
+        // 04:xx UTC: late enough that the day's imports have landed, early
+        // enough to be off-peak. Same gating style as the alias backfill —
+        // derived from the scheduled time, so it needs no stored state and a
+        // missed run costs one day of staleness against a two-day KV TTL.
+        if (typeof buildPriceBlocks === 'function') {
+          if (scheduledAt.getUTCHours() === 4 && aliasTick) {
+            const r = await buildPriceBlocks().catch(err => {
+              console.error('[Cron] price blocks failed:', err && err.message || err);
+              return null;
+            });
+            if (r && !r.ok) console.error('[Cron] price blocks not built:', r.reason);
+          }
+        } else {
+          console.error('[Cron] buildPriceBlocks missing from init() — not wired through');
         }
 
         if (typeof checkAlerts === 'function') {
