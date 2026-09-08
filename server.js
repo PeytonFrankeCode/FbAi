@@ -4697,6 +4697,110 @@ app.get('/api/debug/d1-usage', (req, res) => {
   });
 });
 
+// ---- /api/debug/price-coverage ----
+//
+// Can the landing pages actually show prices?
+//
+// 2,173 pages are titled "Checklist & Prices" and carry none. Putting real
+// numbers on them means joining the sold-sales table to the checklists, and
+// whether that is worth building depends on a figure nobody has measured: how
+// many products have enough sales behind them to show anything.
+//
+// scripts/probe-price-coverage.js answers the same question from CI, but needs
+// a token with D1 on it. This needs nothing: the Worker already holds the D1
+// binding, so loading one URL answers it. That the script came first was an
+// oversight worth naming — the access was here the whole time.
+//
+// Read-only, and cached, because it is a decision aid rather than a page.
+const PRICE_COVERAGE_TTL = 3600;
+app.get('/api/debug/price-coverage', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no D1 binding' });
+
+  const cached = await cacheGet('pricecoverage:v1');
+  if (cached && !req.query.fresh) return res.json(cached);
+
+  // A set must clear both bars before a price block is worth rendering on its
+  // page. Reported against rather than enforced — the point is to find out
+  // whether these are the right numbers.
+  const WANT_SALES = 20, WANT_CARDS = 10;
+
+  try {
+    const Y = _normCol('year'), S = _normCol('set_name');
+    const CARD = `${_normCol('player')} || '|' || ${_normCol('card_number')}`;
+    const WHERE = `price_cents IS NOT NULL AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+
+    const [totals, bySet] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n, MIN(sold_date) AS first, MAX(sold_date) AS last
+                  FROM sales WHERE ${WHERE}`).first(),
+      // One row per set name — a few thousand at most, not one query per page.
+      db.prepare(`SELECT ${Y} AS y, ${S} AS s, COUNT(*) AS n, COUNT(DISTINCT ${CARD}) AS cards
+                  FROM sales WHERE ${WHERE} AND ${S} <> ''
+                  GROUP BY y, s ORDER BY n DESC`).all(),
+    ]);
+
+    // The checklist side. index.json carries id/name/year/brand for all 361
+    // products in 82 KB, which is exactly the join key and nothing more.
+    const idx = await _loadJson('checklists/index.json');
+    const products = (idx && idx.products) || [];
+
+    // The join is on year + BRAND, not the product name. A sale's set_name is
+    // parsed from a seller's title and reads "Prizm", where the product is
+    // "2024 Panini Prizm Football" with brand "Prizm". Joining on the name
+    // matches nothing, which would look like absent data rather than a wrong
+    // key — so the orphan total below is what tells the two apart.
+    const norm = (v) => String(v == null ? '' : v)
+      .replace(/['.,"`’-]/g, '').toLowerCase().trim().replace(/\s{2,}/g, ' ');
+    const rows = (bySet && bySet.results) || [];
+    const byKey = new Map(rows.map(r => [`${norm(r.y)}|${norm(r.s)}`, r]));
+
+    const joined = products.map(p => ({
+      id: p.id, name: p.name, cards: p.totalCards,
+      hit: byKey.get(`${norm(p.year)}|${norm(p.brand)}`) || null,
+    }));
+    const matched = joined.filter(j => j.hit);
+    const clears = matched.filter(j => j.hit.n >= WANT_SALES && j.hit.cards >= WANT_CARDS);
+
+    const claimed = new Set(products.map(p => `${norm(p.year)}|${norm(p.brand)}`));
+    const orphans = rows.filter(r => !claimed.has(`${norm(r.y)}|${norm(r.s)}`));
+    const orphanSales = orphans.reduce((n, r) => n + Number(r.n || 0), 0);
+
+    const share = products.length ? Math.round((100 * clears.length) / products.length) : 0;
+    const payload = {
+      available: true,
+      dataset: {
+        pricedSales: (totals && totals.n) || 0,
+        from: totals && totals.first, to: totals && totals.last,
+        distinctSetNames: rows.length,
+      },
+      thresholds: { minSales: WANT_SALES, minDistinctCards: WANT_CARDS },
+      products: products.length,
+      matchedToSales: matched.length,
+      clearingThreshold: clears.length,
+      shareOfProductsWithUsablePrices: share + '%',
+      // A large figure here means the join key is wrong rather than the data
+      // being absent, and that is worth knowing before anything is built on it.
+      salesUnderUnclaimedSetNames: {
+        sales: orphanSales,
+        share: (totals && totals.n) ? Math.round((100 * orphanSales) / totals.n) + '%' : 'n/a',
+        examples: orphans.slice(0, 10).map(r => ({ year: r.y, set: r.s, sales: r.n })),
+      },
+      best: matched.slice().sort((a, b) => b.hit.n - a.hit.n).slice(0, 15)
+        .map(j => ({ product: j.name, sales: j.hit.n, soldCards: j.hit.cards, catalogued: j.cards })),
+      verdict: share >= 40
+        ? 'Build it — most set pages would carry real numbers.'
+        : share >= 15
+          ? 'Build it for the qualifying slice only; leave the long tail as it is.'
+          : 'Not yet — a price block would render empty on almost every page, which is worse than showing none.',
+    };
+    cachePut('pricecoverage:v1', payload, PRICE_COVERAGE_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[price-coverage]', err && err.message);
+    res.json({ available: false, error: String(err && err.message) });
+  }
+});
+
 app.get('/api/debug/index-health', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
