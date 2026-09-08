@@ -41,6 +41,7 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserDat
 // and the same resolvers are built from them — which is what the tests drive.
 const { createCardIndex } = require('./card-index-core');
 const { createParallelIndex } = require('./parallel-index-core');
+const { buildIndex: buildSetIndex, matchSale } = require('./set-key');
 
 const _dict = { card: null, parallel: null };
 async function _loadJson(name) {
@@ -4717,7 +4718,7 @@ app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
 
-  const cached = await cacheGet('pricecoverage:v1');
+  const cached = await cacheGet('pricecoverage:v2');
   if (cached && !req.query.fresh) return res.json(cached);
 
   // A set must clear both bars before a price block is worth rendering on its
@@ -4739,30 +4740,42 @@ app.get('/api/debug/price-coverage', async (req, res) => {
                   GROUP BY y, s ORDER BY n DESC`).all(),
     ]);
 
-    // The checklist side. index.json carries id/name/year/brand for all 361
-    // products in 82 KB, which is exactly the join key and nothing more.
+    // The checklist side. index.json carries id/name/year for all 361 products
+    // in 82 KB — enough to build the key without loading a single checklist.
     const idx = await _loadJson('checklists/index.json');
     const products = (idx && idx.products) || [];
 
-    // The join is on year + BRAND, not the product name. A sale's set_name is
-    // parsed from a seller's title and reads "Prizm", where the product is
-    // "2024 Panini Prizm Football" with brand "Prizm". Joining on the name
-    // matches nothing, which would look like absent data rather than a wrong
-    // key — so the orphan total below is what tells the two apart.
-    const norm = (v) => String(v == null ? '' : v)
-      .replace(/['.,"`’-]/g, '').toLowerCase().trim().replace(/\s{2,}/g, ' ');
+    // The join lives in set-key.js, which is where the reasoning and the tests
+    // are. The short version: this used to key on year + brand, which sent 37%
+    // of priced sales to no product at all and gave three different Donruss
+    // sets identical figures. It keys on the product name now.
     const rows = (bySet && bySet.results) || [];
-    const byKey = new Map(rows.map(r => [`${norm(r.y)}|${norm(r.s)}`, r]));
+    const { index: setIndex, ambiguous } = buildSetIndex(products);
 
-    const joined = products.map(p => ({
-      id: p.id, name: p.name, cards: p.totalCards,
-      hit: byKey.get(`${norm(p.year)}|${norm(p.brand)}`) || null,
-    }));
-    const matched = joined.filter(j => j.hit);
-    const clears = matched.filter(j => j.hit.n >= WANT_SALES && j.hit.cards >= WANT_CARDS);
+    // Several sale groups can reach one product — "prizm" and "panini prizm"
+    // are the same set written two ways — so this accumulates rather than
+    // looks up.
+    const agg = new Map();
+    const orphans = [];
+    for (const r of rows) {
+      const p = matchSale(setIndex, r.y, r.s);
+      if (!p) { orphans.push(r); continue; }
+      let a = agg.get(p.id);
+      if (!a) { a = { p, n: 0, cardsFloor: 0, cardsCeil: 0, groups: 0 }; agg.set(p.id, a); }
+      a.n += Number(r.n || 0);
+      a.groups++;
+      // Sales add up exactly. Distinct cards do not: a card that sold under
+      // both spellings is counted twice by the sum and once by the largest
+      // group, so the true figure sits between them. The threshold is applied
+      // to the floor, because overstating coverage is the failure this whole
+      // endpoint exists to avoid.
+      const c = Number(r.cards || 0);
+      a.cardsCeil += c;
+      if (c > a.cardsFloor) a.cardsFloor = c;
+    }
 
-    const claimed = new Set(products.map(p => `${norm(p.year)}|${norm(p.brand)}`));
-    const orphans = rows.filter(r => !claimed.has(`${norm(r.y)}|${norm(r.s)}`));
+    const matched = [...agg.values()];
+    const clears = matched.filter(a => a.n >= WANT_SALES && a.cardsFloor >= WANT_CARDS);
     const orphanSales = orphans.reduce((n, r) => n + Number(r.n || 0), 0);
 
     const share = products.length ? Math.round((100 * clears.length) / products.length) : 0;
@@ -4780,20 +4793,31 @@ app.get('/api/debug/price-coverage', async (req, res) => {
       shareOfProductsWithUsablePrices: share + '%',
       // A large figure here means the join key is wrong rather than the data
       // being absent, and that is worth knowing before anything is built on it.
+      // It was 37% on the year+brand key; that is what sent it back.
       salesUnderUnclaimedSetNames: {
         sales: orphanSales,
         share: (totals && totals.n) ? Math.round((100 * orphanSales) / totals.n) + '%' : 'n/a',
-        examples: orphans.slice(0, 10).map(r => ({ year: r.y, set: r.s, sales: r.n })),
+        examples: orphans.slice()
+          .sort((a, b) => Number(b.n || 0) - Number(a.n || 0)).slice(0, 10)
+          .map(r => ({ year: r.y, set: r.s, sales: r.n })),
       },
-      best: matched.slice().sort((a, b) => b.hit.n - a.hit.n).slice(0, 15)
-        .map(j => ({ product: j.name, sales: j.hit.n, soldCards: j.hit.cards, catalogued: j.cards })),
+      // Expected to be empty. A key two products both answer to is dropped
+      // rather than given to one of them, so anything listed here is a page
+      // that will show no prices until the catalogue names it distinctly.
+      ambiguousKeys: ambiguous.slice(0, 10),
+      best: matched.slice().sort((a, b) => b.n - a.n).slice(0, 15)
+        .map(a => ({
+          product: a.p.name, sales: a.n,
+          soldCards: a.cardsFloor, soldCardsUpperBound: a.cardsCeil,
+          spellings: a.groups, catalogued: a.p.totalCards,
+        })),
       verdict: share >= 40
         ? 'Build it — most set pages would carry real numbers.'
         : share >= 15
           ? 'Build it for the qualifying slice only; leave the long tail as it is.'
           : 'Not yet — a price block would render empty on almost every page, which is worse than showing none.',
     };
-    cachePut('pricecoverage:v1', payload, PRICE_COVERAGE_TTL);
+    cachePut('pricecoverage:v2', payload, PRICE_COVERAGE_TTL);
     res.json(payload);
   } catch (err) {
     console.error('[price-coverage]', err && err.message);
