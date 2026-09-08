@@ -173,6 +173,26 @@ const { index, ambiguous } = buildIndex(products);
   check('ambiguous player names are dropped, not guessed',
     pAmb.length > 0 && pAmb.every(a => a.products.length > 1 && a.products.every(Boolean)),
     `${pAmb.length} names dropped, e.g. ${pAmb[0] && pAmb[0].key}`);
+
+  // The distinction that matters, and the reason the dedupe exists.
+  //
+  // An ambiguous name is acceptable when it is two different people — Marvin
+  // Harrison and his son both have pages and the join is right to refuse. It
+  // is NOT acceptable when it is one person spelled two ways, because then the
+  // refusal is throwing away a real page's sales for no reason: "cj stroud"
+  // alone was 2,006 of them.
+  //
+  // So: every surviving collision must be two DIFFERENT normalised names.
+  const typographic = pAmb.filter(a => {
+    const bySlug = new Map(pages.map(p => [p.slug, p]));
+    const names = a.products.map(s => bySlug.get(s)).filter(Boolean).map(p => norm(p.name));
+    return new Set(names).size === 1;
+  });
+  check('no player has two pages from a punctuation difference',
+    typographic.length === 0,
+    typographic.length
+      ? typographic.map(a => a.products.join(' / ')).join(' | ')
+      : `${pAmb.length} remaining collisions are all distinct names`);
 }
 
 // ---- the sitemap constant server.js divides by ----
