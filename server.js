@@ -9148,6 +9148,25 @@ const PRICE_BLOCKS_KEY = 'priceblocks:v1';
 const PRICE_BLOCKS_TTL = 172800;   // two days: survives a missed cron
 const PRICE_BLOCK_WINDOW_DAYS = 45;
 
+// Is there a usable map already?
+//
+// The daily schedule means a deploy would otherwise show no prices until the
+// next 04:xx UTC — up to a day of pages that still do not keep their promise,
+// and no way to tell that from a build that simply failed. The cron asks this
+// on every tick and builds immediately when the answer is no, so the first
+// tick after a deploy fills the pages and every tick after that is a single
+// cheap KV read.
+async function priceBlocksMissing() {
+  try {
+    const cur = await cacheGet(PRICE_BLOCKS_KEY);
+    return !(cur && cur.pages && Object.keys(cur.pages).length);
+  } catch (_) {
+    // Unreadable is not the same as absent, and rebuilding on a transient KV
+    // error would run two full table scans for nothing. Assume it is there.
+    return false;
+  }
+}
+
 async function buildPriceBlocks() {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no D1 binding' };
@@ -9366,7 +9385,7 @@ async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -716,7 +716,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -779,7 +779,10 @@ export default {
         // derived from the scheduled time, so it needs no stored state and a
         // missed run costs one day of staleness against a two-day KV TTL.
         if (typeof buildPriceBlocks === 'function') {
-          if (scheduledAt.getUTCHours() === 4 && aliasTick) {
+          // Or right now, if there is no map at all — see priceBlocksMissing().
+          const due = (scheduledAt.getUTCHours() === 4 && aliasTick)
+            || (typeof priceBlocksMissing === 'function' && await priceBlocksMissing().catch(() => false));
+          if (due) {
             const r = await buildPriceBlocks().catch(err => {
               console.error('[Cron] price blocks failed:', err && err.message || err);
               return null;
