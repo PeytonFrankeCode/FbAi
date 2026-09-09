@@ -456,6 +456,9 @@ class PriceSlotFiller {
     if (!summary) return;               // too little data — leave the slot empty
     const html = this.render(summary, {
       noun: summary.noun, from: this.blocks.from, to: this.blocks.to,
+      // What to search eBay for. The set or player name the page is about,
+      // which is also what a reader would type themselves.
+      shopQuery: summary.noun,
     });
     if (html) { el.setInnerContent(html, { html: true }); this.filled++; }
   }

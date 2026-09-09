@@ -77,5 +77,56 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     'a second ? silently breaks the whole query string');
 }
 
+// ---- the two copies of the campaign id ----
+//
+// public/app.js is a plain browser script and price-block-core.js is a
+// CommonJS module the Worker loads; neither can import from the other, so the
+// parameters exist twice. A divergence would not throw — it would just credit
+// half the site's clicks to a campaign that does not exist, or to nobody.
+{
+  const core = require(path.join(ROOT, 'price-block-core.js'));
+  const m = app.match(/const EPN_PARAMS = '([^']+)'/);
+  check('app.js and price-block-core.js carry identical EPN parameters',
+    m && m[1] === core.EPN_PARAMS,
+    m && m[1] === core.EPN_PARAMS ? 'byte-identical' : `app.js: ${m && m[1]}\n      core:   ${core.EPN_PARAMS}`);
+}
+
+// ---- the server-rendered link ----
+//
+// One per page, on ~930 pages. The rel attributes are not optional: Google
+// requires "sponsored" on a paid link, and 900-odd followed links all pointing
+// at one merchant is a link scheme whatever the intent behind it.
+{
+  const core = require(path.join(ROOT, 'price-block-core.js'));
+  const summary = core.summarise(
+    { sales: 500, cards: 100, median: 1200, low: 200, high: 40000 },
+    [{ label: 'Some Card #1', sales: 20, median: 1200 }]);
+  const html = core.render(summary, {
+    noun: '2025 Panini Prizm Football', from: '2026-07-19', to: '2026-08-30',
+    shopQuery: '2025 Panini Prizm Football',
+  });
+
+  check('the price block carries the affiliate parameters',
+    html.includes('campid=5339145753') && html.includes('mkevt=1'));
+  check('  ...marked rel="sponsored", as Google requires for a paid link',
+    /rel="[^"]*sponsored[^"]*"/.test(html));
+  check('  ...and nofollow, so 930 pages pointing at eBay is not a link scheme',
+    /rel="[^"]*nofollow[^"]*"/.test(html));
+
+  // A completed sale's listing is closed, and 404s once eBay purges it.
+  check('  ...and links to a search, not to an ended listing',
+    html.includes('/sch/i.html?_nkw=') && !/ebay\.com\/itm\//.test(html));
+
+  // Density is the whole reason this is one link and not eight.
+  const links = (html.match(/href="https:\/\/www\.ebay\.com/g) || []).length;
+  check('exactly one outbound affiliate link per page',
+    links === 1, `${links} — eight would read as a thin affiliate table`);
+
+  // And it must not appear at all when the caller does not ask for it.
+  const noShop = core.render(summary, { noun: 'x', from: 'a', to: 'b' });
+  check('  ...and none at all without a shop query',
+    !noShop.includes('ebay.com'), 'the block is data first, link second');
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);

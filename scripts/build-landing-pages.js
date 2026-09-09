@@ -1032,6 +1032,7 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-price-table th:nth-child(2),.lp-price-table td:nth-child(2),
 .lp-price-table th:nth-child(3),.lp-price-table td:nth-child(3){text-align:right;white-space:nowrap}
 .lp-price-table tr:last-child td{border-bottom:none}
+.lp-price-shop{margin:.9rem 0 0;font-weight:600}
 .lp-price-note{font-size:.8rem;margin:.75rem 0 0}
 /* A long card label must not push the page sideways on a phone. */
 @media (max-width:560px){.lp-prices{overflow-x:auto}.lp-price-table{min-width:100%}}

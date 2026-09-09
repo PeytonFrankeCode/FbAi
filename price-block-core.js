@@ -83,6 +83,27 @@ function summarise(totals, rows) {
   };
 }
 
+// The eBay Partner Network parameters.
+//
+// Duplicated from public/app.js rather than shared, because app.js is a plain
+// browser script with no module system to import from. test/affiliate-links.js
+// asserts the two copies are byte-identical, which is the closest thing to one
+// source of truth available here — and a silent divergence would mean clicks
+// credited to nobody.
+const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&toolid=10001&mkevt=1';
+
+// A search, deliberately, not a listing.
+//
+// The sales behind these medians are COMPLETED. Linking to one sends the
+// reader to an ended listing, or a 404 once eBay purges it — the worst
+// possible landing for someone who just decided to buy. A search for the same
+// set stays valid indefinitely and lands on things that are actually for sale.
+function ebaySearchUrl(query) {
+  const q = String(query || '').trim();
+  if (!q) return '';
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&${EPN_PARAMS}`;
+}
+
 // The markup.
 //
 // Plain semantic HTML, no scripts, no classes the landing-page CSS does not
@@ -127,6 +148,25 @@ function render(summary, opts) {
     html += `    </tbody>\n  </table>\n`;
   }
 
+  // Exactly one outbound link per page, and it goes here rather than on each
+  // of the eight card rows.
+  //
+  // Eight would be ~7,400 monetised links across the site, added while Google
+  // is reviewing it for low-value content — which is the shape of a thin
+  // affiliate page whether or not the data above it is real. One clearly
+  // labelled link keeps nearly all the intent (a reader who just saw the
+  // median and wants to buy clicks whatever is in front of them) at an eighth
+  // of the density, and costs one exit per page instead of eight.
+  //
+  // rel="sponsored" is required by Google for a paid link; nofollow because
+  // 900-odd pages all pointing at one merchant with followed links is a link
+  // scheme regardless of intent.
+  const shopUrl = o.shopQuery ? ebaySearchUrl(o.shopQuery) : '';
+  if (shopUrl) {
+    html += `  <p class="lp-price-shop"><a href="${esc(shopUrl)}" target="_blank" rel="sponsored nofollow noopener">`;
+    html += `See current ${esc(noun)} listings on eBay</a></p>\n`;
+  }
+
   // The honesty line. These are mixed conditions — a raw base card and a PSA
   // 10 of the same card are both in here — and saying so is the difference
   // between a price guide and a misleading one.
@@ -142,4 +182,7 @@ function render(summary, opts) {
 // is the kind of failure that goes unnoticed for weeks.
 const keyFor = (kind, id) => `${kind}:${id}`;
 
-module.exports = { MIN_SALES, MIN_CARDS, TOP_CARDS, median, money, esc, summarise, render, keyFor };
+module.exports = {
+  MIN_SALES, MIN_CARDS, TOP_CARDS, EPN_PARAMS,
+  median, money, esc, summarise, render, keyFor, ebaySearchUrl,
+};
