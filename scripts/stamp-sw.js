@@ -20,6 +20,19 @@
 // exists so the app works on bad wifi at a card show, and throwing it away on
 // every deploy would trade one bug for a worse one.
 //
+// The same class of bug lives in index.html, which requests its assets as
+// `style.css?v=159` and `app.js?v=210` — cache keys a human has to remember to
+// bump. #550 changed style.css and did not bump the number, so returning
+// visitors were served new HTML against a months-old stylesheet. The homepage
+// <h1> that commit added is styled by a .sr-only rule in the CSS they did not
+// have, so it rendered as a giant green heading instead of being invisible:
+// one feature, two halves, different ages. Again.
+//
+// So those are computed here too, from the content of the file each one points
+// at. Note this runs BEFORE the sw.js version is computed, because index.html
+// is one of the files that version hashes — stamp it after and the recorded
+// version would describe an index.html that no longer exists.
+//
 // Run: node scripts/stamp-sw.js [--check]
 //   --check  verify the file is stampable and report the version, write nothing
 const fs = require('fs');
@@ -61,7 +74,41 @@ function version(swSrc) {
   return 'b' + h.digest('hex').slice(0, 12);
 }
 
+// `<link href="style.css?v=159">` and `<script src="app.js?v=210">`.
+//
+// An exact shape again, and a hard failure if a reference goes missing: a
+// silently un-stamped asset is the whole bug. The tag order in index.html is
+// not assumed — each asset is matched on its own.
+const ASSET_REFS = ['style.css', 'app.js'];
+
+function stampAssetRefs() {
+  const INDEX = path.join(PUBLIC, 'index.html');
+  let html = fs.readFileSync(INDEX, 'utf8');
+  const before = html;
+  const changes = [];
+
+  for (const asset of ASSET_REFS) {
+    const p = path.join(PUBLIC, asset);
+    if (!fs.existsSync(p)) throw new Error(`stamp-sw: public/${asset} is missing`);
+    const hash = crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').slice(0, 10);
+    const ref = new RegExp(`(${asset.replace('.', '\\.')}\\?v=)([A-Za-z0-9]+)`, 'g');
+    const found = html.match(ref);
+    if (!found) throw new Error(`stamp-sw: index.html has no ${asset}?v= reference to stamp`);
+    let from = null;
+    html = html.replace(ref, (_, head, old) => { from = old; return head + hash; });
+    if (from !== hash) changes.push(`${asset} ?v=${from} -> ?v=${hash}`);
+  }
+
+  if (html !== before) {
+    fs.writeFileSync(INDEX, html);
+    for (const c of changes) console.log(`index.html ${c}`);
+  } else {
+    console.log('index.html asset versions already current');
+  }
+}
+
 function main() {
+  if (!process.argv.includes('--check')) stampAssetRefs();
   const src = fs.readFileSync(SW, 'utf8');
   const m = src.match(ANCHOR);
   if (!m) {

@@ -37,6 +37,20 @@ jobs:
       - name: Build SEO landing pages
         run: npm run build:pages
 
+      # After build:pages, which regenerates the checklist index this hashes;
+      # BEFORE the tests, which assert index.html's ?v= asset versions match
+      # the content they point at. Run it after them and any commit touching
+      # style.css fails CI until someone stamps by hand — reintroducing the
+      # manual step this exists to remove.
+      #
+      # The service worker keys its caches on this version, and it sat at 'v1'
+      # for 137 commits, so returning visitors kept whatever app.js and
+      # checklist index they first downloaded, indefinitely. Computing it from
+      # content rather than trusting someone to remember is the fix; an
+      # unchanged deploy produces the same stamp and evicts nobody.
+      - name: Stamp asset and service worker cache versions
+        run: npm run build:sw
+
       # Runs the index endpoints against a real in-memory SQLite dataset. The
       # index once shipped with a helper deleted out from under it — a syntax
       # check passes on a missing global, so the code path has to be executed.
@@ -49,14 +63,6 @@ jobs:
       - name: Test
         run: npm test
 
-      # Must run after build:pages, which regenerates the checklist index the
-      # stamp hashes. The service worker keys its caches on this version, and it
-      # sat at 'v1' for 137 commits — so returning visitors kept whatever app.js
-      # and checklist index they first downloaded, indefinitely. Computing it
-      # from content rather than trusting someone to remember is the fix; an
-      # unchanged deploy produces the same stamp and evicts nobody.
-      - name: Stamp the service worker cache version
-        run: npm run build:sw
 
       # Ask Cloudflare what the token can actually do, before wrangler tries.
       #

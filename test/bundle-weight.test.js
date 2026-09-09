@@ -125,5 +125,31 @@ for (const rel of HEAVY) {
   check(`${rel} ships in the assets directory`, ok && kb > 100, `${kb} KB`);
 }
 
+// ---- asset cache keys ----
+//
+// index.html requests style.css and app.js with a ?v= query. That number was
+// maintained by hand, and #550 changed style.css without bumping it — so
+// returning visitors got the new HTML against a months-old stylesheet, and the
+// homepage <h1> that commit added rendered as a giant green heading instead of
+// being hidden by a .sr-only rule they did not have.
+//
+// It is computed from file content now. This check is what notices if the
+// stamping stops running, which is the same silent failure one level up.
+{
+  const crypto = require('crypto');
+  const idx = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
+  for (const asset of ['style.css', 'app.js']) {
+    const m = idx.match(new RegExp(`${asset.replace('.', '\\.')}\\?v=([A-Za-z0-9]+)`));
+    check(`index.html requests ${asset} with a version`, !!m,
+      m ? `?v=${m[1]}` : 'no ?v= — every deploy is invisible to a cached visitor');
+    if (!m) continue;
+    const want = crypto.createHash('sha256')
+      .update(fs.readFileSync(path.join(ROOT, 'public', asset))).digest('hex').slice(0, 10);
+    check(`  ...and it matches the file's content hash`,
+      m[1] === want,
+      m[1] === want ? 'stamped' : `page says ${m[1]}, content hashes to ${want} — run npm run build:sw`);
+  }
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall bundle-weight checks passed');
 process.exit(failures ? 1 : 0);
