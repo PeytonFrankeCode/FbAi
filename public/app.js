@@ -1001,7 +1001,7 @@ async function loadMarketPulse(days) {
     rowsFor(title, sub, BOARD_OF[title], list, render);
 
   parts.push(tiles('Most expensive', label, data.priciest, (r) =>
-    '<a class="mp-tile" href="' + escHtml(r.itemUrl) + '" target="_blank" rel="noopener">' +
+    '<a class="mp-tile" href="' + escHtml(epnUrl(r.itemUrl)) + '" target="_blank" rel="noopener">' +
     thumb(r.imageUrl, r.title) +
     '<span class="mp-tile-price">' + _mpMoney(r.price) + '</span>' +
     '<span class="mp-tile-name">' + escHtml(String(r.title).slice(0, 70)) + '</span>' +
@@ -1077,13 +1077,48 @@ const STATS_BOARDS = [
 let _statsBoard = 'mostSold';
 let _statsDays = 30;
 
+// eBay serves one photo at many sizes, the size encoded as s-l<N> in the path.
+// Rows are 34px wide, so asking for the 1600px original the sales table happens
+// to hold would pull roughly 200KB per row to paint a thumbnail — 50 of those
+// on a phone. 140 covers a 2x display with room to spare.
+function _statsThumbUrl(url) {
+  const u = String(url || '');
+  if (!u) return '';
+  return u.replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, '/s-l140.$1');
+}
+
+// The photo, or the space where one would be.
+//
+// eBay purges images for long-ended listings, which is the entire reason the
+// R2 archive exists — and on the 1y board most of these sales are old enough
+// that some photos are already gone. So the <img> sits inside a span that
+// carries the placeholder, and onerror hides only the image: a dead photo
+// leaves the card glyph and the row keeps its shape, rather than showing a
+// browser's broken-image icon fifty times.
+function _statsThumb(url, alt) {
+  const u = _statsThumbUrl(url);
+  return '<span class="st-thumb">' + (u
+    ? '<img class="st-img" src="' + escHtml(u) + '" alt="' + escHtml(alt || '') +
+      '" loading="lazy" onerror="this.style.display=\'none\'" />'
+    : '') + '</span>';
+}
+
+// Which boards have a photo to show at all. topSets is deliberately absent:
+// its rows are whole sets, and one card's photo would stand in for a thousand.
+const _STATS_WITH_PHOTOS = { priciest: 1, mostSold: 1, cardMovers: 1, playerMovers: 1 };
+
 function _statsRow(board, r, i) {
   const rank = '<span class="st-rank">' + (i + 1) + '</span>';
   const q = r.query ? ' data-query="' + escHtml(r.query) + '"' : '';
-  const open = '<button class="st-row"' + q + '>' + rank;
+  const photo = _STATS_WITH_PHOTOS[board]
+    ? _statsThumb(board === 'playerMovers' ? (r.topCard && r.topCard.imageUrl) : r.imageUrl,
+                  board === 'playerMovers' ? r.player : r.name || r.title)
+    : '';
+  const cls = photo ? 'st-row st-row-img' : 'st-row';
+  const open = '<button class="' + cls + '"' + q + '>' + rank + photo;
 
   if (board === 'priciest') {
-    return '<a class="st-row" href="' + escHtml(r.itemUrl) + '" target="_blank" rel="noopener">' + rank +
+    return '<a class="' + cls + '" href="' + escHtml(epnUrl(r.itemUrl)) + '" target="_blank" rel="noopener">' + rank + photo +
       '<span class="st-name">' + escHtml(String(r.title).slice(0, 90)) + '</span>' +
       '<span class="st-meta">' + escHtml(r.grade || 'raw') + '</span>' +
       '<span class="st-n">' + _mpMoney(r.price) + '</span></a>';

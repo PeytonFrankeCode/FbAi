@@ -9289,10 +9289,32 @@ body.tour-open { overflow: hidden; }
 .st-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
 .st-n { font-size: 0.85rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
 
+/* Card photo on the boards that have one. The extra column exists only on
+   those rows — topSets lists whole sets, and one card standing in for a
+   thousand would be worse than no picture. */
+.st-row-img { grid-template-columns: 1.6rem 2.1rem minmax(0, 1fr) auto auto; }
+.st-thumb {
+  position: relative; width: 2.1rem; height: 2.9rem; border-radius: 4px;
+  overflow: hidden; background: rgba(148, 163, 184, 0.10);
+  display: flex; align-items: center; justify-content: center; align-self: center;
+}
+/* The placeholder is the span's own glyph, sitting underneath. When eBay has
+   purged a photo the <img> hides itself and this shows through, so the row
+   keeps its exact footprint — without it the list would reflow one row at a
+   time as images fail. */
+.st-thumb::after { content: '\1F0A0'; font-size: 0.9rem; opacity: 0.35; }
+/* Absolute rather than in flow, so it covers the glyph instead of displacing
+   it. Removing the image from the flow is what lets both occupy one slot. */
+.st-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
 @media (max-width: 560px) {
   /* Rank, name and the number survive; the meta line is the one that would
      force horizontal scroll on a phone. */
   .st-row { grid-template-columns: 1.4rem minmax(0, 1fr) auto; }
+  .st-row-img { grid-template-columns: 1.4rem 1.9rem minmax(0, 1fr) auto; }
   .st-meta { display: none; }
 }
 

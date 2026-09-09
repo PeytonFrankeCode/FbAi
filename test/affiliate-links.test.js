@@ -47,9 +47,18 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
 // numbers: a new render function with a raw href is exactly how the last three
 // got in, and a hard-coded list would not have caught them.
 {
-  // Any href interpolating something that looks like a listing URL.
-  const hrefs = [...app.matchAll(/href="\$\{([^}]*(?:itemUrl|ebayUrl|listingUrl|itemWebUrl)[^}]*)\}"/g)]
-    .map(m => ({ expr: m[1], at: app.slice(0, m.index).split('\n').length }));
+  // Any href built from something that looks like a listing URL — in EITHER
+  // syntax. The first version of this only matched template literals
+  // (href="${...}"), and app.js builds plenty of markup by concatenation
+  // instead (href="' + escHtml(...) + '"). Two untagged links were sitting in
+  // that blind spot, one of them the homepage's Most Expensive tiles — the most
+  // prominent placement on the site. A guard that covers one syntax is a guard
+  // that reports "all tagged" while money leaks through the other.
+  const URLISH = '(?:itemUrl|ebayUrl|listingUrl|itemWebUrl)';
+  const hrefs = [
+    ...app.matchAll(new RegExp(`href="\\$\\{([^}]*${URLISH}[^}]*)\\}"`, 'g')),
+    ...app.matchAll(new RegExp(`href=\\\\?["']'\\s*\\+\\s*([^+]*${URLISH}[^+]*)\\+`, 'g')),
+  ].map(m => ({ expr: m[1], at: app.slice(0, m.index).split('\n').length }));
 
   check('outbound listing links were found to check',
     hrefs.length > 0, `${hrefs.length} href interpolations`);
