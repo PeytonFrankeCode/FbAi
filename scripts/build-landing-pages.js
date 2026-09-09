@@ -206,6 +206,16 @@ function prefillHref(q) { return '/?prefill=' + encodeURIComponent(jsonText(q));
 // never happens — no KV value, a cold isolate that failed to load it, a page
 // with too few sales — the reader sees the page exactly as it is today rather
 // than an empty table that reads as broken.
+// The key that ties a checklist card to a sold row.
+//
+// It has to be built identically on both sides — here from a checklist entry,
+// and in server.js from the sales columns — or every lookup misses and the
+// subset pages silently stay empty. normName() is the shared normaliser the
+// sales join already uses.
+function cardMemberKey(c) {
+  return normName(c && c.player) + '|' + normName(c && c.number);
+}
+
 function priceSlot(kind, id) {
   return `    <div class="lp-price-slot" data-price-key="${esc(kind)}:${esc(id)}"></div>`;
 }
@@ -556,6 +566,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(`${cl.year || ''} ${cl.brand} ${setName}`.replace(/\s+/g, ' ').trim())}">&#128270; Check live prices for ${esc(setName)}</a>
     </p>
+${priceSlot('subset', cl.id + '/' + slug)}
 `;
   if (parallels.length) {
     const shown = parallels.slice(0, PARALLEL_CAP).map(p => {
@@ -1275,6 +1286,52 @@ function main() {
   // be asked at all until the Worker could see them.
   //
   // Names only, no card lists. The point is coverage, not content.
+  // Which subset a sold card belongs to.
+  //
+  // The sales table has year, set_name, player, card_number and parallel —
+  // and no subset column. A subset page therefore cannot be joined by name;
+  // it has to be joined by MEMBERSHIP, because a subset is exactly a list of
+  // (player, card number) pairs and a sale carries both.
+  //
+  // The catch is that inserts reuse the base set's numbering, so within one
+  // product 28.5% of (player, number) keys belong to more than one subset.
+  // Those are omitted rather than assigned to whichever subset was seen
+  // first — the same refusal the sales join makes, for the same reason: a
+  // guessed attribution puts one subset's prices on another's page.
+  //
+  // Dropping them was worth checking for bias, since a median built only from
+  // the survivors would be misleading if the excluded cards were the valuable
+  // ones. They are not: excluded cards belong to slightly LESS prominent
+  // players than included ones (median 313 catalogue appearances against 349).
+  //
+  // Only subsets big enough to be indexed are listed. The whole map is 1.5 MB
+  // — small enough for the daily cron to load, which 27 MB of checklists is
+  // not.
+  const subsetAttribution = {};
+  for (const cl of checklists) {
+    const sets = (cl.sets || []).filter(x => (x.cards || []).length >= MIN_SUBSET_CARDS);
+    if (!sets.length) continue;
+    const owners = new Map();
+    for (const x of sets) {
+      for (const c of (x.cards || [])) {
+        const k = cardMemberKey(c);
+        owners.set(k, (owners.get(k) || 0) + 1);
+      }
+    }
+    const m = {};
+    for (const sub of (subsetIndex.get(cl.id) || [])) {
+      if ((sub.set.cards || []).length < INDEX_MIN_SUBSET_CARDS) continue;
+      for (const c of (sub.set.cards || [])) {
+        const k = cardMemberKey(c);
+        if (owners.get(k) === 1) m[k] = sub.slug;
+      }
+    }
+    if (Object.keys(m).length) subsetAttribution[cl.id] = m;
+  }
+  fs.mkdirSync(path.join(DATA_DIR, 'subsets'), { recursive: true });
+  fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'attribution.json'),
+    JSON.stringify(subsetAttribution) + '\n');
+
   fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
   fs.writeFileSync(path.join(DATA_DIR, 'players', 'redirects.json'), JSON.stringify(redirects) + '\n');
   fs.writeFileSync(path.join(DATA_DIR, 'players', 'index.json'), JSON.stringify({

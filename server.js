@@ -9252,6 +9252,59 @@ async function buildPriceBlocks() {
   }, 'set');
   collect(playerCards, g => matchPlayer(playerIndex, g), 'player');
 
+  // ---- subset pages ----
+  //
+  // 572 of the indexable URLs are subsets of a product — "2025 Panini Prizm /
+  // Rookie Revolution" — and they cannot be joined the way the other two are,
+  // because `sales` has no subset column. A subset IS a list of (player, card
+  // number) pairs though, and a sale carries both, so the join goes through
+  // membership instead. build-landing-pages.js emits the map.
+  //
+  // Ambiguous cards are absent from that map by construction: inserts reuse
+  // the base numbering, so 28.5% of keys belong to more than one subset and
+  // are omitted rather than guessed. A page therefore prices the cards it can
+  // prove are its own, and MIN_CARDS still decides whether that is enough to
+  // print anything.
+  try {
+    const attribution = await _loadJson('subsets/attribution.json');
+    for (const r of (setCards && setCards.results) || []) {
+      const i = String(r.g || '').indexOf('|');
+      if (i === -1) continue;
+      const product = matchSale(setIndex, String(r.g).slice(0, i), String(r.g).slice(i + 1));
+      if (!product) continue;
+      const map = attribution[product.id];
+      if (!map) continue;
+      // The label is `player #number`; the map is keyed `player|number`. Split
+      // on the LAST ' #' so a player whose name contains one still resolves.
+      const label = String(r.label || '');
+      const at = label.lastIndexOf(' #');
+      if (at === -1) continue;
+      // Both halves arrive already normalised — the SQL label is built from
+      // _normCol(player) and _normCol(card_number), and the map was keyed with
+      // the JS norm(). test/subset-attribution.test.js asserts those two agree;
+      // if they ever drift, every lookup here misses and the subset pages just
+      // stay empty, with nothing thrown to say why.
+      const slug = map[`${label.slice(0, at)}|${label.slice(at + 2)}`];
+      if (!slug) continue;
+      const key = priceKeyFor('subset', `${product.id}/${slug}`);
+      let p = pages.get(key);
+      if (!p) {
+        p = { kind: 'subset', page: { id: `${product.id}/${slug}`, name: product.name, slug },
+              sales: 0, prices: [], cards: [] };
+        pages.set(key, p);
+      }
+      const sales = Number(r.sales || 0), med = Number(r.median || 0);
+      p.sales += sales;
+      p.cards.push({ label: r.label, sales, median: med });
+      p.prices.push(med);
+    }
+  } catch (err) {
+    // No attribution artifact means no subset blocks, which is the same as a
+    // subset with too little data: the slot stays empty. Not worth failing the
+    // whole build for.
+    console.error('[prices] subset attribution unavailable:', err && err.message);
+  }
+
   const out = {};
   let kept = 0;
   for (const [key, p] of pages) {
