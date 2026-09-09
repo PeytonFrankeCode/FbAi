@@ -279,7 +279,11 @@ function buildPlayerIndex(checklists) {
 }
 
 // ---- Shared chrome --------------------------------------------------------
+let _landingV = null;
+const LANDING_CSS_V_GET = () => (_landingV || (_landingV = landingCssVersion()));
+
 function head({ title, description, canonical, extraJsonLd, noindex }) {
+  const LANDING_CSS_V = LANDING_CSS_V_GET();
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -308,7 +312,7 @@ ${adsenseTag()}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/sets/landing.css?v=3" />
+  <link rel="stylesheet" href="/sets/landing.css?v=${LANDING_CSS_V}" />
 ${extraJsonLd || ''}
 </head>
 <body>
@@ -985,6 +989,18 @@ function buildTeamsHub(teams) {
 }
 
 // ---- Stylesheet -----------------------------------------------------------
+// The landing stylesheet's cache key, from its own content.
+//
+// This was a hard-coded ?v=3 and it had already gone stale twice in one day:
+// the price-block styles were added to LANDING_CSS without touching it, so
+// every returning visitor to a landing page would have been served the old
+// stylesheet and seen the new price block completely unstyled.
+//
+// Same failure as index.html's ?v=159 and sw.js's 'v1' before it. A cache key
+// that a person has to remember to change is a cache key that will be wrong.
+const landingCssVersion = () => require('crypto')
+  .createHash('sha256').update(LANDING_CSS).digest('hex').slice(0, 10);
+
 const LANDING_CSS = `/* Lightweight stylesheet for SEO landing pages. Brand-matched, self-contained. */
 :root{--bg:#0c0e14;--card:#161b28;--text:#edf0f7;--muted:#9aa3b2;--accent:#5ece99;--accent-2:#3fae7d;--border:#2a3142;--amber:#f59e0b}
 *{box-sizing:border-box}

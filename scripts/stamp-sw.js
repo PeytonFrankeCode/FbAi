@@ -79,32 +79,62 @@ function version(swSrc) {
 // An exact shape again, and a hard failure if a reference goes missing: a
 // silently un-stamped asset is the whole bug. The tag order in index.html is
 // not assumed — each asset is matched on its own.
-const ASSET_REFS = ['style.css', 'app.js'];
+// Which pages reference which assets.
+//
+// privacy.html and terms.html are here because a sweep found them still asking
+// for style.css?v=159 — the stale number index.html had. They are also two of
+// the pages an AdSense reviewer is most likely to open, and they were being
+// served a months-old stylesheet.
+//
+// The landing pages are NOT here: they reference /sets/landing.css, whose
+// version is computed inside build-landing-pages.js from that stylesheet's own
+// text, because the file is generated rather than checked in.
+//
+// The favicon and manifest ?v=1 references are deliberately left alone. They
+// point at files that have not changed and would not break a page if they
+// were stale — unlike a stylesheet, a month-old icon is just an icon.
+const PAGE_ASSETS = {
+  'index.html': ['style.css', 'app.js'],
+  'privacy.html': ['style.css'],
+  'terms.html': ['style.css'],
+};
 
 function stampAssetRefs() {
-  const INDEX = path.join(PUBLIC, 'index.html');
-  let html = fs.readFileSync(INDEX, 'utf8');
-  const before = html;
-  const changes = [];
+  const hashes = new Map();
+  const hashOf = (asset) => {
+    if (!hashes.has(asset)) {
+      const p = path.join(PUBLIC, asset);
+      if (!fs.existsSync(p)) throw new Error(`stamp-sw: public/${asset} is missing`);
+      hashes.set(asset, crypto.createHash('sha256')
+        .update(fs.readFileSync(p)).digest('hex').slice(0, 10));
+    }
+    return hashes.get(asset);
+  };
 
-  for (const asset of ASSET_REFS) {
-    const p = path.join(PUBLIC, asset);
-    if (!fs.existsSync(p)) throw new Error(`stamp-sw: public/${asset} is missing`);
-    const hash = crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').slice(0, 10);
-    const ref = new RegExp(`(${asset.replace('.', '\\.')}\\?v=)([A-Za-z0-9]+)`, 'g');
-    const found = html.match(ref);
-    if (!found) throw new Error(`stamp-sw: index.html has no ${asset}?v= reference to stamp`);
-    let from = null;
-    html = html.replace(ref, (_, head, old) => { from = old; return head + hash; });
-    if (from !== hash) changes.push(`${asset} ?v=${from} -> ?v=${hash}`);
-  }
+  let touched = 0;
+  for (const [page, assets] of Object.entries(PAGE_ASSETS)) {
+    const file = path.join(PUBLIC, page);
+    if (!fs.existsSync(file)) throw new Error(`stamp-sw: public/${page} is missing`);
+    let html = fs.readFileSync(file, 'utf8');
+    const before = html;
 
-  if (html !== before) {
-    fs.writeFileSync(INDEX, html);
-    for (const c of changes) console.log(`index.html ${c}`);
-  } else {
-    console.log('index.html asset versions already current');
+    for (const asset of assets) {
+      const hash = hashOf(asset);
+      // Matches with or without a leading path — privacy.html writes
+      // /style.css where index.html writes style.css.
+      const ref = new RegExp(`(${asset.replace('.', '\\.')}\\?v=)([A-Za-z0-9]+)`, 'g');
+      if (!ref.test(html)) {
+        throw new Error(`stamp-sw: ${page} has no ${asset}?v= reference to stamp`);
+      }
+      ref.lastIndex = 0;
+      let from = null;
+      html = html.replace(ref, (_, head, old) => { from = old; return head + hash; });
+      if (from !== hash) console.log(`${page} ${asset} ?v=${from} -> ?v=${hash}`);
+    }
+
+    if (html !== before) { fs.writeFileSync(file, html); touched++; }
   }
+  if (!touched) console.log('asset versions already current');
 }
 
 function main() {
