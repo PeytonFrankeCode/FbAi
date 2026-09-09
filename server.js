@@ -9227,18 +9227,34 @@ const PRICE_BLOCKS_KEY = 'priceblocks:v1';
 const PRICE_BLOCKS_TTL = 172800;   // two days: survives a missed cron
 const PRICE_BLOCK_WINDOW_DAYS = 45;
 
-// Is there a usable map already?
+// Records that a build was tried, separately from whether it worked.
 //
-// The daily schedule means a deploy would otherwise show no prices until the
-// next 04:xx UTC — up to a day of pages that still do not keep their promise,
-// and no way to tell that from a build that simply failed. The cron asks this
-// on every tick and builds immediately when the answer is no, so the first
-// tick after a deploy fills the pages and every tick after that is a single
-// cheap KV read.
+// This exists because the first version of the "build immediately if there is
+// no map" rule was a cost bug, and a bad one. It asked only whether the map
+// existed. A build that FAILED left no map, so the answer stayed no, so it
+// tried again on the next tick — every fifteen minutes, ninety-six times a
+// day, each one two full aggregate passes over the sales table. A job designed
+// to scan twice a day would have scanned two hundred times, and nothing about
+// the failure would have been visible except the D1 bill.
+//
+// So the marker is written BEFORE the work starts and survives a crash. Six
+// hours means a genuinely broken build costs four attempts a day rather than
+// ninety-six, while a deploy still fills the pages within a tick.
+const PRICE_BLOCKS_ATTEMPT_KEY = 'priceblocks:attempt:v1';
+const PRICE_BLOCKS_RETRY_SECONDS = 21600;
+
+// Should the cron build the map right now, outside the daily schedule?
+//
+// Only when there is no usable map AND nothing has tried recently. The daily
+// 04:xx run does not consult this at all — it is scheduled, not reactive.
 async function priceBlocksMissing() {
   try {
     const cur = await cacheGet(PRICE_BLOCKS_KEY);
-    return !(cur && cur.pages && Object.keys(cur.pages).length);
+    if (cur && cur.pages && Object.keys(cur.pages).length) return false;
+    // No map. Has something already tried and failed inside the window?
+    const tried = await cacheGet(PRICE_BLOCKS_ATTEMPT_KEY);
+    if (tried) return false;
+    return true;
   } catch (_) {
     // Unreadable is not the same as absent, and rebuilding on a transient KV
     // error would run two full table scans for nothing. Assume it is there.
@@ -9249,6 +9265,12 @@ async function priceBlocksMissing() {
 async function buildPriceBlocks() {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no D1 binding' };
+
+  // Before anything expensive, and deliberately not in a finally: a crash
+  // partway through must still count as an attempt, or the crash itself
+  // becomes the retry loop.
+  try { await cachePut(PRICE_BLOCKS_ATTEMPT_KEY, { at: new Date().toISOString() }, PRICE_BLOCKS_RETRY_SECONDS); }
+  catch (_) { /* a marker we cannot write is not worth failing the build for */ }
 
   const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
   const CARDNO = _normCol('card_number');
