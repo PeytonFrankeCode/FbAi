@@ -407,63 +407,6 @@ export class UserInbox {
   }
 }
 
-// The price-block map, loaded once per isolate.
-//
-// Written daily by buildPriceBlocks() on the cron. Held in module scope for
-// the same reason as the redirects: this is consulted on the most-visited
-// pages on the site, and a KV read per request would be both slower and
-// billable for no benefit — the value changes once a day.
-//
-// Deliberately no D1 on this path at all. The alternative design queried the
-// database per page view behind a cache; this one costs a visitor nothing.
-let _priceBlocks = null;
-let _priceBlocksAt = 0;
-const PRICE_BLOCKS_ISOLATE_TTL = 3600000;   // an hour, so a long-lived isolate still refreshes
-
-async function priceBlocks(env) {
-  const now = Date.now();
-  if (_priceBlocks && (now - _priceBlocksAt) < PRICE_BLOCKS_ISOLATE_TTL) return _priceBlocks;
-  let loaded = null;
-  try {
-    const { cacheGet } = await init(env);
-    if (cacheGet) loaded = await cacheGet('priceblocks:v1');
-  } catch (err) {
-    console.error('price blocks unavailable:', err && err.message);
-  }
-  // An empty map on failure, cached like any other result. The page then
-  // renders exactly as it does today — the slot stays empty — rather than the
-  // request paying for a retry on every hit.
-  _priceBlocks = loaded && loaded.pages ? loaded : { pages: {}, from: '', to: '' };
-  _priceBlocksAt = now;
-  return _priceBlocks;
-}
-
-// Fill the empty <div class="lp-price-slot"> the build left behind.
-//
-// HTMLRewriter rather than a string replace on the body: it streams, so the
-// response starts flowing before the whole document is in memory, and it
-// cannot accidentally match the same class name inside a script or an
-// attribute somewhere else on the page.
-class PriceSlotFiller {
-  // The renderer is passed in rather than imported at module scope: it lives
-  // in server.js's dependency graph, which is loaded lazily by init(), and
-  // reaching for it as a global would be undefined on the first request.
-  constructor(blocks, render) { this.blocks = blocks; this.render = render; this.filled = 0; }
-  element(el) {
-    const key = el.getAttribute('data-price-key');
-    if (!key) return;
-    const summary = this.blocks.pages[key];
-    if (!summary) return;               // too little data — leave the slot empty
-    const html = this.render(summary, {
-      noun: summary.noun, from: this.blocks.from, to: this.blocks.to,
-      // What to search eBay for. The set or player name the page is about,
-      // which is also what a reader would type themselves.
-      shopQuery: summary.noun,
-    });
-    if (html) { el.setInnerContent(html, { html: true }); this.filled++; }
-  }
-}
-
 // The retired-player-slug map, loaded once per isolate.
 //
 // Cached in module scope rather than fetched per request: a player page is the
