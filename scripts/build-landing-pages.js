@@ -195,6 +195,31 @@ function esc(s) {
 }
 function jsonText(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
 function prefillHref(q) { return '/?prefill=' + encodeURIComponent(jsonText(q)); }
+// Where the Worker injects the sold-price block.
+//
+// An empty element with the page's own key on it, and nothing else. The prices
+// cannot be baked in here: this file runs at build time and the numbers change
+// daily, so a static price would be stale the day after a deploy and there
+// would be no way to tell by looking.
+//
+// It is empty rather than a placeholder with dashes in it. If the injection
+// never happens — no KV value, a cold isolate that failed to load it, a page
+// with too few sales — the reader sees the page exactly as it is today rather
+// than an empty table that reads as broken.
+// The key that ties a checklist card to a sold row.
+//
+// It has to be built identically on both sides — here from a checklist entry,
+// and in server.js from the sales columns — or every lookup misses and the
+// subset pages silently stay empty. normName() is the shared normaliser the
+// sales join already uses.
+function cardMemberKey(c) {
+  return normName(c && c.player) + '|' + normName(c && c.number);
+}
+
+function priceSlot(kind, id) {
+  return `    <div class="lp-price-slot" data-price-key="${esc(kind)}:${esc(id)}"></div>`;
+}
+
 function slugify(s) {
   return String(s).toLowerCase()
     .replace(/['’.]/g, '')          // drop apostrophes & periods (A.J. -> aj)
@@ -254,7 +279,11 @@ function buildPlayerIndex(checklists) {
 }
 
 // ---- Shared chrome --------------------------------------------------------
+let _landingV = null;
+const LANDING_CSS_V_GET = () => (_landingV || (_landingV = landingCssVersion()));
+
 function head({ title, description, canonical, extraJsonLd, noindex }) {
+  const LANDING_CSS_V = LANDING_CSS_V_GET();
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -283,7 +312,7 @@ ${adsenseTag()}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/sets/landing.css?v=3" />
+  <link rel="stylesheet" href="/sets/landing.css?v=${LANDING_CSS_V}" />
 ${extraJsonLd || ''}
 </head>
 <body>
@@ -404,6 +433,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(((cl.year ? cl.year + ' ' : '') + cl.brand).trim() || cl.name)}">&#128270; Check live prices for this set</a>
     </p>
+${priceSlot('set', cl.id)}
 `;
 
   let rendered = 0, truncated = false;
@@ -540,6 +570,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(`${cl.year || ''} ${cl.brand} ${setName}`.replace(/\s+/g, ' ').trim())}">&#128270; Check live prices for ${esc(setName)}</a>
     </p>
+${priceSlot('subset', cl.id + '/' + slug)}
 `;
   if (parallels.length) {
     const shown = parallels.slice(0, PARALLEL_CAP).map(p => {
@@ -710,6 +741,7 @@ function buildPlayerPage(p, related, teamSlug) {
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(p.name)}">&#128270; See all ${esc(p.name)} prices now</a>
     </p>
+${priceSlot('player', p.slug)}
 ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a href="/teams/${teamSlug.get(t)}/">${esc(t)}</a>`).join(' ')}</p>\n` : ''}`;
 
   let rendered = 0, truncated = false;
@@ -957,6 +989,18 @@ function buildTeamsHub(teams) {
 }
 
 // ---- Stylesheet -----------------------------------------------------------
+// The landing stylesheet's cache key, from its own content.
+//
+// This was a hard-coded ?v=3 and it had already gone stale twice in one day:
+// the price-block styles were added to LANDING_CSS without touching it, so
+// every returning visitor to a landing page would have been served the old
+// stylesheet and seen the new price block completely unstyled.
+//
+// Same failure as index.html's ?v=159 and sw.js's 'v1' before it. A cache key
+// that a person has to remember to change is a cache key that will be wrong.
+const landingCssVersion = () => require('crypto')
+  .createHash('sha256').update(LANDING_CSS).digest('hex').slice(0, 10);
+
 const LANDING_CSS = `/* Lightweight stylesheet for SEO landing pages. Brand-matched, self-contained. */
 :root{--bg:#0c0e14;--card:#161b28;--text:#edf0f7;--muted:#9aa3b2;--accent:#5ece99;--accent-2:#3fae7d;--border:#2a3142;--amber:#f59e0b}
 *{box-sizing:border-box}
@@ -1003,6 +1047,22 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-aznav a:hover{border-color:var(--accent);text-decoration:none}
 .lp-teamline{margin:-0.75rem 0 1.25rem;font-size:.9rem;color:var(--muted)}
 .lp-teamline a{margin-right:.6rem}
+/* Sold-price block, injected by the Worker into .lp-price-slot. The slot
+   itself gets no styles — an empty div must take up no space on the pages
+   that have too little data to fill it. */
+.lp-prices{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin:1.25rem 0}
+.lp-prices h2{margin:0 0 .5rem;font-size:1.1rem}
+.lp-price-lede{margin:0 0 .9rem}
+.lp-price-table{width:100%;border-collapse:collapse;font-size:.92rem}
+.lp-price-table caption{text-align:left;font-size:.82rem;padding-bottom:.4rem}
+.lp-price-table th,.lp-price-table td{text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--border)}
+.lp-price-table th:nth-child(2),.lp-price-table td:nth-child(2),
+.lp-price-table th:nth-child(3),.lp-price-table td:nth-child(3){text-align:right;white-space:nowrap}
+.lp-price-table tr:last-child td{border-bottom:none}
+.lp-price-shop{margin:.9rem 0 0;font-weight:600}
+.lp-price-note{font-size:.8rem;margin:.75rem 0 0}
+/* A long card label must not push the page sideways on a phone. */
+@media (max-width:560px){.lp-prices{overflow-x:auto}.lp-price-table{min-width:100%}}
 .lp-faq{border-top:1px solid var(--border);margin-top:2.25rem;padding-top:.5rem}
 .lp-faq-item{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:.5rem 0;padding:.2rem .9rem}
 .lp-faq-item summary{cursor:pointer;font-weight:600;padding:.65rem 0;list-style:none}
@@ -1242,6 +1302,52 @@ function main() {
   // be asked at all until the Worker could see them.
   //
   // Names only, no card lists. The point is coverage, not content.
+  // Which subset a sold card belongs to.
+  //
+  // The sales table has year, set_name, player, card_number and parallel —
+  // and no subset column. A subset page therefore cannot be joined by name;
+  // it has to be joined by MEMBERSHIP, because a subset is exactly a list of
+  // (player, card number) pairs and a sale carries both.
+  //
+  // The catch is that inserts reuse the base set's numbering, so within one
+  // product 28.5% of (player, number) keys belong to more than one subset.
+  // Those are omitted rather than assigned to whichever subset was seen
+  // first — the same refusal the sales join makes, for the same reason: a
+  // guessed attribution puts one subset's prices on another's page.
+  //
+  // Dropping them was worth checking for bias, since a median built only from
+  // the survivors would be misleading if the excluded cards were the valuable
+  // ones. They are not: excluded cards belong to slightly LESS prominent
+  // players than included ones (median 313 catalogue appearances against 349).
+  //
+  // Only subsets big enough to be indexed are listed. The whole map is 1.5 MB
+  // — small enough for the daily cron to load, which 27 MB of checklists is
+  // not.
+  const subsetAttribution = {};
+  for (const cl of checklists) {
+    const sets = (cl.sets || []).filter(x => (x.cards || []).length >= MIN_SUBSET_CARDS);
+    if (!sets.length) continue;
+    const owners = new Map();
+    for (const x of sets) {
+      for (const c of (x.cards || [])) {
+        const k = cardMemberKey(c);
+        owners.set(k, (owners.get(k) || 0) + 1);
+      }
+    }
+    const m = {};
+    for (const sub of (subsetIndex.get(cl.id) || [])) {
+      if ((sub.set.cards || []).length < INDEX_MIN_SUBSET_CARDS) continue;
+      for (const c of (sub.set.cards || [])) {
+        const k = cardMemberKey(c);
+        if (owners.get(k) === 1) m[k] = sub.slug;
+      }
+    }
+    if (Object.keys(m).length) subsetAttribution[cl.id] = m;
+  }
+  fs.mkdirSync(path.join(DATA_DIR, 'subsets'), { recursive: true });
+  fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'attribution.json'),
+    JSON.stringify(subsetAttribution) + '\n');
+
   fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
   fs.writeFileSync(path.join(DATA_DIR, 'players', 'redirects.json'), JSON.stringify(redirects) + '\n');
   fs.writeFileSync(path.join(DATA_DIR, 'players', 'index.json'), JSON.stringify({

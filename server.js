@@ -44,6 +44,9 @@ const { createParallelIndex } = require('./parallel-index-core');
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys,
 } = require('./set-key');
+const {
+  summarise: priceSummarise, render: priceRender, median: priceMedian, keyFor: priceKeyFor,
+} = require('./price-block-core');
 
 const _dict = { card: null, parallel: null };
 async function _loadJson(name) {
@@ -4206,6 +4209,85 @@ app.get('/api/debug/photo-status', async (req, res) => {
 // This measures both before anything is built. It reads no images — it only
 // counts what exists, which is the cheap question that decides whether the
 // expensive one is worth asking.
+// ---- /api/debug/photo-archive ----
+//
+// Is the R2 copy job actually moving?
+//
+// archiveListingPhotos() walks the sales table oldest-first behind a
+// (sold_date, item_id) cursor in KV, and that cursor deliberately STOPS at a
+// transient failure so the photo is retried rather than lost. The failure mode
+// that creates: if a row fails transiently and never succeeds, every tick
+// re-reads the same 400 rows forever, stores nothing, and reports no error.
+//
+// From outside, that is indistinguishable from a job correctly finding that
+// most old listings have already had their images purged — both look like
+// "lots of reads, few writes" on the R2 dashboard.
+//
+// The cursor's position against the table tells them apart, and until now
+// nothing exposed it. Shipping a job that can stall silently without also
+// shipping the thing that shows whether it has is the gap this closes.
+//
+// The WHERE clause below is copied from the job's own query rather than
+// written afresh: a diagnostic that measures a different set of rows than the
+// job walks would give a confident answer about the wrong thing.
+const PHOTO_ARCHIVE_TTL = 300;
+app.get('/api/debug/photo-archive', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no D1 binding' });
+  if (!getPhotos()) return res.json({ available: false, reason: 'no R2 binding' });
+
+  const cached = await cacheGet('photoarchive:status:v1');
+  if (cached && !req.query.fresh) return res.json(cached);
+
+  try {
+    if (!(await _nflHasImageColumn(db))) {
+      return res.json({ available: false, reason: 'sales has no image_url column' });
+    }
+    let cursor = null;
+    try { cursor = await cacheGet(PHOTO_CURSOR_KEY); } catch (_) { /* never run */ }
+    const from = (cursor && cursor.soldDate) || '0000-00-00';
+    const fromId = (cursor && cursor.itemId) || '';
+
+    const HAS = `image_url IS NOT NULL AND image_url <> ''`;
+    const [span, ahead] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n, MIN(sold_date) AS first, MAX(sold_date) AS last
+                    FROM sales WHERE ${HAS}`).first(),
+      db.prepare(`SELECT COUNT(*) AS n FROM sales
+                   WHERE ${HAS} AND (sold_date > ? OR (sold_date = ? AND item_id > ?))`)
+        .bind(from, from, fromId).first(),
+    ]);
+
+    const total = (span && Number(span.n)) || 0;
+    const left = (ahead && Number(ahead.n)) || 0;
+    const done = Math.max(0, total - left);
+
+    const payload = {
+      available: true,
+      rowsWithAPhoto: total,
+      cursor: cursor || null,
+      walked: done,
+      remaining: left,
+      progress: total ? Math.round((100 * done) / total) + '%' : 'n/a',
+      oldestSale: span && span.first,
+      newestSale: span && span.last,
+      batchPerTick: PHOTO_ARCHIVE_BATCH,
+      // What to make of it, stated here rather than left to be re-derived.
+      reading: !cursor
+        ? 'The job has never stored a batch — check the cron logs for [photos].'
+        : left === 0
+          ? 'Caught up. It is now keeping pace with new sales.'
+          : `At ${PHOTO_ARCHIVE_BATCH} per tick and 96 ticks a day, the remainder is about ` +
+            `${Math.ceil(left / (PHOTO_ARCHIVE_BATCH * 96))} day(s) of work — IF the cursor is moving. ` +
+            'Load this again in an hour: if `walked` has not changed, it is stalled on a row it cannot fetch.',
+    };
+    cachePut('photoarchive:status:v1', payload, PHOTO_ARCHIVE_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[photo-archive]', err && err.message);
+    res.json({ available: false, error: String(err && err.message) });
+  }
+});
+
 app.get('/api/debug/photo-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
@@ -9126,6 +9208,215 @@ const PHOTO_FETCH_TIMEOUT_MS = 8000;
 // The cursor is (sold_date, item_id) rather than sold_date alone because many
 // sales share a date; a date-only cursor would either re-do a whole day every
 // tick or skip the rest of one.
+// ---- the price block map ----
+//
+// Every checklist and player page's price summary, computed once and stored as
+// a single KV value.
+//
+// The alternative was a D1 query per page view behind a cache. This is cheaper
+// by a wide margin and simpler to reason about: the cron does two aggregate
+// passes a day, and a page view costs one KV read that is itself cached in
+// module scope for the life of the isolate. Marginal D1 cost per visitor is
+// zero, which matters because the whole point is to put this on 900+ pages.
+//
+// One value rather than one key per page for the same reason: ~950 pages at a
+// few hundred bytes each is a few hundred KB, well inside KV's 25 MB limit,
+// and it makes the map atomic — a page can never read a summary written
+// against a different day's window than its neighbour.
+const PRICE_BLOCKS_KEY = 'priceblocks:v1';
+const PRICE_BLOCKS_TTL = 172800;   // two days: survives a missed cron
+const PRICE_BLOCK_WINDOW_DAYS = 45;
+
+// Is there a usable map already?
+//
+// The daily schedule means a deploy would otherwise show no prices until the
+// next 04:xx UTC — up to a day of pages that still do not keep their promise,
+// and no way to tell that from a build that simply failed. The cron asks this
+// on every tick and builds immediately when the answer is no, so the first
+// tick after a deploy fills the pages and every tick after that is a single
+// cheap KV read.
+async function priceBlocksMissing() {
+  try {
+    const cur = await cacheGet(PRICE_BLOCKS_KEY);
+    return !(cur && cur.pages && Object.keys(cur.pages).length);
+  } catch (_) {
+    // Unreadable is not the same as absent, and rebuilding on a transient KV
+    // error would run two full table scans for nothing. Assume it is there.
+    return false;
+  }
+}
+
+async function buildPriceBlocks() {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no D1 binding' };
+
+  const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
+  const CARDNO = _normCol('card_number');
+  const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+
+  // The window is a floor on sold_date rather than "all of it". Prices from
+  // three months ago are not this month's prices, and a median that silently
+  // widens as the table grows is a number that means something different every
+  // week without ever saying so.
+  const since = new Date(Date.now() - PRICE_BLOCK_WINDOW_DAYS * 86400000)
+    .toISOString().slice(0, 10);
+
+  let products = [], players = [];
+  try {
+    const idx = await _loadJson('checklists/index.json');
+    products = (idx && idx.products) || [];
+    const pidx = await _loadJson('players/index.json');
+    players = (pidx && pidx.players) || [];
+  } catch (err) {
+    return { ok: false, reason: `page indexes unavailable: ${err && err.message}` };
+  }
+
+  const { index: setIndex } = buildJoinIndex(products);
+  const { index: playerIndex } = buildJoinIndex(players, playerKeys);
+
+  // Per (set, card) and per (player, card). SQLite computes the median for us
+  // via a window function rather than shipping every row here — 473k rows
+  // would not fit in a Worker's memory, and paging them would take longer than
+  // the cron is allowed to run.
+  //
+  // median_price is the middle row of each group by ordinal, which is the same
+  // definition price-block-core.js uses on the small arrays it handles.
+  const cardAgg = (groupCols, labelCols) => `
+    WITH base AS (
+      SELECT ${groupCols} AS g, ${labelCols} AS label, price_cents,
+             ROW_NUMBER() OVER (PARTITION BY ${groupCols}, ${labelCols} ORDER BY price_cents) AS rn,
+             COUNT(*)   OVER (PARTITION BY ${groupCols}, ${labelCols}) AS n
+        FROM sales
+       WHERE ${WHERE} AND sold_date >= ? AND ${groupCols} <> '' AND ${labelCols} <> ''
+    )
+    SELECT g, label, n AS sales, price_cents AS median
+      FROM base WHERE rn = (n + 1) / 2`;
+
+  let setCards, playerCards, span;
+  try {
+    [setCards, playerCards, span] = await Promise.all([
+      db.prepare(cardAgg(`${Y} || '|' || ${S}`, `${P} || ' #' || ${CARDNO}`)).bind(since).all(),
+      db.prepare(cardAgg(P, `${Y} || ' ' || ${S} || ' #' || ${CARDNO}`)).bind(since).all(),
+      db.prepare(`SELECT MIN(sold_date) AS first, MAX(sold_date) AS last
+                    FROM sales WHERE ${WHERE} AND sold_date >= ?`).bind(since).first(),
+    ]);
+  } catch (err) {
+    return { ok: false, reason: `query-failed: ${err && err.message}` };
+  }
+
+  // Fold the card rows onto the pages they belong to. A page can collect rows
+  // from several spellings — the join already knows that — so this accumulates
+  // rather than assigns.
+  const pages = new Map();
+  const collect = (rows, resolve, kind) => {
+    for (const r of (rows && rows.results) || []) {
+      const page = resolve(r.g);
+      if (!page) continue;
+      const id = kind === 'set' ? page.id : page.slug;
+      const key = priceKeyFor(kind, id);
+      let p = pages.get(key);
+      if (!p) { p = { kind, page, sales: 0, prices: [], cards: [] }; pages.set(key, p); }
+      const sales = Number(r.sales || 0), med = Number(r.median || 0);
+      p.sales += sales;
+      p.cards.push({ label: r.label, sales, median: med });
+      // The page-wide median is over CARDS, not over sales: weighting by sale
+      // count would let one heavily-traded base card decide the figure for the
+      // whole set, which is the opposite of what a reader is asking.
+      p.prices.push(med);
+    }
+  };
+  collect(setCards, g => {
+    const i = String(g || '').indexOf('|');
+    return i === -1 ? null : matchSale(setIndex, String(g).slice(0, i), String(g).slice(i + 1));
+  }, 'set');
+  collect(playerCards, g => matchPlayer(playerIndex, g), 'player');
+
+  // ---- subset pages ----
+  //
+  // 572 of the indexable URLs are subsets of a product — "2025 Panini Prizm /
+  // Rookie Revolution" — and they cannot be joined the way the other two are,
+  // because `sales` has no subset column. A subset IS a list of (player, card
+  // number) pairs though, and a sale carries both, so the join goes through
+  // membership instead. build-landing-pages.js emits the map.
+  //
+  // Ambiguous cards are absent from that map by construction: inserts reuse
+  // the base numbering, so 28.5% of keys belong to more than one subset and
+  // are omitted rather than guessed. A page therefore prices the cards it can
+  // prove are its own, and MIN_CARDS still decides whether that is enough to
+  // print anything.
+  try {
+    const attribution = await _loadJson('subsets/attribution.json');
+    for (const r of (setCards && setCards.results) || []) {
+      const i = String(r.g || '').indexOf('|');
+      if (i === -1) continue;
+      const product = matchSale(setIndex, String(r.g).slice(0, i), String(r.g).slice(i + 1));
+      if (!product) continue;
+      const map = attribution[product.id];
+      if (!map) continue;
+      // The label is `player #number`; the map is keyed `player|number`. Split
+      // on the LAST ' #' so a player whose name contains one still resolves.
+      const label = String(r.label || '');
+      const at = label.lastIndexOf(' #');
+      if (at === -1) continue;
+      // Both halves arrive already normalised — the SQL label is built from
+      // _normCol(player) and _normCol(card_number), and the map was keyed with
+      // the JS norm(). test/subset-attribution.test.js asserts those two agree;
+      // if they ever drift, every lookup here misses and the subset pages just
+      // stay empty, with nothing thrown to say why.
+      const slug = map[`${label.slice(0, at)}|${label.slice(at + 2)}`];
+      if (!slug) continue;
+      const key = priceKeyFor('subset', `${product.id}/${slug}`);
+      let p = pages.get(key);
+      if (!p) {
+        p = { kind: 'subset', page: { id: `${product.id}/${slug}`, name: product.name, slug },
+              sales: 0, prices: [], cards: [] };
+        pages.set(key, p);
+      }
+      const sales = Number(r.sales || 0), med = Number(r.median || 0);
+      p.sales += sales;
+      p.cards.push({ label: r.label, sales, median: med });
+      p.prices.push(med);
+    }
+  } catch (err) {
+    // No attribution artifact means no subset blocks, which is the same as a
+    // subset with too little data: the slot stays empty. Not worth failing the
+    // whole build for.
+    console.error('[prices] subset attribution unavailable:', err && err.message);
+  }
+
+  const out = {};
+  let kept = 0;
+  for (const [key, p] of pages) {
+    p.cards.sort((a, b) => b.sales - a.sales || a.label.localeCompare(b.label));
+    const prices = p.prices.slice().sort((a, b) => a - b);
+    const summary = priceSummarise({
+      sales: p.sales,
+      cards: p.cards.length,
+      median: priceMedian(prices),
+      low: prices[0], high: prices[prices.length - 1],
+    }, p.cards);
+    if (!summary) continue;
+    summary.noun = p.kind === 'set' ? p.page.name : p.page.name;
+    out[key] = summary;
+    kept++;
+  }
+
+  const payload = {
+    built: new Date().toISOString(),
+    from: (span && span.first) || since,
+    to: (span && span.last) || '',
+    pages: out,
+  };
+  try {
+    await cachePut(PRICE_BLOCKS_KEY, payload, PRICE_BLOCKS_TTL);
+  } catch (err) {
+    return { ok: false, reason: `kv-write-failed: ${err && err.message}` };
+  }
+  const bytes = JSON.stringify(payload).length;
+  console.log(`[prices] ${kept} pages priced, ${(bytes / 1024).toFixed(0)} KB, window ${payload.from}..${payload.to}`);
+  return { ok: true, pages: kept, bytes, from: payload.from, to: payload.to };
+}
+
 async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   const db = getNflDb();
   const bucket = getPhotos();
@@ -9226,7 +9517,7 @@ async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

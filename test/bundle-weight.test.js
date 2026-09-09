@@ -125,5 +125,81 @@ for (const rel of HEAVY) {
   check(`${rel} ships in the assets directory`, ok && kb > 100, `${kb} KB`);
 }
 
+// ---- asset cache keys ----
+//
+// index.html requests style.css and app.js with a ?v= query. That number was
+// maintained by hand, and #550 changed style.css without bumping it — so
+// returning visitors got the new HTML against a months-old stylesheet, and the
+// homepage <h1> that commit added rendered as a giant green heading instead of
+// being hidden by a .sr-only rule they did not have.
+//
+// It is computed from file content now. This check is what notices if the
+// stamping stops running, which is the same silent failure one level up.
+{
+  const crypto = require('crypto');
+  const hashOf = (rel) => crypto.createHash('sha256')
+    .update(fs.readFileSync(path.join(ROOT, 'public', rel))).digest('hex').slice(0, 10);
+
+  // privacy.html and terms.html are checked because a sweep found them still
+  // on ?v=159 after index.html had moved on — and they are two of the pages an
+  // AdSense reviewer opens first.
+  const PAGES = {
+    'index.html': ['style.css', 'app.js'],
+    'privacy.html': ['style.css'],
+    'terms.html': ['style.css'],
+  };
+  for (const [page, assets] of Object.entries(PAGES)) {
+    const html = fs.readFileSync(path.join(ROOT, 'public', page), 'utf8');
+    for (const asset of assets) {
+      const m = html.match(new RegExp(`${asset.replace('.', '\\.')}\\?v=([A-Za-z0-9]+)`));
+      check(`${page} requests ${asset} with a version`, !!m,
+        m ? `?v=${m[1]}` : 'no ?v= — every deploy is invisible to a cached visitor');
+      if (!m) continue;
+      const want = hashOf(asset);
+      check(`  ...and it matches the file's content hash`,
+        m[1] === want,
+        m[1] === want ? 'stamped' : `page says ${m[1]}, content hashes to ${want} — run npm run build:sw`);
+    }
+  }
+
+  // The generated landing pages carry their own stylesheet, versioned inside
+  // build-landing-pages.js rather than by the stamper. It went stale twice in
+  // one day before this check existed: the price-block styles were added to
+  // LANDING_CSS without touching a hard-coded ?v=3, which would have served
+  // every returning visitor the new block with none of its styling.
+  {
+    const sample = path.join(ROOT, 'public', 'sets', '2025-panini-prizm-football', 'index.html');
+    const cssFile = path.join(ROOT, 'public', 'sets', 'landing.css');
+    if (!fs.existsSync(sample) || !fs.existsSync(cssFile)) {
+      console.log('SKIP  landing.css version  — run `npm run build:pages` first (CI does)');
+    } else {
+      const m = fs.readFileSync(sample, 'utf8').match(/landing\.css\?v=([A-Za-z0-9]+)/);
+      const want = crypto.createHash('sha256')
+        .update(fs.readFileSync(cssFile)).digest('hex').slice(0, 10);
+      check('landing pages version landing.css by its content',
+        m && m[1] === want,
+        m ? `page says ${m[1]}, css hashes to ${want}` : 'no ?v= on the landing stylesheet');
+    }
+  }
+
+  // The sweep that found those. Any NEW hand-written ?v= on a stylesheet or
+  // script is the same latent bug, so it has to be declared above or it fails
+  // here rather than going unnoticed for months.
+  {
+    const known = new Set(['style.css', 'app.js', 'landing.css']);
+    const suspicious = [];
+    for (const page of ['index.html', 'privacy.html', 'terms.html']) {
+      const html = fs.readFileSync(path.join(ROOT, 'public', page), 'utf8');
+      for (const m of html.matchAll(/([A-Za-z0-9_./-]+\.(?:css|js))\?v=([A-Za-z0-9]+)/g)) {
+        const base = m[1].split('/').pop();
+        if (!known.has(base)) suspicious.push(`${page}: ${m[1]}?v=${m[2]}`);
+      }
+    }
+    check('no stylesheet or script carries an unmanaged cache key',
+      suspicious.length === 0,
+      suspicious.join(' | ') || 'all versioned assets are content-stamped');
+  }
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall bundle-weight checks passed');
 process.exit(failures ? 1 : 0);

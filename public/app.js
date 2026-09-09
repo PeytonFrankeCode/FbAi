@@ -2123,7 +2123,7 @@ function buildSimilarEstimateSection(est, query) {
       : '<div class="est-comp-img est-comp-img-empty"></div>';
     const titleInner = escHtml(c.title || '');
     const titleHtml = c.itemUrl
-      ? `<a class="est-comp-title" href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener">${titleInner}</a>`
+      ? `<a class="est-comp-title" href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener">${titleInner}</a>`
       : `<span class="est-comp-title">${titleInner}</span>`;
     return `
       <div class="est-comp">
@@ -5829,7 +5829,7 @@ function openGradingComps(key) {
         ? `<img class="gc-comp-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" />`
         : '<div class="gc-comp-img gc-comp-noimg">&#127944;</div>';
       const titleHtml = c.itemUrl
-        ? `<a class="gc-comp-title" href="${escHtml(c.itemUrl)}" target="_blank" rel="noopener">${escHtml(c.title || '')}</a>`
+        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener">${escHtml(c.title || '')}</a>`
         : `<span class="gc-comp-title">${escHtml(c.title || '')}</span>`;
       return `<div class="gc-comp">
         ${img}
@@ -10335,7 +10335,7 @@ function renderMyListings() {
     const date = new Date(l.createdAt).toLocaleDateString();
     return `<div class="seller-listing-card">
       <div class="seller-listing-info">
-        <span class="seller-listing-title-text">${l.listingUrl ? `<a href="${escHtml(l.listingUrl)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escHtml(l.title)}</a>` : escHtml(l.title)}</span>
+        <span class="seller-listing-title-text">${l.listingUrl ? `<a href="${escHtml(epnUrl(l.listingUrl))}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escHtml(l.title)}</a>` : escHtml(l.title)}</span>
         <div class="seller-listing-meta">
           <span class="seller-listing-badge ${l.format}">${l.format === 'auction' ? 'Auction' : 'BIN'}</span>
           <span>${conditionLabels[l.condition] || l.condition}</span>
@@ -14208,7 +14208,7 @@ function _caRow(r, right) {
   const thumb = r.imageUrl
     ? `<img class="ca-row-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />`
     : `<div class="ca-row-img ca-row-noimg"><span>&#127183;</span></div>`;
-  return `<a class="ca-row" href="${escHtml(r.itemUrl || '#')}" target="_blank" rel="noopener">
+  return `<a class="ca-row" href="${escHtml(epnUrl(r.itemUrl))}" target="_blank" rel="noopener">
     ${thumb}
     <span class="ca-row-title">${escHtml(String(r.title || '').slice(0, 95))}</span>
     <span class="ca-row-right">${right}</span>
