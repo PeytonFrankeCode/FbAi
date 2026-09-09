@@ -4209,6 +4209,85 @@ app.get('/api/debug/photo-status', async (req, res) => {
 // This measures both before anything is built. It reads no images — it only
 // counts what exists, which is the cheap question that decides whether the
 // expensive one is worth asking.
+// ---- /api/debug/photo-archive ----
+//
+// Is the R2 copy job actually moving?
+//
+// archiveListingPhotos() walks the sales table oldest-first behind a
+// (sold_date, item_id) cursor in KV, and that cursor deliberately STOPS at a
+// transient failure so the photo is retried rather than lost. The failure mode
+// that creates: if a row fails transiently and never succeeds, every tick
+// re-reads the same 400 rows forever, stores nothing, and reports no error.
+//
+// From outside, that is indistinguishable from a job correctly finding that
+// most old listings have already had their images purged — both look like
+// "lots of reads, few writes" on the R2 dashboard.
+//
+// The cursor's position against the table tells them apart, and until now
+// nothing exposed it. Shipping a job that can stall silently without also
+// shipping the thing that shows whether it has is the gap this closes.
+//
+// The WHERE clause below is copied from the job's own query rather than
+// written afresh: a diagnostic that measures a different set of rows than the
+// job walks would give a confident answer about the wrong thing.
+const PHOTO_ARCHIVE_TTL = 300;
+app.get('/api/debug/photo-archive', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no D1 binding' });
+  if (!getPhotos()) return res.json({ available: false, reason: 'no R2 binding' });
+
+  const cached = await cacheGet('photoarchive:status:v1');
+  if (cached && !req.query.fresh) return res.json(cached);
+
+  try {
+    if (!(await _nflHasImageColumn(db))) {
+      return res.json({ available: false, reason: 'sales has no image_url column' });
+    }
+    let cursor = null;
+    try { cursor = await cacheGet(PHOTO_CURSOR_KEY); } catch (_) { /* never run */ }
+    const from = (cursor && cursor.soldDate) || '0000-00-00';
+    const fromId = (cursor && cursor.itemId) || '';
+
+    const HAS = `image_url IS NOT NULL AND image_url <> ''`;
+    const [span, ahead] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) AS n, MIN(sold_date) AS first, MAX(sold_date) AS last
+                    FROM sales WHERE ${HAS}`).first(),
+      db.prepare(`SELECT COUNT(*) AS n FROM sales
+                   WHERE ${HAS} AND (sold_date > ? OR (sold_date = ? AND item_id > ?))`)
+        .bind(from, from, fromId).first(),
+    ]);
+
+    const total = (span && Number(span.n)) || 0;
+    const left = (ahead && Number(ahead.n)) || 0;
+    const done = Math.max(0, total - left);
+
+    const payload = {
+      available: true,
+      rowsWithAPhoto: total,
+      cursor: cursor || null,
+      walked: done,
+      remaining: left,
+      progress: total ? Math.round((100 * done) / total) + '%' : 'n/a',
+      oldestSale: span && span.first,
+      newestSale: span && span.last,
+      batchPerTick: PHOTO_ARCHIVE_BATCH,
+      // What to make of it, stated here rather than left to be re-derived.
+      reading: !cursor
+        ? 'The job has never stored a batch — check the cron logs for [photos].'
+        : left === 0
+          ? 'Caught up. It is now keeping pace with new sales.'
+          : `At ${PHOTO_ARCHIVE_BATCH} per tick and 96 ticks a day, the remainder is about ` +
+            `${Math.ceil(left / (PHOTO_ARCHIVE_BATCH * 96))} day(s) of work — IF the cursor is moving. ` +
+            'Load this again in an hour: if `walked` has not changed, it is stalled on a row it cannot fetch.',
+    };
+    cachePut('photoarchive:status:v1', payload, PHOTO_ARCHIVE_TTL);
+    res.json(payload);
+  } catch (err) {
+    console.error('[photo-archive]', err && err.message);
+    res.json({ available: false, error: String(err && err.message) });
+  }
+});
+
 app.get('/api/debug/photo-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });

@@ -100,6 +100,46 @@ const check = (label, ok, detail) => {
     sum.stored === 2 && sum.skipped === 1 && sum.permanent === 1 && sum.retry === 1,
     JSON.stringify(sum));
 
+  // ---- the diagnostic has to measure what the job walks ----
+  //
+  // /api/debug/photo-archive answers "is the cursor moving?" by counting rows
+  // ahead of it. If its WHERE clause drifts from the job's, it counts a
+  // different set and gives a confident answer about the wrong thing — which
+  // is worse than no diagnostic, because it would be believed.
+  //
+  // This exists because the job shipped with a cursor that can stall silently
+  // and nothing at all to show whether it had.
+  {
+    const fs = require('fs');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+
+    const jobAt = src.indexOf('async function archiveListingPhotos');
+    const job = jobAt === -1 ? '' : src.slice(jobAt, jobAt + 2500);
+    const diagAt = src.indexOf("app.get('/api/debug/photo-archive'");
+    const diag = diagAt === -1 ? '' : src.slice(diagAt, diagAt + 2500);
+
+    check('the archive diagnostic exists at all', diagAt !== -1,
+      'a job that can stall silently needs something that shows whether it has');
+
+    // Both must gate on a non-empty image_url, or the totals disagree.
+    check('  ...and filters on a photo the same way the job does',
+      /image_url IS NOT NULL AND image_url <> ''/.test(job)
+        && /image_url IS NOT NULL AND image_url <> ''/.test(diag),
+      'otherwise "remaining" counts rows the job never looks at');
+
+    // Both must use the same composite cursor comparison. Comparing on
+    // sold_date alone would re-count a whole day, or skip the rest of one.
+    const cursorCmp = /sold_date > \? OR \(sold_date = \? AND item_id > \?\)/;
+    check('  ...and advances on the same (sold_date, item_id) comparison',
+      cursorCmp.test(job) && cursorCmp.test(diag),
+      'date alone would double-count or skip within a day');
+
+    // And it must read the cursor the job writes, not a key of its own.
+    check('  ...and reads the very key the job stores',
+      /PHOTO_CURSOR_KEY/.test(diag),
+      'a second key would always report "never run"');
+  }
+
   console.log(failures ? `\n${failures} check(s) failed` : '\nall photo-archive checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error('THREW:', e && e.stack || e); process.exit(1); });
