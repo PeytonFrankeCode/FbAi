@@ -4262,6 +4262,39 @@ app.get('/api/debug/price-blocks', async (req, res) => {
     if (kinds[kind] !== undefined) kinds[kind]++;
   }
 
+  // How many of these pages Google actually sees.
+  //
+  // The page count on its own overstates the reach: 3,201 player pages exist
+  // and only 1,228 are in the sitemap, so a priced page can easily be one
+  // carrying noindex. For the low-value-content question the only figure that
+  // matters is priced AND indexable, against the 2,173 URLs in the sitemap.
+  //
+  // Sets are all indexable (every product clears the card minimum), and the
+  // subset attribution map is built only from subsets that clear it too — so
+  // players are the side that needs looking up.
+  let indexed = null;
+  try {
+    const pidx = await _loadJson('players/index.json');
+    const byslug = new Map(((pidx && pidx.players) || []).map(p => [p.slug, p]));
+    let players = 0, hidden = 0;
+    for (const k of keys) {
+      if (!k.startsWith('player:')) continue;
+      const p = byslug.get(k.slice(7));
+      if (p && p.indexable) players++; else hidden++;
+    }
+    const total = kinds.set + kinds.subset + players;
+    indexed = {
+      indexableUrls: INDEXABLE_URLS,
+      pricedAndIndexable: total,
+      share: Math.round((100 * total) / INDEXABLE_URLS) + '%',
+      breakdown: { sets: kinds.set, players, subsets: kinds.subset },
+      pricedButNoindexed: hidden,
+      stillWithoutPrices: INDEXABLE_URLS - total,
+    };
+  } catch (err) {
+    indexed = { error: String(err && err.message) };
+  }
+
   res.json({
     available: true,
     ranNow: ran,
@@ -4271,6 +4304,7 @@ app.get('/api/debug/price-blocks', async (req, res) => {
       sample: keys.slice(0, 3),
     } : null,
     lastAttempt: attempt,
+    indexedReach: indexed,
     // The reading, so the numbers do not have to be re-derived each time.
     //
     // ranNow comes first when present, and that ordering is not cosmetic. KV
