@@ -205,13 +205,53 @@ const check = (label, ok, detail) => {
     /catch\s*\(priceErr\)/.test(around),
     'injection is wrapped so it cannot 502 a page over a missing median');
 
-  // 6. The cost claim in the design: no D1 on the request path.
-  const rewriterBlock = workerSrc.slice(
-    workerSrc.indexOf('async function priceBlocks(env)'),
-    workerSrc.indexOf('class PriceSlotFiller'));
+  // 6. The pieces the call site needs must EXIST, not merely be called.
+  //
+  // This is the check that was missing, and its absence cost a day. A merge
+  // resolving a conflict in worker.js deleted both priceBlocks() and
+  // PriceSlotFiller while keeping the line that calls them. The call then threw
+  // ReferenceError, the defensive try/catch around the injection swallowed it,
+  // and every page quietly rendered without a price block — while every check
+  // in this file still passed, because they all matched the surviving call
+  // site.
+  //
+  // Worse, the D1 check below used indexOf() to slice between two names that
+  // were both gone: indexOf returns -1, the slice is empty, and testing an
+  // empty string for "no D1 query" passes. A guard that reads deleted code
+  // reports success about nothing at all.
+  const defines = (re, what) => check(`the Worker actually defines ${what}`,
+    re.test(workerSrc), 'the call site alone is not enough — a merge can keep one and drop the other');
+  defines(/async function priceBlocks\s*\(/, 'priceBlocks()');
+  defines(/class PriceSlotFiller\b/, 'PriceSlotFiller');
+
+  // Every identifier the injection block calls has to be defined somewhere in
+  // the file. Checked generically so a future addition is covered too.
+  {
+    const at = workerSrc.indexOf("if (resp.status === 200 && /^\\/(sets|players)\\//");
+    const inject = at === -1 ? '' : workerSrc.slice(at, at + 700);
+    check('the injection block was found', at !== -1);
+    const called = [...inject.matchAll(/\bnew (\w+)\(|\bawait (\w+)\(/g)]
+      // Runtime globals the Worker gets from Cloudflare, and init() which is
+      // defined above the region this slice covers.
+      .map(m => m[1] || m[2])
+      .filter(n => !['init', 'Response', 'Headers', 'HTMLRewriter', 'Request', 'URL'].includes(n));
+    const undef = [...new Set(called)].filter(n =>
+      !new RegExp(`(function|class|const|let)\\s+${n}\\b`).test(workerSrc));
+    check('  ...and every name it calls is defined in worker.js',
+      undef.length === 0,
+      undef.length ? `UNDEFINED: ${undef.join(', ')}` : `${[...new Set(called)].join(', ')}`);
+  }
+
+  // The cost claim in the design: no D1 on the request path. Guarded against
+  // the empty-slice trap above — an absent function must fail, not pass.
+  const fnAt = workerSrc.indexOf('async function priceBlocks(env)');
+  const endAt = workerSrc.indexOf('class PriceSlotFiller');
+  const rewriterBlock = (fnAt === -1 || endAt === -1 || endAt <= fnAt)
+    ? null : workerSrc.slice(fnAt, endAt);
   check('the request path reads KV, never D1',
-    !/getNflDb|\.prepare\(/.test(rewriterBlock),
-    'a D1 query per page view is the design this replaced');
+    rewriterBlock !== null && !/getNflDb|\.prepare\(/.test(rewriterBlock),
+    rewriterBlock === null ? 'could not locate the loader — it may not exist'
+      : 'a D1 query per page view is the design this replaced');
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall price-block checks passed');

@@ -4272,15 +4272,30 @@ app.get('/api/debug/price-blocks', async (req, res) => {
     } : null,
     lastAttempt: attempt,
     // The reading, so the numbers do not have to be re-derived each time.
-    reading: !attempt && !map
-      ? 'The cron has never tried. Check that buildPriceBlocks is wired through init().'
-      : (attempt && attempt.state === 'started')
-        ? 'A build started and never finished — a timeout or a crash, not a query error.'
-        : (attempt && attempt.state === 'failed')
-          ? `The build ran and failed: ${attempt.reason}`
-          : keys.length
-            ? 'The map exists and has pages. If a page still shows no block, the fault is in the injection, not the build.'
-            : 'A build reported success but stored no pages — every page fell below the sales threshold.',
+    //
+    // ranNow comes first when present, and that ordering is not cosmetic. KV
+    // reads are eventually consistent, so reading the marker straight after
+    // this request's own build returns the 'started' value written at its
+    // beginning — and the first version of this reported "started and never
+    // finished" about a build that had just succeeded in the same request. A
+    // diagnostic confidently describing the opposite of what happened is worse
+    // than no diagnostic.
+    reading: ran
+      ? (ran.ok
+        ? `A build just ran here and succeeded: ${ran.pages} pages. If a page still shows no block, the fault is in the injection, not the build.`
+        : `A build just ran here and failed: ${ran.reason}`)
+      : keys.length
+        ? 'The map exists and has pages. If a page still shows no block, the fault is in the injection, not the build.'
+        : !attempt
+          ? 'The cron has never tried. Check that buildPriceBlocks is wired through init().'
+          : attempt.state === 'started'
+            ? 'A build started and never finished — a timeout or a crash, not a query error.'
+            : attempt.state === 'failed'
+              ? `The build ran and failed: ${attempt.reason}`
+              : 'A build reported success but stored no pages — every page fell below the sales threshold.',
+    staleMarkerNote: ran
+      ? 'lastAttempt may lag this request: KV reads are eventually consistent.'
+      : undefined,
     note: req.query.build === '1'
       ? 'A build was run for this request: two full aggregate passes over sales.'
       : 'Add ?build=1 to run the build now and see its error directly.',
