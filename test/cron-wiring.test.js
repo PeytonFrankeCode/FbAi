@@ -127,5 +127,54 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
   /sendSoldUnavailable\(res,\s*blocked\.reason/.test(serverSrc));
 
 
+// ---- the price-block rebuild cannot become a retry loop ----
+//
+// The cron builds the price map immediately when there is no map, so a deploy
+// fills the pages within a tick instead of waiting for 04:xx. The first
+// version of that rule asked ONLY whether the map existed — and a build that
+// failed left no map, so it retried every fifteen minutes, ninety-six times a
+// day, each one two full aggregate passes over the sales table.
+//
+// Nothing about that is visible from inside: no error accumulates, no page
+// looks wrong, the pages just stay empty. It shows up as a D1 bill.
+{
+  const src = serverSrc;
+
+  // Bounded to the function itself, not a fixed character window. The first
+  // version sliced 1200 characters from the declaration, which ran past the
+  // end of this function into buildPriceBlocks — where the same constant
+  // appears — so deleting the check here still "passed". A guard that reads
+  // the next function's source is not a guard.
+  const bodyOf = (name) => {
+    const start = src.indexOf(`async function ${name}`);
+    if (start === -1) return '';
+    const next = src.indexOf('\nasync function ', start + 1);
+    return src.slice(start, next === -1 ? src.length : next);
+  };
+  const fn = bodyOf('priceBlocksMissing');
+  check('the reactive rebuild is gated on more than "is the map missing"',
+    /ATTEMPT_KEY/.test(fn),
+    'without an attempt marker, a failing build retries on every tick');
+
+  // The marker has to be written before the queries run, not after they
+  // succeed — otherwise a failure or a crash leaves nothing recorded and the
+  // loop is exactly as fast as before.
+  const build = bodyOf('buildPriceBlocks');
+  const markerAt = build.indexOf('PRICE_BLOCKS_ATTEMPT_KEY');
+  const firstQueryAt = build.indexOf('db.prepare');
+  check('  ...and the attempt is recorded before any query runs',
+    markerAt !== -1 && (firstQueryAt === -1 || markerAt < firstQueryAt),
+    markerAt === -1 ? 'no marker written in buildPriceBlocks'
+      : 'a marker written after the work does not survive a crash');
+
+  // How bad a totally broken build is allowed to get.
+  const m = src.match(/const PRICE_BLOCKS_RETRY_SECONDS = (\d+);/);
+  const ticksPerDay = 96;
+  const worst = m ? Math.ceil(86400 / Number(m[1])) : ticksPerDay;
+  check('  ...capping a broken build to a few scans a day, not ninety-six',
+    m && worst <= 6,
+    `${worst} attempts/day worst case` + (m ? ` (retry window ${m[1]}s)` : ''));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall cron-wiring checks passed');
 process.exit(failures ? 1 : 0);
