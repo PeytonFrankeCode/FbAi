@@ -4231,6 +4231,62 @@ app.get('/api/debug/photo-status', async (req, res) => {
 // written afresh: a diagnostic that measures a different set of rows than the
 // job walks would give a confident answer about the wrong thing.
 const PHOTO_ARCHIVE_TTL = 300;
+// ---- /api/debug/price-blocks ----
+//
+// Why are the landing pages still showing no prices?
+//
+// The block only appears if three things all happened: the cron ran the build,
+// the build wrote a map to KV, and the Worker injected it. When it does not
+// appear, every one of those looks identical from outside — a page with no
+// price block. This says which.
+//
+// Reads KV only, so it costs nothing and can be hit freely. `?build=1` runs
+// the build synchronously and returns its result, which is the fast way to see
+// the actual error rather than waiting up to six hours for the next attempt.
+// That does cost two full aggregate scans, so it says so in the response.
+app.get('/api/debug/price-blocks', async (req, res) => {
+  let ran = null;
+  if (req.query.build === '1') {
+    ran = await buildPriceBlocks().catch(err => ({ ok: false, reason: `threw: ${err && err.message}` }));
+  }
+
+  let map = null, attempt = null;
+  try { map = await cacheGet(PRICE_BLOCKS_KEY); } catch (_) { /* reported below */ }
+  try { attempt = await cacheGet(PRICE_BLOCKS_ATTEMPT_KEY); } catch (_) { /* reported below */ }
+
+  const pages = (map && map.pages) || {};
+  const keys = Object.keys(pages);
+  const kinds = { set: 0, player: 0, subset: 0 };
+  for (const k of keys) {
+    const kind = k.slice(0, k.indexOf(':'));
+    if (kinds[kind] !== undefined) kinds[kind]++;
+  }
+
+  res.json({
+    available: true,
+    ranNow: ran,
+    map: map ? {
+      built: map.built, window: `${map.from}..${map.to}`,
+      pages: keys.length, byKind: kinds,
+      sample: keys.slice(0, 3),
+    } : null,
+    lastAttempt: attempt,
+    // The reading, so the numbers do not have to be re-derived each time.
+    reading: !attempt && !map
+      ? 'The cron has never tried. Check that buildPriceBlocks is wired through init().'
+      : (attempt && attempt.state === 'started')
+        ? 'A build started and never finished — a timeout or a crash, not a query error.'
+        : (attempt && attempt.state === 'failed')
+          ? `The build ran and failed: ${attempt.reason}`
+          : keys.length
+            ? 'The map exists and has pages. If a page still shows no block, the fault is in the injection, not the build.'
+            : 'A build reported success but stored no pages — every page fell below the sales threshold.',
+    note: req.query.build === '1'
+      ? 'A build was run for this request: two full aggregate passes over sales.'
+      : 'Add ?build=1 to run the build now and see its error directly.',
+  });
+});
+
 app.get('/api/debug/photo-archive', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
@@ -9269,8 +9325,22 @@ async function buildPriceBlocks() {
   // Before anything expensive, and deliberately not in a finally: a crash
   // partway through must still count as an attempt, or the crash itself
   // becomes the retry loop.
-  try { await cachePut(PRICE_BLOCKS_ATTEMPT_KEY, { at: new Date().toISOString() }, PRICE_BLOCKS_RETRY_SECONDS); }
-  catch (_) { /* a marker we cannot write is not worth failing the build for */ }
+  //
+  // It records the OUTCOME too, because the first time this failed in
+  // production there was no way to ask why. The cron logs the reason and
+  // Worker logs are not where anyone looks first; a marker that survives in KV
+  // can be read from a URL. A marker still saying 'started' when the next one
+  // is due means the build did not return at all — a timeout or a crash,
+  // which is a different fix from a query error.
+  const mark = async (state, extra) => {
+    try {
+      await cachePut(PRICE_BLOCKS_ATTEMPT_KEY,
+        { at: new Date().toISOString(), state, ...(extra || {}) },
+        PRICE_BLOCKS_RETRY_SECONDS);
+    } catch (_) { /* a marker we cannot write is not worth failing the build for */ }
+  };
+  await mark('started');
+  const failed = async (reason) => { await mark('failed', { reason }); return { ok: false, reason }; };
 
   const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
   const CARDNO = _normCol('card_number');
@@ -9290,7 +9360,7 @@ async function buildPriceBlocks() {
     const pidx = await _loadJson('players/index.json');
     players = (pidx && pidx.players) || [];
   } catch (err) {
-    return { ok: false, reason: `page indexes unavailable: ${err && err.message}` };
+    return failed(`page indexes unavailable: ${err && err.message}`);
   }
 
   const { index: setIndex } = buildJoinIndex(products);
@@ -9323,7 +9393,7 @@ async function buildPriceBlocks() {
                     FROM sales WHERE ${WHERE} AND sold_date >= ?`).bind(since).first(),
     ]);
   } catch (err) {
-    return { ok: false, reason: `query-failed: ${err && err.message}` };
+    return failed(`query-failed: ${err && err.message}`);
   }
 
   // Fold the card rows onto the pages they belong to. A page can collect rows
@@ -9432,10 +9502,11 @@ async function buildPriceBlocks() {
   try {
     await cachePut(PRICE_BLOCKS_KEY, payload, PRICE_BLOCKS_TTL);
   } catch (err) {
-    return { ok: false, reason: `kv-write-failed: ${err && err.message}` };
+    return failed(`kv-write-failed: ${err && err.message}`);
   }
   const bytes = JSON.stringify(payload).length;
   console.log(`[prices] ${kept} pages priced, ${(bytes / 1024).toFixed(0)} KB, window ${payload.from}..${payload.to}`);
+  await mark('ok', { pages: kept, bytes, groups: pages.size });
   return { ok: true, pages: kept, bytes, from: payload.from, to: payload.to };
 }
 
