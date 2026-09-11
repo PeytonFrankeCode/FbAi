@@ -147,6 +147,9 @@ for (const rel of HEAVY) {
     'index.html': ['style.css', 'app.js'],
     'privacy.html': ['style.css'],
     'terms.html': ['style.css'],
+    'about.html': ['style.css'],
+    'contact.html': ['style.css'],
+    'methodology.html': ['style.css'],
   };
   for (const [page, assets] of Object.entries(PAGES)) {
     const html = fs.readFileSync(path.join(ROOT, 'public', page), 'utf8');
@@ -188,7 +191,7 @@ for (const rel of HEAVY) {
   {
     const known = new Set(['style.css', 'app.js', 'landing.css']);
     const suspicious = [];
-    for (const page of ['index.html', 'privacy.html', 'terms.html']) {
+    for (const page of Object.keys(PAGES)) {
       const html = fs.readFileSync(path.join(ROOT, 'public', page), 'utf8');
       for (const m of html.matchAll(/([A-Za-z0-9_./-]+\.(?:css|js))\?v=([A-Za-z0-9]+)/g)) {
         const base = m[1].split('/').pop();

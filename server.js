@@ -4905,7 +4905,7 @@ app.get('/api/debug/d1-usage', (req, res) => {
 const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's own count, checked by test/checklist-index.test.js so it
 // cannot drift silently away from what build-landing-pages.js emits.
-const INDEXABLE_URLS = 2173;
+const INDEXABLE_URLS = 2176;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
