@@ -1059,6 +1059,15 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-price-table th:nth-child(2),.lp-price-table td:nth-child(2),
 .lp-price-table th:nth-child(3),.lp-price-table td:nth-child(3){text-align:right;white-space:nowrap}
 .lp-price-table tr:last-child td{border-bottom:none}
+/* Card photo. The span carries the placeholder so a purged eBay image — the
+   <img> removes itself on error — leaves the glyph and the row keeps its
+   height, instead of the table reflowing as images fail one at a time. */
+.lp-thumb-cell{width:44px;padding-right:0}
+.lp-thumb{position:relative;display:flex;align-items:center;justify-content:center;
+  width:40px;height:56px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,.10)}
+.lp-thumb::after{content:'\1F0A0';font-size:.85rem;opacity:.35}
+.lp-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.lp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .lp-price-shop{margin:.9rem 0 0;font-weight:600}
 .lp-price-note{font-size:.8rem;margin:.75rem 0 0}
 /* A long card label must not push the page sideways on a phone. */

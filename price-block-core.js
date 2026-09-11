@@ -79,7 +79,10 @@ function summarise(totals, rows) {
     top: (rows || [])
       .filter(r => r && r.label && r.sales > 0 && r.median != null)
       .slice(0, TOP_CARDS)
-      .map(r => ({ label: String(r.label), sales: Number(r.sales), median: Number(r.median) })),
+      .map(r => ({
+        label: String(r.label), sales: Number(r.sales), median: Number(r.median),
+        img: r.img ? String(r.img) : null,
+      })),
   };
 }
 
@@ -102,6 +105,30 @@ function ebaySearchUrl(query) {
   const q = String(query || '').trim();
   if (!q) return '';
   return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&${EPN_PARAMS}`;
+}
+
+// The card photo, sized to the cell and safe when it is gone.
+//
+// eBay purges images for long-ended listings — that is why the R2 archive
+// exists — so on a 45-day window a fraction of these are already dead and more
+// die every week. An <img> whose source 404s renders a browser's broken-image
+// icon, and eight of those on a page under review for quality is worse than no
+// photos at all.
+//
+// So the img sits inside a span that carries a placeholder glyph, and removes
+// itself on error. A dead photo leaves the glyph, the row keeps its height,
+// and the table does not reflow as images fail one by one.
+//
+// The onerror is the only script on the page and it is not load-bearing: with
+// JavaScript off, a dead image is a broken icon and everything else still
+// renders. Nothing a crawler needs depends on it.
+const THUMB_SIZE = 140;
+
+function thumb(url, alt) {
+  const u = String(url || '').replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, `/s-l${THUMB_SIZE}.$1`);
+  if (!u || !/^https:\/\//i.test(u)) return '<span class="lp-thumb"></span>';
+  return `<span class="lp-thumb"><img src="${esc(u)}" alt="${esc(alt)}" loading="lazy" `
+    + `decoding="async" width="40" height="56" onerror="this.remove()" /></span>`;
 }
 
 // The markup.
@@ -140,10 +167,16 @@ function render(summary, opts) {
   if (summary.top.length) {
     html += `  <table class="lp-price-table">\n`;
     html += `    <caption class="lp-muted">Most-traded cards, by number of completed sales</caption>\n`;
-    html += `    <thead><tr><th scope="col">Card</th><th scope="col">Sales</th><th scope="col">Median</th></tr></thead>\n`;
+    // The photo column has an empty header: it labels nothing, and a screen
+    // reader announcing "Photo" before every row adds noise rather than
+    // meaning — the alt text on each image already names the card.
+    html += `    <thead><tr><th scope="col"><span class="lp-sr">Photo</span></th>`;
+    html += `<th scope="col">Card</th><th scope="col">Sales</th><th scope="col">Median</th></tr></thead>\n`;
     html += `    <tbody>\n`;
     for (const r of summary.top) {
-      html += `      <tr><td>${esc(r.label)}</td><td>${r.sales.toLocaleString('en-US')}</td><td>${esc(money(r.median))}</td></tr>\n`;
+      html += `      <tr><td class="lp-thumb-cell">${thumb(r.img, r.label)}</td>`;
+      html += `<td>${esc(r.label)}</td><td>${r.sales.toLocaleString('en-US')}</td>`;
+      html += `<td>${esc(money(r.median))}</td></tr>\n`;
     }
     html += `    </tbody>\n  </table>\n`;
   }
@@ -183,6 +216,6 @@ function render(summary, opts) {
 const keyFor = (kind, id) => `${kind}:${id}`;
 
 module.exports = {
-  MIN_SALES, MIN_CARDS, TOP_CARDS, EPN_PARAMS,
+  MIN_SALES, MIN_CARDS, TOP_CARDS, EPN_PARAMS, THUMB_SIZE, thumb,
   median, money, esc, summarise, render, keyFor, ebaySearchUrl,
 };

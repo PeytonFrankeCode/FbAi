@@ -105,6 +105,58 @@ const check = (label, ok, detail) => {
     /<section[^>]*class="lp-prices"/.test(html) && /<h2>/.test(html));
 }
 
+// ---- card photos ----
+//
+// These come from eBay and eBay purges them, so the failure to design for is
+// not "no photo" but "photo that used to exist". Eight broken-image icons on a
+// page under review for quality is worse than none at all.
+{
+  const { thumb, THUMB_SIZE } = require(path.join(__dirname, '..', 'price-block-core.js'));
+
+  check('a photo is requested at the size the cell renders',
+    thumb('https://i.ebayimg.com/images/g/abc/s-l1600.jpg', 'x').includes(`s-l${THUMB_SIZE}.jpg`),
+    'the stored url is often s-l1600 — 200KB to paint a 40px thumbnail');
+
+  check('  ...and a dead photo removes itself rather than showing a broken icon',
+    /onerror="this\.remove\(\)"/.test(thumb('https://i.ebayimg.com/x/s-l64.jpg', 'x')),
+    'the span keeps the row height, so the table does not reflow as images fail');
+
+  check('  ...and a missing photo still occupies the cell',
+    thumb(null, 'x') === '<span class="lp-thumb"></span>',
+    'an empty cell would make the rows different heights');
+
+  // The url comes from the sales table, which is fed by an importer reading
+  // seller-supplied listings. It is not trusted markup.
+  // Checked by parsing the src, not by searching for "onload=". The escaped
+  // form contains that literal substring — `onload=&quot;` — so the obvious
+  // check fails against correctly escaped output, which is exactly what the
+  // first version of this did.
+  {
+    const out = thumb('https://i.ebayimg.com/a.jpg" onload="alert(1)', 'x');
+    const src = (out.match(/src="([^"]*)"/) || [])[1] || '';
+    check('a photo url cannot break out of the attribute',
+      src.includes('&quot;') && !/\son[a-z]+=["']/.test(out.replace(/onerror="this\.remove\(\)"/, '')),
+      'the quote is escaped, so the rest stays inside the attribute');
+  }
+  check('  ...and a non-https url is refused outright',
+    thumb('javascript:alert(1)', 'x') === '<span class="lp-thumb"></span>',
+    'a javascript: src is the one that actually executes');
+  check('  ...as is a protocol-relative one',
+    thumb('//evil.example/x.jpg', 'x') === '<span class="lp-thumb"></span>');
+
+  // Alt text is the card name: useful to a screen reader, and to the image
+  // search that is part of why photos are worth adding at all.
+  check('every photo carries the card name as alt text',
+    thumb('https://i.ebayimg.com/x/s-l140.jpg', 'Jayden Daniels #1').includes('alt="Jayden Daniels #1"'));
+
+  // Dimensions on the tag reserve the space before the image arrives. Without
+  // them the whole table jumps as each one loads, which is a Core Web Vitals
+  // failure on the pages this is meant to improve.
+  check('  ...and width/height, so the page does not shift as photos load',
+    /width="\d+" height="\d+"/.test(thumb('https://i.ebayimg.com/x/s-l140.jpg', 'x')),
+    'layout shift is measured, and these pages are being judged');
+}
+
 // ---- injection safety ----
 //
 // Card labels come from eBay listing titles by way of the sales table. They

@@ -9422,15 +9422,29 @@ async function buildPriceBlocks() {
   //
   // median_price is the middle row of each group by ordinal, which is the same
   // definition price-block-core.js uses on the small arrays it handles.
+  // The photo comes from the same row the median does.
+  //
+  // Not "any photo of this card" — the median row's. That row is a real sale
+  // at that price, so the picture and the number describe the same thing.
+  // Picking a different row's image would show a raw card beside a PSA 10's
+  // price, or vice versa.
+  //
+  // The column is optional: the sales schema has grown over time and this
+  // deployment may predate it. Absent, the map simply carries no photos and
+  // the block renders exactly as it does today.
+  const hasImg = await _nflHasImageColumn(db).catch(() => false);
+  const IMG = hasImg ? ', image_url' : '';
+  const IMGSEL = hasImg ? ', image_url AS img' : '';
+
   const cardAgg = (groupCols, labelCols) => `
     WITH base AS (
-      SELECT ${groupCols} AS g, ${labelCols} AS label, price_cents,
+      SELECT ${groupCols} AS g, ${labelCols} AS label, price_cents${IMG},
              ROW_NUMBER() OVER (PARTITION BY ${groupCols}, ${labelCols} ORDER BY price_cents) AS rn,
              COUNT(*)   OVER (PARTITION BY ${groupCols}, ${labelCols}) AS n
         FROM sales
        WHERE ${WHERE} AND sold_date >= ? AND ${groupCols} <> '' AND ${labelCols} <> ''
     )
-    SELECT g, label, n AS sales, price_cents AS median
+    SELECT g, label, n AS sales, price_cents AS median${IMGSEL}
       FROM base WHERE rn = (n + 1) / 2`;
 
   let setCards, playerCards, span;
@@ -9459,7 +9473,7 @@ async function buildPriceBlocks() {
       if (!p) { p = { kind, page, sales: 0, prices: [], cards: [] }; pages.set(key, p); }
       const sales = Number(r.sales || 0), med = Number(r.median || 0);
       p.sales += sales;
-      p.cards.push({ label: r.label, sales, median: med });
+      p.cards.push({ label: r.label, sales, median: med, img: r.img || null });
       // The page-wide median is over CARDS, not over sales: weighting by sale
       // count would let one heavily-traded base card decide the figure for the
       // whole set, which is the opposite of what a reader is asking.
@@ -9515,7 +9529,7 @@ async function buildPriceBlocks() {
       }
       const sales = Number(r.sales || 0), med = Number(r.median || 0);
       p.sales += sales;
-      p.cards.push({ label: r.label, sales, median: med });
+      p.cards.push({ label: r.label, sales, median: med, img: r.img || null });
       p.prices.push(med);
     }
   } catch (err) {
