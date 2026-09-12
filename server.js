@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos } = require('./db');
+const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
 // Canonical player and parallel names from the checklists, derived from
 // public/data/checklists at build time by scripts/build-card-index.js.
 //
@@ -879,6 +879,71 @@ const NFLDB_SEARCH_WINDOW_DAYS = 1095;
 // modelled — and it is the number that decides whether the window above is too
 // generous. Exposed at /api/debug/d1-usage.
 const _d1Usage = { queries: 0, rowsRead: 0, cacheHits: 0, since: new Date().toISOString() };
+
+// ---- where the rows read actually go ----
+//
+// D1 reported two billion rows read in thirty days against traffic that cannot
+// account for a fraction of it. There are 74 D1 call sites in this file and
+// exactly two of them were counting, so the honest answer to "which one" was
+// that nobody knew — and a guess would have optimised whichever query came to
+// mind first.
+//
+// So the binding itself is wrapped, once, and every statement is counted no
+// matter which of the 74 issued it. Attribution comes from a module-level
+// label the scheduled jobs set around themselves: the cron runs them serially,
+// so the label is unambiguous for exactly the work that runs unattended and
+// therefore has nobody watching its bill.
+//
+// The honest limitation: D1's .first() returns the row and discards the meta
+// that carries rows_read, so those queries are counted but their rows are not.
+// The expensive jobs all use .all(), which does carry it.
+let _d1Source = 'request';
+const _d1By = Object.create(null);
+
+function _d1Tally(res) {
+  const src = _d1Source;
+  const e = _d1By[src] || (_d1By[src] = { queries: 0, rowsRead: 0, unmeasured: 0 });
+  e.queries++;
+  const read = res && res.meta && Number(res.meta.rows_read);
+  if (Number.isFinite(read)) e.rowsRead += read; else e.unmeasured++;
+  return res;
+}
+
+// Runs fn with every D1 query inside it attributed to `name`. Restores the
+// previous label in a finally, so a throwing job cannot leave the label stuck
+// and mis-attribute everything that follows it.
+async function _asD1Source(name, fn) {
+  const prev = _d1Source;
+  _d1Source = name;
+  try { return await fn(); } finally { _d1Source = prev; }
+}
+
+function _countingStmt(stmt) {
+  return {
+    bind: (...a) => _countingStmt(stmt.bind(...a)),
+    all: async (...a) => _d1Tally(await stmt.all(...a)),
+    run: async (...a) => _d1Tally(await stmt.run(...a)),
+    // .first() gives back the row itself — there is no meta to read, so this
+    // counts the query and records that its rows could not be measured.
+    first: async (...a) => { const r = await stmt.first(...a); _d1Tally(null); return r; },
+    raw: async (...a) => stmt.raw(...a),
+  };
+}
+
+function getNflDb() {
+  const db = _rawNflDb();
+  if (!db || db.__counted) return db;
+  return {
+    __counted: true,
+    prepare: (sql) => _countingStmt(db.prepare(sql)),
+    // Pass-throughs. batch() and exec() are used by the importer paths and are
+    // deliberately not wrapped rather than half-wrapped.
+    batch: (...a) => db.batch(...a),
+    exec: (...a) => db.exec(...a),
+    dump: (...a) => db.dump && db.dump(...a),
+    withSession: (...a) => db.withSession && db.withSession(...a),
+  };
+}
 
 // Turn a free-text card query into a LIKE-matched D1 lookup. Every term must
 // appear somewhere in the title, which mirrors how the other providers behave
@@ -3149,7 +3214,11 @@ async function _aliasEnsure(db) {
 // reconsidered on every run. Time-boxed by row count, not by clock: the cron
 // fires every 15 minutes and the head of the distribution is covered in the
 // first few passes.
-async function backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = null } = {}) {
+async function backfillPlayerAliases(opts) {
+  return _asD1Source('alias-backfill', () => _backfillPlayerAliases(opts || {}));
+}
+
+async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = null } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   if (!await _aliasEnsure(db)) return { ok: false, reason: 'table unavailable' };
@@ -4852,6 +4921,42 @@ app.get('/api/market-basket', async (req, res) => {
   }
 });
 
+// Flush the per-source tally into a daily KV bucket.
+//
+// The in-memory counters die with the isolate, and an isolate lives minutes.
+// That is precisely how a job quietly reading tens of millions of rows a day
+// stays invisible: every time anyone looks, the counter has just been reset.
+//
+// Called from the cron, so the cost is one KV write per tick rather than one
+// per query, and the bucket is a day so a month of history is 30 keys.
+const D1_USAGE_KEY = (d) => `d1usage:${d}`;
+const D1_USAGE_TTL = 60 * 60 * 24 * 40;   // a bit over a month
+
+async function flushD1Usage() {
+  const today = new Date().toISOString().slice(0, 10);
+  const sources = Object.keys(_d1By);
+  if (!sources.length) return { ok: true, flushed: 0 };
+  try {
+    const key = D1_USAGE_KEY(today);
+    const prev = (await cacheGet(key)) || {};
+    for (const src of sources) {
+      const mine = _d1By[src];
+      const acc = prev[src] || { queries: 0, rowsRead: 0, unmeasured: 0 };
+      acc.queries += mine.queries;
+      acc.rowsRead += mine.rowsRead;
+      acc.unmeasured += mine.unmeasured;
+      prev[src] = acc;
+      // Zeroed rather than deleted: the next flush adds to a clean slate, and
+      // double-counting a tick would be worse than losing one.
+      mine.queries = 0; mine.rowsRead = 0; mine.unmeasured = 0;
+    }
+    await cachePut(key, prev, D1_USAGE_TTL);
+    return { ok: true, flushed: sources.length, day: today };
+  } catch (err) {
+    return { ok: false, reason: String(err && err.message) };
+  }
+}
+
 // ---- /api/debug/d1-usage ----
 // What the sold-search path is actually costing in D1 rows read.
 //
@@ -4864,13 +4969,47 @@ app.get('/api/market-basket', async (req, res) => {
 // Counters are per isolate and reset when Cloudflare recycles it, which makes
 // this a rate check rather than a monthly total — the useful number is rows per
 // query, and whether the cache is absorbing the repeats.
-app.get('/api/debug/d1-usage', (req, res) => {
+app.get('/api/debug/d1-usage', async (req, res) => {
+  // The durable half: which job has been reading how much, per day.
+  //
+  // This is the view that answers "two billion rows in thirty days — from
+  // where", which the per-isolate counters below cannot, because they reset
+  // every few minutes.
+  const days = [];
+  try {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      const row = await cacheGet(D1_USAGE_KEY(d));
+      if (!row) continue;
+      const total = Object.values(row).reduce((n, e) => n + (e.rowsRead || 0), 0);
+      days.push({
+        day: d, rowsRead: total,
+        bySource: Object.fromEntries(Object.entries(row)
+          .sort((a, b) => (b[1].rowsRead || 0) - (a[1].rowsRead || 0))
+          .map(([k, v]) => [k, { rowsRead: v.rowsRead, queries: v.queries, unmeasured: v.unmeasured }])),
+      });
+    }
+  } catch (_) { /* reported as an empty history rather than an error */ }
+  const worst = days[0] && Object.entries(days[0].bySource)[0];
+  res.locals.d1Daily = {
+    days,
+    // 25 billion a month is the included allowance; a day's share of it is the
+    // line a sustained rate should be judged against.
+    dailyShareOfIncluded: Math.round(25e9 / 30).toLocaleString('en-US'),
+    biggestConsumerToday: worst ? `${worst[0]} — ${worst[1].rowsRead.toLocaleString('en-US')} rows` : 'nothing recorded yet',
+    note: 'Written by the cron every 15 minutes. A job absent here has not run since the last deploy.',
+  };
+  return _d1UsageBody(req, res);
+});
+
+function _d1UsageBody(req, res) {
   const served = _d1Usage.queries + _d1Usage.cacheHits;
   const perQuery = _d1Usage.queries ? Math.round(_d1Usage.rowsRead / _d1Usage.queries) : 0;
   // 25 billion a month, spread evenly, is the budget a sustained rate is
   // measured against.
   const MONTHLY_INCLUDED = 25e9;
   res.json({
+    daily: res.locals.d1Daily,
     since: _d1Usage.since,
     searchesServed: served,
     fromCache: _d1Usage.cacheHits,
@@ -4885,7 +5024,7 @@ app.get('/api/debug/d1-usage', (req, res) => {
     cacheTtlSeconds: NFLDB_SEARCH_TTL,
     note: 'Counters are per isolate and reset on recycle. rowsPerQuery is the figure to act on.',
   });
-});
+}
 
 // ---- /api/debug/price-coverage ----
 //
@@ -9368,6 +9507,10 @@ async function priceBlocksMissing() {
 }
 
 async function buildPriceBlocks() {
+  return _asD1Source('price-blocks', () => _buildPriceBlocks());
+}
+
+async function _buildPriceBlocks() {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no D1 binding' };
 
@@ -9573,7 +9716,11 @@ async function buildPriceBlocks() {
   return { ok: true, pages: kept, bytes, from: payload.from, to: payload.to };
 }
 
-async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
+async function archiveListingPhotos(opts) {
+  return _asD1Source('photo-archive', () => _archiveListingPhotos(opts || {}));
+}
+
+async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   const db = getNflDb();
   const bucket = getPhotos();
   if (!db) return { ok: false, reason: 'no D1 binding' };
@@ -9673,7 +9820,7 @@ async function archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

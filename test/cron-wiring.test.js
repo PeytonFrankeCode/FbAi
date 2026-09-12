@@ -145,11 +145,22 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
   // end of this function into buildPriceBlocks — where the same constant
   // appears — so deleting the check here still "passed". A guard that reads
   // the next function's source is not a guard.
-  const bodyOf = (name) => {
+  const rawBodyOf = (name) => {
     const start = src.indexOf(`async function ${name}`);
     if (start === -1) return '';
     const next = src.indexOf('\nasync function ', start + 1);
     return src.slice(start, next === -1 ? src.length : next);
+  };
+  // Follow a one-hop delegation.
+  //
+  // The D1 usage accounting wraps each scheduled job so its queries can be
+  // attributed — buildPriceBlocks now just calls _buildPriceBlocks inside a
+  // label. Reading the wrapper and concluding the marker is missing is a guard
+  // failing on a rename rather than on a regression, which is what it did.
+  const bodyOf = (name) => {
+    const body = rawBodyOf(name);
+    const hop = body.match(/_asD1Source\('[^']+',\s*\(\)\s*=>\s*(_\w+)\(/);
+    return hop ? rawBodyOf(hop[1]) : body;
   };
   const fn = bodyOf('priceBlocksMissing');
   check('the reactive rebuild is gated on more than "is the map missing"',
@@ -160,7 +171,11 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
   // succeed — otherwise a failure or a crash leaves nothing recorded and the
   // loop is exactly as fast as before.
   const build = bodyOf('buildPriceBlocks');
-  const markerAt = build.indexOf('PRICE_BLOCKS_ATTEMPT_KEY');
+  // The INVOCATION, not the constant. Looking for PRICE_BLOCKS_ATTEMPT_KEY
+  // finds it in the helper that writes the marker, which is defined before the
+  // queries regardless — so deleting the call that actually records the attempt
+  // still passed. It is the call that has to happen first, not the definition.
+  const markerAt = build.search(/await mark\('started'\)/);
   const firstQueryAt = build.indexOf('db.prepare');
   check('  ...and the attempt is recorded before any query runs',
     markerAt !== -1 && (firstQueryAt === -1 || markerAt < firstQueryAt),
