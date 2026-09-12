@@ -97,6 +97,9 @@ const PAGE_ASSETS = {
   'index.html': ['style.css', 'app.js'],
   'privacy.html': ['style.css'],
   'terms.html': ['style.css'],
+  'about.html': ['style.css'],
+  'contact.html': ['style.css'],
+  'methodology.html': ['style.css'],
 };
 
 function stampAssetRefs() {

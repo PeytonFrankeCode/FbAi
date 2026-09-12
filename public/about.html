@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About | The Card Huddle</title>
+  <meta name="description" content="Who runs The Card Huddle, where the sold-price data comes from, and what the site does and does not claim." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#5ece99" />
+  <link rel="canonical" href="https://thecardhuddle.com/about.html" />
+  <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+
+  <!-- Consent Mode v2 defaults, kept in step with the copy in index.html.
+       This page loads the AdSense tag purely to pull in Google's consent
+       management platform, so the "Manage cookie choices" button below has
+       something to reopen — no ad slots are placed on this page. As in
+       index.html, these defaults must stay above the tag they govern. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+      region: [
+        'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE',
+        'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
+        'IS','LI','NO','GB','CH'
+      ]
+    });
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css?v=867282d47f" />
+  <script>
+    // Same theme bootstrap as app.js. This page doesn't load app.js, so
+    // without it a light-mode user would get a dark legal page.
+    (function () {
+      try {
+        if (localStorage.getItem('cardHuddleTheme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) { /* storage blocked — dark theme is the default anyway */ }
+    })();
+  </script>
+  <style>
+    .legal { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .legal h1 { font-size: 2rem; font-weight: 800; margin: 0 0 .35rem; }
+    .legal .updated { color: var(--text-secondary); font-size: .85rem; margin: 0 0 2rem; }
+    .legal h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 .6rem; }
+    .legal h3 { font-size: .98rem; font-weight: 600; margin: 1.25rem 0 .4rem; }
+    .legal p, .legal li { color: var(--text-secondary); line-height: 1.65; font-size: .95rem; }
+    .legal ul { padding-left: 1.15rem; margin: .5rem 0 1rem; }
+    .legal li { margin: .3rem 0; }
+    .legal a { color: var(--accent); }
+    .legal table { width: 100%; border-collapse: collapse; margin: .75rem 0 1.25rem; font-size: .9rem; table-layout: fixed; }
+    /* Policy URLs are long unbroken strings; without this they push the page
+       past the viewport on phones instead of wrapping. */
+    .legal th, .legal td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--border-primary); vertical-align: top; overflow-wrap: anywhere; }
+    .legal th { color: var(--text-primary); font-weight: 600; }
+    .legal .back { display: inline-block; margin-bottom: 1.5rem; font-size: .9rem; }
+    .legal .note { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 10px; padding: .9rem 1rem; margin: 1.25rem 0; }
+  </style>
+</head>
+<body>
+  <main class="legal">
+    <a class="back" href="/">&larr; Back to The Card Huddle</a>
+    <h1>About The Card Huddle</h1>
+
+    <p>The Card Huddle is a free football card price tool. It answers one question as honestly as we
+    can manage: what is this card actually selling for?</p>
+
+    <p>It is run by one person, not a company with a research department, and it is not affiliated
+    with eBay, Panini, Topps, Fanatics, PSA, BGS or SGC. Nobody pays us to feature a card or a set.</p>
+
+    <h2>What it does</h2>
+    <ul>
+      <li><strong>Sold prices from real completed sales.</strong> Not asking prices, not estimates, not
+      an algorithm's opinion of what something is worth. Prices here are what somebody actually paid.</li>
+      <li><strong>Full checklists.</strong> Over 360 football products, more than 370,000 catalogued
+      cards, with their parallels and inserts.</li>
+      <li><strong>Grade breakdowns.</strong> A raw card and a PSA 10 of the same card are different
+      markets, and they are shown separately where there is enough data to separate them.</li>
+      <li><strong>Collection and inventory tracking</strong>, free, with or without an account.</li>
+    </ul>
+
+    <h2>Where the numbers come from</h2>
+    <p>We maintain our own dataset of completed eBay sales for football cards, built continuously.
+    That dataset is the source for every price on the site. It is not licensed from a price guide
+    and it is not scraped from another tracker.</p>
+    <p>How a set or player page turns that into a figure — which average, over what period, and why
+    some pages show no prices at all — is written out in full on the
+    <a href="/methodology.html">methodology page</a>.</p>
+
+    <h2>What it costs</h2>
+    <p>Nothing. The site is supported by advertising and by affiliate commission when someone buys
+    through a link to eBay, at no extra cost to the buyer. That is disclosed on every page carrying
+    such a link, and it never changes which prices we show &mdash; the numbers come out of the sales
+    data before any link is attached to them.</p>
+
+    <h2>What it is not</h2>
+    <p>It is not an appraisal service, and nothing here is financial advice. A median of past sales
+    is a record of what happened, not a promise about what your card will fetch. Condition, timing,
+    grading population and plain luck all move a real sale away from the number on the screen.</p>
+
+    <h2>Getting in touch</h2>
+    <p>Corrections are genuinely welcome &mdash; a wrong checklist entry, a price that looks off, a
+    card attributed to the wrong player. See <a href="/contact.html">contact</a>.</p>
+
+    <h2>More</h2>
+    <ul>
+      <li><a href="/about.html">About The Card Huddle</a></li>
+      <li><a href="/methodology.html">How the prices are calculated</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/privacy.html">Privacy Policy</a> &bull; <a href="/terms.html">Terms</a></li>
+    </ul>
+
+  </main>
+</body>
+</html>

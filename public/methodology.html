@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How prices are calculated | The Card Huddle</title>
+  <meta name="description" content="The method behind every price on The Card Huddle: completed eBay sales, medians over a 45-day window, and the thresholds below which we show nothing." />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#5ece99" />
+  <link rel="canonical" href="https://thecardhuddle.com/methodology.html" />
+  <link rel="icon" href="/favicon.ico?v=1" sizes="any" />
+
+  <!-- Consent Mode v2 defaults, kept in step with the copy in index.html.
+       This page loads the AdSense tag purely to pull in Google's consent
+       management platform, so the "Manage cookie choices" button below has
+       something to reopen — no ad slots are placed on this page. As in
+       index.html, these defaults must stay above the tag they govern. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted',
+      analytics_storage: 'granted'
+    });
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'denied',
+      wait_for_update: 500,
+      region: [
+        'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE',
+        'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
+        'IS','LI','NO','GB','CH'
+      ]
+    });
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css?v=867282d47f" />
+  <script>
+    // Same theme bootstrap as app.js. This page doesn't load app.js, so
+    // without it a light-mode user would get a dark legal page.
+    (function () {
+      try {
+        if (localStorage.getItem('cardHuddleTheme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) { /* storage blocked — dark theme is the default anyway */ }
+    })();
+  </script>
+  <style>
+    .legal { max-width: 780px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .legal h1 { font-size: 2rem; font-weight: 800; margin: 0 0 .35rem; }
+    .legal .updated { color: var(--text-secondary); font-size: .85rem; margin: 0 0 2rem; }
+    .legal h2 { font-size: 1.15rem; font-weight: 700; margin: 2rem 0 .6rem; }
+    .legal h3 { font-size: .98rem; font-weight: 600; margin: 1.25rem 0 .4rem; }
+    .legal p, .legal li { color: var(--text-secondary); line-height: 1.65; font-size: .95rem; }
+    .legal ul { padding-left: 1.15rem; margin: .5rem 0 1rem; }
+    .legal li { margin: .3rem 0; }
+    .legal a { color: var(--accent); }
+    .legal table { width: 100%; border-collapse: collapse; margin: .75rem 0 1.25rem; font-size: .9rem; table-layout: fixed; }
+    /* Policy URLs are long unbroken strings; without this they push the page
+       past the viewport on phones instead of wrapping. */
+    .legal th, .legal td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--border-primary); vertical-align: top; overflow-wrap: anywhere; }
+    .legal th { color: var(--text-primary); font-weight: 600; }
+    .legal .back { display: inline-block; margin-bottom: 1.5rem; font-size: .9rem; }
+    .legal .note { background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 10px; padding: .9rem 1rem; margin: 1.25rem 0; }
+  </style>
+</head>
+<body>
+  <main class="legal">
+    <a class="back" href="/">&larr; Back to The Card Huddle</a>
+    <h1>How the prices are calculated</h1>
+    <p class="updated">The short version: medians of real completed eBay sales, over a rolling
+    45-day window, and nothing at all when there is too little data to be honest about.</p>
+
+    <h2>Where the sales come from</h2>
+    <p>We maintain our own dataset of completed eBay sales for football cards. Every listing is
+    parsed into its parts &mdash; year, set, player, card number, parallel, grader and grade &mdash;
+    so that sales of the same card can be grouped together even when sellers describe them
+    differently.</p>
+    <p>Only <em>completed</em> sales count. An asking price is a hope; a completed sale is evidence.</p>
+
+    <h2>Median, not average</h2>
+    <p>A single set runs from a two-dollar base card to a one-of-one patch autograph that sells for
+    hundreds. The mean of that range is a number no card in the set has ever sold for. The median
+    &mdash; the middle sale &mdash; describes what a typical card actually trades at, which is the
+    question a collector is asking.</p>
+    <p>The same logic applies within a card. A card's figure is the middle of its own completed
+    sales, so one unusually high or low sale moves it very little.</p>
+    <p>A set's headline figure is a median across its <em>cards</em>, not across its sales. Otherwise
+    one heavily-traded base card, selling hundreds of times, would decide the number for the entire
+    set.</p>
+
+    <h2>The 45-day window</h2>
+    <p>Prices are drawn from the last 45 days of sales, and the exact date range is printed on every
+    price block. A price with no date attached to it is a claim about the present that quietly goes
+    stale; showing the window means you can judge for yourself how current the figure is.</p>
+    <p>It also means a set that was hot six months ago and is quiet now shows no recent figure rather
+    than an old one dressed up as current.</p>
+
+    <h2>Conditions and grades are mixed &mdash; and we say so</h2>
+    <p>The set and player page medians include raw cards and graded cards together. A PSA 10 and a
+    raw copy of the same card are genuinely different markets, so a combined median sits somewhere
+    between them and is not the value of either one.</p>
+    <p>That is why every price block says so in plain words. For a grade-by-grade breakdown of a
+    specific card, search for it directly &mdash; the search results separate raw, PSA 10, PSA 9 and
+    the rest.</p>
+
+    <h2>When we show nothing</h2>
+    <p>A page only shows prices if it has <strong>at least 20 completed sales across at least 10
+    different cards</strong> in the window. Below that, the median is noise.</p>
+    <p>Three sales of a common base card tell you nothing reliable about the fourth, and a page
+    printing &ldquo;median $4.00&rdquo; from three sales looks authoritative while being close to
+    meaningless. We would rather a page stay quiet than mislead, so pages under that bar show no
+    price block at all.</p>
+
+    <h2>What we do not do</h2>
+    <ul>
+      <li><strong>No estimated values.</strong> If a card has not sold recently, we do not invent a
+      figure for it by extrapolating from similar cards.</li>
+      <li><strong>No asking prices presented as values.</strong> Current listings are shown as
+      listings, clearly separate from completed sales.</li>
+      <li><strong>No paid placement.</strong> No set, card or seller is featured in exchange for
+      money, and affiliate links never alter a displayed price.</li>
+    </ul>
+
+    <h2>Known limitations</h2>
+    <p>Worth stating plainly, because every price tool has these and few list them:</p>
+    <ul>
+      <li><strong>Title parsing is imperfect.</strong> Prices are built from seller-written listing
+      titles. Most parse cleanly; some do not, and a mis-read title can put a sale under the wrong
+      card. Volume limits the damage &mdash; one bad row barely moves a median &mdash; but it is not
+      zero.</li>
+      <li><strong>Shared card numbering.</strong> Inserts often reuse the base set's numbering, so
+      some cards cannot be attributed to one subset with certainty. Where that is ambiguous, we leave
+      the card out of the subset figure rather than guess at it.</li>
+      <li><strong>Two people, one name.</strong> Fathers and sons share names in football. Where a
+      sale could belong to either, it is counted for neither rather than assigned to the wrong
+      player.</li>
+      <li><strong>Photos come from the listings.</strong> eBay removes images from long-ended
+      listings, so some older sales show a placeholder instead of a picture.</li>
+      <li><strong>Recent sales only.</strong> The window is 45 days. This is not a long-run price
+      history, and it is not trying to be one.</li>
+    </ul>
+
+    <h2>Found something wrong?</h2>
+    <p>Tell us which card and what looks off, and we will check the sales behind it:
+    <a href="/contact.html">contact</a>. Corrections make the data better for everyone.</p>
+
+    <h2>More</h2>
+    <ul>
+      <li><a href="/about.html">About The Card Huddle</a></li>
+      <li><a href="/methodology.html">How the prices are calculated</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/privacy.html">Privacy Policy</a> &bull; <a href="/terms.html">Terms</a></li>
+    </ul>
+
+  </main>
+</body>
+</html>

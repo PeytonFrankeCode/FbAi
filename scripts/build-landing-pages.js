@@ -326,7 +326,7 @@ function footer() {
   return `
   <footer class="lp-footer">
     <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>
-    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
+    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
     <p class="lp-muted">Prices are historical sale records, not appraisals or financial advice. As an eBay Partner Network affiliate we may earn a commission on qualifying purchases made through links on this site, at no extra cost to you.</p>
   </footer>
 </body>
@@ -1059,6 +1059,15 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-price-table th:nth-child(2),.lp-price-table td:nth-child(2),
 .lp-price-table th:nth-child(3),.lp-price-table td:nth-child(3){text-align:right;white-space:nowrap}
 .lp-price-table tr:last-child td{border-bottom:none}
+/* Card photo. The span carries the placeholder so a purged eBay image — the
+   <img> removes itself on error — leaves the glyph and the row keeps its
+   height, instead of the table reflowing as images fail one at a time. */
+.lp-thumb-cell{width:44px;padding-right:0}
+.lp-thumb{position:relative;display:flex;align-items:center;justify-content:center;
+  width:40px;height:56px;border-radius:3px;overflow:hidden;background:rgba(148,163,184,.10)}
+.lp-thumb::after{content:'\\1F0A0';font-size:.85rem;opacity:.35}
+.lp-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.lp-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .lp-price-shop{margin:.9rem 0 0;font-weight:600}
 .lp-price-note{font-size:.8rem;margin:.75rem 0 0}
 /* A long card label must not push the page sideways on a phone. */
@@ -1091,6 +1100,21 @@ function buildSitemap(list, players, teams, years, subsetIndex) {
   push(`${SITE}/sets/`, '0.9', 'weekly', siteDate);
   push(`${SITE}/players/`, '0.9', 'weekly', siteDate);
   push(`${SITE}/teams/`, '0.9', 'weekly', siteDate);
+
+  // Hand-written pages: who runs the site, how to reach us, and how the prices
+  // are arrived at. They are not generated from the checklists, so nothing else
+  // in this function would ever list them — and an unlisted page that is only
+  // reachable from a footer is easy for a crawler to under-weight.
+  //
+  // The methodology page in particular is the site explaining its own data, and
+  // the closest thing here to an answer to "what makes this worth indexing".
+  //
+  // Their lastmod is the site date rather than a per-file commit date: they are
+  // checked in rather than built, so fileLastmod() would need a path for each
+  // and gain nothing — these change rarely and together.
+  for (const p of ['about.html', 'methodology.html', 'contact.html']) {
+    push(`${SITE}/${p}`, '0.5', 'monthly', siteDate);
+  }
 
   for (const y of years) {
     push(`${SITE}/sets/${y}/`, '0.8', 'weekly',
