@@ -4278,6 +4278,93 @@ app.get('/api/debug/photo-status', async (req, res) => {
 // This measures both before anything is built. It reads no images — it only
 // counts what exists, which is the cheap question that decides whether the
 // expensive one is worth asking.
+// ---- /api/debug/d1-schema ----
+//
+// Which indexes exist, and what the expensive queries actually do.
+//
+// The photo archive reads the sales table 96 times a day ordered by
+// (sold_date, item_id). If those columns are indexed that is a range seek over
+// a few hundred rows; if they are not, it is a full scan AND a sort of the
+// whole table, every tick. Those two differ by a factor of about a thousand,
+// and nothing anywhere said which one was happening.
+//
+// EXPLAIN QUERY PLAN settles it rather than inferring it from the query shape.
+// SQLite says "SCAN sales" or "SEARCH sales USING INDEX ..." in so many words.
+//
+// Costs nothing: sqlite_master is a handful of rows, and EXPLAIN plans a query
+// without running it.
+app.get('/api/debug/d1-schema', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no D1 binding' });
+
+  try {
+    const schema = await db.prepare(
+      `SELECT type, name, sql FROM sqlite_master
+        WHERE tbl_name = 'sales' ORDER BY type DESC, name`).all();
+    const rows = (schema && schema.results) || [];
+
+    const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
+    const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+
+    // The exact shapes the scheduled jobs run, not simplified stand-ins — a
+    // plan for a query nobody issues answers the wrong question.
+    const probes = {
+      'photo-archive walk': {
+        sql: `SELECT item_id, sold_date, image_url FROM sales
+               WHERE image_url IS NOT NULL AND image_url <> ''
+                 AND (sold_date > ? OR (sold_date = ? AND item_id > ?))
+               ORDER BY sold_date ASC, item_id ASC LIMIT 400`,
+        bind: ['2026-01-01', '2026-01-01', ''],
+      },
+      'price-blocks per-card': {
+        sql: `SELECT ${Y} AS g, COUNT(*) AS n FROM sales
+               WHERE ${WHERE} AND sold_date >= ? GROUP BY g`,
+        bind: ['2026-01-01'],
+      },
+      'sold search by title': {
+        sql: `SELECT item_id FROM sales WHERE title LIKE ? LIMIT 50`,
+        bind: ['%mahomes%'],
+      },
+    };
+
+    const plans = {};
+    for (const [label, q] of Object.entries(probes)) {
+      try {
+        const p = await db.prepare(`EXPLAIN QUERY PLAN ${q.sql}`).bind(...q.bind).all();
+        const steps = ((p && p.results) || []).map(r => r.detail || JSON.stringify(r));
+        plans[label] = {
+          steps,
+          // The word that decides whether this is cheap. SQLite writes "SCAN"
+          // for a full table read and "SEARCH ... USING INDEX" for a seek.
+          verdict: steps.some(d => /USING (COVERING )?INDEX/i.test(d))
+            ? 'uses an index'
+            : steps.some(d => /^SCAN/i.test(d))
+              ? 'FULL TABLE SCAN'
+              : 'unclear',
+          sorts: steps.some(d => /USE TEMP B-TREE/i.test(d)),
+        };
+      } catch (err) {
+        plans[label] = { error: String(err && err.message) };
+      }
+    }
+
+    res.json({
+      available: true,
+      table: (rows.find(r => r.type === 'table') || {}).sql || null,
+      indexes: rows.filter(r => r.type === 'index')
+        .map(r => ({ name: r.name, sql: r.sql || '(implicit — from a UNIQUE or PRIMARY KEY)' })),
+      indexCount: rows.filter(r => r.type === 'index').length,
+      queryPlans: plans,
+      reading: 'A plan saying FULL TABLE SCAN on the photo-archive walk means that job '
+        + 'reads every row in sales, 96 times a day. "sorts: true" on top of that means '
+        + 'it also sorts the whole table each time.',
+    });
+  } catch (err) {
+    console.error('[d1-schema]', err && err.message);
+    res.json({ available: false, error: String(err && err.message) });
+  }
+});
+
 // ---- /api/debug/photo-archive ----
 //
 // Is the R2 copy job actually moving?
