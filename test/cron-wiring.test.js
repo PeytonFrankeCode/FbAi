@@ -229,6 +229,33 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
     /cachePut\(ALIAS_CAUGHTUP_KEY/.test(body),
     'a marker that is never written is a skip that never happens');
 
+  // A run that drained the table marks itself caught up without spending a
+  // second scan to prove it.
+  //
+  // The query asked for `limit` and got fewer, so it returned every unaliased
+  // variant there was, and all of them now have a row. The next scan is
+  // guaranteed to match nothing. Without this the daily shape is two expensive
+  // runs rather than one: the first writes the day's new spellings, and only
+  // the second sees an empty result.
+  //
+  // The tail is everything after the batch was written, and it holds exactly
+  // one cachePut. Reading the CONDITION that guards it — rather than searching
+  // the whole function for the comparison — is what makes the pair below
+  // distinguishable: a check that only asked whether "list.length < limit"
+  // appears anywhere would still pass if the marker were written
+  // unconditionally and the comparison left sitting in a log line.
+  const tail = body.slice(body.indexOf('[alias] +'));
+  const tailGuard = tail.match(/if \(([^)]*)\)\s*\{\s*try \{ await cachePut\(ALIAS_CAUGHTUP_KEY/);
+  check('  ...and a run that drains the table skips the confirming scan',
+    !!tailGuard,
+    'otherwise every day costs two full scans instead of one');
+  // Conditional on a SHORT batch. A full batch may have more behind it, and
+  // marking caught up there would strand the initial fill partway and leave the
+  // index on fragmented names for a day at a time.
+  check('  ...but a full batch keeps going, so the first fill is not stranded',
+    !!tailGuard && /list\.length\s*<\s*limit/.test(tailGuard[1]),
+    tailGuard ? `guarded by: ${tailGuard[1].trim()}` : 'no guard on the drain marker');
+
   // It has to expire. A permanent marker would mean a quiet week wedges the
   // backfill off and new spellings are never picked up again.
   const ttl = serverSrc.match(/const ALIAS_CAUGHTUP_TTL = ([^;]+);/);

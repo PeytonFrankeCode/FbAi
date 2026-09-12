@@ -3326,6 +3326,29 @@ async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = 
     return { ok: false, reason: 'write failed', written };
   }
   console.log(`[alias] +${written} variants (${resolved} resolved)`);
+
+  // A short batch means the table is drained, and there is no need to spend
+  // another scan proving it.
+  //
+  // The query asks for `limit` rows and got fewer, so it returned every
+  // unaliased variant there was — and all of them now have a row, including the
+  // ones that did not resolve (those are written mapped to themselves, which is
+  // what stops them being re-read forever). The next run's query would
+  // therefore match nothing. That is a certainty derived from the batch we just
+  // wrote, not a guess, so take the marker now.
+  //
+  // Without this the daily shape is two expensive runs, not one: the first
+  // finds the day's new spellings and writes them, and only the second gets an
+  // empty result and sets the marker. A full batch is the other case — there
+  // may be more behind it, so leave the marker unset and let the next hour
+  // continue draining.
+  //
+  // Reaching here means every statement was written — a partial write returns
+  // above — so the only question left is whether the query was capped.
+  if (!resolve && list.length < limit) {
+    try { await cachePut(ALIAS_CAUGHTUP_KEY, { at: now, drained: written }, ALIAS_CAUGHTUP_TTL); }
+    catch (_) { /* worst case the next run scans, as it did before */ }
+  }
   return { ok: true, inserted: written, resolved };
 }
 
