@@ -204,5 +204,23 @@ for (const rel of HEAVY) {
   }
 }
 
+// ---- every suite in test/ is actually run ----
+//
+// test/info-pages.test.js was written, committed, and passing, and `npm test`
+// never called it — so for several commits the About/Contact/Methodology pages
+// had a guard that could not fail. A suite nobody runs is worse than no suite,
+// because it reads like coverage.
+//
+// This lives here because bundle-weight is the first suite `npm test` invokes,
+// so an orphaned file is reported before anything else has a chance to pass.
+{
+  const testScript = require(path.join(ROOT, 'package.json')).scripts.test || '';
+  const onDisk = fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js')).sort();
+  const orphans = onDisk.filter(f => !testScript.includes(`test/${f}`));
+  check('every *.test.js in test/ is wired into npm test',
+    orphans.length === 0,
+    orphans.length ? `never run: ${orphans.join(', ')}` : `${onDisk.length} suites, all invoked`);
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall bundle-weight checks passed');
 process.exit(failures ? 1 : 0);

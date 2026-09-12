@@ -3218,10 +3218,40 @@ async function backfillPlayerAliases(opts) {
   return _asD1Source('alias-backfill', () => _backfillPlayerAliases(opts || {}));
 }
 
+// Caught up, and how long to take that for granted.
+//
+// The backfill reads 1.06 million rows per run — more than twice the table —
+// because _normCol() wraps the player column so idx_sales_player cannot be
+// used, and the NOT EXISTS runs as a correlated lookup for every row. Then it
+// groups and sorts. That is the price of ASKING, and it is paid in full even
+// when the answer is "nothing new", which is the answer almost every hour once
+// the table has filled.
+//
+// Measured: 20,219,058 rows in 19 runs in one day, against 73,416 for the
+// photo archive in 72 runs. It was not close.
+//
+// So when a run comes back with nothing left to do, the next 23 hours skip the
+// query entirely. New sales arrive daily and bring new spellings with them, so
+// a daily pass keeps up; the marker expires on its own, which means a quiet
+// period cannot wedge it off permanently.
+const ALIAS_CAUGHTUP_KEY = 'alias:caughtup:v1';
+const ALIAS_CAUGHTUP_TTL = 60 * 60 * 23;
+
 async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = null } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   if (!await _aliasEnsure(db)) return { ok: false, reason: 'table unavailable' };
+
+  // Before the expensive part, and deliberately not after it: the whole point
+  // is to avoid the scan, so a check that runs afterwards would save nothing.
+  // A caller passing its own resolver is a test, and tests are never skipped.
+  if (!resolve) {
+    try {
+      if (await cacheGet(ALIAS_CAUGHTUP_KEY)) {
+        return { ok: true, skipped: 'caught up within the last day' };
+      }
+    } catch (_) { /* unreadable marker: do the work rather than skip wrongly */ }
+  }
 
   const P = _normCol('player');
   const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
@@ -3243,7 +3273,15 @@ async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = 
   }
 
   const list = (rows && rows.results) || [];
-  if (!list.length) return { ok: true, done: true, inserted: 0 };
+  if (!list.length) {
+    // Nothing left. Record it so the next 23 hours cost one KV read instead of
+    // another million rows.
+    if (!resolve) {
+      try { await cachePut(ALIAS_CAUGHTUP_KEY, { at: new Date().toISOString() }, ALIAS_CAUGHTUP_TTL); }
+      catch (_) { /* worst case it runs again next hour, as it does today */ }
+    }
+    return { ok: true, done: true, inserted: 0 };
+  }
   // Injected by the caller, because the dictionary is not in the Worker bundle.
   // Tests pass the real resolver so the whole path is still exercised; the cron
   // has none to give and says so rather than writing rows it cannot fill.
@@ -4278,6 +4316,93 @@ app.get('/api/debug/photo-status', async (req, res) => {
 // This measures both before anything is built. It reads no images — it only
 // counts what exists, which is the cheap question that decides whether the
 // expensive one is worth asking.
+// ---- /api/debug/d1-schema ----
+//
+// Which indexes exist, and what the expensive queries actually do.
+//
+// The photo archive reads the sales table 96 times a day ordered by
+// (sold_date, item_id). If those columns are indexed that is a range seek over
+// a few hundred rows; if they are not, it is a full scan AND a sort of the
+// whole table, every tick. Those two differ by a factor of about a thousand,
+// and nothing anywhere said which one was happening.
+//
+// EXPLAIN QUERY PLAN settles it rather than inferring it from the query shape.
+// SQLite says "SCAN sales" or "SEARCH sales USING INDEX ..." in so many words.
+//
+// Costs nothing: sqlite_master is a handful of rows, and EXPLAIN plans a query
+// without running it.
+app.get('/api/debug/d1-schema', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no D1 binding' });
+
+  try {
+    const schema = await db.prepare(
+      `SELECT type, name, sql FROM sqlite_master
+        WHERE tbl_name = 'sales' ORDER BY type DESC, name`).all();
+    const rows = (schema && schema.results) || [];
+
+    const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
+    const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+
+    // The exact shapes the scheduled jobs run, not simplified stand-ins — a
+    // plan for a query nobody issues answers the wrong question.
+    const probes = {
+      'photo-archive walk': {
+        sql: `SELECT item_id, sold_date, image_url FROM sales
+               WHERE image_url IS NOT NULL AND image_url <> ''
+                 AND (sold_date > ? OR (sold_date = ? AND item_id > ?))
+               ORDER BY sold_date ASC, item_id ASC LIMIT 400`,
+        bind: ['2026-01-01', '2026-01-01', ''],
+      },
+      'price-blocks per-card': {
+        sql: `SELECT ${Y} AS g, COUNT(*) AS n FROM sales
+               WHERE ${WHERE} AND sold_date >= ? GROUP BY g`,
+        bind: ['2026-01-01'],
+      },
+      'sold search by title': {
+        sql: `SELECT item_id FROM sales WHERE title LIKE ? LIMIT 50`,
+        bind: ['%mahomes%'],
+      },
+    };
+
+    const plans = {};
+    for (const [label, q] of Object.entries(probes)) {
+      try {
+        const p = await db.prepare(`EXPLAIN QUERY PLAN ${q.sql}`).bind(...q.bind).all();
+        const steps = ((p && p.results) || []).map(r => r.detail || JSON.stringify(r));
+        plans[label] = {
+          steps,
+          // The word that decides whether this is cheap. SQLite writes "SCAN"
+          // for a full table read and "SEARCH ... USING INDEX" for a seek.
+          verdict: steps.some(d => /USING (COVERING )?INDEX/i.test(d))
+            ? 'uses an index'
+            : steps.some(d => /^SCAN/i.test(d))
+              ? 'FULL TABLE SCAN'
+              : 'unclear',
+          sorts: steps.some(d => /USE TEMP B-TREE/i.test(d)),
+        };
+      } catch (err) {
+        plans[label] = { error: String(err && err.message) };
+      }
+    }
+
+    res.json({
+      available: true,
+      table: (rows.find(r => r.type === 'table') || {}).sql || null,
+      indexes: rows.filter(r => r.type === 'index')
+        .map(r => ({ name: r.name, sql: r.sql || '(implicit — from a UNIQUE or PRIMARY KEY)' })),
+      indexCount: rows.filter(r => r.type === 'index').length,
+      queryPlans: plans,
+      reading: 'A plan saying FULL TABLE SCAN on the photo-archive walk means that job '
+        + 'reads every row in sales, 96 times a day. "sorts: true" on top of that means '
+        + 'it also sorts the whole table each time.',
+    });
+  } catch (err) {
+    console.error('[d1-schema]', err && err.message);
+    res.json({ available: false, error: String(err && err.message) });
+  }
+});
+
 // ---- /api/debug/photo-archive ----
 //
 // Is the R2 copy job actually moving?

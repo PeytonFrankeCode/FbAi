@@ -714,6 +714,33 @@ export default {
   // KV each invocation; waitUntil keeps the isolate alive until both finish so
   // their KV writes flush.
   async scheduled(event, env, ctx) {
+    // The same waitUntil binding fetch() installs, and for the same reason —
+    // it was missing here.
+    //
+    // cachePut() in db.js is fire-and-forget by design: it never returns its
+    // KV promise, it hands it to globalThis.__kvWaitUntil so the runtime keeps
+    // the invocation alive until the write lands. Only fetch() ever set that,
+    // so every KV write made from the cron was a floating promise. The outer
+    // waitUntil below keeps the isolate alive while the async body runs, but
+    // the body does not await those writes, so they could be cancelled the
+    // moment it returned.
+    //
+    // Worse than simply unset: globalThis persists across invocations in a
+    // warm isolate, so a cron running after a request would find the PREVIOUS
+    // request's ctx still installed, call waitUntil on a finalized context,
+    // throw, and get swallowed by the try/catch inside cachePut. Whether a
+    // cron KV write survived came down to what else had recently run in the
+    // same isolate — which is why it looked intermittent rather than broken.
+    //
+    // Overwriting it with this invocation's ctx is what makes the caught-up
+    // marker, the price-block attempt marker and the D1 usage counters
+    // durable; all three are gates that cost real money when they silently
+    // fail to persist.
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      globalThis.__kvWaitUntil = (promise) => {
+        try { ctx.waitUntil(promise); } catch (_) { /* already finalized */ }
+      };
+    }
     ctx.waitUntil((async () => {
       try {
         const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, flushD1Usage } = await init(env);
