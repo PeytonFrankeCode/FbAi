@@ -65,7 +65,6 @@
   --transition-med: 0.25s ease;
   --border: var(--border-primary);
 }
-
 [data-theme="light"] {
   /* "Fresh field" light mode — crisp white cards on a faintly green-tinted
      page, with a rich field-green accent (deeper than the old bright
@@ -129,7 +128,6 @@
   --card-gradient: var(--bg-card);
   --surface-gradient: var(--bg-secondary);
 }
-
 /* ---- Login Overlay ---- */
 .login-overlay {
   position: fixed;
@@ -246,7 +244,6 @@
 .login-box {
   position: relative;
 }
-
 /* Social sign-in (Google / Apple) */
 .social-auth {
   margin: 0.75rem 0 0.5rem;
@@ -314,7 +311,6 @@
 .login-toggle a:hover {
   text-decoration: underline;
 }
-
 /* ---- Header Auth Button ---- */
 .header-auth {
   position: absolute;
@@ -349,7 +345,6 @@
   background: rgba(94, 206, 153, 0.12);
   border-color: var(--accent);
 }
-
 /* Go Pro — filled accent pill so it reads as the upgrade CTA. Self-contained
    (not an .auth-btn) since it sits in its own centered row below the nameplate. */
 .pro-btn {
@@ -492,7 +487,6 @@
   background: rgba(248, 113, 113, 0.1) !important;
   color: var(--error) !important;
 }
-
 /* ---- Header Pro Button ---- */
 .header-pro {
   position: absolute;
@@ -744,7 +738,6 @@
 .pricing-cta.pro:hover {
   background: var(--pro-hover);
 }
-
 /* Pro+ pricing card */
 .proplus-card {
   border-color: #f59e0b;
@@ -760,7 +753,6 @@
   font-weight: 700;
 }
 .pricing-cta.proplus:hover { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
-
 /* Pro nav badge */
 .proplus-nav-badge {
   display: inline-block;
@@ -774,7 +766,6 @@
   vertical-align: middle;
   letter-spacing: 0.03em;
 }
-
 /* Browse Cards view */
 .browse-view {
   padding: 2rem 1rem;
@@ -822,7 +813,6 @@
 }
 .browse-empty a:hover { text-decoration: underline; }
 .browse-view .results-grid { margin-top: 0.5rem; }
-
 /* Mobile — slim the controls bar and let the search fill its row. */
 .mobile-layout .browse-view,
 @media (max-width: 600px) {
@@ -830,7 +820,6 @@
 }
 @media (max-width: 600px) {
 }
-
 /* Pro+ view */
 .proplus-view { padding: 2rem 1.5rem; max-width: 960px; margin: 0 auto; }
 /* All top-level view containers share the same horizontal frame so that
@@ -866,7 +855,6 @@
   padding: 0.2rem 0.55rem;
   border-radius: 5px;
 }
-
 /* Pro+ subtabs */
 .proplus-tabs {
   display: flex;
@@ -895,7 +883,6 @@
   color: #f59e0b;
   background: rgba(245, 158, 11, 0.08);
 }
-
 /* Shared Pro+ panel styles */
 .pptab-panel { }
 .pp-desc { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; }
@@ -914,7 +901,6 @@
 .pp-summary { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-secondary); border-radius: 6px; }
 .pp-textarea { width: 100%; min-height: 120px; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.75rem; font-size: 0.85rem; color: var(--text-primary); resize: vertical; box-sizing: border-box; outline: none; font-family: inherit; }
 .pp-textarea:focus { border-color: #f59e0b; }
-
 /* Flip Finder */
 .ff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
 .ff-card { display: flex; gap: 0.75rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.75rem; text-decoration: none; color: var(--text-primary); transition: border-color 0.15s; }
@@ -928,7 +914,6 @@
 .ff-profit-row { display: flex; gap: 0.5rem; align-items: center; }
 .ff-profit { font-size: 0.78rem; font-weight: 700; color: #4ade80; }
 .ff-discount { font-size: 0.72rem; background: rgba(74, 222, 128, 0.12); color: #4ade80; border-radius: 4px; padding: 0.1rem 0.4rem; }
-
 /* Market Movers */
 .mm-summary { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; font-size: 1rem; font-weight: 600; }
 .mm-up { background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); color: #4ade80; }
@@ -948,7 +933,6 @@
 .mm-recent-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
 .mm-recent-price { font-weight: 700; color: #4ade80; white-space: nowrap; }
 .mm-recent-date { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
-
 /* Auto-Pricer */
 /* Auto-Pricer comp picker */
 .ap-pick-header { margin-bottom: 1rem; }
@@ -979,7 +963,6 @@
 .ap-comp-bottom { display: flex; align-items: center; justify-content: space-between; gap: 0.25rem; }
 .ap-comp-price { font-size: 0.88rem; font-weight: 700; color: #f59e0b; }
 .ap-comp-date { font-size: 0.68rem; color: var(--text-muted); }
-
 /* Rec section (appears below comp grid after selection) */
 .ap-rec-section { border-top: 1px solid var(--border-primary); padding-top: 1.25rem; margin-top: 0.5rem; }
 .ap-selected-label { font-size: 0.8rem; color: var(--accent); margin-bottom: 0.5rem; }
@@ -994,7 +977,6 @@
 .ap-rec-desc { font-size: 0.72rem; color: var(--text-secondary); min-height: 2.5em; }
 .ap-repick-btn { background: none; border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 7px; padding: 0.4rem 0.9rem; font-size: 0.8rem; cursor: pointer; margin-top: 0.25rem; }
 .ap-repick-btn:hover { border-color: #f59e0b; color: #f59e0b; }
-
 /* Multi-select comps + print-run-adjusted valuation */
 .ap-yourcard-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.9rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 0.85rem; }
 .ap-pr-label { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.45rem; }
@@ -1031,7 +1013,6 @@
 .ap-bd-mult { color: #4ade80; font-weight: 700; }
 .ap-bd-muted { color: var(--text-muted); }
 .ap-breakdown-foot { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.5; }
-
 /* Bulk Pricer */
 .bulk-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .bulk-table th { text-align: left; color: var(--text-muted); font-weight: 600; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border-primary); }
@@ -1039,7 +1020,6 @@
 .bulk-query { color: var(--text-primary); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bulk-median { font-weight: 700; color: #4ade80; }
 .bulk-row-na .bulk-median { color: var(--text-muted); font-weight: 400; }
-
 /* Bulk comps drilldown */
 .bulk-comps-cell { text-align: right; white-space: nowrap; }
 .bulk-comps-btn { background: none; border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.72rem; font-family: inherit; cursor: pointer; transition: all 0.15s; }
@@ -1061,7 +1041,6 @@
 .bulk-comp-link:hover { text-decoration: underline; }
 .bulk-comp-excluded { opacity: 0.45; }
 .bulk-comp-excluded .bulk-comp-title { text-decoration: line-through; }
-
 @media (max-width: 520px) {
   .pricing-cards {
     grid-template-columns: 1fr;
@@ -1079,14 +1058,12 @@
     height: 56px;
   }
 }
-
 /* ---- Reset & Base ---- */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-
 body {
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
@@ -1106,7 +1083,6 @@ body {
      small increment. Letting the user's scroll win is the right call. */
   overflow-anchor: none;
 }
-
 /* Light-mode body overrides — the radial green tints above were designed for
    the dark theme and read as dingy on light surfaces. Strip them. */
 [data-theme="light"] body {
@@ -1137,7 +1113,8 @@ body {
 }
 [data-theme="light"] .auth-btn.logged-in {
   border-color: rgba(255, 255, 255, 0.6);
-}/* Dark-mode-tuned shadows are too heavy on light backgrounds — they make
+}
+/* Dark-mode-tuned shadows are too heavy on light backgrounds — they make
    cards look like cutouts instead of subtly elevated surfaces. */
 [data-theme="light"] .card {
   box-shadow: 0 1px 3px var(--shadow-card);
@@ -1151,7 +1128,6 @@ body {
 [data-theme="light"] .modal-box {
   box-shadow: 0 8px 24px var(--shadow-modal);
 }
-
 /* ---- Global Element Defaults ---- */
 button {
   font-family: inherit;
@@ -1170,13 +1146,11 @@ button {
   white-space: nowrap;
   line-height: 1;
 }
-
 button:hover {
   color: var(--text-primary);
   border-color: var(--accent-border);
   background: var(--card-bg);
 }
-
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -1197,7 +1171,6 @@ textarea {
   width: 100%;
   box-sizing: border-box;
 }
-
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
@@ -1208,12 +1181,10 @@ select:focus,
 textarea:focus {
   border-color: var(--accent-border);
 }
-
 input::placeholder,
 textarea::placeholder {
   color: var(--text-muted);
 }
-
 select {
   appearance: none;
   -webkit-appearance: none;
@@ -1223,30 +1194,25 @@ select {
   padding-right: 2rem;
   cursor: pointer;
 }
-
 /* ---- Animations ---- */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+to { opacity: 1; }
 }
-
 @keyframes shimmer {
   0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+100% { background-position: 200% 0; }
 }
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 .fade-in {
   animation: fadeUp 0.4s ease both;
 }
-
 /* ---- Header ---- */
 header {
   background: var(--header-bg);
@@ -1257,7 +1223,6 @@ header {
   overflow: hidden;
   box-shadow: none;
 }
-
 /* Nav bar sits below the header, outside its overflow:hidden boundary */
 .nav-bar {
   background: var(--header-bg);
@@ -1313,7 +1278,6 @@ header {
   padding: 0.45rem 0.6rem;
   flex-shrink: 0;
 }
-
 /* Pro membership active for two features: Tracked Cards + Pro Tools.
    Collection / Watchlist are free now — their gates are no longer
    shown. The pricing-overlay, tracked-gate, and proplus-gate are NOT in this
@@ -1325,7 +1289,6 @@ header {
   max-width: 560px;
   margin: 0 auto;
 }
-
 header::before {
   content: '';
   position: absolute;
@@ -1346,7 +1309,6 @@ header::before {
   align-items: center;
   gap: 0.5rem 1rem;
 }
-
 /* Auth button — left side */
 .header-inner .header-auth {
   position: static;
@@ -1354,14 +1316,12 @@ header::before {
   grid-row: 1;
   justify-self: start;
 }
-
 /* Brand logo — center */
 .header-inner .header-brand {
   grid-column: 2;
   grid-row: 1;
   text-align: center;
 }
-
 /* Tagline — full width below the nameplate */
 .header-inner .header-tagline {
   grid-column: 1 / -1;
@@ -1369,7 +1329,6 @@ header::before {
   text-align: center;
   margin-top: 0;
 }
-
 header h1 {
   font-size: 2.2rem;
   font-weight: 800;
@@ -1378,7 +1337,6 @@ header h1 {
   position: relative;
   z-index: 1;
 }
-
 /* ---- Header Logo ---- */
 .header-brand {
   margin-bottom: 0.5rem;
@@ -1395,7 +1353,6 @@ header h1 {
 .header-logo:hover {
   transform: scale(1.03);
 }
-
 /* Logo sits on the green header band in light mode, so the dark-mode screen
    blend still applies; a small brightness lift keeps the wordmark legible
    against the lighter green. */
@@ -1415,7 +1372,6 @@ header h1 {
   color: var(--accent);
   font-weight: 600;
 }
-
 /* ---- Main ---- */
 main {
   flex: 1;
@@ -1424,7 +1380,6 @@ main {
   width: 100%;
   padding: 2rem 1.5rem;
 }
-
 /* ---- Search ---- */
 .search-section {
   margin-bottom: 2rem;
@@ -1527,7 +1482,6 @@ main {
   margin-left: 0.5rem;
   vertical-align: middle;
 }
-
 /* ---- Mode Tabs ---- */
 .mode-tabs {
   display: flex;
@@ -1535,7 +1489,6 @@ main {
   gap: 0.5rem;
   margin-top: 1rem;
 }
-
 /* Price range filter — shows in For Sale mode under the mode tabs */
 .price-filter {
   display: flex;
@@ -1637,7 +1590,6 @@ main {
   border-color: var(--accent);
   font-weight: 700;
 }
-
 /* ---- Section Labels ---- */
 .section-label {
   font-size: 0.75rem;
@@ -1647,7 +1599,6 @@ main {
   margin-bottom: 0.75rem;
   font-weight: 600;
 }
-
 /* ---- Recent Searches ---- */
 .recent-section {
   text-align: center;
@@ -1693,7 +1644,6 @@ main {
 .recent-chip:hover .remove-recent {
   color: var(--error);
 }
-
 /* ---- Suggestions ---- */
 .suggestions-section {
   text-align: center;
@@ -1726,7 +1676,6 @@ main {
 .chip:active {
   transform: scale(0.97);
 }
-
 /* ---- Collection Sub-Tabs ---- */
 .collection-tabs {
   display: flex;
@@ -1848,7 +1797,6 @@ main {
   background: var(--accent-bg);
   border-color: var(--accent-border);
 }
-
 /* ---- Sort Controls ---- */
 .sort-controls {
   display: flex;
@@ -1887,7 +1835,6 @@ main {
   color: var(--accent);
   border-color: var(--accent-border);
 }
-
 /* ---- Grade Filter (sold searches) ---- */
 .grade-filter {
   display: flex;
@@ -1942,7 +1889,6 @@ main {
   color: var(--accent);
   background: rgba(99, 102, 241, 0.12);
 }
-
 /* ---- For Sale Badge ---- */
 .for-sale-badge {
   position: absolute;
@@ -1958,7 +1904,6 @@ main {
   text-transform: uppercase;
   z-index: 2;
 }
-
 /* ---- States ---- */
 .hidden {
   display: none !important;
@@ -2000,7 +1945,6 @@ main {
   padding: 3rem 0;
   font-size: 1rem;
 }
-
 /* ---- Empty States ----
    Every place that used to be plain paragraph text ("No cards yet…",
    "Search for cards…", etc.) becomes a card-style block matching the
@@ -2027,7 +1971,6 @@ main {
   line-height: 1.5;
   position: relative;
 }
-
 /* Subtle accent dot to break up the plainness without being loud */
 .portfolio-empty::before,
 .watchlist-empty::before,
@@ -2047,7 +1990,6 @@ main {
   background-repeat: no-repeat;
   background-position: center;
 }
-
 /* no-listings-box is built by JS with its own inner content — strip the
    ::before icon since the JS injects its own. */
 .no-listings-box::before { display: none; }
@@ -2068,14 +2010,12 @@ main {
   font-size: 0.9rem;
   line-height: 1.5;
 }
-
 /* ---- Results Grid ---- */
 .results-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
 }
-
 /* ---- Skeleton Loader ---- */
 .skeleton-grid .skeleton-card {
   background: var(--card-gradient);
@@ -2105,7 +2045,6 @@ main {
 .skeleton-line.short { width: 60%; }
 .skeleton-line.medium { width: 80%; }
 .skeleton-line.price { width: 40%; height: 22px; margin-top: 0.3rem; }
-
 /* ---- Stats Bar ---- */
 .stats-bar {
   grid-column: 1 / -1;
@@ -2119,7 +2058,6 @@ main {
   margin-bottom: 0.5rem;
   animation: fadeIn 0.25s ease;
 }
-
 /* Soft note shown when a Sold search falls back to live For-Sale prices */
 .sold-fallback-note {
   grid-column: 1 / -1;
@@ -2148,7 +2086,6 @@ main {
   cursor: pointer;
   text-decoration: underline;
 }
-
 /* Shareable price-card button (under the stats bar) */
 .share-row {
   grid-column: 1 / -1;
@@ -2190,7 +2127,6 @@ main {
   font-weight: 700;
   color: var(--accent);
 }
-
 /* ---- Card ---- */
 .card {
   background: var(--bg-card);
@@ -2211,7 +2147,6 @@ main {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
   border-color: var(--accent-border);
 }
-
 /* On touch-only devices (iPad, phones), :hover sticks after a tap and was
    making cards lift mid-scroll — felt like getting "stuck between two cards".
    Cancel the hover state when there's no real hover capability. */
@@ -2243,7 +2178,6 @@ main {
   text-transform: uppercase;
   z-index: 2;
 }
-
 /* ---- Card image ---- */
 .card-image-wrap {
   flex: 1;
@@ -2318,7 +2252,6 @@ main {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
-
 /* ---- Grade Section Headers ---- */
 .grade-section-header {
   grid-column: 1 / -1;
@@ -2391,7 +2324,6 @@ main {
   color: var(--accent-on);
   border-color: var(--accent);
 }
-
 /* FTC affiliate disclosure. Deliberately not as faint as the older BCW
    labels: a disclosure only counts if it is actually legible, so this stays
    at --text-secondary rather than --text-muted with reduced opacity. */
@@ -2405,7 +2337,6 @@ main {
   color: var(--text-secondary);
 }
 .card-link:hover .aff-tag { color: var(--accent-on); }
-
 /* ---- Price Chart ---- */
 .chart-section {
   margin-bottom: 2rem;
@@ -2432,7 +2363,6 @@ main {
 .chart-depth-notice.hidden { display: none; }
 .chart-depth-upgrade { color: #a78bfa; text-decoration: none; font-weight: 600; }
 .chart-depth-upgrade:hover { text-decoration: underline; }
-
 /* ---- Back Button ---- */
 .back-btn {
   display: inline-flex;
@@ -2455,7 +2385,6 @@ main {
   color: var(--accent-on);
   border-color: var(--accent);
 }
-
 /* ---- Variants Section ---- */
 .variants-section {
   margin-bottom: 2rem;
@@ -2479,7 +2408,6 @@ main {
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 1.25rem;
 }
-
 /* ---- Variant Card Tile ---- */
 .variant-card {
   background: var(--card-gradient);
@@ -2497,7 +2425,6 @@ main {
   border-color: var(--accent-border);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
 }
-
 @media (hover: none) {
   .variant-card:hover {
     transform: none;
@@ -2568,7 +2495,6 @@ main {
   font-size: 0.72rem;
   color: var(--text-muted);
 }
-
 /* ---- Checklist Variant Cards ---- */
 .cl-variant-card {
   cursor: pointer;
@@ -2656,7 +2582,6 @@ main {
   background: var(--bg-tertiary);
   color: var(--text-primary);
 }
-
 /* ---- Approximate Value Section ---- */
 .approx-value-section {
   background: var(--surface-gradient);
@@ -2708,7 +2633,6 @@ main {
   font-size: 0.8rem;
   font-style: italic;
 }
-
 /* ---- Similar-card print-run estimate (comps used → adjusted) ---- */
 .est-comps-head {
   margin: 1.1rem 0 0.6rem;
@@ -2760,7 +2684,6 @@ main {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-
 a.est-comp-title:hover { color: var(--accent, #5ece99); text-decoration: underline; }
 .est-comp-sub {
   display: flex;
@@ -2799,12 +2722,10 @@ a.est-comp-title:hover { color: var(--accent, #5ece99); text-decoration: underli
   font-weight: 700;
   font-size: 0.98rem;
 }
-
 @media (max-width: 480px) {
   .est-comp { flex-wrap: wrap; }
 .est-comp-prices { width: 100%; justify-content: flex-end; }
 }
-
 /* ---- Grade Value Panel (inline in search results) ---- */
 .grade-panel {
   background: linear-gradient(135deg, rgba(94, 206, 153, 0.05), var(--bg-secondary));
@@ -2876,7 +2797,6 @@ a.est-comp-title:hover { color: var(--accent, #5ece99); text-decoration: underli
   font-size: 0.65rem;
   color: var(--text-muted);
 }
-
 /* ---- Grading Advisor ---- */
 .grading-form-wrap {
   background: var(--bg-secondary);
@@ -2993,12 +2913,10 @@ a.est-comp-title:hover { color: var(--accent, #5ece99); text-decoration: underli
 .grading-positive { color: var(--accent); font-weight: 700; }
 .grading-negative { color: var(--error); font-weight: 700; }
 .grading-no-data td { color: var(--text-muted); }
-
 /* "# Sales" cell becomes a link that opens the comps behind the number */
 .grading-comps-link { background: none; border: none; padding: 0; cursor: pointer; color: var(--accent); font: inherit; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; }
 .grading-comps-link:hover { text-decoration: underline; }
 .grading-comps-eye { font-size: 0.85em; opacity: 0.8; }
-
 /* Grading comps modal listing rows */
 .gc-summary { color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 0.6rem; }
 .gc-empty { color: var(--text-muted); font-style: italic; }
@@ -3017,7 +2935,6 @@ a.gc-comp-title:hover { text-decoration: underline; color: var(--accent); }
   text-align: center;
   font-style: italic;
 }
-
 /* ---- Footer ---- */
 footer {
   text-align: center;
@@ -3027,7 +2944,6 @@ footer {
   margin-top: auto;
   position: relative;
 }
-
 footer::before {
   content: '';
   position: absolute;
@@ -3062,7 +2978,6 @@ footer::before {
   opacity: 0.9;
   mix-blend-mode: screen;
 }
-
 [data-theme="light"] .footer-logo-img {
   mix-blend-mode: normal;
 }
@@ -3098,7 +3013,6 @@ footer::before {
   margin-right: auto;
   line-height: 1.6;
 }
-
 /* ---- No Listings Message ---- */
 .no-listings-box {
   grid-column: 1 / -1;
@@ -3124,7 +3038,6 @@ footer::before {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
-
 /* ---- Similar Cards Section ---- */
 .similar-section {
   margin-top: 2rem;
@@ -3143,7 +3056,6 @@ footer::before {
   color: var(--text-secondary);
   margin-top: 0.3rem;
 }
-
 /* ---- Card Detail Modal ---- */
 .card-modal {
   position: fixed;
@@ -3212,7 +3124,6 @@ footer::before {
   display: flex;
   gap: 1.5rem;
 }
-
 /* Left column: photo, then the affiliate promo in the space beneath it. */
 .card-modal-side {
   flex: 0 0 220px;
@@ -3304,7 +3215,6 @@ footer::before {
   color: var(--text-secondary);
   align-self: flex-start;
 }
-
 /* Both meta lists this badge lands in — the card's and the modal's — are
    columns, so it stretches the full width unless it opts out the way its
    siblings (.card-condition, .modal-condition) already do. */
@@ -3330,7 +3240,6 @@ footer::before {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px var(--accent-bg);
 }
-
 @media (max-width: 600px) {
   .card-modal-layout {
     flex-direction: column;
@@ -3348,21 +3257,18 @@ footer::before {
     padding: 1.5rem;
   }
 }
-
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   header {
     padding: 2rem 1rem;
   }
-
-  header h1 {
+header h1 {
     font-size: 1.4rem;
   }
 .header-tagline {
     font-size: 0.85rem;
   }
-
-  main {
+main {
     padding: 1.5rem 1rem;
   }
 #search-form {
@@ -3384,8 +3290,7 @@ footer::before {
 .sort-controls {
     justify-content: center;
   }
-
-  footer {
+footer {
     padding: 2rem 1rem;
   }
 .nav-bar {
@@ -3401,7 +3306,6 @@ footer::before {
     flex-shrink: 0;
   }
 }
-
 @media (max-width: 400px) {
   .results-grid {
     grid-template-columns: 1fr;
@@ -3425,7 +3329,6 @@ footer::before {
     padding: 0.6rem;
   }
 }
-
 /* ---- Header Nav Tabs ---- */
 .header-nav {
   display: flex;
@@ -3434,7 +3337,6 @@ footer::before {
   min-width: 100%;
   align-items: center;
 }
-
 /* Center the tab group horizontally. The settings-tab already pulls
    itself to the right with margin-left:auto (rule above); giving the
    first tab a matching margin-left:auto creates a flex auto-margin
@@ -3469,7 +3371,6 @@ footer::before {
   box-shadow: 0 2px 14px rgba(94, 206, 153, 0.3), inset 0 1px 0 rgba(255,255,255,0.12);
   font-weight: 700;
 }
-
 /* ---- Checklist View ---- */
 .checklist-view {
   max-width: 960px;
@@ -3491,7 +3392,6 @@ footer::before {
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
 }
-
 /* Links to the SEO landing pages (player price guides + set checklists). */
 .checklist-guide-links {
   display: flex;
@@ -3521,7 +3421,6 @@ footer::before {
   flex-direction: column;
   gap: 1rem;
 }
-
 /* Year dropdown sections */
 .checklist-year-section {
   border: 1px solid var(--border-primary);
@@ -3662,7 +3561,6 @@ footer::before {
   padding: 2rem;
   font-size: 0.95rem;
 }
-
 /* ---- Checklist Browser ---- */
 .checklist-browser.hidden {
   display: none;
@@ -3754,7 +3652,6 @@ footer::before {
   outline: none;
   border-color: var(--accent);
 }
-
 /* ---- Category Tabs ---- */
 .checklist-category-tabs {
   display: flex;
@@ -3796,7 +3693,6 @@ footer::before {
   color: var(--bg-primary);
   border-color: var(--accent);
 }
-
 /* ---- Checklist Set ---- */
 .checklist-set {
   background: var(--card-gradient);
@@ -3865,7 +3761,6 @@ footer::before {
   background: #553c6e;
   color: #d6bcfa;
 }
-
 /* ---- Parallels Row ---- */
 .checklist-parallels-row {
   display: flex;
@@ -3902,7 +3797,6 @@ footer::before {
   margin-left: 0.5rem;
   white-space: nowrap;
 }
-
 /* ---- Checklist Table ---- */
 .checklist-set-body {
   display: none;
@@ -3971,7 +3865,6 @@ footer::before {
   user-select: none;
   white-space: nowrap;
 }
-
 /* Checklist estimated value column */
 .cl-val-header {
   min-width: 80px;
@@ -3998,7 +3891,7 @@ footer::before {
 }
 @keyframes cl-pulse {
   0%, 100% { opacity: 0.2; }
-  50%       { opacity: 1; }
+50%       { opacity: 1; }
 }
 .cl-pr-header:hover {
   color: var(--accent);
@@ -4028,7 +3921,6 @@ footer::before {
 .cl-search-btn:hover {
   opacity: 1;
 }
-
 /* ---- Inline Player Listings ---- */
 .cl-player-link {
   color: var(--accent);
@@ -4051,10 +3943,9 @@ footer::before {
 .cl-listings-block {
   margin: 0.5rem 0 0.25rem;
 }
-
 @keyframes clPanelSlide {
   from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+to { opacity: 1; transform: translateY(0); }
 }
 .cl-listings-cell {
   padding: 0 !important;
@@ -4267,7 +4158,6 @@ footer::before {
 .cl-buyopt-auction { background: rgba(244, 162, 97, 0.18); color: #f4a261; border: 1px solid rgba(244, 162, 97, 0.45); }
 .cl-buyopt-bin     { background: rgba(82, 183, 136, 0.18); color: #52b788; border: 1px solid rgba(82, 183, 136, 0.45); }
 .cl-buyopt-both    { background: rgba(125, 142, 217, 0.18); color: #9aa9e6; border: 1px solid rgba(125, 142, 217, 0.45); }
-
 /* How a sold listing closed. Same shape as the buy-option badges above but
    quieter — on a sold card the price is the headline and this qualifies it,
    so it should read as a footnote rather than compete. */
@@ -4287,7 +4177,6 @@ footer::before {
 /* Best offer gets the warning-ish tone: the number shown is not the whole
    story, because eBay never publishes what the offer actually was. */
 .sale-type-offer   { background: rgba(233, 196, 106, 0.16); color: #e9c46a; border: 1px solid rgba(233, 196, 106, 0.40); }
-
 /* Those three hues are tuned for a dark card and fall to roughly 1.5-2.2:1
    on the white light-mode surface, which is unreadable. Light mode keeps the
    same colour families but takes the text far darker so the badge stays
@@ -4360,7 +4249,6 @@ footer::before {
   font-size: 0.65rem;
   color: var(--text-muted);
 }
-
 /* ---- Checklist Responsive ---- */
 @media (max-width: 600px) {
   .checklist-view {
@@ -4393,7 +4281,6 @@ footer::before {
     margin: 0.25rem;
   }
 }
-
 /* ---- Settings Modal ---- */
 .settings-overlay {
   position: fixed;
@@ -4471,7 +4358,6 @@ footer::before {
 .settings-sub-billing--cancelling {
   color: var(--pro);
 }
-
 /* Stacked settings row */
 .settings-row--stacked {
   flex-direction: column;
@@ -4495,7 +4381,6 @@ footer::before {
   background: var(--accent);
   color: var(--bg-primary);
 }
-
 /* ---- Theme Toggle Switch ---- */
 .theme-toggle {
   position: relative;
@@ -4525,11 +4410,9 @@ footer::before {
 #theme-icon-light {
   opacity: 0.4;
 }
-
 [data-theme="light"] #theme-icon-dark {
   opacity: 0.4;
 }
-
 [data-theme="light"] #theme-icon-light {
   opacity: 1;
 }
@@ -4543,11 +4426,9 @@ footer::before {
   border-radius: 50%;
   transition: transform 0.3s ease;
 }
-
 [data-theme="light"] .theme-toggle-thumb {
   transform: translateX(26px);
 }
-
 /* Settings gear nav tab */
 .settings-tab {
   padding: 0.45rem 0.7rem !important;
@@ -4557,7 +4438,6 @@ footer::before {
 .settings-tab svg {
   display: block;
 }
-
 /* ---- Settings Subscription ---- */
 .settings-sub-btn {
   padding: 0.45rem 1rem;
@@ -4597,7 +4477,6 @@ footer::before {
   color: var(--accent);
   font-weight: 700;
 }
-
 /* ---- Shared Alert/Tracked Styles ---- */
 .pro-feature-badge {
   font-size: 0.6rem;
@@ -4614,7 +4493,6 @@ footer::before {
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
-
 /* Tracked Cards: Type / Checklist mode tabs */
 .tracked-mode-tabs {
   display: inline-flex;
@@ -4649,7 +4527,6 @@ footer::before {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.5rem;
 }
-
 /* Page-level subtab strip (used at the top of Search to swap between
    the search view and Grading Advisor). Matches the look of the
    Collection / Seller subtab strips so it feels native. */
@@ -4684,7 +4561,6 @@ footer::before {
   color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--accent-border);
 }
-
 /* Reusable "Pick from checklist" modal */
 .cl-picker-modal {
   position: fixed;
@@ -4759,7 +4635,6 @@ footer::before {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
 /* "Pick from checklist" trigger button — used inline next to inputs */
 .cl-pick-trigger {
   background: var(--accent-bg);
@@ -4853,7 +4728,6 @@ footer::before {
   text-align: center;
   padding: 1rem;
 }
-
 /* ---- Checklist Alert Bell Button ---- */
 .cl-alert-btn {
   background: none;
@@ -4875,11 +4749,9 @@ footer::before {
   opacity: 1;
   color: var(--gold);
 }
-
 tr:hover .cl-alert-btn {
   opacity: 0.7;
 }
-
 /* ---- Tracked Cards View ---- */
 .tracked-view {
   max-width: 960px;
@@ -5003,7 +4875,6 @@ tr:hover .cl-alert-btn {
 .tracked-card-delete:hover {
   color: var(--error);
 }
-
 /* ---- Collection View ---- */
 .collection-view { padding: 2rem 1rem; max-width: 960px; margin: 0 auto; }
 .collection-container { }
@@ -5014,7 +4885,6 @@ tr:hover .cl-alert-btn {
 .coll-tab { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 1rem; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
 .coll-tab.active { background: var(--accent, #10b981); color: #fff; border-color: var(--accent, #10b981); }
 .coll-panel { }
-
 /* Portfolio */
 .portfolio-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
 .portfolio-stat-card { background: linear-gradient(135deg, var(--bg-card) 0%, rgba(94, 206, 153, 0.04) 100%); border: 1px solid rgba(94, 206, 153, 0.15); border-radius: 10px; padding: 1rem; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
@@ -5046,7 +4916,6 @@ tr:hover .cl-alert-btn {
 .portfolio-scanned-tag { display: inline-block; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: var(--accent); background: rgba(99, 102, 241, 0.12); border-radius: 4px; padding: 0.05rem 0.3rem; margin-right: 0.35rem; vertical-align: middle; }
 .portfolio-card-remove { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; padding: 0.2rem; line-height: 1; }
 .portfolio-card-remove:hover { color: var(--error); }
-
 /* Portfolio checklist-style cards */
 .portfolio-set { margin-bottom: 0.75rem; }
 .portfolio-set .checklist-set-body { display: block; }
@@ -5070,13 +4939,11 @@ tr:hover .cl-alert-btn {
 .portfolio-roi-inline.gain { color: #10b981; }
 .portfolio-roi-inline.loss { color: #ef4444; }
 .portfolio-no-value { font-size: 0.75rem; color: var(--text-muted); }
-
 /* ---- Pro gates (shared) ---- */
 .pro-gate-badge { display: inline-block; background: var(--accent); color: var(--accent-on); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; }
 .pro-gate-box { text-align: center; padding: 2rem 1.5rem; border: 1px dashed var(--accent-border); border-radius: 14px; background: rgba(94, 206, 153, 0.05); }
 .pro-gate-box h3 { margin: 0.7rem 0 0.3rem; }
 .pro-gate-box p { color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.1rem; font-size: 0.9rem; line-height: 1.45; }
-
 /* ---- Collection Analytics (Pro) ---- */
 .portfolio-analytics { margin: 0 0 1rem; }
 .pf-analytics { border: 1px solid var(--border-primary); border-radius: 14px; padding: 1rem; background: var(--bg-secondary); }
@@ -5091,7 +4958,6 @@ tr:hover .cl-alert-btn {
 .pf-mover-val.gain { color: #10b981; white-space: nowrap; }
 .pf-mover-val.loss { color: #ef4444; white-space: nowrap; }
 .pf-an-empty { color: var(--text-muted); font-size: 0.78rem; margin: 0.2rem 0; }
-
 /* Free teaser: blurred fake content under a Go Pro CTA */
 .pf-analytics-teaser { position: relative; border: 1px solid var(--border-primary); border-radius: 14px; overflow: hidden; cursor: pointer; min-height: 170px; }
 .pf-analytics-blur { filter: blur(6px); opacity: 0.5; padding: 1rem; pointer-events: none; }
@@ -5101,7 +4967,6 @@ tr:hover .cl-alert-btn {
 .pf-analytics-cta { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.25rem; padding: 1rem; }
 .pf-analytics-cta h4 { margin: 0.3rem 0 0; }
 .pf-analytics-cta p { margin: 0 0 0.7rem; color: var(--text-secondary); font-size: 0.85rem; }
-
 /* Goal reached — gold celebratory fill + accent label */
 
 .sponsor-strip { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.75rem 1.25rem; margin: 1rem auto 0; padding: 0.85rem 1rem; border-top: 1px solid var(--border-primary); max-width: 760px; }
@@ -5112,7 +4977,6 @@ tr:hover .cl-alert-btn {
 .sponsor-item img { height: 30px; width: auto; object-fit: contain; border-radius: 5px; }
 .sponsor-coupon { margin-left: 0.5rem; background: rgba(94, 206, 153, 0.12); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; }
 .sponsor-aff-note { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); opacity: 0.7; }
-
 /* BCW "protect this card" affiliate callout (after a scan) */
 .bcw-callout { display: flex; align-items: center; gap: 0.6rem; margin: 0.75rem 0 0; padding: 0.7rem 0.9rem; border: 1px solid var(--accent-border); border-radius: 12px; background: rgba(94, 206, 153, 0.06); text-decoration: none; color: var(--text-primary); transition: background 0.15s ease, border-color 0.15s ease; }
 .bcw-callout:hover { background: rgba(94, 206, 153, 0.12); border-color: var(--accent); }
@@ -5121,7 +4985,6 @@ tr:hover .cl-alert-btn {
 .bcw-callout-text strong { color: var(--accent); }
 .bcw-callout-arrow { color: var(--accent); font-weight: 700; }
 .bcw-callout-aff { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); opacity: 0.7; align-self: flex-start; }
-
 /* BCW banner under search results (dismissible) */
 .bcw-banner { position: relative; margin: 0.5rem auto 1.5rem; max-width: 760px; }
 .bcw-banner.hidden { display: none; }
@@ -5136,7 +4999,6 @@ tr:hover .cl-alert-btn {
 .bcw-banner-aff { position: absolute; left: 1rem; bottom: -1.05rem; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); opacity: 0.7; }
 .bcw-banner-x { position: absolute; top: 6px; right: 8px; border: 0; background: transparent; color: var(--text-muted); font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: 6px; }
 .bcw-banner-x:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.06); }
-
 /* Collection valuation revamp */
 .portfolio-valued-summary { font-size: 0.76rem; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.75rem; }
 .pf-summary-hint { color: var(--text-muted); }
@@ -5144,7 +5006,6 @@ tr:hover .cl-alert-btn {
 .portfolio-value-clickable:hover { background: var(--bg-hover); }
 .portfolio-value-link { font-size: 0.78rem; font-weight: 700; color: var(--accent); }
 .pf-val-meta { font-size: 0.66rem; color: var(--text-muted); margin-left: 0.3rem; white-space: nowrap; }
-
 /* ---- Rebuilt portfolio card list ---- */
 .pf-cards { display: flex; flex-direction: column; gap: 0.5rem; }
 .pf-card { display: flex; align-items: center; gap: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-primary, var(--border)); border-radius: 10px; padding: 0.6rem 0.8rem; transition: border-color 0.15s, box-shadow 0.15s; }
@@ -5181,8 +5042,8 @@ tr:hover .cl-alert-btn {
 .pf-remove-btn:hover { border-color: #f87171; color: #f87171; }
 .pf-icon-btn:disabled { opacity: 0.4; cursor: default; }
 .pf-refresh-btn.pf-refreshing { animation: pf-spin 0.7s linear infinite; pointer-events: none; }
-@keyframes pf-spin { to { transform: rotate(360deg); } }
-
+@keyframes pf-spin { to { transform: rotate(360deg); }
+}
 /* "EST" badge — value came from the alternate similar-card estimate, not exact sales */
 .pf-est-badge {
   display: inline-block;
@@ -5208,7 +5069,6 @@ tr:hover .cl-alert-btn {
   border: 1px solid var(--accent-border);
   vertical-align: middle;
 }
-
 /* Edit Card modal form */
 .ec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 0.75rem; margin: 0.5rem 0; }
 .ec-label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); }
@@ -5218,8 +5078,8 @@ tr:hover .cl-alert-btn {
 .ec-check input { width: auto; }
 .ec-check input:disabled { opacity: 0.4; }
 .ec-hint { font-size: 0.72rem; color: var(--text-muted); margin: 0.1rem 0 0.4rem; line-height: 1.4; }
-@media (max-width: 480px) { .ec-grid { grid-template-columns: 1fr; } }
-
+@media (max-width: 480px) { .ec-grid { grid-template-columns: 1fr; }
+}
 /* Estimate breakdown inside the card comps modal */
 .ccm-est-note { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.6rem; line-height: 1.4; }
 .gc-comp-strike { color: var(--text-muted); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.3); font-weight: 600; }
@@ -5231,7 +5091,6 @@ tr:hover .cl-alert-btn {
 .pf-empty-steps { display: inline-flex; flex-direction: column; gap: 0.3rem; margin-top: 0.9rem; text-align: left; font-size: 0.82rem; }
 .pf-empty-steps strong { color: var(--accent); }
 .ccm-match-note { color: var(--text-muted); }
-
 /* Stack money columns under the card identity on narrow screens. Four
    columns (Paid / Market / Min / Gain) won't fit in one phone-width row,
    so wrap them into a 2x2 grid instead of overflowing off-screen. */
@@ -5243,7 +5102,6 @@ tr:hover .cl-alert-btn {
 .pf-card-actions { flex-direction: row; }
 }
 .pf-conf-dot { font-size: 0.7rem; }
-
 /* Card comps modal */
 .ccm-help { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
 .ccm-card-name { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; word-break: break-word; }
@@ -5272,7 +5130,6 @@ tr:hover .cl-alert-btn {
 .ccm-comp-link:hover { text-decoration: underline; }
 .ccm-excluded { opacity: 0.45; }
 .ccm-excluded .ccm-comp-title { text-decoration: line-through; }
-
 /* Checklist match modal */
 .clm-help { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
 .clm-matched-label { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.6rem; }
@@ -5293,7 +5150,6 @@ tr:hover .cl-alert-btn {
 .clm-manual-link:hover { color: var(--accent); }
 .portfolio-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(1rem); background: #1e1e2e; border: 1px solid var(--border); color: var(--text-primary); padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.85rem; z-index: 9999; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; white-space: nowrap; }
 .portfolio-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-
 /* Watchlist */
 .watchlist-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 1rem; }
 .watchlist-add-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.25rem; }
@@ -5321,7 +5177,6 @@ tr:hover .cl-alert-btn {
 .watchlist-search-btn:hover { color: var(--accent, #10b981); border-color: var(--accent, #10b981); }
 .watchlist-remove-btn:hover { color: #ef4444; border-color: #ef4444; }
 .tab-pro-badge { font-size: 0.55rem; background: linear-gradient(135deg,#8b5cf6,#6366f1); color:#fff; padding:0.1rem 0.3rem; border-radius:3px; font-weight:700; letter-spacing:0.04em; margin-left:0.2rem; vertical-align:middle; }
-
 /* Set Completion */
 .completion-subtabs { display: flex; gap: 0.25rem; margin-bottom: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.2rem; width: fit-content; }
 .completion-subtab { background: none; border: none; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
@@ -5338,7 +5193,6 @@ tr:hover .cl-alert-btn {
    Keep it in the DOM so existing onchange handlers + populate functions
    continue to work; hide it visually. */
 .cl-hidden-select { display: none !important; }
-
 /* Searchable combobox — replaces the plain <select> for Set Completion's
    product + player pickers. Matches the rest of the site's modern look:
    pill-rounded surface, accent focus state, in-panel filter. */
@@ -5534,7 +5388,6 @@ tr:hover .cl-alert-btn {
 .rainbow-help-popover.open {
   display: block;
 }
-
 @keyframes rainbowSpin {
   to { --rainbow-angle: 360deg; }
 }
@@ -5543,7 +5396,7 @@ tr:hover .cl-alert-btn {
 }
 @keyframes rainbowDotPulse {
   0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.6; }
+50% { transform: scale(1.4); opacity: 0.6; }
 }
 /* ---- Set Completion / Checklist ---- */
 .completion-progress {
@@ -5581,7 +5434,6 @@ tr:hover .cl-alert-btn {
   flex-direction: column;
   gap: 0.6rem;
 }
-
 /* Each set is a self-contained card with a clear, tappable header */
 .completion-set {
   background: var(--bg-secondary);
@@ -5650,7 +5502,6 @@ tr:hover .cl-alert-btn {
   background: var(--accent);
   color: var(--accent-on);
 }
-
 /* Slim per-set progress bar tracks the count text */
 .completion-mini-bar {
   width: 100%;
@@ -5675,7 +5526,6 @@ tr:hover .cl-alert-btn {
   border-top: 1px solid var(--border-primary);
   background: var(--bg-primary);
 }
-
 /* The actual checklist table — roomy rows, clear hover, owned-row highlight */
 .completion-table {
   width: 100%;
@@ -5727,7 +5577,6 @@ tr:hover .cl-alert-btn {
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
-
 /* Custom checklist checkbox — clear "filled green" state when owned */
 .completion-variant-check {
   display: inline-flex;
@@ -5771,7 +5620,6 @@ tr:hover .cl-alert-btn {
 }
 .completion-variant-check input:active { transform: scale(0.92); }
 .completion-variant-check.owned { color: var(--accent); }
-
 /* Player view: variant checkbox + name = green pill chip, matching the
    look of the .chip pills used elsewhere on the site. The set-view
    checkbox (no label inside) keeps the square form above. */
@@ -5822,7 +5670,6 @@ tr:hover .cl-alert-btn {
 .completion-variant-check:has(span) span {
   font-variant-numeric: tabular-nums;
 }
-
 /* Variant text inside chip — clicking it opens For Sale listings.
    Hover hint distinguishes it from the static checkbox affordance. */
 .completion-variant-text {
@@ -5841,7 +5688,6 @@ tr:hover .cl-alert-btn {
   text-decoration-color: var(--accent);
   font-weight: 700;
 }
-
 /* Rainbow cost button — inline pill at the end of the chip row in Rainbow Mode */
 .rainbow-cost-btn {
   display: inline-flex;
@@ -5888,7 +5734,6 @@ tr:hover .cl-alert-btn {
   color: var(--accent-on);
   border-color: var(--accent);
 }
-
 /* Rainbow breakdown panel — vertical list of variant → cheapest listing */
 .rainbow-breakdown-panel { background: var(--bg-secondary); }
 .rainbow-breakdown-list {
@@ -5981,7 +5826,6 @@ tr:hover .cl-alert-btn {
 .completion-player-pct.complete { color: var(--accent, #10b981); }
 .completion-player-listings-slot { margin-top: 0.25rem; }
 .completion-listings-panel { margin-top: 0.5rem; border-radius: 8px; overflow: hidden; }
-
 /* Hot/Cold */
 .hotcold-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
 .hotcold-period { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
@@ -5996,7 +5840,6 @@ tr:hover .cl-alert-btn {
 .hotcold-change.gain { color: #10b981; }
 .hotcold-change.loss { color: #ef4444; }
 .hotcold-prices { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
-
 /* eBay Seller Section */
 .seller-header { margin-bottom: 1rem; }
 .seller-section-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.15rem; }
@@ -6006,7 +5849,6 @@ tr:hover .cl-alert-btn {
 .seller-subtab.active { background: var(--accent, #10b981); color: #fff; }
 .seller-subtab:not(.active):hover { color: var(--text-primary); background: var(--bg-hover, rgba(255,255,255,0.04)); }
 .seller-panel.hidden { display: none; }
-
 /* Seller Form */
 .seller-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .seller-form-group { display: flex; flex-direction: column; gap: 0.25rem; }
@@ -6033,7 +5875,6 @@ tr:hover .cl-alert-btn {
 .seller-save-btn:hover { opacity: 0.9; }
 .seller-clear-btn { padding: 0.6rem 1.25rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); color: var(--text-secondary); font-weight: 600; cursor: pointer; font-size: 0.85rem; }
 .seller-clear-btn:hover { border-color: #ef4444; color: #ef4444; }
-
 /* My Listings */
 .seller-listings-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
 .seller-listings-stats { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text-muted); }
@@ -6055,7 +5896,6 @@ tr:hover .cl-alert-btn {
 .seller-listing-badge { display: inline-block; font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 4px; text-transform: uppercase; }
 .seller-listing-badge.auction { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
 .seller-listing-badge.fixed { background: rgba(16, 185, 129, 0.12); color: #10b981; }
-
 /* Modal Overlay (shared) */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
 .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; position: relative; }
@@ -6063,7 +5903,6 @@ tr:hover .cl-alert-btn {
 .modal-box h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
 .modal-box input[type="text"], .modal-box input[type="number"], .modal-box input[type="email"] { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-main); color: var(--text-primary); font-size: 0.85rem; margin-bottom: 0.5rem; box-sizing: border-box; }
 .modal-box button[type="submit"] { width: 100%; padding: 0.6rem; border: none; border-radius: 6px; background: var(--accent, #10b981); color: #fff; font-weight: 600; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-
 /* Marketplace */
 .marketplace-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
 .marketplace-search { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -6089,7 +5928,6 @@ tr:hover .cl-alert-btn {
 .marketplace-load-more { display: block; margin: 1.25rem auto 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 2rem; color: var(--text-primary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s; }
 .marketplace-load-more:hover { border-color: var(--accent, #10b981); }
 .marketplace-load-more:disabled { opacity: 0.5; cursor: not-allowed; }
-
 /* Market Insights */
 .insights-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
 .insights-search { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -6133,7 +5971,6 @@ tr:hover .cl-alert-btn {
 .insights-sale-info { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 .insights-sale-title { font-size: 0.78rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .insights-sale-meta { font-size: 0.75rem; color: var(--accent, #10b981); font-weight: 600; }
-
 /* eBay Listing Helper */
 .listing-helper-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
 .listing-helper-search { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
@@ -6144,17 +5981,14 @@ tr:hover .cl-alert-btn {
 .listing-title-len { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
 .listing-copy-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.7rem; cursor: pointer; color: var(--text-secondary); }
 .listing-copy-btn:hover { border-color: var(--accent, #10b981); }
-
 /* Comp Analyzer */
 .comp-analyzer { display: flex; gap: 0.75rem; padding: 0.5rem 0.75rem; background: rgba(16, 185, 129, 0.08); border-radius: 6px; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: center; }
 .comp-label { font-size: 0.7rem; color: var(--accent, #10b981); font-weight: 600; }
 .comp-stat { font-size: 0.75rem; color: var(--text-secondary); }
-
 /* Collection button in checklist */
 .cl-coll-btn { background: none; border: 1px solid var(--border); color: var(--text-muted); width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; padding: 0; line-height: 1; }
 .cl-coll-btn:hover { border-color: var(--accent, #10b981); color: var(--accent, #10b981); }
 .cl-coll-added { background: var(--accent, #10b981) !important; color: #fff !important; border-color: var(--accent, #10b981) !important; }
-
 /* ---- Layout Picker Popup ---- */
 .layout-picker { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(6px); }
 .layout-picker.hidden { display: none; }
@@ -6166,18 +6000,15 @@ tr:hover .cl-alert-btn {
 .layout-pick-btn:hover { border-color: var(--accent, #10b981); color: var(--accent, #10b981); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(16,185,129,0.2); }
 .layout-pick-label { font-size: 1rem; font-weight: 700; }
 .layout-pick-desc { font-size: 0.7rem; color: var(--text-muted); }
-
 /* Layout toggle in Settings */
 .layout-toggle-btns { display: flex; gap: 0.35rem; }
 .layout-toggle-btn { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
 .layout-toggle-btn.active { background: var(--accent, #10b981); color: #fff; border-color: var(--accent, #10b981); }
-
 /* ===========================================================
    MOBILE LAYOUT — applied via .mobile-layout on <html>
    Shrinks all UI to fit phone screens natively
    =========================================================== */
 .mobile-layout body { font-size: 11px; zoom: 0.85; }
-
 /* Header */
 .mobile-layout header { padding: 1.25rem 0.75rem; }
 .mobile-layout header h1 { font-size: 1.15rem; }
@@ -6186,55 +6017,45 @@ tr:hover .cl-alert-btn {
 .mobile-layout .header-pro { position: static; margin-top: 0.5rem; }
 .mobile-layout .header-inner { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 .mobile-layout .auth-btn, .mobile-layout .pro-btn { font-size: 0.7rem; padding: 0.3rem 0.6rem; }
-
 /* Nav tabs */
 .mobile-layout .nav-bar { padding: 0.4rem 0.5rem 0.6rem; }
 .mobile-layout .header-nav { gap: 0.3rem; }
 .mobile-layout .nav-tab { font-size: 0.68rem; padding: 0.3rem 0.65rem; white-space: nowrap; flex-shrink: 0; }
-
 /* Search */
 .mobile-layout main { padding: 1rem 0.75rem; }
 .mobile-layout #search-form { flex-direction: column; }
 .mobile-layout #search-btn { width: 100%; font-size: 0.8rem; padding: 0.55rem; }
 .mobile-layout #search-input { font-size: 0.8rem; padding: 0.55rem 0.55rem 0.55rem 2.2rem; }
 .mobile-layout .search-icon { width: 16px; height: 16px; left: 0.6rem; }
-
 /* Mode tabs */
 .mobile-layout .mode-tabs { gap: 0.25rem; }
 .mobile-layout .mode-tab { font-size: 0.72rem; padding: 0.3rem 0.7rem; }
-
 /* Suggestions chips */
 .mobile-layout .chip { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
 .mobile-layout .recent-chip { font-size: 0.68rem; padding: 0.3rem 0.6rem; }
 .mobile-layout .section-label { font-size: 0.68rem; }
-
 /* Sort controls */
 .mobile-layout .sort-controls { justify-content: center; gap: 0.25rem; }
 .mobile-layout .sort-btn { font-size: 0.68rem; padding: 0.25rem 0.5rem; }
-
 /* Results grid */
 .mobile-layout .results-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; }
 .mobile-layout .card { border-radius: 8px; }
 .mobile-layout .card-title { font-size: 0.7rem; }
 .mobile-layout .card-price { font-size: 0.85rem; }
 .mobile-layout .card-detail { font-size: 0.6rem; }
-
 /* Stats bar */
 .mobile-layout .stats-bar { gap: 0.6rem; padding: 0.75rem; }
 .mobile-layout .stat-value { font-size: 1rem; }
 .mobile-layout .stat-label { font-size: 0.6rem; }
-
 /* Chart */
 .mobile-layout .chart-wrap { height: 140px; }
 .mobile-layout .chart-title { font-size: 0.8rem; }
-
 /* Variants grid */
 .mobile-layout .variants-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.5rem; }
 .mobile-layout .variant-card { padding: 0.6rem; }
 .mobile-layout .variant-name { font-size: 0.72rem; }
 .mobile-layout .variant-price { font-size: 0.85rem; }
 .mobile-layout .variant-meta { font-size: 0.6rem; }
-
 /* Checklist view */
 .mobile-layout .checklist-view { padding: 1.25rem 0.75rem; }
 .mobile-layout .checklist-page-title { font-size: 1.15rem; }
@@ -6249,7 +6070,6 @@ tr:hover .cl-alert-btn {
 .mobile-layout .cl-table th, .mobile-layout .cl-table td { padding: 0.25rem 0.35rem; }
 .mobile-layout .cl-alert-btn, .mobile-layout .cl-search-btn, .mobile-layout .cl-coll-btn { width: 20px; height: 20px; font-size: 0.65rem; }
 .mobile-layout .checklist-parallel { font-size: 0.6rem; padding: 0.1rem 0.35rem; }
-
 /* ======================================================
    MODERN PAGE SECTIONS — base rules for all sub-views
    ====================================================== */
@@ -6263,7 +6083,6 @@ tr:hover .cl-alert-btn {
   max-width: 100%;
   margin: 0 auto;
 }
-
 /* ---- Section Page Header ---- */
 .collection-header {
   margin-bottom: 1.75rem;
@@ -6284,7 +6103,6 @@ tr:hover .cl-alert-btn {
   font-weight: 400;
   margin-bottom: 0;
 }
-
 /* ---- Portfolio Stats ---- */
 .portfolio-stats {
   display: grid;
@@ -6321,7 +6139,6 @@ tr:hover .cl-alert-btn {
   letter-spacing: -0.3px;
   line-height: 1;
 }
-
 /* ---- Portfolio Actions ---- */
 .portfolio-actions {
   display: flex;
@@ -6329,12 +6146,10 @@ tr:hover .cl-alert-btn {
   gap: 0.5rem;
   margin-bottom: 1.5rem;
 }
-
 /* ---- Collection Sub-Panel ---- */
 .coll-panel {
   animation: fadeUp 0.25s ease both;
 }
-
 /* ---- Portfolio Card List ---- */
 .portfolio-list {
   display: flex;
@@ -6374,7 +6189,6 @@ tr:hover .cl-alert-btn {
   white-space: nowrap;
 }
 .portfolio-card-value { color: var(--accent); }
-
 /* ---- Grade Panel ---- */
 .grade-panel {
   background: var(--bg-secondary);
@@ -6415,16 +6229,34 @@ tr:hover .cl-alert-btn {
   padding: 0;
   overflow-x: auto;
 }
-
 /* ---- Grading Advisor Form ---- */
 .grading-form-wrap {
   max-width: 600px;
   margin: 0 auto 2rem;
 }
+/* The search box gets its own full-width line; the buttons wrap underneath.
+   Before this the row was a non-wrapping flex with four children — the input
+   plus "Pick from checklist", the camera and Analyze, none of which shrink —
+   so on a phone the input was squeezed down to about the width of its own
+   magnifying-glass icon. */
 .grading-input-row {
   display: flex;
-  gap: 0.75rem;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+.grading-input-row .search-input-wrap {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.grading-input-row #grading-input {
+  font-size: 1.05rem;
+  padding: 1rem 1.2rem 1rem 2.9rem;
+}
+/* Analyze is the primary action, so it takes the far end of the button row
+   and stays reachable under the thumb rather than being buried mid-line. */
+.grading-input-row .grading-submit-btn {
+  margin-left: auto;
 }
 .grading-submit-btn {
   padding: 0.75rem 2rem !important;
@@ -6441,7 +6273,6 @@ tr:hover .cl-alert-btn {
 .grading-submit-btn:hover {
   background: var(--accent-hover) !important;
 }
-
 /* ---- Grading Table ---- */
 .grading-table-wrap {
   overflow-x: auto;
@@ -6472,7 +6303,6 @@ tr:hover .cl-alert-btn {
 }
 .grading-table tr:last-child td { border-bottom: none; }
 .grading-table tr:hover td { background: var(--bg-card); }
-
 /* ---- Seller Form ---- */
 .seller-form-grid {
   display: grid;
@@ -6537,7 +6367,6 @@ tr:hover .cl-alert-btn {
   background: var(--accent);
   color: var(--accent-on);
 }
-
 /* ---- Completion Sub-Tabs ---- */
 .completion-subtabs {
   display: flex;
@@ -6562,7 +6391,6 @@ tr:hover .cl-alert-btn {
   border-color: var(--accent-border);
   background: var(--accent-bg);
 }
-
 /* ---- Alerts / Tracked form inputs ---- */
 .alerts-input,
 .alerts-threshold-input,
@@ -6601,7 +6429,6 @@ tr:hover .cl-alert-btn {
   background-repeat: no-repeat;
   background-position: right 0.6rem center;
 }
-
 /* ---- Settings Sub-Buttons ---- */
 .settings-sub-btn {
   padding: 0.55rem 1.25rem;
@@ -6628,7 +6455,6 @@ tr:hover .cl-alert-btn {
 .settings-sub-upgrade:hover {
   background: var(--accent-hover);
 }
-
 /* ---- Feedback / Bug buttons ---- */
 .feedback-btn,
 .bug-btn {
@@ -6652,7 +6478,6 @@ tr:hover .cl-alert-btn {
   background: var(--accent-bg);
   box-shadow: 0 4px 16px rgba(94, 206, 153, 0.1);
 }
-
 /* ---- Toggle Switches ---- */
 .theme-toggle {
   display: flex;
@@ -6689,16 +6514,13 @@ tr:hover .cl-alert-btn {
   background: var(--text-muted);
   transition: transform var(--transition-fast), background var(--transition-fast);
 }
-
 [data-theme="light"] .theme-toggle-thumb {
   background: var(--accent-bg);
 }
-
 [data-theme="light"] .theme-toggle-thumb::after {
   transform: translateX(14px);
   background: var(--accent);
 }
-
 /* ---- Layout Toggle Buttons ---- */
 .layout-toggle-btns {
   display: flex;
@@ -6721,7 +6543,6 @@ tr:hover .cl-alert-btn {
   color: var(--accent);
   background: var(--accent-bg);
 }
-
 /* ---- Hot/Cold period buttons ---- */
 .hotcold-period-btn {
   padding: 0.35rem 0.8rem;
@@ -6740,7 +6561,6 @@ tr:hover .cl-alert-btn {
   color: var(--accent);
   background: var(--accent-bg);
 }
-
 /* ---- Pro+ nav badge ---- */
 .proplus-nav-badge {
   display: inline-block;
@@ -6753,14 +6573,12 @@ tr:hover .cl-alert-btn {
   vertical-align: middle;
   letter-spacing: 0.05em;
 }
-
 /* ---- Tracked subtitle ---- */
 .tracked-subtitle {
   font-size: 0.9rem;
   color: var(--text-muted);
   margin-bottom: 1.25rem;
 }
-
 /* ---- Seller export button ---- */
 .seller-export-btn {
   padding: 0.5rem 1.1rem;
@@ -6778,7 +6596,6 @@ tr:hover .cl-alert-btn {
   color: var(--accent);
   background: var(--accent-bg);
 }
-
 /* ---- Improved input focus globally ---- */
 input:focus,
 select:focus,
@@ -6787,7 +6604,6 @@ textarea:focus {
   border-color: var(--accent) !important;
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
-
 /* Collection view */
 .mobile-layout .collection-view { padding: 1.25rem 0.75rem; }
 .mobile-layout .collection-title { font-size: 1.15rem; }
@@ -6811,7 +6627,6 @@ textarea:focus {
 .mobile-layout .seller-subtab { font-size: 0.7rem; padding: 0.35rem 0.65rem; }
 .mobile-layout .seller-listing-card { flex-direction: column; align-items: stretch; }
 .mobile-layout .seller-listing-actions { justify-content: flex-end; }
-
 /* Tracked view */
 .mobile-layout .tracked-container { padding: 0 0.25rem; }
 .mobile-layout .tracked-title { font-size: 1.1rem; }
@@ -6819,7 +6634,6 @@ textarea:focus {
 .mobile-layout .alerts-input { font-size: 0.78rem; }
 .mobile-layout .alerts-add-btn { font-size: 0.75rem; }
 .mobile-layout .tracked-card-query { font-size: 0.78rem; }
-
 /* Modals */
 .mobile-layout .modal-box { padding: 1rem; margin: 0.5rem; }
 .mobile-layout .modal-box h2 { font-size: 0.95rem; }
@@ -6829,18 +6643,15 @@ textarea:focus {
 .mobile-layout .pricing-box { padding: 1.25rem 0.75rem; }
 .mobile-layout .pricing-cards { grid-template-columns: 1fr; }
 .mobile-layout .settings-box { padding: 1.25rem; }
-
 /* Hot/cold */
 .mobile-layout .hotcold-item { font-size: 0.72rem; padding: 0.45rem 0.55rem; gap: 0.4rem; }
 .mobile-layout .hotcold-query { font-size: 0.72rem; }
 .mobile-layout .hotcold-prices { font-size: 0.6rem; }
-
 /* Footer */
 .mobile-layout footer { padding: 1.5rem 0.75rem; }
 .mobile-layout .footer-description { font-size: 0.7rem; }
 .mobile-layout .footer-links { font-size: 0.65rem; }
 .mobile-layout .footer-copy { font-size: 0.6rem; }
-
 /* ---- Mobile Responsive for New Features ---- */
 @media (max-width: 600px) {
   .collection-view { padding: 1.25rem 0.75rem; }
@@ -6865,7 +6676,6 @@ textarea:focus {
 .modal-box-lg { max-width: 100%; }
 .hotcold-item { padding: 0.5rem 0.65rem; font-size: 0.75rem; gap: 0.5rem; }
 }
-
 /* ---- SportsCardsPro Price Guide ---- */
 .scp-price-guide { margin-top: 1.5rem; }
 .scp-title {
@@ -6896,12 +6706,10 @@ textarea:focus {
 .scp-price-value.scp-na { color: var(--text-muted); font-weight: 400; font-size: 0.75rem; }
 .scp-loading { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1rem; }
 .scp-empty { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1rem; }
-
 @media (max-width: 600px) {
   .scp-card { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
 .scp-prices { width: 100%; justify-content: space-between; }
 }
-
 @media (max-width: 400px) {
   .portfolio-stats { grid-template-columns: repeat(2, 1fr); }
 .portfolio-stat-value { font-size: 0.9rem; }
@@ -6910,13 +6718,11 @@ textarea:focus {
 .collection-tabs::-webkit-scrollbar { display: none; }
 .coll-tab { flex-shrink: 0; font-size: 0.65rem; }
 }
-
 /* ---- Footer Feedback Buttons ---- */
 .footer-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 1rem; }
 .footer-btn { background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.8rem; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
 .footer-btn:hover { background: var(--bg-hover, rgba(255,255,255,0.06)); color: var(--text-primary); border-color: var(--accent, #10b981); }
 .bug-btn:hover { border-color: #ef4444; color: #ef4444; }
-
 /* ---- Footer ---- */
 footer {
   background: var(--bg-footer);
@@ -6968,7 +6774,6 @@ footer {
   line-height: 1.5;
   margin: 0;
 }
-
 /* ---- Feedback Modal ---- */
 .feedback-modal { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 1rem; }
 .feedback-modal.hidden { display: none; }
@@ -6985,7 +6790,6 @@ footer {
 .feedback-status { font-size: 0.8rem; margin-top: 0.75rem; }
 .feedback-status.success { color: var(--accent, #10b981); }
 .feedback-status.error { color: #ef4444; }
-
 /* ---- Rainbow Grid View ---- */
 .rainbow-view-btn {
   background: transparent;
@@ -7145,13 +6949,11 @@ footer {
 .rainbow-listings-panel { background: #11151c; border-color: rgba(255,255,255,0.08); }
 .rainbow-listings-panel .cl-listings-header { border-bottom-color: rgba(255,255,255,0.07); }
 .rainbow-listings-panel .cl-listings-title { color: #edf0f7; }
-
 @media (max-width: 480px) {
   .rainbow-grid { grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 0.75rem 0.6rem; }
 .rainbow-tile-name { font-size: 0.66rem; }
 .rainbow-check-badge { width: 18px; height: 18px; font-size: 0.7rem; top: 6px; right: 6px; }
 }
-
 /* ===== Standalone Rainbow tab ===== */
 .rainbow-page-cards {
   display: flex;
@@ -7210,12 +7012,10 @@ footer {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
 @media (max-width: 480px) {
   .rainbow-base-card { width: 96px; }
 .rainbow-card-top { gap: 0.75rem; }
 }
-
 /* ---- Card Scanner ---- */
 .pro-badge { font-size: 0.55rem; background: linear-gradient(135deg,#8b5cf6,#6366f1); color: #fff; padding: 0.1rem 0.4rem; border-radius: 3px; font-weight: 700; letter-spacing: 0.05em; vertical-align: middle; margin-left: 0.35rem; }
 .scanner-upload-area { border: 2px dashed var(--border-primary); border-radius: 12px; padding: 2rem 1.5rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
@@ -7224,207 +7024,11 @@ footer {
 .scanner-upload-icon { font-size: 2.5rem; line-height: 1; }
 .scanner-upload-text { display: flex; flex-direction: column; gap: 0.25rem; color: var(--text-secondary); font-size: 0.9rem; }
 .scanner-upload-text strong { color: var(--text-primary); font-size: 1rem; }
-
-/* ---- Grade My Card (photo pre-grade estimator) ---- */
-.gradescan-section {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-primary);
-}
-.gradescan-head { margin-bottom: 1rem; }
-.gradescan-title {
-  font-size: 1.1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.25rem;
-}
-.gradescan-beta {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  background: rgba(250, 204, 21, 0.15);
-  color: var(--gold);
-  border: 1px solid rgba(250, 204, 21, 0.3);
-}
-.gradescan-sub { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
-.gradescan-result-top {
-  display: flex;
-  gap: 1.25rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 1.25rem;
-  animation: fadeUp 0.3s ease;
-}
-.gradescan-badge {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 130px;
-  padding: 1rem 0.5rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-}
-.gradescan-badge.is-gem  { border-color: rgba(94, 206, 153, 0.4); background: rgba(94, 206, 153, 0.08); }
-.gradescan-badge.is-good { border-color: rgba(250, 204, 21, 0.35); background: rgba(250, 204, 21, 0.07); }
-.gradescan-badge.is-low  { border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.06); }
-.gradescan-badge-cap { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
-.gradescan-badge-num { font-size: 2.6rem; font-weight: 800; line-height: 1.1; color: var(--text-primary); }
-.gradescan-badge-name { font-size: 0.8rem; color: var(--text-secondary); text-align: center; }
-.gradescan-meta { flex: 1; min-width: 200px; }
-.gradescan-confidence {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  margin-bottom: 0.5rem;
-}
-.gradescan-confidence.conf-high { background: rgba(94, 206, 153, 0.12); color: var(--accent-light); }
-.gradescan-confidence.conf-med  { background: rgba(250, 204, 21, 0.12); color: var(--gold); }
-.gradescan-confidence.conf-low  { background: rgba(248, 113, 113, 0.12); color: var(--error); }
-.gradescan-tip { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
-.gradescan-subgrades {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.85rem;
-  margin-bottom: 1rem;
-}
-@media (max-width: 520px) { .gradescan-subgrades { grid-template-columns: 1fr; } }
-.gradescan-sg {
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-}
-.gradescan-sg-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85rem; color: var(--text-secondary); }
-.gradescan-sg-top strong { font-size: 1.05rem; color: var(--text-primary); }
-.gradescan-sg-bar { height: 6px; border-radius: 999px; background: var(--bg-hover); overflow: hidden; margin: 0.4rem 0 0.3rem; }
-.gradescan-sg-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
-.gradescan-sg-fill.sg-gem  { background: var(--accent); }
-.gradescan-sg-fill.sg-good { background: var(--gold); }
-.gradescan-sg-fill.sg-low  { background: var(--error); }
-.gradescan-sg-detail { font-size: 0.72rem; color: var(--text-muted); }
-.gradescan-sg-tag {
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 700;
-  padding: 0.08rem 0.34rem;
-  border-radius: 999px;
-  vertical-align: middle;
-  margin-left: 0.3rem;
-}
-.gradescan-sg-tag.tag-measured { color: var(--accent); background: rgba(94, 206, 153, 0.12); border: 1px solid rgba(94, 206, 153, 0.3); }
-.gradescan-sg-tag.tag-approx   { color: var(--text-muted); background: var(--bg-hover); border: 1px solid var(--border-primary); }
-
-/* ---- Grade scanner sales funnel ---- */
-.gradescan-next {
-  margin-top: 1.1rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid var(--border-primary);
-}
-.gradescan-next-title { margin: 0 0 0.6rem; font-size: 0.95rem; color: var(--text-primary); }
-.gradescan-next-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.gradescan-card-q {
-  flex: 1 1 220px;
-  min-width: 0;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-}
-.gradescan-card-q:focus { outline: none; border-color: var(--accent); }
-.gradescan-value-btn {
-  flex: 0 0 auto;
-  padding: 0.6rem 1.1rem;
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  color: #07120d;
-  font-weight: 700;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-.gradescan-value-btn:hover { filter: brightness(1.06); }
-.gradescan-value-out { margin-top: 0.85rem; }
-.gradescan-value-hint, .gradescan-value-foot { font-size: 0.78rem; color: var(--text-muted); margin: 0.4rem 0 0; }
-.gradescan-value-loading { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); padding: 0.5rem 0; }
-.gradescan-value-card {
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-}
-.gradescan-value-locked { border-style: dashed; }
-.gradescan-value-grid { display: flex; align-items: center; justify-content: center; gap: 1rem; }
 .gv-cell { display: flex; flex-direction: column; align-items: center; }
 .gv-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
 .gv-num { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
 .gv-graded .gv-num { color: var(--accent); }
 .gv-arrow { font-size: 1.4rem; color: var(--text-muted); }
-.gradescan-value-swing { margin: 0.7rem 0 0; font-size: 0.9rem; color: var(--text-secondary); text-align: center; line-height: 1.45; }
-.gradescan-value-swing strong { color: var(--text-primary); }
-.gradescan-cta-card { margin-top: 0.8rem; }
-.gradescan-track-btn {
-  width: 100%;
-  padding: 0.7rem 1rem;
-  border: none;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #52b788, #38a169);
-  color: #07120d;
-  font-weight: 800;
-  font-size: 0.92rem;
-  cursor: pointer;
-}
-.gradescan-track-btn:hover { filter: brightness(1.05); }
-.gradescan-track-msg { margin: 0.45rem 0 0; font-size: 0.78rem; color: var(--text-secondary); text-align: center; min-height: 0.8rem; }
-.gradescan-lead { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
-.gradescan-lead-email {
-  flex: 1 1 200px;
-  min-width: 0;
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 0.88rem;
-}
-.gradescan-lead-email:focus { outline: none; border-color: var(--accent); }
-.gradescan-lead-btn {
-  flex: 0 0 auto;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-.gradescan-lead-btn:hover { border-color: var(--accent); }
-.gradescan-lead-msg { flex: 1 1 100%; margin: 0.1rem 0 0; font-size: 0.78rem; color: var(--text-secondary); }
-.gradescan-share-btn {
-  margin-top: 0.9rem;
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 0.88rem;
-  cursor: pointer;
-}
-.gradescan-share-btn:hover { border-color: var(--accent); color: var(--accent); }
-
 /* Pricing modal: trial CTA */
 .pricing-cta-secondary {
   display: block;
@@ -7444,14 +7048,15 @@ footer {
 .btn-secondary:hover { background: var(--bg-hover); }
 .scanner-price-summary { margin: 0.75rem 0; }
 .scanner-matches-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-@media (min-width: 600px) { .scanner-matches-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 600px) { .scanner-matches-grid { grid-template-columns: repeat(3, 1fr); }
+}
 .scanner-match-card { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; cursor: pointer; }
-@media (hover: hover) { .scanner-match-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); border-color: var(--accent-border); } }
+@media (hover: hover) { .scanner-match-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); border-color: var(--accent-border); }
+}
 .scanner-match-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .scanner-match-card { position: relative; }
 .scanner-match-agrees { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 2px 8px rgba(0,0,0,0.2); }
 .scanner-match-badge { position: absolute; top: 6px; right: 6px; z-index: 2; background: var(--accent); color: var(--accent-on); font-size: 0.6rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,0.35); }
-
 /* Optional back-of-card upload (accuracy booster for shiny cards) */
 .scanner-back-area { margin-top: 12px; }
 .scanner-back-add-label { display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.8rem; color: var(--text-secondary); border: 1px dashed var(--border-primary); border-radius: 8px; padding: 0.45rem 0.8rem; transition: border-color 0.2s, color 0.2s; }
@@ -7489,7 +7094,6 @@ footer {
 .community-stat-num { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
 .community-stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-top: 0.25rem; }
 .community-stat-divider { width: 1px; height: 30px; background: var(--border-primary); }
-
 /* ---- Community: composer ---- */
 .community-composer { background: var(--card-gradient); border: 1px solid var(--border-primary); border-radius: var(--radius-lg, 14px); padding: 1.1rem 1.1rem 1rem; margin-bottom: 1.75rem;
   box-shadow: 0 6px 24px -16px var(--shadow-card); transition: border-color 0.2s, box-shadow 0.2s; }
@@ -7519,12 +7123,13 @@ footer {
 .community-post-btn:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
 .community-post-btn-locked { background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-primary); box-shadow: none; }
 .community-error { color: #ef4444; font-size: 0.82rem; margin: 0.6rem 0 0; }
-
 /* ---- Community: feed ---- */
 .community-feed { display: flex; flex-direction: column; gap: 1.1rem; }
 .community-post { position: relative; background: var(--card-gradient); border: 1px solid var(--border-primary); border-radius: var(--radius-lg, 14px); padding: 1.15rem 1.2rem; animation: communityFadeIn 0.35s cubic-bezier(0.22,1,0.36,1) both; transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s; }
 .community-post:hover { transform: translateY(-3px); border-color: var(--accent-border); box-shadow: 0 16px 40px -22px var(--shadow-card); }
-@keyframes communityFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes communityFadeIn { from { opacity: 0; transform: translateY(12px); }
+to { opacity: 1; transform: translateY(0); }
+}
 .community-post-head { display: flex; align-items: center; gap: 0.7rem; }
 .community-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-hover)); color: #fff; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px -4px rgba(0,0,0,0.35); text-transform: uppercase; }
 .community-post-byline { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
@@ -7549,7 +7154,6 @@ footer {
 .community-empty-icon { font-size: 2.6rem; margin-bottom: 0.6rem; }
 .community-empty h3 { color: var(--text-primary); margin: 0 0 0.4rem; font-size: 1.1rem; font-weight: 700; }
 .community-empty p { margin: 0; font-size: 0.92rem; }
-
 /* ---- Community: comments / replies ---- */
 .community-post-footer { margin-top: 0.9rem; padding-top: 0.75rem; border-top: 1px solid var(--border-primary); }
 .community-comment-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: none; border: none; color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0.25rem 0.3rem; border-radius: 6px; transition: color 0.15s; }
@@ -7589,7 +7193,6 @@ footer {
 .community-reply-inline { margin-top: 0.65rem; }
 .community-reply-cancel { background: none; border: none; color: var(--text-muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 8px; }
 .community-reply-cancel:hover { color: var(--text-primary); }
-
 /* ---- Community: reactions ---- */
 .community-post-footer { display: flex; align-items: center; gap: 0.6rem 1rem; flex-wrap: wrap; }
 .community-reactions { display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
@@ -7606,14 +7209,12 @@ footer {
 .community-react-opt { background: none; border: none; font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.25rem; border-radius: 8px; transition: transform 0.12s, background 0.12s; }
 .community-react-opt:hover { transform: scale(1.25); background: var(--bg-hover); }
 .community-react-opt.mine { background: var(--accent-bg); }
-
 /* ---- Community: threaded replies ---- */
 .community-comment-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
 .community-comment-reply-btn { background: none; border: none; color: var(--text-muted); font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 0.2rem 0.45rem; border-radius: 7px; transition: all 0.13s; }
 .community-comment-reply-btn:hover { color: var(--accent); background: var(--accent-bg); }
 .community-replybox:not(:empty) { margin-top: 0.6rem; }
 .community-comment-children { margin-top: 0.85rem; padding-left: 0.9rem; border-left: 2px solid var(--border-primary); display: flex; flex-direction: column; gap: 0.85rem; }
-
 @media (max-width: 640px) {
   .community-comment-children { padding-left: 0.55rem; margin-left: 0; }
 .community-hero { padding: 1.5rem 1.25rem; }
@@ -7621,7 +7222,6 @@ footer {
 .community-composer-details { grid-template-columns: 1fr; }
 .community-composer-avatar { display: none; }
 }
-
 /* ===================================================================
    Showcase (Sell tab) — virtual table of cards, with sale/trade handoff
    =================================================================== */
@@ -7677,7 +7277,6 @@ footer {
 .sc-link-trade:hover { background: rgba(99, 102, 241, 0.28); }
 .sc-link-dm { background: rgba(244, 208, 63, 0.15); color: #e0a92b; border: 1px solid rgba(244, 208, 63, 0.4); cursor: pointer; font-family: inherit; }
 .sc-link-dm:hover { background: rgba(244, 208, 63, 0.28); }
-
 /* ---- Direct Messages modal ---- */
 .floor-dm-badge {
   display: inline-block; min-width: 1.1rem; padding: 0 0.3rem; margin-left: 0.2rem; font-size: 0.7rem; font-weight: 800;
@@ -7763,7 +7362,8 @@ footer {
    narrow screens instead of squeezing the input down to a tiny box. */
 .dm-form input { flex: 1 1 14rem; min-width: 0; padding: 0.7rem 0.85rem; background: var(--bg-secondary); border: 1.5px solid var(--border-primary); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 1rem; line-height: 1.3; }
 .dm-form input:focus { outline: none; border-color: var(--accent); }
-/* width:auto overrides the global `.modal-box button[type="submit"]{width:100%}`
+/* width:auto overrides the global `.modal-box button[type="submit"]{width:100%}
+`
    rule (more specific) that was forcing Send to full width and squeezing the
    input down to a tiny box. */
 .dm-form button, .dm-form button[type="submit"] { flex: 0 0 auto; width: auto; min-width: 5rem; margin-top: 0; padding: 0.7rem 1.2rem; background: var(--accent); color: var(--accent-on); border: none; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 700; cursor: pointer; }
@@ -7786,7 +7386,6 @@ footer {
 .showcase-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
 .showcase-empty h3 { color: var(--text-primary); margin-bottom: 0.4rem; }
 .showcase-empty ol { display: inline-block; text-align: left; margin-top: 0.6rem; line-height: 1.7; font-size: 0.88rem; }
-
 /* Picker modal */
 .sc-picker-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.3rem; }
 .sc-picker-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem; border-radius: var(--radius-sm); cursor: pointer; }
@@ -7794,7 +7393,6 @@ footer {
 .sc-picker-row img, .sc-picker-noimg { width: 38px; height: 38px; object-fit: cover; border-radius: 5px; background: var(--bg-secondary); flex-shrink: 0; }
 .sc-picker-name { flex: 1; font-size: 0.84rem; color: var(--text-primary); }
 .sc-picker-val { font-size: 0.82rem; font-weight: 700; color: var(--accent); }
-
 /* Edit modal */
 .sc-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
 .sc-edit-grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); }
@@ -7806,17 +7404,14 @@ footer {
   border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; font-weight: 400;
 }
 .sc-edit-grid input:focus, .sc-edit-grid select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
-
 @media (max-width: 560px) {
   .showcase-settings { grid-template-columns: 1fr; }
 .sc-edit-grid { grid-template-columns: 1fr; }
 }
-
 /* ===================================================================
    The Floor — walkable card-show world
    =================================================================== */
 .floor-view { max-width: 1040px; margin: 0 auto; padding: 1rem; }
-
 /* Character creation */
 /* under-construction gate + banner */
 .floor-intro { display: flex; justify-content: center; padding: 2rem 0; }
@@ -7886,7 +7481,6 @@ footer {
   background: var(--accent); color: var(--accent-on); border: none; border-radius: var(--radius-md); cursor: pointer;
 }
 .floor-cc-go:hover { background: var(--accent-hover); }
-
 /* Stage */
 .floor-hud {
   display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
@@ -7899,7 +7493,6 @@ footer {
   padding: 0.35rem 0.7rem; border-radius: var(--radius-sm); font-size: 0.78rem; cursor: pointer;
 }
 .floor-hud-edit:hover { color: var(--text-primary); border-color: var(--accent); }
-
 /* --- floor voice chat --- */
 .floor-voice-panel {
   position: absolute; top: 0.7rem; right: 0.7rem; width: 220px; z-index: 6;
@@ -7933,7 +7526,6 @@ footer {
 }
 .fv-mute:hover { border-color: var(--accent); }
 .fv-mute.active { color: #fca5a5; border-color: #fca5a5; background: rgba(252, 165, 165, 0.1); }
-
 /* --- booth layout editor --- */
 .floor-booth-owneracts { margin-bottom: 0.9rem; }
 .floor-arrange-btn {
@@ -8012,7 +7604,6 @@ footer {
   border-radius: var(--radius-sm); padding: 0.55rem 0.9rem; font-size: 0.85rem; cursor: pointer;
 }
 .floor-editor-save:hover { background: var(--accent-hover); }
-
 /* Floor rules — deliberately big and readable */
 .floor-rules-box { max-width: 560px; text-align: center; }
 .floor-rules-title {
@@ -8049,7 +7640,6 @@ footer {
   background: rgba(12,14,20,0.88); color: var(--text-primary); border: 1px solid var(--accent-border);
   padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 600; pointer-events: none;
 }
-
 /* --- In-canvas floating HUD (identity, action toolbar, controls hint) --- */
 /* These sit on top of the 3D view so the controls live "inside the screen"
    instead of in a bar above it. The wrap is line-height:0 for the canvas, so
@@ -8087,7 +7677,6 @@ footer {
 .floor-tbtn { padding: 0.4rem 0.6rem; font-size: 0.72rem; }
 .floor-hint { display: none; }
 }
-
 /* Touch d-pad — hidden on pointer-capable wide screens, shown on touch */
 .floor-dpad { display: none; flex-direction: column; align-items: center; gap: 0.4rem; margin: 0.8rem auto 0; width: max-content; }
 .floor-dpad-mid { display: flex; gap: 0.4rem; align-items: center; }
@@ -8101,14 +7690,12 @@ footer {
 @media (hover: none), (max-width: 760px) {
   .floor-dpad { display: flex; }
 }
-
 /* The Floor — live presence indicator */
 .floor-online {
   font-size: 0.78rem; font-weight: 700; color: var(--accent);
   background: var(--accent-bg); border: 1px solid var(--accent-border);
   padding: 0.15rem 0.55rem; border-radius: 999px; white-space: nowrap;
 }
-
 /* The Floor — booth directory */
 .floor-directory {
   max-width: 960px; margin: 0.8rem auto 0;
@@ -8140,7 +7727,6 @@ footer {
 .floor-dir-msg { color: var(--accent); border-color: var(--accent) !important; }
 .floor-dir-msg:hover { background: var(--accent); color: var(--accent-on); }
 .floor-dir-empty { color: var(--text-muted); font-size: 0.84rem; padding: 0.5rem; text-align: center; }
-
 /* DM notification toasts — slide in at the corner with a message preview */
 .dm-toast-host {
   position: fixed; top: 1rem; right: 1rem; z-index: 4000;
@@ -8162,10 +7748,8 @@ footer {
   font-size: 0.82rem; color: var(--text-primary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px;
 }
-
 /* The Floor — free-look toggle active state */
 .floor-hud-edit.active { color: var(--accent); border-color: var(--accent); background: var(--accent-bg); }
-
 /* ---- PWA: offline banner + offline download packs ---- */
 .offline-banner {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 9999;
@@ -8197,7 +7781,6 @@ footer {
 .op-btn.op-dl:hover { background: var(--accent-hover); }
 .op-btn.op-dl:disabled { opacity: 0.7; cursor: default; }
 .op-btn.op-remove:hover { border-color: #f87171; color: #f87171; }
-
 /* ==================== Inventory (/inventory) ==================== */
 
 /* Modal <select>s (inventory modals are the first to use them) — mirror the
@@ -8237,7 +7820,9 @@ footer {
 .inv-item-thumb img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
 .inv-thumb-placeholder { font-size: 1.3rem; opacity: 0.5; }
 .inv-thumb-loading { animation: invThumbPulse 1.1s ease-in-out infinite; }
-@keyframes invThumbPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.75; } }
+@keyframes invThumbPulse { 0%, 100% { opacity: 0.35; }
+50% { opacity: 0.75; }
+}
 .inv-item-main { flex: 1 1 12rem; min-width: 0; }
 .inv-item-name { font-weight: 600; color: var(--text-primary); font-size: 0.95rem; }
 .inv-printrun {
@@ -8262,7 +7847,6 @@ footer {
   background: rgba(224, 168, 95, 0.12); font-weight: 700; letter-spacing: 0.03em;
 }
 .inv-badge-loc { font-weight: 600; }
-
 /* Add/edit modal: checkbox row + photo field */
 .inv-check-row { display: flex; gap: 1.25rem; margin: 0.15rem 0 0.6rem; }
 .inv-check {
@@ -8327,13 +7911,11 @@ footer {
 }
 .inv-loc-name { font-weight: 600; color: var(--text-primary); font-size: 0.85rem; }
 .inv-loc-count { margin-left: auto; font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; }
-
 @media (max-width: 560px) {
   .inv-item { padding: 0.6rem 0.7rem; }
 .inv-item-actions { margin-left: auto; }
 .inv-move-when { flex-basis: 100%; margin-left: 0; }
 }
-
 /* ---- Inventory: Wallet ---- */
 .inv-wallet {
   background: linear-gradient(135deg, var(--accent-bg) 0%, var(--bg-card) 100%);
@@ -8366,7 +7948,6 @@ footer {
 .inv-wallet-lnote { color: var(--text-primary); flex: 1; min-width: 0; }
 .inv-wallet-when { margin-left: auto; font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
 .inv-badge-val { border-color: var(--accent-border); color: var(--accent); background: var(--accent-bg); font-weight: 700; }
-
 /* ---- Inventory: Sale / Trade modal ---- */
 .inv-sale-step { font-size: 0.82rem; color: var(--text-secondary); margin: 0.9rem 0 0.5rem; font-weight: 600; }
 .inv-sale-step:first-of-type { margin-top: 0.2rem; }
@@ -8382,7 +7963,6 @@ footer {
   color: var(--text-primary); margin: 0.1rem 0 0.5rem;
 }
 .inv-sale-wallet-note input { width: auto; margin: 0; accent-color: var(--accent); }
-
 /* ---- Inventory: Sold / traded history ---- */
 .inv-history { display: flex; flex-direction: column; gap: 0.4rem; }
 .inv-hist-row {
@@ -8411,12 +7991,10 @@ footer {
 .inv-hist-src { font-size: 0.72rem; color: var(--text-secondary); }
 .inv-hist-note { font-style: italic; color: var(--text-secondary); }
 .inv-hist-row .inv-move-when { margin-left: auto; }
-
 @media (max-width: 560px) {
   .inv-wallet-balance { font-size: 1.5rem; }
 .inv-hist-note { flex-basis: 100%; }
 }
-
 /* ---- Inventory: per-card P/L columns ---- */
 .inv-clickable { cursor: pointer; }
 .inv-clickable:hover { color: var(--accent); }
@@ -8431,7 +8009,6 @@ footer {
 .inv-pl-val { color: var(--text-primary); font-weight: 700; font-size: 0.85rem; }
 .inv-net-pos { color: var(--accent); font-weight: 800; font-size: 0.85rem; }
 .inv-net-neg { color: #e0655f; font-weight: 800; font-size: 0.85rem; }
-
 /* delete-× on wallet + history log rows */
 .inv-log-del {
   margin-left: 0.4rem; width: 1.35rem; height: 1.35rem; flex: 0 0 auto;
@@ -8439,7 +8016,6 @@ footer {
   color: var(--text-muted); font-size: 1rem; line-height: 1; cursor: pointer;
 }
 .inv-log-del:hover { border-color: #e0655f; color: #e0655f; background: var(--bg-input); }
-
 /* ---- Inventory: card detail modal ---- */
 .inv-detail-head { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
 .inv-detail-photo {
@@ -8464,16 +8040,13 @@ footer {
   display: flex; justify-content: space-between; font-size: 0.8rem;
   padding: 0.25rem 0.1rem; border-bottom: 1px solid var(--border); color: var(--text-primary);
 }
-
 /* stat tile net colouring */
 #inv-stat-net.inv-net-pos { color: var(--accent); }
 #inv-stat-net.inv-net-neg { color: #e0655f; }
-
 @media (max-width: 560px) {
   .inv-item-pl { order: 5; flex-basis: 100%; justify-content: space-between; margin-top: 0.3rem; }
 .inv-pl-col { align-items: center; flex: 1; }
 }
-
 /* ---- Inventory: collection value over time ---- */
 .inv-networth {
   background: var(--card-gradient); border: 1px solid var(--border);
@@ -8505,7 +8078,6 @@ footer {
 .inv-networth-nums { flex: 1 0 100%; gap: 1.75rem; margin-top: 0.35rem; }
 .inv-nw-stat { align-items: flex-start; }
 }
-
 /* Print-run badge on similar comps (main sold popup + checklist panels) */
 .card-pr-badge {
   display: inline-block; margin-left: 0.4rem; padding: 0.05rem 0.4rem;
@@ -8514,7 +8086,6 @@ footer {
   vertical-align: middle; white-space: nowrap;
 }
 .cl-item-info .card-pr-badge { margin-left: 0; font-size: 0.66rem; padding: 0.02rem 0.35rem; }
-
 /* ---- Inventory: photo crop / adjust modal ---- */
 .inv-crop-hint { color: var(--text-secondary); font-size: 0.82rem; text-align: center; margin: 0 0 0.5rem; }
 .inv-crop-stage {
@@ -8538,14 +8109,11 @@ footer {
 .inv-crop-handle.br { right: -10px; bottom: -10px; cursor: nwse-resize; }
 .inv-crop-actions { display: flex; gap: 0.5rem; margin-top: 0.85rem; }
 .inv-crop-actions button { flex: 1; margin: 0; }
-
 /* Purchase (cash → card) history badge + disabled got-cash tab */
 .inv-hist-bought { color: #e0a85f; background: rgba(224, 168, 95, 0.12); border: 1px solid rgba(224, 168, 95, 0.35); }
 .inv-sale-tab-disabled { opacity: 0.4; cursor: not-allowed; }
-
 /* Inventory reset (destructive) */
 .inv-reset-btn:hover { border-color: #e0655f; color: #e0655f; }
-
 /* Sale/trade: card+cash checkbox rows + multi-part history sides */
 .inv-sale-substep { font-weight: 500; font-size: 0.72rem; color: var(--text-muted); }
 .inv-sale-checks { display: flex; gap: 1.25rem; margin: 0.15rem 0 0.6rem; }
@@ -8555,7 +8123,8 @@ footer {
 .inv-hist-cardcell { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
 .inv-hist-plus { color: var(--text-muted); font-weight: 700; }
 .inv-networth-now.inv-networth-neg { color: #e0655f; }
-.settings-label-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; padding: 0.05rem 0.4rem; margin-left: 0.35rem; vertical-align: middle; }/* ---- Market pulse: sold-sales snapshot under the search bar ---- */
+.settings-label-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; padding: 0.05rem 0.4rem; margin-left: 0.35rem; vertical-align: middle; }
+/* ---- Market pulse: sold-sales snapshot under the search bar ---- */
 .market-pulse {
   background: var(--card-gradient); border: 1px solid var(--border);
   border-radius: 12px; padding: 0.8rem 0.9rem; margin-top: 0.9rem;
@@ -8571,30 +8140,26 @@ footer {
 .mp-period:hover { color: var(--text-primary); border-color: var(--accent); }
 .mp-period.active { background: var(--accent); border-color: var(--accent); color: #0b1120; }
 .mp-loading { color: var(--text-muted); font-size: 0.8rem; padding: 0.5rem 0; }
-
 /* Headline sale — the fun bit, so it gets the visual weight */
 
 .mp-figures { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .mp-figure { display: flex; flex-direction: column; }
 .mp-figure-n { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
 .mp-figure-k { font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
-
 @media (max-width: 560px) {
   .mp-lists { grid-template-columns: 1fr; gap: 0.75rem; }
 .mp-figures { gap: 1.1rem; }
-  /* Single column so the label can't wrap around the price column. Price
+/* Single column so the label can't wrap around the price column. Price
      leads, since that's the number people are here for. */
   .mp-grail { grid-template-columns: 1fr; gap: 0.1rem; }
 .mp-grail-price { grid-column: 1; grid-row: auto; font-size: 1.45rem; order: -1; }
 .mp-grail-tag { order: -2; }
 }
-
 /* ---- Market pulse: card tiles ---- */
 .mp-section { margin-top: 0.85rem; }
 .mp-section-head { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.45rem; }
 .mp-section-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-primary); }
 .mp-section-sub { font-size: 0.64rem; color: var(--text-muted); }
-
 /* minmax(0, 1fr), not 1fr: a bare 1fr floors each column at its content's
    min-content width, so a long card name pushes the columns wider than the
    grid and the tiles spill past their neighbours — at 320px it took the
@@ -8635,7 +8200,6 @@ footer {
 }
 .mp-tile-meta { font-size: 0.63rem; color: var(--text-muted); min-width: 0; overflow-wrap: anywhere; }
 .mp-tile-price { min-width: 0; overflow-wrap: anywhere; }
-
 @media (max-width: 560px) {
   .mp-tiles { gap: 0.45rem; }
 .mp-tile { padding: 0.4rem; }
@@ -8643,7 +8207,6 @@ footer {
 .mp-tile-name { font-size: 0.65rem; }
 .mp-figures { gap: 1.1rem; }
 }
-
 /* ---- Card analysis: our own sale history inside the card modal ---- */
 .card-analysis { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
 .ca-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
@@ -8654,19 +8217,16 @@ footer {
 .ca-chg.down { color: #e0655f; background: rgba(224,101,95,0.12); }
 .ca-chart-wrap { position: relative; height: 190px; }
 .ca-note { font-size: 0.64rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4; }
-
 /* ---- Card analysis: grade selector ---- */
 .ca-chart-empty {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   text-align: center; font-size: 0.72rem; color: var(--text-muted); margin: 0; padding: 0 1rem;
 }
-
 /* ---- Card analysis: grade selector + selected-grade headline ---- */
 .ca-chart-head {
   display: flex; align-items: center; gap: 0.6rem;
   flex-wrap: wrap; margin-bottom: 0.7rem;
 }
-
 /* Native select, restyled: appearance:none plus our own chevron, so it matches
    the app instead of inheriting the OS control. */
 .ca-grade-select {
@@ -8689,7 +8249,6 @@ footer {
 .ca-stat { display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
 .ca-stat-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
 .ca-stat-n { font-size: 0.68rem; color: var(--text-muted); }
-
 /* ---- Card analysis: sold + for-sale listing rows ---- */
 
 .ca-row {
@@ -8707,7 +8266,6 @@ footer {
 .ca-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; white-space: nowrap; }
 .ca-row-price { font-size: 0.82rem; font-weight: 800; color: var(--accent); }
 .ca-row-date { font-size: 0.62rem; color: var(--text-muted); }
-
 /* ---- Card analysis: Sold / For Sale tabs + scrolling list ---- */
 .ca-tabs { display: flex; gap: 0.3rem; margin: 0.9rem 0 0.5rem; }
 .ca-tab {
@@ -8718,7 +8276,6 @@ footer {
 }
 .ca-tab:hover { color: var(--text-primary); border-color: var(--accent); }
 .ca-tab.active { background: var(--accent); border-color: var(--accent); color: #0b1120; }
-
 /* Fixed height so the modal can't grow without bound as sale counts rise —
    the list scrolls inside instead of pushing the page. */
 .ca-list-body {
@@ -8732,7 +8289,6 @@ footer {
 .ca-list-body::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
 .ca-list-empty { font-size: 0.72rem; color: var(--text-muted); text-align: center; padding: 1.4rem 0.8rem; margin: 0; }
 .ca-list-more { font-size: 0.64rem; color: var(--text-muted); text-align: center; padding: 0.5rem 0 0.25rem; margin: 0; }
-
 /* ---- "View price history" cue on results that have card analytics ---- */
 /* Not a separate control: the whole card already opens the modal that holds
    the history. This exists so the feature is discoverable rather than found
@@ -8746,7 +8302,6 @@ footer {
   letter-spacing: 0.01em; white-space: nowrap;
 }
 .card:hover .card-analytics-cue { background: rgba(94, 206, 153, 0.2); border-color: var(--accent); }
-
 /* ---- BCW affiliate promo in the card modal's left column ---- */
 /* Sits under the photo, in the space the card ratio leaves behind. The column
    is only 220px wide, so this stacks vertically rather than reusing the wide
@@ -8778,7 +8333,6 @@ footer {
   font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--text-muted); opacity: 0.7;
 }
-
 /* ---- Market Index view ---- */
 .market-view { padding: 1.5rem 1rem 3rem; }
 .market-container { max-width: 900px; margin: 0 auto; }
@@ -8800,7 +8354,6 @@ footer {
 .market-loading, .market-empty { text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; }
 .market-empty-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.4rem; }
 .market-empty-text { font-size: 0.82rem; margin: 0; max-width: 34rem; margin-inline: auto; line-height: 1.5; }
-
 /* Score card. The band colour is a read of the number, so it changes with it. */
 .market-score-card {
   border: 1px solid var(--border-primary); border-radius: var(--radius-xl);
@@ -8856,13 +8409,11 @@ footer {
 .market-notes p:last-child { margin-bottom: 0; }
 .market-notes strong { color: var(--text-secondary); }
 .market-notes .market-warn strong { color: #f0ad4e; }
-
 @media (max-width: 700px) {
   .market-components { grid-template-columns: 1fr; }
 .market-score-num { font-size: 2.8rem; }
 .market-header { flex-direction: column; align-items: stretch; }
 }
-
 /* ---- Market: player search ---- */
 .market-search { position: relative; margin-bottom: 1rem; }
 .market-search-box { position: relative; }
@@ -8912,7 +8463,6 @@ footer {
   font-size: 0.74rem; font-weight: 700; cursor: pointer; padding: 2px 4px;
 }
 .market-scope-back:hover { text-decoration: underline; }
-
 /* ---- Recommended price (card modal) ---- */
 .ca-price {
   border: 1px solid var(--accent-border); border-radius: 12px;
@@ -8938,7 +8488,6 @@ footer {
 .ca-price-value + .ca-price-range { font-size: 0.74rem; font-weight: 600; color: var(--text-muted); }
 .ca-price-how { font-size: 0.68rem; color: var(--text-muted); line-height: 1.45; margin: 0.4rem 0 0; }
 .ca-price-how strong { color: var(--text-secondary); }
-
 /* ---- Chart point readout ---- */
 /* Pinned value for a tapped data point, shared by every chart that has one. */
 .chart-readout {
@@ -8952,7 +8501,6 @@ footer {
 .chart-readout-value { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
 .chart-readout-note { font-size: 0.66rem; color: var(--text-muted); }
 .chart-readout-hint { font-size: 0.62rem; color: var(--text-muted); margin: 0.35rem 0 0; opacity: 0.75; }
-
 /* ---- Estimated price on an empty search ---- */
 .qe-loading { font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 0.5rem 0 0; }
 .qe-card {
@@ -8969,12 +8517,10 @@ footer {
 .qe-mid { font-size: 0.74rem; color: var(--text-muted); }
 .qe-how { font-size: 0.7rem; color: var(--text-muted); line-height: 1.45; margin: 0.4rem 0 0; }
 .qe-grades { font-size: 0.66rem; color: var(--text-muted); margin: 0.35rem 0 0; opacity: 0.85; }
-
 /* ---- First-run guided tour ---- */
 .tour { position: fixed; inset: 0; z-index: 4000; }
 .tour.hidden { display: none; }
 body.tour-open { overflow: hidden; }
-
 /* The backdrop is a huge outward shadow cast by the spotlight, so the hole
    tracks the target exactly without needing an SVG mask or four separate
    panels around it. */
@@ -9017,11 +8563,9 @@ body.tour-open { overflow: hidden; }
   white-space: nowrap;
 }
 .tour-replay-btn:hover { background: rgba(94, 206, 153, 0.16); }
-
 @media (prefers-reduced-motion: reduce) {
   .tour-spot, .tour-pop { transition: none; }
 }
-
 /* ---- Site announcement banner ---- */
 .site-banner {
   display: flex; align-items: stretch;
@@ -9033,7 +8577,6 @@ body.tour-open { overflow: hidden; }
   border-bottom: 1px solid var(--accent-border);
 }
 .site-banner.hidden { display: none; }
-
 /* The whole strip is the control, so the click target matches what it looks
    like. A button (not an anchor) because this routes inside the SPA. */
 .site-banner-link {
@@ -9061,18 +8604,16 @@ body.tour-open { overflow: hidden; }
   font-size: 1.15rem; line-height: 1; cursor: pointer; padding: 0 0.75rem;
 }
 .site-banner-x:hover { color: var(--text-primary); }
-
 @media (max-width: 640px) {
   /* The CTA is redundant once the whole strip is tappable, and dropping it
      keeps the announcement to one line on a phone. */
   .site-banner-cta { display: none; }
-  /* Take the whole line and wrap within it, rather than sitting beside the
+/* Take the whole line and wrap within it, rather than sitting beside the
      tag and being pushed wider than the viewport. */
   .site-banner-text { flex: 1 1 100%; font-size: 0.72rem; overflow-wrap: anywhere; }
 .site-banner-tag { flex: 0 0 auto; }
 .site-banner-link { padding: 0.5rem 0.4rem 0.5rem 0.75rem; gap: 0.45rem; }
 }
-
 /* ---- Your data: export + account deletion ------------------------------- */
 .settings-data-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
 .settings-data-btn {
@@ -9137,7 +8678,6 @@ body.tour-open { overflow: hidden; }
 .da-confirm-btn { background: #dc2626; color: #fff; border-color: #dc2626; }
 .da-confirm-btn:hover { background: #b91c1c; border-color: #b91c1c; }
 .da-confirm-btn:disabled { opacity: 0.6; cursor: default; }
-
 /* ---- Market basket: the cards behind the index ------------------------- */
 .market-basket {
   background: var(--bg-secondary);
@@ -9201,16 +8741,14 @@ body.tour-open { overflow: hidden; }
 .mb-change.flat { color: var(--text-muted); }
 [data-theme="light"] .mb-change.down { color: #b91c1c; }
 .market-basket-note { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.5; margin: 0.7rem 0 0; }
-
 /* Stack the numbers under the card name on narrow screens rather than
    squeezing four columns into 320px. */
 @media (max-width: 560px) {
   .market-basket-row { grid-template-columns: auto minmax(0, 1fr) auto auto; }
-  .mb-thumb { grid-row: 1 / span 2; }
-  .mb-card { grid-column: 2 / -1; }
-  .mb-change { text-align: right; }
+.mb-thumb { grid-row: 1 / span 2; }
+.mb-card { grid-column: 2 / -1; }
+.mb-change { text-align: right; }
 }
-
 /* ---- Market pulse: row sections (movers, sets) ----
    Rows rather than photo tiles. Three sections of identical tiles read as one
    undifferentiated wall, and for a mover the number is the point, not the
@@ -9228,34 +8766,29 @@ body.tour-open { overflow: hidden; }
 .mp-row-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
 .mp-row-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
 .mp-row-n { font-size: 0.78rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
-
 /* Down is a direction, not an error, so it gets its own colour rather than
    borrowing whatever the app uses for failure. */
 .mp-change { font-size: 0.8rem; font-weight: 800; white-space: nowrap; }
 .mp-change.up { color: #22c55e; }
 .mp-change.down { color: #f87171; }
 .mp-change.flat { color: var(--text-muted); }
-
 .mp-seeall {
   margin-left: auto; background: none; border: none; cursor: pointer; padding: 0;
   font-size: 0.66rem; font-weight: 700; color: var(--accent); white-space: nowrap;
 }
 .mp-seeall:hover { text-decoration: underline; }
-
 @media (max-width: 560px) {
   /* The meta column is the first thing worth losing: the name and the number
      are what the row is for. */
   .mp-row { grid-template-columns: minmax(0, 1fr) auto; }
-  .mp-row-meta { display: none; }
+.mp-row-meta { display: none; }
 }
-
 /* ---- Leaderboards (/stats) ---- */
 .stats-view { padding: 1rem 0 3rem; }
 .stats-container { max-width: 900px; margin: 0 auto; padding: 0 1rem; }
 .stats-header { margin: 0.5rem 0 1rem; }
 .stats-h2 { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin: 0 0 0.2rem; }
 .stats-sub { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
-
 .stats-boards, .stats-periods { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
 .st-tab, .st-period {
   background: rgba(148, 163, 184, 0.06); border: 1px solid var(--border);
@@ -9266,7 +8799,6 @@ body.tour-open { overflow: hidden; }
   background: var(--accent); border-color: var(--accent); color: #0b1020;
 }
 .st-period { padding: 0.25rem 0.6rem; font-size: 0.7rem; }
-
 /* The note explaining what a board filtered out. Small, but it is the
    difference between a ranking and a ranking you can trust. */
 .stats-basis {
@@ -9274,7 +8806,6 @@ body.tour-open { overflow: hidden; }
   margin: 0 0 0.75rem; max-width: 70ch;
 }
 .stats-empty { font-size: 0.85rem; color: var(--text-muted); padding: 1.5rem 0; }
-
 .st-rows { display: flex; flex-direction: column; gap: 0.25rem; }
 .st-row {
   display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto auto;
@@ -9288,7 +8819,6 @@ body.tour-open { overflow: hidden; }
 .st-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
 .st-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
 .st-n { font-size: 0.85rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
-
 /* Card photo on the boards that have one. The extra column exists only on
    those rows — topSets lists whole sets, and one card standing in for a
    thousand would be worse than no picture. */
@@ -9309,15 +8839,13 @@ body.tour-open { overflow: hidden; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; display: block;
 }
-
 @media (max-width: 560px) {
   /* Rank, name and the number survive; the meta line is the one that would
      force horizontal scroll on a phone. */
   .st-row { grid-template-columns: 1.4rem minmax(0, 1fr) auto; }
-  .st-row-img { grid-template-columns: 1.4rem 1.9rem minmax(0, 1fr) auto; }
-  .st-meta { display: none; }
+.st-row-img { grid-template-columns: 1.4rem 1.9rem minmax(0, 1fr) auto; }
+.st-meta { display: none; }
 }
-
 /* Available to assistive technology and to crawlers, absent visually. Used for
    the homepage <h1>, where the visible heading is a logo image. Clip-based
    rather than display:none, which screen readers skip entirely. */
