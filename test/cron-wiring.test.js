@@ -18,6 +18,28 @@ const path = require('path');
 const workerSrc = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
 const serverSrc = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 
+// Locating a function's body in server.js. Module scope because two separate
+// checks need it; the first version scoped it inside one block and the second
+// could not see it.
+const rawBodyOf = (name) => {
+  const start = serverSrc.indexOf(`async function ${name}`);
+  if (start === -1) return '';
+  const next = serverSrc.indexOf('\nasync function ', start + 1);
+  return serverSrc.slice(start, next === -1 ? serverSrc.length : next);
+};
+
+// Follow a one-hop delegation.
+//
+// The D1 usage accounting wraps each scheduled job so its queries can be
+// attributed — buildPriceBlocks now just calls _buildPriceBlocks inside a
+// label. Reading the wrapper and concluding the marker is missing is a guard
+// failing on a rename rather than on a regression, which is what it did.
+const bodyOf = (name) => {
+  const body = rawBodyOf(name);
+  const hop = body.match(/_asD1Source\('[^']+',\s*\(\)\s*=>\s*(_\w+)\(/);
+  return hop ? rawBodyOf(hop[1]) : body;
+};
+
 let failures = 0;
 const check = (label, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? '  — ' + detail : ''}`);
@@ -145,23 +167,6 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
   // end of this function into buildPriceBlocks — where the same constant
   // appears — so deleting the check here still "passed". A guard that reads
   // the next function's source is not a guard.
-  const rawBodyOf = (name) => {
-    const start = src.indexOf(`async function ${name}`);
-    if (start === -1) return '';
-    const next = src.indexOf('\nasync function ', start + 1);
-    return src.slice(start, next === -1 ? src.length : next);
-  };
-  // Follow a one-hop delegation.
-  //
-  // The D1 usage accounting wraps each scheduled job so its queries can be
-  // attributed — buildPriceBlocks now just calls _buildPriceBlocks inside a
-  // label. Reading the wrapper and concluding the marker is missing is a guard
-  // failing on a rename rather than on a regression, which is what it did.
-  const bodyOf = (name) => {
-    const body = rawBodyOf(name);
-    const hop = body.match(/_asD1Source\('[^']+',\s*\(\)\s*=>\s*(_\w+)\(/);
-    return hop ? rawBodyOf(hop[1]) : body;
-  };
   const fn = bodyOf('priceBlocksMissing');
   check('the reactive rebuild is gated on more than "is the map missing"',
     /ATTEMPT_KEY/.test(fn),
@@ -189,6 +194,92 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
   check('  ...capping a broken build to a few scans a day, not ninety-six',
     m && worst <= 6,
     `${worst} attempts/day worst case` + (m ? ` (retry window ${m[1]}s)` : ''));
+}
+
+// ---- the alias backfill must not pay full price to learn there is nothing to do ----
+//
+// Measured on one day: 20,219,058 rows read across 19 runs — 1.06M per run,
+// more than twice the whole sales table — against 73,416 for the photo archive
+// over 72 runs. _normCol() wraps the player column so idx_sales_player cannot
+// be used, and the NOT EXISTS runs as a correlated lookup per row; then it
+// groups and sorts. That cost is paid in full even when the answer is
+// "nothing new", which it is almost every hour once the table has filled.
+{
+  const body = bodyOf('backfillPlayerAliases');
+
+  // The READ, specifically. An earlier version of this check looked for the
+  // constant anywhere in the function, and deleting the whole skip left it
+  // passing — because the write at the bottom still names the same key. A
+  // marker nothing ever reads saves nothing.
+  const readAt = body.indexOf('cacheGet(ALIAS_CAUGHTUP_KEY)');
+  check('the backfill checks whether it is already caught up',
+    readAt !== -1,
+    'without it, every hour costs a million rows to be told there is no work');
+
+  // Before the query, or it saves nothing at all.
+  const queryAt = body.indexOf('db.prepare');
+  check('  ...before running the query, not after',
+    readAt !== -1 && queryAt !== -1 && readAt < queryAt,
+    'a check that runs after the scan has already paid for the scan');
+
+  // And something has to write it. A read against a key nobody sets is a
+  // permanent miss: the scan runs every hour exactly as it does today, and
+  // every check above still passes.
+  check('  ...and a run that finds nothing records that it is caught up',
+    /cachePut\(ALIAS_CAUGHTUP_KEY/.test(body),
+    'a marker that is never written is a skip that never happens');
+
+  // It has to expire. A permanent marker would mean a quiet week wedges the
+  // backfill off and new spellings are never picked up again.
+  const ttl = serverSrc.match(/const ALIAS_CAUGHTUP_TTL = ([^;]+);/);
+  check('  ...and the caught-up marker expires within a day',
+    !!ttl && eval(ttl[1]) <= 86400 && eval(ttl[1]) >= 3600,
+    ttl ? `${eval(ttl[1])}s` : 'no TTL found');
+
+  // A test passing its own resolver must still exercise the real path, so the
+  // skip itself has to sit inside the !resolve guard — not merely somewhere in
+  // the same function, which the write below also satisfies.
+  check('  ...and a caller with its own resolver is never skipped',
+    /if \(!resolve\)\s*\{[\s\S]{0,240}?cacheGet\(ALIAS_CAUGHTUP_KEY\)/.test(body),
+    'otherwise the tests would stop covering the work they exist to cover');
+}
+
+// ---- the cron must keep its own KV writes alive ----
+//
+// cachePut() never returns its promise; it hands it to globalThis.__kvWaitUntil
+// so the runtime holds the invocation open until the write lands. fetch() set
+// that and scheduled() did not, so every KV write from the cron was a floating
+// promise — and because globalThis survives across invocations in a warm
+// isolate, a cron following a request would call waitUntil on that request's
+// finalized ctx, throw, and have it swallowed. Survival depended on what else
+// had just run in the same isolate.
+//
+// Both markers this file checks above — caught-up and price-block-attempt —
+// are written from the cron. Neither gate works if its write evaporates.
+{
+  // Comments stripped first, and not as a nicety.
+  //
+  // The first version of this scanned the raw source, and the explanation
+  // written directly above the binding names __kvWaitUntil four times. Deleting
+  // the binding outright still "passed" two of the three checks, and moving it
+  // after the jobs passed all three — the guard was reading the paragraph that
+  // describes the fix rather than the fix. Prose cannot keep a promise alive.
+  const stripped = workerSrc
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+  const sched = stripped.slice(stripped.indexOf('async scheduled('));
+  const bindAt = sched.search(/globalThis\.__kvWaitUntil\s*=/);
+  const bodyAt = sched.indexOf('await init(env)');
+  check('the cron binds waitUntil so its KV writes survive',
+    bindAt !== -1,
+    'without it every cachePut from the cron is a promise nothing is holding');
+  check('  ...before it runs any job, not after',
+    bindAt !== -1 && bodyAt !== -1 && bindAt < bodyAt,
+    'a binding installed after the work has already lost the early writes');
+  // Its own ctx, not whatever a previous request left behind.
+  check('  ...using this invocation\'s ctx',
+    /globalThis\.__kvWaitUntil\s*=\s*\(promise\)\s*=>\s*\{[\s\S]{0,120}?ctx\.waitUntil\(promise\)/.test(sched),
+    'a stale ctx from an earlier request throws and the write is dropped');
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall cron-wiring checks passed');

@@ -3218,10 +3218,40 @@ async function backfillPlayerAliases(opts) {
   return _asD1Source('alias-backfill', () => _backfillPlayerAliases(opts || {}));
 }
 
+// Caught up, and how long to take that for granted.
+//
+// The backfill reads 1.06 million rows per run — more than twice the table —
+// because _normCol() wraps the player column so idx_sales_player cannot be
+// used, and the NOT EXISTS runs as a correlated lookup for every row. Then it
+// groups and sorts. That is the price of ASKING, and it is paid in full even
+// when the answer is "nothing new", which is the answer almost every hour once
+// the table has filled.
+//
+// Measured: 20,219,058 rows in 19 runs in one day, against 73,416 for the
+// photo archive in 72 runs. It was not close.
+//
+// So when a run comes back with nothing left to do, the next 23 hours skip the
+// query entirely. New sales arrive daily and bring new spellings with them, so
+// a daily pass keeps up; the marker expires on its own, which means a quiet
+// period cannot wedge it off permanently.
+const ALIAS_CAUGHTUP_KEY = 'alias:caughtup:v1';
+const ALIAS_CAUGHTUP_TTL = 60 * 60 * 23;
+
 async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = null } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   if (!await _aliasEnsure(db)) return { ok: false, reason: 'table unavailable' };
+
+  // Before the expensive part, and deliberately not after it: the whole point
+  // is to avoid the scan, so a check that runs afterwards would save nothing.
+  // A caller passing its own resolver is a test, and tests are never skipped.
+  if (!resolve) {
+    try {
+      if (await cacheGet(ALIAS_CAUGHTUP_KEY)) {
+        return { ok: true, skipped: 'caught up within the last day' };
+      }
+    } catch (_) { /* unreadable marker: do the work rather than skip wrongly */ }
+  }
 
   const P = _normCol('player');
   const since = _mkIso(_mkDay(new Date().toISOString()) - ALIAS_WINDOW_DAYS);
@@ -3243,7 +3273,15 @@ async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = 
   }
 
   const list = (rows && rows.results) || [];
-  if (!list.length) return { ok: true, done: true, inserted: 0 };
+  if (!list.length) {
+    // Nothing left. Record it so the next 23 hours cost one KV read instead of
+    // another million rows.
+    if (!resolve) {
+      try { await cachePut(ALIAS_CAUGHTUP_KEY, { at: new Date().toISOString() }, ALIAS_CAUGHTUP_TTL); }
+      catch (_) { /* worst case it runs again next hour, as it does today */ }
+    }
+    return { ok: true, done: true, inserted: 0 };
+  }
   // Injected by the caller, because the dictionary is not in the Worker bundle.
   // Tests pass the real resolver so the whole path is still exercised; the cron
   // has none to give and says so rather than writing rows it cannot fill.
