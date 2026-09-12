@@ -271,6 +271,26 @@ check('sendIfSoldBlocked forwards the reason rather than dropping it',
     'otherwise the tests would stop covering the work they exist to cover');
 }
 
+// ---- the skip has to be observable, and observable through the same key ----
+//
+// /api/debug/d1-usage reports whether the backfill is currently skipping,
+// because the daily row counts only answer that a day later. The failure mode
+// is not a crash: if the endpoint read a different key than the backfill
+// writes, it would report "not caught up" forever while the skip worked
+// perfectly — or worse, the reverse. /api/debug/price-blocks already did
+// exactly this once, reporting a build as still running because it read its own
+// marker back before KV had converged.
+{
+  const usage = serverSrc.slice(serverSrc.indexOf("app.get('/api/debug/d1-usage'"));
+  const endpoint = usage.slice(0, usage.indexOf('\napp.get('));
+  check('the D1 usage endpoint reports whether the backfill is skipping',
+    /cacheGet\(ALIAS_CAUGHTUP_KEY\)/.test(endpoint),
+    'otherwise the fix cannot be confirmed until a full day of counts has passed');
+  check('  ...reading the same constant the backfill writes',
+    /ALIAS_CAUGHTUP_KEY/.test(bodyOf('backfillPlayerAliases')),
+    'a diagnostic on a different key reports confidently and wrongly');
+}
+
 // ---- the cron must keep its own KV writes alive ----
 //
 // cachePut() never returns its promise; it hands it to globalThis.__kvWaitUntil

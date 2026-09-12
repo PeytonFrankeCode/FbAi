@@ -5139,8 +5139,34 @@ app.get('/api/debug/d1-usage', async (req, res) => {
     }
   } catch (_) { /* reported as an empty history rather than an error */ }
   const worst = days[0] && Object.entries(days[0].bySource)[0];
+
+  // Is the alias backfill actually skipping, right now?
+  //
+  // The daily buckets above only answer that tomorrow — a full day has to pass
+  // before the query count is comparable. This reads the marker itself, so the
+  // fix can be confirmed within an hour of the run that sets it instead of
+  // waiting for the next day's total.
+  //
+  // Absent is not a failure on its own: the marker lasts 23 hours and is taken
+  // by the first run that drains the table, so a fresh deploy legitimately
+  // shows "not set" until that run happens. What would be wrong is today's
+  // alias-backfill query count still climbing past a couple while this says
+  // it is set.
+  let aliasSkip;
+  try {
+    const mark = await cacheGet(ALIAS_CAUGHTUP_KEY);
+    aliasSkip = mark
+      ? { caughtUp: true, at: mark.at, drained: mark.drained,
+          meaning: 'the hourly backfill is skipping its 1.06M-row scan until this expires' }
+      : { caughtUp: false,
+          meaning: 'no marker — the next alias tick (minute <15 of an hour) will scan, and will set this if it drains the table' };
+  } catch (_) {
+    aliasSkip = { caughtUp: null, meaning: 'marker unreadable' };
+  }
+
   res.locals.d1Daily = {
     days,
+    aliasBackfill: aliasSkip,
     // 25 billion a month is the included allowance; a day's share of it is the
     // line a sustained rate should be judged against.
     dailyShareOfIncluded: Math.round(25e9 / 30).toLocaleString('en-US'),
