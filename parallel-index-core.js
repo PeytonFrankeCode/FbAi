@@ -38,6 +38,42 @@ function norm(s) {
     .trim();
 }
 
+// A key for deciding whether two spellings name the SAME parallel, used to
+// group one card's sales together.
+//
+// The vocabulary holds "Silver" and "Silver Prizm" as separate entries, because
+// different products name the same idea differently, and the 2017 Prizm
+// checklist writes its parallels the other way round again — "Prizm Gold
+// Vinyl", where a seller types "Gold Vinyl Prizm". Reading a title therefore
+// returns whichever spelling happened to match, and grouping on the raw answer
+// splits one card's sales across two or three piles. That is exactly what left
+// a card showing two sales when it had five.
+//
+// So the product word is stripped from either end. This is not a new rule:
+// variants() above already indexes "X Prizm" under "X" for lookup, so the
+// vocabulary has always treated them as one name. This applies the same rule at
+// grouping time.
+//
+// WHY STRIPPING THIS HARD IS SAFE HERE, AND ONLY HERE: these keys are never
+// compared globally. They are compared only between sales that already share a
+// player, a year, a set and a card number — so "Red" colliding with some other
+// product's "Red" cannot happen, because the other product is a different set
+// and never reaches the same comparison. A global lookup could not do this.
+//
+// The guard against emptying the string matters: "Prizm" and "Refractor" ARE
+// the parallel in their own products, and reducing either to nothing would
+// merge it into the base card — the single most expensive mistake available
+// here, since it puts a parallel's price into the base card's median.
+const PRODUCT_WORD = new Set(['prizm', 'prizms', 'refractor', 'refractors',
+                              'parallel', 'parallels']);
+
+function parallelKey(name) {
+  const toks = norm(name).split(' ').filter(Boolean);
+  while (toks.length > 1 && PRODUCT_WORD.has(toks[toks.length - 1])) toks.pop();
+  while (toks.length > 1 && PRODUCT_WORD.has(toks[0])) toks.shift();
+  return toks.join(' ');
+}
+
 function createParallelIndex(PARALLELS, resolvePlayer) {
 
 // Checklists write "Silver Prizms", sellers write "Silver Prizm". Both forms go
@@ -398,4 +434,4 @@ function resolveParallel(title, opts = {}) {
   };
 }
 
-module.exports = { createParallelIndex, norm };
+module.exports = { createParallelIndex, norm, parallelKey };
