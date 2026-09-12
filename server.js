@@ -40,7 +40,11 @@ const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserDat
 // In Node there is no assets binding, so the committed files are read directly
 // and the same resolvers are built from them — which is what the tests drive.
 const { createCardIndex } = require('./card-index-core');
-const { createParallelIndex } = require('./parallel-index-core');
+const { createParallelIndex, parallelKey: _parallelKey } = require('./parallel-index-core');
+// Grade bucketing, split out so it can be tested directly. It decides the
+// "Ungraded" badge on every sold tile AND which sales reach the Raw price
+// series, and it was calling every PSA10/BGS9.5 slab raw — see grade-core.js.
+const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./grade-core');
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys,
 } = require('./set-key');
@@ -5986,35 +5990,21 @@ app.get('/api/sold-stats', async (req, res) => {
 // sell that week, so each grade gets its own series and its own stats.
 const CARD_ANALYSIS_TTL = 1800; // 30m
 
-// Grading companies, as they appear in listing titles. Word-bounded so
-// "PSA" can't match inside another word.
-const GRADER_RE = /\b(PSA|BGS|BCCG|BECKETT|SGC|CGC|CSG|HGA|TAG|ISA|GMA|KSA|AGS|RCG|MNT)\b/i;
-// Phrases that only appear on encapsulated cards. Deliberately excludes bare
-// "mint" and "gem mint", which raw listings use constantly as condition claims.
-const SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|ificate|ified)?\s*#?\s*\d)/i;
-// An explicit raw claim outranks a grader mention, so "raw, PSA 10 candidate"
-// and "ungraded — would grade BGS 9.5" stay where they belong.
-const RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
-
-// Which price series a sale belongs to.
+// How far one card's prices may spread before a trend across them is refused.
 //
-// A null grade does NOT mean raw — it means the collector's parser didn't
-// extract one, which happens both for genuinely raw cards and for slabs whose
-// titles it couldn't read. Treating the whole null set as "Raw" drags slab
-// prices into the raw median, which is exactly the failure this guards
-// against: graded buckets stay clean because they only ever contain
-// successfully parsed rows, so every miss lands in Raw.
-function _gradeBucket(r) {
-  if (r.grade != null && r.grade !== '') {
-    const g = String(r.grade).replace(/\.0$/, '');
-    return `${(r.grader || '').toUpperCase()} ${g}`.trim();
-  }
-  const title = String(r.title || '');
-  if (RAW_RE.test(title)) return 'Raw';
-  // A grader column with no grade is still unambiguously a slab.
-  if (r.grader || GRADER_RE.test(title) || SLAB_RE.test(title)) return 'Graded (ungraded number)';
-  return 'Raw';
-}
+// Within ONE parallel at ONE grade, a 40x range is already generous — it covers
+// a beaten copy against a clean one, an auction that ended at 3am against a
+// patient BIN. Beyond it the bucket is not describing a single card, and the
+// honest output is no percentage rather than a confident one.
+const PRICE_SPREAD_MAX = 40;
+
+// Which price series a sale belongs to. See grade-core.js — it lives there so
+// it can be tested directly, which is how the PSA10 hole was found: the old
+// test here was /\b(PSA|BGS|...)\b/, and \b cannot match between "PSA" and
+// "10" because both sides are word characters. Every slab listed with the
+// grader hard against its number — one of the commonest spellings on eBay —
+// was being called Raw, both in this chart and on the sold tiles.
+const _gradeBucket = _gradeBucketCore;
 
 function _median(sorted) {
   if (!sorted.length) return null;
@@ -6192,8 +6182,14 @@ app.get('/api/card-analysis', async (req, res) => {
   if (!db) return res.json({ available: false, reason: 'no-dataset' });
 
   // v2: the payload now carries price estimates, so a warm v1 entry
-    // would serve the new UI a shape with no estimate in it.
-    const cacheKey = `cardanalysis:v2:${itemId}`;
+  // would serve the new UI a shape with no estimate in it.
+  //
+  // v3: the GROUPING changed, not just the shape. Entries written by v2 hold
+  // the old identity — 1/1 autos merged into base cards, one card's sales split
+  // across spellings, slabs counted as raw — and they would keep being served
+  // for the full TTL after this deploys, which is indistinguishable from the
+  // fix not having shipped.
+  const cacheKey = `cardanalysis:v3:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -6210,8 +6206,24 @@ app.get('/api/card-analysis', async (req, res) => {
       return res.json(out);
     }
 
-    // NULL-safe matching: `parallel IS NULL` and `card_number IS NULL` are
-    // ordinary states (base cards, unnumbered), and `= NULL` never matches.
+    // NULL-safe matching: `card_number IS NULL` is an ordinary state
+    // (unnumbered cards), and `= NULL` never matches.
+    //
+    // PARALLEL IS DELIBERATELY NOT IN THIS WHERE CLAUSE ANY MORE.
+    //
+    // It used to be, and matching on it broke the grouping in both directions
+    // at once. Only 48.4% of priced sales carry a parallel in the column, so
+    // `parallel IS NULL OR parallel = ''` was not the base card — it was the
+    // base card PLUS every card whose parallel the collector failed to parse.
+    // A 1/1 Gold Vinyl auto landed in the same bucket as a $3 base card, and
+    // the "trend" across that bucket read as a 44,446,000% rise. Meanwhile a
+    // card whose parallel WAS parsed could not match its own other sales where
+    // it was not, so one card with five sales showed two.
+    //
+    // The rest of the identity is selective enough on its own — one player, one
+    // year, one set, one card number — so the parallel is resolved per row
+    // below, from the column where it exists and from the title where it does
+    // not, and the grouping happens in JS where a title can actually be read.
     const eq = (col, val) => val == null || val === '' ? `${col} IS NULL OR ${col} = ''` : `${col} = ?`;
     const where = [
       'price_cents IS NOT NULL',
@@ -6219,11 +6231,10 @@ app.get('/api/card-analysis', async (req, res) => {
       'player = ?',
       `(${eq('year', seed.year)})`,
       `(${eq('set_name', seed.set_name)})`,
-      `(${eq('parallel', seed.parallel)})`,
       `(${eq('card_number', seed.card_number)})`,
     ].join(' AND ');
     const binds = [NFLDB_MIN_CONFIDENCE, seed.player];
-    for (const v of [seed.year, seed.set_name, seed.parallel, seed.card_number]) {
+    for (const v of [seed.year, seed.set_name, seed.card_number]) {
       if (v != null && v !== '') binds.push(v);
     }
 
@@ -6234,7 +6245,57 @@ app.get('/api/card-analysis', async (req, res) => {
        ORDER BY sold_date DESC LIMIT 2000`
     ).bind(...binds).all();
 
-    const all = (rows && rows.results) || [];
+    // Now decide which of those rows are actually THIS card.
+    //
+    // Each row's parallel comes from the column when it has one, and from the
+    // title when it does not — the same reader the market index diagnostics
+    // use. Three outcomes, and keeping them apart is the entire point:
+    //
+    //   known parallel  -> compare keys; same key, same card
+    //   positively base -> nothing after the card number and nothing before it
+    //                      either, which in a feed this structured is evidence
+    //                      of a base card rather than of a failed read
+    //   unreadable      -> NOT base, and not silently grouped with anything
+    //
+    // That last line is the fix. Treating an unreadable parallel as base is
+    // what merged the 1/1 auto into the base card, and it is the one mistake
+    // here that corrupts a price rather than merely costing sample.
+    const pi = await parallelIndex().catch(() => null);
+    const keyOf = (row) => {
+      const col = String(row.parallel == null ? '' : row.parallel).trim();
+      if (col) return { key: _parallelKey(col), known: true, from: 'column' };
+      if (!pi) return { key: null, known: false, from: 'no-reader' };
+      // Grade stripped first: the reader gives up on an unknown token, and
+      // "PSA10" is one, so a slab's parallel read as unmatched and the sale was
+      // dropped from its own card rather than merely mis-bucketed.
+      const hit = pi.resolveParallel(_stripGrade(String(row.title || '')), { player: seed.player });
+      if (hit.parallel) return { key: _parallelKey(hit.parallel), known: true, from: hit.how };
+      if (hit.how === 'base') return { key: '', known: true, from: 'base' };
+      return { key: null, known: false, from: hit.how };
+    };
+
+    const seedKey = keyOf(seed);
+    const candidates = (rows && rows.results) || [];
+    let all, unreadable = 0, excludedOtherParallel = 0;
+    if (seedKey.known) {
+      all = [];
+      for (const r of candidates) {
+        const k = keyOf(r);
+        if (!k.known) { unreadable++; continue; }
+        if (k.key !== seedKey.key) { excludedOtherParallel++; continue; }
+        all.push(r);
+      }
+    } else {
+      // The clicked sale's own parallel could not be read, so there is no key
+      // to group on. Falling back to the old column match is the honest move:
+      // it is what the page did before, its limits are stated in the payload,
+      // and inventing a grouping from a title we could not parse would be a
+      // guess presented as an identity.
+      const col = String(seed.parallel == null ? '' : seed.parallel).trim();
+      all = candidates.filter(r => String(r.parallel == null ? '' : r.parallel).trim() === col);
+      excludedOtherParallel = candidates.length - all.length;
+    }
+
     if (all.length === 0) {
       // This exact card has never sold. It can still be priced off its
       // siblings, so the modal has something useful to show rather than a
@@ -6296,12 +6357,27 @@ app.get('/api/card-analysis', async (req, res) => {
 
       // Trend: latest point against the median of everything before it, which
       // is steadier on thin data than comparing two fixed windows.
+      //
+      // Suppressed when the bucket's own prices span more than PRICE_SPREAD_MAX.
+      // A percentage change only means anything if both sides are samples of
+      // the same thing, and one card in one parallel at one grade does not
+      // trade from $3 to $900 — a spread that wide is the bucket telling you it
+      // holds more than one card, not the market telling you it moved. This is
+      // the second line of defence behind the grouping fix above: that stops
+      // the merge happening, and this stops a merge that slips through being
+      // published as a 44,446,000% rise, which is how the problem was reported.
       let changePct = null;
+      let trendSuppressed = null;
       if (points.length >= 2) {
         const prior = points.slice(0, -1).map(p => p.median).sort((a, b) => a - b);
         const base = _median(prior);
         const last = points[points.length - 1].median;
-        if (base > 0) changePct = Math.round(((last - base) / base) * 1000) / 10;
+        const lo = prices[0], hi = prices[prices.length - 1];
+        if (lo > 0 && hi / lo > PRICE_SPREAD_MAX) {
+          trendSuppressed = 'prices in this group span too wide a range to be one card';
+        } else if (base > 0) {
+          changePct = Math.round(((last - base) / base) * 1000) / 10;
+        }
       }
 
       // Trend is anchored to THIS grade's own last sale, not the card's, so a
@@ -6327,6 +6403,7 @@ app.get('/api/card-analysis', async (req, res) => {
         high: prices[prices.length - 1] ?? null,
         lastSale: list[0] ? { price: (list[0].price_cents || 0) / 100, date: list[0].sold_date } : null,
         changePct,
+        trendSuppressed,
         points,
       };
     }).sort((a, b) => b.sales - a.sales);
@@ -6345,6 +6422,24 @@ app.get('/api/card-analysis', async (req, res) => {
       firstSale: dates[0] || null,
       lastSale: dates[dates.length - 1] || null,
       grades,
+      // How the identity was decided, and what it cost.
+      //
+      // Reported rather than hidden because both numbers are claims a reader
+      // can check. `otherParallels` is sales of this same base card in a
+      // different parallel, correctly kept out — that count used to be zero
+      // because they were all being let in. `unreadable` is sales whose
+      // parallel could not be determined from either the column or the title;
+      // they are neither included nor called base, and saying so is better than
+      // a total that quietly omits them.
+      identity: {
+        parallel: seedKey.known
+          ? (seedKey.key === '' ? 'Base' : (seed.parallel || null))
+          : null,
+        resolvedFrom: seedKey.from,
+        grouped: all.length,
+        otherParallels: excludedOtherParallel,
+        unreadable,
+      },
     };
 
     cachePut(cacheKey, payload, CARD_ANALYSIS_TTL);

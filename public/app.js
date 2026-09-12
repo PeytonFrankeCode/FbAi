@@ -13508,8 +13508,15 @@ function _caRenderChart(label) {
   if (statEl) {
     if (!g) { statEl.innerHTML = ''; }
     else {
-      const chg = g.changePct == null ? ''
-        : `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}%</span>`;
+      // A suppressed trend says so. The server withholds the percentage when
+      // the prices in a group span too wide a range to be one card, and a
+      // number that silently vanishes reads as the page being broken — which
+      // is roughly how the five-figure percentages it replaced read too.
+      const chg = g.changePct != null
+        ? `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}%</span>`
+        : g.trendSuppressed
+        ? `<span class="ca-chg flat" title="${escHtml(g.trendSuppressed)}">no trend</span>`
+        : '';
       statEl.innerHTML =
         `<span class="ca-stat-price">$${g.median.toLocaleString('en-US')}</span>` +
         chg +
