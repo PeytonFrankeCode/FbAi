@@ -5721,7 +5721,15 @@ app.get('/api/player-index', async (req, res) => {
 // Period totals come from the pre-aggregated `daily` table (at most ~90 rows)
 // rather than scanning millions of sales. Only the headline lookups touch
 // `sales`, and those ride the sold_date / player indexes.
-const SOLD_STATS_TTL = 3600; // 1h — this is identical for every visitor
+// Rebuilt daily by the cron; this is the safety net, not the schedule.
+//
+// It is deliberately LONGER than a day. If the TTL expired exactly when the
+// boards were due to be rebuilt, then any gap between the two — a missed cron
+// tick, a slow run, a deploy landing at the wrong minute — would leave the home
+// page computing on demand again, which is the slow load this is meant to
+// remove. Two days means a missed run degrades to yesterday's numbers instead,
+// and on a 7-to-365-day board that is a difference nobody can see.
+const SOLD_STATS_TTL = 60 * 60 * 48;
 const SOLD_STATS_PERIODS = [7, 30, 90, 365];
 // The home strip shows three of each; the full leaderboard shows fifty. Both
 // are served from the SAME cached payload — it is computed at fifty and sliced
@@ -5772,20 +5780,16 @@ function _median(xs) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-app.get('/api/sold-stats', async (req, res) => {
-  const days = SOLD_STATS_PERIODS.includes(parseInt(req.query.days, 10))
-    ? parseInt(req.query.days, 10)
-    : 30;
-  const db = getNflDb();
-  if (!db) return res.json({ available: false, days });
+// v3: gained top sets and both mover boards, and the lists grew from 3 to 50,
+// so the key changes rather than serving the old shape to the new UI from a
+// warm cache.
+const SOLD_STATS_KEY = (days) => `soldstats:v3:${days}`;
 
-  // v3: gained top sets and both mover boards, and the lists grew from 3 to 50,
-  // so the key changes rather than serving the old shape to the new UI from a
-  // warm cache.
-  const cacheKey = `soldstats:v3:${days}`;
-  const cached = await cacheGet(cacheKey);
-  if (cached) return res.json(cached);
-
+// The boards, computed. Lifted out of the request handler so the cron can call
+// it too — see warmSoldStats below. Returns the payload rather than writing a
+// response, and never throws: a stats widget must not break the page it sits
+// on, and must not fail a cron run either.
+async function _computeSoldStats(db, days) {
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
   // The split point for "before and after". Half the window each side, so both
   // halves cover the same span and a ratio between them is comparing like with
@@ -5969,14 +5973,75 @@ app.get('/api/sold-stats', async (req, res) => {
       },
     };
 
-    if (payload.available) cachePut(cacheKey, payload, SOLD_STATS_TTL);
-    res.json(payload);
+    return payload;
   } catch (err) {
     // A stats widget must never break the page it sits on.
     console.error('[SoldStats]', err && err.message);
-    res.json({ available: false, days, error: 'stats unavailable' });
+    return { available: false, days, error: 'stats unavailable' };
   }
+}
+
+app.get('/api/sold-stats', async (req, res) => {
+  const days = SOLD_STATS_PERIODS.includes(parseInt(req.query.days, 10))
+    ? parseInt(req.query.days, 10)
+    : 30;
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, days });
+
+  const cached = await cacheGet(SOLD_STATS_KEY(days));
+  if (cached) return res.json(cached);
+
+  // Cold cache. This is the slow path the daily warm exists to avoid, and it
+  // stays here on purpose: a fresh deploy, an evicted key or a missed cron must
+  // still produce boards rather than an empty home page. It self-limits,
+  // because the first caller to pay for it fills the cache for everyone else.
+  const payload = await _computeSoldStats(db, days);
+  if (payload.available) cachePut(SOLD_STATS_KEY(days), payload, SOLD_STATS_TTL);
+  res.json(payload);
 });
+
+// Build every period's boards and store them, once a day, from the cron.
+//
+// WHY THIS EXISTS. The boards were computed on demand behind a one-hour TTL,
+// which means that every hour some visitor paid the full cost — several passes
+// over `sales` plus a JS reduction over up to 4,000 groups — and waited while
+// the home page sat empty. Whoever that was experienced the site as slow, and
+// with four periods each on their own key it could be four people an hour.
+//
+// Lengthening the TTL alone would not fix that. It would make the slow load
+// rarer, not rarer AND unowned: somebody still eats it, and the longer the TTL
+// the more likely that somebody is the first real visitor of the day.
+//
+// So the cron pays it instead, at a time nobody is waiting, and every visitor
+// gets a KV read. The TTL is deliberately longer than the refresh interval —
+// see SOLD_STATS_TTL — so a missed run shows yesterday's numbers rather than an
+// empty page, which for a 30-day board is a difference nobody can see.
+//
+// This also costs LESS in D1 than what it replaces: four computations a day,
+// against up to twenty-four per period under the old TTL.
+async function warmSoldStats() {
+  return _asD1Source('sold-stats-warm', () => _warmSoldStats());
+}
+
+async function _warmSoldStats() {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no dataset' };
+  const done = [];
+  for (const days of SOLD_STATS_PERIODS) {
+    const payload = await _computeSoldStats(db, days);
+    if (!payload.available) {
+      // Do not overwrite a good cached payload with an unavailable one. A
+      // transient D1 failure would otherwise replace working boards with an
+      // error for a whole day.
+      done.push(`${days}d:skipped`);
+      continue;
+    }
+    await cachePut(SOLD_STATS_KEY(days), payload, SOLD_STATS_TTL);
+    done.push(`${days}d:${(payload.cardMovers || []).length}`);
+  }
+  console.log(`[SoldStats] warmed ${done.join(' ')}`);
+  return { ok: true, periods: done };
+}
 
 // ---- /api/card-analysis ----
 // Everything we hold on ONE card, reached by clicking a sold result. Identity
@@ -10089,7 +10154,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
