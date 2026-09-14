@@ -82,7 +82,14 @@ function collect() {
       console.warn(`  skipped ${file}: ${err.message}`);
       continue;
     }
-    const sets = Array.isArray(doc.sets) ? doc.sets : [];
+    // checklists/index.json is the manifest the landing-page builder reads, not
+    // a product. Without this it was catalogued as one: a 362nd product with no
+    // id, no name and an empty parallel list, carried in every copy of the
+    // shipped artifact. Harmless, but it is a product that does not exist, and
+    // it made "does the built index match the checklists" impossible to assert
+    // cleanly.
+    if (!Array.isArray(doc.sets)) continue;
+    const sets = doc.sets;
     products.push({
       id: doc.id || file.replace(/\.json$/, ''),
       name: doc.name || '',
@@ -107,6 +114,28 @@ function collect() {
         if (name.length > 60 || /[.]$/.test(name.trim())) continue;
         pset.add(name);
         for (const w of norm(name).split(' ')) if (w.length > 1) noise.add(w);
+
+        // What the market calls this parallel, when that is not what the
+        // catalogue calls it.
+        //
+        // These are not spelling variants — variants() in the reader already
+        // handles "Silver Prizm"/"Silver Prizms"/"Silver". These are different
+        // words for the same thing, which no amount of morphology recovers.
+        // Panini's own checklists name the unnumbered chrome parallel "Prizm";
+        // every seller on eBay writes "Silver" or "Silver Prizm". A reader
+        // built only from the catalogue therefore cannot read the commonest
+        // spelling of one of the most traded cards in the product.
+        //
+        // Aliases go into the VOCABULARY only. The UI and the landing-page
+        // parallel counts read `name` and `printRun`, so an alias adds a
+        // spelling the reader understands without inventing a parallel that
+        // does not exist — which is what a duplicate entry would have done.
+        for (const alias of (par && Array.isArray(par.aliases) ? par.aliases : [])) {
+          const a = String(alias || '').trim();
+          if (!a || a.length > 60) continue;
+          pset.add(a);
+          for (const w of norm(a).split(' ')) if (w.length > 1) noise.add(w);
+        }
       }
       for (const card of (set.cards || [])) {
         cardCount++;

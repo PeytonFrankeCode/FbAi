@@ -196,5 +196,107 @@ check('  ...and a parallel word before the card number is not',
         `base -> "${base.how}", unknown parallel -> "${unread.how}" (segment "${unread.segment}")`);
 }
 
+// ---- the shipped vocabulary matches the checklists it was built from -------
+//
+// public/data/parallel-index.json and card-index.json are GENERATED from
+// public/data/checklists/ by scripts/build-card-index.js. Editing a checklist
+// without re-running that script changes nothing the site actually reads, and
+// nothing fails — the artifact is still valid, just describing an older
+// catalogue.
+//
+// That is not hypothetical. Commit deeb9c0 corrected two 2026 product names in
+// the checklists and did not rebuild, so for two weeks the vocabulary shipped
+// the names that commit existed to fix. Nobody could have noticed: the site
+// behaved consistently, it was consistently out of date.
+//
+// Comparing product ids and names is enough to catch that class of drift
+// without re-implementing any of the build's logic here.
+{
+  const fs = require('fs');
+  const path = require('path');
+  const dir = path.join(__dirname, '..', 'public', 'data', 'checklists');
+  const PARALLELS = require('../public/data/parallel-index.json');
+
+  const onDisk = new Map();
+  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+    const doc = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    // index.json is the landing-page manifest, not a product. The build skips
+    // anything with no `sets` for the same reason, and the two have to agree
+    // about what counts as a product or this check reports drift that is not.
+    if (!Array.isArray(doc.sets)) continue;
+    onDisk.set(doc.id || f.replace(/\.json$/, ''), doc.name);
+  }
+
+  const built = new Map((PARALLELS.products || []).map(p => [p.id, p.name]));
+  const missing = [...onDisk.keys()].filter(id => !built.has(id));
+  const extra = [...built.keys()].filter(id => !onDisk.has(id));
+  const renamed = [...onDisk.entries()].filter(([id, name]) => built.has(id) && built.get(id) !== name);
+
+  check('every checklist on disk is in the built index',
+    missing.length === 0,
+    missing.length ? `not built: ${missing.join(', ')} — run npm run build:card-index` : `${onDisk.size} products`);
+  check('  ...and the index holds no product whose checklist is gone',
+    extra.length === 0,
+    extra.length ? `stale: ${extra.join(', ')}` : 'none stale');
+  check('  ...and no product name has drifted since the last build',
+    renamed.length === 0,
+    renamed.length
+      ? renamed.map(([id, name]) => `${id}: built "${built.get(id)}" vs checklist "${name}"`).join(' | ')
+      : 'names agree');
+
+  // ---- aliases reach the vocabulary --------------------------------------
+  //
+  // A checklist parallel may carry `aliases`: what the market calls it, when
+  // that is not what the catalogue calls it. These are not spelling variants —
+  // variants() already handles those — they are different words for the same
+  // thing, which no morphology recovers.
+  //
+  // The whole mechanism is one loop in build-card-index.js, and deleting it
+  // breaks nothing loudly: the checklists still parse, the artifact is still
+  // valid, and the reader just stops understanding a spelling. Verified by
+  // removing the aliases and rebuilding — every other check in this file still
+  // passed, which is exactly why this one exists.
+  const aliased = [];
+  for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+    const doc = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    if (!Array.isArray(doc.sets)) continue;
+    const id = doc.id || f.replace(/\.json$/, '');
+    for (const s of doc.sets) {
+      for (const par of (s.parallels || [])) {
+        for (const a of (par && Array.isArray(par.aliases) ? par.aliases : [])) {
+          aliased.push({ id, set: s.id, name: par.name, alias: a });
+        }
+      }
+    }
+  }
+  const lost = aliased.filter(x =>
+    !((PARALLELS.parallelsByProduct || {})[x.id] || []).includes(x.alias));
+  check('every alias a checklist declares is in the built vocabulary',
+    aliased.length > 0 && lost.length === 0,
+    lost.length ? `missing: ${lost.map(x => `${x.id}/${x.alias}`).join(', ')}`
+                : `${aliased.length} aliases across ${new Set(aliased.map(x => x.id)).size} product(s)`);
+
+  // ---- the case that prompted it -----------------------------------------
+  //
+  // Panini's own 2017 Prizm checklist names the unnumbered chrome parallel
+  // "Prizm". Every seller writes "Silver" or "Silver Prizm", and the Mahomes
+  // #269 Silver is one of the most traded cards in the hobby. Before the alias
+  // the reader still resolved those titles — by matching "Silver" out of a
+  // DIFFERENT product's vocabulary, since the lookup is global. That worked by
+  // luck, not by knowing anything about this product, so a check on
+  // resolveParallel alone would have passed before the fix too.
+  //
+  // This asserts against the product's own vocabulary, which is the thing that
+  // actually changed.
+  const prizm2017 = (PARALLELS.parallelsByProduct || {})['2017-panini-prizm-football'] || [];
+  check('2017 Prizm knows its own Silver parallel',
+    prizm2017.some(p => /silver/i.test(p)),
+    prizm2017.filter(p => /silver/i.test(p)).join(', ')
+      || 'no Silver spelling — the reader can only borrow one from another product');
+  check('  ...while still knowing the bare "Prizm" the catalogue calls it',
+    prizm2017.includes('Prizm'),
+    'dropping the catalogue name to add the market name would trade one gap for another');
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall parallel-index checks passed');
 process.exit(failures ? 1 : 0);
