@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, flushD1Usage, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, flushD1Usage, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -743,7 +743,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, priceBlocksMissing, flushD1Usage } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -818,6 +818,40 @@ export default {
           }
         } else {
           console.error('[Cron] buildPriceBlocks missing from init() — not wired through');
+        }
+
+        // Rebuild the home-page boards — biggest sellers, movers, top sets.
+        //
+        // Once a day, alongside the price blocks, for the same reason and one
+        // more. These were computed on demand behind a one-hour TTL, so every
+        // hour some visitor paid for several passes over `sales` plus a JS
+        // reduction, and waited with an empty home page while it ran. Four
+        // periods on four separate keys meant that could be four people an
+        // hour, and the one most likely to be caught by it is the first real
+        // visitor after a quiet spell.
+        //
+        // Doing it here moves that cost to a moment when nobody is waiting.
+        // The KV entries outlive the daily refresh (see SOLD_STATS_TTL), so a
+        // missed run serves yesterday's figures rather than falling back to
+        // computing on request, which is the slow path being removed.
+        //
+        // 05:xx UTC — an hour AFTER the price blocks, deliberately not the same
+        // tick. Both are heavy D1 jobs, and this one runs last in the handler,
+        // so sharing a tick means that whenever the price-block build is slow
+        // or the tick runs out of budget, the boards are the thing that silently
+        // does not get rebuilt. They would then sit until the 48h TTL lapsed and
+        // a visitor paid for them, which is the exact failure this removes.
+        // Separate hours cost nothing and make the two jobs independent.
+        if (typeof warmSoldStats === 'function') {
+          if (scheduledAt.getUTCHours() === 5 && aliasTick) {
+            const r = await warmSoldStats().catch(err => {
+              console.error('[Cron] sold-stats warm failed:', err && err.message || err);
+              return null;
+            });
+            if (r && !r.ok) console.error('[Cron] sold-stats not warmed:', r.reason);
+          }
+        } else {
+          console.error('[Cron] warmSoldStats missing from init() — not wired through');
         }
 
         // Persist the D1 usage tally. Last, so it captures everything the
