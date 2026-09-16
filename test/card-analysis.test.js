@@ -46,8 +46,8 @@ const PLAYER = 'Patrick Mahomes II';
 let n = 0;
 // `parallel` is the COLUMN; the title carries its own spelling. The gap between
 // them is the bug.
-function sale(id, { title, price, day, parallel = '', grader = '', grade = '', number = '269' }) {
-  ins.run(id, iso(day), title, Math.round(price * 100), PLAYER, '2017', 'Prizm',
+function sale(id, { title, price, day, parallel = '', grader = '', grade = '', number = '269', player = PLAYER }) {
+  ins.run(id, iso(day), title, Math.round(price * 100), player, '2017', 'Prizm',
           parallel, number, grader, grade, 0.9, null);
   n++;
 }
@@ -127,6 +127,18 @@ sale('g3', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm PSA 
 // number. It must never be grouped in, whatever its parallel says.
 sale('x1', { title: '2017 PANINI PRIZM INSTANT IMPACT #8 PATRICK MAHOMES II',
              price: 223.05, day: -15, number: '8' });
+
+// ---- the insert that shares a number with the base card --------------------
+//
+// The case from the original report, in the form that actually collides. 2017
+// Prizm has a base #8 AND an Instant Impact #8 AND eight more sets at #8, all
+// arriving as "Prizm #8" because set_name holds the product. These are a
+// DIFFERENT player from the Mahomes rows above so they form their own card, and
+// the only thing separating them from each other is the insert name.
+sale('n1', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 14, day: -21, player: 'Dalvin Cook' });
+sale('n2', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 16, day: -12, player: 'Dalvin Cook' });
+sale('n3', { title: '2017 Panini Prizm Instant Impact Dalvin Cook #8', price: 190, day: -19, player: 'Dalvin Cook' });
+sale('n4', { title: '2017 Panini Prizm Instant Impact Dalvin Cook #8', price: 205, day: -8, player: 'Dalvin Cook' });
 
 const d1 = {
   prepare(sql) {
@@ -290,6 +302,33 @@ const rawTitles = (d) => {
   check('  ...and not the $20 base cards',
     !['b1', 'b2', 'b3', 'b4'].some(id => [...autoIds].some(u => u.endsWith('/' + id))),
     'base money in an autograph median is the merge in the other direction');
+
+  // ---- the insert that shares a number with the base card -----------------
+  //
+  // Both are "2017 Prizm Dalvin Cook #8" in every column. Only the title says
+  // one is an Instant Impact. Before this they were one card with a median
+  // somewhere between $16 and $190, describing neither.
+  const plain = await call('/api/card-analysis?itemId=n1');
+  const plainIds = new Set((plain.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('the base card does not absorb the insert sharing its number',
+    plain.available === true && plain.totalSales === 2
+      && !['n3', 'n4'].some(id => [...plainIds].some(u => u.endsWith('/' + id))),
+    `${plain.totalSales} sales, otherSubsets=${plain.identity && plain.identity.otherSubsets}`);
+
+  const ins2 = await call('/api/card-analysis?itemId=n3');
+  const insIds = new Set((ins2.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('  ...and the insert gets its own two sales, not the base card\'s',
+    ins2.available === true && ins2.totalSales === 2
+      && !['n1', 'n2'].some(id => [...insIds].some(u => u.endsWith('/' + id))),
+    `${ins2.totalSales} sales`);
+
+  // The point of all of it: the medians now describe different cards.
+  {
+    const m1 = (plain.grades || [])[0], m2 = (ins2.grades || [])[0];
+    check('  ...so the two medians are genuinely different numbers',
+      m1 && m2 && Math.abs(m1.median - m2.median) > 100,
+      m1 && m2 ? `base $${m1.median} vs insert $${m2.median}` : 'missing a series');
+  }
 
   // ---- 2. graded cards in the raw list ------------------------------------
   const raws = rawTitles(silver);

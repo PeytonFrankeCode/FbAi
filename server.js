@@ -4944,6 +4944,7 @@ app.get('/api/debug/identity-gap', async (req, res) => {
     const amb = { matchedProduct: 0, onAmbiguousKey: 0, ambiguousAndNamed: 0,
                   ambiguousUnnamed: 0, noProduct: 0, byKind: {}, resolvable: {} };
     const ambiguousExamples = [];
+    const noProductBy = new Map();
     const unidentifiedExamples = [];
     const rescuableExamples = [];
     const subsetsSeen = new Map();
@@ -4971,6 +4972,16 @@ app.get('/api/debug/identity-gap', async (req, res) => {
         const product = matchSale(setIndex, r.y, r.s);
         if (!product) {
           amb.noProduct += n;
+          // WHICH year and set fail to match, not just how many.
+          //
+          // A fifth of sampled sales resolve to no product at all, and that is
+          // a bigger hole than any of the identity fixes — a sale outside the
+          // catalogue cannot be helped by reading its parallel, its kind or its
+          // insert, because there is nothing to read it against. The number
+          // alone cannot say whether that is a missing checklist, a set name
+          // the join cannot spell, or something that is not an NFL card.
+          const ys = `${r.y || '?'} | ${r.s || '?'}`;
+          noProductBy.set(ys, (noProductBy.get(ys) || 0) + n);
         } else {
           amb.matchedProduct += n;
           const byKind = ambSets.get(product.id);
@@ -5102,6 +5113,13 @@ app.get('/api/debug/identity-gap', async (req, res) => {
         // Not folded into "unambiguous": a sale we could not match to a product
         // has an unknown answer, not a reassuring one.
         salesWithNoProductMatch: amb.noProduct,
+        // The year and set names carrying the most unmatched sales. This is
+        // the list to act on: each line is either a checklist that does not
+        // exist, a spelling the join cannot reach, or a sport this site does
+        // not cover.
+        topUnmatchedSets: [...noProductBy.entries()]
+          .sort((x, y) => y[1] - x[1]).slice(0, 20)
+          .map(([ys, n]) => ({ yearAndSet: ys, sales: n })),
         catalogueKeysAmbiguous: Object.values(ambiguous).reduce(
           (n, byKind) => n + Object.values(byKind || {}).reduce((m, l) => m + l.length, 0), 0),
       } : { unavailable: 'subsets/ambiguous.json not deployed' },
@@ -6542,7 +6560,9 @@ app.get('/api/card-analysis', async (req, res) => {
   // fix not having shipped.
   // v4: identity now separates a base card from its own autograph and relic
   // versions, so v3 entries hold groupings that merged them.
-  const cacheKey = `cardanalysis:v4:${itemId}`;
+  // v5: identity now also separates a base card from the inserts that share
+  // its number, so v4 entries hold groupings that merged them.
+  const cacheKey = `cardanalysis:v5:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -6677,6 +6697,35 @@ app.get('/api/card-analysis', async (req, res) => {
       excludedOtherParallel = candidates.length - before.length;
       all = before.filter(r => _cardKind(String(r.title || '')) === seedKind);
       excludedOtherKind = before.length - all.length;
+    }
+
+    // ---- the insert, last of all ----
+    //
+    // A product's inserts reuse the base set's numbering too: 2017 Prizm has a
+    // base #8 and an Instant Impact #8 and eight more, and `set_name` holds only
+    // the product. That is 28.2% of ambiguous (player, number) keys — the second
+    // largest kind after autographs, which the filter above already took out.
+    //
+    // Applied to the SURVIVORS rather than to every candidate, and that is a
+    // cost decision, not a stylistic one. resolveSubset() walks a title against
+    // a 4,522-name vocabulary at 0.028ms a call, measured — so the 2,000-row
+    // candidate list costs 57ms, on a user-facing request whose whole CPU budget
+    // is around 50ms. What reaches here after the parallel and kind filters is
+    // usually a handful: 0.3ms for the same answer.
+    //
+    // Absence is treated as "no insert", the same asymmetry the kind filter
+    // makes and for the same reason: a seller names the insert because it is
+    // what the card is. The residual failure is a false SPLIT — an insert whose
+    // title omits its name joins the base group — which is exactly where those
+    // sales sit today, so it is not a regression, and it is the safe direction:
+    // the opposite puts a Downtown's price into a base card's median.
+    let excludedOtherSubset = 0;
+    if (pi) {
+      const seedSubset = pi.resolveSubset(String(seed.title || '')).subset || '';
+      const kept = all.filter(r =>
+        (pi.resolveSubset(String(r.title || '')).subset || '') === seedSubset);
+      excludedOtherSubset = all.length - kept.length;
+      all = kept;
     }
 
     if (all.length === 0) {
@@ -6826,6 +6875,9 @@ app.get('/api/card-analysis', async (req, res) => {
         // Sales of this same number in this same product that are a different
         // KIND — the autograph or relic version. Previously grouped in.
         otherKinds: excludedOtherKind,
+        // Sales of this same number in this same product belonging to a
+        // different insert. Previously grouped in.
+        otherSubsets: excludedOtherSubset,
         unreadable,
       },
     };
