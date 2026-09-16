@@ -37,6 +37,22 @@ jobs:
       - name: Build SEO landing pages
         run: npm run build:pages
 
+      # The parallel dictionary and card index, derived from the checklists.
+      #
+      # These were committed artifacts that only changed when someone ran the
+      # build locally and remembered to commit the result. That is a step to
+      # forget, and forgetting it is silent in the worst way: a checklist you
+      # just added is on the site, its product resolves, and none of its
+      # parallels are readable — so its sales land on the product and then fail
+      # to separate into cards. The file looks complete and does half a job.
+      #
+      # 1.3 seconds, and the output is deterministic apart from its own
+      # builtAt timestamp, so running it every deploy costs nothing and removes
+      # the step. After build:pages, which regenerates the checklist index this
+      # reads; before build:sw, which hashes assets for the service worker.
+      - name: Build card and parallel indexes from the checklists
+        run: npm run build:card-index
+
       # After build:pages, which regenerates the checklist index this hashes;
       # BEFORE the tests, which assert index.html's ?v= asset versions match
       # the content they point at. Run it after them and any commit touching

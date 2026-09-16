@@ -190,6 +190,34 @@ const good = (over = {}) => ({
     r2.out.split('\n').filter(l => /ERROR/.test(l)).join(' | ') || 'quiet');
 }
 
+// ---- a new checklist has to reach the site whole ------------------------
+//
+// Adding a product touches three artifacts, and only one of them is the file
+// you wrote. checklists/index.json is rebuilt by build:pages, which the deploy
+// runs. parallel-index.json and card-index.json are rebuilt by build:card-index
+// — which the deploy did NOT run, so they only changed when someone remembered
+// to run it locally and commit the result.
+//
+// Forgetting is silent in the worst way: the product resolves, its sales find
+// it, and none of its parallels are readable, so every sale lands on the
+// product and then fails to separate into cards. The checklist looks complete
+// and does half a job.
+//
+// 1.3 seconds of build time removes the step entirely. This makes sure nobody
+// removes it again.
+{
+  const wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'deploy.yml'), 'utf8');
+  check('the deploy rebuilds the parallel index from the checklists',
+    /npm run build:card-index/.test(wf),
+    'deploy.yml must run build:card-index, or a new checklist ships with no parallels');
+
+  // Order matters: it reads the checklist index that build:pages regenerates.
+  const pages = wf.indexOf('npm run build:pages');
+  const cards = wf.indexOf('npm run build:card-index');
+  check('  ...after build:pages, whose output it reads',
+    pages > 0 && cards > pages, `build:pages at ${pages}, build:card-index at ${cards}`);
+}
+
 fs.rmSync(dir, { recursive: true, force: true });
 console.log(failures ? `\n${failures} check(s) failed` : '\nall validate-checklist checks passed');
 process.exit(failures ? 1 : 0);
