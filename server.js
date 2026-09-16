@@ -6896,6 +6896,38 @@ app.get('/api/card-analysis', async (req, res) => {
     // because the opposite puts autograph money in a base card's median.
     const seedKind = _cardKind(String(seed.title || ''));
 
+    // ?explain=1 — why is this sale in this card's list?
+    //
+    // The grouping runs on database columns plus four title reads, and when the
+    // answer looks wrong from outside there is no way to tell WHICH of those
+    // said yes. A slab in the Raw list could be an empty grade column, a title
+    // that never names the grade, or the bucket rule; a foreign product in the
+    // group could be a collector parse error in set_name or a reader mistake.
+    // Those need opposite fixes and guessing between them wastes a day.
+    //
+    // So this reports, per candidate, every signal that was read and the first
+    // rule that excluded it. It answers with evidence instead of a verdict.
+    const explain = String(req.query.explain || '') === '1';
+    const trace = [];
+    const note = (r, verdict, why) => {
+      if (!explain || trace.length >= 60) return;
+      trace.push({
+        itemId: r.item_id, verdict, why,
+        price: (r.price_cents || 0) / 100,
+        title: String(r.title || '').slice(0, 120),
+        columns: {
+          player: r.player, year: r.year, set_name: r.set_name,
+          card_number: r.card_number, parallel: r.parallel,
+          grader: r.grader, grade: r.grade,
+        },
+        read: {
+          kind: _cardKind(String(r.title || '')) || 'base',
+          printRun: _printRun(String(r.title || '')),
+          gradeBucket: _gradeBucket(r),
+        },
+      });
+    };
+
     const seedKey = keyOf(seed);
     const candidates = (rows && rows.results) || [];
     let all, unreadable = 0, excludedOtherParallel = 0, excludedOtherKind = 0;
@@ -6903,9 +6935,16 @@ app.get('/api/card-analysis', async (req, res) => {
       all = [];
       for (const r of candidates) {
         const k = keyOf(r);
-        if (!k.known) { unreadable++; continue; }
-        if (k.key !== seedKey.key) { excludedOtherParallel++; continue; }
-        if (_cardKind(String(r.title || '')) !== seedKind) { excludedOtherKind++; continue; }
+        if (!k.known) { unreadable++; note(r, 'dropped', `parallel unreadable (${k.from})`); continue; }
+        if (k.key !== seedKey.key) {
+          excludedOtherParallel++;
+          note(r, 'dropped', `different parallel: "${k.key}" vs "${seedKey.key}"`); continue;
+        }
+        if (_cardKind(String(r.title || '')) !== seedKind) {
+          excludedOtherKind++;
+          note(r, 'dropped', `different kind: ${_cardKind(String(r.title || '')) || 'base'} vs ${seedKind || 'base'}`);
+          continue;
+        }
         all.push(r);
       }
     } else {
@@ -7095,6 +7134,8 @@ app.get('/api/card-analysis', async (req, res) => {
       };
     }).sort((a, b) => b.sales - a.sales);
 
+    if (explain) for (const r of all) note(r, 'kept', 'matched on every rule');
+
     const dates = all.map(r => r.sold_date).filter(Boolean).sort();
     const payload = {
       available: true,
@@ -7141,6 +7182,30 @@ app.get('/api/card-analysis', async (req, res) => {
       },
     };
 
+    if (explain) {
+      // Never cached: a trace is a question about right now, and a stale one
+      // would be answering about a grouping that no longer exists.
+      return res.json({
+        explain: true,
+        seed: {
+          itemId, title: seed.title,
+          columns: {
+            player: seed.player, year: seed.year, set_name: seed.set_name,
+            card_number: seed.card_number, parallel: seed.parallel,
+            confidence: seed.confidence,
+          },
+          read: {
+            parallelKey: seedKey.key, parallelFrom: seedKey.from,
+            kind: seedKind || 'base',
+            printRun: _printRun(String(seed.title || '')),
+          },
+        },
+        identity: payload.identity,
+        candidatesSeen: candidates.length,
+        grouped: all.length,
+        trace,
+      });
+    }
     cachePut(cacheKey, payload, CARD_ANALYSIS_TTL);
     res.json(payload);
   } catch (err) {
