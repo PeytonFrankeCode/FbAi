@@ -88,13 +88,37 @@ sale('a1', { title: '2017 Panini Prizm Patrick Mahomes II #269 Gold Vinyl 1/1 Au
 // evidence of a base card. Without that row the rule can be deleted and every
 // other check here still passes — which is exactly what happened the first time
 // this fixture was run against a deliberately broken build.
-sale('a2', { title: '2017 Panini Prizm Patrick Mahomes II #269 Emerald Kaleidoscope Patch Auto 1/1',
+// Deliberately carries NO autograph or relic word. Once card identity started
+// separating base from auto (a2 used to read "Patch Auto"), the kind filter
+// pulled it out of the base group on its own and the spread guard below stopped
+// being reachable at all — the check passed for the wrong reason. This title
+// keeps the parallel unreadable while leaving the card the same KIND as the
+// base cards, which is the only shape that still reaches the fallback.
+sale('a2', { title: '2017 Panini Prizm Patrick Mahomes II #269 Emerald Kaleidoscope 1/1',
              price: 12500, day: -1 });
 
 // ---- Graded copies of the Silver ------------------------------------------
 // The grader written hard against its number is the commonest spelling on eBay
 // and the one \b could not match. Empty grade columns throughout, because that
 // is the case that fell through to Raw.
+// ---- The autograph of the SAME card ---------------------------------------
+// 2025 Prizm lists Tyler Shough at #327 in the Base Set AND in Base
+// Autographs; every product does this. `set_name` holds the product, so the
+// auto and the base card arrive identical in every column and were grouped
+// together — a $20 base rookie averaged with a $900 on-card auto. This is
+// 65.5% of all ambiguous keys in the catalogue, more than twice the inserts.
+//
+// The auto word sits BEFORE the card number on purpose. A base autograph has no
+// parallel, so the segment after the number is empty and the parallel reads as
+// "base" — which is what puts these on the SAME path as the base cards, where
+// only the kind can separate them. Putting "Auto" after the number instead made
+// the parallel unreadable, sent them down the fallback, and tested the fallback
+// rather than the thing being built.
+sale('u1', { title: '2017 Panini Prizm Rookie Auto Patrick Mahomes II #269 (RC)', price: 940, day: -22 });
+sale('u2', { title: '2017 Panini Prizm On-Card Autograph Patrick Mahomes II #269 (RC)', price: 880, day: -16 });
+// And the relic version, which is a third card again.
+sale('u3', { title: '2017 Panini Prizm Patch Jersey Patrick Mahomes II #269 (RC)', price: 260, day: -11 });
+
 sale('g1', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm PSA10', price: 3200, day: -12 });
 sale('g2', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm BGS9.5', price: 2400, day: -9 });
 sale('g3', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm PSA 10', price: 3100, day: -6 });
@@ -220,6 +244,16 @@ const rawTitles = (d) => {
         murky.available === true,
         murky.available ? `${murky.totalSales} sales` : `reason=${murky.reason}`);
 
+  // The kind filter applies on THIS path too, and asserting only that the
+  // endpoint answered did not test that: removing the filter from the fallback
+  // changed the count and every check still passed. The fallback is where the
+  // data is already weakest, so letting autographs back in here is the worst
+  // place to do it.
+  const murkyIds = new Set((murky.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('  ...and still keeps autographs and relics out',
+        !['u1', 'u2', 'u3'].some(id => [...murkyIds].some(u => u.endsWith('/' + id))),
+        `otherKinds=${murky.identity && murky.identity.otherKinds}`);
+
   check('  ...and says the identity is unresolved rather than claiming one',
         murky.identity && murky.identity.parallel === null,
         murky.identity ? JSON.stringify(murky.identity) : 'no identity block');
@@ -229,6 +263,33 @@ const rawTitles = (d) => {
         wild && wild.changePct === null && !!wild.trendSuppressed,
         wild ? `changePct=${wild.changePct} low=${wild.low} high=${wild.high} suppressed=${wild.trendSuppressed || 'no'}`
              : 'no Raw series');
+
+  // ---- the autograph of the same card is a different card -----------------
+  //
+  // Same player, same year, same product, same card number, same (empty)
+  // parallel column. Only the title says one is signed. Before this, all three
+  // kinds sat in one median.
+  const baseIds2 = new Set((base.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('the autograph version is NOT grouped with the base card',
+    !['u1', 'u2'].some(id => [...baseIds2].some(u => u.endsWith('/' + id))),
+    'an auto and a base card share every column but the title');
+  check('  ...nor is the relic version',
+    ![...baseIds2].some(u => u.endsWith('/u3')),
+    'a patch card is a third card again');
+  check('  ...and the payload counts them rather than hiding the split',
+    base.identity && base.identity.otherKinds >= 3,
+    base.identity ? `otherKinds=${base.identity.otherKinds}` : 'no identity block');
+
+  // Clicking the auto gets the autos — both spellings, and nothing else.
+  const auto = await call('/api/card-analysis?itemId=u1');
+  const autoIds = new Set((auto.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('clicking the autograph gets the autographs',
+    auto.available === true && auto.totalSales === 2
+      && ['u1', 'u2'].every(id => [...autoIds].some(u => u.endsWith('/' + id))),
+    `${auto.totalSales} sales, kind=${auto.identity && auto.identity.kind}`);
+  check('  ...and not the $20 base cards',
+    !['b1', 'b2', 'b3', 'b4'].some(id => [...autoIds].some(u => u.endsWith('/' + id))),
+    'base money in an autograph median is the merge in the other direction');
 
   // ---- 2. graded cards in the raw list ------------------------------------
   const raws = rawTitles(silver);
