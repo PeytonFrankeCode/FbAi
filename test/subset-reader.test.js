@@ -14,6 +14,8 @@
 // none. A wrong subset says two sales are different cards when they are the
 // same, which splits a card's history; no subset leaves things exactly as they
 // were. So most of what follows asserts that things are NOT matched.
+const fs = require('fs');
+const path = require('path');
 const { resolveSubset } = require('../parallel-index.js');
 
 let failures = 0;
@@ -67,6 +69,59 @@ const mustNotMatch = [
       : `all ${mustNotMatch.length} correctly refused`);
 }
 
+// ---- what a month of live sales exposed ------------------------------------
+//
+// Every case below comes from running this reader over real sold listings and
+// reading the top of the result, not from imagining what might go wrong. Each
+// was a genuine catalogued set name being matched against a title that never
+// named it — and each would have caused a false SPLIT if this were wired into
+// card identity: one card's sales divided because some titles matched a set
+// that was not really there.
+{
+  const fromLiveData = [
+    // A two-card tribute set in 2019 National Treasures is called "Tom Brady".
+    // Matching it tagged every Brady listing in the dataset — 343 sales in a
+    // one-month sample, the fourth-commonest "subset" found. This one is not
+    // even a card.
+    ['*EX-NM CONDITION* TOM BRADY 25 CARD LOT INVEST GOAT HOF MVP TB12',
+     'a player-tribute set name, and a 25-card lot'],
+    // The 2018 Flawless checklist carries a set called "Red, White and" —
+    // source data cut off mid-phrase. It matched Prizm's "Red White and Blue"
+    // PARALLEL, a different product entirely.
+    ['2024 Panini Prizm - Rookies Caleb Williams #301 Red White and Blue Prizm (RC)',
+     'a truncated set name matching a parallel'],
+    // Accolades a seller types to talk a card up. "MVP" is a real one-word set
+    // name; it is also what "GOAT HOF MVP" says.
+    ['2015 Topps Tom Brady GOAT HOF MVP Champion', 'seller hype, not a set'],
+    // Not cards at all. These are the population no method reaches — a photo
+    // cannot identify a 24-card lot either.
+    ['SEE SCAN For The Exact Card Up For Auction! NFL READ FREE SHIPPING AutographDen',
+     'auction-house prose naming no card'],
+    ['Football Card Lot of 24 - Vintage 70s 80s 90s 00s Rookies *See Description!*',
+     'a multi-card lot'],
+  ];
+  const claimed = fromLiveData.filter(([t]) => resolveSubset(t).subset);
+  check('the false matches found in live data stay refused',
+    claimed.length === 0,
+    claimed.length
+      ? claimed.map(([t]) => `"${t.slice(0, 38)}" -> ${resolveSubset(t).subset}`).join('; ')
+      : `all ${fromLiveData.length} refused`);
+
+  // The other half of that lesson: the fix must not be a blanket "two words or
+  // more". Uptowns, Downtown, Concourse, Illumination and Anniversary are all
+  // one word, all real sets, and between them 1,223 sales in the same sample.
+  const oneWordReal = [
+    ['2024 Clearly Donruss Uptowns Brock Bowers #12', 'uptowns'],
+    ['2024 Panini Prizm Downtown! Jayden Daniels #12', 'downtown!'],
+  ];
+  const lost = oneWordReal.filter(([t, want]) => resolveSubset(t).subset !== want);
+  check('  ...without throwing away the real one-word sets',
+    lost.length === 0,
+    lost.length
+      ? lost.map(([t, w]) => `"${t.slice(0, 34)}" -> ${resolveSubset(t).subset} (wanted ${w})`).join('; ')
+      : `${oneWordReal.length} kept`);
+}
+
 // A parallel is never a subset. SUBSETS is built by filtering the catalogued
 // set names against the parallel LOOKUP, so this is a property of the
 // vocabulary rather than of the matcher — and it is the property that stops
@@ -103,7 +158,6 @@ const mustNotMatch = [
 // catalogue that is true but rare — and rare enough to matter for the decision,
 // so it is asserted rather than remembered.
 {
-  const path = require('path');
   const doc = require(path.join(__dirname, '..', 'public', 'data', 'checklists',
                                 '2017-panini-prizm-football.json'));
   const norm = (s) => String(s || '').toLowerCase().replace(/[.,']/g, '').replace(/\s+/g, ' ').trim();
@@ -117,18 +171,55 @@ const mustNotMatch = [
   }
   const collide = [...keys.values()].filter(v => v.size > 1).length;
   const share = collide / keys.size;
-  check('the base-vs-insert collision is real but uncommon',
-    collide > 0 && share < 0.10,
-    `${collide} of ${keys.size} (player, number) keys span more than one set — ${(share * 100).toFixed(1)}%`);
 
-  // The specific card the question was asked about. Nine cards in this product,
-  // every one differently numbered — so the number alone separates his base
-  // from his Instant Impact, and no photo is needed to do it.
+  // 2017 Prizm is CLEAN, and saying so here is the point.
+  //
+  // An earlier version of this check read "the collision is real but uncommon"
+  // on the strength of this one product's 1.9%, and that conclusion was wrong.
+  // Measured across all 361 checklists the rate is 27.0% — 63,182 of 234,071
+  // keys — and the median product is 26.2%. 2017 Prizm is one of only nineteen
+  // products with almost no collisions at all; the worst, 2018 Elite Draft
+  // Picks, is 92.5%.
+  //
+  // So this asserts that this product is an outlier, not that the problem is
+  // small. Generalising from the card a question happened to be asked about is
+  // exactly the mistake that produced the earlier answer.
+  check('2017 Prizm is an unusually clean product, not a typical one',
+    share < 0.05,
+    `${collide} of ${keys.size} keys span more than one set — ${(share * 100).toFixed(1)}%, `
+    + 'against 27.0% across the whole catalogue');
+
+  // Which is why the card the question was asked about looked fine: nine cards
+  // in this product, every one differently numbered, so the number alone
+  // separates his base from his Instant Impact.
   const mahomes = [...keys.entries()].filter(([k]) => k.startsWith('patrick mahomes'));
   const ambiguous = mahomes.filter(([, v]) => v.size > 1);
-  check('  ...and does not affect the card it was reported on',
+  check('  ...which is why the reported card resolved correctly',
     mahomes.length > 1 && ambiguous.length === 0,
     `Mahomes has ${mahomes.length} cards in 2017 Prizm, ${ambiguous.length} with an ambiguous number`);
+
+  // The catalogue-wide figure, asserted so the number in the comment above
+  // cannot quietly drift away from the data it describes.
+  {
+    const dir = path.join(__dirname, '..', 'public', 'data', 'checklists');
+    let all = 0, bad = 0;
+    for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.json'))) {
+      const d = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+      if (!Array.isArray(d.sets)) continue;
+      const m = new Map();
+      for (const s of d.sets) {
+        for (const c of (s.cards || [])) {
+          const k = `${norm(c.player)}|${c.number}`;
+          if (!m.has(k)) m.set(k, new Set());
+          m.get(k).add(s.name);
+        }
+      }
+      for (const v of m.values()) { all++; if (v.size > 1) bad++; }
+    }
+    check('  ...and catalogue-wide the collision is substantial',
+      all > 100000 && bad / all > 0.15,
+      `${bad.toLocaleString()} of ${all.toLocaleString()} keys — ${((bad / all) * 100).toFixed(1)}%`);
+  }
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall subset-reader checks passed');
