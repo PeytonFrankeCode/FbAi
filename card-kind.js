@@ -51,9 +51,38 @@ function cardKind(title) {
   return '';
 }
 
+// The print run, read strictly — a /5 and a /10 are different cards.
+//
+// This is deliberately NOT parsePrintRunFromTitle() in server.js, and the
+// difference is the point. That one feeds the similar-card estimator, where a
+// fuzzy read costs a slightly wrong scaling factor. Here a wrong read SPLITS a
+// card's history, so it has to be right more often than it is useful.
+//
+// What that rules out: the bare "a/b" form. "2025 Prizm Cam Ward RC #14 sold
+// 9/16" is a date, and the loose parser reads it as a print run of 16 — which
+// would tear one card into two on a phrase about when it sold. So the slash
+// must not be preceded by a digit, which costs the genuine "copy 5 of 10"
+// spelling and is the right trade: an unknown print run merges, which is where
+// those sales already are, while a wrong one splits.
+//
+// Returns null for "not stated", never 0, so "no print run" and "one of one"
+// can never be confused.
+const ONE_OF_ONE = /(?<![\d/])1\s*\/\s*1(?![\d/])|\bone[-\s]of[-\s]one\b|\b1\s*of\s*1\b/i;
+const NUMBERED = /(?:\bnumbered\s*(?:to\s*)?|#\s*\/|(?<![\d])\/)\s*(\d{1,4})\b/i;
+
+function printRun(title) {
+  const t = String(title || '');
+  if (ONE_OF_ONE.test(t)) return 1;
+  const m = NUMBERED.exec(t);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  // 5,000 is past any real print run and into "part number" territory.
+  return (n >= 1 && n <= 5000) ? n : null;
+}
+
 // The identity component. Empty string for a base card so it concatenates into
 // a key without a separator surprise, and so an existing key is unchanged for
 // the overwhelming majority of sales.
 const kindKey = (title) => cardKind(title);
 
-module.exports = { AUTO_RE, RELIC_RE, cardKind, kindKey };
+module.exports = { AUTO_RE, RELIC_RE, cardKind, kindKey, printRun };
