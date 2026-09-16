@@ -377,10 +377,50 @@ function resolveSubset(title, opts = {}) {
       // A single generic word is the rest of the sentence, not a set name —
       // the same trap coverMatch() guards against for parallels.
       if (sub.split(' ').length < 2 && GENERIC_SUBSET.has(sub)) continue;
+      if (unsafeSubset(sub)) continue;
       return { subset: sub, how: 'matched' };
     }
   }
   return { subset: null, how: 'unmatched' };
+}
+
+// Catalogued set names that are real but must never be matched against a title.
+//
+// Both kinds were found by running the reader over a month of live sales and
+// reading the top of the list, not by thinking about it beforehand.
+//
+//   A TRIBUTE SET NAMED AFTER A PLAYER. 2019 National Treasures has a two-card
+//   set called "Tom Brady". Matching it tags EVERY Brady listing in the dataset
+//   as belonging to those two cards — including "TOM BRADY 25 CARD LOT INVEST
+//   GOAT HOF MVP TB12", which is not a card at all. It was the fourth-commonest
+//   "subset" in the sample at 343 sales.
+//
+//   A TRUNCATED NAME. The 2018 Flawless checklist carries a set called "Red,
+//   White and" — source data cut off mid-phrase. It matched Prizm's "Red White
+//   and Blue" PARALLEL, which is a different product entirely.
+//
+// Both would have caused false SPLITS if this were wired into card identity:
+// one card's sales divided because some titles matched a set that was never
+// really named. That is the failure mode this whole reader is meant to avoid,
+// and it took real data to see it.
+let UNSAFE = null;
+
+function unsafeSubset(name) {
+  if (!UNSAFE) {
+    UNSAFE = new Set();
+    for (const n of SUBSETS) {
+      // Cut off mid-phrase: a set name never ends on a conjunction or article.
+      if (/\b(and|or|the|of|with|vs|in|on|for|a|an|to)$/.test(n)) { UNSAFE.add(n); continue; }
+      // Named after a player. Two words or more, because a one-word name
+      // resolving through the surname index is far too loose to act on —
+      // "Blitz" and "Concourse" are sets, not people.
+      if (n.split(' ').length >= 2) {
+        const hit = resolvePlayer(n);
+        if (hit && hit.key && hit.confident) UNSAFE.add(n);
+      }
+    }
+  }
+  return UNSAFE.has(name);
 }
 
 // One-word set names that are really just words. Matching any of these would
@@ -397,7 +437,18 @@ const GENERIC_SUBSET = new Set([
   'base', 'rookie', 'rookies', 'insert', 'inserts', 'autograph', 'autographs',
   'auto', 'patch', 'jersey', 'relic', 'variation', 'variations',
   'football', 'legends', 'stars', 'rated', 'update', 'series',
+  // Accolades. Every one of these is a real one-word set name somewhere, and
+  // every one is also what a seller types to talk the card up: "TOM BRADY 25
+  // CARD LOT INVEST GOAT HOF MVP TB12" matched the set called "MVP". A set name
+  // is only worth matching bare when it is a name rather than a boast.
+  'mvp', 'mvps', 'goat', 'hof', 'roy', 'champ', 'champs', 'champion',
+  'champions', 'prime', 'signature', 'signatures', 'graded', 'invest',
 ]);
+
+// One-word names kept DELIBERATELY, for the record: Uptowns, Downtown,
+// Concourse, Illumination and Anniversary are all one word, all real sets, and
+// between them were 1,223 sales in a one-month sample. A blanket "two words or
+// more" rule would be simpler and would throw all of that away.
 
 function resolveParallel(title, opts = {}) {
   const t = String(title || '');
