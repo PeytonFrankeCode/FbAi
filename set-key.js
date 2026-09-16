@@ -141,7 +141,27 @@ const playerKeys = (p) => playerVariants(p && p.name);
 // sale instead of as confident nonsense. The catalogue currently produces
 // none, and this exists so that a future product — or a second player whose
 // name collides once a suffix is stripped — is reported rather than absorbed.
-function buildIndex(products, keyFn = productKeys) {
+// `aliases` maps a sale key — "<year>|<normalised set name>" — to a product id,
+// and is how a human answer enters the join.
+//
+// Some spellings no rule will ever reach. A seller types "Topps Flagship" for
+// a product catalogued as "2026 Topps Football"; nothing about those two
+// strings connects them, and no amount of stripping makers or years bridges it.
+// A fifth of sampled sales match no product at all, and that is a ceiling on
+// every other identity fix: a sale outside the catalogue cannot be helped by
+// reading its parallel, its kind or its insert, because there is nothing to
+// read it against.
+//
+// One alias is worth far more than one of anything else that can be corrected
+// here. A title decision resolves about four sales; a set alias resolves every
+// sale ever filed under that spelling, which for the common ones is hundreds.
+// That ratio is the whole argument for doing this by hand.
+//
+// Applied AFTER the ambiguity check, deliberately. A human saying "this
+// spelling is that product" is a stronger statement than the catalogue
+// accidentally producing two owners for a key, and it should settle the case
+// rather than be dropped by it.
+function buildIndex(products, keyFn = productKeys, aliases = null) {
   const owners = new Map();
   for (const p of products || []) {
     for (const k of keyFn(p)) {
@@ -156,6 +176,22 @@ function buildIndex(products, keyFn = productKeys) {
     // Products are identified by id, player pages by slug. Falling back keeps
     // this readable for both rather than printing a list of empty strings.
     else ambiguous.push({ key: k, products: list.map(p => p.id || p.slug || p.name) });
+  }
+
+  if (aliases) {
+    const byId = new Map();
+    for (const p of products || []) {
+      const id = p && (p.id || p.slug);
+      if (id) byId.set(String(id), p);
+    }
+    for (const [key, id] of Object.entries(aliases)) {
+      const p = byId.get(String(id));
+      // An alias naming a product that no longer exists is ignored rather than
+      // written as a null the join would later treat as a match. Products get
+      // renamed; a stale alias should degrade to "unmatched", which is where
+      // the sale already was.
+      if (p) index.set(String(key), p);
+    }
   }
   return { index, ambiguous };
 }
