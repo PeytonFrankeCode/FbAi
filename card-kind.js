@@ -114,11 +114,4 @@ function printRun(title) {
 // the overwhelming majority of sales.
 const kindKey = (title) => cardKind(title);
 
-module.exports = {
-  AUTO_RE, RELIC_RE, REDEMPTION_RE, cardKind, kindKey, printRun,
-  // The word lists, so the SQL copy in server.js is generated from the same
-  // source rather than transcribed. Transcribed copies drift, and this codebase
-  // has already paid for that twice today — two grade readers that disagreed,
-  // and two search endpoints where only one had been wired up.
-  AUTO_WORDS, RELIC_WORDS, REDEMPTION_WORDS,
-};
+module.exports = { AUTO_RE, RELIC_RE, REDEMPTION_RE, cardKind, kindKey, printRun };
