@@ -64,6 +64,21 @@ card({ player: 'Real Riser', oldPrice: 100, newPrice: 180, oldN: 12, newN: 12 })
 card({ player: 'Real Riser', parallel: 'Base', number: '2', oldPrice: 40, newPrice: 68, oldN: 10, newN: 10 });   // +70%
 card({ player: 'Real Riser', parallel: 'Gold', number: '3', oldPrice: 200, newPrice: 320, oldN: 8, newN: 8 });   // +60%
 
+// --- The Most Sold trap: one number, three different cards -------------------
+// Taken from the live board. 2026 Topps Fernando Mendoza #301 exists as a base
+// rookie, an on-card autograph and a redemption voucher — same player, same
+// product, same number, prices an order of magnitude apart. Grouped together
+// they averaged out to a figure that described none of them.
+card({ player: 'Fernando Mendoza', year: '2026', set: 'Topps', parallel: '', number: '301',
+       title: '2026 Topps Flagship Football - Fernando Mendoza RC #301 Las Vegas Raiders',
+       oldPrice: 30, newPrice: 30, oldN: 14, newN: 14 });
+card({ player: 'Fernando Mendoza', year: '2026', set: 'Topps', parallel: '', number: '301',
+       title: '2026 Topps Flagship Fernando Mendoza RC #301 Rookie Real One Auto Raiders',
+       oldPrice: 900, newPrice: 900, oldN: 9, newN: 9 });
+card({ player: 'Fernando Mendoza', year: '2026', set: 'Topps', parallel: '', number: '301',
+       title: '2026 Topps Redemption Card Fernando Mendoza Las Vegas Raiders 301',
+       oldPrice: 25, newPrice: 25, oldN: 11, newN: 11 });
+
 // --- The trap: a huge percentage off almost no data --------------------------
 // Two sales each side. A naive board ranks this first at +900%; the
 // minimum-sales-per-half floor must keep it off entirely.
@@ -227,6 +242,51 @@ const names = (rows) => (rows || []).map(r => r.name || r.player);
   check('the basis of the boards is reported', !!s.moversBasis &&
         s.moversBasis.rawOnly === true && s.moversBasis.cardsConsidered > 0,
         s.moversBasis ? `${s.moversBasis.cardsConsidered} cards, split ${s.moversBasis.splitDate}` : 'missing');
+
+  // ---- Most Sold has to be about ONE card ----------------------------------
+  //
+  // The board showed "2026 Topps Fernando Mendoza" — 482 sales, $269 average,
+  // $11,000 high — with a photo of a PSA-slabbed autograph numbered /5. A base
+  // rookie, an on-card auto and a redemption voucher grouped together produce
+  // an average that describes none of them, on the most prominent tile on the
+  // site.
+  //
+  // The fixture below is that exact card: one player, one product, one number,
+  // three kinds, priced an order of magnitude apart.
+  {
+    const ms = s.mostSold || [];
+    const mine = ms.filter(r => /Fernando Mendoza/.test(r.name));
+    const byKind = Object.fromEntries(mine.map(r => [r.kind, r]));
+
+    check('one card at one number is not one row when the kinds differ',
+      mine.length === 3,
+      mine.length ? mine.map(r => `${r.kind}:${r.sales}@$${r.avgPrice}`).join(' | ')
+                  : 'the Mendoza rows are missing entirely');
+
+    check('  ...the base card is priced as a base card',
+      byKind.base && byKind.base.avgPrice === 30,
+      byKind.base ? `$${byKind.base.avgPrice} avg` : 'no base row');
+    check('  ...the autograph as an autograph',
+      byKind.auto && byKind.auto.avgPrice === 900,
+      byKind.auto ? `$${byKind.auto.avgPrice} avg` : 'no auto row');
+    // The one that started this. A voucher is not the card it promises.
+    check('  ...and the redemption voucher is neither',
+      byKind.redemption && byKind.redemption.avgPrice === 25,
+      byKind.redemption ? `$${byKind.redemption.avgPrice} avg` : 'no redemption row');
+
+    // A tile reading "…#301" while holding autographs is not wrong about the
+    // price so much as wrong about the card.
+    check('  ...and the tile says which kind it is',
+      byKind.auto && / Auto$/.test(byKind.auto.name)
+      && byKind.redemption && / Redemption$/.test(byKind.redemption.name)
+      && byKind.base && !/ (Auto|Relic|Redemption)$/.test(byKind.base.name),
+      [byKind.base, byKind.auto, byKind.redemption].filter(Boolean).map(r => r.name).join(' | '));
+
+    // Clicking a row labelled Auto must not run a search for base cards.
+    check('  ...and clicking it searches for that kind',
+      byKind.auto && /Auto/.test(byKind.auto.query),
+      byKind.auto ? byKind.auto.query : '');
+  }
 
   // ---- it has to fit in a Worker's CPU budget ----
   const t0 = Date.now();

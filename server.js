@@ -48,7 +48,48 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // Base vs autograph vs relic — the largest single source of merged cards.
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
-const { cardKind: _cardKind, printRun: _printRun } = require('./card-kind');
+const { cardKind: _cardKind, printRun: _printRun,
+        AUTO_WORDS: _AUTO_WORDS, RELIC_WORDS: _RELIC_WORDS,
+        REDEMPTION_WORDS: _REDEMPTION_WORDS } = require('./card-kind');
+
+// cardKind(), in SQL.
+//
+// The "Most sold" board groups every priced sale in a 30-day window — around
+// half a million rows — so the kind has to be decided inside the query. Pulling
+// the titles into the Worker to run the JS reader would not fit in memory.
+//
+// GENERATED from card-kind.js's word lists rather than transcribed, because a
+// transcribed copy drifts and this codebase has paid for that twice in one day:
+// two grade readers that disagreed about what a slab was, and two search
+// endpoints where only one had the identity check wired in. card-kind.test.js
+// runs a corpus through both readers and requires the same answer.
+//
+// The title is padded and its separators flattened so '% auto %' cannot match
+// inside a word. That was measured too slow for the market index, which runs on
+// every request; this runs once a day from cron, where it is free.
+const _sqlKindTitle = (col = 'title') =>
+  `' ' || LOWER(REPLACE(REPLACE(REPLACE(COALESCE(${col}, ''), '-', ' '), '/', ' '), '.', ' ')) || ' '`;
+
+// How a kind is written on a tile. Base has no label — the overwhelming
+// majority of cards are base, and stamping "Base" on most of the board adds
+// noise to say nothing.
+const _KIND_LABEL = { auto: 'Auto', relic: 'Relic', redemption: 'Redemption' };
+
+function _sqlKindExpr(col = 'title') {
+  const T = _sqlKindTitle(col);
+  // The same flattening the title gets, applied to the words, so "on-card" and
+  // "game-used" still line up after the hyphens are gone.
+  const flat = (w) => w.replace(/\\s\*/g, ' ').replace(/-/g, ' ').toLowerCase();
+  const any = (words) => words.map(w => `${T} LIKE '% ${flat(w)} %'`).join(' OR ');
+  return `CASE
+        WHEN ${any(_REDEMPTION_WORDS)} THEN 'redemption'
+        WHEN ${any(_AUTO_WORDS)} THEN 'auto'
+        WHEN ${any(_RELIC_WORDS)}
+          -- "jersey" is a relic and also a place. New Jersey is on real cards.
+          OR ( (${T} LIKE '% jersey %' OR ${T} LIKE '% jerseys %')
+               AND ${T} NOT LIKE '% new jersey%' ) THEN 'relic'
+        ELSE '' END`;
+}
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys, saleKeys,
   norm: _setNorm,
@@ -6761,7 +6802,12 @@ function _median(xs) {
 // v3: gained top sets and both mover boards, and the lists grew from 3 to 50,
 // so the key changes rather than serving the old shape to the new UI from a
 // warm cache.
-const SOLD_STATS_KEY = (days) => `soldstats:v3:${days}`;
+// v4: Most Sold groups by KIND, so v3 entries hold base cards, autographs and
+// redemption vouchers averaged into one tile. This cache lives for 48 hours and
+// is warmed by cron, so without the bump the corrected board would not appear
+// for two days — the same mistake that made the grade fix look like it had
+// never shipped.
+const SOLD_STATS_KEY = (days) => `soldstats:v4:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -6797,14 +6843,22 @@ async function _computeSoldStats(db, days) {
       //
       // Confidence floor applies — the grouping columns are parsed out of
       // seller-written titles and are unreliable below it.
+      //
+      // KIND is part of the grouping, and it has to be. Without it the board
+      // showed "2026 Topps Fernando Mendoza" — 482 sales, $269 average, $11,000
+      // high — with a photo of a PSA-slabbed autograph numbered /5. A base
+      // rookie, an on-card auto and a redemption voucher averaged together
+      // produce a number that describes none of them, on the most prominent
+      // tile on the site.
       db.prepare(`SELECT player, year, set_name, parallel, card_number,
+                         ${_sqlKindExpr()} AS kind,
                          COUNT(*) AS n, AVG(price_cents) AS avg_cents,
                          MAX(price_cents) AS max_cents,
                          title, item_id, sold_date, grader, grade${imgCol}
                   FROM sales
                   WHERE price_cents IS NOT NULL AND sold_date >= ?
                     AND confidence >= ? AND player IS NOT NULL AND player != ''
-                  GROUP BY player, year, set_name, parallel, card_number
+                  GROUP BY player, year, set_name, parallel, card_number, kind
                   ORDER BY n DESC LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, SOLD_STATS_TOP).all(),
 
       // Highest demand by set: how many cards of it actually changed hands.
@@ -6915,15 +6969,22 @@ async function _computeSoldStats(db, days) {
       mostSold: ((mostSold && mostSold.results) || []).map(r => ({
         // A readable card name built from the parsed columns, falling back to
         // the raw title when the parse was thin.
-        name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '']
+        // The kind is named, because a tile that says only "2026 Topps Fernando
+        // Mendoza #301" while holding redemption vouchers is not wrong about
+        // the price so much as wrong about the card.
+        name: [r.year, r.set_name, r.player, r.parallel,
+               r.card_number ? `#${r.card_number}` : '', _KIND_LABEL[r.kind] || '']
           .filter(Boolean).join(' ').trim() || r.title,
+        kind: r.kind || 'base',
         sales: r.n,
         avgPrice: Math.round((r.avg_cents || 0) / 100),
         topPrice: Math.round((r.max_cents || 0) / 100),
         imageUrl: r.image_url || null,
         itemUrl: linkOf(r),
-        // What to run when the tile is clicked.
-        query: [r.year, r.set_name, r.player, r.parallel].filter(Boolean).join(' ').trim() || r.title,
+        // What to run when the tile is clicked. Carries the kind too, or
+        // clicking a row labelled Auto runs a search that returns base cards.
+        query: [r.year, r.set_name, r.player, r.parallel, _KIND_LABEL[r.kind] || '']
+          .filter(Boolean).join(' ').trim() || r.title,
       })),
 
       topSets: ((topSets && topSets.results) || []).map(r => ({
@@ -7046,9 +7107,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // compares that hash against the constant below: change any of them without
 // bumping the version and the suite fails, naming the fix. Recompute with
 //   node -e "..." (the test prints the exact command when it fails)
-const CARD_IDENTITY_VERSION = 'cardanalysis:v7';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v8';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
-const CARD_IDENTITY_FINGERPRINT = 'af885094446e';
+const CARD_IDENTITY_FINGERPRINT = '569304699cc0';
 
 // How far one card's prices may spread before a trend across them is refused.
 //
@@ -7258,6 +7319,8 @@ app.get('/api/card-analysis', async (req, res) => {
   // v7: a laundry tag is no longer read as the grading company TAG, and the
   // grade columns are no longer trusted when it was, so v6 entries hold patch
   // cards filed under a grade nobody issued.
+  // v8: a redemption voucher is its own kind, so v7 entries hold "you are due
+  // to receive" slips averaged in with the card they promise.
   const cacheKey = `${CARD_IDENTITY_VERSION}:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
@@ -11359,7 +11422,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, _sqlKindExpr, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
