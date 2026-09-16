@@ -1348,6 +1348,50 @@ function main() {
   // — small enough for the daily cron to load, which 27 MB of checklists is
   // not.
   const subsetAttribution = {};
+  // The complement of the attribution map: the keys it had to leave out.
+  //
+  // attribution.json answers "which subset is this card in" and can only do so
+  // for keys owned by exactly one set. The keys owned by SEVERAL are the ones
+  // where a sale's identity is genuinely uncertain, and until now they were
+  // simply dropped — which meant nothing could count them or say how much of
+  // the dataset they account for.
+  //
+  // They are worth naming because they are not a rounding error. Across all 361
+  // checklists, 27.0% of (player, number) keys belong to more than one set:
+  // 63,182 of 234,071, median product 26.2%, worst 92.5%. Every insert restarts
+  // numbering at #1 and `sales` has one set_name column holding the PRODUCT, so
+  // those collapse together with nothing to separate them.
+  //
+  // Emitted from the SAME `owners` tally attribution.json is built from, so the
+  // two cannot disagree about what "ambiguous" means.
+  // Computed over EVERY set, not just the ones big enough to get a page.
+  //
+  // That is the one place this must NOT follow attribution.json's filter. A
+  // subset page is only built for a set of 25+ cards, so attribution ignores
+  // the small ones — but card identity in /api/card-analysis has no such
+  // filter, and a ten-card insert collides with the base set there exactly as a
+  // three-hundred-card one does. Measuring with the page-building threshold
+  // would have quietly undercounted the problem by a fifth (49,693 keys against
+  // 63,417) and understated it precisely where the cards are rarest.
+  //
+  // The two maps are therefore NOT complements and must not be read as such.
+  // attribution answers "which page does this card belong to"; this answers "is
+  // this card's identity certain at all", which is a broader question with a
+  // broader domain.
+  const subsetAmbiguous = {};
+  for (const cl of checklists) {
+    const owners = new Map();
+    for (const x of (cl.sets || [])) {
+      for (const c of (x.cards || [])) {
+        const k = cardMemberKey(c);
+        owners.set(k, (owners.get(k) || 0) + 1);
+      }
+    }
+    const amb = [];
+    for (const [k, n] of owners) if (n > 1) amb.push(k);
+    if (amb.length) subsetAmbiguous[cl.id] = amb.sort();
+  }
+
   for (const cl of checklists) {
     const sets = (cl.sets || []).filter(x => (x.cards || []).length >= MIN_SUBSET_CARDS);
     if (!sets.length) continue;
@@ -1371,6 +1415,8 @@ function main() {
   fs.mkdirSync(path.join(DATA_DIR, 'subsets'), { recursive: true });
   fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'attribution.json'),
     JSON.stringify(subsetAttribution) + '\n');
+  fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'ambiguous.json'),
+    JSON.stringify(subsetAmbiguous) + '\n');
 
   fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
   fs.writeFileSync(path.join(DATA_DIR, 'players', 'redirects.json'), JSON.stringify(redirects) + '\n');
