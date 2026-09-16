@@ -4846,6 +4846,162 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
   }
 });
 
+// ---- /api/debug/identity-gap ----
+// Where card identity actually breaks, and what each available signal would fix.
+//
+// This exists to settle a question rather than to monitor one: is it worth
+// reading photos to tell a base card from an insert? The case for it is real —
+// a product is not one list of cards. 2017 Panini Prizm is a 300-card base set
+// plus fourteen inserts, and EVERY insert restarts numbering at #1. The sales
+// table has a single `set_name` column holding the PRODUCT, so a base #8, an
+// Instant Impact #8 and an NFL MVP #8 are all "Prizm #8".
+//
+// But the checklists already answer most of that, and cheaply. Against 2017
+// Prizm's own catalogue, only 13 of 687 (player, number) pairs belong to more
+// than one set — 1.9%. Patrick Mahomes has nine cards in that product and every
+// one carries a different number. So for the overwhelming majority the number
+// IS the answer, and no photo is needed.
+//
+// What no local check can measure is how often the number is missing from the
+// data entirely. That is what this reports, over real sales, so the decision
+// rests on a measurement instead of on either of our intuitions.
+//
+// Costed like the other diagnostics: one grouped, limited scan, not a walk of
+// the table.
+app.get('/api/debug/identity-gap', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const limit = Math.min(6000, Math.max(200, parseInt(req.query.limit, 10) || 4000));
+  const pi = await parallelIndex();
+  if (!pi) return res.json({ available: false, reason: 'parallel dictionary unavailable' });
+
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const sinceIso = _mkIso(_mkDay(throughIso) - 30);
+
+    const rows = await db.prepare(
+      `SELECT title, card_number, parallel, set_name, COUNT(*) AS n
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?
+          AND title IS NOT NULL AND title <> ''
+        GROUP BY title ORDER BY n DESC LIMIT ?`
+    ).bind(sinceIso, throughIso, limit).all();
+
+    const list = (rows && rows.results) || [];
+    const HAS_NUM = /#\s*[A-Za-z0-9-]+/;
+
+    let sales = 0;
+    const numbered = { column: 0, title: 0, either: 0, neither: 0 };
+    const salesBy = { numberEither: 0, numberNeither: 0, subsetNamed: 0,
+                      rescuable: 0, stillUnidentified: 0 };
+    const unidentifiedExamples = [];
+    const rescuableExamples = [];
+    const subsetsSeen = new Map();
+
+    for (const r of list) {
+      const n = r.n || 0;
+      sales += n;
+      const hasCol = !!String(r.card_number == null ? '' : r.card_number).trim();
+      const hasTitle = HAS_NUM.test(String(r.title || ''));
+      if (hasCol) numbered.column++;
+      if (hasTitle) numbered.title++;
+
+      const sub = pi.resolveSubset(String(r.title || ''));
+      if (sub.subset) {
+        subsetsSeen.set(sub.subset, (subsetsSeen.get(sub.subset) || 0) + n);
+        salesBy.subsetNamed += n;
+      }
+
+      if (hasCol || hasTitle) {
+        numbered.either++;
+        salesBy.numberEither += n;
+        continue;
+      }
+      // No number anywhere. This is the population a photo would have to serve.
+      numbered.neither++;
+      salesBy.numberNeither += n;
+      if (sub.subset) {
+        // The title names a catalogued insert, so the SET is known even though
+        // the card is not — which is most of what a photo was going to tell us,
+        // available from text for nothing.
+        salesBy.rescuable += n;
+        if (rescuableExamples.length < 12) {
+          rescuableExamples.push({ subset: sub.subset, sales: n, title: r.title });
+        }
+      } else {
+        salesBy.stillUnidentified += n;
+        if (unidentifiedExamples.length < 15) {
+          unidentifiedExamples.push({ sales: n, title: r.title });
+        }
+      }
+    }
+
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
+    res.json({
+      available: true,
+      window: { since: sinceIso, through: throughIso },
+      titlesSampled: list.length,
+      salesCovered: sales,
+
+      // The first question: is the card number there at all?
+      cardNumber: {
+        titlesWithColumn: numbered.column,
+        titlesWithNumberInTitle: numbered.title,
+        titlesWithEither: numbered.either,
+        titlesWithNeither: numbered.neither,
+        salesWithANumber: salesBy.numberEither,
+        salesWithNoNumber: salesBy.numberNeither,
+        salesWithNoNumberShare: pct(salesBy.numberNeither, sales),
+      },
+
+      // The second: for the numberless ones, does the title name the set?
+      //
+      // This is the whole photo question in one number. A sale with no card
+      // number but a named insert is one text can place; a sale with neither is
+      // the only population a photo could help, and it is the honest ceiling on
+      // what photo matching could ever be worth here.
+      subsetFromTitle: {
+        salesNamingASubset: salesBy.subsetNamed,
+        salesNamingASubsetShare: pct(salesBy.subsetNamed, sales),
+        numberlessRescuedBySubset: salesBy.rescuable,
+        numberlessRescuedShare: pct(salesBy.rescuable, salesBy.numberNeither),
+        ceilingForPhotoMatching: salesBy.stillUnidentified,
+        ceilingForPhotoMatchingShare: pct(salesBy.stillUnidentified, sales),
+        topSubsets: [...subsetsSeen.entries()]
+          .sort((a, b) => b[1] - a[1]).slice(0, 15)
+          .map(([name, n]) => ({ subset: name, sales: n })),
+      },
+
+      // Worth more than the rates: whether the leftovers are one broken title
+      // shape or a genuine scattering.
+      rescuableExamples,
+      unidentifiedExamples,
+
+      // Stated here so the number above is read against something. Colour
+      // fingerprinting was built, run over real photos and measured at 37%
+      // accuracy on the cards it committed to, against 95.6% for reading the
+      // title. It is disabled in .github/workflows/fingerprint.yml, and the
+      // post-mortem there names the reason: averaging a photo down to sixteen
+      // bins of colour throws away pattern and texture, which is exactly what
+      // separates one silver card from another.
+      priorAttempt: {
+        method: 'colour-only photo signature',
+        accuracyOnCommitted: '37%',
+        titleBaseline: '95.6%',
+        status: 'disabled',
+      },
+    });
+  } catch (err) {
+    console.error('[identity-gap]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // Where the raw-only filter loses rows, one stage at a time.
 //
 // The filter reads two columns and a title, and any one of the three can empty
