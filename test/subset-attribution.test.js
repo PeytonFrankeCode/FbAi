@@ -151,5 +151,92 @@ if (!fs.existsSync(attrPath)) {
   }
 }
 
+// ---- the ambiguity map ----
+//
+// The other half of the same question. attribution.json says which subset a
+// card belongs to, and can only answer for keys owned by exactly one set.
+// ambiguous.json names the keys owned by SEVERAL — the sales whose card cannot
+// be determined from the columns at all, because every insert restarts
+// numbering at #1 and `set_name` holds only the product.
+//
+// It exists to be counted against real sales by /api/debug/identity-gap, which
+// is how "how much would reading subsets improve accuracy" gets an answer
+// instead of an estimate.
+{
+  const ambPath = path.join(ROOT, 'public', 'data', 'subsets', 'ambiguous.json');
+  if (!fs.existsSync(ambPath)) {
+    console.log('SKIP  ambiguity map  — run `npm run build:pages` first (CI does)');
+  } else {
+    const amb = JSON.parse(fs.readFileSync(ambPath, 'utf8'));
+    const ids = Object.keys(amb);
+    const keys = ids.reduce((n, id) => n + amb[id].length, 0);
+    check('the ambiguity map was built',
+      ids.length > 100 && keys > 10000, `${ids.length} products, ${keys.toLocaleString()} keys`);
+
+    const mb = fs.statSync(ambPath).size / 1024 / 1024;
+    check('  ...and is small enough to load in a Worker', mb < 4, `${mb.toFixed(2)} MB`);
+
+    // Same key shape as attribution, because server.js builds one string and
+    // looks it up in whichever map it needs.
+    const malformed = [];
+    for (const id of ids) {
+      for (const k of amb[id]) {
+        const at = k.indexOf('|');
+        if (at === -1 || norm(k.slice(0, at)) !== k.slice(0, at) || norm(k.slice(at + 1)) !== k.slice(at + 1)) {
+          malformed.push(`${id}: ${k}`); break;
+        }
+      }
+      if (malformed.length > 3) break;
+    }
+    check('  ...with every key in the form server.js reconstructs',
+      malformed.length === 0, malformed.slice(0, 3).join(' | ') || 'all well-formed');
+
+    // Built over EVERY set, not just the 25+ card ones attribution filters to.
+    //
+    // This is the one place the two maps must differ. Card identity in
+    // /api/card-analysis applies no size filter, so a ten-card insert collides
+    // with the base set there exactly as a three-hundred-card one does. Using
+    // attribution's threshold undercounted by a fifth — 49,693 keys against
+    // 63,417 — and understated the problem precisely where cards are rarest.
+    //
+    // Verified against the checklists rather than trusted: a key that is
+    // ambiguous only among small sets must still be present.
+    {
+      const dir = path.join(ROOT, 'public', 'data', 'checklists');
+      let missed = 0, checkedSmall = 0;
+      for (const id of ids.slice(0, 40)) {
+        const file = path.join(dir, `${id}.json`);
+        if (!fs.existsSync(file)) continue;
+        const cl = JSON.parse(fs.readFileSync(file, 'utf8'));
+        const small = new Map();
+        for (const s of (cl.sets || [])) {
+          for (const c of (s.cards || [])) {
+            const k = `${norm(c && c.player)}|${norm(c && c.number)}`;
+            if (!small.has(k)) small.set(k, new Set());
+            small.get(k).add(s.name);
+          }
+        }
+        const have = new Set(amb[id]);
+        for (const [k, sets] of small) {
+          if (sets.size > 1) { checkedSmall++; if (!have.has(k)) missed++; }
+        }
+      }
+      check('  ...covering every set, not only the ones big enough for a page',
+        checkedSmall > 0 && missed === 0,
+        missed ? `${missed} ambiguous keys missing of ${checkedSmall} checked`
+               : `${checkedSmall.toLocaleString()} ambiguous keys across 40 products, all present`);
+    }
+
+    // And the endpoint actually reads it. An artifact nothing loads measures
+    // nothing, and the build would keep emitting it forever.
+    {
+      const serverSrc = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+      check('  ...and /api/debug/identity-gap loads it',
+        /_loadJson\('subsets\/ambiguous\.json'\)/.test(serverSrc),
+        'emitted but unread is the same as not built');
+    }
+  }
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall subset-attribution checks passed');
 process.exit(failures ? 1 : 0);

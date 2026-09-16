@@ -4883,8 +4883,16 @@ app.get('/api/debug/identity-gap', async (req, res) => {
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     const sinceIso = _mkIso(_mkDay(throughIso) - 30);
 
+    // year/set_name/player come back normalised by SQL, because the ambiguity
+    // map is keyed with the JS norm() and the two have to agree exactly. This
+    // is the failure mode subset-attribution.test.js was written for: if the
+    // normalisers drift by so much as a hyphen every lookup misses, nothing is
+    // thrown, and the answer is a confident zero.
+    const Y = _normCol('year'), S = _normCol('set_name');
+    const P = _normCol('player'), CN = _normCol('card_number');
     const rows = await db.prepare(
-      `SELECT title, card_number, parallel, set_name, COUNT(*) AS n
+      `SELECT title, card_number, parallel, set_name, COUNT(*) AS n,
+              ${Y} AS y, ${S} AS s, ${P} AS p, ${CN} AS cn
          FROM sales
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
@@ -4893,12 +4901,38 @@ app.get('/api/debug/identity-gap', async (req, res) => {
     ).bind(sinceIso, throughIso, limit).all();
 
     const list = (rows && rows.results) || [];
+
+    // How many of these sales land on a card whose identity is genuinely
+    // uncertain — a (player, number) that belongs to more than one set in its
+    // product, so the sales row cannot say which card it is.
+    //
+    // Loaded lazily and tolerated when absent: an old deploy has no artifact,
+    // and a diagnostic that 500s because an optional map is missing is worse
+    // than one that reports what it can.
+    let ambiguous = null, products = null, setIndex = null;
+    try {
+      ambiguous = await _loadJson('subsets/ambiguous.json');
+      const idx = await _loadJson('checklists/index.json');
+      products = (idx && idx.products) || [];
+      setIndex = buildJoinIndex(products).index;
+    } catch (err) {
+      console.error('[identity-gap] ambiguity map unavailable:', err && err.message);
+    }
+    // Arrays in the artifact, Sets here — this is looked up once per row.
+    const ambSets = new Map();
+    if (ambiguous) {
+      for (const [pid, keys] of Object.entries(ambiguous)) ambSets.set(pid, new Set(keys));
+    }
     const HAS_NUM = /#\s*[A-Za-z0-9-]+/;
 
     let sales = 0;
     const numbered = { column: 0, title: 0, either: 0, neither: 0 };
     const salesBy = { numberEither: 0, numberNeither: 0, subsetNamed: 0,
                       rescuable: 0, stillUnidentified: 0 };
+    // The measurement this endpoint was extended for.
+    const amb = { matchedProduct: 0, onAmbiguousKey: 0, ambiguousAndNamed: 0,
+                  ambiguousUnnamed: 0, noProduct: 0 };
+    const ambiguousExamples = [];
     const unidentifiedExamples = [];
     const rescuableExamples = [];
     const subsetsSeen = new Map();
@@ -4915,6 +4949,34 @@ app.get('/api/debug/identity-gap', async (req, res) => {
       if (sub.subset) {
         subsetsSeen.set(sub.subset, (subsetsSeen.get(sub.subset) || 0) + n);
         salesBy.subsetNamed += n;
+      }
+
+      // Does this sale sit on a key that names more than one card?
+      //
+      // Only answerable when the sale resolves to a product, so the unresolved
+      // ones are counted separately rather than folded into "not ambiguous" —
+      // which would read as reassurance and would be nothing of the kind.
+      if (setIndex && r.p && r.cn) {
+        const product = matchSale(setIndex, r.y, r.s);
+        if (!product) {
+          amb.noProduct += n;
+        } else {
+          amb.matchedProduct += n;
+          const keys = ambSets.get(product.id);
+          if (keys && keys.has(`${r.p}|${r.cn}`)) {
+            amb.onAmbiguousKey += n;
+            // Naming the insert is what resolves it. This is the split the
+            // whole decision rests on.
+            if (sub.subset) amb.ambiguousAndNamed += n;
+            else {
+              amb.ambiguousUnnamed += n;
+              if (ambiguousExamples.length < 12) {
+                ambiguousExamples.push({ product: product.id, key: `${r.p}|${r.cn}`,
+                                         sales: n, title: r.title });
+              }
+            }
+          }
+        }
       }
 
       if (hasCol || hasTitle) {
@@ -4977,8 +5039,33 @@ app.get('/api/debug/identity-gap', async (req, res) => {
           .map(([name, n]) => ({ subset: name, sales: n })),
       },
 
+      // ---- the number the decision rests on ----
+      //
+      // A key that belongs to more than one set in its product is a sale whose
+      // card cannot be determined from the columns alone: every insert restarts
+      // numbering at #1 and `set_name` holds the PRODUCT, so those sales are
+      // currently grouped together whether or not they are the same card.
+      //
+      // `named` is the share of those the title already resolves, because it
+      // names the insert. That is what reading subsets would recover. `unnamed`
+      // is what would be left — and the honest thing to do with those is mark
+      // them unresolved, not merge them.
+      ambiguity: ambiguous ? {
+        salesResolvedToAProduct: amb.matchedProduct,
+        salesOnAnAmbiguousKey: amb.onAmbiguousKey,
+        salesOnAnAmbiguousKeyShare: pct(amb.onAmbiguousKey, amb.matchedProduct),
+        ofThoseTitleNamesTheInsert: amb.ambiguousAndNamed,
+        resolvableByReadingTheSubset: pct(amb.ambiguousAndNamed, amb.onAmbiguousKey),
+        wouldRemainUnresolved: amb.ambiguousUnnamed,
+        // Not folded into "unambiguous": a sale we could not match to a product
+        // has an unknown answer, not a reassuring one.
+        salesWithNoProductMatch: amb.noProduct,
+        catalogueKeysAmbiguous: Object.values(ambiguous).reduce((n, v) => n + v.length, 0),
+      } : { unavailable: 'subsets/ambiguous.json not deployed' },
+
       // Worth more than the rates: whether the leftovers are one broken title
       // shape or a genuine scattering.
+      ambiguousExamples,
       rescuableExamples,
       unidentifiedExamples,
 
