@@ -48,7 +48,7 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // Base vs autograph vs relic — the largest single source of merged cards.
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
-const { cardKind: _cardKind } = require('./card-kind');
+const { cardKind: _cardKind, printRun: _printRun } = require('./card-kind');
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys, saleKeys,
   norm: _setNorm,
@@ -6786,7 +6786,9 @@ app.get('/api/card-analysis', async (req, res) => {
   // versions, so v3 entries hold groupings that merged them.
   // v5: identity now also separates a base card from the inserts that share
   // its number, so v4 entries hold groupings that merged them.
-  const cacheKey = `cardanalysis:v5:${itemId}`;
+  // v6: identity now separates numbered parallels by print run, so v5 entries
+  // hold groupings that averaged a /5 with a /10.
+  const cacheKey = `cardanalysis:v6:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -6943,6 +6945,35 @@ app.get('/api/card-analysis', async (req, res) => {
     // title omits its name joins the base group — which is exactly where those
     // sales sit today, so it is not a regression, and it is the safe direction:
     // the opposite puts a Downtown's price into a base card's median.
+    // ---- the print run ----
+    //
+    // A Cam Ward auto /5 and a Cam Ward auto /10 are different cards with very
+    // different prices, and every column in the sales table is identical for
+    // both: same player, year, set, number, and the same "auto" kind. Only the
+    // title separates them.
+    //
+    // The rule here is STRICTER than the one for kind, and deliberately so. For
+    // an autograph, absence of the word is evidence — sellers do not omit
+    // "auto" because it is most of the price. For a print run that is weaker: a
+    // /199 goes unstated often enough that treating silence as "unnumbered"
+    // would split real cards apart.
+    //
+    // So this only ever separates when BOTH sides state a run and the runs
+    // differ. An unstated run merges, which is exactly where those sales sit
+    // today — no regression, and no new false splits.
+    let excludedOtherPrintRun = 0;
+    {
+      const seedRun = _printRun(String(seed.title || ''));
+      if (seedRun != null) {
+        const kept = all.filter(r => {
+          const run = _printRun(String(r.title || ''));
+          return run == null || run === seedRun;
+        });
+        excludedOtherPrintRun = all.length - kept.length;
+        all = kept;
+      }
+    }
+
     let excludedOtherSubset = 0;
     if (pi) {
       const seedSubset = pi.resolveSubset(String(seed.title || '')).subset || '';
@@ -7102,6 +7133,10 @@ app.get('/api/card-analysis', async (req, res) => {
         // Sales of this same number in this same product belonging to a
         // different insert. Previously grouped in.
         otherSubsets: excludedOtherSubset,
+        // The print run this card is, and how many sales of the same card at a
+        // DIFFERENT run were kept out. null means no run was stated.
+        printRun: _printRun(String(seed.title || '')),
+        otherPrintRuns: excludedOtherPrintRun,
         unreadable,
       },
     };

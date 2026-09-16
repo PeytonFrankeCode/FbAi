@@ -123,6 +123,20 @@ sale('g1', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm PSA1
 sale('g2', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm BGS9.5', price: 2400, day: -9 });
 sale('g3', { title: '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm PSA 10', price: 3100, day: -6 });
 
+// ---- the same auto at two different print runs -----------------------------
+//
+// A Cam Ward auto /5 and a Cam Ward auto /10 are different cards with very
+// different prices, and EVERY column is identical for both: same player, year,
+// set, card number, and both read as kind "auto". Only the title separates
+// them. Different player from the rows above so they form their own card.
+sale('p1', { title: '2017 Panini Prizm Rookie Auto Cam Ward #40 /5', price: 1400, day: -20, player: 'Cam Ward', number: '40' });
+sale('p2', { title: '2017 Panini Prizm Rookie Auto Cam Ward #40 /5', price: 1250, day: -9,  player: 'Cam Ward', number: '40' });
+sale('p3', { title: '2017 Panini Prizm Rookie Auto Cam Ward #40 /10', price: 520, day: -17, player: 'Cam Ward', number: '40' });
+sale('p4', { title: '2017 Panini Prizm Rookie Auto Cam Ward #40 /10', price: 480, day: -6,  player: 'Cam Ward', number: '40' });
+// Same card, run not stated. Must NOT be split off — silence about a print run
+// is not evidence of one, which is where the rule differs from `kind`.
+sale('p5', { title: '2017 Panini Prizm Rookie Auto Cam Ward #40', price: 900, day: -13, player: 'Cam Ward', number: '40' });
+
 // A different card entirely: same player, same year, same set, different
 // number. It must never be grouped in, whatever its parallel says.
 sale('x1', { title: '2017 PANINI PRIZM INSTANT IMPACT #8 PATRICK MAHOMES II',
@@ -328,6 +342,36 @@ const rawTitles = (d) => {
     check('  ...so the two medians are genuinely different numbers',
       m1 && m2 && Math.abs(m1.median - m2.median) > 100,
       m1 && m2 ? `base $${m1.median} vs insert $${m2.median}` : 'missing a series');
+  }
+
+  // ---- the same auto at two different print runs --------------------------
+  const five = await call('/api/card-analysis?itemId=p1');
+  const fiveIds = new Set((five.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('a /5 auto is not averaged with the /10',
+    five.available === true && !['p3', 'p4'].some(id => [...fiveIds].some(u => u.endsWith('/' + id))),
+    `printRun=${five.identity && five.identity.printRun}, `
+    + `otherPrintRuns=${five.identity && five.identity.otherPrintRuns}`);
+
+  // The rule that separates this from the `kind` filter: silence is not
+  // evidence. A sale that states no run stays with whatever it was grouped
+  // with, because a /199 goes unstated often enough that splitting on silence
+  // would tear real cards apart.
+  check('  ...but a sale that states no run at all is NOT split off',
+    [...fiveIds].some(u => u.endsWith('/p5')),
+    'an unstated print run merges; only a stated, different one separates');
+
+  const ten = await call('/api/card-analysis?itemId=p3');
+  const tenIds = new Set((ten.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
+  check('  ...and the /10 gets its own history',
+    ten.available === true && !['p1', 'p2'].some(id => [...tenIds].some(u => u.endsWith('/' + id))),
+    `printRun=${ten.identity && ten.identity.printRun}`);
+
+  // The point of it: the medians describe different cards.
+  {
+    const a5 = (five.grades || [])[0], a10 = (ten.grades || [])[0];
+    check('  ...so the two medians are genuinely different numbers',
+      a5 && a10 && a5.median > a10.median * 1.5,
+      a5 && a10 ? `/5 $${a5.median} vs /10 $${a10.median}` : 'missing a series');
   }
 
   // ---- 2. graded cards in the raw list ------------------------------------

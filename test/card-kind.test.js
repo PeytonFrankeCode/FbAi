@@ -17,7 +17,7 @@
 // title — it is most of what the card is worth — and because the catalogue
 // agrees: across 361 checklists, "autograph", "signature", "relic" and "mem"
 // appear in no base set name at all.
-const { cardKind } = require('../card-kind.js');
+const { cardKind, printRun } = require('../card-kind.js');
 
 let failures = 0;
 const check = (label, ok, detail) => {
@@ -88,6 +88,41 @@ expect([
   ['2024 Prizm Josh Allen #4 RC Fast Dispatch Free Shipping', ''],
   ['2023 Topps Dispatch Rookie Card Bijan Robinson #12', ''],
 ], 'a word that merely contains a kind word does not count');
+
+// ---- the print run -------------------------------------------------------
+//
+// A Cam Ward auto /5 and a Cam Ward auto /10 are different cards with very
+// different prices, and every column in the sales table is identical for both.
+// Only the title separates them.
+//
+// This reader is deliberately STRICTER than parsePrintRunFromTitle() in
+// server.js, which feeds the similar-card estimator. There, a fuzzy read costs
+// a slightly wrong scaling factor; here it SPLITS a card's history.
+{
+  const runs = [
+    ['2025 Panini Prizm Cam Ward RC Auto /5', 5],
+    ['2025 Panini Prizm Cam Ward RC Auto /10', 10],
+    ['2025 Prizm Cam Ward Gold Auto 1/1', 1],
+    ['2025 Prizm Cam Ward Auto numbered to 25', 25],
+    ['2025 Prizm Cam Ward Auto #/99', 99],
+    // Not stated. Must be null, never 0 — "no print run" and "one of one" can
+    // never be allowed to collapse into each other.
+    ['2025 Prizm Cam Ward #14 Auto', null],
+    ['2024 Panini Prizm Caleb Williams #301 (RC)', null],
+    // THE TRAP, and the reason for the stricter reading. This is a DATE. The
+    // estimator's parser reads it as a print run of 16, which would tear one
+    // card into two on a phrase about when it sold.
+    ['2025 Prizm Cam Ward RC #14 sold 9/16', null],
+    ['2023-24 Topps Chrome Josh Allen #4', null],
+    ['Football Card Lot of 24 - Vintage 70s 80s 90s', null],
+  ];
+  const wrong = runs.filter(([t, want]) => printRun(t) !== want);
+  check('the print run is read when stated, and refused when it is not',
+    wrong.length === 0,
+    wrong.length
+      ? wrong.map(([t, w]) => `"${t.slice(0, 40)}" -> ${printRun(t)} (wanted ${w})`).join('; ')
+      : `all ${runs.length}`);
+}
 
 // ---- the shape of the output ----------------------------------------------
 // Empty string rather than null, because it concatenates into an identity key
