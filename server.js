@@ -1808,6 +1808,10 @@ app.get('/api/search', async (req, res) => {
           .slice(0, 20);
       }
 
+      // Which of these are actually the card that was asked for. Tags the rows
+      // in place; null when the query names no card specific enough to split on.
+      const cardIdentity = await tagSameCard(variantFiltered, query);
+
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       const relaxedNote = matched.relaxedBy > 0 && matched.searchType === 'relaxed'
         ? `Matched ${matched.keywordsMatched} of ${matched.keywordsTotal} keywords`
@@ -1821,6 +1825,7 @@ app.get('/api/search', async (req, res) => {
         mock: false,
         mode,
         serial: serial || null,
+        cardIdentity,
         similarResults,
         searchType: matched.searchType,
         broadenedQuery: null,
@@ -2408,6 +2413,149 @@ function matchSoldListings(results, query) {
 
   // Couldn't pin anything down — fall back to eBay's own results.
   return { results, keywordsTotal: total, keywordsMatched: 0, relaxedBy: total, searchType: 'broadened' };
+}
+
+// ---- Is this listing the same CARD the query asked for? -------------------
+//
+// THE GAP THIS CLOSES, which took four rounds of the wrong fix to find.
+//
+// A search for "2025 Prizm Mahomes Silver" came back with a Panini ASCC Asia
+// Convention card in the list, and every explanation offered was about grade
+// reading or caching. None of it was the problem. The search screen never asked
+// which CARD a listing was. It matched keywords, grouped by grade, and drew the
+// results — so anything eBay returned for the words in the query appeared,
+// forever, no matter how good the identity engine got.
+//
+// The identity engine has been in /api/card-analysis all along, deciding which
+// sales belong to one card. It simply was not wired to the screen people
+// actually look at. This wires it.
+//
+// WHERE THE ERRORS GO, which is the whole design. On the card page an
+// unreadable parallel is DROPPED, because a wrong sale corrupts a published
+// median. Here nothing is dropped: an unreadable anything stays with the card,
+// and only a positive, confident disagreement moves a listing to the second
+// section. A search that hides a real comp teaches the user nothing and tells
+// me nothing; one that shows a wrong comp in a labelled pile is visible, and
+// visible is fixable.
+// Words that ARE in the parallel vocabulary and are also in most card listings
+// regardless of which card it is.
+//
+// The catalogue is enormous, so somewhere in 361 checklists there is a parallel
+// called "Football" and one called "Rookie". Both are in half of eBay. Matching
+// them would declare an ordinary listing a different card on the strength of a
+// word that says nothing — a test caught exactly that on "Patrick Mahomes
+// football card nice condition look", which names no parallel at all.
+//
+// This list guards the FALLBACK reader only. resolveParallel reads the segment
+// after the card number and needs no such help; this scans loose words and is
+// the weaker of the two, so it is the one that needs a floor. When a generic
+// word starts splitting real searches, it belongs here.
+const _PARALLEL_STOPWORDS = new Set([
+  'rookie', 'rc', 'base', 'sp', 'ssp', 'lot', 'card', 'cards',
+  'football', 'nfl', 'sport', 'sports', 'trading', 'player',
+  'mint', 'condition', 'new', 'vintage', 'pack', 'box', 'case', 'hit',
+]);
+
+// The parallel, read out of text that has no card number in it.
+//
+// resolveParallel works on the segment AFTER the card number, which is right
+// for a listing title and useless for a search box: "2025 Prizm Mahomes Silver"
+// has no number, so it returns 'no-number' and reads nothing. Many eBay titles
+// have no number either.
+//
+// So this falls back to the vocabulary: scan the text for the longest phrase
+// the checklists know as a parallel. Two traps, both real:
+//
+//   'prizm' classifies as a parallel on its own, and it is also the PRODUCT in
+//   the same query — so a window made only of set-name words is skipped, and
+//   "silver" wins over "prizm" in "2025 Prizm Mahomes Silver".
+//
+//   longest wins, so "silver prizm" beats "silver" when both are present, and
+//   _parallelKey strips the product word off either end so the two agree.
+//
+// Rightmost match at each length, because a parallel is named after the player
+// far more often than before them.
+function _parallelFromWords(text, pi) {
+  if (!pi) return null;
+  const raw = String(text || '').toLowerCase();
+  const toks = raw.replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(Boolean);
+  if (!toks.length) return null;
+  const setsHere = CARD_SET_NAMES.filter(s => raw.includes(s));
+  const isProductWord = (w) => setsHere.some(s => s.split(' ').includes(w));
+  const skippable = (w) => isProductWord(w) || _PARALLEL_STOPWORDS.has(w) || /^\d+$/.test(w);
+
+  const max = Math.min(pi.stats.longestName || 4, 6, toks.length);
+  for (let n = max; n >= 1; n--) {
+    for (let i = toks.length - n; i >= 0; i--) {
+      const win = toks.slice(i, i + n);
+      if (win.every(skippable)) continue;
+      const cls = pi.classify(win.join(' '));
+      if (cls !== 'parallel' && cls !== 'both') continue;
+      const k = _parallelKey(win.join(' '));
+      if (k) return k;
+    }
+  }
+  return null;
+}
+
+function _identityOf(text, pi, player) {
+  const clean = _stripGrade(String(text || ''));
+  // null means "could not read", and is treated as agreement below. It must
+  // never collapse into '' — that is the BASE card, a real and specific answer.
+  let parallel = null;
+  if (pi) {
+    const hit = pi.resolveParallel(clean, player ? { player } : {});
+    if (hit && hit.parallel) parallel = _parallelKey(hit.parallel);
+    else if (hit && hit.how === 'base') parallel = '';
+    else parallel = _parallelFromWords(clean, pi);
+  }
+  return { parallel, kind: _cardKind(clean), printRun: _printRun(clean) };
+}
+
+function _sameCard(seed, cand) {
+  // Kind is the one signal where absence is evidence: a seller does not leave
+  // "auto" or "patch" off a title, because it is most of what the card is
+  // worth. See card-kind.js — it is 65.5% of all ambiguous keys.
+  if (seed.kind !== cand.kind) return false;
+  // A /5 and a /10 are different cards. Only compared when BOTH are stated,
+  // because an unstated print run is a silence, not a zero.
+  if (seed.printRun != null && cand.printRun != null && seed.printRun !== cand.printRun) return false;
+  // Unreadable on either side keeps the listing with the card.
+  if (seed.parallel == null || cand.parallel == null) return true;
+  return seed.parallel === cand.parallel;
+}
+
+// Tags each result with sameCard, and returns what the query was read as so the
+// page can name the section. Returns null when the query is too vague to
+// resolve a card at all, and the page then renders exactly as it did before —
+// a search for "Mahomes" should not be split into anything.
+async function tagSameCard(results, query) {
+  if (!Array.isArray(results) || results.length === 0) return null;
+  let pi = null;
+  try { pi = await parallelIndex(); } catch (_) { pi = null; }
+  const { player } = extractSearchKeywords(query);
+  const seed = _identityOf(query, pi, player);
+
+  // Too vague to split on. With no parallel read AND no kind AND no print run,
+  // every comparison below returns true and the second section would be empty
+  // anyway — but saying so explicitly keeps the page from drawing an empty
+  // "other cards" heading on a one-word search.
+  if (seed.parallel === null && !seed.kind && seed.printRun == null) return null;
+
+  let differing = 0;
+  for (const r of results) {
+    const same = _sameCard(seed, _identityOf(r.title, pi, player));
+    r.sameCard = same;
+    if (!same) differing++;
+  }
+  if (differing === 0) return null;
+
+  return {
+    parallel: seed.parallel === '' ? 'Base' : seed.parallel,
+    kind: seed.kind || 'base',
+    printRun: seed.printRun,
+    differing,
+  };
 }
 
 // ---- Similar-card price estimate (print-run adjusted) ----
@@ -11065,7 +11213,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

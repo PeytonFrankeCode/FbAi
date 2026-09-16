@@ -2729,7 +2729,67 @@ let _gradeContainers = {};
 // Pagination state for "Show more from eBay" — populated by performSearch.
 let _searchPaging = { query: '', mode: '', offset: 0, hasMore: false, fetching: false };
 
+// Listings the server positively identified as a DIFFERENT card than the one
+// the query asked for.
+//
+// `sameCard` is absent on every path that does not tag (a live eBay page-2
+// fetch, a mock, a non-sold search) and undefined must mean "keep", never
+// "hide". Only an explicit false moves a listing, so a screen that has never
+// heard of this feature renders exactly as it always did.
+const _isOtherCard = (r) => r && r.sameCard === false;
+
 function renderGradeGroups(grid, results) {
+  const mine = results.filter(r => !_isOtherCard(r));
+  const others = results.filter(_isOtherCard);
+  // Everything agreed, or nothing was tagged. One list, as before.
+  if (others.length === 0) return _renderGradeGroupsInto(grid, results);
+
+  _renderGradeGroupsInto(grid, mine);
+  renderOtherCards(grid, others);
+}
+
+// The second section: collapsed, counted, and never removed from the page.
+//
+// Hiding these would have been cleaner to look at and is what a competitor
+// does. It is refused here for one reason: when the identity engine gets a card
+// wrong, hiding makes the mistake invisible to the person using the site AND to
+// whoever has to fix it. A labelled pile is a bug report that writes itself.
+function renderOtherCards(grid, others) {
+  // "Load more" is appended by the grade pass and has to stay at the bottom,
+  // so this section is inserted in front of it rather than after.
+  const anchor = grid.querySelector('.load-more-wrap');
+  const place = (el) => anchor ? grid.insertBefore(el, anchor) : grid.appendChild(el);
+
+  const header = document.createElement('div');
+  header.className = 'grade-section-header other-cards-header';
+  header.innerHTML =
+    `<span class="grade-label">Other cards matching your search</span>` +
+    `<span class="grade-meta">${others.length} listing${others.length !== 1 ? 's' : ''} ` +
+    `&middot; <button type="button" class="other-cards-toggle" aria-expanded="false">show</button></span>`;
+  place(header);
+
+  const container = document.createElement('div');
+  container.style.display = 'none';
+  place(container);
+
+  const btn = header.querySelector('.other-cards-toggle');
+  let open = false;
+  let drawn = false;
+  btn.onclick = () => {
+    open = !open;
+    // Built on first open rather than up front: a search can return 200
+    // listings and most people never open this.
+    if (open && !drawn) {
+      drawn = true;
+      for (const item of others) container.appendChild(buildCard(item));
+    }
+    container.style.display = open ? 'contents' : 'none';
+    btn.textContent = open ? 'hide' : 'show';
+    btn.setAttribute('aria-expanded', String(open));
+  };
+}
+
+function _renderGradeGroupsInto(grid, results) {
   _gradeGroups = groupByGrade(results);
   _gradeShown = {};
   _gradeContainers = {};
