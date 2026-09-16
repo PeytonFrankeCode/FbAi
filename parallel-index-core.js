@@ -335,6 +335,70 @@ function coverMatch(segment, strict = false) {
   return null;
 }
 
+// Which catalogued SUBSET does this title name?
+//
+// A product is not one list of cards. 2017 Panini Prizm is a 300-card base set
+// plus fourteen inserts, and every insert restarts numbering at #1 — so "#8" in
+// that product is a base card, an Instant Impact, a Hall of Fame, an NFL MVP, a
+// Rize Up and five more. The sales table has one `set_name` column and it holds
+// the PRODUCT, so all of those are "Prizm" with a card number that does not
+// distinguish them.
+//
+// The subset is usually sitting in the title. This reports it.
+//
+// The vocabulary is the one residual() already strips with — SUBSETS, built
+// from the checklists' set names and filtered against LOOKUP, so a name that is
+// also a parallel ("Silver", "Gold Vinyl") is never returned here. Longest
+// match wins, because "Rookie Patch Autographs" contains "Rookie Autographs"
+// and the shorter one is a different set.
+function resolveSubset(title, opts = {}) {
+  build();
+  let t = norm(String(title || '').replace(/\([^)]*\)/g, ' '));
+  // The card number and the year are stripped for the same reason residual()
+  // strips them: a subset name never contains either, and leaving them in only
+  // creates chances to match across them.
+  t = t.replace(/#\s*[a-z0-9-]+/gi, ' ').replace(/\b(19|20)\d{2}\b/g, ' ')
+       .replace(/\s+/g, ' ').trim();
+  if (!t) return { subset: null, how: 'empty' };
+
+  // The PRODUCT comes out first, exactly as residual() does it, and for a
+  // reason found by testing rather than reasoning: some checklist catalogues a
+  // set literally named "Topps", so "1984 Topps - John Elway #63" was read as
+  // an insert called Topps. The product name is in every title by definition,
+  // which makes it the one phrase guaranteed to create a false match.
+  for (const p of candidates(PRODUCTS_BY_FIRST, t)) {
+    const n = stripPhrase(t, p);
+    if (n !== t) { t = n.replace(/\s+/g, ' ').trim(); break; }
+  }
+
+  // candidates() is indexed by first word, so this does not scan 4,522 names.
+  for (const sub of candidates(SUBSETS_BY_FIRST, t)) {
+    if (stripPhrase(t, sub) !== t) {
+      // A single generic word is the rest of the sentence, not a set name —
+      // the same trap coverMatch() guards against for parallels.
+      if (sub.split(' ').length < 2 && GENERIC_SUBSET.has(sub)) continue;
+      return { subset: sub, how: 'matched' };
+    }
+  }
+  return { subset: null, how: 'unmatched' };
+}
+
+// One-word set names that are really just words. Matching any of these would
+// attach an insert to titles that merely mention a brand or say "rookie".
+//
+// The brand half is the same list variants() refuses to shorten a parallel down
+// to, and for the same reason: a one-word remainder that is a brand is the rest
+// of the sentence, not a name.
+const GENERIC_SUBSET = new Set([
+  'topps', 'panini', 'bowman', 'leaf', 'donruss', 'score', 'upper', 'deck',
+  'chrome', 'select', 'mosaic', 'optic', 'prizm', 'prizms', 'refractor',
+  'refractors', 'absolute', 'certified', 'contenders', 'elite', 'illusions',
+  'obsidian', 'origins', 'phoenix', 'playbook', 'spectra', 'zenith',
+  'base', 'rookie', 'rookies', 'insert', 'inserts', 'autograph', 'autographs',
+  'auto', 'patch', 'jersey', 'relic', 'variation', 'variations',
+  'football', 'legends', 'stars', 'rated', 'update', 'series',
+]);
+
 function resolveParallel(title, opts = {}) {
   const t = String(title || '');
   if (!CARD_NUMBER.test(t)) return { parallel: null, how: 'no-number', segment: '' };
@@ -394,6 +458,7 @@ function resolveParallel(title, opts = {}) {
 
   return {
   resolveParallel,
+  resolveSubset,
   norm,
   // Is this string an insert SET rather than a parallel? The two are different
   // things in the checklists and the sales column does not distinguish them —
