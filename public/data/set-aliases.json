@@ -1,0 +1,18 @@
+{
+  "_README": [
+    "Set spellings the join cannot reach on its own, mapped to the product they mean.",
+    "Keyed '<year>|<normalised set name>' exactly as the sales table spells it.",
+    "",
+    "These are NAMING FACTS, not judgement calls, which is why they live in the repo",
+    "rather than only in KV: they ship with the deploy, survive a KV wipe, are visible",
+    "in review, and are covered by a test. The sorting desk still writes its own",
+    "aliases to KV for one-off human decisions, and those WIN over anything here.",
+    "",
+    "Before adding one, check the product id exists — set-aliases.test.js fails on an",
+    "alias pointing at a product that is not on disk, because such an alias silently",
+    "resolves nothing while looking like a fix."
+  ],
+
+  "2025|topps signature": "2025-topps-signature-class-football",
+  "2024|topps signature": "2024-topps-signature-class-football"
+}

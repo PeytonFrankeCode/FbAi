@@ -58,6 +58,19 @@ const add = (title, player, num, times) => {
             '2017', 'Prizm', '', String(num), 0.9);
   }
 };
+// A sale that matches NO product, so topUnmatchedSets is not empty and the
+// checks on it are not passing vacuously. Deliberately a throwback shape: the
+// collector filed it under 1989 off the design on the card's face, while the
+// title says it is a 2024 Donruss. Writing a 1989 Score checklist would not
+// move this sale, and the queue has to be able to say so.
+{
+  for (let i = 0; i < 4; i++) {
+    ins.run('tb' + i, iso(-6 - i),
+      '2024 Panini Donruss 1989 Score Throwback Josh Allen Bills', 10000,
+      'Josh Allen', '1989', 'Score', '', '1', 0.9);
+  }
+}
+
 add('2017 Panini Prizm Dalvin Cook #8', 'Dalvin Cook', 8, 6);                      // ambiguous, insert unnamed
 add('2017 Panini Prizm Stained Glass Prizm Dalvin Cook #8', 'Dalvin Cook', 8, 6);  // ambiguous, insert named
 add('2017 Panini Prizm Patrick Mahomes II #269', 'Patrick Mahomes II', 269, 6);    // not ambiguous
@@ -129,9 +142,19 @@ const check = (label, ok, detail) => {
     a.unavailable || `${(a.catalogueKeysAmbiguous || 0).toLocaleString()} catalogue keys`);
 
   // The join works. A zero here is what a normaliser drift looks like.
+  //
+  // Not every fixture sale resolves any more, and that is deliberate: four are
+  // the 1989 throwback, which matches no product on purpose so the unmatched
+  // queue below has something in it. So both halves are asserted — the Prizm
+  // sales resolve, the throwback does not, and they account for everything.
+  // Asserting only the total would pass against a join that resolved nothing
+  // and a counter that had drifted by four.
   check('sales resolve to a product',
-    a.salesResolvedToAProduct === r.salesCovered && r.salesCovered > 0,
-    `${a.salesResolvedToAProduct} of ${r.salesCovered}`);
+    a.salesResolvedToAProduct === r.salesCovered - 4 && a.salesResolvedToAProduct > 0,
+    `${a.salesResolvedToAProduct} of ${r.salesCovered}, expecting all but the 4 throwbacks`);
+  check('  ...and the ones that do not are counted, not lost',
+    a.salesResolvedToAProduct + a.salesWithNoProductMatch === r.salesCovered,
+    `${a.salesResolvedToAProduct} + ${a.salesWithNoProductMatch} vs ${r.salesCovered}`);
 
   // Two thirds of the fixture is the ambiguous card, one third is not.
   check('only the ambiguous card is counted as ambiguous',
@@ -151,6 +174,55 @@ const check = (label, ok, detail) => {
   check('  ...and a sale matching no product is reported, not assumed innocent',
     typeof a.salesWithNoProductMatch === 'number',
     `salesWithNoProductMatch=${a.salesWithNoProductMatch}`);
+
+  // ---- missing vintage set, or modern card in an old jacket? --------------
+  //
+  // topUnmatchedSets is read as a build queue — "1989 | score, 115 sales" looks
+  // like a checklist nobody wrote. But Panini and Topps both reissue old
+  // designs, and the collector reads the design year off the front of the card,
+  // so a 2024 Donruss throwback files itself under 1989. Writing a 1989 Score
+  // checklist would not move one of those sales.
+  //
+  // The tell is that the modern product names BOTH years and the real one is
+  // larger. Getting this backwards sends someone to spend an evening on the
+  // wrong file, so each shape is asserted rather than assumed.
+  {
+    const { _yearDisagrees } = require(path.join(ROOT, 'server.js'));
+    const cases = [
+      // Genuine vintage: the title names its own year and nothing later.
+      ['1989 | score', '1989 Score Barry Sanders #257 Rookie Card RC', false],
+      ['1986 | topps', '1986 Topps Jerry Rice #161 Rookie', false],
+      ['1984 | topps', '1984 Topps John Elway #63 RC', false],
+      // Throwbacks: a modern product wearing an old design.
+      ['1989 | score', '2024 Panini Donruss 1989 Score Throwback Josh Allen Bills', true],
+      ['1986 | topps', '2025 Topps Chrome 1986 Design Anniversary Josh Allen Refractor', true],
+      // A season span is not a disagreement.
+      ['2023 | topps', '2023-24 Topps Chrome Josh Allen #4', false],
+      // No year to compare against: say nothing rather than guess.
+      ['? | topps', '2024 Topps Whatever', false],
+    ];
+    const wrong = cases.filter(([ys, t, want]) => _yearDisagrees(ys, t) !== want);
+    check('a throwback design is told apart from a missing vintage set',
+      wrong.length === 0,
+      wrong.length ? wrong.map(([ys, t]) => `"${ys}" + "${t.slice(0, 40)}"`).join('; ')
+                   : `all ${cases.length}`);
+  }
+
+  // And the queue has to carry the evidence, or the caller cannot use it.
+  {
+    const rows = a.topUnmatchedSets || [];
+    const tb = rows.find(r => /1989/.test(r.yearAndSet));
+    check('  ...and an unmatched spelling reaches the queue at all',
+      !!tb, rows.length ? JSON.stringify(rows.slice(0, 2)) : 'the queue is empty');
+    check('  ...carrying the sample title a person needs to judge it',
+      !!tb && typeof tb.sample === 'string' && /Throwback/i.test(tb.sample),
+      tb ? JSON.stringify(tb.sample) : '');
+    // The fixture row IS a throwback. Flagging it as a missing vintage set
+    // would send someone to write a checklist that moves nothing.
+    check('  ...and correctly flagged as a throwback, not a missing checklist',
+      !!tb && tb.looksLikeAThrowback === true,
+      tb ? `looksLikeAThrowback=${tb.looksLikeAThrowback}` : '');
+  }
 
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall identity-gap checks passed');

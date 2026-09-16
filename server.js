@@ -5082,11 +5082,28 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
 const SET_ALIAS_KEY = 'setaliases:v1';
 
 async function setAliases() {
+  // Two sources, and the order matters.
+  //
+  // public/data/set-aliases.json holds NAMING FACTS — "topps signature" is what
+  // a collector writes for Topps Signature Class. Those belong in the repo:
+  // they ship with the deploy, survive a KV wipe, are visible in review and are
+  // covered by a test. The desk's KV aliases are one-off human decisions and
+  // WIN over the static list, because a person looking at the photos knows
+  // something the file does not.
+  let base = {};
+  try {
+    const doc = await _loadJson('set-aliases.json');
+    for (const [k, v] of Object.entries(doc || {})) {
+      if (!k.startsWith('_') && typeof v === 'string') base[k] = v;
+    }
+  } catch (err) {
+    console.error('[set-aliases] static list unavailable:', err && err.message);
+  }
   // archiveGet, not cacheGet: these are written without an expiry because they
   // are decisions, not a cache, and reading them through the cache path would
   // work today only by accident of both using the same namespace.
-  try { return (await archiveGet(SET_ALIAS_KEY)) || {}; }
-  catch (_) { return {}; }
+  try { return { ...base, ...((await archiveGet(SET_ALIAS_KEY)) || {}) }; }
+  catch (_) { return base; }
 }
 
 // The queue. Every spelling that matched no product, with what it is costing
@@ -5306,6 +5323,24 @@ app.post('/api/review/sets', async (req, res) => {
 //
 // Costed like the other diagnostics: one grouped, limited scan, not a walk of
 // the table.
+// Is this unmatched row a missing vintage set, or a modern throwback?
+//
+// Panini and Topps both reissue old designs — a 2024 Donruss insert built on
+// the 1989 Score look, a Topps Chrome anniversary set on the 1986 layout. The
+// collector reads the design year off the front of the card and files the sale
+// under it, so "1989 | score" can mean a checklist we never wrote OR a 2024
+// card that will never need one.
+//
+// The tell is that the modern product names BOTH years and the real one is
+// larger. A genuine 1984 Topps listing says 1984 and nothing later. Tolerant of
+// a season span by one year, so "2023-24" does not read as disagreement.
+function _yearDisagrees(yearAndSet, title) {
+  const rowYear = parseInt(String(yearAndSet).split('|')[0].trim(), 10);
+  if (!Number.isFinite(rowYear)) return false;
+  const years = String(title || '').match(/\b(?:19|20)\d{2}\b/g) || [];
+  return years.some(y => parseInt(y, 10) > rowYear + 1);
+}
+
 app.get('/api/debug/identity-gap', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
@@ -5414,8 +5449,18 @@ app.get('/api/debug/identity-gap', async (req, res) => {
           // insert, because there is nothing to read it against. The number
           // alone cannot say whether that is a missing checklist, a set name
           // the join cannot spell, or something that is not an NFL card.
+          //
+          // A TITLE comes with it, because the year and set name alone cannot
+          // be trusted to mean what they look like. Modern products ship
+          // throwback and anniversary designs, and a collector reading "1989
+          // Score" off a 2024 Donruss insert files it under 1989 — so a row
+          // reading "1989 | score" may be a missing vintage checklist or may be
+          // a modern card wearing an old jacket. Those need opposite work, and
+          // one sample title separates them at a glance.
           const ys = `${r.y || '?'} | ${r.s || '?'}`;
-          noProductBy.set(ys, (noProductBy.get(ys) || 0) + n);
+          const prev = noProductBy.get(ys);
+          if (prev) { prev.sales += n; if (n > prev.top) { prev.top = n; prev.sample = r.title; } }
+          else noProductBy.set(ys, { sales: n, top: n, sample: r.title });
         } else {
           amb.matchedProduct += n;
           const byKind = ambSets.get(product.id);
@@ -5552,8 +5597,16 @@ app.get('/api/debug/identity-gap', async (req, res) => {
         // exist, a spelling the join cannot reach, or a sport this site does
         // not cover.
         topUnmatchedSets: [...noProductBy.entries()]
-          .sort((x, y) => y[1] - x[1]).slice(0, 20)
-          .map(([ys, n]) => ({ yearAndSet: ys, sales: n })),
+          .sort((x, y) => y[1].sales - x[1].sales).slice(0, 20)
+          .map(([ys, v]) => ({
+            yearAndSet: ys,
+            sales: v.sales,
+            // The commonest title filed under this spelling. If its own year
+            // disagrees with the row's year, the row is a throwback design and
+            // no vintage checklist will fix it.
+            sample: String(v.sample || '').slice(0, 90),
+            looksLikeAThrowback: _yearDisagrees(ys, v.sample),
+          })),
         catalogueKeysAmbiguous: Object.values(ambiguous).reduce(
           (n, byKind) => n + Object.values(byKind || {}).reduce((m, l) => m + l.length, 0), 0),
       } : { unavailable: 'subsets/ambiguous.json not deployed' },
@@ -11277,7 +11330,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
