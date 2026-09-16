@@ -4910,13 +4910,74 @@ app.get('/api/review/sets', async (req, res) => {
         ORDER BY n DESC LIMIT 400`
     ).bind(since, through).all();
 
+    // Photos, because the card is what you are actually identifying.
+    //
+    // A spelling is not one card — the blank row alone covered 14,204 sales of
+    // many different products — so ONE photo chosen arbitrarily would mislead
+    // rather than help. This takes the four most recent per spelling, which is
+    // enough to see whether a group is one product or a pile of unrelated ones.
+    //
+    // One extra query, bounded by the window function, on an admin endpoint
+    // nobody hits in a loop. Failure here must not take the desk down: a photo
+    // is an aid to the decision, not the decision.
+    const photos = new Map();
+    if (await _nflHasImageColumn(db)) {
+      try {
+        const pr = await db.prepare(
+          `WITH ranked AS (
+             SELECT ${Y} AS y, ${S} AS s, image_url, title,
+                    ROW_NUMBER() OVER (PARTITION BY ${Y}, ${S} ORDER BY sold_date DESC) AS rn
+               FROM sales
+              WHERE price_cents IS NOT NULL AND price_cents > 0
+                AND sold_date > ? AND sold_date <= ?
+                AND image_url IS NOT NULL AND image_url <> ''
+           )
+           SELECT y, s, image_url, title FROM ranked WHERE rn <= 4`
+        ).bind(since, through).all();
+        for (const p of (pr && pr.results) || []) {
+          const k = `${p.y}|${p.s}`;
+          if (!photos.has(k)) photos.set(k, []);
+          photos.get(k).push({ url: p.image_url, title: String(p.title || '').slice(0, 110) });
+        }
+      } catch (err) {
+        console.error('[review/sets] photos unavailable:', err && err.message);
+      }
+    }
+
     const open = [];
-    let resolvedSales = 0, openSales = 0;
+    let resolvedSales = 0, openSales = 0, unaliasableSales = 0;
+    const unaliasable = [];
     for (const r of (rows && rows.results) || []) {
       const n = Number(r.n || 0);
       if (matchSale(setIndex, r.y, r.s)) { resolvedSales += n; continue; }
+
+      // A spelling the join has NO key for cannot be fixed here, and offering it
+      // would be worse than useless.
+      //
+      // saleKeys('', '') returns an empty list — variants() has nothing to build
+      // a key from — so matchSale never looks anything up for a sale with no set
+      // name. An alias stored against it would sit in KV and never once be
+      // consulted, while the desk reported the sales as resolved and nothing
+      // changed. That row was the TOP of the live queue at 14,204 sales, so it
+      // is the first thing anyone would have tried and the first thing that
+      // would have silently done nothing.
+      //
+      // Still worth reporting: a sale with no set name at all is an ingestion
+      // problem, not a spelling problem, and it is fixed in the collector rather
+      // than here.
+      const keys = saleKeys(r.y, r.s);
+      if (!keys.length) {
+        unaliasableSales += n;
+        if (unaliasable.length < 10) {
+          unaliasable.push({ year: r.y || null, setName: r.s || null, sales: n,
+                             sample: String(r.sample || '').slice(0, 120) });
+        }
+        continue;
+      }
+
       openSales += n;
       open.push({
+        photos: (photos.get(`${r.y}|${r.s}`) || []).slice(0, 4),
         // Built by saleKeys(), never by hand.
         //
         // The join does not look a sale up by "<year>|<set name>" — variants()
@@ -4925,7 +4986,7 @@ app.get('/api/review/sets', async (req, res) => {
         // way would sit in KV forever and never be consulted, with nothing
         // thrown to say so. Taking the first key the join itself would try is
         // the only way to be sure the answer lands where the question is asked.
-        key: (saleKeys(r.y, r.s)[0] || `${r.y}|${r.s}`),
+        key: keys[0],
         year: r.y, setName: r.s, sales: n,
         value: Math.round(Number(r.cents || 0) / 100),
         sample: String(r.sample || '').slice(0, 120),
@@ -4943,6 +5004,11 @@ app.get('/api/review/sets', async (req, res) => {
       // If this ratio is not large the desk is not worth anyone's evening.
       openSpellings: open.length,
       salesHeldUp: openSales,
+      // Sales this desk CANNOT help: no set name at all, so the join has no key
+      // to alias. Reported rather than queued, so it is visible as an upstream
+      // problem instead of sitting at the top looking actionable.
+      unaliasableSales,
+      unaliasable,
       salesPerDecision: open.length ? Math.round(openSales / open.length) : 0,
       resolvedSales,
       aliasesInPlace: Object.keys(aliases).length,

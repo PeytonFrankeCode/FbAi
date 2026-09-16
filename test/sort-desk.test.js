@@ -35,12 +35,12 @@ db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cen
   bids INTEGER, image_url TEXT)`);
 const iso = (o) => new Date(Date.now() + o * 86400000).toISOString().slice(0, 10);
 const ins = db.prepare(`INSERT INTO sales (item_id,sold_date,title,price_cents,player,year,
-  set_name,parallel,card_number,confidence) VALUES (?,?,?,?,?,?,?,?,?,?)`);
+  set_name,parallel,card_number,confidence,image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
 let n = 0;
 const add = (setName, year, title, times) => {
   for (let i = 0; i < times; i++) {
     ins.run('i' + n++, iso(-3 - (i % 20)), title, 5000, 'Player ' + (i % 5),
-            year, setName, '', String(i % 50), 0.9);
+            year, setName, '', String(i % 50), 0.9, `https://img.test/${n}.jpg`);
   }
 };
 // "Optic Preview" is a real spelling from live data (73 sales in one month) that
@@ -56,6 +56,15 @@ const add = (setName, year, title, times) => {
 add('Optic Preview Football', '2025', '2025 Donruss Optic Preview Jaxson Dart RC #301', 120);
 // One the join already handles, to prove resolved work stays out of the queue.
 add('Prizm', '2017', '2017 Panini Prizm Patrick Mahomes II #269', 60);
+// No set name at all, and no year — the row that topped the LIVE queue at
+// 14,204 sales. saleKeys() can build no key from it, so matchSale() never looks
+// anything up and an alias against it could never be consulted. It must not be
+// offered as work.
+for (let i = 0; i < 90; i++) {
+  ins.run('b' + i, iso(-3 - (i % 20)),
+          '\u273b Josh Hoover \u273b BowmanU Best /25 Orange Refrac #53 CGC 10 Gem',
+          5000, 'Josh Hoover', '', '', '', '53', 0.9, `https://img.test/b${i}.jpg`);
+}
 
 const d1 = { prepare(sql) { const st = db.prepare(sql); return {
   bind: (...a) => ({ all: async () => ({ results: st.all(...a) }), first: async () => st.get(...a) || null }),
@@ -99,10 +108,36 @@ const check = (label, ok, detail) => {
     q1.salesPerDecision >= 100,
     `${q1.salesPerDecision} sales per decision — a title decision is worth about 4`);
 
+  // ---- the row that cannot be fixed here must not be offered ------------
+  //
+  // It was the top of the live queue, holding 14,204 sales, so it is the first
+  // thing anyone would try — and deciding it would have stored an alias the
+  // join never consults while the desk reported the sales as resolved.
+  check('a spelling with no join key is kept out of the queue',
+    (q1.queue || []).every(x => x.setName && String(x.setName).trim()),
+    (q1.queue || []).filter(x => !x.setName).map(x => JSON.stringify(x.key)).join(', ') || 'none offered');
+  check('  ...and is reported as an upstream problem instead',
+    // Not 90: the endpoint excludes the trailing day, so some inserted rows
+    // fall outside the window. Asserting the exact count would be asserting the
+    // fixture's arithmetic rather than the behaviour.
+    q1.unaliasableSales >= 50 && (q1.unaliasable || []).length > 0,
+    `${q1.unaliasableSales} sales with no set name at all`);
+  check('  ...and is not counted as work the desk can do',
+    !String(q1.salesHeldUp).includes('undefined') && q1.salesHeldUp < q1.unaliasableSales + q1.salesHeldUp + 1
+      && (q1.queue || []).every(x => saleKeys(x.year, x.setName).includes(x.key)),
+    `salesHeldUp=${q1.salesHeldUp} excludes the ${q1.unaliasableSales} unaliasable`);
+
   const top = (q1.queue || [])[0];
   check('  ...and a spelling the join already handles stays out',
     top && /optic preview/i.test(top.setName),
     top ? `top is "${top.setName}"` : 'empty queue');
+
+  // Photos. A spelling is not one card, so seeing what actually sold under it is
+  // how you tell a real product from a pile of unrelated listings.
+  check('  ...and carries photos of what sold under it',
+    Array.isArray(top.photos) && top.photos.length > 0
+      && top.photos.every(p => p && typeof p.url === 'string'),
+    `${(top.photos || []).length} photos`);
 
   // The suggestions are what make it one keystroke rather than a search.
   check('  ...with the right product suggested first',
