@@ -94,14 +94,23 @@ const tag = async (query, titles) => {
       vague.identity === null && vague.rows.every(r => r.sameCard === undefined),
       `identity=${JSON.stringify(vague.identity)}`);
 
-    // A title that names no parallel anywhere. Unreadable is NOT disagreement.
-    const murky = await tag('2025 Prizm Mahomes Silver', [
-      '2025 Panini Prizm Patrick Mahomes #1 Silver Prizm',
-      'Patrick Mahomes football card nice condition look',
+    // A title that names no parallel anywhere, on a product we hold no
+    // checklist for. There is no answer key to be accurate against, so
+    // unreadable is not disagreement and the listing stays.
+    //
+    // Inside the catalogue this case goes the OTHER way now — see the strict
+    // block below. That is the whole point of the split, so the two cases are
+    // asserted separately rather than one rule being assumed to cover both.
+    const murky = await tag('2025 Panini ASCC Mahomes Silver', [
+      '2025 Panini ASCC Asia Convention Patrick Mahomes Silver',
+      '2025 Panini ASCC Asia Convention Patrick Mahomes Gold',
+      'Patrick Mahomes ASCC card nice look',
     ]);
-    check('an unreadable listing is kept, not hidden',
-      murky.rows[1].sameCard === true,
-      `"${murky.rows[1].title}" -> sameCard=${murky.rows[1].sameCard}`);
+    check('outside the catalogue, an unreadable listing is kept, not hidden',
+      murky.rows[2].sameCard === true,
+      `"${murky.rows[2].title}" -> sameCard=${murky.rows[2].sameCard}`);
+    check('  ...while a positively different parallel still moves',
+      murky.rows[1].sameCard === false, `sameCard=${murky.rows[1].sameCard}`);
 
     // Nothing to disagree with -> no split, so no heading.
     const agree = await tag('2025 Prizm Mahomes Silver', [
@@ -171,6 +180,57 @@ const tag = async (query, titles) => {
     check('  ...with somewhere to click to see them',
       /\.other-cards-toggle\s*\{/.test(fs.readFileSync(path.join(ROOT, 'public', 'style.css'), 'utf8')),
       'style.css must style .other-cards-toggle');
+  }
+
+  // ---- accurate where we hold the answer key, quiet where we do not -------
+  //
+  // The ask, in the user's words: "we don't need to group all the cards but I
+  // would like the ones that we have checklists for to be accurate."
+  //
+  // So the rule changes with coverage. Inside the catalogue a listing must
+  // PROVE it is this card; "I could not read this" is not good enough and it
+  // goes to the second section. Outside the catalogue there is no answer key to
+  // be accurate against, so nothing changes — being strict there would hide
+  // listings on the strength of nothing at all.
+  {
+    // 2017 Panini Prizm is in the catalogue, so this is the strict path.
+    const inside = await tag('2017 Panini Prizm Mahomes Silver', [
+      '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm',
+      '2017 Panini Prizm Patrick Mahomes II #269 Red White Blue',
+      'Patrick Mahomes 2017 Prizm rookie card nice look',          // names no parallel
+      '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm PSA 10',
+    ]);
+    check('a product we hold a checklist for is matched strictly',
+      inside.identity && inside.identity.catalogued === true,
+      JSON.stringify(inside.identity));
+    check('  ...so a listing that cannot be read is NOT kept as this card',
+      inside.rows[2].sameCard === false, `sameCard=${inside.rows[2].sameCard}`);
+    check('  ...and it is counted as unconfirmed, not as a different card',
+      inside.identity.unconfirmed === 1,
+      `unconfirmed=${inside.identity.unconfirmed} differing=${inside.identity.differing}`);
+    check('  ...while the readable ones are unaffected',
+      inside.rows[0].sameCard === true && inside.rows[1].sameCard === false
+      && inside.rows[3].sameCard === true,
+      inside.rows.map(r => r.sameCard).join(','));
+
+    // ASCC is a real product we have no checklist for — the one in the report.
+    const outside = await tag('2025 Panini ASCC Mahomes Silver', [
+      '2025 Panini ASCC Asia Convention Patrick Mahomes Silver',
+      'Patrick Mahomes ASCC card nice look',
+    ]);
+    check('a product we have no checklist for is left alone',
+      outside.identity === null && outside.rows.every(r => r.sameCard !== false),
+      JSON.stringify(outside.identity));
+
+    // Strictness must not turn a deliberately broad search into pieces.
+    const broad = await tag('2017 Panini Prizm Mahomes', [
+      '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm',
+      '2017 Panini Prizm Patrick Mahomes II #269 Gold Prizm /10',
+      'Patrick Mahomes 2017 Prizm rookie card nice look',
+    ]);
+    check('  ...and a search naming no parallel still returns every parallel',
+      broad.identity === null && broad.rows.every(r => r.sameCard !== false),
+      JSON.stringify(broad.identity));
   }
 
   // ---- EVERY sold search path has to tag, not just the one I looked at ----
