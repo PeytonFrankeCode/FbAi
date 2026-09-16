@@ -2634,25 +2634,80 @@ function timeAgo(dateStr) {
 }
 
 // ---- Grade helpers ----
+//
+// The browser's copy of the grade reader, and it has to agree with
+// grade-core.js on the server. This function decides which sales a shopper sees
+// grouped under "Raw / Ungraded"; grade-core decides which sales the price
+// chart calls raw. When the two disagree the same page contradicts itself, so
+// grade-core.test.js asserts the grader lists below match character for
+// character.
+//
+// WHAT WAS WRONG. This knew four graders where the server knows fifteen, and
+// had no idea what "GRADED", "SLABBED" or a cert number meant. A Beckett, HGA,
+// CSG, GMA or KSA slab therefore landed in Raw / Ungraded, at slab prices,
+// beside loose cards — which is the exact complaint that started this work.
+//
+// It also matched on bare substrings, so 'BGS' was safe but adding the other
+// eleven that way would have been a disaster: 'gma' sits inside "Magmatic" and
+// "Enigma", 'isa' inside "Isaiah", 'mnt' inside "USMNT". The boundaries below
+// are on LETTERS rather than \b, so a digit may follow a grader ("PSA10", the
+// commonest way a slab is listed) while a letter may not.
+const APP_GRADERS = ['PSA', 'BGS', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
+                     'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT'];
+const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.join('|')})(?![A-Za-z])`, 'gi');
+// The number belonging to THIS grader. '/' is excluded along with the digits
+// because a number in front of a slash is a print run: "LAUNDRY TAG 1/1" is a
+// one-of-one patch card, not a card graded 1.
+const APP_GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?![\d./])/i;
+// TAG is a grading company and also a part of a card — the manufacturer's tag
+// cut from a jersey, which is usually the most valuable card in the product.
+// See grade-core.js: measured over 30 days, every common "graded card with no
+// grader in the title" was one of these.
+const APP_TAG_QUALIFIER = /(laundry|jersey|dual|quad|triple|jumbo|nike|shield|brand|size|name|price|hang|woven|patch|logo|manufacturer)[\s-]*$/i;
+const APP_RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
+const APP_SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|ificate|ified)?\s*#?\s*\d)/i;
+
 function detectGrade(title) {
-  const t = (title || '').toUpperCase();
-  if (/PSA\s*10/.test(t)) return 'PSA 10';
-  if (/PSA\s*9\.5/.test(t)) return 'PSA 9.5';
-  if (/PSA\s*9/.test(t)) return 'PSA 9';
-  if (/PSA\s*8/.test(t)) return 'PSA 8';
-  if (/PSA\s*[0-9]/.test(t)) return 'PSA Other';
-  if (/BGS\s*10|BGS\s*PRISTINE/.test(t)) return 'BGS 10';
-  if (/BGS\s*9\.5/.test(t)) return 'BGS 9.5';
-  if (/BGS/.test(t)) return 'BGS';
-  if (/SGC/.test(t)) return 'SGC';
-  if (/CGC/.test(t)) return 'CGC';
+  const t = String(title || '');
+  // An explicit raw claim outranks a grader mention, so "raw, PSA 10 candidate"
+  // stays where it belongs.
+  if (APP_RAW_RE.test(t)) return 'Raw / Ungraded';
+
+  APP_GRADER_RE.lastIndex = 0;
+  let m;
+  while ((m = APP_GRADER_RE.exec(t)) !== null) {
+    let grader = m[1].toUpperCase();
+    const g = APP_GRADE_AFTER.exec(t.slice(m.index + m[1].length));
+    const num = g ? g[1].replace(/\.0$/, '') : null;
+    // A bare "tag", or one with a qualifier in front of it, is cloth. Skipped
+    // rather than returned, because a title can name a laundry tag and then a
+    // real grader — "Laundry Tag ... PSA 10".
+    if (grader === 'TAG' && (num === null || APP_TAG_QUALIFIER.test(t.slice(0, m.index)))) continue;
+    if (grader === 'BECKETT') grader = 'BGS';   // the same company, two names
+    if (grader === 'PSA') {
+      return num === '10' ? 'PSA 10' : num === '9.5' ? 'PSA 9.5'
+           : num === '9' ? 'PSA 9' : num === '8' ? 'PSA 8' : 'PSA Other';
+    }
+    if (grader === 'BGS') {
+      if (num === '10' || /BGS\s*PRISTINE/i.test(t)) return 'BGS 10';
+      return num === '9.5' ? 'BGS 9.5' : 'BGS';
+    }
+    if (grader === 'SGC') return 'SGC';
+    if (grader === 'CGC') return 'CGC';
+    // Named, real, and not one of the five the page prices separately. Its own
+    // group rather than folded into Raw — these are slabs, and slab money in a
+    // raw group is the whole problem.
+    return 'Graded (other)';
+  }
+  // Says it is in a holder without saying who put it there.
+  if (APP_SLAB_RE.test(t)) return 'Graded (other)';
   return 'Raw / Ungraded';
 }
 
-const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC'];
+const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC', 'Graded (other)'];
 
 // Ranking for the "Grade" sort — best grade first, raw/ungraded last.
-const GRADE_SORT_DESC = ['PSA 10', 'BGS 10', 'PSA 9.5', 'BGS 9.5', 'PSA 9', 'BGS', 'PSA 8', 'SGC', 'CGC', 'PSA Other', 'Raw / Ungraded'];
+const GRADE_SORT_DESC = ['PSA 10', 'BGS 10', 'PSA 9.5', 'BGS 9.5', 'PSA 9', 'BGS', 'PSA 8', 'SGC', 'CGC', 'PSA Other', 'Graded (other)', 'Raw / Ungraded'];
 function gradeSortRank(title) {
   const i = GRADE_SORT_DESC.indexOf(detectGrade(title));
   return i < 0 ? GRADE_SORT_DESC.length : i;
