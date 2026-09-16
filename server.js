@@ -2512,7 +2512,48 @@ function _identityOf(text, pi, player) {
   return { parallel, kind: _cardKind(clean), printRun: _printRun(clean) };
 }
 
-function _sameCard(seed, cand) {
+// Do we hold a checklist for the product this query names?
+//
+// This decides how strict the match below is allowed to be, so it is worth
+// getting right rather than guessing. Cached because buildJoinIndex walks every
+// product and this runs on the search path.
+let _setIndexCache = null;
+async function _cataloguedIndex() {
+  if (_setIndexCache === null) {
+    try {
+      const idx = await _loadJson('checklists/index.json');
+      _setIndexCache = buildJoinIndex((idx && idx.products) || []).index;
+    } catch (err) {
+      console.error('[same-card] checklist index unavailable:', err && err.message);
+      _setIndexCache = false;
+    }
+  }
+  return _setIndexCache || null;
+}
+
+async function _isCatalogued(query, year) {
+  if (!year) return false;
+  const index = await _cataloguedIndex();
+  if (!index) return false;
+  const q = String(query).toLowerCase();
+  // Longest set name wins, so "donruss optic" is not read as "donruss".
+  const set = CARD_SET_NAMES.filter(s => q.includes(s)).sort((a, b) => b.length - a.length)[0];
+  return set ? !!matchSale(index, year, set) : false;
+}
+
+// STRICT means: we hold the checklist for this product, so a listing has to
+// PROVE it is this card to stay with it.
+//
+// This is the opposite of how the card page works, and it is deliberate. There,
+// an unreadable sale is kept because dropping it costs sample. Here the ask is
+// accuracy on the products we actually have an answer key for — so where we
+// have one, "I could not read this" is not good enough, and the listing goes to
+// the second section where it is still one click away.
+//
+// Outside the catalogue nothing changes. There is no answer key to be accurate
+// against, so an unreadable listing stays with the card as before. Being strict
+// there would just hide listings on the strength of nothing.
+function _sameCard(seed, cand, strict) {
   // Kind is the one signal where absence is evidence: a seller does not leave
   // "auto" or "patch" off a title, because it is most of what the card is
   // worth. See card-kind.js — it is 65.5% of all ambiguous keys.
@@ -2520,8 +2561,10 @@ function _sameCard(seed, cand) {
   // A /5 and a /10 are different cards. Only compared when BOTH are stated,
   // because an unstated print run is a silence, not a zero.
   if (seed.printRun != null && cand.printRun != null && seed.printRun !== cand.printRun) return false;
-  // Unreadable on either side keeps the listing with the card.
-  if (seed.parallel == null || cand.parallel == null) return true;
+  // The search named no parallel, so every parallel is wanted. Splitting here
+  // would break a deliberately broad search into pieces nobody asked for.
+  if (seed.parallel == null) return true;
+  if (cand.parallel == null) return !strict;
   return seed.parallel === cand.parallel;
 }
 
@@ -2533,8 +2576,9 @@ async function tagSameCard(results, query) {
   if (!Array.isArray(results) || results.length === 0) return null;
   let pi = null;
   try { pi = await parallelIndex(); } catch (_) { pi = null; }
-  const { player } = extractSearchKeywords(query);
+  const { player, year } = extractSearchKeywords(query);
   const seed = _identityOf(query, pi, player);
+  const strict = await _isCatalogued(query, year);
 
   // Too vague to split on. With no parallel read AND no kind AND no print run,
   // every comparison below returns true and the second section would be empty
@@ -2542,11 +2586,19 @@ async function tagSameCard(results, query) {
   // "other cards" heading on a one-word search.
   if (seed.parallel === null && !seed.kind && seed.printRun == null) return null;
 
-  let differing = 0;
+  // Counted apart because they mean different things to whoever reads this.
+  // "A different card" is the engine working. "Could not tell" is the honest
+  // size of what a checklist cannot settle, and it is the number worth watching
+  // — if it climbs, the catalogue is missing something.
+  let differing = 0, unconfirmed = 0;
   for (const r of results) {
-    const same = _sameCard(seed, _identityOf(r.title, pi, player));
+    const cand = _identityOf(r.title, pi, player);
+    const same = _sameCard(seed, cand, strict);
     r.sameCard = same;
-    if (!same) differing++;
+    if (!same) {
+      differing++;
+      if (cand.parallel == null && seed.kind === cand.kind) unconfirmed++;
+    }
   }
   if (differing === 0) return null;
 
@@ -2554,7 +2606,11 @@ async function tagSameCard(results, query) {
     parallel: seed.parallel === '' ? 'Base' : seed.parallel,
     kind: seed.kind || 'base',
     printRun: seed.printRun,
+    // Whether we hold a checklist for this product, and therefore whether a
+    // listing had to prove itself rather than merely not contradict.
+    catalogued: strict,
     differing,
+    unconfirmed,
   };
 }
 
