@@ -173,6 +173,49 @@ const tag = async (query, titles) => {
       'style.css must style .other-cards-toggle');
   }
 
+  // ---- EVERY sold search path has to tag, not just the one I looked at ----
+  //
+  // THE FAILURE THIS PREVENTS, which already burned two deploys. There are two
+  // endpoints that return sold listings into the same grade-group view:
+  // /api/search and /api/direct-search. I wired the identity check into the
+  // first, shipped it, and reported it fixed. The screen being complained about
+  // was served by the second, so nothing changed and it looked once again like
+  // the work had not happened.
+  //
+  // A third one added later would fail exactly the same way and for exactly the
+  // same reason, so this refuses to let that happen quietly: every sold branch
+  // that returns listings must call tagSameCard.
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+    const lines = src.split('\n');
+    const bad = [];
+    let checked = 0;
+    lines.forEach((line, i) => {
+      if (!/^\s*if \(mode === 'sold'\) \{\s*$/.test(line)) return;
+      // Walk to the matching close brace so the block is the real block, not a
+      // fixed window that could miss the call or borrow one from the next.
+      let depth = 0, end = i;
+      for (let j = i; j < lines.length; j++) {
+        depth += (lines[j].match(/\{/g) || []).length;
+        depth -= (lines[j].match(/\}/g) || []).length;
+        if (depth === 0) { end = j; break; }
+      }
+      const block = lines.slice(i, end + 1).join('\n');
+      // Only branches that hand listings back to a page. fetchEbayItems' own
+      // sold branch fetches them and is not a response.
+      if (!/res\.json\(\{[\s\S]*?results:/.test(block)) return;
+      checked++;
+      if (!/tagSameCard\(/.test(block)) bad.push(`server.js:${i + 1}`);
+    });
+
+    check('every sold search branch that returns listings tags them',
+      checked >= 2 && bad.length === 0,
+      bad.length
+        ? `${bad.join(', ')} returns sold listings without calling tagSameCard — `
+          + `that screen renders them in grade groups and will show other cards as this card`
+        : `${checked} branches checked`);
+  }
+
   console.log(failures ? `\n${failures} check(s) failed` : '\nall search-identity checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(err => { console.error(err); process.exit(1); });

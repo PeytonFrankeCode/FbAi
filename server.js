@@ -2895,6 +2895,14 @@ app.get('/api/direct-search', async (req, res) => {
         });
       }
       const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
+      // Which of these are actually the card that was asked for.
+      //
+      // This endpoint is the SECOND sold-search path and it is the one the
+      // reported screen was using. Tagging /api/search alone fixed nothing a
+      // user could see, twice, because this one renders through the same
+      // grade-group view and arrived untagged. Any new sold path has to call
+      // this too — search-identity.test asserts that every one of them does.
+      const cardIdentity = await tagSameCard(variantFiltered, query);
       const approx = variantFiltered.length > 0 ? computeApproxValue(variantFiltered, query) : null;
       // No sale of the exact card? Estimate from the same player's similar
       // sales, adjusted for print run and set (see /api/search).
@@ -2904,7 +2912,7 @@ app.get('/api/direct-search', async (req, res) => {
       return res.json({
         results: variantFiltered, total: variantFiltered.length, mock: false,
         searchType: 'exact', broadenedQuery: null, approximateValue: approx,
-        estimate, mode, serial: serial || null, similarResults: [],
+        estimate, mode, serial: serial || null, similarResults: [], cardIdentity,
       });
     }
 
