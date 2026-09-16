@@ -45,6 +45,10 @@ const { createParallelIndex, parallelKey: _parallelKey } = require('./parallel-i
 // "Ungraded" badge on every sold tile AND which sales reach the Raw price
 // series, and it was calling every PSA10/BGS9.5 slab raw — see grade-core.js.
 const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./grade-core');
+// Base vs autograph vs relic — the largest single source of merged cards.
+// See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
+// all ambiguous (player, number) keys in the catalogue are exactly that.
+const { cardKind: _cardKind } = require('./card-kind');
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys,
 } = require('./set-key');
@@ -6536,7 +6540,9 @@ app.get('/api/card-analysis', async (req, res) => {
   // across spellings, slabs counted as raw — and they would keep being served
   // for the full TTL after this deploys, which is indistinguishable from the
   // fix not having shipped.
-  const cacheKey = `cardanalysis:v3:${itemId}`;
+  // v4: identity now separates a base card from its own autograph and relic
+  // versions, so v3 entries hold groupings that merged them.
+  const cacheKey = `cardanalysis:v4:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -6621,15 +6627,39 @@ app.get('/api/card-analysis', async (req, res) => {
       return { key: null, known: false, from: hit.how };
     };
 
+    // Base, autograph or relic — the other half of the identity, and the bigger
+    // half.
+    //
+    // A product's autograph sets REUSE the base set's card numbers. 2025 Prizm
+    // lists Tyler Shough at #327 in the Base Set, again in Base Autographs and
+    // again in Rookie Prizm Choice Auto, and `set_name` holds only the product,
+    // so all three grouped together: a $12 base rookie averaged with a $300
+    // on-card auto. Across the catalogue this is 65.5% of all ambiguous
+    // (player, number) keys — 41,529 of 63,417 — against 28.2% for inserts,
+    // which is the problem that looked obvious.
+    //
+    // Unlike a parallel, absence really is evidence here, and that asymmetry is
+    // deliberate rather than careless. A seller does not leave "auto" or
+    // "patch" off a title: it is most of what the card is worth. The catalogue
+    // agrees — "autograph", "signature", "relic" and "mem" appear in no base set
+    // name across 361 checklists.
+    //
+    // The failure it can still have is a false SPLIT: an auto whose title
+    // forgets to say so joins the base group. That is exactly where those sales
+    // sit today, so it is not a regression — and it is the safe direction,
+    // because the opposite puts autograph money in a base card's median.
+    const seedKind = _cardKind(String(seed.title || ''));
+
     const seedKey = keyOf(seed);
     const candidates = (rows && rows.results) || [];
-    let all, unreadable = 0, excludedOtherParallel = 0;
+    let all, unreadable = 0, excludedOtherParallel = 0, excludedOtherKind = 0;
     if (seedKey.known) {
       all = [];
       for (const r of candidates) {
         const k = keyOf(r);
         if (!k.known) { unreadable++; continue; }
         if (k.key !== seedKey.key) { excludedOtherParallel++; continue; }
+        if (_cardKind(String(r.title || '')) !== seedKind) { excludedOtherKind++; continue; }
         all.push(r);
       }
     } else {
@@ -6638,9 +6668,15 @@ app.get('/api/card-analysis', async (req, res) => {
       // it is what the page did before, its limits are stated in the payload,
       // and inventing a grouping from a title we could not parse would be a
       // guess presented as an identity.
+      // The KIND still applies here. It is read from the title, not from the
+      // parallel, so an unreadable parallel says nothing about whether the card
+      // is an autograph — and leaving autos in this bucket is the very merge
+      // this is meant to stop, on the path where the data is already weakest.
       const col = String(seed.parallel == null ? '' : seed.parallel).trim();
-      all = candidates.filter(r => String(r.parallel == null ? '' : r.parallel).trim() === col);
-      excludedOtherParallel = candidates.length - all.length;
+      const before = candidates.filter(r => String(r.parallel == null ? '' : r.parallel).trim() === col);
+      excludedOtherParallel = candidates.length - before.length;
+      all = before.filter(r => _cardKind(String(r.title || '')) === seedKind);
+      excludedOtherKind = before.length - all.length;
     }
 
     if (all.length === 0) {
@@ -6783,8 +6819,13 @@ app.get('/api/card-analysis', async (req, res) => {
           ? (seedKey.key === '' ? 'Base' : (seed.parallel || null))
           : null,
         resolvedFrom: seedKey.from,
+        // base, auto or relic. Empty means a plain base card.
+        kind: seedKind || 'base',
         grouped: all.length,
         otherParallels: excludedOtherParallel,
+        // Sales of this same number in this same product that are a different
+        // KIND — the autograph or relic version. Previously grouped in.
+        otherKinds: excludedOtherKind,
         unreadable,
       },
     };
