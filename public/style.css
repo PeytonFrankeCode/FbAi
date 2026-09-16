@@ -2274,6 +2274,26 @@ main {
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
+/* Listings the identity engine says are a different card. Deliberately quieter
+   than a grade heading — it is a place to look when something is missing, not
+   a section anyone needs to read. */
+.other-cards-header {
+  background: transparent;
+  border-style: dashed;
+}
+.other-cards-header .grade-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.other-cards-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
 .load-more-wrap {
   grid-column: 1 / -1;
   display: flex;
