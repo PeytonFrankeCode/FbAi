@@ -79,6 +79,21 @@ card({ player: 'Fernando Mendoza', year: '2026', set: 'Topps', parallel: '', num
        title: '2026 Topps Redemption Card Fernando Mendoza Las Vegas Raiders 301',
        oldPrice: 25, newPrice: 25, oldN: 11, newN: 11 });
 
+// --- The other half: one number, three parallels, and a BLANK column ---------
+// The parallel column is filled on only 48% of sales. On the rest the parallel
+// is in the title and nowhere else, so a SQL GROUP BY puts a plain base rookie,
+// a Refractor and a Gold Refractor in one row. Every one of these has an empty
+// parallel column on purpose.
+card({ player: 'Jaxson Dart', year: '2025', set: 'Topps Chrome', parallel: '', number: '306',
+       title: '2025 Topps Chrome Jaxson Dart #306',
+       oldPrice: 20, newPrice: 20, oldN: 16, newN: 16 });
+card({ player: 'Jaxson Dart', year: '2025', set: 'Topps Chrome', parallel: '', number: '306',
+       title: '2025 Topps Chrome Jaxson Dart #306 Refractor',
+       oldPrice: 75, newPrice: 75, oldN: 13, newN: 13 });
+card({ player: 'Jaxson Dart', year: '2025', set: 'Topps Chrome', parallel: '', number: '306',
+       title: '2025 Topps Chrome Jaxson Dart #306 Gold Refractor',
+       oldPrice: 400, newPrice: 400, oldN: 10, newN: 10 });
+
 // --- The trap: a huge percentage off almost no data --------------------------
 // Two sales each side. A naive board ranks this first at +900%; the
 // minimum-sales-per-half floor must keep it off entirely.
@@ -286,6 +301,40 @@ const names = (rows) => (rows || []).map(r => r.name || r.player);
     check('  ...and clicking it searches for that kind',
       byKind.auto && /Auto/.test(byKind.auto.query),
       byKind.auto ? byKind.auto.query : '');
+  }
+
+  // ---- and the parallels, which the columns do not carry -------------------
+  //
+  // The parallel column is filled on 48% of sales; on the rest it is in the
+  // title and nowhere else. A SQL GROUP BY therefore puts a $20 base rookie, a
+  // $75 Refractor and a $400 Gold Refractor in one row. The fixture's three
+  // Dart rows all have an EMPTY parallel column, so the only way to tell them
+  // apart is to read the title.
+  {
+    const dart = (s.mostSold || []).filter(r => /Jaxson Dart/.test(r.name));
+    const byPar = Object.fromEntries(dart.map(r => [r.parallel, r]));
+
+    check('one number with three parallels is three rows, read from the title',
+      dart.length === 3,
+      dart.length ? dart.map(r => `${r.parallel}:${r.sales}@$${r.avgPrice}`).join(' | ')
+                  : 'the Dart rows are missing');
+    check('  ...each priced as itself',
+      byPar.Base && byPar.Base.avgPrice === 20
+      && byPar.Refractors && byPar.Refractors.avgPrice === 75
+      && byPar['Gold Refractors'] && byPar['Gold Refractors'].avgPrice === 400,
+      dart.map(r => `${r.parallel}=$${r.avgPrice}`).join(' | '));
+    check('  ...and the tile names the parallel',
+      byPar.Refractors && /Refractors/.test(byPar.Refractors.name),
+      byPar.Refractors ? byPar.Refractors.name : '');
+
+    // A base card's title very often ends in a team name, which reads as
+    // "unmatched" rather than "base". Dropping those emptied the board in the
+    // first version of this; they belong in the unnamed pile, and the count of
+    // them is the size of what is still mixed together.
+    check('the board reports how much it could not name',
+      s.mostSoldBasis && typeof s.mostSoldBasis.unnamedParallelSales === 'number'
+      && s.mostSoldBasis.salesRead > 0 && s.mostSoldBasis.truncated === false,
+      JSON.stringify(s.mostSoldBasis));
   }
 
   // ---- it has to fit in a Worker's CPU budget ----
