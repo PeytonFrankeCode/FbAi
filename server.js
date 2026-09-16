@@ -5467,6 +5467,162 @@ app.get('/api/debug/raw-filter', async (req, res) => {
   }
 });
 
+// ---- /api/debug/grade-gap ----
+// Is a card's grade ever ONLY in the photo? The question that decides whether
+// reading slab labels with image recognition is worth building.
+//
+// A 2025 Prizm Mahomes Silver came back with a PSA slab and a CGC slab sitting
+// in its Raw list. The obvious reading is that the grade is printed on the slab
+// and nowhere else, and therefore that OCR is the fix. OCR is a real build —
+// a vendor API or a model, a per-image cost, a backfill over ~340,000 stored
+// photos and a pipeline to keep it fed — and the last image-recognition attempt
+// in this repo scored 37% where reading the title scored 95.6%. So the premise
+// gets measured before anything is built.
+//
+// WHY THIS CAN BE ANSWERED WITHOUT LOOKING AT A SINGLE PHOTO.
+//
+// Some sales already carry eBay's structured grader/grade fields, filled in by
+// the seller from a fixed list. Those rows are a labelled set: we know they are
+// slabs without reading anything. So ask how often a KNOWN slab's title fails
+// to mention it. That share is the rate at which the text loses a grade we can
+// prove was there — and it is the only honest evidence available for how much
+// grade is hiding in the rows where the columns are empty too.
+//
+// Three outcomes, three different fixes, which is the whole reason to measure:
+//
+//   known slab, title names the grader  -> the text carries it; if such a sale
+//                                          is in a Raw list, gradeBucket has a
+//                                          bug and OCR would fix nothing
+//   known slab, title silent            -> text genuinely loses grades, and the
+//                                          size of this is the case for OCR
+//   columns empty, title names a grader -> already caught; a control that
+//                                          proves the title reader runs at all
+//
+// THE LIMIT, stated because a number this load-bearing must not be read as more
+// than it is: sales with populated columns are not a random sample of all
+// sales. A seller who fills in eBay's grading fields is likelier to write the
+// grade in the title as well, so this UNDERSTATES how often grade is missing
+// from the silent rows. It bounds the decision, it does not settle it.
+//
+// Costed like its neighbours: one aggregate pass over the window plus two small
+// grouped samples, not a walk of the table.
+app.get('/api/debug/grade-gap', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
+    ).first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const sinceIso = _mkIso(_mkDay(throughIso) - 30);
+
+    // Substring LIKEs over one LOWER(), for the reason given on RSI_GRADER_WORDS
+    // — the word-boundary version of this predicate took the market index from
+    // 950ms to 1,972ms against a 2,000ms budget. The tokens in that list are
+    // chosen so they cannot occur inside an ordinary word, and the graders that
+    // CAN ('isa' in "Isaiah", 'tag' in "vintage", 'ags' in "flags") are absent
+    // from it deliberately.
+    const T = "LOWER(COALESCE(title, ''))";
+    const anyWord = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
+    const namesGrader = `( ${anyWord(RSI_GRADER_WORDS)} )`;
+    // "graded" minus the two words that contain it. "ungraded" is a raw claim,
+    // not a slab, and counting it as slab language here would manufacture the
+    // very population this endpoint exists to size.
+    const slabWords = `( ${anyWord(RSI_SLAB_WORDS)}
+                      OR ( ${T} LIKE '%graded%'
+                           AND ${T} NOT LIKE '%ungraded%'
+                           AND ${T} NOT LIKE '%upgraded%' ) )`;
+    const titleSilent = `NOT ${namesGrader} AND NOT ${slabWords}`;
+    // At least one column says something other than "not graded". Either alone
+    // is enough: eBay's grader field is filled far more often than its grade
+    // field, and requiring both would discard most of the labelled set.
+    const colGraded = `NOT ( ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')} )`;
+
+    const f = await db.prepare(
+      `SELECT COUNT(*) AS priced,
+              SUM(CASE WHEN ${colGraded} THEN 1 ELSE 0 END) AS known_slab,
+              SUM(CASE WHEN ${colGraded} AND ${namesGrader} THEN 1 ELSE 0 END) AS known_title_names,
+              SUM(CASE WHEN ${colGraded} AND NOT ${namesGrader} AND ${slabWords}
+                       THEN 1 ELSE 0 END) AS known_title_hints,
+              SUM(CASE WHEN ${colGraded} AND ${titleSilent} THEN 1 ELSE 0 END) AS known_title_silent,
+              SUM(CASE WHEN NOT ${colGraded} THEN 1 ELSE 0 END) AS cols_empty,
+              SUM(CASE WHEN NOT ${colGraded} AND ${namesGrader}
+                       THEN 1 ELSE 0 END) AS empty_title_names,
+              SUM(CASE WHEN NOT ${colGraded} AND ${titleSilent}
+                       THEN 1 ELSE 0 END) AS empty_title_silent
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?`
+    ).bind(sinceIso, throughIso).first();
+
+    const sample = async (where, n) => {
+      const r = await db.prepare(
+        `SELECT title, grader, grade, COUNT(*) AS c
+           FROM sales
+          WHERE price_cents IS NOT NULL AND price_cents > 0
+            AND sold_date > ? AND sold_date <= ? AND ${where}
+          GROUP BY title ORDER BY c DESC LIMIT ?`
+      ).bind(sinceIso, throughIso, n).all();
+      return ((r && r.results) || []).map(x => ({
+        title: x.title, grader: x.grader || null, grade: x.grade || null, sales: x.c,
+      }));
+    };
+
+    const p = f || {};
+    const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 : null);
+    const silentShare = pct(p.known_title_silent, p.known_slab);
+
+    res.json({
+      available: true,
+      window: { since: sinceIso, through: throughIso, days: 30 },
+      pricedSales: p.priced,
+
+      // The labelled set: sales eBay's own fields say are slabs.
+      knownSlabs: {
+        sales: p.known_slab,
+        shareOfAllSales: pct(p.known_slab, p.priced),
+        titleNamesTheGrader: p.known_title_names,
+        titleSaysSlabButNotWho: p.known_title_hints,
+        titleSaysNothing: p.known_title_silent,
+      },
+
+      // The population the site can only guess at.
+      columnsEmpty: {
+        sales: p.cols_empty,
+        rescuedByTheTitle: p.empty_title_names,
+        titleSaysNothingEither: p.empty_title_silent,
+      },
+
+      // The one number this was built to produce.
+      verdict: {
+        gradeLostByTitleShare: silentShare,
+        // Applying the labelled set's miss rate to the unlabelled one. An
+        // estimate, and flagged as such — see the LIMIT note above. It is a
+        // floor, not a count.
+        estimatedSlabsSittingInRaw: silentShare == null ? null
+          : Math.round((p.empty_title_silent || 0) * (silentShare / 100)),
+        reading: silentShare == null ? 'no labelled sales in the window'
+          : silentShare < 2
+            ? 'Titles carry the grade. A slab in a Raw list is a bug in the reader, not missing data — OCR would fix nothing.'
+            : silentShare < 10
+              ? 'Titles carry the grade on the large majority of slabs. Worth fixing the reader before considering photos.'
+              : 'Titles lose the grade often enough that the photo is the only remaining source. This is the case for OCR.',
+      },
+
+      // What a lost grade actually looks like. Five of these say instantly
+      // whether there is a readable pattern being missed or genuinely no text.
+      knownSlabsWithSilentTitles: await sample(`${colGraded} AND ${titleSilent}`, 8),
+      // The control. If this is empty the title reader is not running at all,
+      // and every figure above is describing the wrong thing.
+      titleCaughtWhatTheColumnsMissed: await sample(`NOT ${colGraded} AND ${namesGrader}`, 5),
+    });
+  } catch (err) {
+    console.error('[grade-gap]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 app.get('/api/debug/player-quality', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
