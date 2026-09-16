@@ -8280,10 +8280,42 @@ function getSessionUserByToken(token) {
 
 // True when the request carries the shared admin password (same scheme the
 // feedback/admin panel uses): ?key=... or an x-admin-key header.
+// The admin gate.
+//
+// FAILS CLOSED when ADMIN_PASSWORD is unset, and that is the entire point of
+// this rewrite. It used to fall back to a literal `'cardhuddle-admin'`, in a
+// PUBLIC repository — so anyone who read server.js had the live admin password
+// unless the secret happened to be set. Admin here is not cosmetic: it deletes
+// news and community posts, runs the scan-lead email drip, reads lead stats and
+// writes set aliases into the pricing join.
+//
+// A missing secret must mean "nobody is an admin", never "everybody is". The
+// cost of that choice is that forgetting to set it locks the owner out, which
+// is a loud, obvious failure — the opposite of the silent one it replaces.
+//
+// Compared in constant time. The comparison happens on every admin request and
+// a short-circuiting === leaks the password's length and prefix to anyone
+// willing to time it. crypto.timingSafeEqual is not reliably present on
+// Workers, so this is done by hand: fixed number of iterations, no early exit.
+function _safeEqual(a, b) {
+  const x = String(a == null ? '' : a);
+  const y = String(b == null ? '' : b);
+  // Length is compared without branching on it, then folded into the result, so
+  // a wrong-length guess costs the same as a wrong-character one.
+  let diff = x.length ^ y.length;
+  const n = Math.max(x.length, y.length);
+  for (let i = 0; i < n; i++) {
+    diff |= (x.charCodeAt(i) || 0) ^ (y.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
 function isAdminReq(req) {
+  const adminPass = process.env.ADMIN_PASSWORD;
+  if (!adminPass) return false;
   const key = (req.query && req.query.key) || req.headers['x-admin-key'];
-  const adminPass = process.env.ADMIN_PASSWORD || 'cardhuddle-admin';
-  return !!key && key === adminPass;
+  if (!key) return false;
+  return _safeEqual(key, adminPass);
 }
 
 // Middleware factory: previously gated routes on a Pro subscription. Pro Tools
@@ -9934,9 +9966,9 @@ app.post('/api/feedback', (req, res) => {
 });
 
 app.get('/api/feedback', (req, res) => {
-  const key = req.query.key || req.headers['x-admin-key'];
-  const adminPass = process.env.ADMIN_PASSWORD || 'cardhuddle-admin';
-  if (key !== adminPass) return res.status(401).json({ error: 'Unauthorized' });
+  // Was its own copy of the gate, with its own copy of the hardcoded fallback.
+  // One gate, so a fix to it cannot miss a route.
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const items = loadData('feedback', FEEDBACK_FILE, []);
     res.json(items.slice().reverse()); // newest first
