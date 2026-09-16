@@ -1378,18 +1378,51 @@ function main() {
   // attribution answers "which page does this card belong to"; this answers "is
   // this card's identity certain at all", which is a broader question with a
   // broader domain.
+  // Grouped by WHAT KIND of collision it is, which turned out to matter far
+  // more than the total.
+  //
+  // The first version emitted one flat list, and the flat number was
+  // misleading: 30.3% of resolved sales sat on an "ambiguous" key, which read
+  // as a third of the dataset being unidentifiable. Reading the examples showed
+  // most of them were things like "2025 Prizm Tyler Shough #327 Silver" — a
+  // plain base rookie, flagged because the checklist also lists #327 in Base
+  // Autographs and Rookie Prizm Choice Auto.
+  //
+  // Those are different cards, but they are not the same PROBLEM. Across all
+  // 63,417 ambiguous keys:
+  //
+  //   65.5%  base against its own autograph or relic version
+  //    6.4%  base against a variation of itself (Etch, Image, Full Set)
+  //   28.2%  something involving an insert
+  //
+  // The first is resolved by one word in the title — sellers never omit "auto"
+  // or "patch", because it is most of the price. The last is what reading
+  // insert names is for. Lumping them together pointed the effort at the wrong
+  // one, so the kind travels with the key.
+  const AUTOISH = new Set(['autograph', 'memorabilia']);
   const subsetAmbiguous = {};
   for (const cl of checklists) {
     const owners = new Map();
     for (const x of (cl.sets || [])) {
       for (const c of (x.cards || [])) {
         const k = cardMemberKey(c);
-        owners.set(k, (owners.get(k) || 0) + 1);
+        if (!owners.has(k)) owners.set(k, []);
+        owners.get(k).push(x.category || '');
       }
     }
-    const amb = [];
-    for (const [k, n] of owners) if (n > 1) amb.push(k);
-    if (amb.length) subsetAmbiguous[cl.id] = amb.sort();
+    const byKind = { auto: [], insert: [], variation: [] };
+    for (const [k, cats] of owners) {
+      if (cats.length < 2) continue;
+      const set = new Set(cats);
+      // An insert in the mix is the hard case and wins the classification: it
+      // is the one a title's insert name has to resolve.
+      if (set.has('insert')) byKind.insert.push(k);
+      else if ([...set].some(c => AUTOISH.has(c))) byKind.auto.push(k);
+      else byKind.variation.push(k);
+    }
+    const out = {};
+    for (const [kind, list] of Object.entries(byKind)) if (list.length) out[kind] = list.sort();
+    if (Object.keys(out).length) subsetAmbiguous[cl.id] = out;
   }
 
   for (const cl of checklists) {

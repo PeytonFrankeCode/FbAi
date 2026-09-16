@@ -92,12 +92,33 @@ const check = (label, ok, detail) => {
   // The fixture's premise, asserted rather than assumed. If the catalogue ever
   // stops calling this key ambiguous, every check below becomes meaningless
   // while still passing.
+  // The artifact groups keys by the KIND of collision, because which kind a
+  // sale sits on decides what could resolve it. A flat total pointed the work
+  // at the wrong problem entirely — see the byKind comment in server.js.
+  const kindsOf = (pid, key) => Object.entries(AMB[pid] || {})
+    .filter(([, list]) => list.includes(key)).map(([k]) => k);
+
   check('the fixture key really is ambiguous in the catalogue',
-    (AMB[PRODUCT] || []).includes(AMBIGUOUS_KEY),
-    `${AMBIGUOUS_KEY} in ${PRODUCT}`);
+    kindsOf(PRODUCT, AMBIGUOUS_KEY).length === 1,
+    `${AMBIGUOUS_KEY} in ${PRODUCT} as ${kindsOf(PRODUCT, AMBIGUOUS_KEY).join(',') || 'nothing'}`);
   check('  ...and the control key really is not',
-    !(AMB[PRODUCT] || []).includes(UNAMBIGUOUS_KEY),
+    kindsOf(PRODUCT, UNAMBIGUOUS_KEY).length === 0,
     `${UNAMBIGUOUS_KEY} absent from the ambiguity map`);
+  // A key must be filed under exactly one kind, or the sales counted per kind
+  // would not sum to the total and every share would be wrong.
+  {
+    let multi = 0, checked = 0;
+    for (const [pid, byKind] of Object.entries(AMB)) {
+      const seen = new Map();
+      for (const [kind, list] of Object.entries(byKind)) {
+        for (const k of list) { seen.set(k, (seen.get(k) || 0) + 1); }
+      }
+      for (const c of seen.values()) { checked++; if (c > 1) multi++; }
+      if (checked > 50000) break;
+    }
+    check('  ...and every key is filed under exactly one kind',
+      multi === 0, multi ? `${multi} keys in two kinds` : `${checked.toLocaleString()} keys checked`);
+  }
 
   const r = await (await fetch(`http://127.0.0.1:${PORT}/api/debug/identity-gap`)).json();
   check('the endpoint answers', r.available === true, r.available ? `${r.salesCovered} sales` : r.reason);
