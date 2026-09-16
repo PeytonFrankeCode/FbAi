@@ -6739,6 +6739,23 @@ async function _warmSoldStats() {
 // sell that week, so each grade gets its own series and its own stats.
 const CARD_ANALYSIS_TTL = 1800; // 30m
 
+// The cached grouping's version, and a fingerprint of the code that decides it.
+//
+// WHY THE FINGERPRINT EXISTS. Every previous change to card identity bumped
+// this version by hand, and the one after those forgot to. The grouping fix
+// deployed, the test suite passed, the site kept serving the old answer out of
+// KV for half an hour, and the person who reported the bug saw nothing change
+// and reasonably concluded the work had not happened.
+//
+// A convention that has to be remembered will eventually not be. So the three
+// modules that decide how sales are grouped are hashed, and card-analysis.test
+// compares that hash against the constant below: change any of them without
+// bumping the version and the suite fails, naming the fix. Recompute with
+//   node -e "..." (the test prints the exact command when it fails)
+const CARD_IDENTITY_VERSION = 'cardanalysis:v7';
+const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
+const CARD_IDENTITY_FINGERPRINT = 'af885094446e';
+
 // How far one card's prices may spread before a trend across them is refused.
 //
 // Within ONE parallel at ONE grade, a 40x range is already generous — it covers
@@ -6944,7 +6961,10 @@ app.get('/api/card-analysis', async (req, res) => {
   // its number, so v4 entries hold groupings that merged them.
   // v6: identity now separates numbered parallels by print run, so v5 entries
   // hold groupings that averaged a /5 with a /10.
-  const cacheKey = `cardanalysis:v6:${itemId}`;
+  // v7: a laundry tag is no longer read as the grading company TAG, and the
+  // grade columns are no longer trusted when it was, so v6 entries hold patch
+  // cards filed under a grade nobody issued.
+  const cacheKey = `${CARD_IDENTITY_VERSION}:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(cached);
 
@@ -11045,7 +11065,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

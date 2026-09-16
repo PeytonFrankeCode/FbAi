@@ -26,6 +26,8 @@ try {
   process.exit(1);
 }
 const path = require('path');
+const fs = require('fs');
+const ROOT = path.join(__dirname, '..');
 
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (
@@ -442,6 +444,43 @@ const rawTitles = (d) => {
   check('  ...while every genuinely raw sale is kept',
         (bucket(silver, 'Raw') || {}).sales === 5,
         `Raw has ${(bucket(silver, 'Raw') || {}).sales}, expected 5`);
+
+  // ---- the cached answer must not outlive the code that produced it -------
+  //
+  // THE FAILURE THIS PREVENTS, which already happened once. Card groupings are
+  // cached in KV for 30 minutes under a hand-written version, and every change
+  // to identity so far has bumped it — v4, v5, v6. The change after those did
+  // not. The fix deployed, this suite passed, and the site went on serving the
+  // old grouping for half an hour to the person who had reported the bug. From
+  // outside it looked exactly like the work had never shipped.
+  //
+  // A convention that has to be remembered will eventually not be, so it is
+  // enforced instead: the modules that decide the grouping are hashed, and the
+  // hash is pinned beside the version. Change one without bumping the other and
+  // this fails.
+  {
+    const crypto = require('crypto');
+    const srv = require(path.join(ROOT, 'server.js'));
+    const h = crypto.createHash('sha256');
+    for (const f of srv.CARD_IDENTITY_MODULES) {
+      h.update(f).update(fs.readFileSync(path.join(ROOT, f)));
+    }
+    const actual = h.digest('hex').slice(0, 12);
+    check('the cache version matches the identity code it was written for',
+      actual === srv.CARD_IDENTITY_FINGERPRINT,
+      actual === srv.CARD_IDENTITY_FINGERPRINT
+        ? `${srv.CARD_IDENTITY_VERSION} @ ${actual}`
+        : `${srv.CARD_IDENTITY_MODULES.join(', ')} changed since ${srv.CARD_IDENTITY_VERSION} `
+          + `was set. Bump CARD_IDENTITY_VERSION and set CARD_IDENTITY_FINGERPRINT `
+          + `to '${actual}', or every visitor keeps the old grouping for ${'30 minutes'}.`);
+
+    // The version has to be part of the key it versions. A constant that is
+    // bumped but never read is the same bug with more ceremony.
+    const src = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+    check('  ...and the version is actually used in the cache key',
+      /cacheKey = `\$\{CARD_IDENTITY_VERSION\}:/.test(src),
+      'the cache key must be built from CARD_IDENTITY_VERSION');
+  }
 
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall card-analysis checks passed');
