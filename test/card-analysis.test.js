@@ -374,6 +374,50 @@ const rawTitles = (d) => {
       a5 && a10 ? `/5 $${a5.median} vs /10 $${a10.median}` : 'missing a series');
   }
 
+  // ---- the explain mode: WHY is this sale in this list? --------------------
+  //
+  // The grouping runs on database columns plus four separate title reads, and
+  // when the result looks wrong from outside there is no way to tell which of
+  // them said yes. A slab in the Raw list could be an empty grade column, a
+  // title that never names the grade, or the bucket rule — three different
+  // fixes. This reports the signals rather than the verdict.
+  {
+    const ex = await call('/api/card-analysis?itemId=b1&explain=1');
+    check('explain mode reports what was read from the clicked sale',
+      ex.explain === true && ex.seed && ex.seed.read
+        && ex.seed.read.kind === 'base' && typeof ex.seed.columns.set_name === 'string',
+      ex.seed ? JSON.stringify(ex.seed.read) : 'no seed block');
+
+    check('  ...and gives a reason for every candidate it dropped',
+      Array.isArray(ex.trace) && ex.trace.length > 0
+        && ex.trace.filter(t => t.verdict === 'dropped').every(t => t.why && t.why.length > 3),
+      `${(ex.trace || []).length} traced, `
+      + `${(ex.trace || []).filter(t => t.verdict === 'dropped').length} dropped`);
+
+    // The reasons have to be distinguishable, or the trace cannot point at a
+    // fix. These are the three that matter on a real card.
+    const reasons = new Set((ex.trace || []).filter(t => t.verdict === 'dropped')
+      .map(t => String(t.why).split(':')[0]));
+    check('  ...naming which rule excluded it, not just that one did',
+      reasons.size >= 2,
+      [...reasons].join(' | '));
+
+    // Every traced row carries the columns AND the title reads side by side,
+    // which is what separates "the collector parsed it wrong" from "our reader
+    // read it wrong".
+    const t0 = (ex.trace || [])[0];
+    check('  ...with the raw columns beside what we read from the title',
+      t0 && t0.columns && t0.read && 'gradeBucket' in t0.read && 'printRun' in t0.read,
+      t0 ? Object.keys(t0.read).join(', ') : 'no rows');
+
+    // A trace must never be served from cache: it is a question about the
+    // grouping right now.
+    const again = await call('/api/card-analysis?itemId=b1');
+    check('  ...and the trace never replaces the cached payload',
+      again.explain === undefined && again.available === true,
+      'a cached trace would answer about a grouping that no longer exists');
+  }
+
   // ---- 2. graded cards in the raw list ------------------------------------
   const raws = rawTitles(silver);
   const leaked = raws.filter(t => /PSA|BGS/i.test(t));
