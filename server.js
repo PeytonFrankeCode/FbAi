@@ -4919,9 +4919,16 @@ app.get('/api/debug/identity-gap', async (req, res) => {
       console.error('[identity-gap] ambiguity map unavailable:', err && err.message);
     }
     // Arrays in the artifact, Sets here — this is looked up once per row.
+    // Keyed by product then kind, because which KIND of collision a sale sits
+    // on decides what could fix it and the totals alone pointed at the wrong
+    // work entirely.
     const ambSets = new Map();
     if (ambiguous) {
-      for (const [pid, keys] of Object.entries(ambiguous)) ambSets.set(pid, new Set(keys));
+      for (const [pid, byKind] of Object.entries(ambiguous)) {
+        const m = new Map();
+        for (const [kind, keys] of Object.entries(byKind || {})) m.set(kind, new Set(keys));
+        ambSets.set(pid, m);
+      }
     }
     const HAS_NUM = /#\s*[A-Za-z0-9-]+/;
 
@@ -4931,7 +4938,7 @@ app.get('/api/debug/identity-gap', async (req, res) => {
                       rescuable: 0, stillUnidentified: 0 };
     // The measurement this endpoint was extended for.
     const amb = { matchedProduct: 0, onAmbiguousKey: 0, ambiguousAndNamed: 0,
-                  ambiguousUnnamed: 0, noProduct: 0 };
+                  ambiguousUnnamed: 0, noProduct: 0, byKind: {}, resolvable: {} };
     const ambiguousExamples = [];
     const unidentifiedExamples = [];
     const rescuableExamples = [];
@@ -4962,16 +4969,39 @@ app.get('/api/debug/identity-gap', async (req, res) => {
           amb.noProduct += n;
         } else {
           amb.matchedProduct += n;
-          const keys = ambSets.get(product.id);
-          if (keys && keys.has(`${r.p}|${r.cn}`)) {
+          const byKind = ambSets.get(product.id);
+          const key = `${r.p}|${r.cn}`;
+          let kind = null;
+          if (byKind) {
+            for (const [k, set] of byKind) if (set.has(key)) { kind = k; break; }
+          }
+          if (kind) {
             amb.onAmbiguousKey += n;
-            // Naming the insert is what resolves it. This is the split the
-            // whole decision rests on.
-            if (sub.subset) amb.ambiguousAndNamed += n;
+            amb.byKind[kind] = (amb.byKind[kind] || 0) + n;
+
+            // What would actually resolve this sale, by kind. These are
+            // different signals and conflating them is what made the flat
+            // number misleading.
+            //
+            //   auto      the title says "auto"/"patch"/"relic" — sellers never
+            //             leave it off, it is most of the price
+            //   insert    the title names the insert — what resolveSubset reads
+            //   variation neither; an Etch against an Image variation of one
+            //             base card is not distinguishable from a title
+            const t = String(r.title || '');
+            const saysAuto = /\b(auto|autograph|autographed|signed|patch|relic|jersey|mem)\b/i.test(t);
+            if (kind === 'auto') {
+              if (saysAuto) amb.resolvable[kind] = (amb.resolvable[kind] || 0) + n;
+            } else if (kind === 'insert') {
+              if (sub.subset) amb.resolvable[kind] = (amb.resolvable[kind] || 0) + n;
+            }
+
+            const resolved = kind === 'auto' ? saysAuto : kind === 'insert' ? !!sub.subset : false;
+            if (resolved) amb.ambiguousAndNamed += n;
             else {
               amb.ambiguousUnnamed += n;
               if (ambiguousExamples.length < 12) {
-                ambiguousExamples.push({ product: product.id, key: `${r.p}|${r.cn}`,
+                ambiguousExamples.push({ product: product.id, key, kind,
                                          sales: n, title: r.title });
               }
             }
@@ -5057,10 +5087,19 @@ app.get('/api/debug/identity-gap', async (req, res) => {
         ofThoseTitleNamesTheInsert: amb.ambiguousAndNamed,
         resolvableByReadingTheSubset: pct(amb.ambiguousAndNamed, amb.onAmbiguousKey),
         wouldRemainUnresolved: amb.ambiguousUnnamed,
+        // The breakdown that changed the recommendation. A flat total said a
+        // third of sales were unidentifiable; two thirds of that turned out to
+        // be a base card against its own autograph, which one word in the title
+        // settles. Only the `insert` row is what reading insert names is for.
+        byKind: amb.byKind,
+        resolvableByKind: amb.resolvable,
+        kindShares: Object.fromEntries(Object.entries(amb.byKind)
+          .map(([k, v]) => [k, pct(v, amb.onAmbiguousKey)])),
         // Not folded into "unambiguous": a sale we could not match to a product
         // has an unknown answer, not a reassuring one.
         salesWithNoProductMatch: amb.noProduct,
-        catalogueKeysAmbiguous: Object.values(ambiguous).reduce((n, v) => n + v.length, 0),
+        catalogueKeysAmbiguous: Object.values(ambiguous).reduce(
+          (n, byKind) => n + Object.values(byKind || {}).reduce((m, l) => m + l.length, 0), 0),
       } : { unavailable: 'subsets/ambiguous.json not deployed' },
 
       // Worth more than the rates: whether the leftovers are one broken title

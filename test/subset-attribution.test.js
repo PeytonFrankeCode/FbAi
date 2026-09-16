@@ -169,7 +169,14 @@ if (!fs.existsSync(attrPath)) {
   } else {
     const amb = JSON.parse(fs.readFileSync(ambPath, 'utf8'));
     const ids = Object.keys(amb);
-    const keys = ids.reduce((n, id) => n + amb[id].length, 0);
+    // Keys are grouped by the KIND of collision — base-vs-autograph,
+    // base-vs-insert, base-vs-variation — because which kind a sale sits on
+    // decides what could resolve it, and a flat total pointed the work at the
+    // wrong problem. Flattened here so the shape checks below stay about the
+    // keys themselves.
+    const keysOf = (id) => Object.values(amb[id] || {}).flat();
+    const keys = ids.reduce((n, id) => n + keysOf(id).length, 0);
+    const KINDS = new Set(['auto', 'insert', 'variation']);
     check('the ambiguity map was built',
       ids.length > 100 && keys > 10000, `${ids.length} products, ${keys.toLocaleString()} keys`);
 
@@ -180,7 +187,7 @@ if (!fs.existsSync(attrPath)) {
     // looks it up in whichever map it needs.
     const malformed = [];
     for (const id of ids) {
-      for (const k of amb[id]) {
+      for (const k of keysOf(id)) {
         const at = k.indexOf('|');
         if (at === -1 || norm(k.slice(0, at)) !== k.slice(0, at) || norm(k.slice(at + 1)) !== k.slice(at + 1)) {
           malformed.push(`${id}: ${k}`); break;
@@ -216,7 +223,7 @@ if (!fs.existsSync(attrPath)) {
             small.get(k).add(s.name);
           }
         }
-        const have = new Set(amb[id]);
+        const have = new Set(keysOf(id));
         for (const [k, sets] of small) {
           if (sets.size > 1) { checkedSmall++; if (!have.has(k)) missed++; }
         }
@@ -225,6 +232,30 @@ if (!fs.existsSync(attrPath)) {
         checkedSmall > 0 && missed === 0,
         missed ? `${missed} ambiguous keys missing of ${checkedSmall} checked`
                : `${checkedSmall.toLocaleString()} ambiguous keys across 40 products, all present`);
+    }
+
+    // Every group is one of the known kinds, and the shares are reported so a
+    // silent reclassification is visible rather than merely not-failing.
+    {
+      const seen = {};
+      const unknown = new Set();
+      for (const id of ids) {
+        for (const [kind, list] of Object.entries(amb[id] || {})) {
+          if (!KINDS.has(kind)) unknown.add(kind);
+          seen[kind] = (seen[kind] || 0) + list.length;
+        }
+      }
+      check('  ...grouped only into the known collision kinds',
+        unknown.size === 0,
+        unknown.size ? `unknown kinds: ${[...unknown].join(', ')}`
+          : Object.entries(seen).sort((x, y) => y[1] - x[1])
+              .map(([k, v]) => `${k} ${((v / keys) * 100).toFixed(1)}%`).join(', '));
+      // The finding that redirected the work: most "ambiguity" is a base card
+      // against its own autograph, which one word in a title settles. If that
+      // ever stops being true the recommendation changes with it.
+      check('  ...with base-vs-autograph the largest kind',
+        (seen.auto || 0) > (seen.insert || 0),
+        `auto ${seen.auto || 0} vs insert ${seen.insert || 0}`);
     }
 
     // And the endpoint actually reads it. An artifact nothing loads measures
