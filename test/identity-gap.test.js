@@ -71,6 +71,18 @@ const add = (title, player, num, times) => {
   }
 }
 
+// A spelling that resolves ONLY through public/data/set-aliases.json. The
+// collector writes "Topps Signature"; the catalogue calls it Topps Signature
+// Class. If the report ever stops applying aliases, these reappear in the
+// unmatched queue and it sends the next person to solve a solved problem.
+{
+  for (let i = 0; i < 3; i++) {
+    ins.run('al' + i, iso(-7 - i),
+      '2025 Topps Signature Class - Rookies Ashton Jeanty #102 Autographs (AU, RC)',
+      10000, 'Ashton Jeanty', '2025', 'Topps Signature', '', '102', 0.9);
+  }
+}
+
 add('2017 Panini Prizm Dalvin Cook #8', 'Dalvin Cook', 8, 6);                      // ambiguous, insert unnamed
 add('2017 Panini Prizm Stained Glass Prizm Dalvin Cook #8', 'Dalvin Cook', 8, 6);  // ambiguous, insert named
 add('2017 Panini Prizm Patrick Mahomes II #269', 'Patrick Mahomes II', 269, 6);    // not ambiguous
@@ -222,6 +234,16 @@ const check = (label, ok, detail) => {
     check('  ...and correctly flagged as a throwback, not a missing checklist',
       !!tb && tb.looksLikeAThrowback === true,
       tb ? `looksLikeAThrowback=${tb.looksLikeAThrowback}` : '');
+
+    // The queue must reflect work already done, or it never shrinks and nobody
+    // trusts it. "Topps Signature" resolves only through set-aliases.json, so
+    // its presence here means the report is building its join without aliases —
+    // disagreeing with the pricing join that actually serves the site.
+    const stale = rows.filter(x => /topps signature/i.test(x.yearAndSet));
+    check('  ...and a spelling an alias already fixes is NOT still in the queue',
+      stale.length === 0,
+      stale.length ? `${JSON.stringify(stale[0])} — the report is ignoring set aliases`
+                   : 'aliases are applied');
   }
 
   server.close();

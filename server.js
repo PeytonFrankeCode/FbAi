@@ -2522,7 +2522,11 @@ async function _cataloguedIndex() {
   if (_setIndexCache === null) {
     try {
       const idx = await _loadJson('checklists/index.json');
-      _setIndexCache = buildJoinIndex((idx && idx.products) || []).index;
+      // With aliases, or a product reachable only through one counts as
+      // uncatalogued and its searches stay loose — the opposite of what the
+      // alias was added to achieve.
+      _setIndexCache = buildJoinIndex((idx && idx.products) || [],
+                                      undefined, await setAliases()).index;
     } catch (err) {
       console.error('[same-card] checklist index unavailable:', err && err.message);
       _setIndexCache = false;
@@ -2535,10 +2539,28 @@ async function _isCatalogued(query, year) {
   if (!year) return false;
   const index = await _cataloguedIndex();
   if (!index) return false;
-  const q = String(query).toLowerCase();
-  // Longest set name wins, so "donruss optic" is not read as "donruss".
-  const set = CARD_SET_NAMES.filter(s => q.includes(s)).sort((a, b) => b.length - a.length)[0];
-  return set ? !!matchSale(index, year, set) : false;
+
+  // Ask the CATALOGUE, not a hardcoded list of brand words.
+  //
+  // The first version of this matched the query against CARD_SET_NAMES, which
+  // holds optic, prizm, donruss, select, absolute, contenders and so on — and
+  // no topps, no chrome, no bowman. That list grew up alongside a catalogue
+  // that is 330 Panini products to 25 Topps, so strict matching could never
+  // fire for a Topps search no matter how complete its checklist was. The bias
+  // in the data had quietly become a bias in the code.
+  //
+  // So every word window in the query is offered to the join instead, longest
+  // first. The catalogue itself decides what a product name is, which means a
+  // product added tomorrow works today, and an alias counts.
+  const words = String(query).toLowerCase()
+    .replace(/\b(?:19|20)\d{2}(?:-\d{2})?\b/g, ' ')   // the year is passed separately
+    .replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(Boolean);
+  for (let n = Math.min(5, words.length); n >= 1; n--) {
+    for (let i = 0; i + n <= words.length; i++) {
+      if (matchSale(index, year, words.slice(i, i + n).join(' '))) return true;
+    }
+  }
+  return false;
 }
 
 // STRICT means: we hold the checklist for this product, so a listing has to
@@ -5387,7 +5409,14 @@ app.get('/api/debug/identity-gap', async (req, res) => {
       ambiguous = await _loadJson('subsets/ambiguous.json');
       const idx = await _loadJson('checklists/index.json');
       products = (idx && idx.products) || [];
-      setIndex = buildJoinIndex(products).index;
+      // WITH aliases, because the pricing join uses them and a diagnostic that
+      // disagrees with production is worse than none.
+      //
+      // Without this, a spelling someone has already fixed — on the desk, or in
+      // set-aliases.json — stays in topUnmatchedSets forever. The queue then
+      // sends the next person to solve a solved problem, and no amount of work
+      // ever visibly reduces it. That is exactly how a tool stops being used.
+      setIndex = buildJoinIndex(products, undefined, await setAliases()).index;
     } catch (err) {
       console.error('[identity-gap] ambiguity map unavailable:', err && err.message);
     }

@@ -213,6 +213,32 @@ const tag = async (query, titles) => {
       && inside.rows[3].sameCard === true,
       inside.rows.map(r => r.sameCard).join(','));
 
+    // A TOPPS product, which could not be strict at all until the coverage test
+    // stopped asking a hardcoded brand list.
+    //
+    // CARD_SET_NAMES holds optic, prizm, donruss, select, absolute, contenders
+    // — and no topps, no chrome, no bowman. It grew up beside a catalogue that
+    // is 330 Panini products to 25 Topps, so the bias in the data had become a
+    // bias in the code: a Topps search could never match strictly however
+    // complete its checklist was. This one also only resolves through an alias,
+    // so it covers both.
+    const topps = await tag('2025 Topps Signature Ashton Jeanty Silver', [
+      '2025 Topps Signature Class Ashton Jeanty #102 Silver',
+      '2025 Topps Signature Class Ashton Jeanty #102 Gold',
+    ]);
+    check('a Topps product is matched strictly too, not just Panini',
+      topps.identity && topps.identity.catalogued === true,
+      JSON.stringify(topps.identity));
+
+    // The product name does not have to sit at the front of the query.
+    const reordered = await tag('Mahomes 2017 Prizm Silver', [
+      '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm',
+      '2017 Panini Prizm Patrick Mahomes II #269 Gold Prizm',
+    ]);
+    check('  ...and the product is found wherever it sits in the query',
+      reordered.identity && reordered.identity.catalogued === true,
+      JSON.stringify(reordered.identity));
+
     // ASCC is a real product we have no checklist for — the one in the report.
     const outside = await tag('2025 Panini ASCC Mahomes Silver', [
       '2025 Panini ASCC Asia Convention Patrick Mahomes Silver',
