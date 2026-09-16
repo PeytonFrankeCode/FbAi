@@ -50,7 +50,8 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // all ambiguous (player, number) keys in the catalogue are exactly that.
 const { cardKind: _cardKind } = require('./card-kind');
 const {
-  buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys,
+  buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys, saleKeys,
+  norm: _setNorm,
 } = require('./set-key');
 const {
   summarise: priceSummarise, render: priceRender, median: priceMedian, keyFor: priceKeyFor,
@@ -4850,6 +4851,161 @@ app.get('/api/debug/parallel-resolve', async (req, res) => {
   }
 });
 
+// ---- the sorting desk ----
+//
+// Human answers for the cases no rule reaches, at the unit of work where one
+// answer is worth the most.
+//
+// THE ARITHMETIC THAT DECIDES THE UNIT. A month's sample holds 15,917 sales
+// across 4,000 distinct titles — so a decision made about one TITLE is worth
+// about four sales, and there are ~200,000 titles. That is not a system, it is
+// a lifetime. A decision made about one (year, set name) is worth every sale
+// ever filed under that spelling, and the unmatched ones cluster hard: 3,385
+// sales matched no product at all, and the top twenty spellings carry most of
+// them. Tens of decisions against thousands of sales.
+//
+// So the desk works on SET SPELLINGS, sorted by how many sales each one is
+// holding up. It is not a general-purpose card editor and should not become
+// one until the same arithmetic says so for another unit.
+const SET_ALIAS_KEY = 'setaliases:v1';
+
+async function setAliases() {
+  // archiveGet, not cacheGet: these are written without an expiry because they
+  // are decisions, not a cache, and reading them through the cache path would
+  // work today only by accident of both using the same namespace.
+  try { return (await archiveGet(SET_ALIAS_KEY)) || {}; }
+  catch (_) { return {}; }
+}
+
+// The queue. Every spelling that matched no product, with what it is costing
+// and the catalogue's best guesses beside it.
+app.get('/api/review/sets', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const days = Math.min(365, Math.max(7, parseInt(req.query.days, 10) || 90));
+
+  try {
+    const idx = await _loadJson('checklists/index.json');
+    const products = (idx && idx.products) || [];
+    const aliases = await setAliases();
+    const { index: setIndex } = buildJoinIndex(products, undefined, aliases);
+
+    const newest = await db.prepare(
+      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+    if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+    const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+    const since = _mkIso(_mkDay(through) - days);
+
+    // Grouped in SQL, so this reads one row per spelling rather than per sale.
+    const Y = _normCol('year'), S = _normCol('set_name');
+    const rows = await db.prepare(
+      `SELECT ${Y} AS y, ${S} AS s, COUNT(*) AS n,
+              SUM(COALESCE(price_cents, 0)) AS cents,
+              MAX(title) AS sample
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?
+        GROUP BY y, s
+        ORDER BY n DESC LIMIT 400`
+    ).bind(since, through).all();
+
+    const open = [];
+    let resolvedSales = 0, openSales = 0;
+    for (const r of (rows && rows.results) || []) {
+      const n = Number(r.n || 0);
+      if (matchSale(setIndex, r.y, r.s)) { resolvedSales += n; continue; }
+      openSales += n;
+      open.push({
+        // Built by saleKeys(), never by hand.
+        //
+        // The join does not look a sale up by "<year>|<set name>" — variants()
+        // strips the year, the sport suffix and a leading maker first, so
+        // "2025 Prizm" is looked up as "2025|prizm". An alias keyed the obvious
+        // way would sit in KV forever and never be consulted, with nothing
+        // thrown to say so. Taking the first key the join itself would try is
+        // the only way to be sure the answer lands where the question is asked.
+        key: (saleKeys(r.y, r.s)[0] || `${r.y}|${r.s}`),
+        year: r.y, setName: r.s, sales: n,
+        value: Math.round(Number(r.cents || 0) / 100),
+        sample: String(r.sample || '').slice(0, 120),
+        // The catalogue's nearest names, so the common answer is one keystroke
+        // rather than a search. Scored on shared words, which is crude and is
+        // meant to be: the human is the judge, this only orders the options.
+        suggestions: _nearestProducts(products, r.y, r.s).slice(0, 5),
+      });
+    }
+
+    res.json({
+      available: true,
+      window: { since, through, days },
+      // The leverage, stated so it can be checked rather than believed.
+      // If this ratio is not large the desk is not worth anyone's evening.
+      openSpellings: open.length,
+      salesHeldUp: openSales,
+      salesPerDecision: open.length ? Math.round(openSales / open.length) : 0,
+      resolvedSales,
+      aliasesInPlace: Object.keys(aliases).length,
+      queue: open.slice(0, 100),
+    });
+  } catch (err) {
+    console.error('[review/sets]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
+// Nearest catalogue products to a spelling, by shared words. Deliberately
+// simple: it orders the choices, it does not make them.
+function _nearestProducts(products, year, setName) {
+  const want = new Set(_setNorm(setName).split(' ').filter(Boolean));
+  const y = String(_setNorm(year) || '');
+  const scored = [];
+  for (const p of products) {
+    const name = _setNorm(p.name);
+    const words = new Set(name.split(' ').filter(Boolean));
+    let shared = 0;
+    for (const w of want) if (words.has(w)) shared++;
+    // Same year is worth a lot: products are year-scoped and a seller's year
+    // column is one of the more reliable things on the row.
+    const sameYear = String(_setNorm(p.year)) === y;
+    const score = shared * 2 + (sameYear ? 3 : 0);
+    if (score > 0) scored.push({ id: p.id, name: p.name, year: p.year, score });
+  }
+  return scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+}
+
+// One decision. `productId` null removes an alias rather than storing a null,
+// so a mistake is undoable without a deploy.
+app.post('/api/review/sets', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const { key, productId } = req.body || {};
+  if (!key || typeof key !== 'string') return res.status(400).json({ error: 'key required' });
+
+  try {
+    const aliases = await setAliases();
+    if (productId) {
+      const idx = await _loadJson('checklists/index.json');
+      const products = (idx && idx.products) || [];
+      // Refuse an id the catalogue does not have. A typo would otherwise sit in
+      // KV looking like an answer and resolving nothing, which is the failure
+      // shape this whole session keeps running into.
+      if (!products.some(p => String(p.id) === String(productId))) {
+        return res.status(400).json({ error: `no product with id ${productId}` });
+      }
+      aliases[key] = String(productId);
+    } else {
+      delete aliases[key];
+    }
+    // No TTL: these are decisions, not a cache. cachePut always attaches an
+    // expiry, so this uses the archive writer that does not.
+    await archivePut(SET_ALIAS_KEY, aliases);
+    res.json({ ok: true, key, productId: productId || null, total: Object.keys(aliases).length });
+  } catch (err) {
+    console.error('[review/sets POST]', err && err.message);
+    res.status(500).json({ error: err && err.message });
+  }
+});
+
 // ---- /api/debug/identity-gap ----
 // Where card identity actually breaks, and what each available signal would fix.
 //
@@ -5571,7 +5727,9 @@ app.get('/api/debug/price-coverage', async (req, res) => {
     // of priced sales to no product at all and gave three different Donruss
     // sets identical figures. It keys on the product name now.
     const rows = (bySet && bySet.results) || [];
-    const { index: setIndex, ambiguous } = buildJoinIndex(products);
+    // Same aliases the price build uses, or this report would show orphans the
+    // site has already been told how to resolve.
+    const { index: setIndex, ambiguous } = buildJoinIndex(products, undefined, await setAliases());
 
     // Several sale groups can reach one product — "prizm" and "panini prizm"
     // are the same set written two ways — so this accumulates rather than
@@ -10264,7 +10422,11 @@ async function _buildPriceBlocks() {
     return failed(`page indexes unavailable: ${err && err.message}`);
   }
 
-  const { index: setIndex } = buildJoinIndex(products);
+  // Human set aliases apply HERE, which is what makes the sorting desk worth
+  // sitting at: this is the join that decides which product page a sale prices.
+  // An alias added at the desk changes the next daily build, with no deploy.
+  const _setAliases = await setAliases();
+  const { index: setIndex } = buildJoinIndex(products, undefined, _setAliases);
   const { index: playerIndex } = buildJoinIndex(players, playerKeys);
 
   // Per (set, card) and per (player, card). SQLite computes the median for us
