@@ -41,6 +41,24 @@ function d1(sql) {
 // The names eBay's card category actually uses for this field. Sellers pick
 // from a list, so these are the labels rather than free text.
 const PARALLEL_LABELS = /^(parallel|parallel\/variety|variety|features|card variation|insert set|autograph format)$/i;
+// The grade side of the same question, and it exists for the same reason.
+//
+// A 2025 Prizm Mahomes Silver came back with a PSA slab and a CGC slab in its
+// RAW list. Three things could cause that, needing opposite fixes, and one of
+// them — the grade is simply not in the title — is the case people reach for
+// image recognition to solve. Reading a slab label with OCR is a build: a
+// vendor API or a model, per-image cost, a backfill over ~340,000 photos, and
+// a pipeline to keep it fed.
+//
+// eBay may already know. "Professional Grader", "Grade" and "Graded" are
+// standard item specifics that a seller fills in when listing a slab, and
+// USEFUL_LABELS has been collecting them all along without anyone reporting
+// them. If they are present on the sales we call Raw, the answer is structured,
+// authoritative and free — and no OCR was ever needed.
+//
+// This is the same question that should have been asked before the colour
+// fingerprint was built. Asking it costs one probe run.
+const GRADE_LABELS = /^(professional grader|grade|graded|card condition)$/i;
 const USEFUL_LABELS = /^(parallel|parallel\/variety|variety|features|set|card set|card number|player\/athlete|player|season|year|manufacturer|card condition|professional grader|grade|card name|league|team|card type|print run|serial numbered|autographed|graded)$/i;
 
 // eBay renders item specifics as label/value pairs. The markup has changed
@@ -90,15 +108,29 @@ async function fetchListing(itemId) {
 }
 
 async function main() {
-  console.log(`probe-ebay-aspects: sampling ${limit} sold listings whose parallel column is BLANK\n`);
+  console.log(process.argv.includes('--grade')
+    ? `probe-ebay-aspects --grade: sampling ${limit} sold listings we currently call RAW\n`
+    : `probe-ebay-aspects: sampling ${limit} sold listings whose parallel column is BLANK\n`);
 
-  const rows = d1(
-    `SELECT item_id, title, year, set_name FROM sales
-      WHERE item_id IS NOT NULL AND item_id <> ''
-        AND price_cents IS NOT NULL AND price_cents > 0
-        AND COALESCE(TRIM(parallel), '') = ''
-        AND sold_date > date('now', '-45 day')
-      ORDER BY sold_date DESC LIMIT ${limit}`);
+  // Two populations, because the two questions are different. The parallel
+  // question asks about sales whose parallel column is blank; the grade
+  // question asks about sales we currently present as RAW — the ones a slab
+  // would be hiding in.
+  const wantGrade = process.argv.includes('--grade');
+  const rows = d1(wantGrade
+    ? `SELECT item_id, title, year, set_name FROM sales
+        WHERE item_id IS NOT NULL AND item_id <> ''
+          AND price_cents IS NOT NULL AND price_cents > 0
+          AND COALESCE(TRIM(grade), '') = ''
+          AND COALESCE(TRIM(grader), '') = ''
+          AND sold_date > date('now', '-45 day')
+        ORDER BY sold_date DESC LIMIT ${limit}`
+    : `SELECT item_id, title, year, set_name FROM sales
+        WHERE item_id IS NOT NULL AND item_id <> ''
+          AND price_cents IS NOT NULL AND price_cents > 0
+          AND COALESCE(TRIM(parallel), '') = ''
+          AND sold_date > date('now', '-45 day')
+        ORDER BY sold_date DESC LIMIT ${limit}`);
   const list = ((rows && rows[0] && rows[0].results) || []).filter(r => r.item_id);
   console.log(`  ${list.length} sampled\n`);
   if (!list.length) return;
@@ -140,6 +172,39 @@ async function main() {
     const hits = [...r.aspects.entries()].filter(([k]) => PARALLEL_LABELS.test(k))
       .map(([k, v]) => `${k}=${v}`).join(', ');
     console.log(`      ${hits}   << ${String(r.row.title || '').slice(0, 54)}`);
+  }
+
+  // ---- the grade question ----
+  //
+  // Every row here has an EMPTY grade and grader column, which is why the site
+  // calls them Raw. If eBay says otherwise, the slab was knowable all along.
+  if (wantGrade) {
+    const graded = withAny.filter(r => {
+      for (const [k, v] of r.aspects) {
+        if (!GRADE_LABELS.test(k)) continue;
+        const val = String(v || '').trim().toLowerCase();
+        if (!val || val === 'ungraded' || val === 'not graded' || val === 'raw') continue;
+        return true;
+      }
+      return false;
+    });
+    console.log('');
+    console.log(`  SAY THEY ARE GRADED, WHILE OUR COLUMNS SAY RAW: ${graded.length}/${withAny.length}  (${pct(graded.length, withAny.length)})`);
+    console.log('  — if this is large, slabs in the Raw list are an eBay-aspects fix, not an OCR one.');
+    console.log('  — if it is near zero, the grade really is only in the photo, and OCR is the');
+    console.log('    remaining option. Either way the number decides it rather than an opinion.');
+    for (const r of graded.slice(0, 15)) {
+      const hits = [...r.aspects.entries()].filter(([k]) => GRADE_LABELS.test(k))
+        .map(([k, v]) => `${k}=${v}`).join(', ');
+      console.log(`      ${hits}   << ${String(r.row.title || '').slice(0, 52)}`);
+    }
+    // And the one that decides whether the TITLE was ever going to be enough.
+    const titleSaysGrade = graded.filter(r =>
+      /(?<![A-Za-z])(psa|bgs|sgc|cgc|beckett|csg|hga)(?![A-Za-z])/i.test(String(r.row.title || '')));
+    console.log('');
+    console.log(`  ...and of those, the TITLE also names a grader: ${titleSaysGrade.length}/${graded.length}  (${pct(titleSaysGrade.length, graded.length)})`);
+    console.log('  — a high number here means our title reader is missing them and the fix is a');
+    console.log('    pattern. A low one means the title genuinely never said it.');
   }
 
   // What else is on offer, since year/set/player are only 96%/68%/38% filled
