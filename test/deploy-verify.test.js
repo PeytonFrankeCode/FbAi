@@ -168,6 +168,22 @@ function simulate(edgeResponds) {
     /cloudflarestatus\.com/.test(blank.out),
     'the next person must not start by suspecting the diff');
 
+  // AND SHOWS THE BODY. "<no marker>" covers a served index.html, an error
+  // page, an empty body and an unexpected JSON shape — different causes, one
+  // word. Not knowing which is what cost the revert, so the failure path now
+  // prints what actually came back.
+  check('  ...and prints what the edge actually sent',
+    /what \/build\.json actually returned/.test(blank.out)
+    && /<!doctype html>/i.test(blank.out) && /bytes: \d+/.test(blank.out),
+    blank.out.split('\n').filter(l => /returned|doctype|bytes:/.test(l)).join(' ').slice(0, 130));
+
+  // Only on failure. A green deploy printing the marker every time is noise
+  // in the one log people skim.
+  const good = simulate('{"sha":"SHA123","ref":"main"}');
+  check('  ...but says nothing extra when the deploy verified',
+    good.code === 0 && !/actually returned/.test(good.out),
+    good.out.trim().slice(0, 80));
+
   // Both still fail. An unverified deploy is not a shipped one, whatever the
   // reason — softening that is how the check stops being worth having.
   check('  ...but neither is treated as a pass',
