@@ -7058,6 +7058,20 @@ footer {
 .scanner-upload-icon { font-size: 2.5rem; line-height: 1; }
 .scanner-upload-text { display: flex; flex-direction: column; gap: 0.25rem; color: var(--text-secondary); font-size: 0.9rem; }
 .scanner-upload-text strong { color: var(--text-primary); font-size: 1rem; }
+/* ---- Camera viewfinder ---- */
+.cam-scanner-wrap { display: flex; flex-direction: column; gap: 0.75rem; }
+.cam-viewfinder-area { position: relative; width: 100%; aspect-ratio: 3 / 4; max-height: 380px; background: #111; border-radius: 12px; overflow: hidden; }
+.cam-scanner-compact .cam-viewfinder-area { max-height: 280px; }
+.cam-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+.cam-card-guide { width: 60%; height: 75%; border: 2px solid rgba(255,255,255,0.4); border-radius: 10px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.25); }
+.cam-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; color: var(--text-muted); background: var(--bg-secondary); border-radius: 12px; }
+.cam-controls { display: flex; gap: 0.5rem; }
+.cam-capture-btn { flex: 2; background: var(--accent); color: var(--accent-on); border: none; border-radius: 8px; padding: 0.7rem 1rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+.cam-capture-btn:hover { opacity: 0.85; }
+.cam-capture-btn:disabled { opacity: 0.5; cursor: default; }
+.cam-upload-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.7rem 0.75rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s; text-align: center; }
+.cam-upload-btn:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--accent); }
 .gv-cell { display: flex; flex-direction: column; align-items: center; }
 .gv-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
 .gv-num { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
