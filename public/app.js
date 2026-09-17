@@ -13857,7 +13857,16 @@ document.querySelectorAll('.ca-tab').forEach(btn => {
 (function bootFromPath() {
   try {
     const routes = { '/inventory': 'inventory', '/stats': 'stats' };
-    const view = routes[window.location.pathname.replace(/\/+$/, '') || '/'];
-    if (view) switchView(view);
+    // Always route, including at '/'. Routing only when the path named a view
+    // left the default view to the markup, and that was two sources of truth:
+    // index.html hardcodes <button class="nav-tab active" data-view="search">,
+    // while the chrome that tab implies — the Search / Grading Advisor / Scan
+    // Card subtab strip — ships hidden and is revealed only by
+    // switchView('search'). A first load at '/' never called switchView at
+    // all, so Search read as the active tab with its subtabs missing, until you
+    // clicked another tab and came back and the strip appeared out of nowhere.
+    // switchView is now the only thing that decides what a view looks like.
+    const view = routes[window.location.pathname.replace(/\/+$/, '') || '/'] || 'search';
+    switchView(view);
   } catch (_) { /* leave the default view alone */ }
 })();
