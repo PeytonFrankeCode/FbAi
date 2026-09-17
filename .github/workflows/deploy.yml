@@ -310,6 +310,22 @@ jobs:
             echo
             echo "--- bytes: $(wc -c < marker.json 2>/dev/null || echo 0) ---"
           fi
+
+          # A CLOUDFLARE BOT CHALLENGE, NAMED.
+          #
+          # This is what was actually happening for six deploys: the runner was
+          # served "Just a moment..." — Cloudflare's interstitial — so jq found
+          # no .sha and the step reported the site had not changed. The site was
+          # fine throughout. The Worker was fine. The assets were fine. The
+          # check was being challenged like a bot, which is a reasonable thing
+          # for Cloudflare to think about curl running in a datacentre.
+          #
+          # Worth its own message because every other reading of a missing
+          # marker sends someone into the diff, and one already sent me there.
+          challenged=""
+          if grep -qi 'just a moment\|cf-browser-verification\|cf_chl\|challenge-platform' marker.json 2>/dev/null; then
+            challenged=1
+          fi
           if [ "$got" != "$GITHUB_SHA" ]; then
             # TWO DIFFERENT FAILURES, AND TELLING THEM APART MATTERS.
             #
@@ -327,7 +343,14 @@ jobs:
             #
             # So this still fails the run — an unverified deploy is not a
             # shipped one — but it no longer claims to know which happened.
-            if [ -n "$got" ]; then
+            if [ -n "$challenged" ]; then
+              echo "::error::Cloudflare served this check a bot challenge, not /build.json."
+              echo "::error::This says NOTHING about the deploy. The Worker, the assets and the"
+              echo "::error::site are very likely fine — do not go looking in the diff."
+              echo "::error::Fix it in the Cloudflare dashboard, not here: add a WAF rule that"
+              echo "::error::skips bot protection for /build.json, or turn off Bot Fight Mode."
+              echo "::error::Until then this deploy is unverified rather than broken."
+            elif [ -n "$got" ]; then
               echo "::error::Deployed, but the edge is still serving ${got}."
               echo "::error::That is the previous build. Nothing shipped — do not report this as shipped."
             else
