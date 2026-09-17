@@ -63,6 +63,7 @@
   .split.on { color: var(--ink); }
   .split.on kbd { border-color: var(--accent); color: var(--accent); }
   .split-n { font-variant-numeric: tabular-nums; }
+  .tick { display: inline-block; width: 1em; color: var(--accent); }
 </style>
 </head>
 <body>
@@ -92,11 +93,22 @@
 const qs = new URLSearchParams(location.search);
 const KEY = qs.get('key') || '';
 let queue = [], at = 0, sel = 0, done = 0, fixed = 0;
-// Which split of the current phrase is being decided. null = all of them.
-// A phrase does not mean one thing: "signatures" turned up across two
-// products at once, and inside one product a Signatures auto and a
-// Signatures /25 are different cards wearing identical words.
-let scoped = null;
+
+// WHICH PLACES THIS ANSWER APPLIES TO.
+//
+// A phrase does not mean one thing: "signatures" turned up across two products
+// at once, and inside one product a Signatures auto and a Signatures /25 are
+// different cards wearing identical words.
+//
+// A SET rather than one index, because the places often fall into groups — two
+// products where the phrase means the same parallel and a third where it does
+// not. Picking one at a time would work and would be tedious.
+//
+// Empty means something different from "all picked", and the difference
+// matters: empty writes ONE global decision that also covers products not in
+// this list and months not yet collected, while picking every row writes one
+// decision each and says nothing about anywhere else.
+let picked = new Set();
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
@@ -136,29 +148,41 @@ function render() {
   }
 
   const splits = item.splits || [];
-  const view = scoped != null && splits[scoped] ? splits[scoped] : item;
-  const scopeLabel = scoped != null && splits[scoped] ? splits[scoped].label : null;
+  const chosen = [...picked].filter(i => splits[i]).sort((a, b) => a - b);
+  // One picked place shows its own photos; several or none show the phrase's.
+  const view = chosen.length === 1 ? splits[chosen[0]] : item;
+  const scopeLabel = chosen.length === 0 ? null
+    : chosen.length === 1 ? splits[chosen[0]].label
+    : chosen.length + ' of ' + splits.length + ' places';
+  const pickedSales = chosen.length
+    ? chosen.reduce((n, i) => n + splits[i].sales, 0) : (item.sales || 0);
 
   $('main').innerHTML =
     '<div class="card">' +
       '<div class="phrase">' + esc(item.phrase) +
         (scopeLabel ? '<span class="scoped"> in ' + esc(scopeLabel) + '</span>' : '') +
       '</div>' +
-      '<div class="meta"><b>' + (view.sales || 0).toLocaleString() + '</b> sales' +
-        (scoped == null && item.value ? ' &middot; $' + item.value.toLocaleString() + ' traded' : '') +
+      '<div class="meta"><b>' + pickedSales.toLocaleString() + '</b> sales' +
+        (chosen.length === 0 && item.value ? ' &middot; $' + item.value.toLocaleString() + ' traded' : '') +
         ' &middot; ' + (queue.length - at) + ' left' + '</div>' +
       // Where the phrase could mean different things. One row means one
       // meaning and a single decision covers it; several mean look first.
       (splits.length > 1
         ? '<div class="splits">' +
             '<div class="splits-h">Appears in ' + splits.length + ' places &mdash; ' +
-              'press a number to decide just one:</div>' +
+              'press a number to pick the ones this answer applies to' +
+              (chosen.length ? '' : ', or answer with none picked to apply everywhere') +
+              ':</div>' +
             splits.map((sp, i) =>
-              '<div class="split' + (scoped === i ? ' on' : '') + '" data-s="' + i + '">' +
-                '<kbd>' + (i + 1) + '</kbd> ' + esc(sp.label) +
+              '<div class="split' + (picked.has(i) ? ' on' : '') + '" data-s="' + i + '">' +
+                '<kbd>' + (i + 1) + '</kbd> ' +
+                '<span class="tick">' + (picked.has(i) ? '&#10003;' : '&nbsp;') + '</span> ' +
+                esc(sp.label) +
                 ' <span class="split-n">' + sp.sales.toLocaleString() + ' sales</span>' +
               '</div>').join('') +
-            (scoped != null ? '<div class="split" data-s="-1"><kbd>0</kbd> back to all</div>' : '') +
+            '<div class="split" data-s="-2"><kbd>A</kbd> ' +
+              '<span class="tick">&nbsp;</span> ' +
+              (chosen.length === splits.length ? 'clear all' : 'pick every place') + '</div>' +
           '</div>'
         : '') +
       ((view.photos || []).length
@@ -175,10 +199,12 @@ function render() {
       '<ol id="opts">' +
         '<li class="' + (sel === 0 ? 'sel' : '') + '" data-i="0">' +
           '<kbd>X</kbd><span class="pname">Not a parallel &mdash; base' +
-          (scopeLabel ? ' <em>in ' + esc(scopeLabel) + ' only</em>' : '') + '</span></li>' +
+          (scopeLabel ? ' <em>in ' + esc(scopeLabel) + '</em>'
+                      : (splits.length > 1 ? ' <em>everywhere</em>' : '')) + '</span></li>' +
         '<li class="' + (sel === 1 ? 'sel' : '') + '" data-i="1">' +
           '<kbd>Enter</kbd><span class="pname">It is a parallel &mdash; type its catalogue name' +
-          (scopeLabel ? ' <em>for ' + esc(scopeLabel) + ' only</em>' : '') + '</span></li>' +
+          (scopeLabel ? ' <em>for ' + esc(scopeLabel) + '</em>'
+                      : (splits.length > 1 ? ' <em>for everywhere</em>' : '')) + '</span></li>' +
       '</ol>' +
       '<input type="text" id="manual" placeholder="e.g. Silver Prizm" autocomplete="off" />' +
       '<p class="hint">The name must exist in a checklist. If it does not, the parallel ' +
@@ -186,14 +212,15 @@ function render() {
       '<div class="keys">' +
         '<span><kbd>X</kbd> not a parallel</span>' +
         '<span><kbd>Enter</kbd> save typed name</span>' +
-        (splits.length > 1 ? '<span><kbd>1</kbd>–<kbd>9</kbd> one place only</span>' +
-                             '<span><kbd>0</kbd> all places</span>' : '') +
+        (splits.length > 1 ? '<span><kbd>1</kbd>–<kbd>9</kbd> pick places</span>' +
+                             '<span><kbd>A</kbd> pick all</span>' +
+                             '<span><kbd>0</kbd> clear</span>' : '') +
         '<span><kbd>S</kbd> skip</span>' +
       '</div>' +
     '</div>';
 
   document.querySelectorAll('.split').forEach(el => {
-    el.onclick = () => { const i = Number(el.dataset.s); scoped = i < 0 ? null : i; render(); };
+    el.onclick = () => { toggle(Number(el.dataset.s)); };
   });
   document.querySelectorAll('#opts li').forEach(el => {
     el.onclick = () => {
@@ -204,40 +231,77 @@ function render() {
   });
 }
 
-async function decide(parallel) {
-  const item = queue[at];
-  if (!item) return;
-  const splits = item.splits || [];
-  const sp = scoped != null ? splits[scoped] : null;
+// -2 is the pick-all row, -1 clears.
+function toggle(i) {
+  const splits = (queue[at] || {}).splits || [];
+  if (i === -2) {
+    if (picked.size === splits.length) picked.clear();
+    else splits.forEach((_, k) => picked.add(k));
+  } else if (i < 0) {
+    picked.clear();
+  } else if (picked.has(i)) {
+    picked.delete(i);
+  } else {
+    picked.add(i);
+  }
+  render();
+}
+
+async function send(phrase, parallel, sp) {
   const r = await fetch('/api/review/parallels?key=' + encodeURIComponent(KEY), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      phrase: item.phrase,
-      parallel,
-      // Only when one is selected. No scope means the answer holds everywhere,
-      // which is what you want when the phrase really does mean one thing.
+      phrase, parallel,
       scope: sp ? { year: sp.year, setName: sp.setName, printRun: sp.printRun } : undefined,
     }),
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) { flash(d.error || 'Failed', true); return; }
+  return { ok: r.ok, d };
+}
 
-  const covered = sp ? sp.sales : item.sales;
-  done++; fixed += covered;
-  $('s-done').textContent = (d.total || 0).toLocaleString();
-  flash('+' + covered.toLocaleString() + ' sales → ' + (parallel || 'base') +
-        (sp ? ' (' + sp.label + ' only)' : ''));
+async function decide(parallel) {
+  const item = queue[at];
+  if (!item) return;
+  const splits = item.splits || [];
+  const chosen = [...picked].filter(i => splits[i]).sort((a, b) => a - b);
 
-  // A scoped decision leaves the rest of the phrase undecided, so stay on it
-  // and drop back to the whole view. Moving on would silently abandon the
-  // splits the person has not answered yet.
-  if (sp) {
-    item.splits = splits.filter((_, i) => i !== scoped);
-    item.sales -= sp.sales;
-    scoped = null;
+  // Nothing picked means the answer holds everywhere — one decision, and it
+  // covers products not on this list and months not yet collected. Picking
+  // every row instead writes one decision each and says nothing about
+  // anywhere else. They are different statements and both are wanted.
+  const jobs = chosen.length ? chosen.map(i => splits[i]) : [null];
+
+  let okCount = 0, coveredSales = 0, lastTotal = null, firstError = null;
+  for (const sp of jobs) {
+    const { ok, d } = await send(item.phrase, parallel, sp);
+    if (!ok) { firstError = firstError || d.error || 'Failed'; continue; }
+    okCount++;
+    coveredSales += sp ? sp.sales : (item.sales || 0);
+    lastTotal = d.total;
+  }
+
+  // A refusal must not look like a success. If the name is not in any
+  // checklist every job fails, and saying "+0 sales" would read as done.
+  if (!okCount) { flash(firstError || 'Failed', true); return; }
+
+  done += okCount;
+  fixed += coveredSales;
+  if (lastTotal != null) $('s-done').textContent = lastTotal.toLocaleString();
+  flash('+' + coveredSales.toLocaleString() + ' sales \u2192 ' + (parallel || 'base') +
+        (chosen.length ? ' (' + okCount + ' of ' + splits.length + ' places)' : '') +
+        (firstError ? ' \u2014 some failed' : ''));
+
+  // Answered places leave the phrase; the rest keep it open. Advancing while
+  // splits are still undecided would silently abandon them.
+  if (chosen.length) {
+    const doneSet = new Set(chosen);
+    item.splits = splits.filter((_, i) => !doneSet.has(i));
+    item.sales = Math.max(0, (item.sales || 0) - coveredSales);
+    picked.clear();
     if (item.splits.length === 0) { at++; }
   } else {
+    picked.clear();
     at++;
   }
   sel = 0; render();
@@ -254,10 +318,11 @@ document.addEventListener('keydown', (e) => {
   const splits = queue[at].splits || [];
   if (e.key >= '1' && e.key <= '9' && splits.length > 1) {
     const i = Number(e.key) - 1;
-    if (i < splits.length) { scoped = i; render(); }
+    if (i < splits.length) toggle(i);
     return;
   }
-  if (e.key === '0') { scoped = null; render(); return; }
+  if (e.key === '0') { toggle(-1); return; }
+  if (e.key.toLowerCase() === 'a' && splits.length > 1) { toggle(-2); return; }
   if (e.key.toLowerCase() === 'x') { decide(''); }
   else if (e.key === 'Enter') { box && box.focus(); e.preventDefault(); }
   else if (e.key.toLowerCase() === 's') { at++; sel = 0; render(); }
