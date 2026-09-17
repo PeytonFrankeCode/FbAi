@@ -4924,46 +4924,66 @@ async function selectScannerMatch(index, matchesArr) {
   document.getElementById('scanner-phase-matches').classList.add('hidden');
 
   const resultsEl = document.getElementById('scanner-results');
-  const loading = document.getElementById('scanner-loading');
   const errEl = document.getElementById('scanner-error');
-  const titleEl = document.getElementById('scanner-selected-title');
-  const salesEl = document.getElementById('scanner-sales-list');
-
-  resultsEl.classList.remove('hidden');
-  // Show the auto-selected card's image and key terms so the user knows what was picked.
-  const matchData = matchesArr && matchesArr[index];
-  const pickedHtml = matchData
-    ? `<div class="scanner-picked-card">${matchData.imageUrl ? `<img class="scanner-picked-img" src="${escHtml(matchData.imageUrl)}" alt="" />` : ''}<div class="scanner-picked-info"><span class="scanner-picked-title">${escHtml(rawTitle)}</span>${_keyTermsHtml(rawTitle)}</div></div>`
-    : '';
-  titleEl.innerHTML = pickedHtml + `<span class="scanner-picked-query">Searching: ${escHtml(broadQuery)}</span>`;
-  loading.classList.remove('hidden');
   errEl.classList.add('hidden');
-  document.getElementById('scanner-price-summary').innerHTML = '';
-  salesEl.innerHTML = '';
+  resultsEl.classList.remove('hidden');
 
-  try {
-    const res = await authFetch(`/api/search?mode=sold&q=${encodeURIComponent(broadQuery)}&limit=20`);
-    const data = await res.json();
-    loading.classList.add('hidden');
+  _scannerLastQuery = broadQuery;
+  _scannerLastMedian = null;
 
-    if (!res.ok) {
-      errEl.textContent = (data.soldUnavailable || data.noKey)
-        ? 'Sold price data is temporarily unavailable.'
-        : (data.error || 'Search failed.');
-      errEl.classList.remove('hidden');
-      return;
-    }
+  const matchData = matchesArr && matchesArr[index];
+  _renderIdentityCard(rawTitle, matchData, broadQuery);
+}
 
-    // Strict key-term match so only true comps for this exact card count.
-    const _allSold = data.results || [];
-    const _qCard = _cardFromQuery(broadQuery);
-    const _strictSold = _allSold.filter(r => _compMatchesCard(_qCard, r.title));
-    _renderScannerSoldResults(broadQuery, _strictSold.length >= 1 ? _strictSold : _allSold);
-  } catch (err) {
-    loading.classList.add('hidden');
-    errEl.textContent = 'Network error. Please try again.';
-    errEl.classList.remove('hidden');
-  }
+function _renderIdentityCard(rawTitle, matchData, broadQuery) {
+  const el = document.getElementById('scanner-id-card');
+  const player = _extractPlayer(rawTitle);
+  const year = (String(rawTitle).match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const terms = _scanKeyTerms(rawTitle);
+  const imgHtml = matchData && matchData.imageUrl
+    ? `<img class="id-card-img" src="${escHtml(matchData.imageUrl)}" alt="" />`
+    : '';
+
+  const rows = [];
+  if (player) rows.push({ label: 'Player', value: player });
+  if (year) rows.push({ label: 'Year', value: year });
+  const setTerm = terms.find(t => SCAN_KEY_SETS.some(s => t.toLowerCase() === s));
+  if (setTerm) rows.push({ label: 'Set', value: setTerm });
+  const parallelTerms = terms.filter(t => {
+    const tl = t.toLowerCase();
+    return tl !== (setTerm || '').toLowerCase() && !/^\//.test(t) && !/^(psa|bgs|sgc|cgc|hga|csg)\b/i.test(t)
+      && !['rc', 'auto', 'patch'].includes(tl);
+  });
+  if (parallelTerms.length) rows.push({ label: 'Parallel', value: parallelTerms.join(' ') });
+  const pr = parsePrintRun(rawTitle); if (pr) rows.push({ label: 'Print Run', value: '/' + pr });
+  const g = detectGrade(rawTitle); if (g && g !== 'Raw / Ungraded') rows.push({ label: 'Grade', value: g });
+  if (/\b(rookie|rc)\b/i.test(rawTitle)) rows.push({ label: 'Type', value: 'Rookie Card' });
+  if (/\bauto(graph)?\b/i.test(rawTitle)) rows.push({ label: 'Features', value: 'Autograph' });
+  if (/\b(patch|rpa|relic|jersey|memorabilia)\b/i.test(rawTitle)) rows.push({ label: 'Memorabilia', value: 'Patch / Relic' });
+
+  const cardNum = (String(rawTitle).match(/#([\w-]+)/) || [])[1];
+  if (cardNum) rows.push({ label: 'Card #', value: '#' + cardNum });
+
+  el.innerHTML = `
+    <div class="id-card">
+      ${imgHtml ? `<div class="id-card-img-wrap">${imgHtml}</div>` : ''}
+      <div class="id-card-details">
+        <h3 class="id-card-name">${escHtml(player || rawTitle)}</h3>
+        <div class="id-card-rows">
+          ${rows.map(r => `<div class="id-card-row"><span class="id-card-label">${escHtml(r.label)}</span><span class="id-card-value">${escHtml(r.value)}</span></div>`).join('')}
+        </div>
+        <p class="id-card-full-title" title="${escHtml(rawTitle)}">${escHtml(rawTitle)}</p>
+      </div>
+    </div>`;
+}
+
+function searchFromIdentifiedCard() {
+  const q = _scannerLastQuery;
+  if (!q) return;
+  switchView('search');
+  const input = document.getElementById('search-input');
+  if (input) { input.value = q; input.dispatchEvent(new Event('input', { bubbles: true })); }
+  performSearch(q);
 }
 
 function _renderScannerSoldResults(query, items) {

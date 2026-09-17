@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=7049b39c66" />
+  <link rel="stylesheet" href="style.css?v=81773c17da" />
 
 
 </head>
@@ -268,7 +268,7 @@
     <div class="page-subtabs-inner">
       <button class="page-subtab active" data-search-sub="search" onclick="switchSearchSub('search')">Search</button>
       <button class="page-subtab" data-search-sub="grading" onclick="switchSearchSub('grading')">Grading Advisor</button>
-      <button class="page-subtab" data-search-sub="scanner" onclick="switchSearchSub('scanner')">&#128247; Scan Card</button>
+      <button class="page-subtab" data-search-sub="scanner" onclick="switchSearchSub('scanner')">&#128269; Card Identifier</button>
     </div>
   </div>
 
@@ -900,12 +900,12 @@
     </div>
   </div>
 
-  <!-- Card Scanner View -->
+  <!-- Card Identifier View -->
   <div id="scanner-view" class="collection-view hidden">
     <div class="collection-container">
       <div class="collection-header">
-        <h2 class="collection-title">&#128247; Card Scanner</h2>
-        <p class="collection-subtitle">Take or upload a card photo — eBay's image search finds the match instantly</p>
+        <h2 class="collection-title">&#128269; Card Identifier</h2>
+        <p class="collection-subtitle">Take or upload a card photo and we'll tell you exactly what card it is</p>
       </div>
 
       <!-- Phase 1: Upload -->
@@ -952,7 +952,7 @@
           </div>
 
           <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-            <button class="grading-submit-btn" id="scanner-match-btn" onclick="submitCardScan()">&#128269; Find This Card</button>
+            <button class="grading-submit-btn" id="scanner-match-btn" onclick="submitCardScan()">&#128269; Identify This Card</button>
             <button class="btn-secondary" onclick="clearScannerImage()">&#10005; Clear</button>
           </div>
         </div>
@@ -961,7 +961,7 @@
       <!-- Matching spinner -->
       <div id="scanner-matching" class="loading hidden">
         <div class="spinner"></div>
-        <span>Searching eBay card database&hellip;</span>
+        <span>Identifying your card&hellip;</span>
       </div>
 
       <div id="scanner-error" class="error-message hidden"></div>
@@ -974,16 +974,14 @@
         <button class="btn-secondary" style="margin-top:0.75rem" onclick="clearScannerImage()">&#8592; Try a different photo</button>
       </div>
 
-      <!-- Phase 3: Sold price results -->
+      <!-- Phase 3: Card identity result -->
       <div id="scanner-results" class="hidden">
-        <div id="scanner-loading" class="loading hidden">
-          <div class="spinner"></div>
-          <span>Fetching sold prices&hellip;</span>
+        <div id="scanner-id-card"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:0.75rem">
+          <button class="grading-submit-btn" id="scanner-search-btn" onclick="searchFromIdentifiedCard()" style="flex:1;min-width:140px">&#128269; Search Sold Prices</button>
+          <button class="btn-secondary" onclick="showScannerMatches()" style="flex:1;min-width:140px">Wrong card? See other matches</button>
         </div>
-        <p id="scanner-selected-title" class="search-meta" style="margin-bottom:0.5rem"></p>
-        <div id="scanner-price-summary"></div>
-        <div id="scanner-sales-list" class="results-grid" style="margin-top:0.75rem"></div>
-        <button class="btn-secondary" style="margin-top:0.75rem" onclick="showScannerMatches()">Wrong card? See other matches</button>
+        <button class="btn-secondary" style="margin-top:0.5rem;width:100%" onclick="clearScannerImage()">&#8592; Scan another card</button>
       </div>
     </div>
   </div>
@@ -1375,7 +1373,7 @@
   <div id="scan-fill-modal" class="modal-overlay hidden" role="dialog" onclick="if(event.target===this)closeScanFillModal()">
     <div class="modal-box modal-box-lg">
       <button class="login-close" onclick="closeScanFillModal()">&times;</button>
-      <h2>&#128247; Scan Card</h2>
+      <h2>&#128247; Scan Card Photo</h2>
       <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem">Take or upload a card photo — we'll find the best matching title for you.</p>
 
       <!-- Phase 1: Upload -->
@@ -1439,7 +1437,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=13bf7adf79"></script>
+  <script src="app.js?v=72341d32b2"></script>
   <script type="importmap">
   {
     "imports": {
