@@ -400,7 +400,106 @@ app.use(cors({
 }));
 
 // Security headers for Cloudflare deployment
+// ---- WHO IS ACTUALLY ASKING ------------------------------------------------
+//
+// Google Analytics showed 918 users, 919 sessions, 907 views and ZERO seconds
+// of average engagement in a day. That is not a shape people make: one session
+// each, fewer views than sessions, and nobody's page staying open.
+//
+// But GA cannot settle it, because GA only ever sees clients that run its
+// JavaScript. Every headless browser is counted and every plain scraper is
+// invisible, so the one number in front of us is the one guaranteed to
+// undercount the problem. Bot Fight Mode was ON through all of it and changed
+// nothing, which fits: it scores known-bad signatures, and a real headless
+// Chrome does not look like one.
+//
+// So count here instead. The Worker sees every request — JS or no JS, GA
+// blocked or not — and this is the only vantage point that does.
+//
+// COSTS NOTHING TO SPEAK OF. Counters live in the isolate and are flushed to
+// one KV key a day by the cron that already flushes D1 usage. No per-request
+// write, no database, no third party.
+const TRAFFIC_KEY = (d) => `traffic:v1:${d}`;
+const TRAFFIC_TTL = 60 * 60 * 24 * 40;
+
+// Self-declared, and that is the point.
+//
+// Honest crawlers say so and can simply be counted. Nothing here is a defence:
+// a bot that lies is counted as a browser, which is exactly the population
+// worth measuring — if `browserLike` is enormous and engagement is zero, the
+// liars are the story.
+const _BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity/i;
+
+const _traffic = { day: '', total: 0, declaredBot: 0, browserLike: 0, noUa: 0,
+                   asset: 0, api: 0, page: 0, byUa: {}, byPath: {} };
+
+function _trafficDay() { return new Date().toISOString().slice(0, 10); }
+
+function _noteRequest(req) {
+  try {
+    const day = _trafficDay();
+    // A new day resets in place rather than accumulating across midnight, so a
+    // long-lived isolate cannot smear one day's traffic into the next.
+    if (_traffic.day !== day) {
+      _traffic.day = day;
+      _traffic.total = 0; _traffic.declaredBot = 0; _traffic.browserLike = 0;
+      _traffic.noUa = 0; _traffic.asset = 0; _traffic.api = 0; _traffic.page = 0;
+      _traffic.byUa = {}; _traffic.byPath = {};
+    }
+    _traffic.total++;
+
+    const ua = String(req.headers['user-agent'] || '');
+    if (!ua) _traffic.noUa++;
+    else if (_BOT_UA.test(ua)) _traffic.declaredBot++;
+    else _traffic.browserLike++;
+
+    const p = String(req.path || '/');
+    if (p.startsWith('/api/')) _traffic.api++;
+    else if (/\.[a-z0-9]{2,5}$/i.test(p)) _traffic.asset++;
+    else _traffic.page++;
+
+    // Bounded on purpose. An unbounded tally is a memory leak an attacker
+    // controls: every distinct user agent and path would allocate a key, and
+    // both are attacker-supplied.
+    const uaKey = ua ? ua.slice(0, 60) : '(none)';
+    if (_traffic.byUa[uaKey] !== undefined || Object.keys(_traffic.byUa).length < 60) {
+      _traffic.byUa[uaKey] = (_traffic.byUa[uaKey] || 0) + 1;
+    }
+    if (_traffic.byPath[p] !== undefined || Object.keys(_traffic.byPath).length < 60) {
+      _traffic.byPath[p] = (_traffic.byPath[p] || 0) + 1;
+    }
+  } catch (_) { /* counting must never break a request */ }
+}
+
+// Merged into the day's KV row by the cron. Same shape as flushD1Usage: add,
+// then zero, so a missed tick loses one interval rather than double-counting.
+async function flushTraffic() {
+  if (!_traffic.total) return { ok: true, flushed: 0 };
+  const day = _traffic.day || _trafficDay();
+  try {
+    const key = TRAFFIC_KEY(day);
+    const prev = (await cacheGet(key)) || {};
+    for (const k of ['total', 'declaredBot', 'browserLike', 'noUa', 'asset', 'api', 'page']) {
+      prev[k] = (prev[k] || 0) + _traffic[k];
+      _traffic[k] = 0;
+    }
+    for (const bucket of ['byUa', 'byPath']) {
+      const acc = prev[bucket] || {};
+      for (const [k, n] of Object.entries(_traffic[bucket])) acc[k] = (acc[k] || 0) + n;
+      // Kept to the top 60 in KV too, or a month of long tails grows without end.
+      prev[bucket] = Object.fromEntries(
+        Object.entries(acc).sort((a, b) => b[1] - a[1]).slice(0, 60));
+      _traffic[bucket] = {};
+    }
+    await cachePut(key, prev, TRAFFIC_TTL);
+    return { ok: true, flushed: 1, day };
+  } catch (err) {
+    return { ok: false, reason: String(err && err.message) };
+  }
+}
+
 app.use((req, res, next) => {
+  _noteRequest(req);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -7083,6 +7182,84 @@ async function flushD1Usage() {
   }
 }
 
+// ---- /api/debug/traffic ----
+// What the Worker saw, as opposed to what Google Analytics saw.
+//
+// Gated, unlike the d1-usage endpoint next door: user agents are close enough
+// to visitor detail that they should not be public, and a traffic profile is
+// exactly what someone probing the site would like to read.
+app.get('/api/debug/traffic', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const days = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      const row = await cacheGet(TRAFFIC_KEY(d));
+      if (!row) continue;
+      days.push({
+        day: d,
+        requests: row.total || 0,
+        // Self-declared crawlers. Honest, countable, and usually not the
+        // problem — they say who they are.
+        declaredBot: row.declaredBot || 0,
+        // Everything claiming to be a browser. A headless Chrome lives here,
+        // and so does every real person: the number is only meaningful next to
+        // how the traffic behaves.
+        browserLike: row.browserLike || 0,
+        noUserAgent: row.noUa || 0,
+        pages: row.page || 0,
+        assets: row.asset || 0,
+        api: row.api || 0,
+        // THE TELL. A person who opens a page pulls its CSS, its JS and some
+        // images with it, so assets-per-page runs to several. A client that
+        // fetches the HTML and leaves sits near zero, whatever its user agent
+        // claims — which is the one thing a headless browser cannot fake while
+        // still being cheap to run at scale.
+        assetsPerPage: row.page ? Math.round(((row.asset || 0) / row.page) * 10) / 10 : null,
+      });
+    }
+
+    // Merge the newest KV row with what this isolate holds but has not
+    // flushed, or the most recent hour — the one being asked about — is
+    // missing from exactly the report someone opened to look at it.
+    const newest = (await cacheGet(TRAFFIC_KEY(_trafficDay()))) || {};
+    const merge = (a, b) => {
+      const out = { ...(a || {}) };
+      for (const [k, n] of Object.entries(b || {})) out[k] = (out[k] || 0) + n;
+      return Object.entries(out).sort((x, y) => y[1] - x[1]).slice(0, 15)
+        .map(([name, hits]) => ({ name, hits }));
+    };
+    const topUa = merge(newest.byUa, _traffic.byUa);
+    const topPaths = merge(newest.byPath, _traffic.byPath);
+
+    res.json({
+      available: true,
+      generatedAt: new Date().toISOString(),
+      // Said plainly, because the whole reason this exists is that the other
+      // number was not comparable.
+      note: 'Counted in the Worker, so this includes clients that never run '
+          + 'JavaScript and are therefore invisible to Google Analytics. '
+          + 'Expect it to be HIGHER than GA, not equal to it.',
+      today: _trafficDay(),
+      // Not yet flushed to KV — the cron writes once an hour, so the newest
+      // traffic is here rather than in the day rows above.
+      sinceLastFlush: {
+        requests: _traffic.total, declaredBot: _traffic.declaredBot,
+        browserLike: _traffic.browserLike, pages: _traffic.page,
+        assets: _traffic.asset, api: _traffic.api,
+      },
+      days,
+      // Who, by name, biggest first. The answer to "what the heck is this"
+      // is usually just legible here: one user agent carrying most of the day.
+      topUserAgents: topUa,
+      topPaths: topPaths,
+    });
+  } catch (err) {
+    console.error('[debug/traffic]', err && err.stack || err);
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // ---- /api/debug/d1-usage ----
 // What the sold-search path is actually costing in D1 rows read.
 //
@@ -12466,7 +12643,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

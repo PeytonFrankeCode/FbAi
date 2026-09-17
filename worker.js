@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -743,7 +743,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -858,6 +858,14 @@ export default {
         // tick did, and cheap: one KV write per tick rather than per query.
         if (typeof flushD1Usage === 'function') {
           await flushD1Usage().catch(err => console.error('[Cron] d1 usage flush failed:', err && err.message || err));
+        }
+
+        // Persist the request tally, for the same reason and at the same cost:
+        // one KV write a tick. An unflushed counter reports nothing, and a
+        // traffic report that is always empty is worse than none, because it
+        // reads as "no traffic" rather than as "not wired up".
+        if (typeof flushTraffic === 'function') {
+          await flushTraffic().catch(err => console.error('[Cron] traffic flush failed:', err && err.message || err));
         }
 
         if (typeof checkAlerts === 'function') {
