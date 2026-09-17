@@ -4662,9 +4662,10 @@ async function submitCardScan() {
     // If a back photo was sent, use the back's title matches to re-rank the
     // front matches so the correct card/parallel surfaces first.
     const reconciled = _reconcileMatchesWithBack(data.matches, data.backMatches || []);
-    // Populate the match grid (for fallback) but skip straight to sold prices.
     _renderScannerMatches(reconciled.matches, reconciled.identity);
-    selectScannerMatch(0);
+    // Auto-select the best match — prefer one that agrees with the back photo.
+    const bestIdx = reconciled.matches.findIndex(m => m._agrees);
+    selectScannerMatch(bestIdx >= 0 ? bestIdx : 0, reconciled.matches);
   } catch (err) {
     spinner.classList.add('hidden');
     if (matchBtn) matchBtn.disabled = false;
@@ -4910,7 +4911,7 @@ function _renderScannerMatches(matches, backIdentity) {
   `).join('');
 }
 
-async function selectScannerMatch(index) {
+async function selectScannerMatch(index, matchesArr) {
   const cards = document.querySelectorAll('.scanner-match-card');
   const card = cards[index];
   if (!card) return;
@@ -4929,7 +4930,12 @@ async function selectScannerMatch(index) {
   const salesEl = document.getElementById('scanner-sales-list');
 
   resultsEl.classList.remove('hidden');
-  titleEl.textContent = broadQuery;
+  // Show the auto-selected card's image and key terms so the user knows what was picked.
+  const matchData = matchesArr && matchesArr[index];
+  const pickedHtml = matchData
+    ? `<div class="scanner-picked-card">${matchData.imageUrl ? `<img class="scanner-picked-img" src="${escHtml(matchData.imageUrl)}" alt="" />` : ''}<div class="scanner-picked-info"><span class="scanner-picked-title">${escHtml(rawTitle)}</span>${_keyTermsHtml(rawTitle)}</div></div>`
+    : '';
+  titleEl.innerHTML = pickedHtml + `<span class="scanner-picked-query">Searching: ${escHtml(broadQuery)}</span>`;
   loading.classList.remove('hidden');
   errEl.classList.add('hidden');
   document.getElementById('scanner-price-summary').innerHTML = '';
@@ -5324,6 +5330,10 @@ function selectScanFillMatch(index) {
     targetEl.focus();
   }
   closeScanFillModal();
+  // Auto-trigger search so the user sees results immediately.
+  const form = targetEl && targetEl.form;
+  if (form) form.dispatchEvent(new Event('submit'));
+  else if (targetEl && targetEl.id === 'search-input') performSearch();
 }
 
 // ---- Pro+ Tools ----
