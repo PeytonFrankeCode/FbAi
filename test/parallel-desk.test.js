@@ -57,6 +57,27 @@ add('2017 Panini Prizm Patrick Mahomes II #269 Kansas City Chiefs', 7);
 // Already readable — must never reach the queue.
 add('2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm', 20);
 
+// THE CASE THAT BROKE THE FIRST DESIGN, in both its forms.
+//
+// "signatures" came up on the live desk holding 45 sales across 2025 Rookies &
+// Stars AND 2025 Absolute. One global answer would force both products to mean
+// the same parallel, and there is no reason they should.
+//
+// Worse, inside ONE product the same word can be two cards told apart only by
+// how many were made: a Signatures auto and a Signatures /25 carry identical
+// words. Neither the phrase nor the product can settle that.
+// The print run is placed BEFORE the card number on purpose. When it trails
+// the number it lands inside the segment and the reader splits the phrase by
+// itself — "signatures" and "signatures 25" become separate rows with no scope
+// needed, which the first run of this test discovered. The scope exists for the
+// other arrangement, where the words are identical and only the count differs.
+add('2025 Panini Rookies & Stars - Rookies Ashton Jeanty #106 Signatures', 11,
+    'Ashton Jeanty', '2025', 'Rookies & Stars');
+add('2025 Panini Rookies & Stars /25 Jalen Milroe #132 Signatures', 6,
+    'Jalen Milroe', '2025', 'Rookies & Stars');
+add('2025 Panini Absolute - Rookies Shedeur Sanders #177 Signatures', 8,
+    'Shedeur Sanders', '2025', 'Absolute');
+
 const d1 = {
   prepare(sql) {
     const st = db.prepare(sql);
@@ -141,12 +162,21 @@ const post = async (p, body) => {
     !phrases.some(p => /silver/.test(p)), phrases.join(' | '));
 
   // Ranked by cost, or the evening is spent on the wrong end of the list.
-  check('the queue is ordered by the sales each phrase holds up',
-    phrases[0] === 'aqua wave speckle', `first: ${phrases[0]}`);
+  //
+  // Asserted as an ordering rather than by naming the phrase that happens to
+  // lead: the first version pinned "aqua wave speckle" and broke the moment the
+  // fixture grew a bigger phrase, which is a test describing today's data
+  // rather than the rule.
+  {
+    const counts = (q.queue || []).map(g => g.sales);
+    const descending = counts.every((c, i) => i === 0 || counts[i - 1] >= c);
+    check('the queue is ordered by the sales each phrase holds up',
+      descending && counts.length > 1, counts.join(' >= '));
+  }
 
   // The number that decides whether the screen is worth opening at all.
   check('the queue reports its own leverage',
-    q.salesPerDecision >= 7 && q.salesHeldUp === 21,
+    q.salesPerDecision >= 7 && q.salesHeldUp === 46,
     `${q.salesPerDecision} sales per decision, ${q.salesHeldUp} held up`);
 
   // Photos, because a person settles this by looking at the card.
@@ -208,6 +238,96 @@ const post = async (p, body) => {
       `${q2.salesAlreadyFixed} sales fixed, ${q2.decisionsInPlace} decision(s)`);
   }
 
+  // ---- one phrase, several meanings --------------------------------------
+  //
+  // The correction that reshaped this: a phrase does not mean one thing. It can
+  // differ by PRODUCT, and — harder — by PRINT RUN inside a single product,
+  // where the words are identical and only the count differs.
+  //
+  // The desk cannot decide that. What it must do is show the split and let a
+  // decision be made at the level the person could actually tell.
+  {
+    const q = await get(`/api/review/parallels?key=${KEY}&days=90`);
+    const sig = (q.queue || []).find(g => g.phrase === 'signatures');
+    check('a phrase that spans products is shown broken up, not as one lump',
+      !!sig && sig.splits.length === 3,
+      sig ? sig.splits.map(s => `${s.label}:${s.sales}`).join(' | ') : 'signatures missing');
+
+    check('  ...split by product',
+      !!sig && sig.splits.some(s => /Rookies & Stars/.test(s.label))
+            && sig.splits.some(s => /Absolute/.test(s.label)),
+      sig ? sig.splits.map(s => s.label).join(' | ') : '');
+    // The half the product split alone cannot reach.
+    check('  ...and by print run inside one product',
+      !!sig && sig.splits.some(s => s.setName === 'Rookies & Stars' && s.printRun === 25)
+            && sig.splits.some(s => s.setName === 'Rookies & Stars' && s.printRun === null),
+      sig ? sig.splits.filter(s => /Rookies/.test(s.label)).map(s => s.label).join(' | ') : '');
+    check('  ...each carrying its own photos to judge by',
+      !!sig && sig.splits.every(s => Array.isArray(s.photos)),
+      sig ? sig.splits.map(s => `${s.label}:${s.photos.length}`).join(' | ') : '');
+  }
+
+  // A scoped decision must bind ONLY its scope.
+  {
+    const { resolveParallelAliased } = srv;
+    const pi = await srv.parallelIndex();
+    const T = {
+      rsPlain: '2025 Panini Rookies & Stars - Rookies Ashton Jeanty #106 Signatures',
+      rs25:    '2025 Panini Rookies & Stars /25 Jalen Milroe #132 Signatures',
+      abs:     '2025 Panini Absolute - Rookies Shedeur Sanders #177 Signatures',
+    };
+    const read = async (title, year, setName) => {
+      const a = await srv.parallelAliases();
+      return resolveParallelAliased(pi, title, { year, setName }, a);
+    };
+
+    // Narrowest first: this product, this print run.
+    const r1 = await post(`/api/review/parallels?key=${KEY}`, {
+      phrase: 'signatures', parallel: '',
+      scope: { year: '2025', setName: 'Rookies & Stars', printRun: 25 },
+    });
+    check('a decision can be pinned to one product at one print run',
+      r1.status === 200 && /\/25\|signatures$/.test(r1.body.key || ''),
+      `${r1.status} ${r1.body.key}`);
+
+    check('  ...and binds only that print run',
+      (await read(T.rs25, '2025', 'Rookies & Stars')).how === 'base'
+      && (await read(T.rsPlain, '2025', 'Rookies & Stars')).how === 'unmatched',
+      `/25 -> ${(await read(T.rs25, '2025', 'Rookies & Stars')).how}, `
+      + `plain -> ${(await read(T.rsPlain, '2025', 'Rookies & Stars')).how}`);
+
+    check('  ...and does not touch the other product',
+      (await read(T.abs, '2025', 'Absolute')).how === 'unmatched',
+      (await read(T.abs, '2025', 'Absolute')).how);
+
+    // Then the whole product.
+    await post(`/api/review/parallels?key=${KEY}`, {
+      phrase: 'signatures', parallel: '',
+      scope: { year: '2025', setName: 'Rookies & Stars' },
+    });
+    check('a product-wide decision covers the rest of that product',
+      (await read(T.rsPlain, '2025', 'Rookies & Stars')).how === 'base'
+      && (await read(T.abs, '2025', 'Absolute')).how === 'unmatched',
+      `plain -> ${(await read(T.rsPlain, '2025', 'Rookies & Stars')).how}, `
+      + `absolute -> ${(await read(T.abs, '2025', 'Absolute')).how}`);
+
+    // And a scoped answer must outrank a global one, or the narrower statement
+    // — the later thought, made with the card in hand — would be ignored.
+    await post(`/api/review/parallels?key=${KEY}`, { phrase: 'signatures', parallel: 'Signatures' });
+    const scoped = await read(T.rsPlain, '2025', 'Rookies & Stars');
+    const global_ = await read(T.abs, '2025', 'Absolute');
+    check('the narrower decision wins over the global one',
+      scoped.how === 'base' && global_.how === 'alias' && global_.parallel === 'Signatures',
+      `scoped -> ${scoped.how}, global -> ${global_.how}/${global_.parallel}`);
+
+    // Clean up so the undo check below starts from a known state.
+    for (const sc of [{ year: '2025', setName: 'Rookies & Stars', printRun: 25 },
+                      { year: '2025', setName: 'Rookies & Stars' }, null]) {
+      await post(`/api/review/parallels?key=${KEY}`, sc ? { phrase: 'signatures', scope: sc }
+                                                        : { phrase: 'signatures' });
+    }
+  }
+
   // ---- and a decision can be taken back ----------------------------------
   {
     await post(`/api/review/parallels?key=${KEY}`, { phrase: 'kansas city chiefs' });
@@ -215,6 +335,35 @@ const post = async (p, body) => {
     check('a decision can be undone',
       (q3.queue || []).map(g => g.phrase).includes('kansas city chiefs'),
       `${q3.decisionsInPlace} decision(s) left`);
+  }
+
+  // ---- the page has to be able to ask for a scope ------------------------
+  //
+  // The server can accept a scoped decision and the screen can still have no
+  // way to make one — which is the same as not having built it. Checked against
+  // the page rather than assumed, and by executing its script rather than
+  // reading it, so a syntax error in the desk is a failing test and not a blank
+  // screen discovered by a person.
+  {
+    const html = fs.readFileSync(path.join(ROOT, 'public', 'parallel-desk.html'), 'utf8');
+    const script = (html.match(/<script>([\s\S]*)<\/script>/) || [])[1] || '';
+    check('the desk page parses as JavaScript',
+      (() => {
+        try { new Function(script.replace(/const qs[\s\S]*?location\.search\);/, 'const qs=new Map();')); return true; }
+        catch (e) { return false; }
+      })(), 'a syntax error here is a blank screen, found by a person');
+
+    check('  ...sends the scope it was given, not just the phrase',
+      /scope: sp \?/.test(script) && /printRun: sp\.printRun/.test(script),
+      'decide() must pass the selected split through to the server');
+    check('  ...offers a key for each place the phrase appears',
+      /e\.key >= '1' && e\.key <= '9'/.test(script) && /splits\.length > 1/.test(script),
+      'number keys must select a split');
+    // A scoped answer settles one place and leaves the others open. Advancing
+    // past the phrase would silently abandon them.
+    check('  ...and stays on the phrase until every place is answered',
+      /item\.splits = splits\.filter/.test(script) && /if \(item\.splits\.length === 0\) \{ at\+\+; \}/.test(script),
+      'a scoped decision must not skip the undecided splits');
   }
 
   server.close();
