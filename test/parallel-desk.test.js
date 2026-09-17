@@ -78,6 +78,14 @@ add('2025 Panini Rookies & Stars /25 Jalen Milroe #132 Signatures', 6,
 add('2025 Panini Absolute - Rookies Shedeur Sanders #177 Signatures', 8,
     'Shedeur Sanders', '2025', 'Absolute');
 
+// A phrase the catalogue knows as an insert SET, not a parallel. Taken from the
+// live desk: "stars in the night" is a Topps Cosmic Chrome insert, so these are
+// base cards OF that insert and "not a parallel" is the right answer. The screen
+// has to say so, or it invites a guess it will then refuse — which is what it
+// did, and the guess typed into it was "202".
+add('2025 Topps Cosmic Chrome - Tetairoa McMillan #STN-6 Stars In The Night', 4,
+    'Tetairoa McMillan', '2025', 'Cosmic Chrome');
+
 const d1 = {
   prepare(sql) {
     const st = db.prepare(sql);
@@ -176,7 +184,7 @@ const post = async (p, body) => {
 
   // The number that decides whether the screen is worth opening at all.
   check('the queue reports its own leverage',
-    q.salesPerDecision >= 7 && q.salesHeldUp === 46,
+    q.salesPerDecision >= 7 && q.salesHeldUp === 50,
     `${q.salesPerDecision} sales per decision, ${q.salesHeldUp} held up`);
 
   // Photos, because a person settles this by looking at the card.
@@ -337,6 +345,38 @@ const post = async (p, body) => {
       `${q3.decisionsInPlace} decision(s) left`);
   }
 
+  // ---- the rainbow: offer the answer instead of demanding it -------------
+  //
+  // Without the product's parallel list the only way to answer is to already
+  // know the exact catalogue spelling, and a wrong guess is refused — which
+  // makes the screen a memory test. Watched someone type "202" into it.
+  {
+    const q = await get(`/api/review/parallels?key=${KEY}&days=90`);
+    const aqua = (q.queue || []).find(g => g.phrase === 'aqua wave speckle');
+    check('a phrase is offered the parallels its product actually has',
+      !!aqua && Array.isArray(aqua.candidates) && aqua.candidates.length > 0,
+      aqua ? `${(aqua.candidates || []).length} candidates: ${(aqua.candidates || []).slice(0, 4).join(', ')}` : 'missing');
+
+    // 2017 Prizm really does list Silver Prizm. If the suggestions do not
+    // include the product's own parallels they are coming from the wrong place.
+    check('  ...taken from THAT product, not from the whole catalogue',
+      !!aqua && aqua.candidates.some(n => /Silver Prizm/i.test(n)),
+      aqua ? aqua.candidates.slice(0, 8).join(' | ') : '');
+
+    // And the phrase that is really an insert SET must say so, or the screen
+    // invites a guess it will then refuse. "Stars In The Night" is a Cosmic
+    // Chrome insert whose parallel is base — X is the answer.
+    // The check that matters, on the phrase it was written for. "unknown" on an
+    // arbitrary phrase would pass a version of this that never looked anything
+    // up, so it is asserted on one the catalogue definitely knows.
+    const stn = (q.queue || []).find(g => g.phrase === 'stars in the night');
+    check('  ...and a phrase the catalogue knows as an insert SET says so',
+      !!stn && stn.knownAs === 'subset',
+      stn ? `knownAs=${stn.knownAs}` : 'stars in the night missing from the queue');
+    check('  ...while a phrase it has never seen is not labelled as one',
+      !!aqua && aqua.knownAs === 'unknown', aqua ? `knownAs=${aqua.knownAs}` : '');
+  }
+
   // ---- the page has to be able to ask for a scope ------------------------
   //
   // The server can accept a scoped decision and the screen can still have no
@@ -394,6 +434,29 @@ const post = async (p, body) => {
     check('  ...and a refusal is not reported as a save',
       /if \(!okCount\) \{ flash\(firstError/.test(script),
       'zero successes must flash the error, not a total');
+
+    // ---- the picker has to narrow as you type ----------------------------
+    //
+    // The suggestions are only useful if typing filters them: a product can
+    // list forty parallels and nobody scrolls that with the keyboard. Checked
+    // by name because a mutation that removed the input handler slipped past
+    // every other check here — the list still rendered, it just stopped
+    // responding, which is invisible to a test that only reads the markup.
+    check('  ...narrows the suggestions as you type',
+      /box\.oninput = \(\) => \{ typed = box\.value;/.test(script)
+      && /words\.every\(w => low\.includes\(w\)\)/.test(script),
+      'typing must filter the candidate list');
+    check('  ...on every word, so "gold ref" finds "Gold Interstellar Refractors"',
+      /typed\.toLowerCase\(\)\.split\(\/\\s\+\/\)\.filter\(Boolean\)/.test(script),
+      'the filter must match each typed word separately');
+    check('  ...and Enter takes the highlighted suggestion over the raw text',
+      /const hit = list\[cand\];/.test(script) && /if \(hit\) \{ decide\(hit\.textContent\); \}/.test(script),
+      'a fragment like "gold ref" must not be saved as a parallel name');
+    // Re-rendering on every keystroke blurs the box unless focus is restored,
+    // which would silently eat the second character of everything typed.
+    check('  ...while keeping the caret where it was',
+      /box\.focus\(\); box\.setSelectionRange\(typed\.length, typed\.length\);/.test(script),
+      'focus must survive the re-render');
   }
 
   server.close();

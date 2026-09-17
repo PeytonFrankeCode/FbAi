@@ -64,6 +64,13 @@
   .split.on kbd { border-color: var(--accent); color: var(--accent); }
   .split-n { font-variant-numeric: tabular-nums; }
   .tick { display: inline-block; width: 1em; color: var(--accent); }
+  .cands { margin-top: 8px; border: 1px solid var(--line); border-radius: 8px;
+           overflow: hidden; }
+  .cand { padding: 7px 12px; font-size: 14px; color: var(--dim); cursor: pointer; }
+  .cand:hover { background: #1d242c; }
+  .cand.on { background: #16241c; color: var(--ink); box-shadow: inset 3px 0 0 var(--accent); }
+  .cand-more { padding: 6px 12px; font-size: 12px; color: var(--dim);
+               border-top: 1px solid var(--line); }
 </style>
 </head>
 <body>
@@ -109,6 +116,8 @@ let queue = [], at = 0, sel = 0, done = 0, fixed = 0;
 // this list and months not yet collected, while picking every row writes one
 // decision each and says nothing about anywhere else.
 let picked = new Set();
+// Which suggestion is highlighted, and what has been typed to filter them.
+let cand = 0, typed = '';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
@@ -156,6 +165,16 @@ function render() {
     : chosen.length + ' of ' + splits.length + ' places';
   const pickedSales = chosen.length
     ? chosen.reduce((n, i) => n + splits[i].sales, 0) : (item.sales || 0);
+
+  // Filtered on every typed word, so "gold ref" finds "Gold Interstellar
+  // Refractors" — nobody types a parallel's full name from memory.
+  const words = typed.toLowerCase().split(/\s+/).filter(Boolean);
+  const all = (item.candidates || []).filter(nm => {
+    const low = nm.toLowerCase();
+    return words.every(w => low.includes(w));
+  });
+  const matches = all.slice(0, 8);
+  const more = all.length - matches.length;
 
   $('main').innerHTML =
     '<div class="card">' +
@@ -206,12 +225,37 @@ function render() {
           (scopeLabel ? ' <em>for ' + esc(scopeLabel) + '</em>'
                       : (splits.length > 1 ? ' <em>for everywhere</em>' : '')) + '</span></li>' +
       '</ol>' +
-      '<input type="text" id="manual" placeholder="e.g. Silver Prizm" autocomplete="off" />' +
-      '<p class="hint">The name must exist in a checklist. If it does not, the parallel ' +
-      'is missing from that product and the fix is the checklist, not this screen.</p>' +
+      '<input type="text" id="manual" placeholder="type to filter the parallels below" ' +
+        'autocomplete="off" value="' + esc(typed) + '" />' +
+      // THE RAINBOW: every parallel the catalogue lists for these products.
+      // Without it the only way to answer is to already know the exact
+      // catalogue spelling, and a wrong guess is refused — which makes the
+      // screen a memory test.
+      (matches.length
+        ? '<div class="cands">' +
+            matches.map((nm, i) =>
+              '<div class="cand' + (i === cand ? ' on' : '') + '" data-c="' + i + '">' +
+                esc(nm) + '</div>').join('') +
+            (more > 0 ? '<div class="cand-more">+' + more + ' more &mdash; keep typing</div>' : '') +
+          '</div>'
+        : (item.candidates && item.candidates.length
+            ? '<p class="hint">Nothing in these products matches that. If the parallel is ' +
+              'real, it is missing from the checklist and that is where the fix belongs.</p>'
+            : '<p class="hint">No checklist found for these products, so there is nothing to ' +
+              'suggest. The name must still exist in a checklist to be accepted.</p>')) +
+      // What the catalogue already thinks the phrase is. "subset" means an
+      // insert SET name rather than a parallel — "Stars In The Night" is a
+      // Cosmic Chrome insert whose parallel is base — so X is the answer and
+      // the screen should say so instead of inviting a guess it will refuse.
+      (item.knownAs === 'subset'
+        ? '<p class="hint">The catalogue knows &ldquo;' + esc(item.phrase) + '&rdquo; as an ' +
+          'insert SET, not a parallel. These are almost certainly base cards of that ' +
+          'insert &mdash; <kbd>X</kbd> is likely right.</p>'
+        : '') +
       '<div class="keys">' +
         '<span><kbd>X</kbd> not a parallel</span>' +
-        '<span><kbd>Enter</kbd> save typed name</span>' +
+        '<span><kbd>&uarr;</kbd><kbd>&darr;</kbd> pick a parallel</span>' +
+        '<span><kbd>Enter</kbd> save it</span>' +
         (splits.length > 1 ? '<span><kbd>1</kbd>–<kbd>9</kbd> pick places</span>' +
                              '<span><kbd>A</kbd> pick all</span>' +
                              '<span><kbd>0</kbd> clear</span>' : '') +
@@ -222,6 +266,16 @@ function render() {
   document.querySelectorAll('.split').forEach(el => {
     el.onclick = () => { toggle(Number(el.dataset.s)); };
   });
+  document.querySelectorAll('.cand').forEach(el => {
+    el.onclick = () => { decide(el.textContent); };
+  });
+  // Typing re-renders the list, so focus has to be put back or the second
+  // keystroke goes nowhere.
+  const box = $('manual');
+  if (box) {
+    box.oninput = () => { typed = box.value; cand = 0; render(); };
+    if (typed) { box.focus(); box.setSelectionRange(typed.length, typed.length); }
+  }
   document.querySelectorAll('#opts li').forEach(el => {
     el.onclick = () => {
       sel = Number(el.dataset.i);
@@ -304,14 +358,26 @@ async function decide(parallel) {
     picked.clear();
     at++;
   }
-  sel = 0; render();
+  sel = 0; typed = ''; cand = 0; render();
 }
 
 document.addEventListener('keydown', (e) => {
   const box = document.getElementById('manual');
   if (document.activeElement === box) {
-    if (e.key === 'Enter' && box.value.trim()) { decide(box.value.trim()); }
-    if (e.key === 'Escape') box.blur();
+    const list = document.querySelectorAll('.cand');
+    if (e.key === 'ArrowDown') { cand = Math.min(list.length - 1, cand + 1); render(); e.preventDefault(); return; }
+    if (e.key === 'ArrowUp') { cand = Math.max(0, cand - 1); render(); e.preventDefault(); return; }
+    if (e.key === 'Enter') {
+      // The highlighted suggestion wins over the raw text, because the
+      // suggestion is a name the catalogue actually has and the typed text is
+      // usually a fragment of it.
+      const hit = list[cand];
+      if (hit) { decide(hit.textContent); }
+      else if (box.value.trim()) { decide(box.value.trim()); }
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Escape') { typed = ''; box.blur(); render(); }
     return;
   }
   if (!queue[at]) return;
