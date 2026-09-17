@@ -15,6 +15,10 @@ idx.products = idx.products.filter(p => {
   const file = path.join(DIR, `${p.id}.json`);
   if (!fs.existsSync(file)) return false;
   const d = JSON.parse(fs.readFileSync(file, 'utf8'));
+  // An unreleased product is empty on purpose — it is listed so people can see
+  // the product is coming. Deleting it here would undo that every time this
+  // script is run.
+  if (d.unreleased) return true;
   const totalCards = (d.sets || []).reduce((s, x) => s + ((x.cards || []).length), 0);
   if (totalCards === 0) {
     removed.push(p.id);

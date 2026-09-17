@@ -7,7 +7,30 @@
       "brand": "Bowman University",
       "sport": "Football",
       "setCount": 46,
-      "totalCards": 2138
+      "totalCards": 2138,
+      "note": "Parallels for this product have not been announced yet, and some sets may not have any. Card numbers and names are final; parallel lists will be added as Topps publishes them."
+    },
+    {
+      "id": "2026-donruss-football",
+      "name": "2026 Donruss Football",
+      "year": 2026,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-panini-obsidian-football",
+      "name": "2026 Panini Obsidian Football",
+      "year": 2026,
+      "brand": "Obsidian",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
     },
     {
       "id": "2026-topps-football",
@@ -17,6 +40,17 @@
       "sport": "Football",
       "setCount": 72,
       "totalCards": 4037
+    },
+    {
+      "id": "2026-topps-heritage-football",
+      "name": "2026 Topps Heritage Football",
+      "year": 2026,
+      "brand": "Topps Heritage",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
     },
     {
       "id": "2025-bowman-football",

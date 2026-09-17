@@ -269,7 +269,7 @@ async function initTrackedChecklistPicker() {
   if (!productSel) return;
   try {
     const idx = await fetchChecklistsList();
-    const products = (idx && idx.products) || [];
+    const products = ((idx && idx.products) || []).filter(p => !_isUnreleased(p));
     productSel.innerHTML = '<option value="">Select a product…</option>' + products
       .map(p => `<option value="${escHtml(p.id)}">${escHtml(p.name || p.id)}</option>`)
       .join('');
@@ -477,7 +477,7 @@ async function initClPicker() {
   if (!productSel) return;
   try {
     const idx = await fetchChecklistsList();
-    const products = (idx && idx.products) || [];
+    const products = ((idx && idx.products) || []).filter(p => !_isUnreleased(p));
     productSel.innerHTML = '<option value="">Select a product…</option>' + products
       .map(p => `<option value="${escHtml(p.id)}">${escHtml(p.name || p.id)}</option>`)
       .join('');
@@ -6174,12 +6174,19 @@ async function loadChecklistProducts() {
       byYear[year].forEach(p => {
         const card = document.createElement('div');
         card.className = 'checklist-product-card';
+        // An unreleased product has no sets and no cards, so "0 sets / 0 cards"
+        // would read as a broken row. Say what is actually true instead: the
+        // publisher has not put the checklist out yet.
+        const stats = p.unreleased
+          ? `<span class="checklist-product-soon">Checklist not released yet</span>`
+          : `<span>${p.setCount} sets</span>
+              <span>${p.totalCards} cards</span>`;
+        if (p.unreleased) card.classList.add('unreleased');
         card.innerHTML = `
           <div class="checklist-product-info">
             <h3>${escHtml(p.name)}</h3>
             <div class="checklist-product-stats">
-              <span>${p.setCount} sets</span>
-              <span>${p.totalCards} cards</span>
+              ${stats}
             </div>
           </div>
           <span class="checklist-product-arrow">&rarr;</span>
@@ -6202,6 +6209,22 @@ async function loadChecklistProducts() {
   }
 }
 
+// A product is unreleased when its file says so. The flag, not the empty set
+// list, is the test: a product that failed to import is also empty, and the
+// two should not read the same on screen.
+function _isUnreleased(p) {
+  return !!(p && p.unreleased);
+}
+
+// What the browser shows in place of the set list for an unreleased product.
+// The note comes from the product file, so the wording is data the publisher
+// timeline can change without a deploy.
+function renderUnreleasedProduct() {
+  const note = (checklistData && checklistData.note)
+    || 'Checklist not released yet — it will be added here as soon as the publisher releases it.';
+  checklistSets.innerHTML = `<p class="checklist-empty">${escHtml(note)}</p>`;
+}
+
 async function loadProduct(productId) {
   checklistProducts.classList.add('hidden');
   checklistBrowser.classList.remove('hidden');
@@ -6222,6 +6245,10 @@ async function loadProduct(productId) {
     checklistSearch.value = '';
     document.querySelectorAll('.checklist-cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
     populateTeamFilter();
+    // Nothing to filter, search or render for a product whose checklist the
+    // publisher has not put out yet. renderChecklistSets() would land on
+    // "No matching cards found", which reads like the search went wrong.
+    if (_isUnreleased(checklistData)) { renderUnreleasedProduct(); return; }
     renderChecklistSets();
   } catch (err) {
     checklistSets.innerHTML = `<p class="checklist-error">Failed to load: ${escHtml(err.message)}</p>`;
@@ -8014,7 +8041,9 @@ async function loadCompletionProducts() {
   if (select.options.length > 1) return; // already loaded
   try {
     const data = await fetchChecklistsList();
-    data.products.forEach(p => {
+    // Unreleased products have no cards to own or complete, so they are listed
+    // in the checklist browser only — an empty option here is a dead end.
+    data.products.filter(p => !_isUnreleased(p)).forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
       // name already contains the year (e.g. "2025 Bowman Football") — don't prepend it again
@@ -11921,7 +11950,8 @@ async function loadRainbowProducts() {
   if (!select || _rainbowProductsLoaded) return;
   try {
     const data = await fetchChecklistsList();
-    data.products.forEach(p => {
+    // Same as the completion picker: nothing to pick inside an unreleased product.
+    data.products.filter(p => !_isUnreleased(p)).forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
       // name already contains the year (e.g. "2025 Bowman Football")

@@ -3545,6 +3545,20 @@ footer {
   font-size: 1.2rem;
   font-weight: 700;
 }
+/* Announced products whose checklist the publisher has not put out yet. Still
+   clickable — opening one explains the wait — but visibly not a live checklist,
+   so nobody reads "0 sets" as a broken row. */
+.checklist-product-card.unreleased {
+  opacity: 0.82;
+  border-style: dashed;
+}
+.checklist-product-soon {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent-light, var(--accent));
+}
 .checklist-show-more-btn {
   grid-column: 1 / -1;
   background: none;

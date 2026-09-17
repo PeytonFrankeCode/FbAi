@@ -52,6 +52,14 @@ function buildIndex() {
       // count — so counting rows here would silently restate 230 products as
       // smaller than they are, which reads as data loss rather than a fix.
       totalCards: sets.reduce((n, s) => n + (Number(s.totalCards) || (s.cards || []).length), 0),
+      // Announced products whose checklist the publisher has not put out yet
+      // are listed with no sets. The browser renders the product list from the
+      // index alone, so unless these two fields ride along, a product with 0
+      // sets reads as a broken row rather than one that is waiting on its
+      // publisher. Only carried when present, so every other entry is byte-for
+      // -byte what it was.
+      ...(doc.unreleased ? { unreleased: true } : {}),
+      ...(doc.note ? { note: doc.note } : {}),
     });
   }
   // Newest year first, alphabetical within a year — the order the existing
@@ -81,7 +89,7 @@ function main() {
   // stale count, or a stale name after the product was renamed. Every field is
   // compared, not just the counts — reporting "already correct" after a rename
   // is how a rename gets believed and never checked.
-  const FIELDS = ['name', 'year', 'brand', 'sport', 'setCount', 'totalCards'];
+  const FIELDS = ['name', 'year', 'brand', 'sport', 'setCount', 'totalCards', 'unreleased', 'note'];
   const byId = new Map((current && current.products || []).map(p => [p.id, p]));
   const restated = [];
   for (const p of built.products) {
