@@ -313,6 +313,33 @@ jobs:
               echo '```json'
               jq -c '.mostSoldBasis' stats.json
               echo '```'
+              # HOW OLD ARE THE NUMBERS ABOVE.
+              #
+              # /api/sold-stats is cached for 48 hours and warmed by cron, so
+              # this board can predate the deploy by two days. Printed under a
+              # "Serving <sha>" heading it reads as the new code's output, and
+              # I read it that way: a basis showing truncated:true and a
+              # 25,000-row cap was reported as the current build's, when the
+              # current build's ceiling is 60,000 and the board was simply old.
+              #
+              # ageMinutes is absent, not zero, on a payload cached before the
+              # stamp existed — so "unknown" has to be its own case here.
+              age=$(jq -r '.ageMinutes // "unknown"' stats.json 2>/dev/null || echo unknown)
+              if [ "$(jq -r '.servedFromCache // false' stats.json)" = "true" ]; then
+                echo
+                if [ "$age" = "unknown" ]; then
+                  echo "> :warning: Served from cache, age unknown — this board predates the"
+                  echo "> build stamp and may have been computed by an earlier deploy."
+                elif [ "$age" -gt 60 ]; then
+                  echo "> :warning: Served from cache, built ${age} minutes ago — **these numbers"
+                  echo "> are not this deploy's output.** Wait for the cron to rebuild them."
+                else
+                  echo "> Served from cache, built ${age} minutes ago."
+                fi
+              else
+                echo
+                echo "> Computed fresh by this build."
+              fi
             else
               echo '_sold-stats did not return a board — check /api/sold-stats by hand._'
             fi

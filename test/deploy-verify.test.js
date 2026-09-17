@@ -147,6 +147,75 @@ function simulate(edgeResponds) {
     r.code !== 0, `exit ${r.code}`);
 }
 
+// ---- and the numbers it prints, which are not always this build's ---------
+//
+// The half below "# Now the numbers" used to be reporting rather than logic,
+// and was left unexercised on that basis. It stopped being true.
+//
+// /api/sold-stats is cached for 48 hours and warmed by cron, so the board this
+// step prints under a "Serving <sha>" heading can predate the deploy by two
+// days. That is not hypothetical: a basis reading truncated:true against a
+// 25,000-row cap was read here as the current build's output when the current
+// build's ceiling is 60,000 and the board was simply old. The step now has to
+// say which it is, and these run the three branches to prove it does.
+const report = '# Now the numbers' + (script.split('# Now the numbers')[1] || '');
+
+function simulateReport(statsJson) {
+  const stub = [
+    `curl() {`,
+    `  local out=""; local prev=""`,
+    `  for a in "$@"; do if [ "$prev" = "-o" ]; then out="$a"; fi; prev="$a"; done`,
+    `  if [ -n "$out" ]; then printf '%s' ${JSON.stringify(statsJson)} > "$out"; fi`,
+    `}`,
+    '',
+  ].join('\n');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-report-'));
+  const file = path.join(dir, 'run.sh');
+  const summary = path.join(dir, 'summary.md');
+  fs.writeFileSync(file, stub + report);
+  try {
+    execFileSync('bash', ['-e', file], {
+      cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, GITHUB_SHA: 'SHA123', GITHUB_STEP_SUMMARY: summary },
+    });
+    return { code: 0, summary: fs.readFileSync(summary, 'utf8') };
+  } catch (e) {
+    return { code: e.status, summary: String(e.stdout || '') + String(e.stderr || '') };
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const BOARD = '"mostSold":[{"sales":9,"avgPrice":5,"topPrice":9,"name":"A Card"}],'
+            + '"mostSoldBasis":{"salesRead":25000,"truncated":true}';
+{
+  const fresh = simulateReport(`{${BOARD}}`);
+  check('a board this build computed is reported as this build\'s',
+    fresh.code === 0 && /Computed fresh by this build/.test(fresh.summary)
+    && !/warning/.test(fresh.summary),
+    fresh.summary.trim().split('\n').pop());
+
+  const stale = simulateReport(`{${BOARD},"servedFromCache":true,"ageMinutes":2400}`);
+  check('a two-day-old cached board is not passed off as this build\'s',
+    stale.code === 0 && /warning/.test(stale.summary)
+    && /not this deploy's output/.test(stale.summary) && /2400 minutes ago/.test(stale.summary),
+    stale.summary.split('\n').filter(l => l.startsWith('>')).join(' ').slice(0, 120));
+
+  const recent = simulateReport(`{${BOARD},"servedFromCache":true,"ageMinutes":5}`);
+  check('  ...while a cache hit from minutes ago is reported without alarm',
+    recent.code === 0 && /built 5 minutes ago/.test(recent.summary)
+    && !/warning/.test(recent.summary),
+    recent.summary.split('\n').filter(l => l.startsWith('>')).join(' ').slice(0, 120));
+
+  // Payloads cached before the stamp existed have no age at all. Treating a
+  // missing number as 0 is how "unknown" becomes "brand new" — and `[ "" -gt
+  // 60 ]` is a bash error that would fail the step outright under -e.
+  const unknown = simulateReport(`{${BOARD},"servedFromCache":true}`);
+  check('  ...and an unstamped cached board says so rather than erroring',
+    unknown.code === 0 && /age unknown/.test(unknown.summary),
+    `exit ${unknown.code}: ` + unknown.summary.split('\n').filter(l => l.startsWith('>')).join(' ').slice(0, 120));
+}
+
 // The marker has to be written before the deploy, or it ships the previous
 // commit's SHA and the check passes against the wrong build — which would make
 // it worse than useless.
