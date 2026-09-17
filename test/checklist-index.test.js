@@ -62,8 +62,15 @@ for (const p of entries) {
     sport: doc.sport,
     setCount: sets.length,
     totalCards: sets.reduce((n, s) => n + (Number(s.totalCards) || (s.cards || []).length), 0),
+    // Carried from the file when set. An unreleased product has no sets, so
+    // these two fields are the only thing that distinguishes "the publisher
+    // has not put the checklist out yet" from "this row is broken" in a
+    // product list rendered from the index alone.
+    unreleased: doc.unreleased ? true : undefined,
+    note: doc.note || undefined,
   };
-  for (const [field, want] of Object.entries(expected)) {
+  for (const field of Object.keys(expected)) {
+    const want = expected[field];
     if (p[field] !== want) {
       wrong.push(`${p.id}.${field}: index has ${JSON.stringify(p[field])}, file has ${JSON.stringify(want)}`);
     }
@@ -99,6 +106,25 @@ check('every set has a category the filter tabs recognise', badCategory.length =
   badCategory.length
     ? `${badCategory.length} unreachable:\n        ${badCategory.slice(0, 5).join('\n        ')}`
     : '');
+
+// A product with no sets is either an announced product whose checklist the
+// publisher has not put out yet, or a file that failed to parse. From the data
+// alone the two are identical, and the second one shipped to the site as a row
+// that opens onto nothing. `unreleased` plus a note is what makes the first
+// case a deliberate statement: the browser renders "not released yet" from it
+// instead of an empty set list, and the pickers leave it out of their dropdowns.
+const emptyUnmarked = [];
+const markedNoNote = [];
+for (const id of files) {
+  const doc = JSON.parse(fs.readFileSync(path.join(DIR, `${id}.json`), 'utf8'));
+  const empty = (doc.sets || []).length === 0;
+  if (empty && !doc.unreleased) emptyUnmarked.push(id);
+  if (doc.unreleased && !doc.note) markedNoNote.push(id);
+}
+check('every product with no sets is marked unreleased', emptyUnmarked.length === 0,
+  emptyUnmarked.length ? `empty and unexplained: ${emptyUnmarked.join(', ')}` : '');
+check('every unreleased product carries a note explaining it', markedNoNote.length === 0,
+  markedNoNote.length ? `no note: ${markedNoNote.join(', ')}` : '');
 
 console.log('');
 if (failures) {
