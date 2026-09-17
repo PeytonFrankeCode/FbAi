@@ -356,14 +356,44 @@ const post = async (p, body) => {
     check('  ...sends the scope it was given, not just the phrase',
       /scope: sp \?/.test(script) && /printRun: sp\.printRun/.test(script),
       'decide() must pass the selected split through to the server');
-    check('  ...offers a key for each place the phrase appears',
-      /e\.key >= '1' && e\.key <= '9'/.test(script) && /splits\.length > 1/.test(script),
-      'number keys must select a split');
-    // A scoped answer settles one place and leaves the others open. Advancing
-    // past the phrase would silently abandon them.
+
+    // ONE AT A TIME, SEVERAL, OR ALL — the three things asked for.
+    //
+    // Number keys TOGGLE rather than switch, so places can be picked in any
+    // combination: the same phrase often means one parallel in two products and
+    // something else in a third, and answering those one at a time would work
+    // and would be tedious.
+    check('  ...lets places be picked in any combination, not one at a time',
+      /if \(picked\.has\(i\)\) \{\s*picked\.delete\(i\)/.test(script)
+      && /picked\.add\(i\)/.test(script),
+      'number keys must toggle, so several places can be answered together');
+    check('  ...with one key for every place at once',
+      /toggle\(-2\)/.test(script) && /splits\.forEach\(\(_, k\) => picked\.add\(k\)\)/.test(script),
+      'A must pick every place');
+    check('  ...and applies the answer to each picked place',
+      /const jobs = chosen\.length \? chosen\.map\(i => splits\[i\]\) : \[null\];/.test(script),
+      'decide() must send one decision per picked place');
+
+    // Nothing picked is NOT the same as everything picked, and the difference
+    // is the whole reason both exist: one writes a global decision covering
+    // products not on the list, the other writes one decision per place and
+    // says nothing about anywhere else.
+    check('  ...while answering with none picked still means everywhere',
+      /: \[null\]/.test(script) && /scope: sp \?/.test(script),
+      'an empty selection must send no scope at all');
+
+    // An answered place leaves the phrase; the rest keep it open. Advancing
+    // while splits are undecided would silently abandon them.
     check('  ...and stays on the phrase until every place is answered',
-      /item\.splits = splits\.filter/.test(script) && /if \(item\.splits\.length === 0\) \{ at\+\+; \}/.test(script),
+      /item\.splits = splits\.filter\(\(_, i\) => !doneSet\.has\(i\)\)/.test(script)
+      && /if \(item\.splits\.length === 0\) \{ at\+\+; \}/.test(script),
       'a scoped decision must not skip the undecided splits');
+
+    // A refusal must not read as success. If the typed name is in no checklist
+    // every job fails, and "+0 sales" would look like the work was done.
+    check('  ...and a refusal is not reported as a save',
+      /if \(!okCount\) \{ flash\(firstError/.test(script),
+      'zero successes must flash the error, not a total');
   }
 
   server.close();
