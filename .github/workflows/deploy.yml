@@ -292,6 +292,24 @@ jobs:
             echo "attempt $i: edge reports ${got:-<no marker>}"
             sleep 6
           done
+
+          # WHAT THE EDGE ACTUALLY SENT, once, when it never matched.
+          #
+          # "<no marker>" says jq found no .sha and nothing else. That one word
+          # covers a served index.html, an error page, an empty body and a JSON
+          # object of a shape nobody expected, and they have completely
+          # different causes. Not knowing which cost an unnecessary revert and
+          # an afternoon: the site was serving correctly the whole time and the
+          # only thing anyone could see was the word "unknown".
+          #
+          # Truncated, because if it IS the SPA fallback this is the whole of
+          # index.html. Printed only on failure, so a normal deploy stays quiet.
+          if [ "$got" != "$GITHUB_SHA" ]; then
+            echo "--- what /build.json actually returned (first 300 bytes) ---"
+            head -c 300 marker.json 2>/dev/null || echo "(could not read the file)"
+            echo
+            echo "--- bytes: $(wc -c < marker.json 2>/dev/null || echo 0) ---"
+          fi
           if [ "$got" != "$GITHUB_SHA" ]; then
             # TWO DIFFERENT FAILURES, AND TELLING THEM APART MATTERS.
             #
