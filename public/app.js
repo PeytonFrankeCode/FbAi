@@ -4662,7 +4662,9 @@ async function submitCardScan() {
     // If a back photo was sent, use the back's title matches to re-rank the
     // front matches so the correct card/parallel surfaces first.
     const reconciled = _reconcileMatchesWithBack(data.matches, data.backMatches || []);
+    // Populate the match grid (for fallback) but skip straight to sold prices.
     _renderScannerMatches(reconciled.matches, reconciled.identity);
+    selectScannerMatch(0);
   } catch (err) {
     spinner.classList.add('hidden');
     if (matchBtn) matchBtn.disabled = false;
@@ -4906,7 +4908,6 @@ function _renderScannerMatches(matches, backIdentity) {
       </div>
     </div>
   `).join('');
-  document.getElementById('scanner-phase-matches').classList.remove('hidden');
 }
 
 async function selectScannerMatch(index) {
