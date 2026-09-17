@@ -12625,6 +12625,7 @@ function renderInventory() {
       { value: 'auto', label: 'Autos' },
       { value: 'mem', label: 'Memorabilia' },
       { value: 'numbered', label: 'Numbered' },
+      { value: 'pc', label: 'PC (Personal)' },
     ],
     _invFilter.type);
   if (_invFilter.location !== 'all' && !inv.locations.includes(_invFilter.location)) _invFilter.location = 'all';
@@ -12637,9 +12638,55 @@ function renderInventory() {
     if (_invFilter.type === 'auto' && !i.auto) return false;
     if (_invFilter.type === 'mem' && !i.mem) return false;
     if (_invFilter.type === 'numbered' && !String(i.printRun || '').trim()) return false;
+    if (_invFilter.type === 'pc' && !i.pc) return false;
     if (q && !`${i.name} ${i.printRun || ''} ${i.location}`.toLowerCase().includes(q)) return false;
     return true;
   }).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+  const toFetch = [];
+  function _renderInvCard(i) {
+    const pr = _invFmtPrintRun(i.printRun);
+    const photo = photos[i.id];
+    const pending = !photo && i.hasPhoto && !!getSessionToken() && !_invPhotoFetchTried.has(i.id);
+    if (pending) toFetch.push(i.id);
+    const thumb = photo
+      ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" />`
+      : (pending
+          ? '<div class="inv-thumb-placeholder inv-thumb-loading">&#8987;</div>'
+          : '<div class="inv-thumb-placeholder">&#127183;</div>');
+    const paid = Number(i.paid) || 0;
+    const val = Number(i.value) || 0;
+    const net = val - paid;
+    const netCls = net >= 0 ? 'inv-net-pos' : 'inv-net-neg';
+    const pl = `<div class="inv-item-pl" onclick="openInvDetail('${escHtml(i.id)}')" title="View details & value graph">
+      <span class="inv-pl-col"><span class="inv-pl-lbl">Paid</span><span class="inv-pl-neg">${paid > 0 ? '−' + _invMoney(paid).replace('-', '') : '—'}</span></span>
+      <span class="inv-pl-col"><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></span>
+      <span class="inv-pl-col"><span class="inv-pl-lbl">Net</span><span class="${netCls}">${(paid > 0 || val > 0) ? (net >= 0 ? '+' : '−') + _invMoney(Math.abs(net)).replace('-', '') : '—'}</span></span>
+    </div>`;
+    return `<div class="inv-item" data-id="${escHtml(i.id)}">
+      <div class="inv-item-thumb inv-clickable" onclick="openInvDetail('${escHtml(i.id)}')">${thumb}</div>
+      <div class="inv-item-main">
+        <div class="inv-item-name inv-clickable" onclick="openInvDetail('${escHtml(i.id)}')">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
+        <div class="inv-item-meta">
+          ${i.auto ? '<span class="inv-badge inv-badge-auto">AUTO</span>' : ''}
+          ${i.mem ? '<span class="inv-badge inv-badge-mem">MEM</span>' : ''}
+          ${i.pc ? '<span class="inv-badge inv-badge-pc">PC</span>' : ''}
+          <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
+        </div>
+      </div>
+      ${pl}
+      <div class="inv-item-qty">
+        <button class="inv-qty-btn" title="Remove one" onclick="adjustInvQty('${escHtml(i.id)}', -1)">&minus;</button>
+        <span class="inv-qty-num">${Number(i.qty) || 0}</span>
+        <button class="inv-qty-btn" title="Add one" onclick="adjustInvQty('${escHtml(i.id)}', 1)">+</button>
+      </div>
+      <div class="inv-item-actions">
+        <button class="inv-act-btn inv-act-move" onclick="openInvMoveModal('${escHtml(i.id)}')">&#8644; Move</button>
+        <button class="inv-act-btn" onclick="openInvItemModal('${escHtml(i.id)}')">Edit</button>
+        <button class="inv-act-btn inv-act-del" title="Delete item" onclick="deleteInvItem('${escHtml(i.id)}')">&times;</button>
+      </div>
+    </div>`;
+  }
 
   if (items.length === 0) {
     listEl.innerHTML = inv.items.length === 0
@@ -12649,52 +12696,18 @@ function renderInventory() {
          </div>`
       : '<div class="inv-empty"><p>No cards match the current filters.</p></div>';
   } else {
-    const toFetch = []; // photos this device is missing but the account has
-    listEl.innerHTML = items.map(i => {
-      const pr = _invFmtPrintRun(i.printRun);
-      const photo = photos[i.id];
-      // On a fresh device the metadata says hasPhoto but the bytes aren't
-      // cached locally yet — pull them from the server (once).
-      const pending = !photo && i.hasPhoto && !!getSessionToken() && !_invPhotoFetchTried.has(i.id);
-      if (pending) toFetch.push(i.id);
-      const thumb = photo
-        ? `<img src="${escHtml(photo)}" alt="${escHtml(i.name)}" />`
-        : (pending
-            ? '<div class="inv-thumb-placeholder inv-thumb-loading">&#8987;</div>'
-            : '<div class="inv-thumb-placeholder">&#127183;</div>');
-      const paid = Number(i.paid) || 0;
-      const val = Number(i.value) || 0;
-      const net = val - paid;
-      const netCls = net >= 0 ? 'inv-net-pos' : 'inv-net-neg';
-      const pl = `<div class="inv-item-pl" onclick="openInvDetail('${escHtml(i.id)}')" title="View details & value graph">
-        <span class="inv-pl-col"><span class="inv-pl-lbl">Paid</span><span class="inv-pl-neg">${paid > 0 ? '−' + _invMoney(paid).replace('-', '') : '—'}</span></span>
-        <span class="inv-pl-col"><span class="inv-pl-lbl">Value</span><span class="inv-pl-val">${val > 0 ? _invMoney(val) : '—'}</span></span>
-        <span class="inv-pl-col"><span class="inv-pl-lbl">Net</span><span class="${netCls}">${(paid > 0 || val > 0) ? (net >= 0 ? '+' : '−') + _invMoney(Math.abs(net)).replace('-', '') : '—'}</span></span>
-      </div>`;
-      return `<div class="inv-item" data-id="${escHtml(i.id)}">
-        <div class="inv-item-thumb inv-clickable" onclick="openInvDetail('${escHtml(i.id)}')">${thumb}</div>
-        <div class="inv-item-main">
-          <div class="inv-item-name inv-clickable" onclick="openInvDetail('${escHtml(i.id)}')">${escHtml(i.name)}${pr ? ` <span class="inv-printrun">${escHtml(pr)}</span>` : ''}</div>
-          <div class="inv-item-meta">
-            ${i.auto ? '<span class="inv-badge inv-badge-auto">AUTO</span>' : ''}
-            ${i.mem ? '<span class="inv-badge inv-badge-mem">MEM</span>' : ''}
-            <span class="inv-badge inv-badge-loc">&#128205; ${escHtml(i.location)}</span>
-          </div>
-        </div>
-        ${pl}
-        <div class="inv-item-qty">
-          <button class="inv-qty-btn" title="Remove one" onclick="adjustInvQty('${escHtml(i.id)}', -1)">&minus;</button>
-          <span class="inv-qty-num">${Number(i.qty) || 0}</span>
-          <button class="inv-qty-btn" title="Add one" onclick="adjustInvQty('${escHtml(i.id)}', 1)">+</button>
-        </div>
-        <div class="inv-item-actions">
-          <button class="inv-act-btn inv-act-move" onclick="openInvMoveModal('${escHtml(i.id)}')">&#8644; Move</button>
-          <button class="inv-act-btn" onclick="openInvItemModal('${escHtml(i.id)}')">Edit</button>
-          <button class="inv-act-btn inv-act-del" title="Delete item" onclick="deleteInvItem('${escHtml(i.id)}')">&times;</button>
-        </div>
-      </div>`;
-    }).join('');
-    // Kick off any missing-photo pulls; each re-renders when it lands.
+    const invCards = items.filter(i => !i.pc);
+    const pcCards = items.filter(i => i.pc);
+    let html = '';
+    if (invCards.length > 0) {
+      if (pcCards.length > 0) html += '<h3 class="inv-section-title">Investment Cards</h3>';
+      html += invCards.map(_renderInvCard).join('');
+    }
+    if (pcCards.length > 0) {
+      html += '<h3 class="inv-section-title inv-section-pc">&#10084;&#65039; Personal Collection</h3>';
+      html += pcCards.map(_renderInvCard).join('');
+    }
+    listEl.innerHTML = html;
     toFetch.forEach(id => _invServerFetchPhoto(id));
   }
 
@@ -12728,6 +12741,7 @@ function openInvItemModal(id) {
   document.getElementById('inv-item-value').value = (item && item.value) ? item.value : '';
   document.getElementById('inv-item-auto').checked = !!(item && item.auto);
   document.getElementById('inv-item-mem').checked = !!(item && item.mem);
+  document.getElementById('inv-item-pc').checked = !!(item && item.pc);
   const defaultLoc = _invFilter.location !== 'all' ? _invFilter.location : inv.locations[0];
   _invFillSelect(document.getElementById('inv-item-location'),
     inv.locations.map(l => ({ value: l, label: l })),
@@ -12759,6 +12773,7 @@ function handleInvItemSubmit(e) {
   const value = valueRaw === '' ? 0 : Math.max(0, Number(valueRaw) || 0);
   const auto = document.getElementById('inv-item-auto').checked;
   const mem = document.getElementById('inv-item-mem').checked;
+  const pc = document.getElementById('inv-item-pc').checked;
   const location = document.getElementById('inv-item-location').value || inv.locations[0];
   if (!name) return false;
 
@@ -12766,12 +12781,12 @@ function handleInvItemSubmit(e) {
   const existing = id ? inv.items.find(i => i.id === id) : null;
   let itemId, item;
   if (existing) {
-    Object.assign(existing, { name, printRun, paid, value, auto, mem, location, updatedAt: now });
+    Object.assign(existing, { name, printRun, paid, value, auto, mem, pc, location, updatedAt: now });
     itemId = existing.id; item = existing;
   } else {
     itemId = _invId();
     // New cards default to a single copy; the +/- steppers adjust from there.
-    item = { id: itemId, name, printRun, paid, value, auto, mem, qty: 1, location, valueHistory: [], addedAt: now, updatedAt: now };
+    item = { id: itemId, name, printRun, paid, value, auto, mem, pc, qty: 1, location, valueHistory: [], addedAt: now, updatedAt: now };
     inv.items.push(item);
   }
   // Log a dated value point whenever a market value is present/changed.

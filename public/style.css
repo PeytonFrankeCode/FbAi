@@ -7905,7 +7905,16 @@ to { opacity: 1; transform: translateY(0); }
   border-color: rgba(224, 168, 95, 0.4); color: #e0a85f;
   background: rgba(224, 168, 95, 0.12); font-weight: 700; letter-spacing: 0.03em;
 }
+.inv-badge-pc {
+  border-color: rgba(239, 68, 68, 0.4); color: #ef4444;
+  background: rgba(239, 68, 68, 0.12); font-weight: 700; letter-spacing: 0.03em;
+}
 .inv-badge-loc { font-weight: 600; }
+.inv-section-title {
+  font-size: 1rem; font-weight: 700; color: var(--text-primary);
+  margin: 1.2rem 0 0.5rem; padding: 0;
+}
+.inv-section-pc { color: #ef4444; }
 /* Add/edit modal: checkbox row + photo field */
 .inv-check-row { display: flex; gap: 1.25rem; margin: 0.15rem 0 0.6rem; }
 .inv-check {
