@@ -7109,11 +7109,17 @@ footer {
 .scanner-key-chip-player { color: var(--accent-on); background: var(--accent); border-color: var(--accent); }
 .scanner-match-card-btn { background: var(--accent); color: var(--accent-on); border: none; border-radius: 5px; padding: 0.38rem 0.4rem; font-size: 0.72rem; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.15s; }
 .scanner-match-card-btn:hover { opacity: 0.85; }
-.scanner-picked-card { display: flex; gap: 0.65rem; align-items: flex-start; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; padding: 0.5rem; margin-bottom: 0.5rem; }
-.scanner-picked-img { width: 60px; height: 60px; object-fit: contain; border-radius: 6px; flex-shrink: 0; background: var(--bg-primary); }
-.scanner-picked-info { flex: 1; min-width: 0; }
-.scanner-picked-title { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.25rem; }
-.scanner-picked-query { font-size: 0.78rem; color: var(--text-muted); }
+.id-card { display: flex; gap: 1rem; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 12px; padding: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.id-card-img-wrap { flex-shrink: 0; }
+.id-card-img { width: 120px; height: 160px; object-fit: contain; border-radius: 8px; background: var(--bg-primary); box-shadow: 0 1px 6px rgba(0,0,0,0.15); }
+.id-card-details { flex: 1; min-width: 0; }
+.id-card-name { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem; }
+.id-card-rows { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.5rem; }
+.id-card-row { display: flex; gap: 0.5rem; font-size: 0.85rem; }
+.id-card-label { color: var(--text-muted); font-weight: 600; min-width: 75px; flex-shrink: 0; }
+.id-card-value { color: var(--text-primary); font-weight: 500; }
+.id-card-full-title { font-size: 0.72rem; color: var(--text-muted); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.7; }
+@media (max-width: 480px) { .id-card { flex-direction: column; align-items: center; text-align: center; } .id-card-rows { align-items: center; } .id-card-row { justify-content: center; } .id-card-label { min-width: auto; } }
 .scan-cam-btn { background: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-secondary); border-radius: 8px; padding: 0.55rem 0.7rem; font-size: 1rem; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; flex-shrink: 0; line-height: 1; white-space: nowrap; }
 .scan-cam-btn:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--accent); }
 /* ---- Browse Cards subtabs + Community Board ---- */
