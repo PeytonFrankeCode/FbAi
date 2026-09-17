@@ -3185,6 +3185,34 @@ function getUsers() {
   catch { return {}; }
 }
 
+// Delete plain-text passwords this app used to store.
+//
+// Stopping the write only protects people who have not signed in yet. Everyone
+// who already did is carrying a working password in this origin's storage right
+// now, and it stays there until something removes it — so this runs on load and
+// rewrites the record without it.
+//
+// Deliberately not gated on a version flag or a one-shot marker: it is cheap,
+// it is idempotent, and a flag is one more thing that can be wrong in the
+// direction of leaving the password in place.
+function purgeStoredPasswords() {
+  try {
+    const users = getUsers();
+    let found = 0;
+    for (const k of Object.keys(users)) {
+      if (users[k] && typeof users[k] === 'object' && 'password' in users[k]) {
+        delete users[k].password;
+        found++;
+      }
+    }
+    if (found) {
+      localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
+      console.warn('[auth] removed ' + found + ' stored password(s) from local storage');
+    }
+  } catch (_) { /* storage unavailable or unreadable — nothing to clean */ }
+}
+purgeStoredPasswords();
+
 function getSessionToken() { return localStorage.getItem('cardHuddleToken') || null; }
 function setSessionToken(token) {
   if (token) localStorage.setItem('cardHuddleToken', token);
@@ -3602,12 +3630,22 @@ async function handleAuth(e) {
       // device. The /api/auth/login route is what actually authenticates;
       // this is just a belt-and-suspenders cache.
       {
+        // The username and email only. The PASSWORD used to be written here
+        // too, in plain text, to support a local-login fallback for accounts
+        // created before server-side auth existed.
+        //
+        // That is a real exposure for no real benefit: anything with read
+        // access to this origin's storage — an XSS, a shared machine, a
+        // browser extension — gets a working password, and people reuse
+        // passwords across sites. The fallback it enabled could not reach any
+        // server data anyway, because that needs a session token the server
+        // only issues for correct credentials.
         const usersLocal = getUsers();
         const lkey = data.username.toLowerCase();
         if (!usersLocal[lkey]) usersLocal[lkey] = {};
         usersLocal[lkey].username = data.username;
-        usersLocal[lkey].password = password;
         if (email) usersLocal[lkey].email = email;
+        delete usersLocal[lkey].password;
         localStorage.setItem('cardHuddleUsers', JSON.stringify(usersLocal));
       }
       closeLogin();
@@ -3619,47 +3657,20 @@ async function handleAuth(e) {
     } else {
       const { res, data } = await authFetchJson('/api/auth/login', { username, password });
       if (!res.ok) {
-        // Server doesn't know this user. If the local users db (legacy
-        // accounts created before server-side auth, or accounts whose KV
-        // write was killed pre-#222) has a matching password, run a
-        // quiet migration: register the account on the server with the
-        // same credentials so the next login on any device succeeds for
-        // real. If migration fails for some reason, fall back to the
-        // local-only login like before so the user isn't locked out on
-        // this device.
-        const users = getUsers();
-        const localUser = users[username.toLowerCase()];
-        if (localUser && localUser.password === password) {
-          let migrated = false;
-          try {
-            const email = (localUser.email || '').trim();
-            const mig = await authFetchJson('/api/auth/register', { username, password, email });
-            if (mig.res.ok && mig.data && mig.data.token && mig.data.username) {
-              setSessionToken(mig.data.token);
-              setCurrentUser(mig.data.username);
-              if (mig.data.email || email) {
-                const usersNow = getUsers();
-                const key = mig.data.username.toLowerCase();
-                if (!usersNow[key]) usersNow[key] = {};
-                usersNow[key].email = mig.data.email || email;
-                localStorage.setItem('cardHuddleUsers', JSON.stringify(usersNow));
-              }
-              migrated = true;
-              console.log('[auth] migrated local account to cloud');
-            } else if (mig.res.status === 409) {
-              // Server already has this username under a different password
-              // (someone else registered it, or a stale prior attempt).
-              // Can't migrate; just keep local-only login.
-              console.warn('[auth] cannot migrate — username already taken on server');
-            }
-          } catch (err) {
-            console.warn('[auth] migration attempt failed, falling back to local-only:', err && err.message || err);
-          }
-          if (!migrated) setCurrentUser(localUser.username);
-          closeLogin();
-          if (migrated) enableUserSync().catch(() => {});
-          return false;
-        }
+        // A 401 is a 401.
+        //
+        // This used to consult a local users db and, on a password match, sign
+        // the person in on this device without a server session — a fallback
+        // for accounts created before server-side auth. It produced exactly
+        // what a bug report described: an error message and a "signed in"
+        // state at the same time, from the same submit.
+        //
+        // It was never an authentication bypass — the server never issues a
+        // token for bad credentials, and every route that returns user data
+        // requires one — but a UI that says both things at once is worse than
+        // useless, and keeping it meant storing plain-text passwords to
+        // compare against. Neither is worth a fallback for accounts that have
+        // had years of logins to migrate.
         loginError.textContent = data.error || 'Login failed';
         loginError.classList.remove('hidden');
         return false;
