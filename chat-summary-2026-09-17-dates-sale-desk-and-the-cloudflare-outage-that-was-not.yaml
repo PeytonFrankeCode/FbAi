@@ -1,0 +1,237 @@
+session:
+  date: "2026-09-17"
+  branch: claude/inventory-page-feature-x1sbrt
+  topic: >
+    Accuracy tooling and one long false alarm. Dates on every report, labelled
+    photo strips on the review desks, a new sale desk for the sales no reader
+    can place, server-side traffic counting, and a queue of unread titles.
+    Sandwiched in the middle: seven failed deploys, an unnecessary revert, and a
+    Cloudflare bot challenge that took an hour to name.
+  note: >
+    Everything merged to main and deployed green (PRs #599-#611, deploy runs
+    475-483+). Files touched: server.js, worker.js, public/sale-desk.html,
+    public/parallel-desk.html, public/insert-desk.html, package.json,
+    .github/workflows/deploy.yml, and new tests test/report-dates.test.js,
+    test/shot-strip.test.js, test/sale-desk.test.js,
+    test/traffic-count.test.js. Deploys 476-482 failed verification; nothing was
+    wrong with the code and the site served correctly throughout.
+
+overview: >
+  Half the session was ordinary accuracy work on The Card Huddle's card-identity
+  pipeline: making reports say when they were built, making the review desks show
+  which parallel each photo belongs to, and building a desk for the one case no
+  automatic reader can ever reach — a title that is simply wrong. The other half
+  was an outage that never happened. A Cloudflare bot challenge started
+  intercepting the post-deploy check, the check said "the site did not change", I
+  read that as "the site is down" and reverted a feature that was never
+  implicated. Two deploys of byte-identical trees disagreeing is what eventually
+  proved it was not the code; printing the response body is what named it. The
+  lasting fixes are diagnostic: the verify step now distinguishes three failures
+  and shows what the edge actually sent.
+
+features:
+  - >-
+      title: Dates on every report (#599)
+      detail: >
+      Eight endpoints returned a cached payload with nothing to distinguish it
+      from a fresh one. The Most Sold board is cached 48h and cron-warmed; a
+      card's analysis 30 min. "Is this showing my change yet?" was unanswerable
+      from the page and had been answered wrong twice in a day. Every cached
+      object is now stamped with generatedAt inside cachePut (on the object
+      itself, not a copy — the same object goes to res.json, so a stamp reaching
+      only the stored copy would leave the person who paid to compute the report
+      holding the undated one). Every cache hit reports servedFromCache and
+      ageMinutes; ageMinutes is ABSENT rather than zero when the payload predates
+      the stamp, because an unknown age must not read as brand new. Both review
+      desks show two clocks — when it was built, and how recent the sales are —
+      because those come apart.
+      key_functions: [_stamped, _fromCache, asOf]
+
+  - >-
+      title: The deploy summary stops passing off a stale board as this build's (#600)
+      detail: >
+      The post-deploy step prints the Most Sold board under a "Serving <sha>"
+      heading, which reads as the new code's output. It is not — /api/sold-stats
+      is cached 48h. Caught in the act: run 473 printed truncated:true against a
+      25,000-row cap when the current build's ceiling is 60,000, and I reported
+      it as current. Now labels the board's age and warns loudly over an hour.
+      The half of the step below "# Now the numbers" had been excluded from tests
+      as "reporting, not logic"; that stopped being true, so it is executed under
+      bash -e like the polling half.
+
+  - >-
+      title: Labelled, clickable photo strips on both desks (#601)
+      detail: >
+      A 2025 Topps Chrome Jaxson Dart #306 sold under eight titles and the desk
+      showed four photos with nothing tying a photo to a title. Not cosmetic —
+      the owner's point was that this is how a WONKY title hides: a photo tagged
+      X-Fractor showing a card that is plainly a Hyper means that title carries
+      sales it should not. Each photo now captions the part of its title that
+      distinguishes it (shared head cut at a word boundary), clicking a photo
+      picks that title, and photos are drawn ROUND-ROBIN across titles rather
+      than first-four — in order, that card's strip was three Leather Refractors
+      and an X-Fractor, and the 4-sale Hyper never appeared at all.
+      key_functions: [shotStrip]
+
+  - >-
+      title: The sale desk — one photo, looked at, beats the text (#602, reverted #603, re-landed #605)
+      detail: >
+      Every other desk improves a reading of the TITLE and is worth hundreds of
+      sales a click. This one is worth exactly one sale and exists because some
+      titles are simply wrong: a seller who types "Refractor" on a Hyper writes a
+      title every reader in the world reads correctly and gets wrong. No phrase
+      to fix, no checklist to extend. Precedence: an override on this item_id,
+      then the parallel column, then a phrase alias, then the reader. Beating the
+      column is deliberate — it is filled at import from the same title, so when
+      the title lies the column inherits the lie. Three places built that chain
+      inline and now share _saleParallel.
+      key_functions: [_saleParallel, _overrideParallel, saleOverrides]
+      page: /sale-desk.html
+      bugs_found_by_its_own_tests:
+      - The card page displayed seed.parallel (the raw column) while grouping by
+        the resolved value, so a corrected sale moved to the right card and went
+        on announcing itself as the card it had been moved out of.
+      - The seed row never selected item_id, so the seed was the one sale whose
+        correction could not be found — opening a card by clicking the sale you
+        had just fixed showed it uncorrected.
+
+  - >-
+      title: Server-side traffic counting (#610)
+      detail: >
+      GA showed 918 users, 919 sessions, 907 views and ZERO seconds average
+      engagement. Not a shape people make. But GA cannot settle its own question
+      — it only sees clients that run its JavaScript, so every headless browser
+      is counted and every plain scraper is invisible. Counter in the first
+      middleware splitting self-declared crawlers from browser-like, and pages
+      from assets from api; one KV write per cron tick, no per-request write. The
+      ratio worth watching is ASSETS PER PAGE: a real visit pulls CSS, JS and
+      images with it, a client that takes the HTML and leaves sits near zero
+      whatever its user agent claims, and fetching every asset is what makes
+      scraping expensive. Gated, unlike the d1-usage endpoint beside it. Tallies
+      capped at 60 keys because both keys are attacker-supplied.
+      key_functions: [_noteRequest, flushTraffic]
+      endpoint: /api/debug/traffic
+
+  - >-
+      title: A queue of the unread titles (#611)
+      detail: >
+      The sale desk only answered a card you already had in mind — useless
+      against 7,428 unread sales because nothing tells you where to look. The
+      queue is keyed on the TITLE, not the sale: one answer covers every sale
+      carrying it. Exactly the title, never a prefix, because two titles
+      differing by one word are routinely two different cards. Ranked by money,
+      not count — the pile will not be emptied, and the sales worth fixing are
+      the ones whose mis-grouping moves a price. Includes the population the
+      parallel desk drops entirely (`if (!key) continue;` — a sale whose
+      unreadable segment normalises to nothing is invisible there, not deferred).
+      low_confidence_deliberately_not_offered: >
+      Below confidence >= 0.5 a sale is filtered out by SQL in every board and
+      card page, so answering its parallel would change nothing anyone can see.
+      Counted and reported with the reason instead. Making these fixable needs
+      the confidence gate to admit a human decision — a dozen query sites, not
+      built, and not worth doing blind.
+
+the_outage_that_was_not:
+  what_happened: >
+    At ~16:54 UTC deploy 476 reported wrangler success and then served
+    "<no marker>" twenty times. Because wrangler.toml sets run_worker_first,
+    the Worker handles every request including /build.json, so I read a missing
+    marker as the Worker being down and reverted the sale desk (#603). Deploy 477
+    then failed inside wrangler with a Cloudflare API error 10013 on
+    assets-upload-session. Deploys 478-482 failed the same silent way.
+  what_actually_proved_it_was_not_the_code: >
+    Deploy 475 built tree f548fb4c and verified green. Deploy 478 built THE SAME
+    TREE, byte for byte, and failed. Same code, opposite outcomes.
+  the_actual_cause: >
+    Printing the response body (#607) answered it on its first run — the edge was
+    returning Cloudflare's "Just a moment..." interstitial, 5,521 bytes. The
+    GitHub Actions runner was being bot-challenged, which is a fair guess about
+    curl in a datacentre. Turning Bot Fight Mode off fixed it immediately
+    (deploy 483 green). The site served correctly the entire time.
+  method_note: >
+    A second theory — that gitignored public/build.json had stopped being
+    uploaded — was also wrong, and never shipped, because #607 deployed the
+    diagnostic ALONE without the fix it suggested. That is the only reason it did
+    not become a confident wrong fix stacked on a confident wrong revert.
+  lasting_fixes:
+    - The verify step distinguishes three failures — a stale SHA (old build
+      serving), an unreadable marker (asset upload did not land), and a bot
+      challenge — and says which, instead of one sentence for all three.
+    - On failure it prints the first 300 bytes of what the edge returned plus the
+      byte count. "<no marker>" covered a served index.html, an error page, an
+      empty body and an unexpected JSON shape; not knowing which cost the revert.
+    - The challenge branch names the fix (a WAF rule skipping bot protection for
+      /build.json) and says it lives in the Cloudflare dashboard, not this repo.
+
+corrections_made_to_the_owner:
+  - >-
+      claim: The Worker is probably down.
+      reality: It was not. The site served correctly throughout; only the deploy
+      verification could not see the marker. Reverted a feature on this.
+  - >-
+      claim: Requests from the runner looked like they were timing out.
+      reality: They were not — attempts were ~6s apart. Misread elapsed time.
+  - >-
+      claim: Turn Bot Fight Mode back on plus a narrow WAF rule.
+      reality: Withdrawn after the owner pointed out Bot Fight Mode was ON
+      throughout the bot traffic and did nothing. It scores known-bad
+      signatures; a real headless Chrome does not look like one.
+  - >-
+      claim: The reader handles Hyper and Refractor as different parallels.
+      reality: True, but answering a narrower question than was asked. A title
+      that SAYS Refractor on a card that is not one is unreachable by any
+      reader, which is what the sale desk was then built for.
+
+owner_corrections_that_reshaped_the_work:
+  - The photo strip is not about telling refractors apart — the split list
+    already names each parallel. It is for spotting a WONKY one.
+  - Bot Fight Mode did not fix the bot traffic, so putting it back buys nothing.
+  - Retracted the original framing of the Jaxson Dart photos themselves,
+    which stopped a change being shipped on a wrong premise.
+
+measurements:
+  - >-
+    918 users / 919 sessions / 907 views / 0s engagement — GA, one day. Sessions
+    exceeding views is near-impossible for humans; 0s average is the strongest
+    tell. These bots run JS or GA would not see them at all.
+  - >-
+    29,410 sales read for the Most Sold board, 5,766 cards found, 7,428 with an
+    unreadable parallel (~25%), truncated false against a 60,000-row ceiling.
+  - >-
+    Insert desk leverage — 11 sales per decision. Clears the single-figures bar
+    I set for retiring it, but barely; the parallel desk runs in the hundreds
+    and the set desk at ~835. Clear the parallel desk first, every time.
+  - >-
+    "Hyper" appears in NO 2025 Topps Chrome set (all 40 checked) but in 253
+    places across other products. The parallel vocabulary is global, not
+    product-scoped, so it matched from elsewhere. Either a checklist gap or a
+    mislabel; unresolved.
+
+open_items:
+  - >-
+      Bot traffic: unresolved. Needs /api/debug/traffic output after an hour of
+      live data. If server-side volume is flat against GA's +333%, it is a
+      measurement artefact and there is no bot problem to solve.
+  - Whether the GA spike predates the Bot Fight Mode change (hourly view would
+    settle it). Never confirmed.
+  - Low-confidence sales have no route to being fixed. Size of the pile is now
+    reported; the mechanism is not built.
+  - The desks can SHOW a title whose photo disagrees with it, but there is no
+    button to REPORT one. Deliberately not guessed at.
+  - /api/debug/d1-usage is public — exposes query counts, not data. Offered to
+    gate it; no answer.
+  - >-
+      Vintage checklists for 13 sets (~1,100 sales) — owner said to drop this.
+      Consequence: those sales stay unreadable and vintage rows stay coarse.
+  - Asset count is 16,948 against Cloudflare's 20,000 limit. Not a cause of
+    anything today, but the SEO landing pages only grow.
+
+discipline_notes: >
+  Every guard in this session was verified by breaking what it protects and
+  confirming the break was visible — 7 to 9 mutations per change. Several checks
+  were found passing for the wrong reason and had to be tightened: a word-boundary
+  check whose fixture diverged at a boundary anyway; a low-confidence check whose
+  rows were garbled as well as low-confidence; a ranking check whose two fixtures
+  happened to agree; an entry-point check that matched a function's definition
+  rather than anything calling it. Two self-inflicted losses of uncommitted work
+  to git reset/checkout, both recovered from context.
