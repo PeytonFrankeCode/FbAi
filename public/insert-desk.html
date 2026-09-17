@@ -80,6 +80,7 @@
   <span class="stat">sales held up <b id="s-held">–</b></span>
   <span class="stat">per decision <b id="s-per">–</b></span>
   <span class="stat">decided <b id="s-done">–</b></span>
+  <span class="stat" id="s-as-of"></span>
 </header>
 <main id="main"><p class="stat">Loading…</p></main>
 <div id="flash"></div>
@@ -126,6 +127,36 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
   c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// WHEN, ON TWO CLOCKS.
+//
+// A report has two ages and they come apart: when it was built, and how recent
+// the sales inside it are. A queue built a minute ago on sales that stop five
+// days back is stale, and the build time alone says the opposite. So both are
+// shown, and neither is inferred from the other.
+//
+// Every field is optional. A desk that blanks its header because a date was
+// missing would be worse than one that says nothing about dates at all.
+function asOf(d) {
+  const bits = [];
+  const w = d && d.window;
+  const through = w && w.through ? String(w.through).slice(0, 10) : '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(through)) {
+    const [y, m, day] = through.split('-').map(Number);
+    const days = Math.floor((Date.now() - Date.UTC(y, m - 1, day)) / 86400000);
+    bits.push('sales through ' + through +
+      (days > 1 ? ' (' + days + 'd ago)' : ''));
+  }
+  const built = Date.parse((d && d.generatedAt) || '');
+  if (Number.isFinite(built)) {
+    const mins = Math.max(0, Math.round((Date.now() - built) / 60000));
+    bits.push('built ' + (mins < 1 ? 'just now'
+      : mins < 60 ? mins + 'm ago'
+      : mins < 1440 ? Math.round(mins / 60) + 'h ago'
+      : Math.round(mins / 1440) + 'd ago'));
+  }
+  return bits.join(' · ');
+}
+
 function flash(msg, bad) {
   const f = $('flash');
   f.textContent = msg;
@@ -147,6 +178,7 @@ async function load() {
   $('s-held').textContent = (d.salesHeldUp || 0).toLocaleString();
   $('s-per').textContent = (d.salesPerDecision || 0).toLocaleString();
   $('s-done').textContent = (d.decisionsInPlace || 0).toLocaleString();
+  $('s-as-of').textContent = asOf(d);
   render();
 }
 
