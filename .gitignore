@@ -41,3 +41,6 @@ card-huddle-news.html
 # Written by the deploy workflow so the post-deploy check can tell which
 # commit the edge is serving. Generated, never committed.
 public/build.json
+
+# Written by the post-deploy check when it runs locally during tests.
+marker.json
