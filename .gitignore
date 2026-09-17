@@ -37,3 +37,7 @@ data/userphotos/
 # skill from the .dc.html artboards beside it, republished from those sources
 # on every change — the artboards and canvas.json are the files worth keeping.
 card-huddle-news.html
+
+# Written by the deploy workflow so the post-deploy check can tell which
+# commit the edge is serving. Generated, never committed.
+public/build.json

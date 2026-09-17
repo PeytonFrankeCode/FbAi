@@ -226,11 +226,91 @@ jobs:
       # deploys: a deploy does not clear secrets it does not mention. To rotate
       # one, set it in the Cloudflare dashboard, or add User Details:Read to the
       # token and restore a `secrets:`/`env:` block here.
+      # A marker that says WHICH commit is serving, shipped as an ordinary
+      # asset. Deliberately not a --var on the deploy command: that command is
+      # the riskiest line in the repo, it cannot be tested from a sandbox with
+      # no Cloudflare token, and getting it wrong breaks every deploy until
+      # someone notices. A file in public/ needs no change to it at all.
+      #
+      # The worker script and its assets go up in one deployment, so this file
+      # appearing at the edge means the whole deploy is live — not just the
+      # front end.
+      - name: Stamp the build marker
+        run: |
+          printf '{"sha":"%s","ref":"%s","builtAt":"%s"}\n' \
+            "$GITHUB_SHA" "$GITHUB_REF_NAME" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > public/build.json
+          cat public/build.json
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Did the thing we just deployed actually reach the internet?
+      #
+      # WHY THIS EXISTS. Twice in one day a fix was merged, deployed green, and
+      # reported as shipped while the site still served the old answer — once
+      # because a KV cache key had not been bumped, once because the change was
+      # wired into one of two endpoints. Both times the deploy was genuinely
+      # successful and the report was genuinely wrong, and the only way anyone
+      # found out was a person refreshing a page and saying "it hasn't changed".
+      #
+      # So the pipeline checks its own work. It polls for the build marker until
+      # the deployed SHA matches this run's, then prints the numbers most likely
+      # to reveal a bad grouping.
+      #
+      # It fails the run when the marker never appears. The deploy has already
+      # happened at that point, so a red tick here does not mean "deploy
+      # failed" — it means "deployed, and not serving", which is the more
+      # dangerous state precisely because it looks fine.
+      - name: Verify the deploy is serving, and report what it says
+        run: |
+          set -o pipefail
+          # SPA fallback returns index.html with HTTP 200 for a missing asset,
+          # so a 200 proves nothing here — the SHA inside the JSON does.
+          # Written as a plain `if`, not `[ ... ] && { ... }`: GitHub runs each
+          # step under `bash -e`, where that idiom's exit status on the false
+          # branch is a well-known way to kill a step by accident.
+          got=""
+          for i in $(seq 1 20); do
+            got=$(curl -sS -m 15 -H 'Cache-Control: no-cache' \
+                    "https://thecardhuddle.com/build.json?cb=${GITHUB_SHA}" \
+                  | jq -r '.sha // empty' 2>/dev/null || true)
+            if [ "$got" = "$GITHUB_SHA" ]; then
+              echo "serving $got after ${i} attempt(s)"
+              break
+            fi
+            echo "attempt $i: edge reports ${got:-<no marker>}"
+            sleep 6
+          done
+          if [ "$got" != "$GITHUB_SHA" ]; then
+            echo "::error::Deployed, but the edge is still serving ${got:-an unknown build}."
+            echo "::error::The deploy succeeded and the site did not change. Do not report this as shipped."
+            exit 1
+          fi
+
+          # Now the numbers. These are the ones that have been wrong before: a
+          # board that averages different cards together shows it here first.
+          curl -sS -m 60 -o stats.json "https://thecardhuddle.com/api/sold-stats?days=30" || true
+          {
+            echo "### Serving \`${GITHUB_SHA:0:7}\`"
+            echo
+            if jq -e .mostSold stats.json >/dev/null 2>&1; then
+              echo '**Most sold — is each row one card?**'
+              echo '```'
+              jq -r '.mostSold[0:6][] | "\(.sales)\tsold  $\(.avgPrice) avg  $\(.topPrice) high  \(.name)"' stats.json
+              echo '```'
+              echo '**Basis**'
+              echo '```json'
+              jq -c '.mostSoldBasis' stats.json
+              echo '```'
+            else
+              echo '_sold-stats did not return a board — check /api/sold-stats by hand._'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
 
       # Tells Bing, DuckDuckGo, Yandex, Naver and Seznam that pages changed
       # rather than waiting to be crawled. Google ignores IndexNow and has its
