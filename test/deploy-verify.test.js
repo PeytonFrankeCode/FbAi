@@ -60,6 +60,23 @@ if (!script) {
   process.exit(1);
 }
 
+// Does the whole step even parse as shell?
+//
+// Asserted by name because the author of this file has already typed `//` where
+// `#` was meant, inside the step, and shipped it. That is a hard syntax error
+// that would have failed every deploy at the last step — after the deploy had
+// already gone out. It surfaced here only as a confusing side effect in another
+// check, so it gets its own.
+{
+  const file = path.join(os.tmpdir(), `verify-syntax-${Date.now()}.sh`);
+  fs.writeFileSync(file, script);
+  let ok = true, why = '';
+  try { execFileSync('bash', ['-n', file], { stdio: ['ignore', 'pipe', 'pipe'] }); }
+  catch (e) { ok = false; why = String(e.stderr || '').trim().split('\n')[0]; }
+  fs.unlinkSync(file);
+  check('the verify step is valid bash', ok, why || 'parses');
+}
+
 // Only the polling half is exercised. What follows it writes a run summary and
 // is reporting, not logic.
 const body = script.split('# Now the numbers')[0];
@@ -67,7 +84,17 @@ const body = script.split('# Now the numbers')[0];
 function simulate(edgeResponds) {
   const stub = [
     // Stand in for the network. Everything else is the real script.
-    `curl() { printf '%s' ${JSON.stringify(edgeResponds)}; }`,
+    //
+    // The stub honours -o, because the script uses it: writing to a file rather
+    // than piping into jq is what stopped the log filling with "curl: (23)"
+    // while the old build was still serving. A stub that ignored -o would
+    // silently test a script nobody runs.
+    `curl() {`,
+    `  local out=""; local prev=""`,
+    `  for a in "$@"; do if [ "$prev" = "-o" ]; then out="$a"; fi; prev="$a"; done`,
+    `  if [ -n "$out" ]; then printf '%s' ${JSON.stringify(edgeResponds)} > "$out"`,
+    `  else printf '%s' ${JSON.stringify(edgeResponds)}; fi`,
+    `}`,
     'sleep() { :; }',
     'seq() { command seq 1 2; }',   // two attempts, not twenty
     '',

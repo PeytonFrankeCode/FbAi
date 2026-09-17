@@ -275,9 +275,16 @@ jobs:
           # branch is a well-known way to kill a step by accident.
           got=""
           for i in $(seq 1 20); do
-            got=$(curl -sS -m 15 -H 'Cache-Control: no-cache' \
-                    "https://thecardhuddle.com/build.json?cb=${GITHUB_SHA}" \
-                  | jq -r '.sha // empty' 2>/dev/null || true)
+            # To a file, not down a pipe. While the old build is still serving,
+            # the SPA fallback returns index.html, jq exits on the first byte of
+            # HTML, and curl then fails to write its remaining output — logging
+            # "curl: (23) Failure writing output to destination" on every
+            # attempt. The loop was correct and the log looked broken.
+            #
+            curl -sS -m 15 -H 'Cache-Control: no-cache' \
+              -o marker.json "https://thecardhuddle.com/build.json?cb=${GITHUB_SHA}" \
+              2>/dev/null || true
+            got=$(jq -r '.sha // empty' marker.json 2>/dev/null || true)
             if [ "$got" = "$GITHUB_SHA" ]; then
               echo "serving $got after ${i} attempt(s)"
               break
