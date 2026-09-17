@@ -29,6 +29,11 @@
   .shots { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
   .shots img { width: 104px; height: 145px; object-fit: cover; border-radius: 6px;
                background: #0b0e11; border: 1px solid var(--line); display: block; }
+  .shot { margin: 0; width: 104px; cursor: pointer; }
+  .shot.on img { border-color: var(--accent); }
+  .shot figcaption { font-size: 11px; color: var(--dim); margin-top: 4px;
+                     line-height: 1.25; overflow-wrap: anywhere; }
+  .shot.on figcaption { color: var(--accent); }
   .noshots { color: var(--dim); font-size: 12px; margin-top: 12px; }
   ol { list-style: none; padding: 0; margin: 18px 0 0; }
   li { display: flex; gap: 12px; align-items: center; padding: 9px 12px; border-radius: 7px;
@@ -157,6 +162,53 @@ function asOf(d) {
   return bits.join(' · ');
 }
 
+// EVERY PHOTO SAYS WHICH TITLE IT CAME FROM.
+//
+// Not so the parallels can be told apart — the split list above already names
+// each one. So that a WONKY one can be spotted: a photo tagged X-Fractor
+// showing a card that is plainly a Hyper means that title is carrying sales it
+// should not, and no amount of answering the card correctly fixes it.
+//
+// Pooled and unlabelled, that mismatch is invisible. A 2025 Topps Chrome Jaxson
+// Dart #306 showed four photos in a row drawn from four different titles with
+// nothing on screen tying a photo to a title, so the one photo that disagreed
+// with its label looked exactly like the three that agreed.
+//
+// Round-robin across the titles, not the first four photos in order: taking
+// them in order fills the strip from whichever title sold most and hides the
+// rest completely, which is how a wonky title stays hidden.
+function shotStrip(item, splits, chosen) {
+  const from = (chosen.length ? chosen.map(i => splits[i]) : splits)
+    .filter(sp => sp && (sp.photos || []).length);
+  // No per-title photos — fall back to the pooled ones, unlabelled rather than
+  // labelled wrongly.
+  if (!from.length) return (item.photos || []).map(u => ({ url: u, at: -1, tag: '' }));
+
+  // The labels share a long prefix: same product, same player, same number on
+  // every row. The tail is the whole difference, so the shared head is cut and
+  // only what distinguishes them is shown.
+  const labels = from.map(sp => String(sp.label || ''));
+  let cut = 0;
+  if (from.length > 1) {
+    const a = labels[0];
+    while (cut < a.length && labels.every(t => t[cut] === a[cut])) cut++;
+    while (cut > 0 && !/\s/.test(a[cut - 1])) cut--;   // never start mid-word
+  }
+
+  const out = [];
+  for (let k = 0; k < 4; k++) {
+    from.forEach((sp, j) => {
+      if (!sp.photos[k]) return;
+      out.push({
+        url: sp.photos[k],
+        at: splits.indexOf(sp),
+        tag: from.length > 1 ? (labels[j].slice(cut) || labels[j]).trim() : '',
+      });
+    });
+  }
+  return out.slice(0, 12);
+}
+
 function flash(msg, bad) {
   const f = $('flash');
   f.textContent = msg;
@@ -195,6 +247,10 @@ function render() {
   const chosen = [...picked].filter(i => splits[i]).sort((a, b) => a - b);
   // One picked place shows its own photos; several or none show the phrase's.
   const view = chosen.length === 1 ? splits[chosen[0]] : item;
+  // Labelled, and clickable: seeing that three of these are refractors and one
+  // is a Hyper is the whole job, and the answer applies to whichever ones are
+  // picked.
+  const shots = shotStrip(item, splits, chosen);
   const scopeLabel = chosen.length === 0 ? null
     : chosen.length === 1 ? splits[chosen[0]].label
     : chosen.length + ' of ' + splits.length + ' places';
@@ -239,11 +295,15 @@ function render() {
               (chosen.length === splits.length ? 'clear all' : 'pick every place') + '</div>' +
           '</div>'
         : '') +
-      ((view.photos || []).length
-        ? '<div class="shots">' + view.photos.map(u =>
-            '<img src="' + esc(u) + '" alt="" loading="lazy" ' +
-            'onerror="this.style.visibility=\'hidden\'" />').join('') + '</div>'
-        : '<div class="noshots">No photos stored for this phrase.</div>') +
+      (shots.length
+        ? '<div class="shots">' + shots.map(s =>
+            '<figure class="shot' + (s.at >= 0 && picked.has(s.at) ? ' on' : '') + '"' +
+              (s.at >= 0 ? ' data-s="' + s.at + '"' : '') + '>' +
+              '<img src="' + esc(s.url) + '" alt="" loading="lazy" ' +
+              'onerror="this.closest(\'figure\').style.visibility=\'hidden\'" />' +
+              (s.tag ? '<figcaption>' + esc(s.tag) + '</figcaption>' : '') +
+            '</figure>').join('') + '</div>'
+        : '<div class="noshots">No photos stored for this one.</div>') +
       '<div class="samples">' +
         (view.samples || []).map(t => '<div>' + esc(t) + '</div>').join('') +
       '</div>' +
@@ -286,6 +346,11 @@ function render() {
     '</div>';
 
   document.querySelectorAll('.split').forEach(el => {
+    el.onclick = () => { toggle(Number(el.dataset.s)); };
+  });
+  // A photo is the fastest way to say "that one, not the others" — it is what
+  // is actually being looked at when the difference is spotted.
+  document.querySelectorAll('.shot[data-s]').forEach(el => {
     el.onclick = () => { toggle(Number(el.dataset.s)); };
   });
   document.querySelectorAll('.cand').forEach(el => {
