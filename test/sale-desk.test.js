@@ -61,6 +61,34 @@ ins.run('LIAR', iso(-9), '2025 Topps Chrome Jaxson Dart #306 Refractor RC', 3000
 ins.run('COLUMN', iso(-9), '2025 Topps Chrome Jaxson Dart #306 RC', 250000,
         'Jaxson Dart', '2025', 'Topps Chrome', 'Refractors', '306', 0.9, null);
 
+// TITLES THE READER GIVES UP ON. Twelve sales of one, so a single answer is
+// worth twelve — which is the whole argument for a queue keyed on the title
+// rather than on the sale.
+for (let i = 0; i < 12; i++) {
+  ins.run('u' + i, iso(-12 - (i % 5)),
+          '2025 Topps Chrome Caleb Williams #1 Zoinks Wobble', 5000,
+          'Caleb Williams', '2025', 'Topps Chrome', '', '1', 0.9, 'https://img/u.jpg');
+}
+// AND THE ONE THE PARALLEL DESK DROPS ENTIRELY.
+//
+// Its queue does `if (!key) continue;` — a sale whose unreadable segment
+// normalises to nothing is not deferred, it is invisible. No phrase to blame
+// means no queue entry there, so this is the population no other screen shows.
+for (let i = 0; i < 9; i++) {
+  ins.run('np' + i, iso(-12 - (i % 4)),
+          '2025 Topps Chrome Rome Odunze #2 ***', 22000,
+          'Rome Odunze', '2025', 'Topps Chrome', '', '2', 0.9, 'https://img/np.jpg');
+}
+// BELOW THE CONFIDENCE GATE. Excluded by SQL from every board and card page, so
+// these must be counted and reported but never offered as work.
+// Deliberately ALSO unread — same shape as the queued titles above. If it were
+// merely garbled, the reader would exclude it anyway and the check that it is
+// not offered would pass without the confidence test doing any work.
+for (let i = 0; i < 7; i++) {
+  ins.run('lc' + i, iso(-13), '2025 Topps Chrome Ghost Player #9 Zoinks Wobble', 40000,
+          'Ghost Player', '2025', 'Topps Chrome', '', '9', 0.2, null);
+}
+
 for (let d = 0; d < 40; d++) {
   db.prepare('INSERT INTO daily (sold_date, sales, priced, total_cents) VALUES (?,?,?,?)')
     .run(iso(-d), 100, 90, 900000);
@@ -298,6 +326,91 @@ const dartRows = (b) => (b.mostSold || []).filter(r => /Jaxson Dart/.test(r.name
       num ? `override=${num.override} parallel=${num.parallel}` : 'not found');
   }
 
+  // ---- the queue: the work comes to you ----------------------------------
+  //
+  // The desk's first unit was one sale, which is right when a person is looking
+  // at one photo that disagrees with its words, and hopeless as a queue — the
+  // unread pile runs to thousands. So the queue groups by title and one answer
+  // covers every sale carrying it.
+  {
+    const q = await get(`/api/review/sales?key=${K}&mode=queue&days=400`);
+    check('the queue lists titles nothing could read',
+      q.available === true && (q.queue || []).length > 0,
+      q.available ? `${(q.queue || []).length} titles` : `unavailable: ${q.reason || q.error}`);
+
+    const caleb = (q.queue || []).find(t => /Caleb Williams/.test(t.title));
+    check('  ...grouped by title, so one answer is worth every sale of it',
+      caleb && caleb.sales === 12,
+      caleb ? `${caleb.sales} sales, segment="${caleb.segment}"` : 'not queued');
+
+    // THE POPULATION NO OTHER SCREEN SHOWS. The parallel desk drops these for
+    // having no phrase to blame; they are invisible rather than deferred.
+    const noPhrase = (q.queue || []).find(t => /Rome Odunze/.test(t.title));
+    check('  ...including the ones the parallel desk drops for having no phrase',
+      noPhrase && noPhrase.sales === 9,
+      noPhrase ? `${noPhrase.sales} sales, segment="${noPhrase.segment}"` : 'not queued');
+    check('  ...worth many sales per answer, or it is not worth an evening',
+      (q.salesPerDecision || 0) >= 2, `${q.salesPerDecision} sales per answer`);
+    // The two fixtures disagree on purpose: Caleb has MORE sales (12) and LESS
+    // money ($600); Rome has fewer (9) and more ($1,980). Ranking by count
+    // would put Caleb first, and the point of the queue is the money it moves.
+    check('  ...ranked by money, not by count',
+      (q.queue || [])[0] && /Rome Odunze/.test(q.queue[0].title),
+      (q.queue || []).map(t => `${t.sales} sales/$${t.value}`).join(' then '));
+    check('  ...and offers that product\'s own parallels to pick from',
+      caleb && (caleb.candidates || []).length > 5,
+      caleb ? `${(caleb.candidates || []).length} candidates` : 'none');
+
+    // NOT OFFERED, AND SAID SO. Below confidence these are filtered out by SQL
+    // everywhere, so answering one would change nothing anyone can see.
+    // Offering the work anyway would be the worst kind of busy screen.
+    check('low-confidence sales are counted, not queued',
+      q.lowConfidence && q.lowConfidence.sales === 7
+      && !(q.queue || []).some(t => /Ghost Player/.test(t.title)),
+      q.lowConfidence ? `${q.lowConfidence.sales} below ${q.lowConfidence.threshold}` : 'not reported');
+    check('  ...and the report says why answering them would not help',
+      /confidence gate/.test((q.lowConfidence || {}).note || ''),
+      'a number with no explanation invites work that achieves nothing');
+  }
+
+  // ---- one answer, every sale carrying the title -------------------------
+  {
+    const r = await post({ title: '2025 Topps Chrome Caleb Williams #1 Zoinks Wobble', parallel: 'Hyper' });
+    check('answering a title applies to every sale of it',
+      r.status === 200 && r.body.applied === 12,
+      `applied to ${r.body.applied}`);
+
+    // Checked on the card view rather than the board: twelve sales is below
+    // MOST_SOLD_MIN_GROUP, so this card cannot reach the board at all and an
+    // assertion there would be testing the threshold, not the answer.
+    const cv = await get(`/api/review/sales?key=${K}&player=Caleb%20Williams&cardNumber=1`);
+    const fixed = (cv.sales || []).filter(x => x.override === 'Hyper');
+    check('  ...and every one of them now reads as the answer',
+      fixed.length === 12 && fixed.every(x => x.how === 'sale-override'),
+      `${fixed.length} of ${(cv.sales || []).length} read as Hyper`);
+
+    const q2 = await get(`/api/review/sales?key=${K}&mode=queue&days=400`);
+    check('  ...and the title leaves the queue',
+      !(q2.queue || []).some(t => /Caleb Williams/.test(t.title)),
+      `${(q2.queue || []).length} titles left`);
+
+    // Exactly, not loosely. Two titles differing by one word are routinely two
+    // different cards, and a prefix match would spread one answer across them.
+    const miss = await post({ title: '2025 Topps Chrome Caleb Williams #1', parallel: 'Hyper' });
+    check('  ...and a title that is not an exact match applies to nothing',
+      miss.status === 404, `HTTP ${miss.status}: ${miss.body.error || ''}`);
+
+    const bad = await post({ title: '2025 Topps Chrome Caleb Williams #1 Zoinks Wobble', parallel: 'Nonsense Parallel' });
+    check('  ...while a name no checklist has is still refused',
+      bad.status === 400, `HTTP ${bad.status}`);
+
+    const undo = await post({ title: '2025 Topps Chrome Caleb Williams #1 Zoinks Wobble' });
+    check('  ...and the whole group can be undone',
+      undo.status === 200 && undo.body.applied === 12
+      && !(KV.get('saleoverrides:v1') || {}).u0,
+      `undid ${undo.body.applied}`);
+  }
+
   // ---- every grouping path goes through the one chain --------------------
   //
   // The repeated failure: /api/search was fixed while /api/direct-search fed
@@ -351,6 +464,16 @@ const dartRows = (b) => (b.mostSold || []).filter(r => /Jaxson Dart/.test(r.name
     check('  ...and keeps the caret where it was',
       /box\.setSelectionRange\(typed\.length, typed\.length\)/.test(script),
       're-rendering on each keystroke eats the second character otherwise');
+    check('  ...has a way into the queue, or nobody finds it',
+      /\$\('toqueue'\)\.onclick = \(\) => loadQueue\(\);/.test(script)
+      && /id="toqueue"/.test(html) && /mode=queue/.test(script),
+      'defining loadQueue is not the same as anything calling it');
+    check('  ...answers the queue by title, not by one sale',
+      /const body = \{ title: item\.title \};/.test(script),
+      'one sale at a time is not a queue anyone finishes');
+    check('  ...and fills the picker from that item\'s own parallels',
+      /candidates = \(queue\[qAt\] && queue\[qAt\]\.candidates\) \|\| \[\];/.test(script),
+      'an empty picker turns the screen into a spelling test');
     check('  ...marks a corrected sale apart from an unread one',
       /s\.override != null \? ' on' : ''/.test(script) && /' unread'/.test(script),
       'the point of the grid is seeing which one is not like the others');

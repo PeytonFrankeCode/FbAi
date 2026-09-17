@@ -5715,6 +5715,18 @@ const SALE_OVERRIDE_KEY = 'saleoverrides:v1';
 // by price rather than truncating an arbitrary slice.
 const SALE_DESK_MAX_SALES = 300;
 
+// How much of the window the queue reads, and how many answers it offers.
+// Grouped by title in SQL, so the scan is titles rather than sales; the cap on
+// the queue itself is about a screen a person can work through, not a limit on
+// what is wrong.
+const SALE_QUEUE_SCAN = 4000;
+const SALE_QUEUE_MAX = 120;
+
+// A ceiling on how far one title answer reaches. A popular base card can carry
+// hundreds of sales, and a single click writing an unbounded number of
+// overrides is a click nobody can undo by hand — the response says when it bit.
+const SALE_TITLE_MAX_APPLY = 500;
+
 async function saleOverrides() {
   // archiveGet, not cacheGet: these are decisions, not a cache. A cache may be
   // evicted at any time and these must not be.
@@ -6180,6 +6192,7 @@ app.get('/api/review/sales', async (req, res) => {
     const db = getNflDb();
     if (!db) return res.json({ available: false, reason: 'no database' });
 
+    const mode = String(req.query.mode || '').trim();
     const q = String(req.query.q || '').trim();
     const player = String(req.query.player || '').trim();
     const cardNumber = String(req.query.cardNumber || '').trim();
@@ -6188,6 +6201,155 @@ app.get('/api/review/sales', async (req, res) => {
     const img = await _nflHasImageColumn(db);
     const overrides = await saleOverrides();
 
+    // ---- the queue: sales nothing can read -------------------------------
+    //
+    // WHY THIS IS NOT THE PARALLEL DESK AGAIN.
+    //
+    // The parallel desk queues the PHRASE it could not place, and drops any
+    // sale whose unreadable segment normalises to nothing:
+    //
+    //   if (!key) continue;
+    //
+    // Those sales are not deferred, they are invisible. No phrase to blame
+    // means no queue entry, so a title the reader gave up on with nothing to
+    // show for it is seen by no screen at all. This is where they go.
+    //
+    // Grouped by exact title, because an answer about a title is worth every
+    // sale that carries it. One decision covering forty sales is the
+    // difference between this screen being worth an evening and not.
+    //
+    // Ranked by money rather than by count. The point is not to empty the pile
+    // — at 7,428 unread sales nobody is emptying it — but to fix the ones
+    // whose mis-grouping moves a price people trade on.
+    if (mode === 'queue') {
+      const days = Math.min(Math.max(parseInt(req.query.days, 10) || 90, 1), 400);
+      const newest = await db.prepare(
+        'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+      if (!newest || !newest.d) return res.json({ available: false, reason: 'no data in range' });
+      const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+      const since = _mkIso(_mkDay(through) - days);
+
+      const rows = await db.prepare(
+        `SELECT title, COUNT(*) AS n, SUM(COALESCE(price_cents, 0)) AS cents,
+                MAX(player) AS player, MAX(year) AS year, MAX(set_name) AS set_name,
+                MAX(card_number) AS card_number, MIN(confidence) AS conf,
+                MAX(parallel) AS parallel, MAX(item_id) AS item_id
+                ${img ? ', MAX(image_url) AS image_url' : ''}
+           FROM sales
+          WHERE price_cents IS NOT NULL AND price_cents > 0
+            AND sold_date > ? AND sold_date <= ?
+            AND title IS NOT NULL AND title <> ''
+          GROUP BY title
+          ORDER BY SUM(COALESCE(price_cents, 0)) DESC
+          LIMIT ?`).bind(since, through, SALE_QUEUE_SCAN).all();
+
+      const pi = await parallelIndex().catch(() => null);
+      const pAliases = await parallelAliases().catch(() => ({}));
+
+      // The rainbow, per product, memoised by (year|set) because the queue is
+      // long and the same product recurs constantly. Without this the picker
+      // has nothing to filter and the screen becomes a spelling test — the
+      // exact failure the parallel desk's candidate list was added to fix.
+      let byProduct = {}, setIndex = null;
+      try {
+        byProduct = (await _loadJson('parallel-index.json')).parallelsByProduct || {};
+        const cidx = await _loadJson('checklists/index.json');
+        setIndex = buildJoinIndex((cidx && cidx.products) || [], undefined, await setAliases()).index;
+      } catch (err) {
+        console.error('[review/sales] rainbow unavailable:', err && err.message);
+      }
+      const _rainbow = new Map();
+      const rainbowFor = (year, setName) => {
+        const k = `${year || ''}|${setName || ''}`;
+        if (_rainbow.has(k)) return _rainbow.get(k);
+        let names = [];
+        try {
+          const hit = setIndex && matchSale(setIndex, String(year || ''), String(setName || ''));
+          const pid = hit ? (typeof hit === 'string' ? hit : hit.id) : null;
+          names = (byProduct[pid] || []).slice().sort((a, b) => a.localeCompare(b));
+        } catch (_) { names = []; }
+        _rainbow.set(k, names);
+        return names;
+      };
+
+      const queue = [];
+      let scanned = 0, unread = 0, lowConf = 0, lowConfCents = 0, decided = 0;
+
+      for (const r of ((rows && rows.results) || [])) {
+        const n = r.n || 0;
+        scanned += n;
+        const title = String(r.title || '');
+
+        // Below the confidence gate the sale is excluded from every board and
+        // every card page by SQL, long before any of this runs. Counted and
+        // reported rather than queued: answering the parallel on one would
+        // change nothing anyone can see, and offering the work anyway would be
+        // the worst kind of busy screen.
+        const low = (r.conf != null && r.conf < NFLDB_MIN_CONFIDENCE);
+        if (low) { lowConf += n; lowConfCents += (r.cents || 0); continue; }
+
+        // The whole chain, so a title already settled by a phrase alias or by a
+        // decision does not come back. Passing the overrides was not optional:
+        // without them an answered title stayed in the queue for ever, which is
+        // the most demoralising thing a queue can do.
+        //
+        // One representative item_id is enough. A title answer writes an
+        // override for every sale carrying the title, so if one has it they all
+        // do — and grouping by title leaves no other id to check.
+        const hit = _saleParallel({ title, parallel: r.parallel, item_id: r.item_id },
+                                  pi, pAliases, overrides, r.player);
+        if (hit && (hit.parallel || hit.how === 'base')) continue;
+        unread += n;
+
+        queue.push({
+          title: title.slice(0, 140),
+          sales: n,
+          value: Math.round((r.cents || 0) / 100),
+          player: r.player, year: r.year, setName: r.set_name,
+          cardNumber: r.card_number,
+          photo: img ? (r.image_url || null) : null,
+          // What the reader managed before giving up, so the answer can be
+          // judged against the same words it choked on.
+          segment: (hit && hit.segment) || '',
+          how: (hit && hit.how) || 'unread',
+          // This product's own parallels, so the answer is picked rather than
+          // remembered — and so a typo cannot be saved as one.
+          candidates: rainbowFor(r.year, r.set_name),
+        });
+        if (queue.length >= SALE_QUEUE_MAX) break;
+      }
+
+      decided = Object.keys(overrides).length;
+
+      return res.json({
+        available: true,
+        generatedAt: new Date().toISOString(),
+        mode: 'queue',
+        window: { since, through, days },
+        salesScanned: scanned,
+        unreadSales: unread,
+        // The number that says whether this screen is worth an evening.
+        salesPerDecision: queue.length ? Math.round(unread / queue.length) : 0,
+        decisionsInPlace: decided,
+        // NOT QUEUED, AND SAID OUT LOUD.
+        //
+        // These sit below confidence >= 0.5 and are filtered out by SQL in
+        // every board, page and desk — so they are invisible rather than
+        // merely unread, and a parallel answer on one would change nothing
+        // visible. Reported so the size of that hidden pile is known before
+        // anyone decides whether it is worth a mechanism of its own.
+        lowConfidence: {
+          sales: lowConf,
+          value: Math.round(lowConfCents / 100),
+          threshold: NFLDB_MIN_CONFIDENCE,
+          note: 'Excluded by SQL from every board and card page. Answering the '
+              + 'parallel on these would not make them appear — they need the '
+              + 'confidence gate to admit a human decision, which does not '
+              + 'exist yet.',
+        },
+        queue,
+      });
+    }
     // ---- find the card -----------------------------------------------------
     //
     // Nothing named yet, so answer with cards rather than sales. Grouped and
@@ -6295,9 +6457,65 @@ app.get('/api/review/sales', async (req, res) => {
 // it undoes the decision and hands the sale back to the reader.
 app.post('/api/review/sales', async (req, res) => {
   if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
-  const { itemId, parallel } = req.body || {};
+  const { itemId, parallel, title } = req.body || {};
+
+  // ONE ANSWER, EVERY SALE THAT CARRIES THE TITLE.
+  //
+  // The desk's first unit was one sale, which is right when someone is looking
+  // at one photo that disagrees with its words. It is hopeless as a queue: the
+  // unread pile runs to thousands and nobody clicks through it one at a time.
+  //
+  // So a decision can name a TITLE instead, and applies to every sale with
+  // exactly that title in the window. Exactly — not a prefix, not a normalised
+  // form — because two titles differing by one word are routinely two
+  // different cards, and a loose match here would spread one answer across
+  // them silently.
+  //
+  // It still writes one override per item_id rather than a title rule, so
+  // everything downstream keeps reading the same map, and a later sale with the
+  // same title is NOT retroactively covered. That is deliberate: it keeps the
+  // decision about sales a person's answer was actually based on.
+  if (title !== undefined) {
+    if (typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ error: 'title must be a non-empty string' });
+    }
+    if (parallel !== undefined && parallel !== null && typeof parallel !== 'string') {
+      return res.status(400).json({ error: 'parallel must be a string' });
+    }
+    if (parallel) {
+      const pi = await parallelIndex().catch(() => null);
+      if (pi && pi.classify(parallel) === 'unknown') {
+        return res.status(400).json({ error: `"${parallel}" is not a parallel in any checklist` });
+      }
+    }
+    try {
+      const db = getNflDb();
+      if (!db) return res.status(503).json({ error: 'no database' });
+      const rows = await db.prepare(
+        'SELECT item_id FROM sales WHERE title = ? LIMIT ?')
+        .bind(title, SALE_TITLE_MAX_APPLY).all();
+      const ids = ((rows && rows.results) || []).map(r => String(r.item_id)).filter(Boolean);
+      if (!ids.length) return res.status(404).json({ error: 'no sales carry that title' });
+
+      const overrides = await saleOverrides();
+      const at = new Date().toISOString();
+      for (const id of ids) {
+        if (parallel === undefined || parallel === null) delete overrides[id];
+        else overrides[id] = { parallel, at };
+      }
+      await archivePut(SALE_OVERRIDE_KEY, overrides);
+      return res.json({ ok: true, title, applied: ids.length,
+                        parallel: parallel === undefined ? null : parallel,
+                        truncated: ids.length >= SALE_TITLE_MAX_APPLY,
+                        total: Object.keys(overrides).length });
+    } catch (err) {
+      console.error('[review/sales:title]', err && err.stack || err);
+      return res.status(500).json({ error: err && err.message });
+    }
+  }
+
   if (!itemId || typeof itemId !== 'string') {
-    return res.status(400).json({ error: 'itemId required' });
+    return res.status(400).json({ error: 'itemId or title required' });
   }
 
   try {
