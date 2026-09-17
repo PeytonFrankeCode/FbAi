@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Parallel desk</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171c22; --line: #242c35; --ink: #e7edf3;
+    --dim: #8b98a5; --accent: #4ade80; --warn: #fbbf24; --bad: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--line);
+           display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; }
+  h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  .stat { color: var(--dim); font-size: 13px; }
+  .stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  main { padding: 20px; max-width: 880px; margin: 0 auto; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+          padding: 18px 20px; }
+  .phrase { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  .meta { color: var(--dim); font-size: 13px; margin-top: 4px; }
+  .samples { margin-top: 12px; }
+  .samples div { color: var(--dim); font-size: 12px; font-style: italic;
+                 overflow-wrap: anywhere; margin-bottom: 3px; }
+  .shots { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .shots img { width: 104px; height: 145px; object-fit: cover; border-radius: 6px;
+               background: #0b0e11; border: 1px solid var(--line); display: block; }
+  .noshots { color: var(--dim); font-size: 12px; margin-top: 12px; }
+  ol { list-style: none; padding: 0; margin: 18px 0 0; }
+  li { display: flex; gap: 12px; align-items: center; padding: 9px 12px; border-radius: 7px;
+       border: 1px solid transparent; cursor: pointer; }
+  li:hover { background: #1d242c; }
+  li.sel { border-color: var(--accent); background: #16241c; }
+  kbd { background: #0b0e11; border: 1px solid var(--line); border-bottom-width: 2px;
+        border-radius: 5px; padding: 1px 7px; font: 12px/1.6 ui-monospace, monospace;
+        color: var(--dim); min-width: 22px; text-align: center; }
+  .pname { flex: 1; }
+  .keys { margin-top: 18px; color: var(--dim); font-size: 12px; display: flex;
+          gap: 16px; flex-wrap: wrap; }
+  .done { text-align: center; padding: 60px 20px; color: var(--dim); }
+  .done b { color: var(--accent); }
+  #flash { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px;
+           background: #16241c; border: 1px solid var(--accent); color: var(--accent);
+           padding: 9px 18px; border-radius: 7px; font-size: 13px; opacity: 0;
+           transition: opacity .18s; pointer-events: none; }
+  #flash.bad { background: #2a1616; border-color: var(--bad); color: var(--bad); }
+  #flash.on { opacity: 1; }
+  input[type=text] { width: 100%; margin-top: 12px; padding: 9px 12px; border-radius: 7px;
+                     background: #0b0e11; border: 1px solid var(--line); color: var(--ink);
+                     font: inherit; }
+  .hint { color: var(--warn); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Parallel desk</h1>
+  <span class="stat">open phrases <b id="s-open">–</b></span>
+  <span class="stat">sales held up <b id="s-held">–</b></span>
+  <span class="stat">per decision <b id="s-per">–</b></span>
+  <span class="stat">decided <b id="s-done">–</b></span>
+</header>
+<main id="main"><p class="stat">Loading…</p></main>
+<div id="flash"></div>
+
+<script>
+// The desk deals in PHRASES, not sales, and that is the whole design.
+//
+// A month's sample holds ~16,700 sales across ~4,000 titles, so deciding one
+// sale at a time is worth about four sales a click. The parallel reader hands
+// back the exact segment it could not place, and the same phrase recurs on
+// every listing of that card — so a decision about the phrase is worth every
+// sale that will ever carry it. The header shows that ratio live, because if it
+// stops being large this screen is not worth anyone's evening.
+//
+// Two answers, and the second is the one no automatic reader can reach:
+//   a real parallel missing from a checklist
+//   not a parallel at all — usually a team name, and the card is base
+const qs = new URLSearchParams(location.search);
+const KEY = qs.get('key') || '';
+let queue = [], at = 0, sel = 0, done = 0, fixed = 0;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function flash(msg, bad) {
+  const f = $('flash');
+  f.textContent = msg;
+  f.className = 'on' + (bad ? ' bad' : '');
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => { f.className = bad ? 'bad' : ''; }, 1800);
+}
+
+async function load() {
+  const r = await fetch('/api/review/parallels?key=' + encodeURIComponent(KEY) + '&days=90');
+  const d = await r.json();
+  if (!d.available) {
+    $('main').innerHTML = '<p class="stat">' +
+      esc(d.error || d.reason || 'Unavailable — check the admin key in the URL.') + '</p>';
+    return;
+  }
+  queue = d.queue || [];
+  $('s-open').textContent = (d.openPhrases || 0).toLocaleString();
+  $('s-held').textContent = (d.salesHeldUp || 0).toLocaleString();
+  $('s-per').textContent = (d.salesPerDecision || 0).toLocaleString();
+  $('s-done').textContent = (d.decisionsInPlace || 0).toLocaleString();
+  render();
+}
+
+function render() {
+  const item = queue[at];
+  if (!item) {
+    $('main').innerHTML = '<div class="done"><p><b>Queue clear.</b></p>' +
+      '<p class="stat">' + done + ' decided, ' + fixed.toLocaleString() +
+      ' sales resolved this session.</p></div>';
+    return;
+  }
+
+  $('main').innerHTML =
+    '<div class="card">' +
+      '<div class="phrase">' + esc(item.phrase) + '</div>' +
+      '<div class="meta"><b>' + item.sales.toLocaleString() + '</b> sales' +
+        (item.value ? ' &middot; $' + item.value.toLocaleString() + ' traded' : '') +
+        (item.products && item.products.length ? ' &middot; ' + esc(item.products.join(', ')) : '') +
+        ' &middot; ' + (queue.length - at) + ' left' + '</div>' +
+      ((item.photos || []).length
+        ? '<div class="shots">' + item.photos.map(u =>
+            '<img src="' + esc(u) + '" alt="" loading="lazy" ' +
+            'onerror="this.style.visibility=\'hidden\'" />').join('') + '</div>'
+        : '<div class="noshots">No photos stored for this phrase.</div>') +
+      '<div class="samples">' +
+        (item.samples || []).map(t => '<div>' + esc(t) + '</div>').join('') +
+      '</div>' +
+      // Only two options, because there are only two answers. Naming the
+      // parallel is a typing job, not a pick-from-a-list one: the catalogue
+      // holds thousands and the right one is whatever the card actually says.
+      '<ol id="opts">' +
+        '<li class="' + (sel === 0 ? 'sel' : '') + '" data-i="0">' +
+          '<kbd>X</kbd><span class="pname">Not a parallel &mdash; this card is base</span></li>' +
+        '<li class="' + (sel === 1 ? 'sel' : '') + '" data-i="1">' +
+          '<kbd>Enter</kbd><span class="pname">It is a parallel &mdash; type its catalogue name below</span></li>' +
+      '</ol>' +
+      '<input type="text" id="manual" placeholder="e.g. Silver Prizm" autocomplete="off" />' +
+      '<p class="hint">The name must exist in a checklist. If it does not, the parallel ' +
+      'is missing from that product and the fix is the checklist, not this screen.</p>' +
+      '<div class="keys">' +
+        '<span><kbd>X</kbd> not a parallel</span>' +
+        '<span><kbd>Enter</kbd> save typed name</span>' +
+        '<span><kbd>S</kbd> skip</span>' +
+      '</div>' +
+    '</div>';
+
+  document.querySelectorAll('#opts li').forEach(el => {
+    el.onclick = () => {
+      sel = Number(el.dataset.i);
+      if (sel === 0) decide('');
+      else $('manual').focus();
+    };
+  });
+}
+
+async function decide(parallel) {
+  const item = queue[at];
+  if (!item) return;
+  const r = await fetch('/api/review/parallels?key=' + encodeURIComponent(KEY), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ phrase: item.phrase, parallel }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { flash(d.error || 'Failed', true); return; }
+
+  done++; fixed += item.sales;
+  $('s-done').textContent = (d.total || 0).toLocaleString();
+  flash('+' + item.sales.toLocaleString() + ' sales → ' + (parallel || 'base'));
+  at++; sel = 0; render();
+}
+
+document.addEventListener('keydown', (e) => {
+  const box = document.getElementById('manual');
+  if (document.activeElement === box) {
+    if (e.key === 'Enter' && box.value.trim()) { decide(box.value.trim()); }
+    if (e.key === 'Escape') box.blur();
+    return;
+  }
+  if (!queue[at]) return;
+  if (e.key.toLowerCase() === 'x') { decide(''); }
+  else if (e.key === 'Enter') { box && box.focus(); e.preventDefault(); }
+  else if (e.key.toLowerCase() === 's') { at++; sel = 0; render(); }
+});
+
+load();
+</script>
+</body>
+</html>
