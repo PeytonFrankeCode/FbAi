@@ -92,5 +92,44 @@ check('no element missing from index.html is dereferenced unguarded',
     bare.length ? `${bare.join(', ')} — every tab would break, not just one` : 'the navigation cannot be taken down this way');
 }
 
+// Boot has to route, not assume.
+//
+// index.html hardcodes which tab is active — <button class="nav-tab active"
+// data-view="search"> — so Search looks selected before a line of JS runs. But
+// the chrome that selection implies is not in the markup's hands: the Search /
+// Grading Advisor / Scan Card strip ships with the `hidden` class and is
+// revealed only by switchView('search'). While boot routed conditionally
+// (`if (view) switchView(view)`), a first load at '/' matched no route and
+// called nothing, so the strip stayed hidden under an active-looking tab. It
+// appeared on the first trip to another tab and back, which is why it read as
+// a rendering glitch rather than a missing call.
+//
+// Two sources of truth for what a view looks like is the actual defect, and
+// the fix is for switchView to be the only one. So: boot calls it
+// unconditionally, with a default.
+{
+  const start = app.indexOf('function bootFromPath(');
+  const body = start === -1 ? '' : app.slice(start, app.indexOf('})();', start));
+  check('boot routes a view on every load, not only on a recognised path',
+    start !== -1 && /switchView\(/.test(body) && !/if\s*\(\s*view\s*\)\s*switchView/.test(body),
+    start === -1
+      ? 'bootFromPath is gone — nothing establishes the starting view'
+      : (/if\s*\(\s*view\s*\)\s*switchView/.test(body)
+        ? "guarded call: '/' falls through and the Search subtab strip stays hidden"
+        : 'switchView owns the starting view'));
+  check('  ...and names a fallback view for the paths no route matches',
+    /\|\|\s*'search'/.test(body),
+    /\|\|\s*'search'/.test(body) ? "'/' boots on Search" : 'no default — switchView(undefined) is not a view');
+}
+
+// The strip this was about. If it ever stops shipping hidden the checks above
+// are no longer load-bearing, and this is the line that will say so.
+check('  ...which is what the Search subtab strip depends on',
+  /id="search-subtabs"[^>]*class="[^"]*\bhidden\b/.test(html)
+    || !/id="search-subtabs"/.test(html),
+  /id="search-subtabs"/.test(html)
+    ? 'the strip is hidden in the markup and un-hidden by switchView alone'
+    : 'the strip is gone from the markup');
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
