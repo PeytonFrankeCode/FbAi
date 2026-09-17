@@ -4525,14 +4525,14 @@ function switchSearchSub(sub) {
   if (sub === 'grading') {
     mainEl.classList.add('hidden');
     gradingView.classList.remove('hidden');
-    if (scannerView) scannerView.classList.add('hidden');
+    if (scannerView) { scannerView.classList.add('hidden'); _stopCam('scanner-video'); }
   } else if (sub === 'scanner') {
     mainEl.classList.add('hidden');
     gradingView.classList.add('hidden');
     if (scannerView) { scannerView.classList.remove('hidden'); initScannerView(); }
   } else {
     gradingView.classList.add('hidden');
-    if (scannerView) scannerView.classList.add('hidden');
+    if (scannerView) { scannerView.classList.add('hidden'); _stopCam('scanner-video'); }
     mainEl.classList.remove('hidden');
   }
 }
@@ -4551,7 +4551,77 @@ let _scannerLastQuery = null;
 const SCANNER_IMG_DIM = 1400;
 const SCANNER_IMG_QUALITY = 0.85;
 
-function initScannerView() { /* no gate needed */ }
+function initScannerView() { _startCam('scanner-video', 'scanner-cam-fallback', 'scanner-capture-btn'); }
+
+// ---- Shared camera helpers ----
+let _camStreams = {};
+
+async function _startCam(videoId, fallbackId, captureBtnId) {
+  const video = document.getElementById(videoId);
+  const fallback = document.getElementById(fallbackId);
+  const captureBtn = captureBtnId && document.getElementById(captureBtnId);
+  if (!video) return;
+  if (_camStreams[videoId]) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1400 }, height: { ideal: 1400 } },
+      audio: false,
+    });
+    _camStreams[videoId] = stream;
+    video.srcObject = stream;
+    video.classList.remove('hidden');
+    if (fallback) fallback.classList.add('hidden');
+    if (captureBtn) captureBtn.disabled = false;
+  } catch {
+    video.classList.add('hidden');
+    if (fallback) fallback.classList.remove('hidden');
+    if (captureBtn) captureBtn.disabled = true;
+  }
+}
+
+function _stopCam(videoId) {
+  const stream = _camStreams[videoId];
+  if (stream) { stream.getTracks().forEach(t => t.stop()); delete _camStreams[videoId]; }
+  const video = document.getElementById(videoId);
+  if (video) video.srcObject = null;
+}
+
+function _captureFrame(videoId, maxDim, quality) {
+  const video = document.getElementById(videoId);
+  if (!video || !video.videoWidth) return null;
+  const scale = Math.min(1, maxDim / Math.max(video.videoWidth, video.videoHeight));
+  const w = Math.round(video.videoWidth * scale);
+  const h = Math.round(video.videoHeight * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(video, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+function captureScanner() {
+  const dataUrl = _captureFrame('scanner-video', SCANNER_IMG_DIM, SCANNER_IMG_QUALITY);
+  if (!dataUrl) { alert('Camera not ready. Try again or upload a photo.'); return; }
+  _scannerImageDataUrl = dataUrl;
+  _stopCam('scanner-video');
+  document.getElementById('scanner-preview').src = dataUrl;
+  document.querySelector('.cam-scanner-wrap:not(.cam-scanner-compact)')?.classList.add('hidden');
+  document.getElementById('scanner-preview-wrap').classList.remove('hidden');
+  document.getElementById('scanner-error').classList.add('hidden');
+  document.getElementById('scanner-phase-matches').classList.add('hidden');
+  document.getElementById('scanner-results').classList.add('hidden');
+}
+
+function captureScanFill() {
+  const dataUrl = _captureFrame('scan-fill-video', 800, 0.85);
+  if (!dataUrl) { alert('Camera not ready. Try again or upload a photo.'); return; }
+  _scanFillImageDataUrl = dataUrl;
+  _stopCam('scan-fill-video');
+  document.getElementById('scan-fill-preview').src = dataUrl;
+  document.querySelector('.cam-scanner-compact')?.classList.add('hidden');
+  document.getElementById('scan-fill-preview-wrap').classList.remove('hidden');
+  document.getElementById('scan-fill-error').classList.add('hidden');
+  document.getElementById('scan-fill-phase-matches').classList.add('hidden');
+}
 
 async function handleScannerFile(e) {
   const file = e.target.files && e.target.files[0];
@@ -4560,7 +4630,9 @@ async function handleScannerFile(e) {
   if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
   try {
     _scannerImageDataUrl = await readImageFileAsDataUrl(file, SCANNER_IMG_DIM, SCANNER_IMG_QUALITY);
+    _stopCam('scanner-video');
     document.getElementById('scanner-preview').src = _scannerImageDataUrl;
+    document.querySelector('.cam-scanner-wrap:not(.cam-scanner-compact)')?.classList.add('hidden');
     document.getElementById('scanner-phase-upload').classList.remove('hidden');
     document.getElementById('scanner-preview-wrap').classList.remove('hidden');
     document.getElementById('scanner-error').classList.add('hidden');
@@ -4611,6 +4683,8 @@ function clearScannerImage() {
   clearScannerBackImage();
   const collBtnWrap = document.getElementById('scanner-collection-btn-wrap');
   if (collBtnWrap) collBtnWrap.classList.add('hidden');
+  const camWrap = document.querySelector('.cam-scanner-wrap:not(.cam-scanner-compact)');
+  if (camWrap) { camWrap.classList.remove('hidden'); _startCam('scanner-video', 'scanner-cam-fallback', 'scanner-capture-btn'); }
 }
 
 function showScannerMatches() {
@@ -5234,11 +5308,15 @@ function openScanFillModal(targetId, isTextarea, mode) {
   document.getElementById('scan-fill-error').classList.add('hidden');
   document.getElementById('scan-fill-phase-matches').classList.add('hidden');
   document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+  const camWrap = document.querySelector('.cam-scanner-compact');
+  if (camWrap) camWrap.classList.remove('hidden');
   document.getElementById('scan-fill-modal').classList.remove('hidden');
+  _startCam('scan-fill-video', 'scan-fill-cam-fallback');
 }
 
 function closeScanFillModal() {
   document.getElementById('scan-fill-modal').classList.add('hidden');
+  _stopCam('scan-fill-video');
   _scanFillImageDataUrl = null;
   _scanFillTargetId = null;
 }
@@ -5251,6 +5329,8 @@ function resetScanFill() {
   document.getElementById('scan-fill-error').classList.add('hidden');
   document.getElementById('scan-fill-phase-matches').classList.add('hidden');
   document.getElementById('scan-fill-phase-upload').classList.remove('hidden');
+  const camWrap = document.querySelector('.cam-scanner-compact');
+  if (camWrap) { camWrap.classList.remove('hidden'); _startCam('scan-fill-video', 'scan-fill-cam-fallback'); }
 }
 
 async function handleScanFillFile(e) {
@@ -5260,7 +5340,9 @@ async function handleScanFillFile(e) {
   if (file.size > 8 * 1024 * 1024) { alert('Image is too large (max 8MB).'); return; }
   try {
     _scanFillImageDataUrl = await readImageFileAsDataUrl(file, 800, 0.85);
+    _stopCam('scan-fill-video');
     document.getElementById('scan-fill-preview').src = _scanFillImageDataUrl;
+    document.querySelector('.cam-scanner-compact')?.classList.add('hidden');
     document.getElementById('scan-fill-preview-wrap').classList.remove('hidden');
     document.getElementById('scan-fill-error').classList.add('hidden');
     document.getElementById('scan-fill-phase-matches').classList.add('hidden');
