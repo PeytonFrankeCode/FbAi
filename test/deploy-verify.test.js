@@ -183,12 +183,52 @@ function simulate(edgeResponds) {
   check('  ...but says nothing extra when the deploy verified',
     good.code === 0 && !/actually returned/.test(good.out),
     good.out.trim().slice(0, 80));
+}
 
-  // Both still fail. An unverified deploy is not a shipped one, whatever the
-  // reason — softening that is how the check stops being worth having.
-  check('  ...but neither is treated as a pass',
-    stale.code !== 0 && blank.code !== 0,
-    `stale exit ${stale.code}, blank exit ${blank.code}`);
+// ---- and a bot challenge is called a bot challenge ------------------------
+//
+// What was actually happening for six deploys. The runner was served
+// Cloudflare's "Just a moment..." interstitial, jq found no .sha, and the step
+// reported that the site had not changed. The site was fine the whole time —
+// Worker, assets, all of it. The check was being challenged like a bot, which
+// is a fair guess about curl running in a datacentre.
+//
+// It gets its own message because every other reading of a missing marker
+// sends someone into the diff, and one already sent me there.
+{
+  const CHALLENGE = '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title>'
+                  + '<meta name="robots" content="noindex,nofollow"></head><body>'
+                  + '<div class="cf-browser-verification"></div></body></html>';
+  const r = simulate(CHALLENGE);
+
+  check('a Cloudflare bot challenge is recognised as one',
+    /served this check a bot challenge/.test(r.out),
+    r.out.split('\n').filter(l => l.includes('::error::')).join(' ').slice(0, 120));
+  check('  ...and says the deploy is probably fine',
+    /says NOTHING about the deploy/.test(r.out) && /do not go looking in the diff/.test(r.out),
+    'the whole point is stopping the next person suspecting the code');
+  check('  ...and names the fix, which is not in this repo',
+    /WAF rule/.test(r.out) && /Bot Fight Mode/.test(r.out),
+    'an error that does not say what to do next is the one that wastes the afternoon');
+  check('  ...and is not reported as a stale build',
+    !/still serving/.test(r.out) && !/ASSET UPLOAD/.test(r.out),
+    'the three failures must stay distinguishable');
+  check('  ...but still fails the run, because the build is unverified',
+    r.code !== 0, `exit ${r.code}`);
+
+  // The challenge page is HTML, so the plain-HTML case must NOT claim a
+  // challenge — otherwise every SPA fallback gets blamed on Cloudflare.
+  const plain = simulate('<!doctype html><html><body>hello</body></html>');
+  check('  ...while ordinary HTML is still an asset-upload failure',
+    /ASSET UPLOAD did not land/.test(plain.out) && !/bot challenge/.test(plain.out),
+    plain.out.split('\n').filter(l => l.includes('::error::')).join(' ').slice(0, 110));
+
+  // All three still fail. An unverified deploy is not a shipped one, whatever
+  // the reason — softening that is how the check stops being worth having.
+  check('  ...and none of the three is treated as a pass',
+    simulate('{"sha":"OLDSHA","ref":"main"}').code !== 0
+    && plain.code !== 0 && r.code !== 0,
+    'stale, unreadable and challenged must all exit non-zero');
 }
 
 // A check that cannot fail is worse than none, because it is trusted.
