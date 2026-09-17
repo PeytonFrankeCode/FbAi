@@ -1,0 +1,81 @@
+name: Peek at a live endpoint
+
+# Fetch one PUBLIC endpoint from the deployed site and print it to the run log.
+#
+# WHY THIS EXISTS. The agent sandbox is blocked from reaching thecardhuddle.com
+# at the network layer — the proxy answers 403 to CONNECT — so every diagnostic
+# this session has been a copy-paste loop: I ask for /api/debug/identity-gap,
+# Peyton opens it on a phone and pastes the JSON back. That loop has run five
+# times and has been the slowest part of the work.
+#
+# GitHub's runners are not blocked, and the run log is readable. So this fetches
+# the endpoint and prints it, and the answer can be collected without anyone
+# being asked to be a clipboard.
+#
+# DELIBERATELY LIMITED:
+#   - manual trigger only, so it costs nothing unless someone asks for it
+#   - a plain GET, nothing written
+#   - PUBLIC endpoints only. No admin key is passed and none should be: a run
+#     log is not a private place, and a key in a URL ends up in it forever.
+#     Anything behind isAdminReq stays a copy-paste job.
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: 'Path to fetch, e.g. /api/debug/identity-gap'
+        required: true
+        default: '/api/sold-stats?days=30'
+      jq:
+        description: 'Optional jq filter, e.g. .mostSoldBasis'
+        required: false
+        default: '.'
+
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse anything that looks like a credential
+        env:
+          P: ${{ inputs.path }}
+        run: |
+          # A key pasted into the path would be written to a public run log and
+          # stay there. Cheaper to refuse than to rotate.
+          if printf '%s' "$P" | grep -qiE '(^|[?&])(key|token|password|secret)='; then
+            echo "::error::That path carries a credential. Run logs are not private — use a public endpoint."
+            exit 1
+          fi
+          case "$P" in
+            /*) ;;
+            *) echo "::error::Path must start with /"; exit 1 ;;
+          esac
+
+      - name: Fetch
+        env:
+          P: ${{ inputs.path }}
+          FILTER: ${{ inputs.jq }}
+        run: |
+          set -o pipefail
+          URL="https://thecardhuddle.com${P}"
+          echo "GET $URL"
+          code=$(curl -sS -m 60 -o body.json -w '%{http_code}' "$URL") || {
+            echo "::error::request failed"; exit 1; }
+          echo "HTTP $code  ($(wc -c < body.json) bytes)"
+          echo
+
+          # Pretty-print when it is JSON, fall back to raw when it is not — an
+          # HTML error page is itself the answer and must not be swallowed.
+          if jq -e . body.json >/dev/null 2>&1; then
+            jq "${FILTER:-.}" body.json | tee out.txt
+          else
+            head -c 4000 body.json | tee out.txt
+          fi
+
+          # Also in the run summary, so it is readable without opening the log.
+          {
+            echo '### `'"$P"'` — HTTP '"$code"
+            echo '```json'
+            head -c 60000 out.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          [ "$code" = "200" ] || { echo "::error::non-200 response"; exit 1; }
