@@ -53,6 +53,16 @@
                      background: #0b0e11; border: 1px solid var(--line); color: var(--ink);
                      font: inherit; }
   .hint { color: var(--warn); font-size: 12px; margin-top: 10px; }
+  .scoped { font-size: 15px; font-weight: 400; color: var(--warn); }
+  .splits { margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--line);
+            border-radius: 8px; }
+  .splits-h { color: var(--warn); font-size: 12px; margin-bottom: 6px; }
+  .split { padding: 4px 2px; font-size: 13px; color: var(--dim); cursor: pointer;
+           border-radius: 5px; }
+  .split:hover { background: #1d242c; }
+  .split.on { color: var(--ink); }
+  .split.on kbd { border-color: var(--accent); color: var(--accent); }
+  .split-n { font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -82,6 +92,11 @@
 const qs = new URLSearchParams(location.search);
 const KEY = qs.get('key') || '';
 let queue = [], at = 0, sel = 0, done = 0, fixed = 0;
+// Which split of the current phrase is being decided. null = all of them.
+// A phrase does not mean one thing: "signatures" turned up across two
+// products at once, and inside one product a Signatures auto and a
+// Signatures /25 are different cards wearing identical words.
+let scoped = null;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
@@ -120,29 +135,50 @@ function render() {
     return;
   }
 
+  const splits = item.splits || [];
+  const view = scoped != null && splits[scoped] ? splits[scoped] : item;
+  const scopeLabel = scoped != null && splits[scoped] ? splits[scoped].label : null;
+
   $('main').innerHTML =
     '<div class="card">' +
-      '<div class="phrase">' + esc(item.phrase) + '</div>' +
-      '<div class="meta"><b>' + item.sales.toLocaleString() + '</b> sales' +
-        (item.value ? ' &middot; $' + item.value.toLocaleString() + ' traded' : '') +
-        (item.products && item.products.length ? ' &middot; ' + esc(item.products.join(', ')) : '') +
+      '<div class="phrase">' + esc(item.phrase) +
+        (scopeLabel ? '<span class="scoped"> in ' + esc(scopeLabel) + '</span>' : '') +
+      '</div>' +
+      '<div class="meta"><b>' + (view.sales || 0).toLocaleString() + '</b> sales' +
+        (scoped == null && item.value ? ' &middot; $' + item.value.toLocaleString() + ' traded' : '') +
         ' &middot; ' + (queue.length - at) + ' left' + '</div>' +
-      ((item.photos || []).length
-        ? '<div class="shots">' + item.photos.map(u =>
+      // Where the phrase could mean different things. One row means one
+      // meaning and a single decision covers it; several mean look first.
+      (splits.length > 1
+        ? '<div class="splits">' +
+            '<div class="splits-h">Appears in ' + splits.length + ' places &mdash; ' +
+              'press a number to decide just one:</div>' +
+            splits.map((sp, i) =>
+              '<div class="split' + (scoped === i ? ' on' : '') + '" data-s="' + i + '">' +
+                '<kbd>' + (i + 1) + '</kbd> ' + esc(sp.label) +
+                ' <span class="split-n">' + sp.sales.toLocaleString() + ' sales</span>' +
+              '</div>').join('') +
+            (scoped != null ? '<div class="split" data-s="-1"><kbd>0</kbd> back to all</div>' : '') +
+          '</div>'
+        : '') +
+      ((view.photos || []).length
+        ? '<div class="shots">' + view.photos.map(u =>
             '<img src="' + esc(u) + '" alt="" loading="lazy" ' +
             'onerror="this.style.visibility=\'hidden\'" />').join('') + '</div>'
         : '<div class="noshots">No photos stored for this phrase.</div>') +
       '<div class="samples">' +
-        (item.samples || []).map(t => '<div>' + esc(t) + '</div>').join('') +
+        (view.samples || []).map(t => '<div>' + esc(t) + '</div>').join('') +
       '</div>' +
       // Only two options, because there are only two answers. Naming the
       // parallel is a typing job, not a pick-from-a-list one: the catalogue
       // holds thousands and the right one is whatever the card actually says.
       '<ol id="opts">' +
         '<li class="' + (sel === 0 ? 'sel' : '') + '" data-i="0">' +
-          '<kbd>X</kbd><span class="pname">Not a parallel &mdash; this card is base</span></li>' +
+          '<kbd>X</kbd><span class="pname">Not a parallel &mdash; base' +
+          (scopeLabel ? ' <em>in ' + esc(scopeLabel) + ' only</em>' : '') + '</span></li>' +
         '<li class="' + (sel === 1 ? 'sel' : '') + '" data-i="1">' +
-          '<kbd>Enter</kbd><span class="pname">It is a parallel &mdash; type its catalogue name below</span></li>' +
+          '<kbd>Enter</kbd><span class="pname">It is a parallel &mdash; type its catalogue name' +
+          (scopeLabel ? ' <em>for ' + esc(scopeLabel) + ' only</em>' : '') + '</span></li>' +
       '</ol>' +
       '<input type="text" id="manual" placeholder="e.g. Silver Prizm" autocomplete="off" />' +
       '<p class="hint">The name must exist in a checklist. If it does not, the parallel ' +
@@ -150,10 +186,15 @@ function render() {
       '<div class="keys">' +
         '<span><kbd>X</kbd> not a parallel</span>' +
         '<span><kbd>Enter</kbd> save typed name</span>' +
+        (splits.length > 1 ? '<span><kbd>1</kbd>–<kbd>9</kbd> one place only</span>' +
+                             '<span><kbd>0</kbd> all places</span>' : '') +
         '<span><kbd>S</kbd> skip</span>' +
       '</div>' +
     '</div>';
 
+  document.querySelectorAll('.split').forEach(el => {
+    el.onclick = () => { const i = Number(el.dataset.s); scoped = i < 0 ? null : i; render(); };
+  });
   document.querySelectorAll('#opts li').forEach(el => {
     el.onclick = () => {
       sel = Number(el.dataset.i);
@@ -166,18 +207,40 @@ function render() {
 async function decide(parallel) {
   const item = queue[at];
   if (!item) return;
+  const splits = item.splits || [];
+  const sp = scoped != null ? splits[scoped] : null;
   const r = await fetch('/api/review/parallels?key=' + encodeURIComponent(KEY), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ phrase: item.phrase, parallel }),
+    body: JSON.stringify({
+      phrase: item.phrase,
+      parallel,
+      // Only when one is selected. No scope means the answer holds everywhere,
+      // which is what you want when the phrase really does mean one thing.
+      scope: sp ? { year: sp.year, setName: sp.setName, printRun: sp.printRun } : undefined,
+    }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) { flash(d.error || 'Failed', true); return; }
 
-  done++; fixed += item.sales;
+  const covered = sp ? sp.sales : item.sales;
+  done++; fixed += covered;
   $('s-done').textContent = (d.total || 0).toLocaleString();
-  flash('+' + item.sales.toLocaleString() + ' sales → ' + (parallel || 'base'));
-  at++; sel = 0; render();
+  flash('+' + covered.toLocaleString() + ' sales → ' + (parallel || 'base') +
+        (sp ? ' (' + sp.label + ' only)' : ''));
+
+  // A scoped decision leaves the rest of the phrase undecided, so stay on it
+  // and drop back to the whole view. Moving on would silently abandon the
+  // splits the person has not answered yet.
+  if (sp) {
+    item.splits = splits.filter((_, i) => i !== scoped);
+    item.sales -= sp.sales;
+    scoped = null;
+    if (item.splits.length === 0) { at++; }
+  } else {
+    at++;
+  }
+  sel = 0; render();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -188,6 +251,13 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (!queue[at]) return;
+  const splits = queue[at].splits || [];
+  if (e.key >= '1' && e.key <= '9' && splits.length > 1) {
+    const i = Number(e.key) - 1;
+    if (i < splits.length) { scoped = i; render(); }
+    return;
+  }
+  if (e.key === '0') { scoped = null; render(); return; }
   if (e.key.toLowerCase() === 'x') { decide(''); }
   else if (e.key === 'Enter') { box && box.focus(); e.preventDefault(); }
   else if (e.key.toLowerCase() === 's') { at++; sel = 0; render(); }
