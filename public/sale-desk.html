@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Sale desk</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171c22; --line: #242c35; --ink: #e7edf3;
+    --dim: #8b98a5; --accent: #4ade80; --warn: #fbbf24; --bad: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  header { padding: 16px 20px; border-bottom: 1px solid var(--line);
+           display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; }
+  h1 { font-size: 17px; margin: 0; font-weight: 600; }
+  .stat { color: var(--dim); font-size: 13px; }
+  .stat b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  main { padding: 20px; max-width: 1000px; margin: 0 auto; }
+  input[type=text] { width: 100%; padding: 10px 12px; border-radius: 7px;
+                     background: #0b0e11; border: 1px solid var(--line); color: var(--ink);
+                     font: inherit; }
+  .cards { margin-top: 12px; border: 1px solid var(--line); border-radius: 8px;
+           overflow: hidden; }
+  .crow { padding: 9px 12px; font-size: 14px; color: var(--dim); cursor: pointer;
+          display: flex; gap: 12px; align-items: baseline; }
+  .crow:hover { background: #1d242c; }
+  .crow b { color: var(--ink); font-weight: 500; flex: 1; }
+  .num { font-variant-numeric: tabular-nums; font-size: 12px; }
+  .cardhead { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap;
+              margin: 18px 0 4px; }
+  .cardhead h2 { font-size: 20px; margin: 0; font-weight: 600; }
+  .back { color: var(--accent); cursor: pointer; font-size: 13px; }
+  .grid { display: grid; gap: 14px; margin-top: 16px;
+          grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+  .sale { background: var(--panel); border: 1px solid var(--line); border-radius: 9px;
+          padding: 8px; cursor: pointer; }
+  .sale:hover { border-color: var(--dim); }
+  .sale.on { border-color: var(--accent); background: #16241c; }
+  .sale img { width: 100%; aspect-ratio: 5 / 7; object-fit: cover; border-radius: 5px;
+              background: #0b0e11; display: block; }
+  .noimg { width: 100%; aspect-ratio: 5 / 7; border-radius: 5px; background: #0b0e11;
+           display: flex; align-items: center; justify-content: center;
+           color: var(--dim); font-size: 11px; }
+  .sale .p { font-size: 13px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .sale .par { font-size: 12px; color: var(--dim); margin-top: 2px;
+               overflow-wrap: anywhere; }
+  .sale .par.fixed { color: var(--accent); }
+  .sale .par.unread { color: var(--warn); }
+  .picker { position: fixed; inset: 0; background: rgba(6,8,11,.82);
+            display: flex; align-items: flex-start; justify-content: center;
+            padding: 40px 16px; z-index: 10; }
+  .pbox { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+          padding: 16px 18px; width: 100%; max-width: 520px; }
+  .pbox h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+  .pbox .sub { color: var(--dim); font-size: 12px; margin-bottom: 10px;
+               overflow-wrap: anywhere; }
+  .cands { margin-top: 10px; border: 1px solid var(--line); border-radius: 8px;
+           max-height: 300px; overflow-y: auto; }
+  .cand { padding: 7px 12px; font-size: 14px; color: var(--dim); cursor: pointer; }
+  .cand:hover { background: #1d242c; }
+  .cand.on { background: #16241c; color: var(--ink); box-shadow: inset 3px 0 0 var(--accent); }
+  .pkeys { margin-top: 12px; color: var(--dim); font-size: 12px; display: flex;
+           gap: 14px; flex-wrap: wrap; }
+  kbd { background: #0b0e11; border: 1px solid var(--line); border-bottom-width: 2px;
+        border-radius: 5px; padding: 1px 7px; font: 12px/1.6 ui-monospace, monospace;
+        color: var(--dim); min-width: 22px; text-align: center; }
+  #flash { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px;
+           background: #16241c; border: 1px solid var(--accent); color: var(--accent);
+           padding: 9px 18px; border-radius: 7px; font-size: 13px; opacity: 0;
+           transition: opacity .18s; pointer-events: none; z-index: 20; }
+  #flash.bad { background: #2a1616; border-color: var(--bad); color: var(--bad); }
+  #flash.on { opacity: 1; }
+  .hint { color: var(--warn); font-size: 12px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sale desk</h1>
+  <span class="stat">sales corrected <b id="s-done">–</b></span>
+  <span class="stat" id="s-as-of"></span>
+</header>
+<main id="main"><p class="stat">Loading…</p></main>
+<div id="flash"></div>
+
+<script>
+// ONE SALE, DECIDED BY EYE.
+//
+// Every other desk here improves a reading of the TITLE, and each is worth
+// hundreds of sales a click because the same words come back. This one is worth
+// exactly one sale, and it exists because some titles are simply wrong.
+//
+// A seller who types "Refractor" on a Hyper writes a title every reader in the
+// world reads correctly and gets wrong. There is no phrase to fix and no
+// checklist to extend — the words say Refractor and the card is not one. The
+// difference is in the foil, and only a person looking at the photo can settle
+// it.
+//
+// So there is no queue. Nothing marks a confident wrong read, so nothing can
+// line them up; the person finds them by looking at a card's rainbow and seeing
+// that one of these is not like the others. Name a card, see every sale, fix
+// the ones that are wrong.
+const qs = new URLSearchParams(location.search);
+const KEY = qs.get('key') || '';
+let cards = [], sales = [], card = null, candidates = [];
+let openAt = -1, cand = 0, typed = '', corrected = 0;
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// WHEN, ON TWO CLOCKS. Same reasoning as the other desks: when the report was
+// built and how recent the sales in it are come apart, and the build time alone
+// reads as the reassuring one.
+function asOf(d) {
+  const bits = [];
+  const w = d && d.window;
+  const through = w && w.through ? String(w.through).slice(0, 10) : '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(through)) {
+    const [y, m, day] = through.split('-').map(Number);
+    const days = Math.floor((Date.now() - Date.UTC(y, m - 1, day)) / 86400000);
+    bits.push('sales through ' + through + (days > 1 ? ' (' + days + 'd ago)' : ''));
+  }
+  const built = Date.parse((d && d.generatedAt) || '');
+  if (Number.isFinite(built)) {
+    const mins = Math.max(0, Math.round((Date.now() - built) / 60000));
+    bits.push('built ' + (mins < 1 ? 'just now'
+      : mins < 60 ? mins + 'm ago'
+      : mins < 1440 ? Math.round(mins / 60) + 'h ago'
+      : Math.round(mins / 1440) + 'd ago'));
+  }
+  return bits.join(' · ');
+}
+
+function flash(msg, bad) {
+  const f = $('flash');
+  f.textContent = msg;
+  f.className = 'on' + (bad ? ' bad' : '');
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => { f.className = bad ? 'bad' : ''; }, 1800);
+}
+
+const api = (p) => '/api/review/sales?key=' + encodeURIComponent(KEY) + p;
+
+async function find(q) {
+  const r = await fetch(api('&q=' + encodeURIComponent(q)));
+  const d = await r.json();
+  if (!d.available) { flash(d.error || d.reason || 'Unavailable', true); return; }
+  cards = d.cards || [];
+  $('s-as-of').textContent = asOf(d);
+  render();
+}
+
+async function openCard(c) {
+  const r = await fetch(api('&player=' + encodeURIComponent(c.player)
+    + '&cardNumber=' + encodeURIComponent(c.cardNumber)
+    + (c.year ? '&year=' + encodeURIComponent(c.year) : '')
+    + (c.setName ? '&setName=' + encodeURIComponent(c.setName) : '')));
+  const d = await r.json();
+  if (!d.available) { flash(d.error || d.reason || 'Unavailable', true); return; }
+  card = d.card; sales = d.sales || []; candidates = d.candidates || [];
+  $('s-done').textContent = (d.decisionsInPlace || 0).toLocaleString();
+  $('s-as-of').textContent = asOf(d);
+  render();
+}
+
+function render() {
+  if (!card) {
+    $('main').innerHTML =
+      '<input type="text" id="q" placeholder="name a player — e.g. jaxson dart" ' +
+        'autocomplete="off" value="' + esc(typed) + '" />' +
+      (cards.length
+        ? '<div class="cards">' + cards.map((c, i) =>
+            '<div class="crow" data-i="' + i + '">' +
+              '<b>' + esc(c.label) + '</b>' +
+              '<span class="num">' + c.sales.toLocaleString() + ' sales</span>' +
+              '<span class="num">$' + c.value.toLocaleString() + '</span>' +
+            '</div>').join('') + '</div>'
+        : '<p class="stat" style="margin-top:12px">Type a player and press Enter.</p>');
+    const box = $('q');
+    box.oninput = () => { typed = box.value; };
+    box.onkeydown = (e) => { if (e.key === 'Enter') find(box.value); };
+    box.focus();
+    box.setSelectionRange(typed.length, typed.length);
+    document.querySelectorAll('.crow').forEach(el => {
+      el.onclick = () => openCard(cards[Number(el.dataset.i)]);
+    });
+    return;
+  }
+
+  // The rainbow. Every sale of this card, dearest first, each showing what it
+  // currently groups as and where that came from — a corrected one in green, an
+  // unread one in amber, so "one of these is not like the others" is a glance
+  // rather than a comparison.
+  $('main').innerHTML =
+    '<div class="cardhead">' +
+      '<h2>' + esc(card.label) + '</h2>' +
+      '<span class="back" id="back">&larr; another card</span>' +
+      '<span class="stat">' + sales.length + ' sales</span>' +
+    '</div>' +
+    '<p class="stat">Click a sale to say what it really is. Your answer beats the ' +
+      'title and the imported column, for that one sale.</p>' +
+    '<div class="grid">' +
+      sales.map((s, i) =>
+        '<div class="sale' + (s.override != null ? ' on' : '') + '" data-i="' + i + '">' +
+          (s.photo
+            ? '<img src="' + esc(s.photo) + '" alt="" loading="lazy" ' +
+              'onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),' +
+              '{className:\'noimg\',textContent:\'no photo\'}))" />'
+            : '<div class="noimg">no photo</div>') +
+          '<div class="p">$' + s.price.toLocaleString() + '</div>' +
+          '<div class="par' + (s.override != null ? ' fixed' : (s.parallel ? '' : ' unread')) + '">' +
+            esc(s.override != null ? s.override : (s.parallel || 'unread')) +
+          '</div>' +
+        '</div>').join('') +
+    '</div>' +
+    (openAt >= 0 ? picker() : '');
+
+  $('back').onclick = () => { card = null; sales = []; openAt = -1; render(); };
+  document.querySelectorAll('.sale').forEach(el => {
+    el.onclick = () => { openAt = Number(el.dataset.i); cand = 0; typed = ''; render(); };
+  });
+  if (openAt >= 0) wirePicker();
+}
+
+function matches() {
+  const words = typed.toLowerCase().split(/\s+/).filter(Boolean);
+  return candidates.filter(nm => {
+    const low = nm.toLowerCase();
+    return words.every(w => low.includes(w));
+  }).slice(0, 60);
+}
+
+function picker() {
+  const s = sales[openAt];
+  const list = matches();
+  return '<div class="picker" id="picker"><div class="pbox">' +
+    '<h3>$' + s.price.toLocaleString() + ' &middot; ' +
+      esc(s.override != null ? s.override : (s.parallel || 'unread')) + '</h3>' +
+    '<div class="sub">' + esc(s.title) + '</div>' +
+    '<input type="text" id="pf" placeholder="type to filter the parallels" ' +
+      'autocomplete="off" value="' + esc(typed) + '" />' +
+    (list.length
+      ? '<div class="cands">' + list.map((nm, i) =>
+          '<div class="cand' + (i === cand ? ' on' : '') + '" data-n="' + esc(nm) + '">' +
+            esc(nm) + '</div>').join('') + '</div>'
+      : '<p class="hint">No parallel in this product matches. The name has to be ' +
+        'one the checklist lists, or it would group the sale into a card that ' +
+        'does not exist.</p>') +
+    '<div class="pkeys">' +
+      '<span><kbd>Enter</kbd> save</span>' +
+      '<span><kbd>B</kbd> it is the base card</span>' +
+      '<span><kbd>U</kbd> undo this one</span>' +
+      '<span><kbd>Esc</kbd> close</span>' +
+    '</div>' +
+  '</div></div>';
+}
+
+function wirePicker() {
+  const box = $('pf');
+  box.oninput = () => { typed = box.value; cand = 0; render(); };
+  box.focus();
+  box.setSelectionRange(typed.length, typed.length);
+  document.querySelectorAll('.cand').forEach(el => {
+    el.onclick = () => decide(el.dataset.n);
+  });
+  $('picker').onclick = (e) => { if (e.target.id === 'picker') { openAt = -1; render(); } };
+}
+
+// undefined clears the decision; '' says the card is base.
+async function decide(parallel) {
+  const s = sales[openAt];
+  if (!s) return;
+  const body = { itemId: s.itemId };
+  if (parallel !== undefined) body.parallel = parallel;
+  const r = await fetch('/api/review/sales?key=' + encodeURIComponent(KEY), {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.ok) { flash(d.error || 'Could not save', true); return; }
+  // Reflected locally rather than refetched: the answer is already known and a
+  // round trip would blank the grid for it.
+  s.override = d.parallel === null ? null : (d.parallel || 'Base');
+  if (d.parallel !== null) corrected++;
+  $('s-done').textContent = (d.total || 0).toLocaleString();
+  flash(d.parallel === null ? 'Cleared' : 'Saved — ' + (d.parallel || 'Base'));
+  openAt = -1; typed = ''; render();
+}
+
+document.addEventListener('keydown', (e) => {
+  if (openAt < 0) return;
+  const list = matches();
+  if (e.key === 'Escape') { openAt = -1; typed = ''; render(); return; }
+  if (e.key === 'ArrowDown') { cand = Math.min(cand + 1, list.length - 1); render(); e.preventDefault(); return; }
+  if (e.key === 'ArrowUp') { cand = Math.max(cand - 1, 0); render(); e.preventDefault(); return; }
+  if (e.key === 'Enter') { if (list[cand]) decide(list[cand]); e.preventDefault(); return; }
+  // Only when the filter box is empty, or typing "base" would trip them.
+  if (!typed && (e.key === 'b' || e.key === 'B')) { decide(''); e.preventDefault(); return; }
+  if (!typed && (e.key === 'u' || e.key === 'U')) { decide(undefined); e.preventDefault(); return; }
+});
+
+render();
+</script>
+</body>
+</html>
