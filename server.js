@@ -156,21 +156,22 @@ const MOST_SOLD_MAX_ROWS = 60000;
 //
 // The count is reported, because that pile is where a Refractor can still hide
 // next to a base card, and its size is the size of the remaining problem.
-function _groupMostSold(rows, pi, pAliases, overrides) {
+function _groupMostSold(rows, pi, pAliases) {
   const groups = new Map();
   let unreadable = 0;
   for (const r of rows) {
     const title = String(r.title || '');
     const kind = _cardKind(title);
 
-    // An override on this sale, then the column, then the title. One chain,
-    // shared with the card page, so a decision cannot land on one and not the
-    // other.
-    const hit = _saleParallel(r, pi, pAliases, overrides, r.player);
-    let name = '', key = '';
-    if (hit && hit.parallel) { name = hit.parallel; key = _parallelKey(name); }
-    else if (hit && hit.how === 'base') { name = ''; key = ''; }
-    else { unreadable++; name = ''; key = ''; }
+    // The column when the collector filled it; the title when it did not.
+    const col = String(r.parallel == null ? '' : r.parallel).trim();
+    let name = col, key = col ? _parallelKey(col) : null;
+    if (!col) {
+      const hit = pi && resolveParallelAliased(pi, _stripGrade(title), { player: r.player }, pAliases);
+      if (hit && hit.parallel) { name = hit.parallel; key = _parallelKey(name); }
+      else if (hit && hit.how === 'base') { name = ''; key = ''; }
+      else { unreadable++; name = ''; key = ''; }
+    }
 
     const id = [r.player, r.year, r.set_name, r.card_number, kind, key].join('\u0000');
     let g = groups.get(id);
@@ -2637,17 +2638,8 @@ function _parallelFromWords(text, pi) {
   return null;
 }
 
-// `itemId` and `overrides` are optional: the SEED is a query string and has no
-// sale behind it, while every candidate is a row that does. Passing them for
-// the candidates is what lets a corrected sale be matched to the card a person
-// said it belongs to, rather than to the one its title claims.
-function _identityOf(text, pi, player, _pAliasCache, itemId, overrides) {
+function _identityOf(text, pi, player, _pAliasCache) {
   const clean = _stripGrade(String(text || ''));
-  const ov = _overrideParallel(itemId, overrides);
-  if (ov !== undefined) {
-    return { parallel: ov ? _parallelKey(ov) : '',
-             kind: _cardKind(clean), printRun: _printRun(clean) };
-  }
   // null means "could not read", and is treated as agreement below. It must
   // never collapse into '' — that is the BASE card, a real and specific answer.
   let parallel = null;
@@ -2749,7 +2741,6 @@ async function tagSameCard(results, query) {
   const { player, year } = extractSearchKeywords(query);
   // The human decisions, fetched once for the whole result set.
   const pAliases = await parallelAliases().catch(() => ({}));
-  const sOverrides = await saleOverrides().catch(() => ({}));
   const seed = _identityOf(query, pi, player, pAliases);
   const strict = await _isCatalogued(query, year);
 
@@ -2765,7 +2756,7 @@ async function tagSameCard(results, query) {
   // — if it climbs, the catalogue is missing something.
   let differing = 0, unconfirmed = 0;
   for (const r of results) {
-    const cand = _identityOf(r.title, pi, player, pAliases, r.itemId || r.item_id, sOverrides);
+    const cand = _identityOf(r.title, pi, player, pAliases);
     const same = _sameCard(seed, cand, strict);
     r.sameCard = same;
     if (!same) {
@@ -5585,85 +5576,6 @@ function resolveParallelAliased(pi, text, opts, aliases) {
   return hit;
 }
 
-// ---- one sale, decided by eye ---------------------------------------------
-//
-// WHAT THIS IS FOR, AND WHY NOTHING ELSE HERE CAN DO IT.
-//
-// Every other decision in this file is about TEXT. The set desk says what a
-// product name means, the parallel desk says what a phrase means, the insert
-// desk says which set a card number belongs to. All three improve a reading of
-// the title, and all three are worth hundreds of sales a click because the same
-// words recur.
-//
-// This one is worth exactly one sale, and it exists because some titles are
-// simply wrong. A seller who types "Refractor" on a Hyper writes a title that
-// every reader in the world will read correctly and get wrong. There is no
-// phrase to fix, no checklist to extend and no alias that helps — the words say
-// Refractor and the card is not one. The difference is in the foil, and the
-// only thing that can settle it is a person looking at the photo.
-//
-// So the unit is the item_id, and the answer outranks everything: the phrase
-// aliases, the reader, and the collector's own parallel column. That last one
-// is deliberate and is the part worth arguing with. The column is filled at
-// import from the same title, so when the title lies the column inherits the
-// lie; a person looking at the card is later and better evidence than a field
-// copied from the text they are disagreeing with.
-const SALE_OVERRIDE_KEY = 'saleoverrides:v1';
-
-// One card's sales, bounded. A heavily traded rookie can carry thousands, and
-// nobody is scrolling past a few hundred photos — the dearest are both the ones
-// worth correcting and the ones a mis-grouping distorts most, so the cap sorts
-// by price rather than truncating an arbitrary slice.
-const SALE_DESK_MAX_SALES = 300;
-
-async function saleOverrides() {
-  // archiveGet, not cacheGet: these are decisions, not a cache. A cache may be
-  // evicted at any time and these must not be.
-  try { return (await archiveGet(SALE_OVERRIDE_KEY)) || {}; }
-  catch (_) { return {}; }
-}
-
-// The stored answer for one sale, or undefined when there is none.
-//
-// '' is an answer — the card is base — and must never read as "nothing stored".
-// A malformed entry returns undefined rather than throwing or resolving to
-// base, because losing a sale to a bad KV write would be worse than ignoring
-// the write.
-function _overrideParallel(itemId, overrides) {
-  if (itemId == null || !overrides) return undefined;
-  const e = overrides[String(itemId)];
-  if (!e || typeof e.parallel !== 'string') return undefined;
-  return e.parallel;
-}
-
-// What parallel is this ONE sale, with every human decision applied.
-//
-// The precedence, and the order is the whole point:
-//
-//   1. an override on this item_id   someone looked at THIS photo
-//   2. the parallel column           the collector typed it on import
-//   3. a phrase alias                someone decided what this phrase means
-//   4. the reader                    the title, read
-//
-// Every caller goes through this rather than assembling the chain itself.
-// Three places grouped sales by parallel and each built that chain inline; a
-// decision wired into two of them would be a fix that worked on the board and
-// not the card page, which is this codebase's most repeated failure and is
-// silent every time.
-function _saleParallel(row, pi, pAliases, overrides, player) {
-  const r = row || {};
-  const ov = _overrideParallel(r.item_id, overrides);
-  if (ov !== undefined) {
-    return ov ? { parallel: ov, how: 'sale-override', segment: '' }
-              : { parallel: null, how: 'base', segment: '' };
-  }
-  const col = String(r.parallel == null ? '' : r.parallel).trim();
-  if (col) return { parallel: col, how: 'column', segment: '' };
-  if (!pi) return { parallel: null, how: 'no-reader', segment: '' };
-  return resolveParallelAliased(pi, _stripGrade(String(r.title || '')),
-                                player ? { player } : {}, pAliases);
-}
-
 // ---- the insert desk -------------------------------------------------------
 //
 // The same idea as the parallel desk, but the unit had to change.
@@ -6057,178 +5969,6 @@ app.get('/api/review/parallels', async (req, res) => {
   } catch (err) {
     console.error('[review/parallels]', err && err.stack || err);
     res.json({ available: false, error: err && err.message });
-  }
-});
-
-// ---- the sale desk ---------------------------------------------------------
-//
-// One card, every sale of it, as photos. Rainbow mode with an eraser.
-//
-// The queue-shaped desks cannot serve this. They surface what the reader could
-// NOT read, and the case here is the opposite: a title the reader read
-// confidently and got wrong. Nothing marks it, nothing queues it, and the only
-// way it is ever found is a person looking at a card and seeing that one of
-// these is not like the others.
-//
-// So this desk is driven by the person, not by a queue. Name a card, see its
-// sales, fix the ones that are wrong. One sale per decision, which is terrible
-// leverage and exactly right for the job: it is the last resort for the sales
-// no amount of reading can place, and those are usually the expensive ones,
-// where a single mis-grouped sale moves an average that people trade on.
-app.get('/api/review/sales', async (req, res) => {
-  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
-  try {
-    const db = getNflDb();
-    if (!db) return res.json({ available: false, reason: 'no database' });
-
-    const q = String(req.query.q || '').trim();
-    const player = String(req.query.player || '').trim();
-    const cardNumber = String(req.query.cardNumber || '').trim();
-    const year = String(req.query.year || '').trim();
-    const setName = String(req.query.setName || '').trim();
-    const img = await _nflHasImageColumn(db);
-    const overrides = await saleOverrides();
-
-    // ---- find the card -----------------------------------------------------
-    //
-    // Nothing named yet, so answer with cards rather than sales. Grouped and
-    // ranked by how much of it traded: a person opening this screen is looking
-    // for a card they have in mind, and the ones worth correcting are the ones
-    // with money in them.
-    if (!player || !cardNumber) {
-      if (!q) return res.json({ available: true, mode: 'find', cards: [],
-                                reason: 'name a player, or pick a card' });
-      const like = `%${q.toLowerCase()}%`;
-      const rows = await db.prepare(
-        `SELECT player, year, set_name, card_number, COUNT(*) AS n,
-                SUM(price_cents) AS total
-           FROM sales
-          WHERE price_cents IS NOT NULL AND player IS NOT NULL AND player != ''
-            AND (LOWER(player) LIKE ? OR LOWER(title) LIKE ?)
-          GROUP BY player, year, set_name, card_number
-          ORDER BY SUM(price_cents) DESC
-          LIMIT 40`).bind(like, like).all();
-      return res.json({
-        available: true,
-        generatedAt: new Date().toISOString(),
-        mode: 'find',
-        cards: ((rows && rows.results) || []).map(r => ({
-          player: r.player, year: r.year, setName: r.set_name,
-          cardNumber: r.card_number, sales: r.n,
-          value: Math.round((r.total || 0) / 100),
-          label: [r.year, r.set_name, r.player,
-                  r.card_number ? `#${r.card_number}` : ''].filter(Boolean).join(' '),
-        })),
-      });
-    }
-
-    // ---- one card, every sale ---------------------------------------------
-    const where = ['price_cents IS NOT NULL', 'player = ?', 'card_number = ?'];
-    const args = [player, cardNumber];
-    if (year) { where.push('year = ?'); args.push(year); }
-    if (setName) { where.push('set_name = ?'); args.push(setName); }
-    const rows = await db.prepare(
-      `SELECT item_id, title, price_cents, sold_date, player, year, set_name,
-              parallel, card_number${img ? ', image_url' : ''}
-         FROM sales WHERE ${where.join(' AND ')}
-        ORDER BY price_cents DESC LIMIT ${SALE_DESK_MAX_SALES}`).bind(...args).all();
-
-    const pi = await parallelIndex().catch(() => null);
-    const pAliases = await parallelAliases().catch(() => ({}));
-    const list = (rows && rows.results) || [];
-
-    // The rainbow for this product, so the right name is picked rather than
-    // remembered — and so a typo cannot be saved as an answer.
-    let candidates = [];
-    try {
-      const byProduct = (await _loadJson('parallel-index.json')).parallelsByProduct || {};
-      const idx = await _loadJson('checklists/index.json');
-      const setIndex = buildJoinIndex((idx && idx.products) || [], undefined, await setAliases()).index;
-      const seen = new Set();
-      for (const r of list) {
-        const hit = setIndex && matchSale(setIndex, String(r.year || ''), String(r.set_name || ''));
-        const pid = hit ? (typeof hit === 'string' ? hit : hit.id) : null;
-        for (const nm of (byProduct[pid] || [])) seen.add(nm);
-      }
-      candidates = [...seen].sort((a, b) => a.localeCompare(b));
-    } catch (err) {
-      console.error('[review/sales] rainbow unavailable:', err && err.message);
-    }
-
-    const sales = list.map(r => {
-      const hit = _saleParallel(r, pi, pAliases, overrides, r.player) || {};
-      const ov = _overrideParallel(r.item_id, overrides);
-      return {
-        itemId: String(r.item_id),
-        title: r.title,
-        price: Math.round((r.price_cents || 0) / 100),
-        soldDate: r.sold_date,
-        photo: img ? (r.image_url || null) : null,
-        // What it currently groups as, and where that came from — so a wrong
-        // one can be told from a merely unread one at a glance.
-        parallel: hit.parallel || (hit.how === 'base' ? 'Base' : null),
-        how: hit.how || 'unread',
-        // Whether a person has already answered this sale, and what they said.
-        override: ov === undefined ? null : (ov || 'Base'),
-        column: String(r.parallel == null ? '' : r.parallel).trim() || null,
-      };
-    });
-
-    res.json({
-      available: true,
-      generatedAt: new Date().toISOString(),
-      mode: 'card',
-      card: { player, cardNumber, year: year || null, setName: setName || null,
-              label: [year, setName, player, `#${cardNumber}`].filter(Boolean).join(' ') },
-      salesShown: sales.length,
-      truncated: sales.length >= SALE_DESK_MAX_SALES,
-      decisionsInPlace: Object.keys(overrides).length,
-      candidates,
-      sales,
-    });
-  } catch (err) {
-    console.error('[review/sales]', err && err.stack || err);
-    res.json({ available: false, error: err && err.message });
-  }
-});
-
-// One sale, decided. `parallel` names it; '' means the card is base; omitting
-// it undoes the decision and hands the sale back to the reader.
-app.post('/api/review/sales', async (req, res) => {
-  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
-  const { itemId, parallel } = req.body || {};
-  if (!itemId || typeof itemId !== 'string') {
-    return res.status(400).json({ error: 'itemId required' });
-  }
-
-  try {
-    const overrides = await saleOverrides();
-    if (parallel === undefined || parallel === null) {
-      delete overrides[itemId];
-    } else if (typeof parallel !== 'string') {
-      return res.status(400).json({ error: 'parallel must be a string' });
-    } else if (parallel === '') {
-      // "This one is the base card." A real answer, stored rather than deleted:
-      // the absence of a decision and a decision that it is base are different
-      // states and only one of them should keep looking wrong.
-      overrides[itemId] = { parallel: '', at: new Date().toISOString() };
-    } else {
-      // Refuse a name no checklist has. A typo would otherwise sit in KV
-      // looking like an answer while grouping the sale into a card that does
-      // not exist — which is the mis-grouping this screen exists to undo.
-      const pi = await parallelIndex().catch(() => null);
-      if (pi && pi.classify(parallel) === 'unknown') {
-        return res.status(400).json({ error: `"${parallel}" is not a parallel in any checklist` });
-      }
-      overrides[itemId] = { parallel, at: new Date().toISOString() };
-    }
-    await archivePut(SALE_OVERRIDE_KEY, overrides);
-    res.json({ ok: true, itemId,
-               parallel: overrides[itemId] === undefined ? null : overrides[itemId].parallel,
-               total: Object.keys(overrides).length });
-  } catch (err) {
-    console.error('[review/sales:post]', err && err.stack || err);
-    res.status(500).json({ error: err && err.message });
   }
 });
 
@@ -7883,8 +7623,7 @@ async function _computeSoldStats(db, days) {
     const _mostSoldRaw = (mostSold && mostSold.results) || [];
     const { groups: _mostSoldRows, unreadable: _mostSoldUnreadable } =
       _groupMostSold(_mostSoldRaw, await parallelIndex().catch(() => null),
-                     await parallelAliases().catch(() => ({})),
-                     await saleOverrides().catch(() => ({})));
+                     await parallelAliases().catch(() => ({})));
 
     const priced = (totals && totals.priced) || 0;
     const totalCents = (totals && totals.total) || 0;
@@ -8335,11 +8074,7 @@ app.get('/api/card-analysis', async (req, res) => {
 
   try {
     const seed = await db.prepare(
-      // item_id is selected back out deliberately: the sale desk's decisions are
-      // keyed by it, and without it on the row the seed is the one sale whose
-      // correction cannot be found — so opening a card by clicking the very
-      // sale you just fixed would show it as the card you moved it out of.
-      `SELECT item_id, player, year, set_name, parallel, card_number, confidence, title
+      `SELECT player, year, set_name, parallel, card_number, confidence, title
        FROM sales WHERE item_id = ?`
     ).bind(itemId).first();
 
@@ -8408,8 +8143,6 @@ app.get('/api/card-analysis', async (req, res) => {
     // The parallel desk's decisions, so a phrase settled by a person reads
     // the same here as it does on the boards and in search.
     const pAliases = await parallelAliases().catch(() => ({}));
-    // The sale desk's decisions: one photo, looked at, outranking the text.
-    const sOverrides = await saleOverrides().catch(() => ({}));
     // The insert desk's decisions, and the product they are keyed by.
     const iAliases = await insertAliases().catch(() => ({}));
     let seedProductId = null;
@@ -8422,12 +8155,13 @@ app.get('/api/card-analysis', async (req, res) => {
       console.error('[card-analysis] product lookup unavailable:', err && err.message);
     }
     const keyOf = (row) => {
-      // An override first, then the column, then the title — the same chain the
-      // board groups by. Grade is stripped inside it: the reader gives up on an
-      // unknown token, and "PSA10" is one, so a slab's parallel read as
-      // unmatched and the sale was dropped from its own card rather than merely
-      // mis-bucketed.
-      const hit = _saleParallel(row, pi, pAliases, sOverrides, seed.player);
+      const col = String(row.parallel == null ? '' : row.parallel).trim();
+      if (col) return { key: _parallelKey(col), known: true, from: 'column' };
+      if (!pi) return { key: null, known: false, from: 'no-reader' };
+      // Grade stripped first: the reader gives up on an unknown token, and
+      // "PSA10" is one, so a slab's parallel read as unmatched and the sale was
+      // dropped from its own card rather than merely mis-bucketed.
+      const hit = resolveParallelAliased(pi, _stripGrade(String(row.title || '')), { player: seed.player }, pAliases);
       if (hit.parallel) return { key: _parallelKey(hit.parallel), known: true, from: hit.how };
       if (hit.how === 'base') return { key: '', known: true, from: 'base' };
       return { key: null, known: false, from: hit.how };
@@ -8489,15 +8223,6 @@ app.get('/api/card-analysis', async (req, res) => {
     };
 
     const seedKey = keyOf(seed);
-    // The NAME to show, as opposed to the key to group by.
-    //
-    // The page used to print seed.parallel — the imported column — which is
-    // blank whenever the parallel was read from the title, and simply wrong
-    // whenever a person has corrected the sale. It grouped by one value and
-    // displayed another, so a corrected sale moved to the right card and went
-    // on announcing itself as the card it had been moved out of.
-    const seedName = (_saleParallel(seed, pi, pAliases, sOverrides, seed.player) || {}).parallel
-                     || String(seed.parallel == null ? '' : seed.parallel).trim();
     const candidates = (rows && rows.results) || [];
     let all, unreadable = 0, excludedOtherParallel = 0, excludedOtherKind = 0;
     if (seedKey.known) {
@@ -8716,10 +8441,10 @@ app.get('/api/card-analysis', async (req, res) => {
       available: true,
       generatedAt: new Date().toISOString(),
       card: {
-        name: [seed.year, seed.set_name, seed.player, seedName, seed.card_number ? `#${seed.card_number}` : '']
+        name: [seed.year, seed.set_name, seed.player, seed.parallel, seed.card_number ? `#${seed.card_number}` : '']
           .filter(Boolean).join(' ').trim() || seed.title,
         player: seed.player, year: seed.year, set: seed.set_name,
-        parallel: seedName, cardNumber: seed.card_number,
+        parallel: seed.parallel, cardNumber: seed.card_number,
         imageUrl: (all.find(r => r.image_url) || {}).image_url || null,
       },
       totalSales: all.length,
@@ -8737,7 +8462,7 @@ app.get('/api/card-analysis', async (req, res) => {
       // a total that quietly omits them.
       identity: {
         parallel: seedKey.known
-          ? (seedKey.key === '' ? 'Base' : (seedName || null))
+          ? (seedKey.key === '' ? 'Base' : (seed.parallel || null))
           : null,
         resolvedFrom: seedKey.from,
         // base, auto or relic. Empty means a plain base card.
