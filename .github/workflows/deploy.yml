@@ -293,8 +293,32 @@ jobs:
             sleep 6
           done
           if [ "$got" != "$GITHUB_SHA" ]; then
-            echo "::error::Deployed, but the edge is still serving ${got:-an unknown build}."
-            echo "::error::The deploy succeeded and the site did not change. Do not report this as shipped."
+            # TWO DIFFERENT FAILURES, AND TELLING THEM APART MATTERS.
+            #
+            # A SHA that is not ours means the old build is genuinely serving:
+            # the deploy did not take, and nothing shipped.
+            #
+            # No readable marker at all is a different thing. build.json is a
+            # static asset, so an empty answer means the asset upload did not
+            # land — the Worker script may well have deployed and the site may
+            # be serving perfectly. That happened: Cloudflare's asset upload
+            # session started failing (error 10013), two deploys of BYTE
+            # IDENTICAL trees disagreed, and reading "the site did not change"
+            # as "the site is down" cost a revert of a feature that was never
+            # implicated. The site was up the whole time.
+            #
+            # So this still fails the run — an unverified deploy is not a
+            # shipped one — but it no longer claims to know which happened.
+            if [ -n "$got" ]; then
+              echo "::error::Deployed, but the edge is still serving ${got}."
+              echo "::error::That is the previous build. Nothing shipped — do not report this as shipped."
+            else
+              echo "::error::Deployed, but /build.json is not readable at the edge."
+              echo "::error::This means the ASSET UPLOAD did not land. The Worker may still be"
+              echo "::error::serving fine — check the site before assuming an outage, and check"
+              echo "::error::https://www.cloudflarestatus.com before assuming it is this repo."
+              echo "::error::Either way this build is unverified: do not report it as shipped."
+            fi
             exit 1
           fi
 
