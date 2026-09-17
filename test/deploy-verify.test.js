@@ -137,7 +137,42 @@ function simulate(edgeResponds) {
 {
   const r = simulate('<!doctype html><html><body>hello</body></html>');
   check('an HTML SPA fallback is not mistaken for a successful check',
-    r.code !== 0 && /<no marker>|unknown build/.test(r.out), `exit ${r.code}`);
+    r.code !== 0 && /<no marker>/.test(r.out), `exit ${r.code}`);
+}
+
+// ---- and the two failures are not the same failure ------------------------
+//
+// A SHA that is not ours means the old build is serving and nothing shipped.
+// An unreadable marker means the ASSET UPLOAD did not land, and says nothing
+// about whether the Worker is serving.
+//
+// Conflating them cost a real revert. Cloudflare's asset upload session began
+// failing (error 10013); two deploys of byte-identical trees disagreed; the
+// step said "the site did not change", I read that as "the site is down" and
+// reverted a feature that was never implicated. The site was up throughout.
+{
+  const stale = simulate('{"sha":"OLDSHA","ref":"main"}');
+  check('a stale SHA is reported as the previous build serving',
+    /still serving OLDSHA/.test(stale.out) && /That is the previous build/.test(stale.out)
+    && !/ASSET UPLOAD/.test(stale.out),
+    stale.out.split('\n').filter(l => l.includes('::error::')).join(' ').slice(0, 120));
+
+  const blank = simulate('<!doctype html><html><body>hello</body></html>');
+  check('an unreadable marker is reported as an asset-upload failure',
+    /ASSET UPLOAD did not land/.test(blank.out)
+    && /Worker may still be/.test(blank.out)
+    && !/still serving/.test(blank.out),
+    blank.out.split('\n').filter(l => l.includes('::error::')).join(' ').slice(0, 140));
+
+  check('  ...and points at Cloudflare status rather than at this repo',
+    /cloudflarestatus\.com/.test(blank.out),
+    'the next person must not start by suspecting the diff');
+
+  // Both still fail. An unverified deploy is not a shipped one, whatever the
+  // reason — softening that is how the check stops being worth having.
+  check('  ...but neither is treated as a pass',
+    stale.code !== 0 && blank.code !== 0,
+    `stale exit ${stale.code}, blank exit ${blank.code}`);
 }
 
 // A check that cannot fail is worse than none, because it is trusted.
