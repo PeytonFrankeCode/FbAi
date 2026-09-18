@@ -10651,6 +10651,121 @@ function openInvCropper(file) {
   });
 }
 
+// ---- The cropper's controls ----
+//
+// openInvCropper() above hands back a promise and parks its `resolve` on
+// _invCropState. The modal's markup has always called these four by name,
+// but they were never written, so nothing ever settled that promise: the
+// `await openInvCropper(file)` in handleInvPhotoPick waited forever and the
+// crop screen sat there with both buttons dead. Every exit below settles it.
+
+// Same budget as readImageFileAsDataUrl — these photos end up in the same
+// localStorage, and a full-resolution phone picture would spend the quota
+// on its own.
+function _invCropToDataUrl(s, src) {
+  try {
+    const sw = Math.max(1, Math.round(src.sw));
+    const sh = Math.max(1, Math.round(src.sh));
+    const scale = Math.min(1, 800 / Math.max(sw, sh));
+    const w = Math.max(1, Math.round(sw * scale));
+    const h = Math.max(1, Math.round(sh * scale));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').drawImage(
+      s.img, Math.round(src.sx), Math.round(src.sy), sw, sh, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', 0.82);
+  } catch (_) {
+    // Never strand the picker. null reads as "cancelled" to the caller,
+    // which closes cleanly — the one thing this must not do is hang.
+    return null;
+  }
+}
+
+// One way out, so the promise settles exactly once and no drag listener
+// outlives the modal.
+function _invCropFinish(url) {
+  const s = _invCropState;
+  _invCropState = null;
+  _invCropStopDrag();
+  const modal = document.getElementById('inv-crop-modal');
+  if (modal) modal.classList.add('hidden');
+  const imgEl = document.getElementById('inv-crop-img');
+  if (imgEl) imgEl.src = '';
+  if (s && typeof s.resolve === 'function') s.resolve(url);
+}
+
+function cancelInvCrop() { _invCropFinish(null); }
+
+function useInvCropFull() {
+  const s = _invCropState;
+  if (!s) return;
+  _invCropFinish(_invCropToDataUrl(s,
+    { sx: 0, sy: 0, sw: s.img.naturalWidth, sh: s.img.naturalHeight }));
+}
+
+function applyInvCrop() {
+  const s = _invCropState;
+  if (!s) return;
+  // rect is in display pixels; the source image is disp times larger.
+  const inv = 1 / (s.disp || 1);
+  _invCropFinish(_invCropToDataUrl(s, {
+    sx: s.rect.x * inv, sy: s.rect.y * inv,
+    sw: s.rect.w * inv, sh: s.rect.h * inv,
+  }));
+}
+
+// Dragging the box, or any of its four corners. Listeners go on the window
+// rather than the handle: a finger that leaves the little corner square
+// mid-drag should keep dragging, not silently stop.
+function _invCropStart(ev, mode) {
+  const s = _invCropState;
+  if (!s) return;
+  ev.preventDefault();
+  // A corner must not also count as a drag of the whole box beneath it.
+  ev.stopPropagation();
+  s.drag = { mode, x0: ev.clientX, y0: ev.clientY, rect: { ...s.rect } };
+  window.addEventListener('pointermove', _invCropMove, { passive: false });
+  window.addEventListener('pointerup', _invCropStopDrag);
+  window.addEventListener('pointercancel', _invCropStopDrag);
+}
+
+function _invCropMove(ev) {
+  const s = _invCropState;
+  if (!s || !s.drag) return;
+  ev.preventDefault();
+  const r0 = s.drag.rect;
+  const dx = ev.clientX - s.drag.x0;
+  const dy = ev.clientY - s.drag.y0;
+  const MIN = 24;
+  let { x, y, w, h } = r0;
+  switch (s.drag.mode) {
+    case 'move': x = r0.x + dx; y = r0.y + dy; break;
+    case 'tl': x = r0.x + dx; y = r0.y + dy; w = r0.w - dx; h = r0.h - dy; break;
+    case 'tr': y = r0.y + dy; w = r0.w + dx; h = r0.h - dy; break;
+    case 'bl': x = r0.x + dx; w = r0.w - dx; h = r0.h + dy; break;
+    case 'br': w = r0.w + dx; h = r0.h + dy; break;
+    default: return;
+  }
+  // A corner dragged past its opposite would invert the box. Stop it at MIN
+  // and pin the edge that is not moving.
+  if (w < MIN) { if (s.drag.mode === 'tl' || s.drag.mode === 'bl') x = r0.x + r0.w - MIN; w = MIN; }
+  if (h < MIN) { if (s.drag.mode === 'tl' || s.drag.mode === 'tr') y = r0.y + r0.h - MIN; h = MIN; }
+  // And it stays on the photo, or the crop would read pixels that aren't there.
+  w = Math.min(w, s.dw);
+  h = Math.min(h, s.dh);
+  x = Math.max(0, Math.min(x, s.dw - w));
+  y = Math.max(0, Math.min(y, s.dh - h));
+  s.rect = { x, y, w, h };
+  _invCropRenderBox();
+}
+
+function _invCropStopDrag() {
+  if (_invCropState) _invCropState.drag = null;
+  window.removeEventListener('pointermove', _invCropMove);
+  window.removeEventListener('pointerup', _invCropStopDrag);
+  window.removeEventListener('pointercancel', _invCropStopDrag);
+}
+
 let _communityWired = false;
 let _communityPostsCache = null;
 let _communityImageDataUrl = null;
