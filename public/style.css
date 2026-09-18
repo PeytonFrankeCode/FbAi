@@ -1836,67 +1836,15 @@ main {
   border-color: var(--accent-border);
 }
 /* ---- Grade Filter (sold searches) ---- */
-/* ---- Parallel Switcher ---- */
-.parallel-switcher {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-.parallel-switcher-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.parallel-switcher-row {
-  display: flex;
-  gap: 0.35rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.parallel-switcher-row::-webkit-scrollbar { display: none; }
-.parallel-chip {
-  display: inline-block;
-  white-space: nowrap;
-  background: transparent;
-  border: 1px solid var(--border-primary);
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 500;
-  font-family: inherit;
-  padding: 0.35rem 0.7rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.parallel-chip:hover {
-  border-color: var(--text-muted);
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
-.parallel-chip.active {
-  background: var(--accent-bg);
-  color: var(--accent);
-  border-color: var(--accent-border);
-}
-.card-modal-content > .parallel-switcher {
-  margin: 0.5rem 0 0;
-  padding: 0 0.25rem;
-}
-
-.grade-filter {
+/* ---- Filter chip rows (grade + parallel) ---- */
+.parallel-filter {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
-.grade-filter-label {
+.chip-row-label {
   font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -1904,7 +1852,7 @@ main {
   font-weight: 600;
   margin-right: 0.25rem;
 }
-.grade-filter-btn {
+.chip-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -1919,17 +1867,17 @@ main {
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.grade-filter-btn:hover {
+.chip-btn:hover {
   border-color: var(--text-muted);
   color: var(--text-primary);
   background: var(--bg-hover);
 }
-.grade-filter-btn.active {
+.chip-btn.active {
   background: var(--accent-bg);
   color: var(--accent);
   border-color: var(--accent-border);
 }
-.grade-filter-count {
+.chip-count {
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-muted);
@@ -1938,9 +1886,17 @@ main {
   padding: 0.02rem 0.4rem;
   line-height: 1.5;
 }
-.grade-filter-btn.active .grade-filter-count {
+.chip-btn.active .chip-count {
   color: var(--accent);
   background: rgba(99, 102, 241, 0.12);
+}
+
+.grade-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
 }
 /* ---- For Sale Badge ---- */
 .for-sale-badge {
@@ -8367,6 +8323,17 @@ to { opacity: 1; transform: translateY(0); }
 /* Options render in the OS menu, so give them explicit colors — otherwise
    dark-on-dark makes them unreadable on some platforms. */
 .ca-grade-select option { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
+/* Sits to the left of the grade select: which card, then which grade.
+   Accent-tinted because this one changes the card, not just the view of it.
+   Width-capped so a long parallel name ("Neon Green Pulsar") cannot push the
+   grade select off a phone. */
+.ca-parallel-select {
+  border-color: rgba(94, 206, 153, 0.35);
+  background-color: rgba(94, 206, 153, 0.10);
+  max-width: 58%;
+  text-overflow: ellipsis;
+}
+.ca-parallel-select:disabled { opacity: 0.55; cursor: progress; }
 .ca-stat { display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
 .ca-stat-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
 .ca-stat-n { font-size: 0.68rem; color: var(--text-muted); }

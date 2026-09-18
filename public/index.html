@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=4f9746965d" />
+  <link rel="stylesheet" href="style.css?v=da14487ead" />
 
 
 </head>
@@ -366,8 +366,8 @@
       <button class="sort-btn" data-sort="grade">Grade</button>
     </div>
 
-    <!-- Parallel switcher — hop between Base, Silver, Gold, etc. for the same player/set -->
-    <div id="parallel-switcher" class="parallel-switcher hidden"></div>
+    <!-- Parallel Filter (sold searches) — filter results by detected parallel -->
+    <div id="parallel-filter" class="parallel-filter hidden"></div>
 
     <!-- Grade Filter (sold searches) — filters the value stats and chart by grade -->
     <div id="grade-filter" class="grade-filter hidden"></div>
@@ -1031,7 +1031,6 @@
     <div class="card-modal-content">
       <button class="card-modal-close" aria-label="Close">&times;</button>
       <div id="card-modal-showing" class="card-modal-showing"></div>
-      <div id="card-modal-parallels" class="parallel-switcher hidden"></div>
       <div class="card-modal-layout">
         <!-- Left column. The photo sizes to the card ratio, so on a card with
              history there's real space beneath it — the affiliate promo fills
@@ -1061,6 +1060,9 @@
             <div id="ca-price" class="ca-price hidden"></div>
 
             <div class="ca-chart-head">
+              <!-- Which card, then which grade. The parallel select only
+                   appears when this card actually sold in more than one. -->
+              <select id="ca-parallel-select" class="ca-grade-select ca-parallel-select hidden" aria-label="Which parallel to show"></select>
               <select id="ca-grade-select" class="ca-grade-select" aria-label="Which grade to show"></select>
               <div id="ca-stat" class="ca-stat"></div>
             </div>

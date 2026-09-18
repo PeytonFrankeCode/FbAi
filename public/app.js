@@ -849,6 +849,7 @@ let currentMode = 'sold'; // 'forsale' or 'sold'
 let currentResults = []; // store results for sorting
 let currentResultMode = 'sold'; // mode the visible results actually came from ('sold' | 'forsale'), which may differ from the toggle when we fall back
 let currentGradeFilter = 'all'; // 'all' or a grade label from detectGrade()
+let currentParallelFilter = 'all'; // 'all' or a parallel name from parseCardTitle()
 
 // ---- Recent Searches (localStorage) ----
 const MAX_RECENT = 6;
@@ -1281,7 +1282,7 @@ document.querySelectorAll('.sort-btn').forEach(sortBtn => {
 });
 
 function applySortToResults(sortType) {
-  const base = getGradeFilteredResults();
+  const base = getFilteredResults();
   if (!base.length) return;
 
   let sorted = [...base];
@@ -2029,8 +2030,7 @@ async function fetchDirectSearch(query) {
           addForsaleLoadMore(grid);
         }
       }
-      if (isSold) { updatePriceChart(results); buildGradeFilter(); }
-      buildParallelSwitcher(query);
+      if (isSold) { updatePriceChart(results); buildGradeFilter(); buildParallelFilter(query); }
     }
 
     backBtn.classList.remove('hidden');
@@ -2263,7 +2263,7 @@ async function performSearch(query, opts = {}) {
   approxSection.classList.add('hidden');
   document.getElementById('grade-panel').classList.add('hidden');
   resetGradeFilter();
-  hideParallelSwitcher();
+  resetParallelFilter();
   currentResults = [];
   if (priceChart) {
     priceChart.destroy();
@@ -2415,8 +2415,8 @@ async function performSearch(query, opts = {}) {
         updatePriceChart(results);
         loadGradePanel(query);
         buildGradeFilter();
+        buildParallelFilter(query);
       }
-      buildParallelSwitcher(query);
 
       // Also show similar cards below if serial search returned both
       if (serial && similarResults && similarResults.length > 0) {
@@ -2826,12 +2826,192 @@ function _renderGradeGroupsInto(grid, results) {
   updateLoadMoreButton(grid);
 }
 
-// ---- Grade Filter (sold searches) ----
-// Lets the user narrow the value stats, chart and card list to a single
-// grade (e.g. PSA 10) so the numbers reflect that grade only.
-function getGradeFilteredResults() {
-  if (currentGradeFilter === 'all') return currentResults;
-  return currentResults.filter(r => detectGrade(r.title) === currentGradeFilter);
+// ---- Parallel classification ----
+// Assigns each sold listing to a parallel from the matched checklist product.
+// The checklist is the source of truth: 93% of its ~4,000 parallel names are
+// multi-word ("Neon Green Pulsar", "Green Ice"), so matching a single colour
+// token would collapse hundreds of distinct parallels — and their very
+// different prices — into one bucket. We match the longest phrase first and
+// only on word boundaries.
+
+// Stripped from titles before matching so a team name never reads as a
+// colour parallel ("Green Bay Packers" -> Green). Longest first: the
+// full club name has to go before the city half of it.
+const PARALLEL_STRIP_TEAMS = [
+  'arizona cardinals', 'atlanta falcons', 'baltimore ravens', 'buffalo bills',
+  'carolina panthers', 'chicago bears', 'cincinnati bengals', 'cleveland browns',
+  'dallas cowboys', 'denver broncos', 'detroit lions', 'green bay packers',
+  'houston texans', 'indianapolis colts', 'jacksonville jaguars', 'kansas city chiefs',
+  'las vegas raiders', 'los angeles chargers', 'los angeles rams', 'miami dolphins',
+  'minnesota vikings', 'new england patriots', 'new orleans saints', 'new york giants',
+  'new york jets', 'philadelphia eagles', 'pittsburgh steelers', 'san francisco 49ers',
+  'seattle seahawks', 'tampa bay buccaneers', 'tennessee titans', 'washington commanders',
+  'green bay', 'kansas city', 'new england', 'new orleans', 'tampa bay', 'las vegas',
+  'los angeles', 'san francisco', 'new york',
+].sort((a, b) => b.length - a.length);
+
+const _reEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Lowercase, drop the punctuation that splits names inconsistently between
+// eBay titles and checklist entries ("A.J." vs "AJ", "Red, White and Blue"),
+// and pad with spaces so every \b lookup has something to anchor against.
+function _cleanForMatch(s) {
+  return ' ' + String(s || '')
+    .toLowerCase()
+    .replace(/[.,'’]/g, '')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim() + ' ';
+}
+
+// "Green Ice Prizms" -> "green ice"
+// "Mirror Orange - /299 (#1-135), /199 (#136-200)" -> "mirror orange"
+function _normalizeParallelName(name) {
+  let s = String(name || '').toLowerCase();
+  s = s.split(/–|—|\s-\s/)[0];   // drop trailing print-run annotations
+  s = s.replace(/\(.*?\)/g, ' ');           // drop parentheticals
+  s = s.replace(/\/\s*\d[\d,]*/g, ' ');     // drop "/299"
+  // The product suffix carries no information — every parallel in the file has it.
+  s = s.replace(/\b(prizms?|refractors?|parallels?|autographs?)\b/g, ' ');
+  s = s.replace(/[.,'’]/g, '');
+  s = s.replace(/[^a-z0-9\s-]/g, ' ');
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+// Turn raw parallel names into regex matchers ordered longest-phrase-first,
+// so "neon green pulsar" is tested before "green" and wins.
+function _buildParallelMatchers(names) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of names) {
+    const norm = _normalizeParallelName(raw);
+    if (!norm || norm === 'base' || norm.length < 3) continue;
+    if (seen.has(norm)) continue;
+    seen.add(norm);
+    out.push({ norm, label: _titleCase(norm) });
+  }
+  out.sort((a, b) =>
+    b.norm.split(' ').length - a.norm.split(' ').length ||
+    b.norm.length - a.norm.length);
+  for (const t of out) {
+    t.re = new RegExp('\\b' + _reEsc(t.norm).replace(/[\s-]+/g, '[\\s-]+') + '\\b');
+  }
+  return out;
+}
+
+// Used when the query matches no checklist product. Richer than the old
+// colour-only list because it reuses the scanner's vocabulary (ice, pulsar,
+// sparkle, mojo...), and still phrase-first.
+let _fallbackMatchersCache = null;
+function _fallbackParallelMatchers() {
+  if (!_fallbackMatchersCache) {
+    _fallbackMatchersCache = _buildParallelMatchers([
+      ...SCAN_KEY_PARALLEL_PHRASES,
+      ...SCAN_KEY_PARALLEL_WORDS,
+    ]);
+  }
+  return _fallbackMatchersCache;
+}
+
+// Context for the active search: which matchers to use and which player name
+// to blank out first (so "A.J. Green" never reads as a Green parallel).
+let _parallelCtx = null;
+let _parallelBuildToken = 0;
+
+function _classifyParallel(title, ctx) {
+  if (!ctx) return 'Base';
+  let hay = _cleanForMatch(title);
+  if (ctx.playerRe) hay = hay.replace(ctx.playerRe, ' ');
+  for (const t of PARALLEL_STRIP_TEAMS) {
+    hay = hay.replace(new RegExp('\\b' + _reEsc(t).replace(/\s+/g, '[\\s-]+') + '\\b', 'g'), ' ');
+  }
+  hay = hay.replace(/\s+/g, ' ');
+  for (const t of ctx.matchers) if (t.re.test(hay)) return t.label;
+  return 'Base';
+}
+
+// Classified once and cached on the result. "Load more" appends objects that
+// were never in the snapshot, so classify lazily on first read too.
+function _parallelOf(r) {
+  if (!r) return 'Base';
+  if (r._parallel === undefined) r._parallel = _classifyParallel(r.title, _parallelCtx);
+  return r._parallel;
+}
+
+// Resolve the search query to one checklist product and harvest its parallel
+// names. Highest set-term score wins, then the shortest product name, so
+// "2024 Panini Prizm Football" beats "2024 Panini Prizm Deca Football".
+async function _resolveParallelVocab(query) {
+  const cleaned = _cleanForMatch(query);
+  const year = (cleaned.match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  const setTerms = SCAN_KEY_SETS.filter(s =>
+    new RegExp('\\b' + _reEsc(s).replace(/\s+/g, '[\\s-]+') + '\\b').test(cleaned));
+  if (!setTerms.length) return null;
+
+  let index;
+  try { index = await fetchChecklistsList(); } catch { return null; }
+
+  const scored = (index.products || [])
+    .map(p => {
+      const hay = _cleanForMatch(`${p.id} ${p.name} ${p.brand}`);
+      const score = setTerms.reduce((s, t) =>
+        s + (new RegExp('\\b' + _reEsc(t).replace(/\s+/g, '[\\s-]+') + '\\b').test(hay) ? 1 : 0), 0);
+      return { p, score };
+    })
+    .filter(x => x.score > 0 && (year ? String(x.p.year) === year : true));
+  if (!scored.length) return null;
+  scored.sort((a, b) => b.score - a.score || (a.p.name || '').length - (b.p.name || '').length);
+
+  let data;
+  try { data = await fetchChecklistProduct(scored[0].p.id); } catch { return null; }
+
+  const names = [];
+  for (const set of data.sets || []) {
+    for (const par of set.parallels || []) if (par && par.name) names.push(par.name);
+  }
+  // The generic vocabulary is appended, not substituted: sellers word
+  // parallels differently than the checklist does, and some product files
+  // list few or none. Checklist names go in first so they win an exact tie,
+  // and the longest-phrase-first sort keeps "Green Ice" ahead of bare "ice".
+  const matchers = _buildParallelMatchers([
+    ...names,
+    ...SCAN_KEY_PARALLEL_PHRASES,
+    ...SCAN_KEY_PARALLEL_WORDS,
+  ]);
+  if (!matchers.length) return null;
+  return { matchers, productName: data.name || scored[0].p.name || '' };
+}
+
+// ---- Grade + Parallel filters (sold searches) ----
+// Both narrow the value stats, chart and card list. They compose: picking
+// PSA 10 and Silver shows Silver PSA 10 sales only.
+
+// `skip` leaves one filter out, which is how each chip row gets counts for
+// the pool it is actually choosing between.
+function _filterResults(skip) {
+  let results = currentResults;
+  if (skip !== 'grade' && currentGradeFilter !== 'all') {
+    results = results.filter(r => detectGrade(r.title) === currentGradeFilter);
+  }
+  if (skip !== 'parallel' && currentParallelFilter !== 'all') {
+    results = results.filter(r => _parallelOf(r) === currentParallelFilter);
+  }
+  return results;
+}
+
+function getFilteredResults() { return _filterResults(null); }
+
+function _medianPrice(items) {
+  const prices = items.map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
+  if (!prices.length) return 0;
+  const mid = Math.floor(prices.length / 2);
+  return prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+}
+
+function _chipLabel(text, count, items) {
+  const median = _medianPrice(items);
+  const medianStr = median ? ` · $${median.toFixed(0)}` : '';
+  return `${escHtml(text)} <span class="chip-count">${count}${medianStr}</span>`;
 }
 
 function resetGradeFilter() {
@@ -2840,32 +3020,51 @@ function resetGradeFilter() {
   if (wrap) { wrap.innerHTML = ''; wrap.classList.add('hidden'); }
 }
 
+function resetParallelFilter() {
+  currentParallelFilter = 'all';
+  _parallelCtx = null;
+  _parallelBuildToken++;
+  const wrap = document.getElementById('parallel-filter');
+  if (wrap) { wrap.innerHTML = ''; wrap.classList.add('hidden'); }
+}
+
 function buildGradeFilter() {
   currentGradeFilter = 'all';
+  renderGradeChips();
+}
+
+// Counts reflect the parallel filter, so switching parallel restates them.
+function renderGradeChips() {
   const wrap = document.getElementById('grade-filter');
   if (!wrap) return;
   wrap.innerHTML = '';
+  if (currentMode !== 'sold') { wrap.classList.add('hidden'); return; }
 
-  // Only meaningful for sold results that actually span multiple grades.
-  const groups = currentMode === 'sold' ? groupByGrade(currentResults) : [];
-  if (groups.length < 2) { wrap.classList.add('hidden'); return; }
+  const pool = _filterResults('grade');
+  const groups = groupByGrade(pool);
+  // Keep the active chip visible even when the other filter empties it,
+  // otherwise there is no way back to "all".
+  const keys = groups.map(g => g.grade);
+  if (currentGradeFilter !== 'all' && !keys.includes(currentGradeFilter)) {
+    groups.push({ grade: currentGradeFilter, items: [] });
+  }
+  if (groups.length < 2 && currentGradeFilter === 'all') { wrap.classList.add('hidden'); return; }
 
   const label = document.createElement('span');
-  label.className = 'grade-filter-label';
+  label.className = 'chip-row-label';
   label.textContent = 'Grade:';
   wrap.appendChild(label);
 
-  const addBtn = (grade, count, text) => {
+  const addBtn = (key, items, text) => {
     const btn = document.createElement('button');
-    btn.className = 'grade-filter-btn' + (currentGradeFilter === grade ? ' active' : '');
-    btn.dataset.grade = grade;
-    btn.innerHTML = `${escHtml(text)} <span class="grade-filter-count">${count}</span>`;
-    btn.addEventListener('click', () => applyGradeFilter(grade));
+    btn.className = 'chip-btn' + (currentGradeFilter === key ? ' active' : '');
+    btn.dataset.grade = key;
+    btn.innerHTML = _chipLabel(text, items.length, items);
+    btn.addEventListener('click', () => applyGradeFilter(key));
     wrap.appendChild(btn);
   };
-  addBtn('all', currentResults.length, 'All');
-  for (const g of groups) addBtn(g.grade, g.items.length, g.grade);
-
+  addBtn('all', pool, 'All');
+  for (const g of groups) addBtn(g.grade, g.items, g.grade);
   wrap.classList.remove('hidden');
 }
 
@@ -2909,6 +3108,7 @@ async function buildParallelSwitcher(query) {
   if (!wrap) return;
   wrap.innerHTML = '';
   wrap.classList.add('hidden');
+  if (currentMode !== 'sold' || !currentResults.length) return;
 
   const parsed = parseCardTitle(query);
   if (!parsed.set || !parsed.player) return;
@@ -2960,20 +3160,24 @@ async function buildParallelSwitcher(query) {
       row.appendChild(btn);
     }
 
-    wrap.appendChild(row);
-    wrap.classList.remove('hidden');
-  } catch (err) {
-    console.warn('[parallel-switcher]', err && err.message);
+  _parallelCtx = {
+    matchers: (vocab && vocab.matchers) || _fallbackParallelMatchers(),
+    productName: (vocab && vocab.productName) || '',
+    playerRe: null,
+  };
+  const player = (parseCardTitle(query).player || '').trim();
+  if (player.length > 2) {
+    const p = _cleanForMatch(player).trim();
+    if (p) _parallelCtx.playerRe = new RegExp('\\b' + _reEsc(p).replace(/\s+/g, '[\\s-]+') + '\\b', 'g');
   }
+
+  for (const r of currentResults) r._parallel = _classifyParallel(r.title, _parallelCtx);
+  renderParallelChips();
 }
 
-function hideParallelSwitcher() {
-  const wrap = document.getElementById('parallel-switcher');
-  if (wrap) { wrap.innerHTML = ''; wrap.classList.add('hidden'); }
-}
-
-async function buildModalParallelSwitcher(item) {
-  const wrap = document.getElementById('card-modal-parallels');
+// Counts reflect the grade filter, so switching grade restates them.
+function renderParallelChips() {
+  const wrap = document.getElementById('parallel-filter');
   if (!wrap) return;
   wrap.innerHTML = '';
   wrap.classList.add('hidden');
@@ -2990,50 +3194,65 @@ async function buildModalParallelSwitcher(item) {
     const detail = await fetchChecklistProduct(product.id);
     if (!detail || !Array.isArray(detail.sets)) return;
 
-    const baseSet = detail.sets.find(s => {
-      const sn = (s.name || '').toLowerCase();
-      return sn.includes('base') || sn === 'base set';
-    }) || detail.sets[0];
-    if (!baseSet) return;
-
-    const variants = buildVariants(baseSet);
-    if (variants.length < 2) return;
-
-    const currentParallel = (parsed.parallel || 'Base').toLowerCase();
-
-    const label = document.createElement('span');
-    label.className = 'parallel-switcher-label';
-    label.textContent = 'Parallel:';
-    wrap.appendChild(label);
-
-    const row = document.createElement('div');
-    row.className = 'parallel-switcher-row';
-
-    for (const v of variants) {
-      const btn = document.createElement('button');
-      const vName = v.name || 'Base';
-      const isActive = vName.toLowerCase() === currentParallel;
-      btn.className = 'parallel-chip' + (isActive ? ' active' : '');
-      btn.textContent = vName + (v.printRun ? ` /${v.printRun}` : '');
-      btn.addEventListener('click', () => {
-        if (isActive) return;
-        closeCardModal();
-        const newParallel = vName === 'Base' ? '' : vName;
-        let parts = [parsed.player, parsed.year, parsed.set].filter(Boolean);
-        if (newParallel) parts.push(newParallel);
-        if (parsed.cardNumber) parts.push('#' + parsed.cardNumber);
-        const newQuery = parts.join(' ');
-        document.getElementById('search-input').value = newQuery;
-        performSearch(newQuery);
-      });
-      row.appendChild(btn);
-    }
-
-    wrap.appendChild(row);
-    wrap.classList.remove('hidden');
-  } catch (err) {
-    console.warn('[modal-parallel-switcher]', err && err.message);
+  const pool = _filterResults('parallel');
+  const groups = {};
+  for (const item of pool) {
+    const p = _parallelOf(item);
+    (groups[p] = groups[p] || []).push(item);
   }
+  if (currentParallelFilter !== 'all' && !groups[currentParallelFilter]) {
+    groups[currentParallelFilter] = [];
+  }
+
+  const keys = Object.keys(groups).sort((a, b) => {
+    if (a === 'Base') return -1;
+    if (b === 'Base') return 1;
+    return groups[b].length - groups[a].length || a.localeCompare(b);
+  });
+  if (keys.length < 2 && currentParallelFilter === 'all') { wrap.classList.add('hidden'); return; }
+
+  const label = document.createElement('span');
+  label.className = 'chip-row-label';
+  label.textContent = 'Parallel:';
+  if (_parallelCtx && _parallelCtx.productName) label.title = `Matched to ${_parallelCtx.productName}`;
+  wrap.appendChild(label);
+
+  const addBtn = (key, items, text) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn' + (currentParallelFilter === key ? ' active' : '');
+    btn.dataset.parallel = key;
+    btn.innerHTML = _chipLabel(text, items.length, items);
+    btn.addEventListener('click', () => applyParallelFilter(key));
+    wrap.appendChild(btn);
+  };
+  addBtn('all', pool, 'All');
+  for (const key of keys) addBtn(key, groups[key], key);
+  wrap.classList.remove('hidden');
+}
+
+// Re-render stats, chart and cards for whatever both filters now select,
+// and restate the other chip row's counts against the new pool.
+function _reRenderForFilters() {
+  const filtered = getFilteredResults();
+  grid.innerHTML = '';
+  if (filtered.length > 0) renderStatsBar(filtered, true);
+  const sortType = document.querySelector('.sort-btn.active')?.dataset.sort || 'default';
+  applySortToResults(sortType);
+  updatePriceChart(filtered);
+}
+
+function applyGradeFilter(grade) {
+  currentGradeFilter = grade;
+  renderGradeChips();
+  renderParallelChips();
+  _reRenderForFilters();
+}
+
+function applyParallelFilter(parallel) {
+  currentParallelFilter = parallel;
+  renderParallelChips();
+  renderGradeChips();
+  _reRenderForFilters();
 }
 
 function updateLoadMoreButton(grid) {
@@ -3214,9 +3433,6 @@ const cardModalLink = document.getElementById('card-modal-link');
 function openCardModal(item) {
   // "Showing X card" header with parsed details
   cardModalShowing.textContent = buildShowingText(item);
-
-  // Parallel switcher inside the modal
-  buildModalParallelSwitcher(item);
 
   // Image
   cardModalImage.innerHTML = item.imageUrl
@@ -13786,6 +14002,54 @@ function renderNetWorthChart() {
 // leaves the modal exactly as it was.
 let _caChart = null;
 let _caData = null;   // last payload, so the grade dropdown re-renders without refetching
+let _caItemId = null; // the sale the open analysis was derived from
+
+// Switch the card history to another parallel of the same card.
+//
+// The server hands back a representative item id per parallel, so this is the
+// same request the modal already makes rather than a fresh search — the
+// grouping that decides "same card" stays in one place on the server.
+async function _caSwitchParallel(itemId) {
+  if (!itemId || itemId === _caItemId) return;
+  const sel = document.getElementById('ca-parallel-select');
+  if (sel) sel.disabled = true;
+  try {
+    await loadCardAnalysis({ source: 'nflcarddb', itemId, hasAnalysis: true }, { switching: true });
+  } catch (_) {
+    // Put the dropdown back where it was; the series on screen is still the
+    // one it describes.
+    const s = document.getElementById('ca-parallel-select');
+    if (s) { s.value = _caItemId || s.value; s.disabled = false; }
+  }
+}
+
+// Only rendered when this card actually sold in more than one parallel —
+// a lone dropdown offering the thing already on screen is just clutter.
+function _caRenderParallels(data) {
+  const sel = document.getElementById('ca-parallel-select');
+  if (!sel) return;
+  const others = Array.isArray(data && data.parallels) ? data.parallels : [];
+  if (!others.length || !_caItemId) {
+    sel.classList.add('hidden');
+    sel.innerHTML = '';
+    return;
+  }
+  const currentName = (data.identity && data.identity.parallel) || 'This parallel';
+  const all = [
+    { name: currentName, sales: data.totalSales || 0, itemId: _caItemId },
+    ...others,
+  ];
+  // Base first, then by how much actually traded. The one on screen sits
+  // wherever it belongs rather than being hoisted to the top.
+  all.sort((a, b) =>
+    (a.name === 'Base' ? -1 : b.name === 'Base' ? 1 : 0) || (b.sales - a.sales));
+  sel.innerHTML = all.map(o =>
+    `<option value="${escHtml(String(o.itemId))}">${escHtml(o.name)} (${o.sales})</option>`).join('');
+  sel.value = _caItemId;
+  sel.disabled = false;
+  sel.onchange = () => _caSwitchParallel(sel.value);
+  sel.classList.remove('hidden');
+}
 let _caSelectedGrade = null;
 // Distinct per grade series. Raw and the common grades get fixed hues so a
 // grade keeps its colour between cards; anything else cycles the tail.
@@ -13850,9 +14114,12 @@ function _caRenderPrice(estimate) {
   el.classList.remove('hidden');
 }
 
-function _caReset() {
+// `keepVisible` is for switching parallels: the section stays put and only its
+// series are cleared, so the panel does not collapse and reflow under a finger
+// that is still on the dropdown.
+function _caReset(keepVisible) {
   const wrap = document.getElementById('card-analysis');
-  if (wrap) wrap.classList.add('hidden');
+  if (wrap && !keepVisible) wrap.classList.add('hidden');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
   _caData = null; // don't let one card's series render under the next card
   _caForSale = null;
@@ -13868,15 +14135,20 @@ function _caReset() {
   });
   const listEl = document.getElementById('ca-list-body');
   if (listEl) listEl.innerHTML = '';
+  // Hidden on every reset: a stale list would offer to switch to parallels of
+  // whichever card was open before this one.
+  const parSel = document.getElementById('ca-parallel-select');
+  if (parSel) { parSel.classList.add('hidden'); parSel.innerHTML = ''; parSel.disabled = false; }
   const priceEl = document.getElementById('ca-price');
   if (priceEl) { priceEl.classList.add('hidden'); priceEl.innerHTML = ''; }
   renderChartReadout('ca-point', '');
 }
 
-async function loadCardAnalysis(item) {
-  _caReset();
+async function loadCardAnalysis(item, opts = {}) {
+  _caReset(opts.switching);
   // Only our own rows carry an item id we can resolve to a card identity.
   if (!item || item.source !== 'nflcarddb' || !item.itemId) return;
+  _caItemId = item.itemId;
 
   const wrap = document.getElementById('card-analysis');
   const summaryEl = document.getElementById('ca-summary');
@@ -13919,6 +14191,7 @@ async function loadCardAnalysis(item) {
   // One grade at a time. Raw is the default because it's the widest market and
   // the baseline people reason from; everything else is a click away.
   _caData = data;
+  _caRenderParallels(data);
   const sel = document.getElementById('ca-grade-select');
   if (sel) {
     sel.innerHTML = data.grades.map(g =>
