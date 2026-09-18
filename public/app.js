@@ -2891,6 +2891,19 @@ function applyGradeFilter(grade) {
 // After a search, detect the player/year/set from the query, look up the
 // matching checklist, and render a scrollable row of parallel chips so the
 // user can hop between Base, Silver, Gold, etc. without retyping.
+// Find the best matching checklist product for a set name + year.
+// Prefers the shortest name among matches so "2024 Panini Prizm Football"
+// wins over "2024 Panini Prizm Deca Football".
+function _findChecklistProduct(products, setName, year) {
+  const setLower = setName.toLowerCase();
+  const matches = products.filter(p => {
+    const pName = (p.name || '').toLowerCase();
+    return pName.includes(setLower) && (!year || pName.includes(year));
+  });
+  if (matches.length === 0) return null;
+  return matches.reduce((best, p) => (p.name || '').length < (best.name || '').length ? p : best);
+}
+
 async function buildParallelSwitcher(query) {
   const wrap = document.getElementById('parallel-switcher');
   if (!wrap) return;
@@ -2903,12 +2916,7 @@ async function buildParallelSwitcher(query) {
   try {
     const index = await fetchChecklistIndex();
     if (!index || !Array.isArray(index.products)) return;
-    const yearNum = parsed.year || '';
-    const setLower = parsed.set.toLowerCase();
-    const product = index.products.find(p => {
-      const pName = (p.name || '').toLowerCase();
-      return pName.includes(setLower) && (!yearNum || pName.includes(yearNum));
-    });
+    const product = _findChecklistProduct(index.products, parsed.set, parsed.year);
     if (!product) return;
 
     const detail = await fetchChecklistProduct(product.id);
@@ -2976,12 +2984,7 @@ async function buildModalParallelSwitcher(item) {
   try {
     const index = await fetchChecklistIndex();
     if (!index || !Array.isArray(index.products)) return;
-    const yearNum = parsed.year || '';
-    const setLower = parsed.set.toLowerCase();
-    const product = index.products.find(p => {
-      const pName = (p.name || '').toLowerCase();
-      return pName.includes(setLower) && (!yearNum || pName.includes(yearNum));
-    });
+    const product = _findChecklistProduct(index.products, parsed.set, parsed.year);
     if (!product) return;
 
     const detail = await fetchChecklistProduct(product.id);
