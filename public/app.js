@@ -13915,6 +13915,54 @@ function renderNetWorthChart() {
 // leaves the modal exactly as it was.
 let _caChart = null;
 let _caData = null;   // last payload, so the grade dropdown re-renders without refetching
+let _caItemId = null; // the sale the open analysis was derived from
+
+// Switch the card history to another parallel of the same card.
+//
+// The server hands back a representative item id per parallel, so this is the
+// same request the modal already makes rather than a fresh search — the
+// grouping that decides "same card" stays in one place on the server.
+async function _caSwitchParallel(itemId) {
+  if (!itemId || itemId === _caItemId) return;
+  const sel = document.getElementById('ca-parallel-select');
+  if (sel) sel.disabled = true;
+  try {
+    await loadCardAnalysis({ source: 'nflcarddb', itemId, hasAnalysis: true }, { switching: true });
+  } catch (_) {
+    // Put the dropdown back where it was; the series on screen is still the
+    // one it describes.
+    const s = document.getElementById('ca-parallel-select');
+    if (s) { s.value = _caItemId || s.value; s.disabled = false; }
+  }
+}
+
+// Only rendered when this card actually sold in more than one parallel —
+// a lone dropdown offering the thing already on screen is just clutter.
+function _caRenderParallels(data) {
+  const sel = document.getElementById('ca-parallel-select');
+  if (!sel) return;
+  const others = Array.isArray(data && data.parallels) ? data.parallels : [];
+  if (!others.length || !_caItemId) {
+    sel.classList.add('hidden');
+    sel.innerHTML = '';
+    return;
+  }
+  const currentName = (data.identity && data.identity.parallel) || 'This parallel';
+  const all = [
+    { name: currentName, sales: data.totalSales || 0, itemId: _caItemId },
+    ...others,
+  ];
+  // Base first, then by how much actually traded. The one on screen sits
+  // wherever it belongs rather than being hoisted to the top.
+  all.sort((a, b) =>
+    (a.name === 'Base' ? -1 : b.name === 'Base' ? 1 : 0) || (b.sales - a.sales));
+  sel.innerHTML = all.map(o =>
+    `<option value="${escHtml(String(o.itemId))}">${escHtml(o.name)} (${o.sales})</option>`).join('');
+  sel.value = _caItemId;
+  sel.disabled = false;
+  sel.onchange = () => _caSwitchParallel(sel.value);
+  sel.classList.remove('hidden');
+}
 let _caSelectedGrade = null;
 // Distinct per grade series. Raw and the common grades get fixed hues so a
 // grade keeps its colour between cards; anything else cycles the tail.
@@ -13979,9 +14027,12 @@ function _caRenderPrice(estimate) {
   el.classList.remove('hidden');
 }
 
-function _caReset() {
+// `keepVisible` is for switching parallels: the section stays put and only its
+// series are cleared, so the panel does not collapse and reflow under a finger
+// that is still on the dropdown.
+function _caReset(keepVisible) {
   const wrap = document.getElementById('card-analysis');
-  if (wrap) wrap.classList.add('hidden');
+  if (wrap && !keepVisible) wrap.classList.add('hidden');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
   _caData = null; // don't let one card's series render under the next card
   _caForSale = null;
@@ -13997,15 +14048,20 @@ function _caReset() {
   });
   const listEl = document.getElementById('ca-list-body');
   if (listEl) listEl.innerHTML = '';
+  // Hidden on every reset: a stale list would offer to switch to parallels of
+  // whichever card was open before this one.
+  const parSel = document.getElementById('ca-parallel-select');
+  if (parSel) { parSel.classList.add('hidden'); parSel.innerHTML = ''; parSel.disabled = false; }
   const priceEl = document.getElementById('ca-price');
   if (priceEl) { priceEl.classList.add('hidden'); priceEl.innerHTML = ''; }
   renderChartReadout('ca-point', '');
 }
 
-async function loadCardAnalysis(item) {
-  _caReset();
+async function loadCardAnalysis(item, opts = {}) {
+  _caReset(opts.switching);
   // Only our own rows carry an item id we can resolve to a card identity.
   if (!item || item.source !== 'nflcarddb' || !item.itemId) return;
+  _caItemId = item.itemId;
 
   const wrap = document.getElementById('card-analysis');
   const summaryEl = document.getElementById('ca-summary');
@@ -14048,6 +14104,7 @@ async function loadCardAnalysis(item) {
   // One grade at a time. Raw is the default because it's the widest market and
   // the baseline people reason from; everything else is a click away.
   _caData = data;
+  _caRenderParallels(data);
   const sel = document.getElementById('ca-grade-select');
   if (sel) {
     sel.innerHTML = data.grades.map(g =>

@@ -482,6 +482,65 @@ const rawTitles = (d) => {
       'the cache key must be built from CARD_IDENTITY_VERSION');
   }
 
+  // ---- switching parallels -------------------------------------------------
+  //
+  // The rows for a card's OTHER parallels are read by this endpoint and then
+  // thrown away. They are now returned instead, so the modal can offer them.
+  //
+  // The risk this guards is not "the list is empty" — it is the list being
+  // WRONG in the one direction that costs money. Offering the $8,900 Gold
+  // Vinyl auto as a parallel of a $20 base card would put the reader one tap
+  // from a number that has nothing to do with the card in their hand, which is
+  // the same false merge the grouping above exists to prevent.
+  {
+    const sv = await call('/api/card-analysis?itemId=s1');
+    const names = (sv.parallels || []).map(p => p.name);
+
+    check('the Silver card offers its other parallels to switch to',
+      Array.isArray(sv.parallels) && sv.parallels.length > 0, names.join(', ') || 'none offered');
+
+    const base = (sv.parallels || []).find(p => p.key === '');
+    check('  ...naming the base card, with its own sales and median',
+      !!base && base.sales === 4 && base.median === 20,
+      base ? `Base: ${base.sales} sales, median $${base.median}` : 'base not offered');
+
+    // a1 is an autograph. Different kind, and an order of magnitude apart.
+    check('  ...while the 1/1 auto is NOT offered as a parallel of the base card',
+      !names.some(nm => /vinyl/i.test(nm)),
+      'a $8,900 auto one tap from a $20 card is the merge this prevents');
+
+    // a2's parallel is not in the vocabulary, so there is no key to offer.
+    check('  ...nor is the sale whose parallel could not be read',
+      !names.some(nm => /kaleidoscope/i.test(nm)),
+      'an unreadable parallel is not a parallel you can switch to');
+
+    // The whole design: the option carries an item id, so switching is another
+    // call to this same endpoint rather than a fresh search.
+    const hopped = base ? await call(`/api/card-analysis?itemId=${base.itemId}`) : null;
+    check('  ...and following that item id actually lands on the base card',
+      !!hopped && hopped.available === true && hopped.totalSales === 4,
+      hopped ? `${hopped.totalSales} sales, parallel=${hopped.identity && hopped.identity.parallel}` : 'no hop');
+
+    // Round trip, or the switcher is a one-way door.
+    const backNames = ((hopped && hopped.parallels) || []).map(p => p.name);
+    const backToSilver = ((hopped && hopped.parallels) || []).find(p => /silver/i.test(p.name));
+    check('  ...and the base card offers the Silver back',
+      !!backToSilver && backToSilver.sales === 8,
+      backToSilver ? `${backToSilver.name}: ${backToSilver.sales} sales` : backNames.join(', ') || 'none');
+
+    check('  ...so the two medians on offer are genuinely different cards',
+      !!base && !!backToSilver && base.median !== backToSilver.median,
+      base && backToSilver ? `Base $${base.median} vs Silver $${backToSilver.median}` : 'n/a');
+
+    // An insert is not a parallel. Dalvin Cook's base #8 and Instant Impact #8
+    // read as the SAME parallel key and are separated by the subset rule, so
+    // they must not surface here as something to switch between.
+    const cook = await call('/api/card-analysis?itemId=n1');
+    check('an insert never appears in the parallel switcher',
+      Array.isArray(cook.parallels) && cook.parallels.length === 0,
+      (cook.parallels || []).map(p => p.name).join(', ') || 'none offered, correctly');
+  }
+
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall card-analysis checks passed');
   process.exit(failures ? 1 : 0);

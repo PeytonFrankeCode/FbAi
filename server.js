@@ -8629,7 +8629,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // compares that hash against the constant below: change any of them without
 // bumping the version and the suite fails, naming the fix. Recompute with
 //   node -e "..." (the test prints the exact command when it fails)
-const CARD_IDENTITY_VERSION = 'cardanalysis:v8';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v9';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -8848,6 +8848,12 @@ app.get('/api/card-analysis', async (req, res) => {
   // cards filed under a grade nobody issued.
   // v8: a redemption voucher is its own kind, so v7 entries hold "you are due
   // to receive" slips averaged in with the card they promise.
+  // v9: the payload now carries `parallels`, the other parallels of this card
+  // and the item id that opens each. The GROUPING is unchanged — this is the
+  // v2 case, a shape change — but a warm v8 entry has no such list, so the
+  // switcher would be missing for the TTL on exactly the cards people look at
+  // most. That is indistinguishable from the feature not having shipped, which
+  // is the mistake this comment block exists to stop repeating.
   const cacheKey = `${CARD_IDENTITY_VERSION}:${itemId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(_fromCache(cached));
@@ -9018,6 +9024,11 @@ app.get('/api/card-analysis', async (req, res) => {
     const seedName = (_saleParallel(seed, pi, pAliases, sOverrides, seed.player) || {}).parallel
                      || String(seed.parallel == null ? '' : seed.parallel).trim();
     const candidates = (rows && rows.results) || [];
+    // The same base card in its OTHER parallels, bucketed as they are excluded.
+    // These rows were already read and identified; throwing them away wastes
+    // the only expensive part of this request, and they are precisely what
+    // somebody looking at one parallel's price wants to compare against.
+    const siblingRows = new Map();
     let all, unreadable = 0, excludedOtherParallel = 0, excludedOtherKind = 0;
     if (seedKey.known) {
       all = [];
@@ -9026,6 +9037,14 @@ app.get('/api/card-analysis', async (req, res) => {
         if (!k.known) { unreadable++; note(r, 'dropped', `parallel unreadable (${k.from})`); continue; }
         if (k.key !== seedKey.key) {
           excludedOtherParallel++;
+          let bucket = siblingRows.get(k.key);
+          if (!bucket) {
+            // Named once per bucket, from the same reader the grouping used,
+            // so a corrected sale announces the parallel it was moved into.
+            const nm = (_saleParallel(r, pi, pAliases, sOverrides, seed.player) || {}).parallel;
+            siblingRows.set(k.key, bucket = { name: k.key === '' ? 'Base' : (nm || k.key), rows: [] });
+          }
+          bucket.rows.push(r);
           note(r, 'dropped', `different parallel: "${k.key}" vs "${seedKey.key}"`); continue;
         }
         if (_cardKind(String(r.title || '')) !== seedKind) {
@@ -9102,18 +9121,82 @@ app.get('/api/card-analysis', async (req, res) => {
     }
 
     let excludedOtherSubset = 0;
+    // Carried out of the block below so the parallel pass can reuse the answer
+    // instead of resolving the seed's insert a second time. The declaration
+    // inside stays as it is: insert-desk.test asserts on that exact line, to
+    // guarantee the card page reads desk decisions through the shared reader.
+    let seedSubsetResolved = '';
     if (pi) {
       // Through the aliased reader, so a decision made on the insert desk
       // reaches the card page. Wiring it into one screen and not the others is
       // how this codebase has lost a day twice.
       const ctx = { productId: seedProductId, player: seed.player, cardNumber: seed.card_number };
       const seedSubset = resolveSubsetAliased(pi, seed.title, ctx, iAliases).subset || '';
+      seedSubsetResolved = seedSubset;
       const kept = all.filter(r =>
         (resolveSubsetAliased(pi, r.title,
           { productId: seedProductId, player: r.player, cardNumber: r.card_number },
           iAliases).subset || '') === seedSubset);
       excludedOtherSubset = all.length - kept.length;
       all = kept;
+    }
+
+    // ---- the other parallels, as somewhere to switch to ----
+    //
+    // Everything above narrows to ONE parallel. This turns the rows it set
+    // aside into options, so a Silver can be compared against the Base and the
+    // Gold without going back to the search box and retyping the card.
+    //
+    // Each option carries a representative item id rather than an encoded
+    // identity. Switching is then another call to this same endpoint, which
+    // keeps the definition of "same card" in exactly one place — the last
+    // attempt at this feature re-ran a text SEARCH per parallel and inherited
+    // every ambiguity the search box has.
+    //
+    // The kind and print-run filters are applied here too: offering "Gold" and
+    // landing the reader on an autograph would be worse than not offering it.
+    // The insert filter is budgeted, because resolveSubset is the expensive
+    // read on this path (0.028ms a call against a 4,522-name vocabulary) and
+    // the request's whole CPU budget is around 50ms. A count here is a
+    // preview; switching re-derives it exactly through the pipeline above.
+    const parallels = [];
+    {
+      const seedRun = _printRun(String(seed.title || ''));
+      let subsetBudget = 400;
+      const ranked = [...siblingRows.entries()]
+        .sort((a, b) => b[1].rows.length - a[1].rows.length)
+        .slice(0, 12);
+      for (const [key, bucket] of ranked) {
+        let kept = bucket.rows.filter(r => _cardKind(String(r.title || '')) === seedKind);
+        if (seedRun != null) {
+          kept = kept.filter(r => {
+            const run = _printRun(String(r.title || ''));
+            return run == null || run === seedRun;
+          });
+        }
+        if (pi && kept.length <= subsetBudget) {
+          subsetBudget -= kept.length;
+          kept = kept.filter(r =>
+            (resolveSubsetAliased(pi, r.title,
+              { productId: seedProductId, player: r.player, cardNumber: r.card_number },
+              iAliases).subset || '') === seedSubsetResolved);
+        }
+        const prices = kept.map(r => (r.price_cents || 0) / 100)
+          .filter(p => p > 0).sort((a, b) => a - b);
+        if (!prices.length) continue;
+        const mid = Math.floor(prices.length / 2);
+        // The newest sale stands for the parallel: it is the likeliest to still
+        // parse the way the rest of this pipeline expects when it is reopened.
+        const rep = kept.reduce((best, r) =>
+          String(r.sold_date || '') > String(best.sold_date || '') ? r : best, kept[0]);
+        parallels.push({
+          key, name: bucket.name, sales: kept.length, itemId: rep.item_id,
+          median: Math.round(prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2),
+        });
+      }
+      // Base first, then by how much actually traded.
+      parallels.sort((a, b) =>
+        (a.key === '' ? -1 : b.key === '' ? 1 : 0) || b.sales - a.sales);
     }
 
     if (all.length === 0) {
@@ -9254,6 +9337,11 @@ app.get('/api/card-analysis', async (req, res) => {
       // parallel could not be determined from either the column or the title;
       // they are neither included nor called base, and saying so is better than
       // a total that quietly omits them.
+      // The same base card in its other parallels, each with the item id that
+      // reopens this endpoint on it. Empty when nothing else of this card sold,
+      // and when the clicked sale's own parallel could not be read at all —
+      // there is no key to be "other" than.
+      parallels,
       identity: {
         parallel: seedKey.known
           ? (seedKey.key === '' ? 'Base' : (seedName || null))

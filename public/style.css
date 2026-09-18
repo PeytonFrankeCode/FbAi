@@ -8323,6 +8323,17 @@ to { opacity: 1; transform: translateY(0); }
 /* Options render in the OS menu, so give them explicit colors — otherwise
    dark-on-dark makes them unreadable on some platforms. */
 .ca-grade-select option { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
+/* Sits to the left of the grade select: which card, then which grade.
+   Accent-tinted because this one changes the card, not just the view of it.
+   Width-capped so a long parallel name ("Neon Green Pulsar") cannot push the
+   grade select off a phone. */
+.ca-parallel-select {
+  border-color: rgba(94, 206, 153, 0.35);
+  background-color: rgba(94, 206, 153, 0.10);
+  max-width: 58%;
+  text-overflow: ellipsis;
+}
+.ca-parallel-select:disabled { opacity: 0.55; cursor: progress; }
 .ca-stat { display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
 .ca-stat-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
 .ca-stat-n { font-size: 0.68rem; color: var(--text-muted); }
