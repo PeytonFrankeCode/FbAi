@@ -1836,33 +1836,26 @@ main {
   border-color: var(--accent-border);
 }
 /* ---- Grade Filter (sold searches) ---- */
-/* ---- Parallel Switcher ---- */
-.parallel-switcher {
+/* ---- Parallel Filter ---- */
+.parallel-filter {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
 }
-.parallel-switcher-label {
+.parallel-filter-label {
   font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
-  white-space: nowrap;
+  margin-right: 0.25rem;
 }
-.parallel-switcher-row {
-  display: flex;
+.parallel-filter-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 0.35rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.parallel-switcher-row::-webkit-scrollbar { display: none; }
-.parallel-chip {
-  display: inline-block;
-  white-space: nowrap;
   background: transparent;
   border: 1px solid var(--border-primary);
   color: var(--text-secondary);
@@ -1874,19 +1867,28 @@ main {
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.parallel-chip:hover {
+.parallel-filter-btn:hover {
   border-color: var(--text-muted);
   color: var(--text-primary);
   background: var(--bg-hover);
 }
-.parallel-chip.active {
+.parallel-filter-btn.active {
   background: var(--accent-bg);
   color: var(--accent);
   border-color: var(--accent-border);
 }
-.card-modal-content > .parallel-switcher {
-  margin: 0.5rem 0 0;
-  padding: 0 0.25rem;
+.parallel-filter-count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-radius: 999px;
+  padding: 0.02rem 0.4rem;
+  line-height: 1.5;
+}
+.parallel-filter-btn.active .parallel-filter-count {
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.12);
 }
 
 .grade-filter {
