@@ -431,7 +431,8 @@ const TRAFFIC_TTL = 60 * 60 * 24 * 40;
 const _BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity/i;
 
 const _traffic = { day: '', total: 0, declaredBot: 0, browserLike: 0, noUa: 0,
-                   asset: 0, api: 0, page: 0, byUa: {}, byPath: {} };
+                   asset: 0, api: 0, page: 0, limited: 0, byUa: {}, byPath: {},
+                   byLimited: {} };
 
 function _trafficDay() { return new Date().toISOString().slice(0, 10); }
 
@@ -444,7 +445,8 @@ function _noteRequest(req) {
       _traffic.day = day;
       _traffic.total = 0; _traffic.declaredBot = 0; _traffic.browserLike = 0;
       _traffic.noUa = 0; _traffic.asset = 0; _traffic.api = 0; _traffic.page = 0;
-      _traffic.byUa = {}; _traffic.byPath = {};
+      _traffic.limited = 0;
+      _traffic.byUa = {}; _traffic.byPath = {}; _traffic.byLimited = {};
     }
     _traffic.total++;
 
@@ -479,11 +481,11 @@ async function flushTraffic() {
   try {
     const key = TRAFFIC_KEY(day);
     const prev = (await cacheGet(key)) || {};
-    for (const k of ['total', 'declaredBot', 'browserLike', 'noUa', 'asset', 'api', 'page']) {
+    for (const k of ['total', 'declaredBot', 'browserLike', 'noUa', 'asset', 'api', 'page', 'limited']) {
       prev[k] = (prev[k] || 0) + _traffic[k];
       _traffic[k] = 0;
     }
-    for (const bucket of ['byUa', 'byPath']) {
+    for (const bucket of ['byUa', 'byPath', 'byLimited']) {
       const acc = prev[bucket] || {};
       for (const [k, n] of Object.entries(_traffic[bucket])) acc[k] = (acc[k] || 0) + n;
       // Kept to the top 60 in KV too, or a month of long tails grows without end.
@@ -498,12 +500,124 @@ async function flushTraffic() {
   }
 }
 
+// ---- Inbound rate limiting ----
+//
+// WHY THIS EXISTS. Every `rateLimited` path in this file until now pointed
+// outward: eBay telling us we had asked too often. Nothing capped what one
+// caller could ask of us. /api/search spends eBay quota per call and
+// /api/scan-card spends an eBay image search per photo, so an unattended
+// script could run up real money at whatever rate its network allowed.
+//
+// WHAT IT IS NOT. This is not bot protection and will not be mistaken for it.
+// It does not care who is calling, it cannot tell a scraper from a person,
+// and a caller spread over many addresses gets a fresh budget at each one.
+// It caps what a single address can spend, which is the part that bills.
+//
+// APPROXIMATE ON PURPOSE. Counters live in the isolate, like the traffic
+// tally above. Workers run many isolates, so a caller spread across colos
+// holds a budget in each and the real ceiling is higher than the numbers
+// below. The alternative is a KV or Durable Object write per request, which
+// would cost more than the abuse it prevents. Undercounting is the accepted
+// trade: the case this exists to stop is one client hammering one endpoint,
+// and that it does see.
+const RL_DISABLED = process.env.DISABLE_RATE_LIMIT === '1';
+
+// Budgets sit where no person can reach them and a script trips immediately.
+// A fast searcher might manage a query every few seconds; 60 a minute is an
+// order of magnitude past that, and 600 an hour is past a whole session of it.
+// The hour window is what stops a caller pacing itself just under the minute.
+const RL_TIERS = [
+  { name: 'scan', minute: 20, hour: 200, match: (p) => p === '/api/scan-card' },
+  { name: 'search', minute: 60, hour: 600, match: (p) => p === '/api/search' },
+  { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
+];
+
+// Bounded, for the same reason the traffic tally is: one key per source
+// address is a memory leak a botnet controls. Past the cap we stop metering
+// rather than stop serving — a rate limiter that takes the site down has
+// done the attacker's job for them.
+const RL_MAX_KEYS = 20000;
+const _rlHits = new Map();
+
+function _rlSweep(now) {
+  for (const [k, e] of _rlHits) if (now >= e.h.until) _rlHits.delete(k);
+}
+
+// Behind Cloudflare, cf-connecting-ip is set by the edge and cannot be forged
+// by the caller. x-forwarded-for can be, so it is only consulted off-Worker,
+// where this is a development convenience rather than a control.
+function _rlKey(req) {
+  const cf = String(req.headers['cf-connecting-ip'] || '').trim();
+  if (cf) return cf;
+  if (process.env.CF_WORKER) return 'no-cf-ip';
+  const xff = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return xff || req.ip || 'local';
+}
+
+// Returns null to allow, or { tier, scope, retryAfter } to refuse.
+// Exported so the tests can drive it without standing up a socket.
+function rateLimitCheck(req, now = Date.now()) {
+  if (RL_DISABLED) return null;
+  const p = String(req.path || '/');
+  if (!p.startsWith('/api/')) return null;
+  const tier = RL_TIERS.find(t => t.match(p));
+  if (!tier) return null;
+
+  const key = _rlKey(req);
+  let e = _rlHits.get(key);
+  if (!e) {
+    if (_rlHits.size >= RL_MAX_KEYS) _rlSweep(now);
+    if (_rlHits.size >= RL_MAX_KEYS) return null; // saturated: serve, don't meter
+    e = { m: { n: 0, until: 0 }, h: { n: 0, until: 0 } };
+    _rlHits.set(key, e);
+  }
+  if (now >= e.m.until) { e.m.n = 0; e.m.until = now + 60000; }
+  if (now >= e.h.until) { e.h.n = 0; e.h.until = now + 3600000; }
+
+  e.m.n++;
+  e.h.n++;
+  if (e.m.n > tier.minute) {
+    return { tier: tier.name, scope: 'minute', retryAfter: Math.max(1, Math.ceil((e.m.until - now) / 1000)) };
+  }
+  if (e.h.n > tier.hour) {
+    return { tier: tier.name, scope: 'hour', retryAfter: Math.max(1, Math.ceil((e.h.until - now) / 1000)) };
+  }
+  return null;
+}
+
+// Tier names are ours, not the caller's, so this needs no size bound.
+function _noteLimited(tier) {
+  try {
+    _traffic.limited++;
+    _traffic.byLimited[tier] = (_traffic.byLimited[tier] || 0) + 1;
+  } catch (_) { /* counting must never break a request */ }
+}
+
 app.use((req, res, next) => {
   _noteRequest(req);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
+});
+
+// Ahead of express.json on purpose: a refused request must not first cost us
+// the parse of a 12mb scan body.
+app.use((req, res, next) => {
+  // Admin tooling is not the threat, and spends no budget even when busy.
+  if (isAdminReq(req)) return next();
+  const hit = rateLimitCheck(req);
+  if (!hit) return next();
+  _noteLimited(hit.tier);
+  res.setHeader('Retry-After', String(hit.retryAfter));
+  // `rateLimited` / `rateLimitMessage` match the shape the client already
+  // understands from the eBay path, so there is one way to say this.
+  return res.status(429).json({
+    error: `Too many requests — slow down and try again in ${hit.retryAfter}s.`,
+    rateLimited: true,
+    rateLimitMessage: `That's a lot of requests in a short time. This unlocks again in ${hit.retryAfter} seconds.`,
+    retryAfter: hit.retryAfter,
+  });
 });
 
 // Cloudflare's edge handles compression automatically; only use locally.
@@ -7434,6 +7548,11 @@ app.get('/api/debug/traffic', async (req, res) => {
         // claims — which is the one thing a headless browser cannot fake while
         // still being cheap to run at scale.
         assetsPerPage: row.page ? Math.round(((row.asset || 0) / row.page) * 10) / 10 : null,
+        // Requests refused for asking too fast, and which budget refused them.
+        // Zero here with high `api` means the load is spread across addresses,
+        // which is worth knowing before reaching for a bigger hammer.
+        limited: row.limited || 0,
+        limitedBy: row.byLimited || {},
       });
     }
 
@@ -7465,7 +7584,12 @@ app.get('/api/debug/traffic', async (req, res) => {
         requests: _traffic.total, declaredBot: _traffic.declaredBot,
         browserLike: _traffic.browserLike, pages: _traffic.page,
         assets: _traffic.asset, api: _traffic.api,
+        limited: _traffic.limited, limitedBy: { ..._traffic.byLimited },
       },
+      // The budgets in force, so a reading of `limited` can be judged against
+      // what it took to trip them without reading the source.
+      rateLimits: RL_DISABLED ? 'disabled' : RL_TIERS.map(t =>
+        ({ tier: t.name, perMinute: t.minute, perHour: t.hour })),
       days,
       // Who, by name, biggest first. The answer to "what the heck is this"
       // is usually just legible here: one user agent carrying most of the day.
@@ -12861,7 +12985,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
