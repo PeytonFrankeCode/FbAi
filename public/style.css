@@ -1884,6 +1884,10 @@ main {
   color: var(--accent);
   border-color: var(--accent-border);
 }
+.card-modal-content > .parallel-switcher {
+  margin: 0.5rem 0 0;
+  padding: 0 0.25rem;
+}
 
 .grade-filter {
   display: flex;

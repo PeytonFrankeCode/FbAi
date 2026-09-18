@@ -2964,6 +2964,75 @@ function hideParallelSwitcher() {
   if (wrap) { wrap.innerHTML = ''; wrap.classList.add('hidden'); }
 }
 
+async function buildModalParallelSwitcher(item) {
+  const wrap = document.getElementById('card-modal-parallels');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  wrap.classList.add('hidden');
+
+  const parsed = parseCardTitle(item.title);
+  if (!parsed.set || !parsed.player) return;
+
+  try {
+    const index = await fetchChecklistIndex();
+    if (!index || !Array.isArray(index.products)) return;
+    const yearNum = parsed.year || '';
+    const setLower = parsed.set.toLowerCase();
+    const product = index.products.find(p => {
+      const pName = (p.name || '').toLowerCase();
+      return pName.includes(setLower) && (!yearNum || pName.includes(yearNum));
+    });
+    if (!product) return;
+
+    const detail = await fetchChecklistProduct(product.id);
+    if (!detail || !Array.isArray(detail.sets)) return;
+
+    const baseSet = detail.sets.find(s => {
+      const sn = (s.name || '').toLowerCase();
+      return sn.includes('base') || sn === 'base set';
+    }) || detail.sets[0];
+    if (!baseSet) return;
+
+    const variants = buildVariants(baseSet);
+    if (variants.length < 2) return;
+
+    const currentParallel = (parsed.parallel || 'Base').toLowerCase();
+
+    const label = document.createElement('span');
+    label.className = 'parallel-switcher-label';
+    label.textContent = 'Parallel:';
+    wrap.appendChild(label);
+
+    const row = document.createElement('div');
+    row.className = 'parallel-switcher-row';
+
+    for (const v of variants) {
+      const btn = document.createElement('button');
+      const vName = v.name || 'Base';
+      const isActive = vName.toLowerCase() === currentParallel;
+      btn.className = 'parallel-chip' + (isActive ? ' active' : '');
+      btn.textContent = vName + (v.printRun ? ` /${v.printRun}` : '');
+      btn.addEventListener('click', () => {
+        if (isActive) return;
+        closeCardModal();
+        const newParallel = vName === 'Base' ? '' : vName;
+        let parts = [parsed.player, parsed.year, parsed.set].filter(Boolean);
+        if (newParallel) parts.push(newParallel);
+        if (parsed.cardNumber) parts.push('#' + parsed.cardNumber);
+        const newQuery = parts.join(' ');
+        document.getElementById('search-input').value = newQuery;
+        performSearch(newQuery);
+      });
+      row.appendChild(btn);
+    }
+
+    wrap.appendChild(row);
+    wrap.classList.remove('hidden');
+  } catch (err) {
+    console.warn('[modal-parallel-switcher]', err && err.message);
+  }
+}
+
 function updateLoadMoreButton(grid) {
   let wrap = grid.querySelector('.load-more-wrap');
   const hasCachedMore = _gradeGroups.some(g => (_gradeShown[g.grade] || 0) < g.items.length);
@@ -3142,6 +3211,9 @@ const cardModalLink = document.getElementById('card-modal-link');
 function openCardModal(item) {
   // "Showing X card" header with parsed details
   cardModalShowing.textContent = buildShowingText(item);
+
+  // Parallel switcher inside the modal
+  buildModalParallelSwitcher(item);
 
   // Image
   cardModalImage.innerHTML = item.imageUrl
