@@ -1449,8 +1449,14 @@
     </div>
   </div>
 
+  <!-- reCAPTCHA v3. Loads async so it never blocks first paint, and the app
+       works without it — app.js attaches a token when one is available and
+       the server decides what a missing one means. The floating badge is
+       Google's required attribution; hiding it obliges us to show the
+       "protected by reCAPTCHA" text instead. -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=70892f9432"></script>
+  <script src="app.js?v=71be20320a"></script>
   <script type="importmap">
   {
     "imports": {

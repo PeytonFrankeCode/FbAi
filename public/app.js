@@ -1,3 +1,56 @@
+// ---- reCAPTCHA ----
+//
+// Attaches a token to the two endpoints the server guards. Done by wrapping
+// fetch once rather than at each call site: /api/search alone is called from
+// ten places, and the eleventh would have been the one that silently started
+// getting 403s.
+//
+// Fails open on purpose. If the Google script is blocked, slow, or simply not
+// there, the request still goes — the server decides what to do about a
+// missing token, and it can be put in report-only mode from the dashboard.
+// The browser's job here is to supply evidence, not to withhold requests.
+const RECAPTCHA_SITE_KEY = '6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE';
+const RECAPTCHA_GUARDED = ['/api/search', '/api/scan-card'];
+
+function _captchaToken(action) {
+  return new Promise((resolve) => {
+    const g = window.grecaptcha;
+    if (!g || typeof g.ready !== 'function') return resolve(null);
+    // Never let a hung script hold a search hostage.
+    const bail = setTimeout(() => resolve(null), 3000);
+    try {
+      g.ready(() => {
+        g.execute(RECAPTCHA_SITE_KEY, { action })
+          .then(t => { clearTimeout(bail); resolve(t || null); })
+          .catch(() => { clearTimeout(bail); resolve(null); });
+      });
+    } catch (_) { clearTimeout(bail); resolve(null); }
+  });
+}
+
+(function wrapFetchForCaptcha() {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    let path = '';
+    try {
+      const url = (input && typeof input === 'object' && input.url) ? input.url : String(input);
+      path = new URL(url, window.location.origin).pathname;
+    } catch (_) { /* not a URL we can read — treat as unguarded */ }
+    if (!RECAPTCHA_GUARDED.includes(path)) return nativeFetch(input, init);
+
+    const action = path === '/api/scan-card' ? 'scan' : 'search';
+    return _captchaToken(action).then((token) => {
+      if (!token) return nativeFetch(input, init);
+      const opts = { ...(init || {}) };
+      // Headers can arrive as a Headers instance, an array, or a plain object.
+      const h = new Headers((init && init.headers) || (input && input.headers) || {});
+      h.set('x-recaptcha-token', token);
+      opts.headers = h;
+      return nativeFetch(input, opts);
+    });
+  };
+})();
+
 // ---- Theme ----
 (function initTheme() {
   const saved = localStorage.getItem('cardHuddleTheme');
@@ -2314,6 +2367,18 @@ async function performSearch(query, opts = {}) {
       setLoading(false);
       refreshSoldUsage();
       alert(data.error || `You've hit today's sold-search limit (${data.freeLimit || 25}). It resets tomorrow.`);
+      return;
+    }
+    if (response.status === 403 && data && data.captchaFailed) {
+      // A reCAPTCHA token is single-use and expires in two minutes, so the
+      // ordinary cause of this is a page left open. Say what to do about it
+      // rather than reporting a bare 403.
+      setLoading(false);
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#128260;</div><h3>Couldn\'t verify this request</h3>'
+        + '<p>Reload the page and search again. If it keeps happening, an extension may be blocking Google\'s reCAPTCHA script.</p>';
+      grid.appendChild(msg);
       return;
     }
     if (!response.ok) {

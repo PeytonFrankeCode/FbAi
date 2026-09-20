@@ -432,7 +432,7 @@ const _BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|p
 
 const _traffic = { day: '', total: 0, declaredBot: 0, browserLike: 0, noUa: 0,
                    asset: 0, api: 0, page: 0, limited: 0, byUa: {}, byPath: {},
-                   byLimited: {} };
+                   byLimited: {}, captcha: {} };
 
 function _trafficDay() { return new Date().toISOString().slice(0, 10); }
 
@@ -447,6 +447,7 @@ function _noteRequest(req) {
       _traffic.noUa = 0; _traffic.asset = 0; _traffic.api = 0; _traffic.page = 0;
       _traffic.limited = 0;
       _traffic.byUa = {}; _traffic.byPath = {}; _traffic.byLimited = {};
+      _traffic.captcha = {};
     }
     _traffic.total++;
 
@@ -485,7 +486,7 @@ async function flushTraffic() {
       prev[k] = (prev[k] || 0) + _traffic[k];
       _traffic[k] = 0;
     }
-    for (const bucket of ['byUa', 'byPath', 'byLimited']) {
+    for (const bucket of ['byUa', 'byPath', 'byLimited', 'captcha']) {
       const acc = prev[bucket] || {};
       for (const [k, n] of Object.entries(_traffic[bucket])) acc[k] = (acc[k] || 0) + n;
       // Kept to the top 60 in KV too, or a month of long tails grows without end.
@@ -593,12 +594,105 @@ function _noteLimited(tier) {
   } catch (_) { /* counting must never break a request */ }
 }
 
+// ---- reCAPTCHA ----
+//
+// Guards the two endpoints that spend money per call — /api/search (eBay
+// quota) and /api/scan-card (an eBay image search per photo). Nothing else,
+// and deliberately nothing that renders a page: the generated /sets, /players
+// and /teams pages are how this site is found, and a crawler handed a
+// challenge is a page removed from the index.
+//
+// Google is asked about the token on each guarded call. That is a network
+// round trip, not CPU, so it does not touch the Worker's CPU budget, and it
+// sits in front of a search that was already going to take seconds.
+//
+// v2 and v3 are both handled. A v3 verification carries a `score` and is
+// checked against RECAPTCHA_MIN_SCORE; a v2 one carries no score and only has
+// to succeed. That way the key can be swapped without touching this code.
+const RECAPTCHA_SECRET = process.env.Recaptcha_secret || process.env.RECAPTCHA_SECRET || '';
+const RECAPTCHA_MIN_SCORE = Number(process.env.RECAPTCHA_MIN_SCORE || 0.5);
+// A kill switch that needs no deploy. If this turns real people away, setting
+// it to 0 in the dashboard stops the enforcement on the next request while
+// the counters below keep reporting what it WOULD have done.
+const RECAPTCHA_ENFORCE = process.env.RECAPTCHA_ENFORCE !== '0';
+const RECAPTCHA_PATHS = ['/api/search', '/api/scan-card'];
+
+// Verifications are counted the same way refusals are, so /api/debug/traffic
+// answers the question this feature actually raises: how many people is it
+// turning away? A silent gate is how you lose real users and never find out.
+function _noteCaptcha(outcome) {
+  try {
+    _traffic.captcha[outcome] = (_traffic.captcha[outcome] || 0) + 1;
+  } catch (_) { /* counting must never break a request */ }
+}
+
+async function verifyRecaptcha(token, ip) {
+  if (!token) return { ok: false, why: 'missing' };
+  try {
+    const body = new URLSearchParams({ secret: RECAPTCHA_SECRET, response: token });
+    if (ip) body.set('remoteip', ip);
+    const r = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const d = await r.json();
+    if (!d.success) {
+      const codes = (d['error-codes'] || []).join(',');
+      // A token is single-use and short-lived. Both of those read as an
+      // ordinary stale retry, not as an attack.
+      return { ok: false, why: codes || 'rejected' };
+    }
+    // v3 only. A v2 response has no score and success is the whole answer.
+    if (typeof d.score === 'number' && d.score < RECAPTCHA_MIN_SCORE) {
+      return { ok: false, why: 'low-score', score: d.score };
+    }
+    return { ok: true, score: typeof d.score === 'number' ? d.score : null };
+  } catch (err) {
+    // Google unreachable. Fail OPEN, and say so in the counters.
+    //
+    // The alternative is that an outage at Google takes search down here, which
+    // is a worse day than letting some traffic through unverified — the rate
+    // limiter is still underneath this, so the cost is still capped.
+    console.error('[recaptcha] verify failed:', err && err.message);
+    return { ok: true, degraded: true };
+  }
+}
+
 app.use((req, res, next) => {
   _noteRequest(req);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
+});
+
+// Runs before express.json for the same reason the rate limiter does: a
+// refused scan must not first cost the parse of a 12mb body.
+app.use(async (req, res, next) => {
+  // No secret configured is not a failure — it is local development and every
+  // test in this repo. The guard simply is not on.
+  if (!RECAPTCHA_SECRET) return next();
+  if (!RECAPTCHA_PATHS.includes(String(req.path || ''))) return next();
+  if (isAdminReq(req)) return next();
+
+  const token = String(req.headers['x-recaptcha-token'] || req.query.captcha || '');
+  const ip = String(req.headers['cf-connecting-ip'] || '').trim();
+  const v = await verifyRecaptcha(token, ip);
+
+  if (v.degraded) { _noteCaptcha('degraded'); return next(); }
+  if (v.ok) { _noteCaptcha('pass'); return next(); }
+
+  _noteCaptcha(v.why === 'missing' ? 'missing' : 'fail');
+  // Report-only mode still counts, so the damage can be measured before the
+  // gate is trusted with real traffic.
+  if (!RECAPTCHA_ENFORCE) return next();
+
+  return res.status(403).json({
+    error: "Couldn't verify this request came from a browser. Reload the page and try again.",
+    captchaFailed: true,
+    reason: v.why,
+  });
 });
 
 // Ahead of express.json on purpose: a refused request must not first cost us
@@ -7553,6 +7647,11 @@ app.get('/api/debug/traffic', async (req, res) => {
         // which is worth knowing before reaching for a bigger hammer.
         limited: row.limited || 0,
         limitedBy: row.byLimited || {},
+        // reCAPTCHA outcomes. `missing` and `fail` are people (or bots) being
+        // turned away; a `missing` count that tracks real traffic means the
+        // script is not loading for them, which is a problem with the gate,
+        // not with them.
+        captcha: row.captcha || {},
       });
     }
 
@@ -7585,11 +7684,17 @@ app.get('/api/debug/traffic', async (req, res) => {
         browserLike: _traffic.browserLike, pages: _traffic.page,
         assets: _traffic.asset, api: _traffic.api,
         limited: _traffic.limited, limitedBy: { ..._traffic.byLimited },
+        captcha: { ..._traffic.captcha },
       },
       // The budgets in force, so a reading of `limited` can be judged against
       // what it took to trip them without reading the source.
       rateLimits: RL_DISABLED ? 'disabled' : RL_TIERS.map(t =>
         ({ tier: t.name, perMinute: t.minute, perHour: t.hour })),
+      recaptcha: !RECAPTCHA_SECRET ? 'not configured' : {
+        enforcing: RECAPTCHA_ENFORCE,
+        minScore: RECAPTCHA_MIN_SCORE,
+        paths: RECAPTCHA_PATHS,
+      },
       days,
       // Who, by name, biggest first. The answer to "what the heck is this"
       // is usually just legible here: one user agent carrying most of the day.
