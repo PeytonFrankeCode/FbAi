@@ -55,11 +55,42 @@ const SITE = 'https://thecardhuddle.com';
 //
 // Set this to the pub id ('ca-pub-…') once the pages have traffic worth
 // monetising, and reserve a fixed height on every slot when you do.
-const ADSENSE_CLIENT = null;
+// ---- AdSense on the generated pages ---------------------------------------
+//
+// This was null, which put the ad tag on the app shell and nowhere else. The
+// shell renders 207 visible words — a search box and a row of tabs — because
+// the checklist, market and inventory panels are display:none until a tab is
+// clicked, and their data is fetched on demand rather than served in the HTML.
+// Clicking "Checklists" takes the page to 2,128 visible words without changing
+// the URL, so none of it is a page anything can crawl or index. The generated
+// pages below are where the substance actually has an address.
+//
+// NOT on every page, though. The build emits roughly 8,200 of these from one
+// template, and a thin templated page carrying ads is what Google's policies
+// call scaled content.
+//
+// The rule is the one this file already makes: a page carries ads only if it
+// is INDEXABLE. The thin-content thresholds below already decide which pages
+// are substantial enough to put in front of Google, and that comment block
+// reaches this conclusion on its own — "a monetised site made mostly of thin
+// generated pages is a review risk". Reusing that judgement rather than adding
+// a second one means the two can never disagree, and never monetises a page we
+// have told Google not to index.
+//
+// Set ADSENSE_CLIENT='' to turn the tag off everywhere again.
+const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT !== undefined
+  ? process.env.ADSENSE_CLIENT
+  : 'ca-pub-3644779384068007';
 
-const adsenseTag = () => ADSENSE_CLIENT
-  ? `  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
-  : '';
+const _adsStats = { withAds: 0, withoutAds: 0 };
+
+const adsenseTag = (noindex) => {
+  const on = !!ADSENSE_CLIENT && !noindex;
+  if (on) _adsStats.withAds++; else _adsStats.withoutAds++;
+  return on
+    ? `  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
+    : '';
+};
 const TODAY = new Date().toISOString().slice(0, 10);
 
 // ---- Sitemap <lastmod> -----------------------------------------------------
@@ -294,7 +325,7 @@ function head({ title, description, canonical, extraJsonLd, noindex }) {
   <meta name="robots" content="${noindex ? 'noindex, follow' : 'index, follow'}" />
   <meta name="theme-color" content="#5ece99" />
   <link rel="canonical" href="${esc(canonical)}" />
-${adsenseTag()}
+${adsenseTag(noindex)}
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="The Card Huddle" />
@@ -1468,6 +1499,15 @@ function main() {
 
   console.log(`  wrote ${checklists.length} product + ${subsetTotal} set + ${eligible.length} player + ${teams.length} team pages + ${years.length} year hubs + 3 hubs + sitemap`);
   console.log(`  total generated HTML: ${(bytes / 1024 / 1024).toFixed(1)} MB`);
+  {
+    const { withAds, withoutAds } = _adsStats;
+    const total = withAds + withoutAds;
+    console.log(ADSENSE_CLIENT
+      ? `  AdSense: ${withAds}/${total} pages carry the tag `
+        + `(${total ? Math.round((withAds / total) * 100) : 0}%) — `
+        + `the indexable ones; ${withoutAds} noindexed pages carry none`
+      : '  AdSense: disabled (ADSENSE_CLIENT empty)');
+  }
   console.log('  done.');
 }
 

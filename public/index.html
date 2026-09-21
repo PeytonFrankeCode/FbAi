@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=da14487ead" />
+  <link rel="stylesheet" href="style.css?v=a9e040c9c0" />
 
 
 </head>
@@ -342,6 +342,74 @@
         <button class="chip" data-query="Josh Allen 2018 Prizm Base">Allen Prizm Base</button>
         <button class="chip" data-query="Ja'Marr Chase 2021 Prizm Base">Chase Prizm Base</button>
       </div>
+    </section>
+
+    <!-- The homepage's own content.
+         Everything else on this page is a panel that stays display:none until
+         a tab is clicked, and the data behind those panels is fetched on
+         demand rather than served in the HTML — so to anything that reads the
+         page without clicking, this section is the homepage. It is hidden
+         during a search alongside the suggestions above it. -->
+    <section id="about-section" class="about-section" aria-label="How it works">
+      <h2>How The Card Huddle prices a card</h2>
+      <p>
+        Every figure on this site comes from listings that actually sold on eBay.
+        Asking prices tell you what somebody hopes to get; sold prices tell you what
+        somebody paid. Only the second one is a comp, so it is the only kind of
+        number we keep.
+      </p>
+
+      <h3>A grade is a different market, not a modifier</h3>
+      <p>
+        A PSA 10 and a raw copy of the same card are often an order of magnitude
+        apart in price, and they do not trade against each other. Averaging them
+        produces a line that mostly tracks which copies happened to sell that week.
+        So each grade gets its own price series and its own stats — Raw, PSA 10,
+        BGS 9.5, SGC 10 and the rest — and the raw line never has slab money in it.
+        Reading grades correctly is harder than it sounds: a slab listed as
+        &ldquo;PSA10&rdquo; with no space, or one whose grade sits only in eBay&rsquo;s
+        structured fields and never in the title, has to be recognised either way.
+      </p>
+
+      <h3>A parallel is a different card</h3>
+      <p>
+        Modern football products carry enormous parallel lists. Across the checklists
+        behind this site &mdash; more than 360 products and over 11,000 sets &mdash;
+        there are roughly four thousand distinct parallel names, and the large
+        majority of them are more than one word. A Neon Green Pulsar, a Green Ice and
+        a plain Green are three different cards at three very different prices, and
+        collapsing them into &ldquo;Green&rdquo; would produce a median that describes
+        none of them. Each sale is matched against the real parallel list for the
+        product it belongs to, longest name first, so the specific card wins over the
+        colour it happens to contain.
+      </p>
+
+      <h3>What counts as the same card</h3>
+      <p>
+        Two sales are comparable only when they are the same player, year, set and
+        card number &mdash; and also the same parallel, the same print run, and the
+        same kind of card. That last one matters more than it looks: autograph sets
+        routinely reuse the base set&rsquo;s numbering, so a base rookie and its
+        on-card auto can share a number while differing tenfold in price. Autographs,
+        relics, inserts and numbered parallels are each held apart, and a sale whose
+        card cannot be read confidently is left out rather than guessed at.
+      </p>
+
+      <h3>Medians, and an honest blank</h3>
+      <p>
+        Prices are reported as medians rather than averages, because card sales carry
+        long tails and one unusual result should not move the number a collector is
+        about to trade on. Where the prices inside a group spread too far to plausibly
+        be one card, the trend is withheld instead of printed &mdash; a confident
+        percentage built on a bad bucket is worse than no percentage at all.
+      </p>
+
+      <p class="about-closing">
+        The Card Huddle is free. The goal is simple: give new collectors and veterans
+        the same information, so trades and sales happen at fair numbers.
+        <a href="/methodology.html">Read the full methodology</a> or
+        <a href="/sets/">browse the checklists</a>.
+      </p>
     </section>
 
     <!-- Variant selection view -->
@@ -1456,7 +1524,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=7243dea7e8"></script>
+  <script src="app.js?v=6a076fbe79"></script>
   <script type="importmap">
   {
     "imports": {

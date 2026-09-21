@@ -878,6 +878,9 @@ const errorMsg = document.getElementById('error-message');
 const grid = document.getElementById('results-grid');
 const meta = document.getElementById('search-meta');
 const suggestionsSection = document.getElementById('suggestions-section');
+// The homepage's prose. Follows the suggestions section exactly: present when
+// somebody lands, out of the way once they have searched for something.
+const aboutSection = document.getElementById('about-section');
 const chartSection = document.getElementById('chart-section');
 const chartCanvas = document.getElementById('price-chart');
 const variantsSection = document.getElementById('variants-section');
@@ -948,6 +951,7 @@ function renderRecentSearches() {
       }
       input.value = query;
       suggestionsSection.classList.add('hidden');
+      if (aboutSection) aboutSection.classList.add('hidden');
       recentSection.classList.add('hidden');
       fetchDirectSearch(query);
     });
@@ -1503,6 +1507,7 @@ form.addEventListener('submit', async (e) => {
   const query = input.value.trim();
   if (!query) return;
   suggestionsSection.classList.add('hidden');
+  if (aboutSection) aboutSection.classList.add('hidden');
   recentSection.classList.add('hidden');
   addRecentSearch(query);
   await fetchDirectSearch(query);
@@ -1514,6 +1519,7 @@ document.querySelectorAll('.chip').forEach(chip => {
     const query = chip.dataset.query;
     input.value = query;
     suggestionsSection.classList.add('hidden');
+    if (aboutSection) aboutSection.classList.add('hidden');
     recentSection.classList.add('hidden');
     addRecentSearch(query);
     fetchDirectSearch(query);
@@ -1949,6 +1955,7 @@ function goBackToVariants() {
     currentSearchMode = 'variants';
     input.value = '';
     suggestionsSection.classList.remove('hidden');
+    if (aboutSection) aboutSection.classList.remove('hidden');
     renderRecentSearches();
     return;
   }
