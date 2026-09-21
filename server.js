@@ -4190,7 +4190,10 @@ function _cardKeySql(playerExpr) {
 // inside "Isaiah", 'tag' inside "vintage", 'ags' inside "flags" — because
 // matching those would throw away real raw sales of real players, and ISA, TAG
 // and AGS together slab a rounding error of the football market.
-const RSI_GRADER_WORDS = ['psa', 'bgs', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
+// 'bvg' (Beckett Vintage Grading) added alongside grade-core's copy: the
+// raw-filter diagnostic found 102 sales carrying it in the grader column, and
+// it is as safe a substring as the rest — it occurs inside no ordinary word.
+const RSI_GRADER_WORDS = ['psa', 'bgs', 'bvg', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
                           'hga', 'ksa', 'gma', 'rcg', 'mnt'];
 const RSI_SLAB_WORDS = ['slab', 'encapsulated', 'cert'];
 
@@ -7247,6 +7250,40 @@ app.get('/api/debug/raw-filter', async (req, res) => {
         GROUP BY title ORDER BY n DESC LIMIT 5`
     ).bind(sinceIso, throughIso).all();
 
+    // ---- what a grade-word rule WOULD cost, before anyone writes one ----
+    //
+    // The tempting next fix is to read "GEM MT 10" as a slab. grade-core
+    // refuses to, on purpose: a seller calling a loose card "gem mint" is
+    // describing its corners, not saying it is in a holder, and catching that
+    // would invent grades for raw cards — the same corruption as missing a
+    // slab, pointing the other way.
+    //
+    // Which way that trade falls is a number, not an opinion, and nobody has
+    // had the number. So this counts how many sales the rule would actually
+    // move, per phrasing, among the rows that survive as Raw today. Reading
+    // them against sampleRawTitles says whether they are slabs or sellers.
+    const gradeWordProbe = async () => {
+      const pats = {
+        'gem mt <n>': ["%gem mt 10%", "%gem mt10%", "%gem mt 9%"],
+        'gem mint <n>': ["%gem mint 10%", "%gem mint10%", "%gem mint 9%"],
+        'mint <n>, no "gem"': ["%mint 9%", "%mint 10%"],
+        'pristine/black label': ["%pristine 10%", "%black label%"],
+      };
+      const out = {};
+      for (const [label, likes] of Object.entries(pats)) {
+        const any = likes.map(() => `${T} LIKE ?`).join(' OR ');
+        const r = await db.prepare(
+          `SELECT COUNT(*) AS n FROM sales
+            WHERE price_cents IS NOT NULL AND price_cents > 0
+              AND sold_date > ? AND sold_date <= ?
+              AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+              AND ${titleClean} AND ( ${any} )`
+        ).bind(sinceIso, throughIso, ...likes).first();
+        out[label] = (r && r.n) || 0;
+      }
+      return out;
+    };
+
     const p = funnel || {};
     const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
     res.json({
@@ -7274,6 +7311,11 @@ app.get('/api/debug/raw-filter', async (req, res) => {
       gradeValues: await top('grade'),
       sampleRawTitles: ((survivors && survivors.results) || [])
         .map(r => ({ title: r.title, player: r.player, sales: r.n })),
+      // Sales still counted as Raw whose titles carry grading language that
+      // grade-core deliberately does not act on. These are candidates, not
+      // errors: the count is what a rule would move, and the decision to
+      // write one needs this number next to sampleRawTitles.
+      gradeWordCandidates: await gradeWordProbe(),
       ungradedTreatedAs: RSI_UNGRADED_VALUES.map(v => v === '' ? '(empty)' : v),
     });
   } catch (err) {
@@ -8734,14 +8776,14 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // compares that hash against the constant below: change any of them without
 // bumping the version and the suite fails, naming the fix. Recompute with
 //   node -e "..." (the test prints the exact command when it fails)
-const CARD_IDENTITY_VERSION = 'cardanalysis:v9';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v10';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
 // grouping. The guard cannot tell a cosmetic edit from a behavioural one, and
 // should not try — it exists to force this judgement, not to make it. Bumping
 // here would throw away every cached analysis to no effect.
-const CARD_IDENTITY_FINGERPRINT = '5ba269e236c7';
+const CARD_IDENTITY_FINGERPRINT = '19a077137bc2';
 
 // How far one card's prices may spread before a trend across them is refused.
 //
@@ -8953,6 +8995,9 @@ app.get('/api/card-analysis', async (req, res) => {
   // cards filed under a grade nobody issued.
   // v8: a redemption voucher is its own kind, so v7 entries hold "you are due
   // to receive" slips averaged in with the card they promise.
+  // v10: BVG joins the grader list, so a title reading "BVG 9.5" with empty
+  // columns is a slab rather than a raw card. That MOVES SALES between price
+  // series, so v9 entries hold a Raw line with Beckett Vintage money in it.
   // v9: the payload now carries `parallels`, the other parallels of this card
   // and the item id that opens each. The GROUPING is unchanged — this is the
   // v2 case, a shape change — but a warm v8 entry has no such list, so the

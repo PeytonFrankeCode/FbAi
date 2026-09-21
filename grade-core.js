@@ -30,7 +30,12 @@
 // because it runs as SQL LIKEs over the whole sales table and cannot afford
 // regex. That copy deliberately omits ISA, TAG and AGS, which are unsafe as
 // bare substrings. Here they are safe, because the boundaries below are real.
-const GRADERS = ['PSA', 'BGS', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
+// BVG is Beckett Vintage Grading, and it was missing. /api/debug/raw-filter
+// found 102 sales in a 30-day window carrying grader='bvg' in the column, so
+// it is demonstrably in this dataset — and a title reading "BVG 9.5" with
+// empty columns was landing in Raw. Safe as a bare token for the same reason
+// PSA and BGS are: 'bvg' does not occur inside an ordinary word.
+const GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
                  'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT'];
 
 // Letters, not word characters. See the header: this is the whole fix.

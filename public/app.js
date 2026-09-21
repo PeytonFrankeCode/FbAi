@@ -2720,7 +2720,10 @@ function timeAgo(dateStr) {
 // "Enigma", 'isa' inside "Isaiah", 'mnt' inside "USMNT". The boundaries below
 // are on LETTERS rather than \b, so a digit may follow a grader ("PSA10", the
 // commonest way a slab is listed) while a letter may not.
-const APP_GRADERS = ['PSA', 'BGS', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
+// Kept in step with grade-core.js by grade-core.test — BVG (Beckett Vintage
+// Grading) was added there after the raw-filter diagnostic found 102 sales
+// carrying it, and a browser list one short would badge those as Ungraded.
+const APP_GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
                      'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT'];
 const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.join('|')})(?![A-Za-z])`, 'gi');
 // The number belonging to THIS grader. '/' is excluded along with the digits
