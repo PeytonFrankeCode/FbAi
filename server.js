@@ -1335,6 +1335,56 @@ const NFLDB_SEARCH_WINDOW_DAYS = 1095;
 // generous. Exposed at /api/debug/d1-usage.
 const _d1Usage = { queries: 0, rowsRead: 0, cacheHits: 0, since: new Date().toISOString() };
 
+// How LONG the sold search takes, as opposed to what it costs.
+//
+// rows_read above answers the billing question and has been answered for a
+// while. It does not answer "why does this feel slow", and nothing on this
+// path was timing itself, so the only available evidence was that it felt
+// slow. Kept as a small sorted sample rather than a mean: a median next to a
+// p95 says whether every search is slow or one in twenty is, and those have
+// different causes and different fixes.
+const _soldTimings = { n: 0, ms: [] };
+const SOLD_TIMING_SAMPLE = 200;
+function _noteSoldTiming(ms) {
+  try {
+    _soldTimings.n++;
+    _soldTimings.ms.push(Math.round(ms));
+    // Bounded: keep the most recent window, not every search since boot.
+    if (_soldTimings.ms.length > SOLD_TIMING_SAMPLE) _soldTimings.ms.shift();
+  } catch (_) { /* timing must never break a search */ }
+}
+function _soldTimingSummary() {
+  const s = [..._soldTimings.ms].sort((a, b) => a - b);
+  if (!s.length) return { samples: 0 };
+  const at = (p) => s[Math.min(s.length - 1, Math.floor(s.length * p))];
+  return { samples: s.length, totalSearches: _soldTimings.n,
+           medianMs: at(0.5), p95Ms: at(0.95), maxMs: s[s.length - 1], minMs: s[0] };
+}
+
+// Terms that appear in a large share of card titles, and so reject almost
+// nothing when tested.
+//
+// SQLite evaluates an AND chain left to right, and every term is a
+// leading-wildcard LIKE that cannot use an index — so each one is a substring
+// walk over the title. Testing "williams" before "panini" lets the chain give
+// up on most rows at the first comparison instead of the fifth. Reordering an
+// AND cannot change which rows match, so this is a pure cost change.
+const NFLDB_COMMON_TERMS = new Set(['panini', 'topps', 'football', 'nfl', 'card', 'cards',
+  'rookie', 'rc', 'prizm', 'donruss', 'optic', 'select', 'mosaic', 'chronicles',
+  'score', 'contenders', 'bowman', 'chrome', 'base', 'the', 'and']);
+
+// Rare terms first, then longer before shorter as a tiebreak. A four-digit
+// year is common by construction and goes to the back with the brand words.
+function _orderTermsBySelectivity(terms) {
+  const rank = (t) => {
+    const w = t.toLowerCase();
+    if (/^(19|20)\d{2}$/.test(w)) return 2;
+    if (NFLDB_COMMON_TERMS.has(w)) return 2;
+    return 1;
+  };
+  return [...terms].sort((a, b) => rank(a) - rank(b) || b.length - a.length);
+}
+
 // ---- where the rows read actually go ----
 //
 // D1 reported two billion rows read in thirty days against traffic that cannot
@@ -1429,12 +1479,15 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     return cached;
   }
 
+  // Ordered so the AND chain rejects a row on its rarest term first. The set
+  // of matching rows is identical either way; only the work to find them changes.
+  const ordered = _orderTermsBySelectivity(terms);
   const where = [
     'price_cents IS NOT NULL', // exclude best-offer rows — see note above
     'confidence >= ?',
-    ...terms.map(() => 'title LIKE ?'),
+    ...ordered.map(() => 'title LIKE ?'),
   ].join(' AND ');
-  const binds = [NFLDB_MIN_CONFIDENCE, ...terms.map(t => `%${t}%`)];
+  const binds = [NFLDB_MIN_CONFIDENCE, ...ordered.map(t => `%${t}%`)];
 
   // The floor on how far back the walk may go. This only pays off if sold_date
   // is indexed — without an index SQLite scans regardless and this just filters
@@ -1460,7 +1513,10 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
        FROM sales WHERE ${where}${windowClause}
        ORDER BY sold_date DESC LIMIT ?`
     ).bind(...binds, Math.min(limit, 500));
+    const t0 = Date.now();
     const out = await stmt.all();
+    const elapsed = Date.now() - t0;
+    _noteSoldTiming(elapsed);
     const rows = (out && Array.isArray(out.results)) ? out.results : [];
 
     // rows_read is what D1 charges for, and it is nothing like rows returned:
@@ -1470,7 +1526,7 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     _d1Usage.queries++;
     _d1Usage.rowsRead += read;
     console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales, `
-      + `${read.toLocaleString('en-US')} rows read (${source})`);
+      + `${read.toLocaleString('en-US')} rows read, ${elapsed}ms (${source})`);
 
     const payload = { results: rows.map(mapNflDbSale), total: rows.length };
     cachePut(cacheKey, payload, NFLDB_SEARCH_TTL);
@@ -7898,6 +7954,9 @@ function _d1UsageBody(req, res) {
     cacheHitRate: served ? Math.round((100 * _d1Usage.cacheHits) / served) + '%' : 'n/a',
     d1Queries: _d1Usage.queries,
     rowsRead: _d1Usage.rowsRead,
+    // How long the sold search actually takes. rows_read says what it costs;
+    // this says why it feels slow, which is a different question.
+    soldSearchMs: _soldTimingSummary(),
     rowsPerQuery: perQuery,
     // The number that decides whether this is a problem: at this cost per
     // query, how many searches fit in a month's included reads?
@@ -13287,7 +13346,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
