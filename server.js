@@ -4215,6 +4215,38 @@ function _rsiUngradedCol(col) {
   return `${v} IN (${RSI_UNGRADED_VALUES.map(x => `'${x}'`).join(', ')})`;
 }
 
+// Titles that do not describe ONE identifiable card.
+//
+// The raw-filter diagnostic surfaced the reason to care: the single commonest
+// title reaching the index was "SEE SCAN For The Exact Card Up For Auction!
+// NFL READ FREE SHIPPING AutographDen", 247 sales, with the player parsed as
+// "See". That is one seller's template, relisted, and it entered the basket as
+// a player named See who traded 247 times. A price index is a comparison
+// between sales of the same card; a title that names no card cannot be one
+// side of that comparison, whatever price it carries.
+//
+// This is NOT the grade filter's job and is kept separate from it on purpose:
+// these sales are not graded copies hiding in the raw pool, they are non-cards.
+//
+// Substrings, for the same cost reason as the grader list, so every phrase
+// here has to be one that does not occur inside an ordinary card title. The
+// tempting additions that are NOT here: "read" (appears in "Bread"), "digital"
+// (Topps Digital is a real product line), and "1/1" or "plate" — a printing
+// plate is a real card, filed by the checklists under the set whose number it
+// shares, and excluding plates would drop genuine sales.
+const RSI_JUNK_WORDS = [
+  'see scan', 'see scans', 'see photo', 'see pics', 'see picture',
+  'exact card up for auction', 'card pictured is the card',
+  'you pick', 'u pick', 'pick your', 'your choice', 'choose your',
+  'case break', 'break spot', 'razz', 'repack', 'mystery pack',
+  'lot of', 'card lot', 'bulk',
+  'reprint', 'custom made', 'aceo', 'novelty', 'proxy',
+];
+
+function _rsiJunkSql(T) {
+  return RSI_JUNK_WORDS.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
+}
+
 function _rsiRawOnlySql(titleCol = 'title') {
   const T = `LOWER(COALESCE(${titleCol}, ''))`;
   const any = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
@@ -4227,7 +4259,8 @@ function _rsiRawOnlySql(titleCol = 'title') {
                  -- padding the title, and "ungraded" is a raw claim, not a slab.
                  OR ( ${T} LIKE '%graded%'
                       AND ${T} NOT LIKE '%ungraded%'
-                      AND ${T} NOT LIKE '%upgraded%' ) )`;
+                      AND ${T} NOT LIKE '%upgraded%' ) )
+          AND NOT ( ${_rsiJunkSql(T)} )`;
 }
 const RSI_RAW_ONLY = _rsiRawOnlySql();
 
@@ -7219,7 +7252,10 @@ app.get('/api/debug/raw-filter', async (req, res) => {
               SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
                        THEN 1 ELSE 0 END) AS grader_ok,
               SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
-                        AND ${titleClean} THEN 1 ELSE 0 END) AS raw_final,
+                        AND ${titleClean} THEN 1 ELSE 0 END) AS before_junk,
+              SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+                        AND ${titleClean} AND NOT ( ${_rsiJunkSql(T)} )
+                       THEN 1 ELSE 0 END) AS raw_final,
               SUM(CASE WHEN title IS NULL OR title = '' THEN 1 ELSE 0 END) AS no_title,
               SUM(CASE WHEN COALESCE(TRIM(year), '') <> '' THEN 1 ELSE 0 END) AS has_year,
               SUM(CASE WHEN COALESCE(TRIM(set_name), '') <> '' THEN 1 ELSE 0 END) AS has_set,
@@ -7247,6 +7283,7 @@ app.get('/api/debug/raw-filter', async (req, res) => {
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
           AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')} AND ${titleClean}
+          AND NOT ( ${_rsiJunkSql(T)} )
         GROUP BY title ORDER BY n DESC LIMIT 5`
     ).bind(sinceIso, throughIso).all();
 
@@ -7284,6 +7321,24 @@ app.get('/api/debug/raw-filter', async (req, res) => {
       return out;
     };
 
+    // Counted per phrase, over the rows the grade stages already passed, so a
+    // phrase that is quietly eating real cards is visible rather than inferred.
+    const junkProbe = async () => {
+      const out = {};
+      for (const w of RSI_JUNK_WORDS) {
+        const r = await db.prepare(
+          `SELECT COUNT(*) AS n FROM sales
+            WHERE price_cents IS NOT NULL AND price_cents > 0
+              AND sold_date > ? AND sold_date <= ?
+              AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+              AND ${titleClean} AND ${T} LIKE ?`
+        ).bind(sinceIso, throughIso, `%${w}%`).first();
+        const n = (r && r.n) || 0;
+        if (n > 0) out[w] = n;
+      }
+      return out;
+    };
+
     const p = funnel || {};
     const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
     res.json({
@@ -7294,6 +7349,10 @@ app.get('/api/debug/raw-filter', async (req, res) => {
         pricedSales: p.priced,
         afterGradeCheck: p.grade_ok, afterGradeCheckShare: pct(p.grade_ok, p.priced),
         afterGraderCheck: p.grader_ok, afterGraderCheckShare: pct(p.grader_ok, p.priced),
+        afterTitleCheck: p.before_junk, afterTitleCheckShare: pct(p.before_junk, p.priced),
+        // Titles that name no single card — seller templates, lots, break
+        // spots. Removed last so the grade stages above read unchanged.
+        junkTitlesRemoved: (p.before_junk || 0) - (p.raw_final || 0),
         rawFinal: p.raw_final, rawFinalShare: pct(p.raw_final, p.priced),
         salesWithNoTitle: p.no_title,
       },
@@ -7316,6 +7375,11 @@ app.get('/api/debug/raw-filter', async (req, res) => {
       // errors: the count is what a rule would move, and the decision to
       // write one needs this number next to sampleRawTitles.
       gradeWordCandidates: await gradeWordProbe(),
+      // What the junk filter actually removed, per phrase. A phrase with a
+      // surprising count is one to look at: every entry here is a substring,
+      // and a substring that matches a real card title is a silent loss of
+      // real sales rather than a visible error.
+      junkByPattern: await junkProbe(),
       ungradedTreatedAs: RSI_UNGRADED_VALUES.map(v => v === '' ? '(empty)' : v),
     });
   } catch (err) {
@@ -13223,7 +13287,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
