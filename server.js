@@ -85,9 +85,9 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // Base vs autograph vs relic — the largest single source of merged cards.
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
-const { cardKind: _cardKind, printRun: _printRun,
-        AUTO_WORDS: _AUTO_WORDS, RELIC_WORDS: _RELIC_WORDS,
-        REDEMPTION_WORDS: _REDEMPTION_WORDS } = require('./card-kind');
+const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql } = require('./card-kind');
+// The movers board groups in SQL, so it reads the kind there. Built once.
+const _KIND_SQL = _kindSql('title');
 
 // cardKind(), in SQL.
 //
@@ -8711,7 +8711,9 @@ function _median(xs) {
 // never shipped.
 // v5: Most Sold keeps unread parallels out of the base tile, drops cards with
 // no number, and takes the photo from a typical sale rather than the dearest.
-const SOLD_STATS_KEY = (days) => `soldstats:v5:${days}`;
+// v6: the movers board splits autographs, relics and redemptions from the base
+// card that shares their number.
+const SOLD_STATS_KEY = (days) => `soldstats:v6:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -8801,7 +8803,12 @@ async function _computeSoldStats(db, days) {
       // that player's flat and falling cards too — pulling only the top gainers
       // would compute each player's median from their best cards alone and put
       // every name on the board in the green.
+      //
+      // Split by KIND as well, the same split Most Sold makes: an autograph
+      // shares its base card's number and parallel column, so without it a
+      // month where the autos traded more reads as the card taking off.
       db.prepare(`SELECT player, year, set_name, parallel, card_number,
+                         ${_KIND_SQL} AS kind,
                          COUNT(*) AS n,
                          SUM(CASE WHEN sold_date >= ? THEN 1 ELSE 0 END) AS n_recent,
                          SUM(CASE WHEN sold_date <  ? THEN 1 ELSE 0 END) AS n_older,
@@ -8814,7 +8821,7 @@ async function _computeSoldStats(db, days) {
                     AND COALESCE(TRIM(player), '') <> ''
                     AND COALESCE(TRIM(card_number), '') <> ''
                     ${RSI_RAW_ONLY}${RSI_IDENTIFIED}
-                  GROUP BY player, year, set_name, parallel, card_number
+                  GROUP BY player, year, set_name, parallel, card_number, kind
                   HAVING n_recent >= ? AND n_older >= ? AND older_cents >= ?
                   ORDER BY n DESC LIMIT ?`)
         .bind(mid, mid, mid, mid, since, NFLDB_MIN_CONFIDENCE,
@@ -8844,15 +8851,18 @@ async function _computeSoldStats(db, days) {
     // One change per card, from the halves the query already counted.
     const moverRows = ((movers && movers.results) || []).map(r => ({
       player: r.player,
-      name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '']
+      name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '',
+             _KIND_LABEL[r.kind] || '']
         .filter(Boolean).join(' ').trim() || r.title,
+      kind: r.kind || 'base',
       sales: r.n,
       recent: Math.round((r.recent_cents || 0) / 100),
       older: Math.round((r.older_cents || 0) / 100),
       changePct: Math.round(((r.recent_cents - r.older_cents) / r.older_cents) * 1000) / 10,
       imageUrl: r.image_url || null,
       itemUrl: linkOf(r),
-      query: [r.year, r.set_name, r.player, r.parallel].filter(Boolean).join(' ').trim() || r.title,
+      query: [r.year, r.set_name, r.player, r.parallel, _KIND_LABEL[r.kind] || '']
+        .filter(Boolean).join(' ').trim() || r.title,
     })).filter(m => Number.isFinite(m.changePct));
 
     const byChange = (a, b) => b.changePct - a.changePct;
@@ -9073,7 +9083,9 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // grouping. The guard cannot tell a cosmetic edit from a behavioural one, and
 // should not try — it exists to force this judgement, not to make it. Bumping
 // here would throw away every cached analysis to no effect.
-const CARD_IDENTITY_FINGERPRINT = '19a077137bc2';
+// Re-fingerprinted again at v10 for the same reason: card-kind.js gained
+// kindSql() and exported its word lists, and cardKind() itself is unchanged.
+const CARD_IDENTITY_FINGERPRINT = 'f44f600db0a8';
 
 // How far one card's prices may spread before a trend across them is refused.
 //

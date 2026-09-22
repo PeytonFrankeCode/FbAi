@@ -122,6 +122,14 @@ card({ player: 'No Number', year: '2026', set: 'Topps', parallel: '', number: ''
        title: '2026 Topps No Number Rookie Lot',
        oldPrice: 50, newPrice: 50, oldN: 20, newN: 20 });
 
+// --- The movers trap: autographs join the base card's row -------------------
+// Same player, number and parallel column; the base card is flat at $20, but
+// autographs start trading in the recent half. Mixed, the row reads +700%.
+card({ player: 'Kind Mix', parallel: 'Base', number: '5', oldPrice: 20, newPrice: 20,
+       oldN: 12, newN: 6, title: '2022 Prizm Kind Mix Base #5' });
+card({ player: 'Kind Mix', parallel: 'Base', number: '5', oldPrice: 300, newPrice: 300,
+       oldN: 0, newN: 6, title: '2022 Prizm Kind Mix Base #5 Rookie Auto' });
+
 // --- The trap: a huge percentage off almost no data --------------------------
 // Two sales each side. A naive board ranks this first at +900%; the
 // minimum-sales-per-half floor must keep it off entirely.
@@ -261,6 +269,13 @@ const names = (rows) => (rows || []).map(r => r.name || r.player);
         !cardNames.some(x => /Slab Mixed/.test(x)), 'raw-only filter');
   check('sales with no readable parallel never group together',
         !cardNames.some(x => /Blank Parallel/.test(x)), 'identity filter');
+
+  {
+    const mix = (s.cardMovers || []).filter(r => /Kind Mix/.test(r.name));
+    check('autographs sharing a number do not become a price move',
+      mix.every(r => Math.abs(r.changePct) < 5) && !mix.some(r => r.kind === 'auto'),
+      mix.map(r => `${r.name} ${r.changePct}%`).join(' | ') || 'none on the board');
+  }
 
   // The single most important property: nothing excluded may outrank the real
   // mover by sneaking in under another name.
