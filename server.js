@@ -1262,6 +1262,45 @@ async function _nflHasImageColumn(db) {
   return _nflImageCol;
 }
 
+// Best-offer sales, kept out of every aggregate.
+//
+// Most of them never reach one: price_cents is NULL on the ~46% of rows where
+// eBay published the seller's ask rather than what the buyer paid, and every
+// query here already requires a price. What this is for is the remainder —
+// rows that carry both a price and a best_offer flag.
+//
+// They are excluded because of what the number means, not because it is
+// missing. An accepted best offer settled at some amount under an asking price
+// nobody published, so two of them on the same card can sit far apart for
+// reasons that have nothing to do with the market. In a median across hundreds
+// of sales that is noise; in a chart of one card's history, or a set's top
+// eight cards, it is a visible wobble that is not a price signal.
+//
+// THE SOLD SEARCH KEEPS THEM. There the sale is shown on its own, labelled by
+// saleTypeOf() as an offer, and a reader can weigh it. It is aggregates that
+// must not silently average it in.
+//
+// Column-gated, like every other optional column on this table: naming a
+// column the schema does not have fails the whole query, which would take the
+// market index down rather than merely widen it.
+async function _noBestOfferSql(db) {
+  if (!(await _nflHasSaleTypeColumns(db))) return '';
+  // Two tests, because the column arrives in both shapes — the same spread
+  // saleTypeOf() already handles on the JS side.
+  //
+  // The numeric one is NOT redundant with the text one. A string cast of a
+  // numeric flag depends on how the value was stored: bound as a float it
+  // casts to '1.0', not '1', and the first version of this let every such row
+  // straight through. Comparing numerically catches the flag whether it landed
+  // as INTEGER or REAL; the IN list then catches 'y'/'yes'/'true'.
+  //
+  // COALESCE on the comparison, not just the cast: `NULL = 1` is NULL, and
+  // `NOT NULL` is NULL, so without it a row with no flag would be filtered out
+  // rather than kept. An absent flag means unknown, and unknown is not an offer.
+  return " AND NOT COALESCE(best_offer = 1, 0)"
+       + " AND LOWER(COALESCE(CAST(best_offer AS TEXT), '')) NOT IN ('1', '1.0', 'y', 'yes', 'true')";
+}
+
 // How a sale actually closed. eBay settles a listing three ways and they mean
 // very different things to someone reading a comp: an auction result is what
 // the market bid on the day, a fixed-price sale is the seller's number met in
@@ -4456,7 +4495,11 @@ const MARKET_CALC_SIG = (() => {
 // cards traded. Scoped to one player there is only ever one player, so the
 // contributor is a card instead — otherwise every bucket has a sample of one
 // and the index can never report.
-function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false) {
+// async so the best-offer clause is resolved HERE rather than at each call
+// site. Four places build these queries; a rule that has to be remembered at
+// four places is not a rule.
+async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false) {
+  const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days);
   // Reach back beyond the window so a sale early in it still has a prior.
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
@@ -4486,7 +4529,7 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${noOffer}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -4564,7 +4607,8 @@ function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit 
 // A representative raw spelling of each field is carried through with MAX(),
 // because grouping happens on the normalised form and the normalised form is
 // lower-cased and stripped of punctuation — no use as a label.
-function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false) {
+async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false) {
+  const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
   const P = _normCol('player');
@@ -4589,7 +4633,7 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_JUNK_ONLY}${RSI_IDENTIFIED}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_JUNK_ONLY}${RSI_IDENTIFIED}${noOffer}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -5190,7 +5234,12 @@ app.get('/api/debug/d1-schema', async (req, res) => {
     const rows = (schema && schema.results) || [];
 
     const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
-    const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+    // Mirrors the price-block job's WHERE exactly, best-offer clause included.
+    // The point of this endpoint is to plan "the exact shapes the scheduled
+    // jobs run, not simplified stand-ins" — a plan for a query the job no
+    // longer issues would be worse than no plan.
+    const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`
+      + (await _noBestOfferSql(db));
 
     // The exact shapes the scheduled jobs run, not simplified stand-ins — a
     // plan for a query nobody issues answers the wrong question.
@@ -7745,9 +7794,9 @@ app.get('/api/market-basket', async (req, res) => {
     const hasImage = await _nflHasImageColumn(db);
     const useAlias = await _aliasReady(db);
     const rows = player
-      ? await _rsiBasketQuery(db, throughIso, days, 12,
-          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, useAlias).all()
-      : await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage, useAlias).all();
+      ? await (await _rsiBasketQuery(db, throughIso, days, 12,
+          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, useAlias)).all()
+      : await (await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage, useAlias)).all();
 
     const payload = {
       available: true, days, player: player || null, through: throughIso,
@@ -8385,7 +8434,7 @@ app.get('/api/market-index', async (req, res) => {
 
     // Only groups on canonical names once the table is actually filled.
     const useAlias = await _aliasReady(db);
-    const rows = await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias).all();
+    const rows = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias)).all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });
 
@@ -8492,8 +8541,8 @@ app.get('/api/player-index', async (req, res) => {
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     // Identical maths to the market index on purpose: a player's number is only
     // worth showing beside the market's if the two are the same measurement.
-    const rows = await _rsiQuery(db, throughIso, days,
-      ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card').all();
+    const rows = await (await _rsiQuery(db, throughIso, days,
+      ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card')).all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return res.json({ available: false, days, player, reason: 'no sales for this player' });
 
@@ -8595,6 +8644,9 @@ async function _computeSoldStats(db, days) {
   const mid = new Date(Date.now() - (days / 2) * 86400000).toISOString().slice(0, 10);
   const img = await _nflHasImageColumn(db);
   const imgCol = img ? ', image_url' : '';
+  // Boards are aggregates too — biggest sellers, movers, top sets. See
+  // _noBestOfferSql: an accepted offer settled under an ask nobody published.
+  const noOffer = await _noBestOfferSql(db);
 
   try {
     const [totals, priciest, mostSold, topSets, movers] = await Promise.all([
@@ -8604,7 +8656,7 @@ async function _computeSoldStats(db, days) {
 
       // Priciest individual sales in the window.
       db.prepare(`SELECT item_id, title, price_cents, sold_date, grader, grade${imgCol}
-                  FROM sales WHERE price_cents IS NOT NULL AND sold_date >= ?
+                  FROM sales WHERE price_cents IS NOT NULL${noOffer} AND sold_date >= ?
                   ORDER BY price_cents DESC LIMIT ?`).bind(since, SOLD_STATS_TOP).all(),
 
       // The most-traded CARDS, and this one deliberately does NOT group in SQL.
@@ -8634,7 +8686,7 @@ async function _computeSoldStats(db, days) {
                     FROM sales s
                     JOIN (SELECT player, year, set_name, card_number
                             FROM sales
-                           WHERE price_cents IS NOT NULL AND sold_date >= ?
+                           WHERE price_cents IS NOT NULL${noOffer} AND sold_date >= ?
                              AND confidence >= ? AND player IS NOT NULL AND player != ''
                            GROUP BY player, year, set_name, card_number
                           HAVING COUNT(*) >= ?
@@ -9208,9 +9260,13 @@ app.get('/api/card-analysis', async (req, res) => {
     }
 
     const img = await _nflHasImageColumn(db);
+    // A card's price chart is the clearest place an accepted offer misleads:
+    // one point well under the line, with no way to see the ask it settled
+    // against. The sold list below is where those belong.
+    const noOffer = await _noBestOfferSql(db);
     const rows = await db.prepare(
       `SELECT item_id, sold_date, title, price_cents, grader, grade${img ? ', image_url' : ''}
-       FROM sales WHERE ${where}
+       FROM sales WHERE ${where}${noOffer}
        ORDER BY sold_date DESC LIMIT 2000`
     ).bind(...binds).all();
 
@@ -13121,7 +13177,9 @@ async function _buildPriceBlocks() {
 
   const Y = _normCol('year'), S = _normCol('set_name'), P = _normCol('player');
   const CARDNO = _normCol('card_number');
-  const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`;
+  // Medians printed onto public pages — an aggregate, so offers are out.
+  const WHERE = `price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ${NFLDB_MIN_CONFIDENCE}`
+    + (await _noBestOfferSql(db));
 
   // The window is a floor on sold_date rather than "all of it". Prices from
   // three months ago are not this month's prices, and a median that silently
@@ -13409,7 +13467,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
