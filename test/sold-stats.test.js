@@ -94,6 +94,34 @@ card({ player: 'Jaxson Dart', year: '2025', set: 'Topps Chrome', parallel: '', n
        title: '2025 Topps Chrome Jaxson Dart #306 Gold Refractor',
        oldPrice: 400, newPrice: 400, oldN: 10, newN: 10 });
 
+// --- The live board, again: parallels the dictionary cannot read ------------
+// "2026 Topps Fernando Mendoza #301" showed a $680 high and a photo of a foil
+// card. Unread parallels joined the base pile: "Orange Foilboard /99" reads as
+// unmatched, and so does "#301 Lava Foil". Neither is the base card.
+(() => {
+  const foil = ['2026 Topps Fernando Mendoza #301 Orange Foilboard /99 Raiders',
+                '2026 Topps Fernando Mendoza #301 Lava Foil RC'];
+  for (let k = 0; k < 12; k++) {
+    ins.run(`f${n++}`, iso(RECENT + (k % 3)), foil[k % 2], 68000, 'Fernando Mendoza',
+            '2026', 'Topps', '', '301', '', '', 0.9, 'foil.jpg');
+  }
+  // A plain base title with a photo, so the tile has a photo to pick.
+  for (let k = 0; k < 4; k++) {
+    ins.run(`b${n++}`, iso(RECENT + (k % 3)), '2026 Topps Fernando Mendoza RC #301 Rookie Card',
+            3000, 'Fernando Mendoza', '2026', 'Topps', '', '301', '', '', 0.9, 'base.jpg');
+  }
+})();
+
+// A base card whose team has a colour in its name must stay a base card.
+card({ player: 'Jordan Love', year: '2020', set: 'Prizm', parallel: '', number: '325',
+       title: '2020 Panini Prizm Jordan Love RC #325 Green Bay Packers',
+       oldPrice: 40, newPrice: 40, oldN: 15, newN: 15 });
+
+// No card number: every card the player has in the product, in one row.
+card({ player: 'No Number', year: '2026', set: 'Topps', parallel: '', number: '',
+       title: '2026 Topps No Number Rookie Lot',
+       oldPrice: 50, newPrice: 50, oldN: 20, newN: 20 });
+
 // --- The trap: a huge percentage off almost no data --------------------------
 // Two sales each side. A naive board ranks this first at +900%; the
 // minimum-sales-per-half floor must keep it off entirely.
@@ -335,6 +363,26 @@ const names = (rows) => (rows || []).map(r => r.name || r.player);
       s.mostSoldBasis && typeof s.mostSoldBasis.unnamedParallelSales === 'number'
       && s.mostSoldBasis.salesRead > 0 && s.mostSoldBasis.truncated === false,
       JSON.stringify(s.mostSoldBasis));
+  }
+
+  // ---- one tile, one parallel ----------------------------------------------
+  {
+    const ms = s.mostSold || [];
+    const base = ms.find(r => /Fernando Mendoza #301$/.test(r.name));
+    check('an unread parallel does not join the base tile',
+      base && base.avgPrice === 30 && base.topPrice === 30 && base.sales === 32,
+      base ? `${base.sales} sales, $${base.avgPrice} avg, $${base.topPrice} high` : 'no base row');
+    check('  ...and the base tile shows a base card\'s photo',
+      base && base.imageUrl === 'base.jpg', base ? String(base.imageUrl) : '');
+    check('  ...and it is counted, not silently lost',
+      s.mostSoldBasis && s.mostSoldBasis.unplacedParallelSales >= 12,
+      JSON.stringify(s.mostSoldBasis));
+    const love = ms.find(r => /Jordan Love/.test(r.name));
+    check('a team colour is not a parallel',
+      love && love.sales === 30 && love.parallel === 'Base', love ? love.name : 'missing');
+    check('a card with no number never makes the board',
+      !ms.some(r => /No Number/.test(r.name)) && !ms.some(r => !/#/.test(r.name)),
+      ms.filter(r => !/#/.test(r.name)).map(r => r.name).join(' | ') || 'none');
   }
 
   // ---- it has to fit in a Worker's CPU budget ----

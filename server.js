@@ -156,11 +156,68 @@ const MOST_SOLD_MAX_ROWS = 60000;
 //
 // The count is reported, because that pile is where a Refractor can still hide
 // next to a base card, and its size is the size of the remaining problem.
+//
+// ...and it was hiding there. The live board's "2026 Topps Fernando Mendoza
+// #301" tile showed a $680 high and a photo of a foil parallel, because
+// "#301 Orange Foilboard /99" and "Lava Refractor RC #301" read as unmatched
+// or base and joined the base pile. So a sale only joins the unnamed pile when
+// its title shows no sign of a parallel at all (see _PARALLEL_SIGNAL). One that
+// plainly names a parallel the dictionary does not know is left off the board:
+// a base tile that holds a /99 is wrong about the card, and a base title ending
+// in a team name carries none of these words, so the board keeps its sample.
+
+// Words that only turn up in a title when the card is not the plain base card.
+// Colours and finishes, not the parallel dictionary itself: that vocabulary
+// also holds "Rookie", "Football" and a few hundred player names.
+const _PARALLEL_SIGNAL_WORDS = [
+  'gold', 'golden', 'red', 'blue', 'black', 'green', 'purple', 'orange', 'pink',
+  'yellow', 'silver', 'white', 'teal', 'aqua', 'bronze', 'platinum', 'emerald',
+  'sapphire', 'ruby', 'lime', 'magenta', 'copper', 'maroon', 'onyx', 'cyan',
+  'navy', 'fuchsia', 'turquoise', 'lavender', 'indigo', 'violet', 'amethyst',
+  'citrine', 'jade', 'cobalt', 'neon',
+  'refractor', 'refractors', 'xfractor', 'superfractor', 'prizm', 'prizms',
+  'holo', 'foil', 'foilboard', 'shimmer', 'wave', 'mojo', 'sparkle', 'lava',
+  'ice', 'disco', 'pulsar', 'shock', 'camo', 'mosaic', 'mirror', 'geometric',
+  'hyper', 'sandglitter', 'diamante', 'rainbow', 'raywave', 'speckle', 'lazer',
+  'laser', 'cracked', 'snakeskin', 'zebra', 'galactic', 'nebula', 'fluorescent',
+  'velocity', 'scope', 'marble', 'aqueous', 'glitter', 'stained', 'fotl',
+  'parallel', 'variation', 'var', 'sp', 'ssp', 'numbered', 'proof', 'plate',
+];
+const _PARALLEL_SIGNAL = new RegExp(`\\b(${_PARALLEL_SIGNAL_WORDS.join('|')})\\b`);
+// A print run: "/99", "/ 25", "1/1". Base cards are not serial numbered.
+const _SERIAL_RUN = /(^|\s|\d)\/\s*\d+\b|\b\d+\s*of\s*\d+\b/;
+// Team names that carry a colour word and would otherwise read as a parallel.
+const _SIGNAL_TEAM_PHRASES = /\bgreen bay\b|\bred ?sea\b/g;
+// Matched "parallels" that are really what a seller types about a base card.
+const _BASE_NAMES = new Set(['base', 'rookie', 'rc']);
+
+// Does this title look like a parallel even though no parallel was read? The
+// player and set names are removed first, so "A.J. Green", "Golden Tate",
+// "Topps Chrome" and "Prizm" (the product) do not count against the base card.
+function _looksLikeParallel(title, player, setName) {
+  let t = ' ' + _stripGrade(String(title || '')).toLowerCase()
+    .replace(/[^a-z0-9/ ]+/g, ' ') + ' ';
+  if (_SERIAL_RUN.test(t)) return true;
+  const drop = (s) => {
+    for (const w of String(s || '').toLowerCase().split(/[^a-z0-9]+/)) {
+      if (w) t = t.replace(new RegExp(`\\b${w}\\b`, 'g'), ' ');
+    }
+  };
+  drop(player);
+  drop(setName);
+  t = t.replace(_SIGNAL_TEAM_PHRASES, ' ');
+  return _PARALLEL_SIGNAL.test(t);
+}
+
 function _groupMostSold(rows, pi, pAliases, overrides) {
   const groups = new Map();
-  let unreadable = 0;
+  let unreadable = 0, dropped = 0;
   for (const r of rows) {
     const title = String(r.title || '');
+    // No card number is no card: "2026 Topps Fernando Mendoza" with a blank
+    // number spans every card he has in the product. The query leaves these
+    // out; this is the same rule for rows reaching here any other way.
+    if (!String(r.card_number == null ? '' : r.card_number).trim()) { dropped++; continue; }
     const kind = _cardKind(title);
 
     // An override on this sale, then the column, then the title. One chain,
@@ -168,25 +225,47 @@ function _groupMostSold(rows, pi, pAliases, overrides) {
     // other.
     const hit = _saleParallel(r, pi, pAliases, overrides, r.player);
     let name = '', key = '';
-    if (hit && hit.parallel) { name = hit.parallel; key = _parallelKey(name); }
-    else if (hit && hit.how === 'base') { name = ''; key = ''; }
-    else { unreadable++; name = ''; key = ''; }
+    if (hit && hit.parallel && !_BASE_NAMES.has(_parallelKey(hit.parallel))) {
+      name = hit.parallel; key = _parallelKey(name);
+    } else if (hit && hit.how === 'sale-override') {
+      // A person looked at this sale and said base. That outranks any word in
+      // the title.
+    } else if (_looksLikeParallel(title, r.player, r.set_name)) {
+      dropped++; continue;
+    } else if (!(hit && (hit.how === 'base' || hit.parallel))) {
+      unreadable++;
+    }
 
     const id = [r.player, r.year, r.set_name, r.card_number, kind, key].join('\u0000');
     let g = groups.get(id);
     if (!g) {
       g = { player: r.player, year: r.year, set_name: r.set_name,
             card_number: r.card_number, kind, parallel: name,
-            n: 0, total: 0, max: -1, top: null };
+            n: 0, total: 0, max: -1, rows: [] };
       groups.set(id, g);
     }
     g.n++;
     g.total += (r.price_cents || 0);
-    // The dearest sale supplies the photo and the link, matching what the old
-    // aggregate query did with its bare columns.
-    if ((r.price_cents || 0) > g.max) { g.max = r.price_cents || 0; g.top = r; }
+    g.max = Math.max(g.max, r.price_cents || 0);
+    g.rows.push(r);
   }
-  return { groups: [...groups.values()].sort((a, b) => b.n - a.n), unreadable };
+  // The photo and link come from a typical sale, the one nearest the median
+  // price, preferring one with a photo. The dearest sale was used before, and
+  // the dearest sale in a pile is exactly the one most likely to be a stray
+  // parallel, so the tile advertised the wrong card.
+  const out = [...groups.values()];
+  for (const g of out) {
+    const byPrice = g.rows.slice().sort((a, b) => (a.price_cents || 0) - (b.price_cents || 0));
+    const mid = byPrice.length >> 1;
+    let best = mid;
+    for (let i = 0; i < byPrice.length; i++) {
+      if (byPrice[i].image_url &&
+          (!byPrice[best].image_url || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
+    }
+    g.top = byPrice[best] || null;
+    delete g.rows;
+  }
+  return { groups: out.sort((a, b) => b.n - a.n), unreadable, dropped };
 }
 const {
   buildIndex: buildJoinIndex, matchSale, matchPlayer, playerKeys, saleKeys,
@@ -8630,7 +8709,9 @@ function _median(xs) {
 // is warmed by cron, so without the bump the corrected board would not appear
 // for two days — the same mistake that made the grade fix look like it had
 // never shipped.
-const SOLD_STATS_KEY = (days) => `soldstats:v4:${days}`;
+// v5: Most Sold keeps unread parallels out of the base tile, drops cards with
+// no number, and takes the photo from a typical sale rather than the dearest.
+const SOLD_STATS_KEY = (days) => `soldstats:v5:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -8688,6 +8769,7 @@ async function _computeSoldStats(db, days) {
                             FROM sales
                            WHERE price_cents IS NOT NULL${noOffer} AND sold_date >= ?
                              AND confidence >= ? AND player IS NOT NULL AND player != ''
+                             AND COALESCE(TRIM(card_number), '') <> ''
                            GROUP BY player, year, set_name, card_number
                           HAVING COUNT(*) >= ?
                            ORDER BY COUNT(*) DESC
@@ -8730,6 +8812,7 @@ async function _computeSoldStats(db, days) {
                   WHERE price_cents IS NOT NULL AND sold_date >= ?
                     AND confidence >= ?
                     AND COALESCE(TRIM(player), '') <> ''
+                    AND COALESCE(TRIM(card_number), '') <> ''
                     ${RSI_RAW_ONLY}${RSI_IDENTIFIED}
                   GROUP BY player, year, set_name, parallel, card_number
                   HAVING n_recent >= ? AND n_older >= ? AND older_cents >= ?
@@ -8749,7 +8832,8 @@ async function _computeSoldStats(db, days) {
     // builds, using the parallel column alone, rather than the page losing its
     // most prominent panel over an optional artifact.
     const _mostSoldRaw = (mostSold && mostSold.results) || [];
-    const { groups: _mostSoldRows, unreadable: _mostSoldUnreadable } =
+    const { groups: _mostSoldRows, unreadable: _mostSoldUnreadable,
+            dropped: _mostSoldDropped } =
       _groupMostSold(_mostSoldRaw, await parallelIndex().catch(() => null),
                      await parallelAliases().catch(() => ({})),
                      await saleOverrides().catch(() => ({})));
@@ -8851,6 +8935,10 @@ async function _computeSoldStats(db, days) {
         // with the confident base reads. This is where a Refractor can still
         // hide next to a base card, so its size is the size of what is left.
         unnamedParallelSales: _mostSoldUnreadable,
+        // Sales left off because the title names a parallel the dictionary
+        // could not read, or the sale has no card number. Kept off rather than
+        // pooled with base, so a base tile holds only base cards.
+        unplacedParallelSales: _mostSoldDropped,
         minGroupSize: MOST_SOLD_MIN_GROUP,
         // True when the row ceiling bit, so a truncated ranking is never
         // presented as a complete one.
