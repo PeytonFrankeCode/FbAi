@@ -461,6 +461,55 @@ class PriceSlotFiller {
   }
 }
 
+// The price key a URL corresponds to, derived from the path rather than read
+// off the page.
+//
+// It has to come from the URL because of streaming order. HTMLRewriter emits
+// the <head> before it reaches the body, and the ad tag is in the head while
+// data-price-key is in the body — so by the time the slot tells us whether
+// this page has prices, the script has already gone out. The build writes the
+// key from the same id the path is built from, so the path is an equally good
+// source and one we have up front.
+//
+//   /sets/2024-panini-prizm-football/        -> set:2024-panini-prizm-football
+//   /sets/2024-panini-prizm-football/downtown/ -> subset:2024-panini-prizm-football/downtown
+//   /players/caleb-williams/                 -> player:caleb-williams
+export function priceKeyForPath(pathname) {
+  const p = pathname.replace(/\/+$/, '');
+  let m = p.match(/^\/players\/([^/]+)$/);
+  if (m) return `player:${m[1]}`;
+  m = p.match(/^\/sets\/([^/]+)\/([^/]+)$/);
+  if (m) return `subset:${m[1]}/${m[2]}`;
+  m = p.match(/^\/sets\/([^/]+)$/);
+  // A year hub (/sets/2024/) is not a product and has no price block; it is
+  // simply a key that will miss, which is the correct outcome for it.
+  if (m) return `set:${m[1]}`;
+  return null;
+}
+
+// Take the ad tag back off a page that turned out to have nothing to say.
+//
+// The generated pages are built from one template over checklist data, and
+// the thing that makes any given one worth reading is its price block — our
+// own sold data, which no other site has. A page whose block came back empty
+// did not clear MIN_SALES/MIN_CARDS, so what remains is the template: a
+// reformatted checklist. Google's scaled-content policy is aimed exactly at
+// many pages that carry advertising and no material information beyond the
+// substitutions, so those pages should not carry advertising.
+//
+// The build already gates the tag on whether a page is INDEXABLE. That is a
+// different question from whether it has anything on it, and this is the
+// stricter half: indexable AND priced.
+export class AdTagRemover {
+  constructor() { this.removed = 0; }
+  element(el) {
+    const src = el.getAttribute('src') || '';
+    if (!src.includes('adsbygoogle.js')) return;
+    el.remove();
+    this.removed++;
+  }
+}
+
 // The retired-player-slug map, loaded once per isolate.
 //
 // Cached in module scope rather than fetched per request: a player page is the
@@ -630,9 +679,18 @@ export default {
                   if (renderPriceBlock) {
                     const blocks = await priceBlocks(env);
                     if (blocks && Object.keys(blocks.pages).length) {
-                      out = new HTMLRewriter()
-                        .on('div[data-price-key]', new PriceSlotFiller(blocks, renderPriceBlock))
-                        .transform(out);
+                      const rw = new HTMLRewriter()
+                        .on('div[data-price-key]', new PriceSlotFiller(blocks, renderPriceBlock));
+                      // No price block for this URL means the page is the bare
+                      // template, so the ad tag comes off with it. Only when the
+                      // map actually loaded — an empty map is a KV failure, and
+                      // stripping every ad on the site over one would be a far
+                      // worse outcome than serving a page unpriced.
+                      const key = priceKeyForPath(url.pathname);
+                      if (key && !blocks.pages[key]) {
+                        rw.on('script[src]', new AdTagRemover());
+                      }
+                      out = rw.transform(out);
                     }
                   }
                 } catch (priceErr) {

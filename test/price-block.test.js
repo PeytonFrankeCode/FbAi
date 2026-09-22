@@ -251,11 +251,22 @@ const check = (label, ok, detail) => {
 
   // 5. The failure mode. A missing price must never turn a working page into
   //    an error — this is a decoration on 900 pages, not a feature they need.
+  // The window reaches past the ad-gate block that now sits between the
+  // filler and the catch. Widened rather than relaxed: the thing being
+  // asserted is still that this whole region is inside one try/catch, and
+  // the check below pins the new code inside it too.
   const at = workerSrc.indexOf('PriceSlotFiller(blocks');
-  const around = at === -1 ? '' : workerSrc.slice(Math.max(0, at - 900), at + 400);
+  const around = at === -1 ? '' : workerSrc.slice(Math.max(0, at - 900), at + 1400);
   check('a failure to price degrades to the page as it is today',
     /catch\s*\(priceErr\)/.test(around),
     'injection is wrapped so it cannot 502 a page over a missing median');
+
+  // The ad gate rides in the same try, so a throw there degrades the same way
+  // — a page served without its price block rather than a 502.
+  const guarded = at === -1 ? '' : workerSrc.slice(at, workerSrc.indexOf('catch (priceErr)', at));
+  check('  ...and the ad gate is inside that same guard',
+    /AdTagRemover/.test(guarded),
+    'an ad-gate throw must degrade to the page, not error it');
 
   // 6. The pieces the call site needs must EXIST, not merely be called.
   //
