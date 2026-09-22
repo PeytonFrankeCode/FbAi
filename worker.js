@@ -503,11 +503,28 @@ class PriceSlotFiller {
 const SPA_HTML_ROUTES = new Set(['/', '/inventory', '/stats']);
 const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)/];
 
+// The static pages in public/, WITHOUT their extension.
+//
+// Cloudflare's assets serve pretty URLs (html_handling defaults to
+// auto-trailing-slash): a request for /admin.html is answered with a 307 to
+// /admin, and /admin serves admin.html. Allowing only the ".html" spelling
+// meant every one of these pages 404'd at the address it is actually served
+// from — the admin page, and the about, privacy, terms and contact pages the
+// footer links to. soft-404.test.js checks this list against public/ on disk,
+// so a page added without being listed fails the suite instead of vanishing.
+export const STATIC_PAGES = new Set([
+  '_avatar-preview', 'about', 'admin', 'admin-news', 'contact', 'diag', 'index',
+  'insert-desk', 'methodology', 'parallel-desk', 'privacy', 'sale-desk',
+  'sort-desk', 'terms', 'usage',
+]);
+
 export function isKnownHtmlPath(pathname) {
   const p = String(pathname || '/').replace(/\/+$/, '') || '/';
   if (SPA_HTML_ROUTES.has(p)) return true;
   // about.html, contact.html, privacy.html, terms.html, methodology.html…
   if (/\.html$/i.test(p)) return true;
+  // ...and the same pages as Cloudflare actually serves them: /admin, /about.
+  if (STATIC_PAGES.has(p.slice(1))) return true;
   return HTML_PREFIXES.some(re => re.test(pathname));
 }
 
