@@ -432,7 +432,7 @@ const _BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|p
 
 const _traffic = { day: '', total: 0, declaredBot: 0, browserLike: 0, noUa: 0,
                    asset: 0, api: 0, page: 0, limited: 0, byUa: {}, byPath: {},
-                   byLimited: {} };
+                   byLimited: {}, captcha: {} };
 
 function _trafficDay() { return new Date().toISOString().slice(0, 10); }
 
@@ -447,6 +447,7 @@ function _noteRequest(req) {
       _traffic.noUa = 0; _traffic.asset = 0; _traffic.api = 0; _traffic.page = 0;
       _traffic.limited = 0;
       _traffic.byUa = {}; _traffic.byPath = {}; _traffic.byLimited = {};
+      _traffic.captcha = {};
     }
     _traffic.total++;
 
@@ -485,7 +486,7 @@ async function flushTraffic() {
       prev[k] = (prev[k] || 0) + _traffic[k];
       _traffic[k] = 0;
     }
-    for (const bucket of ['byUa', 'byPath', 'byLimited']) {
+    for (const bucket of ['byUa', 'byPath', 'byLimited', 'captcha']) {
       const acc = prev[bucket] || {};
       for (const [k, n] of Object.entries(_traffic[bucket])) acc[k] = (acc[k] || 0) + n;
       // Kept to the top 60 in KV too, or a month of long tails grows without end.
@@ -593,12 +594,105 @@ function _noteLimited(tier) {
   } catch (_) { /* counting must never break a request */ }
 }
 
+// ---- reCAPTCHA ----
+//
+// Guards the two endpoints that spend money per call — /api/search (eBay
+// quota) and /api/scan-card (an eBay image search per photo). Nothing else,
+// and deliberately nothing that renders a page: the generated /sets, /players
+// and /teams pages are how this site is found, and a crawler handed a
+// challenge is a page removed from the index.
+//
+// Google is asked about the token on each guarded call. That is a network
+// round trip, not CPU, so it does not touch the Worker's CPU budget, and it
+// sits in front of a search that was already going to take seconds.
+//
+// v2 and v3 are both handled. A v3 verification carries a `score` and is
+// checked against RECAPTCHA_MIN_SCORE; a v2 one carries no score and only has
+// to succeed. That way the key can be swapped without touching this code.
+const RECAPTCHA_SECRET = process.env.Recaptcha_secret || process.env.RECAPTCHA_SECRET || '';
+const RECAPTCHA_MIN_SCORE = Number(process.env.RECAPTCHA_MIN_SCORE || 0.5);
+// A kill switch that needs no deploy. If this turns real people away, setting
+// it to 0 in the dashboard stops the enforcement on the next request while
+// the counters below keep reporting what it WOULD have done.
+const RECAPTCHA_ENFORCE = process.env.RECAPTCHA_ENFORCE !== '0';
+const RECAPTCHA_PATHS = ['/api/search', '/api/scan-card'];
+
+// Verifications are counted the same way refusals are, so /api/debug/traffic
+// answers the question this feature actually raises: how many people is it
+// turning away? A silent gate is how you lose real users and never find out.
+function _noteCaptcha(outcome) {
+  try {
+    _traffic.captcha[outcome] = (_traffic.captcha[outcome] || 0) + 1;
+  } catch (_) { /* counting must never break a request */ }
+}
+
+async function verifyRecaptcha(token, ip) {
+  if (!token) return { ok: false, why: 'missing' };
+  try {
+    const body = new URLSearchParams({ secret: RECAPTCHA_SECRET, response: token });
+    if (ip) body.set('remoteip', ip);
+    const r = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
+    const d = await r.json();
+    if (!d.success) {
+      const codes = (d['error-codes'] || []).join(',');
+      // A token is single-use and short-lived. Both of those read as an
+      // ordinary stale retry, not as an attack.
+      return { ok: false, why: codes || 'rejected' };
+    }
+    // v3 only. A v2 response has no score and success is the whole answer.
+    if (typeof d.score === 'number' && d.score < RECAPTCHA_MIN_SCORE) {
+      return { ok: false, why: 'low-score', score: d.score };
+    }
+    return { ok: true, score: typeof d.score === 'number' ? d.score : null };
+  } catch (err) {
+    // Google unreachable. Fail OPEN, and say so in the counters.
+    //
+    // The alternative is that an outage at Google takes search down here, which
+    // is a worse day than letting some traffic through unverified — the rate
+    // limiter is still underneath this, so the cost is still capped.
+    console.error('[recaptcha] verify failed:', err && err.message);
+    return { ok: true, degraded: true };
+  }
+}
+
 app.use((req, res, next) => {
   _noteRequest(req);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   next();
+});
+
+// Runs before express.json for the same reason the rate limiter does: a
+// refused scan must not first cost the parse of a 12mb body.
+app.use(async (req, res, next) => {
+  // No secret configured is not a failure — it is local development and every
+  // test in this repo. The guard simply is not on.
+  if (!RECAPTCHA_SECRET) return next();
+  if (!RECAPTCHA_PATHS.includes(String(req.path || ''))) return next();
+  if (isAdminReq(req)) return next();
+
+  const token = String(req.headers['x-recaptcha-token'] || req.query.captcha || '');
+  const ip = String(req.headers['cf-connecting-ip'] || '').trim();
+  const v = await verifyRecaptcha(token, ip);
+
+  if (v.degraded) { _noteCaptcha('degraded'); return next(); }
+  if (v.ok) { _noteCaptcha('pass'); return next(); }
+
+  _noteCaptcha(v.why === 'missing' ? 'missing' : 'fail');
+  // Report-only mode still counts, so the damage can be measured before the
+  // gate is trusted with real traffic.
+  if (!RECAPTCHA_ENFORCE) return next();
+
+  return res.status(403).json({
+    error: "Couldn't verify this request came from a browser. Reload the page and try again.",
+    captchaFailed: true,
+    reason: v.why,
+  });
 });
 
 // Ahead of express.json on purpose: a refused request must not first cost us
@@ -1241,6 +1335,56 @@ const NFLDB_SEARCH_WINDOW_DAYS = 1095;
 // generous. Exposed at /api/debug/d1-usage.
 const _d1Usage = { queries: 0, rowsRead: 0, cacheHits: 0, since: new Date().toISOString() };
 
+// How LONG the sold search takes, as opposed to what it costs.
+//
+// rows_read above answers the billing question and has been answered for a
+// while. It does not answer "why does this feel slow", and nothing on this
+// path was timing itself, so the only available evidence was that it felt
+// slow. Kept as a small sorted sample rather than a mean: a median next to a
+// p95 says whether every search is slow or one in twenty is, and those have
+// different causes and different fixes.
+const _soldTimings = { n: 0, ms: [] };
+const SOLD_TIMING_SAMPLE = 200;
+function _noteSoldTiming(ms) {
+  try {
+    _soldTimings.n++;
+    _soldTimings.ms.push(Math.round(ms));
+    // Bounded: keep the most recent window, not every search since boot.
+    if (_soldTimings.ms.length > SOLD_TIMING_SAMPLE) _soldTimings.ms.shift();
+  } catch (_) { /* timing must never break a search */ }
+}
+function _soldTimingSummary() {
+  const s = [..._soldTimings.ms].sort((a, b) => a - b);
+  if (!s.length) return { samples: 0 };
+  const at = (p) => s[Math.min(s.length - 1, Math.floor(s.length * p))];
+  return { samples: s.length, totalSearches: _soldTimings.n,
+           medianMs: at(0.5), p95Ms: at(0.95), maxMs: s[s.length - 1], minMs: s[0] };
+}
+
+// Terms that appear in a large share of card titles, and so reject almost
+// nothing when tested.
+//
+// SQLite evaluates an AND chain left to right, and every term is a
+// leading-wildcard LIKE that cannot use an index — so each one is a substring
+// walk over the title. Testing "williams" before "panini" lets the chain give
+// up on most rows at the first comparison instead of the fifth. Reordering an
+// AND cannot change which rows match, so this is a pure cost change.
+const NFLDB_COMMON_TERMS = new Set(['panini', 'topps', 'football', 'nfl', 'card', 'cards',
+  'rookie', 'rc', 'prizm', 'donruss', 'optic', 'select', 'mosaic', 'chronicles',
+  'score', 'contenders', 'bowman', 'chrome', 'base', 'the', 'and']);
+
+// Rare terms first, then longer before shorter as a tiebreak. A four-digit
+// year is common by construction and goes to the back with the brand words.
+function _orderTermsBySelectivity(terms) {
+  const rank = (t) => {
+    const w = t.toLowerCase();
+    if (/^(19|20)\d{2}$/.test(w)) return 2;
+    if (NFLDB_COMMON_TERMS.has(w)) return 2;
+    return 1;
+  };
+  return [...terms].sort((a, b) => rank(a) - rank(b) || b.length - a.length);
+}
+
 // ---- where the rows read actually go ----
 //
 // D1 reported two billion rows read in thirty days against traffic that cannot
@@ -1335,12 +1479,15 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     return cached;
   }
 
+  // Ordered so the AND chain rejects a row on its rarest term first. The set
+  // of matching rows is identical either way; only the work to find them changes.
+  const ordered = _orderTermsBySelectivity(terms);
   const where = [
     'price_cents IS NOT NULL', // exclude best-offer rows — see note above
     'confidence >= ?',
-    ...terms.map(() => 'title LIKE ?'),
+    ...ordered.map(() => 'title LIKE ?'),
   ].join(' AND ');
-  const binds = [NFLDB_MIN_CONFIDENCE, ...terms.map(t => `%${t}%`)];
+  const binds = [NFLDB_MIN_CONFIDENCE, ...ordered.map(t => `%${t}%`)];
 
   // The floor on how far back the walk may go. This only pays off if sold_date
   // is indexed — without an index SQLite scans regardless and this just filters
@@ -1366,7 +1513,10 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
        FROM sales WHERE ${where}${windowClause}
        ORDER BY sold_date DESC LIMIT ?`
     ).bind(...binds, Math.min(limit, 500));
+    const t0 = Date.now();
     const out = await stmt.all();
+    const elapsed = Date.now() - t0;
+    _noteSoldTiming(elapsed);
     const rows = (out && Array.isArray(out.results)) ? out.results : [];
 
     // rows_read is what D1 charges for, and it is nothing like rows returned:
@@ -1376,7 +1526,7 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     _d1Usage.queries++;
     _d1Usage.rowsRead += read;
     console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales, `
-      + `${read.toLocaleString('en-US')} rows read (${source})`);
+      + `${read.toLocaleString('en-US')} rows read, ${elapsed}ms (${source})`);
 
     const payload = { results: rows.map(mapNflDbSale), total: rows.length };
     cachePut(cacheKey, payload, NFLDB_SEARCH_TTL);
@@ -4096,7 +4246,10 @@ function _cardKeySql(playerExpr) {
 // inside "Isaiah", 'tag' inside "vintage", 'ags' inside "flags" — because
 // matching those would throw away real raw sales of real players, and ISA, TAG
 // and AGS together slab a rounding error of the football market.
-const RSI_GRADER_WORDS = ['psa', 'bgs', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
+// 'bvg' (Beckett Vintage Grading) added alongside grade-core's copy: the
+// raw-filter diagnostic found 102 sales carrying it in the grader column, and
+// it is as safe a substring as the rest — it occurs inside no ordinary word.
+const RSI_GRADER_WORDS = ['psa', 'bgs', 'bvg', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
                           'hga', 'ksa', 'gma', 'rcg', 'mnt'];
 const RSI_SLAB_WORDS = ['slab', 'encapsulated', 'cert'];
 
@@ -4118,6 +4271,50 @@ function _rsiUngradedCol(col) {
   return `${v} IN (${RSI_UNGRADED_VALUES.map(x => `'${x}'`).join(', ')})`;
 }
 
+// Titles that do not describe ONE identifiable card.
+//
+// The raw-filter diagnostic surfaced the reason to care: the single commonest
+// title reaching the index was "SEE SCAN For The Exact Card Up For Auction!
+// NFL READ FREE SHIPPING AutographDen", 247 sales, with the player parsed as
+// "See". That is one seller's template, relisted, and it entered the basket as
+// a player named See who traded 247 times. A price index is a comparison
+// between sales of the same card; a title that names no card cannot be one
+// side of that comparison, whatever price it carries.
+//
+// This is NOT the grade filter's job and is kept separate from it on purpose:
+// these sales are not graded copies hiding in the raw pool, they are non-cards.
+//
+// Substrings, for the same cost reason as the grader list, so every phrase
+// here has to be one that does not occur inside an ordinary card title. The
+// tempting additions that are NOT here: "read" (appears in "Bread"), "digital"
+// (Topps Digital is a real product line), and "1/1" or "plate" — a printing
+// plate is a real card, filed by the checklists under the set whose number it
+// shares, and excluding plates would drop genuine sales.
+// KEPT SHORT ON PURPOSE. Every entry is another LIKE in a predicate that runs
+// over every priced sale in the window, and this endpoint has a 2,000ms Worker
+// budget that market-index.test enforces. A first pass at this list had 24
+// entries and took /api/market-index?days=90 to 2,325ms — correct, and over
+// the line. The test caught it, which is what it is for.
+//
+// So: substring matching means several of those entries were redundant
+// anyway ('see scans' is already matched by 'see scan', 'mystery pack' by
+// 'mystery'), and the rest are ordered by what the data showed. "see scan"
+// alone was the single commonest title reaching the index at 247 sales.
+// Adding more is a measurement, not a guess — junkByPattern on
+// /api/debug/raw-filter reports what each one catches, and anything with a
+// real count earns its place in the budget.
+const RSI_JUNK_WORDS = [
+  'see scan',      // the reported case, and the biggest single title
+  'you pick', 'pick your', 'choose your',
+  'case break', 'break spot',
+  'lot of', 'repack', 'mystery',
+  'reprint', 'custom made', 'aceo',   // fan art and reproductions, not cards
+];
+
+function _rsiJunkSql(T) {
+  return RSI_JUNK_WORDS.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
+}
+
 function _rsiRawOnlySql(titleCol = 'title') {
   const T = `LOWER(COALESCE(${titleCol}, ''))`;
   const any = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
@@ -4130,8 +4327,24 @@ function _rsiRawOnlySql(titleCol = 'title') {
                  -- padding the title, and "ungraded" is a raw claim, not a slab.
                  OR ( ${T} LIKE '%graded%'
                       AND ${T} NOT LIKE '%ungraded%'
-                      AND ${T} NOT LIKE '%upgraded%' ) )`;
+                      AND ${T} NOT LIKE '%upgraded%' ) )
+`;
 }
+
+// Applied to the BASKET, not to the whole-window aggregate.
+//
+// Where junk actually shows is the card list: "SEE SCAN For The Exact Card Up
+// For Auction!" entered the basket as a player named See who traded 247 times,
+// which a reader sees. In the index SCORE those same sales are a rounding
+// error inside a median of medians over hundreds of thousands.
+//
+// And the aggregate cannot afford them. /api/market-index?days=90 measures
+// 1,857-1,934ms against the 2,000ms ceiling market-index.test enforces —
+// BEFORE any of this — so the predicate that runs over every priced sale in
+// the window has no room to spend on a cosmetic fix. The basket query runs
+// over far less and can carry it.
+const RSI_JUNK_ONLY = `
+          AND NOT ( ${_rsiJunkSql("LOWER(COALESCE(title, ''))")} )`;
 const RSI_RAW_ONLY = _rsiRawOnlySql();
 
 // A sale can only be compared against another sale of the SAME card, and a card
@@ -4376,7 +4589,7 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_JUNK_ONLY}${RSI_IDENTIFIED}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -7122,7 +7335,10 @@ app.get('/api/debug/raw-filter', async (req, res) => {
               SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
                        THEN 1 ELSE 0 END) AS grader_ok,
               SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
-                        AND ${titleClean} THEN 1 ELSE 0 END) AS raw_final,
+                        AND ${titleClean} THEN 1 ELSE 0 END) AS before_junk,
+              SUM(CASE WHEN ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+                        AND ${titleClean} AND NOT ( ${_rsiJunkSql(T)} )
+                       THEN 1 ELSE 0 END) AS raw_final,
               SUM(CASE WHEN title IS NULL OR title = '' THEN 1 ELSE 0 END) AS no_title,
               SUM(CASE WHEN COALESCE(TRIM(year), '') <> '' THEN 1 ELSE 0 END) AS has_year,
               SUM(CASE WHEN COALESCE(TRIM(set_name), '') <> '' THEN 1 ELSE 0 END) AS has_set,
@@ -7150,8 +7366,61 @@ app.get('/api/debug/raw-filter', async (req, res) => {
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
           AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')} AND ${titleClean}
+          AND NOT ( ${_rsiJunkSql(T)} )
         GROUP BY title ORDER BY n DESC LIMIT 5`
     ).bind(sinceIso, throughIso).all();
+
+    // ---- what a grade-word rule WOULD cost, before anyone writes one ----
+    //
+    // The tempting next fix is to read "GEM MT 10" as a slab. grade-core
+    // refuses to, on purpose: a seller calling a loose card "gem mint" is
+    // describing its corners, not saying it is in a holder, and catching that
+    // would invent grades for raw cards — the same corruption as missing a
+    // slab, pointing the other way.
+    //
+    // Which way that trade falls is a number, not an opinion, and nobody has
+    // had the number. So this counts how many sales the rule would actually
+    // move, per phrasing, among the rows that survive as Raw today. Reading
+    // them against sampleRawTitles says whether they are slabs or sellers.
+    const gradeWordProbe = async () => {
+      const pats = {
+        'gem mt <n>': ["%gem mt 10%", "%gem mt10%", "%gem mt 9%"],
+        'gem mint <n>': ["%gem mint 10%", "%gem mint10%", "%gem mint 9%"],
+        'mint <n>, no "gem"': ["%mint 9%", "%mint 10%"],
+        'pristine/black label': ["%pristine 10%", "%black label%"],
+      };
+      const out = {};
+      for (const [label, likes] of Object.entries(pats)) {
+        const any = likes.map(() => `${T} LIKE ?`).join(' OR ');
+        const r = await db.prepare(
+          `SELECT COUNT(*) AS n FROM sales
+            WHERE price_cents IS NOT NULL AND price_cents > 0
+              AND sold_date > ? AND sold_date <= ?
+              AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+              AND ${titleClean} AND ( ${any} )`
+        ).bind(sinceIso, throughIso, ...likes).first();
+        out[label] = (r && r.n) || 0;
+      }
+      return out;
+    };
+
+    // Counted per phrase, over the rows the grade stages already passed, so a
+    // phrase that is quietly eating real cards is visible rather than inferred.
+    const junkProbe = async () => {
+      const out = {};
+      for (const w of RSI_JUNK_WORDS) {
+        const r = await db.prepare(
+          `SELECT COUNT(*) AS n FROM sales
+            WHERE price_cents IS NOT NULL AND price_cents > 0
+              AND sold_date > ? AND sold_date <= ?
+              AND ${_rsiUngradedCol('grade')} AND ${_rsiUngradedCol('grader')}
+              AND ${titleClean} AND ${T} LIKE ?`
+        ).bind(sinceIso, throughIso, `%${w}%`).first();
+        const n = (r && r.n) || 0;
+        if (n > 0) out[w] = n;
+      }
+      return out;
+    };
 
     const p = funnel || {};
     const pct = (a, b) => (b ? Math.round((a / b) * 1000) / 10 + '%' : null);
@@ -7163,6 +7432,10 @@ app.get('/api/debug/raw-filter', async (req, res) => {
         pricedSales: p.priced,
         afterGradeCheck: p.grade_ok, afterGradeCheckShare: pct(p.grade_ok, p.priced),
         afterGraderCheck: p.grader_ok, afterGraderCheckShare: pct(p.grader_ok, p.priced),
+        afterTitleCheck: p.before_junk, afterTitleCheckShare: pct(p.before_junk, p.priced),
+        // Titles that name no single card — seller templates, lots, break
+        // spots. Removed last so the grade stages above read unchanged.
+        junkTitlesRemoved: (p.before_junk || 0) - (p.raw_final || 0),
         rawFinal: p.raw_final, rawFinalShare: pct(p.raw_final, p.priced),
         salesWithNoTitle: p.no_title,
       },
@@ -7180,6 +7453,16 @@ app.get('/api/debug/raw-filter', async (req, res) => {
       gradeValues: await top('grade'),
       sampleRawTitles: ((survivors && survivors.results) || [])
         .map(r => ({ title: r.title, player: r.player, sales: r.n })),
+      // Sales still counted as Raw whose titles carry grading language that
+      // grade-core deliberately does not act on. These are candidates, not
+      // errors: the count is what a rule would move, and the decision to
+      // write one needs this number next to sampleRawTitles.
+      gradeWordCandidates: await gradeWordProbe(),
+      // What the junk filter actually removed, per phrase. A phrase with a
+      // surprising count is one to look at: every entry here is a substring,
+      // and a substring that matches a real card title is a silent loss of
+      // real sales rather than a visible error.
+      junkByPattern: await junkProbe(),
       ungradedTreatedAs: RSI_UNGRADED_VALUES.map(v => v === '' ? '(empty)' : v),
     });
   } catch (err) {
@@ -7553,6 +7836,11 @@ app.get('/api/debug/traffic', async (req, res) => {
         // which is worth knowing before reaching for a bigger hammer.
         limited: row.limited || 0,
         limitedBy: row.byLimited || {},
+        // reCAPTCHA outcomes. `missing` and `fail` are people (or bots) being
+        // turned away; a `missing` count that tracks real traffic means the
+        // script is not loading for them, which is a problem with the gate,
+        // not with them.
+        captcha: row.captcha || {},
       });
     }
 
@@ -7585,11 +7873,17 @@ app.get('/api/debug/traffic', async (req, res) => {
         browserLike: _traffic.browserLike, pages: _traffic.page,
         assets: _traffic.asset, api: _traffic.api,
         limited: _traffic.limited, limitedBy: { ..._traffic.byLimited },
+        captcha: { ..._traffic.captcha },
       },
       // The budgets in force, so a reading of `limited` can be judged against
       // what it took to trip them without reading the source.
       rateLimits: RL_DISABLED ? 'disabled' : RL_TIERS.map(t =>
         ({ tier: t.name, perMinute: t.minute, perHour: t.hour })),
+      recaptcha: !RECAPTCHA_SECRET ? 'not configured' : {
+        enforcing: RECAPTCHA_ENFORCE,
+        minScore: RECAPTCHA_MIN_SCORE,
+        paths: RECAPTCHA_PATHS,
+      },
       days,
       // Who, by name, biggest first. The answer to "what the heck is this"
       // is usually just legible here: one user agent carrying most of the day.
@@ -7687,6 +7981,9 @@ function _d1UsageBody(req, res) {
     cacheHitRate: served ? Math.round((100 * _d1Usage.cacheHits) / served) + '%' : 'n/a',
     d1Queries: _d1Usage.queries,
     rowsRead: _d1Usage.rowsRead,
+    // How long the sold search actually takes. rows_read says what it costs;
+    // this says why it feels slow, which is a different question.
+    soldSearchMs: _soldTimingSummary(),
     rowsPerQuery: perQuery,
     // The number that decides whether this is a problem: at this cost per
     // query, how many searches fit in a month's included reads?
@@ -8629,14 +8926,14 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // compares that hash against the constant below: change any of them without
 // bumping the version and the suite fails, naming the fix. Recompute with
 //   node -e "..." (the test prints the exact command when it fails)
-const CARD_IDENTITY_VERSION = 'cardanalysis:v9';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v10';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
 // grouping. The guard cannot tell a cosmetic edit from a behavioural one, and
 // should not try — it exists to force this judgement, not to make it. Bumping
 // here would throw away every cached analysis to no effect.
-const CARD_IDENTITY_FINGERPRINT = '5ba269e236c7';
+const CARD_IDENTITY_FINGERPRINT = '19a077137bc2';
 
 // How far one card's prices may spread before a trend across them is refused.
 //
@@ -8848,6 +9145,9 @@ app.get('/api/card-analysis', async (req, res) => {
   // cards filed under a grade nobody issued.
   // v8: a redemption voucher is its own kind, so v7 entries hold "you are due
   // to receive" slips averaged in with the card they promise.
+  // v10: BVG joins the grader list, so a title reading "BVG 9.5" with empty
+  // columns is a slab rather than a raw card. That MOVES SALES between price
+  // series, so v9 entries hold a Raw line with Beckett Vintage money in it.
   // v9: the payload now carries `parallels`, the other parallels of this card
   // and the item id that opens each. The GROUPING is unchanged — this is the
   // v2 case, a shape change — but a warm v8 entry has no such list, so the
@@ -11444,6 +11744,54 @@ const COMMENT_MAX_MESSAGE = 500;          // chars
 const COMMENT_MAX_PER_POST = 200;         // bound the per-post comment list
 const COMMUNITY_REACTIONS = ['👍', '❤️', '🔥', '😂', '😮']; // allowed reaction emoji
 
+// ---- Attached photos: screened, or not published ----
+//
+// moderateImage() reports honestly and refuses to decide policy — with no
+// provider configured it returns { allowed: true, verified: false }, meaning
+// "nobody looked at this". Both call sites used to publish on that, leaving
+// the report/auto-hide net as the only screen. That net needs
+// COMMUNITY_AUTOHIDE_REPORTS distinct people to report a post, which on a
+// small feed can take days or never happen.
+//
+// The photo lands on the same URL as the ad tag, because the community feed is
+// a panel inside the app shell. An unscreened image beside ads is the kind of
+// thing that costs an AdSense account rather than an application, and the
+// asymmetry is stark: refusing a photo annoys one person for a minute, while
+// publishing the wrong one is not reversible by noticing it later.
+//
+// So an image nobody screened does not publish. Text posts are unaffected, so
+// the feed still works with photos off, and wiring IMAGE_MODERATION_URL +
+// IMAGE_MODERATION_KEY turns them straight back on. Setting
+// COMMUNITY_ALLOW_UNVERIFIED_IMAGES=1 restores the old behaviour deliberately,
+// which is a different thing from arriving at it by not having configured
+// anything.
+const COMMUNITY_ALLOW_UNVERIFIED_IMAGES = process.env.COMMUNITY_ALLOW_UNVERIFIED_IMAGES === '1';
+
+// Returns null to publish, or an { status, body } refusal for the caller to send.
+async function screenCommunityImage(imageUrl) {
+  if (!imageUrl) return null;
+  let check;
+  try {
+    check = await moderateImage(imageUrl);
+  } catch (_) {
+    // The screen itself failed. That is "nobody looked at this" too.
+    check = { allowed: true, verified: false };
+  }
+  if (!check.allowed) {
+    return { status: 422, body: {
+      error: 'That image didn’t pass our content check. Please choose a different photo.',
+      reason: 'image',
+    } };
+  }
+  if (!check.verified && !COMMUNITY_ALLOW_UNVERIFIED_IMAGES) {
+    return { status: 503, body: {
+      error: 'Photo uploads are paused — we can’t screen images right now. Please post without a photo and try adding it later.',
+      reason: 'image-screening-unavailable',
+    } };
+  }
+  return null;
+}
+
 function loadCommunityPosts() {
   const data = loadData('community', COMMUNITY_FILE, { posts: [] });
   return Array.isArray(data.posts) ? data.posts : [];
@@ -11544,18 +11892,12 @@ app.post('/api/community/posts', async (req, res) => {
       : 'Your post contains language that isn’t allowed. Please revise it.';
     return res.status(422).json({ error: msg, reason: textCheck.reason });
   }
-  // Image: blocked only when a configured provider scores it NSFW; otherwise
-  // it passes through marked unverified (reports/auto-hide remain the net).
-  let imageVerified = true;
-  if (imageUrl) {
-    try {
-      const imgCheck = await moderateImage(imageUrl);
-      if (!imgCheck.allowed) {
-        return res.status(422).json({ error: 'That image didn’t pass our content check. Please choose a different photo.', reason: 'image' });
-      }
-      imageVerified = !!imgCheck.verified;
-    } catch (_) { imageVerified = false; }
-  }
+  // Image: screened, or not published. See screenCommunityImage.
+  const imgRefusal = await screenCommunityImage(imageUrl);
+  if (imgRefusal) return res.status(imgRefusal.status).json(imgRefusal.body);
+  // Anything that reaches here was either screened clean or deliberately
+  // allowed through by COMMUNITY_ALLOW_UNVERIFIED_IMAGES.
+  const imageVerified = !imageUrl ? true : !COMMUNITY_ALLOW_UNVERIFIED_IMAGES;
 
   const post = {
     id: 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
@@ -11665,16 +12007,10 @@ app.post('/api/community/posts/:id/comments', async (req, res) => {
       : 'Your reply contains language that isn’t allowed. Please revise it.';
     return res.status(422).json({ error: msg, reason: textCheck.reason });
   }
-  let imageVerified = true;
-  if (imageUrl) {
-    try {
-      const imgCheck = await moderateImage(imageUrl);
-      if (!imgCheck.allowed) {
-        return res.status(422).json({ error: 'That image didn’t pass our content check. Please choose a different photo.', reason: 'image' });
-      }
-      imageVerified = !!imgCheck.verified;
-    } catch (_) { imageVerified = false; }
-  }
+  // Same rule as a post: an image nobody screened does not publish.
+  const imgRefusal = await screenCommunityImage(imageUrl);
+  if (imgRefusal) return res.status(imgRefusal.status).json(imgRefusal.body);
+  const imageVerified = !imageUrl ? true : !COMMUNITY_ALLOW_UNVERIFIED_IMAGES;
 
   const posts = loadCommunityPosts();
   const post = posts.find(p => p.id === id);
@@ -13073,7 +13409,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

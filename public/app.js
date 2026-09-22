@@ -1,3 +1,56 @@
+// ---- reCAPTCHA ----
+//
+// Attaches a token to the two endpoints the server guards. Done by wrapping
+// fetch once rather than at each call site: /api/search alone is called from
+// ten places, and the eleventh would have been the one that silently started
+// getting 403s.
+//
+// Fails open on purpose. If the Google script is blocked, slow, or simply not
+// there, the request still goes — the server decides what to do about a
+// missing token, and it can be put in report-only mode from the dashboard.
+// The browser's job here is to supply evidence, not to withhold requests.
+const RECAPTCHA_SITE_KEY = '6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE';
+const RECAPTCHA_GUARDED = ['/api/search', '/api/scan-card'];
+
+function _captchaToken(action) {
+  return new Promise((resolve) => {
+    const g = window.grecaptcha;
+    if (!g || typeof g.ready !== 'function') return resolve(null);
+    // Never let a hung script hold a search hostage.
+    const bail = setTimeout(() => resolve(null), 3000);
+    try {
+      g.ready(() => {
+        g.execute(RECAPTCHA_SITE_KEY, { action })
+          .then(t => { clearTimeout(bail); resolve(t || null); })
+          .catch(() => { clearTimeout(bail); resolve(null); });
+      });
+    } catch (_) { clearTimeout(bail); resolve(null); }
+  });
+}
+
+(function wrapFetchForCaptcha() {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    let path = '';
+    try {
+      const url = (input && typeof input === 'object' && input.url) ? input.url : String(input);
+      path = new URL(url, window.location.origin).pathname;
+    } catch (_) { /* not a URL we can read — treat as unguarded */ }
+    if (!RECAPTCHA_GUARDED.includes(path)) return nativeFetch(input, init);
+
+    const action = path === '/api/scan-card' ? 'scan' : 'search';
+    return _captchaToken(action).then((token) => {
+      if (!token) return nativeFetch(input, init);
+      const opts = { ...(init || {}) };
+      // Headers can arrive as a Headers instance, an array, or a plain object.
+      const h = new Headers((init && init.headers) || (input && input.headers) || {});
+      h.set('x-recaptcha-token', token);
+      opts.headers = h;
+      return nativeFetch(input, opts);
+    });
+  };
+})();
+
 // ---- Theme ----
 (function initTheme() {
   const saved = localStorage.getItem('cardHuddleTheme');
@@ -825,6 +878,9 @@ const errorMsg = document.getElementById('error-message');
 const grid = document.getElementById('results-grid');
 const meta = document.getElementById('search-meta');
 const suggestionsSection = document.getElementById('suggestions-section');
+// The homepage's prose. Follows the suggestions section exactly: present when
+// somebody lands, out of the way once they have searched for something.
+const aboutSection = document.getElementById('about-section');
 const chartSection = document.getElementById('chart-section');
 const chartCanvas = document.getElementById('price-chart');
 const variantsSection = document.getElementById('variants-section');
@@ -895,6 +951,7 @@ function renderRecentSearches() {
       }
       input.value = query;
       suggestionsSection.classList.add('hidden');
+      if (aboutSection) aboutSection.classList.add('hidden');
       recentSection.classList.add('hidden');
       fetchDirectSearch(query);
     });
@@ -1450,6 +1507,7 @@ form.addEventListener('submit', async (e) => {
   const query = input.value.trim();
   if (!query) return;
   suggestionsSection.classList.add('hidden');
+  if (aboutSection) aboutSection.classList.add('hidden');
   recentSection.classList.add('hidden');
   addRecentSearch(query);
   await fetchDirectSearch(query);
@@ -1461,6 +1519,7 @@ document.querySelectorAll('.chip').forEach(chip => {
     const query = chip.dataset.query;
     input.value = query;
     suggestionsSection.classList.add('hidden');
+    if (aboutSection) aboutSection.classList.add('hidden');
     recentSection.classList.add('hidden');
     addRecentSearch(query);
     fetchDirectSearch(query);
@@ -1896,6 +1955,7 @@ function goBackToVariants() {
     currentSearchMode = 'variants';
     input.value = '';
     suggestionsSection.classList.remove('hidden');
+    if (aboutSection) aboutSection.classList.remove('hidden');
     renderRecentSearches();
     return;
   }
@@ -2316,6 +2376,18 @@ async function performSearch(query, opts = {}) {
       alert(data.error || `You've hit today's sold-search limit (${data.freeLimit || 25}). It resets tomorrow.`);
       return;
     }
+    if (response.status === 403 && data && data.captchaFailed) {
+      // A reCAPTCHA token is single-use and expires in two minutes, so the
+      // ordinary cause of this is a page left open. Say what to do about it
+      // rather than reporting a bare 403.
+      setLoading(false);
+      const msg = document.createElement('div');
+      msg.className = 'no-listings-box';
+      msg.innerHTML = '<div class="no-listings-icon">&#128260;</div><h3>Couldn\'t verify this request</h3>'
+        + '<p>Reload the page and search again. If it keeps happening, an extension may be blocking Google\'s reCAPTCHA script.</p>';
+      grid.appendChild(msg);
+      return;
+    }
     if (!response.ok) {
       const msg = data.detail ? `${data.error}: ${data.detail}` : (data.error || `Server error ${response.status}`);
       throw new Error(msg);
@@ -2655,7 +2727,10 @@ function timeAgo(dateStr) {
 // "Enigma", 'isa' inside "Isaiah", 'mnt' inside "USMNT". The boundaries below
 // are on LETTERS rather than \b, so a digit may follow a grader ("PSA10", the
 // commonest way a slab is listed) while a letter may not.
-const APP_GRADERS = ['PSA', 'BGS', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
+// Kept in step with grade-core.js by grade-core.test — BVG (Beckett Vintage
+// Grading) was added there after the raw-filter diagnostic found 102 sales
+// carrying it, and a browser list one short would badge those as Ungraded.
+const APP_GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
                      'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT'];
 const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.join('|')})(?![A-Za-z])`, 'gi');
 // The number belonging to THIS grader. '/' is excluded along with the digits

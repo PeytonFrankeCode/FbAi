@@ -29,6 +29,11 @@ const GLUED = [
   ['SGC10', 'SGC 10'],
   ['CGC9', 'CGC 9'],
   ['BCCG10', 'BCCG 10'],
+  // Beckett Vintage Grading, missing from the list until the raw-filter
+  // diagnostic found 102 sales in a 30-day window carrying grader='bvg'.
+  // A title naming it with empty columns was being priced as a raw card.
+  ['BVG9.5', 'BVG 9.5'],
+  ['BVG 8', 'BVG 8'],
 ];
 for (const [spelling, want] of GLUED) {
   const got = bucketOf(`2017 Panini Prizm Mahomes #269 Silver ${spelling}`);
