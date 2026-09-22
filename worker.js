@@ -474,6 +474,78 @@ class PriceSlotFiller {
 //   /sets/2024-panini-prizm-football/        -> set:2024-panini-prizm-football
 //   /sets/2024-panini-prizm-football/downtown/ -> subset:2024-panini-prizm-football/downtown
 //   /players/caleb-williams/                 -> player:caleb-williams
+// Which paths are allowed to answer with HTML.
+//
+// not_found_handling is "single-page-application", so the ASSETS binding
+// returns index.html — status 200, ad tag and all — for EVERY path it does
+// not recognise. Measured: /wp-admin/, /.env and /this-page-does-not-exist
+// each came back 200 with the AdSense script on them. That is three problems
+// at once: ads on a page with no content, a soft 404 for Google to index,
+// and — the one that matters — ad impressions painted against the bot scans
+// this worker's own comments note arriving at /wp-admin/*. Invalid traffic
+// costs an AdSense account rather than an application.
+//
+// The fallback is covering very little. The app uses path routing for exactly
+// two views; everything else (Checklists, Market, Community) lives at / and
+// switches without touching the URL:
+//
+//   const PATH_VIEWS = { inventory: '/inventory', stats: '/stats' };
+//
+// So the allowlist is short, and anything outside it that still came back as
+// HTML is the fallback rather than a real page.
+//
+// DELIBERATELY BY PATH ONLY. An unknown slug UNDER these prefixes — a typo'd
+// /players/xyz/ — still answers 200, because telling a real landing page from
+// the fallback needs the body, and 4,654 set pages make an exact index
+// expensive. That case is already handled: the ad gate gives it a price key
+// that misses and strips the tag. What this closes is the scan traffic, which
+// is the part that generates impressions.
+const SPA_HTML_ROUTES = new Set(['/', '/inventory', '/stats']);
+const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)/];
+
+export function isKnownHtmlPath(pathname) {
+  const p = String(pathname || '/').replace(/\/+$/, '') || '/';
+  if (SPA_HTML_ROUTES.has(p)) return true;
+  // about.html, contact.html, privacy.html, terms.html, methodology.html…
+  if (/\.html$/i.test(p)) return true;
+  return HTML_PREFIXES.some(re => re.test(pathname));
+}
+
+// A real 404, carrying no ad tag.
+//
+// Deliberately not the app shell with a 404 status: the shell is what puts the
+// ad script on the page in the first place, and a junk URL should cost nothing
+// to serve. Small, styled enough not to look broken, and it links home.
+export function notFoundResponse() {
+  const body = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, follow" />
+<title>Page not found — The Card Huddle</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+       background:#0d1117;color:#c9d1d9;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       text-align:center;padding:24px}
+  h1{font-size:1.4rem;margin:0 0 .5rem;color:#e6edf3}
+  p{margin:0 0 1.25rem;color:#8b949e}
+  a{display:inline-block;padding:.6rem 1.1rem;border-radius:999px;background:#5ece99;
+    color:#0d1117;font-weight:700;text-decoration:none}
+</style></head>
+<body><main>
+  <h1>That page doesn't exist</h1>
+  <p>The link may be out of date, or the address mistyped.</p>
+  <a href="/">Search card prices &rarr;</a>
+</main></body></html>`;
+  return new Response(body, {
+    status: 404,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'X-Robots-Tag': 'noindex',
+    },
+  });
+}
+
 export function priceKeyForPath(pathname) {
   const p = pathname.replace(/\/+$/, '');
   let m = p.match(/^\/players\/([^/]+)$/);
@@ -657,6 +729,12 @@ export default {
             // (run_worker_first), so enforce it here.
             const ct = resp.headers.get('content-type') || '';
             if (ct.includes('text/html')) {
+              // HTML came back for a path that has no business returning any,
+              // which means this is the SPA fallback rather than a page. Answer
+              // 404 with no ad tag instead of 200 with one.
+              if (resp.status === 200 && !isKnownHtmlPath(url.pathname)) {
+                return notFoundResponse();
+              }
               const h = new Headers(resp.headers);
               h.set('Cache-Control', 'no-cache, no-store, must-revalidate');
               h.set('Pragma', 'no-cache');
