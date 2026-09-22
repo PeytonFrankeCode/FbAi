@@ -4290,13 +4290,25 @@ function _rsiUngradedCol(col) {
 // (Topps Digital is a real product line), and "1/1" or "plate" — a printing
 // plate is a real card, filed by the checklists under the set whose number it
 // shares, and excluding plates would drop genuine sales.
+// KEPT SHORT ON PURPOSE. Every entry is another LIKE in a predicate that runs
+// over every priced sale in the window, and this endpoint has a 2,000ms Worker
+// budget that market-index.test enforces. A first pass at this list had 24
+// entries and took /api/market-index?days=90 to 2,325ms — correct, and over
+// the line. The test caught it, which is what it is for.
+//
+// So: substring matching means several of those entries were redundant
+// anyway ('see scans' is already matched by 'see scan', 'mystery pack' by
+// 'mystery'), and the rest are ordered by what the data showed. "see scan"
+// alone was the single commonest title reaching the index at 247 sales.
+// Adding more is a measurement, not a guess — junkByPattern on
+// /api/debug/raw-filter reports what each one catches, and anything with a
+// real count earns its place in the budget.
 const RSI_JUNK_WORDS = [
-  'see scan', 'see scans', 'see photo', 'see pics', 'see picture',
-  'exact card up for auction', 'card pictured is the card',
-  'you pick', 'u pick', 'pick your', 'your choice', 'choose your',
-  'case break', 'break spot', 'razz', 'repack', 'mystery pack',
-  'lot of', 'card lot', 'bulk',
-  'reprint', 'custom made', 'aceo', 'novelty', 'proxy',
+  'see scan',      // the reported case, and the biggest single title
+  'you pick', 'pick your', 'choose your',
+  'case break', 'break spot',
+  'lot of', 'repack', 'mystery',
+  'reprint', 'custom made', 'aceo',   // fan art and reproductions, not cards
 ];
 
 function _rsiJunkSql(T) {
@@ -4316,8 +4328,23 @@ function _rsiRawOnlySql(titleCol = 'title') {
                  OR ( ${T} LIKE '%graded%'
                       AND ${T} NOT LIKE '%ungraded%'
                       AND ${T} NOT LIKE '%upgraded%' ) )
-          AND NOT ( ${_rsiJunkSql(T)} )`;
+`;
 }
+
+// Applied to the BASKET, not to the whole-window aggregate.
+//
+// Where junk actually shows is the card list: "SEE SCAN For The Exact Card Up
+// For Auction!" entered the basket as a player named See who traded 247 times,
+// which a reader sees. In the index SCORE those same sales are a rounding
+// error inside a median of medians over hundreds of thousands.
+//
+// And the aggregate cannot afford them. /api/market-index?days=90 measures
+// 1,857-1,934ms against the 2,000ms ceiling market-index.test enforces —
+// BEFORE any of this — so the predicate that runs over every priced sale in
+// the window has no room to spend on a cosmetic fix. The basket query runs
+// over far less and can carry it.
+const RSI_JUNK_ONLY = `
+          AND NOT ( ${_rsiJunkSql("LOWER(COALESCE(title, ''))")} )`;
 const RSI_RAW_ONLY = _rsiRawOnlySql();
 
 // A sale can only be compared against another sale of the SAME card, and a card
@@ -4562,7 +4589,7 @@ function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extr
          FROM sales ${JOIN}
         WHERE price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${extraWhere}
+          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_JUNK_ONLY}${RSI_IDENTIFIED}${extraWhere}
      ),
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
@@ -11717,6 +11744,54 @@ const COMMENT_MAX_MESSAGE = 500;          // chars
 const COMMENT_MAX_PER_POST = 200;         // bound the per-post comment list
 const COMMUNITY_REACTIONS = ['👍', '❤️', '🔥', '😂', '😮']; // allowed reaction emoji
 
+// ---- Attached photos: screened, or not published ----
+//
+// moderateImage() reports honestly and refuses to decide policy — with no
+// provider configured it returns { allowed: true, verified: false }, meaning
+// "nobody looked at this". Both call sites used to publish on that, leaving
+// the report/auto-hide net as the only screen. That net needs
+// COMMUNITY_AUTOHIDE_REPORTS distinct people to report a post, which on a
+// small feed can take days or never happen.
+//
+// The photo lands on the same URL as the ad tag, because the community feed is
+// a panel inside the app shell. An unscreened image beside ads is the kind of
+// thing that costs an AdSense account rather than an application, and the
+// asymmetry is stark: refusing a photo annoys one person for a minute, while
+// publishing the wrong one is not reversible by noticing it later.
+//
+// So an image nobody screened does not publish. Text posts are unaffected, so
+// the feed still works with photos off, and wiring IMAGE_MODERATION_URL +
+// IMAGE_MODERATION_KEY turns them straight back on. Setting
+// COMMUNITY_ALLOW_UNVERIFIED_IMAGES=1 restores the old behaviour deliberately,
+// which is a different thing from arriving at it by not having configured
+// anything.
+const COMMUNITY_ALLOW_UNVERIFIED_IMAGES = process.env.COMMUNITY_ALLOW_UNVERIFIED_IMAGES === '1';
+
+// Returns null to publish, or an { status, body } refusal for the caller to send.
+async function screenCommunityImage(imageUrl) {
+  if (!imageUrl) return null;
+  let check;
+  try {
+    check = await moderateImage(imageUrl);
+  } catch (_) {
+    // The screen itself failed. That is "nobody looked at this" too.
+    check = { allowed: true, verified: false };
+  }
+  if (!check.allowed) {
+    return { status: 422, body: {
+      error: 'That image didn’t pass our content check. Please choose a different photo.',
+      reason: 'image',
+    } };
+  }
+  if (!check.verified && !COMMUNITY_ALLOW_UNVERIFIED_IMAGES) {
+    return { status: 503, body: {
+      error: 'Photo uploads are paused — we can’t screen images right now. Please post without a photo and try adding it later.',
+      reason: 'image-screening-unavailable',
+    } };
+  }
+  return null;
+}
+
 function loadCommunityPosts() {
   const data = loadData('community', COMMUNITY_FILE, { posts: [] });
   return Array.isArray(data.posts) ? data.posts : [];
@@ -11817,18 +11892,12 @@ app.post('/api/community/posts', async (req, res) => {
       : 'Your post contains language that isn’t allowed. Please revise it.';
     return res.status(422).json({ error: msg, reason: textCheck.reason });
   }
-  // Image: blocked only when a configured provider scores it NSFW; otherwise
-  // it passes through marked unverified (reports/auto-hide remain the net).
-  let imageVerified = true;
-  if (imageUrl) {
-    try {
-      const imgCheck = await moderateImage(imageUrl);
-      if (!imgCheck.allowed) {
-        return res.status(422).json({ error: 'That image didn’t pass our content check. Please choose a different photo.', reason: 'image' });
-      }
-      imageVerified = !!imgCheck.verified;
-    } catch (_) { imageVerified = false; }
-  }
+  // Image: screened, or not published. See screenCommunityImage.
+  const imgRefusal = await screenCommunityImage(imageUrl);
+  if (imgRefusal) return res.status(imgRefusal.status).json(imgRefusal.body);
+  // Anything that reaches here was either screened clean or deliberately
+  // allowed through by COMMUNITY_ALLOW_UNVERIFIED_IMAGES.
+  const imageVerified = !imageUrl ? true : !COMMUNITY_ALLOW_UNVERIFIED_IMAGES;
 
   const post = {
     id: 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
@@ -11938,16 +12007,10 @@ app.post('/api/community/posts/:id/comments', async (req, res) => {
       : 'Your reply contains language that isn’t allowed. Please revise it.';
     return res.status(422).json({ error: msg, reason: textCheck.reason });
   }
-  let imageVerified = true;
-  if (imageUrl) {
-    try {
-      const imgCheck = await moderateImage(imageUrl);
-      if (!imgCheck.allowed) {
-        return res.status(422).json({ error: 'That image didn’t pass our content check. Please choose a different photo.', reason: 'image' });
-      }
-      imageVerified = !!imgCheck.verified;
-    } catch (_) { imageVerified = false; }
-  }
+  // Same rule as a post: an image nobody screened does not publish.
+  const imgRefusal = await screenCommunityImage(imageUrl);
+  if (imgRefusal) return res.status(imgRefusal.status).json(imgRefusal.body);
+  const imageVerified = !imageUrl ? true : !COMMUNITY_ALLOW_UNVERIFIED_IMAGES;
 
   const posts = loadCommunityPosts();
   const post = posts.find(p => p.id === id);
@@ -13346,7 +13409,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

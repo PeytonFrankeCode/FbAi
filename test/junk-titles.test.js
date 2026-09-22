@@ -35,7 +35,7 @@ try {
 
 process.env.CF_WORKER = '1';
 process.env.ADMIN_PASSWORD = 'test-key-for-junk';
-const { RSI_JUNK_WORDS, _rsiRawOnlySql } = require(path.join(ROOT, 'server.js'));
+const { RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY } = require(path.join(ROOT, 'server.js'));
 
 // Run the REAL predicate against real SQLite, so this tests the SQL that
 // ships rather than a JavaScript re-implementation of it.
@@ -45,8 +45,13 @@ const ins = db.prepare('INSERT INTO sales (title, grade, grader, price_cents) VA
 const survives = (title) => {
   db.exec('DELETE FROM sales');
   ins.run(title);
+  // The BASKET predicate: raw-only plus the junk clause. The whole-window
+  // aggregate deliberately omits the junk clause — it has no CPU budget left
+  // for it. See the comment on RSI_JUNK_ONLY for why the basket is where junk
+  // actually shows.
   const r = db.prepare(
-    `SELECT COUNT(*) AS n FROM sales WHERE price_cents IS NOT NULL ${_rsiRawOnlySql()}`).get();
+    `SELECT COUNT(*) AS n FROM sales
+      WHERE price_cents IS NOT NULL ${_rsiRawOnlySql()}${RSI_JUNK_ONLY}`).get();
   return r.n === 1;
 };
 
@@ -108,9 +113,20 @@ db.exec('DELETE FROM sales');
 db.prepare('INSERT INTO sales (title, grade, grader, price_cents) VALUES (?,?,?,?)')
   .run('2017 Prizm Mahomes #269 Silver', '10.0', 'psa', 50000);
 const slab = db.prepare(
-  `SELECT COUNT(*) AS n FROM sales WHERE price_cents IS NOT NULL ${_rsiRawOnlySql()}`).get();
+  `SELECT COUNT(*) AS n FROM sales
+    WHERE price_cents IS NOT NULL ${_rsiRawOnlySql()}${RSI_JUNK_ONLY}`).get();
 check('a graded sale is still excluded for being graded', slab.n === 0,
   'the junk clause must not have loosened the grade stages');
+
+// ---- The split is load-bearing ----
+check('the junk clause is NOT in the whole-window raw predicate',
+  !/see scan/.test(_rsiRawOnlySql()),
+  'the aggregate runs at ~95% of its 2,000ms budget before this; putting the '
+  + 'clause back there is what market-index.test catches');
+check('  ...and IS in the basket clause', /see scan/.test(RSI_JUNK_ONLY));
+check('  ...with the list short enough to afford',
+  RSI_JUNK_WORDS.length <= 12,
+  `${RSI_JUNK_WORDS.length} patterns — each is another LIKE per row`);
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall junk-title checks passed');
 process.exit(failures ? 1 : 0);
