@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -503,11 +503,28 @@ class PriceSlotFiller {
 const SPA_HTML_ROUTES = new Set(['/', '/inventory', '/stats']);
 const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)/];
 
+// The static pages in public/, WITHOUT their extension.
+//
+// Cloudflare's assets serve pretty URLs (html_handling defaults to
+// auto-trailing-slash): a request for /admin.html is answered with a 307 to
+// /admin, and /admin serves admin.html. Allowing only the ".html" spelling
+// meant every one of these pages 404'd at the address it is actually served
+// from — the admin page, and the about, privacy, terms and contact pages the
+// footer links to. soft-404.test.js checks this list against public/ on disk,
+// so a page added without being listed fails the suite instead of vanishing.
+export const STATIC_PAGES = new Set([
+  '_avatar-preview', 'about', 'admin', 'admin-news', 'contact', 'diag', 'index',
+  'insert-desk', 'methodology', 'parallel-desk', 'privacy', 'sale-desk',
+  'sort-desk', 'terms', 'usage',
+]);
+
 export function isKnownHtmlPath(pathname) {
   const p = String(pathname || '/').replace(/\/+$/, '') || '/';
   if (SPA_HTML_ROUTES.has(p)) return true;
   // about.html, contact.html, privacy.html, terms.html, methodology.html…
   if (/\.html$/i.test(p)) return true;
+  // ...and the same pages as Cloudflare actually serves them: /admin, /about.
+  if (STATIC_PAGES.has(p.slice(1))) return true;
   return HTML_PREFIXES.some(re => re.test(pathname));
 }
 
@@ -879,7 +896,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -988,6 +1005,16 @@ export default {
           }
         } else {
           console.error('[Cron] warmSoldStats missing from init() — not wired through');
+        }
+
+        // Rebuild any missing Market tab entry — whole-market index and basket
+        // for each period — so the first visitor after a deploy does not wait
+        // for the full query. Every tick, because it is six KV reads when
+        // nothing is missing; see warmMarket for why stale ones are left alone.
+        if (typeof warmMarket === 'function') {
+          await warmMarket().catch(err => console.error('[Cron] market warm failed:', err && err.message || err));
+        } else {
+          console.error('[Cron] warmMarket missing from init() — not wired through');
         }
 
         // Persist the D1 usage tally. Last, so it captures everything the

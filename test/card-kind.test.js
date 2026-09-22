@@ -17,7 +17,10 @@
 // title — it is most of what the card is worth — and because the catalogue
 // agrees: across 361 checklists, "autograph", "signature", "relic" and "mem"
 // appear in no base set name at all.
-const { cardKind, printRun } = require('../card-kind.js');
+const { cardKind, kindSql, printRun } = require('../card-kind.js');
+
+// Every title handed to expect(), so the SQL reader can be held to the same set.
+const CORPUS = [];
 
 let failures = 0;
 const check = (label, ok, detail) => {
@@ -25,6 +28,7 @@ const check = (label, ok, detail) => {
   if (!ok) failures++;
 };
 const expect = (cases, label) => {
+  CORPUS.push(...cases.map(([t]) => t));
   const wrong = cases.filter(([t, want]) => cardKind(t) !== want);
   check(label, wrong.length === 0,
     wrong.length
@@ -150,6 +154,37 @@ expect([
   ['2026 Topps Flagship Football Fernando Mendoza RC #301 Auto', 'auto'],
   ['2026 Topps Flagship Football Fernando Mendoza RC #301 Las Vegas Raiders', ''],
 ], 'a redemption voucher is its own kind, not an autograph');
+
+// ---- the SQL twin gives the same answer ------------------------------------
+//
+// The movers board splits by kind inside a GROUP BY, where the JS reader cannot
+// run. Two readers of one thing drift unless something holds them together;
+// this is that something. Every title above, plus the shapes that punctuation
+// and the "New Jersey" exception make awkward.
+{
+  let DatabaseSync;
+  try { ({ DatabaseSync } = require('node:sqlite')); } catch (_) {}
+  if (!DatabaseSync) {
+    check('node:sqlite available for the SQL twin', false, `Node ${process.version} — needs 22.5+`);
+  } else {
+    const titles = [...new Set([...CORPUS,
+      'Mendoza RC/Auto /99', 'Mendoza (AUTO) #301', 'Mendoza Auto-Patch RPA', 'Mendoza On-Card Auto',
+      'Brady Laundry Tag 1/1', 'Brady LaundryTag', 'Game-Used Jersey Swatch', 'New Jersey Devils rookie',
+      'Saquon Barkley Giants New Jersey home', 'Barkley jersey #26 New Jersey', 'Automatic Win Mahomes',
+      'Design Variation Allen', 'Signed, sealed', 'Mendoza SIG!', 'Relics: Lamb', 'Redeemable card',
+      'Patches of Lamb', 'Worn by Hurts', 'Thread count Hurts', 'Threads Hurts'])];
+    const db = new DatabaseSync(':memory:');
+    db.exec('CREATE TABLE t (title TEXT)');
+    const ins = db.prepare('INSERT INTO t VALUES (?)');
+    for (const x of titles) ins.run(x);
+    const rows = db.prepare(`SELECT title, ${kindSql('title')} AS k FROM t`).all();
+    const wrong = rows.filter(r => r.k !== cardKind(r.title));
+    check('the SQL kind reader agrees with the JS one', wrong.length === 0,
+      wrong.length
+        ? wrong.map(r => `"${r.title.slice(0, 40)}" sql=${JSON.stringify(r.k)} js=${JSON.stringify(cardKind(r.title))}`).join('; ')
+        : `all ${rows.length} titles`);
+  }
+}
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall card-kind checks passed');
 process.exit(failures ? 1 : 0);

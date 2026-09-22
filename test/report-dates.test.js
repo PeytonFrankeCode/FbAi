@@ -183,6 +183,15 @@ const server_js = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
       sites++;
       if (!/_fromCache\(/.test(m[1])) bare.push(m[0]);
     }
+    // The Market endpoints return through one shared stale-while-revalidate
+    // helper instead. Each call counts as a site, and the helper must label
+    // both of its hit paths — fresh and stale — or every one of them is bare.
+    const helper = (server_js.match(/async function _marketCached[\s\S]*?\n}\n/) || [''])[0];
+    const helperSites = (server_js.match(/await _marketCached\(/g) || []).length;
+    sites += helperSites;
+    if (helperSites && (helper.match(/_fromCache\(hit\)/g) || []).length < 2) {
+      bare.push('_marketCached returns a hit without _fromCache');
+    }
     check('every endpoint that returns a cached payload labels it',
       sites >= 10 && bare.length === 0,
       bare.length ? bare.join(' | ') : `${sites} sites, all labelled`);

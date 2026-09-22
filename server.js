@@ -85,9 +85,9 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // Base vs autograph vs relic — the largest single source of merged cards.
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
-const { cardKind: _cardKind, printRun: _printRun,
-        AUTO_WORDS: _AUTO_WORDS, RELIC_WORDS: _RELIC_WORDS,
-        REDEMPTION_WORDS: _REDEMPTION_WORDS } = require('./card-kind');
+const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql } = require('./card-kind');
+// The movers board groups in SQL, so it reads the kind there. Built once.
+const _KIND_SQL = _kindSql('title');
 
 // cardKind(), in SQL.
 //
@@ -7853,18 +7853,22 @@ app.get('/api/market-basket', async (req, res) => {
   const player = String(req.query.player || '').trim();
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, reason: 'no dataset' });
+  _marketCacheHeaders(res);
+  res.json(await _marketCached(_marketBasketKey(days, player),
+    () => _computeMarketBasket(db, days, player)));
+});
 
-  const cacheKey = `marketbasket:v2:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`;
-  const cached = await cacheGet(cacheKey);
-  if (cached) return res.json(_fromCache(cached));
+const _marketBasketKey = (days, player) =>
+  `marketbasket:v2:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
 
+async function _computeMarketBasket(db, days, player) {
   try {
     const newest = player
       ? await db.prepare(
           'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
         ).bind(player, NFLDB_MIN_CONFIDENCE).first()
       : await db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
-    if (!newest || !newest.d) return res.json({ available: false, days, reason: 'no data in range' });
+    if (!newest || !newest.d) return { available: false, days, reason: 'no data in range' };
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     const g = _rsiGeometry(days);
@@ -7877,17 +7881,113 @@ app.get('/api/market-basket', async (req, res) => {
           ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, useAlias)).all()
       : await (await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage, useAlias)).all();
 
-    const payload = {
+    return {
       available: true, days, player: player || null, through: throughIso,
       cards: _rsiBasketRows((rows && rows.results) || [], days, g.bucketDays, g.points),
     };
-    cachePut(cacheKey, payload, MARKET_TTL);
-    res.json(payload);
   } catch (err) {
     console.error('[MarketBasket]', err && err.message);
-    res.json({ available: false, days, reason: 'basket unavailable' });
+    return { available: false, days, reason: 'basket unavailable', transient: true };
   }
-});
+}
+
+// ---- Market caching: nobody waits for a recompute they did not ask for ----
+//
+// The index and the basket are the heaviest reads a visitor can trigger — a
+// window-function pass over months of sales — and they sat behind a plain
+// one-hour TTL. So every hour, for every period and every player someone
+// looked at, the next visitor waited for the full query, and switching period
+// or player was exactly the action most likely to land on an expired key.
+//
+// Now an entry is FRESH for MARKET_TTL, as before, but KEPT for
+// MARKET_KEEP_TTL. A stale hit is served at once and rebuilt in the background
+// (waitUntil on Workers), so the only request that waits is the first one ever
+// for that key. The numbers are daily — the newest trailing days are excluded
+// by design — so an answer an hour or two old is the same answer.
+//
+// What is kept, and for how long:
+//   available answers        MARKET_KEEP_TTL, refreshed in the background
+//   a settled "no" (a thin
+//   player, short history)   MARKET_NO_TTL — it can change as data arrives,
+//                            but recomputing it on every click proved nothing
+//   a failure (transient)    never, so a D1 hiccup is not remembered
+const MARKET_KEEP_TTL = 60 * 60 * 48;
+const MARKET_NO_TTL = 60 * 30;
+const _marketRefreshing = new Set();
+
+function _marketTtl(v) {
+  if (!v || v.transient) return 0;
+  return v.available ? MARKET_KEEP_TTL : MARKET_NO_TTL;
+}
+
+// Stores what is worth keeping and returns the payload without its internal
+// `transient` flag, which is bookkeeping, not part of the answer.
+function _marketStore(key, v) {
+  const { transient, ...clean } = v || {};
+  const ttl = _marketTtl(v);
+  if (ttl) cachePut(key, clean, ttl);
+  return clean;
+}
+
+async function _marketCached(key, compute) {
+  const hit = await cacheGet(key);
+  if (hit) {
+    const age = (Date.now() - Date.parse(hit.generatedAt || '')) / 1000;
+    const freshFor = hit.available ? MARKET_TTL : MARKET_NO_TTL;
+    // No stamp means no known age — treat it as stale, never as fresh.
+    if (Number.isFinite(age) && age <= freshFor) return _fromCache(hit);
+    if (!_marketRefreshing.has(key)) {
+      _marketRefreshing.add(key);
+      const p = Promise.resolve().then(compute)
+        .then(v => { _marketStore(key, v); })
+        .catch(err => console.error('[MarketCache] refresh failed', key, err && err.message))
+        .finally(() => _marketRefreshing.delete(key));
+      if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
+    }
+    return { ..._fromCache(hit), refreshing: true };
+  }
+  return _marketStore(key, await compute());
+}
+
+// The browser may reuse an answer for a few minutes: going 7d -> 30d -> 7d, or
+// back to a player just viewed, should not be a network round trip at all.
+// Private, because the /api/* default is no-store for good reasons elsewhere.
+function _marketCacheHeaders(res) {
+  res.setHeader('Cache-Control', 'private, max-age=300');
+}
+
+// Build the whole-market index and basket for every period, for the cron.
+//
+// Only what is MISSING, so an ordinary tick costs six KV reads and no queries.
+// Without this the first visitor after a deploy — a change to the index maths
+// changes MARKET_CALC_SIG, which changes every key — or after an eviction pays
+// for the full query. Stale entries are deliberately left to the visitor-side
+// background refresh: rebuilding them here every hour would read far more of
+// D1 than visitors ever cause, on an account that has hit its limits before.
+async function warmMarket() {
+  return _asD1Source('market-warm', () => _warmMarket());
+}
+
+async function _warmMarket() {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no dataset' };
+  const done = [];
+  const jobs = [];
+  for (const days of MARKET_PERIODS) {
+    jobs.push([`index:${days}d`, _marketIndexKey(days), () => _computeMarketIndex(db, days)]);
+    jobs.push([`basket:${days}d`, _marketBasketKey(days, ''), () => _computeMarketBasket(db, days, '')]);
+  }
+  for (const [label, key, compute] of jobs) {
+    if (await cacheGet(key)) { done.push(`${label}:cached`); continue; }
+    const v = await compute();
+    // A failed build never replaces a good entry; a good entry simply ages on.
+    if (!v || !v.available) { done.push(`${label}:skipped`); continue; }
+    _marketStore(key, v);
+    done.push(`${label}:built`);
+  }
+  console.log(`[Market] warm ${done.join(' ')}`);
+  return { ok: true, periods: done };
+}
 
 // Flush the per-source tally into a daily KV bucket.
 //
@@ -8472,30 +8572,35 @@ app.get('/api/market-index', async (req, res) => {
     : 30;
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, reason: 'no dataset' });
+  _marketCacheHeaders(res);
+  res.json(await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days)));
+});
 
-  // v3: grouping moved into SQL. v2 keys are left behind deliberately — they
-  // hold payloads from the build that tripped the Worker CPU limit.
-  const cacheKey = `marketindex:v4:${MARKET_CALC_SIG}:${days}`;
-  const cached = await cacheGet(cacheKey);
-  if (cached) return res.json(_fromCache(cached));
+// v3: grouping moved into SQL. v2 keys are left behind deliberately — they
+// hold payloads from the build that tripped the Worker CPU limit.
+const _marketIndexKey = (days) => `marketindex:v4:${MARKET_CALC_SIG}:${days}`;
 
+// The whole-market index, computed. Returns the payload rather than writing a
+// response so the cron can build it too — see warmMarket.
+async function _computeMarketIndex(db, days) {
   try {
     // Anchor to the newest day we hold, not to today: if the collector paused,
     // counting back from today walks off the end of the data and reads as a
     // crash that never happened.
-    const newest = await db.prepare(
-      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
-    ).first();
-    if (!newest || !newest.d) return res.json({ available: false, days, reason: 'no data in range' });
+    //
+    // "We haven't been collecting long enough" is not the same as "cards don't
+    // resell", and only one of them resolves on its own. Check it explicitly so
+    // the page can say which, rather than blaming the data density. Both ends
+    // are read at once: they are independent, and serially they were two round
+    // trips before the real query could start.
+    const [newest, oldest] = await Promise.all([
+      db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first(),
+      db.prepare('SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first(),
+    ]);
+    if (!newest || !newest.d) return { available: false, days, reason: 'no data in range' };
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
 
-    // "We haven't been collecting long enough" is not the same as "cards don't
-    // resell", and only one of them resolves on its own. Check it explicitly so
-    // the page can say which, rather than blaming the data density.
-    const oldest = await db.prepare(
-      'SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL'
-    ).first();
     // The gate is where the oldest bucket STARTS, not where it ends. A period
     // whose last bucket is only partly covered still scores fine off the sales
     // it does have; one whose last bucket is entirely before the first sale we
@@ -8504,27 +8609,25 @@ app.get('/api/market-index', async (req, res) => {
     const { bucketDays, points, spanDays } = _rsiGeometry(days);
     const haveDays = oldest && oldest.d ? _mkDay(throughIso) - _mkDay(oldest.d) + 1 : 0;
     if (haveDays < points * bucketDays) {
-      return res.json({
+      return {
         available: false, days, reason: 'not enough history yet',
         daysOfHistory: haveDays, daysNeeded: points * bucketDays, fullSpanDays: spanDays,
         through: throughIso, method: 'repeat-sales',
-      });
+      };
     }
 
     // Only groups on canonical names once the table is actually filled.
     const useAlias = await _aliasReady(db);
     const rows = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias)).all();
     const list = (rows && rows.results) || [];
-    if (list.length === 0) return res.json({ available: false, days, reason: 'no data in range' });
+    if (list.length === 0) return { available: false, days, reason: 'no data in range' };
 
-    const payload = _buildRepeatSalesPayload(list, throughIso, days);
-    if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
-    res.json(payload);
+    return _buildRepeatSalesPayload(list, throughIso, days);
   } catch (err) {
     console.error('[MarketIndex]', err && err.message);
-    res.json({ available: false, days, reason: 'index unavailable' });
+    return { available: false, days, reason: 'index unavailable', transient: true };
   }
-});
+}
 
 // ---- Player market index ----
 // The same index as /api/market-index, scoped to one player. Identical maths
@@ -8576,6 +8679,13 @@ app.get('/api/player-search', async (req, res) => {
   if (!db) return res.json({ available: false, players: [] });
   try {
     const roster = await _playerRoster(db);
+    // The whole roster, once, so the page can filter as you type without a
+    // round trip per keystroke. It is at most PLAYER_LIST_MAX names and changes
+    // every few hours, so the browser may keep it for a while.
+    if (req.query.all === '1') {
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      return res.json({ available: true, players: roster });
+    }
     // Substring, not prefix — people search "Nix" as often as "Bo".
     // Names that START with the query rank first, since that's the stronger
     // match, and sale count breaks ties.
@@ -8601,11 +8711,15 @@ app.get('/api/player-index', async (req, res) => {
 
   const db = getNflDb();
   if (!db) return res.json({ available: false, days, player, reason: 'no dataset' });
+  _marketCacheHeaders(res);
+  // v4: carries MARKET_CALC_SIG like the market keys. Entries are now kept for
+  // two days and served stale while they rebuild, so a key that survived a
+  // change to the maths would keep showing the old answer.
+  res.json(await _marketCached(`playerindex:v4:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
+    () => _computePlayerIndex(db, days, player)));
+});
 
-  const cacheKey = `playerindex:v3:${days}:${player.toLowerCase()}`;
-  const cached = await cacheGet(cacheKey);
-  if (cached) return res.json(_fromCache(cached));
-
+async function _computePlayerIndex(db, days, player) {
   try {
     // Anchored to this player's newest sale rather than the market's, so a
     // player who stopped selling three weeks ago says so instead of being
@@ -8614,7 +8728,7 @@ app.get('/api/player-index', async (req, res) => {
       'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
     ).bind(player, NFLDB_MIN_CONFIDENCE).first();
     if (!newest || !newest.d) {
-      return res.json({ available: false, days, player, reason: 'no sales for this player' });
+      return { available: false, days, player, reason: 'no sales for this player' };
     }
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
@@ -8623,16 +8737,14 @@ app.get('/api/player-index', async (req, res) => {
     const rows = await (await _rsiQuery(db, throughIso, days,
       ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card')).all();
     const list = (rows && rows.results) || [];
-    if (list.length === 0) return res.json({ available: false, days, player, reason: 'no sales for this player' });
+    if (list.length === 0) return { available: false, days, player, reason: 'no sales for this player' };
 
-    const payload = _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
-    if (payload.available) cachePut(cacheKey, payload, MARKET_TTL);
-    res.json(payload);
+    return _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);
-    res.json({ available: false, days, player, reason: 'index unavailable' });
+    return { available: false, days, player, reason: 'index unavailable', transient: true };
   }
-});
+}
 
 // ---- /api/sold-stats ----
 // Market snapshot for the strip under the search bar. Reads our own D1 dataset
@@ -8711,7 +8823,9 @@ function _median(xs) {
 // never shipped.
 // v5: Most Sold keeps unread parallels out of the base tile, drops cards with
 // no number, and takes the photo from a typical sale rather than the dearest.
-const SOLD_STATS_KEY = (days) => `soldstats:v5:${days}`;
+// v6: the movers board splits autographs, relics and redemptions from the base
+// card that shares their number.
+const SOLD_STATS_KEY = (days) => `soldstats:v6:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -8801,7 +8915,12 @@ async function _computeSoldStats(db, days) {
       // that player's flat and falling cards too — pulling only the top gainers
       // would compute each player's median from their best cards alone and put
       // every name on the board in the green.
+      //
+      // Split by KIND as well, the same split Most Sold makes: an autograph
+      // shares its base card's number and parallel column, so without it a
+      // month where the autos traded more reads as the card taking off.
       db.prepare(`SELECT player, year, set_name, parallel, card_number,
+                         ${_KIND_SQL} AS kind,
                          COUNT(*) AS n,
                          SUM(CASE WHEN sold_date >= ? THEN 1 ELSE 0 END) AS n_recent,
                          SUM(CASE WHEN sold_date <  ? THEN 1 ELSE 0 END) AS n_older,
@@ -8814,7 +8933,7 @@ async function _computeSoldStats(db, days) {
                     AND COALESCE(TRIM(player), '') <> ''
                     AND COALESCE(TRIM(card_number), '') <> ''
                     ${RSI_RAW_ONLY}${RSI_IDENTIFIED}
-                  GROUP BY player, year, set_name, parallel, card_number
+                  GROUP BY player, year, set_name, parallel, card_number, kind
                   HAVING n_recent >= ? AND n_older >= ? AND older_cents >= ?
                   ORDER BY n DESC LIMIT ?`)
         .bind(mid, mid, mid, mid, since, NFLDB_MIN_CONFIDENCE,
@@ -8844,15 +8963,18 @@ async function _computeSoldStats(db, days) {
     // One change per card, from the halves the query already counted.
     const moverRows = ((movers && movers.results) || []).map(r => ({
       player: r.player,
-      name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '']
+      name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '',
+             _KIND_LABEL[r.kind] || '']
         .filter(Boolean).join(' ').trim() || r.title,
+      kind: r.kind || 'base',
       sales: r.n,
       recent: Math.round((r.recent_cents || 0) / 100),
       older: Math.round((r.older_cents || 0) / 100),
       changePct: Math.round(((r.recent_cents - r.older_cents) / r.older_cents) * 1000) / 10,
       imageUrl: r.image_url || null,
       itemUrl: linkOf(r),
-      query: [r.year, r.set_name, r.player, r.parallel].filter(Boolean).join(' ').trim() || r.title,
+      query: [r.year, r.set_name, r.player, r.parallel, _KIND_LABEL[r.kind] || '']
+        .filter(Boolean).join(' ').trim() || r.title,
     })).filter(m => Number.isFinite(m.changePct));
 
     const byChange = (a, b) => b.changePct - a.changePct;
@@ -9073,7 +9195,9 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // grouping. The guard cannot tell a cosmetic edit from a behavioural one, and
 // should not try — it exists to force this judgement, not to make it. Bumping
 // here would throw away every cached analysis to no effect.
-const CARD_IDENTITY_FINGERPRINT = '19a077137bc2';
+// Re-fingerprinted again at v10 for the same reason: card-kind.js gained
+// kindSql() and exported its word lists, and cardKind() itself is unchanged.
+const CARD_IDENTITY_FINGERPRINT = 'f44f600db0a8';
 
 // How far one card's prices may spread before a trend across them is refused.
 //
@@ -13555,7 +13679,7 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, warmMarket, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

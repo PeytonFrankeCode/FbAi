@@ -114,4 +114,40 @@ function printRun(title) {
 // the overwhelming majority of sales.
 const kindKey = (title) => cardKind(title);
 
-module.exports = { AUTO_RE, RELIC_RE, REDEMPTION_RE, cardKind, kindKey, printRun };
+// cardKind(), in SQL, for a GROUP BY that cannot bring every title back to JS.
+//
+// The movers board aggregates every raw sale in the window, so reading titles
+// one by one in the Worker is not an option there the way it is for Most Sold.
+// Generated from the same word lists, never transcribed, and card-kind.test.js
+// runs a corpus through both readers and requires the same answer.
+//
+// The regexes want a non-letter either side of each word. SQL has no lookaround,
+// so the title is lowercased, its common punctuation turned into spaces and
+// padded, and each word is looked for as ' word '. A cheap substring test runs
+// first, so the padding is only built for the few titles that could match.
+const _SQL_PUNCT = ['-', '/', '(', ')', ',', '.', '!', '#', ':', ';', '"', "'", '&', '+', '*', '[', ']', '|'];
+function kindSql(titleCol = 'title') {
+  const T = `LOWER(COALESCE(${titleCol}, ''))`;
+  let P = T;
+  for (const c of _SQL_PUNCT) P = `REPLACE(${P}, '${c.replace(/'/g, "''")}', ' ')`;
+  P = `(' ' || ${P} || ' ')`;
+  // A word as it reads once punctuation is a space: 'on-card' is 'on card'.
+  const spaced = (w) => w.replace(/\\s\*/g, ' ').replace(/[-]/g, ' ');
+  const words = (list) => [...new Set(list.map(spaced))];
+  const hit = (list, pad) => words(list).map(w => `${pad} LIKE '% ${w} %'`).join(' OR ');
+  const rough = (list) => words(list).map(w => `${T} LIKE '%${w.split(' ')[0]}%'`).join(' OR ');
+  // "laundry\s*tag" also matches with no space at all.
+  const relic = [...RELIC_WORDS, 'laundrytag'];
+  // Jerseys, except the state: the regex's (?<!new\s).
+  const noState = `REPLACE(${P}, ' new jersey', ' ')`;
+  const jersey = `${noState} LIKE '% jersey %' OR ${noState} LIKE '% jerseys %'`;
+  return `(CASE
+      WHEN (${rough(REDEMPTION_WORDS)}) AND (${hit(REDEMPTION_WORDS, P)}) THEN 'redemption'
+      WHEN (${rough(AUTO_WORDS)}) AND (${hit(AUTO_WORDS, P)}) THEN 'auto'
+      WHEN (${rough(relic)} OR ${T} LIKE '%jersey%')
+           AND (${hit(relic, P)} OR ${jersey}) THEN 'relic'
+      ELSE '' END)`;
+}
+
+module.exports = { AUTO_RE, RELIC_RE, REDEMPTION_RE, AUTO_WORDS, RELIC_WORDS,
+                   REDEMPTION_WORDS, cardKind, kindKey, kindSql, printRun };

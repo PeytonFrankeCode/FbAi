@@ -60,6 +60,26 @@ const check = (label, ok, detail) => {
       bad.length === 0, bad.length ? bad.join(', ') : files.slice(0, 4).join(', ') + '…');
   }
 
+  // ...and at the address Cloudflare actually serves them from. Its assets use
+  // pretty URLs: /admin.html is answered with a 307 to /admin, which serves the
+  // file. Checking only the .html spelling is how the admin page, and the
+  // about, privacy, terms and contact pages the footer links to, all 404'd
+  // while this test passed.
+  {
+    const { STATIC_PAGES } = await import(path.join(ROOT, 'worker.js'));
+    const names = fs.readdirSync(path.join(ROOT, 'public'))
+      .filter(f => f.endsWith('.html')).map(f => f.replace(/\.html$/, ''));
+    const bad = names.filter(n => !isKnownHtmlPath('/' + n) || !isKnownHtmlPath('/' + n + '/'));
+    check(`kept — all ${names.length} static pages at their pretty URL (/admin, /about…)`,
+      bad.length === 0, bad.length ? bad.map(n => '/' + n).join(', ') : '/admin, /about, /privacy…');
+    const unlisted = names.filter(n => !STATIC_PAGES.has(n));
+    const stale = [...STATIC_PAGES].filter(n => !names.includes(n));
+    check('  ...and the list matches public/ exactly',
+      unlisted.length === 0 && stale.length === 0,
+      unlisted.length ? `missing from STATIC_PAGES: ${unlisted.join(', ')}`
+        : stale.length ? `listed but not in public/: ${stale.join(', ')}` : `${names.length} pages`);
+  }
+
   // ---- Scans and junk must not ----
   const DROP = [
     ['a WordPress scan', '/wp-admin/'],
@@ -67,6 +87,9 @@ const check = (label, ok, detail) => {
     ['an xmlrpc probe', '/xmlrpc.php'],
     ['a php admin probe', '/admin/config.php'],
     ['a plain typo', '/this-page-does-not-exist'],
+    // Close to a real page, but not one. Only the exact names are allowed.
+    ['a near miss of a real page', '/administrator'],
+    ['a real page name nested under a path', '/wp/admin'],
     ['a missing image', '/missing.png'],
     ['a missing script', '/vendor/nope.js'],
   ];

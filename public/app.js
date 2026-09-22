@@ -4477,7 +4477,48 @@ function renderChartReadout(elId, html) {
 const MARKET_VIEW_PERIODS = [7, 30, 90];
 let _mkDays = 30;
 let _mkChart = null;
-let _mkLoading = false;
+
+// Every Market answer already asked for on this visit, by URL, as a promise.
+//
+// A promise rather than the data, so a prefetch still in flight and the click
+// that wants it share one request instead of racing two. Going 7d -> 30d -> 7d,
+// or back to the whole market from a player, is then instant. Kept for a few
+// minutes: the numbers behind it move daily.
+const MK_CLIENT_TTL = 5 * 60 * 1000;
+const _mkResp = new Map();
+function _mkGet(url) {
+  const hit = _mkResp.get(url);
+  if (hit && Date.now() - hit.t < MK_CLIENT_TTL) return hit.p;
+  const p = fetch(url).then(safeJson).catch(() => null).then(d => {
+    // A failure is not an answer worth remembering; the next click retries.
+    if (!d || /unavailable/.test(String(d.reason || ''))) _mkResp.delete(url);
+    return d;
+  });
+  _mkResp.set(url, { t: Date.now(), p });
+  return p;
+}
+const _mkIndexUrl = (days, player) => player
+  ? `/api/player-index?player=${encodeURIComponent(player)}&days=${days}`
+  : `/api/market-index?days=${days}`;
+const _mkBasketUrl = (days, player) =>
+  `/api/market-basket?days=${days}` + (player ? `&player=${encodeURIComponent(player)}` : '');
+
+// Once a view has drawn, fetch the other periods for the same scope, so the
+// next tap on 7d or 90d is already answered. After a pause, so it never
+// competes with what is on screen. The whole market's are warmed server-side
+// and cheap; for a player only the index is fetched ahead, not the basket.
+function _mkPrefetch(days, player) {
+  const run = () => {
+    if (days !== _mkDays || player !== _mkPlayer) return;
+    for (const d of MARKET_VIEW_PERIODS) {
+      if (d === days) continue;
+      _mkGet(_mkIndexUrl(d, player));
+      if (!player) _mkGet(_mkBasketUrl(d, player));
+    }
+  };
+  if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 1500 });
+  else setTimeout(run, 400);
+}
 
 function initMarketView() {
   const strip = document.getElementById('market-periods');
@@ -4490,6 +4531,8 @@ function initMarketView() {
   _mkBindSearch();
   _mkRenderScope();
   loadMarketIndex();
+  // Fetched ahead so the first letter typed already has names to match.
+  _mkRoster();
 }
 
 function setMarketPeriod(days) {
@@ -4533,26 +4576,45 @@ function _mkDateLabel(iso) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-async function loadMarketIndex() {
-  const body = document.getElementById('market-body');
-  if (!body || _mkLoading) return;
-  _mkLoading = true;
+// The latest request wins. This used to be a lock that IGNORED any period or
+// player picked while a load was in flight — the button lit up, the old
+// numbers stayed, and the page looked slow when it had simply dropped the
+// click. Now every pick starts its own load and a superseded one discards its
+// answer instead of drawing it.
+let _mkSeq = 0;
+
+function _mkClearChart() {
   if (_mkChart) { _mkChart.destroy(); _mkChart = null; }
   renderChartReadout('market-point', '');
-  body.innerHTML = '<p class="market-loading">Loading the market…</p>';
+}
 
-  let data;
-  try {
-    // One renderer for both scopes. The player index returns the same payload
-    // shape on purpose, so a player's number is directly comparable with the
-    // market's rather than being a different measure that looks similar.
-    const url = _mkPlayer
-      ? `/api/player-index?player=${encodeURIComponent(_mkPlayer)}&days=${_mkDays}`
-      : `/api/market-index?days=${_mkDays}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    data = await safeJson(res);
-  } catch (_) { data = null; }
-  _mkLoading = false;
+async function loadMarketIndex() {
+  const body = document.getElementById('market-body');
+  if (!body) return;
+  const seq = ++_mkSeq;
+  const days = _mkDays, player = _mkPlayer;
+
+  // One renderer for both scopes. The player index returns the same payload
+  // shape on purpose, so a player's number is directly comparable with the
+  // market's rather than being a different measure that looks similar.
+  //
+  // The basket is requested NOW, alongside the index, rather than after the
+  // index has drawn. They are independent queries, and in series the page
+  // waited for the sum of the two.
+  const indexP = _mkGet(_mkIndexUrl(days, player));
+  const basketP = _mkGet(_mkBasketUrl(days, player));
+
+  // The loading message only if the answer is not already here — a cached
+  // answer should swap in directly, not flash a spinner for one frame.
+  const loadingTimer = setTimeout(() => {
+    if (seq !== _mkSeq) return;
+    _mkClearChart();
+    body.innerHTML = '<p class="market-loading">Loading the market…</p>';
+  }, 120);
+  const data = await indexP;
+  clearTimeout(loadingTimer);
+  if (seq !== _mkSeq) return;
+  _mkClearChart();
   _mkRenderScope();
 
   if (!data || !data.available) {
@@ -4651,24 +4713,19 @@ async function loadMarketIndex() {
   `;
 
   _mkRenderChart(data);
-  loadMarketBasket();
+  loadMarketBasket(basketP, seq);
+  _mkPrefetch(days, player);
 }
 
-// The basket is fetched separately from the index so a slow constituent query
-// never holds up the headline number.
-let _mkBasketSeq = 0;
-async function loadMarketBasket() {
+// The basket is drawn separately from the index so a slow constituent query
+// never holds up the headline number. It was already requested by
+// loadMarketIndex; this only waits for it.
+async function loadMarketBasket(basketP, seq = _mkSeq) {
   const wrap = document.getElementById('market-basket');
   if (!wrap) return;
-  const seq = ++_mkBasketSeq;
-  let data;
-  try {
-    const url = `/api/market-basket?days=${_mkDays}` + (_mkPlayer ? `&player=${encodeURIComponent(_mkPlayer)}` : '');
-    const res = await fetch(url, { cache: 'no-store' });
-    data = await safeJson(res);
-  } catch (_) { data = null; }
-  // A later request has already been issued; this answer is stale.
-  if (seq !== _mkBasketSeq) return;
+  const data = await (basketP || _mkGet(_mkBasketUrl(_mkDays, _mkPlayer)));
+  // A later view has already been asked for; this answer is stale.
+  if (seq !== _mkSeq) return;
 
   const cards = data && data.available && Array.isArray(data.cards) ? data.cards : [];
   if (!cards.length) { wrap.classList.add('hidden'); return; }
@@ -4813,20 +4870,54 @@ function _mkHideSuggest() {
   if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
 }
 
+// The roster of searchable players, fetched once and filtered here, so typing
+// is instant instead of one round trip per pause. The server's own search is
+// the fallback if the roster cannot be had.
+let _mkRosterP = null;
+let _mkRosterReady = false;
+function _mkRoster() {
+  if (!_mkRosterP) {
+    _mkRosterP = fetch('/api/player-search?all=1').then(safeJson).catch(() => null).then(d => {
+      const list = d && d.available && Array.isArray(d.players) && d.players.length ? d.players : null;
+      if (!list) _mkRosterP = null; else _mkRosterReady = true;
+      return list;
+    });
+  }
+  return _mkRosterP;
+}
+
+// The same ranking the server uses: substring match, names that START with the
+// query first, then by sales.
+function _mkFilterRoster(roster, q) {
+  const needle = q.toLowerCase();
+  return roster.filter(p => p.player.toLowerCase().includes(needle))
+    .sort((a, b) => {
+      const ap = a.player.toLowerCase().startsWith(needle) ? 0 : 1;
+      const bp = b.player.toLowerCase().startsWith(needle) ? 0 : 1;
+      return ap !== bp ? ap - bp : b.sales - a.sales;
+    })
+    .slice(0, 12);
+}
+
 async function _mkFetchSuggest(q) {
   const box = document.getElementById('market-suggest');
   if (!box) return;
   // Sequence guard: a slow response for an earlier keystroke must not
   // overwrite the list for what's currently typed.
   const seq = ++_mkSuggestSeq;
-  let data;
-  try {
-    const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
-    data = await safeJson(res);
-  } catch (_) { data = null; }
+  let players = null;
+  const roster = await _mkRoster();
+  if (roster) {
+    players = _mkFilterRoster(roster, q);
+  } else {
+    try {
+      const res = await fetch(`/api/player-search?q=${encodeURIComponent(q)}`);
+      const data = await safeJson(res);
+      players = (data && data.players) || [];
+    } catch (_) { players = []; }
+  }
   if (seq !== _mkSuggestSeq) return;
 
-  const players = (data && data.players) || [];
   if (!players.length) {
     box.innerHTML = `<div class="market-suggest-empty">No players match “${escHtml(q)}”.</div>`;
     box.classList.remove('hidden');
@@ -4849,7 +4940,9 @@ function _mkBindSearch() {
     const q = input.value.trim();
     clearTimeout(_mkSuggestTimer);
     if (q.length < 2) { _mkHideSuggest(); return; }
-    _mkSuggestTimer = setTimeout(() => _mkFetchSuggest(q), 180);
+    // No debounce once the roster is here: filtering it costs nothing.
+    if (_mkRosterReady) _mkFetchSuggest(q);
+    else _mkSuggestTimer = setTimeout(() => _mkFetchSuggest(q), 180);
   });
 
   input.addEventListener('focus', () => {
