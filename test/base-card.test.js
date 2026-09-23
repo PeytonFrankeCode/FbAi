@@ -116,6 +116,28 @@ check(`every parallel, numbered, autograph, relic or numberless sale is dropped 
   const worst = Object.entries(parts).map(([k, v]) => [k, longestChain(v)]).sort((a, b) => b[1] - a[1]);
   check('no OR/AND chain comes near D1\'s expression-depth cap of 100',
     worst[0][1] <= 40, worst.map(([k, n]) => `${k}=${n}`).join(', '));
+
+  // The longest chain was not enough. The depth adds up with the rest of the
+  // statement, and the full market index query sits close to the cap: adding
+  // ~40 parallel names took the title test from 12 groups of ten to 16, every
+  // chain stayed short, and the index went off the site with "Expression tree
+  // is too large" (the basket, a shallower statement, survived). So the title
+  // test's whole depth is bounded — a chain of n costs n levels, and brackets
+  // stack — and it is built as a balanced tree to stay far under this.
+  const depth = (sql) => {
+    const stack = [0]; let worst = 0;
+    const str = sql.replace(/'(?:[^']|'')*'/g, "''");
+    for (const tok of str.match(/\(|\)|\bOR\b|\bAND\b/gi) || []) {
+      if (tok === '(') stack.push(0);
+      else if (tok === ')') stack.pop();
+      else stack[stack.length - 1]++;
+      worst = Math.max(worst, stack.reduce((a, n) => a + n + 1, 0));
+    }
+    return worst;
+  };
+  const titleDepth = depth(RSI_BASE_TITLE_TEST);
+  check('the title test stays shallow however many parallel names it holds',
+    titleDepth <= 20, `depth ~${titleDepth} (the flat version that broke the live index measured 23)`);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall base-card checks passed');
