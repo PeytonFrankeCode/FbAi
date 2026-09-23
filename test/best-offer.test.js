@@ -99,17 +99,19 @@ const { _noBestOfferSql } = require(path.join(ROOT, 'server.js'));
       /async function _rsiQuery[\s\S]{0,400}?_noBestOfferSql\(db\)/.test(src));
     check('  ...and so does the basket query',
       /async function _rsiBasketQuery[\s\S]{0,400}?_noBestOfferSql\(db\)/.test(src));
-    // Both queries build their WHERE in one shared helper, so the clause is
-    // interpolated once there — into the tests both of its passes apply, the one
-    // that chooses the basket and the one that prices it — and each query must
-    // hand the helper its noOffer.
+    check('  ...and the player trend query',
+      /async function _playerTrendQuery[\s\S]{0,400}?_noBestOfferSql\(db\)/.test(src));
+    // All three queries (index, basket, player trend) build their WHERE in one
+    // shared helper, so the clause is interpolated once there — into the tests
+    // both of its passes apply, the one that chooses the basket and the one
+    // that prices it — and each query must hand the helper its noOffer.
     const helper = (src.match(/function _rsiBaseCtes[\s\S]*?\n}\n/) || [''])[0];
     check('  ...with the clause actually reaching both WHERE clauses',
       /const saleTests = `[^`]*\$\{noOffer\}/.test(helper)
       && /const columns = `\$\{colTests\}\$\{saleTests\}`/.test(helper)
       && /WHERE \$\{columns\}/.test(helper)
       && /_rsiQualify\(saleTests, 's'\)/.test(helper)
-      && (src.match(/\$\{_rsiBaseCtes\(\{[^}]*\bnoOffer\b/g) || []).length === 2,
+      && (src.match(/\$\{_rsiBaseCtes\(\{[^}]*\bnoOffer\b/g) || []).length === 3,
       'defined but not interpolated is the failure mode here');
 
     // The card history chart.
