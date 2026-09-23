@@ -86,5 +86,23 @@ check('the versions container is on the page and styled',
   /id="version-groups"/.test(fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8'))
   && /\.version-grid\s*\{/.test(fs.readFileSync(path.join(ROOT, 'public', 'style.css'), 'utf8')));
 
+// Best offers: shown in the comps, left out of every average. The figure held
+// for an accepted offer is the seller's ask, not what was paid.
+{
+  const i = src.indexOf('const _isBestOffer');
+  const pred = i > 0 ? src.slice(i, src.indexOf('\n', i)) : '';
+  const c2 = { console }; vm.createContext(c2);
+  if (pred) vm.runInContext(pred + '\nthis.f = _isBestOffer;', c2);
+  check('a best offer is recognised, and nothing else is',
+    !!c2.f && c2.f({ saleType: 'offer' }) === true && c2.f({ saleType: 'auction' }) === false
+    && c2.f({}) === false && c2.f(null) === false, pred || 'missing');
+  const statsFn = src.slice(src.indexOf('function renderStatsBar'), src.indexOf('function renderStatsBar') + 900);
+  check('  ...and the value stats average without them',
+    /results\.filter\(r => !_isBestOffer\(r\)\)/.test(statsFn) && /counted\.map\(r => parseFloat\(r\.price\)\)/.test(statsFn));
+  const verFn = src.slice(src.indexOf('function _buildVersionCard'), src.indexOf('function _buildVersionCard') + 1400);
+  check('  ...and so does each version card',
+    /items\.filter\(r => !_isBestOffer\(r\)\)/.test(verFn) && /const raw = clean\.filter/.test(verFn));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sold-versions checks passed');
 process.exit(failures ? 1 : 0);

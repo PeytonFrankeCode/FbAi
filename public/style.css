@@ -2153,6 +2153,14 @@ main {
   letter-spacing: 0.03em;
   font-weight: 600;
 }
+.stat-label .stat-note {
+  display: block;
+  font-size: 0.85em;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.75;
+}
 .stat-value {
   font-size: 1.15rem;
   font-weight: 700;

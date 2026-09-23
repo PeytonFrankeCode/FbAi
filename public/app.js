@@ -2274,13 +2274,25 @@ function buildSimilarEstimateSection(est, query) {
 }
 
 // ---- Render Stats Bar ----
+// An accepted best offer settled under an asking price eBay does not publish,
+// and the price we hold for it is that ask — so it is shown in the comps,
+// labelled, but kept out of every average, low and high. The same rule the
+// server applies to the market index and boards (_noBestOfferSql).
+const _isBestOffer = (r) => !!(r && r.saleType === 'offer');
+
 function renderStatsBar(results, isSold) {
-  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+  // If every sale was a best offer there is nothing better to show; say so.
+  const offers = isSold ? results.filter(_isBestOffer).length : 0;
+  const counted = offers && offers < results.length ? results.filter(r => !_isBestOffer(r)) : results;
+  const prices = counted.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
   if (prices.length === 0) return;
 
   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
   const minP = Math.min(...prices);
   const maxP = Math.max(...prices);
+  const offerNote = !offers ? ''
+    : counted === results ? ' <span class="stat-note">(best offers only)</span>'
+    : ` <span class="stat-note" title="Best offers are shown in the list but left out of the average, low and high: eBay publishes the asking price, not what was paid">(${offers} best offer${offers === 1 ? '' : 's'} excluded)</span>`;
 
   const statsEl = document.createElement('div');
   statsEl.className = 'stats-bar';
@@ -2290,7 +2302,7 @@ function renderStatsBar(results, isSold) {
       <span class="stat-value">${results.length}</span>
     </div>
     <div class="stat-item">
-      <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
+      <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}${offerNote}</span>
       <span class="stat-value">$${avg.toFixed(2)}</span>
     </div>
     <div class="stat-item">
@@ -3204,10 +3216,14 @@ function _buildVersionCard({ v, items }) {
   // than doubled a Silver's average. With no grade chosen, the headline is the
   // raw average and the slabs are counted beside it; choosing a grade chip
   // restates every card for that grade.
+  // Best offers are counted as sales but priced as nothing: the figure we hold
+  // for one is the seller's ask (see _isBestOffer).
   const isRaw = (r) => detectGrade(r.title) === 'Raw / Ungraded';
-  const raw = items.filter(isRaw);
-  const graded = items.length - raw.length;
-  const priced = (currentGradeFilter === 'all' && raw.length) ? raw : items;
+  const offers = items.filter(_isBestOffer).length;
+  const clean = offers < items.length ? items.filter(r => !_isBestOffer(r)) : items;
+  const raw = clean.filter(isRaw);
+  const graded = clean.length - raw.length;
+  const priced = (currentGradeFilter === 'all' && raw.length) ? raw : clean;
   const prices = priced.map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
   const avg = prices.length ? prices.reduce((a, p) => a + p, 0) / prices.length : 0;
   const avgLabel = priced === raw && graded ? 'avg raw' : 'avg';
@@ -3236,7 +3252,7 @@ function _buildVersionCard({ v, items }) {
       <p class="card-title">${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}</p>
       <p class="card-price">${avg ? `$${avg.toFixed(2)}` : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
       <div class="card-meta">
-        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}</span>
+        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
         ${prices.length > 1 ? `<span class="card-condition">median $${median.toFixed(2)} &middot; $${prices[0].toFixed(0)}&ndash;$${prices[prices.length - 1].toFixed(0)}</span>` : ''}
       </div>
     </div>`;
