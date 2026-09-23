@@ -2025,6 +2025,28 @@ main {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
 }
+/* ---- Versions: sold results grouped by checklist card and parallel ---- */
+.version-groups { margin: 0.75rem 0 1.25rem; }
+.version-groups .grade-section-header { margin-bottom: 0.75rem; }
+.version-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+.version-card { cursor: pointer; }
+.version-card.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.version-card .version-avg {
+  font-size: 0.7em;
+  font-weight: 500;
+  opacity: 0.7;
+  margin-left: 0.2em;
+}
+@media (max-width: 600px) {
+  .version-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; }
+}
 /* ---- Skeleton Loader ---- */
 .skeleton-grid .skeleton-card {
   background: var(--card-gradient);
