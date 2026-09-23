@@ -4434,7 +4434,14 @@ function _rsiJunkSql(T) {
 }
 
 function _rsiRawOnlySql(titleCol = 'title') {
-  const T = `LOWER(COALESCE(${titleCol}, ''))`;
+  // No LOWER(). SQLite's LIKE is already case-insensitive for ASCII, and every
+  // token here is ASCII, so wrapping the title changed no answer — it just
+  // lowercased the same title once per token, some twenty times a row. On a
+  // live-sized sample (3.1M sales) dropping it took 2.5s off each pass of the
+  // index query with byte-identical output. The grade-gap and best-offer
+  // tests include upper-case slab titles, so a case-sensitive LIKE would fail
+  // them rather than let slabs in quietly.
+  const T = `COALESCE(${titleCol}, '')`;
   const any = (words) => words.map(w => `${T} LIKE '%${w}%'`).join(' OR ');
   return `
           AND ${_rsiUngradedCol('grade')}
@@ -4462,7 +4469,7 @@ function _rsiRawOnlySql(titleCol = 'title') {
 // the window has no room to spend on a cosmetic fix. The basket query runs
 // over far less and can carry it.
 const RSI_JUNK_ONLY = `
-          AND NOT ( ${_rsiJunkSql("LOWER(COALESCE(title, ''))")} )`;
+          AND NOT ( ${_rsiJunkSql("COALESCE(title, '')")} )`;
 const RSI_RAW_ONLY = _rsiRawOnlySql();
 
 // A sale can only be compared against another sale of the SAME card, and a card
@@ -4577,6 +4584,63 @@ const MARKET_CALC_SIG = (() => {
 // async so the best-offer clause is resolved HERE rather than at each call
 // site. Four places build these queries; a rule that has to be remembered at
 // four places is not a rule.
+// The first two steps of both market queries, shared so the index and its
+// basket read exactly the same population.
+//
+// WHY IT IS SHAPED LIKE THIS. At live scale the old single `base` CTE was the
+// whole cost. Measured on 3.1M synthetic sales shaped like the real table:
+//
+//   reading the rows                       89ms
+//   filters + cleaned card key per sale  ~12s
+//   ...and SQLite ran that step once per reference to `base` — three times in
+//   the index, four in the basket — so 38s and 65s, past D1's CPU limit. That
+//   is the "D1 DB exceeded its CPU time limit and was reset" the live site
+//   returned for every period.
+//
+// Now:
+//   raw   filters, cheapest and most selective first, then collapses identical
+//         sales of a day into one row carrying SUM(price) and COUNT. MATERIALIZED
+//         so it is computed once.
+//   base  the cleaned player and card keys, built once per raw GROUP rather than
+//         once per sale — a busy card sells many times a day with identical
+//         columns. Also MATERIALIZED.
+//
+// Downstream, COUNT(*) becomes SUM(c) and AVG(price) becomes SUM(s)/SUM(c).
+// Those are the same numbers, not approximations: the average of a day's sales
+// is their total over their count however they are grouped first. The index
+// was compared row for row against the old query on the same data.
+//
+// The comment on the index's daily CTE records that adding MATERIALIZED once
+// moved a flat market from -0.9% to -67.5%. That was row order leaking into
+// which same-day sale got paired; the daily averaging added since makes the
+// result independent of row order, which is what makes materialising safe now.
+// `junk` adds the junk-title filter; `labels` carries the display columns the
+// basket prints. The index needs neither.
+function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
+                        junk = false, labels = false, hasImage = false, useAlias = false }) {
+  // Identified, then no-offer, then the ungraded columns: cheap column tests
+  // that reject most rows. The title LIKEs, the expensive part, run last and on
+  // what survives. SQLite evaluates these in the order written.
+  const titleFilters = `${RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
+  return `raw AS MATERIALIZED (
+       SELECT sold_date, player, year, set_name, parallel, grader, grade,
+              SUM(price_cents) AS s, COUNT(*) AS c${hasImage ? `,
+              MAX(CASE WHEN image_url IS NOT NULL AND image_url <> ''
+                       THEN sold_date || '|' || image_url END) AS dated_image` : ''}
+         FROM sales
+        WHERE price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?${RSI_IDENTIFIED}${noOffer}${titleFilters}${extraWhere}
+        GROUP BY sold_date, player, year, set_name, parallel, grader, grade
+     ),
+     base AS MATERIALIZED (
+       SELECT sold_date, s, c, ${PLAYER} AS player_n, ${CARD} AS card${labels ? `,
+              ${useAlias ? 'COALESCE(al.display, player)' : 'player'} AS player,
+              year, set_name, parallel, grader, grade${hasImage ? ', dated_image' : ''}` : ''}
+         FROM raw ${JOIN}
+        WHERE ${P} <> ''${ALIAS_FILTER}
+     )`;
+}
+
 async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false) {
   const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days);
@@ -4603,20 +4667,14 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
   const CARD = _cardKeySql(PLAYER);
   return db.prepare(
-    `WITH base AS (
-       SELECT sold_date, price_cents, ${PLAYER} AS player_n, ${CARD} AS card
-         FROM sales ${JOIN}
-        WHERE price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_IDENTIFIED}${noOffer}${extraWhere}
-     ),
+    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
-        ORDER BY COUNT(*) DESC LIMIT ${MARKET_TOP_PLAYERS}
+        ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
      ),
      card_counts AS (
-       SELECT b.player_n, b.card, COUNT(*) AS sales,
-              ROW_NUMBER() OVER (PARTITION BY b.player_n ORDER BY COUNT(*) DESC, b.card) AS rn
+       SELECT b.player_n, b.card, SUM(b.c) AS sales,
+              ROW_NUMBER() OVER (PARTITION BY b.player_n ORDER BY SUM(b.c) DESC, b.card) AS rn
          FROM base b JOIN top_players t ON t.player_n = b.player_n
         GROUP BY b.player_n, b.card
      ),
@@ -4637,7 +4695,7 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
      -- of an arbitrary one of them is both steadier and better evidence.
      daily AS (
        SELECT b.card, MAX(b.player_n) AS player_n, b.sold_date,
-              AVG(b.price_cents) AS price
+              SUM(b.s) * 1.0 / SUM(b.c) AS price
          FROM base b JOIN picked k ON k.card = b.card
         GROUP BY b.card, b.sold_date
      ),
@@ -4700,27 +4758,19 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   // The photo comes from the newest sale of that card that carried one. Dates
   // are ISO, so their lexical maximum is also their chronological one — the
   // date is glued on only to rank by, and stripped off again on the way out.
-  const imgLabel = hasImage
-    ? `MAX(CASE WHEN b.image_url IS NOT NULL AND b.image_url <> ''
-                THEN b.sold_date || '|' || b.image_url END)`
-    : 'NULL';
+  // dated_image is already the per-group maximum (see _rsiBaseCtes), and the
+  // maximum of maxima is the maximum.
+  const imgLabel = hasImage ? 'MAX(b.dated_image)' : 'NULL';
   return db.prepare(
-    `WITH base AS (
-       SELECT sold_date, price_cents, ${PLAYER} AS player_n, ${CARD} AS card,
-              ${useAlias ? 'COALESCE(al.display, player)' : 'player'} AS player,
-              year, set_name, parallel, grader, grade${hasImage ? ', image_url' : ''}
-         FROM sales ${JOIN}
-        WHERE price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?
-          AND ${P} <> ''${ALIAS_FILTER}${RSI_RAW_ONLY}${RSI_JUNK_ONLY}${RSI_IDENTIFIED}${noOffer}${extraWhere}
-     ),
+    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
+                          junk: true, labels: true, hasImage, useAlias })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
-        ORDER BY COUNT(*) DESC LIMIT ${MARKET_TOP_PLAYERS}
+        ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
      ),
      card_counts AS (
-       SELECT b.player_n, b.card, COUNT(*) AS sales,
-              ROW_NUMBER() OVER (PARTITION BY b.player_n ORDER BY COUNT(*) DESC, b.card) AS rn
+       SELECT b.player_n, b.card, SUM(b.c) AS sales,
+              ROW_NUMBER() OVER (PARTITION BY b.player_n ORDER BY SUM(b.c) DESC, b.card) AS rn
          FROM base b JOIN top_players t ON t.player_n = b.player_n
         GROUP BY b.player_n, b.card
      ),
@@ -4739,7 +4789,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
      -- order. A card's move here must be computed exactly as the index computes
      -- it or the list stops reconciling with the number above it.
      daily AS (
-       SELECT b.card, b.sold_date, AVG(b.price_cents) AS price
+       SELECT b.card, b.sold_date, SUM(b.s) * 1.0 / SUM(b.c) AS price
          FROM base b JOIN shortlist k ON k.card = b.card
         GROUP BY b.card, b.sold_date
      ),
@@ -4772,8 +4822,8 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
        SELECT b.card,
               MAX(b.player) AS player, MAX(b.year) AS year, MAX(b.set_name) AS set_name,
               MAX(b.parallel) AS parallel, MAX(b.grader) AS grader, MAX(b.grade) AS grade,
-              COUNT(*) AS sales,
-              AVG(b.price_cents) AS avg_cents,
+              SUM(b.c) AS sales,
+              SUM(b.s) * 1.0 / SUM(b.c) AS avg_cents,
               ${imgLabel} AS dated_image
          FROM base b JOIN shortlist k ON k.card = b.card
         GROUP BY b.card
@@ -7887,7 +7937,7 @@ async function _computeMarketBasket(db, days, player) {
     };
   } catch (err) {
     console.error('[MarketBasket]', err && err.message);
-    return { available: false, days, reason: 'basket unavailable', transient: true };
+    return { available: false, days, reason: 'basket unavailable', transient: true, error: err && err.message };
   }
 }
 
@@ -7913,7 +7963,6 @@ async function _computeMarketBasket(db, days, player) {
 //   a failure (transient)    never, so a D1 hiccup is not remembered
 const MARKET_KEEP_TTL = 60 * 60 * 48;
 const MARKET_NO_TTL = 60 * 30;
-const _marketRefreshing = new Set();
 
 function _marketTtl(v) {
   if (!v || v.transient) return 0;
@@ -7921,32 +7970,81 @@ function _marketTtl(v) {
 }
 
 // Stores what is worth keeping and returns the payload without its internal
-// `transient` flag, which is bookkeeping, not part of the answer.
+// `transient` flag and error text, which are bookkeeping, not the answer.
 function _marketStore(key, v) {
-  const { transient, ...clean } = v || {};
+  const { transient, error, ...clean } = v || {};
   const ttl = _marketTtl(v);
   if (ttl) cachePut(key, clean, ttl);
   return clean;
 }
 
+// ---- the breaker: stop hitting a database that is already over its limit ----
+//
+// D1 answers an over-budget query with "D1 DB exceeded its CPU time limit and
+// was reset", after about 30 seconds, and a reset also fails every other query
+// in flight. Retrying straight away is how one slow query becomes an outage:
+// each visitor, each period prefetch and each cron tick sent another one, and
+// the live Market tab waited ~39s for every period to answer "unavailable".
+//
+// So after an overload failure, heavy market queries stop for a few minutes.
+// A cached answer, however old, is served instead; with none, the visitor is
+// told the market is busy straight away rather than after half a minute.
+// Recorded in KV so every isolate honours it, and in memory so this one does
+// without waiting on a KV read.
+const MARKET_BREAKER_KEY = 'marketbreaker:v1';
+const MARKET_BREAKER_TTL = 300;
+let _marketBreakerUntil = 0;
+
+function _isD1Overload(msg) {
+  return /exceeded its CPU time limit|was reset|timed? ?out|too many requests|overloaded|D1_ERROR.*(CPU|limit)/i
+    .test(String(msg || ''));
+}
+
+async function _marketBreakerOpen() {
+  if (Date.now() < _marketBreakerUntil) return true;
+  const until = await cacheGet(MARKET_BREAKER_KEY).then(v => v && v.until).catch(() => 0);
+  if (until && Date.now() < until) { _marketBreakerUntil = until; return true; }
+  return false;
+}
+
+function _marketTrip(v) {
+  if (!v || !v.transient || !_isD1Overload(v.error)) return;
+  _marketBreakerUntil = Date.now() + MARKET_BREAKER_TTL * 1000;
+  cachePut(MARKET_BREAKER_KEY, { until: _marketBreakerUntil, why: String(v.error).slice(0, 200) }, MARKET_BREAKER_TTL);
+  console.error('[MarketCache] database overloaded — pausing market queries', MARKET_BREAKER_TTL + 's');
+}
+
+// One computation per key per isolate, shared by everyone who asks while it
+// runs — ten visitors opening the same cold view cost one query, not ten.
+const _marketInFlight = new Map();
+function _marketCompute(key, compute) {
+  if (_marketInFlight.has(key)) return _marketInFlight.get(key);
+  const p = Promise.resolve().then(compute)
+    .then(v => { _marketTrip(v); return _marketStore(key, v); })
+    .finally(() => _marketInFlight.delete(key));
+  _marketInFlight.set(key, p);
+  return p;
+}
+
 async function _marketCached(key, compute) {
   const hit = await cacheGet(key);
+  const breaker = await _marketBreakerOpen();
   if (hit) {
     const age = (Date.now() - Date.parse(hit.generatedAt || '')) / 1000;
     const freshFor = hit.available ? MARKET_TTL : MARKET_NO_TTL;
     // No stamp means no known age — treat it as stale, never as fresh.
     if (Number.isFinite(age) && age <= freshFor) return _fromCache(hit);
-    if (!_marketRefreshing.has(key)) {
-      _marketRefreshing.add(key);
-      const p = Promise.resolve().then(compute)
-        .then(v => { _marketStore(key, v); })
-        .catch(err => console.error('[MarketCache] refresh failed', key, err && err.message))
-        .finally(() => _marketRefreshing.delete(key));
+    // Stale: serve it, and rebuild behind the visitor unless the database is
+    // resting, in which case an old answer is exactly what should be served.
+    if (!breaker && !_marketInFlight.has(key)) {
+      const p = _marketCompute(key, compute)
+        .catch(err => console.error('[MarketCache] refresh failed', key, err && err.message));
       if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
     }
-    return { ..._fromCache(hit), refreshing: true };
+    return { ..._fromCache(hit), refreshing: !breaker };
   }
-  return _marketStore(key, await compute());
+  if (breaker) return { available: false, reason: 'market busy', retryAfter: MARKET_BREAKER_TTL };
+  return _marketCompute(key, compute);
 }
 
 // The browser may reuse an answer for a few minutes: going 7d -> 30d -> 7d, or
@@ -7979,7 +8077,12 @@ async function _warmMarket() {
   }
   for (const [label, key, compute] of jobs) {
     if (await cacheGet(key)) { done.push(`${label}:cached`); continue; }
+    // A tick that finds the database resting builds nothing, and one whose
+    // build overloads it stops there: six heavy queries in a row against a
+    // database already over its limit is how the last outage was sustained.
+    if (await _marketBreakerOpen()) { done.push(`${label}:paused`); continue; }
     const v = await compute();
+    _marketTrip(v);
     // A failed build never replaces a good entry; a good entry simply ages on.
     if (!v || !v.available) { done.push(`${label}:skipped`); continue; }
     _marketStore(key, v);
@@ -8625,7 +8728,7 @@ async function _computeMarketIndex(db, days) {
     return _buildRepeatSalesPayload(list, throughIso, days);
   } catch (err) {
     console.error('[MarketIndex]', err && err.message);
-    return { available: false, days, reason: 'index unavailable', transient: true };
+    return { available: false, days, reason: 'index unavailable', transient: true, error: err && err.message };
   }
 }
 
@@ -8742,7 +8845,7 @@ async function _computePlayerIndex(db, days, player) {
     return _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);
-    return { available: false, days, player, reason: 'index unavailable', transient: true };
+    return { available: false, days, player, reason: 'index unavailable', transient: true, error: err && err.message };
   }
 }
 

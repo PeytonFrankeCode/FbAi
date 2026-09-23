@@ -8439,6 +8439,12 @@ to { opacity: 1; transform: translateY(0); }
 }
 .market-period:hover { border-color: var(--accent-border); color: var(--text-primary); }
 .market-period.active { background: var(--accent); border-color: var(--accent); color: #0b1f16; }
+.market-retry {
+  margin-top: 0.75rem; padding: 0.45rem 1rem; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  font-size: 0.8rem; font-weight: 600;
+}
+.market-retry:hover { background: var(--accent); color: #0b1f16; }
 .market-loading, .market-empty { text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; }
 .market-empty-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.4rem; }
 .market-empty-text { font-size: 0.82rem; margin: 0; max-width: 34rem; margin-inline: auto; line-height: 1.5; }
