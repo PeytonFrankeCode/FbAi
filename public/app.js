@@ -4765,7 +4765,7 @@ async function loadMarketBasket(basketP, seq = _mkSeq) {
             c.changePct == null ? '—' : (c.changePct >= 0 ? '+' : '') + c.changePct + '%'}</span>
         </li>`).join('')}
     </ul>
-    <p class="market-basket-note">Each card's move is measured the same way as the index, over the same ${_mkDays} days. A dash means the card traded but never twice, so it has no move to report.</p>`;
+    <p class="market-basket-note">Each card's move compares its average price in the second half of the last ${_mkDays} days with the first half. A dash means it didn't trade on at least two days in each half.</p>`;
 }
 
 function _mkRenderChart(data) {
