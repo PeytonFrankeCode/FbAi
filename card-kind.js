@@ -135,7 +135,11 @@ function kindSql(titleCol = 'title') {
   const spaced = (w) => w.replace(/\\s\*/g, ' ').replace(/[-]/g, ' ');
   const words = (list) => [...new Set(list.map(spaced))];
   const hit = (list, pad) => words(list).map(w => `${pad} LIKE '% ${w} %'`).join(' OR ');
-  const rough = (list) => words(list).map(w => `${T} LIKE '%${w.split(' ')[0]}%'`).join(' OR ');
+  // The quick substring pre-check needs no LOWER(): LIKE is already
+  // case-insensitive for these ASCII words, and lowercasing the title once per
+  // word, ~30 times a row, was most of this expression's cost.
+  const U = `COALESCE(${titleCol}, '')`;
+  const rough = (list) => words(list).map(w => `${U} LIKE '%${w.split(' ')[0]}%'`).join(' OR ');
   // "laundry\s*tag" also matches with no space at all.
   const relic = [...RELIC_WORDS, 'laundrytag'];
   // Jerseys, except the state: the regex's (?<!new\s).
@@ -144,7 +148,7 @@ function kindSql(titleCol = 'title') {
   return `(CASE
       WHEN (${rough(REDEMPTION_WORDS)}) AND (${hit(REDEMPTION_WORDS, P)}) THEN 'redemption'
       WHEN (${rough(AUTO_WORDS)}) AND (${hit(AUTO_WORDS, P)}) THEN 'auto'
-      WHEN (${rough(relic)} OR ${T} LIKE '%jersey%')
+      WHEN (${rough(relic)} OR ${U} LIKE '%jersey%')
            AND (${hit(relic, P)} OR ${jersey}) THEN 'relic'
       ELSE '' END)`;
 }

@@ -86,8 +86,6 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
 const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql } = require('./card-kind');
-// The movers board groups in SQL, so it reads the kind there. Built once.
-const _KIND_SQL = _kindSql('title');
 
 // cardKind(), in SQL.
 //
@@ -4330,7 +4328,11 @@ app.get('/api/debug/alias-status', async (req, res) => {
 
 // The card identity used by every index query. Normalised so that grouping is
 // done on the cleaned form rather than the raw text.
-const RSI_KEY_COLS = ['year', 'set_name', 'player', 'parallel', 'grader', 'grade'];
+// No parallel: the index holds base cards only (see RSI_BASE_CARD), where the
+// column is blank, "Base" or "Rated Rookie" for the same card. The card
+// NUMBER is what tells one base card from another — without it a player's
+// base rookie and every insert of theirs in the product were one "card".
+const RSI_KEY_COLS = ['year', 'set_name', 'player', 'card_number', 'grader', 'grade'];
 const RSI_KEY_SQL = RSI_KEY_COLS.map(_normCol).join(', ');
 // The card key, with the player component swappable. When the alias table is
 // in play the canonical name goes in that slot, which is the whole point: two
@@ -4483,13 +4485,78 @@ const RSI_RAW_ONLY = _rsiRawOnlySql();
 // parallel and a +7,127% move came from, and it is also why the same card
 // appeared twice in the basket at $59 and $233.
 //
-// So a sale needs a year, a set and a parallel to be indexed at all. That costs
-// sample, and it is the same trade as the raw-only filter: a card we cannot
-// identify is not a comparison, it is a coincidence.
-const RSI_IDENTIFIED = `
+// So a sale used to need a year, a set and a filled parallel column to be
+// indexed at all (RSI_IDENTIFIED, now retired). It kept that bucket out, and it
+// kept every base card out with it — see RSI_BASE_CARD below for the rule that
+// replaced it, which admits the base card and nothing mixed in with it.
+
+// The market index tracks BASE cards only: the plain base rookie, the Rated
+// Rookie — never a parallel.
+//
+// It used to require the parallel column to be FILLED, for the reason above.
+// But base cards are exactly the ones whose column is blank, so the basket was
+// built entirely from parallels: the live "what's driving it" list read
+// Refractor, Refractor, XFractor, Cosmic, Blue Hyper, with moves of -93.7% and
+// +1500% (the cap). A parallel is the hardest thing in a title to read, and
+// with no card number in the key, "Jaxson Dart Refractor" also pooled every
+// Refractor he has in the product — the base card's with the inserts'.
+//
+// So the rule is inverted, and made safe the way the +7,127% bucket was not:
+//   - the parallel column is blank or says base in so many words;
+//   - the TITLE names no parallel either: no colour, finish or "refractor",
+//     as whole words, after the player's and product's own names are removed
+//     ("Jerry Rice" is not Ice, "Mosaic" the product is not the parallel);
+//   - no print run ("/99", "1/1") — base cards are not numbered;
+//   - not an autograph, relic or redemption (card-kind.js, in SQL);
+//   - a card number, which is now part of the card key, so one card is one card.
+// Anything uncertain is left out. That costs sample and cannot mix two cards.
+const RSI_BASE_PARALLELS = ['', 'base', 'base set', 'base rookie', 'base rookies',
+                            'rookie', 'rookies', 'rc', 'rated rookie', 'rated rookies'];
+// Two-word finishes the whole-word test would miss.
+const RSI_BASE_SIGNAL_PHRASES = ['tie dye', 'press proof', 'green bay'];
+// Split in two for cost. The column tests are cheap and run in a WHERE. The
+// title test needs the title cleaned into words — about fifty REPLACE calls —
+// and SQLite does not reuse a repeated expression, so written inline it was
+// rebuilt inside every one of ~110 word tests: 6,000 string operations a row,
+// and the 90-day index went from ~1s to 14s on the test dataset. So the cleaned
+// title is a COLUMN (RSI_BASE_TITLE_WORDS, computed once per row in a
+// materialised step) and the word tests read that column.
+function _rsiBaseCardSql() {
+  const inList = RSI_BASE_PARALLELS.map(v => `'${v}'`).join(', ');
+  return `
           AND COALESCE(TRIM(year), '') <> ''
           AND COALESCE(TRIM(set_name), '') <> ''
-          AND COALESCE(TRIM(parallel), '') <> ''`;
+          AND COALESCE(TRIM(card_number), '') <> ''
+          AND LOWER(TRIM(COALESCE(parallel, ''))) IN (${inList})`;
+}
+// A print run in the title ("/99", "1/1"): base cards are not numbered.
+const RSI_BASE_SERIAL = `
+          AND NOT (COALESCE(title, '') GLOB '*/[0-9]*')`;
+// The column tests only. The title tests — kind (card-kind.js in SQL) and the
+// whole-word parallel test — are applied in _rsiBaseCtes, and only to the
+// sales of the cards chosen for the basket; see there for why.
+const RSI_BASE_CARD = _rsiBaseCardSql();
+
+// The title as padded words, with the player's and product's own names removed
+// — they are not evidence of a parallel ("Jerry Rice" is not Ice, "Mosaic" the
+// product is not the Mosaic parallel) — and "Green Bay", a team, not a Green.
+function _rsiBaseTitleWordsSql() {
+  const words = (expr) => {
+    let e = `LOWER(COALESCE(${expr}, ''))`;
+    for (const c of ['-', '(', ')', ',', '.', '!', '#', ':', ';', '"', "'", '&', '+', '*', '[', ']', '|', '/'])
+      e = `REPLACE(${e}, '${c.replace(/'/g, "''")}', ' ')`;
+    return e;
+  };
+  let T = `(' ' || ${words('title')} || ' ')`;
+  T = `REPLACE(${T}, ' ' || ${words('player')} || ' ', ' ')`;
+  T = `REPLACE(${T}, ' ' || ${words('set_name')} || ' ', ' ')`;
+  return `REPLACE(${T}, ' green bay ', ' ')`;
+}
+const RSI_BASE_TITLE_WORDS = _rsiBaseTitleWordsSql();
+const RSI_BASE_SIGNALS = [..._PARALLEL_SIGNAL_WORDS, 'cosmic', 'reactive', 'xfractors', 'superfractors',
+                          ...RSI_BASE_SIGNAL_PHRASES.filter(p => p !== 'green bay')];
+// Against the cleaned-title column, named `tw` where it is selected.
+const RSI_BASE_TITLE_TEST = `NOT ( ${RSI_BASE_SIGNALS.map(w => `tw LIKE '% ${w} %'`).join(' OR ')} )`;
 
 function _rsiGeometry(days) {
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
@@ -4561,7 +4628,8 @@ const MARKET_CALC_SIG = (() => {
     MARKET_EXCLUDE_TRAILING_DAYS, RSI_TARGET_POINTS, RSI_MIN_BUCKET_DAYS,
     RSI_MAX_GAP_DAYS, RSI_RATIO_FLOOR, RSI_RATIO_CEIL,
     RSI_BUCKET_MOVE_FLOOR, RSI_BUCKET_MOVE_CEIL,
-    RSI_KEY_COLS.join(','), RSI_RAW_ONLY, RSI_IDENTIFIED,
+    RSI_KEY_COLS.join(','), RSI_RAW_ONLY, RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST,
+    _kindSql('s.title'),
     JSON.stringify(RSI_TIERS), JSON.stringify(RSI_TIERS_PLAYER),
   ].join('|');
   let h = 2166136261;                       // FNV-1a, enough to separate builds
@@ -4616,28 +4684,145 @@ const MARKET_CALC_SIG = (() => {
 // result independent of row order, which is what makes materialising safe now.
 // `junk` adds the junk-title filter; `labels` carries the display columns the
 // basket prints. The index needs neither.
+// Prefix the sales columns in a WHERE fragment with a table alias, for a join
+// where another table shares the column names. Only bare identifiers are
+// touched: anything already qualified, quoted or inside a string literal is
+// left alone.
+const _RSI_SALES_COLS = ['item_id', 'sold_date', 'title', 'price_cents', 'currency', 'listing_format',
+  'grader', 'grade', 'player', 'parallel', 'year', 'set_name', 'card_number', 'confidence',
+  'best_offer', 'bids', 'image_url'];
+function _rsiQualify(sql, alias) {
+  const re = new RegExp(`('(?:[^']|'')*')|(?<![\\w.])(${_RSI_SALES_COLS.join('|')})(?![\\w(])`, 'g');
+  return sql.replace(re, (m, str, col) => str ? str : `${alias}.${col}`);
+}
+
+// The parameters _rsiBaseCtes consumes, in the order its SQL uses them:
+// choosing the basket (the period), ranking the pre-period days (look-back to
+// period start), then reading the chosen cards' sales (look-back to the end of
+// the period, with the period start once more for the pre-period test).
+function _rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds = [] }) {
+  return [periodIso, throughIso, ...extraBinds,
+          sinceIso, periodIso, ...extraBinds,
+          sinceIso, throughIso, ...extraBinds, periodIso];
+}
+
 function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                         junk = false, labels = false, hasImage = false, useAlias = false }) {
-  // Identified, then no-offer, then the ungraded columns: cheap column tests
-  // that reject most rows. The title LIKEs, the expensive part, run last and on
-  // what survives. SQLite evaluates these in the order written.
-  const titleFilters = `${RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
-  return `raw AS MATERIALIZED (
-       SELECT sold_date, player, year, set_name, parallel, grader, grade,
-              SUM(price_cents) AS s, COUNT(*) AS c${hasImage ? `,
-              MAX(CASE WHEN image_url IS NOT NULL AND image_url <> ''
-                       THEN sold_date || '|' || image_url END) AS dated_image` : ''}
+  // The column tests, which are cheap. Applied twice — once to choose the
+  // basket, once to the sales of the cards chosen — because the second pass
+  // re-reads `sales` and must admit exactly what the first one counted.
+  // Cheap column tests, and the per-sale tests that read the title as a
+  // substring (print run, best offer, slab words, junk). Both passes use both;
+  // pricing computes the title ones as a column:
+  // SQLite runs a WHERE term that mentions only `sales` before the join, so
+  // written there they ran on every sale in the window rather than on the
+  // chosen cards' sales alone.
+  const colTests = `price_cents IS NOT NULL AND price_cents > 0
+          AND sold_date > ? AND sold_date <= ?${RSI_BASE_CARD}${extraWhere}`;
+  const saleTests = `${RSI_BASE_SERIAL}${noOffer}${RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
+  const columns = `${colTests}${saleTests}`;
+  // The same key columns join the two passes. Player by `=`, which lets SQLite
+  // build a lookup index on the chosen list; the rest by `IS`, because grader
+  // and grade are NULL on most raw rows and NULL = NULL is not true.
+  // (player is never NULL here — see the player_n <> '' test.)
+  const tupleCols = ['player', 'year', 'set_name', 'card_number', 'grader', 'grade'];
+  const tupleJoin = ['s.player = k.player',
+    ...tupleCols.filter(c => c !== 'player').map(c => `s.${c} IS k.${c}`)].join(' AND ');
+  // TWO PASSES, for cost.
+  //
+  // The base-card rule has to read the title — a blank parallel column is the
+  // norm for base cards and also for a Refractor whose parallel the collector
+  // did not parse — and reading titles is the one thing D1 cannot afford at
+  // this volume: ~140 word tests over the ~750,000 sales that pass the column
+  // tests measured at 45-63s on a live-sized table, over the limit.
+  //
+  // But only the basket is priced, and the basket is 600 players x 10 cards.
+  // So the basket is CHOSEN on the column tests alone (counts), and the titles
+  // are read only for the sales of the cards chosen. A card's volume may
+  // include a few mislabelled parallel sales when it is chosen; its PRICES
+  // never do, because those sales are removed before anything is averaged.
+  // The basket is chosen from the PERIOD's sales (its own date bounds, bound
+  // first); the second pass reads the period plus the look-back, because a
+  // sale early in the period still needs its previous sale to be priced. The
+  // look-back has nothing to say about who is most traded now, and for a
+  // 7-day view it was 180 of the 194 days the first pass read.
+  //
+  // Chosen with the substring title tests too, not the column tests alone:
+  // tried, and without them unparsed slabs are chosen, fill basket slots, and
+  // are then rejected wholesale at pricing — slower, and fewer real cards.
+  return `pick_raw AS MATERIALIZED (
+       SELECT ${tupleCols.join(', ')}, COUNT(*) AS c
          FROM sales
-        WHERE price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?${RSI_IDENTIFIED}${noOffer}${titleFilters}${extraWhere}
-        GROUP BY sold_date, player, year, set_name, parallel, grader, grade
+        WHERE ${columns}
+        GROUP BY ${tupleCols.join(', ')}
+     ),
+     pick_keys AS MATERIALIZED (
+       SELECT ${tupleCols.join(', ')}, c, ${PLAYER} AS player_n, ${CARD} AS card,
+              ${useAlias ? 'COALESCE(al.display, player)' : 'player'} AS display
+         FROM pick_raw ${JOIN}
+        WHERE ${P} <> ''${ALIAS_FILTER}
+     ),
+     pick_players AS (
+       SELECT player_n FROM pick_keys GROUP BY player_n
+        ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
+     ),
+     pick_cards AS (
+       SELECT card FROM (
+         SELECT k.card, ROW_NUMBER() OVER (PARTITION BY k.player_n ORDER BY SUM(k.c) DESC, k.card) AS rn
+           FROM pick_keys k JOIN pick_players t ON t.player_n = k.player_n
+          GROUP BY k.player_n, k.card)
+        WHERE rn <= ${MARKET_CARDS_PER_PLAYER}
+     ),
+     pick_tuples AS MATERIALIZED (
+       SELECT k.* FROM pick_keys k JOIN pick_cards pc ON pc.card = k.card
+     ),
+     -- Before the period, only each card's LAST few trading days matter.
+     --
+     -- Pricing pairs a card's consecutive days, and only pairs landing in the
+     -- period are used, so the one pre-period day that counts is the latest
+     -- clean one: it prices the card's first day in the period. Every earlier
+     -- day was read, title-checked and thrown away — for a 90-day view, 180 of
+     -- the 279 days the second pass read. The last THREE days are kept, not one,
+     -- so a latest day made entirely of mislabelled parallels still leaves a
+     -- clean day to pair with. (If all three are dirty the card simply starts
+     -- pairing inside the period.) Chosen on the column tests alone, so no
+     -- title is read to rank them.
+     pre_days AS MATERIALIZED (
+       SELECT card, sold_date FROM (
+         SELECT k.card, s.sold_date,
+                DENSE_RANK() OVER (PARTITION BY k.card ORDER BY s.sold_date DESC) AS dr
+           FROM sales s CROSS JOIN pick_tuples k ON ${tupleJoin}
+          WHERE ${_rsiQualify(colTests, 's')})
+        WHERE dr <= 3
+        GROUP BY card, sold_date
+     ),
+     -- The sales of the chosen cards only — in the period, plus those last
+     -- pre-period days — each title cleaned into words ONCE.
+     cand AS MATERIALIZED (
+       SELECT s.sold_date, s.price_cents, k.player_n, k.card, k.display,
+              s.year, s.set_name, s.card_number, s.parallel, s.grader, s.grade${hasImage ? ', s.image_url' : ''},
+              ${RSI_BASE_TITLE_WORDS.replace(/\b(title|player|set_name)\b/g, 's.$1')} AS tw,
+              ${_kindSql('s.title')} AS kind,
+              CASE WHEN 1 = 1 ${_rsiQualify(saleTests, 's')} THEN 1 ELSE 0 END AS ok
+         -- CROSS JOIN fixes the loop order: sales read ONCE by date, each probing
+         -- the small chosen-card list. Left to itself SQLite looped over the
+         -- 6,000 chosen tuples and used the player index, fetching a player's
+         -- whole history once per card of theirs — 51s against 14s measured on
+         -- a live-sized table, identical rows either way.
+         FROM sales s CROSS JOIN pick_tuples k ON ${tupleJoin}
+        WHERE ${_rsiQualify(colTests, 's')}
+          AND (s.sold_date > ? OR (k.card, s.sold_date) IN (SELECT card, sold_date FROM pre_days))
      ),
      base AS MATERIALIZED (
-       SELECT sold_date, s, c, ${PLAYER} AS player_n, ${CARD} AS card${labels ? `,
-              ${useAlias ? 'COALESCE(al.display, player)' : 'player'} AS player,
-              year, set_name, parallel, grader, grade${hasImage ? ', dated_image' : ''}` : ''}
-         FROM raw ${JOIN}
-        WHERE ${P} <> ''${ALIAS_FILTER}
+       SELECT sold_date, SUM(price_cents) AS s, COUNT(*) AS c, player_n, card${labels ? `,
+              MAX(display) AS player, MAX(year) AS year, MAX(set_name) AS set_name,
+              MAX(card_number) AS card_number, MAX(parallel) AS parallel, MAX(grader) AS grader,
+              MAX(grade) AS grade${hasImage ? `,
+              MAX(CASE WHEN image_url IS NOT NULL AND image_url <> ''
+                       THEN sold_date || '|' || image_url END) AS dated_image` : ''}` : ''}
+         FROM cand
+        WHERE ok = 1 AND kind = '' AND ${RSI_BASE_TITLE_TEST}
+        GROUP BY sold_date, player_n, card
      )`;
 }
 
@@ -4646,6 +4831,8 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
   const { bucketDays, spanDays } = _rsiGeometry(days);
   // Reach back beyond the window so a sale early in it still has a prior.
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
+  // The period itself, which the basket is chosen from.
+  const periodIso = _mkIso(_mkDay(throughIso) - spanDays);
   const P = _normCol('player');
   // With aliases the player is the canonical name and the join doubles as a
   // filter: a variant marked unresolved carries no player we could identify —
@@ -4733,7 +4920,7 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
     // the base CTE's date range, then any scope filter appended to it, then the
     // bucket arithmetic further down. Passing extraBinds last silently fed the
     // player name into the julianday() slot and returned nothing.
-  ).bind(sinceIso, throughIso, ...extraBinds, throughIso, bucketDays);
+  ).bind(..._rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds }), throughIso, bucketDays);
 }
 
 // The basket, itemised. Same selection as the index — busiest players, their
@@ -4748,6 +4935,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
+  const periodIso = _mkIso(_mkDay(throughIso) - spanDays);
   const P = _normCol('player');
   // Same substitution as the index. The basket has to select from exactly the
   // same population or the list stops explaining the number above it.
@@ -4821,19 +5009,20 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
      labels AS (
        SELECT b.card,
               MAX(b.player) AS player, MAX(b.year) AS year, MAX(b.set_name) AS set_name,
-              MAX(b.parallel) AS parallel, MAX(b.grader) AS grader, MAX(b.grade) AS grade,
+              MAX(b.parallel) AS parallel, MAX(b.card_number) AS card_number,
+              MAX(b.grader) AS grader, MAX(b.grade) AS grade,
               SUM(b.c) AS sales,
               SUM(b.s) * 1.0 / SUM(b.c) AS avg_cents,
               ${imgLabel} AS dated_image
          FROM base b JOIN shortlist k ON k.card = b.card
         GROUP BY b.card
      )
-     SELECT l.player, l.year, l.set_name, l.parallel, l.grader, l.grade,
+     SELECT l.player, l.year, l.set_name, l.parallel, l.card_number, l.grader, l.grade,
             l.sales, l.avg_cents, l.dated_image, m.pairs, m.med_ratio, m.med_gap
        FROM labels l
        LEFT JOIN moves m ON m.card = l.card
       ORDER BY l.sales DESC`
-  ).bind(sinceIso, throughIso, ...extraBinds);
+  ).bind(..._rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds }));
 }
 
 // Turn basket rows into something displayable: a label, how much it traded,
@@ -4843,7 +5032,11 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
   const out = [];
   for (const r of (rows || [])) {
     const parts = [r.year, r.set_name, r.player].filter(Boolean).map(String);
-    const extras = [r.parallel, [r.grader, r.grade].filter(Boolean).join(' ')]
+    if (r.card_number) parts.push(`#${String(r.card_number).replace(/^#/, '')}`);
+    // Every card here is a base card, so "Base" says nothing; a Rated Rookie
+    // is worth naming, since that is how collectors know the card.
+    const par = String(r.parallel || '').trim();
+    const extras = [/^(base|base set)$/i.test(par) ? '' : par, [r.grader, r.grade].filter(Boolean).join(' ')]
       .map(x => String(x || '').trim()).filter(Boolean);
     let changePct = null;
     const ratio = Number(r.med_ratio), gap = Number(r.med_gap);
@@ -8888,8 +9081,12 @@ const SOLD_STATS_TOP = 50;
 //
 //   raw only        RSI_RAW_ONLY — a PSA 10 among raw copies is not a price
 //                   move, it is a different market. Reuses the index's filter.
-//   identified      RSI_IDENTIFIED — year, set and parallel must all be
-//                   present, which is what the Jaxson Dart case was missing.
+//   base cards      RSI_BASE_CARD — the market index's rule: a base card with
+//                   a year, a set and a number, no parallel in the column or
+//                   the title, no print run, not an auto, relic or redemption.
+//                   The Jaxson Dart case was a blank-parallel bucket holding all
+//                   of those at once; this admits only the one of them that is
+//                   the base card, and keys it by number.
 //   both halves     at least MOVERS_MIN_HALF sales in each half of the window,
 //                   so a ratio rests on real samples on both sides.
 //   worth reporting a floor price, so a $1 -> $4 common cannot lead the board.
@@ -8928,7 +9125,8 @@ function _median(xs) {
 // no number, and takes the photo from a typical sale rather than the dearest.
 // v6: the movers board splits autographs, relics and redemptions from the base
 // card that shares their number.
-const SOLD_STATS_KEY = (days) => `soldstats:v6:${days}`;
+// v7: the movers boards take base cards only, keyed by card number.
+const SOLD_STATS_KEY = (days) => `soldstats:v7:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -8945,6 +9143,16 @@ async function _computeSoldStats(db, days) {
   // Boards are aggregates too — biggest sellers, movers, top sets. See
   // _noBestOfferSql: an accepted offer settled under an ask nobody published.
   const noOffer = await _noBestOfferSql(db);
+
+  // The movers board's filters, split as the index splits them: cheap column
+  // tests in the WHERE, title-substring tests (print run, best offer, slab
+  // words) computed only on the chosen cards' sales. Best offers are excluded
+  // here as on every other price board: eBay publishes the ask, not what was
+  // paid, and a move computed from asks is not a move in price.
+  const moverColTests = `price_cents IS NOT NULL AND sold_date >= ?
+                       AND confidence >= ?
+                       AND COALESCE(TRIM(player), '') <> ''${RSI_BASE_CARD}`;
+  const moverSaleTests = `${RSI_BASE_SERIAL}${noOffer}${RSI_RAW_ONLY}`;
 
   try {
     const [totals, priciest, mostSold, topSets, movers] = await Promise.all([
@@ -9019,27 +9227,55 @@ async function _computeSoldStats(db, days) {
       // would compute each player's median from their best cards alone and put
       // every name on the board in the green.
       //
-      // Split by KIND as well, the same split Most Sold makes: an autograph
-      // shares its base card's number and parallel column, so without it a
-      // month where the autos traded more reads as the card taking off.
-      db.prepare(`SELECT player, year, set_name, parallel, card_number,
-                         ${_KIND_SQL} AS kind,
+      // BASE CARDS ONLY, by the market index's rule (RSI_BASE_CARD and the
+      // title test beside it), keyed by card number. The board was built from
+      // parallels — it required the parallel column to be filled, which is
+      // exactly what base cards leave blank — and a parallel is the hardest
+      // thing in a title to read, so its moves were the least trustworthy
+      // numbers on the page. Autographs, relics and numbered cards are out too.
+      //
+      // Two passes, as in the index, because reading titles is what costs:
+      //   m_pick   cards with enough sales in BOTH halves, on the cheap column
+      //            tests — a necessary condition, re-checked after cleaning;
+      //   m_rows   those cards' sales only, each title cleaned once;
+      // then the whole-word test, the kind test, and the thresholds for real.
+      db.prepare(`WITH m_pick AS MATERIALIZED (
+                    SELECT player, year, set_name, card_number
+                      FROM sales
+                     WHERE ${moverColTests}${moverSaleTests}
+                     GROUP BY player, year, set_name, card_number
+                    HAVING SUM(CASE WHEN sold_date >= ? THEN 1 ELSE 0 END) >= ?
+                       AND SUM(CASE WHEN sold_date <  ? THEN 1 ELSE 0 END) >= ?
+                  ),
+                  m_rows AS MATERIALIZED (
+                    SELECT s.player, s.year, s.set_name, s.card_number, s.parallel,
+                           s.sold_date, s.price_cents, s.title, s.item_id${img ? ', s.image_url' : ''},
+                           ${RSI_BASE_TITLE_WORDS.replace(/\b(title|player|set_name)\b/g, 's.$1')} AS tw,
+                           ${_kindSql('s.title')} AS kind,
+                           CASE WHEN 1 = 1 ${_rsiQualify(moverSaleTests, 's')} THEN 1 ELSE 0 END AS ok
+                      FROM sales s CROSS JOIN m_pick g
+                        ON s.player = g.player AND s.year IS g.year
+                       AND s.set_name IS g.set_name AND s.card_number IS g.card_number
+                     WHERE ${_rsiQualify(moverColTests, 's')}
+                  )
+                  SELECT player, year, set_name, card_number,
+                         -- "Rated Rookie" sorts above "Base" and blank, so a card
+                         -- that is a Rated Rookie is named as one.
+                         MAX(parallel) AS parallel,
                          COUNT(*) AS n,
                          SUM(CASE WHEN sold_date >= ? THEN 1 ELSE 0 END) AS n_recent,
                          SUM(CASE WHEN sold_date <  ? THEN 1 ELSE 0 END) AS n_older,
                          AVG(CASE WHEN sold_date >= ? THEN price_cents END) AS recent_cents,
                          AVG(CASE WHEN sold_date <  ? THEN price_cents END) AS older_cents,
                          title, item_id${imgCol}
-                  FROM sales
-                  WHERE price_cents IS NOT NULL AND sold_date >= ?
-                    AND confidence >= ?
-                    AND COALESCE(TRIM(player), '') <> ''
-                    AND COALESCE(TRIM(card_number), '') <> ''
-                    ${RSI_RAW_ONLY}${RSI_IDENTIFIED}
-                  GROUP BY player, year, set_name, parallel, card_number, kind
+                    FROM m_rows
+                   WHERE ok = 1 AND kind = '' AND ${RSI_BASE_TITLE_TEST}
+                   GROUP BY player, year, set_name, card_number
                   HAVING n_recent >= ? AND n_older >= ? AND older_cents >= ?
-                  ORDER BY n DESC LIMIT ?`)
-        .bind(mid, mid, mid, mid, since, NFLDB_MIN_CONFIDENCE,
+                   ORDER BY n DESC LIMIT ?`)
+        .bind(since, NFLDB_MIN_CONFIDENCE, mid, MOVERS_MIN_HALF, mid, MOVERS_MIN_HALF,
+              since, NFLDB_MIN_CONFIDENCE,
+              mid, mid, mid, mid,
               MOVERS_MIN_HALF, MOVERS_MIN_HALF, MOVERS_MIN_CENTS, MOVERS_MAX_GROUPS).all(),
     ]);
 
@@ -9064,19 +9300,21 @@ async function _computeSoldStats(db, days) {
     const totalCents = (totals && totals.total) || 0;
 
     // One change per card, from the halves the query already counted.
+    // Every mover is a base card. "Base" on each row would say nothing; a Rated
+    // Rookie is worth naming, since that is how collectors know the card.
+    const _moverPar = (p) => (/rated rookie/i.test(String(p || '')) ? 'Rated Rookie' : '');
     const moverRows = ((movers && movers.results) || []).map(r => ({
       player: r.player,
-      name: [r.year, r.set_name, r.player, r.parallel, r.card_number ? `#${r.card_number}` : '',
-             _KIND_LABEL[r.kind] || '']
+      name: [r.year, r.set_name, r.player, _moverPar(r.parallel), r.card_number ? `#${r.card_number}` : '']
         .filter(Boolean).join(' ').trim() || r.title,
-      kind: r.kind || 'base',
+      kind: 'base',
       sales: r.n,
       recent: Math.round((r.recent_cents || 0) / 100),
       older: Math.round((r.older_cents || 0) / 100),
       changePct: Math.round(((r.recent_cents - r.older_cents) / r.older_cents) * 1000) / 10,
       imageUrl: r.image_url || null,
       itemUrl: linkOf(r),
-      query: [r.year, r.set_name, r.player, r.parallel, _KIND_LABEL[r.kind] || '']
+      query: [r.year, r.set_name, r.player, _moverPar(r.parallel)]
         .filter(Boolean).join(' ').trim() || r.title,
     })).filter(m => Number.isFinite(m.changePct));
 
@@ -9300,7 +9538,9 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // here would throw away every cached analysis to no effect.
 // Re-fingerprinted again at v10 for the same reason: card-kind.js gained
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
-const CARD_IDENTITY_FINGERPRINT = 'f44f600db0a8';
+// And again: kindSql()'s substring pre-check dropped a redundant LOWER().
+// cardKind() is untouched, so no cached analysis groups differently.
+const CARD_IDENTITY_FINGERPRINT = 'dd5db2c1a99e';
 
 // How far one card's prices may spread before a trend across them is refused.
 //
@@ -13782,7 +14022,12 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
   return { ok: true, done: false, cursor: moved, ...sum };
 }
 
-module.exports = { app, connectDB, warmMarket, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+// The base-card rule's SQL, for test/base-card.test.js to run as the index does.
+function _rsiBaseSql() {
+  return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
+}
+
+module.exports = { app, connectDB, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
