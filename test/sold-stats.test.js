@@ -46,9 +46,11 @@ const OLDER = -25;   // comfortably in the older half
 // `sales` per half, at `price` dollars. A title is supplied because the raw-only
 // filter reads it, not just the grade columns.
 function card(opts) {
-  const { player, set = 'Prizm', parallel = 'Silver', number = '1', year = '2022',
+  // Base cards by default: the movers boards take base cards only (the market
+  // index's rule), so a fixture that should reach them is a base card.
+  const { player, set = 'Prizm', parallel = '', number = '1', year = '2022',
           oldPrice, newPrice, oldN, newN, title, grader = '', grade = '' } = opts;
-  const t = title || `${year} ${set} ${player} ${parallel} #${number}`;
+  const t = title || [year, set, player, parallel, `#${number}`].filter(Boolean).join(' ');
   const put = (day, price, count) => {
     for (let k = 0; k < count; k++) {
       ins.run(`x${n++}`, iso(day + (k % 3)), t, Math.round(price * 100), player, year,
@@ -62,7 +64,7 @@ function card(opts) {
 // --- Genuine movers: plenty of sales both sides, a real rise -----------------
 card({ player: 'Real Riser', oldPrice: 100, newPrice: 180, oldN: 12, newN: 12 });          // +80%
 card({ player: 'Real Riser', parallel: 'Base', number: '2', oldPrice: 40, newPrice: 68, oldN: 10, newN: 10 });   // +70%
-card({ player: 'Real Riser', parallel: 'Gold', number: '3', oldPrice: 200, newPrice: 320, oldN: 8, newN: 8 });   // +60%
+card({ player: 'Real Riser', number: '3', oldPrice: 200, newPrice: 320, oldN: 8, newN: 8 });   // +60%
 
 // --- The Most Sold trap: one number, three different cards -------------------
 // Taken from the live board. 2026 Topps Fernando Mendoza #301 exists as a base
@@ -145,38 +147,51 @@ card({ player: 'Penny Common', oldPrice: 1, newPrice: 6, oldN: 20, newN: 20 });
 // What remains is flat, so this card must not appear as a riser.
 card({ player: 'Slab Mixed', oldPrice: 50, newPrice: 50, oldN: 10, newN: 10 });
 (() => {
-  const t = '2022 Prizm Slab Mixed Silver #1 PSA 10 GEM MINT';
+  const t = '2022 Prizm Slab Mixed #1 PSA 10 GEM MINT';
   for (let k = 0; k < 12; k++) {
     ins.run(`g${n++}`, iso(RECENT + (k % 3)), t, 50000, 'Slab Mixed', '2022', 'Prizm',
-            'Silver', '1', 'PSA', '10', 0.9, null);
+            '', '1', 'PSA', '10', 0.9, null);
   }
 })();
 
-// --- The trap: unidentified sales that would collapse into one bucket -------
-// Blank parallel, base and patch prices together — the Jaxson Dart shape. The
-// identity filter must drop these before they can be grouped.
+// --- The trap: a parallel that looks like a base card -----------------------
+// The Jaxson Dart shape. The parallel column is blank on half of all sales, so
+// the column cannot say which are base cards; the title has to. Older sales are
+// the plain base card at $5; the recent ones name a Gold Refractor /50 at $500.
+// Mixed, that is +9,900%. The recent sales are not this card at all.
 (() => {
   for (let k = 0; k < 14; k++) {
-    ins.run(`u${n++}`, iso(OLDER + (k % 3)), '2025 Chrome Blank Parallel', 500,
-            'Blank Parallel', '2025', 'Chrome', '', '1', '', '', 0.9, null);
+    ins.run(`u${n++}`, iso(OLDER + (k % 3)), '2025 Topps Chrome Title Trap #1 RC', 500,
+            'Title Trap', '2025', 'Topps Chrome', '', '1', '', '', 0.9, null);
   }
   for (let k = 0; k < 14; k++) {
-    ins.run(`u${n++}`, iso(RECENT + (k % 3)), '2025 Chrome Blank Parallel', 50000,
-            'Blank Parallel', '2025', 'Chrome', '', '1', '', '', 0.9, null);
+    ins.run(`u${n++}`, iso(RECENT + (k % 3)), '2025 Topps Chrome Title Trap #1 Gold Refractor /50', 50000,
+            'Title Trap', '2025', 'Topps Chrome', '', '1', '', '', 0.9, null);
   }
 })();
+// ...and one whose column names the parallel, doubling. Not a base card.
+card({ player: 'Column Trap', parallel: 'Silver', number: '4', oldPrice: 50, newPrice: 100, oldN: 10, newN: 10 });
+
+// --- One base card, written two ways ----------------------------------------
+// The column says "Rated Rookie" on the older sales and nothing on the newer
+// ones. It is one card, and must be one row — named as a Rated Rookie, and
+// priced across both halves (+40%).
+card({ player: 'Rated Merge', set: 'Donruss', parallel: 'Rated Rookie', number: '7',
+       oldPrice: 50, newPrice: 50, oldN: 10, newN: 0 });
+card({ player: 'Rated Merge', set: 'Donruss', number: '7',
+       oldPrice: 70, newPrice: 70, oldN: 0, newN: 10 });
 
 // --- The trap: one hot card must not carry a whole player -------------------
 // Four cards. One triples; the other three are flat. The player's MEDIAN change
 // is 0%, so they must not lead the player board — a mean would put them top.
-card({ player: 'One Hot Card', parallel: 'Silver', number: '1', oldPrice: 50, newPrice: 200, oldN: 10, newN: 10 });
+card({ player: 'One Hot Card', number: '1', oldPrice: 50, newPrice: 200, oldN: 10, newN: 10 });
 card({ player: 'One Hot Card', parallel: 'Base', number: '2', oldPrice: 50, newPrice: 50, oldN: 10, newN: 10 });
-card({ player: 'One Hot Card', parallel: 'Gold', number: '3', oldPrice: 60, newPrice: 60, oldN: 10, newN: 10 });
-card({ player: 'One Hot Card', parallel: 'Red', number: '4', oldPrice: 70, newPrice: 70, oldN: 10, newN: 10 });
+card({ player: 'One Hot Card', number: '3', oldPrice: 60, newPrice: 60, oldN: 10, newN: 10 });
+card({ player: 'One Hot Card', number: '4', oldPrice: 70, newPrice: 70, oldN: 10, newN: 10 });
 
 // --- A player who genuinely moved across their whole card list --------------
 for (let c = 1; c <= 4; c++) {
-  card({ player: 'Broad Riser', parallel: `P${c}`, number: String(c),
+  card({ player: 'Broad Riser', number: String(c),
          oldPrice: 100, newPrice: 150, oldN: 10, newN: 10 });   // every card +50%
 }
 
@@ -267,8 +282,19 @@ const names = (rows) => (rows || []).map(r => r.name || r.player);
         `floor $${s.moversBasis.minPrice}`);
   check('PSA 10s among raw copies do not become a price move',
         !cardNames.some(x => /Slab Mixed/.test(x)), 'raw-only filter');
-  check('sales with no readable parallel never group together',
-        !cardNames.some(x => /Blank Parallel/.test(x)), 'identity filter');
+  check('a parallel named only in the title never reaches the board',
+        !cardNames.some(x => /Title Trap/.test(x)), 'base-card title test');
+  check('  ...nor one named in the parallel column',
+        !cardNames.some(x => /Column Trap/.test(x)), 'base-card column test');
+  {
+    const merged = (s.cardMovers || []).filter(r => /Rated Merge/.test(r.name));
+    check('one base card written two ways is one row, named as a Rated Rookie',
+          merged.length === 1 && /Rated Rookie #7$/.test(merged[0].name) && Math.abs(merged[0].changePct - 40) < 0.5,
+          merged.map(r => `${r.name} ${r.changePct}%`).join(' | ') || 'missing');
+  }
+  check('every card on the board is a numbered base card',
+        (s.cardMovers || []).every(r => / #\d+$/.test(r.name) && r.kind === 'base'),
+        (s.cardMovers || []).filter(r => !/ #\d+$/.test(r.name)).map(r => r.name).join(' | ') || 'all numbered');
 
   {
     const mix = (s.cardMovers || []).filter(r => /Kind Mix/.test(r.name));

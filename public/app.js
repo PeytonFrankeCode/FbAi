@@ -1077,13 +1077,13 @@ async function loadMarketPulse(days) {
   // Cards and players that moved. Rows rather than photo tiles: the number is
   // the point here, and five sections of identical tiles would read as one
   // undifferentiated wall.
-  parts.push(rows('Biggest movers', 'cards, raw only', data.cardMovers, (r) =>
+  parts.push(rows('Biggest movers', 'base cards, raw only', data.cardMovers, (r) =>
     '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
     '<span class="mp-row-name">' + escHtml(String(r.name).slice(0, 60)) + '</span>' +
     '<span class="mp-row-meta">' + _mpMoney(r.older) + ' &rarr; ' + _mpMoney(r.recent) + '</span>' +
     _mpChange(r.changePct) + '</button>'));
 
-  parts.push(rows('Players on the move', 'median of their cards', data.playerMovers, (r) =>
+  parts.push(rows('Players on the move', 'median of their base cards', data.playerMovers, (r) =>
     '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
     '<span class="mp-row-name">' + escHtml(r.player) + '</span>' +
     '<span class="mp-row-meta">' + r.cards + ' cards</span>' +
