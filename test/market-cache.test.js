@@ -46,13 +46,20 @@ for (let c = 0; c < 150; c++) {
 
 let queries = 0;
 let broken = false;
+let overloaded = false;
+let slow = 0;
 const d1 = {
   prepare(sql) {
     if (broken) throw new Error('D1 down');
+    if (overloaded) throw new Error('D1_ERROR: D1 DB exceeded its CPU time limit and was reset.');
     let bound = [];
     const api = {
       bind(...args) { bound = args; return api; },
-      all: async () => { queries++; return { results: db.prepare(sql).all(...bound) }; },
+      all: async () => {
+        queries++;
+        if (slow) await new Promise(r => setTimeout(r, slow));
+        return { results: db.prepare(sql).all(...bound) };
+      },
       first: async () => { queries++; return db.prepare(sql).get(...bound) || null; },
       run: async () => { queries++; return { success: true, meta: db.prepare(sql).run(...bound) }; },
     };
@@ -182,6 +189,61 @@ const check = (label, ok, detail) => {
   check('the whole player roster can be fetched once for local search',
     roster.body.available === true && roster.body.players.length > 12,
     `${(roster.body.players || []).length} players`);
+
+  // ---- ten visitors on one cold view cost one query ---------------------
+  store.clear();
+  queries = 0;
+  slow = 200;
+  const together = await Promise.all(Array.from({ length: 10 }, () => call('/api/market-index?days=30')));
+  const shared = queries;
+  queries = 0;
+  store.clear();
+  await call('/api/market-index?days=30');
+  const single = queries;
+  slow = 0;
+  check('simultaneous visitors on a cold view share one computation',
+    together.every(r => r.body.available === true) && shared === single,
+    `${shared} queries for 10 visitors, ${single} for one`);
+
+  // ---- an overloaded database is left alone to recover ------------------
+  // What the live site hit: "D1 DB exceeded its CPU time limit and was reset",
+  // after ~30s, for every period, while each visitor, prefetch and cron tick
+  // sent another heavy query.
+  const goodKey = indexKey(30);
+  age(goodKey, 2 * 3600);                       // a stale but good 30d answer
+  const oldScore = store.get(goodKey).score;
+  store.delete(indexKey(7));
+  overloaded = true;
+  const trip = await call('/api/market-index?days=7');
+  overloaded = false;
+  check('an overload failure is reported, not cached',
+    trip.body.available === false && !indexKey(7) && !('error' in trip.body),
+    `reason=${trip.body.reason}`);
+
+  queries = 0;
+  const busy = await call('/api/market-index?days=7');
+  check('  ...then the next cold request is answered at once, without the database',
+    busy.body.available === false && busy.body.reason === 'market busy' && queries === 0,
+    `${queries} queries, reason=${busy.body.reason}`);
+
+  queries = 0;
+  pending.length = 0;
+  const staleWhileResting = await call('/api/market-index?days=30');
+  check('  ...a stale answer is still served, and not rebuilt while it rests',
+    staleWhileResting.body.available === true && staleWhileResting.body.score === oldScore
+    && pending.length === 0 && queries === 0,
+    `${queries} queries, ${pending.length} background rebuilds`);
+
+  queries = 0;
+  const paused = await warmMarket();
+  check('  ...and the cron builds nothing while it rests',
+    queries === 0 && (paused.periods || []).some(p => /:paused$/.test(p)),
+    `${queries} queries, ${JSON.stringify(paused.periods)}`);
+
+  const breaker = store.get('marketbreaker:v1');
+  check('  ...for a few minutes, shared across isolates through KV',
+    breaker && breaker.until > Date.now() && ttls.get('marketbreaker:v1') <= 600,
+    breaker ? `${Math.round((breaker.until - Date.now()) / 1000)}s left` : 'no breaker key');
 
   // ---- the cron actually calls it ---------------------------------------
   const code = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8')

@@ -99,8 +99,12 @@ const { _noBestOfferSql } = require(path.join(ROOT, 'server.js'));
       /async function _rsiQuery[\s\S]{0,400}?_noBestOfferSql\(db\)/.test(src));
     check('  ...and so does the basket query',
       /async function _rsiBasketQuery[\s\S]{0,400}?_noBestOfferSql\(db\)/.test(src));
+    // Both queries build their WHERE in one shared helper, so the clause is
+    // interpolated once there and each query must hand the helper its noOffer.
+    const helper = (src.match(/function _rsiBaseCtes[\s\S]*?\n}\n/) || [''])[0];
     check('  ...with the clause actually reaching both WHERE clauses',
-      (src.match(/\$\{RSI_IDENTIFIED\}\$\{noOffer\}/g) || []).length === 2,
+      /\$\{RSI_IDENTIFIED\}\$\{noOffer\}/.test(helper)
+      && (src.match(/\$\{_rsiBaseCtes\(\{[^}]*\bnoOffer\b/g) || []).length === 2,
       'defined but not interpolated is the failure mode here');
 
     // The card history chart.

@@ -4491,7 +4491,7 @@ function _mkGet(url) {
   if (hit && Date.now() - hit.t < MK_CLIENT_TTL) return hit.p;
   const p = fetch(url).then(safeJson).catch(() => null).then(d => {
     // A failure is not an answer worth remembering; the next click retries.
-    if (!d || /unavailable/.test(String(d.reason || ''))) _mkResp.delete(url);
+    if (!d || /unavailable|busy/.test(String(d.reason || ''))) _mkResp.delete(url);
     return d;
   });
   _mkResp.set(url, { t: Date.now(), p });
@@ -4507,13 +4507,19 @@ const _mkBasketUrl = (days, player) =>
 // next tap on 7d or 90d is already answered. After a pause, so it never
 // competes with what is on screen. The whole market's are warmed server-side
 // and cheap; for a player only the index is fetched ahead, not the basket.
+//
+// One at a time, and it stops at the first answer that is not a real one. Each
+// uncached answer is a heavy query, and firing four at once is part of what
+// pushed the database over its limit; a "busy" answer means it needs a rest,
+// not more requests.
 function _mkPrefetch(days, player) {
-  const run = () => {
-    if (days !== _mkDays || player !== _mkPlayer) return;
+  const run = async () => {
     for (const d of MARKET_VIEW_PERIODS) {
       if (d === days) continue;
-      _mkGet(_mkIndexUrl(d, player));
-      if (!player) _mkGet(_mkBasketUrl(d, player));
+      if (days !== _mkDays || player !== _mkPlayer) return;
+      const r = await _mkGet(_mkIndexUrl(d, player));
+      if (!r || r.available === false && /busy|unavailable/.test(String(r.reason || ''))) return;
+      if (!player) await _mkGet(_mkBasketUrl(d, player));
     }
   };
   if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 1500 });
@@ -4640,13 +4646,20 @@ async function loadMarketIndex() {
     } else if (noPlayer) {
       title = 'No sales on record';
       text = `We don't hold any priced sales for ${who} yet.`;
+    } else if (data && data.reason === 'market busy') {
+      // The server paused heavy queries after the database hit its limit. Say
+      // that, rather than the generic failure: it clears on its own.
+      title = 'The market is busy';
+      text = 'Our sales database is catching its breath. This usually clears within a few minutes.';
     } else {
       title = 'Market index unavailable';
       text = 'We couldn\'t read the sales data just now. Try again shortly.';
     }
+    const retry = !data || /unavailable|busy/.test(String(data.reason || ''));
     body.innerHTML = `<div class="market-empty">
       <p class="market-empty-title">${title}</p>
       <p class="market-empty-text">${text}</p>
+      ${retry ? '<button type="button" class="market-retry" onclick="loadMarketIndex()">Try again</button>' : ''}
     </div>`;
     return;
   }
