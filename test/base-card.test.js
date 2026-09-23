@@ -77,5 +77,30 @@ check(`every base card is kept, names with colours in them included (${KEEP.leng
 check(`every parallel, numbered, autograph, relic or numberless sale is dropped (${DROP.length})`,
   wrongDrop.length === 0, wrongDrop.length ? 'kept: ' + wrongDrop.join(' | ') : 'Refractor, Silver Prizm, /50, 1/1, Auto, Patch, no #…');
 
+// ---- it has to compile on D1, not just on stock SQLite ----------------------
+//
+// D1 caps expression depth at 100; stock SQLite, which every test here runs
+// on, allows 1,000. SQLite nests a chain of ORs one level per term, so the
+// first version of the title test — ~115 LIKEs in one chain — passed every
+// local test and failed on D1 with "Expression tree is too large (maximum depth
+// 100)", taking the market index off the site. Measure the longest chain of
+// OR/AND at any one bracket level and keep it far from the cap.
+{
+  const longestChain = (sql) => {
+    const stack = [0]; let worst = 0;
+    const str = sql.replace(/'(?:[^']|'')*'/g, "''");       // ignore literals
+    for (const tok of str.match(/\(|\)|\bOR\b|\bAND\b/gi) || []) {
+      if (tok === '(') stack.push(0);
+      else if (tok === ')') stack.pop();
+      else { stack[stack.length - 1]++; worst = Math.max(worst, stack[stack.length - 1]); }
+    }
+    return worst;
+  };
+  const parts = { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind };
+  const worst = Object.entries(parts).map(([k, v]) => [k, longestChain(v)]).sort((a, b) => b[1] - a[1]);
+  check('no OR/AND chain comes near D1\'s expression-depth cap of 100',
+    worst[0][1] <= 40, worst.map(([k, n]) => `${k}=${n}`).join(', '));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall base-card checks passed');
 process.exit(failures ? 1 : 0);
