@@ -23,11 +23,34 @@ const path = require('path');
 const DAY = 86400000;
 const iso = (o) => new Date(Date.now() + o * DAY).toISOString().slice(0, 10);
 
-function buildDb(driftPct) {
-  const db = new DatabaseSync(':memory:');
+// The sales table, as the live one has it — including card_number, which is
+// how the index tells one base card from another.
+//
+// The fixtures below were written when a card was keyed on its parallel, so
+// they model a player's distinct cards as parallels Var0, Var1, ... The index
+// now tracks BASE cards only (server.js, RSI_BASE_CARD) and identifies them by
+// number, so the trigger reads each fixture's intent that way: "Var<n>" is
+// that player's base card #n+1, and "Base" is base card #1. Rows that set a
+// card_number themselves are left exactly as written.
+function salesTable(db) {
   db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
     currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-    year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    year TEXT, set_name TEXT, card_number TEXT, confidence REAL, best_offer INTEGER, bids INTEGER,
+    image_url TEXT)`);
+  db.exec(`CREATE TRIGGER var_is_card_number AFTER INSERT ON sales
+    WHEN NEW.card_number IS NULL AND (NEW.parallel GLOB 'Var[0-9]*' OR NEW.parallel = 'Base')
+    BEGIN
+      UPDATE sales SET
+        card_number = CASE WHEN NEW.parallel = 'Base' THEN '1'
+                           ELSE CAST(CAST(substr(NEW.parallel, 4) AS INTEGER) + 1 AS TEXT) END,
+        parallel = CASE WHEN NEW.parallel = 'Base' THEN 'Base' ELSE '' END
+      WHERE rowid = NEW.rowid;
+    END`);
+}
+
+function buildDb(driftPct) {
+  const db = new DatabaseSync(':memory:');
+  salesTable(db);
   const priceAt = (d, base) => base * Math.pow(1 + driftPct / 100, (d + 35) / 30);
   db.exec('BEGIN');
   const ins = db.prepare(`INSERT INTO sales
@@ -160,9 +183,7 @@ const check = (label, ok, detail) => {
   const readings = {};
   for (const [label, gapDays] of [['fast resales', 4], ['slow resales', 20]]) {
     const db2 = new DatabaseSync(':memory:');
-    db2.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    salesTable(db2);
     const priceAt = (d, base) => base * Math.pow(1.15, (d + 100) / 30);  // +15%/30d in both
     db2.exec('BEGIN');
     const ins2 = db2.prepare(`INSERT INTO sales
@@ -200,9 +221,7 @@ const check = (label, ok, detail) => {
   // spellings each and checks they come back together.
   {
     const dbF = new DatabaseSync(':memory:');
-    dbF.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    salesTable(dbF);
     const spellings = (n) => [n, n.toLowerCase(), n.toUpperCase(), ' ' + n + ' ', n + '.', n.replace(/ /g, '  ')];
     dbF.exec('BEGIN');
     const insF = dbF.prepare(`INSERT INTO sales
@@ -236,9 +255,7 @@ const check = (label, ok, detail) => {
   // while perfectly good images sit one row down.
   {
     const dbP = new DatabaseSync(':memory:');
-    dbP.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    salesTable(dbP);
     const insP = dbP.prepare(`INSERT INTO sales
       (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence, image_url)
       VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
@@ -270,9 +287,7 @@ const check = (label, ok, detail) => {
   // rest — a display artefact that would look exactly like a filter bug.
   {
     const dbG = new DatabaseSync(':memory:');
-    dbG.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    salesTable(dbG);
     const insG = dbG.prepare(`INSERT INTO sales
       (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
       VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
@@ -387,9 +402,7 @@ const check = (label, ok, detail) => {
     // The floor rises with the square root of that; the bound has room for it.
     const flatMarket = (seed) => {
       const dbN = new DatabaseSync(':memory:');
-      dbN.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      salesTable(dbN);
       let s = seed;
       const rand = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
       const noise = (sigma) => Math.exp(sigma * Math.sqrt(-2 * Math.log(Math.max(rand(), 1e-9)))
@@ -463,9 +476,7 @@ const check = (label, ok, detail) => {
     const missed = [];
     for (const [label, grader, grade] of spellings) {
       const dbS = new DatabaseSync(':memory:');
-      dbS.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      salesTable(dbS);
       dbS.exec('BEGIN');
       const insS = dbS.prepare(`INSERT INTO sales
         (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
@@ -506,9 +517,7 @@ const check = (label, ok, detail) => {
   {
     const readAt = async (reverse) => {
       const dbO = new DatabaseSync(':memory:');
-      dbO.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      salesTable(dbO);
       const rows = [];
       for (let p = 0; p < 200; p++) {
         for (let c = 0; c < 4; c++) {
@@ -539,55 +548,63 @@ const check = (label, ok, detail) => {
           `forward=${forward}  reversed=${backward}`);
   }
 
-  // A card is not a card without its set and its parallel.
+  // A card is one card: a base card, with a year, a set and a number.
   //
-  // A blank parallel means the collector could not read one, not "base". It is
-  // part of the card key, so every unreadable sale for a player lands in one
-  // bucket holding base cards, refractors, autos and patches together — and
-  // that bucket then prices a $5 base against a $500 patch and reports the
-  // difference as a price move. Live, it put "2025 Topps Chrome Jaxson Dart"
-  // with no parallel and +7,127% on the page, and listed the same card twice at
-  // two different averages.
+  // The danger this guards is the bucket that holds several cards at once. It
+  // happened: when a blank parallel was keyed as a card, every unreadable sale
+  // for a player landed together — base cards, refractors, autos and patches —
+  // and "2025 Topps Chrome Jaxson Dart" went on the page at +7,127%. Then, with
+  // blank parallels excluded instead, the basket was ALL parallels, and with no
+  // card number in the key "Jaxson Dart Refractor" pooled every Refractor he
+  // has in the product: -93.7% and +1500% on the live list.
+  //
+  // So the index now takes base cards only, keyed by number. The sales below
+  // are the ways a sale can look like a base card and not be one; none of them
+  // may reach the basket, and the real base cards must.
   {
     const dbI = new DatabaseSync(':memory:');
-    dbI.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    salesTable(dbI);
     dbI.exec('BEGIN');
     const insI = dbI.prepare(`INSERT INTO sales
-      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, card_number, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`);
     let z = 0;
-    const sellI = (player, year, set_, parallel, cents, d) =>
-      insI.run(`z${z++}`, iso(d), '2025 Topps Chrome Base', cents, player, year, set_, parallel, '', '', 0.9);
+    const sellI = (player, year, set_, parallel, number, title, cents, d) =>
+      insI.run(`z${z++}`, iso(d), title, cents, player, year, set_, parallel, number, '', '', 0.9);
 
     for (let p2 = 0; p2 < 40; p2++) {
       const who = `Star ${p2}`;
       for (let c = 0; c < 3; c++) {
+        const num = String(300 + c);
         for (let d = -30; d <= -2; d += 4) {
           const px = Math.round(10000 * Math.pow(1.1, (d + 30) / 30));
-          sellI(who, '2025', 'Topps Chrome', `Var${c}`, px, d);          // identified
-          // The same player, parallel unreadable, wildly mixed prices — a base
-          // one day and a patch the next. Nothing here is a comparison.
-          sellI(who, '2025', 'Topps Chrome', '', d % 8 === 0 ? 500 : 50000, d);
-          sellI(who, '2025', '', 'Refractor', 30000, d);                 // no set
-          sellI(who, '', 'Topps Chrome', 'Refractor', 30000, d);         // no year
+          // The real thing: a base card, column blank, title plain.
+          sellI(who, '2025', 'Topps Chrome', '', num, `2025 Topps Chrome ${who} #${num} RC`, px, d);
+          // Same number, column blank, but the TITLE names what it is — a
+          // parallel, a numbered card, an autograph patch. Wildly priced, and
+          // not the base card whatever the column says.
+          sellI(who, '2025', 'Topps Chrome', '', num, `2025 Topps Chrome ${who} #${num} Gold Refractor`, 50000, d);
+          sellI(who, '2025', 'Topps Chrome', '', num, `2025 Topps Chrome ${who} #${num} /99`, 40000, d);
+          sellI(who, '2025', 'Topps Chrome', '', num, `2025 Topps Chrome ${who} #${num} Rookie Patch Auto`, 90000, d);
+          // Column names a parallel.
+          sellI(who, '2025', 'Topps Chrome', 'Refractor', num, `2025 Topps Chrome ${who} #${num}`, 30000, d);
+          // Plain title, but no card number: which card is it?
+          sellI(who, '2025', 'Topps Chrome', '', '', `2025 Topps Chrome ${who} RC`, d % 8 === 0 ? 500 : 50000, d);
+          // No set, no year.
+          sellI(who, '2025', '', '', num, `2025 ${who} #${num}`, 30000, d);
+          sellI(who, '', 'Topps Chrome', '', num, `Topps Chrome ${who} #${num}`, 30000, d);
         }
       }
     }
-    // A fully identified card, running hard and reselling fast. Deliberately
-    // extreme — 1.5x every two days — because that is where the arithmetic
-    // bites: converting a ratio to a per-day rate divides by the gap, so a
-    // short gap raises the move to a large power before it is compounded across
-    // every bucket. Each individual ratio still sits inside the pair filter, so
-    // nothing upstream discards these; only the clamp bounds them.
-    //
-    // Alternating cheap and dear prices does NOT test this — ratios of 100 and
-    // 0.01 fall outside the pair filter and never reach the clamp at all.
+    // A base card running hard and reselling fast. Deliberately extreme — 1.5x
+    // every two days — because that is where the arithmetic bites: converting a
+    // ratio to a per-day rate divides by the gap, so a short gap raises the move
+    // to a large power before it is compounded across every bucket. Each ratio
+    // still sits inside the pair filter, so only the clamp bounds these.
     for (let p2 = 0; p2 < 12; p2++) {
       const who = `Rocket ${p2}`;
       for (let d = -30; d <= -2; d += 2) {
-        sellI(who, '2025', 'Topps Chrome', 'Refractor',
+        sellI(who, '2025', 'Topps Chrome', '', '1', `2025 Topps Chrome ${who} #1 RC`,
               Math.round(500 * Math.pow(1.5, (d + 30) / 2)), d);
       }
     }
@@ -596,17 +613,31 @@ const check = (label, ok, detail) => {
 
     const b3 = await call('/api/market-basket?days=30');
     const cards = (b3.body && b3.body.cards) || [];
-    check('every card in the basket is fully identified',
-          cards.length > 0 && cards.every(c => c.detail && c.detail.trim() !== ''),
+    check('every card in the basket is a numbered base card',
+          cards.length > 0 && cards.every(c => / #\d+$/.test(c.label) && !c.detail),
           cards.length
-            ? `${cards.length} cards, ${cards.filter(c => !c.detail || !c.detail.trim()).length} missing a parallel`
+            ? `${cards.length} cards, e.g. "${cards[0].label}"${cards[0].detail ? ` (${cards[0].detail})` : ''}`
             : 'empty');
+    // Every Star base card sells at ~$100-110. Anything a parallel, a /99, an
+    // auto or a numberless sale leaked into would average far above that.
+    const stars = cards.filter(c => /^2025 Topps Chrome Star /.test(c.label));
+    check('  ...priced as the base card, with nothing else mixed in',
+          stars.length > 0 && stars.every(c => c.avgPrice >= 95 && c.avgPrice <= 115),
+          stars.length ? `Star cards avg $${Math.min(...stars.map(c => c.avgPrice))}–$${Math.max(...stars.map(c => c.avgPrice))}`
+                       : 'no Star cards');
     check('  ...so no card is listed twice under one label',
-          new Set(cards.map(c => `${c.label} | ${c.detail}`)).size === cards.length,
-          `${new Set(cards.map(c => c.label)).size} distinct labels, `
-          + `${new Set(cards.map(c => `${c.label} | ${c.detail}`)).size} distinct label+parallel, of ${cards.length}`);
-    // The clamp. Unbounded, the mixed bucket above compounds into thousands of
-    // percent; the index has always bounded a bucket move and the list must too.
+          new Set(cards.map(c => c.label)).size === cards.length,
+          `${new Set(cards.map(c => c.label)).size} distinct labels of ${cards.length}`);
+    // One Star player's own index: their base cards rise 10%. (The whole-market
+    // reading also averages in the Rockets, built to hit the cap, so it is not
+    // the number to test here.) A leak of the $300-900 parallels, numbered
+    // cards and autos on the same numbers would swing this far off.
+    const idx = await call('/api/player-index?player=Star%200&days=30');
+    check('  ...and a player\'s index reads their base cards\' trend',
+          idx.body.available && idx.body.changePct > 0 && idx.body.changePct < 20,
+          idx.body.available ? `Star 0: changePct=${idx.body.changePct}%` : `reason=${idx.body.reason}`);
+    // The clamp. Unbounded, the Rockets compound into thousands of percent; the
+    // index has always bounded a bucket move and the list must too.
     const moves = cards.map(c => c.changePct).filter(v => v != null);
     const worst = moves.length ? Math.max(...moves.map(Math.abs)) : 0;
     check('  ...and no card reports an impossible move',
@@ -634,9 +665,7 @@ const check = (label, ok, detail) => {
                               `${p} #331`, `${p} PSA 10`];
 
     const dbA = new DatabaseSync(':memory:');
-    dbA.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-      currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-      year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+    salesTable(dbA);
     dbA.exec('BEGIN');
     const insA = dbA.prepare(`INSERT INTO sales
       (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
@@ -701,9 +730,7 @@ const check = (label, ok, detail) => {
     // exactly as it did before rather than dropping out of the market.
     {
       const dbP2 = new DatabaseSync(':memory:');
-      dbP2.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER,
-        currency TEXT, listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-        year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER, image_url TEXT)`);
+      salesTable(dbP2);
       dbP2.exec(`CREATE TABLE player_alias (variant TEXT PRIMARY KEY, canonical TEXT NOT NULL,
         display TEXT NOT NULL, how TEXT, resolved INTEGER NOT NULL DEFAULT 1, n INTEGER, updated_at TEXT)`);
       dbP2.exec('BEGIN');

@@ -25,7 +25,7 @@ const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (
   item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT,
   listing_format TEXT, grader TEXT, grade TEXT, player TEXT, parallel TEXT,
-  year TEXT, set_name TEXT, confidence REAL, best_offer INTEGER, bids INTEGER
+  year TEXT, set_name TEXT, card_number TEXT, confidence REAL, best_offer INTEGER, bids INTEGER
 )`);
 // Deliberately no image_url. The sales schema grew over time and naming a
 // column the table lacks fails the whole query, so the basket probes for it —
@@ -38,27 +38,28 @@ db.exec(`CREATE TABLE sales (
 const DAY = 86400000;
 const iso = (off) => new Date(Date.now() + off * DAY).toISOString().slice(0, 10);
 const ins = db.prepare(
-  `INSERT INTO sales (item_id, sold_date, price_cents, player, year, set_name, parallel, grader, grade, confidence)
-   VALUES (?,?,?,?,?,?,?,?,?,?)`);
+  `INSERT INTO sales (item_id, sold_date, price_cents, player, year, set_name, parallel, card_number, grader, grade, confidence)
+   VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
 let n = 0;
 for (let c = 0; c < 400; c++) {
   for (let d = -200; d <= 0; d++) {
     if ((c + d) % 3) continue;
     const drift = 1 + 0.08 * (d + 200) / 200;
     ins.run(`i${n++}`, iso(d), Math.round(10000 * drift), `Player ${c}`, '2020',
-            'Prizm', 'Base', '', '', 0.9);
+            'Prizm', 'Base', '1', '', '', 0.9);
   }
 }
 
 // The two cases the old volume index got backwards, as player-scoped fixtures.
-// Each gets 20 distinct cards so it clears the matched-card gate on its own.
+// Each gets 20 distinct cards so it clears the matched-card gate on its own —
+// 20 base cards told apart by number, which is how the index identifies them.
 function scenario(player, priceFor, salesFor) {
   for (let c = 0; c < 20; c++) {
     for (let d = -200; d <= 0; d++) {
       if (d % 3) continue;
       for (let k = 0; k < salesFor(d); k++) {
         ins.run(`s${n++}`, iso(d), Math.round(priceFor(d) * 100), player, '2021',
-                'Select', `P${c}`, '', '', 0.9);
+                'Select', '', String(c + 1), '', '', 0.9);
       }
     }
   }
