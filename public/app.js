@@ -2050,7 +2050,7 @@ async function fetchDirectSearch(query) {
 
     // Stats bar
     if (results.length > 0) {
-      renderStatsBar(results, isSold);
+      renderStatsBar(isSold ? _withoutDroppedOffers(results) : results, isSold);
       sortControls.classList.remove('hidden');
       // Reset sort to default
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
@@ -2080,7 +2080,7 @@ async function fetchDirectSearch(query) {
       loadQueryEstimate(query);
     } else {
       if (isSold) {
-        renderGradeGroups(grid, results);
+        renderGradeGroups(grid, _withoutDroppedOffers(results));
       } else {
         results.forEach((item, i) => {
           const card = buildCard(item);
@@ -2095,7 +2095,7 @@ async function fetchDirectSearch(query) {
           addForsaleLoadMore(grid);
         }
       }
-      if (isSold) { updatePriceChart(results); buildGradeFilter(); buildParallelFilter(query); }
+      if (isSold) { updatePriceChart(_withoutDroppedOffers(results)); buildGradeFilter(); buildParallelFilter(query); }
     }
 
     backBtn.classList.remove('hidden');
@@ -2274,13 +2274,56 @@ function buildSimilarEstimateSection(est, query) {
 }
 
 // ---- Render Stats Bar ----
+// An accepted best offer settled under an asking price eBay does not publish,
+// and the price we hold for it is that ask — so it is shown in the comps,
+// labelled, but kept out of every average, low and high. The same rule the
+// server applies to the market index and boards (_noBestOfferSql).
+const _isBestOffer = (r) => !!(r && r.saleType === 'offer');
+
+// Where a card trades often, its best offers are removed from the sold results
+// altogether — list, stats and chart. With enough auction and listing-price
+// sales to read the card from, an offer adds a number we know is wrong (the
+// ask) and nothing else. Where the card is rare, an offer may be the only
+// price there is, so it stays (and is still kept out of averages while any
+// other sale exists). "The card" is its version when the search is grouped by
+// checklist version, and the whole result set otherwise.
+const OFFER_DROP_MIN_SALES = 3;
+let _offerCountsMemo = null;
+function _offerGroupKey(r) {
+  if (_versionCtx) { const v = _versionOf(r); if (v) return v.key; }
+  return '*';
+}
+function _offerDropped(r) {
+  if (!_isBestOffer(r) || currentMode !== 'sold') return false;
+  const src = currentResults;
+  if (!_offerCountsMemo || _offerCountsMemo.src !== src || _offerCountsMemo.n !== src.length
+      || _offerCountsMemo.ctx !== _versionCtx) {
+    const counts = new Map();
+    for (const x of src) {
+      if (_isBestOffer(x)) continue;
+      const k = _offerGroupKey(x);
+      counts.set(k, (counts.get(k) || 0) + 1);
+      if (k !== '*') counts.set('*', (counts.get('*') || 0) + 1);
+    }
+    _offerCountsMemo = { src, n: src.length, ctx: _versionCtx, counts };
+  }
+  return (_offerCountsMemo.counts.get(_offerGroupKey(r)) || 0) >= OFFER_DROP_MIN_SALES;
+}
+const _withoutDroppedOffers = (results) => results.filter(r => !_offerDropped(r));
+
 function renderStatsBar(results, isSold) {
-  const prices = results.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
+  // If every sale was a best offer there is nothing better to show; say so.
+  const offers = isSold ? results.filter(_isBestOffer).length : 0;
+  const counted = offers && offers < results.length ? results.filter(r => !_isBestOffer(r)) : results;
+  const prices = counted.map(r => parseFloat(r.price)).filter(p => !isNaN(p));
   if (prices.length === 0) return;
 
   const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
   const minP = Math.min(...prices);
   const maxP = Math.max(...prices);
+  const offerNote = !offers ? ''
+    : counted === results ? ' <span class="stat-note">(best offers only)</span>'
+    : ` <span class="stat-note" title="Best offers are shown in the list but left out of the average, low and high: eBay publishes the asking price, not what was paid">(${offers} best offer${offers === 1 ? '' : 's'} excluded)</span>`;
 
   const statsEl = document.createElement('div');
   statsEl.className = 'stats-bar';
@@ -2290,7 +2333,7 @@ function renderStatsBar(results, isSold) {
       <span class="stat-value">${results.length}</span>
     </div>
     <div class="stat-item">
-      <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}</span>
+      <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}${offerNote}</span>
       <span class="stat-value">$${avg.toFixed(2)}</span>
     </div>
     <div class="stat-item">
@@ -2435,7 +2478,7 @@ async function performSearch(query, opts = {}) {
 
     // Stats bar
     if (results.length > 0) {
-      renderStatsBar(results, isSold);
+      renderStatsBar(isSold ? _withoutDroppedOffers(results) : results, isSold);
       sortControls.classList.remove('hidden');
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
       document.querySelector('.sort-btn[data-sort="default"]').classList.add('active');
@@ -2471,7 +2514,7 @@ async function performSearch(query, opts = {}) {
       }
     } else {
       if (isSold) {
-        renderGradeGroups(grid, results);
+        renderGradeGroups(grid, _withoutDroppedOffers(results));
       } else {
         results.forEach((item, i) => {
           const card = buildCard(item);
@@ -2489,7 +2532,7 @@ async function performSearch(query, opts = {}) {
         if (_forsalePaging.hasMore) addForsaleLoadMore(grid);
       }
       if (isSold) {
-        updatePriceChart(results);
+        updatePriceChart(_withoutDroppedOffers(results));
         loadGradePanel(query);
         buildGradeFilter();
         buildParallelFilter(query);
@@ -3204,10 +3247,14 @@ function _buildVersionCard({ v, items }) {
   // than doubled a Silver's average. With no grade chosen, the headline is the
   // raw average and the slabs are counted beside it; choosing a grade chip
   // restates every card for that grade.
+  // Best offers are counted as sales but priced as nothing: the figure we hold
+  // for one is the seller's ask (see _isBestOffer).
   const isRaw = (r) => detectGrade(r.title) === 'Raw / Ungraded';
-  const raw = items.filter(isRaw);
-  const graded = items.length - raw.length;
-  const priced = (currentGradeFilter === 'all' && raw.length) ? raw : items;
+  const offers = items.filter(_isBestOffer).length;
+  const clean = offers < items.length ? items.filter(r => !_isBestOffer(r)) : items;
+  const raw = clean.filter(isRaw);
+  const graded = clean.length - raw.length;
+  const priced = (currentGradeFilter === 'all' && raw.length) ? raw : clean;
   const prices = priced.map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
   const avg = prices.length ? prices.reduce((a, p) => a + p, 0) / prices.length : 0;
   const avgLabel = priced === raw && graded ? 'avg raw' : 'avg';
@@ -3236,7 +3283,7 @@ function _buildVersionCard({ v, items }) {
       <p class="card-title">${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}</p>
       <p class="card-price">${avg ? `$${avg.toFixed(2)}` : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
       <div class="card-meta">
-        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}</span>
+        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
         ${prices.length > 1 ? `<span class="card-condition">median $${median.toFixed(2)} &middot; $${prices[0].toFixed(0)}&ndash;$${prices[prices.length - 1].toFixed(0)}</span>` : ''}
       </div>
     </div>`;
@@ -3299,7 +3346,7 @@ async function _resolveParallelVocab(query) {
 // `skip` leaves one filter out, which is how each chip row gets counts for
 // the pool it is actually choosing between.
 function _filterResults(skip) {
-  let results = currentResults;
+  let results = _withoutDroppedOffers(currentResults);
   if (skip !== 'grade' && currentGradeFilter !== 'all') {
     results = results.filter(r => detectGrade(r.title) === currentGradeFilter);
   }
@@ -3548,8 +3595,9 @@ async function fetchMoreFromServer(grid) {
     const response = await fetch(`/api/search?${params}`);
     const data = await safeJson(response);
     if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
-    const more = Array.isArray(data.results) ? data.results : [];
-    if (more.length === 0) {
+    // The same best-offer rule as the first page, counted against it.
+    const more = (Array.isArray(data.results) ? data.results : []).filter(r => !_offerDropped(r));
+    if (more.length === 0 && !data.hasMore) {
       _searchPaging.hasMore = false;
     } else {
       _searchPaging.offset = nextOffset;

@@ -86,5 +86,47 @@ check('the versions container is on the page and styled',
   /id="version-groups"/.test(fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8'))
   && /\.version-grid\s*\{/.test(fs.readFileSync(path.join(ROOT, 'public', 'style.css'), 'utf8')));
 
+// Best offers: shown in the comps, left out of every average. The figure held
+// for an accepted offer is the seller's ask, not what was paid.
+{
+  const i = src.indexOf('const _isBestOffer');
+  const pred = i > 0 ? src.slice(i, src.indexOf('\n', i)) : '';
+  const c2 = { console }; vm.createContext(c2);
+  if (pred) vm.runInContext(pred + '\nthis.f = _isBestOffer;', c2);
+  check('a best offer is recognised, and nothing else is',
+    !!c2.f && c2.f({ saleType: 'offer' }) === true && c2.f({ saleType: 'auction' }) === false
+    && c2.f({}) === false && c2.f(null) === false, pred || 'missing');
+  const statsFn = src.slice(src.indexOf('function renderStatsBar'), src.indexOf('function renderStatsBar') + 900);
+  check('  ...and the value stats average without them',
+    /results\.filter\(r => !_isBestOffer\(r\)\)/.test(statsFn) && /counted\.map\(r => parseFloat\(r\.price\)\)/.test(statsFn));
+  const verFn = src.slice(src.indexOf('function _buildVersionCard'), src.indexOf('function _buildVersionCard') + 1400);
+  check('  ...and so does each version card',
+    /items\.filter\(r => !_isBestOffer\(r\)\)/.test(verFn) && /const raw = clean\.filter/.test(verFn));
+}
+
+// Busy cards lose their best offers altogether; rare ones keep them.
+{
+  const a = src.indexOf('const _isBestOffer'), b = src.indexOf('const _withoutDroppedOffers');
+  const e = src.indexOf('\n', b);
+  check('the best-offer rule is where this check expects it', a > 0 && b > a, `start=${a} end=${b}`);
+  const c3 = { console, currentMode: 'sold', currentResults: [], _versionCtx: null };
+  vm.createContext(c3);
+  vm.runInContext('var currentMode = this.currentMode, currentResults = [], _versionCtx = null;\n'
+    + 'function _versionOf(r) { return r.v ? { key: r.v } : null; }\n'
+    + src.slice(a, e) + '\nthis.drop = _offerDropped; this.set = (r, ctx) => { currentResults = r; _versionCtx = ctx; };', c3);
+  const sale = (v, offer) => ({ v, saleType: offer ? 'offer' : 'auction' });
+  const busyOffer = sale('silver', true), rareOffer = sale('gold', true);
+  const pool = [sale('silver'), sale('silver'), sale('silver'), busyOffer, rareOffer, sale('base')];
+  c3.set(pool, { grouped: true });
+  check('grouped: a version with 3+ other sales drops its best offers, a rare one keeps them',
+    c3.drop(busyOffer) === true && c3.drop(rareOffer) === false && c3.drop(pool[0]) === false,
+    `silver offer dropped=${c3.drop(busyOffer)}, gold offer dropped=${c3.drop(rareOffer)}`);
+  c3.set([sale(null), sale(null), sale(null), sale(null, true)], null);
+  const flatOffer = c3.drop(sale(null, true));
+  c3.set([sale(null), sale(null, true)], null);
+  check('  ...and ungrouped, the whole result set is the card',
+    flatOffer === true && c3.drop(sale(null, true)) === false);
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sold-versions checks passed');
 process.exit(failures ? 1 : 0);
