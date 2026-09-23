@@ -449,7 +449,8 @@ const check = (label, ok, detail) => {
       // week across all their cards, too thin for daily points.
       for (const who of ['Star 0', 'Star 5', 'Star 20', 'Star 60', 'Star 150', 'Star 400']) {
         const pr = await call(`/api/player-index?days=30&player=${encodeURIComponent(who)}`);
-        const got = pr.body.available ? `${(pr.body.series || []).length}pts` : pr.body.reason;
+        const got = pr.body.available
+          ? `${(pr.body.series || []).length}pts${pr.body.estimated ? '~est' : ''}` : pr.body.reason;
         playerOutcome.set(who, (playerOutcome.get(who) || []).concat(got));
         if (pr.body.available) playerReadings.push(pr.body.changePct);
       }
@@ -502,14 +503,18 @@ const check = (label, ok, detail) => {
           && playerReadings.every(v => Math.abs(v) <= 15),
           `mean |reading| ${playerMean.toFixed(1)}pp, largest ${Math.max(...playerReadings.map(Math.abs))}pp `
           + `over ${playerReadings.length} player readings`);
-    // Busy players get a point per day; one trading a few times a week gets
-    // no number at all rather than a shaky one.
+    // Busy players get a measured point per day. One trading a few times a
+    // week gets an estimate — windows reaching back for enough sales, flagged
+    // so the page says so — or, where even that cannot separate a first window
+    // from a last, no number. Never an unflagged number. (Its estimates are in
+    // the mean and the 15pp bound above.)
     const drawn = ['Star 0', 'Star 5', 'Star 20'].every(w =>
       (playerOutcome.get(w) || []).length && playerOutcome.get(w).every(x => /^\d+pts$/.test(x) && parseInt(x, 10) >= 20));
-    const declined = (playerOutcome.get('Star 400') || []).length
-      && playerOutcome.get('Star 400').every(x => x === 'not enough sales for a reliable reading');
-    check('  ...busy players get daily points, a thin one gets no number rather than a shaky one',
-          drawn && declined,
+    const thinOk = (playerOutcome.get('Star 400') || []).length
+      && playerOutcome.get('Star 400').every(x => /~est$/.test(x) || x === 'not enough sales for a reliable reading')
+      && playerOutcome.get('Star 400').some(x => /~est$/.test(x));
+    check('  ...busy players get measured daily points, a thin one an estimate flagged as one',
+          drawn && thinOk,
           [...playerOutcome].map(([w, xs]) => `${w}: ${xs.join('/')}`).join(', '));
     check('  ...drawn one point per day',
           geometry && geometry.bucketDays === 1 && geometry.points === 31,
@@ -566,6 +571,38 @@ const check = (label, ok, detail) => {
     check('  ...and a market trading one day in four falls back to weekly points',
           sparseBuckets.size === 1 && sparseBuckets.has(7),
           `bucket sizes used: ${[...sparseBuckets].join(', ') || 'none'}`);
+  }
+
+  // A player whose newest days were never collected. Live, every 7-day player
+  // view said "not enough sales" because the last two days before the lag had
+  // nothing in them. The period now ends on the last day that can be read,
+  // says so, and flags the number as estimated; the rise still reads as one.
+  {
+    const dbE = new DatabaseSync(':memory:');
+    salesTable(dbE);
+    dbE.exec('BEGIN');
+    const insE = dbE.prepare(`INSERT INTO sales
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?)`);
+    let e = 0;
+    for (let c = 0; c < 6; c++) {
+      for (let d = -40; d <= -1; d++) {
+        if (d >= -4 && d <= -2) continue;            // three uncollected days
+        for (let k = 0; k < 2; k++) {
+          insE.run(`e${e++}`, iso(d), '2023 Prizm Base', Math.round(10000 * Math.pow(1.2, (d + 40) / 40)),
+                   'Gap Guy', '2023', 'Prizm', `Var${c}`, '', '', 0.9);
+        }
+      }
+    }
+    // One lone sale on the newest day, the way a partial collection looks.
+    insE.run(`e${e++}`, iso(0), '2023 Prizm Base', 12000, 'Gap Guy', '2023', 'Prizm', 'Var0', '', '', 0.9);
+    dbE.exec('COMMIT');
+    use(dbE);
+    const r7 = await call('/api/player-index?player=Gap%20Guy&days=7');
+    check('a player whose newest days are missing still gets a 7-day number, flagged as estimated',
+          r7.body.available && r7.body.estimated === true && r7.body.shiftedDays > 0 && r7.body.changePct > 0,
+          r7.body.available ? `changePct=${r7.body.changePct}% through ${r7.body.through}, shifted ${r7.body.shiftedDays}d`
+                            : `reason=${r7.body.reason}`);
   }
 
   // The same sales in a different order must give the same number.
