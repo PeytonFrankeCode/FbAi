@@ -5192,6 +5192,9 @@ function _rsiPayloadAt(byBucket, throughIso, days, bucketDays, points, tier, ext
       date: _mkIso(through - s.bucket * bucketDays),
       score: round1(level),
       matched: s.players,
+      // An unmeasured step carries the typical move (see above): an estimate,
+      // and the chart draws it as one.
+      ...(s.thin ? { estimated: true } : {}),
     });
   }
 
@@ -8915,7 +8918,8 @@ app.get('/api/market-index', async (req, res) => {
 
 // v3: grouping moved into SQL. v2 keys are left behind deliberately — they
 // hold payloads from the build that tripped the Worker CPU limit.
-const _marketIndexKey = (days) => `marketindex:v4:${MARKET_CALC_SIG}:${days}`;
+// v5: unmeasured steps carry `estimated: true` in the series, for the chart.
+const _marketIndexKey = (days) => `marketindex:v5:${MARKET_CALC_SIG}:${days}`;
 
 // The whole-market index, computed. Returns the payload rather than writing a
 // response so the cron can build it too — see warmMarket.
@@ -9061,9 +9065,9 @@ app.get('/api/player-index', async (req, res) => {
   // v4: carries MARKET_CALC_SIG like the market keys. Entries are now kept for
   // two days and served stale while they rebuild, so a key that survived a
   // change to the maths would keep showing the old answer. v5: daily points;
-  // v6: a price-level trend instead of the chained index. Neither changes
-  // MARKET_CALC_SIG, so each needs its own bump.
-  res.json(await _marketCached(`playerindex:v6:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
+  // v6: a price-level trend instead of the chained index; v7: estimated
+  // points. None of them changes MARKET_CALC_SIG, so each needs its own bump.
+  res.json(await _marketCached(`playerindex:v7:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
     () => _computePlayerIndex(db, days, player)));
 });
 
@@ -9094,12 +9098,28 @@ app.get('/api/player-index', async (req, res) => {
 const PLAYER_TREND_MIN_CARD_DAYS = 3;     // a card must trade on this many days to say anything
 function _playerTrendWindow(days) { return days >= 90 ? 14 : days >= 30 ? 7 : 3; }
 const PLAYER_TREND_MIN_WINDOW = 8;        // card-days needed in a window for it to count
+// ESTIMATED POINTS. Collection gaps leave whole days with no sales, and at the
+// end of the data (the collector's lag plus any uncollected days) a player's
+// last few days are routinely empty — which made every 7-day player view say
+// "not enough sales". Two relaxations, both flagged `estimated` so the page
+// can draw them as estimates rather than measurements:
+//  - a window short of sales reaches back further, up to this many times its
+//    width, for the sales it needs;
+//  - the period may end up to two window-widths earlier than the newest data,
+//    on the last day that had sales and can be measured (the page shows
+//    `through`).
+// What is never done is compare a window with itself: if the first and last
+// windows would overlap, there is no trend to read and the player gets none.
+const PLAYER_TREND_MAX_WIDEN = 2;
+
+// Read far enough back for the first window to widen and the period to shift.
+function _playerTrendLookback(days) { return days + _playerTrendWindow(days) * (PLAYER_TREND_MAX_WIDEN + 1); }
 
 async function _playerTrendQuery(db, throughIso, days, player) {
   const noOffer = await _noBestOfferSql(db);
-  // Only the period is read: nothing here pairs a sale with an earlier one.
-  // Passing the period start as the look-back empties the pre-period pass.
-  const periodIso = _mkIso(_mkDay(throughIso) - days);
+  // Only this span is read: nothing here pairs a sale with an earlier one.
+  // Passing the span start as the look-back empties the pre-period pass.
+  const periodIso = _mkIso(_mkDay(throughIso) - _playerTrendLookback(days));
   const P = _normCol('player');
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER: P, CARD: _cardKeySql(P), P, JOIN: '', ALIAS_FILTER: '', noOffer,
@@ -9112,10 +9132,10 @@ async function _playerTrendQuery(db, throughIso, days, player) {
 function _playerTrendPayload(rows, throughIso, days, player) {
   const round1 = (n) => Math.round(n * 10) / 10;
   const W = _playerTrendWindow(days);
-  const through = _mkDay(throughIso);
-  const start = through - days + 1;             // first day of the period
+  const maxW = W * PLAYER_TREND_MAX_WIDEN;
+  const newest = _mkDay(throughIso);
 
-  // card -> [{ day, logp }], one entry per card-day (same-day sales averaged).
+  // card -> [{ day, logp, n }], one entry per card-day (same-day sales averaged).
   const byCard = new Map();
   for (const r of rows || []) {
     const n = Number(r.c), sum = Number(r.s);
@@ -9139,42 +9159,74 @@ function _playerTrendPayload(rows, throughIso, days, player) {
     cards++;
     for (const x of list) { entries.push({ day: x.day, rel: x.logp - ref }); sales += x.n; }
   }
-  const levelAt = (endDay) => {
-    const win = entries.filter(e => e.day > endDay - W && e.day <= endDay).map(e => e.rel);
-    return win.length >= PLAYER_TREND_MIN_WINDOW ? { level: median(win), n: win.length } : null;
+  const inWin = (from, to) => entries.filter(e => e.day >= from && e.day <= to);
+  // The level on `endDay`: the trailing W days, reaching further back (never
+  // before `floor`) until it holds enough to read.
+  const levelAt = (endDay, floor = -Infinity) => {
+    for (let w = W; w <= maxW; w++) {
+      const from = endDay - w + 1;
+      if (from < floor) break;
+      const win = inWin(from, endDay);
+      if (win.length >= PLAYER_TREND_MIN_WINDOW) {
+        return { level: median(win.map(e => e.rel)), n: win.length, from, estimated: w > W };
+      }
+    }
+    return null;
   };
 
-  const first = levelAt(start + W - 1);
-  const last = levelAt(through);
-  if (!first || !last) {
-    const count = (endDay) => entries.filter(e => e.day > endDay - W && e.day <= endDay).length;
+  // The period ends on the newest day that can be measured, trying earlier
+  // ends up to two windows back. For each end, the period keeps its start if
+  // it can (it just gets shorter) or moves back whole. The last window may
+  // reach back for sales but never into the first, which ends W-1 days after
+  // the period starts; the first may reach back before the period, which the
+  // query read for it.
+  let through = null, last = null, first = null, start = null;
+  for (let d = newest; d >= newest - 2 * W && !last; d--) {
+    for (const st of new Set([newest - days + 1, d - days + 1])) {
+      const firstEnd = st + W - 1;
+      const l = levelAt(d, firstEnd + 1);
+      const f = l && levelAt(firstEnd);
+      if (l && f) { through = d; last = l; first = f; start = st; break; }
+    }
+  }
+  if (!last) {
+    const count = (endDay) => inWin(endDay - W + 1, endDay).length;
     return {
       available: false, days, player, reason: 'not enough sales for a reliable reading',
       method: 'player-trend', windowDays: W, needed: PLAYER_TREND_MIN_WINDOW,
-      firstWindow: count(start + W - 1), lastWindow: count(through), through: throughIso,
+      firstWindow: count(newest - days + W), lastWindow: count(newest), through: throughIso,
     };
   }
 
-  // A point per day once the first window is full, where its window holds
-  // enough to measure. Days without one are left out rather than invented.
+  // A point per day from the first window to the last, estimated where its
+  // window had to reach back; a day nothing can be read for is left out.
   const series = [];
+  let estimatedPoints = 0;
   for (let d = start + W - 1; d <= through; d++) {
-    const at = levelAt(d);
-    if (at) series.push({ date: _mkIso(d), score: round1(100 * Math.exp(at.level - first.level)), matched: at.n });
+    const at = d === through ? last : levelAt(d);
+    if (!at) continue;
+    if (at.estimated) estimatedPoints++;
+    series.push({ date: _mkIso(d), score: round1(100 * Math.exp(at.level - first.level)),
+                  matched: at.n, ...(at.estimated ? { estimated: true } : {}) });
   }
   const score = round1(100 * Math.exp(last.level - first.level));
+  const shiftedDays = newest - through;
   return {
     available: true,
     days,
     player,
     unit: 'card',
     method: 'player-trend',
-    through: throughIso,
+    through: _mkIso(through),
     dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - through),
     score: Math.round(score),
     rawScore: score,
     changePct: round1(score - 100),
     windowDays: W,
+    // Set when the headline leans on a reached-back window or an earlier end.
+    estimated: !!(first.estimated || last.estimated || shiftedDays > 0),
+    estimatedPoints,
+    shiftedDays,
     matchedCards: cards,
     cardsPerPlayer: MARKET_CARDS_PER_PLAYER,
     totalObservations: sales,
