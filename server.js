@@ -4569,10 +4569,27 @@ const RSI_BASE_TITLE_TEST = (() => {
   return `NOT ( ${groups.join(' OR ')} )`;
 })();
 
-function _rsiGeometry(days) {
+// `daily` gives the whole-market index one point per day on the longer
+// periods, where weekly steps drew four or five dots across a month. It is
+// safe there because every comparison is already rescaled to a per-bucket rate
+// over its own gap: a one-day step is the same rate raised to a smaller power,
+// so the noise per step shrinks with the step and the headline over the period
+// reads about the same. It is whole-market only — scoped to one player a day
+// holds a handful of comparisons, which the tier gate would mostly refuse.
+const RSI_DAILY_MIN_DAYS = 30;
+function _rsiGeometry(days, daily = false) {
+  if (daily && days >= RSI_DAILY_MIN_DAYS) return { bucketDays: 1, points: days, spanDays: days + 1 };
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
   const points = Math.max(1, Math.round(days / bucketDays));
   return { bucketDays, points, spanDays: (points + 1) * bucketDays };
+}
+
+// The per-bucket clamp was set for a week. Scaled by the bucket width, a day
+// may move at most a seventh of that (as a power), so seven daily steps are
+// bounded exactly as one weekly step is.
+function _rsiBucketBounds(bucketDays) {
+  const k = bucketDays / RSI_MIN_BUCKET_DAYS;
+  return { lo: Math.pow(RSI_BUCKET_MOVE_FLOOR, k), hi: Math.pow(RSI_BUCKET_MOVE_CEIL, k) };
 }
 
 // Every sale paired with that card's previous sale at ANY earlier date, then
@@ -4638,7 +4655,7 @@ const MARKET_CALC_SIG = (() => {
     MARKET_TOP_PLAYERS, MARKET_CARDS_PER_PLAYER, MARKET_MIN_OBS_PER_PLAYER,
     MARKET_EXCLUDE_TRAILING_DAYS, RSI_TARGET_POINTS, RSI_MIN_BUCKET_DAYS,
     RSI_MAX_GAP_DAYS, RSI_RATIO_FLOOR, RSI_RATIO_CEIL,
-    RSI_BUCKET_MOVE_FLOOR, RSI_BUCKET_MOVE_CEIL,
+    RSI_BUCKET_MOVE_FLOOR, RSI_BUCKET_MOVE_CEIL, RSI_DAILY_MIN_DAYS,
     RSI_KEY_COLS.join(','), RSI_RAW_ONLY, RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST,
     _kindSql('s.title'),
     JSON.stringify(RSI_TIERS), JSON.stringify(RSI_TIERS_PLAYER),
@@ -4837,9 +4854,9 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
      )`;
 }
 
-async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false) {
+async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [], unit = 'player', useAlias = false, daily = false) {
   const noOffer = await _noBestOfferSql(db);
-  const { bucketDays, spanDays } = _rsiGeometry(days);
+  const { bucketDays, spanDays } = _rsiGeometry(days, daily);
   // Reach back beyond the window so a sale early in it still has a prior.
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
   // The period itself, which the basket is chosen from.
@@ -4921,7 +4938,14 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
          FROM usable
      )
      SELECT bucket, p, cnt AS n,
-            AVG(CASE WHEN rr IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN ratio END) AS med_ratio,
+            -- The two middle ratios (the same row when cnt is odd), combined in
+            -- JavaScript as a geometric mean. Averaging them here was an
+            -- arithmetic mean of price ratios, which always reads high: 0.8
+            -- and 1.25 average to +2.5% where the market did nothing. Rare
+            -- across a week, it is the common case across one day — a player
+            -- with two comparisons — and read a flat market at +5% a month.
+            MIN(CASE WHEN rr IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN ratio END) AS med_lo,
+            MAX(CASE WHEN rr IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN ratio END) AS med_hi,
             AVG(CASE WHEN rg IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN gap   END) AS med_gap
        FROM ranked
       WHERE cnt >= ${MARKET_MIN_OBS_PER_PLAYER}
@@ -5083,19 +5107,20 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
   return out;
 }
 
-function _buildRepeatSalesPayload(rows, throughIso, days, extra = {}, tiers = RSI_TIERS) {
-  const { bucketDays, points } = _rsiGeometry(days);
+function _buildRepeatSalesPayload(rows, throughIso, days, extra = {}, tiers = RSI_TIERS, daily = false) {
+  const { bucketDays, points } = _rsiGeometry(days, daily);
+  const bounds = _rsiBucketBounds(bucketDays);
   // bucket -> [{ growth, n }] — one entry per player in that bucket.
   const byBucket = new Map();
   const players = new Set();
   for (const r of rows) {
     const b = Number(r.bucket);
-    const ratio = Number(r.med_ratio);
+    const ratio = Math.sqrt(Number(r.med_lo) * Number(r.med_hi));
     const gap = Number(r.med_gap);
     if (!Number.isInteger(b) || b < 0 || !(ratio > 0) || !(gap > 0)) continue;
     let growth = Math.pow(ratio, bucketDays / gap);
     if (!Number.isFinite(growth) || growth <= 0) continue;
-    growth = Math.min(RSI_BUCKET_MOVE_CEIL, Math.max(RSI_BUCKET_MOVE_FLOOR, growth));
+    growth = Math.min(bounds.hi, Math.max(bounds.lo, growth));
     if (!byBucket.has(b)) byBucket.set(b, []);
     byBucket.get(b).push({ growth, n: Number(r.n) || 0, gap });
     players.add(r.p);
@@ -8930,11 +8955,20 @@ async function _computeMarketIndex(db, days) {
 
     // Only groups on canonical names once the table is actually filled.
     const useAlias = await _aliasReady(db);
-    const rows = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias)).all();
+    // Daily points where the period is long enough to want them. If more than
+    // half the days went unmeasured the daily chain cannot be drawn, and the
+    // weekly one — the same sales, pooled seven days at a time — usually can,
+    // so a quiet stretch costs the chart its detail rather than the whole index.
+    // The history gate above stays on the weekly geometry for the same reason.
+    const daily = _rsiGeometry(days, true).bucketDays !== bucketDays;
+    const rows = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias, daily)).all();
     const list = (rows && rows.results) || [];
     if (list.length === 0) return { available: false, days, reason: 'no data in range' };
 
-    return _buildRepeatSalesPayload(list, throughIso, days);
+    const out = _buildRepeatSalesPayload(list, throughIso, days, {}, RSI_TIERS, daily);
+    if (out.available || !daily) return out;
+    const weekly = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias)).all();
+    return _buildRepeatSalesPayload((weekly && weekly.results) || [], throughIso, days);
   } catch (err) {
     console.error('[MarketIndex]', err && err.message);
     return { available: false, days, reason: 'index unavailable', transient: true, error: err && err.message };

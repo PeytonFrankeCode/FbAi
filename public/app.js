@@ -4801,9 +4801,11 @@ function _mkRenderChart(data) {
         borderColor: accent,
         backgroundColor: 'rgba(94, 206, 153, 0.12)',
         borderWidth: 2,
-        pointRadius: 3,
+        // Daily points on the longer periods: 90 dots would read as a bead
+        // chain, so the dots shrink as they multiply and hover still finds one.
+        pointRadius: series.length > 60 ? 0 : series.length > 12 ? 1.5 : 3,
         pointHoverRadius: 6,
-        tension: 0.25,
+        tension: series.length > 12 ? 0.15 : 0.25,
         fill: true,
       }],
     },
