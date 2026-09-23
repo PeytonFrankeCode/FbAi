@@ -658,6 +658,39 @@ const check = (label, ok, detail) => {
           `largest move ${worst}% across ${moves.length} cards`);
   }
 
+  // The collector runs days behind. Live, the 7-day list read "no move" on
+  // every card: its sales sat on four early days of the week and the later
+  // days held none yet, so a calendar half-and-half left one side empty. A card
+  // that traded on four days has a move to report, whatever the calendar.
+  {
+    const dbL = new DatabaseSync(':memory:');
+    salesTable(dbL);
+    dbL.exec('BEGIN');
+    const insL = dbL.prepare(`INSERT INTO sales
+      (item_id, sold_date, title, price_cents, player, year, set_name, parallel, card_number, grader, grade, confidence)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`);
+    let l = 0;
+    for (let p = 0; p < 40; p++) {
+      // Four trading days early in the week, rising; nothing after.
+      [-9, -8, -7, -6].forEach((d, i) => {
+        for (let k = 0; k < 3; k++) {
+          insL.run(`l${l++}`, iso(d), `2024 Prizm Lag ${p} #1 RC`, 10000 + i * 500, `Lag ${p}`,
+                   '2024', 'Prizm', '', '1', '', '', 0.9);
+        }
+      });
+    }
+    // The newest sale in the table, which anchors "through" at day -3.
+    insL.run(`l${l++}`, iso(-2), '2024 Prizm Anchor #1 RC', 10000, 'Anchor', '2024', 'Prizm', '', '1', '', '', 0.9);
+    dbL.exec('COMMIT');
+    use(dbL);
+    const b7 = await call('/api/market-basket?days=7');
+    const cards = (b7.body && b7.body.cards) || [];
+    const moved = cards.filter(c => c.changePct != null);
+    check('a card that traded on four days has a move, even with the week\'s end empty',
+          cards.length > 0 && moved.length === cards.length && moved.every(c => c.changePct > 0),
+          `${moved.length}/${cards.length} cards with a move, e.g. ${cards[0] ? cards[0].label + ' ' + cards[0].changePct + '%' : 'none'}`);
+  }
+
   // Canonical names, end to end: fixture -> backfill -> index.
   //
   // On live data Tom Brady arrives under 80 different spellings and the index
