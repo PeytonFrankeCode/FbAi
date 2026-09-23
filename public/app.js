@@ -2050,7 +2050,7 @@ async function fetchDirectSearch(query) {
 
     // Stats bar
     if (results.length > 0) {
-      renderStatsBar(results, isSold);
+      renderStatsBar(isSold ? _withoutDroppedOffers(results) : results, isSold);
       sortControls.classList.remove('hidden');
       // Reset sort to default
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
@@ -2080,7 +2080,7 @@ async function fetchDirectSearch(query) {
       loadQueryEstimate(query);
     } else {
       if (isSold) {
-        renderGradeGroups(grid, results);
+        renderGradeGroups(grid, _withoutDroppedOffers(results));
       } else {
         results.forEach((item, i) => {
           const card = buildCard(item);
@@ -2095,7 +2095,7 @@ async function fetchDirectSearch(query) {
           addForsaleLoadMore(grid);
         }
       }
-      if (isSold) { updatePriceChart(results); buildGradeFilter(); buildParallelFilter(query); }
+      if (isSold) { updatePriceChart(_withoutDroppedOffers(results)); buildGradeFilter(); buildParallelFilter(query); }
     }
 
     backBtn.classList.remove('hidden');
@@ -2280,6 +2280,37 @@ function buildSimilarEstimateSection(est, query) {
 // server applies to the market index and boards (_noBestOfferSql).
 const _isBestOffer = (r) => !!(r && r.saleType === 'offer');
 
+// Where a card trades often, its best offers are removed from the sold results
+// altogether — list, stats and chart. With enough auction and listing-price
+// sales to read the card from, an offer adds a number we know is wrong (the
+// ask) and nothing else. Where the card is rare, an offer may be the only
+// price there is, so it stays (and is still kept out of averages while any
+// other sale exists). "The card" is its version when the search is grouped by
+// checklist version, and the whole result set otherwise.
+const OFFER_DROP_MIN_SALES = 3;
+let _offerCountsMemo = null;
+function _offerGroupKey(r) {
+  if (_versionCtx) { const v = _versionOf(r); if (v) return v.key; }
+  return '*';
+}
+function _offerDropped(r) {
+  if (!_isBestOffer(r) || currentMode !== 'sold') return false;
+  const src = currentResults;
+  if (!_offerCountsMemo || _offerCountsMemo.src !== src || _offerCountsMemo.n !== src.length
+      || _offerCountsMemo.ctx !== _versionCtx) {
+    const counts = new Map();
+    for (const x of src) {
+      if (_isBestOffer(x)) continue;
+      const k = _offerGroupKey(x);
+      counts.set(k, (counts.get(k) || 0) + 1);
+      if (k !== '*') counts.set('*', (counts.get('*') || 0) + 1);
+    }
+    _offerCountsMemo = { src, n: src.length, ctx: _versionCtx, counts };
+  }
+  return (_offerCountsMemo.counts.get(_offerGroupKey(r)) || 0) >= OFFER_DROP_MIN_SALES;
+}
+const _withoutDroppedOffers = (results) => results.filter(r => !_offerDropped(r));
+
 function renderStatsBar(results, isSold) {
   // If every sale was a best offer there is nothing better to show; say so.
   const offers = isSold ? results.filter(_isBestOffer).length : 0;
@@ -2447,7 +2478,7 @@ async function performSearch(query, opts = {}) {
 
     // Stats bar
     if (results.length > 0) {
-      renderStatsBar(results, isSold);
+      renderStatsBar(isSold ? _withoutDroppedOffers(results) : results, isSold);
       sortControls.classList.remove('hidden');
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
       document.querySelector('.sort-btn[data-sort="default"]').classList.add('active');
@@ -2483,7 +2514,7 @@ async function performSearch(query, opts = {}) {
       }
     } else {
       if (isSold) {
-        renderGradeGroups(grid, results);
+        renderGradeGroups(grid, _withoutDroppedOffers(results));
       } else {
         results.forEach((item, i) => {
           const card = buildCard(item);
@@ -2501,7 +2532,7 @@ async function performSearch(query, opts = {}) {
         if (_forsalePaging.hasMore) addForsaleLoadMore(grid);
       }
       if (isSold) {
-        updatePriceChart(results);
+        updatePriceChart(_withoutDroppedOffers(results));
         loadGradePanel(query);
         buildGradeFilter();
         buildParallelFilter(query);
@@ -3315,7 +3346,7 @@ async function _resolveParallelVocab(query) {
 // `skip` leaves one filter out, which is how each chip row gets counts for
 // the pool it is actually choosing between.
 function _filterResults(skip) {
-  let results = currentResults;
+  let results = _withoutDroppedOffers(currentResults);
   if (skip !== 'grade' && currentGradeFilter !== 'all') {
     results = results.filter(r => detectGrade(r.title) === currentGradeFilter);
   }
@@ -3564,8 +3595,9 @@ async function fetchMoreFromServer(grid) {
     const response = await fetch(`/api/search?${params}`);
     const data = await safeJson(response);
     if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
-    const more = Array.isArray(data.results) ? data.results : [];
-    if (more.length === 0) {
+    // The same best-offer rule as the first page, counted against it.
+    const more = (Array.isArray(data.results) ? data.results : []).filter(r => !_offerDropped(r));
+    if (more.length === 0 && !data.hasMore) {
       _searchPaging.hasMore = false;
     } else {
       _searchPaging.offset = nextOffset;
