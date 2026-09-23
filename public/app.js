@@ -4643,6 +4643,14 @@ async function loadMarketIndex() {
            + `${_mkPlayer ? `, and ${who} hasn't had enough of those` : ''}.`
            + `${data.playersInBestStep != null ? ` It found ${data.playersInBestStep} of the ${data.topPlayers || 125} tracked players and needs ${data.minPlayers}.` : ''}`
            + ` Try a longer period, or check back as more sales are collected.`;
+    } else if (data && data.reason === 'not enough sales for a reliable reading') {
+      // A player's number compares their first and last weeks, and one of the
+      // two had too few sales to pin down. Saying so beats printing a figure
+      // two or three sales could swing by half.
+      title = 'Not enough sales for a reliable number';
+      text = `${who} needs at least ${data.needed || 8} sales days across their cards in both the first and last ${data.windowDays || 7} days of the period`
+           + `${data.firstWindow != null ? ` (it had ${data.firstWindow} and ${data.lastWindow})` : ''}.`
+           + ` Try a longer period, or check back as more sales are collected.`;
     } else if (noPlayer) {
       title = 'No sales on record';
       text = `We don't hold any priced sales for ${who} yet.`;
@@ -4667,6 +4675,12 @@ async function loadMarketIndex() {
   const v = _mkVerdict(data.score);
   const who = _mkPlayer ? escHtml(_mkPlayer) : 'the market';
   const up = (data.changePct || 0) >= 0;
+  // A player is measured as a price level, the last few days against the
+  // first few (see _playerTrendPayload); the market as a chained index. The
+  // page says which, so the number means what it reads as.
+  const trend = data.method === 'player-trend';
+  const W = data.windowDays || 7;
+  const span = trend ? `last ${W} days vs first ${W}` : `over ${data.days} days`;
 
   body.innerHTML = `
     <div class="market-score-card ${v.cls}">
@@ -4674,18 +4688,29 @@ async function loadMarketIndex() {
         <div class="market-score-num">${data.score}</div>
         <div class="market-score-side">
           <div class="market-verdict">${v.label}</div>
-          <div class="market-score-note">${up ? '+' : ''}${data.changePct}% over ${data.days} days${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
+          <div class="market-score-note">${up ? '+' : ''}${data.changePct}% ${span}${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
         </div>
       </div>
-      <p class="market-score-explain">100 means ${who} is flat. This tracks what cards are <strong>worth</strong>, not how many changed hands &mdash; each card is compared only against its own earlier sales.</p>
+      <p class="market-score-explain">100 means ${who} is flat. This tracks what cards are <strong>worth</strong>, not how many changed hands &mdash; each card is compared only against ${trend ? 'its own typical price' : 'its own earlier sales'}.</p>
     </div>
 
     <div class="market-components">
       <div class="market-comp">
         <div class="market-comp-head"><span class="market-comp-label">Price change</span></div>
         <div class="market-comp-value ${up ? 'up' : 'down'}">${up ? '+' : ''}${data.changePct}%</div>
-        <div class="market-comp-prev">median across matched cards</div>
+        <div class="market-comp-prev">${trend ? span : 'median across matched cards'}</div>
       </div>
+      ${trend ? `
+      <div class="market-comp">
+        <div class="market-comp-head"><span class="market-comp-label">Cards tracked</span></div>
+        <div class="market-comp-value">${data.matchedCards || 0}</div>
+        <div class="market-comp-prev">of their ${data.cardsPerPlayer || 10} most-traded</div>
+      </div>
+      <div class="market-comp">
+        <div class="market-comp-head"><span class="market-comp-label">Sales used</span></div>
+        <div class="market-comp-value">${(data.totalObservations || 0).toLocaleString('en-US')}</div>
+        <div class="market-comp-prev">across the period</div>
+      </div>` : `
       <div class="market-comp">
         <div class="market-comp-head"><span class="market-comp-label">Players reporting</span></div>
         <div class="market-comp-value">${(data.matchedCards || 0).toLocaleString('en-US')}</div>
@@ -4695,7 +4720,7 @@ async function loadMarketIndex() {
         <div class="market-comp-head"><span class="market-comp-label">Resale gap</span></div>
         <div class="market-comp-value">${data.typicalGapDays != null ? data.typicalGapDays + 'd' : '—'}</div>
         <div class="market-comp-prev">typical gap between the two sales</div>
-      </div>
+      </div>`}
     </div>
 
     <div class="market-basket" id="market-basket">
@@ -4717,9 +4742,11 @@ async function loadMarketIndex() {
     </div>
 
     <div class="market-notes">
-      <p><strong>How it works.</strong> The index tracks the ${data.topPlayers || 600} most actively traded players, and for each of them the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Parallels, autographs, relics and numbered cards are left out: a Refractor or a /99 is its own market, and the hardest thing in a listing title to read reliably. Where a card sold more than once on a day, those sales are averaged into one price for that day first. Each price is then compared with what that same card last sold for, converted to a per-day rate over its own gap so a card reappearing after months isn't mistaken for a one-day move. Each player contributes one number however many of their cards sold, and the market is the average across players.</p>
+      ${trend ? `<p><strong>How it works.</strong> ${who}'s number follows the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Every sale is compared with that card's own typical price over the period, so a $10 base and a $200 rookie can share one line, and the level on each day is the middle of those comparisons over the ${W} days before it. The headline is the last ${W} days against the first ${W}. Nothing is carried from one day to the next, so a noisy day moves one point and nothing after it, and a day with no sales has no point rather than an invented one. A player without enough sales at both ends gets no number at all.</p>` : `<p><strong>How it works.</strong> The index tracks the ${data.topPlayers || 600} most actively traded players, and for each of them the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Parallels, autographs, relics and numbered cards are left out: a Refractor or a /99 is its own market, and the hardest thing in a listing title to read reliably. Where a card sold more than once on a day, those sales are averaged into one price for that day first. Each price is then compared with what that same card last sold for, converted to a per-day rate over its own gap so a card reappearing after months isn't mistaken for a one-day move. Each player contributes one number however many of their cards sold, and the market is the average across players.</p>`}
       <p><strong>Raw cards only.</strong> Graded sales are left out entirely. A slab's price is partly the grade's price &mdash; a PSA 10 and a PSA 9 of the same card are different assets that move on population reports and grading turnaround as much as on the card itself &mdash; so mixing them in blurs what the card did. Listings whose grade we couldn't read are excluded too if anything in the title suggests a slab, which means the odd genuinely raw card is dropped. That is the safer error: a lost sale costs a little sample, a stray slab costs the number.</p>
-      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded raw base cards, matched on year, set and card number. A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}. Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
+      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded raw base cards, matched on year, set and card number. ${trend
+        ? `It rests on ${data.matchedCards || 0} card${data.matchedCards === 1 ? '' : 's'} and ${(data.totalObservations || 0).toLocaleString('en-US')} sales across the period.`
+        : `A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}.`} Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
       ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Heads up.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had too few matched cards to measure, so the line is held flat there. It is smoother than the market actually was.</p>` : ''}
       ${data.tier && data.tier !== 'strict' ? `<p class="market-warn"><strong>Wider sample.</strong> There weren't enough exact repeat sales in this period, so the index looked back over a ${data.valueWindow}-day window per card to find them. Treat it as directional.</p>` : ''}
     </div>
@@ -4838,7 +4865,8 @@ function _mkRenderChart(data) {
     const vs = pt.score >= 100 ? 'above' : 'below';
     return `<span class="chart-readout-date">${_mkDateLabel(pt.date)}</span>`
       + `<span class="chart-readout-value">Index ${pt.score}</span>`
-      + `<span class="chart-readout-note">${Math.abs(Math.round((pt.score - 100) * 10) / 10)}% ${vs} its previous ${data.days} days</span>`;
+      + `<span class="chart-readout-note">${Math.abs(Math.round((pt.score - 100) * 10) / 10)}% ${vs} ${data.method === 'player-trend'
+          ? `the first ${data.windowDays || 7} days of the period` : `its previous ${data.days} days`}</span>`;
   });
 }
 

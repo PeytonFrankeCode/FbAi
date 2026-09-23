@@ -433,7 +433,7 @@ const check = (label, ok, detail) => {
     // Seeded, so a failure is a regression rather than an unlucky day.
     const draws = [];
     let width = 0, perPoint = 0, obs = 0, sales = 0, flatBasket = [], geometry = null;
-    const playerDaily = [], playerBuckets = new Map();
+    const playerReadings = [], playerOutcome = new Map();
     for (const seed of [20260822, 19870401, 20240915]) {
       const built = flatMarket(seed);
       sales = built.sales;
@@ -449,9 +449,9 @@ const check = (label, ok, detail) => {
       // week across all their cards, too thin for daily points.
       for (const who of ['Star 0', 'Star 5', 'Star 20', 'Star 60', 'Star 150', 'Star 400']) {
         const pr = await call(`/api/player-index?days=30&player=${encodeURIComponent(who)}`);
-        if (!pr.body.available) continue;
-        playerBuckets.set(who, (playerBuckets.get(who) || new Set()).add(pr.body.bucketDays));
-        if (pr.body.bucketDays === 1) playerDaily.push(pr.body.changePct);
+        const got = pr.body.available ? `${(pr.body.series || []).length}pts` : pr.body.reason;
+        playerOutcome.set(who, (playerOutcome.get(who) || []).concat(got));
+        if (pr.body.available) playerReadings.push(pr.body.changePct);
       }
       const b = await call('/api/market-basket?days=30');
       flatBasket = flatBasket.concat(((b.body && b.body.cards) || []).map(c => c.changePct).filter(v => v != null));
@@ -487,21 +487,30 @@ const check = (label, ok, detail) => {
     // drawn one day at a time, still reads close to nothing. Averaging the two
     // middle ratios arithmetically once read it at +5% a month, entirely from
     // players with two comparisons in a day.
-    // One player is a far smaller sample than the market, so their reading on
-    // a flat market is wider — but daily points make it steadier, not noisier.
-    // Measured on these draws: mean |reading| 9.7pp daily against 19.5pp with
-    // the same players forced onto weekly steps, so this bound catches the
-    // player index going back to weekly while leaving room over what it reads.
-    const playerMean = playerDaily.length
-      ? playerDaily.reduce((a, v) => a + Math.abs(v), 0) / playerDaily.length : Infinity;
-    check('  ...and a busy player on it, drawn daily, reads steadier than weekly did',
-          playerDaily.length >= 12 && playerMean <= 13,
-          `mean |reading| ${playerMean.toFixed(1)}pp over ${playerDaily.length} player readings`);
-    const busy = ['Star 0', 'Star 5', 'Star 20'].every(w => playerBuckets.has(w) && playerBuckets.get(w).has(1));
-    const thin = playerBuckets.has('Star 400') && [...playerBuckets.get('Star 400')].every(x => x === 7);
-    check('  ...busy players get daily points, a thin one falls back to weekly',
-          busy && thin,
-          [...playerBuckets].map(([w, set]) => `${w}: ${[...set].join('/')}d`).join(', '));
+    // One player is a far smaller sample than the market. Their number was
+    // once the market's chained index scoped to them, and on this flat market
+    // it wandered: mean |reading| 9.7pp drawn daily, 19.5pp weekly, with single
+    // readings past +100%. Live, it put Fernando Mendoza at -53% while his main
+    // card was down 12%. A player is now read as a price level — each card
+    // against its own typical price, the last week against the first — which
+    // reads 3.0pp here (3.5pp with the live data's 14 missing days). The bound
+    // catches a return to chaining with room over what it reads.
+    const playerMean = playerReadings.length
+      ? playerReadings.reduce((a, v) => a + Math.abs(v), 0) / playerReadings.length : Infinity;
+    check('  ...and a player on it reads close to nothing too',
+          playerReadings.length >= 12 && playerMean <= 6
+          && playerReadings.every(v => Math.abs(v) <= 15),
+          `mean |reading| ${playerMean.toFixed(1)}pp, largest ${Math.max(...playerReadings.map(Math.abs))}pp `
+          + `over ${playerReadings.length} player readings`);
+    // Busy players get a point per day; one trading a few times a week gets
+    // no number at all rather than a shaky one.
+    const drawn = ['Star 0', 'Star 5', 'Star 20'].every(w =>
+      (playerOutcome.get(w) || []).length && playerOutcome.get(w).every(x => /^\d+pts$/.test(x) && parseInt(x, 10) >= 20));
+    const declined = (playerOutcome.get('Star 400') || []).length
+      && playerOutcome.get('Star 400').every(x => x === 'not enough sales for a reliable reading');
+    check('  ...busy players get daily points, a thin one gets no number rather than a shaky one',
+          drawn && declined,
+          [...playerOutcome].map(([w, xs]) => `${w}: ${xs.join('/')}`).join(', '));
     check('  ...drawn one point per day',
           geometry && geometry.bucketDays === 1 && geometry.points === 31,
           geometry ? `bucket ${geometry.bucketDays}d, ${geometry.points} points` : 'index unavailable');
@@ -634,7 +643,10 @@ const check = (label, ok, detail) => {
       const who = `Star ${p2}`;
       for (let c = 0; c < 3; c++) {
         const num = String(300 + c);
-        for (let d = -30; d <= -2; d += 4) {
+        // Every other day: a player's number needs enough card-days in its first
+        // and last week to read (PLAYER_TREND_MIN_WINDOW), and every fourth day
+        // left three cards with six.
+        for (let d = -30; d <= -2; d += 2) {
           const px = Math.round(10000 * Math.pow(1.1, (d + 30) / 30));
           // The real thing: a base card, column blank, title plain.
           sellI(who, '2025', 'Topps Chrome', '', num, `2025 Topps Chrome ${who} #${num} RC`, px, d);

@@ -9060,11 +9060,127 @@ app.get('/api/player-index', async (req, res) => {
   _marketCacheHeaders(res);
   // v4: carries MARKET_CALC_SIG like the market keys. Entries are now kept for
   // two days and served stale while they rebuild, so a key that survived a
-  // change to the maths would keep showing the old answer. v5: daily points,
-  // which change the payload without changing MARKET_CALC_SIG.
-  res.json(await _marketCached(`playerindex:v5:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
+  // change to the maths would keep showing the old answer. v5: daily points;
+  // v6: a price-level trend instead of the chained index. Neither changes
+  // MARKET_CALC_SIG, so each needs its own bump.
+  res.json(await _marketCached(`playerindex:v6:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
     () => _computePlayerIndex(db, days, player)));
 });
+
+// ---- A player's number: their own cards' prices, first week against last ----
+//
+// The whole-market index chains per-step moves across ~600 players, and the
+// average across them is what makes the chain steady. Scoped to one player it
+// had one player's handful of cards per step, and on the live data that read
+// Fernando Mendoza at -53% over 30 days while his main card (157 sales) was
+// down 12%. Two things compounded: two or three cards cannot pin down a day's
+// move, and every unmeasured day (collection gaps, 14 of 30 at the time)
+// inherited the typical measured move, repeating its error. On a flat market
+// the chained player number wandered +-10 to 30%, weekly or daily alike.
+//
+// So a player is measured the way a collector reads their comps. Every
+// card-day price is taken relative to that card's own typical price over the
+// period (a card fixed effect, so a $10 base and a $200 rookie can share a
+// line), and the level on a day is the median of those relative prices over
+// the trailing window. Nothing is chained: a noisy day moves one window's
+// median and nothing after it, and a day with no sales simply has no point.
+// The headline compares the last window with the first.
+//
+// And a player without enough sales at both ends gets no number rather than a
+// shaky one — option (1) of the same fix.
+//
+// Measured on the flat-market fixture (true prices never move), see
+// test/market-accuracy.test.js for the figures this was tuned against.
+const PLAYER_TREND_MIN_CARD_DAYS = 3;     // a card must trade on this many days to say anything
+function _playerTrendWindow(days) { return days >= 90 ? 14 : days >= 30 ? 7 : 3; }
+const PLAYER_TREND_MIN_WINDOW = 8;        // card-days needed in a window for it to count
+
+async function _playerTrendQuery(db, throughIso, days, player) {
+  const noOffer = await _noBestOfferSql(db);
+  // Only the period is read: nothing here pairs a sale with an earlier one.
+  // Passing the period start as the look-back empties the pre-period pass.
+  const periodIso = _mkIso(_mkDay(throughIso) - days);
+  const P = _normCol('player');
+  return db.prepare(
+    `WITH ${_rsiBaseCtes({ PLAYER: P, CARD: _cardKeySql(P), P, JOIN: '', ALIAS_FILTER: '', noOffer,
+                          extraWhere: ' AND player = ? AND confidence >= ?' })}
+     SELECT card, sold_date, s, c FROM base WHERE sold_date > ? ORDER BY sold_date`
+  ).bind(..._rsiBaseBinds({ periodIso, sinceIso: periodIso, throughIso,
+                            extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
+}
+
+function _playerTrendPayload(rows, throughIso, days, player) {
+  const round1 = (n) => Math.round(n * 10) / 10;
+  const W = _playerTrendWindow(days);
+  const through = _mkDay(throughIso);
+  const start = through - days + 1;             // first day of the period
+
+  // card -> [{ day, logp }], one entry per card-day (same-day sales averaged).
+  const byCard = new Map();
+  for (const r of rows || []) {
+    const n = Number(r.c), sum = Number(r.s);
+    if (!(n > 0) || !(sum > 0)) continue;
+    const day = _mkDay(r.sold_date);
+    if (!Number.isFinite(day)) continue;
+    if (!byCard.has(r.card)) byCard.set(r.card, []);
+    byCard.get(r.card).push({ day, logp: Math.log(sum / n), n });
+  }
+  const median = (xs) => {
+    const a = xs.slice().sort((x, y) => x - y);
+    const m = a.length >> 1;
+    return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+  };
+  // Each card-day relative to that card's own median day price.
+  const entries = [];
+  let cards = 0, sales = 0;
+  for (const list of byCard.values()) {
+    if (list.length < PLAYER_TREND_MIN_CARD_DAYS) continue;
+    const ref = median(list.map(x => x.logp));
+    cards++;
+    for (const x of list) { entries.push({ day: x.day, rel: x.logp - ref }); sales += x.n; }
+  }
+  const levelAt = (endDay) => {
+    const win = entries.filter(e => e.day > endDay - W && e.day <= endDay).map(e => e.rel);
+    return win.length >= PLAYER_TREND_MIN_WINDOW ? { level: median(win), n: win.length } : null;
+  };
+
+  const first = levelAt(start + W - 1);
+  const last = levelAt(through);
+  if (!first || !last) {
+    const count = (endDay) => entries.filter(e => e.day > endDay - W && e.day <= endDay).length;
+    return {
+      available: false, days, player, reason: 'not enough sales for a reliable reading',
+      method: 'player-trend', windowDays: W, needed: PLAYER_TREND_MIN_WINDOW,
+      firstWindow: count(start + W - 1), lastWindow: count(through), through: throughIso,
+    };
+  }
+
+  // A point per day once the first window is full, where its window holds
+  // enough to measure. Days without one are left out rather than invented.
+  const series = [];
+  for (let d = start + W - 1; d <= through; d++) {
+    const at = levelAt(d);
+    if (at) series.push({ date: _mkIso(d), score: round1(100 * Math.exp(at.level - first.level)), matched: at.n });
+  }
+  const score = round1(100 * Math.exp(last.level - first.level));
+  return {
+    available: true,
+    days,
+    player,
+    unit: 'card',
+    method: 'player-trend',
+    through: throughIso,
+    dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - through),
+    score: Math.round(score),
+    rawScore: score,
+    changePct: round1(score - 100),
+    windowDays: W,
+    matchedCards: cards,
+    cardsPerPlayer: MARKET_CARDS_PER_PLAYER,
+    totalObservations: sales,
+    series,
+  };
+}
 
 async function _computePlayerIndex(db, days, player) {
   try {
@@ -9079,24 +9195,13 @@ async function _computePlayerIndex(db, days, player) {
     }
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
-    // Identical maths to the market index on purpose: a player's number is only
-    // worth showing beside the market's if the two are the same measurement.
-    // Daily points where the period allows, as for the market. One player's
-    // day holds only a few of their cards, so most players fail the daily gate
-    // and get the weekly chain instead — the same sales pooled seven days at a
-    // time. Busy players, the ones people actually look up, get the detail.
-    const run = async (daily) => {
-      const rows = await (await _rsiQuery(db, throughIso, days,
-        ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card', false, daily)).all();
-      return (rows && rows.results) || [];
-    };
-    const daily = _rsiGeometry(days, true).bucketDays !== _rsiGeometry(days).bucketDays;
-    const list = await run(daily);
+    // The same cards as the market's basket for this player (base, raw, no
+    // best offers, their busiest ten), measured as a price level rather than
+    // a chain of moves — see _playerTrendPayload for why.
+    const rows = await (await _playerTrendQuery(db, throughIso, days, player)).all();
+    const list = (rows && rows.results) || [];
     if (list.length === 0) return { available: false, days, player, reason: 'no sales for this player' };
-
-    const out = _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER, daily);
-    if (out.available || !daily) return out;
-    return _buildRepeatSalesPayload(await run(false), throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
+    return _playerTrendPayload(list, throughIso, days, player);
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);
     return { available: false, days, player, reason: 'index unavailable', transient: true, error: err && err.message };
