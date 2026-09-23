@@ -42,6 +42,11 @@ const KEEP = [
   ['2019 Topps Chrome A.J. Green #50', 'A.J. Green', 'Topps Chrome', '50', ''],
   ['1989 Score Barry Sanders #257 Rookie', 'Barry Sanders', 'Score', '257', ''],
   ['1986 Topps Reggie White #275 RC', 'Reggie White', 'Topps', '275', ''],
+  // Where the card came from is not what it is: packaging words stay allowed,
+  // and a team's "Tigers" is not the Tiger parallel.
+  ['2025 Topps Chrome Jaxson Dart RC #306 Giants Retail Blaster', 'Jaxson Dart', 'Topps Chrome', '306', ''],
+  ['2024 Prizm Caleb Williams #301 Rookie Hobby Mega', 'Caleb Williams', 'Prizm', '301', ''],
+  ['2020 Bowman Chrome University Joe Burrow #50 LSU Tigers', 'Joe Burrow', 'Bowman Chrome University', '50', ''],
 ];
 const DROP = [
   ['2025 Topps Chrome Jaxson Dart #306 Refractor', 'Jaxson Dart', 'Topps Chrome', '306', ''],
@@ -57,6 +62,17 @@ const DROP = [
   ['2025 Topps Chrome Jaxson Dart Cosmic #306', 'Jaxson Dart', 'Topps Chrome', '306', ''],
   ['2024 Prizm Caleb Williams #301 Jersey Patch', 'Caleb Williams', 'Prizm', '301', ''],
   ['2024 Prizm Caleb Williams #301', 'Caleb Williams', 'Prizm', '', ''],   // no number
+  // The hyphen becomes a space when the title is cleaned, so "X-Fractor" is
+  // two words. These priced Jaxson Dart's #306 at +1,226% on the live list.
+  ['2025 Topps Chrome Jaxson Dart X-Fractor RC #306', 'Jaxson Dart', 'Topps Chrome', '306', ''],
+  ['2025 Topps Chrome Jaxson Dart #306 Xfractor Rookie', 'Jaxson Dart', 'Topps Chrome', '306', ''],
+  // Parallels and inserts the list lacked, found by running every parallel
+  // name the collector has seen through this filter.
+  ['2025 Topps Chrome Jaxson Dart Orange Lava RC #306', 'Jaxson Dart', 'Topps Chrome', '306', ''],
+  ['2025 Topps Chrome Jaxson Dart Pigskin SSP #306', 'Jaxson Dart', 'Topps Chrome', '306', ''],
+  ['2024 Donruss Optic Caleb Williams Kaboom #5', 'Caleb Williams', 'Donruss Optic', '5', ''],
+  ['2024 Prizm Caleb Williams Color Blast #3', 'Caleb Williams', 'Prizm', '3', ''],
+  ['2025 Topps Chrome Cam Ward Sepia #314', 'Cam Ward', 'Topps Chrome', '314', ''],
 ];
 
 const db = new DatabaseSync(':memory:');

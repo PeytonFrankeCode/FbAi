@@ -4512,8 +4512,24 @@ const RSI_RAW_ONLY = _rsiRawOnlySql();
 // Anything uncertain is left out. That costs sample and cannot mix two cards.
 const RSI_BASE_PARALLELS = ['', 'base', 'base set', 'base rookie', 'base rookies',
                             'rookie', 'rookies', 'rc', 'rated rookie', 'rated rookies'];
-// Two-word finishes the whole-word test would miss.
-const RSI_BASE_SIGNAL_PHRASES = ['tie dye', 'press proof', 'green bay'];
+// Two-word finishes the whole-word test would miss. Hyphens become spaces
+// when the title is cleaned, so "X-Fractor" arrives as two words — listed only
+// as "xfractors" it slipped through, and Jaxson Dart's 2025 Topps Chrome #306
+// X-Fractors (~$20-25 raw) were priced as his $2 base card: +1,226% on the list.
+const RSI_BASE_SIGNAL_PHRASES = ['tie dye', 'press proof', 'green bay',
+  'x fractor', 'x fractors', 'mini diamond', 'fast break', 'short print', 'case hit', 'die cut',
+  // Inserts, named. They carry their own numbers, but where one matches a
+  // base card's number the two would share a key; no base title says these.
+  'color blast', 'my house', 'light it up', 'night moves', 'sunday best',
+  'premier level', 'club level', 'field level'];
+// Single words the shared parallel list lacks, found by running every
+// parallel name the collector has seen (NflCardDB's cards.json, 303 names)
+// through this filter. Packaging words ("retail", "blaster", "mega", "hobby")
+// and loose ones ("stars", "fire", "mini") are left out on purpose: genuine
+// base listings use them.
+const RSI_BASE_SIGNAL_EXTRA = ['xfractor', 'pigskin', 'lava', 'sepia', 'negative', 'checkerboard',
+  'tiger', 'atomic', 'kaleidoscope', 'vinyl', 'photon', 'glitch', 'genesis', 'choice', 'ssp', 'rwb',
+  'downtown', 'uptown', 'kaboom', 'concourse', 'pandora', 'manga'];
 // Split in two for cost. The column tests are cheap and run in a WHERE. The
 // title test needs the title cleaned into words — about fifty REPLACE calls —
 // and SQLite does not reuse a repeated expression, so written inline it was
@@ -4553,8 +4569,8 @@ function _rsiBaseTitleWordsSql() {
   return `REPLACE(${T}, ' green bay ', ' ')`;
 }
 const RSI_BASE_TITLE_WORDS = _rsiBaseTitleWordsSql();
-const RSI_BASE_SIGNALS = [..._PARALLEL_SIGNAL_WORDS, 'cosmic', 'reactive', 'xfractors', 'superfractors',
-                          ...RSI_BASE_SIGNAL_PHRASES.filter(p => p !== 'green bay')];
+const RSI_BASE_SIGNALS = [...new Set([..._PARALLEL_SIGNAL_WORDS, 'cosmic', 'reactive', 'xfractors', 'superfractors',
+                          ...RSI_BASE_SIGNAL_EXTRA, ...RSI_BASE_SIGNAL_PHRASES.filter(p => p !== 'green bay')])];
 // Against the cleaned-title column, named `tw` where it is selected.
 //
 // Bracketed in groups of ten. SQLite nests a chain of ORs one level per term,
@@ -9344,7 +9360,9 @@ function _median(xs) {
 // v6: the movers board splits autographs, relics and redemptions from the base
 // card that shares their number.
 // v7: the movers boards take base cards only, keyed by card number.
-const SOLD_STATS_KEY = (days) => `soldstats:v7:${days}`;
+// v8: the base-card filter recognises X-Fractors and ~35 more parallel and
+// insert names, which the movers boards share.
+const SOLD_STATS_KEY = (days) => `soldstats:v8:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
