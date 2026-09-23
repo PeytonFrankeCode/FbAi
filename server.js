@@ -4578,12 +4578,23 @@ const RSI_BASE_SIGNALS = [...new Set([..._PARALLEL_SIGNAL_WORDS, 'cosmic', 'reac
 // every local test passed): ~115 terms in one chain failed on D1 with
 // "Expression tree is too large (maximum depth 100)" and took the market index
 // off the site. Grouped, the same test is about twenty levels deep.
-const RSI_BASE_TITLE_TEST = (() => {
-  const terms = RSI_BASE_SIGNALS.map(w => `tw LIKE '% ${w} %'`);
-  const groups = [];
-  for (let i = 0; i < terms.length; i += 10) groups.push(`(${terms.slice(i, i + 10).join(' OR ')})`);
-  return `NOT ( ${groups.join(' OR ')} )`;
-})();
+//
+// And bracketed as a balanced tree, not a flat list of groups. Groups of ten
+// joined in one chain still cost a level per group, and the depth adds up with
+// the rest of the statement: adding ~40 signals took the chain from 12 groups
+// to 16 and the whole-market index query over the cap again ("Expression tree
+// is too large", found by replaying it on a local D1) while the smaller basket
+// query survived. A tree of fan-out RSI_OR_FANOUT is ~log(n) deep — about 12
+// levels for 150 terms — so the list can keep growing.
+const RSI_OR_FANOUT = 6;
+function _rsiOrTree(terms) {
+  if (terms.length <= RSI_OR_FANOUT) return `(${terms.join(' OR ')})`;
+  const size = Math.ceil(terms.length / RSI_OR_FANOUT);
+  const parts = [];
+  for (let i = 0; i < terms.length; i += size) parts.push(_rsiOrTree(terms.slice(i, i + size)));
+  return `(${parts.join(' OR ')})`;
+}
+const RSI_BASE_TITLE_TEST = `NOT ${_rsiOrTree(RSI_BASE_SIGNALS.map(w => `tw LIKE '% ${w} %'`))}`;
 
 // `daily` gives the whole-market index one point per day on the longer
 // periods, where weekly steps drew four or five dots across a month. It is

@@ -1368,11 +1368,16 @@ function applySortToResults(sortType) {
   if (currentMode === 'sold' && sortType === 'default') {
     renderGradeGroups(grid, sorted);
   } else {
+    // Grouped by checklist card, the flat sorts keep the same split as the
+    // default view: unmatched listings stay in their own collapsed section.
+    const others = _versionCtx ? sorted.filter(_isOtherCard) : [];
+    if (others.length) sorted = sorted.filter(r => !_isOtherCard(r));
     sorted.forEach((item, i) => {
       const card = buildCard(item);
       card.style.animationDelay = `${i * 0.05}s`;
       grid.appendChild(card);
     });
+    if (others.length) renderOtherCards(grid, others);
   }
 
   // For Sale keeps its "Load more" pager after a re-sort, so paging still works
@@ -2814,7 +2819,13 @@ let _searchPaging = { query: '', mode: '', offset: 0, hasMore: false, fetching: 
 // fetch, a mock, a non-sold search) and undefined must mean "keep", never
 // "hide". Only an explicit false moves a listing, so a screen that has never
 // heard of this feature renders exactly as it always did.
-const _isOtherCard = (r) => r && r.sameCard === false;
+//
+// Grouped by checklist card (see "Versions" below), a listing that could not be
+// tied to one of the card's versions also goes to that section. The grouping
+// state lives here so this predicate reads it without depending on anything
+// declared further down.
+const _isOtherCard = (r) => !!(r && (r.sameCard === false || (_versionCtx && _versionOf(r) === null)));
+let _versionCtx = null;
 
 function renderGradeGroups(grid, results) {
   const mine = results.filter(r => !_isOtherCard(r));
@@ -2841,7 +2852,7 @@ function renderOtherCards(grid, others) {
   const header = document.createElement('div');
   header.className = 'grade-section-header other-cards-header';
   header.innerHTML =
-    `<span class="grade-label">Other cards matching your search</span>` +
+    `<span class="grade-label">${_versionCtx ? 'Listings we couldn\u2019t match to the checklist' : 'Other cards matching your search'}</span>` +
     `<span class="grade-meta">${others.length} listing${others.length !== 1 ? 's' : ''} ` +
     `&middot; <button type="button" class="other-cards-toggle" aria-expanded="false">show</button></span>`;
   place(header);
@@ -3013,6 +3024,230 @@ function _parallelOf(r) {
   return r._parallel;
 }
 
+// ---- Versions: sold results grouped by the checklist card they are ----
+//
+// A sold search returns every listing that shares the query's words, so a
+// search for a Silver Prizm comes back mixed with the base card, the other
+// parallels, the player's inserts and autos. Where we hold the checklist for
+// the product, each listing is tied to ONE of the player's cards in it (by
+// card number when the title has one, otherwise by the insert's name or by
+// autograph/relic words) and then to one of THAT set's parallels. The results
+// are shown as one card per version, with its average price, above the comps.
+//
+// Only listings that can be tied to a checklist card count. One naming a card
+// number the player does not have in this product, a parallel this set was
+// never printed in, or nothing that separates two of his cards, is not
+// guessed at: it goes to the collapsed section below the comps, where it is
+// still one click away and a wrong call stays visible. (_versionCtx, the
+// grouping state, is declared beside _isOtherCard.)
+
+const _VERSION_SUFFIX_RE = /\b(ii|iii|iv|jr|sr)\b/g;
+function _versionName(s) {
+  return _cleanForMatch(s).replace(_VERSION_SUFFIX_RE, ' ').replace(/\s+/g, ' ').trim();
+}
+const _AUTO_RE = /\b(auto|autos|autograph|autographs|autographed|signed|signature|signatures|penmanship|ink)\b/;
+const _RELIC_RE = /\b(patch|patches|jersey|jerseys|relic|relics|memorabilia|swatch|materials?|mem)\b/;
+
+function _setKind(name) {
+  const n = _cleanForMatch(name);
+  if (_AUTO_RE.test(n)) return 'auto';
+  if (_RELIC_RE.test(n)) return 'relic';
+  return 'base';
+}
+
+// The player's cards in the product, each with its own parallel matchers.
+function _buildVersionCtx(product, player, query) {
+  if (!product || !Array.isArray(product.sets) || !player || player.length < 3) return null;
+  const want = _versionName(player);
+  if (!want) return null;
+  const cards = [];
+  for (const set of product.sets) {
+    for (const c of set.cards || []) {
+      const who = _versionName(c.player || '');
+      if (!who || !(who === want || who.includes(want) || want.includes(who))) continue;
+      // "Red, White and Blue" is sold as "Red White Blue": the joining words
+      // carry nothing, and left in they let the shorter "Blue" win.
+      const names = [];
+      for (const par of set.parallels || []) {
+        if (!par || !par.name) continue;
+        for (const n of [par.name, ...(par.aliases || [])]) names.push(n.replace(/\s*(,|&|\band\b)\s*/gi, ' '));
+      }
+      cards.push({
+        set: set.name || '',
+        setNorm: _versionName((set.name || '').replace(/\b(base set|set|prizms?)\b/gi, ' ')),
+        base: /^base\b/i.test(set.name || '') || set.category === 'base',
+        number: String(c.number || '').replace(/^#/, '').toLowerCase(),
+        player: c.player || player,
+        kind: _setKind(set.name || ''),
+        matchers: _buildParallelMatchers(names),
+      });
+    }
+  }
+  if (!cards.length) return null;
+  return {
+    productName: product.name || '',
+    year: product.year || '',
+    cards,
+    playerRe: new RegExp('\\b' + _reEsc(want).replace(/\s+/g, '[\\s-]+') + '\\b', 'g'),
+    // Parallel words from any product. A title naming one that this card's
+    // set does not list is a card we cannot confirm.
+    generic: _fallbackParallelMatchers(),
+  };
+}
+
+// Which of the player's cards, and which of its parallels, a title is.
+// Returns { key, card, parallel } or null when it cannot be told.
+function _matchVersion(title, ctx) {
+  if (!ctx) return null;
+  let hay = _cleanForMatch(title).replace(ctx.playerRe, ' ');
+  for (const t of PARALLEL_STRIP_TEAMS) {
+    hay = hay.replace(new RegExp('\\b' + _reEsc(t).replace(/\s+/g, '[\\s-]+') + '\\b', 'g'), ' ');
+  }
+  hay = hay.replace(/\band\b/g, ' ').replace(/\s+/g, ' ');
+
+  // 1. The card. A stated number decides it outright.
+  let card = null;
+  const num = (String(title).match(/#\s*([a-z0-9]+(?:-[a-z0-9]+)*)/i) || [])[1];
+  if (num) {
+    const n = num.toLowerCase().replace(/^0+(?=\d)/, '');
+    const hits = ctx.cards.filter(c => c.number.replace(/^0+(?=\d)/, '') === n);
+    if (hits.length !== 1) return null;             // not his, or ambiguous
+    card = hits[0];
+  } else {
+    // An insert named in the title, longest name first.
+    const named = ctx.cards
+      .filter(c => !c.base && c.setNorm.length >= 4
+        && new RegExp('\\b' + _reEsc(c.setNorm).replace(/\s+/g, '[\\s-]+') + '\\b').test(hay))
+      .sort((a, b) => b.setNorm.length - a.setNorm.length);
+    if (named.length) card = named[0];
+    else {
+      // Otherwise the kind of card the title describes, if he has exactly one.
+      const kind = _AUTO_RE.test(hay) ? 'auto' : _RELIC_RE.test(hay) ? 'relic' : 'base';
+      const pool = ctx.cards.filter(c => kind === 'base' ? c.base : c.kind === kind);
+      if (pool.length !== 1) return null;
+      card = pool[0];
+    }
+  }
+
+  // 2. The parallel, from that set's own list. Whatever parallel vocabulary is
+  // left once that is taken out means the title names more than the set lists
+  // ("Neon Green Pulsar" where the set only has "Green"): a version this set
+  // was never printed in, not a Green. "Holo" is exempt — sellers write
+  // "Silver Holo Prizm" for the plain Silver.
+  let parallel = 'Base';
+  const hit = card.matchers.find(m => m.re.test(hay));
+  const rest = (hit ? hay.replace(new RegExp(hit.re.source, 'g'), ' ') : hay).replace(/\bholo\b/g, ' ');
+  if (ctx.generic.some(m => m.re.test(rest))) return null;
+  if (hit) parallel = hit.label;
+
+  const key = `${card.set}|${card.number}|${parallel}`;
+  return { key, card, parallel };
+}
+
+function _versionOf(r) {
+  if (!r || !_versionCtx) return null;
+  if (r._version === undefined) r._version = _matchVersion(r.title, _versionCtx);
+  return r._version;
+}
+
+// What the parallel filter compares against: the version key when grouping,
+// the loose parallel name otherwise.
+function _filterKeyOf(r) {
+  if (_versionCtx) { const v = _versionOf(r); return v ? v.key : null; }
+  return _parallelOf(r);
+}
+
+// One card per version, in the same design as a sale card, above the comps.
+function _renderVersionGroups() {
+  const wrap = document.getElementById('version-groups');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (!_versionCtx || currentMode !== 'sold' || !currentResults.length) { wrap.classList.add('hidden'); return; }
+
+  // Counts follow the grade filter, as the chips did.
+  const pool = _filterResults('parallel');
+  const groups = new Map();
+  for (const r of pool) {
+    const v = _versionOf(r);
+    if (!v) continue;
+    if (!groups.has(v.key)) groups.set(v.key, { v, items: [] });
+    groups.get(v.key).items.push(r);
+  }
+  if (!groups.size) { wrap.classList.add('hidden'); return; }
+
+  const list = [...groups.values()].sort((a, b) =>
+    (b.v.card.base - a.v.card.base) || (a.v.parallel === 'Base' ? -1 : b.v.parallel === 'Base' ? 1 : 0)
+    || b.items.length - a.items.length || a.v.key.localeCompare(b.v.key));
+
+  const head = document.createElement('div');
+  head.className = 'grade-section-header version-groups-header';
+  head.innerHTML = `<span class="grade-label">Versions of this card</span>`
+    + `<span class="grade-meta">${list.length} version${list.length === 1 ? '' : 's'} in ${escHtml(_versionCtx.productName)}`
+    + `${currentParallelFilter !== 'all' ? ` &middot; <button type="button" class="other-cards-toggle version-clear">show all</button>` : ''}</span>`;
+  wrap.appendChild(head);
+  const clear = head.querySelector('.version-clear');
+  if (clear) clear.onclick = () => applyParallelFilter('all');
+
+  const row = document.createElement('div');
+  row.className = 'version-grid';
+  list.forEach((g, i) => {
+    const card = _buildVersionCard(g);
+    card.style.animationDelay = `${i * 0.04}s`;
+    row.appendChild(card);
+  });
+  wrap.appendChild(row);
+  wrap.classList.remove('hidden');
+}
+
+function _buildVersionCard({ v, items }) {
+  // Raw and graded copies are different money: one PSA 10 among raw sales more
+  // than doubled a Silver's average. With no grade chosen, the headline is the
+  // raw average and the slabs are counted beside it; choosing a grade chip
+  // restates every card for that grade.
+  const isRaw = (r) => detectGrade(r.title) === 'Raw / Ungraded';
+  const raw = items.filter(isRaw);
+  const graded = items.length - raw.length;
+  const priced = (currentGradeFilter === 'all' && raw.length) ? raw : items;
+  const prices = priced.map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
+  const avg = prices.length ? prices.reduce((a, p) => a + p, 0) / prices.length : 0;
+  const avgLabel = priced === raw && graded ? 'avg raw' : 'avg';
+  const median = _medianPrice(priced);
+  // The photo of a typically priced copy, not the dearest.
+  const withImg = items.filter(r => r.imageUrl && parseFloat(r.price) > 0)
+    .sort((a, b) => Math.abs(parseFloat(a.price) - median) - Math.abs(parseFloat(b.price) - median));
+  const img = withImg[0] && withImg[0].imageUrl;
+
+  const card = document.createElement('div');
+  card.className = 'card version-card' + (currentParallelFilter === v.key ? ' active' : '');
+  card.style.setProperty('--team-color', getTeamColor(items[0] && items[0].title));
+  // An insert or auto in its plain version is named by its set ("#65 · Rookie
+  // Autographs"), not "Base"; the set then need not repeat in the tag.
+  const plainInsert = !v.card.base && v.parallel === 'Base';
+  const setLabel = v.card.base || plainInsert ? '' : v.card.set;
+  const versionLabel = plainInsert ? v.card.set : v.parallel;
+  card.innerHTML = `
+    <div class="card-accent"></div>
+    <div class="sold-badge">${items.length} SOLD</div>
+    <div class="card-image-wrap">${img
+      ? `<img src="${escHtml(img)}" alt="${escHtml(v.card.player)} ${escHtml(v.parallel)}" loading="lazy" />`
+      : `<div class="no-image"><span class="no-image-icon">&#127183;</span><span>No image</span></div>`}</div>
+    <div class="card-body">
+      <p class="card-tag">${escHtml([_versionCtx.productName, setLabel].filter(Boolean).join(' · '))}</p>
+      <p class="card-title">${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}</p>
+      <p class="card-price">${avg ? `$${avg.toFixed(2)}` : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
+      <div class="card-meta">
+        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}</span>
+        ${prices.length > 1 ? `<span class="card-condition">median $${median.toFixed(2)} &middot; $${prices[0].toFixed(0)}&ndash;$${prices[prices.length - 1].toFixed(0)}</span>` : ''}
+      </div>
+    </div>`;
+  card.addEventListener('click', () => {
+    applyParallelFilter(currentParallelFilter === v.key ? 'all' : v.key);
+    const statsTop = document.getElementById('results-grid');
+    if (statsTop && currentParallelFilter !== 'all') statsTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  return card;
+}
+
 // Resolve the search query to one checklist product and harvest its parallel
 // names. Highest set-term score wins, then the shortest product name, so
 // "2024 Panini Prizm Football" beats "2024 Panini Prizm Deca Football".
@@ -3054,7 +3289,7 @@ async function _resolveParallelVocab(query) {
     ...SCAN_KEY_PARALLEL_WORDS,
   ]);
   if (!matchers.length) return null;
-  return { matchers, productName: data.name || scored[0].p.name || '' };
+  return { matchers, productName: data.name || scored[0].p.name || '', product: data };
 }
 
 // ---- Grade + Parallel filters (sold searches) ----
@@ -3069,9 +3304,16 @@ function _filterResults(skip) {
     results = results.filter(r => detectGrade(r.title) === currentGradeFilter);
   }
   if (skip !== 'parallel' && currentParallelFilter !== 'all') {
-    results = results.filter(r => _parallelOf(r) === currentParallelFilter);
+    results = results.filter(r => _filterKeyOf(r) === currentParallelFilter);
   }
   return results;
+}
+
+// What the value stats and chart are computed from. Grouped by checklist card,
+// a listing that could not be tied to one is not part of any number on the
+// page; renderGradeGroups still draws it, in the "other listings" section.
+function _countedResults(results) {
+  return _versionCtx ? results.filter(r => _versionOf(r) !== null) : results;
 }
 
 function getFilteredResults() { return _filterResults(null); }
@@ -3098,6 +3340,8 @@ function resetGradeFilter() {
 function resetParallelFilter() {
   currentParallelFilter = 'all';
   _parallelCtx = null;
+  _versionCtx = null;
+  _renderVersionGroups();
   _parallelBuildToken++;
   const wrap = document.getElementById('parallel-filter');
   if (wrap) { wrap.innerHTML = ''; wrap.classList.add('hidden'); }
@@ -3147,6 +3391,9 @@ function renderGradeChips() {
 // then draws the chips. Async: a newer search invalidates an in-flight build.
 async function buildParallelFilter(query) {
   currentParallelFilter = 'all';
+  // A previous search's grouping must never outlive it.
+  _versionCtx = null;
+  _renderVersionGroups();
   const wrap = document.getElementById('parallel-filter');
   if (!wrap) return;
   wrap.innerHTML = '';
@@ -3172,6 +3419,18 @@ async function buildParallelFilter(query) {
   }
 
   for (const r of currentResults) r._parallel = _classifyParallel(r.title, _parallelCtx);
+
+  // Where the query is a card we hold a checklist for, group by that card's
+  // versions instead of offering loose parallel chips.
+  _versionCtx = _buildVersionCtx(vocab && vocab.product, player, query);
+  if (_versionCtx) {
+    for (const r of currentResults) r._version = _matchVersion(r.title, _versionCtx);
+    _renderVersionGroups();
+    renderParallelChips();
+    _reRenderForFilters();
+    return;
+  }
+  _renderVersionGroups();
   renderParallelChips();
 }
 
@@ -3181,6 +3440,8 @@ function renderParallelChips() {
   if (!wrap) return;
   wrap.innerHTML = '';
   if (currentMode !== 'sold' || !currentResults.length) { wrap.classList.add('hidden'); return; }
+  // The version cards are the parallel filter when the card is catalogued.
+  if (_versionCtx) { wrap.classList.add('hidden'); _renderVersionGroups(); return; }
 
   const pool = _filterResults('parallel');
   const groups = {};
@@ -3222,11 +3483,12 @@ function renderParallelChips() {
 // and restate the other chip row's counts against the new pool.
 function _reRenderForFilters() {
   const filtered = getFilteredResults();
+  const counted = _countedResults(filtered);
   grid.innerHTML = '';
-  if (filtered.length > 0) renderStatsBar(filtered, true);
+  if (counted.length > 0) renderStatsBar(counted, true);
   const sortType = document.querySelector('.sort-btn.active')?.dataset.sort || 'default';
   applySortToResults(sortType);
-  updatePriceChart(filtered);
+  updatePriceChart(counted);
 }
 
 function applyGradeFilter(grade) {
@@ -3238,6 +3500,7 @@ function applyGradeFilter(grade) {
 
 function applyParallelFilter(parallel) {
   currentParallelFilter = parallel;
+  _renderVersionGroups();
   renderParallelChips();
   renderGradeChips();
   _reRenderForFilters();
