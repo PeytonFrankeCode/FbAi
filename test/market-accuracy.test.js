@@ -433,6 +433,7 @@ const check = (label, ok, detail) => {
     // Seeded, so a failure is a regression rather than an unlucky day.
     const draws = [];
     let width = 0, perPoint = 0, obs = 0, sales = 0, flatBasket = [], geometry = null;
+    const playerDaily = [], playerBuckets = new Map();
     for (const seed of [20260822, 19870401, 20240915]) {
       const built = flatMarket(seed);
       sales = built.sales;
@@ -444,6 +445,14 @@ const check = (label, ok, detail) => {
       perPoint = r.body.matchedCards;
       obs = r.body.totalObservations;
       geometry = { bucketDays: r.body.bucketDays, points: (r.body.series || []).length };
+      // Players from busiest to barely trading. Star 400 sells a few times a
+      // week across all their cards, too thin for daily points.
+      for (const who of ['Star 0', 'Star 5', 'Star 20', 'Star 60', 'Star 150', 'Star 400']) {
+        const pr = await call(`/api/player-index?days=30&player=${encodeURIComponent(who)}`);
+        if (!pr.body.available) continue;
+        playerBuckets.set(who, (playerBuckets.get(who) || new Set()).add(pr.body.bucketDays));
+        if (pr.body.bucketDays === 1) playerDaily.push(pr.body.changePct);
+      }
       const b = await call('/api/market-basket?days=30');
       flatBasket = flatBasket.concat(((b.body && b.body.cards) || []).map(c => c.changePct).filter(v => v != null));
     }
@@ -478,6 +487,21 @@ const check = (label, ok, detail) => {
     // drawn one day at a time, still reads close to nothing. Averaging the two
     // middle ratios arithmetically once read it at +5% a month, entirely from
     // players with two comparisons in a day.
+    // One player is a far smaller sample than the market, so their reading on
+    // a flat market is wider — but daily points make it steadier, not noisier.
+    // Measured on these draws: mean |reading| 9.7pp daily against 19.5pp with
+    // the same players forced onto weekly steps, so this bound catches the
+    // player index going back to weekly while leaving room over what it reads.
+    const playerMean = playerDaily.length
+      ? playerDaily.reduce((a, v) => a + Math.abs(v), 0) / playerDaily.length : Infinity;
+    check('  ...and a busy player on it, drawn daily, reads steadier than weekly did',
+          playerDaily.length >= 12 && playerMean <= 13,
+          `mean |reading| ${playerMean.toFixed(1)}pp over ${playerDaily.length} player readings`);
+    const busy = ['Star 0', 'Star 5', 'Star 20'].every(w => playerBuckets.has(w) && playerBuckets.get(w).has(1));
+    const thin = playerBuckets.has('Star 400') && [...playerBuckets.get('Star 400')].every(x => x === 7);
+    check('  ...busy players get daily points, a thin one falls back to weekly',
+          busy && thin,
+          [...playerBuckets].map(([w, set]) => `${w}: ${[...set].join('/')}d`).join(', '));
     check('  ...drawn one point per day',
           geometry && geometry.bucketDays === 1 && geometry.points === 31,
           geometry ? `bucket ${geometry.bucketDays}d, ${geometry.points} points` : 'index unavailable');
