@@ -4556,7 +4556,18 @@ const RSI_BASE_TITLE_WORDS = _rsiBaseTitleWordsSql();
 const RSI_BASE_SIGNALS = [..._PARALLEL_SIGNAL_WORDS, 'cosmic', 'reactive', 'xfractors', 'superfractors',
                           ...RSI_BASE_SIGNAL_PHRASES.filter(p => p !== 'green bay')];
 // Against the cleaned-title column, named `tw` where it is selected.
-const RSI_BASE_TITLE_TEST = `NOT ( ${RSI_BASE_SIGNALS.map(w => `tw LIKE '% ${w} %'`).join(' OR ')} )`;
+//
+// Bracketed in groups of ten. SQLite nests a chain of ORs one level per term,
+// and D1 caps expression depth at 100 (stock SQLite allows 1,000, which is why
+// every local test passed): ~115 terms in one chain failed on D1 with
+// "Expression tree is too large (maximum depth 100)" and took the market index
+// off the site. Grouped, the same test is about twenty levels deep.
+const RSI_BASE_TITLE_TEST = (() => {
+  const terms = RSI_BASE_SIGNALS.map(w => `tw LIKE '% ${w} %'`);
+  const groups = [];
+  for (let i = 0; i < terms.length; i += 10) groups.push(`(${terms.slice(i, i + 10).join(' OR ')})`);
+  return `NOT ( ${groups.join(' OR ')} )`;
+})();
 
 function _rsiGeometry(days) {
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
