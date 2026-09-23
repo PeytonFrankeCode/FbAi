@@ -432,7 +432,7 @@ const check = (label, ok, detail) => {
 
     // Seeded, so a failure is a regression rather than an unlucky day.
     const draws = [];
-    let width = 0, obs = 0, sales = 0, flatBasket = [];
+    let width = 0, perPoint = 0, obs = 0, sales = 0, flatBasket = [], geometry = null;
     for (const seed of [20260822, 19870401, 20240915]) {
       const built = flatMarket(seed);
       sales = built.sales;
@@ -440,8 +440,10 @@ const check = (label, ok, detail) => {
       const r = await call('/api/market-index?days=30');
       if (!r.body.available) { draws.length = 0; break; }
       draws.push(r.body.changePct);
-      width = r.body.matchedCards;
+      width = r.body.basketPlayers;
+      perPoint = r.body.matchedCards;
       obs = r.body.totalObservations;
+      geometry = { bucketDays: r.body.bucketDays, points: (r.body.series || []).length };
       const b = await call('/api/market-basket?days=30');
       flatBasket = flatBasket.concat(((b.body && b.body.cards) || []).map(c => c.changePct).filter(v => v != null));
     }
@@ -465,9 +467,20 @@ const check = (label, ok, detail) => {
     check('  ...and the cards under it read noise-sized moves, not the clamp',
           absMoves.length >= 30 && medMove <= 15 && absMoves[absMoves.length - 1] < 90,
           `median |move| ${medMove}%, largest ${absMoves[absMoves.length - 1]}% over ${absMoves.length} cards`);
+    // Width is the basket's player count. It was the players behind a typical
+    // point while points were weekly; a daily point holds fewer by design, so
+    // that is floored separately rather than standing in for the basket.
     check('  ...because the basket really is that wide',
-          width >= 500 && obs >= 15000,
-          `${width} players, ${obs.toLocaleString('en-US')} comparisons per point`);
+          width >= 500 && perPoint >= 300 && obs >= 15000,
+          `${width} players in the basket, ${perPoint} behind a typical point, `
+          + `${obs.toLocaleString('en-US')} comparisons`);
+    // This is also the check that daily points are safe: the same flat market,
+    // drawn one day at a time, still reads close to nothing. Averaging the two
+    // middle ratios arithmetically once read it at +5% a month, entirely from
+    // players with two comparisons in a day.
+    check('  ...drawn one point per day',
+          geometry && geometry.bucketDays === 1 && geometry.points === 31,
+          geometry ? `bucket ${geometry.bucketDays}d, ${geometry.points} points` : 'index unavailable');
   }
 
   // Ungraded is not always spelled the same way.
@@ -487,6 +500,7 @@ const check = (label, ok, detail) => {
       ['Ungraded',     'Ungraded', ''],
     ];
     const missed = [];
+    const sparseBuckets = new Set();
     for (const [label, grader, grade] of spellings) {
       const dbS = new DatabaseSync(':memory:');
       salesTable(dbS);
@@ -507,11 +521,18 @@ const check = (label, ok, detail) => {
       use(dbS);
       const r = await call('/api/market-index?days=30');
       if (!r.body.available) missed.push(`${label} -> ${r.body.reason}`);
+      else sparseBuckets.add(r.body.bucketDays);
     }
     check('ungraded reaches the index however the column spells it',
           missed.length === 0,
           missed.length ? `NOT MATCHED: ${missed.join('; ')}`
                         : `all ${spellings.length} spellings scored`);
+    // These markets trade one day in four, so most days are unmeasured and a
+    // daily chain cannot be drawn. The index must fall back to weekly points
+    // rather than go unavailable.
+    check('  ...and a market trading one day in four falls back to weekly points',
+          sparseBuckets.size === 1 && sparseBuckets.has(7),
+          `bucket sizes used: ${[...sparseBuckets].join(', ') || 'none'}`);
   }
 
   // The same sales in a different order must give the same number.
