@@ -8106,8 +8106,12 @@ app.get('/api/market-basket', async (req, res) => {
     () => _computeMarketBasket(db, days, player)));
 });
 
+// v3: each card's move is second half vs first half. MARKET_CALC_SIG only
+// changes with the INDEX maths, so a change to the basket alone needs its own
+// bump — without it the corrected list waited behind an hour of cached v2
+// answers (and was kept for two days as a stale fallback).
 const _marketBasketKey = (days, player) =>
-  `marketbasket:v2:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
+  `marketbasket:v3:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
 
 async function _computeMarketBasket(db, days, player) {
   try {
