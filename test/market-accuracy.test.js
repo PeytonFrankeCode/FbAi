@@ -432,7 +432,7 @@ const check = (label, ok, detail) => {
 
     // Seeded, so a failure is a regression rather than an unlucky day.
     const draws = [];
-    let width = 0, obs = 0, sales = 0;
+    let width = 0, obs = 0, sales = 0, flatBasket = [];
     for (const seed of [20260822, 19870401, 20240915]) {
       const built = flatMarket(seed);
       sales = built.sales;
@@ -442,6 +442,8 @@ const check = (label, ok, detail) => {
       draws.push(r.body.changePct);
       width = r.body.matchedCards;
       obs = r.body.totalObservations;
+      const b = await call('/api/market-basket?days=30');
+      flatBasket = flatBasket.concat(((b.body && b.body.cards) || []).map(c => c.changePct).filter(v => v != null));
     }
     const meanAbs = draws.length
       ? draws.reduce((a, b) => a + Math.abs(b), 0) / draws.length : Infinity;
@@ -452,6 +454,17 @@ const check = (label, ok, detail) => {
                        : 'index unavailable');
     // The width the noise floor depends on, asserted directly because it is
     // deterministic where the floor is not.
+    // The list under the number, on the same flat market. Its moves were once
+    // computed with the index's pair arithmetic — a day-to-day ratio raised to
+    // (bucket / gap) — which is sound across hundreds of players and turns one
+    // card's ordinary day-to-day noise into -93.7% or +1500%. That is what the
+    // live list showed. On a market that did nothing, a card's move must be
+    // noise-sized.
+    const absMoves = flatBasket.map(Math.abs).sort((a, b) => a - b);
+    const medMove = absMoves.length ? absMoves[absMoves.length >> 1] : Infinity;
+    check('  ...and the cards under it read noise-sized moves, not the clamp',
+          absMoves.length >= 30 && medMove <= 15 && absMoves[absMoves.length - 1] < 90,
+          `median |move| ${medMove}%, largest ${absMoves[absMoves.length - 1]}% over ${absMoves.length} cards`);
     check('  ...because the basket really is that wide',
           width >= 500 && obs >= 15000,
           `${width} players, ${obs.toLocaleString('en-US')} comparisons per point`);
