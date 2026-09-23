@@ -4947,9 +4947,8 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
   const periodIso = _mkIso(_mkDay(throughIso) - spanDays);
-  // The period as the page states it, halved, for each card's own move.
+  // The period as the page states it, for each card's own move.
   const startIso = _mkIso(_mkDay(throughIso) - days);
-  const midIso = _mkIso(_mkDay(throughIso) - Math.floor(days / 2));
   const P = _normCol('player');
   // Same substitution as the index. The basket has to select from exactly the
   // same population or the list stops explaining the number above it.
@@ -4995,8 +4994,9 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
          FROM base b JOIN shortlist k ON k.card = b.card
         GROUP BY b.card, b.sold_date
      ),
-     -- Each card's move: its average daily price in the second half of the
-     -- period against the first half.
+     -- Each card's move: its average daily price over its LATER trading days in
+     -- the period against its EARLIER ones — the card's own trading days split
+     -- in half, not the calendar.
      --
      -- Not the index's pair arithmetic. That converts each day-to-day price
      -- ratio to a per-bucket rate by raising it to (bucket / gap), which is
@@ -5004,15 +5004,22 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
      -- card: a base card selling every day has a one-day gap, so ordinary +/-10%
      -- day-to-day noise was raised to the 7th power per week and compounded, and
      -- nearly every card on the live list sat at the clamp (-93.7%, +1500%).
-     -- Halves are what a collector means by "this card moved", and one noisy day
-     -- cannot swing them.
+     --
+     -- Not the calendar halves either, which were tried: the collector runs
+     -- days behind, so on the 7-day view the second half of the week held no
+     -- sales yet and every card read "no move". Splitting the days the card
+     -- actually traded keeps both sides populated whatever the lag.
      moves AS (
        SELECT card,
-              SUM(CASE WHEN sold_date > ? THEN 1 ELSE 0 END) AS days_recent,
-              SUM(CASE WHEN sold_date > ? AND sold_date <= ? THEN 1 ELSE 0 END) AS days_older,
-              AVG(CASE WHEN sold_date > ? THEN price END) AS recent_c,
-              AVG(CASE WHEN sold_date > ? AND sold_date <= ? THEN price END) AS older_c
-         FROM daily GROUP BY card
+              SUM(CASE WHEN rn * 2 >  cnt THEN 1 ELSE 0 END) AS days_recent,
+              SUM(CASE WHEN rn * 2 <= cnt THEN 1 ELSE 0 END) AS days_older,
+              AVG(CASE WHEN rn * 2 >  cnt THEN price END) AS recent_c,
+              AVG(CASE WHEN rn * 2 <= cnt THEN price END) AS older_c
+         FROM (SELECT card, price,
+                      ROW_NUMBER() OVER (PARTITION BY card ORDER BY sold_date) AS rn,
+                      COUNT(*) OVER (PARTITION BY card) AS cnt
+                 FROM daily WHERE sold_date > ?)
+        GROUP BY card
      ),
      labels AS (
        SELECT b.card,
@@ -5031,8 +5038,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
        FROM labels l
        LEFT JOIN moves m ON m.card = l.card
       ORDER BY l.sales DESC`
-  ).bind(..._rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds }),
-         midIso, startIso, midIso, midIso, startIso, midIso);
+  ).bind(..._rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds }), startIso);
 }
 
 // Turn basket rows into something displayable: a label, how much it traded,
@@ -5047,8 +5053,8 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
     const par = String(r.parallel || '').trim();
     const extras = [/^(base|base set)$/i.test(par) ? '' : par, [r.grader, r.grade].filter(Boolean).join(' ')]
       .map(x => String(x || '').trim()).filter(Boolean);
-    // Second half of the period against the first (see the basket query's
-    // moves CTE), needing two trading days on each side, and bounded as the
+    // Later trading days against earlier ones (see the basket query's moves
+    // CTE), needing two trading days on each side, and bounded as the
     // index bounds a period: at most halving or doubling per bucket.
     let changePct = null;
     const recent = Number(r.recent_c), older = Number(r.older_c);
@@ -8110,8 +8116,9 @@ app.get('/api/market-basket', async (req, res) => {
 // changes with the INDEX maths, so a change to the basket alone needs its own
 // bump — without it the corrected list waited behind an hour of cached v2
 // answers (and was kept for two days as a stale fallback).
+// v4: the move splits the card's own trading days, not the calendar.
 const _marketBasketKey = (days, player) =>
-  `marketbasket:v3:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
+  `marketbasket:v4:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
 
 async function _computeMarketBasket(db, days, player) {
   try {
