@@ -1,6 +1,17 @@
 {
   "products": [
     {
+      "id": "2026-bowman-sapphire-football",
+      "name": "2026 Topps Bowman Sapphire Football",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
       "id": "2026-bowman-university-football",
       "name": "2026 Bowman University Football",
       "year": 2026,
@@ -46,6 +57,39 @@
       "name": "2026 Topps Heritage Football",
       "year": 2026,
       "brand": "Topps Heritage",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-topps-holiday-football",
+      "name": "2026 Topps Holiday Football",
+      "year": 2026,
+      "brand": "Topps Holiday",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-topps-inception-football",
+      "name": "2026 Topps Inception Football",
+      "year": 2026,
+      "brand": "Topps Inception",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-topps-london-games-football",
+      "name": "2026 Topps London Games Flagship Football",
+      "year": 2026,
+      "brand": "Topps London Games",
       "sport": "Football",
       "setCount": 0,
       "totalCards": 0,

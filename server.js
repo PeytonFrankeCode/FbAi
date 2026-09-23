@@ -9060,8 +9060,9 @@ app.get('/api/player-index', async (req, res) => {
   _marketCacheHeaders(res);
   // v4: carries MARKET_CALC_SIG like the market keys. Entries are now kept for
   // two days and served stale while they rebuild, so a key that survived a
-  // change to the maths would keep showing the old answer.
-  res.json(await _marketCached(`playerindex:v4:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
+  // change to the maths would keep showing the old answer. v5: daily points,
+  // which change the payload without changing MARKET_CALC_SIG.
+  res.json(await _marketCached(`playerindex:v5:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
     () => _computePlayerIndex(db, days, player)));
 });
 
@@ -9080,12 +9081,22 @@ async function _computePlayerIndex(db, days, player) {
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     // Identical maths to the market index on purpose: a player's number is only
     // worth showing beside the market's if the two are the same measurement.
-    const rows = await (await _rsiQuery(db, throughIso, days,
-      ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card')).all();
-    const list = (rows && rows.results) || [];
+    // Daily points where the period allows, as for the market. One player's
+    // day holds only a few of their cards, so most players fail the daily gate
+    // and get the weekly chain instead — the same sales pooled seven days at a
+    // time. Busy players, the ones people actually look up, get the detail.
+    const run = async (daily) => {
+      const rows = await (await _rsiQuery(db, throughIso, days,
+        ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], 'card', false, daily)).all();
+      return (rows && rows.results) || [];
+    };
+    const daily = _rsiGeometry(days, true).bucketDays !== _rsiGeometry(days).bucketDays;
+    const list = await run(daily);
     if (list.length === 0) return { available: false, days, player, reason: 'no sales for this player' };
 
-    return _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
+    const out = _buildRepeatSalesPayload(list, throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER, daily);
+    if (out.available || !daily) return out;
+    return _buildRepeatSalesPayload(await run(false), throughIso, days, { player, unit: 'card' }, RSI_TIERS_PLAYER);
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);
     return { available: false, days, player, reason: 'index unavailable', transient: true, error: err && err.message };
