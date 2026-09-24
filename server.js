@@ -9776,7 +9776,11 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // compares that hash against the constant below: change any of them without
 // bumping the version and the suite fails, naming the fix. Recompute with
 //   node -e "..." (the test prints the exact command when it fails)
-const CARD_IDENTITY_VERSION = 'cardanalysis:v10';
+// v11: the card page checks each sale's parallel against its own title, reads
+// "rookie"/"rc" as base, and no longer lumps every parallel together when the
+// seed's own parallel is unreadable. Grouping changed in server.js, which the
+// fingerprint below does not cover, so the bump is by hand.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v11';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10104,16 +10108,55 @@ app.get('/api/card-analysis', async (req, res) => {
     } catch (err) {
       console.error('[card-analysis] product lookup unavailable:', err && err.message);
     }
+    // The parallel words a title uses once the player's and product's own
+    // names are removed ("Green" in A.J. Green, "Prizm" the product) — minus
+    // the generic suffixes every parallel shares — and whether it is numbered.
+    const GENERIC_PAR = new Set(['prizm', 'prizms', 'refractor', 'refractors', 'holo', 'parallel']);
+    const parWords = (row) => {
+      let t = ' ' + _stripGrade(String(row.title || '')).toLowerCase().replace(/[^a-z0-9/ ]+/g, ' ') + ' ';
+      for (const src of [seed.player, row.set_name || seed.set_name]) {
+        for (const w of String(src || '').toLowerCase().split(/[^a-z0-9]+/)) {
+          if (w) t = t.replace(new RegExp(`\\b${w}\\b`, 'g'), ' ');
+        }
+      }
+      t = t.replace(_SIGNAL_TEAM_PHRASES, ' ');
+      const words = new Set();
+      for (const m of t.matchAll(new RegExp(_PARALLEL_SIGNAL.source, 'g'))) {
+        if (!GENERIC_PAR.has(m[1])) words.add(m[1]);
+      }
+      return { words, serial: _SERIAL_RUN.test(t) };
+    };
     const keyOf = (row) => {
       // An override first, then the column, then the title — the same chain the
       // board groups by. Grade is stripped inside it: the reader gives up on an
       // unknown token, and "PSA10" is one, so a slab's parallel read as
       // unmatched and the sale was dropped from its own card rather than merely
       // mis-bucketed.
+      //
+      // Then checked against the title. The reader alone let whole parallels
+      // into the wrong card: on 2018 Prizm Josh Allen #205 it read "Red White &
+      // Blue" as Blue, "Rookie Card" as a parallel called Rookie, and "Rookie
+      // Green Prizm" as base. So a read of "base"/"rookie"/"rc" is the base
+      // card; a read is trusted only if the title names no parallel beyond it;
+      // and an unreadable title naming no parallel and carrying no print run is
+      // the base card, as the Most Sold board already reads it.
       const hit = _saleParallel(row, pi, pAliases, sOverrides, seed.player);
-      if (hit.parallel) return { key: _parallelKey(hit.parallel), known: true, from: hit.how };
-      if (hit.how === 'base') return { key: '', known: true, from: 'base' };
-      return { key: null, known: false, from: hit.how };
+      const { words, serial } = parWords(row);
+      let key = null, from = hit.how;
+      if (hit.parallel) key = _BASE_NAMES.has(_parallelKey(hit.parallel)) ? '' : _parallelKey(hit.parallel);
+      else if (hit.how === 'base') key = '';
+      else if (!words.size && !serial) { key = ''; from = 'no-parallel-words'; }
+      if (key == null) return { key: null, known: false, from };
+      const named = new Set(String(key).split(/[^a-z0-9]+/).filter(Boolean));
+      const extra = [...words].filter(w => !named.has(w));
+      if (extra.length) return { key: null, known: false, from: `title also says ${extra.join(' ')}` };
+      return { key, known: true, from };
+    };
+    // What an unreadable sale's title says, as a comparable signature: the
+    // parallel words it uses, and whether it is numbered.
+    const signatureOf = (row) => {
+      const { words, serial } = parWords(row);
+      return [...words].sort().join(' ') + (serial ? ' #numbered' : '');
     };
 
     // Base, autograph or relic — the other half of the identity, and the bigger
@@ -10222,8 +10265,21 @@ app.get('/api/card-analysis', async (req, res) => {
       // parallel, so an unreadable parallel says nothing about whether the card
       // is an autograph — and leaving autos in this bucket is the very merge
       // this is meant to stop, on the path where the data is already weakest.
+      //
+      // But the column alone is blank on most rows, so this path lumped every
+      // parallel of the card together — a Neon Green Pulsar and a Hyper /275 in
+      // the list and chart of a raw base Josh Allen #205. What is not a guess is
+      // the words the title uses: keep only sales whose titles use the SAME
+      // parallel words (and the same numbering) as the clicked one, and none
+      // whose own parallel reads as something definite.
       const col = String(seed.parallel == null ? '' : seed.parallel).trim();
-      const before = candidates.filter(r => String(r.parallel == null ? '' : r.parallel).trim() === col);
+      const sig = signatureOf(seed);
+      const before = candidates.filter(r => {
+        if (String(r.parallel == null ? '' : r.parallel).trim() !== col) return false;
+        if (keyOf(r).known) { note(r, 'dropped', 'a readable parallel; the seed is not'); return false; }
+        if (signatureOf(r) !== sig) { note(r, 'dropped', `different parallel words: "${signatureOf(r)}" vs "${sig}"`); return false; }
+        return true;
+      });
       excludedOtherParallel = candidates.length - before.length;
       all = before.filter(r => _cardKind(String(r.title || '')) === seedKind);
       excludedOtherKind = before.length - all.length;
@@ -10268,14 +10324,14 @@ app.get('/api/card-analysis', async (req, res) => {
     let excludedOtherPrintRun = 0;
     {
       const seedRun = _printRun(String(seed.title || ''));
-      if (seedRun != null) {
-        const kept = all.filter(r => {
-          const run = _printRun(String(r.title || ''));
-          return run == null || run === seedRun;
-        });
-        excludedOtherPrintRun = all.length - kept.length;
-        all = kept;
-      }
+      // An unnumbered card has no numbered copies: a /275 is a different card
+      // however the rest of its title reads.
+      const kept = all.filter(r => {
+        const run = _printRun(String(r.title || ''));
+        return seedRun != null ? (run == null || run === seedRun) : run == null;
+      });
+      excludedOtherPrintRun = all.length - kept.length;
+      all = kept;
     }
 
     let excludedOtherSubset = 0;
