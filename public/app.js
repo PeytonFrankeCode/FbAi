@@ -3612,15 +3612,18 @@ function buildCard(item, opts = {}) {
         <span class="card-condition">${escHtml(item.condition)}</span>
         ${isSold ? saleTypeNoteHtml(item) : buyingOptionBadgeHtml(item)}
       </div>
-      ${item.hasAnalysis ? '<span class="card-analytics-cue">&#128200; View price history</span>' : ''}
+      ${item.hasAnalysis && !_versionCtx ? '<span class="card-analytics-cue">&#128200; View price history</span>' : ''}
       ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener sponsored noreferrer">View on eBay &#8599;<span class="aff-tag">affiliate link</span></a>` : ''}
     </div>
   `;
 
   // Open modal on card click (but not when clicking the eBay link)
+  // When the results are grouped into checklist versions, history lives on
+  // each version card ("Sold history & graph"); a single comp opens just its
+  // own details, not a second copy of the same chart.
   card.addEventListener('click', (e) => {
     if (e.target.closest('.card-link')) return;
-    openCardModal(item);
+    openCardModal(item, { history: !_versionCtx });
   });
 
   return card;
@@ -3635,7 +3638,7 @@ const cardModalPrice = document.getElementById('card-modal-price');
 const cardModalMeta = document.getElementById('card-modal-meta');
 const cardModalLink = document.getElementById('card-modal-link');
 
-function openCardModal(item) {
+function openCardModal(item, opts = {}) {
   // "Showing X card" header with parsed details
   cardModalShowing.textContent = buildShowingText(item);
 
@@ -3682,7 +3685,8 @@ function openCardModal(item) {
     + '<span class="aff-tag">affiliate link</span>';
 
   // Everything we hold on this card, when the sale came from our own dataset.
-  loadCardAnalysis(item);
+  if (opts.history === false) { if (typeof _caReset === 'function') _caReset(); }
+  else loadCardAnalysis(item);
 
   renderCardModalPromo();
 
