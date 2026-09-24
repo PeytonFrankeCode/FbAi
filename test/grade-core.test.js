@@ -62,6 +62,33 @@ for (const t of STAY_RAW) {
   check(`stays raw: "${t.slice(0, 46)}"`, got === 'Raw', `got "${got}"`);
 }
 
+// ---- a slab label with no grader named ---------------------------------
+// Some sellers type what the flip reads ("GEM MT 10", "MINT 9") and never say
+// PSA; the slab is only visible in the photo. The label's own abbreviations
+// mark a slab, while a spelled-out "Gem Mint 10" stays a seller's claim (above),
+// and so does any label wording that is only hoped for.
+const LABEL_SLABS = [
+  '2021 Prizm Josh Allen #205 (RC) Mint 9',
+  '2022 Mosaic Josh Allen Gold 95/99 GEM MT 10',
+  '2020 Optic Josh Allen NM-MT 8',
+  '2019 Prizm Josh Allen Silver Black Label',
+];
+for (const t of LABEL_SLABS) {
+  const got = bucketOf(t);
+  check(`label wording is a slab: "${t.slice(0, 46)}"`, got === 'Graded (ungraded number)', `got "${got}"`);
+}
+const LABEL_HOPES = [
+  '2021 Prizm Josh Allen Gem Mint 10 candidate',
+  '2021 Prizm Josh Allen Mint 9 potential',
+  '2021 Prizm Josh Allen Topps Mint #9',
+  '2021 Prizm Josh Allen Gem Mint corners!',
+  '2021 Prizm Josh Allen Mint condition 10/10',
+];
+for (const t of LABEL_HOPES) {
+  const got = bucketOf(t);
+  check(`label wording hoped for stays raw: "${t.slice(0, 46)}"`, got === 'Raw', `got "${got}"`);
+}
+
 // ---- a number that is not a grade --------------------------------------
 // Only a number attached to the grader counts. A stray 10 later in the title
 // may be a card number, a jersey, or a print run, and reading one as a grade
@@ -202,11 +229,20 @@ check('stripGrade keeps a laundry tag in the title',
   // of the global object, so it has to be handed out explicitly. A function
   // declaration does become one, which is why detectGrade needs no help — and
   // why the first run of this check reported "browser=0" against correct code.
-  vm.runInContext(src.slice(start, end) + '\nthis.__graders = APP_GRADERS;', ctx);
+  vm.runInContext(src.slice(start, end) + '\nthis.__graders = APP_GRADERS;'
+    + ' this.__label = APP_LABEL_GRADE_RE; this.__hope = APP_HOPE_RE;', ctx);
 
   check('the browser knows exactly the graders the server knows',
     JSON.stringify(ctx.__graders) === JSON.stringify(GRADERS),
     `browser=${(ctx.__graders || []).length} server=${GRADERS.length}`);
+
+  const core = require('../grade-core');
+  check('  ...and reads a slab label with no grader exactly as the server does',
+    !!ctx.__label && ctx.__label.source === core.LABEL_GRADE_RE.source
+    && !!ctx.__hope && ctx.__hope.source === core.HOPE_RE.source
+    && LABEL_SLABS.every(t => ctx.detectGrade(t) === 'Graded (other)')
+    && LABEL_HOPES.concat(['2017 Prizm Mahomes #269 Silver GEM MINT 10']).every(t => ctx.detectGrade(t) === 'Raw / Ungraded'),
+    'patterns must match grade-core.js character for character');
 
   // The cases that used to land in the raw group. Each is a slab.
   const notRaw = [
