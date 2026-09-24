@@ -79,7 +79,7 @@ check(`every listing is tied to the right version, or to none (${CASES.length})`
 check('unmatched listings go to the collapsed section, not the comps',
   /_isOtherCard = \(r\) => !!\(r && \(r\.sameCard === false \|\| \(_versionCtx && _versionOf\(r\) === null\)\)\)/.test(src));
 check('  ...and are left out of the value stats and chart',
-  /function _countedResults\(/.test(src) && /renderStatsBar\(counted, true\)/.test(src) && /updatePriceChart\(counted\)/.test(src));
+  /function _countedResults\(/.test(src) && /renderStatsBar\(counted, true\)/.test(src));
 check('  ...and a new search never inherits the last one\'s grouping',
   /async function buildParallelFilter\(query\) \{[\s\S]{0,200}_versionCtx = null;/.test(src));
 check('the versions container is on the page and styled',
@@ -126,6 +126,25 @@ check('the versions container is on the page and styled',
   c3.set([sale(null), sale(null, true)], null);
   check('  ...and ungrouped, the whole result set is the card',
     flatOffer === true && c3.drop(sale(null, true)) === false);
+}
+
+// Each version opens its full sold history and graph: the card detail view,
+// on one of its own sales that the server can resolve to a card.
+{
+  const verFn = src.slice(src.indexOf('function _buildVersionCard'), src.indexOf('function _buildVersionCard') + 6000);
+  check('each version card has a button to its sold history and graph',
+    /class="version-history-btn"/.test(verFn) && /openCardModal\(histFrom\)/.test(verFn)
+    && /r\.source === 'nflcarddb' && r\.itemId && r\.hasAnalysis/.test(verFn)
+    && /e\.stopPropagation\(\)/.test(verFn),
+    'the button must open the detail view without also toggling the comps filter');
+}
+// The price chart that sat above every search is gone, markup and code alike:
+// a module-level binding to a removed element would take the page down.
+{
+  const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
+  check('the search results no longer draw a price chart',
+    !/id="chart-section"/.test(html) && !/id="price-chart"/.test(html)
+    && !/updatePriceChart|chartSection|chartCanvas/.test(src));
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sold-versions checks passed');

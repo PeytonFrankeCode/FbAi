@@ -881,8 +881,6 @@ const suggestionsSection = document.getElementById('suggestions-section');
 // The homepage's prose. Follows the suggestions section exactly: present when
 // somebody lands, out of the way once they have searched for something.
 const aboutSection = document.getElementById('about-section');
-const chartSection = document.getElementById('chart-section');
-const chartCanvas = document.getElementById('price-chart');
 const variantsSection = document.getElementById('variants-section');
 const variantsGrid = document.getElementById('variants-grid');
 const variantsTitle = document.getElementById('variants-title');
@@ -895,7 +893,6 @@ const recentChips = document.getElementById('recent-chips');
 const similarSection = document.getElementById('similar-section');
 const similarGrid = document.getElementById('similar-grid');
 const similarTitle = document.getElementById('similar-title');
-let priceChart = null;
 
 // State
 let cachedVariants = null;
@@ -1549,9 +1546,7 @@ async function fetchVariants(query) {
   similarGrid.innerHTML = '';
   grid.innerHTML = '';
   meta.classList.add('hidden');
-  chartSection.classList.add('hidden');
   errorMsg.classList.add('hidden');
-  if (priceChart) { priceChart.destroy(); priceChart = null; }
 
   loadingText.textContent = currentMode === 'sold' ? 'Finding sold card variants...' : 'Finding card variants...';
   setLoading(true);
@@ -1950,10 +1945,8 @@ function goBackToVariants() {
   similarGrid.innerHTML = '';
   grid.innerHTML = '';
   meta.classList.add('hidden');
-  chartSection.classList.add('hidden');
   errorMsg.classList.add('hidden');
   currentResults = [];
-  if (priceChart) { priceChart.destroy(); priceChart = null; }
 
   if (currentSearchMode === 'direct') {
     // Return to search home
@@ -1984,9 +1977,7 @@ async function fetchDirectSearch(query) {
   similarGrid.innerHTML = '';
   grid.innerHTML = '';
   meta.classList.add('hidden');
-  chartSection.classList.add('hidden');
   errorMsg.classList.add('hidden');
-  if (priceChart) { priceChart.destroy(); priceChart = null; }
 
   const isSold = currentMode === 'sold';
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
@@ -2095,7 +2086,7 @@ async function fetchDirectSearch(query) {
           addForsaleLoadMore(grid);
         }
       }
-      if (isSold) { updatePriceChart(_withoutDroppedOffers(results)); buildGradeFilter(); buildParallelFilter(query); }
+      if (isSold) { buildGradeFilter(); buildParallelFilter(query); }
     }
 
     backBtn.classList.remove('hidden');
@@ -2364,7 +2355,6 @@ async function performSearch(query, opts = {}) {
   grid.innerHTML = '';
   errorMsg.classList.add('hidden');
   meta.classList.add('hidden');
-  chartSection.classList.add('hidden');
   sortControls.classList.add('hidden');
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
@@ -2373,10 +2363,6 @@ async function performSearch(query, opts = {}) {
   resetGradeFilter();
   resetParallelFilter();
   currentResults = [];
-  if (priceChart) {
-    priceChart.destroy();
-    priceChart = null;
-  }
 
   const fallback = !!opts.fallback;
   const effectiveMode = fallback ? 'forsale' : currentMode;
@@ -2532,7 +2518,6 @@ async function performSearch(query, opts = {}) {
         if (_forsalePaging.hasMore) addForsaleLoadMore(grid);
       }
       if (isSold) {
-        updatePriceChart(_withoutDroppedOffers(results));
         loadGradePanel(query);
         buildGradeFilter();
         buildParallelFilter(query);
@@ -2616,103 +2601,6 @@ async function loadGradePanel(query) {
 }
 
 // ---- Price Chart ----
-function updatePriceChart(results) {
-  if (typeof Chart === 'undefined') return;
-
-  // Full price history is free for everyone — show up to a year.
-  const cutoffDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-
-  const allSorted = [...results]
-    .filter(r => r.soldDate && r.price)
-    .sort((a, b) => new Date(a.soldDate) - new Date(b.soldDate));
-
-  const sorted = allSorted.filter(r => new Date(r.soldDate) >= cutoffDate);
-
-  // Show depth notice
-  let depthEl = document.getElementById('chart-depth-notice');
-  if (!depthEl) {
-    depthEl = document.createElement('div');
-    depthEl.id = 'chart-depth-notice';
-    depthEl.className = 'chart-depth-notice';
-    chartSection.appendChild(depthEl);
-  }
-  if (allSorted.length > 0) {
-    depthEl.textContent = `Showing up to 1 year of price history`;
-    depthEl.classList.remove('hidden');
-  } else {
-    depthEl.classList.add('hidden');
-  }
-
-  if (sorted.length < 2) {
-    chartSection.classList.add('hidden');
-    return;
-  }
-
-  const labels = sorted.map(r =>
-    new Date(r.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  );
-  const prices = sorted.map(r => parseFloat(r.price));
-
-  if (priceChart) {
-    priceChart.destroy();
-    priceChart = null;
-  }
-
-  priceChart = new Chart(chartCanvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Sale Price (USD)',
-        data: prices,
-        borderColor: '#52b788',
-        backgroundColor: 'rgba(82, 183, 136, 0.08)',
-        pointBackgroundColor: '#52b788',
-        pointBorderColor: '#0f1117',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        fill: true,
-        tension: 0.3,
-        borderWidth: 2,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a202c',
-          borderColor: '#2d3748',
-          borderWidth: 1,
-          titleColor: '#8d99ae',
-          bodyColor: '#52b788',
-          callbacks: {
-            label: ctx => ` $${ctx.parsed.y.toFixed(2)}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { color: '#1a2030' },
-          ticks: { color: '#8d99ae', font: { size: 11, family: 'Inter' } }
-        },
-        y: {
-          grid: { color: '#2d3748' },
-          ticks: {
-            color: '#8d99ae',
-            font: { size: 11, family: 'Inter' },
-            callback: val => `$${val}`
-          },
-          beginAtZero: false
-        }
-      }
-    }
-  });
-
-  chartSection.classList.remove('hidden');
-}
 
 // ---- Team Colors ----
 const TEAM_COLORS = {
@@ -3263,6 +3151,13 @@ function _buildVersionCard({ v, items }) {
   const withImg = items.filter(r => r.imageUrl && parseFloat(r.price) > 0)
     .sort((a, b) => Math.abs(parseFloat(a.price) - median) - Math.abs(parseFloat(b.price) - median));
   const img = withImg[0] && withImg[0].imageUrl;
+  // The full sold history and graph for this version: the card detail view,
+  // opened on one of its own sales — a typically priced raw sale where there
+  // is one — since that view resolves a sale to its card and charts every
+  // sale of it we hold, by grade. Only our own rows can be resolved that way.
+  const histPool = clean.filter(r => r.source === 'nflcarddb' && r.itemId && r.hasAnalysis);
+  const histFrom = (raw.length ? histPool.filter(isRaw) : []).concat(histPool)
+    .sort((a, b) => Math.abs(parseFloat(a.price) - median) - Math.abs(parseFloat(b.price) - median))[0] || null;
 
   const card = document.createElement('div');
   card.className = 'card version-card' + (currentParallelFilter === v.key ? ' active' : '');
@@ -3286,7 +3181,13 @@ function _buildVersionCard({ v, items }) {
         <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
         ${prices.length > 1 ? `<span class="card-condition">median $${median.toFixed(2)} &middot; $${prices[0].toFixed(0)}&ndash;$${prices[prices.length - 1].toFixed(0)}</span>` : ''}
       </div>
+      ${histFrom ? '<button type="button" class="version-history-btn">&#128200; Sold history &amp; graph</button>' : ''}
     </div>`;
+  const histBtn = card.querySelector('.version-history-btn');
+  if (histBtn) histBtn.addEventListener('click', (e) => {
+    e.stopPropagation();                 // the card itself filters the comps
+    openCardModal(histFrom);
+  });
   card.addEventListener('click', () => {
     applyParallelFilter(currentParallelFilter === v.key ? 'all' : v.key);
     const statsTop = document.getElementById('results-grid');
@@ -3535,7 +3436,6 @@ function _reRenderForFilters() {
   if (counted.length > 0) renderStatsBar(counted, true);
   const sortType = document.querySelector('.sort-btn.active')?.dataset.sort || 'default';
   applySortToResults(sortType);
-  updatePriceChart(counted);
 }
 
 function applyGradeFilter(grade) {
