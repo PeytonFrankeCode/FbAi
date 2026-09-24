@@ -57,7 +57,8 @@ function parseCardLine(line) {
     team = rest.slice(lastComma + 1).trim();
   }
   const card = { number: num, player, team };
-  if (printRun) card.printRun = printRun;
+  // A number, as every other product stores it; "99" only survived on coercion.
+  if (printRun) card.printRun = /^\d+$/.test(printRun) ? Number(printRun) : printRun;
   if (note) card.note = note;
   return card;
 }
@@ -71,7 +72,7 @@ function parseParallelLine(line) {
   //   Refractors (no print run)
   const printMatch = line.match(/\s+\/(\d+|1\/1)\s*(\(.*\))?$/);
   if (printMatch) {
-    return { name: line.slice(0, printMatch.index).trim(), printRun: printMatch[1].replace('1/1', '1') };
+    return { name: line.slice(0, printMatch.index).trim(), printRun: Number(printMatch[1].replace('1/1', '1')) || null };
   }
   return { name: line.replace(/\s*\([^)]*\)\s*$/, '').trim(), printRun: null };
 }

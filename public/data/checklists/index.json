@@ -444,7 +444,7 @@
       "year": 2024,
       "brand": "Black",
       "sport": "Football",
-      "setCount": 33,
+      "setCount": 32,
       "totalCards": 786
     },
     {
@@ -588,8 +588,8 @@
       "year": 2024,
       "brand": "Panini One",
       "sport": "Football",
-      "setCount": 28,
-      "totalCards": 499
+      "setCount": 25,
+      "totalCards": 465
     },
     {
       "id": "2024-panini-origins-football",
@@ -1524,8 +1524,8 @@
       "year": 2021,
       "brand": "Donruss Elite",
       "sport": "Football",
-      "setCount": 32,
-      "totalCards": 1103
+      "setCount": 38,
+      "totalCards": 1403
     },
     {
       "id": "2021-donruss-football",
@@ -1533,8 +1533,8 @@
       "year": 2021,
       "brand": "Donruss",
       "sport": "Football",
-      "setCount": 76,
-      "totalCards": 2802
+      "setCount": 81,
+      "totalCards": 2867
     },
     {
       "id": "2021-donruss-optic-football",
@@ -1542,8 +1542,8 @@
       "year": 2021,
       "brand": "Donruss Optic",
       "sport": "Football",
-      "setCount": 33,
-      "totalCards": 1019
+      "setCount": 35,
+      "totalCards": 1079
     },
     {
       "id": "2021-panini-absolute-football",
@@ -1551,8 +1551,8 @@
       "year": 2021,
       "brand": "Absolute",
       "sport": "Football",
-      "setCount": 43,
-      "totalCards": 1349
+      "setCount": 44,
+      "totalCards": 1399
     },
     {
       "id": "2021-panini-black-football",
@@ -1578,8 +1578,8 @@
       "year": 2021,
       "brand": "Contender",
       "sport": "Football",
-      "setCount": 13,
-      "totalCards": 192
+      "setCount": 14,
+      "totalCards": 212
     },
     {
       "id": "2021-panini-contenders-draft-picks-football",
@@ -1587,7 +1587,7 @@
       "year": 2021,
       "brand": "Contenders Draft Picks",
       "sport": "Football",
-      "setCount": 16,
+      "setCount": 18,
       "totalCards": 925
     },
     {
@@ -1605,8 +1605,8 @@
       "year": 2021,
       "brand": "Contenders Optic",
       "sport": "Football",
-      "setCount": 25,
-      "totalCards": 605
+      "setCount": 33,
+      "totalCards": 640
     },
     {
       "id": "2021-panini-elements-football",
@@ -1659,8 +1659,8 @@
       "year": 2021,
       "brand": "Gold Standard",
       "sport": "Football",
-      "setCount": 40,
-      "totalCards": 1217
+      "setCount": 44,
+      "totalCards": 1304
     },
     {
       "id": "2021-panini-illusions-football",
@@ -1686,8 +1686,8 @@
       "year": 2021,
       "brand": "Immaculate",
       "sport": "Football",
-      "setCount": 79,
-      "totalCards": 2170
+      "setCount": 80,
+      "totalCards": 2176
     },
     {
       "id": "2021-panini-impeccable-football",
@@ -1695,8 +1695,8 @@
       "year": 2021,
       "brand": "Impeccable",
       "sport": "Football",
-      "setCount": 36,
-      "totalCards": 672
+      "setCount": 37,
+      "totalCards": 680
     },
     {
       "id": "2021-panini-legacy-football",
@@ -1713,7 +1713,7 @@
       "year": 2021,
       "brand": "Limited",
       "sport": "Football",
-      "setCount": 53,
+      "setCount": 54,
       "totalCards": 1365
     },
     {
@@ -1740,8 +1740,8 @@
       "year": 2021,
       "brand": "Mosaic",
       "sport": "Football",
-      "setCount": 32,
-      "totalCards": 1378
+      "setCount": 33,
+      "totalCards": 1393
     },
     {
       "id": "2021-panini-national-treasures-collegiate-football",
@@ -1776,7 +1776,7 @@
       "year": 2021,
       "brand": "One",
       "sport": "Football",
-      "setCount": 13,
+      "setCount": 14,
       "totalCards": 210
     },
     {
@@ -1794,8 +1794,8 @@
       "year": 2021,
       "brand": "Phoenix",
       "sport": "Football",
-      "setCount": 50,
-      "totalCards": 1562
+      "setCount": 53,
+      "totalCards": 1581
     },
     {
       "id": "2021-panini-playbook-football",
@@ -1830,8 +1830,8 @@
       "year": 2021,
       "brand": "Prizm",
       "sport": "Football",
-      "setCount": 25,
-      "totalCards": 1334
+      "setCount": 26,
+      "totalCards": 1364
     },
     {
       "id": "2021-panini-rookies-stars-football",
@@ -1857,8 +1857,8 @@
       "year": 2021,
       "brand": "XR",
       "sport": "Football",
-      "setCount": 28,
-      "totalCards": 971
+      "setCount": 33,
+      "totalCards": 1007
     },
     {
       "id": "2021-panini-zenith-football",
@@ -1866,8 +1866,8 @@
       "year": 2021,
       "brand": "Zenith",
       "sport": "Football",
-      "setCount": 22,
-      "totalCards": 674
+      "setCount": 24,
+      "totalCards": 743
     },
     {
       "id": "2021-playoff-football",
@@ -1875,8 +1875,8 @@
       "year": 2021,
       "brand": "Playoff",
       "sport": "Football",
-      "setCount": 23,
-      "totalCards": 1143
+      "setCount": 25,
+      "totalCards": 1150
     },
     {
       "id": "2021-score-football",
@@ -1884,8 +1884,8 @@
       "year": 2021,
       "brand": "Score",
       "sport": "Football",
-      "setCount": 22,
-      "totalCards": 1113
+      "setCount": 26,
+      "totalCards": 1708
     },
     {
       "id": "2021-select-football",
@@ -1893,8 +1893,8 @@
       "year": 2021,
       "brand": "Select",
       "sport": "Football",
-      "setCount": 42,
-      "totalCards": 1861
+      "setCount": 47,
+      "totalCards": 1786
     },
     {
       "id": "2020-absolute-football",
@@ -1902,7 +1902,7 @@
       "year": 2020,
       "brand": "Absolute",
       "sport": "Football",
-      "setCount": 44,
+      "setCount": 45,
       "totalCards": 1352
     },
     {
@@ -1911,8 +1911,8 @@
       "year": 2020,
       "brand": "Donruss",
       "sport": "Football",
-      "setCount": 60,
-      "totalCards": 2504
+      "setCount": 61,
+      "totalCards": 2404
     },
     {
       "id": "2020-donruss-optic-football",
@@ -1920,8 +1920,8 @@
       "year": 2020,
       "brand": "Donruss Optic",
       "sport": "Football",
-      "setCount": 27,
-      "totalCards": 846
+      "setCount": 28,
+      "totalCards": 856
     },
     {
       "id": "2020-elite-football",
@@ -1929,8 +1929,8 @@
       "year": 2020,
       "brand": "Elite",
       "sport": "Football",
-      "setCount": 34,
-      "totalCards": 1220
+      "setCount": 41,
+      "totalCards": 1520
     },
     {
       "id": "2020-panini-black-football",
@@ -1938,8 +1938,8 @@
       "year": 2020,
       "brand": "Black",
       "sport": "Football",
-      "setCount": 18,
-      "totalCards": 796
+      "setCount": 20,
+      "totalCards": 938
     },
     {
       "id": "2020-panini-certified-football",
@@ -1947,8 +1947,8 @@
       "year": 2020,
       "brand": "Certified",
       "sport": "Football",
-      "setCount": 27,
-      "totalCards": 994
+      "setCount": 28,
+      "totalCards": 952
     },
     {
       "id": "2020-panini-contenders-draft-picks-football",
@@ -1956,7 +1956,7 @@
       "year": 2020,
       "brand": "Contenders Draft Picks",
       "sport": "Football",
-      "setCount": 9,
+      "setCount": 10,
       "totalCards": 496
     },
     {
@@ -1965,8 +1965,8 @@
       "year": 2020,
       "brand": "Contenders",
       "sport": "Football",
-      "setCount": 33,
-      "totalCards": 1270
+      "setCount": 35,
+      "totalCards": 1290
     },
     {
       "id": "2020-panini-contenders-optic-football",
@@ -1974,8 +1974,8 @@
       "year": 2020,
       "brand": "Contenders Optic",
       "sport": "Football",
-      "setCount": 18,
-      "totalCards": 388
+      "setCount": 25,
+      "totalCards": 409
     },
     {
       "id": "2020-panini-elements-football",
@@ -2019,8 +2019,8 @@
       "year": 2020,
       "brand": "Gold Standard",
       "sport": "Football",
-      "setCount": 27,
-      "totalCards": 896
+      "setCount": 35,
+      "totalCards": 1000
     },
     {
       "id": "2020-panini-honors-football",
@@ -2028,8 +2028,8 @@
       "year": 2020,
       "brand": "Honors",
       "sport": "Football",
-      "setCount": 2,
-      "totalCards": 59
+      "setCount": 9,
+      "totalCards": 179
     },
     {
       "id": "2020-panini-illusions-football",
@@ -2037,7 +2037,7 @@
       "year": 2020,
       "brand": "Illusions",
       "sport": "Football",
-      "setCount": 31,
+      "setCount": 32,
       "totalCards": 888
     },
     {
@@ -2055,8 +2055,8 @@
       "year": 2020,
       "brand": "Immaculate",
       "sport": "Football",
-      "setCount": 69,
-      "totalCards": 2136
+      "setCount": 71,
+      "totalCards": 2140
     },
     {
       "id": "2020-panini-impeccable-football",
@@ -2073,7 +2073,7 @@
       "year": 2020,
       "brand": "Legacy",
       "sport": "Football",
-      "setCount": 36,
+      "setCount": 37,
       "totalCards": 1100
     },
     {
@@ -2091,7 +2091,7 @@
       "year": 2020,
       "brand": "Luminance",
       "sport": "Football",
-      "setCount": 25,
+      "setCount": 26,
       "totalCards": 711
     },
     {
@@ -2100,8 +2100,8 @@
       "year": 2020,
       "brand": "Mosaic",
       "sport": "Football",
-      "setCount": 25,
-      "totalCards": 1016
+      "setCount": 30,
+      "totalCards": 1024
     },
     {
       "id": "2020-panini-national-treasures-collegiate-football",
@@ -2136,8 +2136,8 @@
       "year": 2020,
       "brand": "One",
       "sport": "Football",
-      "setCount": 19,
-      "totalCards": 298
+      "setCount": 20,
+      "totalCards": 299
     },
     {
       "id": "2020-panini-origins-football",
@@ -2145,7 +2145,7 @@
       "year": 2020,
       "brand": "Origins",
       "sport": "Football",
-      "setCount": 7,
+      "setCount": 9,
       "totalCards": 296
     },
     {
@@ -2181,7 +2181,7 @@
       "year": 2020,
       "brand": "Prestige",
       "sport": "Football",
-      "setCount": 23,
+      "setCount": 24,
       "totalCards": 873
     },
     {
@@ -2226,8 +2226,8 @@
       "year": 2020,
       "brand": "Spectra",
       "sport": "Football",
-      "setCount": 40,
-      "totalCards": 1181
+      "setCount": 42,
+      "totalCards": 1288
     },
     {
       "id": "2020-panini-xr-football",
@@ -2271,8 +2271,8 @@
       "year": 2019,
       "brand": "Donruss",
       "sport": "Football",
-      "setCount": 64,
-      "totalCards": 2393
+      "setCount": 65,
+      "totalCards": 2413
     },
     {
       "id": "2019-donruss-optic-football",
@@ -2280,8 +2280,8 @@
       "year": 2019,
       "brand": "Donruss Optic",
       "sport": "Football",
-      "setCount": 26,
-      "totalCards": 724
+      "setCount": 30,
+      "totalCards": 776
     },
     {
       "id": "2019-elite-football",
@@ -2289,8 +2289,8 @@
       "year": 2019,
       "brand": "Elite",
       "sport": "Football",
-      "setCount": 33,
-      "totalCards": 1208
+      "setCount": 39,
+      "totalCards": 1508
     },
     {
       "id": "2019-panini-absolute-football",
@@ -2325,8 +2325,8 @@
       "year": 2019,
       "brand": "Contenders Draft Picks",
       "sport": "Football",
-      "setCount": 20,
-      "totalCards": 821
+      "setCount": 22,
+      "totalCards": 836
     },
     {
       "id": "2019-panini-contenders-football",
@@ -2334,8 +2334,8 @@
       "year": 2019,
       "brand": "Contenders",
       "sport": "Football",
-      "setCount": 40,
-      "totalCards": 1927
+      "setCount": 43,
+      "totalCards": 1977
     },
     {
       "id": "2019-panini-elements-football",
@@ -2352,8 +2352,8 @@
       "year": 2019,
       "brand": "Encased",
       "sport": "Football",
-      "setCount": 19,
-      "totalCards": 500
+      "setCount": 20,
+      "totalCards": 503
     },
     {
       "id": "2019-panini-flawless-collegiate-football",
@@ -2379,8 +2379,8 @@
       "year": 2019,
       "brand": "Gold Standard",
       "sport": "Football",
-      "setCount": 29,
-      "totalCards": 1064
+      "setCount": 33,
+      "totalCards": 1182
     },
     {
       "id": "2019-panini-illusions-football",
@@ -2487,8 +2487,8 @@
       "year": 2019,
       "brand": "One",
       "sport": "Football",
-      "setCount": 16,
-      "totalCards": 225
+      "setCount": 18,
+      "totalCards": 231
     },
     {
       "id": "2019-panini-origins-football",
@@ -2523,8 +2523,8 @@
       "year": 2019,
       "brand": "Plates & Patches",
       "sport": "Football",
-      "setCount": 22,
-      "totalCards": 536
+      "setCount": 23,
+      "totalCards": 556
     },
     {
       "id": "2019-panini-playbook-football",
@@ -2631,8 +2631,8 @@
       "year": 2018,
       "brand": "Donruss",
       "sport": "Football",
-      "setCount": 56,
-      "totalCards": 2547
+      "setCount": 61,
+      "totalCards": 2619
     },
     {
       "id": "2018-donruss-optic-football",
@@ -2640,8 +2640,8 @@
       "year": 2018,
       "brand": "Donruss Optic",
       "sport": "Football",
-      "setCount": 24,
-      "totalCards": 685
+      "setCount": 29,
+      "totalCards": 736
     },
     {
       "id": "2018-elite-football",
@@ -2658,8 +2658,8 @@
       "year": 2018,
       "brand": "Absolute",
       "sport": "Football",
-      "setCount": 40,
-      "totalCards": 1094
+      "setCount": 41,
+      "totalCards": 1114
     },
     {
       "id": "2018-panini-certified-football",
@@ -2694,8 +2694,8 @@
       "year": 2018,
       "brand": "Contenders",
       "sport": "Football",
-      "setCount": 48,
-      "totalCards": 2490
+      "setCount": 51,
+      "totalCards": 2512
     },
     {
       "id": "2018-panini-contenders-optic-football",
@@ -2703,8 +2703,8 @@
       "year": 2018,
       "brand": "Contenders Optic",
       "sport": "Football",
-      "setCount": 17,
-      "totalCards": 413
+      "setCount": 24,
+      "totalCards": 423
     },
     {
       "id": "2018-panini-day-kickoff-football",
@@ -2721,8 +2721,8 @@
       "year": 2018,
       "brand": "Elements",
       "sport": "Football",
-      "setCount": 15,
-      "totalCards": 633
+      "setCount": 16,
+      "totalCards": 634
     },
     {
       "id": "2018-panini-elite-draft-picks-football",
@@ -2766,8 +2766,8 @@
       "year": 2018,
       "brand": "Gold Standard",
       "sport": "Football",
-      "setCount": 32,
-      "totalCards": 945
+      "setCount": 35,
+      "totalCards": 1065
     },
     {
       "id": "2018-panini-honors-football",
@@ -2775,8 +2775,8 @@
       "year": 2018,
       "brand": "Honors",
       "sport": "Football",
-      "setCount": 13,
-      "totalCards": 297
+      "setCount": 20,
+      "totalCards": 305
     },
     {
       "id": "2018-panini-illusions-football",
@@ -2865,8 +2865,8 @@
       "year": 2018,
       "brand": "Obsidian",
       "sport": "Football",
-      "setCount": 19,
-      "totalCards": 1004
+      "setCount": 20,
+      "totalCards": 1005
     },
     {
       "id": "2018-panini-one-football",
@@ -2874,8 +2874,8 @@
       "year": 2018,
       "brand": "One",
       "sport": "Football",
-      "setCount": 13,
-      "totalCards": 222
+      "setCount": 14,
+      "totalCards": 223
     },
     {
       "id": "2018-panini-origins-football",
@@ -2919,8 +2919,8 @@
       "year": 2018,
       "brand": "Prizm",
       "sport": "Football",
-      "setCount": 19,
-      "totalCards": 1037
+      "setCount": 20,
+      "totalCards": 1052
     },
     {
       "id": "2018-panini-rookies-stars-football",
@@ -2937,8 +2937,8 @@
       "year": 2018,
       "brand": "Spectra",
       "sport": "Football",
-      "setCount": 21,
-      "totalCards": 720
+      "setCount": 22,
+      "totalCards": 735
     },
     {
       "id": "2018-panini-unparalleled-football",
@@ -3009,8 +3009,8 @@
       "year": 2017,
       "brand": "Donruss",
       "sport": "Football",
-      "setCount": 70,
-      "totalCards": 2959
+      "setCount": 71,
+      "totalCards": 2982
     },
     {
       "id": "2017-donruss-optic-football",
@@ -3018,8 +3018,8 @@
       "year": 2017,
       "brand": "Donruss Optic",
       "sport": "Football",
-      "setCount": 22,
-      "totalCards": 697
+      "setCount": 23,
+      "totalCards": 719
     },
     {
       "id": "2017-panini-absolute-football",
@@ -3072,8 +3072,8 @@
       "year": 2017,
       "brand": "Contenders Optic",
       "sport": "Football",
-      "setCount": 25,
-      "totalCards": 821
+      "setCount": 28,
+      "totalCards": 824
     },
     {
       "id": "2017-panini-elite-draft-picks-football",
@@ -3090,8 +3090,8 @@
       "year": 2017,
       "brand": "Encased",
       "sport": "Football",
-      "setCount": 19,
-      "totalCards": 656
+      "setCount": 18,
+      "totalCards": 633
     },
     {
       "id": "2017-panini-flawless-collegiate-football",
@@ -3126,8 +3126,8 @@
       "year": 2017,
       "brand": "Gold Standard",
       "sport": "Football",
-      "setCount": 41,
-      "totalCards": 1551
+      "setCount": 44,
+      "totalCards": 1666
     },
     {
       "id": "2017-panini-illusions-football",
@@ -3171,8 +3171,8 @@
       "year": 2017,
       "brand": "Limited",
       "sport": "Football",
-      "setCount": 50,
-      "totalCards": 1485
+      "setCount": 51,
+      "totalCards": 1498
     },
     {
       "id": "2017-panini-majestic-football",
