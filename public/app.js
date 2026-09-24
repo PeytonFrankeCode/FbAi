@@ -2992,6 +2992,24 @@ function _setKind(name) {
   return 'base';
 }
 
+// Whether an insert code could stand for a set: its letters, in order, in the
+// set's name and starting with its first letter ("DT" Downtown, "PB" Prizm
+// Break, "PJ" Premier Jerseys).
+function _codeFits(pre, c) {
+  const w = c.setNorm.replace(/\s+/g, '');
+  if (!pre || w[0] !== pre[0]) return false;
+  let i = 0;
+  for (const ch of w) if (ch === pre[i]) i++;
+  return i === pre.length;
+}
+
+const _BASE_LIKE_SET_RE = /^(rookies?|rated rookies|veterans?|legends?|retired( players)?)$/i;
+
+// Set names that describe nothing a title would single out.
+const _GENERIC_SET_RE = /^(base|rookies?|veterans?|retired|legends?|base rookies?|rookies? and veterans?)$/;
+// Sellers mark a variation "variation", "var" or "SP".
+const _VARIATION_RE = /\b(variations?|var|sp|ssp)\b/;
+
 // The player's cards in the product, each with its own parallel matchers.
 function _buildVersionCtx(product, player, query) {
   if (!product || !Array.isArray(product.sets) || !player || player.length < 3) return null;
@@ -3009,10 +3027,18 @@ function _buildVersionCtx(product, player, query) {
         if (!par || !par.name) continue;
         for (const n of [par.name, ...(par.aliases || [])]) names.push(n.replace(/\s*(,|&|\band\b)\s*/gi, ' '));
       }
+      const setNorm = _versionName((set.name || '').replace(/\b(base set|set|prizms?)\b/gi, ' '));
       cards.push({
         set: set.name || '',
-        setNorm: _versionName((set.name || '').replace(/\b(base set|set|prizms?)\b/gi, ' ')),
-        base: /^base\b/i.test(set.name || '') || set.category === 'base',
+        setNorm,
+        // A set name that says something ("Prizmatic", "Rookie Introduction",
+        // "Downtown") can be matched in a title; "Rookies" or "Base" cannot.
+        setRe: setNorm.length >= 4 && !_GENERIC_SET_RE.test(setNorm)
+          ? new RegExp('\\b' + _reEsc(setNorm).replace(/\s+/g, '[\\s-]+') + '\\b') : null,
+        variation: /\bvariations?\b/.test(setNorm),
+        // The rookie run of the base set is often filed as its own "insert"
+        // ("Rated Rookies", Mosaic's "Rookies"); it is still the base card.
+        base: /^base\b/i.test(set.name || '') || set.category === 'base' || _BASE_LIKE_SET_RE.test(set.name || ''),
         number: String(c.number || '').replace(/^#/, '').toLowerCase(),
         player: c.player || player,
         kind: _setKind(set.name || ''),
@@ -3042,40 +3068,123 @@ function _matchVersion(title, ctx) {
   }
   hay = hay.replace(/\band\b/g, ' ').replace(/\s+/g, ' ');
 
-  // 1. The card. A stated number decides it outright.
+  // 1. The card.
+  //
+  // Several of his cards can share a number (base #325, its variation and its
+  // autograph are all #325; Color Blast and Prizmatic are both #3), so a
+  // number narrows the field rather than deciding it, and the rest of the
+  // title — the set it names, auto or relic words, "variation" — picks
+  // among what is left. Two sets still standing is a card we cannot tell.
+  const kind = _AUTO_RE.test(hay) ? 'auto' : _RELIC_RE.test(hay) ? 'relic' : 'base';
+  const wantsVar = _VARIATION_RE.test(hay);
+  const narrow = (cands) => {
+    const bySet = new Map();
+    for (const c of cands) if (!bySet.has(c.set)) bySet.set(c.set, c);
+    let list = [...bySet.values()];
+    if (list.length <= 1) return list;
+    const named = list.filter(c => c.setRe && c.setRe.test(hay)).sort((x, y) => y.setNorm.length - x.setNorm.length);
+    if (named.length) return [named[0]];
+    const ofKind = list.filter(c => c.kind === kind);
+    if (ofKind.length) list = ofKind;
+    const ofVar = list.filter(c => c.variation === wantsVar);
+    if (ofVar.length) list = ofVar;
+    return list;
+  };
+
+  // A sibling product: "2023 Select Draft Picks" is not 2023 Select, and its
+  // #2 is a different card from Select's #2.
+  const prodNorm = _cleanForMatch(ctx.productName);
+  for (const w of ['draft picks', 'collegiate', 'deca', 'update']) {
+    if (hay.includes(w) && !prodNorm.includes(w)) return null;
+  }
+
   let card = null;
-  const num = (String(title).match(/#\s*([a-z0-9]+(?:-[a-z0-9]+)*)/i) || [])[1];
-  if (num) {
-    const n = num.toLowerCase().replace(/^0+(?=\d)/, '');
-    const hits = ctx.cards.filter(c => c.number.replace(/^0+(?=\d)/, '') === n);
-    if (hits.length !== 1) return null;             // not his, or ambiguous
-    card = hits[0];
+  const raw = (String(title).match(/#\s*([a-z0-9]+(?:-[a-z0-9]+)*)/i) || [])[1] || '';
+  const flat = (x) => x.toLowerCase().replace(/-/g, '').replace(/^([a-z]*)0+(?=\d)/, '$1');
+  // "#DT-39", "#RI-5", "#K41": the letters are the insert's code, the
+  // checklist keeps the number alone. "#RG-JDS" has no number at all.
+  const code = /^([a-z]+)-?(\d+)$/i.exec(raw);
+  if (/\d/.test(raw)) {
+    let cands = ctx.cards.filter(c => flat(c.number) === flat(raw));
+    if (!cands.length && code) {
+      const pre = code[1].toLowerCase(), n = String(+code[2]);
+      cands = ctx.cards.filter(c => flat(c.number) === n);
+      // Keep the sets the code could stand for: its letters, in order, in the
+      // set's name and starting with its first letter ("DT" Downtown, "PB"
+      // Prizm Break, "ND" NFL Debut). Nothing fitting means nothing to drop.
+      const fits = cands.filter(c => _codeFits(pre, c));
+      if (fits.length) cands = fits;
+    }
+    // The checklist and the card can number the same insert differently
+    // (NFL Debut "#ND-3" is 383 in the list); a set the title names settles it.
+    if (!cands.length) cands = ctx.cards.filter(c => c.setRe && c.setRe.test(hay));
+    if (!cands.length) return null;                 // not his card in this product
+    const left = narrow(cands);
+    if (left.length !== 1) return null;
+    card = left[0];
   } else {
     // An insert named in the title, longest name first.
     const named = ctx.cards
-      .filter(c => !c.base && c.setNorm.length >= 4
-        && new RegExp('\\b' + _reEsc(c.setNorm).replace(/\s+/g, '[\\s-]+') + '\\b').test(hay))
-      .sort((a, b) => b.setNorm.length - a.setNorm.length);
+      .filter(c => c.setRe && c.setRe.test(hay))
+      .sort((x, y) => y.setNorm.length - x.setNorm.length);
     if (named.length) card = named[0];
+    // A coded number with no digits ("#PJ-CJS", "#RG-JDS") is an insert's:
+    // its first part is the insert's code, and it is never the base card.
+    else if (raw) {
+      const pre = raw.includes('-') ? raw.split('-')[0].toLowerCase() : '';
+      const fits = pre ? narrow(ctx.cards.filter(c => !c.base && _codeFits(pre, c))) : [];
+      if (fits.length !== 1) return null;
+      card = fits[0];
+    }
     else {
       // Otherwise the kind of card the title describes, if he has exactly one.
-      const kind = _AUTO_RE.test(hay) ? 'auto' : _RELIC_RE.test(hay) ? 'relic' : 'base';
-      const pool = ctx.cards.filter(c => kind === 'base' ? c.base : c.kind === kind);
+      const pool = narrow(ctx.cards.filter(c => kind === 'base' ? c.base && c.kind === 'base' : c.kind === kind));
       if (pool.length !== 1) return null;
       card = pool[0];
     }
   }
 
-  // 2. The parallel, from that set's own list. Whatever parallel vocabulary is
-  // left once that is taken out means the title names more than the set lists
-  // ("Neon Green Pulsar" where the set only has "Green"): a version this set
-  // was never printed in, not a Green. "Holo" is exempt — sellers write
-  // "Silver Holo Prizm" for the plain Silver.
+  // An autograph is always its own set; a title saying "auto" that landed on
+  // a set without one is some other card.
+  if (kind === 'auto' && card.kind !== 'auto') return null;
+
+  // 2. The parallel. The set's own name comes out first — "Prizmatic" and
+  // "Neon Icons" are sets whose names are also parallel words. Then the
+  // title's parallel words are read against the set's list and, for what the
+  // list does not name ("Orange Disco", "Green Wave"), the wider vocabulary:
+  // the card is confirmed, so an unlisted version is labelled as sold rather
+  // than dropped. "Holo" alone is not a version — sellers write "Silver Holo
+  // Prizm" for the plain Silver.
+  let pHay = hay;
+  if (card.setRe) pHay = pHay.replace(new RegExp(card.setRe.source, 'g'), ' ');
+  const found = [];
+  for (const m of [...card.matchers, ...ctx.generic]) {
+    const re = new RegExp(m.re.source, 'g');
+    let r;
+    while ((r = re.exec(pHay))) {
+      found.push({ at: r.index, len: r[0].length, norm: m.norm, label: m.label, listed: card.matchers.includes(m) });
+    }
+  }
+  // Longest first, listed names before generic ones; keep what does not overlap.
+  found.sort((x, y) => y.len - x.len || (y.listed - x.listed));
+  const taken = [];
+  for (const f of found) {
+    if (taken.some(t => f.at < t.at + t.len && t.at < f.at + f.len)) continue;
+    if (taken.some(t => t.norm === f.norm)) continue;
+    taken.push(f);
+  }
+  taken.sort((x, y) => x.at - y.at);
+  // "Holo" beside another word is that word's finish ("Silver Holo"); alone,
+  // it is a version only where the set lists one (Optic's Holo).
+  const words = taken.filter(t => t.norm !== 'holo' || (taken.length === 1 && t.listed));
   let parallel = 'Base';
-  const hit = card.matchers.find(m => m.re.test(hay));
-  const rest = (hit ? hay.replace(new RegExp(hit.re.source, 'g'), ' ') : hay).replace(/\bholo\b/g, ' ');
-  if (ctx.generic.some(m => m.re.test(rest))) return null;
-  if (hit) parallel = hit.label;
+  if (words.length === 1) parallel = words[0].label;
+  else if (words.length > 1) {
+    // "Orange" + "Disco", in title order; a listed name that covers them all wins.
+    const joined = words.map(w => w.norm).join(' ');
+    const listed = card.matchers.find(m => m.norm === joined || m.norm.split(' ').sort().join(' ') === words.map(w => w.norm).sort().join(' '));
+    parallel = listed ? listed.label : _titleCase(joined);
+  }
 
   const key = `${card.set}|${card.number}|${parallel}`;
   return { key, card, parallel };

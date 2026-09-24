@@ -447,8 +447,11 @@ function parseMasterProduct(productName, block, lines) {
 
 function isMasterCardLine(line) {
   if (!line || line.length < 10) return false;
-  if (/^\d+\s+[A-Z][a-z].*,\s*[A-Z]/.test(line)) return true;
-  if (/^\d*[A-Z][A-Z0-9]{0,5}-[A-Z0-9]+\s+[A-Z][a-z].*,\s*[A-Z]/.test(line)) return true;
+  // The first name may be initials — "301 BJ Ojulari", "339 C.J. Stroud".
+  // Asking for a lowercase second letter threw away every glued run that
+  // happened to open with one: 2023 Prizm's rookies 301-350 among them.
+  if (/^\d+\s+[A-Z][A-Za-z.'’].*,\s*[A-Z]/.test(line)) return true;
+  if (/^\d*[A-Z][A-Z0-9]{0,5}-[A-Z0-9]+\s+[A-Z][A-Za-z.'’].*,\s*[A-Z]/.test(line)) return true;
   // Leaf-style prefix-coded, team-less: "BA-AG1 Sauce GardnerBA-AH1 Aidan
   // HutchinsonBA-AM1 ...". No comma, no team — just back-to-back prefix-
   // code+player chunks. Require at least two prefix-code occurrences so we

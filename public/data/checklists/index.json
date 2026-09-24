@@ -832,7 +832,7 @@
       "brand": "Donruss",
       "sport": "Football",
       "setCount": 80,
-      "totalCards": 2632
+      "totalCards": 2682
     },
     {
       "id": "2023-donruss-optic-football",
@@ -841,7 +841,7 @@
       "brand": "Donruss Optic",
       "sport": "Football",
       "setCount": 37,
-      "totalCards": 1107
+      "totalCards": 1157
     },
     {
       "id": "2023-panini-absolute-football",
@@ -858,8 +858,8 @@
       "year": 2023,
       "brand": "Black",
       "sport": "Football",
-      "setCount": 36,
-      "totalCards": 1228
+      "setCount": 39,
+      "totalCards": 1281
     },
     {
       "id": "2023-panini-certified-football",
@@ -867,8 +867,8 @@
       "year": 2023,
       "brand": "Certified",
       "sport": "Football",
-      "setCount": 39,
-      "totalCards": 1189
+      "setCount": 40,
+      "totalCards": 1209
     },
     {
       "id": "2023-panini-contenders-football",
@@ -876,8 +876,8 @@
       "year": 2023,
       "brand": "Contenders",
       "sport": "Football",
-      "setCount": 37,
-      "totalCards": 1342
+      "setCount": 38,
+      "totalCards": 1381
     },
     {
       "id": "2023-panini-contenders-optic-football",
@@ -903,8 +903,8 @@
       "year": 2023,
       "brand": "Flawless",
       "sport": "Football",
-      "setCount": 78,
-      "totalCards": 1287
+      "setCount": 79,
+      "totalCards": 1307
     },
     {
       "id": "2023-panini-gold-standard-football",
@@ -912,8 +912,8 @@
       "year": 2023,
       "brand": "Gold Standard",
       "sport": "Football",
-      "setCount": 49,
-      "totalCards": 1352
+      "setCount": 50,
+      "totalCards": 1358
     },
     {
       "id": "2023-panini-illusions-football",
@@ -922,7 +922,7 @@
       "brand": "Illusions",
       "sport": "Football",
       "setCount": 36,
-      "totalCards": 1050
+      "totalCards": 1014
     },
     {
       "id": "2023-panini-immaculate-collegiate-football",
@@ -939,8 +939,8 @@
       "year": 2023,
       "brand": "Immaculate",
       "sport": "Football",
-      "setCount": 87,
-      "totalCards": 2374
+      "setCount": 89,
+      "totalCards": 2528
     },
     {
       "id": "2023-panini-impeccable-football",
@@ -949,7 +949,7 @@
       "brand": "Impeccable",
       "sport": "Football",
       "setCount": 43,
-      "totalCards": 789
+      "totalCards": 811
     },
     {
       "id": "2023-panini-legacy-football",
@@ -957,8 +957,8 @@
       "year": 2023,
       "brand": "Legacy",
       "sport": "Football",
-      "setCount": 47,
-      "totalCards": 1355
+      "setCount": 49,
+      "totalCards": 1383
     },
     {
       "id": "2023-panini-limited-football",
@@ -976,7 +976,7 @@
       "brand": "Luminance",
       "sport": "Football",
       "setCount": 37,
-      "totalCards": 839
+      "totalCards": 889
     },
     {
       "id": "2023-panini-mosaic-draft-picks-collegiate-football",
@@ -1002,8 +1002,8 @@
       "year": 2023,
       "brand": "National Treasures Collegiate",
       "sport": "Football",
-      "setCount": 46,
-      "totalCards": 1045
+      "setCount": 49,
+      "totalCards": 1129
     },
     {
       "id": "2023-panini-national-treasures-football",
@@ -1011,8 +1011,8 @@
       "year": 2023,
       "brand": "National Treasures",
       "sport": "Football",
-      "setCount": 101,
-      "totalCards": 2327
+      "setCount": 103,
+      "totalCards": 2379
     },
     {
       "id": "2023-panini-obsidian-football",
@@ -1020,8 +1020,8 @@
       "year": 2023,
       "brand": "Obsidian",
       "sport": "Football",
-      "setCount": 33,
-      "totalCards": 1092
+      "setCount": 36,
+      "totalCards": 1137
     },
     {
       "id": "2023-panini-one-football",
@@ -1074,8 +1074,8 @@
       "year": 2023,
       "brand": "Prizm Draft Picks",
       "sport": "Football",
-      "setCount": 26,
-      "totalCards": 999
+      "setCount": 29,
+      "totalCards": 1058
     },
     {
       "id": "2023-panini-prizm-football",
@@ -1084,7 +1084,7 @@
       "brand": "Prizm",
       "sport": "Football",
       "setCount": 26,
-      "totalCards": 1137
+      "totalCards": 1172
     },
     {
       "id": "2023-panini-rookies-stars-football",
@@ -1092,8 +1092,8 @@
       "year": 2023,
       "brand": "Rookies & Stars",
       "sport": "Football",
-      "setCount": 41,
-      "totalCards": 1234
+      "setCount": 34,
+      "totalCards": 1156
     },
     {
       "id": "2023-panini-select-draft-picks-football",
@@ -1110,8 +1110,8 @@
       "year": 2023,
       "brand": "Select",
       "sport": "Football",
-      "setCount": 50,
-      "totalCards": 2480
+      "setCount": 54,
+      "totalCards": 2575
     },
     {
       "id": "2023-panini-spectra-football",
@@ -1119,8 +1119,8 @@
       "year": 2023,
       "brand": "Spectra",
       "sport": "Football",
-      "setCount": 48,
-      "totalCards": 1265
+      "setCount": 52,
+      "totalCards": 1355
     },
     {
       "id": "2023-panini-zenith-football",
