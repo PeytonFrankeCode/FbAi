@@ -374,6 +374,8 @@ function parseSources(paths) {
   const products = [];
   for (const name of order) {
     const product = parseProduct(name, blocks.get(name), lines);
+    renameScannedNoise(product);
+    product.sets = reclaimFromNoisyHeader(product.sets);
     // Merge, fold variants onto their base, then merge again — folding can
     // produce two entries with the same id under different categories
     // ("Great X-Pectations Gold" as base, "... Purple" as insert).
@@ -659,6 +661,24 @@ function isCardLine(line) {
 
 function isSetHeader(line, slice, idx) {
   if (!line || line.length > 120) return false;
+  line = line.replace(/^[lI]st\b/, '1st');   // OCR: "lst Round Gems Platinum"
+  // A name may start with a digit ("1981 Tribute", "1-2 Punch", "100 Years
+  // Signatures"), and then it can read as a card line or a count. It is a
+  // header only when "N cards." is the very next line, and — unless it says
+  // "Checklist" — only when it could not be a card.
+  if (/^\d/.test(line)) {
+    if (PRODUCT_HEADER_RE.test(line)) return false;
+    if (!/\sChecklists?\s*$/.test(line) && isCardLine(line)) return false;   // "1999 Elite Rookies" has no suffix
+    const next = (slice.slice(idx + 1).find(l => l.trim()) || '').trim();
+    if (!/^\d+\s+cards?\b/i.test(next)) return false;
+    // "3D Checklist" / "15 cards." is as sure as a header gets, however short.
+    // A card with a team or a print run ("340 Marlon Mack, Indianapolis Colts
+    // /99 — …") is a card, whatever got glued on after it.
+    if (/,|\s\/\d/.test(line)) return false;
+    if (/\sChecklists?\s*$/.test(line)) return /[A-Za-z]/.test(cleanSetName(line));
+    const rest = cleanSetName(line).replace(/^[\d-]+(st|nd|rd|th)?\s+/, '');
+    return rest.length >= 3 && looksLikeTitle(rest);
+  }
   if (isCardLine(line)) return false;
   if (CHROME_RE.test(line)) return false;
   if (PRODUCT_HEADER_RE.test(line)) return false;
@@ -679,9 +699,13 @@ function isSetHeader(line, slice, idx) {
   if (/^\S{1,4}$/.test(name) && !declaresCardCount(slice, idx)) return false;
   // Must be followed within a few lines by a card count, a parallels block,
   // or actual card data — otherwise it's stray prose.
-  for (let j = idx + 1; j < Math.min(idx + 8, slice.length); j++) {
+  // Counted in lines with something on them: the Word sources space every
+  // line out, and "Tom Brady TD Tribute" put its "18 cards." eight raw lines
+  // down, so all 581 of its cards were read as Score Team's.
+  for (let j = idx + 1, seen = 0; j < slice.length && seen < 7; j++) {
     const n = slice[j].trim();
     if (!n) continue;
+    seen++;
     if (/^\d+\s+cards?\b/i.test(n)) return true;
     if (/^Parallels?\s*:?\s*$/i.test(n)) return true;
     if (isCardLine(n)) return true;
@@ -698,7 +722,9 @@ function isSetHeader(line, slice, idx) {
 // else in a title is capitalised, an acronym, or a number.
 // No bare "a"/"an": they let photo-caption noise like "OAKLAND RAIDERS a)"
 // pass, and no set in the source needs them.
-const TITLE_STOPWORDS = new Set(['of', 'the', 'and', 'in', 'for', 'on', 'to', 'at', 'is', 'or', 'with', 'vs']);
+// "as" is Gold Standard's "Good as Gold": without it that header was refused
+// and its 40 cards, and both parallels' 80, landed in the set above.
+const TITLE_STOPWORDS = new Set(['of', 'the', 'and', 'in', 'for', 'on', 'to', 'at', 'is', 'or', 'with', 'vs', 'as']);
 
 // OCR reads the card photos on the page as letter salad that is otherwise
 // indistinguishable from a title — "ces Pry et", "ae See", "WNP ay ea erp
@@ -714,7 +740,7 @@ function wordsLookLikeATitle(line) {
   // CARR" are photo captions. Length of the longest word tells them apart.
   if (line === line.toUpperCase() && words.some(w => w.length > 5)) return false;
   for (const raw of words) {
-    const w = raw.replace(/^[(]|[),.]+$/g, '');
+    const w = raw.replace(/^[(]|[),.!]+$/g, '');
     if (!w) continue;
     if (/^[–—-]+$/.test(w)) continue;                    // "Base – Common"
     if (/^\d+(st|nd|rd|th)?$/i.test(w)) continue;        // "Year 2", "1st Down"
@@ -743,7 +769,8 @@ function looksLikeTitle(line) {
   // En/em dashes belong in set names ("Base – Common"). The characters that
   // actually mark page noise are slashes, brackets and arrows, which the
   // rest of the checks below and above still catch.
-  if (/[^A-Za-z0-9 \-–—'’.&(),]/.test(line)) return false;
+  // "!" only at the end of a word: "Bang!", "Downtown!".
+  if (/[^A-Za-z0-9 \-–—'’.&(),!]/.test(line) || /![^\s]/.test(line)) return false;
   if (!wordsLookLikeATitle(line)) return false;
   const letters = (line.match(/[A-Za-z0-9 ]/g) || []).length;
   return letters / line.length >= 0.7;
@@ -1039,6 +1066,8 @@ function cleanSetName(raw) {
     .replace(/\.\s*Buy on eBay\.?\s*/gi, '')
     .trim();
   if (/^Base$/i.test(s)) s = 'Base Set';
+  // OCR reads a leading "1" as l or I: "lst Round Gems", "Ist Round Gems".
+  s = s.replace(/^[lI]st\b/, '1st');
   return s;
 }
 
@@ -1095,6 +1124,52 @@ const VARIANT_WORDS = 'Red|Blue|Green|Gold|Silver|Purple|Orange|Pink|Black|White
 const VARIANT_RE = new RegExp(`\\s+(${VARIANT_WORDS})(\\s+(${VARIANT_WORDS}))*\\s*$`, 'i');
 const ONE_VARIANT_WORD = new RegExp(`^(${VARIANT_WORDS})$`, 'i');
 
+// Set names the page scan mangled past any rule: the real header sits behind
+// photo text with no "N cards." near it, so the nearest title-shaped scrap of
+// that photo became the name. Each one checked against the source by its cards.
+const SCANNED_SET_NAMES = {
+  '2017 Panini Contenders Optic Football': {
+    'Lager VLU': '1999 Contenders Tribute Autographs',              // James, R. Williams
+  },
+  '2017 Panini Encased Football': {
+    'ALVIN': 'Rookie Cap Patch Autographs',                         // #101 Trubisky, ...
+    'Ldetfex )': 'Vaulted Veteran Material Signatures',             // #2 Prescott, 25 cards
+  },
+};
+// The same theft when the real header is not quite empty: photo text under it
+// read as a card or two ("2 Py a ."), so it is not an orphan, and the shouted
+// caption below ("TOM BRADY QuarTERBACK") took the 35 cards it declared. The
+// caption set gets the header's name back when its size is the header's.
+function reclaimFromNoisyHeader(sets) {
+  const out = [];
+  for (let i = 0; i < sets.length; i++) {
+    const s = sets[i], next = sets[i + 1];
+    const declared = s.totalCards || 0;
+    if (next && declared >= 8 && s.cards.length * 4 < declared && looksShouted(next.name)
+        && Math.abs(next.cards.length - declared) <= Math.max(2, declared * 0.1)) {
+      next.name = s.name;
+      next.id = s.id;
+      next.category = categoryForSetName(s.name, next.category);
+      next.totalCards = declared;
+      continue;
+    }
+    out.push(s);
+  }
+  return out;
+}
+
+function renameScannedNoise(product) {
+  const fixes = SCANNED_SET_NAMES[product.name];
+  if (!fixes) return;
+  for (const set of product.sets) {
+    const real = fixes[set.name];
+    if (!real) continue;
+    set.name = real;
+    set.id = idify(real);
+    set.category = categoryForSetName(real, set.category);
+  }
+}
+
 function consolidateSets(sets) {
   const groups = new Map();
   for (const set of sets) {
@@ -1106,7 +1181,9 @@ function consolidateSets(sets) {
     // parallel of some set called "White". When stripping the finish word
     // leaves nothing but another finish word, the name was never a base
     // plus a variant, so it stays whole.
-    const baseName = ONE_VARIANT_WORD.test(stripped) ? set.name : trimmed;
+    // Likewise "Good as Gold": what is left, "Good as", ends mid-phrase.
+    const lastWord = (trimmed.split(/\s+/).pop() || '').toLowerCase();
+    const baseName = (ONE_VARIANT_WORD.test(stripped) || TITLE_STOPWORDS.has(lastWord)) ? set.name : trimmed;
     // Measured against the untrimmed prefix so the variant is still "Chrome".
     const variantName = (set.name === baseName) ? null : set.name.substring(stripped.length).trim();
     const key = `${set.category}:${baseName}`;

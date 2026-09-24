@@ -72,6 +72,12 @@ function validateStructure(doc, file) {
   if (doc.id && doc.id !== base) {
     err('id', `"${doc.id}" does not match the filename "${base}" — the product list would 404`);
   }
+  // A product announced but not yet released is listed on purpose with no
+  // sets ("Checklist not released yet"), and says so.
+  if (doc.unreleased === true && Array.isArray(doc.sets) && doc.sets.length === 0) {
+    ok('unreleased placeholder — no sets until the checklist is published');
+    return;
+  }
   if (!Array.isArray(doc.sets) || doc.sets.length === 0) {
     err('sets', 'must be a non-empty array — a product with no sets holds no cards');
     return;
