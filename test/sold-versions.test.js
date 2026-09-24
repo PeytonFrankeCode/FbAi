@@ -64,8 +64,10 @@ const CASES = [
   ['2017 Panini Prizm Patrick Mahomes Illumination Rookie', '#3 Base'],
   // Not his number in this product.
   ['2017 Panini Prizm Patrick Mahomes #401 Silver', null],
-  // A parallel this set was never printed in; read as Green at first.
-  ['2017 Panini Prizm Patrick Mahomes #269 Neon Green Pulsar RC', null],
+  // A parallel the set's list does not name: read as Green at first. The card
+  // is confirmed, so it is its own version under the name it sold as — the
+  // lists are short of real parallels ("Orange Disco", "Reactive Yellow").
+  ['2017 Panini Prizm Patrick Mahomes #269 Neon Green Pulsar RC', '#269 Neon Green Pulsar'],
   // An auto with no number or set name: he has several auto cards here.
   ['2017 Panini Prizm Patrick Mahomes Auto RC', null],
 ];
@@ -73,6 +75,65 @@ const wrong = CASES.map(([t, want]) => [t, want, read(t)]).filter(([, want, got]
 check(`every listing is tied to the right version, or to none (${CASES.length})`,
   wrong.length === 0,
   wrong.length ? wrong.map(([t, want, got]) => `"${t}" -> ${got} (want ${want})`).join(' | ') : 'Silver, Holo, RWB, inserts, autos, #401, Pulsar');
+
+// Inserts, autographs and coded numbers, from real sold titles. Each shape was
+// missed before: the insert's name is also a parallel word ("Prizmatic"), the
+// number carries the insert's code ("#RI-5", "#K41", "#DT-39"), several sets
+// share his number (#325 base, variation and auto), or the title names a
+// sibling product ("Draft Picks").
+{
+  const cases = [
+    ['2024-panini-prizm-football', 'Bo Nix', [
+      ['2024 Panini Prizm - Prizmatic Bo Nix #11 Green Prizm (RC) PSA 9', '#11 Prizmatic Green'],
+      ['2024 Panini Prizm Prizmatic Bo Nix #11 Green Wave Prizm (RC)', '#11 Prizmatic Wave Green'],
+      ['2024 Panini Prizm - Fireworks Bo Nix #23 Green Wave Prizm (RC)', '#23 Fireworks Wave Green'],
+      ['2024 Panini Prizm Bo Nix Rookie Orange Lazer Prizm #309 RC Broncos', '#309 Rookies Orange Lazer'],
+      ['2024 PANINI PRIZM BO NIX RC ROOKIE PSA 9 MINT', '#309 Rookies Base'],
+      ['113277948 Bo Nix 2024 Panini Prizm Collegiate Draft Picks #HP-BN Hype RC PSA 10', null],
+    ]],
+    ['2020-panini-prizm-football', 'Justin Herbert', [
+      ['2020 Panini Prizm Justin Herbert Red White and Blue Rookie RC #325 Chargers', '#325 Rookies Red White Blue'],
+      ['2020 Panini Prizm Rookie Autograph #325 Justin Herbert Silver BGS 9.5 Auto 10', '#325 Rookie Autographs Silver'],
+    ]],
+    ['2018-panini-prizm-football', 'Josh Allen', [
+      ['2018 Panini Prizm Rookie Introduction Josh Allen #RI-5 (RC) PSA 9 Buffalo Bills', '#5 Rookie Introduction Base'],
+      ['2018 Panini Prizm - Instant Impact Josh Allen #II-5 (RC)', '#5 Instant Impact Base'],
+    ]],
+    ['2021-donruss-football', 'Justin Fields', [
+      ['2021 Panini Donruss Downtown! Justin Fields #DT-39 (RC) PSA 10', '#39 Downtown! Base'],
+    ]],
+    ['2021-panini-absolute-football', 'Trevor Lawrence', [
+      ['2021 Panini Absolute Trevor Lawrence Kaboom RC Rookie #K41 Jaguars PSA 9', '#41 Kaboom! Base'],
+    ]],
+    // 301-350 were one glued line opening with "301 BJ Ojulari", which the
+    // 2023 parser refused for its initials; Stroud's rookie was not on file.
+    ['2023-panini-prizm-football', 'C.J. Stroud', [
+      ['2023 Panini Prizm #339 CJ Stroud Rookie RC PSA 9 MINT Texans', '#339 Rookies Base'],
+      ['2023 PANINI PRIZM PRIZMATIC #6 CJ STROUD ROOKIE RC PSA 9', '#6 Prizmatic Base'],
+    ]],
+    // "Rated Rookies" is filed as an insert, but it is the base rookie card.
+    ['2021-donruss-optic-football', 'Trevor Lawrence', [
+      ['Trevor Lawrence 2021 Optic Blue Hyper PSA 10 GEM MINT', '#201 Rated Rookies Blue Hyper'],
+    ]],
+    ['2023-panini-select-football', 'C.J. Stroud', [
+      ['2023 PANINI SELECT DRAFT PICKS BLUE #2 CJ STROUD PSA 9', null],
+    ]],
+  ];
+  const wrong2 = [];
+  let n = 0;
+  for (const [file, player, list] of cases) {
+    const prod = JSON.parse(fs.readFileSync(path.join(ROOT, 'public', 'data', 'checklists', file + '.json'), 'utf8'));
+    const vc = ctx.build(prod, player, `${prod.year} ${player}`);
+    for (const [t, want] of list) {
+      n++;
+      const v = ctx.match(t, vc);
+      const got = v ? `#${v.card.number} ${v.card.set} ${v.parallel}` : null;
+      if (got !== want) wrong2.push(`"${t}" -> ${got} (want ${want})`);
+    }
+  }
+  check(`inserts, autos and coded numbers are tied to the right card (${n})`,
+    wrong2.length === 0, wrong2.join(' | ') || 'Prizmatic, Fireworks, #RI-5, #DT-39, #K41, #325 auto, Draft Picks');
+}
 
 // The page wiring: grouped listings that match nothing leave the main list,
 // the stats skip them, and a new search starts ungrouped.
@@ -137,6 +198,17 @@ check('the versions container is on the page and styled',
     && /r\.source === 'nflcarddb' && r\.itemId && r\.hasAnalysis/.test(verFn)
     && /e\.stopPropagation\(\)/.test(verFn),
     'the button must open the detail view without also toggling the comps filter');
+}
+// Grouped, the history belongs to the version, not to each comp under it:
+// no per-comp "View price history" cue, and a comp opens without the chart.
+{
+  const cardFn = src.slice(src.indexOf('function buildCard('), src.indexOf('// ---- Card Detail Modal ----'));
+  const modalFn = src.slice(src.indexOf('function openCardModal('), src.indexOf('function openCardModal(') + 6000);
+  check('grouped comps carry no price-history cue of their own',
+    /item\.hasAnalysis && !_versionCtx \?/.test(cardFn)
+    && /openCardModal\(item, \{ history: !_versionCtx \}\)/.test(cardFn)
+    && /opts\.history === false/.test(modalFn),
+    'the cue and the modal chart are both gated on the grouping');
 }
 // The price chart that sat above every search is gone, markup and code alike:
 // a module-level binding to a removed element would take the page down.
