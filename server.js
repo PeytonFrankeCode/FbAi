@@ -6581,6 +6581,12 @@ function insertAliasKeys(productId, player, cardNumber, title, pi) {
   return keys;
 }
 
+// An insert's name for comparing, not showing: "Downtown!" and "Downtown" are
+// one set, and the reader returns whichever spelling the title used.
+function _subsetKey(name) {
+  return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
 // resolveSubset, with the human decisions applied. Every production caller goes
 // through this, or a decision would improve one screen and not the others.
 function resolveSubsetAliased(pi, title, ctx, aliases) {
@@ -8612,9 +8618,9 @@ function _d1UsageBody(req, res) {
 //
 // Read-only, and cached, because it is a decision aid rather than a page.
 const PRICE_COVERAGE_TTL = 3600;
-// The sitemap's own count, checked by test/checklist-index.test.js so it
+// The sitemap's own count, checked by test/set-key.test.js so it
 // cannot drift silently away from what build-landing-pages.js emits.
-const INDEXABLE_URLS = 2176;
+const INDEXABLE_URLS = 2205;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
@@ -9789,7 +9795,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // fingerprint below does not cover, so the bump is by hand.
 // v12: grade-core reads the label's grade wording ("Mint 9", "GEM MT 10") as a
 // slab, and the Raw series sheds sales priced like slabs.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v12';
+// v13: rows are fetched with the parallel, player and card-number columns the
+// seed is read with, so v12 entries hold "no sales" for inserts that have them.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v13';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10121,7 +10129,13 @@ app.get('/api/card-analysis', async (req, res) => {
     // against. The sold list below is where those belong.
     const noOffer = await _noBestOfferSql(db);
     const rows = await db.prepare(
-      `SELECT item_id, sold_date, title, price_cents, grader, grade${img ? ', image_url' : ''}
+      // Every column the seed is read with, the rows are read with too. They
+      // used to come back without parallel, player or card_number: the seed's
+      // insert read "Downtown" off its column while its OWN row, fetched here,
+      // read as base — so an insert's page matched nothing, itself included,
+      // and showed "no sales" for a card with 27 of them.
+      `SELECT item_id, sold_date, title, price_cents, grader, grade, player, year, set_name,
+              parallel, card_number, confidence${img ? ', image_url' : ''}
        FROM sales WHERE ${where}${noOffer}
        ORDER BY sold_date DESC LIMIT 2000`
     ).bind(...binds).all();
@@ -10161,7 +10175,9 @@ app.get('/api/card-analysis', async (req, res) => {
     // The parallel words a title uses once the player's and product's own
     // names are removed ("Green" in A.J. Green, "Prizm" the product) — minus
     // the generic suffixes every parallel shares — and whether it is numbered.
-    const GENERIC_PAR = new Set(['prizm', 'prizms', 'refractor', 'refractors', 'holo', 'parallel']);
+    // "SP", "SSP" and "case hit" are how rare a card is, not which parallel:
+    // read as parallel words they split one Downtown into three cards.
+    const GENERIC_PAR = new Set(['prizm', 'prizms', 'refractor', 'refractors', 'holo', 'parallel', 'sp', 'ssp', 'case', 'hit']);
     const parWords = (row) => {
       let t = ' ' + _stripGrade(String(row.title || '')).toLowerCase().replace(/[^a-z0-9/ ]+/g, ' ') + ' ';
       for (const src of [seed.player, row.set_name || seed.set_name]) {
@@ -10395,12 +10411,13 @@ app.get('/api/card-analysis', async (req, res) => {
       // reaches the card page. Wiring it into one screen and not the others is
       // how this codebase has lost a day twice.
       const ctx = { productId: seedProductId, player: seed.player, cardNumber: seed.card_number };
-      const seedSubset = resolveSubsetAliased(pi, seed.title, ctx, iAliases).subset || '';
-      seedSubsetResolved = seedSubset;
+      const seedSubset = resolveSubsetAliased(pi, seed.title, ctx, iAliases).subset;
+      // Compared without punctuation: "Downtown!" and "Downtown" are one insert.
+      seedSubsetResolved = _subsetKey(seedSubset);
       const kept = all.filter(r =>
-        (resolveSubsetAliased(pi, r.title,
+        _subsetKey(resolveSubsetAliased(pi, r.title,
           { productId: seedProductId, player: r.player, cardNumber: r.card_number },
-          iAliases).subset || '') === seedSubset);
+          iAliases).subset) === seedSubsetResolved);
       excludedOtherSubset = all.length - kept.length;
       all = kept;
     }
@@ -10441,9 +10458,9 @@ app.get('/api/card-analysis', async (req, res) => {
         if (pi && kept.length <= subsetBudget) {
           subsetBudget -= kept.length;
           kept = kept.filter(r =>
-            (resolveSubsetAliased(pi, r.title,
+            _subsetKey(resolveSubsetAliased(pi, r.title,
               { productId: seedProductId, player: r.player, cardNumber: r.card_number },
-              iAliases).subset || '') === seedSubsetResolved);
+              iAliases).subset) === seedSubsetResolved);
         }
         const prices = kept.map(r => (r.price_cents || 0) / 100)
           .filter(p => p > 0).sort((a, b) => a - b);
@@ -10471,6 +10488,10 @@ app.get('/api/card-analysis', async (req, res) => {
       const out = similar
         ? { available: false, reason: 'no-sales', estimate: similar }
         : { available: false, reason: 'no-sales' };
+      // "No sales" for a card that plainly has them is the answer most worth
+      // explaining, so ?explain=1 carries the trace here too — uncached, like
+      // the full payload's.
+      if (explain) return res.json({ ...out, explain: { seed: { title: seed.title, parallel: seed.parallel, set_name: seed.set_name, card_number: seed.card_number, key: seedKey }, trace } });
       if (similar) cachePut(cacheKey, out, CARD_ANALYSIS_TTL);
       return res.json(out);
     }
