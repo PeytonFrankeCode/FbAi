@@ -51,6 +51,21 @@ const SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|ifica
 // and "ungraded — would grade BGS 9.5" stay where they belong.
 const RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
 
+// The grade as the LABEL prints it, when the seller copies the label and leaves
+// the grader's name off: "Mint 9", "GEM MT 10", "NM-MT 8", "Pristine 10",
+// "Black Label". These are PSA's and BGS's own words for a grade, and a title
+// using them was being read as Raw — a slab you could see in the photo, in the
+// raw list and the raw median. Measured on the collector's newest 1,500 sales:
+// 3 of the 693 titles read as Raw carried one ("…#205 (RC) Mint 9", "…95/99
+// GEM MT 10"), and none of the three was a loose card.
+//
+// Only with a grade NUMBER attached. Bare "mint" and "gem mint" remain the
+// condition claims SLAB_RE already refuses to read as a slab ("gem mint
+// corners!"). And not when the title is hoping — "gem mint 10 candidate",
+// "could be a Mint 9" — which is a raw card being described, not a label.
+const LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mt|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|\bblack\s+label\b/i;
+const HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible|looks?|like)\b/i;
+
 // The grader and its number, pulled out of a title.
 //
 // Wanted because a slab whose grade column is empty used to land in a bucket
@@ -152,6 +167,10 @@ function gradeBucket(r) {
     return num ? `${grader} ${num}` : `${grader} (no grade read)`;
   }
   if (SLAB_RE.test(title)) return 'Graded (ungraded number)';
+  // The label's wording with no grader named: a slab, grader unknown, so it
+  // joins the other slabs whose grader could not be read rather than
+  // inventing a PSA series for it.
+  if (LABEL_GRADE_RE.test(title) && !HOPE_RE.test(title)) return 'Graded (ungraded number)';
   return 'Raw';
 }
 
@@ -197,4 +216,4 @@ function stripGrade(title) {
   return out.replace(/\s{2,}/g, ' ').trim();
 }
 
-module.exports = { GRADERS, GRADER_RE, SLAB_RE, RAW_RE, gradeFromTitle, gradeBucket, isRaw, stripGrade };
+module.exports = { GRADERS, GRADER_RE, SLAB_RE, RAW_RE, LABEL_GRADE_RE, HOPE_RE, gradeFromTitle, gradeBucket, isRaw, stripGrade };

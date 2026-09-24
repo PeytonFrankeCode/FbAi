@@ -2680,6 +2680,11 @@ const APP_GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?
 const APP_TAG_QUALIFIER = /(laundry|jersey|dual|quad|triple|jumbo|nike|shield|brand|size|name|price|hang|woven|patch|logo|manufacturer)[\s-]*$/i;
 const APP_RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
 const APP_SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|ificate|ified)?\s*#?\s*\d)/i;
+// The label's own wording with no grader named ("GEM MT 10", "MINT 9"): the
+// slab is in the photo, not the text. Same patterns as grade-core.js, checked
+// character for character by grade-core.test.
+const APP_LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mt|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|\bblack\s+label\b/i;
+const APP_HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible|looks?|like)\b/i;
 
 function detectGrade(title) {
   const t = String(title || '');
@@ -2715,6 +2720,7 @@ function detectGrade(title) {
   }
   // Says it is in a holder without saying who put it there.
   if (APP_SLAB_RE.test(t)) return 'Graded (other)';
+  if (APP_LABEL_GRADE_RE.test(t) && !APP_HOPE_RE.test(t)) return 'Graded (other)';
   return 'Raw / Ungraded';
 }
 

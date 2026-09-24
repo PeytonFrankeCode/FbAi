@@ -4372,6 +4372,12 @@ function _cardKeySql(playerExpr) {
 const RSI_GRADER_WORDS = ['psa', 'bgs', 'bvg', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
                           'hga', 'ksa', 'gma', 'rcg', 'mnt'];
 const RSI_SLAB_WORDS = ['slab', 'encapsulated', 'cert'];
+// The label's own grade wording with the grader's name left off (see
+// grade-core.js LABEL_GRADE_RE). Substrings, and without the JS reader's
+// "candidate"/"could be" exemption: here a dropped raw sale costs sample and an
+// admitted slab costs the raw series, so the filter errs toward dropping.
+// Grouped in their own bracket so they add one level to the OR chain, not seven.
+const RSI_LABEL_WORDS = ['gem mt', 'mint 9', 'nm-mt', 'pristine 1', 'black label'];
 
 // Where the errors land is a deliberate choice. Dropping a genuinely raw sale
 // costs a little sample out of thousands; admitting one slab puts graded money
@@ -4450,6 +4456,7 @@ function _rsiRawOnlySql(titleCol = 'title') {
           AND ${_rsiUngradedCol('grader')}
           AND NOT ( ${any(RSI_GRADER_WORDS)}
                  OR ${any(RSI_SLAB_WORDS)}
+                 OR ( ${any(RSI_LABEL_WORDS)} )
                  -- "graded" minus the two words that contain it. Cheaper than
                  -- padding the title, and "ungraded" is a raw claim, not a slab.
                  OR ( ${T} LIKE '%graded%'
@@ -9780,7 +9787,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // "rookie"/"rc" as base, and no longer lumps every parallel together when the
 // seed's own parallel is unreadable. Grouping changed in server.js, which the
 // fingerprint below does not cover, so the bump is by hand.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v11';
+// v12: grade-core reads the label's grade wording ("Mint 9", "GEM MT 10") as a
+// slab, and the Raw series sheds sales priced like slabs.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v12';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -9791,7 +9800,48 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = 'dd5db2c1a99e';
+const CARD_IDENTITY_FINGERPRINT = '723e3ea3f1ae';
+
+// A "raw" sale priced like a slab, moved out of the Raw series.
+//
+// Some slabs never say so in text — no grader, no label wording, just the
+// photo — and they sit in a card's Raw list at slab money. A raw median is what
+// people price their own loose copy against, so one PSA 10 in it is the worst
+// kind of wrong. Where the text has nothing, the price still does: among one
+// card's raw sales (one card, one parallel — the grouping above), a sale at
+// SLAB_PRICE_X times the raw median is far likelier a slab than a raw copy.
+//
+// Only with enough raw sales to have a median worth trusting, and at a stricter
+// multiple when the card's own slabs do not actually sell above raw (then a
+// high "raw" price is weaker evidence). The sales are not deleted: they move to
+// a series of their own, named for what they are suspected of, so the reader
+// can still see them and the raw line no longer carries them.
+const SLAB_PRICE_MIN_RAW = 5;
+const SLAB_PRICE_X = 3;
+const SLAB_PRICE_X_NO_SLAB_EVIDENCE = 5;
+const SUSPECTED_SLAB_LABEL = 'Likely graded (priced like a slab)';
+function _flagSlabPricedRaw(byGrade) {
+  const raw = byGrade.get('Raw') || [];
+  if (raw.length < SLAB_PRICE_MIN_RAW) return 0;
+  const cents = (r) => r.price_cents || 0;
+  const med = (xs) => { const a = xs.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+  const rawMed = med(raw.map(cents).filter(c => c > 0));
+  if (!(rawMed > 0)) return 0;
+  // Do this card's high-grade slabs sell for clearly more than a raw copy?
+  let slabsPricier = false;
+  for (const [label, list] of byGrade) {
+    const m = /\b(9(?:\.5)?|10)$/.exec(label);
+    if (!m || list.length < 2) continue;
+    if (med(list.map(cents).filter(c => c > 0)) > 1.5 * rawMed) { slabsPricier = true; break; }
+  }
+  const cut = rawMed * (slabsPricier ? SLAB_PRICE_X : SLAB_PRICE_X_NO_SLAB_EVIDENCE);
+  const keep = [], moved = [];
+  for (const r of raw) (cents(r) >= cut ? moved : keep).push(r);
+  if (!moved.length) return 0;
+  byGrade.set('Raw', keep);
+  byGrade.set(SUSPECTED_SLAB_LABEL, (byGrade.get(SUSPECTED_SLAB_LABEL) || []).concat(moved));
+  return moved.length;
+}
 
 // How far one card's prices may spread before a trend across them is refused.
 //
@@ -10457,6 +10507,7 @@ app.get('/api/card-analysis', async (req, res) => {
       if (!byGrade.has(k)) byGrade.set(k, []);
       byGrade.get(k).push(r);
     }
+    const suspectedSlabs = _flagSlabPricedRaw(byGrade);
 
     const grades = Array.from(byGrade.entries()).map(([label, list]) => {
       const prices = list.map(r => (r.price_cents || 0) / 100).filter(p => p > 0).sort((a, b) => a - b);
@@ -10564,6 +10615,8 @@ app.get('/api/card-analysis', async (req, res) => {
         // base, auto or relic. Empty means a plain base card.
         kind: seedKind || 'base',
         grouped: all.length,
+        // "Raw" sales priced like slabs, moved to their own series.
+        suspectedSlabs,
         otherParallels: excludedOtherParallel,
         // Sales of this same number in this same product that are a different
         // KIND — the autograph or relic version. Previously grouped in.

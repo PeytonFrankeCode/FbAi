@@ -170,6 +170,16 @@ sale('j3', { title: 'JOSH ALLEN 2017 PANINI PRIZM #205 ROOKIE NEON GREEN PULSAR 
 sale('j4', { title: '2017 Panini Prizm - Rookie Josh Allen #205 Hyper Prizm /275 (RC)', price: 747, day: -12, ...JA });
 sale('j5', { title: '2017 Panini Prizm Josh Allen RC Red White and Blue Rookie #205 Bills', price: 521, day: -7, ...JA });
 sale('j6', { title: '2017 Panini PRIZM RC Josh Allen Rookie Green Prizm #205 Buffalo Bills', price: 456, day: -4, ...JA });
+// ---- A slab that never says so -------------------------------------------
+// One card, six raw copies around $10, two PSA 10s at $60, and a sale whose
+// title reads raw but whose price (and photo) is a slab's. A seventh copy names
+// its label, not its grader. Neither may sit in the Raw series.
+const KS = { player: 'Kyler Stone', number: '301' };
+[9, 10, 11, 10, 12, 9].forEach((p, i) => sale(`k${i + 1}`, { title: '2017 Panini Prizm Kyler Stone #301 RC', price: p, day: -30 + i * 3, ...KS }));
+sale('k7', { title: '2017 Panini Prizm Kyler Stone #301 RC', price: 90, day: -5, ...KS });
+sale('k8', { title: '2017 Panini Prizm Kyler Stone #301 RC PSA 10', price: 60, day: -10, grader: 'PSA', grade: '10', ...KS });
+sale('k9', { title: '2017 Panini Prizm Kyler Stone #301 RC PSA 10', price: 62, day: -3, grader: 'PSA', grade: '10', ...KS });
+sale('k10', { title: '2017 Panini Prizm Kyler Stone #301 RC GEM MT 10', price: 58, day: -2, ...KS });
 sale('n1', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 14, day: -21, player: 'Dalvin Cook' });
 sale('n2', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 16, day: -12, player: 'Dalvin Cook' });
 sale('n3', { title: '2017 Panini Prizm Instant Impact Dalvin Cook #8', price: 190, day: -19, player: 'Dalvin Cook' });
@@ -362,6 +372,17 @@ const rawTitles = (d) => {
     const ids = [...new Set((r.grades || []).flatMap(g => g.recent.map(x => String(x.itemUrl).split('/').pop())))].sort();
     check(`opened on ${seedId}, a base card's history holds only the base card`,
           ids.join(',') === 'j1,j2', `grouped ${ids.join(',') || 'nothing'} (identity ${JSON.stringify(r.identity || {})})`);
+  }
+
+  {
+    const k = await call('/api/card-analysis?itemId=k1');
+    const raw = rawTitles(k).length, sus = bucket(k, 'Likely graded (priced like a slab)');
+    const ids = (sus ? sus.recent : []).map(x => String(x.itemUrl).split('/').pop());
+    check('a raw-titled sale at slab money leaves the Raw series for its own',
+      raw === 6 && ids.join(',') === 'k7' && (k.identity || {}).suspectedSlabs === 1,
+      `raw ${raw}, suspected ${ids.join(',') || 'none'}, series ${bucketNames(k).join(' | ')}`);
+    check('  ...and a title naming the label, not the grader, is graded too',
+      !!bucket(k, 'Graded (ungraded number)'), bucketNames(k).join(' | '));
   }
 
   const plain = await call('/api/card-analysis?itemId=n1');
