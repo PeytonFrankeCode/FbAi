@@ -98,6 +98,13 @@ sale('a1', { title: '2017 Panini Prizm Patrick Mahomes II #269 Gold Vinyl 1/1 Au
 // base cards, which is the only shape that still reaches the fallback.
 sale('a2', { title: '2017 Panini Prizm Patrick Mahomes II #269 Emerald Kaleidoscope 1/1',
              price: 12500, day: -1 });
+// Its twin: the same unreadable wording, at a price no 1/1 sells for. The
+// fallback used to lump every blank-column sale together, base cards included,
+// and that is how the spread guard below was reached. It no longer lumps (it
+// keeps only titles using the same parallel words), so the guard is reached
+// honestly: two sales that read alike and cannot plausibly be one card.
+sale('a3', { title: 'Patrick Mahomes II 2017 Prizm #269 Emerald Kaleidoscope 1/1 RC',
+             price: 18, day: -12 });
 
 // ---- Graded copies of the Silver ------------------------------------------
 // The grader written hard against its number is the commonest spelling on eBay
@@ -151,6 +158,18 @@ sale('x1', { title: '2017 PANINI PRIZM INSTANT IMPACT #8 PATRICK MAHOMES II',
 // arriving as "Prizm #8" because set_name holds the product. These are a
 // DIFFERENT player from the Mahomes rows above so they form their own card, and
 // the only thing separating them from each other is the insert name.
+// ---- One card's parallels, where the title is all there is ---------------
+// The shapes of a live raw base Josh Allen #205 whose history listed a Neon
+// Green Pulsar and a Hyper /275 as his base card: blank parallel column
+// throughout, "Rookie" read as a parallel, "Red White and Blue" read as Blue,
+// "Rookie Green Prizm" read as base. Only j1 and j2 are the base card.
+const JA = { player: 'Josh Allen', number: '205' };
+sale('j1', { title: 'Panini 2017 Prizm Josh Allen #205 Rookie RC Buffalo Bills', price: 145, day: -20, ...JA });
+sale('j2', { title: '2017 Panini Prizm Josh Allen #205 Rookie Card BILLS', price: 120, day: -9, ...JA });
+sale('j3', { title: 'JOSH ALLEN 2017 PANINI PRIZM #205 ROOKIE NEON GREEN PULSAR RC BILLS', price: 255, day: -15, ...JA });
+sale('j4', { title: '2017 Panini Prizm - Rookie Josh Allen #205 Hyper Prizm /275 (RC)', price: 747, day: -12, ...JA });
+sale('j5', { title: '2017 Panini Prizm Josh Allen RC Red White and Blue Rookie #205 Bills', price: 521, day: -7, ...JA });
+sale('j6', { title: '2017 Panini PRIZM RC Josh Allen Rookie Green Prizm #205 Buffalo Bills', price: 456, day: -4, ...JA });
 sale('n1', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 14, day: -21, player: 'Dalvin Cook' });
 sale('n2', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 16, day: -12, player: 'Dalvin Cook' });
 sale('n3', { title: '2017 Panini Prizm Instant Impact Dalvin Cook #8', price: 190, day: -19, player: 'Dalvin Cook' });
@@ -272,6 +291,17 @@ const rawTitles = (d) => {
         murky.available === true,
         murky.available ? `${murky.totalSales} sales` : `reason=${murky.reason}`);
 
+  // What the fallback now keeps: sales whose titles use the same parallel
+  // words, and nothing else. It used to fall back to the parallel column alone,
+  // blank on most rows, and put every base card and parallel of the card in the
+  // 1/1's list and chart — live, a Neon Green Pulsar and a Hyper /275 in a raw
+  // base Josh Allen's history.
+  {
+    const ids = [...new Set((murky.grades || []).flatMap(g => g.recent.map(r => String(r.itemUrl).split('/').pop())))].sort();
+    check('  ...and groups only the sales whose titles read the same, not every blank-column sale',
+          ids.join(',') === 'a2,a3', `grouped ${ids.join(',') || 'nothing'}`);
+  }
+
   // The kind filter applies on THIS path too, and asserting only that the
   // endpoint answered did not test that: removing the filter from the fallback
   // changed the count and every check still passed. The fallback is where the
@@ -324,6 +354,16 @@ const rawTitles = (d) => {
   // Both are "2017 Prizm Dalvin Cook #8" in every column. Only the title says
   // one is an Instant Impact. Before this they were one card with a median
   // somewhere between $16 and $190, describing neither.
+  // Whichever of the two base sales the page is opened on, only the base card
+  // comes back: no Pulsar, no numbered Hyper, no Red White and Blue read as
+  // Blue, no "Green Prizm" read as base.
+  for (const seedId of ['j1', 'j2']) {
+    const r = await call(`/api/card-analysis?itemId=${seedId}`);
+    const ids = [...new Set((r.grades || []).flatMap(g => g.recent.map(x => String(x.itemUrl).split('/').pop())))].sort();
+    check(`opened on ${seedId}, a base card's history holds only the base card`,
+          ids.join(',') === 'j1,j2', `grouped ${ids.join(',') || 'nothing'} (identity ${JSON.stringify(r.identity || {})})`);
+  }
+
   const plain = await call('/api/card-analysis?itemId=n1');
   const plainIds = new Set((plain.grades || []).flatMap(g => g.recent.map(r => r.itemUrl)));
   check('the base card does not absorb the insert sharing its number',
