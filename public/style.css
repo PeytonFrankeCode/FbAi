@@ -2039,7 +2039,16 @@ main {
   outline-offset: 2px;
 }
 .version-history-btn {
-  display: block;
+  /* The site-wide button style is inline-flex with nowrap, which pushed the
+     label past the edge of a narrow (phone) card. Centre it and let it wrap. */
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+  box-sizing: border-box;
+  max-width: 100%;
   width: 100%;
   margin-top: 0.6rem;
   padding: 0.45rem 0.6rem;
