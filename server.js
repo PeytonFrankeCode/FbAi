@@ -10389,13 +10389,19 @@ async function _computeParallelLadder(db) {
 // hobby prices it: a PSA 9 about 25-30% over raw, a PSA 8 about level with raw
 // to 10% over, an 8.5 between. By the grade number, whichever company: a BGS 9
 // or SGC 9 is priced as a 9. A card's own sales may place it anywhere inside
-// the band, not outside it. 9.5s and 10s carry no band — their premium swings
-// from 2x to 10x and more with the card, so only the card's own sales say.
+// the band — but a star's slabs carry more, so a card with enough sales both
+// ways can move its own premium past it (see _checklistParallels). 9.5s and
+// 10s carry no band: their premium swings from 2x to 10x and more with the
+// card, so only the card's own sales say.
 const GRADE_PREMIUM = {
   '8':   { lo: 0.95, mid: 1.05, hi: 1.12 },
   '8.5': { lo: 1.05, mid: 1.15, hi: 1.22 },
   '9':   { lo: 1.2,  mid: 1.28, hi: 1.35 },
 };
+// How many sales' worth of weight the band's middle carries against the
+// card's own evidence, and the most a mid grade is ever taken to be worth.
+const GRADE_PREMIUM_WEIGHT = 5;
+const GRADE_PREMIUM_MAX = 3;
 function _gradePremium(label) {
   const m = /^[A-Z]+ (\d+(?:\.\d)?)$/.exec(String(label || ''));
   return m ? GRADE_PREMIUM[m[1]] || null : null;
@@ -10412,6 +10418,16 @@ function _gradeMedians(rows) {
     if (p > 0) (by[g] = by[g] || []).push(p);
   }
   return Object.fromEntries(Object.entries(by).map(([g, ps]) => [g, Math.round(_medOf(ps) * 100) / 100]));
+}
+// How many sales stand behind each of those medians.
+function _gradeCounts(rows) {
+  const by = {};
+  for (const r of rows) {
+    const g = _gradeBucket(r);
+    if (g === 'Raw' || !/^[A-Z]+ \d/.test(g) || !((r.price_cents || 0) > 0)) continue;
+    by[g] = (by[g] || 0) + 1;
+  }
+  return by;
 }
 
 // What a typical card in the product sells for raw in its base version: each
@@ -10651,20 +10667,31 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
   // (GRADE_PREMIUM): a card's own raw median can sit well under its clean
   // copies — Silver #269 read PSA 9 at 2.3x raw — and taken at its word that
   // would shrink every slab it converts.
-  const gradeRatio = {};
-  {
-    const by = {};
-    for (const k of known) {
-      if (!(k.raw > 0) || !k.grades) continue;
-      for (const [g, p] of Object.entries(k.grades)) if (p > 0) (by[g] = by[g] || []).push(p / k.raw);
+  //
+  // The band is where a card starts, not where it must stay: the premium grows
+  // with the player (a Mahomes slab over raw is not a mid-tier rookie's), and
+  // a card that has sold plenty both ways shows its own. So the card's gap —
+  // each parallel's weighted by how many raw and graded sales stand behind it —
+  // is blended with the band's middle by that evidence: a few sales barely move
+  // it, dozens mostly replace it. Never under the band, never over 3x.
+  const gradeObs = {};
+  for (const k of known) {
+    if (!(k.raw > 0) || !k.grades) continue;
+    for (const [g, p] of Object.entries(k.grades)) {
+      if (!(p > 0)) continue;
+      const w = Math.max(1, Math.min(k.rawN || 1, (k.gradeN && k.gradeN[g]) || 1));
+      (gradeObs[g] = gradeObs[g] || []).push([Math.log(p / k.raw), w]);
     }
-    for (const [g, rs] of Object.entries(by)) gradeRatio[g] = _medOf(rs);
   }
   const ratioFor = (g) => {
     const band = _gradePremium(g);
-    const seen = gradeRatio[g];
-    if (!band) return seen > 0 ? seen : null;
-    return seen > 0 ? Math.min(band.hi, Math.max(band.lo, seen)) : band.mid;
+    const obs = gradeObs[g] || [];
+    const n = obs.reduce((t, [, w]) => t + w, 0);
+    const seen = n ? obs.reduce((t, [l, w]) => t + l * w, 0) / n : null;
+    if (!band) return seen != null ? Math.exp(seen) : null;
+    if (seen == null) return band.mid;
+    const blended = Math.exp((n * seen + GRADE_PREMIUM_WEIGHT * Math.log(band.mid)) / (n + GRADE_PREMIUM_WEIGHT));
+    return Math.min(GRADE_PREMIUM_MAX, Math.max(band.lo, blended));
   };
   const rawEq = (k) => {
     if (k.raw > 0) return k.raw;
@@ -10771,7 +10798,7 @@ app.get('/api/checklist-prices', async (req, res) => {
   const pid = String(req.query.product || '').trim();
   const player = String(req.query.player || '').trim();
   if (!pid || !player) return res.status(400).json({ error: 'product and player are required' });
-  const cacheKey = `clprices:v3:${pid}:${player.toLowerCase()}`;
+  const cacheKey = `clprices:v4:${pid}:${player.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(_fromCache(cached));
   try {
@@ -10869,7 +10896,8 @@ async function _checklistPrices(pid, player) {
   const priced = mine.map(m => {
     const kind = _CATEGORY_KIND[m.set.category] || '';
     const known = [...m.keys].map(([key, b]) => ({ key, name: b.name, itemId: b.itemId, sales: b.sales,
-      raw: b.raw.length ? _medOf(b.raw) : null, grades: _gradeMedians(b.rows) }));
+      raw: b.raw.length ? _medOf(b.raw) : null, rawN: b.raw.length,
+      grades: _gradeMedians(b.rows), gradeN: _gradeCounts(b.rows) }));
     const list = _checklistParallels(m.set, known, fitFor(kind), pooledFor(kind)) || [];
     return { m, kind, known, list };
   });
@@ -10947,7 +10975,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v20: graded sales count toward unsold parallels' estimates, and rarer is
 // never cheaper for ladder rungs either.
 // v21: mid-grade slabs are converted to raw within GRADE_PREMIUM's bands.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v21';
+// v22: ...blended with the card's own premium by how much evidence it has.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v22';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11703,7 +11732,9 @@ app.get('/api/card-analysis', async (req, res) => {
           key, name: bucket.name, sales: kept.length, itemId: rep.item_id,
           median: Math.round(prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2),
           rawMedian: raw.length ? Math.round(_medOf(raw) * 100) / 100 : null,
+          rawSales: raw.length,
           gradeMedians: _gradeMedians(kept),
+          gradeCounts: _gradeCounts(kept),
         });
       }
       // Base first, then by how much actually traded.
@@ -11866,10 +11897,13 @@ app.get('/api/card-analysis', async (req, res) => {
           const known = [
             { key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
               raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null,
+              rawN: rawG ? rawG.sales : 0,
               grades: Object.fromEntries(grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL)
-                .map(g => [g.label, g.median])) },
+                .map(g => [g.label, g.median])),
+              gradeN: Object.fromEntries(grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL)
+                .map(g => [g.label, g.sales])) },
             ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales,
-              raw: p.rawMedian, grades: p.gradeMedians })),
+              raw: p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts })),
           ];
           const ladder = await _parallelLadder();
           const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;

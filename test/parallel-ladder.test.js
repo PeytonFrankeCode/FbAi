@@ -158,14 +158,21 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
   const pick = (n) => m269.find(e => e.name === n);
   check('a parallel sold only in slabs gets a raw equivalent', pick('Prizm Orange').rawEquivalent > 0
     && pick('Prizm Orange').price == null, JSON.stringify(pick('Prizm Orange')));
-  // The card read PSA 9 at 2.3x raw; the hobby's 9 is 25-30% over, so the
-  // Orange's $3,000 PSA 9 is held at 3000 / 1.35 at the least, not 3000 / 2.3.
-  const orange9 = S._checklistParallels(set, [
-    { key: '', itemId: 'B', sales: 20, raw: 790, grades: { 'PSA 9': 1800 } },
+  // The hobby's 9 is 25-30% over raw; this card reads 2.3x. With one sale
+  // each way the card barely moves the band; with a dozen each way (a star's
+  // card, where slabs really do carry more) it mostly speaks for itself.
+  const orange9 = (rawN, gradeN) => S._checklistParallels(set, [
+    { key: '', itemId: 'B', sales: 20, raw: 790, rawN, grades: { 'PSA 9': 1800 }, gradeN: { 'PSA 9': gradeN } },
     { key: S._ladderKey('Orange'), itemId: 'O', sales: 1, raw: null, grades: { 'PSA 9': 3000 } },
-  ], live, null).find(e => e.name === 'Prizm Orange');
-  check('a PSA 9 converts to raw at no more than the hobby\'s 35% premium',
-    near(orange9.rawEquivalent, 3000 / 1.35, 0.01), JSON.stringify(orange9));
+  ], live, null).find(e => e.name === 'Prizm Orange').rawEquivalent;
+  const thinR = 3000 / orange9(1, 1), deepR = 3000 / orange9(12, 12);
+  check('one sale each way: the PSA 9 premium stays near the hobby\'s 28%', thinR > 1.3 && thinR < 1.5, thinR.toFixed(3));
+  check('a dozen each way: the card\'s own 2.3x mostly wins', deepR > 1.8 && deepR < 2.28, deepR.toFixed(3));
+  const junk = 3000 / S._checklistParallels(set, [
+    { key: '', itemId: 'B', sales: 50, raw: 100, rawN: 50, grades: { 'PSA 9': 1000 }, gradeN: { 'PSA 9': 50 } },
+    { key: S._ladderKey('Orange'), itemId: 'O', sales: 1, raw: null, grades: { 'PSA 9': 3000 } },
+  ], live, null).find(e => e.name === 'Prizm Orange').rawEquivalent;
+  check('never over 3x, however much the card claims', near(junk, 3, 0.001), junk.toFixed(3));
   const orange8 = S._checklistParallels(set, [
     { key: S._ladderKey('Orange'), itemId: 'O', sales: 1, raw: null, grades: { 'BGS 8': 2100 } },
   ], live, null).find(e => e.name === 'Prizm Orange');
