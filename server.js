@@ -4561,6 +4561,8 @@ const RSI_BASE_SIGNAL_PHRASES = ['tie dye', 'press proof', 'green bay',
 const RSI_BASE_SIGNAL_EXTRA = ['xfractor', 'pigskin', 'lava', 'sepia', 'negative', 'checkerboard',
   'tiger', 'atomic', 'kaleidoscope', 'vinyl', 'photon', 'glitch', 'genesis', 'choice', 'ssp', 'rwb',
   'downtown', 'uptown', 'kaboom', 'concourse', 'pandora', 'manga',
+  // Sellers pluralise the set name: "Donruss Optic - Uptowns Jaxson Dart #11".
+  'downtowns', 'uptowns',
   // A jumbo / oversized copy is a different card from the standard size.
   'jumbo', 'oversized', 'oversize'];
 // Split in two for cost. The column tests are cheap and run in a WHERE. The
@@ -8312,7 +8314,7 @@ async function _basketChecklist(id) {
 }
 const _basketName = (s) => String(s || '').toLowerCase()
   .replace(/[^a-z0-9 ]+/g, '').replace(/\s+(ii|iii|iv|jr|sr)$/, '').replace(/\s+/g, ' ').trim();
-const _basketNum = (s) => String(s || '').toLowerCase().replace(/^#/, '').replace(/^0+(?=\d)/, '').trim();
+const _basketNum = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '').replace(/^0+(?=\d)/, '');
 async function _basketBaseOnly(rows) {
   let sIdx = null;
   try {
@@ -8352,6 +8354,16 @@ async function _basketBaseOnly(rows) {
     if (verdict === 'keep') out.push(r);
   }
   return out;
+}
+
+// The same check for rows keyed by card (RSI_KEY_COLS joined by '|').
+async function _baseCardRowsOnly(rows) {
+  const keys = [...new Set(rows.map(r => r.card))];
+  const at = (k, col) => String(k || '').split('|')[RSI_KEY_COLS.indexOf(col)] || '';
+  const probe = keys.map(k => ({ key: k, year: at(k, 'year'), set_name: at(k, 'set_name'),
+                                 player: at(k, 'player'), card_number: at(k, 'card_number') }));
+  const kept = new Set((await _basketBaseOnly(probe)).map(r => r.key));
+  return rows.filter(r => kept.has(r.card));
 }
 
 // ---- Market caching: nobody waits for a recompute they did not ask for ----
@@ -9249,7 +9261,8 @@ app.get('/api/player-index', async (req, res) => {
 // The player index through the same cache the Market tab reads, so a card page
 // adjusting a stale price by it sees the very number the tab shows.
 async function _playerIndexCached(db, days, player) {
-  return await _marketCached(`playerindex:v7:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+  // v8: base cards by checklist, outlier card-days set aside.
+  return await _marketCached(`playerindex:v8:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
     () => _computePlayerIndex(db, days, player));
 }
 
@@ -9315,6 +9328,7 @@ function _marketRatioFrom(series, fromDay) {
 //
 // Measured on the flat-market fixture (true prices never move), see
 // test/market-accuracy.test.js for the figures this was tuned against.
+const PLAYER_TREND_OUTLIER_X = 3;         // a card-day this far off the card's typical day is set aside
 const PLAYER_TREND_MIN_CARD_DAYS = 3;     // a card must trade on this many days to say anything
 function _playerTrendWindow(days) { return days >= 90 ? 14 : days >= 30 ? 7 : 3; }
 const PLAYER_TREND_MIN_WINDOW = 8;        // card-days needed in a window for it to count
@@ -9373,7 +9387,14 @@ function _playerTrendPayload(rows, throughIso, days, player) {
   // Each card-day relative to that card's own median day price.
   const entries = [];
   let cards = 0, sales = 0;
-  for (const list of byCard.values()) {
+  // A card-day priced over 3x or under a third of that card's typical day is
+  // not this card's price — a parallel or an insert that reached it under the
+  // same number — and one of them on a thin day moved the whole player.
+  const OUT = Math.log(PLAYER_TREND_OUTLIER_X);
+  for (const all of byCard.values()) {
+    if (all.length < PLAYER_TREND_MIN_CARD_DAYS) continue;
+    const typical = median(all.map(x => x.logp));
+    const list = all.filter(x => Math.abs(x.logp - typical) <= OUT);
     if (list.length < PLAYER_TREND_MIN_CARD_DAYS) continue;
     const ref = median(list.map(x => x.logp));
     cards++;
@@ -9471,7 +9492,10 @@ async function _computePlayerIndex(db, days, player) {
     // best offers, their busiest ten), measured as a price level rather than
     // a chain of moves — see _playerTrendPayload for why.
     const rows = await (await _playerTrendQuery(db, throughIso, days, player)).all();
-    const list = (rows && rows.results) || [];
+    // Only the player's base cards, by the checklist (see _basketBaseOnly):
+    // Jaxson Dart's Optic #11 is his Uptown case hit, and its $300-500 sales
+    // on thin days read as his whole market quadrupling overnight.
+    const list = await _baseCardRowsOnly((rows && rows.results) || []);
     if (list.length === 0) return { available: false, days, player, reason: 'no sales for this player' };
     return _playerTrendPayload(list, throughIso, days, player);
   } catch (err) {
@@ -14691,7 +14715,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _basketMove, _basketBaseOnly, _isPackListing, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
