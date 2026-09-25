@@ -10385,6 +10385,22 @@ async function _computeParallelLadder(db) {
            curves: await _ladderCurves(products) };
 }
 
+// What a mid-grade slab is worth over a raw copy of the same card, as the
+// hobby prices it: a PSA 9 about 25-30% over raw, a PSA 8 about level with raw
+// to 10% over, an 8.5 between. By the grade number, whichever company: a BGS 9
+// or SGC 9 is priced as a 9. A card's own sales may place it anywhere inside
+// the band, not outside it. 9.5s and 10s carry no band — their premium swings
+// from 2x to 10x and more with the card, so only the card's own sales say.
+const GRADE_PREMIUM = {
+  '8':   { lo: 0.95, mid: 1.05, hi: 1.12 },
+  '8.5': { lo: 1.05, mid: 1.15, hi: 1.22 },
+  '9':   { lo: 1.2,  mid: 1.28, hi: 1.35 },
+};
+function _gradePremium(label) {
+  const m = /^[A-Z]+ (\d+(?:\.\d)?)$/.exec(String(label || ''));
+  return m ? GRADE_PREMIUM[m[1]] || null : null;
+}
+
 // A parallel's median price per grade (PSA 9, BGS 9.5, ...), raw left out:
 // how a card's slabs are put back on the raw scale (_checklistParallels).
 function _gradeMedians(rows) {
@@ -10630,6 +10646,11 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
   // put back on the raw scale by THIS card's own gap between that grade and
   // raw, read off the parallels that sold both ways (Silver #269: PSA 9 about
   // 2.3x raw). A grade the card has no raw comparison for is not used.
+  //
+  // Mid grades are held to what the hobby knows them to be worth over raw
+  // (GRADE_PREMIUM): a card's own raw median can sit well under its clean
+  // copies — Silver #269 read PSA 9 at 2.3x raw — and taken at its word that
+  // would shrink every slab it converts.
   const gradeRatio = {};
   {
     const by = {};
@@ -10639,10 +10660,16 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     }
     for (const [g, rs] of Object.entries(by)) gradeRatio[g] = _medOf(rs);
   }
+  const ratioFor = (g) => {
+    const band = _gradePremium(g);
+    const seen = gradeRatio[g];
+    if (!band) return seen > 0 ? seen : null;
+    return seen > 0 ? Math.min(band.hi, Math.max(band.lo, seen)) : band.mid;
+  };
   const rawEq = (k) => {
     if (k.raw > 0) return k.raw;
-    const xs = Object.entries(k.grades || {}).filter(([g, p]) => p > 0 && gradeRatio[g] > 0)
-      .map(([g, p]) => p / gradeRatio[g]);
+    const xs = Object.entries(k.grades || {}).filter(([g, p]) => p > 0 && ratioFor(g) > 0)
+      .map(([g, p]) => p / ratioFor(g));
     return xs.length ? _medOf(xs) : null;
   };
   const entryOf = (k) => list.find(e => e.keys.includes(k.key));
@@ -10744,7 +10771,7 @@ app.get('/api/checklist-prices', async (req, res) => {
   const pid = String(req.query.product || '').trim();
   const player = String(req.query.player || '').trim();
   if (!pid || !player) return res.status(400).json({ error: 'product and player are required' });
-  const cacheKey = `clprices:v2:${pid}:${player.toLowerCase()}`;
+  const cacheKey = `clprices:v3:${pid}:${player.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(_fromCache(cached));
   try {
@@ -10919,7 +10946,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // and autograph and relic cards get theirs; v18 entries carry the old figures.
 // v20: graded sales count toward unsold parallels' estimates, and rarer is
 // never cheaper for ladder rungs either.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v20';
+// v21: mid-grade slabs are converted to raw within GRADE_PREMIUM's bands.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v21';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -15677,7 +15705,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

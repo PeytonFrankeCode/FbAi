@@ -156,9 +156,23 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
     { key: S._ladderKey('Light Blue'), itemId: 'L', sales: 2, raw: 2050 },
   ], live, null);
   const pick = (n) => m269.find(e => e.name === n);
-  check('a parallel sold only in slabs gets a raw equivalent from the card\'s own grade gap',
-    pick('Prizm Orange').rawEquivalent > 1000 && pick('Prizm Orange').rawEquivalent < 2000 && pick('Prizm Orange').price == null,
-    JSON.stringify(pick('Prizm Orange')));
+  check('a parallel sold only in slabs gets a raw equivalent', pick('Prizm Orange').rawEquivalent > 0
+    && pick('Prizm Orange').price == null, JSON.stringify(pick('Prizm Orange')));
+  // The card read PSA 9 at 2.3x raw; the hobby's 9 is 25-30% over, so the
+  // Orange's $3,000 PSA 9 is held at 3000 / 1.35 at the least, not 3000 / 2.3.
+  const orange9 = S._checklistParallels(set, [
+    { key: '', itemId: 'B', sales: 20, raw: 790, grades: { 'PSA 9': 1800 } },
+    { key: S._ladderKey('Orange'), itemId: 'O', sales: 1, raw: null, grades: { 'PSA 9': 3000 } },
+  ], live, null).find(e => e.name === 'Prizm Orange');
+  check('a PSA 9 converts to raw at no more than the hobby\'s 35% premium',
+    near(orange9.rawEquivalent, 3000 / 1.35, 0.01), JSON.stringify(orange9));
+  const orange8 = S._checklistParallels(set, [
+    { key: S._ladderKey('Orange'), itemId: 'O', sales: 1, raw: null, grades: { 'BGS 8': 2100 } },
+  ], live, null).find(e => e.name === 'Prizm Orange');
+  check('with nothing to compare, an 8 (any company) converts at the band\'s middle, 5%',
+    near(orange8.rawEquivalent, 2000, 0.01), JSON.stringify(orange8));
+  check('a PSA 10 has no band: only the card\'s own sales price it', S._gradePremium('PSA 10') === null
+    && S._gradePremium('BGS 9.5') === null && S._gradePremium('SGC 9').mid === 1.28);
   const wave = pick('Prizm Blue Wave');
   check('Blue Wave /149 is never below the Light Blue /199 that sold at $2,050',
     wave.estimate && wave.estimate.price >= 2050 * 1.1 - 0.01 && wave.estimate.lifted, JSON.stringify(wave.estimate));
