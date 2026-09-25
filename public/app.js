@@ -14927,9 +14927,10 @@ function _caRenderChart(label) {
   _caSyncTabLabels();
   if (_caTab === 'sold') _caRenderList();
 
-  // A line through one or two points is noise pretending to be a trend — say
-  // so rather than drawing something misleading.
-  if (!g || g.points.length < 3 || typeof Chart === 'undefined') {
+  // Every sale is charted, however few: one sale is a dot, two a line between
+  // them. The trend figure above is what is held back on thin data, not the
+  // sales themselves.
+  if (!g || !g.points.length || typeof Chart === 'undefined') {
     canvas.classList.add('hidden');
     if (empty) {
       empty.classList.remove('hidden');
@@ -14956,7 +14957,9 @@ function _caRenderChart(label) {
         data: g.points.map(p => p.median),
         borderColor: color,
         backgroundColor: color.replace(')', ', 0.12)').replace('rgb', 'rgba'),
-        fill: false, tension: 0.25, borderWidth: 2, pointRadius: 3, pointHoverRadius: 6,
+        // Few points are drawn larger, so a lone sale is easy to see and tap.
+        fill: false, tension: 0.25, borderWidth: 2,
+        pointRadius: g.points.length <= 3 ? 5 : 3, pointHoverRadius: 7,
       }],
     },
     options: {
