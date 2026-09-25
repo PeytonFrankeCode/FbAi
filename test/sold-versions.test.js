@@ -222,5 +222,17 @@ check('the versions container is on the page and styled',
     && !/updatePriceChart|chartSection|chartCanvas/.test(src));
 }
 
+// The home page's long-form text hides once anyone searches, whatever started
+// the search, and stays in the HTML for the home page itself (500+ words).
+{
+  const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
+  const a = html.indexOf('id="about-section"'), b = html.indexOf('</section>', a);
+  const words = a > 0 ? html.slice(a, b).replace(/<[^>]+>/g, ' ').split(/\s+/).filter(w => /[a-z]/i.test(w)).length : 0;
+  check('the home page keeps its long-form text in the HTML', words >= 500, `${words} words`);
+  check('  ...and every search hides it, not just the search box',
+    /async function fetchDirectSearch\(query\) \{\s*_hideHomeContent\(\);/.test(src)
+    && /async function performSearch\(query, opts = \{\}\) \{\s*_hideHomeContent\(\);/.test(src));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sold-versions checks passed');
 process.exit(failures ? 1 : 0);

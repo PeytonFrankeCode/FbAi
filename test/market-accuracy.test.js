@@ -143,6 +143,14 @@ const check = (label, ok, detail) => {
     check(`market index recovers a ${drift > 0 ? '+' : ''}${drift}% trend`, within,
           r.available ? `reported ${got > 0 ? '+' : ''}${got}% on ${built.sales} sales, matched=${r.matchedCards}`
                       : `FAILED: ${r.reason}`);
+    // The accuracy scorer: on a trending market, pricing a card off its last
+    // comp moved by the index must beat the last comp as it stood.
+    if (drift === 10) {
+      const a = await (await fetch(`http://127.0.0.1:${PORT}/api/debug/market-accuracy?days=30`)).json();
+      check('  ...and the accuracy scorer credits the index for the trend',
+        a.available && a.pairs > 50 && a.withMarket.medianErrorPct <= a.lastComp.medianErrorPct,
+        a.available ? `last comp ${a.lastComp.medianErrorPct}% vs with market ${a.withMarket.medianErrorPct}% on ${a.pairs} pairs` : `FAILED: ${a.reason}`);
+    }
     // A week is drawn a day at a time, not as one step: two dots and a line
     // said nothing the headline percentage did not.
     if (drift === 0) {

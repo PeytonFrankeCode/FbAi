@@ -111,7 +111,9 @@ const { _noBestOfferSql } = require(path.join(ROOT, 'server.js'));
       && /const columns = `\$\{colTests\}\$\{saleTests\}`/.test(helper)
       && /WHERE \$\{columns\}/.test(helper)
       && /_rsiQualify\(saleTests, 's'\)/.test(helper)
-      && (src.match(/\$\{_rsiBaseCtes\(\{[^}]*\bnoOffer\b/g) || []).length === 3,
+      // Four: index, basket, player trend, and the checklist deny probe
+      // (_marketDenied), which lists the same population the index picks from.
+      && (src.match(/\$\{_rsiBaseCtes\(\{[^}]*\bnoOffer\b/g) || []).length === 4,
       'defined but not interpolated is the failure mode here');
 
     // The card history chart.

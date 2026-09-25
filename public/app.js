@@ -1963,7 +1963,19 @@ function goBackToVariants() {
 }
 
 // ---- Direct Card Search (Stage: direct) ----
+// The home page's long-form text (#about-section) is for readers and crawlers
+// of the home page itself; once someone searches, it is in the way of the
+// results. Hidden here, where every search starts — the form, the chips, the
+// home boards, the scanner, links with ?q= — rather than at each caller, which
+// is how a board click came to leave it sitting under the results. It stays in
+// the HTML, so the home page still carries it; "back to search" shows it again.
+function _hideHomeContent() {
+  if (typeof suggestionsSection !== 'undefined' && suggestionsSection) suggestionsSection.classList.add('hidden');
+  if (typeof aboutSection !== 'undefined' && aboutSection) aboutSection.classList.add('hidden');
+}
+
 async function fetchDirectSearch(query) {
+  _hideHomeContent();
   currentSearchMode = 'direct';
   currentResults = [];
 
@@ -2350,6 +2362,7 @@ function renderStatsBar(results, isSold) {
 // sold data is unavailable), so quietly search live For-Sale listings instead and show a
 // soft note" — never a dead-end error wall.
 async function performSearch(query, opts = {}) {
+  _hideHomeContent();
   setLoading(true);
   showSkeleton();
   grid.innerHTML = '';

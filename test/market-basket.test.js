@@ -44,8 +44,54 @@ const check = (label, ok, detail) => {
   check('  ...and where no checklist can say, a coded number is still an insert',
     unknown.length === 1 && unknown[0].card_number === '12');
 
+  // ---- the player index: the Sep 2 spike ----
+  // Jaxson Dart's 30-day number jumped to 420 in a day: his Uptown case hits
+  // ($275-500) sold on thin days under Optic #11, as if a base card.
+  {
+    const iso = (d) => new Date(Date.UTC(2026, 7, 22) + d * 86400000).toISOString().slice(0, 10);
+    const rows = [];
+    const add = (card, d, dollars) => rows.push({ card, sold_date: iso(d), s: dollars * 100, c: 1 });
+    // Two base cards trading flat at $5 and $8, one sale each every other day.
+    for (let d = 0; d <= 38; d += 2) { add('2025|donruss optic|jaxson dart|273||', d, 5); add('2025|topps chrome|jaxson dart|306||', d + 1, 8); }
+    // "#11": a few $5 days and, on two thin days, $300 Uptowns.
+    for (const d of [3, 9, 15, 21, 27]) add('2025|donruss optic|jaxson dart|11||', d, 5);
+    add('2025|donruss optic|jaxson dart|11||', 11, 300); add('2025|donruss optic|jaxson dart|11||', 12, 350);
+    const out = S._playerTrendPayload(rows, iso(38), 30, 'Jaxson Dart');
+    const peak = Math.max(...(out.series || []).map(p => p.score));
+    check('a case hit sold under a base number does not spike the player',
+      out.available && peak < 130, `peak ${peak}, change ${out.changePct}%`);
+    const kept = new Set((await S._baseCardRowsOnly(rows)).map(r => r.card));
+    check('  ...and the player index keeps only his base cards by the checklist',
+      kept.has('2025|donruss optic|jaxson dart|273||') && kept.has('2025|topps chrome|jaxson dart|306||')
+      && !kept.has('2025|donruss optic|jaxson dart|11||'), [...kept].join(' , '));
+  }
+
+  // ---- the checklist only ever takes a card OUT ----
+  // Important cards live in products we hold no checklist for, and a
+  // checklist can miss a player's base card. Only a number the checklist lists
+  // for him as an insert / auto / relic, and not as base, is dropped.
+  {
+    const probe = [
+      { card: 'k273', year: '2025', set_name: 'donruss optic', player: 'jaxson dart', card_number: '273' },
+      { card: 'k11', year: '2025', set_name: 'donruss optic', player: 'jaxson dart', card_number: '11' },
+      { card: 'k999', year: '2025', set_name: 'donruss optic', player: 'jaxson dart', card_number: '999' },
+      { card: 'kX', year: '2031', set_name: 'nothing we hold', player: 'jaxson dart', card_number: '7' },
+      { card: 'kNew', year: '2025', set_name: 'donruss optic', player: 'someone unlisted', card_number: '11' },
+    ];
+    const kept = (await S._basketBaseOnly(probe)).map(r => r.card).sort();
+    check('only a number the checklist calls his insert is dropped; the unknown is kept',
+      kept.join(',') === 'k273,k999,kNew,kX', kept.join(','));
+    // The whole-market index gets the same answer through its deny list.
+    const fakeDb = { prepare: () => ({ bind: () => ({ all: async () => ({ results: probe }) }) }) };
+    const deny = await S._marketDenied(fakeDb, '2026-09-21', 30, false);
+    check('  ...and the market index leaves out exactly those cards', JSON.stringify(deny) === '["k11"]', JSON.stringify(deny));
+  }
+
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
   check('the index itself leaves coded numbers out', /card_number NOT GLOB '\*\[A-Za-z\]\*'/.test(src));
+  check('  ...and passes the checklist deny list into the index and basket queries',
+    /_rsiQuery\(db, throughIso, days, '', \[\], 'player', useAlias, daily, deny\)/.test(src)
+    && /FROM pick_keys k JOIN pick_players t ON t\.player_n = k\.player_n\$\{denySql\}/.test(src));
 
   console.log(failures ? `\n${failures} check(s) failed` : '\nall market-basket checks passed');
   process.exit(failures ? 1 : 0);
