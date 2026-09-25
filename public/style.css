@@ -8352,6 +8352,15 @@ to { opacity: 1; transform: translateY(0); }
   background: var(--accent-bg);
 }
 .ca-combo.cl-combo-disabled .cl-combo-toggle { opacity: 0.55; cursor: progress; }
+/* An estimated parallel: the price panel and the pickers, and nothing that
+   would draw sales it does not have. */
+.card-analysis.ca-estimated .ca-chart-wrap,
+.card-analysis.ca-estimated #ca-stat,
+.card-analysis.ca-estimated #ca-point,
+.card-analysis.ca-estimated .chart-readout-hint,
+.card-analysis.ca-estimated .ca-note,
+.card-analysis.ca-estimated .ca-tabs,
+.card-analysis.ca-estimated .ca-list-body { display: none !important; }
 .ca-stat { display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap; }
 .ca-stat-price { font-size: 1.15rem; font-weight: 800; color: var(--accent); }
 .ca-stat-n { font-size: 0.68rem; color: var(--text-muted); }
