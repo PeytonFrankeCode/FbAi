@@ -14693,6 +14693,7 @@ async function _caSwitchParallel(itemId) {
   if (!itemId || itemId === _caItemId) return;
   const sel = document.getElementById('ca-parallel-select');
   if (sel) sel.disabled = true;
+  _caSyncCombos();
   try {
     await loadCardAnalysis({ source: 'nflcarddb', itemId, hasAnalysis: true }, { switching: true });
   } catch (_) {
@@ -14700,6 +14701,22 @@ async function _caSwitchParallel(itemId) {
     // one it describes.
     const s = document.getElementById('ca-parallel-select');
     if (s) { s.value = _caItemId || s.value; s.disabled = false; }
+    _caSyncCombos();
+  }
+}
+
+// The pickers on screen are combos over the hidden selects; mirror each
+// select's options, value, hidden and disabled state onto its combo.
+function _caSyncCombos() {
+  for (const [comboId, selId] of [['ca-combo-parallel', 'ca-parallel-select'], ['ca-combo-grade', 'ca-grade-select']]) {
+    const combo = document.getElementById(comboId);
+    const sel = document.getElementById(selId);
+    if (!combo || !sel) continue;
+    syncComboboxFromSelect(combo);
+    combo.classList.toggle('hidden', sel.classList.contains('hidden') || !sel.options.length);
+    combo.classList.toggle('cl-combo-disabled', !!sel.disabled);
+    const toggle = combo.querySelector('.cl-combo-toggle');
+    if (toggle) toggle.disabled = !!sel.disabled;
   }
 }
 
@@ -14712,6 +14729,7 @@ function _caRenderParallels(data) {
   if (!others.length || !_caItemId) {
     sel.classList.add('hidden');
     sel.innerHTML = '';
+    _caSyncCombos();
     return;
   }
   const currentName = (data.identity && data.identity.parallel) || 'This parallel';
@@ -14729,6 +14747,7 @@ function _caRenderParallels(data) {
   sel.disabled = false;
   sel.onchange = () => _caSwitchParallel(sel.value);
   sel.classList.remove('hidden');
+  _caSyncCombos();
 }
 let _caSelectedGrade = null;
 // Distinct per grade series. Raw and the common grades get fixed hues so a
@@ -14824,6 +14843,7 @@ function _caReset(keepVisible) {
   // whichever card was open before this one.
   const parSel = document.getElementById('ca-parallel-select');
   if (parSel) { parSel.classList.add('hidden'); parSel.innerHTML = ''; parSel.disabled = false; }
+  _caSyncCombos();
   const priceEl = document.getElementById('ca-price');
   if (priceEl) { priceEl.classList.add('hidden'); priceEl.innerHTML = ''; }
   renderChartReadout('ca-point', '');
@@ -14885,6 +14905,7 @@ async function loadCardAnalysis(item, opts = {}) {
     sel.value = preferred.label;
     sel.onchange = () => _caRenderChart(sel.value);
   }
+  _caSyncCombos();
   _caRenderChart((data.grades.find(g => g.label === 'Raw') || data.grades[0]).label);
   _caLoadForSale(item.itemId);
 }
