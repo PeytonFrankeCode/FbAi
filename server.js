@@ -1392,6 +1392,26 @@ function saleTypeOf({ bestOffer, listingFormat }) {
   return 'fixed';
 }
 
+// ---- Pack listings: a chase pack is not the card on the photo ----
+//
+// "CHASE PACK", "Chaser Pack #12", "Mystery Pack — hit shown!": the listing
+// shows a card but sells a pack that might contain it, so the price is the
+// pack's, not the card's. Kept out of search, card history and the market.
+//
+// "Chase" is also a name — Ja'Marr Chase, Chase Brown, Chase Young — so a bare
+// "chase" only counts when it is not a player's: not when the sale's own
+// player is a Chase, and not when the title names one. "Mystery" alone stays:
+// "Mystery Rookie" and "Mystery Autograph" are real checklist cards.
+const _PACK_LISTING_RE = /\b(chasers?|chase\s+(packs?|box(es)?|breaks?|bags?)|mystery\s+(packs?|box(es)?|bags?|mailers?))\b/i;
+const _CHASE_NAME_RE = /\bja['’]?\s*marr\s+chase\b|\bjamarr\s+chase\b|\bchase\s+(brown|young|claypool|daniel|edmonds|winovich|lucas|allen|mclaughlin|roullier|cota|stuart|hayden|wilson|jackson|davis|thomas|williams|smith|johnson|harrell|chandler)\b|\b(burrow|joe\s+burrow)\s*[&/+]\s*chase\b|\bchase\s*[&/+]\s*(burrow|higgins)\b/i;
+function _isPackListing(title, player) {
+  const t = String(title || '');
+  if (_PACK_LISTING_RE.test(t)) return true;
+  if (!/\bchase\b/i.test(t)) return false;
+  if (/\bchase\b/i.test(String(player || ''))) return false;
+  return !_CHASE_NAME_RE.test(t);
+}
+
 function mapNflDbSale(r) {
   // Same rule as the analysis buckets: an unparsed grade isn't proof a card
   // was raw, so don't label a likely slab "Ungraded".
@@ -1644,7 +1664,8 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales, `
       + `${read.toLocaleString('en-US')} rows read, ${elapsed}ms (${source})`);
 
-    const payload = { results: rows.map(mapNflDbSale), total: rows.length };
+    const cards = rows.filter(r => !_isPackListing(r.title, r.player));
+    const payload = { results: cards.map(mapNflDbSale), total: cards.length };
     cachePut(cacheKey, payload, NFLDB_SEARCH_TTL);
     return payload;
   } catch (err) {
@@ -1765,7 +1786,7 @@ async function getArchivedSales(keywords, opts = {}) {
   const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
   try {
     const rec = await archiveGet(_soldArchiveKey(cleaned, filterKey));
-    return (rec && Array.isArray(rec.sales)) ? rec.sales : [];
+    return (rec && Array.isArray(rec.sales)) ? rec.sales.filter(x => !_isPackListing(x && x.title)) : [];
   } catch (_) {
     return [];
   }
@@ -4434,6 +4455,9 @@ const RSI_JUNK_WORDS = [
   'you pick', 'pick your', 'choose your',
   'case break', 'break spot',
   'lot of', 'repack', 'mystery',
+  // A pack sold on a card's photo, not the card. Only "chaser": "chase pack" as
+  // a substring also reads "Ja'Marr Chase pack fresh", a real card.
+  'chaser',
   'reprint', 'custom made', 'aceo',   // fan art and reproductions, not cards
 ];
 
@@ -4546,12 +4570,16 @@ const RSI_BASE_SIGNAL_EXTRA = ['xfractor', 'pigskin', 'lava', 'sepia', 'negative
 // and the 90-day index went from ~1s to 14s on the test dataset. So the cleaned
 // title is a COLUMN (RSI_BASE_TITLE_WORDS, computed once per row in a
 // materialised step) and the word tests read that column.
+// A card number with letters in it ("STN-2", "RI-5") is an insert's code,
+// never a base card's. (No SQL comment for it: this clause is spliced into
+// other lines, where "--" would swallow what follows.)
 function _rsiBaseCardSql() {
   const inList = RSI_BASE_PARALLELS.map(v => `'${v}'`).join(', ');
   return `
           AND COALESCE(TRIM(year), '') <> ''
           AND COALESCE(TRIM(set_name), '') <> ''
           AND COALESCE(TRIM(card_number), '') <> ''
+          AND card_number NOT GLOB '*[A-Za-z]*'
           AND LOWER(TRIM(COALESCE(parallel, ''))) IN (${inList})`;
 }
 // A print run in the title ("/99", "1/1"): base cards are not numbered.
@@ -5079,8 +5107,10 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
               SUM(CASE WHEN rn * 2 >  cnt THEN 1 ELSE 0 END) AS days_recent,
               SUM(CASE WHEN rn * 2 <= cnt THEN 1 ELSE 0 END) AS days_older,
               AVG(CASE WHEN rn * 2 >  cnt THEN price END) AS recent_c,
-              AVG(CASE WHEN rn * 2 <= cnt THEN price END) AS older_c
-         FROM (SELECT card, price,
+              AVG(CASE WHEN rn * 2 <= cnt THEN price END) AS older_c,
+              -- Each trading day's price, for the robust move in _basketMove.
+              GROUP_CONCAT(sold_date || ':' || CAST(ROUND(price) AS INTEGER), ',') AS day_prices
+         FROM (SELECT card, price, sold_date,
                       ROW_NUMBER() OVER (PARTITION BY card ORDER BY sold_date) AS rn,
                       COUNT(*) OVER (PARTITION BY card) AS cnt
                  FROM daily WHERE sold_date > ?)
@@ -5099,11 +5129,41 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
      )
      SELECT l.player, l.year, l.set_name, l.parallel, l.card_number, l.grader, l.grade,
             l.sales, l.avg_cents, l.dated_image,
-            m.days_recent, m.days_older, m.recent_c, m.older_c
+            m.days_recent, m.days_older, m.recent_c, m.older_c, m.day_prices
        FROM labels l
        LEFT JOIN moves m ON m.card = l.card
       ORDER BY l.sales DESC`
   ).bind(..._rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds }), startIso);
+}
+
+// A card's own move over the period, read so one bad day cannot drive it.
+//
+// "+1,226%" on a $2 base card came from averages: a few parallels or junk
+// sales priced as the base card on some days, averaged in. So each trading
+// day's price is first compared with the card's typical day (the median): a
+// day over 3x or under a third of it is not this card's price and is set
+// aside. The card's later trading days are then compared with its earlier ones
+// by MEDIAN, needing two days a side, and bounded as before.
+const BASKET_OUTLIER_X = 3;
+function _basketMove(dayPrices, points) {
+  const days = String(dayPrices || '').split(',').map(x => {
+    const [d, p] = x.split(':');
+    return { d, p: Number(p) };
+  }).filter(x => x.d && x.p > 0).sort((a, b) => a.d.localeCompare(b.d));
+  if (!days.length) return null;
+  const med = (xs) => { const a = xs.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+  const typical = med(days.map(x => x.p));
+  const kept = days.filter(x => x.p <= typical * BASKET_OUTLIER_X && x.p >= typical / BASKET_OUTLIER_X);
+  const out = { typicalCents: med(kept.map(x => x.p)), changePct: null, outlierDays: days.length - kept.length };
+  const half = kept.length >> 1;
+  if (half < 2 || kept.length - half < 2) return out;
+  const older = med(kept.slice(0, half).map(x => x.p));
+  const recent = med(kept.slice(half).map(x => x.p));
+  if (!(older > 0) || !(recent > 0)) return out;
+  const lo = Math.pow(RSI_BUCKET_MOVE_FLOOR, points), hi = Math.pow(RSI_BUCKET_MOVE_CEIL, points);
+  const ratio = Math.min(hi, Math.max(lo, recent / older));
+  out.changePct = Math.round((ratio - 1) * 1000) / 10;
+  return out;
 }
 
 // Turn basket rows into something displayable: a label, how much it traded,
@@ -5121,13 +5181,8 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
     // Later trading days against earlier ones (see the basket query's moves
     // CTE), needing two trading days on each side, and bounded as the
     // index bounds a period: at most halving or doubling per bucket.
-    let changePct = null;
-    const recent = Number(r.recent_c), older = Number(r.older_c);
-    if (Number(r.days_recent) >= 2 && Number(r.days_older) >= 2 && recent > 0 && older > 0) {
-      const lo = Math.pow(RSI_BUCKET_MOVE_FLOOR, points), hi = Math.pow(RSI_BUCKET_MOVE_CEIL, points);
-      const ratio = Math.min(hi, Math.max(lo, recent / older));
-      changePct = Math.round((ratio - 1) * 1000) / 10;
-    }
+    const mv = _basketMove(r.day_prices, points);
+    const changePct = mv ? mv.changePct : null;
     // Drop the sort-key date the query prefixed to the photo URL.
     let imageUrl = null;
     if (r.dated_image) {
@@ -5140,7 +5195,9 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
       sales: Number(r.sales) || 0,
       // Trading days behind the move, across both halves.
       pairs: (Number(r.days_recent) || 0) + (Number(r.days_older) || 0),
-      avgPrice: r.avg_cents != null ? Math.round(Number(r.avg_cents)) / 100 : null,
+      // The card's typical day, not its mean: one stray sale moves a mean.
+      avgPrice: mv && mv.typicalCents ? Math.round(mv.typicalCents) / 100
+        : r.avg_cents != null ? Math.round(Number(r.avg_cents)) / 100 : null,
       changePct,
       imageUrl,
     });
@@ -8216,19 +8273,85 @@ async function _computeMarketBasket(db, days, player) {
     // query, and image_url arrived late enough that not every deployment has it.
     const hasImage = await _nflHasImageColumn(db);
     const useAlias = await _aliasReady(db);
+    // Twice the cards shown are read, because some are set aside below.
+    const show = player ? 12 : 24;
     const rows = player
-      ? await (await _rsiBasketQuery(db, throughIso, days, 12,
+      ? await (await _rsiBasketQuery(db, throughIso, days, show * 2,
           ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, useAlias)).all()
-      : await (await _rsiBasketQuery(db, throughIso, days, 24, '', [], hasImage, useAlias)).all();
+      : await (await _rsiBasketQuery(db, throughIso, days, show * 2, '', [], hasImage, useAlias)).all();
+    const base = await _basketBaseOnly((rows && rows.results) || []);
 
     return {
       available: true, days, player: player || null, through: throughIso,
-      cards: _rsiBasketRows((rows && rows.results) || [], days, g.bucketDays, g.points),
+      cards: _rsiBasketRows(base.slice(0, show), days, g.bucketDays, g.points),
     };
   } catch (err) {
     console.error('[MarketBasket]', err && err.message);
     return { available: false, days, reason: 'basket unavailable', transient: true, error: err && err.message };
   }
+}
+
+// ---- The basket shows base cards: checked against the checklist ----
+//
+// A card here is a player, a product and a card number, and nothing in the
+// sales says the number is his BASE card. Jaxson Dart's 2025 Optic #11 is his
+// Uptown case hit ($355), filed as a base card because its titles did not
+// say "Uptown"; #STN-2, #ET-2 and #BM-2 are inserts by their numbers alone.
+// So each card is looked up in its product's checklist and kept only if the
+// number is one of the player's numbers in a base set (Base, Rookies, Rated
+// Rookies...). Where the checklist cannot say — no product, or the player not
+// in it — a number with letters in it is an insert code and is dropped, and a
+// plain number is kept.
+const _BASE_SET_NAME_RE = /^(base( set)?|rookies?|rated rookies?|veterans?|legends?|retired( players)?|base (rookies|veterans))$/i;
+const _basketChecklists = new Map();
+async function _basketChecklist(id) {
+  if (!_basketChecklists.has(id)) {
+    _basketChecklists.set(id, _loadJson(`checklists/${id}.json`).catch(() => null));
+  }
+  return _basketChecklists.get(id);
+}
+const _basketName = (s) => String(s || '').toLowerCase()
+  .replace(/[^a-z0-9 ]+/g, '').replace(/\s+(ii|iii|iv|jr|sr)$/, '').replace(/\s+/g, ' ').trim();
+const _basketNum = (s) => String(s || '').toLowerCase().replace(/^#/, '').replace(/^0+(?=\d)/, '').trim();
+async function _basketBaseOnly(rows) {
+  let sIdx = null;
+  try {
+    const cIdx = await _loadJson('checklists/index.json');
+    sIdx = buildJoinIndex((cIdx && cIdx.products) || [], undefined, await setAliases()).index;
+  } catch (err) {
+    console.error('[MarketBasket] checklist lookup unavailable:', err && err.message);
+  }
+  const out = [];
+  for (const r of rows) {
+    const num = _basketNum(r.card_number);
+    const coded = /[a-z]/.test(num);
+    let verdict = coded ? 'drop' : 'keep';
+    try {
+      const hit = sIdx && matchSale(sIdx, String(r.year || ''), String(r.set_name || ''));
+      const id = hit ? (typeof hit === 'string' ? hit : hit.id) : null;
+      const doc = id ? await _basketChecklist(id) : null;
+      if (doc && Array.isArray(doc.sets)) {
+        const who = _basketName(r.player);
+        let seen = false;
+        const baseNums = new Set();
+        for (const set of doc.sets) {
+          // By name: the category marks inserts like "Rookie Kings" as base.
+          const nm = String(set.name || '').trim();
+          const isBase = /^base\b/i.test(nm) || _BASE_SET_NAME_RE.test(nm);
+          for (const c of set.cards || []) {
+            if (_basketName(c.player) !== who) continue;
+            seen = true;
+            if (isBase) baseNums.add(_basketNum(c.number));
+          }
+        }
+        if (seen) verdict = baseNums.has(num) ? 'keep' : 'drop';
+      }
+    } catch (err) {
+      console.error('[MarketBasket] checklist check failed:', err && err.message);
+    }
+    if (verdict === 'keep') out.push(r);
+  }
+  return out;
 }
 
 // ---- Market caching: nobody waits for a recompute they did not ask for ----
@@ -9860,7 +9983,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // so v14 entries carry the old estimate.
 // v16: prices read off the last comp, or the average of comps within three
 // days of it, instead of a median; v15 entries carry the median.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v16';
+// v17: chase / mystery pack listings are left out, so v16 entries carry them.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v17';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10411,7 +10535,8 @@ app.get('/api/card-analysis', async (req, res) => {
     // on announcing itself as the card it had been moved out of.
     const seedName = (_saleParallel(seed, pi, pAliases, sOverrides, seed.player) || {}).parallel
                      || String(seed.parallel == null ? '' : seed.parallel).trim();
-    const candidates = (rows && rows.results) || [];
+    // Pack listings are not this card, whatever the photo shows (_isPackListing).
+    const candidates = ((rows && rows.results) || []).filter(r => !_isPackListing(r.title, r.player));
     // The same base card in its OTHER parallels, bucketed as they are excluded.
     // These rows were already read and identified; throwing them away wastes
     // the only expensive part of this request, and they are precisely what
@@ -14566,7 +14691,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _basketMove, _basketBaseOnly, _isPackListing, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
