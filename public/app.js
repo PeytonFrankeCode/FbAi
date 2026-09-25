@@ -14803,11 +14803,18 @@ const CA_PRICE_METHODS = {
   'trend-adjusted': { label: 'Estimated', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
   'stale-sales': { label: 'Last sold', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago; this is its most recent price.` },
   // A checklist parallel this card has not sold in, priced off its sold ones.
-  'parallel-ladder': { label: 'Estimated', how: (e) => e.basis === 'ladder'
-    ? `Priced from this card's own sales and how ${e.parallelName || 'this parallel'} sells against the other parallels across ${e.basedOnCards} cards in this product.`
-    : e.basis === 'print-run'
-    ? `Priced from this card's own sales and how this product's numbered parallels climb as the print run shrinks.`
-    : `Priced from this card's own sales and how this product's unnumbered parallels typically sell.` },
+  'parallel-ladder': { label: 'Estimated', how: (e) => (e.oneOfOne
+      ? `A 1/1 has no comps of its own, so treat the range as the answer. `
+      : '') + ({
+    ladder: `Priced from this card's own sales and how ${e.parallelName || 'this parallel'} sells against the other parallels across ${e.basedOnCards} cards in this product.`,
+    base: `Priced from this card's own sales in its other parallels and how they sell against base in this product.`,
+    'line-ladder': `Priced from this card's own sales and how ${e.parallelName || 'this parallel'} sells against the others across ${e.basedOnCards} releases of this product line.`,
+    'print-run': `Priced from this card's own sales and how this product's numbered parallels climb as the print run shrinks.`,
+    'line-curve': `Priced from this card's own sales and how numbered parallels climb as the print run shrinks across this product line's releases.`,
+    'site-curve': `Priced from this card's own sales and how numbered parallels climb as the print run shrinks across every product we track.`,
+    unnumbered: `Priced from this card's own sales and how this product's unnumbered parallels typically sell.`,
+    'line-unnumbered': `Priced from this card's own sales and how unnumbered parallels typically sell across this product line's releases.`,
+  }[e.basis] || `Priced from this card's own sales in its other parallels.`) },
   'similar-cards': { label: 'Ballpark', how: (e) => `This exact card hasn't sold. Based on ${e.basedOn} sales across ${e.variantCount} other version${e.variantCount === 1 ? '' : 's'} of it — parallels vary a lot, so treat the range as the answer.` },
 };
 
@@ -14834,7 +14841,7 @@ function _caRenderPrice(estimate) {
   const m = CA_PRICE_METHODS[estimate.method] || { label: 'Estimated', how: () => '' };
   const conf = estimate.confidence || 'low';
   // A range is the honest headline when the estimate isn't built on this card.
-  const rangeFirst = estimate.method === 'similar-cards';
+  const rangeFirst = estimate.method === 'similar-cards' || !!estimate.oneOfOne;
 
   const range = (estimate.low != null && estimate.high != null && estimate.low !== estimate.high)
     ? `<span class="ca-price-range">$${_caNum(estimate.low)} – $${_caNum(estimate.high)}</span>` : '';

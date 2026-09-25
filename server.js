@@ -10184,25 +10184,45 @@ async function _warmSoldStats() {
 // a short list of parallel words as SUBSTRINGS — cheap, and a false positive
 // ("Jared" holds "red") only drops a base sale from the sample, never mixes a
 // parallel into base.
-const PAR_LADDER_KEY = 'parladder:v1';
-const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v1';
+const PAR_LADDER_KEY = 'parladder:v2';   // v2: per-kind ladders and pooled curves
+const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v2';
 const PAR_LADDER_TTL = 3 * 86400;          // outlives a missed daily run
-const PAR_LADDER_WINDOW_DAYS = 180;
+// A year: the first live build over 180 days tied most rungs in with a handful
+// of cards (2017 Prizm: 3 to 12), and parallels' relative prices move far more
+// slowly than prices do.
+const PAR_LADDER_WINDOW_DAYS = 365;
+// How many cards' worth of weight the product line's shared rung carries when
+// a product's own rung is thin: a rung tied in by 3 cards leans on the line,
+// one tied in by 50 barely moves.
+const PAR_LADDER_LINE_WEIGHT = 5;
 const PAR_LADDER_MIN_CARDS = 3;            // cards tying a parallel in, to publish it
 const PAR_LADDER_BASE_BLOCK = ['silver', 'gold', 'holo', 'refractor', 'red', 'blue', 'green',
   'orange', 'purple', 'pink', 'black', 'bronze', 'camo', 'disco', 'wave', 'shimmer', 'mojo',
   'sparkle', 'vinyl', 'finite', 'scope', 'hyper', 'pulsar', 'ice', 'cracked', 'neon', 'tie dye',
   'teal', 'yellow', 'white', 'lazer', 'laser', 'prizms', 'parallel', 'xfractor', 'x-fractor'];
-// Autographs, relics and redemptions are other cards with ladders of their own;
-// substring tests again, for cost.
-const PAR_LADDER_KIND_BLOCK = ['auto', 'signature', 'signed', 'patch', 'relic', 'jersey',
-  'memorabilia', 'swatch', 'redemption', 'jumbo', 'oversize'];
+// Autographs and relics are other cards with ladders of their own, told apart
+// by substring tests again, for cost; a sale that could be either counts as
+// the autograph (an RPA is priced as an auto). Redemptions and jumbos are left
+// out entirely.
+const PAR_LADDER_AUTO = ['auto', 'signature', 'signed', 'rpa', 'on card', 'oncard'];
+const PAR_LADDER_RELIC = ['relic', 'patch', 'swatch', 'memorabilia', 'game used', 'game-used',
+  'jersey', 'worn', 'threads', 'laundry'];
+const PAR_LADDER_KIND_BLOCK = ['redemption', 'jumbo', 'oversize'];
+const PAR_LADDER_KINDS = ['', 'auto', 'relic'];
+// The ladder key for a product and a kind: "2017-panini-prizm-football",
+// "2017-panini-prizm-football|auto".
+const _ladderId = (pid, kind) => kind ? `${pid}|${kind}` : pid;
 
 // The name a ladder is keyed by: the parallel key without its print run, and
 // every way of saying "base" as ''.
+// A bare "Prizm" is the Silver: Panini's checklists name the parallel
+// "Prizm" (2018 Prizm lists no Silver at all) where sellers and the parallel
+// column write "Silver" or "Silver Prizm", and a checklist name that matches no
+// rung is a parallel priced off a curve instead of its own sales.
 function _ladderKey(name) {
   const k = _parallelKey(String(name == null ? '' : name)).replace(/(\s+\d+)+$/, '').trim();
-  return RSI_BASE_PARALLELS.includes(k) ? '' : k;
+  if (RSI_BASE_PARALLELS.includes(k)) return '';
+  return k === 'prizm' || k === 'prizms' ? 'silver' : k;
 }
 
 function _ladderSql(noOffer) {
@@ -10212,6 +10232,7 @@ function _ladderSql(noOffer) {
   return `
     WITH r AS (
       SELECT year || '|' || set_name AS g, player || '#' || card_number AS c,
+             CASE WHEN ${any(PAR_LADDER_AUTO)} THEN 'auto' WHEN ${any(PAR_LADDER_RELIC)} THEN 'relic' ELSE '' END AS kind,
              CASE WHEN LOWER(TRIM(COALESCE(parallel, ''))) IN (${baseList})
                   THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)} THEN NULL ELSE '' END)
                   ELSE LOWER(TRIM(parallel)) END AS par,
@@ -10223,16 +10244,17 @@ function _ladderSql(noOffer) {
          AND COALESCE(TRIM(card_number), '') <> '' AND COALESCE(TRIM(player), '') <> ''
          AND NOT ${any(PAR_LADDER_KIND_BLOCK)}${noOffer}${RSI_RAW_ONLY}
     ), m AS (
-      SELECT g, c, par, price_cents,
-             ROW_NUMBER() OVER (PARTITION BY g, c, par ORDER BY price_cents) AS rn,
-             COUNT(*) OVER (PARTITION BY g, c, par) AS n
+      SELECT g, kind, c, par, price_cents,
+             ROW_NUMBER() OVER (PARTITION BY g, kind, c, par ORDER BY price_cents) AS rn,
+             COUNT(*) OVER (PARTITION BY g, kind, c, par) AS n
         FROM r WHERE par IS NOT NULL
     ), med AS (
-      SELECT g, c, par, n, price_cents AS med FROM m WHERE rn = (n + 1) / 2
+      SELECT g, kind, c, par, n, price_cents AS med FROM m WHERE rn = (n + 1) / 2
     ), multi AS (
-      SELECT g, c FROM med GROUP BY g, c HAVING COUNT(*) >= 2
+      SELECT g, kind, c FROM med GROUP BY g, kind, c HAVING COUNT(*) >= 2
     )
-    SELECT med.g, med.c, med.par, med.n, med.med FROM med JOIN multi ON multi.g = med.g AND multi.c = med.c`;
+    SELECT med.g, med.kind, med.c, med.par, med.n, med.med
+      FROM med JOIN multi ON multi.g = med.g AND multi.kind = med.kind AND multi.c = med.c`;
 }
 
 const _medOf = (xs) => {
@@ -10337,8 +10359,9 @@ async function _computeParallelLadder(db) {
     }
     if (!pid) continue;
     const k = _ladderKey(r.par);
-    if (!byProduct.has(pid)) byProduct.set(pid, new Map());
-    const cards = byProduct.get(pid);
+    const lid = _ladderId(pid, r.kind || '');
+    if (!byProduct.has(lid)) byProduct.set(lid, new Map());
+    const cards = byProduct.get(lid);
     const ck = `${r.g}|${r.c}`;
     if (!cards.has(ck)) cards.set(ck, new Map());
     const pars = cards.get(ck);
@@ -10348,12 +10371,88 @@ async function _computeParallelLadder(db) {
     if (!prev || prev.n < r.n) pars.set(k, { med: r.med / 100, n: r.n });
   }
   const products = {};
-  for (const [pid, cards] of byProduct) {
+  for (const [lid, cards] of byProduct) {
     const flat = new Map([...cards].map(([c, pars]) => [c, new Map([...pars].map(([k, v]) => [k, v.med]))]));
     const fit = _fitParallelLadder(flat);
-    if (fit && Object.keys(fit.rungs).length > 1) products[pid] = fit;
+    if (fit && Object.keys(fit.rungs).length > 1) products[lid] = fit;
   }
-  return { ok: true, builtAt: new Date().toISOString(), since, rowsIn, products };
+  return { ok: true, builtAt: new Date().toISOString(), since, rowsIn, products,
+           curves: await _ladderCurves(products) };
+}
+
+// Checklist categories each ladder kind prices.
+const _KIND_CATEGORIES = { '': ['base', 'insert'], auto: ['autograph'], relic: ['memorabilia'] };
+
+// The print-run curve and the typical unnumbered rung, pooled per product LINE
+// (the checklist's `brand`: Prizm, Donruss Optic, Select — one line's years
+// share a parallel structure) and kind, and across everything per kind: what a parallel is priced off when its
+// own product has too few numbered rungs to draw a curve through. Only
+// ladders anchored on base count — a rung relative to Silver says nothing
+// about how far above base a /10 sits.
+async function _ladderCurves(products) {
+  const pools = new Map();   // "line|kind" and "*|kind" -> { pts, unnumbered, rungs }
+  const pool = (key) => {
+    if (!pools.has(key)) pools.set(key, { pts: [], unnumbered: [], rungs: new Map() });
+    return pools.get(key);
+  };
+  for (const [lid, fit] of Object.entries(products)) {
+    if (fit.ref !== '') continue;
+    const [pid, kind = ''] = lid.split('|');
+    const doc = await _checklistProduct(pid);
+    if (!doc) continue;
+    const runOf = new Map();
+    for (const set of doc.sets || []) {
+      if (!(_KIND_CATEGORIES[kind] || []).includes(set.category)) continue;
+      for (const p of set.parallels || []) {
+        for (const nm of [p.name, ...(p.aliases || [])]) {
+          const k = _ladderKey(nm);
+          if (k && !runOf.has(k)) runOf.set(k, p.printRun || null);
+        }
+      }
+    }
+    const line = String(doc.brand || '').toLowerCase() || 'other';
+    for (const [k, r] of Object.entries(fit.rungs)) {
+      if (k === '') continue;
+      if (runOf.has(k)) {
+        const run = runOf.get(k);
+        for (const key of [`${line}|${kind}`, `*|${kind}`]) {
+          if (run) pool(key).pts.push([Math.log(run), Math.log(r.f)]);
+          else pool(key).unnumbered.push(r.f);
+        }
+      }
+      // The same parallel across the line's releases: 2017 Prizm's Silver
+      // beside 2018's and 2024's. Named parallels mean one thing within a
+      // line, so they pool; across the whole site they would not.
+      const lr = pool(`${line}|${kind}`).rungs;
+      if (!lr.has(k)) lr.set(k, []);
+      lr.get(k).push(r.f);
+    }
+  }
+  const round4 = (x) => Math.round(x * 10000) / 10000;
+  const curves = {};
+  for (const [key, { pts, unnumbered, rungs }] of pools) {
+    const c = _fitRunCurve(pts, 8);
+    const u = unnumbered.length >= 4 ? round4(_medOf(unnumbered)) : null;
+    const lineRungs = {};
+    for (const [k, fs] of rungs) if (fs.length >= 2) lineRungs[k] = { f: round4(_medOf(fs)), p: fs.length };
+    if (c || u || Object.keys(lineRungs).length) {
+      curves[key] = { ...(c || {}), unnumbered: u, points: pts.length,
+                      ...(Object.keys(lineRungs).length ? { rungs: lineRungs } : {}) };
+    }
+  }
+  return curves;
+}
+
+// Least squares on (log print run, log factor). Null unless there are enough
+// points and rarer costs more — a curve sloping the other way is noise.
+function _fitRunCurve(pts, min) {
+  if (pts.length < min) return null;
+  const mx = pts.reduce((s, p) => s + p[0], 0) / pts.length, my = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  const sxx = pts.reduce((s, p) => s + (p[0] - mx) ** 2, 0);
+  if (!(sxx > 0)) return null;
+  const slope = pts.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / sxx;
+  if (!(slope < 0)) return null;
+  return { slope: Math.round(slope * 10000) / 10000, icpt: Math.round((my - slope * mx) * 10000) / 10000 };
 }
 
 async function warmParallelLadder() {
@@ -10419,14 +10518,27 @@ function _checklistSetFor(product, { player, cardNumber, kind, subset }) {
 }
 
 // Every parallel the checklist lists for this card, each either sold (with the
-// item id that opens it) or estimated off the ladder.
-//   known: [{ key, name, itemId, sales, raw }] — this card's sold parallels,
-//          `raw` its raw price where it has one.
-// Estimates need an anchor: the card's own raw price in at least one parallel
-// the ladder knows. A parallel the ladder does not know is priced off the
-// product's own print-run curve (its numbered rungs, fitted log-log) when it is
-// numbered, or off the product's typical unnumbered rung when it is not.
-function _checklistParallels(set, known, fit) {
+// item id that opens it) or estimated.
+//   known:  [{ key, name, itemId, sales, raw }] — this card's sold parallels,
+//           `raw` its raw price where it has one.
+//   fit:    the product's ladder for this kind (_fitParallelLadder), or null.
+//   pooled: { line, all } — the product line's (its other years) and the
+//           whole site's curves for this kind (_ladderCurves), for a product
+//           too thin to draw its own.
+//
+// Every parallel gets a factor — its price relative to base — from the first
+// of these that has one: its rung on the product's ladder; for a numbered
+// parallel, the product's own print-run curve, then its line's, then the
+// site's; for an unnumbered one, the product's typical unnumbered rung, then
+// its line's. The card's level is then read off every parallel it DID sell
+// raw in, through the same factors, and each unsold parallel is that level
+// times its factor.
+//
+// Guard rails: a curve-priced parallel is never cheaper than one with a larger
+// print run on the same card (the ladder's own rungs are left as measured),
+// and a 1/1 off the ladder carries a wide range — it has no comps by
+// definition, and the range is the honest answer.
+function _checklistParallels(set, known, fit, pooled) {
   if (!set) return null;
   const list = [];
   const seen = new Set();
@@ -10436,31 +10548,52 @@ function _checklistParallels(set, known, fit) {
     keys.forEach(k => seen.add(k));
     list.push({ name, printRun: printRun || null, keys });
   };
-  if (set.category === 'base' && !(set.parallels || []).some(p => _ladderKey(p.name) === '')) add('Base', null, []);
+  if (!(set.parallels || []).some(p => _ladderKey(p.name) === '')) add('Base', null, []);
   for (const p of set.parallels || []) add(p.name, p.printRun, p.aliases);
 
   const rungs = (fit && fit.rungs) || {};
+  // Base-relative only: a ladder anchored elsewhere is rescaled onto base when
+  // base is on it, and otherwise cannot be mixed with the curves.
+  const baseF = rungs[''] ? rungs[''].f : (fit && fit.ref === '' ? 1 : null);
+  const runOf = new Map(list.filter(e => e.printRun).flatMap(e => e.keys.map(k => [k, e.printRun])));
+  const own = _fitRunCurve(Object.entries(rungs).filter(([k]) => runOf.has(k))
+    .map(([k, r]) => [Math.log(runOf.get(k)), Math.log(r.f / (baseF || 1))]), 3);
+  const ownUnnumbered = Object.entries(rungs).filter(([k]) => k !== '' && !runOf.has(k)).map(([, r]) => r.f / (baseF || 1));
+  const line = (pooled && pooled.line) || {}, all = (pooled && pooled.all) || {};
+
+  // The factor for a checklist entry, relative to base, and what it rests on.
+  const lineRungs = line.rungs || {};
+  const factorOf = (e) => {
+    if (e.keys.includes('')) return { f: 1, lo: 0.85, hi: 1.2, basis: 'base', n: 0 };
+    const rung = baseF ? e.keys.map(k => rungs[k]).find(Boolean) : null;
+    const lr = e.keys.map(k => lineRungs[k]).find(Boolean);
+    if (rung) {
+      // Shrunk toward the line's rung by how thin the product's own is.
+      let f = rung.f / baseF;
+      if (lr) f = Math.exp((rung.n * Math.log(f) + PAR_LADDER_LINE_WEIGHT * Math.log(lr.f)) / (rung.n + PAR_LADDER_LINE_WEIGHT));
+      return { f, lo: rung.lo, hi: rung.hi, basis: 'ladder', n: rung.n };
+    }
+    if (lr) return { f: lr.f, lo: 0.7, hi: 1.45, basis: 'line-ladder', n: lr.p };
+    if (e.printRun) {
+      for (const [c, basis] of [[baseF ? own : null, 'print-run'], [line, 'line-curve'], [all, 'site-curve']]) {
+        if (c && c.slope != null) return { f: Math.exp(c.icpt + c.slope * Math.log(e.printRun)), lo: 0.6, hi: 1.7, basis, n: 0 };
+      }
+      return null;
+    }
+    if (baseF && ownUnnumbered.length >= 2) return { f: _medOf(ownUnnumbered), lo: 0.6, hi: 1.7, basis: 'unnumbered', n: 0 };
+    if (line.unnumbered) return { f: line.unnumbered, lo: 0.55, hi: 1.8, basis: 'line-unnumbered', n: 0 };
+    return null;
+  };
+
+  const entryOf = (k) => list.find(e => e.keys.includes(k.key));
   const anchors = [];
   for (const k of known) {
-    const r = rungs[k.key];
-    if (r && k.raw > 0) anchors.push(Math.log(k.raw) - Math.log(r.f));
+    if (!(k.raw > 0)) continue;
+    const e = entryOf(k);
+    const fac = e ? factorOf(e) : (baseF && rungs[k.key] ? { f: rungs[k.key].f / baseF } : null);
+    if (fac) anchors.push(Math.log(k.raw) - Math.log(fac.f));
   }
-  const a = anchors.length ? _medOf(anchors) : null;
-  // The product's own print-run curve, from rungs with a known run.
-  const runOf = new Map(list.filter(e => e.printRun).flatMap(e => e.keys.map(k => [k, e.printRun])));
-  const pts = Object.entries(rungs).filter(([k]) => runOf.has(k))
-    .map(([k, r]) => [Math.log(runOf.get(k)), Math.log(r.f)]);
-  let curve = null;
-  if (pts.length >= 3) {
-    const mx = pts.reduce((s, p) => s + p[0], 0) / pts.length, my = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-    const sxx = pts.reduce((s, p) => s + (p[0] - mx) ** 2, 0);
-    if (sxx > 0) {
-      const slope = pts.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / sxx;
-      if (slope < 0) curve = { slope, icpt: my - slope * mx };   // rarer must cost more
-    }
-  }
-  const ref = fit ? fit.ref : '';
-  const unnumbered = Object.entries(rungs).filter(([k]) => k !== '' && k !== ref && !runOf.has(k)).map(([, r]) => r.f);
+  const level = anchors.length ? Math.exp(_medOf(anchors)) : null;
   const round2 = (n) => Math.round(n * 100) / 100;
 
   const out = [];
@@ -10468,20 +10601,33 @@ function _checklistParallels(set, known, fit) {
   for (const e of list) {
     const sold = known.find(k => e.keys.includes(k.key));
     const entry = { name: e.name, printRun: e.printRun };
-    if (sold) { used.add(sold); out.push({ ...entry, itemId: sold.itemId, sales: sold.sales }); continue; }
-    if (a == null) continue;
-    const rung = e.keys.map(k => rungs[k]).find(Boolean);
-    let f, lo, hi, basis, n = 0, conf = 'low';
-    if (rung) { f = rung.f; lo = rung.lo; hi = rung.hi; basis = 'ladder'; n = rung.n; conf = n >= 8 ? 'medium' : 'low'; }
-    else if (e.printRun && curve) { f = Math.exp(curve.icpt + curve.slope * Math.log(e.printRun)); lo = 0.6; hi = 1.7; basis = 'print-run'; }
-    else if (!e.printRun && unnumbered.length >= 2) { f = _medOf(unnumbered); lo = 0.6; hi = 1.7; basis = 'unnumbered'; }
-    else continue;
-    const price = Math.exp(a) * f;
-    out.push({ ...entry, estimate: {
-      price: round2(price), low: round2(price * Math.min(1, lo)), high: round2(price * Math.max(1, hi)),
-      method: 'parallel-ladder', basis, confidence: conf, basedOnCards: n,
-      anchors: anchors.length,
+    if (sold) { used.add(sold); out.push({ ...entry, itemId: sold.itemId, sales: sold.sales, _price: sold.raw }); continue; }
+    if (level == null) continue;
+    const fac = factorOf(e);
+    if (!fac) continue;
+    const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
+    const conf = fac.basis === 'ladder' && fac.n >= 8 ? 'medium' : 'low';
+    out.push({ ...entry, _price: level * fac.f, _fac: fac, estimate: {
+      method: 'parallel-ladder', basis: fac.basis, confidence: conf, basedOnCards: fac.n,
+      anchors: anchors.length, oneOfOne,
     } });
+  }
+
+  // Rarer is never cheaper, for what the curves priced: walk the numbered
+  // entries from the largest print run down, lifting any curve estimate to
+  // just above the dearest larger-run price already on this card.
+  let floor = 0;
+  for (const e of out.filter(x => x.printRun).sort((a, b) => b.printRun - a.printRun)) {
+    if (e.estimate && e._fac.basis !== 'ladder' && e._price < floor * 1.1) e._price = floor * 1.1;
+    if (e._price > floor) floor = e._price;
+  }
+  for (const e of out) {
+    if (e.estimate) {
+      const p = e._price;
+      const [lo, hi] = e.estimate.oneOfOne ? [0.5, 2.2] : [Math.min(1, e._fac.lo), Math.max(1, e._fac.hi)];
+      Object.assign(e.estimate, { price: round2(p), low: round2(p * lo), high: round2(p * hi) });
+    }
+    delete e._price; delete e._fac;
   }
   // A sold parallel the checklist names some other way ("Blue Red White" for
   // "Red, White and Blue") is still a place to switch to: listed after the
@@ -10534,7 +10680,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v17: chase / mystery pack listings are left out, so v16 entries carry them.
 // v18: the payload carries `checklistParallels` (every checklist parallel,
 // sold or estimated off the ladder) — a shape change, the v9 case.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v18';
+// v19: estimates for unsold parallels use the pooled line ladders and curves,
+// and autograph and relic cards get theirs; v18 entries carry the old figures.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v19';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11437,10 +11585,10 @@ app.get('/api/card-analysis', async (req, res) => {
     if (explain) for (const r of all) note(r, 'kept', 'matched on every rule');
 
     // Every parallel the checklist lists for this card: the sold ones to
-    // switch to, the rest priced off the product's parallel ladder. Only where
+    // switch to, the rest priced off the product's parallel ladder for this
+    // kind (base, auto, relic), with the pooled curves behind it. Only where
     // the clicked sale's own parallel is known — there is no rung to stand on
-    // otherwise — and not for autographs and relics, whose ladders are their
-    // own and not built yet: they list what sold.
+    // otherwise. Redemptions list what sold.
     let checklistParallels = null;
     if (seedKey.known && seedProductId) {
       try {
@@ -11454,9 +11602,16 @@ app.get('/api/card-analysis', async (req, res) => {
               raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null },
             ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales, raw: p.rawMedian })),
           ];
-          const ladder = seedKind ? null : await _parallelLadder();
-          const fit = ladder && ladder.products ? ladder.products[seedProductId] : null;
-          checklistParallels = _checklistParallels(set, known, fit);
+          const ladder = await _parallelLadder();
+          const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;
+          let fit = null, pooled = null;
+          if (ladder && kind != null) {
+            fit = (ladder.products || {})[_ladderId(seedProductId, kind)] || null;
+            const doc = await _checklistProduct(seedProductId);
+            const line = String((doc && doc.brand) || '').toLowerCase() || 'other';
+            pooled = { line: (ladder.curves || {})[`${line}|${kind}`] || null, all: (ladder.curves || {})[`*|${kind}`] || null };
+          }
+          checklistParallels = _checklistParallels(set, known, fit, pooled);
           if (checklistParallels) {
             // The one on screen, marked, so the picker can select it.
             const cur = checklistParallels.find(e => e.itemId === itemId);
@@ -15281,7 +15436,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _computeParallelLadder, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
