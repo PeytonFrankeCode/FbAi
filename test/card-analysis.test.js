@@ -190,6 +190,9 @@ sale('w1', { title: '2025 Panini Donruss Cam Ward Downtown! SP #12 Titans PSA 10
 sale('w2', { title: '2025 Panini Donruss - Downtown! Cam Ward #12 (RC) CASE HIT SSP!!', price: 475, day: -5, ...CW });
 sale('w3', { title: 'Panini 2025 Donruss Football Downtown Insert Rookie Cam Ward #12 Titan', price: 449, day: -4, ...CW });
 sale('w4', { title: '2025 Panini Donruss - Downtown! Cam Ward #12 (RC)', price: 285, day: -3, ...CW });
+// The jumbo: a case hit, a different card at a different price.
+sale('w5', { title: '2025 Panini Donruss - Downtown! Cam Ward #12 (RC)- Jumbo', price: 25, day: -2, ...CW });
+sale('w6', { title: '2025 Donruss Downtown Oversized Cam Ward #12 Titans', price: 30, day: -1, ...CW });
 sale('n1', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 14, day: -21, player: 'Dalvin Cook' });
 sale('n2', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 16, day: -12, player: 'Dalvin Cook' });
 sale('n3', { title: '2017 Panini Prizm Instant Impact Dalvin Cook #8', price: 190, day: -19, player: 'Dalvin Cook' });
@@ -400,6 +403,13 @@ const rawTitles = (d) => {
     const ids = [...new Set((w.grades || []).flatMap(g => g.recent.map(x => String(x.itemUrl).split('/').pop())))].sort();
     check(`an insert filed under its parallel column finds all its sales (opened on ${seedId})`,
       ids.join(',') === 'w1,w2,w3,w4', `grouped ${ids.join(',') || 'nothing'} (${w.reason || JSON.stringify(w.identity || {})})`);
+  }
+  {
+    const j = await call('/api/card-analysis?itemId=w5');
+    const ids = [...new Set((j.grades || []).flatMap(g => g.recent.map(x => String(x.itemUrl).split('/').pop())))].sort();
+    check('  ...and a jumbo / oversized copy is its own card, both ways',
+      ids.join(',') === 'w5,w6' && (j.identity || {}).oversize === true,
+      `jumbo grouped ${ids.join(',') || 'nothing'}`);
   }
 
   const plain = await call('/api/card-analysis?itemId=n1');

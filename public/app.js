@@ -3005,6 +3005,9 @@ function _codeFits(pre, c) {
 
 const _BASE_LIKE_SET_RE = /^(rookies?|rated rookies|veterans?|legends?|retired( players)?)$/i;
 
+// A jumbo / oversized version: the same words the card page splits on.
+const _OVERSIZE_RE = /\b(jumbos?|oversized?|over-sized?|box[\s-]?toppers?)\b/;
+
 // Set names that describe nothing a title would single out.
 const _GENERIC_SET_RE = /^(base|rookies?|veterans?|retired|legends?|base rookies?|rookies? and veterans?)$/;
 // Sellers mark a variation "variation", "var" or "SP".
@@ -3185,6 +3188,11 @@ function _matchVersion(title, ctx) {
     const listed = card.matchers.find(m => m.norm === joined || m.norm.split(' ').sort().join(' ') === words.map(w => w.norm).sort().join(' '));
     parallel = listed ? listed.label : _titleCase(joined);
   }
+
+  // A jumbo / oversized copy is its own card — a case hit at a different
+  // price. The set's own name is already out of pHay, so a set that is jumbo
+  // by name ("Jumbo Rookie Swatches") is not split from itself.
+  if (_OVERSIZE_RE.test(pHay)) parallel = parallel === 'Base' ? 'Jumbo' : `${parallel} Jumbo`;
 
   const key = `${card.set}|${card.number}|${parallel}`;
   return { key, card, parallel };
