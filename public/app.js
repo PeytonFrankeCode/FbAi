@@ -14970,7 +14970,14 @@ async function loadCardAnalysis(item, opts = {}) {
   if (data && !data.available && data.estimate) {
     _caReset();
     wrap.classList.remove('hidden');
-    if (summaryEl) summaryEl.textContent = 'No recent sales for this exact card';
+    // The estimate alone: no chart, and no grade picker left over from the
+    // last card opened (it read "Raw (1) $179.95" under a 1/1's estimate).
+    wrap.classList.add('ca-estimated');
+    const gSel = document.getElementById('ca-grade-select');
+    if (gSel) { gSel.innerHTML = ''; gSel.onchange = null; }
+    _caSyncCombos();
+    if (summaryEl) summaryEl.textContent = data.estimate.parallelName
+      ? `Estimated value for ${data.estimate.parallelName}` : 'Estimated value';
     _caRenderPrice(data.estimate);
     return;
   }
@@ -14995,7 +15002,10 @@ function _caRenderSoldView() {
   const span = (data.firstSale && data.lastSale && data.firstSale !== data.lastSale)
     ? ` · ${_caDate(data.firstSale)} – ${_caDate(data.lastSale)}`
     : '';
-  if (summaryEl) summaryEl.textContent = `${data.totalSales.toLocaleString('en-US')} sale${data.totalSales === 1 ? '' : 's'} on record${span}`;
+  // A card whose only sales are accepted best offers shows them, and says so:
+  // each settled under an asking price nobody published.
+  const offers = data.identity && data.identity.offersOnly ? ' · best offers' : '';
+  if (summaryEl) summaryEl.textContent = `${data.totalSales.toLocaleString('en-US')} sale${data.totalSales === 1 ? '' : 's'} on record${offers}${span}`;
 
   // One grade at a time. Raw is the default because it's the widest market and
   // the baseline people reason from; everything else is a click away.
