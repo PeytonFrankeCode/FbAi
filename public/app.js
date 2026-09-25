@@ -3832,18 +3832,18 @@ function buildCard(item, opts = {}) {
         <span class="card-condition">${escHtml(item.condition)}</span>
         ${isSold ? saleTypeNoteHtml(item) : buyingOptionBadgeHtml(item)}
       </div>
-      ${item.hasAnalysis && !_versionCtx ? '<span class="card-analytics-cue">&#128200; View price history</span>' : ''}
       ${!isSold ? `<a class="card-link" href="${epnUrl(item.itemUrl)}" target="_blank" rel="noopener sponsored noreferrer">View on eBay &#8599;<span class="aff-tag">affiliate link</span></a>` : ''}
     </div>
   `;
 
   // Open modal on card click (but not when clicking the eBay link)
-  // When the results are grouped into checklist versions, history lives on
-  // each version card ("Sold history & graph"); a single comp opens just its
-  // own details, not a second copy of the same chart.
+  // Sold history lives only on a checklist-matched version card ("Sold
+  // history & graph"). A single listing opens just its own details: one we
+  // could not match to the checklist has no card we can vouch for, and one
+  // we did match already has its history on its version card.
   card.addEventListener('click', (e) => {
     if (e.target.closest('.card-link')) return;
-    openCardModal(item, { history: !_versionCtx });
+    openCardModal(item, { history: false });
   });
 
   return card;

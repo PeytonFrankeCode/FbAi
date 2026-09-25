@@ -202,16 +202,17 @@ check('the versions container is on the page and styled',
     && /e\.stopPropagation\(\)/.test(verFn),
     'the button must open the detail view without also toggling the comps filter');
 }
-// Grouped, the history belongs to the version, not to each comp under it:
-// no per-comp "View price history" cue, and a comp opens without the chart.
+// History belongs to a checklist-matched version, never to a single listing:
+// no per-listing "View price history" cue, and a listing opens without the
+// chart, grouped or not.
 {
   const cardFn = src.slice(src.indexOf('function buildCard('), src.indexOf('// ---- Card Detail Modal ----'));
   const modalFn = src.slice(src.indexOf('function openCardModal('), src.indexOf('function openCardModal(') + 6000);
-  check('grouped comps carry no price-history cue of their own',
-    /item\.hasAnalysis && !_versionCtx \?/.test(cardFn)
-    && /openCardModal\(item, \{ history: !_versionCtx \}\)/.test(cardFn)
+  check('single listings carry no price history of their own',
+    !/card-analytics-cue|View price history/.test(cardFn)
+    && /openCardModal\(item, \{ history: false \}\)/.test(cardFn)
     && /opts\.history === false/.test(modalFn),
-    'the cue and the modal chart are both gated on the grouping');
+    'only the version card opens the history');
 }
 // The price chart that sat above every search is gone, markup and code alike:
 // a module-level binding to a removed element would take the page down.
