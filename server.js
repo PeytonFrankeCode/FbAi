@@ -10407,6 +10407,19 @@ function _gradePremium(label) {
   return m ? GRADE_PREMIUM[m[1]] || null : null;
 }
 
+// Does this card identity (the card page's WHERE, before any title reading)
+// have accepted-best-offer sales? Column-gated like _noBestOfferSql.
+async function _cardHasOfferSales(db, where, binds) {
+  if (!(await _nflHasSaleTypeColumns(db))) return false;
+  const row = await db.prepare(
+    `SELECT 1 AS n FROM sales WHERE ${where}
+        AND (COALESCE(best_offer = 1, 0)
+             OR LOWER(COALESCE(CAST(best_offer AS TEXT), '')) IN ('1', '1.0', 'y', 'yes', 'true'))
+      LIMIT 1`
+  ).bind(...binds).first();
+  return !!row;
+}
+
 // A parallel's median price per grade (PSA 9, BGS 9.5, ...), raw left out:
 // how a card's slabs are put back on the raw scale (_checklistParallels).
 function _gradeMedians(rows) {
@@ -10976,7 +10989,10 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // never cheaper for ladder rungs either.
 // v21: mid-grade slabs are converted to raw within GRADE_PREMIUM's bands.
 // v22: ...blended with the card's own premium by how much evidence it has.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v22';
+// v23: a card whose only sales are best offers shows them rather than "no
+// sales", and an unsold parallel is priced off the ladder, not its siblings'
+// median.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v23';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11272,7 +11288,7 @@ async function _similarVariantEstimate(db, seed) {
   };
 }
 
-app.get('/api/card-analysis', async (req, res) => {
+async function _cardAnalysisRoute(req, res) {
   const itemId = String(req.query.itemId || '').trim();
   if (!itemId) return res.status(400).json({ error: 'itemId is required' });
 
@@ -11307,7 +11323,12 @@ app.get('/api/card-analysis', async (req, res) => {
   // switcher would be missing for the TTL on exactly the cards people look at
   // most. That is indistinguishable from the feature not having shipped, which
   // is the mistake this comment block exists to stop repeating.
-  const cacheKey = `${CARD_IDENTITY_VERSION}:${itemId}`;
+  // ?offers=1: accepted best offers are let in. Only ever set by the route
+  // itself, for a card whose only sales are best offers (see the no-sales
+  // branch below) — otherwise the card page answers "no sales" about the very
+  // sale that was clicked.
+  const allowOffers = String(req.query.offers || '') === '1';
+  const cacheKey = `${CARD_IDENTITY_VERSION}:${itemId}${allowOffers ? ':offers' : ''}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(_fromCache(cached));
 
@@ -11364,7 +11385,7 @@ app.get('/api/card-analysis', async (req, res) => {
     // A card's price chart is the clearest place an accepted offer misleads:
     // one point well under the line, with no way to see the ask it settled
     // against. The sold list below is where those belong.
-    const noOffer = await _noBestOfferSql(db);
+    const noOffer = allowOffers ? '' : await _noBestOfferSql(db);
     const rows = await db.prepare(
       // Every column the seed is read with, the rows are read with too. They
       // used to come back without parallel, player or card_number: the seed's
@@ -11742,10 +11763,65 @@ app.get('/api/card-analysis', async (req, res) => {
         (a.key === '' ? -1 : b.key === '' ? 1 : 0) || b.sales - a.sales);
     }
 
+    // Every parallel the checklist lists for this card: the sold ones to
+    // switch to, the rest priced off the product's parallel ladder for this
+    // kind (base, auto, relic), with the pooled curves behind it. Only where
+    // the clicked sale's own parallel is known — there is no rung to stand on
+    // otherwise. Redemptions list what sold. `current` is the parallel on
+    // screen, or null when it has no sales of its own.
+    const checklistFor = async (current) => {
+      if (!seedKey.known || !seedProductId) return null;
+      const set = _checklistSetFor(await _checklistProduct(seedProductId), {
+        player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset: seedSubsetResolved,
+      });
+      if (!set) return null;
+      const known = [
+        ...(current ? [current] : []),
+        ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales,
+          raw: p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts })),
+      ];
+      const ladder = await _parallelLadder();
+      const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;
+      let fit = null, pooled = null;
+      if (ladder && kind != null) {
+        fit = (ladder.products || {})[_ladderId(seedProductId, kind)] || null;
+        const doc = await _checklistProduct(seedProductId);
+        const line = String((doc && doc.brand) || '').toLowerCase() || 'other';
+        pooled = { line: (ladder.curves || {})[`${line}|${kind}`] || null, all: (ladder.curves || {})[`*|${kind}`] || null };
+      }
+      return _checklistParallels(set, known, fit, pooled);
+    };
+    // The seed's own parallel, priced off the others, for a card with no sale
+    // of its own in it.
+    const checklistEstimateForSeed = async () => {
+      const list = await checklistFor(null);
+      const k = _ladderKey(seedKey.key);
+      const e = (list || []).find(x => x.estimate && _ladderKey(x.name) === k);
+      if (!e) return null;
+      const label = `${e.name}${e.printRun ? (e.printRun === 1 ? ' 1/1' : ` /${e.printRun}`) : ''}`;
+      return { ...e.estimate, parallelName: label };
+    };
+
     if (all.length === 0) {
-      // This exact card has never sold. It can still be priced off its
-      // siblings, so the modal has something useful to show rather than a
-      // dead end — flagged as an estimate from other cards, not this one.
+      // Nothing but best offers: the clicked sale may well be one of them, and
+      // "no sales" beside a $125 sale reads as broken. Answer again with
+      // offers let in — labelled as such (identity.offersOnly) — rather than
+      // not at all. Offers still never mix into a card that has other sales.
+      if (!allowOffers && explain === false && await _cardHasOfferSales(db, where, binds)) {
+        req.query = { ...req.query, offers: '1' };
+        return _cardAnalysisRoute(req, res);
+      }
+      // This exact card has never sold. It is priced off its other parallels
+      // along the product's parallel ladder where the checklist places it,
+      // and only failing that off the median of its other versions — which
+      // for a 1/1 or a short print is a figure for a different card.
+      let ladder = null;
+      try { ladder = await checklistEstimateForSeed(); } catch (_) { ladder = null; }
+      if (ladder) {
+        const out = { available: false, reason: 'no-sales', estimate: ladder };
+        cachePut(cacheKey, out, CARD_ANALYSIS_TTL);
+        return res.json(out);
+      }
       const similar = await _similarVariantEstimate(db, seed);
       const out = similar
         ? { available: false, reason: 'no-sales', estimate: similar }
@@ -11887,44 +11963,24 @@ app.get('/api/card-analysis', async (req, res) => {
     // the clicked sale's own parallel is known — there is no rung to stand on
     // otherwise. Redemptions list what sold.
     let checklistParallels = null;
-    if (seedKey.known && seedProductId) {
-      try {
-        const set = _checklistSetFor(await _checklistProduct(seedProductId), {
-          player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset: seedSubsetResolved,
-        });
-        if (set) {
-          const rawG = grades.find(g => g.label === 'Raw');
-          const known = [
-            { key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
-              raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null,
-              rawN: rawG ? rawG.sales : 0,
-              grades: Object.fromEntries(grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL)
-                .map(g => [g.label, g.median])),
-              gradeN: Object.fromEntries(grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL)
-                .map(g => [g.label, g.sales])) },
-            ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales,
-              raw: p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts })),
-          ];
-          const ladder = await _parallelLadder();
-          const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;
-          let fit = null, pooled = null;
-          if (ladder && kind != null) {
-            fit = (ladder.products || {})[_ladderId(seedProductId, kind)] || null;
-            const doc = await _checklistProduct(seedProductId);
-            const line = String((doc && doc.brand) || '').toLowerCase() || 'other';
-            pooled = { line: (ladder.curves || {})[`${line}|${kind}`] || null, all: (ladder.curves || {})[`*|${kind}`] || null };
-          }
-          checklistParallels = _checklistParallels(set, known, fit, pooled);
-          if (checklistParallels) {
-            // The one on screen, marked, so the picker can select it.
-            const cur = checklistParallels.find(e => e.itemId === itemId);
-            if (cur) cur.current = true;
-            else checklistParallels = null;   // the checklist and the sale disagree on what this is
-          }
-        }
-      } catch (err) {
-        console.error('[card-analysis] checklist parallels unavailable:', err && err.message);
+    try {
+      const rawG = grades.find(g => g.label === 'Raw');
+      const slabs = grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL);
+      checklistParallels = await checklistFor({
+        key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
+        raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null,
+        rawN: rawG ? rawG.sales : 0,
+        grades: Object.fromEntries(slabs.map(g => [g.label, g.median])),
+        gradeN: Object.fromEntries(slabs.map(g => [g.label, g.sales])),
+      });
+      if (checklistParallels) {
+        // The one on screen, marked, so the picker can select it.
+        const cur = checklistParallels.find(e => e.itemId === itemId);
+        if (cur) cur.current = true;
+        else checklistParallels = null;   // the checklist and the sale disagree on what this is
       }
+    } catch (err) {
+      console.error('[card-analysis] checklist parallels unavailable:', err && err.message);
     }
 
     const dates = all.map(r => r.sold_date).filter(Boolean).sort();
@@ -11985,6 +12041,9 @@ app.get('/api/card-analysis', async (req, res) => {
         oversize: _isOversize(seed.title),
         otherSizes: excludedOtherSize,
         unreadable,
+        // Every sale here is an accepted best offer — shown because there is
+        // nothing else, and labelled so.
+        offersOnly: allowOffers,
       },
     };
 
@@ -12018,7 +12077,8 @@ app.get('/api/card-analysis', async (req, res) => {
     console.error('[CardAnalysis]', err && err.message);
     res.json({ available: false, reason: 'error' });
   }
-});
+}
+app.get('/api/card-analysis', _cardAnalysisRoute);
 
 // ---- /api/price-estimate ----
 // Price a card from a search query rather than from a sold row we already
