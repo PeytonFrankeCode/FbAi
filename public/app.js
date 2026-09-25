@@ -1542,6 +1542,8 @@ async function fetchVariants(query) {
   variantsSection.classList.add('hidden');
   backBtn.classList.add('hidden');
   sortControls.classList.add('hidden');
+  resetGradeFilter();
+  resetParallelFilter();
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
   grid.innerHTML = '';
@@ -1941,6 +1943,10 @@ function goBackToVariants() {
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
   sortControls.classList.add('hidden');
+  resetGradeFilter();
+  resetParallelFilter();
+  const gp = document.getElementById('grade-panel');
+  if (gp) gp.classList.add('hidden');
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
   grid.innerHTML = '';
@@ -1984,7 +1990,12 @@ async function fetchDirectSearch(query) {
   backBtn.classList.add('hidden');
   approxSection.classList.add('hidden');
   sortControls.classList.add('hidden');
+  // The last search's version cards and chips go with it, before this one's
+  // arrive — or they stay on screen over the wrong results.
   resetGradeFilter();
+  resetParallelFilter();
+  const gp = document.getElementById('grade-panel');
+  if (gp) gp.classList.add('hidden');
   similarSection.classList.add('hidden');
   similarGrid.innerHTML = '';
   grid.innerHTML = '';

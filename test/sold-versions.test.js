@@ -214,6 +214,16 @@ check('the versions container is on the page and styled',
     && /opts\.history === false/.test(modalFn),
     'only the version card opens the history');
 }
+// A search's version cards and grade chips leave with it: going back or
+// starting another search clears them before anything new arrives.
+{
+  const fnBody = (name) => { const i = src.indexOf(name); return src.slice(i, src.indexOf('\n}\n', i)); };
+  for (const fn of ['function goBackToVariants(', 'async function fetchDirectSearch(', 'async function fetchVariants(']) {
+    const body = fnBody(fn);
+    check(`${fn.replace(/^(async )?function /, '').replace('(', '')} clears the last search's version cards and grade chips`,
+      /resetParallelFilter\(\)/.test(body) && /resetGradeFilter\(\)/.test(body));
+  }
+}
 // The price chart that sat above every search is gone, markup and code alike:
 // a module-level binding to a removed element would take the page down.
 {
