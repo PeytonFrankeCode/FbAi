@@ -6879,11 +6879,11 @@ footer {
 .rainbow-empty-hint { font-size: 0.85rem; color: var(--text-muted); }
 .rainbow-view.hidden { display: none; }
 .rainbow-view {
-  background: #0b0d12;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 1rem;
   margin-top: 0.5rem;
-  color: #edf0f7;
+  color: var(--text-primary);
 }
 .rainbow-header {
   display: flex;
@@ -6892,26 +6892,26 @@ footer {
   flex-wrap: wrap;
   padding-bottom: 0.75rem;
   margin-bottom: 0.85rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--border-primary);
 }
 .rainbow-back-btn {
   background: transparent;
-  color: #edf0f7;
-  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   padding: 0.35rem 0.7rem;
   font-size: 0.82rem;
   cursor: pointer;
 }
-.rainbow-back-btn:hover { background: rgba(255,255,255,0.05); }
+.rainbow-back-btn:hover { background: var(--bg-hover); }
 .rainbow-card-label { flex: 1; min-width: 0; }
-.rainbow-card-player { font-weight: 700; font-size: 1.05rem; color: #fff; }
-.rainbow-card-meta { font-size: 0.78rem; color: #94a3b8; }
+.rainbow-card-player { font-weight: 700; font-size: 1.05rem; color: var(--text-primary); }
+.rainbow-card-meta { font-size: 0.78rem; color: var(--text-secondary); }
 .rainbow-progress {
   font-size: 0.82rem;
-  color: var(--accent-light);
+  color: var(--accent);
   font-weight: 600;
-  background: rgba(94, 206, 153, 0.12);
+  background: var(--accent-bg);
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
 }
@@ -6942,13 +6942,13 @@ footer {
   aspect-ratio: 5 / 7;
   border-radius: 7px;
   overflow: hidden;
-  background: #1a1f2a;
+  background: var(--bg-tertiary);
   border: 2px solid transparent;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: inset 0 0 0 1px var(--border-primary);
   filter: grayscale(0.9) brightness(0.55);
   transition: filter 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
-.rainbow-tile.has-image .rainbow-tile-img-wrap { background: #000; }
+.rainbow-tile.has-image .rainbow-tile-img-wrap { background: var(--bg-tertiary); }
 .rainbow-tile.owned .rainbow-tile-img-wrap {
   filter: none;
   border-color: var(--accent);
@@ -6985,7 +6985,7 @@ footer {
   height: 22px;
   border-radius: 50%;
   background: var(--accent);
-  color: #0b0d12;
+  color: var(--accent-on);
   font-size: 0.78rem;
   font-weight: 800;
   display: flex;
@@ -7007,14 +7007,14 @@ footer {
   letter-spacing: 0.03em;
   text-align: center;
   text-transform: uppercase;
-  color: #6b7382;
+  color: var(--text-muted);
   line-height: 1.2;
 }
-.rainbow-tile.owned .rainbow-tile-name { color: #fff; }
+.rainbow-tile.owned .rainbow-tile-name { color: var(--text-primary); }
 .rainbow-listings-slot { margin-top: 1rem; }
-.rainbow-listings-panel { background: #11151c; border-color: rgba(255,255,255,0.08); }
-.rainbow-listings-panel .cl-listings-header { border-bottom-color: rgba(255,255,255,0.07); }
-.rainbow-listings-panel .cl-listings-title { color: #edf0f7; }
+.rainbow-listings-panel { background: var(--bg-card); border-color: var(--border-primary); }
+.rainbow-listings-panel .cl-listings-header { border-bottom-color: var(--border-primary); }
+.rainbow-listings-panel .cl-listings-title { color: var(--text-primary); }
 @media (max-width: 480px) {
   .rainbow-grid { grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 0.75rem 0.6rem; }
 .rainbow-tile-name { font-size: 0.66rem; }
@@ -7027,11 +7027,11 @@ footer {
   gap: 1.25rem;
 }
 .rainbow-card-section {
-  background: #0b0d12;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 1rem;
-  color: #edf0f7;
+  color: var(--text-primary);
 }
 .rainbow-card-top {
   display: flex;
@@ -7039,7 +7039,7 @@ footer {
   align-items: flex-start;
   padding-bottom: 0.85rem;
   margin-bottom: 0.95rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--border-primary);
 }
 .rainbow-base-card {
   flex: 0 0 auto;
@@ -7051,8 +7051,8 @@ footer {
   aspect-ratio: 5 / 7;
   border-radius: 9px;
   overflow: hidden;
-  background: #1a1f2a;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 2px 10px rgba(0,0,0,0.35);
+  background: var(--bg-tertiary);
+  box-shadow: inset 0 0 0 1px var(--border-primary), 0 2px 10px rgba(0,0,0,0.12);
 }
 .rainbow-base-img-wrap .rainbow-tile-img-placeholder { width: 100%; height: 100%; }
 .rainbow-base-img {
@@ -7061,7 +7061,12 @@ footer {
   object-fit: cover;
   display: block;
 }
-.rainbow-base-img-wrap.has-image { background: #000; }
+.rainbow-base-img-wrap.has-image { background: var(--bg-tertiary); }
+/* Light theme: the ghost card is drawn in white for the dark panels, so it
+   is inverted to a faint dark outline; unowned tiles fade rather than go
+   dark, which on a light page read as broken images. */
+[data-theme="light"] .rainbow-tile-img-placeholder { filter: invert(1); }
+[data-theme="light"] .rainbow-tile:not(.owned) .rainbow-tile-img-wrap { filter: grayscale(0.9) opacity(0.6); }
 .rainbow-card-info {
   flex: 1;
   min-width: 0;

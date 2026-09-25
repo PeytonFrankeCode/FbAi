@@ -11048,7 +11048,10 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // or its silence (see the print-run pass).
 // v26: "VAR"/"Variation" are not parallel words, so v25 entries hold
 // variation cards as unreadable.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v26';
+// v27: the checklists' parallel lists were restored from their sources and
+// their names cleaned (scripts/audit-parallels.js, clean-parallel-names.js),
+// which changes the vocabulary sales are read against.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v27';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
