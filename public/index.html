@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=07018e049b" />
+  <link rel="stylesheet" href="style.css?v=dd7a16e4e3" />
 
 
 </head>
@@ -1139,8 +1139,24 @@
             <div class="ca-chart-head">
               <!-- Which card, then which grade. The parallel select only
                    appears when this card actually sold in more than one. -->
-              <select id="ca-parallel-select" class="ca-grade-select ca-parallel-select hidden" aria-label="Which parallel to show"></select>
-              <select id="ca-grade-select" class="ca-grade-select" aria-label="Which grade to show"></select>
+              <!-- The site's own picker (as in Rainbow Mode), backed by a
+                   hidden <select> that keeps the change handlers. -->
+              <div class="cl-combo ca-combo ca-combo-parallel hidden" id="ca-combo-parallel" data-target="ca-parallel-select">
+                <button type="button" class="cl-combo-toggle" aria-label="Which parallel to show"><span class="cl-combo-value">This parallel</span><span class="cl-combo-caret"></span></button>
+                <div class="cl-combo-panel hidden">
+                  <input type="text" class="cl-combo-search" placeholder="Type to filter…" autocomplete="off" />
+                  <div class="cl-combo-list"></div>
+                </div>
+              </div>
+              <select id="ca-parallel-select" class="cl-hidden-select hidden" aria-hidden="true" tabindex="-1"></select>
+              <div class="cl-combo ca-combo" id="ca-combo-grade" data-target="ca-grade-select">
+                <button type="button" class="cl-combo-toggle" aria-label="Which grade to show"><span class="cl-combo-value">Raw</span><span class="cl-combo-caret"></span></button>
+                <div class="cl-combo-panel hidden">
+                  <input type="text" class="cl-combo-search" placeholder="Type to filter…" autocomplete="off" />
+                  <div class="cl-combo-list"></div>
+                </div>
+              </div>
+              <select id="ca-grade-select" class="cl-hidden-select" aria-hidden="true" tabindex="-1"></select>
               <div id="ca-stat" class="ca-stat"></div>
             </div>
             <div class="ca-chart-wrap">
@@ -1533,7 +1549,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=5e4338f966"></script>
+  <script src="app.js?v=d1d149cdda"></script>
   <script type="importmap">
   {
     "imports": {
