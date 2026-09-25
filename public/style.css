@@ -9010,3 +9010,9 @@ body.tour-open { overflow: hidden; }
   .about-section { margin-top: 2rem; }
   .about-section p { font-size: 0.85rem; }
 }
+
+/* A price on each Rainbow tile: raw where the parallel has sold, "~" where it
+   is an estimate from the parallel ladder. */
+.rainbow-tile-price { font-size: 0.7rem; font-weight: 800; color: var(--accent); margin-top: 0.15rem; min-height: 0.9rem; }
+.rainbow-tile-price.est { color: var(--text-secondary); font-weight: 700; }
+.rainbow-value { font-size: 0.78rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }

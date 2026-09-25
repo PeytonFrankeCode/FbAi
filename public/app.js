@@ -12856,12 +12856,13 @@ function renderRainbowView() {
     const prDisplay = v.printRun ? ` /${escHtml(String(v.printRun))}` : '';
     const variantName = (v.name || '').replace(/'/g, "\\'");
     const printRun = v.printRun ? String(v.printRun) : '';
-    return `<div class="rainbow-tile ${isOwned ? 'owned' : ''}" data-variant-idx="${vi}" data-variant-name="${escHtml(variantName)}" data-variant-pr="${escHtml(printRun)}" data-key="${escHtml(key)}">
+    return `<div class="rainbow-tile ${isOwned ? 'owned' : ''}" data-variant-idx="${vi}" data-variant-name="${escHtml(variantName)}" data-variant-pr="${escHtml(printRun)}" data-key="${escHtml(key)}" data-pname="${escHtml(String(v.name || '').toLowerCase())}">
       <div class="rainbow-tile-img-wrap" aria-hidden="true">
         <div class="rainbow-tile-img-placeholder"></div>
       </div>
       <div class="rainbow-check-badge" aria-hidden="true">&#10003;</div>
       <div class="rainbow-tile-name">${escHtml(v.name)}${prDisplay}</div>
+      <div class="rainbow-tile-price"></div>
     </div>`;
   }).join('');
 
@@ -12871,6 +12872,7 @@ function renderRainbowView() {
 
   grid.querySelectorAll('.rainbow-tile').forEach(tile => attachRainbowTileHandlers(tile, productKey, si, ci, card, set));
   loadRainbowTileImages(grid, productKey, si, ci, card, set);
+  if (card.player) loadRainbowPrices(productKey, card.player, [{ root: grid, set, card }]);
 }
 
 function attachRainbowTileHandlers(tile, productKey, si, ci, card, set) {
@@ -13240,10 +13242,11 @@ function renderRainbowPlayerCards(player) {
       const prDisplay = v.printRun ? ` /${escHtml(String(v.printRun))}` : '';
       const variantName = (v.name || '').replace(/'/g, "\\'");
       const printRun = v.printRun ? String(v.printRun) : '';
-      return `<div class="rainbow-tile ${isOwned ? 'owned' : ''}" data-variant-idx="${vi}" data-variant-name="${escHtml(variantName)}" data-variant-pr="${escHtml(printRun)}" data-key="${escHtml(key)}">
+      return `<div class="rainbow-tile ${isOwned ? 'owned' : ''}" data-variant-idx="${vi}" data-variant-name="${escHtml(variantName)}" data-variant-pr="${escHtml(printRun)}" data-key="${escHtml(key)}" data-pname="${escHtml(String(v.name || '').toLowerCase())}">
         <div class="rainbow-tile-img-wrap" aria-hidden="true"><div class="rainbow-tile-img-placeholder"></div></div>
         <div class="rainbow-check-badge" aria-hidden="true">&#10003;</div>
         <div class="rainbow-tile-name">${escHtml(v.name)}${prDisplay}</div>
+        <div class="rainbow-tile-price"></div>
       </div>`;
     }).join('');
 
@@ -13260,6 +13263,7 @@ function renderRainbowPlayerCards(player) {
           <div class="rainbow-card-player">${escHtml(card.player || 'Unknown')}</div>
           <div class="rainbow-card-meta">${escHtml(meta)}</div>
           <div class="rainbow-progress"><span class="rainbow-progress-text">${ownedCount} / ${ordered.length} owned</span></div>
+          <div class="rainbow-value hidden"></div>
           <div class="completion-variants rainbow-cost-wrap">${rainbowBtn}</div>
         </div>
       </div>
@@ -13278,6 +13282,47 @@ function renderRainbowPlayerCards(player) {
     const baseWrap = section.querySelector('.rainbow-base-img-wrap');
     if (baseWrap) loadRainbowBaseImage(baseWrap, card, set);
   });
+  loadRainbowPrices(productKey, player, matches.map(({ set, si, card, ci }) => ({
+    set, card, root: cardsEl.querySelector(`.rainbow-card-section[data-si="${si}"][data-ci="${ci}"]`),
+  })));
+}
+
+// A price on every tile: what the parallel sells for raw where it has sold,
+// and an estimate (marked ~) where it has not, from /api/checklist-prices.
+// One request per player; a newer selection makes an older answer moot.
+let _rainbowPriceToken = 0;
+//   entries: [{ root, set, card }] — the element holding each card's tiles.
+async function loadRainbowPrices(productKey, player, entries) {
+  const token = ++_rainbowPriceToken;
+  let data;
+  try {
+    const res = await fetch(`/api/checklist-prices?${new URLSearchParams({ product: productKey, player })}`);
+    data = await safeJson(res);
+  } catch (_) { return; }
+  if (token !== _rainbowPriceToken || !data || !data.available) return;
+  for (const { root: section, set, card } of entries) {
+    const priced = (data.cards || []).find(c => c.set === set.name && String(c.number) === String(card.number));
+    if (!section || !priced) continue;
+    const byName = new Map((priced.parallels || []).map(p => [String(p.name).toLowerCase(), p]));
+    let total = 0, count = 0;
+    section.querySelectorAll('.rainbow-tile').forEach(tile => {
+      const p = byName.get(tile.dataset.pname || '');
+      const el = tile.querySelector('.rainbow-tile-price');
+      if (!el || !p || !(p.price > 0)) return;
+      const guess = !!p.estimated;
+      el.textContent = `${guess ? '~' : ''}$${_caNum(p.price)}`;
+      el.classList.toggle('est', guess);
+      el.title = guess
+        ? `Estimated value${p.low != null ? ` ($${_caNum(p.low)} – $${_caNum(p.high)})` : ''}`
+        : `Recent raw price · ${p.sales} sale${p.sales === 1 ? '' : 's'}`;
+      total += p.price; count++;
+    });
+    const valueEl = section.querySelector('.rainbow-value');
+    if (valueEl && count > 1) {
+      valueEl.textContent = `Rainbow value ≈ $${_caNum(total)}`;
+      valueEl.classList.remove('hidden');
+    }
+  }
 }
 
 // Fetch a representative image for the corresponding (base) card and show it

@@ -10248,13 +10248,8 @@ function _ladderSql(noOffer) {
              ROW_NUMBER() OVER (PARTITION BY g, kind, c, par ORDER BY price_cents) AS rn,
              COUNT(*) OVER (PARTITION BY g, kind, c, par) AS n
         FROM r WHERE par IS NOT NULL
-    ), med AS (
-      SELECT g, kind, c, par, n, price_cents AS med FROM m WHERE rn = (n + 1) / 2
-    ), multi AS (
-      SELECT g, kind, c FROM med GROUP BY g, kind, c HAVING COUNT(*) >= 2
     )
-    SELECT med.g, med.kind, med.c, med.par, med.n, med.med
-      FROM med JOIN multi ON multi.g = med.g AND multi.kind = med.kind AND multi.c = med.c`;
+    SELECT g, kind, c, par, n, price_cents AS med FROM m WHERE rn = (n + 1) / 2`;
 }
 
 const _medOf = (xs) => {
@@ -10328,8 +10323,9 @@ async function _computeParallelLadder(db) {
   if (!index) return { ok: false, reason: 'no checklist index' };
   // One query per year: each reads the window by its sold_date index but
   // tests titles and sorts partitions for one year's sales only, which keeps
-  // every statement well inside D1's time limit on a live-sized table. Only
-  // cards sold in two or more parallels come back — the rest tie nothing.
+  // every statement well inside D1's time limit on a live-sized table. Cards
+  // sold in one parallel tie nothing into the ladder, but they are most of a
+  // product's cards, so they are what its typical card level is read from.
   const sql = _ladderSql(await _noBestOfferSql(db));
   let years = [];
   try {
@@ -10374,10 +10370,33 @@ async function _computeParallelLadder(db) {
   for (const [lid, cards] of byProduct) {
     const flat = new Map([...cards].map(([c, pars]) => [c, new Map([...pars].map(([k, v]) => [k, v.med]))]));
     const fit = _fitParallelLadder(flat);
-    if (fit && Object.keys(fit.rungs).length > 1) products[lid] = fit;
+    if (fit && Object.keys(fit.rungs).length > 1) {
+      const lv = _productLevels(flat, fit);
+      if (lv) fit.levels = lv;
+      products[lid] = fit;
+    }
   }
   return { ok: true, builtAt: new Date().toISOString(), since, rowsIn, products,
            curves: await _ladderCurves(products) };
+}
+
+// What a typical card in the product sells for raw in its base version: each
+// card's sales moved onto base along the ladder, then the quartiles across
+// cards. The lower quartile is what a card nobody has sold is priced from —
+// the cards that never trade are the product's commons, not its stars.
+function _productLevels(cards, fit) {
+  const rungs = fit.rungs || {};
+  const baseF = rungs[''] ? rungs[''].f : null;
+  if (!baseF) return null;
+  const lv = [];
+  for (const pars of cards.values()) {
+    const xs = [];
+    for (const [k, p] of pars) if (rungs[k] && p > 0) xs.push(p / (rungs[k].f / baseF));
+    if (xs.length) lv.push(_medOf(xs));
+  }
+  if (lv.length < 10) return null;
+  const r2 = (x) => Math.round(x * 100) / 100;
+  return { q25: r2(_quantOf(lv, 0.25)), q50: r2(_quantOf(lv, 0.5)), cards: lv.length };
 }
 
 // Checklist categories each ladder kind prices.
@@ -10480,6 +10499,8 @@ async function parallelLadderMissing() {
 }
 
 let _ladderMemo = { at: 0, data: null };
+// For tests, which have no KV: hand the ladder in directly.
+function _primeParallelLadder(data) { _ladderMemo = { at: Date.now(), data }; }
 async function _parallelLadder() {
   if (_ladderMemo.data && Date.now() - _ladderMemo.at < 10 * 60000) return _ladderMemo.data;
   const data = await cacheGet(PAR_LADDER_KEY).catch(() => null);
@@ -10538,7 +10559,7 @@ function _checklistSetFor(product, { player, cardNumber, kind, subset }) {
 // print run on the same card (the ladder's own rungs are left as measured),
 // and a 1/1 off the ladder carries a wide range — it has no comps by
 // definition, and the range is the honest answer.
-function _checklistParallels(set, known, fit, pooled) {
+function _checklistParallels(set, known, fit, pooled, opts = {}) {
   if (!set) return null;
   const list = [];
   const seen = new Set();
@@ -10593,7 +10614,10 @@ function _checklistParallels(set, known, fit, pooled) {
     const fac = e ? factorOf(e) : (baseF && rungs[k.key] ? { f: rungs[k.key].f / baseF } : null);
     if (fac) anchors.push(Math.log(k.raw) - Math.log(fac.f));
   }
-  const level = anchors.length ? Math.exp(_medOf(anchors)) : null;
+  // With no sale of its own to stand on, a card can be given its level: the
+  // player's, or the product's typical card (/api/checklist-prices).
+  const level = anchors.length ? Math.exp(_medOf(anchors)) : (opts.level > 0 ? opts.level : null);
+  const levelFrom = anchors.length ? 'card' : (level ? (opts.levelFrom || 'given') : null);
   const round2 = (n) => Math.round(n * 100) / 100;
 
   const out = [];
@@ -10601,15 +10625,20 @@ function _checklistParallels(set, known, fit, pooled) {
   for (const e of list) {
     const sold = known.find(k => e.keys.includes(k.key));
     const entry = { name: e.name, printRun: e.printRun };
-    if (sold) { used.add(sold); out.push({ ...entry, itemId: sold.itemId, sales: sold.sales, _price: sold.raw }); continue; }
+    if (sold) {
+      used.add(sold);
+      out.push({ ...entry, itemId: sold.itemId, sales: sold.sales, _price: sold.raw,
+                 ...(sold.raw > 0 ? { price: round2(sold.raw) } : {}) });
+      continue;
+    }
     if (level == null) continue;
     const fac = factorOf(e);
     if (!fac) continue;
     const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
-    const conf = fac.basis === 'ladder' && fac.n >= 8 ? 'medium' : 'low';
+    const conf = fac.basis === 'ladder' && fac.n >= 8 && levelFrom === 'card' ? 'medium' : 'low';
     out.push({ ...entry, _price: level * fac.f, _fac: fac, estimate: {
       method: 'parallel-ladder', basis: fac.basis, confidence: conf, basedOnCards: fac.n,
-      anchors: anchors.length, oneOfOne,
+      anchors: anchors.length, oneOfOne, levelFrom,
     } });
   }
 
@@ -10635,7 +10664,157 @@ function _checklistParallels(set, known, fit, pooled) {
   for (const k of known) {
     if (!used.has(k) && k.itemId) out.push({ name: k.name || 'Other', printRun: null, itemId: k.itemId, sales: k.sales });
   }
+  // The card's own level, for callers pricing its neighbours. A property, not
+  // an element: it does not reach the JSON.
+  out.level = anchors.length ? level : null;
   return out;
+}
+
+// ---- /api/checklist-prices ----
+// A price on every parallel of every card a player has in a product, sold or
+// not — what Rainbow Mode puts on its tiles.
+//
+// One read of the player's sales in the product's year (by the player index),
+// each sale placed on the checklist card it is: by number, then kind (base,
+// auto, relic), then — only where the player holds two cards at one number —
+// the insert its title names. Then every card is priced like the card page
+// prices its parallels (_checklistParallels), and a card with no raw sale of
+// its own is given a level: the player's, from his other cards of the same
+// category in the product, or failing that the product's typical card
+// (_productLevels). An insert with no sale of its own is left unpriced: inserts
+// are too unlike each other for a player's base level to say what one is worth.
+const CHECKLIST_PRICES_TTL = 3600;
+const _CATEGORY_KIND = { autograph: 'auto', memorabilia: 'relic' };
+const _KIND_ALLOWS = { '': ['base', 'insert'], auto: ['autograph'], relic: ['memorabilia'] };
+
+app.get('/api/checklist-prices', async (req, res) => {
+  const pid = String(req.query.product || '').trim();
+  const player = String(req.query.player || '').trim();
+  if (!pid || !player) return res.status(400).json({ error: 'product and player are required' });
+  const cacheKey = `clprices:v1:${pid}:${player.toLowerCase()}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return res.json(_fromCache(cached));
+  try {
+    const out = await _checklistPrices(pid, player);
+    if (out.available) cachePut(cacheKey, out, CHECKLIST_PRICES_TTL);
+    res.json(out);
+  } catch (err) {
+    console.error('[checklist-prices]', err && err.message);
+    res.json({ available: false, reason: 'error' });
+  }
+});
+
+async function _checklistPrices(pid, player) {
+  const doc = await _checklistProduct(pid);
+  if (!doc) return { available: false, reason: 'unknown-product' };
+  const pl = _plNorm(player);
+  const mine = [];
+  for (const set of doc.sets || []) {
+    for (const card of set.cards || []) {
+      if (_plNorm(card.player) === pl) mine.push({ set, card, keys: new Map() });
+    }
+  }
+  if (!mine.length) return { available: false, reason: 'not-in-checklist' };
+
+  const byNum = new Map();
+  for (const m of mine) {
+    const n = String(m.card.number || '').replace(/^#/, '').trim().toLowerCase();
+    if (!byNum.has(n)) byNum.set(n, []);
+    byNum.get(n).push(m);
+  }
+
+  const db = getNflDb();
+  let rows = [];
+  if (db) {
+    // The checklist writes "Patrick Mahomes II"; sales mostly drop the suffix.
+    const bare = player.replace(/\s+(jr\.?|sr\.?|ii|iii|iv|v)$/i, '').trim();
+    const names = [...new Set([player, bare])];
+    const noOffer = await _noBestOfferSql(db);
+    const out = await db.prepare(
+      `SELECT item_id, sold_date, title, price_cents, grader, grade, player, parallel, set_name, card_number
+         FROM sales
+        WHERE player IN (${names.map(() => '?').join(', ')}) AND year = ?
+          AND price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ?${noOffer}
+        ORDER BY sold_date DESC LIMIT 3000`
+    ).bind(...names, String(doc.year || ''), NFLDB_MIN_CONFIDENCE).all();
+    rows = (out && out.results) || [];
+  }
+
+  const index = await _cataloguedIndex();
+  const pi = await parallelIndex().catch(() => null);
+  const iAliases = await insertAliases().catch(() => ({}));
+  const inProduct = new Map();
+  for (const r of rows) {
+    if (_isPackListing(r.title, r.player) || _isOversize(r.title)) continue;
+    let ok = inProduct.get(r.set_name);
+    if (ok === undefined) {
+      const hit = index ? matchSale(index, String(doc.year || ''), String(r.set_name || '')) : null;
+      ok = !!hit && (typeof hit === 'string' ? hit : hit.id) === pid;
+      inProduct.set(r.set_name, ok);
+    }
+    if (!ok) continue;
+    const cands = byNum.get(String(r.card_number || '').replace(/^#/, '').trim().toLowerCase());
+    if (!cands) continue;
+    const kind = _cardKind(String(r.title || ''));
+    if (!_KIND_ALLOWS[kind]) continue;                     // redemptions
+    let fits = cands.filter(m => _KIND_ALLOWS[kind].includes(m.set.category));
+    if (fits.length > 1 && pi) {
+      const sub = _subsetKey(resolveSubsetAliased(pi, r.title,
+        { productId: pid, player: r.player, cardNumber: r.card_number }, iAliases).subset);
+      fits = fits.filter(m => sub ? _subsetKey(m.set.name) === sub : m.set.category !== 'insert');
+    }
+    if (fits.length !== 1) continue;
+    const col = String(r.parallel == null ? '' : r.parallel).trim();
+    let key;
+    if (col) key = _ladderKey(col);
+    else if (_looksLikeParallel(r.title, r.player, r.set_name)) continue;   // a parallel we cannot name
+    else key = '';
+    const m = fits[0];
+    if (!m.keys.has(key)) m.keys.set(key, { raw: [], sales: 0, itemId: r.item_id, name: col || 'Base' });
+    const b = m.keys.get(key);
+    b.sales++;
+    if (_gradeBucket(r) === 'Raw') b.raw.push(r.price_cents / 100);
+  }
+
+  const ladder = await _parallelLadder();
+  const line = String(doc.brand || '').toLowerCase() || 'other';
+  const fitFor = (kind) => ladder ? (ladder.products || {})[_ladderId(pid, kind)] || null : null;
+  const pooledFor = (kind) => ladder ? {
+    line: (ladder.curves || {})[`${line}|${kind}`] || null, all: (ladder.curves || {})[`*|${kind}`] || null,
+  } : null;
+
+  // First the cards with sales of their own, which also say where the player
+  // sits in each category; then the rest, priced from that.
+  const priced = mine.map(m => {
+    const kind = _CATEGORY_KIND[m.set.category] || '';
+    const known = [...m.keys].map(([key, b]) => ({ key, name: b.name, itemId: b.itemId, sales: b.sales,
+      raw: b.raw.length ? _medOf(b.raw) : null }));
+    const list = _checklistParallels(m.set, known, fitFor(kind), pooledFor(kind)) || [];
+    return { m, kind, known, list };
+  });
+  const playerLevel = {};
+  for (const p of priced) {
+    if (p.list.level > 0) (playerLevel[p.m.set.category] = playerLevel[p.m.set.category] || []).push(p.list.level);
+  }
+  const cards = priced.map(p => {
+    let list = p.list;
+    if (!(list.level > 0) && p.m.set.category !== 'insert') {
+      const own = playerLevel[p.m.set.category];
+      const fit = fitFor(p.kind);
+      const level = own && own.length ? _medOf(own) : (fit && fit.levels ? fit.levels.q25 : null);
+      if (level) {
+        list = _checklistParallels(p.m.set, p.known, fit, pooledFor(p.kind),
+          { level, levelFrom: own && own.length ? 'player' : 'product' }) || list;
+      }
+    }
+    return { set: p.m.set.name, category: p.m.set.category, number: p.m.card.number,
+             parallels: list.map(({ name, printRun, price, sales, itemId, estimate }) =>
+               ({ name, printRun, price: price ?? (estimate ? estimate.price : null), sales: sales || 0,
+                  itemId: itemId || null, estimated: !!estimate,
+                  ...(estimate ? { low: estimate.low, high: estimate.high, confidence: estimate.confidence } : {}) })) };
+  });
+  return { available: true, product: pid, player, builtAt: ladder ? ladder.builtAt : null,
+           salesRead: rows.length, cards };
 }
 
 // ---- /api/card-analysis ----
@@ -15436,7 +15615,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
