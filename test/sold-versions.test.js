@@ -101,6 +101,9 @@ check(`every listing is tied to the right version, or to none (${CASES.length})`
     ]],
     ['2021-donruss-football', 'Justin Fields', [
       ['2021 Panini Donruss Downtown! Justin Fields #DT-39 (RC) PSA 10', '#39 Downtown! Base'],
+      // A jumbo is a different card (a case hit, a different price).
+      ['2021 Panini Donruss - Downtown! Justin Fields #39 (RC)- Jumbo', '#39 Downtown! Jumbo'],
+      ['2021 Donruss Downtown Oversized Justin Fields #39 Bears', '#39 Downtown! Jumbo'],
     ]],
     ['2021-panini-absolute-football', 'Trevor Lawrence', [
       ['2021 Panini Absolute Trevor Lawrence Kaboom RC Rookie #K41 Jaguars PSA 9', '#41 Kaboom! Base'],

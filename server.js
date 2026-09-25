@@ -4536,7 +4536,9 @@ const RSI_BASE_SIGNAL_PHRASES = ['tie dye', 'press proof', 'green bay',
 // base listings use them.
 const RSI_BASE_SIGNAL_EXTRA = ['xfractor', 'pigskin', 'lava', 'sepia', 'negative', 'checkerboard',
   'tiger', 'atomic', 'kaleidoscope', 'vinyl', 'photon', 'glitch', 'genesis', 'choice', 'ssp', 'rwb',
-  'downtown', 'uptown', 'kaboom', 'concourse', 'pandora', 'manga'];
+  'downtown', 'uptown', 'kaboom', 'concourse', 'pandora', 'manga',
+  // A jumbo / oversized copy is a different card from the standard size.
+  'jumbo', 'oversized', 'oversize'];
 // Split in two for cost. The column tests are cheap and run in a WHERE. The
 // title test needs the title cleaned into words — about fifty REPLACE calls —
 // and SQLite does not reuse a repeated expression, so written inline it was
@@ -6584,6 +6586,12 @@ function insertAliasKeys(productId, player, cardNumber, title, pi) {
   if (title) keys.push(`${base}|${pi ? pi.norm(title) : String(title).toLowerCase()}`);
   keys.push(base);
   return keys;
+}
+
+// A jumbo / oversized version: "Jumbo", "Oversized", "Oversize", "Box Topper".
+const _OVERSIZE_RE = /\b(jumbos?|oversized?|over-sized?|box[\s-]?toppers?)\b/i;
+function _isOversize(title) {
+  return _OVERSIZE_RE.test(String(title || ''));
 }
 
 // An insert's name for comparing, not showing: "Downtown!" and "Downtown" are
@@ -9802,7 +9810,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // slab, and the Raw series sheds sales priced like slabs.
 // v13: rows are fetched with the parallel, player and card-number columns the
 // seed is read with, so v12 entries hold "no sales" for inserts that have them.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v13';
+// v14: a jumbo / oversized version is its own card, so v13 entries hold
+// case-hit jumbos averaged in with the standard size.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v14';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10405,6 +10415,21 @@ app.get('/api/card-analysis', async (req, res) => {
       all = kept;
     }
 
+    // ---- the size ----
+    //
+    // A jumbo or oversized Downtown is not the Downtown: a different card, sold
+    // one to a box as a case hit, at a different price ($25 against $470 on
+    // the same day for Cam Ward #12). Every column is identical for both, so
+    // only the title separates them — and sellers always say it, because the
+    // size is what the buyer is paying for. Split both ways, like the kind.
+    let excludedOtherSize = 0;
+    {
+      const seedJumbo = _isOversize(seed.title);
+      const kept = all.filter(r => _isOversize(r.title) === seedJumbo);
+      excludedOtherSize = all.length - kept.length;
+      all = kept;
+    }
+
     let excludedOtherSubset = 0;
     // Carried out of the block below so the parallel pass can reuse the answer
     // instead of resolving the seed's insert a second time. The declaration
@@ -10453,7 +10478,9 @@ app.get('/api/card-analysis', async (req, res) => {
         .sort((a, b) => b[1].rows.length - a[1].rows.length)
         .slice(0, 12);
       for (const [key, bucket] of ranked) {
-        let kept = bucket.rows.filter(r => _cardKind(String(r.title || '')) === seedKind);
+        const seedJumbo = _isOversize(seed.title);
+        let kept = bucket.rows.filter(r => _cardKind(String(r.title || '')) === seedKind
+          && _isOversize(r.title) === seedJumbo);
         if (seedRun != null) {
           kept = kept.filter(r => {
             const run = _printRun(String(r.title || ''));
@@ -10654,6 +10681,10 @@ app.get('/api/card-analysis', async (req, res) => {
         // DIFFERENT run were kept out. null means no run was stated.
         printRun: _printRun(String(seed.title || '')),
         otherPrintRuns: excludedOtherPrintRun,
+        // Jumbo / oversized: whether this card is one, and how many sales of
+        // the other size were kept out.
+        oversize: _isOversize(seed.title),
+        otherSizes: excludedOtherSize,
         unreadable,
       },
     };
