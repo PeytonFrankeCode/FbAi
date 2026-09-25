@@ -9858,7 +9858,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // case-hit jumbos averaged in with the standard size.
 // v15: a grade unsold for over a week is priced off its player's market move,
 // so v14 entries carry the old estimate.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v15';
+// v16: prices read off the last comp, or the average of comps within three
+// days of it, instead of a median; v15 entries carry the median.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v16';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -9995,6 +9997,22 @@ function _playerTrendRatio(rows, fromDay, toDay) {
   };
 }
 
+// What a card is worth off its comps, the way collectors read them: the last
+// sale, unless several sold close together — then their average. "Close" is
+// within COMP_RECENT_DAYS of that last sale, so three copies that sold the same
+// day a week ago still average, and the market move handles how old it is.
+// `priced` is newest first: [{ day, price }].
+const COMP_RECENT_DAYS = 3;
+function _compValue(priced) {
+  if (!priced || !priced.length) return null;
+  const lastDay = priced[0].day;
+  const recent = priced.filter(r => lastDay - r.day <= COMP_RECENT_DAYS);
+  if (recent.length >= 2) {
+    return { price: recent.reduce((a, r) => a + r.price, 0) / recent.length, count: recent.length, basis: 'recent-average' };
+  }
+  return { price: priced[0].price, count: 1, basis: 'last-comp' };
+}
+
 // Estimate for one grade of one card.
 // `list` is that grade's sales, newest first. `todayDay` anchors "recent".
 function _estimateGrade(list, todayDay, trend) {
@@ -10009,9 +10027,12 @@ function _estimateGrade(list, todayDay, trend) {
 
   if (fresh.length) {
     const ps = fresh.map(r => r.price).sort((a, b) => a - b);
+    const comp = _compValue(fresh);
     return {
-      price: round2(_median(ps)),
+      price: round2(comp.price),
       method: 'recent-sales',
+      compBasis: comp.basis,
+      compCount: comp.count,
       // Three comps is where a median starts describing a market rather than
       // an accident. Below that it's still the best number available, just not
       // one to lean on.
@@ -10023,12 +10044,12 @@ function _estimateGrade(list, todayDay, trend) {
     };
   }
 
-  // Nothing fresh: median the cluster around the last sale, then move it by
-  // the player's price trend since.
+  // Nothing fresh: the comp value at the last sale (_compValue), then moved
+  // by the player's price trend since. The cluster around it is the range.
   const newestDay = priced[0].day;
   const cluster = priced.filter(r => newestDay - r.day <= PRICE_STALE_CLUSTER);
   const ps = cluster.map(r => r.price).sort((a, b) => a - b);
-  const base = _median(ps);
+  const base = _compValue(priced).price;
   if (!base) return null;
 
   const staleDays = todayDay - newestDay;
@@ -10057,8 +10078,8 @@ function _estimateGrade(list, todayDay, trend) {
   };
 }
 
-// A grade that has not sold in over MARKET_ADJ_AFTER_DAYS: its recent price
-// (the sales of its last 30 days of trading) moved by the player's market
+// A grade that has not sold in over MARKET_ADJ_AFTER_DAYS: its comp value at
+// the last sale (_compValue) moved by the player's market
 // change since its last sale. null when it sold recently or the player has no
 // market number, and the older estimate applies instead.
 function _marketEstimate(list, nowDay, adj) {
@@ -10073,13 +10094,17 @@ function _marketEstimate(list, nowDay, adj) {
   if (!(staleDays > MARKET_ADJ_AFTER_DAYS)) return null;
   const m = adj(newest);
   if (!m) return null;
+  // Its comp value at the last sale (_compValue); the month before it is the range.
   const ps = priced.filter(r => newest - r.day <= 30).map(r => r.price).sort((a, b) => a - b);
-  const base = _median(ps);
+  const comp = _compValue(priced);
+  const base = comp && comp.price;
   if (!base) return null;
   const round2 = (n) => Math.round(n * 100) / 100;
   return {
     price: round2(base * m.ratio),
     method: 'market-adjusted',
+    compBasis: comp.basis,
+    compCount: comp.count,
     confidence: staleDays > 90 ? 'low' : 'medium',
     basedOn: ps.length,
     unadjustedPrice: round2(base),
@@ -14541,7 +14566,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

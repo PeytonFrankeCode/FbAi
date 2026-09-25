@@ -45,8 +45,24 @@ check('a card that sold this week keeps its sales price', fresh === null, JSON.s
 check('  ...and without a player market there is nothing to move it by',
   S._marketEstimate([sale(5, 100)], now, null) === null);
 
+// ---- the comp value: the last sale, or an average of close-together ones ----
+{
+  const day = (d, p) => ({ day: dayOf(iso(d)), price: p });
+  const one = S._compValue([day(10, 300), day(2, 200), day(1, 100)]);
+  check('one recent sale is the price, whatever sold before it',
+    one && one.price === 300 && one.basis === 'last-comp', JSON.stringify(one));
+  const three = S._compValue([day(10, 300), day(9, 330), day(7, 360), day(2, 100)]);
+  check('  ...several within three days of it are averaged',
+    three && three.price === 330 && three.count === 3 && three.basis === 'recent-average', JSON.stringify(three));
+  const g = S._estimateGrade([sale(19, 120), sale(12, 80), sale(11, 90)], now, null);
+  check('the card page prices a recently sold card off its last comp, not a median',
+    g && g.method === 'recent-sales' && g.price === 120 && g.compBasis === 'last-comp', JSON.stringify(g));
+}
+
 // The page wiring: the sold-search version cards use the same rule.
 const src = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+check('the version cards headline the comp value',
+  /const comp = _compOf\(priced\);/.test(src) && /function _compOf\(/.test(src) && /const COMP_RECENT_DAYS = 3;/.test(src));
 check('the card page explains a market-adjusted price',
   /'market-adjusted': \{ label: 'Estimated'/.test(src));
 check('the version cards price a stale version off the player index',

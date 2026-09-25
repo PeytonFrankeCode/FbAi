@@ -3269,8 +3269,12 @@ function _buildVersionCard({ v, items }) {
   const graded = clean.length - raw.length;
   const priced = (currentGradeFilter === 'all' && raw.length) ? raw : clean;
   const prices = priced.map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
-  const avg = prices.length ? prices.reduce((a, p) => a + p, 0) / prices.length : 0;
-  const avgLabel = priced === raw && graded ? 'avg raw' : 'avg';
+  // The headline is the comp value: the last sale, or the average of the
+  // sales within three days of it (_compOf) — how collectors read comps.
+  const comp = _compOf(priced);
+  const avg = comp ? comp.price : 0;
+  const rawTag = priced === raw && graded ? ' raw' : '';
+  const avgLabel = comp && comp.count > 1 ? `avg of ${comp.count} recent${rawTag}` : `last comp${rawTag}`;
   const median = _medianPrice(priced);
   // The photo of a typically priced copy, not the dearest.
   const withImg = items.filter(r => r.imageUrl && parseFloat(r.price) > 0)
@@ -3303,7 +3307,7 @@ function _buildVersionCard({ v, items }) {
       <p class="card-title">${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}</p>
       <p class="card-price">${avg ? `$${avg.toFixed(2)}` : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
       <div class="card-meta">
-        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${avgLabel === 'avg raw' ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
+        <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${rawTag ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
         ${prices.length > 1 ? `<span class="card-condition">median $${median.toFixed(2)} &middot; $${prices[0].toFixed(0)}&ndash;$${prices[prices.length - 1].toFixed(0)}</span>` : ''}
       </div>
       ${histFrom ? '<button type="button" class="version-history-btn">&#128200; Sold history &amp; graph</button>' : ''}
@@ -3341,6 +3345,22 @@ function _versionMarket(player, days) {
   return _versionMarketCache.get(key);
 }
 const _saleDay = (r) => Math.floor(Date.parse(String((r && r.soldDate) || '')) / 86400000);
+// The comp value (server.js _compValue): the last sale, or the average of the
+// sales within COMP_RECENT_DAYS of it when there are several.
+const COMP_RECENT_DAYS = 3;
+function _compOf(list) {
+  const sales = (list || []).map(r => ({ day: _saleDay(r), price: parseFloat(r.price) || 0 }))
+    .filter(r => r.price > 0 && Number.isFinite(r.day)).sort((a, b) => b.day - a.day);
+  if (!sales.length) {
+    // Undated: results arrive newest first, so the first priced one is the last comp.
+    const first = (list || []).map(r => parseFloat(r.price) || 0).find(p => p > 0);
+    return first ? { price: first, count: 1 } : null;
+  }
+  const recent = sales.filter(r => sales[0].day - r.day <= COMP_RECENT_DAYS);
+  return recent.length >= 2
+    ? { price: recent.reduce((a, r) => a + r.price, 0) / recent.length, count: recent.length }
+    : { price: sales[0].price, count: 1 };
+}
 // The index knows a player by the name sales carry: the searched spelling
 // first ("Patrick Mahomes"), then the checklist's without its suffix.
 async function _versionMarketIndex(v, stale) {
@@ -3363,11 +3383,9 @@ function _versionMarketPrice(card, priced, v) {
   const newest = Math.max(...days);
   const stale = nowDay - newest;
   if (!(stale > VERSION_MARKET_AFTER_DAYS)) return;
-  const recent = priced.filter(r => newest - _saleDay(r) <= 30)
-    .map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
-  if (!recent.length) return;
-  const m = recent.length >> 1;
-  const base = recent.length % 2 ? recent[m] : (recent[m - 1] + recent[m]) / 2;
+  const comp = _compOf(priced);
+  if (!comp) return;
+  const base = comp.price;
   const ctxAtCall = _versionCtx;
   _versionMarketIndex(v, stale).then(idx => {
     if (_versionCtx !== ctxAtCall || !card.isConnected) return;   // a newer search
@@ -14715,8 +14733,11 @@ const CA_FALLBACK = ['#5ece99', '#a06ff0', '#f2b544', '#7fb3ff', '#e0655f', '#94
 // make them look the same.
 const CA_PRICE_METHODS = {
   // Not sold in over a week: its last price, moved by the player's market since.
-  'market-adjusted': { label: 'Estimated', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago around $${_caNum(e.unadjustedPrice)}. Moved ${e.marketPct >= 0 ? 'up' : 'down'} ${Math.abs(e.marketPct)}% with this player's market since then.` },
-  'recent-sales': { label: 'Recent sales', how: (e) => `Median of ${e.basedOn} sale${e.basedOn === 1 ? '' : 's'} in the last ${_caDaysWord(e.newestSaleDays)}.` },
+  'market-adjusted': { label: 'Estimated', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago at $${_caNum(e.unadjustedPrice)}${e.compBasis === 'recent-average' ? ` (average of ${e.compCount} sales within three days)` : ''}. Moved ${e.marketPct >= 0 ? 'up' : 'down'} ${Math.abs(e.marketPct)}% with this player's market since then.` },
+  // The last comp, or the average of the comps within three days of it.
+  'recent-sales': { label: 'Last comp', how: (e) => e.compBasis === 'recent-average'
+    ? `Average of the ${e.compCount} sales within three days of the latest, ${_caDaysWord(e.newestSaleDays)} ago.`
+    : `The latest sale, ${_caDaysWord(e.newestSaleDays)} ago.` },
   'trend-adjusted': { label: 'Estimated', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
   'stale-sales': { label: 'Last sold', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago; this is its most recent price.` },
   'similar-cards': { label: 'Ballpark', how: (e) => `This exact card hasn't sold. Based on ${e.basedOn} sales across ${e.variantCount} other version${e.variantCount === 1 ? '' : 's'} of it — parallels vary a lot, so treat the range as the answer.` },
