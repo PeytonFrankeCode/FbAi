@@ -10219,10 +10219,15 @@ const _ladderId = (pid, kind) => kind ? `${pid}|${kind}` : pid;
 // "Prizm" (2018 Prizm lists no Silver at all) where sellers and the parallel
 // column write "Silver" or "Silver Prizm", and a checklist name that matches no
 // rung is a parallel priced off a curve instead of its own sales.
+//
+// And word order is not identity: "Blue Red White", "Red White & Blue" and
+// "Red, White and Blue" are one parallel, and came back as two on the Mahomes
+// #269 picker. So "and" goes and the words are sorted.
 function _ladderKey(name) {
   const k = _parallelKey(String(name == null ? '' : name)).replace(/(\s+\d+)+$/, '').trim();
   if (RSI_BASE_PARALLELS.includes(k)) return '';
-  return k === 'prizm' || k === 'prizms' ? 'silver' : k;
+  if (k === 'prizm' || k === 'prizms') return 'silver';
+  return k.split(' ').filter(w => w && w !== 'and').sort().join(' ');
 }
 
 function _ladderSql(noOffer) {
@@ -10378,6 +10383,19 @@ async function _computeParallelLadder(db) {
   }
   return { ok: true, builtAt: new Date().toISOString(), since, rowsIn, products,
            curves: await _ladderCurves(products) };
+}
+
+// A parallel's median price per grade (PSA 9, BGS 9.5, ...), raw left out:
+// how a card's slabs are put back on the raw scale (_checklistParallels).
+function _gradeMedians(rows) {
+  const by = {};
+  for (const r of rows) {
+    const g = _gradeBucket(r);
+    if (g === 'Raw' || !/^[A-Z]+ \d/.test(g)) continue;
+    const p = (r.price_cents || 0) / 100;
+    if (p > 0) (by[g] = by[g] || []).push(p);
+  }
+  return Object.fromEntries(Object.entries(by).map(([g, ps]) => [g, Math.round(_medOf(ps) * 100) / 100]));
 }
 
 // What a typical card in the product sells for raw in its base version: each
@@ -10606,13 +10624,35 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     return null;
   };
 
+  // Graded sales are evidence too. A parallel that has only sold slabbed —
+  // the Mahomes #269 Orange /275, three sales, all graded — used to count for
+  // nothing, so a rarer parallel could be estimated below it. Each grade is
+  // put back on the raw scale by THIS card's own gap between that grade and
+  // raw, read off the parallels that sold both ways (Silver #269: PSA 9 about
+  // 2.3x raw). A grade the card has no raw comparison for is not used.
+  const gradeRatio = {};
+  {
+    const by = {};
+    for (const k of known) {
+      if (!(k.raw > 0) || !k.grades) continue;
+      for (const [g, p] of Object.entries(k.grades)) if (p > 0) (by[g] = by[g] || []).push(p / k.raw);
+    }
+    for (const [g, rs] of Object.entries(by)) gradeRatio[g] = _medOf(rs);
+  }
+  const rawEq = (k) => {
+    if (k.raw > 0) return k.raw;
+    const xs = Object.entries(k.grades || {}).filter(([g, p]) => p > 0 && gradeRatio[g] > 0)
+      .map(([g, p]) => p / gradeRatio[g]);
+    return xs.length ? _medOf(xs) : null;
+  };
   const entryOf = (k) => list.find(e => e.keys.includes(k.key));
   const anchors = [];
   for (const k of known) {
-    if (!(k.raw > 0)) continue;
+    const r = rawEq(k);
+    if (!(r > 0)) continue;
     const e = entryOf(k);
     const fac = e ? factorOf(e) : (baseF && rungs[k.key] ? { f: rungs[k.key].f / baseF } : null);
-    if (fac) anchors.push(Math.log(k.raw) - Math.log(fac.f));
+    if (fac) anchors.push(Math.log(r) - Math.log(fac.f));
   }
   // With no sale of its own to stand on, a card can be given its level: the
   // player's, or the product's typical card (/api/checklist-prices).
@@ -10627,8 +10667,9 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     const entry = { name: e.name, printRun: e.printRun };
     if (sold) {
       used.add(sold);
-      out.push({ ...entry, itemId: sold.itemId, sales: sold.sales, _price: sold.raw,
-                 ...(sold.raw > 0 ? { price: round2(sold.raw) } : {}) });
+      const eq = rawEq(sold);
+      out.push({ ...entry, itemId: sold.itemId, sales: sold.sales, _price: eq, _base: e.keys.includes('') || e.keys.includes('silver'),
+                 ...(sold.raw > 0 ? { price: round2(sold.raw) } : eq > 0 ? { rawEquivalent: round2(eq) } : {}) });
       continue;
     }
     if (level == null) continue;
@@ -10636,27 +10677,39 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     if (!fac) continue;
     const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
     const conf = fac.basis === 'ladder' && fac.n >= 8 && levelFrom === 'card' ? 'medium' : 'low';
-    out.push({ ...entry, _price: level * fac.f, _fac: fac, estimate: {
+    out.push({ ...entry, _price: level * fac.f, _fac: fac, _base: e.keys.includes('') || e.keys.includes('silver'), estimate: {
       method: 'parallel-ladder', basis: fac.basis, confidence: conf, basedOnCards: fac.n,
       anchors: anchors.length, oneOfOne, levelFrom,
     } });
   }
 
-  // Rarer is never cheaper, for what the curves priced: walk the numbered
-  // entries from the largest print run down, lifting any curve estimate to
-  // just above the dearest larger-run price already on this card.
-  let floor = 0;
-  for (const e of out.filter(x => x.printRun).sort((a, b) => b.printRun - a.printRun)) {
-    if (e.estimate && e._fac.basis !== 'ladder' && e._price < floor * 1.1) e._price = floor * 1.1;
-    if (e._price > floor) floor = e._price;
+  // Rarer is never cheaper. Walk the numbered parallels from the largest
+  // print run down; an estimate below the dearest price on this card at a
+  // LARGER run — sold (raw, or raw-equivalent from its slabs) or estimated —
+  // or below its base or Silver, is lifted just above it. This holds for
+  // ladder rungs too: a thin one (2017 Prizm Blue Wave /149, 1.27x base on
+  // four cards) put a /149 at $1,171 beside a /199 that sold raw at $2,050.
+  // Sold prices are never moved; they are what the floor is made of.
+  let floor = Math.max(0, ...out.filter(x => x._base && x._price > 0).map(x => x._price));
+  const numbered = out.filter(x => x.printRun && x._price > 0).sort((a, b) => b.printRun - a.printRun);
+  for (let i = 0; i < numbered.length;) {
+    const run = numbered[i].printRun;
+    const tier = [];
+    while (i < numbered.length && numbered[i].printRun === run) tier.push(numbered[i++]);
+    for (const e of tier) if (e.estimate && e._price < floor * 1.1) { e._price = floor * 1.1; e.estimate.lifted = true; }
+    floor = Math.max(floor, ...tier.map(e => e._price));
   }
   for (const e of out) {
     if (e.estimate) {
       const p = e._price;
-      const [lo, hi] = e.estimate.oneOfOne ? [0.5, 2.2] : [Math.min(1, e._fac.lo), Math.max(1, e._fac.hi)];
+      // A lifted estimate is a floor, not a measurement: it can only be off
+      // upward.
+      const [lo, hi] = e.estimate.oneOfOne ? [0.5, 2.2]
+        : e.estimate.lifted ? [0.95, 1.5]
+        : [Math.min(1, e._fac.lo), Math.max(1, e._fac.hi)];
       Object.assign(e.estimate, { price: round2(p), low: round2(p * lo), high: round2(p * hi) });
     }
-    delete e._price; delete e._fac;
+    delete e._price; delete e._fac; delete e._base;
   }
   // A sold parallel the checklist names some other way ("Blue Red White" for
   // "Red, White and Blue") is still a place to switch to: listed after the
@@ -10691,7 +10744,7 @@ app.get('/api/checklist-prices', async (req, res) => {
   const pid = String(req.query.product || '').trim();
   const player = String(req.query.player || '').trim();
   if (!pid || !player) return res.status(400).json({ error: 'product and player are required' });
-  const cacheKey = `clprices:v1:${pid}:${player.toLowerCase()}`;
+  const cacheKey = `clprices:v2:${pid}:${player.toLowerCase()}`;
   const cached = await cacheGet(cacheKey);
   if (cached) return res.json(_fromCache(cached));
   try {
@@ -10770,9 +10823,10 @@ async function _checklistPrices(pid, player) {
     else if (_looksLikeParallel(r.title, r.player, r.set_name)) continue;   // a parallel we cannot name
     else key = '';
     const m = fits[0];
-    if (!m.keys.has(key)) m.keys.set(key, { raw: [], sales: 0, itemId: r.item_id, name: col || 'Base' });
+    if (!m.keys.has(key)) m.keys.set(key, { raw: [], rows: [], sales: 0, itemId: r.item_id, name: col || 'Base' });
     const b = m.keys.get(key);
     b.sales++;
+    b.rows.push(r);
     if (_gradeBucket(r) === 'Raw') b.raw.push(r.price_cents / 100);
   }
 
@@ -10788,7 +10842,7 @@ async function _checklistPrices(pid, player) {
   const priced = mine.map(m => {
     const kind = _CATEGORY_KIND[m.set.category] || '';
     const known = [...m.keys].map(([key, b]) => ({ key, name: b.name, itemId: b.itemId, sales: b.sales,
-      raw: b.raw.length ? _medOf(b.raw) : null }));
+      raw: b.raw.length ? _medOf(b.raw) : null, grades: _gradeMedians(b.rows) }));
     const list = _checklistParallels(m.set, known, fitFor(kind), pooledFor(kind)) || [];
     return { m, kind, known, list };
   });
@@ -10808,9 +10862,11 @@ async function _checklistPrices(pid, player) {
       }
     }
     return { set: p.m.set.name, category: p.m.set.category, number: p.m.card.number,
-             parallels: list.map(({ name, printRun, price, sales, itemId, estimate }) =>
-               ({ name, printRun, price: price ?? (estimate ? estimate.price : null), sales: sales || 0,
-                  itemId: itemId || null, estimated: !!estimate,
+             // A parallel sold only in slabs shows its raw equivalent, marked
+             // as an estimate: no raw copy has actually sold at that price.
+             parallels: list.map(({ name, printRun, price, rawEquivalent, sales, itemId, estimate }) =>
+               ({ name, printRun, price: price ?? rawEquivalent ?? (estimate ? estimate.price : null), sales: sales || 0,
+                  itemId: itemId || null, estimated: !!estimate || (price == null && rawEquivalent != null),
                   ...(estimate ? { low: estimate.low, high: estimate.high, confidence: estimate.confidence } : {}) })) };
   });
   return { available: true, product: pid, player, builtAt: ladder ? ladder.builtAt : null,
@@ -10861,7 +10917,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // sold or estimated off the ladder) — a shape change, the v9 case.
 // v19: estimates for unsold parallels use the pooled line ladders and curves,
 // and autograph and relic cards get theirs; v18 entries carry the old figures.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v19';
+// v20: graded sales count toward unsold parallels' estimates, and rarer is
+// never cheaper for ladder rungs either.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v20';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11617,6 +11675,7 @@ app.get('/api/card-analysis', async (req, res) => {
           key, name: bucket.name, sales: kept.length, itemId: rep.item_id,
           median: Math.round(prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2),
           rawMedian: raw.length ? Math.round(_medOf(raw) * 100) / 100 : null,
+          gradeMedians: _gradeMedians(kept),
         });
       }
       // Base first, then by how much actually traded.
@@ -11778,8 +11837,11 @@ app.get('/api/card-analysis', async (req, res) => {
           const rawG = grades.find(g => g.label === 'Raw');
           const known = [
             { key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
-              raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null },
-            ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales, raw: p.rawMedian })),
+              raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null,
+              grades: Object.fromEntries(grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL)
+                .map(g => [g.label, g.median])) },
+            ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales,
+              raw: p.rawMedian, grades: p.gradeMedians })),
           ];
           const ladder = await _parallelLadder();
           const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;

@@ -87,14 +87,19 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
   check('an unnumbered parallel off the ladder gets the product\'s typical unnumbered rung',
     disco.estimate && disco.estimate.basis === 'unnumbered', JSON.stringify(disco.estimate));
   const odd = S._checklistParallels(set, [...known, { key: 'blue red white', name: 'Blue Red White', itemId: 'D', sales: 3, raw: 900 }], fit);
-  check('a sold parallel the checklist spells differently is still listed',
-    odd.some(e => e.name === 'Blue Red White' && e.itemId === 'D'));
+  check('a sold parallel the checklist words in another order lands on its entry',
+    odd.some(e => e.name === 'Prizm Red, White and Blue' && e.itemId === 'D'));
+  const other = S._checklistParallels(set, [...known, { key: 'purple', name: 'Purple', itemId: 'E', sales: 1, raw: 900 }], fit);
+  check('a sold parallel the checklist does not name is still listed',
+    other.some(e => e.name === 'Purple' && e.itemId === 'E'));
   check('no graded or unanchored card is estimated', S._checklistParallels(set, [{ key: 'silver', itemId: 'A', sales: 2, raw: null }], fit)
     .every(e => e.itemId || !e.estimate));
 }
 
 // ---- part 2: pooled curves, anchoring through them, 1/1s, rarer-is-dearer ----
 (async () => {
+  // Keyed as the build keys them (_ladderKey).
+  const K = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [S._ladderKey(k), v]));
   const set = S._checklistSetFor(prizm17, { player: 'Patrick Mahomes', cardNumber: '269', kind: '', subset: '' });
   // A curve: /10 at 40x base, /100 at 10x, /1000 at 2.5x — slope -0.6 in log-log.
   const brand = { slope: -0.6021, icpt: Math.log(40) + 0.6021 * Math.log(10), unnumbered: 2.5 };
@@ -140,15 +145,35 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
   check('a parallel off the product\'s ladder takes the line\'s rung',
     goldE.estimate && goldE.estimate.basis === 'line-ladder' && near(goldE.estimate.price, 5500, 0.01), JSON.stringify(goldE.estimate));
 
+  // Mahomes #269, as it read live: Orange /275 sold only in slabs, Light Blue
+  // /199 sold raw at $2,050, and a thin rung put Blue Wave /149 at 1.27x base.
+  const live = { ref: '', rungs: K({ Base: { f: 1, n: 7, lo: 1, hi: 1.1 }, Prizm: { f: 1, n: 12, lo: 1, hi: 1 },
+    'Prizm Blue Wave': { f: 1.27, n: 4, lo: 1, hi: 1 }, 'Prizm Light Blue': { f: 2.2, n: 4, lo: 1, hi: 1 } }) };
+  const m269 = S._checklistParallels(set, [
+    { key: '', itemId: 'B', sales: 20, raw: 790, grades: { 'PSA 9': 1800, 'PSA 10': 7800 } },
+    { key: 'silver', itemId: 'S', sales: 38, raw: 792, grades: { 'PSA 9': 1795 } },
+    { key: S._ladderKey('Orange'), itemId: 'O', sales: 3, raw: null, grades: { 'PSA 9': 3000, 'PSA 10': 9000 } },
+    { key: S._ladderKey('Light Blue'), itemId: 'L', sales: 2, raw: 2050 },
+  ], live, null);
+  const pick = (n) => m269.find(e => e.name === n);
+  check('a parallel sold only in slabs gets a raw equivalent from the card\'s own grade gap',
+    pick('Prizm Orange').rawEquivalent > 1000 && pick('Prizm Orange').rawEquivalent < 2000 && pick('Prizm Orange').price == null,
+    JSON.stringify(pick('Prizm Orange')));
+  const wave = pick('Prizm Blue Wave');
+  check('Blue Wave /149 is never below the Light Blue /199 that sold at $2,050',
+    wave.estimate && wave.estimate.price >= 2050 * 1.1 - 0.01 && wave.estimate.lifted, JSON.stringify(wave.estimate));
+  check('nor anything rarer below it', ['Prizm Green Scope', 'Prizm Purple Crystals', 'Prizm Red Power', 'Prizm Gold', 'Prizm Black Finite']
+    .every(n => !pick(n) || !pick(n).estimate || pick(n).estimate.price >= wave.estimate.price), 'ok');
+
   check('a curve sloping the wrong way is refused',
     S._fitRunCurve([[0, 0], [1, 0.5], [2, 1], [3, 1.5], [4, 2], [5, 2.5], [6, 3], [7, 3.5]], 8) === null);
 
   // Pooled per brand and kind from ladders anchored on base.
-  const curves = await S._ladderCurves({ '2017-panini-prizm-football': { ref: '', rungs: {
-    '': { f: 1, n: 40 }, prizm: { f: 3, n: 40 }, 'prizm green': { f: 5, n: 20 }, orange: { f: 8, n: 12 },
-    'light blue': { f: 10, n: 12 }, 'blue wave': { f: 12, n: 10 }, 'green scope': { f: 18, n: 8 },
-    'purple crystals': { f: 22, n: 8 }, 'red power': { f: 30, n: 6 }, camo: { f: 45, n: 5 }, gold: { f: 70, n: 5 },
-    disco: { f: 4, n: 9 }, pink: { f: 4, n: 9 }, red: { f: 3.5, n: 9 }, blue: { f: 3.5, n: 9 } } } });
+  const curves = await S._ladderCurves({ '2017-panini-prizm-football': { ref: '', rungs: K({
+    Base: { f: 1, n: 40 }, Prizm: { f: 3, n: 40 }, 'Prizm Green': { f: 5, n: 20 }, 'Prizm Orange': { f: 8, n: 12 },
+    'Prizm Light Blue': { f: 10, n: 12 }, 'Prizm Blue Wave': { f: 12, n: 10 }, 'Prizm Green Scope': { f: 18, n: 8 },
+    'Prizm Purple Crystals': { f: 22, n: 8 }, 'Prizm Red Power': { f: 30, n: 6 }, 'Prizm Camo': { f: 45, n: 5 }, 'Prizm Gold': { f: 70, n: 5 },
+    'Prizm Disco': { f: 4, n: 9 }, 'Prizm Pink': { f: 4, n: 9 }, 'Prizm Red': { f: 3.5, n: 9 }, 'Prizm Blue': { f: 3.5, n: 9 } }) } });
   const pc = curves['prizm|'];
   check('the line curve is pooled from the product\'s numbered rungs', pc && pc.slope < 0 && pc.points >= 8, JSON.stringify(pc));
   check('and its typical unnumbered rung', pc && pc.unnumbered > 1, pc && pc.unnumbered);

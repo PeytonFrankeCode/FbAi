@@ -14859,7 +14859,8 @@ const CA_PRICE_METHODS = {
     'site-curve': `Priced from this card's own sales and how numbered parallels climb as the print run shrinks across every product we track.`,
     unnumbered: `Priced from this card's own sales and how this product's unnumbered parallels typically sell.`,
     'line-unnumbered': `Priced from this card's own sales and how unnumbered parallels typically sell across this product line's releases.`,
-  }[e.basis] || `Priced from this card's own sales in its other parallels.`) },
+  }[e.basis] || `Priced from this card's own sales in its other parallels.`)
+    + (e.lifted ? ' Kept above what this card\'s less rare parallels sell for.' : '') },
   'similar-cards': { label: 'Ballpark', how: (e) => `This exact card hasn't sold. Based on ${e.basedOn} sales across ${e.variantCount} other version${e.variantCount === 1 ? '' : 's'} of it — parallels vary a lot, so treat the range as the answer.` },
 };
 
