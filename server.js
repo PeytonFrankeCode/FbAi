@@ -1609,6 +1609,17 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   // repeating it is pure waste. The cost is that a card added by the importer
   // stays invisible for up to an hour after it lands.
   const cacheKey = `nfldb:v1:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
+  // Callers asking the same question at once (the grading advisor's four
+  // grades read one pool) share one query rather than racing four to D1.
+  const inflight = _nflDbInflight.get(cacheKey);
+  if (inflight) return inflight;
+  const run = _fetchViaNflCardDbUncached(db, cleaned, terms, limit, source, cacheKey);
+  _nflDbInflight.set(cacheKey, run);
+  try { return await run; } finally { _nflDbInflight.delete(cacheKey); }
+}
+const _nflDbInflight = new Map();
+
+async function _fetchViaNflCardDbUncached(db, cleaned, terms, limit, source, cacheKey) {
   const cached = await cacheGet(cacheKey);
   if (cached) {
     _d1Usage.cacheHits++;
@@ -2305,6 +2316,21 @@ function sendIfSoldBlocked(res, ...responses) {
 // upstream APIs fresh so users always see current listings/prices. The
 // in-memory ebayCache + getCached/setCache helpers stay in the file for
 // the unrelated marketplace endpoint to use.
+// Grade filters ({ graded: false } or { grader, grade }) applied to our own
+// sales, by the same bucket the card history uses. "Raw" is only a sale with
+// no grade and nothing slab-like in its title; "PSA 10" is PSA and 10 exactly,
+// so a BGS 10 or a PSA 9 never lands there.
+const GRADE_POOL_LIMIT = 300;
+function _hasGradeOpts(opts) {
+  return !!opts && (opts.graded === false || !!(opts.grader && opts.grade != null));
+}
+function _matchesGradeOpts(item, opts) {
+  const bucket = String(_gradeBucket(item) || '').toUpperCase();
+  if (opts.graded === false) return bucket === 'RAW';
+  const want = `${opts.grader} ${String(opts.grade).replace(/\.0$/, '')}`.toUpperCase();
+  return bucket === want;
+}
+
 async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = 'search', offset = 0, opts = {}) {
   if (mode === 'sold') {
     // Our own D1 dataset first — no key, no quota, no lookback window, no
@@ -2312,8 +2338,13 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
     // only ever see what it misses. Football-only, and absent until the D1
     // binding exists, so a miss here is the normal case rather than an error.
     if (SOLD_PROVIDER !== 'cardapi') {
-      const own = await fetchViaNflCardDb(keywords, limit, source);
-      const ownResults = Array.isArray(own.results) ? filterJunkListings(own.results) : [];
+      // Our rows carry the grade as data, not as a query filter, so a grade
+      // request reads a wider pool and keeps the sales in that grade — the
+      // same pool for every grade, which is why they must be split here.
+      const gradeAsk = _hasGradeOpts(opts);
+      const own = await fetchViaNflCardDb(keywords, gradeAsk ? Math.max(limit, GRADE_POOL_LIMIT) : limit, source);
+      let ownResults = Array.isArray(own.results) ? filterJunkListings(own.results) : [];
+      if (gradeAsk) ownResults = ownResults.filter(r => _matchesGradeOpts(r, opts)).slice(0, limit);
       if (ownResults.length > 0) {
         // Archive these too: they're ours, but the archive is what survives if
         // the dataset is ever rebuilt, and it dedupes on the same item ids.
@@ -14867,7 +14898,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
