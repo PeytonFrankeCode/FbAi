@@ -8201,7 +8201,7 @@ function renderPortfolioAnalytics(coll, totalValue) {
         },
         options: {
           plugins: { legend: { display: false } },
-          scales: { x: { display: false }, y: { ticks: { callback: (v) => '$' + v } } },
+          scales: { x: { display: false }, y: { ticks: { callback: (v) => '$' + _caNum(v) } } },
           maintainAspectRatio: false,
         },
       });
@@ -14630,7 +14630,7 @@ function openInvDetail(id) {
         },
         options: {
           plugins: { legend: { display: false } },
-          scales: { y: { ticks: { callback: (v) => '$' + v } } },
+          scales: { y: { ticks: { callback: (v) => '$' + _caNum(v) } } },
           maintainAspectRatio: false,
         },
       });
@@ -14727,7 +14727,7 @@ function renderNetWorthChart() {
       },
       scales: {
         x: { display: false },
-        y: { ticks: { color: ink, callback: (v) => '$' + v }, grid: { color: grid } },
+        y: { ticks: { color: ink, callback: (v) => '$' + _caNum(v) }, grid: { color: grid } },
       },
       maintainAspectRatio: false,
     },
@@ -15128,14 +15128,16 @@ function _caRenderChart(label) {
           callbacks: {
             label: (c) => {
               const pt = g.points[c.dataIndex];
-              return `$${c.parsed.y} · ${pt.sales} sale${pt.sales === 1 ? '' : 's'}`;
+              return `$${_caNum(c.parsed.y)} · ${pt.sales} sale${pt.sales === 1 ? '' : 's'}`;
             },
           },
         },
       },
       scales: {
         x: { ticks: { color: ink, maxTicksLimit: 6, font: { size: 9 } }, grid: { display: false } },
-        y: { ticks: { color: ink, callback: (v) => '$' + v, font: { size: 9 } }, grid: { color: grid } },
+        // Rounded: a $0.99 card's axis read "$0.9900000000000001" off the
+        // float steps Chart.js picks between ticks.
+        y: { ticks: { color: ink, callback: (v) => '$' + _caNum(v), font: { size: 9 }, maxTicksLimit: 6 }, grid: { color: grid } },
       },
       maintainAspectRatio: false,
     },
