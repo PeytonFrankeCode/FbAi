@@ -3357,13 +3357,14 @@ function parsePrintRunFromTitle(title) {
   if (!title) return null;
   const s = String(title);
   const t = s.toLowerCase();
-  if (/\b1\s*\/\s*1\b/.test(s) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
-  const frac = s.match(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/);
-  if (frac) {
+  // A serial stamp over more than one ("8/8") is what the card says, and
+  // beats a "1/1" beside it: the last of eight sold as a one-of-one.
+  for (const frac of s.matchAll(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/g)) {
     const num = parseInt(frac[1], 10), denom = parseInt(frac[2], 10);
     const looksLikeSeason = num >= 1900 && num <= 2099;
-    if (!looksLikeSeason && denom >= 1 && denom <= 5000) return denom;
+    if (!looksLikeSeason && denom >= 2 && denom <= 5000) return denom;
   }
+  if (/\b1\s*\/\s*1\b/.test(s) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
   const m = s.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|\/)\s*(\d{1,4})\b/i);
   if (m) {
     const n = parseInt(m[1], 10);
@@ -10992,7 +10993,10 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v23: a card whose only sales are best offers shows them rather than "no
 // sales", and an unsold parallel is priced off the ladder, not its siblings'
 // median.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v23';
+// v24: card-kind reads serial stamps ("8/8", "12/99", "#3/10"), and a stamp
+// beats a "1/1" said beside it, so v23 entries split a /8 sold as "8/8 1/1"
+// from its own card and grouped a "12/99" with the unnumbered base.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v24';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11003,7 +11007,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = '723e3ea3f1ae';
+const CARD_IDENTITY_FINGERPRINT = '153c5654a3ba';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //

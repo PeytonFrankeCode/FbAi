@@ -99,8 +99,31 @@ function cardKind(title) {
 const ONE_OF_ONE = /(?<![\d/])1\s*\/\s*1(?![\d/])|\bone[-\s]of[-\s]one\b|\b1\s*of\s*1\b/i;
 const NUMBERED = /(?:\bnumbered\s*(?:to\s*)?|#\s*\/|(?<![\d])\/)\s*(\d{1,4})\b/i;
 
+// A serial stamp, "8/8" or "12/99": the card's number over the run. A title
+// can say "1/1" beside one — "Green Sparkle 8/8 1/1", the last of eight sold
+// as a one-of-one — and the stamp is what the card says, so it wins.
+//
+// But "9/16" is as often a date ("sold 9/16"), which the test corpus pins as
+// unstated. So a stamp counts only when it cannot be a date or says it is a
+// serial: a run over 31 (no day of a month), a number equal to its run (the
+// last copy), a "#" in front, or a "1/1" elsewhere in the same title. Never
+// when it is a full date (9/16/25) or follows "sold", "ended" or "on".
+const SERIAL_STAMP = /(^|[^\d/])(#\s*)?(\d{1,4})\s*\/\s*(\d{1,4})(?![\d/])/g;
+function serialStamp(t) {
+  for (const m of t.matchAll(SERIAL_STAMP)) {
+    const n = parseInt(m[3], 10), run = parseInt(m[4], 10);
+    if (!(run >= 2 && run <= 5000 && n >= 1 && n <= run)) continue;
+    const before = t.slice(Math.max(0, m.index - 8), m.index + m[1].length).toLowerCase();
+    if (/\b(sold|ended|on|date)\s*$/.test(before)) continue;
+    if (run > 31 || n === run || m[2] || ONE_OF_ONE.test(t)) return run;
+  }
+  return null;
+}
+
 function printRun(title) {
   const t = String(title || '');
+  const stamped = serialStamp(t);
+  if (stamped) return stamped;
   if (ONE_OF_ONE.test(t)) return 1;
   const m = NUMBERED.exec(t);
   if (!m) return null;

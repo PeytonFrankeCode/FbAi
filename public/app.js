@@ -6526,14 +6526,15 @@ function detectSetTier(text) {
 function parsePrintRun(title) {
   if (!title) return null;
   const t = title.toLowerCase();
-  if (/\b1\s*\/\s*1\b/.test(title) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
   // X/Y serial stamp — take the denominator, ignoring year ranges (2020/21).
-  const frac = title.match(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/);
-  if (frac) {
+  // One over more than one ("8/8") beats a "1/1" beside it: the last of eight
+  // sold as a one-of-one is still a /8.
+  for (const frac of title.matchAll(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/g)) {
     const num = parseInt(frac[1], 10), denom = parseInt(frac[2], 10);
     const looksLikeSeason = num >= 1900 && num <= 2099;
-    if (!looksLikeSeason && denom >= 1 && denom <= 5000) return denom;
+    if (!looksLikeSeason && denom >= 2 && denom <= 5000) return denom;
   }
+  if (/\b1\s*\/\s*1\b/.test(title) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
   // Bare "/NN" only when NOT preceded by a digit, so a season like "2020/21"
   // (whose "/21" survived the frac check above) isn't misread as a print run.
   const m = title.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|(?<!\d)\/)\s*(\d{1,4})\b/i);
