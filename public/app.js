@@ -14736,6 +14736,25 @@ function _caSyncCombos() {
 function _caRenderParallels(data) {
   const sel = document.getElementById('ca-parallel-select');
   if (!sel) return;
+  // Every parallel the checklist lists for this card, in checklist order: the
+  // sold ones open their own history, the rest show their estimate.
+  const cl = Array.isArray(data && data.checklistParallels) ? data.checklistParallels : null;
+  if (cl && cl.length > 1 && _caItemId) {
+    sel.innerHTML = cl.map((e, i) => e.itemId
+      ? `<option value="${escHtml(String(e.itemId))}">${escHtml(_caParallelLabel(e))} (${e.sales})</option>`
+      : `<option value="est:${i}">${escHtml(_caParallelLabel(e))} · est. $${_caNum(e.estimate.price)}</option>`).join('');
+    sel.value = _caItemId;
+    sel.disabled = false;
+    sel.onchange = () => {
+      const v = sel.value;
+      if (v.startsWith('est:')) _caRenderEstimatedView(cl[Number(v.slice(4))]);
+      else if (v === _caItemId) _caRenderSoldView();
+      else _caSwitchParallel(v);
+    };
+    sel.classList.remove('hidden');
+    _caSyncCombos();
+    return;
+  }
   const others = Array.isArray(data && data.parallels) ? data.parallels : [];
   if (!others.length || !_caItemId) {
     sel.classList.add('hidden');
@@ -14783,6 +14802,12 @@ const CA_PRICE_METHODS = {
     : `The latest sale, ${_caDaysWord(e.newestSaleDays)} ago.` },
   'trend-adjusted': { label: 'Estimated', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
   'stale-sales': { label: 'Last sold', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago; this is its most recent price.` },
+  // A checklist parallel this card has not sold in, priced off its sold ones.
+  'parallel-ladder': { label: 'Estimated', how: (e) => e.basis === 'ladder'
+    ? `Priced from this card's own sales and how ${e.parallelName || 'this parallel'} sells against the other parallels across ${e.basedOnCards} cards in this product.`
+    : e.basis === 'print-run'
+    ? `Priced from this card's own sales and how this product's numbered parallels climb as the print run shrinks.`
+    : `Priced from this card's own sales and how this product's unnumbered parallels typically sell.` },
   'similar-cards': { label: 'Ballpark', how: (e) => `This exact card hasn't sold. Based on ${e.basedOn} sales across ${e.variantCount} other version${e.variantCount === 1 ? '' : 's'} of it — parallels vary a lot, so treat the range as the answer.` },
 };
 
@@ -14835,6 +14860,7 @@ function _caRenderPrice(estimate) {
 function _caReset(keepVisible) {
   const wrap = document.getElementById('card-analysis');
   if (wrap && !keepVisible) wrap.classList.add('hidden');
+  if (wrap) wrap.classList.remove('ca-estimated');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
   _caData = null; // don't let one card's series render under the next card
   _caForSale = null;
@@ -14899,27 +14925,63 @@ async function loadCardAnalysis(item, opts = {}) {
 
   wrap.classList.remove('hidden');
 
+  _caData = data;
+  _caRenderParallels(data);
+  _caRenderSoldView();
+  _caLoadForSale(item.itemId);
+}
+
+// The card's own sales: summary, grade picker and chart, from _caData. Also
+// how the picker comes back from an estimated parallel to the one on screen.
+function _caRenderSoldView() {
+  const data = _caData;
+  if (!data) return;
+  const wrap = document.getElementById('card-analysis');
+  if (wrap) wrap.classList.remove('ca-estimated');
+  const summaryEl = document.getElementById('ca-summary');
   const span = (data.firstSale && data.lastSale && data.firstSale !== data.lastSale)
     ? ` · ${_caDate(data.firstSale)} – ${_caDate(data.lastSale)}`
     : '';
-  summaryEl.textContent = `${data.totalSales.toLocaleString('en-US')} sale${data.totalSales === 1 ? '' : 's'} on record${span}`;
+  if (summaryEl) summaryEl.textContent = `${data.totalSales.toLocaleString('en-US')} sale${data.totalSales === 1 ? '' : 's'} on record${span}`;
 
   // One grade at a time. Raw is the default because it's the widest market and
   // the baseline people reason from; everything else is a click away.
-  _caData = data;
-  _caRenderParallels(data);
   const sel = document.getElementById('ca-grade-select');
   if (sel) {
     sel.innerHTML = data.grades.map(g =>
       `<option value="${escHtml(g.label)}">${escHtml(g.label)} (${g.sales})</option>`).join('');
     const preferred = data.grades.find(g => g.label === 'Raw') || data.grades[0];
     sel.value = preferred.label;
+    sel.disabled = false;
     sel.onchange = () => _caRenderChart(sel.value);
   }
   _caSyncCombos();
   _caRenderChart((data.grades.find(g => g.label === 'Raw') || data.grades[0]).label);
-  _caLoadForSale(item.itemId);
 }
+
+// A checklist parallel this card has not sold in: its estimate alone, priced
+// off the product's parallel ladder. No chart or sales list — there are no
+// sales to draw — and the grade picker says what the figure is for.
+function _caRenderEstimatedView(entry) {
+  const wrap = document.getElementById('card-analysis');
+  if (!wrap || !entry || !entry.estimate) return;
+  if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
+  wrap.classList.add('ca-estimated');
+  const summaryEl = document.getElementById('ca-summary');
+  if (summaryEl) summaryEl.textContent = `Estimated value for ${_caParallelLabel(entry)}`;
+  const sel = document.getElementById('ca-grade-select');
+  if (sel) {
+    sel.innerHTML = '<option value="Raw">Raw · est.</option>';
+    sel.value = 'Raw';
+    sel.disabled = true;
+    sel.onchange = null;
+  }
+  _caSyncCombos();
+  _caRenderPrice({ ...entry.estimate, parallelName: _caParallelLabel(entry) });
+  renderChartReadout('ca-point', '');
+}
+
+const _caParallelLabel = (e) => `${e.name}${e.printRun ? (e.printRun === 1 ? ' 1/1' : ` /${e.printRun}`) : ''}`;
 
 // Draw one grade's price history. Kept separate from the fetch so switching
 // grades re-renders from data already in hand.

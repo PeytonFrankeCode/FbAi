@@ -9161,6 +9161,17 @@ app.get('/api/debug/market-accuracy', async (req, res) => {
   res.json(await _marketCached(`marketaccuracy:v1:${MARKET_CALC_SIG}:${days}`, () => _computeMarketAccuracy(db, days)));
 });
 
+// The parallel ladder for one product (?product=<checklist id>), or a summary
+// of all of them: what an unsold parallel's estimate stands on.
+app.get('/api/debug/parallel-ladder', async (req, res) => {
+  const ladder = await _parallelLadder();
+  if (!ladder) return res.json({ available: false, reason: 'not built yet' });
+  const id = String(req.query.product || '').trim();
+  if (id) return res.json({ available: true, builtAt: ladder.builtAt, product: id, fit: ladder.products[id] || null });
+  res.json({ available: true, builtAt: ladder.builtAt, since: ladder.since, rowsIn: ladder.rowsIn,
+    products: Object.fromEntries(Object.entries(ladder.products).map(([k, v]) => [k, Object.keys(v.rungs).length])) });
+});
+
 app.get('/api/debug/index-health', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
@@ -10151,6 +10162,336 @@ async function _warmSoldStats() {
   return { ok: true, periods: done };
 }
 
+// ---- The parallel ladder: pricing a parallel that has not sold ----
+//
+// A checklist names every parallel a card was printed in, and most of them
+// have never sold for most cards: 2017 Prizm Mahomes #269 has sales in Base,
+// Silver and Green, and none in Gold /10 or Black Finite 1/1. One card cannot
+// price its own Gold. The PRODUCT can: across every player in 2017 Prizm there
+// are Gold /10 sales, and each one sold beside that same card's Silver, Base or
+// Green. So the ladder says how each parallel sells relative to the others in
+// its product, and a card's unsold parallels are its sold ones moved along it.
+//
+// The fit is log-additive and median-based: log price(card, parallel) = a_card
+// + b_parallel. A card only contributes where it sold in two or more
+// parallels, which is what ties the parallels together; medians rather than
+// means, because one mislabelled sale should not move a rung.
+//
+// Built daily by the cron (warmParallelLadder), never on a request: it reads
+// every raw sale in the window. Title word tests are what D1 cannot afford at
+// that volume (see _rsiBaseCtes), so the parallel comes from the column, and a
+// blank column counts as base only when the title has no print run and none of
+// a short list of parallel words as SUBSTRINGS — cheap, and a false positive
+// ("Jared" holds "red") only drops a base sale from the sample, never mixes a
+// parallel into base.
+const PAR_LADDER_KEY = 'parladder:v1';
+const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v1';
+const PAR_LADDER_TTL = 3 * 86400;          // outlives a missed daily run
+const PAR_LADDER_WINDOW_DAYS = 180;
+const PAR_LADDER_MIN_CARDS = 3;            // cards tying a parallel in, to publish it
+const PAR_LADDER_BASE_BLOCK = ['silver', 'gold', 'holo', 'refractor', 'red', 'blue', 'green',
+  'orange', 'purple', 'pink', 'black', 'bronze', 'camo', 'disco', 'wave', 'shimmer', 'mojo',
+  'sparkle', 'vinyl', 'finite', 'scope', 'hyper', 'pulsar', 'ice', 'cracked', 'neon', 'tie dye',
+  'teal', 'yellow', 'white', 'lazer', 'laser', 'prizms', 'parallel', 'xfractor', 'x-fractor'];
+// Autographs, relics and redemptions are other cards with ladders of their own;
+// substring tests again, for cost.
+const PAR_LADDER_KIND_BLOCK = ['auto', 'signature', 'signed', 'patch', 'relic', 'jersey',
+  'memorabilia', 'swatch', 'redemption', 'jumbo', 'oversize'];
+
+// The name a ladder is keyed by: the parallel key without its print run, and
+// every way of saying "base" as ''.
+function _ladderKey(name) {
+  const k = _parallelKey(String(name == null ? '' : name)).replace(/(\s+\d+)+$/, '').trim();
+  return RSI_BASE_PARALLELS.includes(k) ? '' : k;
+}
+
+function _ladderSql(noOffer) {
+  const T = "COALESCE(title, '')";
+  const any = (ws) => _rsiOrTree(ws.map(w => `${T} LIKE '%${w}%'`));
+  const baseList = RSI_BASE_PARALLELS.map(v => `'${v}'`).join(', ');
+  return `
+    WITH r AS (
+      SELECT year || '|' || set_name AS g, player || '#' || card_number AS c,
+             CASE WHEN LOWER(TRIM(COALESCE(parallel, ''))) IN (${baseList})
+                  THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)} THEN NULL ELSE '' END)
+                  ELSE LOWER(TRIM(parallel)) END AS par,
+             price_cents
+        FROM sales
+       WHERE price_cents IS NOT NULL AND price_cents > 0
+         AND confidence >= ${NFLDB_MIN_CONFIDENCE} AND sold_date >= ? AND year = ?
+         AND COALESCE(TRIM(set_name), '') <> ''
+         AND COALESCE(TRIM(card_number), '') <> '' AND COALESCE(TRIM(player), '') <> ''
+         AND NOT ${any(PAR_LADDER_KIND_BLOCK)}${noOffer}${RSI_RAW_ONLY}
+    ), m AS (
+      SELECT g, c, par, price_cents,
+             ROW_NUMBER() OVER (PARTITION BY g, c, par ORDER BY price_cents) AS rn,
+             COUNT(*) OVER (PARTITION BY g, c, par) AS n
+        FROM r WHERE par IS NOT NULL
+    ), med AS (
+      SELECT g, c, par, n, price_cents AS med FROM m WHERE rn = (n + 1) / 2
+    ), multi AS (
+      SELECT g, c FROM med GROUP BY g, c HAVING COUNT(*) >= 2
+    )
+    SELECT med.g, med.c, med.par, med.n, med.med FROM med JOIN multi ON multi.g = med.g AND multi.c = med.c`;
+}
+
+const _medOf = (xs) => {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+const _quantOf = (xs, q) => {
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.min(s.length - 1, Math.max(0, Math.round(q * (s.length - 1))))];
+};
+
+// One product's ladder from its cards' raw medians.
+//   cards: Map(cardKey -> Map(ladderKey -> median dollars))
+// Returns { ref, rungs: { key: { f, n, lo, hi } } }: f is the price relative to
+// `ref` (base where base is tied in); lo/hi the spread of real cards around it,
+// as factors, for the estimate's range.
+function _fitParallelLadder(cards) {
+  const rows = [];                             // [card, key, log price]
+  for (const [c, pars] of cards) {
+    if (pars.size < 2) continue;               // ties nothing together
+    for (const [k, p] of pars) if (p > 0) rows.push([c, k, Math.log(p)]);
+  }
+  if (!rows.length) return null;
+  const cardsOf = new Map();
+  for (const [c, k] of rows) {
+    if (!cardsOf.has(k)) cardsOf.set(k, new Set());
+    cardsOf.get(k).add(c);
+  }
+  const keys = [...cardsOf.keys()];
+  const ref = (cardsOf.get('') || new Set()).size >= PAR_LADDER_MIN_CARDS ? ''
+    : keys.sort((x, y) => cardsOf.get(y).size - cardsOf.get(x).size)[0];
+  const a = new Map(), b = new Map(keys.map(k => [k, 0]));
+  for (let it = 0; it < 12; it++) {
+    const byCard = new Map();
+    for (const [c, k, lp] of rows) {
+      if (!byCard.has(c)) byCard.set(c, []);
+      byCard.get(c).push(lp - b.get(k));
+    }
+    for (const [c, xs] of byCard) a.set(c, _medOf(xs));
+    const byKey = new Map();
+    for (const [c, k, lp] of rows) {
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k).push(lp - a.get(c));
+    }
+    for (const [k, xs] of byKey) b.set(k, _medOf(xs));
+    const shift = b.get(ref) || 0;
+    for (const k of keys) b.set(k, b.get(k) - shift);
+    for (const c of a.keys()) a.set(c, a.get(c) + shift);
+  }
+  const resid = new Map();
+  for (const [c, k, lp] of rows) {
+    if (!resid.has(k)) resid.set(k, []);
+    resid.get(k).push(lp - a.get(c) - b.get(k));
+  }
+  const round = (x) => Math.round(x * 10000) / 10000;
+  const rungs = {};
+  for (const k of keys) {
+    const n = cardsOf.get(k).size;
+    if (n < PAR_LADDER_MIN_CARDS && k !== ref) continue;
+    const r = resid.get(k);
+    rungs[k] = { f: round(Math.exp(b.get(k))), n,
+                 lo: round(Math.exp(_quantOf(r, 0.25))), hi: round(Math.exp(_quantOf(r, 0.75))) };
+  }
+  return { ref, rungs };
+}
+
+async function _computeParallelLadder(db) {
+  const since = new Date(Date.now() - PAR_LADDER_WINDOW_DAYS * 86400000).toISOString().slice(0, 10);
+  const index = await _cataloguedIndex();
+  if (!index) return { ok: false, reason: 'no checklist index' };
+  // One query per year: each reads the window by its sold_date index but
+  // tests titles and sorts partitions for one year's sales only, which keeps
+  // every statement well inside D1's time limit on a live-sized table. Only
+  // cards sold in two or more parallels come back — the rest tie nothing.
+  const sql = _ladderSql(await _noBestOfferSql(db));
+  let years = [];
+  try {
+    const idx = await _loadJson('checklists/index.json');
+    years = [...new Set(((idx && idx.products) || []).map(p => String(p.year || '')).filter(Boolean))].sort();
+  } catch (err) {
+    return { ok: false, reason: `checklist index unavailable: ${err && err.message}` };
+  }
+  const out = { results: [] };
+  for (const y of years) {
+    const part = await db.prepare(sql).bind(since, y).all();
+    for (const r of (part && part.results) || []) out.results.push(r);
+  }
+  // Spellings of one product fold together; a card keeps its spelling in its
+  // key, so two spellings of one card are two cards — still valid ties.
+  const byProduct = new Map();
+  const productOf = new Map();
+  let rowsIn = 0;
+  for (const r of (out && out.results) || []) {
+    rowsIn++;
+    let pid = productOf.get(r.g);
+    if (pid === undefined) {
+      const i = String(r.g).indexOf('|');
+      const hit = matchSale(index, String(r.g).slice(0, i), String(r.g).slice(i + 1));
+      pid = hit ? (typeof hit === 'string' ? hit : hit.id) : null;
+      productOf.set(r.g, pid);
+    }
+    if (!pid) continue;
+    const k = _ladderKey(r.par);
+    if (!byProduct.has(pid)) byProduct.set(pid, new Map());
+    const cards = byProduct.get(pid);
+    const ck = `${r.g}|${r.c}`;
+    if (!cards.has(ck)) cards.set(ck, new Map());
+    const pars = cards.get(ck);
+    // Two column spellings of one parallel ("Silver", "Silver Prizm") land on
+    // one key; keep the better-traded median.
+    const prev = pars.get(k);
+    if (!prev || prev.n < r.n) pars.set(k, { med: r.med / 100, n: r.n });
+  }
+  const products = {};
+  for (const [pid, cards] of byProduct) {
+    const flat = new Map([...cards].map(([c, pars]) => [c, new Map([...pars].map(([k, v]) => [k, v.med]))]));
+    const fit = _fitParallelLadder(flat);
+    if (fit && Object.keys(fit.rungs).length > 1) products[pid] = fit;
+  }
+  return { ok: true, builtAt: new Date().toISOString(), since, rowsIn, products };
+}
+
+async function warmParallelLadder() {
+  return _asD1Source('parallel-ladder', () => _warmParallelLadder());
+}
+async function _warmParallelLadder() {
+  const db = getNflDb();
+  if (!db) return { ok: false, reason: 'no dataset' };
+  await cachePut(PAR_LADDER_ATTEMPT_KEY, { at: new Date().toISOString() }, 6 * 3600);
+  const built = await _computeParallelLadder(db);
+  if (!built.ok) return built;
+  await cachePut(PAR_LADDER_KEY, built, PAR_LADDER_TTL);
+  _ladderMemo = { at: Date.now(), data: built };
+  console.log(`[ParallelLadder] ${Object.keys(built.products).length} products from ${built.rowsIn} card medians`);
+  return { ok: true, products: Object.keys(built.products).length };
+}
+// No ladder at all, and nothing tried in the last six hours: build now rather
+// than wait for the daily hour. The attempt marker is what keeps a failing
+// build from rerunning every tick.
+async function parallelLadderMissing() {
+  try {
+    if (await cacheGet(PAR_LADDER_KEY)) return false;
+    return !(await cacheGet(PAR_LADDER_ATTEMPT_KEY));
+  } catch (_) { return false; }
+}
+
+let _ladderMemo = { at: 0, data: null };
+async function _parallelLadder() {
+  if (_ladderMemo.data && Date.now() - _ladderMemo.at < 10 * 60000) return _ladderMemo.data;
+  const data = await cacheGet(PAR_LADDER_KEY).catch(() => null);
+  _ladderMemo = { at: Date.now(), data: data || null };
+  return _ladderMemo.data;
+}
+
+// Checklist products, held per isolate: a card page reads one on every open.
+const _checklistMemo = new Map();
+async function _checklistProduct(id) {
+  if (!id) return null;
+  if (_checklistMemo.has(id)) return _checklistMemo.get(id);
+  let doc = null;
+  try { doc = await _loadJson(`checklists/${id}.json`); } catch (_) { return null; }  // not remembered: may be transient
+  if (_checklistMemo.size > 40) _checklistMemo.delete(_checklistMemo.keys().next().value);
+  _checklistMemo.set(id, doc);
+  return doc;
+}
+
+const _plNorm = (s) => String(s || '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv)\b/g, ' ')
+  .replace(/[^a-z]+/g, ' ').trim();
+// The checklist set this card is in: the one naming this player at this number,
+// of the insert the sale resolved to, or else of its kind (base, auto, relic).
+function _checklistSetFor(product, { player, cardNumber, kind, subset }) {
+  if (!product || !Array.isArray(product.sets)) return null;
+  const num = String(cardNumber || '').replace(/^#/, '').trim().toLowerCase();
+  const pl = _plNorm(player);
+  if (!num || !pl) return null;
+  const holds = (s) => (s.cards || []).some(c => String(c.number || '').toLowerCase() === num
+    && (_plNorm(c.player) === pl || _plNorm(c.player).startsWith(pl + ' ') || pl.startsWith(_plNorm(c.player) + ' ')));
+  const sets = product.sets.filter(holds);
+  if (!sets.length) return null;
+  if (subset) return sets.find(s => _subsetKey(s.name) === subset) || null;
+  const cat = kind === 'auto' ? 'autograph' : kind === 'relic' ? 'memorabilia' : 'base';
+  return sets.find(s => s.category === cat) || null;
+}
+
+// Every parallel the checklist lists for this card, each either sold (with the
+// item id that opens it) or estimated off the ladder.
+//   known: [{ key, name, itemId, sales, raw }] — this card's sold parallels,
+//          `raw` its raw price where it has one.
+// Estimates need an anchor: the card's own raw price in at least one parallel
+// the ladder knows. A parallel the ladder does not know is priced off the
+// product's own print-run curve (its numbered rungs, fitted log-log) when it is
+// numbered, or off the product's typical unnumbered rung when it is not.
+function _checklistParallels(set, known, fit) {
+  if (!set) return null;
+  const list = [];
+  const seen = new Set();
+  const add = (name, printRun, aliases) => {
+    const keys = [...new Set([name, ...(aliases || [])].map(_ladderKey))];
+    if (keys.some(k => seen.has(k))) return;
+    keys.forEach(k => seen.add(k));
+    list.push({ name, printRun: printRun || null, keys });
+  };
+  if (set.category === 'base' && !(set.parallels || []).some(p => _ladderKey(p.name) === '')) add('Base', null, []);
+  for (const p of set.parallels || []) add(p.name, p.printRun, p.aliases);
+
+  const rungs = (fit && fit.rungs) || {};
+  const anchors = [];
+  for (const k of known) {
+    const r = rungs[k.key];
+    if (r && k.raw > 0) anchors.push(Math.log(k.raw) - Math.log(r.f));
+  }
+  const a = anchors.length ? _medOf(anchors) : null;
+  // The product's own print-run curve, from rungs with a known run.
+  const runOf = new Map(list.filter(e => e.printRun).flatMap(e => e.keys.map(k => [k, e.printRun])));
+  const pts = Object.entries(rungs).filter(([k]) => runOf.has(k))
+    .map(([k, r]) => [Math.log(runOf.get(k)), Math.log(r.f)]);
+  let curve = null;
+  if (pts.length >= 3) {
+    const mx = pts.reduce((s, p) => s + p[0], 0) / pts.length, my = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+    const sxx = pts.reduce((s, p) => s + (p[0] - mx) ** 2, 0);
+    if (sxx > 0) {
+      const slope = pts.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / sxx;
+      if (slope < 0) curve = { slope, icpt: my - slope * mx };   // rarer must cost more
+    }
+  }
+  const ref = fit ? fit.ref : '';
+  const unnumbered = Object.entries(rungs).filter(([k]) => k !== '' && k !== ref && !runOf.has(k)).map(([, r]) => r.f);
+  const round2 = (n) => Math.round(n * 100) / 100;
+
+  const out = [];
+  const used = new Set();
+  for (const e of list) {
+    const sold = known.find(k => e.keys.includes(k.key));
+    const entry = { name: e.name, printRun: e.printRun };
+    if (sold) { used.add(sold); out.push({ ...entry, itemId: sold.itemId, sales: sold.sales }); continue; }
+    if (a == null) continue;
+    const rung = e.keys.map(k => rungs[k]).find(Boolean);
+    let f, lo, hi, basis, n = 0, conf = 'low';
+    if (rung) { f = rung.f; lo = rung.lo; hi = rung.hi; basis = 'ladder'; n = rung.n; conf = n >= 8 ? 'medium' : 'low'; }
+    else if (e.printRun && curve) { f = Math.exp(curve.icpt + curve.slope * Math.log(e.printRun)); lo = 0.6; hi = 1.7; basis = 'print-run'; }
+    else if (!e.printRun && unnumbered.length >= 2) { f = _medOf(unnumbered); lo = 0.6; hi = 1.7; basis = 'unnumbered'; }
+    else continue;
+    const price = Math.exp(a) * f;
+    out.push({ ...entry, estimate: {
+      price: round2(price), low: round2(price * Math.min(1, lo)), high: round2(price * Math.max(1, hi)),
+      method: 'parallel-ladder', basis, confidence: conf, basedOnCards: n,
+      anchors: anchors.length,
+    } });
+  }
+  // A sold parallel the checklist names some other way ("Blue Red White" for
+  // "Red, White and Blue") is still a place to switch to: listed after the
+  // checklist's own, under the name it sold as.
+  for (const k of known) {
+    if (!used.has(k) && k.itemId) out.push({ name: k.name || 'Other', printRun: null, itemId: k.itemId, sales: k.sales });
+  }
+  return out;
+}
+
 // ---- /api/card-analysis ----
 // Everything we hold on ONE card, reached by clicking a sold result. Identity
 // is derived server-side from the clicked sale so the client only passes an
@@ -10191,7 +10532,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v16: prices read off the last comp, or the average of comps within three
 // days of it, instead of a median; v15 entries carry the median.
 // v17: chase / mystery pack listings are left out, so v16 entries carry them.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v17';
+// v18: the payload carries `checklistParallels` (every checklist parallel,
+// sold or estimated off the ladder) — a shape change, the v9 case.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v18';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10940,9 +11283,13 @@ app.get('/api/card-analysis', async (req, res) => {
         // parse the way the rest of this pipeline expects when it is reopened.
         const rep = kept.reduce((best, r) =>
           String(r.sold_date || '') > String(best.sold_date || '') ? r : best, kept[0]);
+        // Its raw price, for anchoring the ladder: a slab's price says little
+        // about where the card's raw copies sit.
+        const raw = kept.filter(r => _gradeBucket(r) === 'Raw').map(r => (r.price_cents || 0) / 100).filter(p => p > 0);
         parallels.push({
           key, name: bucket.name, sales: kept.length, itemId: rep.item_id,
           median: Math.round(prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2),
+          rawMedian: raw.length ? Math.round(_medOf(raw) * 100) / 100 : null,
         });
       }
       // Base first, then by how much actually traded.
@@ -11089,6 +11436,39 @@ app.get('/api/card-analysis', async (req, res) => {
 
     if (explain) for (const r of all) note(r, 'kept', 'matched on every rule');
 
+    // Every parallel the checklist lists for this card: the sold ones to
+    // switch to, the rest priced off the product's parallel ladder. Only where
+    // the clicked sale's own parallel is known — there is no rung to stand on
+    // otherwise — and not for autographs and relics, whose ladders are their
+    // own and not built yet: they list what sold.
+    let checklistParallels = null;
+    if (seedKey.known && seedProductId) {
+      try {
+        const set = _checklistSetFor(await _checklistProduct(seedProductId), {
+          player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset: seedSubsetResolved,
+        });
+        if (set) {
+          const rawG = grades.find(g => g.label === 'Raw');
+          const known = [
+            { key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
+              raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null },
+            ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales, raw: p.rawMedian })),
+          ];
+          const ladder = seedKind ? null : await _parallelLadder();
+          const fit = ladder && ladder.products ? ladder.products[seedProductId] : null;
+          checklistParallels = _checklistParallels(set, known, fit);
+          if (checklistParallels) {
+            // The one on screen, marked, so the picker can select it.
+            const cur = checklistParallels.find(e => e.itemId === itemId);
+            if (cur) cur.current = true;
+            else checklistParallels = null;   // the checklist and the sale disagree on what this is
+          }
+        }
+      } catch (err) {
+        console.error('[card-analysis] checklist parallels unavailable:', err && err.message);
+      }
+    }
+
     const dates = all.map(r => r.sold_date).filter(Boolean).sort();
     const payload = {
       available: true,
@@ -11118,6 +11498,9 @@ app.get('/api/card-analysis', async (req, res) => {
       // and when the clicked sale's own parallel could not be read at all —
       // there is no key to be "other" than.
       parallels,
+      // The checklist's full list for this card, sold or estimated
+      // (_checklistParallels). Null where the card could not be placed.
+      checklistParallels,
       identity: {
         parallel: seedKey.known
           ? (seedKey.key === '' ? 'Base' : (seedName || null))
@@ -14898,7 +15281,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _computeParallelLadder, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
