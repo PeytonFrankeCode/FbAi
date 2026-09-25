@@ -10996,7 +10996,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v24: card-kind reads serial stamps ("8/8", "12/99", "#3/10"), and a stamp
 // beats a "1/1" said beside it, so v23 entries split a /8 sold as "8/8 1/1"
 // from its own card and grouped a "12/99" with the unnumbered base.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v24';
+// v25: the checklist's print run for the parallel outranks a title's "1/1"
+// or its silence (see the print-run pass).
+const CARD_IDENTITY_VERSION = 'cardanalysis:v25';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11650,13 +11652,42 @@ async function _cardAnalysisRoute(req, res) {
     // So this only ever separates when BOTH sides state a run and the runs
     // differ. An unstated run merges, which is exactly where those sales sit
     // today — no regression, and no new false splits.
+    //
+    // The checklist has the last word where it knows the parallel. Sellers
+    // write "1/1" for the last copy of a run, or for any card they want to
+    // sound rare — a Green Sparkle is /8 whatever its title says — and they
+    // leave a run off as often as not. So where the checklist lists this
+    // parallel with a run: a title claiming 1/1 is read as that run, and so is
+    // a title stating none, which would otherwise count as unnumbered and
+    // split the card from its own stamped sales. A title stating a different
+    // real run is still believed: that is more likely a different card than
+    // a seller's flourish.
     let excludedOtherPrintRun = 0;
+    const checklistRun = await (async () => {
+      if (!seedKey.known || !seedKey.key || !seedProductId || !pi) return null;
+      try {
+        const subset = _subsetKey(resolveSubsetAliased(pi, seed.title,
+          { productId: seedProductId, player: seed.player, cardNumber: seed.card_number }, iAliases).subset);
+        const set = _checklistSetFor(await _checklistProduct(seedProductId), {
+          player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset,
+        });
+        const k = _ladderKey(seedKey.key);
+        const par = set && (set.parallels || []).find(p => [p.name, ...(p.aliases || [])].some(n => _ladderKey(n) === k));
+        return par && par.printRun > 0 ? par.printRun : null;
+      } catch (_) { return null; }
+    })();
+    const runOf = (title, isSeed) => {
+      const run = _printRun(String(title || ''));
+      if (!checklistRun) return run;
+      if (run === 1 && checklistRun !== 1) return checklistRun;
+      return run == null && isSeed ? checklistRun : run;
+    };
+    const seedRun = runOf(seed.title, true);
     {
-      const seedRun = _printRun(String(seed.title || ''));
       // An unnumbered card has no numbered copies: a /275 is a different card
       // however the rest of its title reads.
       const kept = all.filter(r => {
-        const run = _printRun(String(r.title || ''));
+        const run = runOf(r.title, false);
         return seedRun != null ? (run == null || run === seedRun) : run == null;
       });
       excludedOtherPrintRun = all.length - kept.length;
@@ -12038,7 +12069,7 @@ async function _cardAnalysisRoute(req, res) {
         otherSubsets: excludedOtherSubset,
         // The print run this card is, and how many sales of the same card at a
         // DIFFERENT run were kept out. null means no run was stated.
-        printRun: _printRun(String(seed.title || '')),
+        printRun: seedRun,
         otherPrintRuns: excludedOtherPrintRun,
         // Jumbo / oversized: whether this card is one, and how many sales of
         // the other size were kept out.
@@ -12066,7 +12097,7 @@ async function _cardAnalysisRoute(req, res) {
           read: {
             parallelKey: seedKey.key, parallelFrom: seedKey.from,
             kind: seedKind || 'base',
-            printRun: _printRun(String(seed.title || '')),
+            printRun: seedRun,
           },
         },
         identity: payload.identity,
