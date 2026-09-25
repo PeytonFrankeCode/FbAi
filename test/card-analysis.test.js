@@ -180,6 +180,16 @@ sale('k7', { title: '2017 Panini Prizm Kyler Stone #301 RC', price: 90, day: -5,
 sale('k8', { title: '2017 Panini Prizm Kyler Stone #301 RC PSA 10', price: 60, day: -10, grader: 'PSA', grade: '10', ...KS });
 sale('k9', { title: '2017 Panini Prizm Kyler Stone #301 RC PSA 10', price: 62, day: -3, grader: 'PSA', grade: '10', ...KS });
 sale('k10', { title: '2017 Panini Prizm Kyler Stone #301 RC GEM MT 10', price: 58, day: -2, ...KS });
+// ---- An insert whose name sits in the parallel column ------------------
+// The collector files 2025 Donruss Downtown under parallel "Downtown". The
+// rows used to be fetched without that column, so the seed read "Downtown"
+// and its own row read base: an insert with 27 sales showed none. "SP",
+// "SSP" and "CASE HIT" are rarity, and "Downtown!" is "Downtown".
+const CW = { player: 'Cam Ward', number: '12', parallel: 'Downtown' };
+sale('w1', { title: '2025 Panini Donruss Cam Ward Downtown! SP #12 Titans PSA 10 GEM MINT', price: 684, day: -6, grader: 'PSA', grade: '10', ...CW });
+sale('w2', { title: '2025 Panini Donruss - Downtown! Cam Ward #12 (RC) CASE HIT SSP!!', price: 475, day: -5, ...CW });
+sale('w3', { title: 'Panini 2025 Donruss Football Downtown Insert Rookie Cam Ward #12 Titan', price: 449, day: -4, ...CW });
+sale('w4', { title: '2025 Panini Donruss - Downtown! Cam Ward #12 (RC)', price: 285, day: -3, ...CW });
 sale('n1', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 14, day: -21, player: 'Dalvin Cook' });
 sale('n2', { title: '2017 Panini Prizm Dalvin Cook #8 (RC)', price: 16, day: -12, player: 'Dalvin Cook' });
 sale('n3', { title: '2017 Panini Prizm Instant Impact Dalvin Cook #8', price: 190, day: -19, player: 'Dalvin Cook' });
@@ -383,6 +393,13 @@ const rawTitles = (d) => {
       `raw ${raw}, suspected ${ids.join(',') || 'none'}, series ${bucketNames(k).join(' | ')}`);
     check('  ...and a title naming the label, not the grader, is graded too',
       !!bucket(k, 'Graded (ungraded number)'), bucketNames(k).join(' | '));
+  }
+
+  for (const seedId of ['w1', 'w4']) {
+    const w = await call(`/api/card-analysis?itemId=${seedId}`);
+    const ids = [...new Set((w.grades || []).flatMap(g => g.recent.map(x => String(x.itemUrl).split('/').pop())))].sort();
+    check(`an insert filed under its parallel column finds all its sales (opened on ${seedId})`,
+      ids.join(',') === 'w1,w2,w3,w4', `grouped ${ids.join(',') || 'nothing'} (${w.reason || JSON.stringify(w.identity || {})})`);
   }
 
   const plain = await call('/api/card-analysis?itemId=n1');

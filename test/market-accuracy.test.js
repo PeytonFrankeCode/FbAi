@@ -143,6 +143,14 @@ const check = (label, ok, detail) => {
     check(`market index recovers a ${drift > 0 ? '+' : ''}${drift}% trend`, within,
           r.available ? `reported ${got > 0 ? '+' : ''}${got}% on ${built.sales} sales, matched=${r.matchedCards}`
                       : `FAILED: ${r.reason}`);
+    // A week is drawn a day at a time, not as one step: two dots and a line
+    // said nothing the headline percentage did not.
+    if (drift === 0) {
+      const w = await (await fetch(`http://127.0.0.1:${PORT}/api/market-index?days=7`)).json();
+      const pts = (w.series || []).length;
+      check('  ...and the 7-day view has a point for each day', w.available && pts >= 7,
+        w.available ? `${pts} points` : `FAILED: ${w.reason}`);
+    }
     // The bug this file exists for: a market full of single-sale cards must
     // still pair up.
     // The itemised basket is what makes the number auditable, so it has to
