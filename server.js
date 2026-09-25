@@ -3357,13 +3357,14 @@ function parsePrintRunFromTitle(title) {
   if (!title) return null;
   const s = String(title);
   const t = s.toLowerCase();
-  if (/\b1\s*\/\s*1\b/.test(s) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
-  const frac = s.match(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/);
-  if (frac) {
+  // A serial stamp over more than one ("8/8") is what the card says, and
+  // beats a "1/1" beside it: the last of eight sold as a one-of-one.
+  for (const frac of s.matchAll(/\b(\d{1,4})\s*\/\s*(\d{1,4})\b/g)) {
     const num = parseInt(frac[1], 10), denom = parseInt(frac[2], 10);
     const looksLikeSeason = num >= 1900 && num <= 2099;
-    if (!looksLikeSeason && denom >= 1 && denom <= 5000) return denom;
+    if (!looksLikeSeason && denom >= 2 && denom <= 5000) return denom;
   }
+  if (/\b1\s*\/\s*1\b/.test(s) || /\b1\s*of\s*1\b/.test(t) || /\bone[-\s]of[-\s]one\b/.test(t)) return 1;
   const m = s.match(/(?:numbered\s*(?:to\s*)?\/?|#\s*\/|\/)\s*(\d{1,4})\b/i);
   if (m) {
     const n = parseInt(m[1], 10);
@@ -10992,7 +10993,12 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v23: a card whose only sales are best offers shows them rather than "no
 // sales", and an unsold parallel is priced off the ladder, not its siblings'
 // median.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v23';
+// v24: card-kind reads serial stamps ("8/8", "12/99", "#3/10"), and a stamp
+// beats a "1/1" said beside it, so v23 entries split a /8 sold as "8/8 1/1"
+// from its own card and grouped a "12/99" with the unnumbered base.
+// v25: the checklist's print run for the parallel outranks a title's "1/1"
+// or its silence (see the print-run pass).
+const CARD_IDENTITY_VERSION = 'cardanalysis:v25';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11003,7 +11009,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = '723e3ea3f1ae';
+const CARD_IDENTITY_FINGERPRINT = '153c5654a3ba';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -11646,13 +11652,42 @@ async function _cardAnalysisRoute(req, res) {
     // So this only ever separates when BOTH sides state a run and the runs
     // differ. An unstated run merges, which is exactly where those sales sit
     // today — no regression, and no new false splits.
+    //
+    // The checklist has the last word where it knows the parallel. Sellers
+    // write "1/1" for the last copy of a run, or for any card they want to
+    // sound rare — a Green Sparkle is /8 whatever its title says — and they
+    // leave a run off as often as not. So where the checklist lists this
+    // parallel with a run: a title claiming 1/1 is read as that run, and so is
+    // a title stating none, which would otherwise count as unnumbered and
+    // split the card from its own stamped sales. A title stating a different
+    // real run is still believed: that is more likely a different card than
+    // a seller's flourish.
     let excludedOtherPrintRun = 0;
+    const checklistRun = await (async () => {
+      if (!seedKey.known || !seedKey.key || !seedProductId || !pi) return null;
+      try {
+        const subset = _subsetKey(resolveSubsetAliased(pi, seed.title,
+          { productId: seedProductId, player: seed.player, cardNumber: seed.card_number }, iAliases).subset);
+        const set = _checklistSetFor(await _checklistProduct(seedProductId), {
+          player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset,
+        });
+        const k = _ladderKey(seedKey.key);
+        const par = set && (set.parallels || []).find(p => [p.name, ...(p.aliases || [])].some(n => _ladderKey(n) === k));
+        return par && par.printRun > 0 ? par.printRun : null;
+      } catch (_) { return null; }
+    })();
+    const runOf = (title, isSeed) => {
+      const run = _printRun(String(title || ''));
+      if (!checklistRun) return run;
+      if (run === 1 && checklistRun !== 1) return checklistRun;
+      return run == null && isSeed ? checklistRun : run;
+    };
+    const seedRun = runOf(seed.title, true);
     {
-      const seedRun = _printRun(String(seed.title || ''));
       // An unnumbered card has no numbered copies: a /275 is a different card
       // however the rest of its title reads.
       const kept = all.filter(r => {
-        const run = _printRun(String(r.title || ''));
+        const run = runOf(r.title, false);
         return seedRun != null ? (run == null || run === seedRun) : run == null;
       });
       excludedOtherPrintRun = all.length - kept.length;
@@ -12034,7 +12069,7 @@ async function _cardAnalysisRoute(req, res) {
         otherSubsets: excludedOtherSubset,
         // The print run this card is, and how many sales of the same card at a
         // DIFFERENT run were kept out. null means no run was stated.
-        printRun: _printRun(String(seed.title || '')),
+        printRun: seedRun,
         otherPrintRuns: excludedOtherPrintRun,
         // Jumbo / oversized: whether this card is one, and how many sales of
         // the other size were kept out.
@@ -12062,7 +12097,7 @@ async function _cardAnalysisRoute(req, res) {
           read: {
             parallelKey: seedKey.key, parallelFrom: seedKey.from,
             kind: seedKind || 'base',
-            printRun: _printRun(String(seed.title || '')),
+            printRun: seedRun,
           },
         },
         identity: payload.identity,

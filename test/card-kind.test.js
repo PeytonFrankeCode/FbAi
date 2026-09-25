@@ -119,6 +119,14 @@ expect([
     ['2025 Prizm Cam Ward RC #14 sold 9/16', null],
     ['2023-24 Topps Chrome Josh Allen #4', null],
     ['Football Card Lot of 24 - Vintage 70s 80s 90s', null],
+    // A serial stamp is the run, and beats a "1/1" said beside it: the last of
+    // eight sold as a one-of-one is still a /8.
+    ['2024 Panini Prizm Troy Franklin Green Sparkle Rookie RC 8/8 1/1 PSA 9 Broncos', 8],
+    ['2017 Prizm Patrick Mahomes II Light Blue RC 32/199', 199],
+    ['2025 Prizm Cam Ward Gold #3/10 RC', 10],
+    // ...but not a date, however serial it looks.
+    ['2025 Prizm Cam Ward RC #14 sold 9/16 1/1', 1],
+    ['2025 Prizm Cam Ward RC 9/16/25', null],
   ];
   const wrong = runs.filter(([t, want]) => printRun(t) !== want);
   check('the print run is read when stated, and refused when it is not',
