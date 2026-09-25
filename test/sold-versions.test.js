@@ -234,5 +234,10 @@ check('the versions container is on the page and styled',
     && /async function performSearch\(query, opts = \{\}\) \{\s*_hideHomeContent\(\);/.test(src));
 }
 
+// The card's sale-history chart draws every sale, even one or two.
+check('the sale-history chart charts a card with a single sale',
+  /if \(!g \|\| !g\.points\.length \|\| typeof Chart === 'undefined'\)/.test(src)
+  && !/g\.points\.length < 3/.test(src));
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sold-versions checks passed');
 process.exit(failures ? 1 : 0);
