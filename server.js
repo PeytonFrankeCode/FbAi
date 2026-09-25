@@ -9120,9 +9120,53 @@ app.get('/api/player-index', async (req, res) => {
   // change to the maths would keep showing the old answer. v5: daily points;
   // v6: a price-level trend instead of the chained index; v7: estimated
   // points. None of them changes MARKET_CALC_SIG, so each needs its own bump.
-  res.json(await _marketCached(`playerindex:v7:${MARKET_CALC_SIG}:${days}:${player.toLowerCase()}`,
-    () => _computePlayerIndex(db, days, player)));
+  res.json(await _playerIndexCached(db, days, player));
 });
+
+// The player index through the same cache the Market tab reads, so a card page
+// adjusting a stale price by it sees the very number the tab shows.
+async function _playerIndexCached(db, days, player) {
+  return await _marketCached(`playerindex:v7:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+    () => _computePlayerIndex(db, days, player));
+}
+
+// ---- A stale card's price, moved by its player's market ----
+//
+// A card that has not sold in over a week is priced at what it last sold for,
+// moved by how its player's market has moved since: the player index level on
+// the day of that last sale against its latest level. The 30-day index covers
+// a sale up to a month back, the 90-day index anything older (from its first
+// level, when the sale is older still). The move is capped like the old trend
+// adjustment, since a player's number is a median over all their cards.
+const MARKET_ADJ_AFTER_DAYS = 7;
+async function _playerMarketAdjuster(db, player, nowDay, oldestFromDay) {
+  if (!player || !(nowDay - oldestFromDay > MARKET_ADJ_AFTER_DAYS)) return null;
+  const idx30 = await _playerIndexCached(db, 30, player);
+  // The 90-day index for a sale older than a month, and for a player the
+  // 30-day index gives no reading for.
+  const idx90 = nowDay - oldestFromDay > 30 || !(idx30 && idx30.available)
+    ? await _playerIndexCached(db, 90, player) : null;
+  return (fromDay) => {
+    const use90 = idx90 && idx90.available && (nowDay - fromDay > 30 || !(idx30 && idx30.available));
+    const idx = use90 ? idx90 : idx30;
+    return idx && idx.available ? _marketRatioFrom(idx.series, fromDay) : null;
+  };
+}
+
+// The player index's move from `fromDay` (the level on or before it, or its
+// first level when the day predates the series) to its latest level, capped.
+function _marketRatioFrom(series, fromDay) {
+  if (!Array.isArray(series) || !series.length) return null;
+  let at = series[0];
+  for (const pt of series) { if (_mkDay(pt.date) <= fromDay) at = pt; else break; }
+  const end = series[series.length - 1];
+  if (!(at.score > 0) || !(end.score > 0)) return null;
+  const raw = end.score / at.score;
+  const lo = 1 - PRICE_TREND_MAX_ADJ, hi = 1 + PRICE_TREND_MAX_ADJ;
+  const ratio = Math.min(hi, Math.max(lo, raw));
+  return { ratio, pct: Math.round((ratio - 1) * 1000) / 10, clamped: raw < lo || raw > hi,
+           fromDate: at.date, throughDate: end.date };
+}
 
 // ---- A player's number: their own cards' prices, first week against last ----
 //
@@ -9812,7 +9856,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // seed is read with, so v12 entries hold "no sales" for inserts that have them.
 // v14: a jumbo / oversized version is its own card, so v13 entries hold
 // case-hit jumbos averaged in with the standard size.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v14';
+// v15: a grade unsold for over a week is priced off its player's market move,
+// so v14 entries carry the old estimate.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v15';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10007,6 +10053,41 @@ function _estimateGrade(list, todayDay, trend) {
     trendPct: Math.round((trend.ratio - 1) * 1000) / 10,
     trendClamped: !!trend.clamped,
     low: round2(ps[0] * trend.ratio), high: round2(ps[ps.length - 1] * trend.ratio),
+    newestSaleDays: staleDays,
+  };
+}
+
+// A grade that has not sold in over MARKET_ADJ_AFTER_DAYS: its recent price
+// (the sales of its last 30 days of trading) moved by the player's market
+// change since its last sale. null when it sold recently or the player has no
+// market number, and the older estimate applies instead.
+function _marketEstimate(list, nowDay, adj) {
+  if (!adj) return null;
+  const priced = list
+    .map(r => ({ day: _mkDay(r.sold_date), price: (r.price_cents || 0) / 100 }))
+    .filter(r => Number.isFinite(r.day) && r.price > 0)
+    .sort((a, b) => b.day - a.day);
+  if (!priced.length) return null;
+  const newest = priced[0].day;
+  const staleDays = nowDay - newest;
+  if (!(staleDays > MARKET_ADJ_AFTER_DAYS)) return null;
+  const m = adj(newest);
+  if (!m) return null;
+  const ps = priced.filter(r => newest - r.day <= 30).map(r => r.price).sort((a, b) => a - b);
+  const base = _median(ps);
+  if (!base) return null;
+  const round2 = (n) => Math.round(n * 100) / 100;
+  return {
+    price: round2(base * m.ratio),
+    method: 'market-adjusted',
+    confidence: staleDays > 90 ? 'low' : 'medium',
+    basedOn: ps.length,
+    unadjustedPrice: round2(base),
+    marketPct: m.pct,
+    marketClamped: m.clamped,
+    marketFrom: m.fromDate,
+    marketThrough: m.throughDate,
+    low: round2(ps[0] * m.ratio), high: round2(ps[ps.length - 1] * m.ratio),
     newestSaleDays: staleDays,
   };
 }
@@ -10552,6 +10633,26 @@ app.get('/api/card-analysis', async (req, res) => {
       trend = _playerTrendRatio((trendRows && trendRows.results) || [], oldestNeeded, newestDay);
     }
 
+    // A grade that has not sold in over a week is priced off its player's
+    // market move since its last sale (_playerMarketAdjuster). "Now" is the
+    // player's newest sale rather than this card's, so a card that simply went
+    // quiet while the player kept trading is the one that gets moved.
+    let marketNowDay = newestDay, marketAdj = null;
+    try {
+      const pn = await db.prepare(
+        'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
+      ).bind(seed.player, NFLDB_MIN_CONFIDENCE).first();
+      if (pn && pn.d && Number.isFinite(_mkDay(pn.d))) marketNowDay = Math.max(newestDay, _mkDay(pn.d));
+      const gradeNewest = Array.from(new Set(all.map(r => _gradeBucket(r)))).map(k =>
+        Math.max(...all.filter(r => _gradeBucket(r) === k).map(r => _mkDay(r.sold_date)).filter(Number.isFinite)));
+      const oldestGradeNewest = Math.min(...gradeNewest.filter(Number.isFinite));
+      if (Number.isFinite(oldestGradeNewest)) {
+        marketAdj = await _playerMarketAdjuster(db, seed.player, marketNowDay, oldestGradeNewest);
+      }
+    } catch (err) {
+      console.error('[card-analysis] player market unavailable:', err && err.message);
+    }
+
     // Split into per-grade series, then reduce each to one point per day so a
     // busy day doesn't outweigh a quiet one on the chart.
     const byGrade = new Map();
@@ -10609,7 +10710,7 @@ app.get('/api/card-analysis', async (req, res) => {
       return {
         label,
         sales: list.length,
-        estimate: _estimateGrade(list, newestDay, gradeTrend),
+        estimate: _marketEstimate(list, marketNowDay, marketAdj) || _estimateGrade(list, newestDay, gradeTrend),
         // The individual sales behind the figure. Capped because a busy grade
         // can run to hundreds and the whole payload is cached in KV.
         recent: list.slice(0, 25).map(r => ({
@@ -14440,7 +14541,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

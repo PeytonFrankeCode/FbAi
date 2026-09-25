@@ -3052,6 +3052,8 @@ function _buildVersionCtx(product, player, query) {
   if (!cards.length) return null;
   return {
     productName: product.name || '',
+    // The searched player, as the Market tab's player index knows them.
+    player,
     year: product.year || '',
     cards,
     playerRe: new RegExp('\\b' + _reEsc(want).replace(/\s+/g, '[\\s-]+') + '\\b', 'g'),
@@ -3306,6 +3308,7 @@ function _buildVersionCard({ v, items }) {
       </div>
       ${histFrom ? '<button type="button" class="version-history-btn">&#128200; Sold history &amp; graph</button>' : ''}
     </div>`;
+  _versionMarketPrice(card, priced, v);
   const histBtn = card.querySelector('.version-history-btn');
   if (histBtn) histBtn.addEventListener('click', (e) => {
     e.stopPropagation();                 // the card itself filters the comps
@@ -3317,6 +3320,75 @@ function _buildVersionCard({ v, items }) {
     if (statsTop && currentParallelFilter !== 'all') statsTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   return card;
+}
+
+// ---- A version that has not sold in over a week ----
+//
+// Priced like the card page prices it (server.js _marketEstimate): its recent
+// price — the median of its sales in the 30 days up to its last one — moved
+// by the player's market since that sale, read off the same player index the
+// Market tab shows. "Now" is the newest sale in these results, so a version
+// that went quiet while the player kept selling is the one that is moved.
+const VERSION_MARKET_AFTER_DAYS = 7;
+const VERSION_MARKET_MAX_ADJ = 0.5;
+const _versionMarketCache = new Map();
+function _versionMarket(player, days) {
+  const key = `${player.toLowerCase()}|${days}`;
+  if (!_versionMarketCache.has(key)) {
+    _versionMarketCache.set(key, fetch(`/api/player-index?${new URLSearchParams({ player, days: String(days) })}`)
+      .then(r => r.ok ? r.json() : null).catch(() => null));
+  }
+  return _versionMarketCache.get(key);
+}
+const _saleDay = (r) => Math.floor(Date.parse(String((r && r.soldDate) || '')) / 86400000);
+// The index knows a player by the name sales carry: the searched spelling
+// first ("Patrick Mahomes"), then the checklist's without its suffix.
+async function _versionMarketIndex(v, stale) {
+  const names = [_versionCtx.player];
+  const own = String((v && v.card && v.card.player) || '');
+  if (own && !own.includes('/')) names.push(own.replace(/\s+(ii|iii|iv|jr\.?|sr\.?)$/i, '').trim());
+  for (const name of [...new Set(names.filter(Boolean))]) {
+    for (const days of stale > 30 ? [90] : [30, 90]) {
+      const idx = await _versionMarket(name, days);
+      if (idx && idx.available && Array.isArray(idx.series) && idx.series.length) return idx;
+    }
+  }
+  return null;
+}
+function _versionMarketPrice(card, priced, v) {
+  if (!_versionCtx || !_versionCtx.player || !priced.length) return;
+  const days = priced.map(_saleDay).filter(Number.isFinite);
+  const nowDay = Math.max(...(currentResults || []).map(_saleDay).filter(Number.isFinite));
+  if (!days.length || !Number.isFinite(nowDay)) return;
+  const newest = Math.max(...days);
+  const stale = nowDay - newest;
+  if (!(stale > VERSION_MARKET_AFTER_DAYS)) return;
+  const recent = priced.filter(r => newest - _saleDay(r) <= 30)
+    .map(r => parseFloat(r.price) || 0).filter(p => p > 0).sort((a, b) => a - b);
+  if (!recent.length) return;
+  const m = recent.length >> 1;
+  const base = recent.length % 2 ? recent[m] : (recent[m - 1] + recent[m]) / 2;
+  const ctxAtCall = _versionCtx;
+  _versionMarketIndex(v, stale).then(idx => {
+    if (_versionCtx !== ctxAtCall || !card.isConnected) return;   // a newer search
+    const series = idx ? idx.series : [];
+    if (!series.length) return;
+    let at = series[0];
+    for (const pt of series) { if (_saleDay({ soldDate: pt.date }) <= newest) at = pt; else break; }
+    const end = series[series.length - 1];
+    if (!(at.score > 0) || !(end.score > 0)) return;
+    const ratio = Math.min(1 + VERSION_MARKET_MAX_ADJ, Math.max(1 - VERSION_MARKET_MAX_ADJ, end.score / at.score));
+    const pct = Math.round((ratio - 1) * 1000) / 10;
+    const priceEl = card.querySelector('.card-price');
+    if (priceEl) priceEl.innerHTML = `$${(base * ratio).toFixed(2)} <span class="version-avg">est. value</span>`;
+    const meta = card.querySelector('.card-meta');
+    if (meta) {
+      const note = document.createElement('span');
+      note.className = 'card-condition version-market-note';
+      note.innerHTML = `last sold ${stale} days ago &middot; market ${pct >= 0 ? '+' : ''}${pct}% since`;
+      meta.appendChild(note);
+    }
+  });
 }
 
 // Resolve the search query to one checklist product and harvest its parallel
@@ -14642,9 +14714,11 @@ const CA_FALLBACK = ['#5ece99', '#a06ff0', '#f2b544', '#7fb3ff', '#e0655f', '#94
 // comps nudged by a player trend are different claims, and the UI shouldn't
 // make them look the same.
 const CA_PRICE_METHODS = {
+  // Not sold in over a week: its last price, moved by the player's market since.
+  'market-adjusted': { label: 'Estimated', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago around $${_caNum(e.unadjustedPrice)}. Moved ${e.marketPct >= 0 ? 'up' : 'down'} ${Math.abs(e.marketPct)}% with this player's market since then.` },
   'recent-sales': { label: 'Recent sales', how: (e) => `Median of ${e.basedOn} sale${e.basedOn === 1 ? '' : 's'} in the last ${_caDaysWord(e.newestSaleDays)}.` },
   'trend-adjusted': { label: 'Estimated', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
-  'stale-sales': { label: 'Last sold', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}, and not enough of this player's other sales to judge how prices have moved since. This is the old price, unadjusted.` },
+  'stale-sales': { label: 'Last sold', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago; this is its most recent price.` },
   'similar-cards': { label: 'Ballpark', how: (e) => `This exact card hasn't sold. Based on ${e.basedOn} sales across ${e.variantCount} other version${e.variantCount === 1 ? '' : 's'} of it — parallels vary a lot, so treat the range as the answer.` },
 };
 
