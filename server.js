@@ -4610,7 +4610,12 @@ const RSI_BASE_TITLE_TEST = `NOT ${_rsiOrTree(RSI_BASE_SIGNALS.map(w => `tw LIKE
 // so the noise per step shrinks with the step and the headline over the period
 // reads about the same. It is whole-market only — scoped to one player a day
 // holds a handful of comparisons, which the tier gate would mostly refuse.
-const RSI_DAILY_MIN_DAYS = 30;
+//
+// From 7 days: a week drawn weekly is two dots and a straight line, which says
+// nothing a single percentage doesn't. Seven daily steps are each clamped to a
+// seventh of the weekly bound (_rsiBucketBounds), thin days are drawn as
+// estimates, and a week too quiet to chain daily falls back to the weekly line.
+const RSI_DAILY_MIN_DAYS = 7;
 function _rsiGeometry(days, daily = false) {
   if (daily && days >= RSI_DAILY_MIN_DAYS) return { bucketDays: 1, points: days, spanDays: days + 1 };
   const bucketDays = Math.max(RSI_MIN_BUCKET_DAYS, Math.round(days / RSI_TARGET_POINTS));
