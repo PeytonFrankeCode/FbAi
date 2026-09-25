@@ -10588,18 +10588,66 @@ const _plNorm = (s) => String(s || '').toLowerCase().replace(/\b(jr|sr|ii|iii|iv
   .replace(/[^a-z]+/g, ' ').trim();
 // The checklist set this card is in: the one naming this player at this number,
 // of the insert the sale resolved to, or else of its kind (base, auto, relic).
-function _checklistSetFor(product, { player, cardNumber, kind, subset }) {
+function _checklistSetFor(product, { player, cardNumber, kind, subset, title }) {
   if (!product || !Array.isArray(product.sets)) return null;
-  const num = String(cardNumber || '').replace(/^#/, '').trim().toLowerCase();
   const pl = _plNorm(player);
-  if (!num || !pl) return null;
-  const holds = (s) => (s.cards || []).some(c => String(c.number || '').toLowerCase() === num
-    && (_plNorm(c.player) === pl || _plNorm(c.player).startsWith(pl + ' ') || pl.startsWith(_plNorm(c.player) + ' ')));
-  const sets = product.sets.filter(holds);
-  if (!sets.length) return null;
-  if (subset) return sets.find(s => _subsetKey(s.name) === subset) || null;
+  if (!pl) return null;
+  const isHim = (c) => _plNorm(c.player) === pl || _plNorm(c.player).startsWith(pl + ' ') || pl.startsWith(_plNorm(c.player) + ' ');
+  const mine = [];
+  for (const set of product.sets) for (const card of set.cards || []) if (isHim(card)) mine.push({ set, card });
+  if (!mine.length) return null;
+
+  // The number, as sellers write it: "393", "#39", "CB-18" (an insert's code
+  // with the checklist's number), "RG-TFN" (a code with no number at all), or
+  // nothing. Only a plain number that is not his in this product rules the
+  // product out; the others narrow what he holds.
+  const flat = (x) => String(x || '').toLowerCase().replace(/-/g, '').replace(/^([a-z]*)0+(?=\d)/, '$1');
+  const raw = String(cardNumber || '').replace(/^#/, '').trim().toLowerCase();
+  let cands = mine;
+  if (raw) {
+    const exact = mine.filter(m => flat(m.card.number) === flat(raw));
+    const code = /^([a-z]+)-?(\d+)$/i.exec(raw);
+    if (exact.length) cands = exact;
+    else if (code) {
+      cands = mine.filter(m => flat(m.card.number) === String(+code[2]));
+      const fits = cands.filter(m => _codeFitsSet(code[1], m.set.name));
+      if (fits.length) cands = fits;
+      if (!cands.length) return null;
+    } else if (!/\d/.test(raw)) {
+      const fits = mine.filter(m => _codeFitsSet(raw.split('-')[0], m.set.name));
+      if (fits.length) cands = fits;
+    } else return null;
+  }
+  const sets = [...new Set(cands.map(m => m.set))];
+  // The insert the title names settles it, whatever its category: "Rookie
+  // Gear" is a relic set whose titles need not say "relic".
+  if (subset) {
+    const named = sets.find(s => _subsetKey(s.name) === subset);
+    if (named) return named;
+    if (raw && /\d/.test(raw)) return null;
+  }
+  if (sets.length === 1) return sets[0];
   const cat = kind === 'auto' ? 'autograph' : kind === 'relic' ? 'memorabilia' : 'base';
-  return sets.find(s => s.category === cat) || null;
+  let list = sets.filter(s => s.category === cat);
+  // A variation set only when the title says so ("Rookie Variations", "VAR").
+  if (list.length > 1) {
+    const wantsVar = /\bvar(iation)?s?\b/i.test(String(title || ''));
+    const v = list.filter(s => /variation/i.test(s.name) === wantsVar);
+    if (v.length) list = v;
+  }
+  // With a number, the first of its category (as before); without one, only
+  // an unambiguous card.
+  return raw ? list[0] || null : (list.length === 1 ? list[0] : null);
+}
+
+// An insert's code against a set's name: its letters in order, starting with
+// the name's first letter — "RG" Rookie Gear, "CB" Color Blast, "DT" Downtown.
+function _codeFitsSet(code, name) {
+  const c = String(code || '').toLowerCase(), n = String(name || '').toLowerCase();
+  if (!c || !n || c[0] !== n[0]) return false;
+  let i = 0;
+  for (const ch of n) if (ch === c[i]) i++;
+  return i >= c.length;
 }
 
 // Every parallel the checklist lists for this card, each either sold (with the
@@ -10998,7 +11046,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // from its own card and grouped a "12/99" with the unnumbered base.
 // v25: the checklist's print run for the parallel outranks a title's "1/1"
 // or its silence (see the print-run pass).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v25';
+// v26: "VAR"/"Variation" are not parallel words, so v25 entries hold
+// variation cards as unreadable.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v26';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11441,7 +11491,10 @@ async function _cardAnalysisRoute(req, res) {
     // the generic suffixes every parallel shares — and whether it is numbered.
     // "SP", "SSP" and "case hit" are how rare a card is, not which parallel:
     // read as parallel words they split one Downtown into three cards.
-    const GENERIC_PAR = new Set(['prizm', 'prizms', 'refractor', 'refractors', 'holo', 'parallel', 'sp', 'ssp', 'case', 'hit']);
+    // "VAR" and "Variation" name the variation set, not a parallel: read as
+    // one, they left "Rookie Variations RC Gold VAR #/10" unreadable.
+    const GENERIC_PAR = new Set(['prizm', 'prizms', 'refractor', 'refractors', 'holo', 'parallel', 'sp', 'ssp', 'case', 'hit',
+                                 'var', 'variation', 'variations']);
     const parWords = (row) => {
       let t = ' ' + _stripGrade(String(row.title || '')).toLowerCase().replace(/[^a-z0-9/ ]+/g, ' ') + ' ';
       for (const src of [seed.player, row.set_name || seed.set_name]) {
@@ -11669,7 +11722,7 @@ async function _cardAnalysisRoute(req, res) {
         const subset = _subsetKey(resolveSubsetAliased(pi, seed.title,
           { productId: seedProductId, player: seed.player, cardNumber: seed.card_number }, iAliases).subset);
         const set = _checklistSetFor(await _checklistProduct(seedProductId), {
-          player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset,
+          player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset, title: seed.title,
         });
         const k = _ladderKey(seedKey.key);
         const par = set && (set.parallels || []).find(p => [p.name, ...(p.aliases || [])].some(n => _ladderKey(n) === k));
@@ -11807,7 +11860,7 @@ async function _cardAnalysisRoute(req, res) {
     const checklistFor = async (current) => {
       if (!seedKey.known || !seedProductId) return null;
       const set = _checklistSetFor(await _checklistProduct(seedProductId), {
-        player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset: seedSubsetResolved,
+        player: seed.player, cardNumber: seed.card_number, kind: seedKind, subset: seedSubsetResolved, title: seed.title,
       });
       if (!set) return null;
       const known = [
