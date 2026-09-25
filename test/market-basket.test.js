@@ -66,8 +66,32 @@ const check = (label, ok, detail) => {
       && !kept.has('2025|donruss optic|jaxson dart|11||'), [...kept].join(' , '));
   }
 
+  // ---- the checklist only ever takes a card OUT ----
+  // Important cards live in products we hold no checklist for, and a
+  // checklist can miss a player's base card. Only a number the checklist lists
+  // for him as an insert / auto / relic, and not as base, is dropped.
+  {
+    const probe = [
+      { card: 'k273', year: '2025', set_name: 'donruss optic', player: 'jaxson dart', card_number: '273' },
+      { card: 'k11', year: '2025', set_name: 'donruss optic', player: 'jaxson dart', card_number: '11' },
+      { card: 'k999', year: '2025', set_name: 'donruss optic', player: 'jaxson dart', card_number: '999' },
+      { card: 'kX', year: '2031', set_name: 'nothing we hold', player: 'jaxson dart', card_number: '7' },
+      { card: 'kNew', year: '2025', set_name: 'donruss optic', player: 'someone unlisted', card_number: '11' },
+    ];
+    const kept = (await S._basketBaseOnly(probe)).map(r => r.card).sort();
+    check('only a number the checklist calls his insert is dropped; the unknown is kept',
+      kept.join(',') === 'k273,k999,kNew,kX', kept.join(','));
+    // The whole-market index gets the same answer through its deny list.
+    const fakeDb = { prepare: () => ({ bind: () => ({ all: async () => ({ results: probe }) }) }) };
+    const deny = await S._marketDenied(fakeDb, '2026-09-21', 30, false);
+    check('  ...and the market index leaves out exactly those cards', JSON.stringify(deny) === '["k11"]', JSON.stringify(deny));
+  }
+
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
   check('the index itself leaves coded numbers out', /card_number NOT GLOB '\*\[A-Za-z\]\*'/.test(src));
+  check('  ...and passes the checklist deny list into the index and basket queries',
+    /_rsiQuery\(db, throughIso, days, '', \[\], 'player', useAlias, daily, deny\)/.test(src)
+    && /FROM pick_keys k JOIN pick_players t ON t\.player_n = k\.player_n\$\{denySql\}/.test(src));
 
   console.log(failures ? `\n${failures} check(s) failed` : '\nall market-basket checks passed');
   process.exit(failures ? 1 : 0);
