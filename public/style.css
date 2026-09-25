@@ -9021,3 +9021,14 @@ body.tour-open { overflow: hidden; }
 .rainbow-tile-price { font-size: 0.7rem; font-weight: 800; color: var(--accent); margin-top: 0.15rem; min-height: 0.9rem; }
 .rainbow-tile-price.est { color: var(--text-secondary); font-weight: 700; }
 .rainbow-value { font-size: 0.78rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
+
+/* An estimate's working, under its recommended price. */
+.ca-workings { margin: 0.6rem 0 0.8rem; padding: 0.8rem 0.95rem; border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md); background: var(--bg-card); font-size: 0.78rem; line-height: 1.5; color: var(--text-secondary); }
+.ca-workings p { margin: 0.35rem 0; }
+.ca-workings strong { color: var(--text-primary); }
+.ca-work-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.3rem; }
+.ca-work-list { margin: 0.2rem 0 0.4rem; padding-left: 1.1rem; }
+.ca-work-list li { margin: 0.15rem 0; }
+.ca-work-name { color: var(--text-primary); font-weight: 600; }
+.ca-work-dim { color: var(--text-muted); }

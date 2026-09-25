@@ -40,6 +40,9 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
   for (const [k, f] of Object.entries(TRUE)) {
     check(`rung "${k || 'base'}" ≈ ${f}×`, fit.rungs[k] && near(fit.rungs[k].f, f, 0.15), fit.rungs[k] && fit.rungs[k].f);
   }
+  check('each rung keeps a few of the comps behind it (the page shows them)',
+    fit.rungs.gold.ex && fit.rungs.gold.ex.length > 0 && fit.rungs.gold.ex.length <= 4
+    && fit.rungs.gold.ex.every(e => e.card && e.p > 0 && e.r > 0), JSON.stringify(fit.rungs.gold.ex && fit.rungs.gold.ex[0]));
   const lone = new Map([['x', new Map([['gold', 100]])]]);
   check('a card sold in one parallel ties nothing', S._fitParallelLadder(lone) === null);
 }
@@ -79,6 +82,10 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
   check('Gold /10 is priced off the ladder: base $100 × 60', gold.estimate && near(gold.estimate.price, 6000, 0.01)
     && gold.estimate.basis === 'ladder' && gold.estimate.confidence === 'medium', JSON.stringify(gold.estimate));
   check('its range brackets the price', gold.estimate.low < gold.estimate.price && gold.estimate.high > gold.estimate.price);
+  const w = gold.estimate.workings;
+  check('its working shows the anchors, the base level and the step, and they multiply out',
+    w && w.anchors.length === 3 && w.anchors.every(a => Math.abs(a.level - 100) < 0.01)
+    && Math.abs(w.level * w.factor - gold.estimate.price) < 0.01, JSON.stringify(w));
   const black = by('Prizm Black Finite');
   check('Black Finite 1/1, off the ladder, is priced off the print-run curve and rarest of all',
     black.estimate && black.estimate.basis === 'print-run' && black.estimate.price > gold.estimate.price
@@ -183,6 +190,9 @@ for (const b of ['Base', 'base rookie', 'RC', '']) check(`"${b}" is base`, S._la
   const wave = pick('Prizm Blue Wave');
   check('Blue Wave /149 is never below the Light Blue /199 that sold at $2,050',
     wave.estimate && wave.estimate.price >= 2050 * 1.1 - 0.01 && wave.estimate.lifted, JSON.stringify(wave.estimate));
+  check('  ...and its working names what it was kept above',
+    wave.estimate.workings.liftedAbove && /Light Blue/.test(wave.estimate.workings.liftedAbove.name)
+    && wave.estimate.workings.liftedAbove.sold === true, JSON.stringify(wave.estimate.workings.liftedAbove));
   check('nor anything rarer below it', ['Prizm Green Scope', 'Prizm Purple Crystals', 'Prizm Red Power', 'Prizm Gold', 'Prizm Black Finite']
     .every(n => !pick(n) || !pick(n).estimate || pick(n).estimate.price >= wave.estimate.price), 'ok');
 
