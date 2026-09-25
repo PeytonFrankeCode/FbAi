@@ -177,6 +177,18 @@ const check = (label, ok, detail) => {
         noimg.body.available ? `${noimgCards.length} cards, all imageUrl=null`
                              : `reason=${noimg.body.reason}`);
 
+  // The page presents the index as the market's reading. How a quiet day was
+  // filled, or how wide the sample had to reach, is the index's business: the
+  // chart draws every point alike and the page says nothing about gaps.
+  {
+    const appSrc = require('fs').readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+    const banned = ['Estimated points', 'hollow dots', 'Wider sample', 'no sales collected',
+      'catching its breath', 'more sales are collected', 'couldn\'t read the sales data', ' · estimated'];
+    const found = banned.filter(w => appSrc.includes(w));
+    check('the market page never tells visitors a point was estimated or data is missing',
+      found.length === 0 && !/p\.estimated \?/.test(appSrc), found.join(', ') || 'none');
+  }
+
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall checks passed');
   process.exit(failures ? 1 : 0);

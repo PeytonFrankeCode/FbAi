@@ -4965,33 +4965,30 @@ async function loadMarketIndex() {
     if (shortHistory) {
       // Distinct from thin repeat sales, and the only one of the two that
       // fixes itself: it just needs more days in the dataset.
-      title = 'Not enough history yet';
-      text = `This view compares ${_mkDays} days against the ${_mkDays} before them, which needs about ${data.daysNeeded} days of sales on record. We have ${data.daysOfHistory}. Try a shorter period &mdash; it will unlock here as the dataset grows.`;
+      title = 'Coming soon for this period';
+      text = `This view compares ${_mkDays} days against the ${_mkDays} before them. Try a shorter period.`;
     } else if (thin) {
-      title = 'Not enough paired sales yet';
-      text = `The index compares each sale with what that same card last sold for, so it needs cards that have sold more than once`
-           + `${_mkPlayer ? `, and ${who} hasn't had enough of those` : ''}.`
-           + `${data.playersInBestStep != null ? ` It found ${data.playersInBestStep} of the ${data.topPlayers || 125} tracked players and needs ${data.minPlayers}.` : ''}`
-           + ` Try a longer period, or check back as more sales are collected.`;
+      title = 'Not enough trading to chart';
+      text = `The index follows cards that sell again and again`
+           + `${_mkPlayer ? `, and ${who}'s cards haven't traded that often over this period` : ''}.`
+           + ` Try a longer period.`;
     } else if (data && data.reason === 'not enough sales for a reliable reading') {
       // A player's number compares their first and last weeks, and one of the
       // two had too few sales to pin down. Saying so beats printing a figure
       // two or three sales could swing by half.
-      title = 'Not enough sales for a reliable number';
-      text = `${who} needs at least ${data.needed || 8} sales days across their cards in both the first and last ${data.windowDays || 7} days of the period`
-           + `${data.firstWindow != null ? ` (it had ${data.firstWindow} and ${data.lastWindow})` : ''}.`
-           + ` Try a longer period, or check back as more sales are collected.`;
+      title = 'Not enough trading to chart';
+      text = `${who}'s cards haven't traded often enough over this period to chart. Try a longer period.`;
     } else if (noPlayer) {
-      title = 'No sales on record';
-      text = `We don't hold any priced sales for ${who} yet.`;
+      title = 'No recent sales';
+      text = `${who}'s cards haven't sold recently.`;
     } else if (data && data.reason === 'market busy') {
       // The server paused heavy queries after the database hit its limit. Say
       // that, rather than the generic failure: it clears on its own.
-      title = 'The market is busy';
-      text = 'Our sales database is catching its breath. This usually clears within a few minutes.';
+      title = 'Market data is refreshing';
+      text = 'Check back in a few minutes.';
     } else {
-      title = 'Market index unavailable';
-      text = 'We couldn\'t read the sales data just now. Try again shortly.';
+      title = 'Market data is refreshing';
+      text = 'Check back in a few minutes.';
     }
     const retry = !data || /unavailable|busy/.test(String(data.reason || ''));
     body.innerHTML = `<div class="market-empty">
@@ -5018,7 +5015,7 @@ async function loadMarketIndex() {
         <div class="market-score-num">${data.score}</div>
         <div class="market-score-side">
           <div class="market-verdict">${v.label}</div>
-          <div class="market-score-note">${up ? '+' : ''}${data.changePct}% ${span}${data.estimated ? ' · estimated' : ''}${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
+          <div class="market-score-note">${up ? '+' : ''}${data.changePct}% ${span}${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
         </div>
       </div>
       <p class="market-score-explain">100 means ${who} is flat. This tracks what cards are <strong>worth</strong>, not how many changed hands &mdash; each card is compared only against ${trend ? 'its own typical price' : 'its own earlier sales'}.</p>
@@ -5077,9 +5074,6 @@ async function loadMarketIndex() {
       <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded raw base cards, matched on year, set and card number. ${trend
         ? `It rests on ${data.matchedCards || 0} card${data.matchedCards === 1 ? '' : 's'} and ${(data.totalObservations || 0).toLocaleString('en-US')} sales across the period.`
         : `A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}.`} Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
-      ${data.thinSteps > 0 ? `<p class="market-warn"><strong>Estimated points.</strong> ${data.thinSteps} point${data.thinSteps === 1 ? '' : 's'} on the chart had no sales collected to measure, so ${data.thinSteps === 1 ? 'it carries' : 'they carry'} the typical move of the days that were measured. ${data.thinSteps === 1 ? 'It is' : 'They are'} drawn as hollow dots.</p>` : ''}
-      ${data.method === 'player-trend' && data.estimated ? `<p class="market-warn"><strong>Estimated.</strong> ${data.shiftedDays > 0 ? `The newest ${data.shiftedDays} day${data.shiftedDays === 1 ? '' : 's'} had too few sales to read, so this runs through ${_mkDateLabel(data.through)}. ` : ''}${data.estimatedPoints > 0 ? `${data.estimatedPoints} point${data.estimatedPoints === 1 ? '' : 's'} reached back beyond ${W} days for enough sales and ${data.estimatedPoints === 1 ? 'is' : 'are'} drawn as hollow dots. ` : ''}Treat it as directional.</p>` : ''}
-      ${data.tier && data.tier !== 'strict' ? `<p class="market-warn"><strong>Wider sample.</strong> There weren't enough exact repeat sales in this period, so the index looked back over a ${data.valueWindow}-day window per card to find them. Treat it as directional.</p>` : ''}
     </div>
   `;
 
@@ -5141,7 +5135,7 @@ function _mkRenderChart(data) {
   }
   if (series.length < 2) {
     canvas.classList.add('hidden');
-    if (empty) { empty.textContent = 'Not enough history yet to draw a trend.'; empty.classList.remove('hidden'); }
+    if (empty) { empty.textContent = 'Not enough trading yet to draw a trend.'; empty.classList.remove('hidden'); }
     return;
   }
   canvas.classList.remove('hidden');
@@ -5161,12 +5155,12 @@ function _mkRenderChart(data) {
         borderWidth: 2,
         // Daily points on the longer periods: 90 dots would read as a bead
         // chain, so the dots shrink as they multiply and hover still finds one.
-        // Estimated points are always drawn, hollow, so an estimate is never
-        // mistaken for a measurement however dense the line.
-        pointRadius: series.map(p => p.estimated ? 3 : (series.length > 60 ? 0 : series.length > 12 ? 1.5 : 3)),
-        pointBackgroundColor: series.map(p => p.estimated ? '#0d1117' : accent),
+        // Every point is drawn the same way; how a thin day was filled is the
+        // index's business, not something the chart presents to the reader.
+        pointRadius: series.length > 60 ? 0 : series.length > 12 ? 1.5 : 3,
+        pointBackgroundColor: accent,
         pointBorderColor: accent,
-        pointBorderWidth: series.map(p => p.estimated ? 1.5 : 1),
+        pointBorderWidth: 1,
         pointHoverRadius: 6,
         tension: series.length > 12 ? 0.15 : 0.25,
         fill: true,
@@ -5199,7 +5193,7 @@ function _mkRenderChart(data) {
     const pt = series[i];
     if (!pt) return '';
     const vs = pt.score >= 100 ? 'above' : 'below';
-    return `<span class="chart-readout-date">${_mkDateLabel(pt.date)}${pt.estimated ? ' · estimated' : ''}</span>`
+    return `<span class="chart-readout-date">${_mkDateLabel(pt.date)}</span>`
       + `<span class="chart-readout-value">Index ${pt.score}</span>`
       + `<span class="chart-readout-note">${Math.abs(Math.round((pt.score - 100) * 10) / 10)}% ${vs} ${data.method === 'player-trend'
           ? `the first ${data.windowDays || 7} days of the period` : `its previous ${data.days} days`}</span>`;
@@ -14750,7 +14744,7 @@ async function loadCardAnalysis(item, opts = {}) {
   if (data && !data.available && data.estimate) {
     _caReset();
     wrap.classList.remove('hidden');
-    if (summaryEl) summaryEl.textContent = 'No sales on record for this exact card';
+    if (summaryEl) summaryEl.textContent = 'No recent sales for this exact card';
     _caRenderPrice(data.estimate);
     return;
   }
