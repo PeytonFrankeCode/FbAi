@@ -125,7 +125,9 @@ check('the junk clause is NOT in the whole-window raw predicate',
   + 'clause back there is what market-index.test catches');
 check('  ...and IS in the basket clause', /see scan/.test(RSI_JUNK_ONLY));
 check('  ...with the list short enough to afford',
-  RSI_JUNK_WORDS.length <= 12,
+  // 13 since "chaser" (chase-pack listings sold on a card's photo): one more
+  // LIKE on the basket query only, never the whole-window aggregate.
+  RSI_JUNK_WORDS.length <= 13,
   `${RSI_JUNK_WORDS.length} patterns — each is another LIKE per row`);
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall junk-title checks passed');

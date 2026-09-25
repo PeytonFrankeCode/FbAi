@@ -1392,6 +1392,26 @@ function saleTypeOf({ bestOffer, listingFormat }) {
   return 'fixed';
 }
 
+// ---- Pack listings: a chase pack is not the card on the photo ----
+//
+// "CHASE PACK", "Chaser Pack #12", "Mystery Pack — hit shown!": the listing
+// shows a card but sells a pack that might contain it, so the price is the
+// pack's, not the card's. Kept out of search, card history and the market.
+//
+// "Chase" is also a name — Ja'Marr Chase, Chase Brown, Chase Young — so a bare
+// "chase" only counts when it is not a player's: not when the sale's own
+// player is a Chase, and not when the title names one. "Mystery" alone stays:
+// "Mystery Rookie" and "Mystery Autograph" are real checklist cards.
+const _PACK_LISTING_RE = /\b(chasers?|chase\s+(packs?|box(es)?|breaks?|bags?)|mystery\s+(packs?|box(es)?|bags?|mailers?))\b/i;
+const _CHASE_NAME_RE = /\bja['’]?\s*marr\s+chase\b|\bjamarr\s+chase\b|\bchase\s+(brown|young|claypool|daniel|edmonds|winovich|lucas|allen|mclaughlin|roullier|cota|stuart|hayden|wilson|jackson|davis|thomas|williams|smith|johnson|harrell|chandler)\b|\b(burrow|joe\s+burrow)\s*[&/+]\s*chase\b|\bchase\s*[&/+]\s*(burrow|higgins)\b/i;
+function _isPackListing(title, player) {
+  const t = String(title || '');
+  if (_PACK_LISTING_RE.test(t)) return true;
+  if (!/\bchase\b/i.test(t)) return false;
+  if (/\bchase\b/i.test(String(player || ''))) return false;
+  return !_CHASE_NAME_RE.test(t);
+}
+
 function mapNflDbSale(r) {
   // Same rule as the analysis buckets: an unparsed grade isn't proof a card
   // was raw, so don't label a likely slab "Ungraded".
@@ -1644,7 +1664,8 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
     console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales, `
       + `${read.toLocaleString('en-US')} rows read, ${elapsed}ms (${source})`);
 
-    const payload = { results: rows.map(mapNflDbSale), total: rows.length };
+    const cards = rows.filter(r => !_isPackListing(r.title, r.player));
+    const payload = { results: cards.map(mapNflDbSale), total: cards.length };
     cachePut(cacheKey, payload, NFLDB_SEARCH_TTL);
     return payload;
   } catch (err) {
@@ -1765,7 +1786,7 @@ async function getArchivedSales(keywords, opts = {}) {
   const filterKey = [opts.grader || '', opts.grade || '', opts.graded == null ? '' : String(opts.graded)].join('|');
   try {
     const rec = await archiveGet(_soldArchiveKey(cleaned, filterKey));
-    return (rec && Array.isArray(rec.sales)) ? rec.sales : [];
+    return (rec && Array.isArray(rec.sales)) ? rec.sales.filter(x => !_isPackListing(x && x.title)) : [];
   } catch (_) {
     return [];
   }
@@ -4434,6 +4455,9 @@ const RSI_JUNK_WORDS = [
   'you pick', 'pick your', 'choose your',
   'case break', 'break spot',
   'lot of', 'repack', 'mystery',
+  // A pack sold on a card's photo, not the card. Only "chaser": "chase pack" as
+  // a substring also reads "Ja'Marr Chase pack fresh", a real card.
+  'chaser',
   'reprint', 'custom made', 'aceo',   // fan art and reproductions, not cards
 ];
 
@@ -9860,7 +9884,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // so v14 entries carry the old estimate.
 // v16: prices read off the last comp, or the average of comps within three
 // days of it, instead of a median; v15 entries carry the median.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v16';
+// v17: chase / mystery pack listings are left out, so v16 entries carry them.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v17';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -10411,7 +10436,8 @@ app.get('/api/card-analysis', async (req, res) => {
     // on announcing itself as the card it had been moved out of.
     const seedName = (_saleParallel(seed, pi, pAliases, sOverrides, seed.player) || {}).parallel
                      || String(seed.parallel == null ? '' : seed.parallel).trim();
-    const candidates = (rows && rows.results) || [];
+    // Pack listings are not this card, whatever the photo shows (_isPackListing).
+    const candidates = ((rows && rows.results) || []).filter(r => !_isPackListing(r.title, r.player));
     // The same base card in its OTHER parallels, bucketed as they are excluded.
     // These rows were already read and identified; throwing them away wastes
     // the only expensive part of this request, and they are precisely what
@@ -14566,7 +14592,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _isPackListing, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
