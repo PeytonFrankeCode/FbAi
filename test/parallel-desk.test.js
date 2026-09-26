@@ -53,7 +53,10 @@ const add = (title, times, player, year, set) => {
 // checked, not just the membership.
 add('2017 Panini Prizm Patrick Mahomes II #269 Aqua Wave Speckle', 9);
 add('2017 Panini Prizm Patrick Mahomes II #269 Aqua Wave Speckle RC', 5);
-add('2017 Panini Prizm Patrick Mahomes II #269 Kansas City Chiefs', 7);
+add('2017 Panini Prizm Patrick Mahomes II #269 Chiefs Kingdom', 7);
+// A full team name is read past on its own now (parallel-index-core.js), so
+// it never needs a decision.
+add('2017 Panini Prizm Patrick Mahomes II #269 Kansas City Chiefs', 3);
 // Already readable — must never reach the queue.
 add('2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm', 20);
 
@@ -147,8 +150,10 @@ const post = async (p, body) => {
   // ---- what belongs in it, and what must not -----------------------------
   check('an unreadable phrase reaches the queue',
     phrases.includes('aqua wave speckle'), phrases.join(' | ') || 'empty');
-  check('  ...and so does a team name, which is the commonest case',
-    phrases.includes('kansas city chiefs'), phrases.join(' | '));
+  check('  ...and so does a seller phrase the reader does not know',
+    phrases.includes('chiefs kingdom'), phrases.join(' | '));
+  check('  ...but a full team name no longer does: the reader reads past it',
+    !phrases.includes('kansas city chiefs'), phrases.join(' | '));
   // THE LIMIT OF THE LEVERAGE, asserted so it is not overclaimed.
   //
   // The reader gives up on the WHOLE trailing segment, so "Aqua Wave Speckle"
@@ -213,7 +218,7 @@ const post = async (p, body) => {
   // only one had the identity check.
   {
     const ok = await post(`/api/review/parallels?key=${KEY}`,
-      { phrase: 'kansas city chiefs', parallel: '' });
+      { phrase: 'chiefs kingdom', parallel: '' });
     check('"not a parallel" is a decision the desk accepts',
       ok.status === 200 && ok.body.parallel === '',
       `HTTP ${ok.status} ${JSON.stringify(ok.body)}`);
@@ -221,7 +226,7 @@ const post = async (p, body) => {
     const { resolveParallelAliased } = srv;
     const pi = await srv.parallelIndex();
     const aliases = await srv.parallelAliases();
-    const title = '2017 Panini Prizm Patrick Mahomes II #269 Kansas City Chiefs';
+    const title = '2017 Panini Prizm Patrick Mahomes II #269 Chiefs Kingdom';
 
     const before = pi.resolveParallel(title, {});
     const after = resolveParallelAliased(pi, title, {}, aliases);
@@ -240,7 +245,7 @@ const post = async (p, body) => {
     const q2 = await get(`/api/review/parallels?key=${KEY}&days=90`);
     const still = (q2.queue || []).map(g => g.phrase);
     check('a decided phrase drops out of the queue',
-      !still.includes('kansas city chiefs'), still.join(' | ') || 'empty');
+      !still.includes('chiefs kingdom'), still.join(' | ') || 'empty');
     check('  ...and is counted as work already done',
       q2.salesAlreadyFixed === 7 && q2.decisionsInPlace === 1,
       `${q2.salesAlreadyFixed} sales fixed, ${q2.decisionsInPlace} decision(s)`);
@@ -338,10 +343,10 @@ const post = async (p, body) => {
 
   // ---- and a decision can be taken back ----------------------------------
   {
-    await post(`/api/review/parallels?key=${KEY}`, { phrase: 'kansas city chiefs' });
+    await post(`/api/review/parallels?key=${KEY}`, { phrase: 'chiefs kingdom' });
     const q3 = await get(`/api/review/parallels?key=${KEY}&days=90`);
     check('a decision can be undone',
-      (q3.queue || []).map(g => g.phrase).includes('kansas city chiefs'),
+      (q3.queue || []).map(g => g.phrase).includes('chiefs kingdom'),
       `${q3.decisionsInPlace} decision(s) left`);
   }
 
