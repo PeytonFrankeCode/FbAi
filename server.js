@@ -4994,8 +4994,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
           AND (s.sold_date > ? OR (k.card, s.sold_date) IN (SELECT card, sold_date FROM pre_days))
      ),
      base AS MATERIALIZED (
-       SELECT sold_date, SUM(price_cents) AS s, COUNT(*) AS c, player_n, card${labels === 'player' ? `,
-              MAX(display) AS player` : labels ? `,
+       SELECT sold_date, SUM(price_cents) AS s, COUNT(*) AS c, player_n, card${labels ? `,
               MAX(display) AS player, MAX(year) AS year, MAX(set_name) AS set_name,
               MAX(card_number) AS card_number, MAX(parallel) AS parallel, MAX(grader) AS grader,
               MAX(grade) AS grade${hasImage ? `,
@@ -5035,8 +5034,7 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
   const CARD = _cardKeySql(PLAYER);
   return db.prepare(
-    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny,
-                          labels: unit === 'player' ? 'player' : false })},
+    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -5092,11 +5090,21 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
          FROM usable
      )${unit === 'player' ? `,
      -- How each player is written, for boards that name them (the moves of
-     -- the market's own players, _marketPlayerMoves). Read once per player.
+     -- the market's own players, _marketPlayerMoves): the spelling most of
+     -- their sales use. Not MAX(): that is the alphabetically last, and a bulk
+     -- seller's "Jerry Rice / Set Break / Vg-Vgex Gmcards" sorts after "Jerry
+     -- Rice". Read from the chosen cards' spellings, a few per player.
      -- Materialized, and joined once to the finished rows: as a subquery per
-     -- row it re-grouped \`base\` for every row, and a 90-day build went from
+     -- row it was re-evaluated for every row, and a 90-day build went from
      -- under a second to forty.
-     names AS MATERIALIZED (SELECT player_n, MAX(player) AS label FROM base GROUP BY player_n)` : ''}
+     names AS MATERIALIZED (
+       SELECT player_n, label FROM (
+         SELECT player_n, display AS label,
+                ROW_NUMBER() OVER (PARTITION BY player_n
+                                   ORDER BY SUM(c) DESC, LENGTH(display), display) AS rn
+           FROM pick_tuples GROUP BY player_n, display)
+        WHERE rn = 1
+     )` : ''}
      ${unit === 'player' ? 'SELECT g.*, nm.label FROM (' : ''}
      SELECT bucket, p, cnt AS n,
             -- The two middle ratios (the same row when cnt is odd), combined in
@@ -5265,7 +5273,7 @@ function _basketMove(dayPrices, points) {
 function _rsiBasketRows(rows, days, bucketDays, points) {
   const out = [];
   for (const r of (rows || [])) {
-    const parts = [r.year, r.set_name, r.player].filter(Boolean).map(String);
+    const parts = [r.year, r.set_name, _boardPlayerName(r.player)].filter(Boolean).map(String);
     if (r.card_number) parts.push(`#${String(r.card_number).replace(/^#/, '')}`);
     // Every card here is a base card, so "Base" says nothing; a Rated Rookie
     // is worth naming, since that is how collectors know the card.
@@ -9376,6 +9384,17 @@ const _marketIndexKey = (days) => `marketindex:v7:${MARKET_CALC_SIG}:${days}`;
 // within each step already keeps one hot card from carrying a player whose
 // other cards sat still.
 const MOVERS_PLAYER_MIN_OBS = 12;
+
+// A player's name as a board shows it. Sellers stuff the player field — "Earl
+// Campbell / Houston Oilers", "Jerry Rice / Set Break / Vg-Vgex Gmcards" —
+// and what follows the first " / " is never the player these boards are
+// about: they key on one player, so the name is the part before it.
+function _boardPlayerName(s) {
+  const name = String(s || '').trim();
+  const head = name.split(/\s+\/\s+/)[0].trim();
+  return head.length >= 2 ? head : name;
+}
+
 function _marketPlayerMoves(rows, days, daily) {
   const { bucketDays, points } = _rsiGeometry(days, daily);
   const bounds = _rsiBucketBounds(bucketDays);
@@ -9390,7 +9409,7 @@ function _marketPlayerMoves(rows, days, daily) {
     if (!Number.isFinite(growth) || growth <= 0) continue;
     growth = Math.min(bounds.hi, Math.max(bounds.lo, growth));
     let e = by.get(r.p);
-    if (!e) by.set(r.p, e = { label: r.label || r.p, log: 0, steps: 0, obs: 0 });
+    if (!e) by.set(r.p, e = { label: _boardPlayerName(r.label || r.p), log: 0, steps: 0, obs: 0 });
     e.log += Math.log(growth);
     e.steps++;
     e.obs += Number(r.n) || 0;
@@ -9903,7 +9922,11 @@ const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
 // v8: the base-card filter recognises X-Fractors and ~35 more parallel and
 // insert names, which the movers boards share.
 // v9: Players on the move is read from the market index (playerMoves).
-const SOLD_STATS_KEY = (days) => `soldstats:v9:${days}`;
+// v10: player names without what a seller wrote after " / ".
+const SOLD_STATS_KEY = (days) => `soldstats:v10:${days}`;
+// The version before, served on a cold key like the last good copy: until a
+// build has stored one, it is the last good copy.
+const SOLD_STATS_PREV_KEY = (days) => `soldstats:v9:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -10081,8 +10104,8 @@ async function _computeSoldStats(db, days) {
     // Rookie is worth naming, since that is how collectors know the card.
     const _moverPar = (p) => (/rated rookie/i.test(String(p || '')) ? 'Rated Rookie' : '');
     const moverRows = ((movers && movers.results) || []).map(r => ({
-      player: r.player,
-      name: [r.year, r.set_name, r.player, _moverPar(r.parallel), r.card_number ? `#${r.card_number}` : '']
+      player: _boardPlayerName(r.player),
+      name: [r.year, r.set_name, _boardPlayerName(r.player), _moverPar(r.parallel), r.card_number ? `#${r.card_number}` : '']
         .filter(Boolean).join(' ').trim() || r.title,
       kind: 'base',
       sales: r.n,
@@ -10091,7 +10114,7 @@ async function _computeSoldStats(db, days) {
       changePct: Math.round(((r.recent_cents - r.older_cents) / r.older_cents) * 1000) / 10,
       imageUrl: r.image_url || null,
       itemUrl: linkOf(r),
-      query: [r.year, r.set_name, r.player, _moverPar(r.parallel)]
+      query: [r.year, r.set_name, _boardPlayerName(r.player), _moverPar(r.parallel)]
         .filter(Boolean).join(' ').trim() || r.title,
     })).filter(m => Number.isFinite(m.changePct));
 
@@ -10108,7 +10131,10 @@ async function _computeSoldStats(db, days) {
       const m = await _marketCached(_marketIndexKey(d), () => _computeMarketIndex(db, d)).catch(() => null);
       if (m && m.playerMoves && (m.playerMoves.players || []).length) { market = m; pm = m.playerMoves; pmDays = d; break; }
     }
-    const playerMovers = (pm && pm.players) || [];
+    // Named here as well as in the market build, so boards built from a
+    // market copy cached before the names were cleaned are clean too.
+    const playerMovers = ((pm && pm.players) || [])
+      .map(p => ({ ...p, player: _boardPlayerName(p.player), query: _boardPlayerName(p.query) }));
 
     const payload = {
       available: priced > 0,
@@ -10235,7 +10261,7 @@ app.get('/api/sold-stats', async (req, res) => {
   // a visitor's request arrived in that window (a phone gives up long before
   // 40s). So the last good boards are served at once, whatever version
   // built them, and the new ones are built behind the visitor.
-  const last = await cacheGet(SOLD_STATS_LAST_KEY(days));
+  const last = await cacheGet(SOLD_STATS_LAST_KEY(days)) || await cacheGet(SOLD_STATS_PREV_KEY(days));
   if (last && last.available) {
     if (!_soldStatsInFlight.has(days)) {
       const p = _soldStatsBuild(db, days)

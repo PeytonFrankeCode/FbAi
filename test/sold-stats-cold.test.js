@@ -21,13 +21,17 @@ const ins = db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cent
   card_number, grader, grade, confidence, best_offer) VALUES (?,?,?,?,?,'2023','Prizm','',?,'','',0.9,0)`);
 let n = 0;
 // Thirty-five days of history: enough for a 30-day market, not a 90-day one.
-for (const [player, perDay] of [['Steady Climber', 0.01], ['Slow Fader', -0.005]]) {
+// A seller who writes the team (or their shop) into the player field.
+for (const [player, perDay] of [['Steady Climber', 0.01], ['Slow Fader', -0.005], ['Earl Campbell / Houston Oilers', 0.012]]) {
   for (let c = 1; c <= 4; c++) {
     for (let d = -35; d <= -1; d++) {
       ins.run(`s${n++}`, iso(d), `2023 Prizm ${player} #${c}`, Math.round(4000 * Math.pow(1 + perDay, d + 35)), player, String(c));
     }
   }
 }
+// A minority spelling of a player, which sorts last alphabetically: the
+// label must be the spelling most of their sales use, not MAX().
+for (let d = -30; d <= -2; d += 7) ins.run(`m${n++}`, iso(d), '2023 Prizm Steady Climber #1', 4000, 'steady CLIMBER.', '1');
 db.exec(`INSERT INTO daily SELECT sold_date, COUNT(*), COUNT(price_cents), SUM(price_cents) FROM sales GROUP BY sold_date`);
 
 let d1Queries = 0;
@@ -55,7 +59,7 @@ const check = (label, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? '  — ' + detail : ''}`);
   if (!ok) failures++;
 };
-const currentKey = (days) => [...store.keys()].find(k => new RegExp(`^soldstats:v\\d+:${days}$`).test(k));
+const currentKey = (days) => [...store.keys()].find(k => new RegExp(`^soldstats:v\\d+:${days}$`).test(k) && k !== `soldstats:v9:${days}`);
 const waitFor = async (fn, ms = 20000) => { const t = Date.now(); while (!fn() && Date.now() - t < ms) await new Promise(r => setTimeout(r, 50)); return fn(); };
 
 (async () => {
@@ -72,6 +76,14 @@ const waitFor = async (fn, ms = 20000) => { const t = Date.now(); while (!fn() &
   check('  ...and become the new last good copy', !JSON.parse(store.get('soldstats:last:30')).marker);
   const r2 = await call('/api/sold-stats?days=30');
   check('the next visitor gets the new boards', r2.available === true && !r2.marker && !r2.refreshing);
+
+  // ---- a key change: the previous version's boards stand in ----
+  store.delete('soldstats:last:30'); store.delete(currentKey(30));
+  store.set('soldstats:v9:30', JSON.stringify({ available: true, days: 30, marker: 'previous version', generatedAt: new Date().toISOString() }));
+  const rp = await call('/api/sold-stats?days=30');
+  check('after a key change, the previous version is served while the new one builds', rp.marker === 'previous version' && rp.refreshing === true);
+  await waitFor(() => currentKey(30) && store.has('soldstats:last:30'));
+  store.delete('soldstats:v9:30');
 
   // ---- nothing at all: built inline, both copies stored ----
   const r7 = await call('/api/sold-stats?days=7');
@@ -98,6 +110,19 @@ const waitFor = async (fn, ms = 20000) => { const t = Date.now(); while (!fn() &
     JSON.stringify(b && { days: b.days, considered: b.playersConsidered }));
   const s30 = await call('/api/sold-stats?days=30');
   check('  ...while a period it has uses its own', s30.playerMovesBasis && s30.playerMovesBasis.days === 30);
+
+  // ---- names as the boards show them ----
+  const pNames = (s30.playerMovers || []).map(p => p.player);
+  check('a player is named by the spelling most of their sales use', pNames.includes('Steady Climber') && !pNames.some(x => /CLIMBER/.test(x)),
+    pNames.join(' | '));
+  check('  ...without what a seller wrote after " / "', pNames.includes('Earl Campbell') && !pNames.some(x => / \/ /.test(x)),
+    pNames.join(' | '));
+  const cNames = (s30.cardMovers || []).map(c => c.name);
+  check('card names drop it too', cNames.some(x => /Earl Campbell #/.test(x)) && !cNames.some(x => /Oilers/.test(x)),
+    cNames.filter(x => /Campbell/.test(x)).join(' | ') || cNames.slice(0, 3).join(' | '));
+  const css = fs.readFileSync(path.join(__dirname, '..', 'public', 'style.css'), 'utf8');
+  check('board names wrap inside their column on iPhones (button text does not wrap in Safari)',
+    /\.st-name \{[^}]*white-space: normal/.test(css) && /\.mp-row-name \{[^}]*white-space: normal/.test(css));
 
   // ---- the page retries rather than hiding on the first failure ----
   const app_js = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
