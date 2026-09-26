@@ -1605,7 +1605,11 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   // Serial stamps are handled by the callers' print-run logic, not by matching
   // "/5" as a title substring.
   const cleaned = String(keywords).replace(/\/\d{1,4}(?![0-9])/g, ' ').replace(/\s+/g, ' ').trim();
-  const terms = cleaned.split(/\s+/).filter(t => t.length > 1).slice(0, 8);
+  // "Base" is what a searcher says and almost no seller writes: required as a
+  // title word, "Mahomes Prizm Base" (a popular-search chip) found next to
+  // nothing. It is a filter, not a word — matchSoldListings and tagSameCard
+  // keep the parallels out.
+  const terms = cleaned.split(/\s+/).filter(t => t.length > 1 && !/^base$/i.test(t)).slice(0, 8);
   if (terms.length === 0) return { results: [], total: 0 };
 
   // Cache on our own data, which is a different question from caching the paid
@@ -3308,6 +3312,9 @@ async function tagSameCard(results, query) {
   const pAliases = await parallelAliases().catch(() => ({}));
   const sOverrides = await saleOverrides().catch(() => ({}));
   const seed = _identityOf(query, pi, player, pAliases);
+  // A search that says "base" asks for the base card: its parallels are other
+  // cards, not "every parallel" as a search naming none would mean.
+  if (seed.parallel == null && /\bbase\b/i.test(String(query))) seed.parallel = '';
   const strict = await _isCatalogued(query, year);
 
   // Too vague to split on. With no parallel read AND no kind AND no print run,
@@ -5156,7 +5163,10 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
 // A representative raw spelling of each field is carried through with MAX(),
 // because grouping happens on the normalised form and the normalised form is
 // lower-cased and stripped of punctuation — no use as a label.
-async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false, deny = []) {
+// `follow` (a player's own list): the cards their chart follows — parallels
+// recorded in the column and graded copies, each its own card — rather than
+// the market's raw base cards. See _playerTrendQuery.
+async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = '', extraBinds = [], hasImage = false, useAlias = false, deny = [], follow = false) {
   const noOffer = await _noBestOfferSql(db);
   const { bucketDays, spanDays } = _rsiGeometry(days);
   const sinceIso = _mkIso(_mkDay(throughIso) - spanDays - RSI_MAX_GAP_DAYS);
@@ -5169,7 +5179,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   const PLAYER = useAlias ? `COALESCE(al.canonical, ${P})` : P;
   const JOIN = useAlias ? `LEFT JOIN ${ALIAS_TABLE} al ON al.variant = ${P}` : '';
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
-  const CARD = _cardKeySql(PLAYER);
+  const CARD = follow ? `${_cardKeySql(PLAYER)} || '|' || ${RSI_PAR_KEY_SQL}` : _cardKeySql(PLAYER);
   // The photo comes from the newest sale of that card that carried one. Dates
   // are ISO, so their lexical maximum is also their chronological one — the
   // date is glued on only to rank by, and stripped off again on the way out.
@@ -5178,7 +5188,8 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   const imgLabel = hasImage ? 'MAX(b.dated_image)' : 'NULL';
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
-                          junk: true, labels: true, hasImage, useAlias, deny })},
+                          junk: true, labels: true, hasImage, useAlias, deny,
+                          ...(follow ? { perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true } : {}) })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -8387,8 +8398,9 @@ app.get('/api/market-basket', async (req, res) => {
 // answers (and was kept for two days as a stale fallback).
 // v4: the move splits the card's own trading days, not the calendar.
 // v5: checklist deny list and robust per-card moves (#658/#659), not in the sig.
+// v6: a player's list follows parallels and graded copies, as their chart does.
 const _marketBasketKey = (days, player) =>
-  `marketbasket:v5:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
+  `marketbasket:v6:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
 
 async function _computeMarketBasket(db, days, player) {
   try {
@@ -8406,10 +8418,13 @@ async function _computeMarketBasket(db, days, player) {
     const hasImage = await _nflHasImageColumn(db);
     const useAlias = await _aliasReady(db);
     // Twice the cards shown are read, because some are set aside below.
-    const show = player ? 12 : 24;
+    const show = player ? 20 : 24;
+    // A player's list is the cards their chart follows: parallels and graded
+    // copies too, each its own line. It showed only the raw base cards, so Bo
+    // Nix's chart moved on 58 cards and the list under it named 7.
     const rows = player
       ? await (await _rsiBasketQuery(db, throughIso, days, show * 2,
-          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, useAlias)).all()
+          ' AND player = ? AND confidence >= ?', [player, NFLDB_MIN_CONFIDENCE], hasImage, false, [], true)).all()
       : await (await _rsiBasketQuery(db, throughIso, days, show * 2, '', [], hasImage, useAlias,
           await _marketDenied(db, throughIso, days, useAlias))).all();
     const base = await _basketBaseOnly((rows && rows.results) || []);

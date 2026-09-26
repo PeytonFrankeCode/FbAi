@@ -80,6 +80,15 @@ const check = (label, ok, detail) => {
     JSON.stringify({ available: tf.available, reason: tf.reason }));
   check('  ...each parallel its own series', (tf.matchedCards || 0) >= 12, `matchedCards=${tf.matchedCards}`);
   check('  ...so a flat market still reads flat', Math.abs(tf.changePct || 0) < 3, `changePct=${tf.changePct}`);
+  // The list under the chart names the cards the chart follows: parallels too.
+  const basket = await call('/api/market-basket?player=Troy%20Franklin&days=30');
+  const details = (basket.cards || []).map(c => c.detail);
+  check('the player\'s card list shows the parallels the chart follows',
+    details.some(d => /silver/i.test(d)) && details.some(d => /orange/i.test(d)),
+    (basket.cards || []).slice(0, 6).map(c => `${c.label} ${c.detail}`).join(' | ') || JSON.stringify(basket).slice(0, 200));
+  const bo = await call('/api/market-basket?player=Bo%20Nix&days=30');
+  check('  ...and the graded copies', (bo.cards || []).some(c => /PSA 10/.test(c.detail)),
+    (bo.cards || []).slice(0, 4).map(c => `${c.label} ${c.detail}`).join(' | '));
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall player-trend-coverage checks passed');
   process.exit(failures ? 1 : 0);

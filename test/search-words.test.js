@@ -25,6 +25,10 @@ const rows = [
   // A longer word must start a word: "Ward" is not "Edwards".
   ['w1', '2025 Prizm Cam Ward #301 Silver Prizms RC', 'Cam Ward'],
   ['w2', '2025 Prizm Cam Edwards #12 Silver', 'Cam Edwards'],
+  // "Base": what a searcher types, and no seller writes.
+  ['m1', '2017 Panini Prizm Patrick Mahomes II #269 RC', 'Patrick Mahomes II'],
+  ['m2', '2017 Panini Prizm Patrick Mahomes #269 Rookie PSA 10', 'Patrick Mahomes II'],
+  ['m3', '2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm RC', 'Patrick Mahomes II'],
 ];
 rows.forEach(([id, title, player], i) => ins.run(id, iso(-i - 1), title, 1000 + i, player));
 
@@ -58,6 +62,13 @@ const check = (label, ok, detail) => {
   check('"Cam Ward" is not "Cam Edwards"', ward.includes('w1') && !ward.includes('w2'), ward.join(', '));
   const prizm = await ids('Cam Ward Prizm');
   check('a longer word still finds its plural ("Prizm" finds "Prizms")', prizm.includes('w1'), prizm.join(', '));
+  const full = async (q) => (await fetch(`http://127.0.0.1:${PORT}/api/search?mode=sold&q=${encodeURIComponent(q)}`)).json();
+  const base = await full('2017 Mahomes Prizm Base');
+  const got = (base.results || []).map(r => r.itemId).sort();
+  check('a search saying "base" finds the base card, though no title says it', got.includes('m1') && got.includes('m2'), got.join(', '));
+  const silver = (base.results || []).find(r => r.itemId === 'm3');
+  check('  ...and its Silver is not counted as the base card', !silver || silver.sameCard === false,
+    silver ? `m3 sameCard=${silver.sameCard}` : 'm3 left out');
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall search-words checks passed');
   process.exit(failures ? 1 : 0);
