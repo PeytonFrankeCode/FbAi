@@ -4994,7 +4994,8 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
           AND (s.sold_date > ? OR (k.card, s.sold_date) IN (SELECT card, sold_date FROM pre_days))
      ),
      base AS MATERIALIZED (
-       SELECT sold_date, SUM(price_cents) AS s, COUNT(*) AS c, player_n, card${labels ? `,
+       SELECT sold_date, SUM(price_cents) AS s, COUNT(*) AS c, player_n, card${labels === 'player' ? `,
+              MAX(display) AS player` : labels ? `,
               MAX(display) AS player, MAX(year) AS year, MAX(set_name) AS set_name,
               MAX(card_number) AS card_number, MAX(parallel) AS parallel, MAX(grader) AS grader,
               MAX(grade) AS grade${hasImage ? `,
@@ -5034,7 +5035,8 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
   const CARD = _cardKeySql(PLAYER);
   return db.prepare(
-    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny })},
+    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny,
+                          labels: unit === 'player' ? 'player' : false })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -5088,7 +5090,14 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
               ROW_NUMBER() OVER (PARTITION BY p, bucket ORDER BY gap)   AS rg,
               COUNT(*)     OVER (PARTITION BY p, bucket)                AS cnt
          FROM usable
-     )
+     )${unit === 'player' ? `,
+     -- How each player is written, for boards that name them (the moves of
+     -- the market's own players, _marketPlayerMoves). Read once per player.
+     -- Materialized, and joined once to the finished rows: as a subquery per
+     -- row it re-grouped \`base\` for every row, and a 90-day build went from
+     -- under a second to forty.
+     names AS MATERIALIZED (SELECT player_n, MAX(player) AS label FROM base GROUP BY player_n)` : ''}
+     ${unit === 'player' ? 'SELECT g.*, nm.label FROM (' : ''}
      SELECT bucket, p, cnt AS n,
             -- The two middle ratios (the same row when cnt is odd), combined in
             -- JavaScript as a geometric mean. Averaging them here was an
@@ -5101,8 +5110,10 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
             AVG(CASE WHEN rg IN ((cnt + 1) / 2, (cnt + 2) / 2) THEN gap   END) AS med_gap
        FROM ranked
       WHERE cnt >= ${MARKET_MIN_OBS_PER_PLAYER}
-      GROUP BY bucket, p, cnt
-      ORDER BY bucket, p`
+      GROUP BY bucket, p, cnt${unit === 'player' ? `
+     ) g LEFT JOIN names nm ON nm.player_n = g.p
+      ORDER BY g.bucket, g.p` : `
+      ORDER BY bucket, p`}`
     // Bind order follows the order the placeholders appear in the statement:
     // the base CTE's date range, then any scope filter appended to it, then the
     // bucket arithmetic further down. Passing extraBinds last silently fed the
@@ -9346,7 +9357,63 @@ app.get('/api/market-index', async (req, res) => {
 // hold payloads from the build that tripped the Worker CPU limit.
 // v5: unmeasured steps carry `estimated: true` in the series, for the chart.
 // v6: the checklist deny list (_marketDenied) is not in MARKET_CALC_SIG.
-const _marketIndexKey = (days) => `marketindex:v6:${MARKET_CALC_SIG}:${days}`;
+// v7: carries playerMoves, which Players on the move is read from.
+const _marketIndexKey = (days) => `marketindex:v7:${MARKET_CALC_SIG}:${days}`;
+
+// Each of the market's own players, moved over the period exactly as the
+// market is: the same rows the index is built from (one per player per step:
+// the median price ratio of their cards' repeat sales, and the median gap),
+// each step's growth scaled and bounded as the index scales and bounds it,
+// and the steps chained. A step a player has no resales in counts as flat,
+// as it does for the index. So a player's figure is their share of the
+// market's number, and the board of them is the market, ranked.
+//
+// Ranked by percentage, the top of a list is where thin evidence lands, so a
+// player needs MOVERS_PLAYER_MIN_OBS resales, in at least half the period's
+// steps (2 of 4 weeks, 15 of 30 days), before they can appear: a move read
+// off one busy week and three silent ones is mostly the silence. The median
+// within each step already keeps one hot card from carrying a player whose
+// other cards sat still.
+const MOVERS_PLAYER_MIN_OBS = 12;
+function _marketPlayerMoves(rows, days, daily) {
+  const { bucketDays, points } = _rsiGeometry(days, daily);
+  const bounds = _rsiBucketBounds(bucketDays);
+  const minSteps = Math.max(2, Math.ceil(points / 2));
+  const by = new Map();
+  for (const r of rows || []) {
+    const b = Number(r.bucket);
+    const ratio = Math.sqrt(Number(r.med_lo) * Number(r.med_hi));
+    const gap = Number(r.med_gap);
+    if (!Number.isInteger(b) || b < 0 || b >= points || !(ratio > 0) || !(gap > 0)) continue;
+    let growth = Math.pow(ratio, bucketDays / gap);
+    if (!Number.isFinite(growth) || growth <= 0) continue;
+    growth = Math.min(bounds.hi, Math.max(bounds.lo, growth));
+    let e = by.get(r.p);
+    if (!e) by.set(r.p, e = { label: r.label || r.p, log: 0, steps: 0, obs: 0 });
+    e.log += Math.log(growth);
+    e.steps++;
+    e.obs += Number(r.n) || 0;
+  }
+  const players = [...by.values()]
+    .filter(e => e.obs >= MOVERS_PLAYER_MIN_OBS && e.steps >= minSteps)
+    .map(e => ({
+      player: e.label,
+      changePct: Math.round((Math.exp(e.log) - 1) * 1000) / 10,
+      resales: e.obs,
+      stepsMeasured: e.steps,
+      query: e.label,
+    }))
+    .sort((a, b) => b.changePct - a.changePct);
+  return {
+    players: players.slice(0, SOLD_STATS_TOP),
+    considered: players.length,
+    inMarket: by.size,
+    steps: points,
+    stepDays: bucketDays,
+    minResales: MOVERS_PLAYER_MIN_OBS,
+    minSteps,
+  };
+}
 
 // The whole-market index, computed. Returns the payload rather than writing a
 // response so the cron can build it too — see warmMarket.
@@ -9398,9 +9465,10 @@ async function _computeMarketIndex(db, days) {
     if (list.length === 0) return { available: false, days, reason: 'no data in range' };
 
     const out = _buildRepeatSalesPayload(list, throughIso, days, {}, RSI_TIERS, daily);
-    if (out.available || !daily) return out;
+    if (out.available || !daily) return { ...out, playerMoves: _marketPlayerMoves(list, days, daily) };
     const weekly = await (await _rsiQuery(db, throughIso, days, '', [], 'player', useAlias, false, deny)).all();
-    return _buildRepeatSalesPayload((weekly && weekly.results) || [], throughIso, days);
+    const wl = (weekly && weekly.results) || [];
+    return { ..._buildRepeatSalesPayload(wl, throughIso, days), playerMoves: _marketPlayerMoves(wl, days, false) };
   } catch (err) {
     console.error('[MarketIndex]', err && err.message);
     return { available: false, days, reason: 'index unavailable', transient: true, error: err && err.message };
@@ -9817,23 +9885,6 @@ const SOLD_STATS_TOP = 50;
 const MOVERS_MIN_HALF = 5;       // sales required in EACH half of the window
 const MOVERS_MIN_CENTS = 500;    // $5 — below this, percentages stop meaning much
 const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
-const MOVERS_MIN_CARDS_PER_PLAYER = 3;
-
-// Player-level movement is NOT the average of a player's sales.
-//
-// A player's mean price moves when their expensive cards happen to trade more
-// often, which is a change in what sold, not a change in what things cost. The
-// index avoids this by comparing a card only against itself, and the same rule
-// applies here: each of the player's cards gets its own change, and the player's
-// figure is the MEDIAN of those. A player needs several qualifying cards before
-// they can appear at all, so one hot card cannot carry a whole name onto the
-// board.
-function _median(xs) {
-  if (!xs.length) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = s.length >> 1;
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
 
 // v3: gained top sets and both mover boards, and the lists grew from 3 to 50,
 // so the key changes rather than serving the old shape to the new UI from a
@@ -9850,7 +9901,8 @@ function _median(xs) {
 // v7: the movers boards take base cards only, keyed by card number.
 // v8: the base-card filter recognises X-Fractors and ~35 more parallel and
 // insert names, which the movers boards share.
-const SOLD_STATS_KEY = (days) => `soldstats:v8:${days}`;
+// v9: Players on the move is read from the market index (playerMoves).
+const SOLD_STATS_KEY = (days) => `soldstats:v9:${days}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -10044,27 +10096,13 @@ async function _computeSoldStats(db, days) {
 
     const byChange = (a, b) => b.changePct - a.changePct;
 
-    // Player board: median of that player's card changes, and only for players
-    // with enough qualifying cards that the median means something.
-    const byPlayer = new Map();
-    for (const m of moverRows) {
-      if (!byPlayer.has(m.player)) byPlayer.set(m.player, []);
-      byPlayer.get(m.player).push(m);
-    }
-    const playerMovers = [...byPlayer.entries()]
-      .filter(([, cards]) => cards.length >= MOVERS_MIN_CARDS_PER_PLAYER)
-      .map(([player, cards]) => ({
-        player,
-        // The median card, not the mean of the cards: one runaway card should
-        // move a player up the board, not define their number.
-        changePct: Math.round(_median(cards.map(c => c.changePct)) * 10) / 10,
-        cards: cards.length,
-        sales: cards.reduce((n, c) => n + c.sales, 0),
-        // The card carrying them, so the tile can show what actually moved.
-        topCard: cards.slice().sort(byChange)[0],
-        query: player,
-      }))
-      .sort(byChange);
+    // Players on the move: the market's own players, each moved as the market
+    // index moves (_marketPlayerMoves), read from the same build the market
+    // page shows, so the two can never disagree about who moved.
+    const market = await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days))
+      .catch(() => null);
+    const pm = (market && market.playerMoves) || null;
+    const playerMovers = (pm && pm.players) || [];
 
     const payload = {
       available: priced > 0,
@@ -10144,15 +10182,24 @@ async function _computeSoldStats(db, days) {
 
       cardMovers: moverRows.slice().sort(byChange).slice(0, SOLD_STATS_TOP),
       playerMovers: playerMovers.slice(0, SOLD_STATS_TOP),
+      // What Players on the move measured: the market index's players.
+      playerMovesBasis: pm ? {
+        source: 'market-index',
+        through: market.through || null,
+        playersInMarket: pm.inMarket,
+        playersConsidered: pm.considered,
+        minResales: pm.minResales,
+        minSteps: pm.minSteps,
+        steps: pm.steps,
+        stepDays: pm.stepDays,
+      } : null,
 
       // What the mover boards were allowed to consider, so the page can say so
       // rather than presenting a filtered ranking as the whole market.
       moversBasis: {
         cardsConsidered: moverRows.length,
-        playersConsidered: playerMovers.length,
         minSalesPerHalf: MOVERS_MIN_HALF,
         minPrice: MOVERS_MIN_CENTS / 100,
-        minCardsPerPlayer: MOVERS_MIN_CARDS_PER_PLAYER,
         splitDate: mid,
         rawOnly: true,
       },
