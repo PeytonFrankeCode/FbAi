@@ -14880,7 +14880,60 @@ function _caDaysWord(d) {
   return y < 1.6 ? 'over a year' : `over ${Math.floor(y)} years`;
 }
 
+// How an estimate for an unsold parallel was reached, step by step, from the
+// working the server sends with it: this card's own sales and the base price
+// each implies, the parallel's step over base with comps from other cards in
+// the product, and the arithmetic — including any lift to stay above a less
+// rare parallel. Shown so the method can be checked, not just trusted.
+const CA_STEP_BASIS = {
+  ladder: (e, w) => `sells at ×${_caFactor(w.factor)} base across ${e.basedOnCards} cards in this product`,
+  'line-ladder': (e, w) => `sells at ×${_caFactor(w.factor)} base across ${e.basedOnCards} releases of this product line`,
+  'print-run': (e, w) => `×${_caFactor(w.factor)} base, from how this product's numbered parallels climb as the run shrinks`,
+  'line-curve': (e, w) => `×${_caFactor(w.factor)} base, from how numbered parallels climb across this product line`,
+  'site-curve': (e, w) => `×${_caFactor(w.factor)} base, from how numbered parallels climb across every product we track`,
+  unnumbered: (e, w) => `×${_caFactor(w.factor)} base, this product's typical unnumbered parallel`,
+  'line-unnumbered': (e, w) => `×${_caFactor(w.factor)} base, this product line's typical unnumbered parallel`,
+  base: () => 'is the base card itself',
+};
+const _caFactor = (f) => (Math.round(Number(f) * 100) / 100).toLocaleString('en-US');
+function _caRenderWorkings(estimate) {
+  const el = document.getElementById('ca-workings');
+  if (!el) return;
+  const w = estimate && estimate.workings;
+  if (!w) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  const name = escHtml(estimate.parallelName || 'This parallel');
+  const anchors = (w.anchors || []).map(a => {
+    const how = a.from === 'raw' ? 'raw' : `raw equivalent of its ${escHtml((a.grades || []).join(', ') || 'graded')} sales`;
+    return `<li><span class="ca-work-name">${escHtml(a.name)}</span> $${_caNum(a.price)} ${how}`
+      + `${a.sales ? ` <span class="ca-work-dim">(${a.sales} sale${a.sales === 1 ? '' : 's'})</span>` : ''}`
+      + (a.factor !== 1 ? ` ÷ ${_caFactor(a.factor)} = <strong>$${_caNum(a.level)}</strong> base` : ' = <strong>base</strong>')
+      + `</li>`;
+  }).join('');
+  const start = w.levelFrom === 'card'
+    ? `<p><strong>1. This card's own sales</strong>, each moved to its base price along the ladder:</p>`
+      + `<ul class="ca-work-list">${anchors}</ul>`
+      + `<p>Base price for this card: <strong>$${_caNum(w.level)}</strong>${(w.anchors || []).length > 1 ? ' (the middle of these)' : ''}.</p>`
+    : w.levelFrom === 'player'
+    ? `<p><strong>1.</strong> No sale of this card yet, so it starts from the player's base price in this product: <strong>$${_caNum(w.level)}</strong>.</p>`
+    : `<p><strong>1.</strong> No sale of this card yet, so it starts from a typical card in this product: <strong>$${_caNum(w.level)}</strong>.</p>`;
+  const stepFn = CA_STEP_BASIS[estimate.basis] || ((e, x) => `×${_caFactor(x.factor)} base`);
+  const examples = (w.examples || []).map(x =>
+    `<li><span class="ca-work-name">${escHtml(String(x.card).replace('#', ' #'))}</span> $${_caNum(x.p)} vs $${_caNum(x.r)} base`
+    + ` <span class="ca-work-dim">(×${_caFactor(x.p / x.r)})</span></li>`).join('');
+  const step = `<p><strong>2. ${name}</strong> ${stepFn(estimate, w)}.</p>`
+    + (examples ? `<p class="ca-work-dim">Comps behind that, from other cards in this product (raw medians):</p><ul class="ca-work-list">${examples}</ul>` : '');
+  const raw = w.unlifted != null ? w.unlifted : estimate.price;
+  let math = `<p><strong>3.</strong> $${_caNum(w.level)} × ${_caFactor(w.factor)} = <strong>$${_caNum(raw)}</strong>.</p>`;
+  if (w.liftedAbove) {
+    math += `<p>Raised to <strong>$${_caNum(estimate.price)}</strong> to stay above ${escHtml(w.liftedAbove.name)}`
+      + ` (${w.liftedAbove.sold ? 'sold' : 'estimated'} at $${_caNum(w.liftedAbove.price)}): a rarer parallel is never priced below a less rare one.</p>`;
+  }
+  el.innerHTML = `<div class="ca-work-title">How this was priced</div>${start}${step}${math}`;
+  el.classList.remove('hidden');
+}
+
 function _caRenderPrice(estimate) {
+  _caRenderWorkings(estimate);
   const el = document.getElementById('ca-price');
   if (!el) return;
   if (!estimate || estimate.price == null) { el.classList.add('hidden'); el.innerHTML = ''; return; }
@@ -14937,6 +14990,7 @@ function _caReset(keepVisible) {
   _caSyncCombos();
   const priceEl = document.getElementById('ca-price');
   if (priceEl) { priceEl.classList.add('hidden'); priceEl.innerHTML = ''; }
+  _caRenderWorkings(null);
   renderChartReadout('ca-point', '');
 }
 
