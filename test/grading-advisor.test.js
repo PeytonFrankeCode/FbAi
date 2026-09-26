@@ -37,5 +37,22 @@ check('PSA 10 holds both PSA 10s and no SGC 10', split.psa10.length === 2 && spl
 const all = Object.values(split).flat();
 check('no sale lands in two grades', new Set(all).size === all.length);
 
+// ---- The grading fee: PSA's $74.99, in one place, and the page quotes it ----
+// PSA shut its cheaper tiers to work down its backlog; the advisor still
+// subtracted $25 and told people grading paid when it did not.
+{
+  const fs = require('fs');
+  const root = require('path').join(__dirname, '..');
+  const srv = fs.readFileSync(root + '/server.js', 'utf8');
+  const app = fs.readFileSync(root + '/public/app.js', 'utf8');
+  const html = fs.readFileSync(root + '/public/index.html', 'utf8');
+  check('the fee is PSA\'s $74.99, defined once', /const PSA_GRADING_FEE = 74\.99;/.test(srv) && !/GRADING_COST/.test(srv));
+  check('  ...the net premium subtracts it', /graded\.median - rawVal\.median - PSA_GRADING_FEE/.test(srv));
+  check('  ...and every answer says what was subtracted', /gradingCost: \{ fee: PSA_GRADING_FEE/.test(srv));
+  const render = app.slice(app.indexOf('function renderGradingResults'), app.indexOf('function renderGradingResults') + 6000);
+  check('the page quotes the fee the server used, not a number of its own',
+    /data\.gradingCost/.test(render) && !/\$25/.test(render) && !/\$25/.test(html));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall grading-advisor checks passed');
 process.exit(failures ? 1 : 0);
