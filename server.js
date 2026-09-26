@@ -3563,6 +3563,13 @@ function computeApproxValue(results, label) {
   };
 }
 
+// What grading one card at PSA costs, in dollars: the cheapest tier PSA is
+// taking. $74.99 since PSA shut its cheaper tiers to work down its backlog. One figure, used by the advisor's math, sent to the
+// page with every answer, and quoted in the emails — so a price change is an
+// edit here and nowhere else.
+const PSA_GRADING_FEE = 74.99;
+const PSA_GRADING_TIER = 'PSA\u2019s cheapest open tier';
+
 // ---- /api/grading-advisor ----
 // Returns sold price stats for raw, PSA 8, PSA 9, PSA 10 for a given card query.
 app.get('/api/grading-advisor', async (req, res) => {
@@ -3571,7 +3578,6 @@ app.get('/api/grading-advisor', async (req, res) => {
     return res.status(400).json({ error: 'Query parameter "q" is required' });
   }
 
-  const GRADING_COST = { economy: 25, express: 50 };
 
   try {
     const baseQ = query.trim();
@@ -3607,7 +3613,7 @@ app.get('/api/grading-advisor', async (req, res) => {
     // Grade premium over the raw median, net of grading cost.
     const calcPremium = (graded, rawVal) => {
       if (!graded || !rawVal) return null;
-      const net = graded.median - rawVal.median - GRADING_COST.economy;
+      const net = graded.median - rawVal.median - PSA_GRADING_FEE;
       return { gross: graded.median - rawVal.median, net, worthIt: net > 0 };
     };
 
@@ -3630,7 +3636,8 @@ app.get('/api/grading-advisor', async (req, res) => {
         psa9:  calcPremium(psa9,  raw),
         psa10: calcPremium(psa10, raw),
       },
-      gradingCost: GRADING_COST,
+      // `economy` is what pages loaded before this read; keep it equal.
+      gradingCost: { fee: PSA_GRADING_FEE, tier: PSA_GRADING_TIER, economy: PSA_GRADING_FEE },
       comps: {
         raw:   trimComps(rawItems),
         psa8:  trimComps(psa8Items),
@@ -13118,7 +13125,7 @@ const DRIP_STEPS = [
     subject: (l) => `Is your ${l.card || 'card'} actually worth grading?`,
     body: (l) => _dripShell(l, `
       <h2 style="margin:0 0 10px;font-size:22px;">The grading math, in 30 seconds</h2>
-      <p style="line-height:1.6;color:#333;">Grading runs ~$25 and a few weeks. It only pays off when the graded premium clears that. Some cards triple in value at a PSA 10 — others barely move. Guessing wrong costs you money either way.</p>
+      <p style="line-height:1.6;color:#333;">Grading runs about $${Math.round(PSA_GRADING_FEE)} a card at PSA now, and a few weeks. It only pays off when the graded premium clears that. Some cards triple in value at a PSA 10 — others barely move. Guessing wrong costs you money either way.</p>
       <p style="line-height:1.6;color:#333;">The Card Huddle shows the <strong>raw-vs-graded swing</strong> for ${_esc(l.card || 'your card')} from real sold comps, so you only grade the ones that pay. Track it free and we'll keep an eye on the price for you.</p>
       <p style="margin:22px 0;">${_dripCta('Run the numbers on my card', l.card)}</p>
     `),

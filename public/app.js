@@ -7006,6 +7006,12 @@ let _gradingComps = {};
 
 function renderGradingResults(data) {
   const { grades, premiums, query } = data;
+  // The fee the server's math used; it says, so the page never quotes a
+  // different one than it subtracted.
+  const fee = Number((data.gradingCost && (data.gradingCost.fee || data.gradingCost.economy)) || 0);
+  const feeTxt = fee ? '$' + fee.toFixed(2) : 'grading';
+  const feeHead = document.getElementById('grading-fee-head');
+  if (feeHead) feeHead.textContent = `Net after ${feeTxt} fee`;
   const tbody  = document.getElementById('grading-tbody');
   const recBox = document.getElementById('grading-recommendation');
   const results = document.getElementById('grading-results');
@@ -7053,13 +7059,13 @@ function renderGradingResults(data) {
     const label = bestGrade === 'psa10' ? 'PSA 10' : bestGrade === 'psa9' ? 'PSA 9' : 'PSA 8';
     const net   = premiums[bestGrade].net;
     recBox.className = 'grading-recommendation grading-rec-yes';
-    recBox.innerHTML = `<span class="grading-rec-icon">✅</span> <strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the $25 grading fee.`;
+    recBox.innerHTML = `<span class="grading-rec-icon">✅</span> <strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the ${feeTxt} grading fee.`;
   } else if (!grades.psa10 && !grades.psa9 && !grades.psa8) {
     recBox.className = 'grading-recommendation grading-rec-unknown';
     recBox.innerHTML = `<span class="grading-rec-icon">❓</span> <strong>Not enough data</strong> — no recent graded sales found for this card.`;
   } else {
     recBox.className = 'grading-recommendation grading-rec-no';
-    recBox.innerHTML = `<span class="grading-rec-icon">❌</span> <strong>Probably not worth grading</strong> — the grade premium doesn't cover the $25 fee based on recent sales.`;
+    recBox.innerHTML = `<span class="grading-rec-icon">❌</span> <strong>Probably not worth grading</strong> — the grade premium doesn't cover the ${feeTxt} fee based on recent sales.`;
   }
 
   results.classList.remove('hidden');
