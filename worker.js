@@ -37,7 +37,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, warmParallelLadder, parallelLadderMissing, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, warmParallelLadder, parallelLadderMissing, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -49,7 +49,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, warmParallelLadder, parallelLadderMissing, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, warmParallelLadder, parallelLadderMissing, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -896,7 +896,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, warmParallelLadder, parallelLadderMissing, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, warmParallelLadder, parallelLadderMissing, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -1032,6 +1032,18 @@ export default {
           await warmMarket().catch(err => console.error('[Cron] market warm failed:', err && err.message || err));
         } else {
           console.error('[Cron] warmMarket missing from init() — not wired through');
+        }
+
+        // Is the sales collector still collecting, at its usual volume, and
+        // parsing as well as it was? Daily at 07:xx UTC, its own hour; emails
+        // ALERT_EMAIL when the answer changes. See checkCollectionHealth.
+        if (typeof checkCollectionHealth === 'function') {
+          if (scheduledAt.getUTCHours() === 7 && aliasTick) {
+            await checkCollectionHealth()
+              .catch(err => console.error('[Cron] collection health failed:', err && err.message || err));
+          }
+        } else {
+          console.error('[Cron] checkCollectionHealth missing from init() — not wired through');
         }
 
         // Home-page boards with no current copy (a deploy changed the key, or

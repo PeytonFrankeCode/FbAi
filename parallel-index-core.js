@@ -74,6 +74,28 @@ function parallelKey(name) {
   return toks.join(' ');
 }
 
+// Team names with a colour (or a parallel word) in them. Rookie cards show
+// the college, and sellers write it: "2017 Score Patrick Mahomes II #403 Red
+// Raiders RC" read as the Red parallel, because "raiders" is NFL filler and
+// "red" was all that was left. Removed as whole phrases before any parallel
+// is looked for. public/app.js keeps a copy in PARALLEL_STRIP_TEAMS; a test
+// holds the two equal, and holds every phrase clear of every parallel name we
+// know ("Green Wave" is Tulane, and also a Prizm parallel, so it is not here).
+const COLOR_TEAM_PHRASES = [
+  'red raiders', 'crimson tide', 'blue devils', 'mean green',
+  'golden bears', 'golden gophers', 'golden hurricane', 'golden flashes',
+  'golden eagles', 'golden knights', 'golden lions', 'golden griffins',
+  'golden panthers', 'golden rams', 'scarlet knights', 'black knights',
+  'blue raiders', 'blue hens', 'rainbow warriors', 'red wolves', 'red hawks',
+  'redhawks', 'purple eagles', 'black bears', 'big red', 'syracuse orange',
+  'green bay', 'red sea',
+].sort((a, b) => b.length - a.length);
+const _COLOR_TEAM_RE = new RegExp(`\\b(?:${COLOR_TEAM_PHRASES.map(p => p.replace(/ /g, '\\s+')).join('|')})\\b`, 'gi');
+// The text with those team names blanked out.
+function stripColorTeams(text) {
+  return String(text == null ? '' : text).replace(_COLOR_TEAM_RE, ' ');
+}
+
 function createParallelIndex(PARALLELS, resolvePlayer) {
 
 // Checklists write "Silver Prizms", sellers write "Silver Prizm". Both forms go
@@ -220,7 +242,7 @@ function parallelSegment(title) {
   let seg = m ? t.slice(m.index + m[0].length) : '';
   // (RC), (Rookie Card), and similar trailing notes are not parallels.
   seg = seg.replace(/\([^)]*\)/g, ' ');
-  return norm(seg);
+  return norm(stripColorTeams(seg)).replace(/\s+/g, ' ').trim();
 }
 
 // Everything in a title that is known NOT to be a parallel: the product, the
@@ -275,7 +297,7 @@ function stripPhrase(text, phrase) {
 
 function residual(title, playerHint) {
   build();
-  let t = norm(String(title || '').replace(/\([^)]*\)/g, ' '));
+  let t = norm(stripColorTeams(String(title || '').replace(/\([^)]*\)/g, ' ')));
   t = t.replace(/#\s*[a-z0-9-]+/gi, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');
   t = t.replace(/\s+/g, ' ').trim();
   for (const p of candidates(PRODUCTS_BY_FIRST, t)) { const n = stripPhrase(t, p); if (n !== t) { t = n; break; } }
@@ -550,4 +572,4 @@ function resolveParallel(title, opts = {}) {
   };
 }
 
-module.exports = { createParallelIndex, norm, parallelKey };
+module.exports = { createParallelIndex, norm, parallelKey, COLOR_TEAM_PHRASES, stripColorTeams };

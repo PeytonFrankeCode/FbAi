@@ -2919,6 +2919,17 @@ const PARALLEL_STRIP_TEAMS = [
   'seattle seahawks', 'tampa bay buccaneers', 'tennessee titans', 'washington commanders',
   'green bay', 'kansas city', 'new england', 'new orleans', 'tampa bay', 'las vegas',
   'los angeles', 'san francisco', 'new york',
+  // College teams with a colour in the name: rookie cards show the college,
+  // and "Patrick Mahomes #403 Red Raiders" read as a Red parallel. A copy of
+  // COLOR_TEAM_PHRASES in parallel-index-core.js, which this page cannot
+  // load; a test holds this list to it.
+  'red raiders', 'crimson tide', 'blue devils', 'mean green',
+  'golden bears', 'golden gophers', 'golden hurricane', 'golden flashes',
+  'golden eagles', 'golden knights', 'golden lions', 'golden griffins',
+  'golden panthers', 'golden rams', 'scarlet knights', 'black knights',
+  'blue raiders', 'blue hens', 'rainbow warriors', 'red wolves', 'red hawks',
+  'redhawks', 'purple eagles', 'black bears', 'big red', 'syracuse orange',
+  'red sea',
 ].sort((a, b) => b.length - a.length);
 
 const _reEsc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
