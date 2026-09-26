@@ -13908,7 +13908,7 @@ async function collectAccountData(username) {
   return {
     account,
     subscription: loadSubscriptions()[key] || null,
-    syncedData: await loadUserData(key),
+    syncedData: (await _userSyncLoad(key)).data,
     alerts: (loadAlerts().alerts || []).filter(a => String(a.username || '').toLowerCase() === key),
     communityPosts: posts.filter(p => String(p.author || '').toLowerCase() === key),
     communityComments: posts.flatMap(p => (p.comments || [])
@@ -13970,14 +13970,24 @@ app.post('/api/account/delete', async (req, res) => {
 
     // 1. Synced collection / inventory / watchlist blob, and its photos. Read
     //    the inventory first — once the blob is gone the photo ids are lost.
-    const synced = await loadUserData(key);
+    const synced = (await _userSyncLoad(key)).data;
     const photoIds = new Set();
-    for (const item of (Array.isArray(synced.cardHuddleInventory) ? synced.cardHuddleInventory : [])) {
+    // The inventory is { items, history, ... }; a photo is stored under its
+    // card's id (hasPhoto), and a sale or trade keeps the id of the card
+    // photographed (gotPhotoId, gavePhotoId).
+    const inv = synced.cardHuddleInventory;
+    const invItems = Array.isArray(inv) ? inv : (inv && Array.isArray(inv.items) ? inv.items : []);
+    for (const item of invItems) {
+      if (item && item.hasPhoto && item.id) photoIds.add(item.id);
       for (const pid of (Array.isArray(item && item.photoIds) ? item.photoIds : [])) photoIds.add(pid);
       if (item && item.photoId) photoIds.add(item.photoId);
     }
+    for (const h of (inv && Array.isArray(inv.history) ? inv.history : [])) {
+      if (h && h.gotPhotoId) photoIds.add(h.gotPhotoId);
+      if (h && h.gavePhotoId) photoIds.add(h.gavePhotoId);
+    }
     for (const pid of photoIds) { try { await deleteUserPhoto(key, pid); } catch {} }
-    await deleteUserData(key);
+    await _userSyncDelete(key);
     removed.push('collection, inventory, watchlist and portfolio history', `${photoIds.size} card photos`);
 
     // 2. Community posts, plus this user's comments, reactions and reports on
@@ -14046,20 +14056,134 @@ app.post('/api/account/delete', async (req, res) => {
   }
 });
 
-// GET /api/user/data
+// ---- Account sync store ----
+// Each device keeps its own copy and pushes the whole blob. With a plain
+// "last PUT wins", a device that had been open for a day (a phone's home-screen
+// app) overwrote everything added elsewhere the moment it saved anything. So
+// every stored blob has a revision, a push names the revision it was built on,
+// and a push built on an older one is refused (409) with the current blob, for
+// the device to merge into and push again.
+//
+// The revision check has to be atomic, so the blob lives in D1 when it is
+// bound: one conditional UPDATE is the compare-and-set. KV cannot do that — a
+// read then a write, and its reads can lag another location's write by a
+// minute. KV still gets a copy of every write, so the account is readable
+// without D1 and nothing that read it before breaks. Without D1 the KV blob
+// carries the revision itself, checked as well as a read-then-write can.
+const USER_SYNC_TABLE = 'user_sync';
+let _userSyncTableReady = null;
+async function _userSyncDb() {
+  const db = getNflDb();
+  if (!db) return null;
+  if (_userSyncTableReady === null) {
+    try {
+      await db.prepare(
+        `CREATE TABLE IF NOT EXISTS ${USER_SYNC_TABLE} (
+           username   TEXT PRIMARY KEY,
+           rev        INTEGER NOT NULL,
+           data       TEXT NOT NULL,
+           updated_at TEXT
+         )`).run();
+      _userSyncTableReady = true;
+    } catch (err) {
+      console.error('[user/data] sync table unavailable:', err && err.message);
+      _userSyncTableReady = false;
+    }
+  }
+  return _userSyncTableReady ? db : null;
+}
+
+function _splitRev(blob) {
+  const data = (blob && typeof blob === 'object' && !Array.isArray(blob)) ? { ...blob } : {};
+  const rev = Number(data._syncRev) || 0;
+  delete data._syncRev;
+  return { rev, data };
+}
+
+// { rev, data }. An account D1 has never seen reads its KV blob, at the
+// revision that blob carries (0 for one written before revisions existed).
+async function _userSyncLoad(username, { revOnly = false } = {}) {
+  const key = String(username).toLowerCase();
+  const db = await _userSyncDb();
+  if (db) {
+    const row = await db.prepare(
+      `SELECT rev${revOnly ? '' : ', data'} FROM ${USER_SYNC_TABLE} WHERE username = ?`).bind(key).first();
+    if (row) {
+      let data = {};
+      if (!revOnly) { try { data = JSON.parse(row.data) || {}; } catch (_) { data = {}; } }
+      return { rev: Number(row.rev) || 0, data };
+    }
+  }
+  return _splitRev(await loadUserData(key));
+}
+
+// Store `data` if the account is still at `baseRev` (null: store regardless,
+// for pages loaded before revisions existed). { ok, rev } or { conflict }.
+async function _userSyncSave(username, data, baseRev) {
+  const key = String(username).toLowerCase();
+  const json = JSON.stringify(data);
+  const now = new Date().toISOString();
+  const db = await _userSyncDb();
+  let rev;
+  if (db) {
+    const row = await db.prepare(`SELECT rev FROM ${USER_SYNC_TABLE} WHERE username = ?`).bind(key).first();
+    if (row) {
+      const cur = Number(row.rev) || 0;
+      const base = baseRev == null ? cur : baseRev;
+      const r = await db.prepare(
+        `UPDATE ${USER_SYNC_TABLE} SET data = ?, rev = rev + 1, updated_at = ? WHERE username = ? AND rev = ?`)
+        .bind(json, now, key, base).run();
+      if (!(r && r.meta && r.meta.changes === 1)) return { conflict: true };
+      rev = base + 1;
+    } else {
+      // First write into D1: the KV blob is the account's state until now.
+      const kvRev = _splitRev(await loadUserData(key)).rev;
+      if (baseRev != null && baseRev !== kvRev) return { conflict: true };
+      const r = await db.prepare(
+        `INSERT INTO ${USER_SYNC_TABLE} (username, rev, data, updated_at) VALUES (?, ?, ?, ?)
+           ON CONFLICT(username) DO NOTHING`).bind(key, kvRev + 1, json, now).run();
+      if (!(r && r.meta && r.meta.changes === 1)) return { conflict: true };
+      rev = kvRev + 1;
+    }
+  } else {
+    const cur = _splitRev(await loadUserData(key)).rev;
+    if (baseRev != null && baseRev !== cur) return { conflict: true };
+    rev = cur + 1;
+  }
+  await saveUserData(key, { ...data, _syncRev: rev });
+  return { ok: true, rev };
+}
+
+async function _userSyncDelete(username) {
+  const key = String(username).toLowerCase();
+  const db = await _userSyncDb();
+  if (db) await db.prepare(`DELETE FROM ${USER_SYNC_TABLE} WHERE username = ?`).bind(key).run();
+  await deleteUserData(key);
+}
+
+// GET /api/user/data[?since=<rev>] → { data, rev }, or { rev, unchanged: true }
+// when the account is still at `since` — the cheap answer an open page gets
+// each time it checks whether another device has saved.
 app.get('/api/user/data', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Not authenticated' });
   try {
-    const data = await loadUserData(username);
-    res.json({ data: data || {} });
+    const since = req.query.since != null && req.query.since !== '' ? Number(req.query.since) : null;
+    if (since != null && Number.isFinite(since)) {
+      const { rev } = await _userSyncLoad(username, { revOnly: true });
+      if (rev === since) return res.json({ rev, unchanged: true });
+    }
+    const { rev, data } = await _userSyncLoad(username);
+    res.json({ data: data || {}, rev });
   } catch (err) {
     console.error('[user/data GET]', err && err.message);
     res.status(500).json({ error: 'Failed to load user data' });
   }
 });
 
-// PUT /api/user/data
+// PUT /api/user/data  { data, baseRev } → { ok, rev }, or 409 { rev, data }
+// when another device saved since `baseRev`. A body without baseRev (a page
+// loaded before revisions existed) is stored as before.
 app.put('/api/user/data', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Not authenticated' });
@@ -14067,16 +14191,24 @@ app.put('/api/user/data', async (req, res) => {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return res.status(400).json({ error: 'Expected { data: {...} }' });
   }
-  const json = JSON.stringify(data);
+  const clean = { ...data };
+  delete clean._syncRev;
+  const json = JSON.stringify(clean);
   if (json.length > USER_DATA_MAX_BYTES) {
     return res.status(413).json({ error: `Payload exceeds ${USER_DATA_MAX_BYTES} bytes` });
   }
+  const b = req.body.baseRev;
+  const baseRev = b == null || b === '' || !Number.isFinite(Number(b)) ? null : Number(b);
   try {
-    await saveUserData(username, data);
+    const out = await _userSyncSave(username, clean, baseRev);
+    if (out.conflict) {
+      const cur = await _userSyncLoad(username);
+      return res.status(409).json({ error: 'Changed on another device', rev: cur.rev, data: cur.data });
+    }
     // Mirror this user's booth (character + showcase) into the global floor
     // index so other collectors can visit it on The Floor.
-    updateGlobalFloorIndex(username, data);
-    res.json({ ok: true });
+    updateGlobalFloorIndex(username, clean);
+    res.json({ ok: true, rev: out.rev });
   } catch (err) {
     console.error('[user/data PUT]', err && err.message);
     res.status(500).json({ error: 'Failed to save user data' });
