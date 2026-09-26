@@ -1589,6 +1589,14 @@ function getNflDb() {
 // Turn a free-text card query into a LIKE-matched D1 lookup. Every term must
 // appear somewhere in the title, which mirrors how the other providers behave
 // and keeps the existing downstream filters meaningful.
+// The title as space-padded lowercase words, punctuation turned to spaces, for
+// whole-word LIKE tests (fetchViaNflCardDb).
+const _TITLE_WORDS_SQL = (() => {
+  let e = 'LOWER(COALESCE(title, \'\'))';
+  for (const c of ['-', ',', '#', '/', '(', ')', '.', "'", '’', '!', ':', '&', '|']) e = `REPLACE(${e}, '${c.replace(/'/g, "''")}', ' ')`;
+  return `(' ' || ${e} || ' ')`;
+})();
+
 async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const db = getNflDb();
   if (!db) return { results: [], total: 0, unavailable: true, reason: 'no-d1-binding' };
@@ -1608,7 +1616,8 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   // matching nothing is exactly the search that walks the whole table, and
   // repeating it is pure waste. The cost is that a card added by the importer
   // stays invisible for up to an hour after it lands.
-  const cacheKey = `nfldb:v1:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
+  // v2: words match as words, not fragments (see the WHERE below).
+  const cacheKey = `nfldb:v2:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
   // Callers asking the same question at once (the grading advisor's four
   // grades read one pool) share one query rather than racing four to D1.
   const inflight = _nflDbInflight.get(cacheKey);
@@ -1629,12 +1638,26 @@ async function _fetchViaNflCardDbUncached(db, cleaned, terms, limit, source, cac
   // Ordered so the AND chain rejects a row on its rarest term first. The set
   // of matching rows is identical either way; only the work to find them changes.
   const ordered = _orderTermsBySelectivity(terms);
+  // Each word must be a WORD in the title, not a fragment of one. As plain
+  // substrings, "Bo Nix" matched Bowman, Bomb Squad, Skattebo and Cowboys for
+  // "bo", and Penix and Phoenix for "nix" — 10 of 43 results were other
+  // players' cards. So a short word (3 letters or fewer) must stand alone, and
+  // a longer one must start a word ("Ward" is not "Edwards"; "Prizm" still
+  // finds "Prizms"). The substring tests stay first: they are cheap and do the
+  // narrowing; the word tests only read titles that already passed them.
+  const wordTests = [];
+  for (const t of ordered) {
+    const w = String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if (!w) continue;
+    wordTests.push(w.length <= 3 ? `% ${w} %` : `% ${w}%`);
+  }
   const where = [
     'price_cents IS NOT NULL', // exclude best-offer rows — see note above
     'confidence >= ?',
     ...ordered.map(() => 'title LIKE ?'),
+    ...wordTests.map(() => `${_TITLE_WORDS_SQL} LIKE ?`),
   ].join(' AND ');
-  const binds = [NFLDB_MIN_CONFIDENCE, ...ordered.map(t => `%${t}%`)];
+  const binds = [NFLDB_MIN_CONFIDENCE, ...ordered.map(t => `%${t}%`), ...wordTests];
 
   // The floor on how far back the walk may go. This only pays off if sold_date
   // is indexed — without an index SQLite scans regardless and this just filters
@@ -4626,6 +4649,18 @@ const RSI_BASE_SERIAL = `
 // whole-word parallel test — are applied in _rsiBaseCtes, and only to the
 // sales of the cards chosen for the basket; see there for why.
 const RSI_BASE_CARD = _rsiBaseCardSql();
+// The player chart's rule when it follows parallels too (_rsiBaseCtes'
+// `parallels`): the same card tests without the base-only parallel test, and
+// a parallel counted only where the collector recorded it in the column — a
+// title alone does not say reliably which parallel a card is.
+const _RSI_BASE_PAR_LIST = RSI_BASE_PARALLELS.map(v => `'${v}'`).join(', ');
+const RSI_PAR_IS_BASE = `LOWER(TRIM(COALESCE(parallel, ''))) IN (${_RSI_BASE_PAR_LIST})`;
+const RSI_ANY_PAR_CARD = RSI_BASE_CARD.replace(`\n          AND ${RSI_PAR_IS_BASE}`, '');
+// A print run rules a base card out; a numbered parallel has one.
+const RSI_SERIAL_UNLESS_PARALLEL = `
+          AND (NOT ${RSI_PAR_IS_BASE} OR NOT (COALESCE(title, '') GLOB '*/[0-9]*'))`;
+// The parallel as part of a card's key: base spellings are one, '' .
+const RSI_PAR_KEY_SQL = `(CASE WHEN ${RSI_PAR_IS_BASE} THEN '' ELSE LOWER(TRIM(parallel)) END)`;
 
 // The title as padded words, with the player's and product's own names removed
 // — they are not evidence of a parallel ("Jerry Rice" is not Ice, "Mosaic" the
@@ -4842,7 +4877,7 @@ function _rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds = [] }) {
 
 function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                         junk = false, labels = false, hasImage = false, useAlias = false, deny = [],
-                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false }) {
+                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false, parallels = false }) {
   // Cards the checklists name as NOT base (_marketDenied), taken out before
   // each player's busiest ten are chosen, so the next card takes the slot.
   const denySql = deny.length
@@ -4856,18 +4891,21 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
   // SQLite runs a WHERE term that mentions only `sales` before the join, so
   // written there they ran on every sale in the window rather than on the
   // chosen cards' sales alone.
+  // `parallels` also admits a card's parallels, where the column names one:
+  // each parallel is its own card (the key carries it), measured only against
+  // itself, so a Silver is never read as the base card's price.
   const colTests = `price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?${RSI_BASE_CARD}${extraWhere}`;
+          AND sold_date > ? AND sold_date <= ?${parallels ? RSI_ANY_PAR_CARD : RSI_BASE_CARD}${extraWhere}`;
   // `graded` lets slabs in whose grade was parsed into the columns: the card
   // key carries grader and grade, so each grade is its own card, measured only
   // against itself. Slabs the parser could not grade stay out, as for raw.
-  const saleTests = `${RSI_BASE_SERIAL}${noOffer}${graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
+  const saleTests = `${parallels ? RSI_SERIAL_UNLESS_PARALLEL : RSI_BASE_SERIAL}${noOffer}${graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
   const columns = `${colTests}${saleTests}`;
   // The same key columns join the two passes. Player by `=`, which lets SQLite
   // build a lookup index on the chosen list; the rest by `IS`, because grader
   // and grade are NULL on most raw rows and NULL = NULL is not true.
   // (player is never NULL here — see the player_n <> '' test.)
-  const tupleCols = ['player', 'year', 'set_name', 'card_number', 'grader', 'grade'];
+  const tupleCols = ['player', 'year', 'set_name', 'card_number', 'grader', 'grade', ...(parallels ? ['parallel'] : [])];
   const tupleJoin = ['s.player = k.player',
     ...tupleCols.filter(c => c !== 'player').map(c => `s.${c} IS k.${c}`)].join(' AND ');
   // TWO PASSES, for cost.
@@ -4963,7 +5001,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
               MAX(CASE WHEN image_url IS NOT NULL AND image_url <> ''
                        THEN sold_date || '|' || image_url END) AS dated_image` : ''}` : ''}
          FROM cand
-        WHERE ok = 1 AND kind = '' AND ${RSI_BASE_TITLE_TEST}
+        WHERE ok = 1 AND kind = '' AND ${parallels ? `(NOT ${RSI_PAR_IS_BASE} OR ${RSI_BASE_TITLE_TEST})` : RSI_BASE_TITLE_TEST}
         GROUP BY sold_date, player_n, card
      )`;
 }
@@ -9464,7 +9502,7 @@ app.get('/api/player-index', async (req, res) => {
 // adjusting a stale price by it sees the very number the tab shows.
 async function _playerIndexCached(db, days, player) {
   // v8: base cards by checklist, outlier card-days set aside.
-  return await _marketCached(`playerindex:v9:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+  return await _marketCached(`playerindex:v10:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
     () => _computePlayerIndex(db, days, player));
 }
 
@@ -9558,17 +9596,21 @@ function _playerTrendLookback(days) { return days + _playerTrendWindow(days) * (
 // against the eight a window needs, because a newer player's sales are mostly
 // slabs of a handful of rookies. Each grade is its own card (the key carries
 // it), so a PSA 10 is only ever compared with PSA 10s of the same card.
-const PLAYER_TREND_CARDS = 40;
+// Parallels are followed too (each parallel of each card its own series), so
+// the card budget counts parallels: 80 series.
+const PLAYER_TREND_CARDS = 80;
 async function _playerTrendQuery(db, throughIso, days, player) {
   const noOffer = await _noBestOfferSql(db);
   // Only this span is read: nothing here pairs a sale with an earlier one.
   // Passing the span start as the look-back empties the pre-period pass.
   const periodIso = _mkIso(_mkDay(throughIso) - _playerTrendLookback(days));
   const P = _normCol('player');
+  // Each parallel its own series: the card key with the parallel appended.
+  const CARD = `${_cardKeySql(P)} || '|' || ${RSI_PAR_KEY_SQL}`;
   return db.prepare(
-    `WITH ${_rsiBaseCtes({ PLAYER: P, CARD: _cardKeySql(P), P, JOIN: '', ALIAS_FILTER: '', noOffer,
+    `WITH ${_rsiBaseCtes({ PLAYER: P, CARD, P, JOIN: '', ALIAS_FILTER: '', noOffer,
                           extraWhere: ' AND player = ? AND confidence >= ?',
-                          perPlayer: PLAYER_TREND_CARDS, graded: true })}
+                          perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true })}
      SELECT card, sold_date, s, c FROM base WHERE sold_date > ? ORDER BY sold_date`
   ).bind(..._rsiBaseBinds({ periodIso, sinceIso: periodIso, throughIso,
                             extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
@@ -13600,6 +13642,7 @@ async function verifyGoogleIdToken(idToken) {
       email: (claims.email || '').toLowerCase(),
       emailVerified: claims.email_verified === 'true' || claims.email_verified === true,
       name: claims.name || claims.given_name || '',
+      nonce: claims.nonce || null,
     };
   } catch (err) {
     console.error('[auth/google] verify failed:', err && err.message);
@@ -13716,6 +13759,91 @@ app.post('/api/auth/apple', async (req, res) => {
   } catch (err) {
     console.error('[auth/apple]', err && err.stack || err);
     res.status(500).json({ error: 'Apple sign-in failed', detail: String(err && err.message || err) });
+  }
+});
+
+// ---- Google sign-in without Google's script ----
+//
+// The login panel's Google button is drawn by Google's script
+// (accounts.google.com/gsi/client). Where that script is slow, blocked by a
+// content or tracker blocker, or will not load on a weak connection, the
+// panel showed the "or" and nothing above it. So the page offers its own
+// "Continue with Google" button, and when Google's script is not there to take
+// over, it sends the visitor through Google's standard redirect sign-in:
+// /start goes to Google's page, Google posts an ID token back to /callback,
+// which checks it exactly as the button's token is checked.
+//
+// Needs, once, in the Google Cloud console for this client ID: an Authorized
+// redirect URI of https://<site>/api/auth/google/callback.
+const GOOGLE_OAUTH_COOKIE = 'g_oauth';
+function _googleRedirectUri(req) {
+  // The request's own host, not a forwarded one a client could set: Google
+  // would refuse an unregistered address anyway, but there is no reason to ask.
+  const host = String(req.headers.host || '').trim();
+  const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+  return `${local ? 'http' : 'https'}://${host}/api/auth/google/callback`;
+}
+// Only a path on this site: "/", "/?q=x". Never "//evil.com" or a URL.
+function _safeReturnPath(p) {
+  const r = String(p || '/');
+  return /^\/(?!\/)[^\s\\]*$/.test(r) ? r.slice(0, 300) : '/';
+}
+function _readCookie(req, name) {
+  const m = new RegExp('(?:^|;\\s*)' + name + '=([^;]*)').exec(String(req.headers.cookie || ''));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+const _randHex = (n) => Array.from(webCrypto.getRandomValues(new Uint8Array(n)), b => b.toString(16).padStart(2, '0')).join('');
+
+app.get('/api/auth/google/start', (req, res) => {
+  if (!GOOGLE_CLIENT_ID) return res.status(503).send('Google Sign-In is not configured.');
+  const state = _randHex(16), nonce = _randHex(16);
+  const ret = _safeReturnPath(req.query.return);
+  // SameSite=None: Google returns by a cross-site POST, which a Lax cookie
+  // would not ride along with.
+  res.setHeader('Set-Cookie', `${GOOGLE_OAUTH_COOKIE}=${encodeURIComponent(JSON.stringify({ state, nonce, ret }))}; `
+    + 'Path=/api/auth/google; Max-Age=600; HttpOnly; Secure; SameSite=None');
+  const q = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID, redirect_uri: _googleRedirectUri(req),
+    response_type: 'id_token', response_mode: 'form_post',
+    scope: 'openid email profile', state, nonce, prompt: 'select_account',
+  });
+  res.redirect(302, `https://accounts.google.com/o/oauth2/v2/auth?${q}`);
+});
+
+app.post('/api/auth/google/callback', express.urlencoded({ extended: false, limit: '16kb' }), async (req, res) => {
+  const page = (body) => res.status(200).type('html').send(`<!doctype html><html><head><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>Signing in…</title></head>`
+    + `<body style="font-family:system-ui,sans-serif;background:#0f141d;color:#edf0f7;padding:2rem;text-align:center">${body}</body></html>`);
+  const fail = (msg) => page(`<p>${msg}</p><p><a style="color:#5ece99" href="/">Back to The Card Huddle</a></p>`);
+  try {
+    let saved = null;
+    try { saved = JSON.parse(_readCookie(req, GOOGLE_OAUTH_COOKIE) || 'null'); } catch (_) { saved = null; }
+    res.setHeader('Set-Cookie', `${GOOGLE_OAUTH_COOKIE}=; Path=/api/auth/google; Max-Age=0; HttpOnly; Secure; SameSite=None`);
+    const body = req.body || {};
+    if (body.error) return fail('Google sign-in was cancelled.');
+    if (!saved || !body.state || body.state !== saved.state) return fail('That sign-in link expired. Please try again.');
+    const identity = await verifyGoogleIdToken(body.id_token);
+    if (!identity || identity.nonce !== saved.nonce) return fail('Google could not confirm that sign-in. Please try again.');
+    const username = loginOrCreateOAuthUser('google', identity);
+    const token = issueSession(username);
+    const email = (loadServerUsers()[username] || {}).email || '';
+    // The page keeps its session in localStorage; set it the way the button's
+    // path does, then go back where the visitor was.
+    const js = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
+    return page(`<p>Signing you in…</p><script>
+      try {
+        localStorage.setItem('cardHuddleToken', ${js(token)});
+        localStorage.setItem('cardHuddleCurrentUser', ${js(username)});
+        var u = JSON.parse(localStorage.getItem('cardHuddleUsers') || '{}');
+        var k = ${js(String(username).toLowerCase())};
+        u[k] = u[k] || {}; if (${js(email)}) u[k].email = ${js(email)};
+        localStorage.setItem('cardHuddleUsers', JSON.stringify(u));
+      } catch (e) {}
+      location.replace(${js(_safeReturnPath(saved.ret))});
+    </script>`);
+  } catch (err) {
+    console.error('[auth/google/callback]', err && err.stack || err);
+    return fail('Google sign-in failed. Please try again.');
   }
 });
 
