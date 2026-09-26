@@ -11525,7 +11525,10 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // read as parallels, so v28 entries hold Mahomes' Score #403 as a Red.
 // v30: NFL team names and a name's suffix ("II") no longer block the parallel
 // reader; "Mahomes II Red Sparkle #138 Kansas City Chiefs" was read as base.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v30';
+// v31: the title sweep — seller and condition words, a player named after the
+// number, word order, and a base reading refused while a parallel word is
+// left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
+const CARD_IDENTITY_VERSION = 'cardanalysis:v31';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11536,7 +11539,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = '8fe875113159';
+const CARD_IDENTITY_FINGERPRINT = '27ea3f5012ec';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //

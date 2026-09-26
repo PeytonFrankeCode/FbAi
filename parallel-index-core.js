@@ -115,6 +115,37 @@ function stripColorTeams(text) {
   return String(text == null ? '' : text).replace(_COLOR_TEAM_RE, ' ');
 }
 
+// What sellers write about condition, grading and themselves, never part of a
+// parallel's name: "NR-MINT *GMCARDS*", "NM-MT OR BETTER", "HOF PSA 10 GEM
+// MINT", "RC Base Rookie Cardinals Nice". Left in, they sat after the number,
+// the reader could not cover them, and a plain base card came back unread.
+// Any of these that is also a word of a real parallel name is dropped from
+// the list when the vocabulary is built (build()), so none can delete one.
+const SELLER_WORDS = [
+  'nm', 'mt', 'nmmt', 'nr', 'nrmt', 'nrmint', 'ex', 'exmt', 'exmint', 'vg', 'vgex', 'vgexmt',
+  'or', 'better', 'gmcards', 'setbreak', 'hof', 'nfl', 'pop', 'invest', 'investment',
+  'centered', 'graded', 'slabbed', 'ungraded', 'raw', 'nice', 'sharp', 'clean',
+  'beautiful', 'wow', 'look', 'hot', 'rated', 'prospect', 'rookies', 'card', 'cards',
+  'football', 'pack', 'fresh', 'pulled', 'pull', 'mint', 'gem', 'near', 'excellent',
+];
+// One-word "parallels" that are words sellers write about any card: "Las
+// Vegas Raiders NFL Football" was read as the NFL parallel.
+const NEVER_ALONE = new Set(['nfl', 'base', 'rookie', 'rc', 'football',
+  // A product's own name on its own is the product: "2025 Prizm Cam Ward Auto"
+  // is not a Prizm parallel.
+  'prizm', 'prizms', 'chrome', 'optic', 'mosaic', 'select', 'topps', 'panini', 'donruss']);
+// Words that are part of a few real parallel names ("Gold NFL Shield", "Rated
+// Rookie Logo Holo") but far more often are sellers talking. A match is tried
+// with them first, then without: "Gold Ice Rated Prospect" is Gold Ice, while
+// "Gold NFL Shield" keeps its NFL.
+const SOFT_WORDS = new Set(['nfl', 'rated', 'base', 'prospect', 'prospects', 'or', 'better', 'less', 'fewer']);
+const dropSoft = (text) => String(text || '').split(' ').filter(w => w && !SOFT_WORDS.has(w)).join(' ');
+// Product words a seller leaves beside the parallel: "Chrome Mojo Refractor",
+// "Holo Prizm". Dropped from either end only while what remains is itself a
+// parallel name, and never down to a bare product word ("chrome refractor"
+// must not become "Chrome").
+const EDGE_PRODUCT = new Set(['chrome', 'prizm', 'prizms', 'optic', 'mosaic', 'select', 'topps', 'panini', 'donruss']);
+
 function createParallelIndex(PARALLELS, resolvePlayer) {
 
 // Checklists write "Silver Prizms", sellers write "Silver Prizm". Both forms go
@@ -139,6 +170,12 @@ function variants(name) {
   const GENERIC = new Set(['topps', 'panini', 'bowman', 'leaf', 'donruss', 'score',
                            'upper', 'deck', 'chrome', 'select', 'mosaic', 'optic',
                            'prizm', 'prizms', 'refractor', 'refractors', 'base']);
+  // The product word can lead as well: the 2025 Prizm checklist says "Prizm
+  // White Disco", sellers say "White Disco". Only when two words remain.
+  for (const v of [...out]) {
+    const lead = v.replace(/^(prizms?|refractors?)\s+/, '').trim();
+    if (lead && lead !== v && lead.split(' ').length >= 2) out.add(lead);
+  }
   for (const v of [...out]) {
     const short = v.replace(/\s+(prizms?|refractors?|parallels?)$/, '').trim();
     if (!short || short === v) continue;
@@ -168,6 +205,10 @@ let PRODUCTS_BY_FIRST = null;
 let SUBSETS_BY_FIRST = null;
 let SUBSET_ALL = null;
 let SUBSET_ALL_BARE = null;
+let VOCAB_TOKENS = null;
+let JUNK = null;
+let PARALLEL_SIGNAL = null;
+let TOKSET = null;
 
 function build() {
   if (LOOKUP) return;
@@ -209,6 +250,34 @@ function build() {
   const allSets = (PARALLELS.setNames || []).map(norm).filter(Boolean);
   SUBSET_ALL = new Set(allSets);
   SUBSET_ALL_BARE = new Set(allSets.map(s => s.replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim()).filter(Boolean));
+
+  // Every word of every parallel name, and the seller words that are none of
+  // them (so filler can never delete part of a real name).
+  VOCAB_TOKENS = new Set();
+  for (const k of LOOKUP.keys()) for (const w of k.split(' ')) if (w) VOCAB_TOKENS.add(w);
+  JUNK = new Set(SELLER_WORDS.filter(w => !VOCAB_TOKENS.has(w)));
+  // The words that say "a parallel is named here": parallel-name words that
+  // are not also product names or glue. A base reading is refused while one of
+  // these is left unexplained in the title.
+  const WEAK = new Set(['prizm', 'prizms', 'chrome', 'select', 'mosaic', 'optic', 'topps', 'panini',
+    'donruss', 'bowman', 'score', 'the', 'of', 'and', 'on', 'a', 'in', 'no', 'to', 'at', 'for',
+    'card', 'cards', 'edition', 'level', 'die', 'cut', 'set', 'series', 'rookie', 'rookies', 'rc',
+    'base', 'nfl', 'football', 'auto', 'autograph', 'autographs', 'signature', 'signatures', 'patch',
+    'draft', 'picks', 'premium', 'variation', 'variations', 'insert', 'inserts', 'ssp', 'sp', 'stars']);
+  PARALLEL_SIGNAL = new Set([...VOCAB_TOKENS].filter(w => !WEAK.has(w) && !/^\d+$/.test(w) && w.length > 1));
+  // Word order: sellers write "White Disco" and "Disco White", "Neon Green
+  // Pulsar" and "Green Pulsar Neon". The same words in any order name the
+  // parallel, when exactly one parallel has those words.
+  TOKSET = new Map();
+  for (const [k, name] of LOOKUP) {
+    const toks = [...new Set(k.split(' ').filter(Boolean))].sort();
+    if (toks.length < 2) continue;
+    const key = toks.join(' ');
+    // Two names with the same words are one parallel spelled two ways
+    // ("White Disco" in one checklist, "Disco White" in another). The first
+    // spelling seen stands for both.
+    if (!TOKSET.has(key)) TOKSET.set(key, name);
+  }
 }
 
 function groupByFirstWord(phrases) {
@@ -325,21 +394,80 @@ function stripPhrase(text, phrase) {
   return (' ' + text + ' ').slice(0, i) + ' ' + (' ' + text + ' ').slice(i + phrase.length + 1);
 }
 
-function residual(title, playerHint) {
+function residual(title, playerHint, opts = {}) {
   build();
   let t = norm(stripColorTeams(String(title || '').replace(/\([^)]*\)/g, ' ')));
   t = t.replace(/#\s*[a-z0-9-]+/gi, ' ').replace(/\b(19|20)\d{2}\b/g, ' ');
   t = t.replace(/\s+/g, ' ').trim();
   for (const p of candidates(PRODUCTS_BY_FIRST, t)) { const n = stripPhrase(t, p); if (n !== t) { t = n; break; } }
-  for (const sub of candidates(SUBSETS_BY_FIRST, t)) { const n = stripPhrase(t, sub); if (n !== t) t = n; }
+  // Insert-set names come out of the words BEFORE the number only. After it
+  // they stay: "#106 Signatures" is a set in one product and something else in
+  // another, and a /25 of it is numbered: the review desk decides those per
+  // product, and a blanket strip here would call them all base.
+  if (opts.subsets !== false) {
+    for (const sub of candidates(SUBSETS_BY_FIRST, t)) { const n = stripPhrase(t, sub); if (n !== t) t = n; }
+  }
+  // "Set-Break" is how vintage sellers say "from a broken-up set"; its
+  // "break" is also a parallel word ("Fast Break"), so the phrase goes whole.
+  t = t.replace(/\bset\s+break\b/g, ' ').replace(/\s+/g, ' ').trim();
   const hit = resolvePlayer(playerHint || t);
   if (hit && hit.key) for (const w of hit.key.split(' ')) t = stripPhrase(t, w);
+  // A player the index does not know yet (a new rookie) but the caller named:
+  // his name is still not a parallel.
+  else if (playerHint) for (const w of norm(playerHint).split(' ')) if (w) t = stripPhrase(t, w);
   // Deliberately NOT the FILLER set. That contains "refractor" and "prizm",
   // which are real parallel names — stripping them here deletes the very thing
   // being looked for, and is why "RC Refractor #306 Giants" read as nothing.
   return t.split(' ')
-    .filter(w => w && !RESIDUAL_FILLER.has(w) && !/^\d+(\.\d+)?$/.test(w))
+    .map(w => w.replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, ''))
+    .filter(w => w && !RESIDUAL_FILLER.has(w) && !JUNK.has(w) && !/^\d+(\.\d+)?$/.test(w))
     .join(' ');
+}
+
+// The parallel named by these words in any order, when exactly one is.
+function tokenSetMatch(text) {
+  build();
+  const toks = [...new Set(String(text || '').split(' ').filter(Boolean))].sort();
+  if (toks.length < 2) return null;
+  return TOKSET.get(toks.join(' ')) || null;
+}
+
+// The parallel a run of leftover words names: whole, in any order, with
+// product words at its edges set aside, and then again without the soft words.
+function leftoverMatch(text) {
+  const tryOne = (txt) => {
+    if (!txt) return null;
+    const direct = alone(coverMatch(txt, true)) || tokenSetMatch(txt);
+    if (direct) return direct;
+    let toks = txt.split(' ');
+    while (toks.length > 1 && EDGE_PRODUCT.has(toks[0])) toks = toks.slice(1);
+    while (toks.length > 1 && EDGE_PRODUCT.has(toks[toks.length - 1])) toks = toks.slice(0, -1);
+    const trimmed = toks.join(' ');
+    const hit = trimmed !== txt && !EDGE_PRODUCT.has(trimmed)
+      ? (alone(coverMatch(trimmed, true)) || tokenSetMatch(trimmed)) : null;
+    if (hit) return hit;
+    // "Mojo Refractor" where the checklist says "Mojo": a trailing finish
+    // word, set aside only when what remains is a parallel on its own.
+    if (toks.length > 1 && /^refractors?$/.test(toks[toks.length - 1])) {
+      const rest = toks.slice(0, -1).join(' ');
+      if (!EDGE_PRODUCT.has(rest)) return alone(coverMatch(rest, true)) || tokenSetMatch(rest);
+    }
+    return null;
+  };
+  return tryOne(text) || (dropSoft(text) !== text ? tryOne(dropSoft(text)) : null);
+}
+
+// A one-word match that is only a word sellers write about any card.
+function alone(hit) {
+  return hit && NEVER_ALONE.has(norm(hit)) ? null : hit;
+}
+
+// Is there a parallel word left unexplained in this text? Then "base" would
+// be a guess: "Mojo Refractor RC #91TRC-1 Rookie" has only filler after the
+// number, and was read as the base card.
+function namesAParallel(text) {
+  build();
+  return dropSoft(text).split(' ').some(w => PARALLEL_SIGNAL.has(w));
 }
 
 /**
@@ -362,7 +490,7 @@ const APPENDED_PRODUCT = new Set(['prizm', 'prizms', 'refractor', 'refractors',
 
 function coverMatch(segment, strict = false) {
   build();
-  const isFiller = (t) => FILLER.has(t) || /^\d+(\.\d+)?$/.test(t);
+  const isFiller = (t) => FILLER.has(t) || JUNK.has(t.replace(/[^a-z0-9]/g, '')) || !/[a-z0-9]/.test(t) || /^\d+(\.\d+)?$/.test(t);
   let toks = segment.split(' ').filter(Boolean);
   while (toks.length) {
     const hit = LOOKUP.get(toks.join(' '));
@@ -504,58 +632,59 @@ const GENERIC_SUBSET = new Set([
 
 function resolveParallel(title, opts = {}) {
   const t = String(title || '');
-  if (!CARD_NUMBER.test(t)) return { parallel: null, how: 'no-number', segment: '' };
+  build();
+  // The words before the number with everything known taken out: product,
+  // subset, year, player, filler, seller words. What is left, if anything, is
+  // the parallel — or a word this reader does not know.
+  const res = residual(t, opts.player);
+  const early = res ? leftoverMatch(res) : null;
 
-  const segment = parallelSegment(t);
-  if (!segment) {
-    // Nothing after the number. Before concluding base, check whether the
-    // parallel is stated earlier in the title instead.
-    const res = residual(t, opts.player);
-    const early = res ? coverMatch(res, true) : null;
-    if (early) return { parallel: early, how: 'matched-before-number', segment: res };
-    return { parallel: null, how: 'base', segment: '' };
+  if (!CARD_NUMBER.test(t)) {
+    // No number to anchor on, but a title whose leftovers are exactly one
+    // parallel's name still says which parallel it is: "Jaxson Dart 2025 Topps
+    // Chrome Refractor Rookie New York Giants RC". Nothing left is NOT base
+    // here — without a number it may be a lot, or another card.
+    if (early) return { parallel: early, how: 'matched-no-number', segment: res };
+    return { parallel: null, how: 'no-number', segment: '' };
   }
 
-  // Anchored at the start of the segment, longest first.
-  //
-  // Matching anywhere inside the segment is what made this unsafe. "White Disco
-  // Prizm" is not in the vocabulary, so a floating search found the "Disco
-  // Prizms" inside it; "Red White and Blue Prizm" gave up its "Blue Prizm"; and
-  // a segment of trailing junk like "Giants Rookie" matched "Rookie", which is
-  // a parallel in some product. Each of those merges two different cards and
-  // nothing downstream can notice.
-  //
-  // The parallel begins where the segment begins, so requiring the match to
-  // start at the first word turns all three into an honest "unmatched", which
-  // costs sample and cannot corrupt a price.
-  // The match must cover the ENTIRE segment once trailing filler is removed.
-  //
-  // Partial matches are the whole danger. Anchoring at the first word was not
-  // enough on its own: "White Disco Prizm" then matched the bare "White", which
-  // is a real but different parallel, and merging those two is exactly the harm
-  // this is meant to avoid. Covering everything means the reader either
-  // understands the segment or admits it does not.
-  const after = coverMatch(segment);
-  if (after) return { parallel: after, how: 'matched', segment };
+  const segment = parallelSegment(t);
+  // The segment with what is known to be no parallel taken out: the player's
+  // name when the title puts it after the number ("#304 JOSH ALLEN RC"),
+  // nicknames, suffixes, seller words.
+  const segLeft = segment ? residual(segment, opts.player || t, { subsets: false }) : '';
 
-  // Not after the number. Strip everything known and see what stands alone.
-  const res = residual(t, opts.player);
-  const early = res ? coverMatch(res, true) : null;
+  if (segment) {
+    // Anchored at the start of the segment, longest first.
+    //
+    // Matching anywhere inside the segment is what made this unsafe. "White
+    // Disco Prizm" is not in the vocabulary, so a floating search found the
+    // "Disco Prizms" inside it; "Red White and Blue Prizm" gave up its "Blue
+    // Prizm"; and a segment of trailing junk like "Giants Rookie" matched
+    // "Rookie", which is a parallel in some product. Each of those merges two
+    // different cards and nothing downstream can notice.
+    //
+    // The match must cover the ENTIRE segment once trailing filler is removed.
+    // Partial matches are the whole danger: "White Disco Prizm" matching the
+    // bare "White" merges two cards. Covering everything means the reader
+    // either understands the segment or admits it does not.
+    const after = alone(coverMatch(segment)) || (segLeft && leftoverMatch(segLeft));
+    if (after) return { parallel: after, how: 'matched', segment };
+  }
+
+  // Not after the number. The parallel stated before it.
   if (early) return { parallel: early, how: 'matched-before-number', segment: res };
 
-  // Nothing but filler followed the number, and nothing before it named a
-  // parallel either. Now base is a safe reading: the earlier objection was
-  // that a parallel might be stated before the number, and that has just been
-  // checked.
-  const onlyFiller = segment.split(' ').every(
-    w => FILLER.has(w) || /^\d+(\.\d+)?$/.test(w));
-  if (onlyFiller) return { parallel: null, how: 'base', segment };
-  // Filler-only is NOT the same evidence as an empty segment, and treating it
-  // as base asserts something false. "Jaxson Dart RC Refractor #306 Giants
-  // Rookie" leaves only "giants rookie" after the number, but the card is a
-  // Refractor — the parallel is stated before the number in that title format.
-  // Base is an actionable answer and unmatched is not, so the honest one wins:
-  // a parallel may be named somewhere this reader does not look.
+  // Base only when nothing is left after the number but filler (the player's
+  // name and seller words count as filler there) AND nothing before it names
+  // a parallel. "Holo Prizm #273 Giants" and "Mojo Refractor RC #91TRC-1
+  // Rookie" were read as base on the first test alone.
+  if (!dropSoft(segLeft)) {
+    if (namesAParallel(res)) return { parallel: null, how: 'unmatched', segment: res };
+    return { parallel: null, how: 'base', segment };
+  }
+  // Something after the number this reader does not know. Base is an
+  // actionable answer and unmatched is not, so the honest one wins.
   return { parallel: null, how: 'unmatched', segment };
 }
 
