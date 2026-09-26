@@ -4536,6 +4536,9 @@ function _rsiRawOnlySql(titleCol = 'title') {
 const RSI_JUNK_ONLY = `
           AND NOT ( ${_rsiJunkSql("COALESCE(title, '')")} )`;
 const RSI_RAW_ONLY = _rsiRawOnlySql();
+// Raw, or a slab whose grader and grade the collector parsed.
+const RSI_RAW_OR_GRADED = `
+          AND ((1 = 1 ${RSI_RAW_ONLY}) OR (COALESCE(TRIM(grader), '') <> '' AND COALESCE(TRIM(grade), '') <> ''))`;
 
 // A sale can only be compared against another sale of the SAME card, and a card
 // is not identified by its player alone. A blank parallel does not mean "base"
@@ -4838,7 +4841,8 @@ function _rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds = [] }) {
 }
 
 function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
-                        junk = false, labels = false, hasImage = false, useAlias = false, deny = [] }) {
+                        junk = false, labels = false, hasImage = false, useAlias = false, deny = [],
+                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false }) {
   // Cards the checklists name as NOT base (_marketDenied), taken out before
   // each player's busiest ten are chosen, so the next card takes the slot.
   const denySql = deny.length
@@ -4854,7 +4858,10 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
   // chosen cards' sales alone.
   const colTests = `price_cents IS NOT NULL AND price_cents > 0
           AND sold_date > ? AND sold_date <= ?${RSI_BASE_CARD}${extraWhere}`;
-  const saleTests = `${RSI_BASE_SERIAL}${noOffer}${RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
+  // `graded` lets slabs in whose grade was parsed into the columns: the card
+  // key carries grader and grade, so each grade is its own card, measured only
+  // against itself. Slabs the parser could not grade stay out, as for raw.
+  const saleTests = `${RSI_BASE_SERIAL}${noOffer}${graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
   const columns = `${colTests}${saleTests}`;
   // The same key columns join the two passes. Player by `=`, which lets SQLite
   // build a lookup index on the chosen list; the rest by `IS`, because grader
@@ -4906,7 +4913,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
          SELECT k.card, ROW_NUMBER() OVER (PARTITION BY k.player_n ORDER BY SUM(k.c) DESC, k.card) AS rn
            FROM pick_keys k JOIN pick_players t ON t.player_n = k.player_n${denySql}
           GROUP BY k.player_n, k.card)
-        WHERE rn <= ${MARKET_CARDS_PER_PLAYER}
+        WHERE rn <= ${perPlayer}
      ),
      pick_tuples AS MATERIALIZED (
        SELECT k.* FROM pick_keys k JOIN pick_cards pc ON pc.card = k.card
@@ -9457,7 +9464,7 @@ app.get('/api/player-index', async (req, res) => {
 // adjusting a stale price by it sees the very number the tab shows.
 async function _playerIndexCached(db, days, player) {
   // v8: base cards by checklist, outlier card-days set aside.
-  return await _marketCached(`playerindex:v8:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+  return await _marketCached(`playerindex:v9:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
     () => _computePlayerIndex(db, days, player));
 }
 
@@ -9544,6 +9551,14 @@ const PLAYER_TREND_MAX_WIDEN = 2;
 // Read far enough back for the first window to widen and the period to shift.
 function _playerTrendLookback(days) { return days + _playerTrendWindow(days) * (PLAYER_TREND_MAX_WIDEN + 1); }
 
+// A single player's chart follows more of their cards than the whole-market
+// basket takes from each player, and their graded copies too. The market's ten
+// raw base cards per player are plenty across 600 players; for one player they
+// are not: Bo Nix, with ~8,000 sales, had three qualifying card-days a week
+// against the eight a window needs, because a newer player's sales are mostly
+// slabs of a handful of rookies. Each grade is its own card (the key carries
+// it), so a PSA 10 is only ever compared with PSA 10s of the same card.
+const PLAYER_TREND_CARDS = 40;
 async function _playerTrendQuery(db, throughIso, days, player) {
   const noOffer = await _noBestOfferSql(db);
   // Only this span is read: nothing here pairs a sale with an earlier one.
@@ -9552,13 +9567,14 @@ async function _playerTrendQuery(db, throughIso, days, player) {
   const P = _normCol('player');
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER: P, CARD: _cardKeySql(P), P, JOIN: '', ALIAS_FILTER: '', noOffer,
-                          extraWhere: ' AND player = ? AND confidence >= ?' })}
+                          extraWhere: ' AND player = ? AND confidence >= ?',
+                          perPlayer: PLAYER_TREND_CARDS, graded: true })}
      SELECT card, sold_date, s, c FROM base WHERE sold_date > ? ORDER BY sold_date`
   ).bind(..._rsiBaseBinds({ periodIso, sinceIso: periodIso, throughIso,
                             extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
 }
 
-function _playerTrendPayload(rows, throughIso, days, player) {
+function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null) {
   const round1 = (n) => Math.round(n * 10) / 10;
   const W = _playerTrendWindow(days);
   const maxW = W * PLAYER_TREND_MAX_WIDEN;
@@ -9627,6 +9643,13 @@ function _playerTrendPayload(rows, throughIso, days, player) {
   }
   if (!last) {
     const count = (endDay) => inWin(endDay - W + 1, endDay).length;
+    // The data does not reach back to the period's first window: that is a
+    // period the dataset is too young for, not a player who does not trade —
+    // and the page says so differently ("coming soon for this period").
+    if (historyFrom != null && historyFrom > newest - days + 1) {
+      return { available: false, days, player, reason: 'not enough history yet', method: 'player-trend',
+               windowDays: W, historyFrom: _mkIso(historyFrom), through: throughIso };
+    }
     return {
       available: false, days, player, reason: 'not enough sales for a reliable reading',
       method: 'player-trend', windowDays: W, needed: PLAYER_TREND_MIN_WINDOW,
@@ -9676,7 +9699,7 @@ async function _computePlayerIndex(db, days, player) {
     // player who stopped selling three weeks ago says so instead of being
     // scored against windows that are empty for them.
     const newest = await db.prepare(
-      'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
+      'SELECT MAX(sold_date) AS d, MIN(sold_date) AS first FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
     ).bind(player, NFLDB_MIN_CONFIDENCE).first();
     if (!newest || !newest.d) {
       return { available: false, days, player, reason: 'no sales for this player' };
@@ -9692,7 +9715,7 @@ async function _computePlayerIndex(db, days, player) {
     // on thin days read as his whole market quadrupling overnight.
     const list = await _baseCardRowsOnly((rows && rows.results) || []);
     if (list.length === 0) return { available: false, days, player, reason: 'no sales for this player' };
-    return _playerTrendPayload(list, throughIso, days, player);
+    return _playerTrendPayload(list, throughIso, days, player, newest.first ? _mkDay(newest.first) : null);
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);
     return { available: false, days, player, reason: 'index unavailable', transient: true, error: err && err.message };
