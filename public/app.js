@@ -987,8 +987,15 @@ function _mpChange(pct) {
   return '<span class="mp-change ' + cls + '">' + (n > 0 ? '+' : '') + n.toFixed(1) + '%</span>';
 }
 
-async function loadMarketPulse(days) {
+// A failed or empty answer is tried again before the strip gives up: the
+// boards are rebuilt after a deploy, and one unlucky request used to hide the
+// whole strip until the page was reloaded.
+const MP_RETRY_MS = [4000, 12000];
+let _mpWanted = 30;
+async function loadMarketPulse(days, attempt = 0) {
   const period = Number(days) || 30;
+  if (!attempt) _mpWanted = period;
+  else if (_mpWanted !== period) return; // another period was picked meanwhile
   const wrap = document.getElementById('market-pulse');
   const body = document.getElementById('mp-body');
   if (!wrap || !body) return;
@@ -1007,12 +1014,20 @@ async function loadMarketPulse(days) {
       data = await safeJson(res);
       if (data && data.available) _mpLoaded[period] = data;
     } catch (_) {
-      wrap.classList.add('hidden');
-      return;
+      data = null;
     }
   }
 
-  if (!data || !data.available) { wrap.classList.add('hidden'); return; }
+  if (!data || !data.available) {
+    if (attempt < MP_RETRY_MS.length) {
+      setTimeout(() => loadMarketPulse(period, attempt + 1), MP_RETRY_MS[attempt]);
+      // Keep what is showing (another period's boards) rather than blanking.
+      if (!wrap.classList.contains('hidden')) body.innerHTML = '<div class="mp-loading">Loading…</div>';
+      return;
+    }
+    wrap.classList.add('hidden');
+    return;
+  }
   wrap.classList.remove('hidden');
 
   const label = period === 365 ? 'the last year' : `the last ${period} days`;
@@ -1080,7 +1095,10 @@ async function loadMarketPulse(days) {
     '<span class="mp-row-meta">' + _mpMoney(r.older) + ' &rarr; ' + _mpMoney(r.recent) + '</span>' +
     _mpChange(r.changePct) + '</button>'));
 
-  parts.push(rows('Players on the move', 'from the market index', data.playerMovers, (r) =>
+  const pmDays = data.playerMovesBasis && data.playerMovesBasis.days;
+  parts.push(rows('Players on the move',
+    pmDays && pmDays !== period ? `market index, last ${pmDays} days` : 'from the market index',
+    data.playerMovers, (r) =>
     '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
     '<span class="mp-row-name">' + escHtml(r.player) + '</span>' +
     '<span class="mp-row-meta">' + Number(r.resales || 0).toLocaleString('en-US') + ' resales</span>' +
@@ -1244,7 +1262,10 @@ async function initStatsView() {
         + `on each side and an average above $${b.minPrice} to qualify. `
         + `${b.cardsConsidered.toLocaleString('en-US')} cards cleared that bar.`;
     } else if (_statsBoard === 'playerMovers' && pb) {
-      note = `The market index's own players, each moved the way the market is: resales of their `
+      note = (pb.days && pb.days !== _statsDays
+          ? `The market doesn't have ${_statsDays === 365 ? 'a year' : _statsDays + ' days'} of history yet, `
+            + `so this is the last ${pb.days} days. ` : '')
+        + `The market index's own players, each moved the way the market is: resales of their `
         + `raw base cards, compared card against itself. A player needs ${pb.minResales}+ resales `
         + `to be ranked; ${Number(pb.playersConsidered).toLocaleString('en-US')} of the market's `
         + `${Number(pb.playersInMarket).toLocaleString('en-US')} players did.`;

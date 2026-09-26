@@ -1034,6 +1034,15 @@ export default {
           console.error('[Cron] warmMarket missing from init() — not wired through');
         }
 
+        // Home-page boards with no current copy (a deploy changed the key, or
+        // one was evicted) are built now rather than at 05:xx tomorrow. After
+        // the market warm, which Players on the move reads from. Visitors are
+        // served the last good boards meanwhile; see /api/sold-stats.
+        if (typeof warmSoldStats === 'function') {
+          await warmSoldStats({ onlyMissing: true })
+            .catch(err => console.error('[Cron] sold-stats gap warm failed:', err && err.message || err));
+        }
+
         // Persist the D1 usage tally. Last, so it captures everything the
         // tick did, and cheap: one KV write per tick rather than per query.
         if (typeof flushD1Usage === 'function') {

@@ -9369,16 +9369,17 @@ const _marketIndexKey = (days) => `marketindex:v7:${MARKET_CALC_SIG}:${days}`;
 // market's number, and the board of them is the market, ranked.
 //
 // Ranked by percentage, the top of a list is where thin evidence lands, so a
-// player needs MOVERS_PLAYER_MIN_OBS resales, in at least half the period's
-// steps (2 of 4 weeks, 15 of 30 days), before they can appear: a move read
-// off one busy week and three silent ones is mostly the silence. The median
+// player needs MOVERS_PLAYER_MIN_OBS resales, in at least a quarter of the
+// period's steps (2 of 7 days, 8 of 30), before they can appear: a move read
+// off one busy day and a month of silent ones is mostly the silence. (Half
+// the steps was tried first: 14 of the market's 362 players cleared it.) The median
 // within each step already keeps one hot card from carrying a player whose
 // other cards sat still.
 const MOVERS_PLAYER_MIN_OBS = 12;
 function _marketPlayerMoves(rows, days, daily) {
   const { bucketDays, points } = _rsiGeometry(days, daily);
   const bounds = _rsiBucketBounds(bucketDays);
-  const minSteps = Math.max(2, Math.ceil(points / 2));
+  const minSteps = Math.max(2, Math.ceil(points / 4));
   const by = new Map();
   for (const r of rows || []) {
     const b = Number(r.bucket);
@@ -10099,9 +10100,14 @@ async function _computeSoldStats(db, days) {
     // Players on the move: the market's own players, each moved as the market
     // index moves (_marketPlayerMoves), read from the same build the market
     // page shows, so the two can never disagree about who moved.
-    const market = await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days))
-      .catch(() => null);
-    const pm = (market && market.playerMoves) || null;
+    // A period the market has too little history for (it says "not enough
+    // history yet") takes the longest shorter period it does have, and says
+    // which, rather than showing an empty board.
+    let market = null, pm = null, pmDays = null;
+    for (const d of [days, ...MARKET_PERIODS.filter(d => d < days).sort((a, b) => b - a)]) {
+      const m = await _marketCached(_marketIndexKey(d), () => _computeMarketIndex(db, d)).catch(() => null);
+      if (m && m.playerMoves && (m.playerMoves.players || []).length) { market = m; pm = m.playerMoves; pmDays = d; break; }
+    }
     const playerMovers = (pm && pm.players) || [];
 
     const payload = {
@@ -10185,6 +10191,7 @@ async function _computeSoldStats(db, days) {
       // What Players on the move measured: the market index's players.
       playerMovesBasis: pm ? {
         source: 'market-index',
+        days: pmDays,
         through: market.through || null,
         playersInMarket: pm.inMarket,
         playersConsidered: pm.considered,
@@ -10223,14 +10230,44 @@ app.get('/api/sold-stats', async (req, res) => {
   const cached = await cacheGet(SOLD_STATS_KEY(days));
   if (cached) return res.json(_fromCache(cached));
 
-  // Cold cache. This is the slow path the daily warm exists to avoid, and it
-  // stays here on purpose: a fresh deploy, an evicted key or a missed cron must
-  // still produce boards rather than an empty home page. It self-limits,
-  // because the first caller to pay for it fills the cache for everyone else.
-  const payload = await _computeSoldStats(db, days);
-  if (payload.available) cachePut(SOLD_STATS_KEY(days), payload, SOLD_STATS_TTL);
-  res.json(payload);
+  // Cold cache: a deploy that changed the key, or an eviction. A build takes
+  // 7-45s on the live table, and the home page's strip hid itself whenever
+  // a visitor's request arrived in that window (a phone gives up long before
+  // 40s). So the last good boards are served at once, whatever version
+  // built them, and the new ones are built behind the visitor.
+  const last = await cacheGet(SOLD_STATS_LAST_KEY(days));
+  if (last && last.available) {
+    if (!_soldStatsInFlight.has(days)) {
+      const p = _soldStatsBuild(db, days)
+        .catch(err => console.error('[SoldStats] background build failed', days, err && err.message));
+      if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
+    }
+    return res.json({ ..._fromCache(last), refreshing: true });
+  }
+  // Nothing at all to show: the first build ever for this period.
+  res.json(await _soldStatsBuild(db, days));
 });
+
+// The version-free copy of the last good boards for a period, served while
+// the current version is being built. Kept far longer than the boards.
+const SOLD_STATS_LAST_KEY = (days) => `soldstats:last:${days}`;
+const SOLD_STATS_LAST_TTL = 60 * 60 * 24 * 30;
+const _soldStatsInFlight = new Map();
+async function _soldStatsStore(days, payload) {
+  await cachePut(SOLD_STATS_KEY(days), payload, SOLD_STATS_TTL);
+  await cachePut(SOLD_STATS_LAST_KEY(days), payload, SOLD_STATS_LAST_TTL);
+}
+// One build per period at a time, stored only when it worked.
+function _soldStatsBuild(db, days) {
+  if (_soldStatsInFlight.has(days)) return _soldStatsInFlight.get(days);
+  const p = (async () => {
+    const payload = await _computeSoldStats(db, days);
+    if (payload.available) await _soldStatsStore(days, payload);
+    return payload;
+  })().finally(() => _soldStatsInFlight.delete(days));
+  _soldStatsInFlight.set(days, p);
+  return p;
+}
 
 // Build every period's boards and store them, once a day, from the cron.
 //
@@ -10251,15 +10288,32 @@ app.get('/api/sold-stats', async (req, res) => {
 //
 // This also costs LESS in D1 than what it replaces: four computations a day,
 // against up to twenty-four per period under the old TTL.
-async function warmSoldStats() {
-  return _asD1Source('sold-stats-warm', () => _warmSoldStats());
+//
+// `onlyMissing` builds just the periods with no current boards — what the cron
+// runs every tick, so a deploy that changes the key is rebuilt within the
+// quarter hour instead of at 05:00 the next day. A few KV reads when nothing
+// is missing.
+async function warmSoldStats(opts = {}) {
+  return _asD1Source('sold-stats-warm', () => _warmSoldStats(opts));
 }
 
-async function _warmSoldStats() {
+async function _warmSoldStats({ onlyMissing = false } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   const done = [];
   for (const days of SOLD_STATS_PERIODS) {
+    if (onlyMissing) {
+      const cur = await cacheGet(SOLD_STATS_KEY(days));
+      if (cur) {
+        // Boards built before the last-good copy existed seed it, so the next
+        // key change already has something to serve.
+        if (cur.available && !(await cacheGet(SOLD_STATS_LAST_KEY(days)))) {
+          await cachePut(SOLD_STATS_LAST_KEY(days), cur, SOLD_STATS_LAST_TTL);
+        }
+        done.push(`${days}d:cached`);
+        continue;
+      }
+    }
     const payload = await _computeSoldStats(db, days);
     if (!payload.available) {
       // Do not overwrite a good cached payload with an unavailable one. A
@@ -10268,7 +10322,7 @@ async function _warmSoldStats() {
       done.push(`${days}d:skipped`);
       continue;
     }
-    await cachePut(SOLD_STATS_KEY(days), payload, SOLD_STATS_TTL);
+    await _soldStatsStore(days, payload);
     done.push(`${days}d:${(payload.cardMovers || []).length}`);
   }
   console.log(`[SoldStats] warmed ${done.join(' ')}`);
