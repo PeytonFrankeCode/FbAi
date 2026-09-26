@@ -29,6 +29,23 @@ for (let c = 0; c < 12; c++) {
   ins.run(`r${n++}`, iso(-20), `2024 Panini Prizm Bo Nix #${601 + c} RC`, 900, null, null, 'Bo Nix', '2024', 'Prizm', String(601 + c));
 }
 
+// A player whose market is its parallels: the base card barely sells, the
+// Silver and a numbered Orange /25 sell most days. Each is its own series,
+// priced against itself, so the Orange's price never reads as a jump.
+const insP = db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cents, grader, grade, player, parallel,
+  year, set_name, card_number, confidence, best_offer) VALUES (?,?,?,?,NULL,NULL,'Troy Franklin',?,'2024','Prizm',?,0.9,0)`);
+for (let c = 0; c < 6; c++) {
+  for (let d = -45; d <= -1; d++) {
+    if ((d + c) % 4 === 0) continue;
+    insP.run(`s${n++}`, iso(d), `2024 Panini Prizm Troy Franklin #${340 + c} Silver RC`, 1200, 'Silver', String(340 + c));
+    insP.run(`o${n++}`, iso(d), `2024 Panini Prizm Troy Franklin #${340 + c} Orange /25 RC`, 15000, 'Orange', String(340 + c));
+  }
+  insP.run(`b${n++}`, iso(-10), `2024 Panini Prizm Troy Franklin #${340 + c} RC`, 150, '', String(340 + c));
+}
+// A numbered card with no parallel recorded is not a base card, and not a
+// parallel either: it stays out.
+for (let d = -45; d <= -1; d++) insP.run(`x${n++}`, iso(d), `2024 Panini Prizm Troy Franklin #399 /10 RC`, 90000 + d * 5000, '', '399');
+
 const d1 = { prepare(sql) {
   const st = db.prepare(sql);
   const api = { _b: [], bind(...a) { api._b = a; return api; },
@@ -57,6 +74,12 @@ const check = (label, ok, detail) => {
   const r90 = await call('/api/player-index?player=Bo%20Nix&days=90');
   check('a period older than the data says so, not "not enough sales"', r90.available === false && r90.reason === 'not enough history yet',
     JSON.stringify({ available: r90.available, reason: r90.reason }));
+
+  const tf = await call('/api/player-index?player=Troy%20Franklin&days=30');
+  check('a player whose market is its parallels charts', tf.available === true,
+    JSON.stringify({ available: tf.available, reason: tf.reason }));
+  check('  ...each parallel its own series', (tf.matchedCards || 0) >= 12, `matchedCards=${tf.matchedCards}`);
+  check('  ...so a flat market still reads flat', Math.abs(tf.changePct || 0) < 3, `changePct=${tf.changePct}`);
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall player-trend-coverage checks passed');
   process.exit(failures ? 1 : 0);

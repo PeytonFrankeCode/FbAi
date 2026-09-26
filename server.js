@@ -4649,6 +4649,18 @@ const RSI_BASE_SERIAL = `
 // whole-word parallel test — are applied in _rsiBaseCtes, and only to the
 // sales of the cards chosen for the basket; see there for why.
 const RSI_BASE_CARD = _rsiBaseCardSql();
+// The player chart's rule when it follows parallels too (_rsiBaseCtes'
+// `parallels`): the same card tests without the base-only parallel test, and
+// a parallel counted only where the collector recorded it in the column — a
+// title alone does not say reliably which parallel a card is.
+const _RSI_BASE_PAR_LIST = RSI_BASE_PARALLELS.map(v => `'${v}'`).join(', ');
+const RSI_PAR_IS_BASE = `LOWER(TRIM(COALESCE(parallel, ''))) IN (${_RSI_BASE_PAR_LIST})`;
+const RSI_ANY_PAR_CARD = RSI_BASE_CARD.replace(`\n          AND ${RSI_PAR_IS_BASE}`, '');
+// A print run rules a base card out; a numbered parallel has one.
+const RSI_SERIAL_UNLESS_PARALLEL = `
+          AND (NOT ${RSI_PAR_IS_BASE} OR NOT (COALESCE(title, '') GLOB '*/[0-9]*'))`;
+// The parallel as part of a card's key: base spellings are one, '' .
+const RSI_PAR_KEY_SQL = `(CASE WHEN ${RSI_PAR_IS_BASE} THEN '' ELSE LOWER(TRIM(parallel)) END)`;
 
 // The title as padded words, with the player's and product's own names removed
 // — they are not evidence of a parallel ("Jerry Rice" is not Ice, "Mosaic" the
@@ -4865,7 +4877,7 @@ function _rsiBaseBinds({ periodIso, sinceIso, throughIso, extraBinds = [] }) {
 
 function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                         junk = false, labels = false, hasImage = false, useAlias = false, deny = [],
-                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false }) {
+                        perPlayer = MARKET_CARDS_PER_PLAYER, graded = false, parallels = false }) {
   // Cards the checklists name as NOT base (_marketDenied), taken out before
   // each player's busiest ten are chosen, so the next card takes the slot.
   const denySql = deny.length
@@ -4879,18 +4891,21 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
   // SQLite runs a WHERE term that mentions only `sales` before the join, so
   // written there they ran on every sale in the window rather than on the
   // chosen cards' sales alone.
+  // `parallels` also admits a card's parallels, where the column names one:
+  // each parallel is its own card (the key carries it), measured only against
+  // itself, so a Silver is never read as the base card's price.
   const colTests = `price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?${RSI_BASE_CARD}${extraWhere}`;
+          AND sold_date > ? AND sold_date <= ?${parallels ? RSI_ANY_PAR_CARD : RSI_BASE_CARD}${extraWhere}`;
   // `graded` lets slabs in whose grade was parsed into the columns: the card
   // key carries grader and grade, so each grade is its own card, measured only
   // against itself. Slabs the parser could not grade stay out, as for raw.
-  const saleTests = `${RSI_BASE_SERIAL}${noOffer}${graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
+  const saleTests = `${parallels ? RSI_SERIAL_UNLESS_PARALLEL : RSI_BASE_SERIAL}${noOffer}${graded ? RSI_RAW_OR_GRADED : RSI_RAW_ONLY}${junk ? RSI_JUNK_ONLY : ''}`;
   const columns = `${colTests}${saleTests}`;
   // The same key columns join the two passes. Player by `=`, which lets SQLite
   // build a lookup index on the chosen list; the rest by `IS`, because grader
   // and grade are NULL on most raw rows and NULL = NULL is not true.
   // (player is never NULL here — see the player_n <> '' test.)
-  const tupleCols = ['player', 'year', 'set_name', 'card_number', 'grader', 'grade'];
+  const tupleCols = ['player', 'year', 'set_name', 'card_number', 'grader', 'grade', ...(parallels ? ['parallel'] : [])];
   const tupleJoin = ['s.player = k.player',
     ...tupleCols.filter(c => c !== 'player').map(c => `s.${c} IS k.${c}`)].join(' AND ');
   // TWO PASSES, for cost.
@@ -4986,7 +5001,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
               MAX(CASE WHEN image_url IS NOT NULL AND image_url <> ''
                        THEN sold_date || '|' || image_url END) AS dated_image` : ''}` : ''}
          FROM cand
-        WHERE ok = 1 AND kind = '' AND ${RSI_BASE_TITLE_TEST}
+        WHERE ok = 1 AND kind = '' AND ${parallels ? `(NOT ${RSI_PAR_IS_BASE} OR ${RSI_BASE_TITLE_TEST})` : RSI_BASE_TITLE_TEST}
         GROUP BY sold_date, player_n, card
      )`;
 }
@@ -9487,7 +9502,7 @@ app.get('/api/player-index', async (req, res) => {
 // adjusting a stale price by it sees the very number the tab shows.
 async function _playerIndexCached(db, days, player) {
   // v8: base cards by checklist, outlier card-days set aside.
-  return await _marketCached(`playerindex:v9:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+  return await _marketCached(`playerindex:v10:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
     () => _computePlayerIndex(db, days, player));
 }
 
@@ -9581,17 +9596,21 @@ function _playerTrendLookback(days) { return days + _playerTrendWindow(days) * (
 // against the eight a window needs, because a newer player's sales are mostly
 // slabs of a handful of rookies. Each grade is its own card (the key carries
 // it), so a PSA 10 is only ever compared with PSA 10s of the same card.
-const PLAYER_TREND_CARDS = 40;
+// Parallels are followed too (each parallel of each card its own series), so
+// the card budget counts parallels: 80 series.
+const PLAYER_TREND_CARDS = 80;
 async function _playerTrendQuery(db, throughIso, days, player) {
   const noOffer = await _noBestOfferSql(db);
   // Only this span is read: nothing here pairs a sale with an earlier one.
   // Passing the span start as the look-back empties the pre-period pass.
   const periodIso = _mkIso(_mkDay(throughIso) - _playerTrendLookback(days));
   const P = _normCol('player');
+  // Each parallel its own series: the card key with the parallel appended.
+  const CARD = `${_cardKeySql(P)} || '|' || ${RSI_PAR_KEY_SQL}`;
   return db.prepare(
-    `WITH ${_rsiBaseCtes({ PLAYER: P, CARD: _cardKeySql(P), P, JOIN: '', ALIAS_FILTER: '', noOffer,
+    `WITH ${_rsiBaseCtes({ PLAYER: P, CARD, P, JOIN: '', ALIAS_FILTER: '', noOffer,
                           extraWhere: ' AND player = ? AND confidence >= ?',
-                          perPlayer: PLAYER_TREND_CARDS, graded: true })}
+                          perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true })}
      SELECT card, sold_date, s, c FROM base WHERE sold_date > ? ORDER BY sold_date`
   ).bind(..._rsiBaseBinds({ periodIso, sinceIso: periodIso, throughIso,
                             extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
