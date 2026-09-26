@@ -112,6 +112,29 @@ check('the draft is a checklist document marked as a draft',
   check('no team phrase is part of a real parallel name', clash.length === 0, clash.join(', ') || `${parNames.size} parallel names checked`);
 }
 
+// ---- Jumbo / oversized copies stay out unless asked for ----
+{
+  const { _isOversize, _dropOversizeUnlessAsked } = require(path.join(__dirname, '..', 'server.js'));
+  const sales = [
+    { title: '2023 Donruss Downtown Bijan Robinson' },
+    { title: '2023 Donruss Downtown Jumbo Bijan Robinson' },
+    { title: '2023 Donruss Downtown Bijan Robinson Oversized' },
+    { title: '2023 Donruss Downtown Bijan Robinson Hobby Jumbo Box pull' },
+  ];
+  const plain = _dropOversizeUnlessAsked(sales, '2023 Donruss Downtown Bijan Robinson').map(s => s.title);
+  check('a Downtown search leaves out the jumbo and oversized copies', plain.length === 2 && !plain.some(t => /Jumbo Bijan|Oversized/.test(t)),
+    plain.join(' | '));
+  check('  ...but keeps a standard card pulled from a jumbo box', plain.some(t => /Jumbo Box pull/.test(t)));
+  check('a search naming them keeps them', _dropOversizeUnlessAsked(sales, 'Bijan Robinson Downtown Jumbo').length === 4
+    && _dropOversizeUnlessAsked(sales, 'Bijan Robinson Downtown oversized').length === 4);
+  check('"Jumbo pack exclusive" is packaging, not a jumbo card', !_isOversize('2024 Prizm Bo Nix #301 Jumbo Pack Exclusive'));
+  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  check('sold search, the grading advisor and card analysis all apply it',
+    /searchData\.results = _dropOversizeUnlessAsked\(searchData\.results, query\);\s*\/\/[^\n]*\n[^\n]*\n\s*const matched = matchSoldListings/.test(srv)
+    && /filterByVariant\(_dropOversizeUnlessAsked\(items, baseQ\), baseQ\)/.test(srv)
+    && /_isOversize\(r\.title\) === seedJumbo/.test(srv));
+}
+
 // ---- Wiring ----
 const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
 check('the cron runs the collection check', /checkCollectionHealth\(\)/.test(worker)

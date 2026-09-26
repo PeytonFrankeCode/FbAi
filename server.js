@@ -2464,6 +2464,8 @@ app.get('/api/search', async (req, res) => {
           rateLimited: true, rateLimitMessage: searchData.rateLimitMessage,
         });
       }
+      // Jumbo / oversized copies only when the search names them.
+      searchData.results = _dropOversizeUnlessAsked(searchData.results, query);
       // Keyword match: keep the listings sharing the most keywords with the
       // query (all → all-but-one → all-but-two …), then trim price outliers.
       const matched = matchSoldListings(searchData.results, query);
@@ -3595,7 +3597,7 @@ app.get('/api/grading-advisor', async (req, res) => {
 
     // Variant-strict filter so each grade's comps reflect the actual card
     // searched (excludes wrong colors, wrong sets, autos/relics not asked for).
-    const filterFor = (items) => filterPriceOutliers(filterByVariant(items, baseQ));
+    const filterFor = (items) => filterPriceOutliers(filterByVariant(_dropOversizeUnlessAsked(items, baseQ), baseQ));
     const rawItems   = filterFor(rawData.results);
     const psa8Items  = filterFor(psa8Data.results);
     const psa9Items  = filterFor(psa9Data.results);
@@ -6756,9 +6758,19 @@ function insertAliasKeys(productId, player, cardNumber, title, pi) {
 }
 
 // A jumbo / oversized version: "Jumbo", "Oversized", "Oversize", "Box Topper".
+// Not the packaging: "Hobby Jumbo box", "Jumbo pack" say where a standard-size
+// card was pulled from, and are taken out before the test.
 const _OVERSIZE_RE = /\b(jumbos?|oversized?|over-sized?|box[\s-]?toppers?)\b/i;
+const _JUMBO_PACKAGING_RE = /\bjumbo[\s-]+(?:hobby[\s-]+)?(?:box|boxes|pack|packs|case|cases|break|breaks|exclusive|excl)\b|\bhobby[\s-]+jumbo\b/gi;
 function _isOversize(title) {
-  return _OVERSIZE_RE.test(String(title || ''));
+  return _OVERSIZE_RE.test(String(title || '').replace(_JUMBO_PACKAGING_RE, ' '));
+}
+// Sold listings without the jumbo / oversized copies — a different, bigger
+// card at a different price ("Downtown" and "Jumbo Downtown") — unless the
+// search asked for them by name.
+function _dropOversizeUnlessAsked(results, query) {
+  if (_isOversize(query)) return results || [];
+  return (results || []).filter(r => !_isOversize(r && r.title));
 }
 
 // An insert's name for comparing, not showing: "Downtown!" and "Downtown" are
@@ -12062,7 +12074,11 @@ async function _cardAnalysisRoute(req, res) {
     const seedName = (_saleParallel(seed, pi, pAliases, sOverrides, seed.player) || {}).parallel
                      || String(seed.parallel == null ? '' : seed.parallel).trim();
     // Pack listings are not this card, whatever the photo shows (_isPackListing).
-    const candidates = ((rows && rows.results) || []).filter(r => !_isPackListing(r.title, r.player));
+    // A jumbo copy is its own card: comps for a standard one leave them out,
+    // and comps for a jumbo keep only jumbos.
+    const seedJumbo = _isOversize(seed.title);
+    const candidates = ((rows && rows.results) || [])
+      .filter(r => !_isPackListing(r.title, r.player) && _isOversize(r.title) === seedJumbo);
     // The same base card in its OTHER parallels, bucketed as they are excluded.
     // These rows were already read and identified; throwing them away wastes
     // the only expensive part of this request, and they are precisely what
@@ -16559,7 +16575,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
