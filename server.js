@@ -13623,6 +13623,7 @@ async function verifyGoogleIdToken(idToken) {
       email: (claims.email || '').toLowerCase(),
       emailVerified: claims.email_verified === 'true' || claims.email_verified === true,
       name: claims.name || claims.given_name || '',
+      nonce: claims.nonce || null,
     };
   } catch (err) {
     console.error('[auth/google] verify failed:', err && err.message);
@@ -13739,6 +13740,91 @@ app.post('/api/auth/apple', async (req, res) => {
   } catch (err) {
     console.error('[auth/apple]', err && err.stack || err);
     res.status(500).json({ error: 'Apple sign-in failed', detail: String(err && err.message || err) });
+  }
+});
+
+// ---- Google sign-in without Google's script ----
+//
+// The login panel's Google button is drawn by Google's script
+// (accounts.google.com/gsi/client). Where that script is slow, blocked by a
+// content or tracker blocker, or will not load on a weak connection, the
+// panel showed the "or" and nothing above it. So the page offers its own
+// "Continue with Google" button, and when Google's script is not there to take
+// over, it sends the visitor through Google's standard redirect sign-in:
+// /start goes to Google's page, Google posts an ID token back to /callback,
+// which checks it exactly as the button's token is checked.
+//
+// Needs, once, in the Google Cloud console for this client ID: an Authorized
+// redirect URI of https://<site>/api/auth/google/callback.
+const GOOGLE_OAUTH_COOKIE = 'g_oauth';
+function _googleRedirectUri(req) {
+  // The request's own host, not a forwarded one a client could set: Google
+  // would refuse an unregistered address anyway, but there is no reason to ask.
+  const host = String(req.headers.host || '').trim();
+  const local = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+  return `${local ? 'http' : 'https'}://${host}/api/auth/google/callback`;
+}
+// Only a path on this site: "/", "/?q=x". Never "//evil.com" or a URL.
+function _safeReturnPath(p) {
+  const r = String(p || '/');
+  return /^\/(?!\/)[^\s\\]*$/.test(r) ? r.slice(0, 300) : '/';
+}
+function _readCookie(req, name) {
+  const m = new RegExp('(?:^|;\\s*)' + name + '=([^;]*)').exec(String(req.headers.cookie || ''));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+const _randHex = (n) => Array.from(webCrypto.getRandomValues(new Uint8Array(n)), b => b.toString(16).padStart(2, '0')).join('');
+
+app.get('/api/auth/google/start', (req, res) => {
+  if (!GOOGLE_CLIENT_ID) return res.status(503).send('Google Sign-In is not configured.');
+  const state = _randHex(16), nonce = _randHex(16);
+  const ret = _safeReturnPath(req.query.return);
+  // SameSite=None: Google returns by a cross-site POST, which a Lax cookie
+  // would not ride along with.
+  res.setHeader('Set-Cookie', `${GOOGLE_OAUTH_COOKIE}=${encodeURIComponent(JSON.stringify({ state, nonce, ret }))}; `
+    + 'Path=/api/auth/google; Max-Age=600; HttpOnly; Secure; SameSite=None');
+  const q = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID, redirect_uri: _googleRedirectUri(req),
+    response_type: 'id_token', response_mode: 'form_post',
+    scope: 'openid email profile', state, nonce, prompt: 'select_account',
+  });
+  res.redirect(302, `https://accounts.google.com/o/oauth2/v2/auth?${q}`);
+});
+
+app.post('/api/auth/google/callback', express.urlencoded({ extended: false, limit: '16kb' }), async (req, res) => {
+  const page = (body) => res.status(200).type('html').send(`<!doctype html><html><head><meta charset="utf-8">`
+    + `<meta name="viewport" content="width=device-width,initial-scale=1"><title>Signing in…</title></head>`
+    + `<body style="font-family:system-ui,sans-serif;background:#0f141d;color:#edf0f7;padding:2rem;text-align:center">${body}</body></html>`);
+  const fail = (msg) => page(`<p>${msg}</p><p><a style="color:#5ece99" href="/">Back to The Card Huddle</a></p>`);
+  try {
+    let saved = null;
+    try { saved = JSON.parse(_readCookie(req, GOOGLE_OAUTH_COOKIE) || 'null'); } catch (_) { saved = null; }
+    res.setHeader('Set-Cookie', `${GOOGLE_OAUTH_COOKIE}=; Path=/api/auth/google; Max-Age=0; HttpOnly; Secure; SameSite=None`);
+    const body = req.body || {};
+    if (body.error) return fail('Google sign-in was cancelled.');
+    if (!saved || !body.state || body.state !== saved.state) return fail('That sign-in link expired. Please try again.');
+    const identity = await verifyGoogleIdToken(body.id_token);
+    if (!identity || identity.nonce !== saved.nonce) return fail('Google could not confirm that sign-in. Please try again.');
+    const username = loginOrCreateOAuthUser('google', identity);
+    const token = issueSession(username);
+    const email = (loadServerUsers()[username] || {}).email || '';
+    // The page keeps its session in localStorage; set it the way the button's
+    // path does, then go back where the visitor was.
+    const js = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
+    return page(`<p>Signing you in…</p><script>
+      try {
+        localStorage.setItem('cardHuddleToken', ${js(token)});
+        localStorage.setItem('cardHuddleCurrentUser', ${js(username)});
+        var u = JSON.parse(localStorage.getItem('cardHuddleUsers') || '{}');
+        var k = ${js(String(username).toLowerCase())};
+        u[k] = u[k] || {}; if (${js(email)}) u[k].email = ${js(email)};
+        localStorage.setItem('cardHuddleUsers', JSON.stringify(u));
+      } catch (e) {}
+      location.replace(${js(_safeReturnPath(saved.ret))});
+    </script>`);
+  } catch (err) {
+    console.error('[auth/google/callback]', err && err.stack || err);
+    return fail('Google sign-in failed. Please try again.');
   }
 });
 

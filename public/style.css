@@ -9032,3 +9032,9 @@ body.tour-open { overflow: hidden; }
 .ca-work-list li { margin: 0.15rem 0; }
 .ca-work-name { color: var(--text-primary); font-weight: 600; }
 .ca-work-dim { color: var(--text-muted); }
+
+/* Our own Google button (see mountGoogleSignIn): shown until Google's script
+   draws the official one, and kept where the script never arrives. Styled to
+   Google's branding rules — white, the four-colour G, "Continue with Google". */
+.social-auth-google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; }
+.social-auth-google:hover { background: #f8f9fa; }
