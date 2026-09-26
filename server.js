@@ -3449,6 +3449,20 @@ function buildSimilarCardEstimate(query, results) {
   const targetEffPR = effectivePrintRun(targetPR);
   const targetSet = detectSetTier(query);
 
+  // A numbered card is priced from numbered cards printed in greater numbers
+  // only: a /10 from its /25s, /49s and /99s, which sell far more often and so
+  // say what the card is worth. Never from the unnumbered base (a different
+  // market, not a longer print run), and never from a rarer copy (/5, 1/1),
+  // whose few sales say more about one buyer than about the card. With none
+  // of those, there is no estimate rather than a worse one.
+  if (targetPR) {
+    pool = pool.filter(r => {
+      const pr = parsePrintRunFromTitle(r.title);
+      return pr != null && pr > 1 && pr >= targetPR;
+    });
+    if (pool.length === 0) return null;
+  }
+
   // Score each comp: bring its price onto the target SET's value level, note its
   // (effective) print run, and measure how much adjusting it would take so the
   // closest comps sort first.

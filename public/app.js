@@ -3497,7 +3497,107 @@ function _versionMarketPrice(card, priced, v) {
 // Resolve the search query to one checklist product and harvest its parallel
 // names. Highest set-term score wins, then the shortest product name, so
 // "2024 Panini Prizm Football" beats "2024 Panini Prizm Deca Football".
-async function _resolveParallelVocab(query) {
+// Which catalogued product, and which of its players, a search is about.
+//
+// Asked of the checklists themselves rather than of a fixed list of set
+// words: that list lacked Resurgence, Wild Card and more, a search without a
+// year took whichever product's name was shortest (Bo Nix's 2025 Prizm rather
+// than his 2024 rookie), and the player was whatever capitalised words were
+// left ("Mahomes Rated", "Chrome Bo Nix"). Now:
+//   product — one whose own name words are all in the search (maker words like
+//             Panini and Topps optional), the most specific first ("Donruss
+//             Optic" over "Donruss"); a brand that is also a parallel word
+//             ("Black", "One") ranks below a real match;
+//   year    — the search's, or else the year most of the sales carry;
+//   player  — a player in that product's checklist whose name is in the
+//             search, full name first, then a surname only that one of the
+//             product's players has.
+const _VT_MAKERS = new Set(['panini', 'topps', 'donruss', 'leaf', 'upper', 'deck', 'football']);
+const _VT_WEAK_BRAND = new Set(['one', 'limited', 'legacy', 'elements', 'encore', 'honors', 'majestic', 'black',
+  'gold', 'standard', 'elite', 'contender', 'kickoff', 'day']);
+async function _resolveVersionTarget(query, results) {
+  let index;
+  try { index = await fetchChecklistsList(); } catch { return null; }
+  const q = _cleanForMatch(query);
+  const has = (w) => new RegExp('\\b' + _reEsc(w) + '\\b').test(q);
+  const year = (q.match(/\b(19|20)\d{2}\b/) || [])[0] || '';
+  // Years the sales carry, for a search that names none.
+  const yearsSold = new Map();
+  if (!year) {
+    for (const r of results || []) {
+      const y = (String((r && r.title) || '').match(/\b(19|20)\d{2}\b/) || [])[0];
+      if (y) yearsSold.set(y, (yearsSold.get(y) || 0) + 1);
+    }
+  }
+  const cands = [];
+  for (const p of index.products || []) {
+    if (year && String(p.year) !== year) continue;
+    // The product's full name, not its brand: 2025 Donruss, Donruss Elite and
+    // Donruss Optic are all filed under the brand "Donruss".
+    const words = _cleanForMatch(String(p.name || p.brand || '').replace(/\b(19|20)\d{2}\b/g, ' '))
+      .split(' ').filter(w => w && w !== 'football');
+    const distinct = words.filter(w => !_VT_MAKERS.has(w));
+    const need = distinct.length ? distinct : words;
+    if (!need.length || !need.every(has)) continue;
+    const weak = need.every(w => _VT_WEAK_BRAND.has(w) || (typeof SCAN_KEY_PARALLEL_WORDS !== 'undefined' && SCAN_KEY_PARALLEL_WORDS.has(w)));
+    let score = need.length + (distinct.length ? 0.5 : 0) + words.filter(has).length * 0.01 - (weak ? 0.6 : 0);
+    if (!year) score += (yearsSold.get(String(p.year)) || 0) / Math.max(1, (results || []).length) * 0.3;
+    cands.push({ p, score });
+  }
+  if (!cands.length) return null;
+  cands.sort((x, y) => y.score - x.score || Number(y.p.year) - Number(x.p.year));
+  for (const c of cands.slice(0, 6)) {
+    let product;
+    try { product = await fetchChecklistProduct(c.p.id); } catch { continue; }
+    const player = _findChecklistPlayer(product, query);
+    if (player) return { product, player };
+  }
+  return null;
+}
+
+// The product's player whose name the search holds. A full name wins; a
+// surname alone counts only when no other player in the product shares it.
+function _findChecklistPlayer(product, query) {
+  const q = ' ' + _versionName(query) + ' ';
+  const names = new Map();
+  for (const set of (product && product.sets) || []) {
+    for (const c of set.cards || []) {
+      // A dual card ("Alex Smith/Patrick Mahomes II") is two players, not a
+      // third one who shares both surnames.
+      for (const one of String(c.player || '').split(/\s*(?:\/|&|\band\b)\s*/)) {
+        const n = one.trim();
+        if (n && !names.has(n)) names.set(n, _versionName(n));
+      }
+    }
+  }
+  let full = null;
+  const bySurname = new Map();
+  for (const [n, vn] of names) {
+    const toks = vn.split(' ').filter(Boolean);
+    if (!toks.length) continue;
+    if (toks.every(t => q.includes(' ' + t + ' '))) {
+      if (!full || vn.length > _versionName(full).length) full = n;
+    }
+    const last = toks[toks.length - 1];
+    if (last.length >= 4) {
+      if (!bySurname.has(last)) bySurname.set(last, new Set());
+      bySurname.get(last).add(vn);
+    }
+  }
+  if (full) return full;
+  for (const [last, set] of bySurname) {
+    if (set.size === 1 && q.includes(' ' + last + ' ')) {
+      const vn = [...set][0];
+      for (const [n, v] of names) if (v === vn) return n;
+    }
+  }
+  return null;
+}
+
+async function _resolveParallelVocab(query, results) {
+  // The catalogue first: the product and player the search is about.
+  const target = await _resolveVersionTarget(query, results).catch(() => null);
+  if (target) return _vocabFor(target.product, target.product.name, target.player);
   const cleaned = _cleanForMatch(query);
   const year = (cleaned.match(/\b(19|20)\d{2}\b/) || [])[0] || '';
   const setTerms = SCAN_KEY_SETS.filter(s =>
@@ -3520,7 +3620,11 @@ async function _resolveParallelVocab(query) {
 
   let data;
   try { data = await fetchChecklistProduct(scored[0].p.id); } catch { return null; }
+  return _vocabFor(data, scored[0].p.name, null);
+}
 
+// The parallel vocabulary for one product, and who the search is about.
+function _vocabFor(data, fallbackName, player) {
   const names = [];
   for (const set of data.sets || []) {
     for (const par of set.parallels || []) if (par && par.name) names.push(par.name);
@@ -3535,7 +3639,7 @@ async function _resolveParallelVocab(query) {
     ...SCAN_KEY_PARALLEL_WORDS,
   ]);
   if (!matchers.length) return null;
-  return { matchers, productName: data.name || scored[0].p.name || '', product: data };
+  return { matchers, productName: data.name || fallbackName || '', product: data, player };
 }
 
 // ---- Grade + Parallel filters (sold searches) ----
@@ -3648,7 +3752,7 @@ async function buildParallelFilter(query) {
 
   const token = ++_parallelBuildToken;
   let vocab = null;
-  try { vocab = await _resolveParallelVocab(query); } catch (err) {
+  try { vocab = await _resolveParallelVocab(query, currentResults); } catch (err) {
     console.warn('[parallel-filter]', err && err.message);
   }
   if (token !== _parallelBuildToken) return;
@@ -3658,7 +3762,9 @@ async function buildParallelFilter(query) {
     productName: (vocab && vocab.productName) || '',
     playerRe: null,
   };
-  const player = (parseCardTitle(query).player || '').trim();
+  // The checklist's own spelling of the player when the catalogue found one;
+  // the words parsed off the search otherwise.
+  const player = ((vocab && vocab.player) || parseCardTitle(query).player || '').trim();
   if (player.length > 2) {
     const p = _cleanForMatch(player).trim();
     if (p) _parallelCtx.playerRe = new RegExp('\\b' + _reEsc(p).replace(/\s+/g, '[\\s-]+') + '\\b', 'g');
@@ -6639,7 +6745,14 @@ async function runAutoPricer() {
     _apComps = data.items
       .filter(it => it && it.price > 0)
       .slice(0, 10) // cap comps at 10
-      .map(it => ({ ...it, pr: parsePrintRun(it.title), set: detectSetTier(it.title), grade: detectGrade(it.title), include: true }));
+      .map(it => {
+        const pr = parsePrintRun(it.title);
+        // A numbered card is priced from numbered copies printed in greater
+        // numbers (the same rule as the sold search's estimate): those are
+        // ticked; unnumbered and rarer ones start unticked, one click away.
+        const include = !_apUserPR || (pr != null && pr > 1 && pr >= _apUserPR);
+        return { ...it, pr, set: detectSetTier(it.title), grade: detectGrade(it.title), include };
+      });
     renderApComps(out);
   } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${escHtml(e.message)}</p>`; }
 }
