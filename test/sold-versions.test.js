@@ -140,8 +140,28 @@ check(`every listing is tied to the right version, or to none (${CASES.length})`
 
 // The page wiring: grouped listings that match nothing leave the main list,
 // the stats skip them, and a new search starts ungrouped.
-check('unmatched listings go to the collapsed section, not the comps',
-  /_isOtherCard = \(r\) => !!\(r && \(r\.sameCard === false \|\| \(_versionCtx && _versionOf\(r\) === null\)\)\)/.test(src));
+{
+  // The predicate, run: _versionOf stubbed to what the checklist matcher said.
+  const start = src.indexOf('const _isOtherCard'), end = src.indexOf('function renderGradeGroups');
+  const pc = { console };
+  vm.createContext(pc);
+  vm.runInContext(src.slice(start, end) + `
+    this.setCtx = (on, idn) => { _versionCtx = on ? {} : null; _searchIdentity = idn; };
+    var _versionOf = (r) => r.v === undefined ? null : r.v;
+    this.isOther = _isOtherCard;`, pc);
+  pc.setCtx(true, { parallel: 'Red Sparkle Prizms' });
+  const redSparkle = { card: {}, parallel: 'Red Sparkle' };
+  check('unmatched listings go to the collapsed section, not the comps',
+    pc.isOther({}) === true && pc.isOther({ v: redSparkle }) === false);
+  check('  ...a listing read as a different parallel stays there',
+    pc.isOther({ v: { card: {}, parallel: 'Red' }, sameCard: false }) === true);
+  check('  ...but one the server could not read, which the checklist reads as the searched parallel, comes back',
+    pc.isOther({ v: redSparkle, sameCard: false, sameCardUnread: true }) === false
+    && pc.isOther({ v: { card: {}, parallel: 'Red' }, sameCard: false, sameCardUnread: true }) === true);
+  pc.setCtx(false, null);
+  check('  ...and without the grouping, only an explicit false moves a listing',
+    pc.isOther({ sameCard: false }) === true && pc.isOther({}) === false && pc.isOther({ sameCard: false, sameCardUnread: true }) === true);
+}
 check('  ...and are left out of the value stats and chart',
   /function _countedResults\(/.test(src) && /renderStatsBar\(counted, true\)/.test(src));
 check('  ...and a new search never inherits the last one\'s grouping',

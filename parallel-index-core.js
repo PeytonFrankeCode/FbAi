@@ -90,8 +90,27 @@ const COLOR_TEAM_PHRASES = [
   'redhawks', 'purple eagles', 'black bears', 'big red', 'syracuse orange',
   'green bay', 'red sea',
 ].sort((a, b) => b.length - a.length);
-const _COLOR_TEAM_RE = new RegExp(`\\b(?:${COLOR_TEAM_PHRASES.map(p => p.replace(/ /g, '\\s+')).join('|')})\\b`, 'gi');
-// The text with those team names blanked out.
+// NFL teams by full name, and the two-word cities, blanked the same way:
+// "Red Sparkle #138 Kansas City Chiefs" left "kansas city" standing beside
+// the parallel, the reader could not cover it, and a Red Sparkle went unread.
+// (A lone nickname after the number is already filler.)
+const NFL_TEAM_PHRASES = [
+  'arizona cardinals', 'atlanta falcons', 'baltimore ravens', 'buffalo bills',
+  'carolina panthers', 'chicago bears', 'cincinnati bengals', 'cleveland browns',
+  'dallas cowboys', 'denver broncos', 'detroit lions', 'green bay packers',
+  'houston texans', 'indianapolis colts', 'jacksonville jaguars', 'kansas city chiefs',
+  'las vegas raiders', 'oakland raiders', 'los angeles chargers', 'san diego chargers',
+  'los angeles rams', 'st louis rams', 'miami dolphins', 'minnesota vikings',
+  'new england patriots', 'new orleans saints', 'new york giants', 'new york jets',
+  'philadelphia eagles', 'pittsburgh steelers', 'san francisco 49ers', 'seattle seahawks',
+  'tampa bay buccaneers', 'tennessee titans', 'houston oilers', 'washington commanders',
+  'washington redskins', 'washington football team',
+  'kansas city', 'new england', 'new orleans', 'tampa bay', 'las vegas',
+  'los angeles', 'san francisco', 'new york', 'green bay',
+];
+const _TEAM_STRIP = [...new Set([...COLOR_TEAM_PHRASES, ...NFL_TEAM_PHRASES])].sort((a, b) => b.length - a.length);
+const _COLOR_TEAM_RE = new RegExp(`\\b(?:${_TEAM_STRIP.map(p => p.replace(/ /g, '\\s+')).join('|')})\\b`, 'gi');
+// The text with those team names (both lists) blanked out.
 function stripColorTeams(text) {
   return String(text == null ? '' : text).replace(_COLOR_TEAM_RE, ' ');
 }
@@ -265,6 +284,17 @@ function parallelSegment(title) {
 // word in cannot promote a Silver Prizm to a Variation.
 const RESIDUAL_FILLER = new Set([
   'rc', 'rookie', 'rookies', 'ssp', 'sp', 'insert', 'card',
+  // A name's suffix, left behind when the search names "Patrick Mahomes" and
+  // the title says "Patrick Mahomes II": "ii red sparkle" covered nothing, and
+  // with nothing after the number the card was read as BASE.
+  'ii', 'iii', 'iv', 'jr', 'sr',
+  // Team nicknames, for the same reason: "Red Sparkle Chiefs #138" is a Red
+  // Sparkle. No parallel name in the checklists contains one (a test holds it).
+  'cardinals', 'falcons', 'ravens', 'bills', 'panthers', 'bears', 'bengals',
+  'browns', 'cowboys', 'broncos', 'lions', 'packers', 'texans', 'colts',
+  'jaguars', 'chiefs', 'raiders', 'chargers', 'rams', 'dolphins', 'vikings',
+  'patriots', 'saints', 'giants', 'jets', 'eagles', 'steelers', 'niners',
+  '49ers', 'seahawks', 'buccaneers', 'titans', 'commanders', 'oilers', 'redskins',
   'psa', 'bgs', 'sgc', 'cgc', 'gem', 'mint', 'mt', 'nm', 'lot', 'the',
   // Signature words. Left in, they sat next to the answer and stopped the
   // residual covering it: "Refractor Auto" is a Refractor that happens to be
@@ -572,4 +602,4 @@ function resolveParallel(title, opts = {}) {
   };
 }
 
-module.exports = { createParallelIndex, norm, parallelKey, COLOR_TEAM_PHRASES, stripColorTeams };
+module.exports = { createParallelIndex, norm, parallelKey, COLOR_TEAM_PHRASES, NFL_TEAM_PHRASES, stripColorTeams };
