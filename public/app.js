@@ -5098,8 +5098,11 @@ async function loadMarketIndex() {
       // A player's number compares their first and last weeks, and one of the
       // two had too few sales to pin down. Saying so beats printing a figure
       // two or three sales could swing by half.
-      title = 'Not enough trading to chart';
-      text = `${who}'s cards haven't traded often enough over this period to chart. Try a longer period.`;
+      // Said as what the chart needs, not as a claim about the player: Bo Nix
+      // has thousands of sales, and "his cards haven't traded" read as wrong.
+      title = 'Not enough repeat sales to chart';
+      text = `This chart follows the same cards from the first ${data.windowDays || 7} days of the period to the last, `
+           + `and too few of ${who}'s cards sold in both to compare. Try a longer period.`;
     } else if (noPlayer) {
       title = 'No recent sales';
       text = `${who}'s cards haven't sold recently.`;
