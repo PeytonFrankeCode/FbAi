@@ -8881,7 +8881,7 @@ body.tour-open { overflow: hidden; }
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .mp-row:hover { border-color: var(--accent); background: rgba(148, 163, 184, 0.09); }
-.mp-row-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
+.mp-row-name { font-size: 0.78rem; font-weight: 600; color: var(--text-primary); min-width: 0; white-space: normal; overflow-wrap: anywhere; word-break: break-word; overflow: hidden; }
 .mp-row-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
 .mp-row-n { font-size: 0.78rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
 /* Down is a direction, not an error, so it gets its own colour rather than
@@ -8934,7 +8934,11 @@ body.tour-open { overflow: hidden; }
 }
 .st-row:hover { border-color: var(--accent); }
 .st-rank { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); }
-.st-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
+/* The name wraps inside its own column and never paints past it. A long
+   name ran under the percentage on iPhones: these rows are <button>s, and
+   Safari's button text does not wrap unless told to (white-space). */
+.st-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); min-width: 0; white-space: normal; overflow-wrap: anywhere; word-break: break-word; overflow: hidden; }
+.st-row > .mp-change, .st-row > .st-n { justify-self: end; padding-left: 0.25rem; }
 .st-meta { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
 .st-n { font-size: 0.85rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
 /* Card photo on the boards that have one. The extra column exists only on
