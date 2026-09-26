@@ -74,9 +74,12 @@ for (let i = 0; i < 12; i++) {
 // Its queue does `if (!key) continue;` — a sale whose unreadable segment
 // normalises to nothing is not deferred, it is invisible. No phrase to blame
 // means no queue entry there, so this is the population no other screen shows.
+// Today that is chiefly a title with no card number and no parallel named: a
+// quarter of all sales carry no number. (It was "#2 ***", which the reader
+// now reads as base: stars are decoration.)
 for (let i = 0; i < 9; i++) {
   ins.run('np' + i, iso(-12 - (i % 4)),
-          '2025 Topps Chrome Rome Odunze #2 ***', 22000,
+          '2025 Topps Chrome Rome Odunze RC ***', 22000,
           'Rome Odunze', '2025', 'Topps Chrome', '', '2', 0.9, 'https://img/np.jpg');
 }
 // BELOW THE CONFIDENCE GATE. Excluded by SQL from every board and card page, so

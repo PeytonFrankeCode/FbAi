@@ -73,9 +73,11 @@ check('  ...and a parallel word before the card number is not',
     ['2024 Panini Prizm - Rookies Caleb Williams #301 Red White & Blue Prizm (RC)',
      'matched', 'red white and blue'],
     // Matched the bare "White" — a real but different parallel — because the
-    // full name was not in the vocabulary. Must refuse instead.
+    // full name was not in the vocabulary. It is now: the 2025 Prizm checklist
+    // writes "Prizm White Disco", and a leading product word is a spelling
+    // variant. The full name, never the bare White.
     ['2025 Panini Prizm - Rookies Jaxson Dart #332 White Disco Prizm (RC)',
-     'unmatched', null],
+     'matched', 'white disco'],
     // The parallel is stated BEFORE the card number here, and the trailing
     // "Giants Rookie" is junk. Found by stripping the product, the subset, the
     // player and the filler and seeing what stands alone.
