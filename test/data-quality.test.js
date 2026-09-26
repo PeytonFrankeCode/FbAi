@@ -83,6 +83,35 @@ check('the draft is a checklist document marked as a draft',
   draft.id === '1986-topps-football' && draft.draft === true && draft.sets[0].cards.length === 2
   && draft.review.uncertain.length === 2 && /not from the manufacturer/.test(draft.source));
 
+// ---- College teams are not parallels ----
+{
+  const core = require(path.join(__dirname, '..', 'parallel-index-core.js'));
+  const idx = core.createParallelIndex(require(path.join(__dirname, '..', 'public', 'data', 'parallel-index.json')), () => null);
+  const read = (t) => idx.resolveParallel(t).parallel;
+  check('"Red Raiders" is Texas Tech, not a Red parallel', read('2017 Score Patrick Mahomes II #403 Red Raiders RC') === null,
+    String(read('2017 Score Patrick Mahomes II #403 Red Raiders RC')));
+  check('  ...while a real Red still reads as Red', read('2017 Score Patrick Mahomes II #403 Red') === 'Red');
+  check('  ...and a colour after a college name still counts', read('2021 Prizm Mac Jones #1 Crimson Tide Blue') === 'Blue');
+  const app_js = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  const m = app_js.match(/const PARALLEL_STRIP_TEAMS = \[([\s\S]*?)\]\.sort/);
+  const pageList = m ? [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]) : [];
+  const missing = core.COLOR_TEAM_PHRASES.filter(p => !pageList.includes(p));
+  check('the page strips every college team the server does (version grouping and parallel reading)',
+    pageList.length > 0 && missing.length === 0, missing.join(', ') || `${core.COLOR_TEAM_PHRASES.length} phrases`);
+  // A team phrase that is also part of a parallel's name would delete the
+  // parallel ("Green Wave" is Tulane and a Prizm parallel).
+  const dir = path.join(__dirname, '..', 'public', 'data', 'checklists');
+  const parNames = new Set();
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith('.json') || f === 'index.json') continue;
+    for (const st of JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).sets || []) {
+      for (const p of st.parallels || []) parNames.add(' ' + String(p.name).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ');
+    }
+  }
+  const clash = core.COLOR_TEAM_PHRASES.filter(ph => [...parNames].some(n => n.includes(' ' + ph + ' ')));
+  check('no team phrase is part of a real parallel name', clash.length === 0, clash.join(', ') || `${parNames.size} parallel names checked`);
+}
+
 // ---- Wiring ----
 const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
 check('the cron runs the collection check', /checkCollectionHealth\(\)/.test(worker)

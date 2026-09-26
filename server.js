@@ -77,7 +77,7 @@ function _fromCache(v) {
 // In Node there is no assets binding, so the committed files are read directly
 // and the same resolvers are built from them — which is what the tests drive.
 const { createCardIndex } = require('./card-index-core');
-const { createParallelIndex, parallelKey: _parallelKey } = require('./parallel-index-core');
+const { createParallelIndex, parallelKey: _parallelKey, stripColorTeams: _stripColorTeams } = require('./parallel-index-core');
 // Grade bucketing, split out so it can be tested directly. It decides the
 // "Ungraded" badge on every sold tile AND which sales reach the Raw price
 // series, and it was calling every PSA10/BGS9.5 slab raw — see grade-core.js.
@@ -184,8 +184,9 @@ const _PARALLEL_SIGNAL_WORDS = [
 const _PARALLEL_SIGNAL = new RegExp(`\\b(${_PARALLEL_SIGNAL_WORDS.join('|')})\\b`);
 // A print run: "/99", "/ 25", "1/1". Base cards are not serial numbered.
 const _SERIAL_RUN = /(^|\s|\d)\/\s*\d+\b|\b\d+\s*of\s*\d+\b/;
-// Team names that carry a colour word and would otherwise read as a parallel.
-const _SIGNAL_TEAM_PHRASES = /\bgreen bay\b|\bred ?sea\b/g;
+// Team names that carry a colour word ("Green Bay", "Red Raiders", "Crimson
+// Tide") are blanked with _stripColorTeams (parallel-index-core.js) before a
+// title is read for parallel words.
 // Matched "parallels" that are really what a seller types about a base card.
 const _BASE_NAMES = new Set(['base', 'rookie', 'rc']);
 
@@ -203,7 +204,7 @@ function _looksLikeParallel(title, player, setName) {
   };
   drop(player);
   drop(setName);
-  t = t.replace(_SIGNAL_TEAM_PHRASES, ' ');
+  t = _stripColorTeams(t).replace(/\bredsea\b/g, ' ');
   return _PARALLEL_SIGNAL.test(t);
 }
 
@@ -11499,7 +11500,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // their names cleaned (scripts/audit-parallels.js, clean-parallel-names.js),
 // which changes the vocabulary sales are read against.
 // v28: estimates carry their working (anchors, ladder step, example comps).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v28';
+// v29: college teams with a colour ("Red Raiders", "Crimson Tide") are not
+// read as parallels, so v28 entries hold Mahomes' Score #403 as a Red.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v29';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11510,7 +11513,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = '153c5654a3ba';
+const CARD_IDENTITY_FINGERPRINT = 'e2233ba9d8e1';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -11953,7 +11956,7 @@ async function _cardAnalysisRoute(req, res) {
           if (w) t = t.replace(new RegExp(`\\b${w}\\b`, 'g'), ' ');
         }
       }
-      t = t.replace(_SIGNAL_TEAM_PHRASES, ' ');
+      t = _stripColorTeams(t).replace(/\bredsea\b/g, ' ');
       const words = new Set();
       for (const m of t.matchAll(new RegExp(_PARALLEL_SIGNAL.source, 'g'))) {
         if (!GENERIC_PAR.has(m[1])) words.add(m[1]);
