@@ -108,7 +108,7 @@ check('the draft is a checklist document marked as a draft',
       for (const p of st.parallels || []) parNames.add(' ' + String(p.name).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ');
     }
   }
-  const clash = core.COLOR_TEAM_PHRASES.filter(ph => [...parNames].some(n => n.includes(' ' + ph + ' ')));
+  const clash = [...core.COLOR_TEAM_PHRASES, ...core.NFL_TEAM_PHRASES].filter(ph => [...parNames].some(n => n.includes(' ' + ph + ' ')));
   check('no team phrase is part of a real parallel name', clash.length === 0, clash.join(', ') || `${parNames.size} parallel names checked`);
 }
 
@@ -135,6 +135,34 @@ check('the draft is a checklist document marked as a draft',
     && /_isOversize\(r\.title\) === seedJumbo/.test(srv));
 }
 
+// ---- Listings the checklist can place are not "unmatched" ----
+(async () => {
+  const { tagSameCard, parallelIndex } = require(path.join(__dirname, '..', 'server.js'));
+  const pi = await parallelIndex();
+  check('a parallel before the number, with the full team name after it, is read',
+    pi.resolveParallel('2024 Panini Prizm Patrick Mahomes II Red Sparkle #138 Kansas City Chiefs', { player: 'Patrick Mahomes II' }).parallel === 'Red Sparkle');
+  // The search says "Patrick Mahomes"; the title says "Patrick Mahomes II".
+  // The leftover "ii" blocked the match, and with nothing after the number
+  // the Red Sparkle was read as BASE.
+  const asSearched = (t) => pi.resolveParallel(t, { player: 'Patrick Mahomes' });
+  check('a suffix the search left off does not turn a parallel into base',
+    asSearched('2024 Panini Prizm Patrick Mahomes II Red Sparkle #138').parallel === 'Red Sparkle'
+    && asSearched('2024 Panini Prizm Patrick Mahomes II Red Sparkle #138 Kansas City Chiefs').parallel === 'Red Sparkle',
+    JSON.stringify(asSearched('2024 Panini Prizm Patrick Mahomes II Red Sparkle #138')));
+  check('  ...nor does a team nickname beside it', asSearched('2024 Panini Prizm Patrick Mahomes II Red Sparkle Chiefs #138').parallel === 'Red Sparkle');
+  const rows = [
+    { title: '2024 Panini Prizm Patrick Mahomes II Red Sparkle #138 Kansas City Chiefs' },
+    { title: '2024 Panini Prizm Patrick Mahomes II #138 Red Prizm' },
+    { title: '2024 Panini Prizm Patrick Mahomes II #138 Chiefs Blurry Photo Lot' },
+  ];
+  await tagSameCard(rows, '2024 Panini Prizm Patrick Mahomes Red Sparkle');
+  check('  ...so it is the searched card', rows[0].sameCard === true, JSON.stringify(rows[0]));
+  check('a different parallel is marked different, not unread', rows[1].sameCard === false && !rows[1].sameCardUnread);
+  check('an unreadable one is marked unread, for the checklist grouping to settle',
+    rows[2].sameCard === false && rows[2].sameCardUnread === true, JSON.stringify(rows[2]));
+  finish();
+})().catch(e => { console.error(e); process.exit(1); });
+
 // ---- Wiring ----
 const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
 check('the cron runs the collection check', /checkCollectionHealth\(\)/.test(worker)
@@ -143,5 +171,8 @@ const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 check('the checklist tally is admin only',
   /app\.get\('\/api\/debug\/observed-checklist', async \(req, res\) => \{\s*if \(!isAdminReq\(req\)\)/.test(srv));
 
-console.log(failures ? `\n${failures} check(s) failed` : '\nall data-quality checks passed');
-process.exit(failures ? 1 : 0);
+// Called by the async checks above, once they have run.
+function finish() {
+  console.log(failures ? `\n${failures} check(s) failed` : '\nall data-quality checks passed');
+  process.exit(failures ? 1 : 0);
+}

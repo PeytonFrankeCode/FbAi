@@ -2063,6 +2063,7 @@ async function fetchDirectSearch(query) {
     const { mock, searchType, approximateValue, relaxedNote } = data;
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
+    _searchIdentity = data.cardIdentity || null;
     recordPriceHistory(query, results);
 
     // Check for rate limiting
@@ -2478,6 +2479,7 @@ async function performSearch(query, opts = {}) {
     const { mock, serial, similarResults } = data;
     const results = Array.isArray(data.results) ? data.results : [];
     currentResults = results;
+    _searchIdentity = data.cardIdentity || null;
     currentResultMode = effectiveMode;
     recordPriceHistory(query, results);
     // A sold search may have consumed a free allowance unit — refresh the pill.
@@ -2809,7 +2811,31 @@ let _searchPaging = { query: '', mode: '', offset: 0, hasMore: false, fetching: 
 // tied to one of the card's versions also goes to that section. The grouping
 // state lives here so this predicate reads it without depending on anything
 // declared further down.
-const _isOtherCard = (r) => !!(r && (r.sameCard === false || (_versionCtx && _versionOf(r) === null)));
+//
+// One exception: a listing the server set aside only because it could not
+// READ its parallel (sameCardUnread) comes back when the checklist grouping
+// reads it as the very parallel the search named. "Red Sparkle #138 Kansas
+// City Chiefs" was one: the server could not see past the team name, the
+// checklist could, and the listing sat in the unmatched pile beside two
+// identical ones in the main list.
+const _isOtherCard = (r) => {
+  if (!r) return false;
+  if (_versionCtx) {
+    const v = _versionOf(r);
+    if (v === null) return true;
+    if (r.sameCard !== false) return false;
+    return !(r.sameCardUnread && _searchIdentity && _sameParallelName(v.parallel, _searchIdentity.parallel));
+  }
+  return r.sameCard === false;
+};
+// "Red Sparkle" and "Red Sparkle Prizms" are one parallel; so are "Base" and
+// "base".
+const _parallelNameKey = (s) => String(s || '').toLowerCase()
+  .replace(/\b(prizms?|refractors?|parallels?)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+const _sameParallelName = (a, b) => !!_parallelNameKey(a) && _parallelNameKey(a) === _parallelNameKey(b);
+// What the server read the search as ({ parallel, kind, printRun }), from the
+// last sold search's cardIdentity; null when it did not split the results.
+let _searchIdentity = null;
 let _versionCtx = null;
 
 function renderGradeGroups(grid, results) {

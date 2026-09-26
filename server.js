@@ -3325,6 +3325,15 @@ async function tagSameCard(results, query) {
     const cand = _identityOf(r.title, pi, player, pAliases, r.itemId || r.item_id, sOverrides);
     const same = _sameCard(seed, cand, strict);
     r.sameCard = same;
+    // Why, when it is not: `sameCardUnread` is "this listing's parallel could
+    // not be read" (only a catalogued product sets those aside), as against a
+    // parallel read and found different. The page's checklist grouping can
+    // read some of what this cannot, and brings those back when they are the
+    // parallel the search named (_isOtherCard in app.js).
+    if (!same && seed.parallel != null && cand.parallel == null && seed.kind === cand.kind
+        && !(seed.printRun != null && cand.printRun != null && seed.printRun !== cand.printRun)) {
+      r.sameCardUnread = true;
+    } else if (r.sameCardUnread) delete r.sameCardUnread;
     if (!same) {
       differing++;
       if (cand.parallel == null && seed.kind === cand.kind) unconfirmed++;
@@ -11514,7 +11523,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v28: estimates carry their working (anchors, ladder step, example comps).
 // v29: college teams with a colour ("Red Raiders", "Crimson Tide") are not
 // read as parallels, so v28 entries hold Mahomes' Score #403 as a Red.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v29';
+// v30: NFL team names and a name's suffix ("II") no longer block the parallel
+// reader; "Mahomes II Red Sparkle #138 Kansas City Chiefs" was read as base.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v30';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -11525,7 +11536,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = 'e2233ba9d8e1';
+const CARD_IDENTITY_FINGERPRINT = '8fe875113159';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
