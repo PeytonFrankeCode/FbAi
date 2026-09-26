@@ -1080,10 +1080,10 @@ async function loadMarketPulse(days) {
     '<span class="mp-row-meta">' + _mpMoney(r.older) + ' &rarr; ' + _mpMoney(r.recent) + '</span>' +
     _mpChange(r.changePct) + '</button>'));
 
-  parts.push(rows('Players on the move', 'median of their base cards', data.playerMovers, (r) =>
+  parts.push(rows('Players on the move', 'from the market index', data.playerMovers, (r) =>
     '<button class="mp-row" data-query="' + escHtml(r.query) + '">' +
     '<span class="mp-row-name">' + escHtml(r.player) + '</span>' +
-    '<span class="mp-row-meta">' + r.cards + ' cards</span>' +
+    '<span class="mp-row-meta">' + Number(r.resales || 0).toLocaleString('en-US') + ' resales</span>' +
     _mpChange(r.changePct) + '</button>'));
 
   parts.push(rows('Highest demand sets', 'by cards sold', data.topSets, (r) =>
@@ -1160,14 +1160,14 @@ function _statsThumb(url, alt) {
 
 // Which boards have a photo to show at all. topSets is deliberately absent:
 // its rows are whole sets, and one card's photo would stand in for a thousand.
-const _STATS_WITH_PHOTOS = { priciest: 1, mostSold: 1, cardMovers: 1, playerMovers: 1 };
+// So is playerMovers: a player's move is their whole basket, not one card.
+const _STATS_WITH_PHOTOS = { priciest: 1, mostSold: 1, cardMovers: 1 };
 
 function _statsRow(board, r, i) {
   const rank = '<span class="st-rank">' + (i + 1) + '</span>';
   const q = r.query ? ' data-query="' + escHtml(r.query) + '"' : '';
   const photo = _STATS_WITH_PHOTOS[board]
-    ? _statsThumb(board === 'playerMovers' ? (r.topCard && r.topCard.imageUrl) : r.imageUrl,
-                  board === 'playerMovers' ? r.player : r.name || r.title)
+    ? _statsThumb(r.imageUrl, r.name || r.title)
     : '';
   const cls = photo ? 'st-row st-row-img' : 'st-row';
   const open = '<button class="' + cls + '"' + q + '>' + rank + photo;
@@ -1193,9 +1193,8 @@ function _statsRow(board, r, i) {
   if (board === 'playerMovers') {
     return open +
       '<span class="st-name">' + escHtml(r.player) + '</span>' +
-      '<span class="st-meta">' + r.cards + ' cards &middot; ' + r.sales.toLocaleString('en-US') + ' sales' +
-      (r.topCard ? ' &middot; top: ' + escHtml(String(r.topCard.name).slice(0, 46)) : '') +
-      '</span>' + _mpChange(r.changePct) + '</button>';
+      '<span class="st-meta">' + Number(r.resales || 0).toLocaleString('en-US') + ' resales</span>' +
+      _mpChange(r.changePct) + '</button>';
   }
   return open +
     '<span class="st-name">' + escHtml(r.name) + '</span>' +
@@ -1237,16 +1236,20 @@ async function initStatsView() {
   // Say what a board measured, so a filtered ranking is not read as the whole
   // market. Only the mover boards are filtered, so only they carry the note.
   const b = data && data.moversBasis;
+  const pb = data && data.playerMovesBasis;
   if (basisEl) {
-    const movers = _statsBoard === 'cardMovers' || _statsBoard === 'playerMovers';
-    basisEl.textContent = (movers && b)
-      ? `Raw (ungraded) sales only, split at ${b.splitDate}. A card needs ${b.minSalesPerHalf}+ sales `
-        + `on each side and an average above $${b.minPrice} to qualify` +
-        (_statsBoard === 'playerMovers'
-          ? `; a player needs ${b.minCardsPerPlayer}+ such cards, and their figure is the median of them. `
-          : '. ') +
-        `${b.cardsConsidered.toLocaleString('en-US')} cards cleared that bar.`
-      : '';
+    let note = '';
+    if (_statsBoard === 'cardMovers' && b) {
+      note = `Raw (ungraded) sales only, split at ${b.splitDate}. A card needs ${b.minSalesPerHalf}+ sales `
+        + `on each side and an average above $${b.minPrice} to qualify. `
+        + `${b.cardsConsidered.toLocaleString('en-US')} cards cleared that bar.`;
+    } else if (_statsBoard === 'playerMovers' && pb) {
+      note = `The market index's own players, each moved the way the market is: resales of their `
+        + `raw base cards, compared card against itself. A player needs ${pb.minResales}+ resales `
+        + `to be ranked; ${Number(pb.playersConsidered).toLocaleString('en-US')} of the market's `
+        + `${Number(pb.playersInMarket).toLocaleString('en-US')} players did.`;
+    }
+    basisEl.textContent = note;
     basisEl.classList.toggle('hidden', !basisEl.textContent);
   }
 

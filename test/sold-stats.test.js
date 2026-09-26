@@ -195,6 +195,27 @@ for (let c = 1; c <= 4; c++) {
          oldPrice: 100, newPrice: 150, oldN: 10, newN: 10 });   // every card +50%
 }
 
+// --- Players on the move: read off the market index ------------------------
+// The market measures price as it changes: a card's sale against its own
+// previous one, day to day. So the players here trade every day, as the
+// market's players do, rather than in two bursts.
+function daily(player, number, startPrice, perDay) {
+  for (let d = -29; d <= -1; d++) {
+    const price = startPrice * Math.pow(1 + perDay, d + 29);
+    ins.run(`d${n++}`, iso(d), `2023 Prizm ${player} #${number}`, Math.round(price * 100),
+            player, '2023', 'Prizm', '', number, '', '', 0.9, null);
+  }
+}
+// Four cards, each up ~1% a day: a player whose market rose.
+for (let c = 1; c <= 4; c++) daily('Steady Climber', String(c), 40, 0.01);
+// One card up 5% a day, three flat: the median of each day's resales is flat.
+daily('Lone Spike', '1', 40, 0.05);
+for (let c = 2; c <= 4; c++) daily('Lone Spike', String(c), 40, 0);
+// A handful of resales at a huge move: too little to rank.
+for (const [d, price] of [[-20, 10], [-19, 10], [-3, 90], [-2, 90]]) {
+  ins.run(`t${n++}`, iso(d), '2023 Prizm Few Resales #1', price * 100, 'Few Resales', '2023', 'Prizm', '', '1', '', '', 0.9, null);
+}
+
 // --- Set volume, for the demand board ---------------------------------------
 // A cheap set that trades constantly must outrank an expensive one that barely
 // moves, because demand is how much is changing hands.
@@ -306,21 +327,30 @@ const names = (rows) => (rows || []).map(r => r.name || r.player);
   // The single most important property: nothing excluded may outrank the real
   // mover by sneaking in under another name.
   check('the top of the card board is a real mover, not an artefact',
-        s.cardMovers.length > 0 && /Real Riser|Broad Riser|One Hot Card/.test(s.cardMovers[0].name),
+        s.cardMovers.length > 0 && /Real Riser|Broad Riser|One Hot Card|Lone Spike|Steady Climber/.test(s.cardMovers[0].name),
         `${s.cardMovers[0] && s.cardMovers[0].name}`);
 
-  // ---- player movers: median, not mean ----
+  // ---- Players on the move: the market's own players, ranked ----
   const playerNames = names(s.playerMovers);
-  const hot = (s.playerMovers || []).find(p => p.player === 'One Hot Card');
-  const broad = (s.playerMovers || []).find(p => p.player === 'Broad Riser');
-  check('a player whose cards all rose is on the board',
-        !!broad, broad ? `${broad.changePct}% across ${broad.cards} cards` : 'missing');
-  check('one tripling card does not carry a player whose others are flat',
-        !!hot && Math.abs(hot.changePct) < 5,
-        hot ? `median ${hot.changePct}% (a mean would read ~+75%)` : 'missing');
-  check('the broad riser outranks the one-hot-card player',
-        !!broad && !!hot && playerNames.indexOf('Broad Riser') < playerNames.indexOf('One Hot Card'),
+  const climber = (s.playerMovers || []).find(p => p.player === 'Steady Climber');
+  const spike = (s.playerMovers || []).find(p => p.player === 'Lone Spike');
+  check('a player whose cards all rose is on the board, risen',
+        !!climber && climber.changePct > 15, climber ? `${climber.changePct}% over ${climber.resales} resales` : 'missing');
+  check('one spiking card does not carry a player whose others are flat',
+        !!spike && Math.abs(spike.changePct) < 5, spike ? `${spike.changePct}% (a mean of cards would read ~+100%)` : 'missing');
+  check('the broad riser outranks the one-card player',
+        !!climber && !!spike && playerNames.indexOf('Steady Climber') < playerNames.indexOf('Lone Spike'),
         playerNames.slice(0, 3).join(' | '));
+  check('a player with a handful of resales is not ranked', !playerNames.includes('Few Resales'),
+        `min ${s.playerMovesBasis && s.playerMovesBasis.minResales} resales`);
+  {
+    const m = await call(`/api/market-index?days=${WINDOW}`);
+    const fromMarket = ((m.playerMoves && m.playerMoves.players) || []).map(p => `${p.player} ${p.changePct}`);
+    check('the board is the market index\'s own players, with the market\'s numbers',
+          fromMarket.length > 0 && JSON.stringify(fromMarket) === JSON.stringify((s.playerMovers || []).map(p => `${p.player} ${p.changePct}`))
+          && s.playerMovesBasis && s.playerMovesBasis.source === 'market-index',
+          `${fromMarket.length} players, basis ${s.playerMovesBasis && s.playerMovesBasis.source}`);
+  }
 
   // ---- the page must be able to say what it measured ----
   check('the basis of the boards is reported', !!s.moversBasis &&
