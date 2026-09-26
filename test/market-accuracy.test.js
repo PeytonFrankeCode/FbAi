@@ -362,11 +362,11 @@ const check = (label, ok, detail) => {
     sale('Anchor', 'Base', '2023 Prizm Base', 10000, '', '', -2);   // sets `through`
     use(dbG);
 
-    // A name is in the index iff its own scoped basket returns cards.
-    const present = async (name) => {
-      const r = await call(`/api/market-basket?days=30&player=${encodeURIComponent(name)}`);
-      return !!(r.body && r.body.available && (r.body.cards || []).length);
-    };
+    // A name is in the index iff the market's own basket lists a card of it.
+    // (Not the player's scoped list: that one follows the player's chart, and
+    // shows their graded copies and parallels on purpose.)
+    const marketCards = ((await call('/api/market-basket?days=30')).body || {}).cards || [];
+    const present = async (name) => marketCards.some(c => String(c.label || '').includes(name));
     const leaked = [];
     for (const [name] of SLAB) if (await present(name)) leaked.push(name);
     const kept = [];
