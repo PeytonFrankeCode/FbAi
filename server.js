@@ -1589,6 +1589,14 @@ function getNflDb() {
 // Turn a free-text card query into a LIKE-matched D1 lookup. Every term must
 // appear somewhere in the title, which mirrors how the other providers behave
 // and keeps the existing downstream filters meaningful.
+// The title as space-padded lowercase words, punctuation turned to spaces, for
+// whole-word LIKE tests (fetchViaNflCardDb).
+const _TITLE_WORDS_SQL = (() => {
+  let e = 'LOWER(COALESCE(title, \'\'))';
+  for (const c of ['-', ',', '#', '/', '(', ')', '.', "'", '’', '!', ':', '&', '|']) e = `REPLACE(${e}, '${c.replace(/'/g, "''")}', ' ')`;
+  return `(' ' || ${e} || ' ')`;
+})();
+
 async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   const db = getNflDb();
   if (!db) return { results: [], total: 0, unavailable: true, reason: 'no-d1-binding' };
@@ -1608,7 +1616,8 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   // matching nothing is exactly the search that walks the whole table, and
   // repeating it is pure waste. The cost is that a card added by the importer
   // stays invisible for up to an hour after it lands.
-  const cacheKey = `nfldb:v1:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
+  // v2: words match as words, not fragments (see the WHERE below).
+  const cacheKey = `nfldb:v2:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
   // Callers asking the same question at once (the grading advisor's four
   // grades read one pool) share one query rather than racing four to D1.
   const inflight = _nflDbInflight.get(cacheKey);
@@ -1629,12 +1638,26 @@ async function _fetchViaNflCardDbUncached(db, cleaned, terms, limit, source, cac
   // Ordered so the AND chain rejects a row on its rarest term first. The set
   // of matching rows is identical either way; only the work to find them changes.
   const ordered = _orderTermsBySelectivity(terms);
+  // Each word must be a WORD in the title, not a fragment of one. As plain
+  // substrings, "Bo Nix" matched Bowman, Bomb Squad, Skattebo and Cowboys for
+  // "bo", and Penix and Phoenix for "nix" — 10 of 43 results were other
+  // players' cards. So a short word (3 letters or fewer) must stand alone, and
+  // a longer one must start a word ("Ward" is not "Edwards"; "Prizm" still
+  // finds "Prizms"). The substring tests stay first: they are cheap and do the
+  // narrowing; the word tests only read titles that already passed them.
+  const wordTests = [];
+  for (const t of ordered) {
+    const w = String(t).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    if (!w) continue;
+    wordTests.push(w.length <= 3 ? `% ${w} %` : `% ${w}%`);
+  }
   const where = [
     'price_cents IS NOT NULL', // exclude best-offer rows — see note above
     'confidence >= ?',
     ...ordered.map(() => 'title LIKE ?'),
+    ...wordTests.map(() => `${_TITLE_WORDS_SQL} LIKE ?`),
   ].join(' AND ');
-  const binds = [NFLDB_MIN_CONFIDENCE, ...ordered.map(t => `%${t}%`)];
+  const binds = [NFLDB_MIN_CONFIDENCE, ...ordered.map(t => `%${t}%`), ...wordTests];
 
   // The floor on how far back the walk may go. This only pays off if sold_date
   // is indexed — without an index SQLite scans regardless and this just filters
