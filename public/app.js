@@ -7860,11 +7860,14 @@ function buildClListingCard(item, mode, opts = {}) {
 }
 
 // ---- Global Account Sync ----
-// Mirrors the per-user portfolio/watchlist/etc. blobs into KV via
+// Mirrors the per-user portfolio/watchlist/etc. blobs to the account via
 // /api/user/data so accounts are portable across devices. The data still
-// lives in localStorage as the source of truth on each device — sync just
-// pushes changes up (debounced) and pulls on login. Anonymous users are
-// untouched: with no session token, every helper here exits silently.
+// lives in localStorage on each device — sync pushes changes up (debounced),
+// pulls on page load, sign-in, and whenever the page comes back into view,
+// and merges another device's changes in rather than overwriting them (each
+// push names the account revision it was built on; see _syncPushOnce).
+// Anonymous users are untouched: with no session token, every helper here
+// exits silently.
 const USER_SYNC_KEYS = [
   'cardHuddleCollection',
   'cardHuddleInventory',
@@ -7879,19 +7882,25 @@ const USER_SYNC_KEYS = [
   'cardHuddlePortfolioHistory',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
-// `var`, not `let`, deliberately:
-// enableUserSync() is called at the top level thousands of lines ABOVE these
-// declarations. With `let` that call hit the temporal dead zone and threw
-// `Cannot access '_userSyncEnabled' before initialization` on every page load
-// for a signed-in user — killing the pull, leaving _userSyncEnabled false
-// forever, and making every schedulePushUserData() a no-op. Nothing synced:
-// not inventory, not watchlists. Hoisted declarations
-// can't land in a dead zone.
+// What this device and the account last agreed on: { owner, rev, data }. A
+// merge needs it to tell "changed here" from "changed on another device"
+// (and "deleted there" from "added here").
+const USER_SYNC_BASE_KEY = 'cardHuddleSyncBase';
+// An open page checks for another device's saves this often while visible,
+// and whenever it comes back into view. A check that finds nothing new costs
+// the server one tiny read.
+const USER_SYNC_POLL_MS = 60 * 1000;
+const USER_SYNC_MIN_GAP_MS = 5 * 1000;
+// `var`, not `let`, deliberately: these are read by functions that can run
+// before this part of the script has been evaluated, and `let` would throw
+// there (the temporal dead zone) where `var` reads as undefined.
 var _userSyncEnabled = false;     // gates push so the initial pull doesn't echo back
 var _syncPushOk = null;           // outcome of the last push, for callers that must know
 var _userSyncTimer = null;
-var _userSyncing = false;
 var _syncTooBigWarned = false;    // one-shot notice when the account blob is over the cap
+var _syncQueue = null;            // pulls and pushes run one at a time
+var _syncLastPull = 0;
+var _syncWatching = false;
 
 function _userSyncPayload() {
   const data = {};
@@ -7911,75 +7920,215 @@ function _syncValueEmpty(v) {
   return false;
 }
 
-// Returns true when a key was deliberately kept from the local copy, so the
-// caller knows it needs to push that back up.
-function _userSyncApply(data) {
-  if (!data || typeof data !== 'object') return false;
-  let keptLocal = false;
-  for (const key of USER_SYNC_KEYS) {
-    if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
-    // An empty value from the server is far more likely to mean "never
-    // written" than "the user cleared it on purpose" — pushes were broken for
-    // a long time, so accounts exist whose blob is missing data this device
-    // still holds. Letting empty win there destroys the only copy.
-    //
-    // The cost of getting this wrong the other way is a deletion made on
-    // another device not propagating, which the user can simply repeat.
-    // Unrecoverable loss beats a repeatable annoyance, so local wins.
-    if (_syncValueEmpty(data[key])) {
-      let local = null;
-      try { local = JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) {}
-      if (!_syncValueEmpty(local)) { keptLocal = true; continue; }
+function _syncSame(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+function _syncOwner() { const u = getCurrentUser(); return u ? String(u).toLowerCase() : null; }
+
+function _syncBaseGet() {
+  try { return JSON.parse(localStorage.getItem(USER_SYNC_BASE_KEY) || 'null'); }
+  catch (_) { return null; }
+}
+// The base for the account signed in now; another account's is no base at all.
+function _syncBaseFor() {
+  const b = _syncBaseGet();
+  if (!b || typeof b !== 'object' || !Number.isFinite(b.rev)) return null;
+  return b.owner === _syncOwner() ? b : null;
+}
+function _syncBaseSet(rev, data) {
+  try { localStorage.setItem(USER_SYNC_BASE_KEY, JSON.stringify({ owner: _syncOwner(), rev, data })); }
+  catch (_) {
+    // Out of room. A stale base would make the next merge misread what
+    // changed, so keep none: the next merge falls back to the no-base rule.
+    try { localStorage.removeItem(USER_SYNC_BASE_KEY); } catch (__) {}
+  }
+}
+
+// A three-way merge of two versions of a list, by key: what either side added
+// is kept, what either side removed goes, unless the other side changed it
+// since (an edit outlives a delete). `pick` settles an entry both still have.
+function _syncListMerge(B, L, S, keyOf, pick) {
+  B = Array.isArray(B) ? B : []; L = Array.isArray(L) ? L : []; S = Array.isArray(S) ? S : [];
+  const map = (arr) => { const m = new Map(); for (const x of arr) m.set(keyOf(x), x); return m; };
+  const bm = map(B), lm = map(L), sm = map(S);
+  const out = [];
+  const seen = new Set();
+  for (const x of L.concat(S)) {
+    const k = keyOf(x);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const b = bm.get(k), l = lm.get(k), s = sm.get(k);
+    let v;
+    if (l !== undefined && s !== undefined) v = pick ? pick(b, l, s) : (_syncSame(l, b) ? s : l);
+    else {
+      const one = l !== undefined ? l : s;
+      v = (b === undefined || !_syncSame(one, b)) ? one : undefined;
     }
-    localStorage.setItem(key, JSON.stringify(data[key]));
+    if (v !== undefined) out.push(v);
   }
-  return keptLocal;
+  return out;
 }
 
-function _userSyncHasContent(data) {
-  if (!data || typeof data !== 'object') return false;
+// The inventory, merged card by card. Two devices that each added cards keep
+// both sets; a card deleted on one and untouched on the other goes; a card
+// edited on both keeps the later edit (updatedAt). Logs are merged entry by
+// entry, and the wallet takes both devices' changes: base + each one's delta.
+function _invSyncMerge(B, L, S) {
+  const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
+  if (!isObj(L) || !isObj(S)) return L;
+  if (!isObj(B)) B = {};
+  const byId = (x) => (x && x.id) || JSON.stringify(x);
+  const newestFirst = (a, b) => (Number(b && b.at) || 0) - (Number(a && a.at) || 0);
+  const out = { ...S, ...L };
+  out.items = _syncListMerge(B.items, L.items, S.items, byId, (b, l, s) =>
+    _syncSame(l, b) ? s : _syncSame(s, b) ? l
+      : ((Number(s.updatedAt) || 0) > (Number(l.updatedAt) || 0) ? s : l));
+  out.moves = _syncListMerge(B.moves, L.moves, S.moves, (x) => JSON.stringify(x)).sort(newestFirst);
+  out.history = _syncListMerge(B.history, L.history, S.history, byId).sort(newestFirst);
+  out.walletLog = _syncListMerge(B.walletLog, L.walletLog, S.walletLog, byId).sort(newestFirst);
+  const locs = _syncListMerge(B.locations, L.locations, S.locations, (x) => String(x));
+  out.locations = locs.length ? locs : (L.locations || S.locations);
+  out.netWorthHistory = _syncListMerge(B.netWorthHistory, L.netWorthHistory, S.netWorthHistory, (x) => x && x.d)
+    .sort((a, b) => String(a && a.d).localeCompare(String(b && b.d)));
+  const bw = Number(B.wallet) || 0;
+  out.wallet = Math.max(0, Math.round(((Number(L.wallet) || 0) + (Number(S.wallet) || 0) - bw) * 100) / 100);
+  return out;
+}
+
+// Merge the account's copy (server) into this device's (local), given what
+// they last agreed on (base, or null when this device has no record of it).
+function _userSyncMerge(base, local, server) {
+  const out = {};
+  const has = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);
   for (const key of USER_SYNC_KEYS) {
-    const v = data[key];
-    if (Array.isArray(v)) { if (v.length > 0) return true; }
-    else if (v && typeof v === 'object') { if (Object.keys(v).length > 0) return true; }
-    else if (v) return true;
+    const L = has(local, key) ? local[key] : undefined;
+    const S = has(server, key) ? server[key] : undefined;
+    let v;
+    if (!base) {
+      // No record of what was agreed: a first sync on this device. The
+      // account wins, except that an empty value there is far more likely to
+      // mean "never written" than "cleared on purpose", and letting it win
+      // would destroy the only copy of what this device holds.
+      v = (S === undefined || (_syncValueEmpty(S) && !_syncValueEmpty(L))) ? L : S;
+      // Two inventories that grew apart (sync used to stop after a reload, so
+      // a phone and a laptop each kept their own) are combined, not one
+      // dropped: every card either has is kept. The wallet is the account's —
+      // with nothing to say where the two balances last agreed, adding them
+      // would count the same money twice.
+      if (key === 'cardHuddleInventory' && !_syncValueEmpty(L) && !_syncValueEmpty(S)
+          && S && typeof S === 'object' && !Array.isArray(S)) {
+        v = _invSyncMerge({ wallet: L && L.wallet }, L, S);
+      }
+    } else {
+      const B = has(base, key) ? base[key] : undefined;
+      if (_syncSame(L, B)) v = S;                 // unchanged here: take theirs
+      else if (_syncSame(S, B)) v = L;            // unchanged there: keep ours
+      else if (key === 'cardHuddleInventory') v = _invSyncMerge(B, L, S);
+      else if (Array.isArray(L) && Array.isArray(S) && L.concat(S).every(x => x && x.id != null)) {
+        v = _syncListMerge(B, L, S, (x) => x.id);
+      } else v = L;                               // both changed, no finer grain: the later write
+    }
+    if (v !== undefined) out[key] = v;
   }
-  return false;
+  return out;
 }
 
-async function pushUserDataNow() {
-  if (_userSyncing) return;
+// Take the account's copy at `rev`: merge it into this device's data, record
+// it as the new base, and redraw if anything here changed. True when the
+// merge holds something the account does not have yet, to be pushed.
+function _syncTakeServer(rev, server) {
+  server = (server && typeof server === 'object') ? server : {};
+  const base = _syncBaseFor();
+  const local = _userSyncPayload();
+  const merged = _userSyncMerge(base ? base.data : null, local, server);
+  let changedHere = false;
+  for (const key of USER_SYNC_KEYS) {
+    const has = Object.prototype.hasOwnProperty.call(merged, key);
+    if (_syncSame(has ? merged[key] : undefined, local[key])) continue;
+    changedHere = true;
+    if (has) localStorage.setItem(key, JSON.stringify(merged[key]));
+    else localStorage.removeItem(key);
+  }
+  _syncBaseSet(rev, server);
+  if (changedHere) _userSyncRerender();
+  return USER_SYNC_KEYS.some(key => !_syncSame(merged[key], server[key]));
+}
+
+function _syncSerial(fn) {
+  const prev = _syncQueue || Promise.resolve();
+  const next = prev.then(fn, fn);
+  _syncQueue = next.catch(() => {});
+  return next;
+}
+
+async function _syncPushOnce() {
   const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
   if (!token) return;
-  _userSyncing = true;
-  try {
-    const res = await fetch('/api/user/data', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ data: _userSyncPayload() }),
-    });
-    if (res && res.ok) {
+  // A push built on an old revision is refused with the account's current
+  // copy; merge it in and try again. Three rounds is plenty: each one only
+  // loses if another device saved in the same second.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const base = _syncBaseFor();
+    const payload = _userSyncPayload();
+    let res;
+    try {
+      res = await fetch('/api/user/data', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ data: payload, baseRev: base ? base.rev : null }),
+      });
+    } catch (err) {
+      _syncPushOk = false;
+      console.warn('[sync] push failed:', err && err.message);
+      return;
+    }
+    if (res.ok) {
+      const body = await res.json().catch(() => ({}));
+      if (body && Number.isFinite(body.rev)) _syncBaseSet(body.rev, payload);
       _syncPushOk = true;
       _syncTooBigWarned = false; // healthy again
-    } else if (res && res.status === 413) {
+      return;
+    }
+    if (res.status === 409) {
+      const body = await res.json().catch(() => null);
+      if (!body || !Number.isFinite(body.rev)) break;
+      if (!_syncTakeServer(body.rev, body.data)) { _syncPushOk = true; return; }
+      continue;
+    }
+    _syncPushOk = false;
+    if (res.status === 413) {
       // Blob over the 1MB cap — sync is silently failing for EVERYTHING
       // (inventory included). Tell the user once so it's not a mystery.
-      _syncPushOk = false;
       console.warn('[sync] push rejected (413): account data over the size cap');
       if (!_syncTooBigWarned && typeof showPortfolioToast === 'function') {
         _syncTooBigWarned = true;
         showPortfolioToast('Your data got too large to sync across devices. Remove some photos, or Reset inventory, to restore syncing.');
       }
     } else {
-      _syncPushOk = false;
-      console.warn('[sync] push failed HTTP', res && res.status);
+      console.warn('[sync] push failed HTTP', res.status);
     }
-  } catch (err) {
-    _syncPushOk = false;
-    console.warn('[sync] push failed:', err && err.message);
-  } finally {
-    _userSyncing = false;
+    return;
   }
+  _syncPushOk = false;
+}
+
+async function pushUserDataNow() {
+  return _syncSerial(_syncPushOnce);
+}
+
+// Fetch another device's saves, if there are any, and merge them in.
+async function pullUserData() {
+  return _syncSerial(async () => {
+    const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
+    if (!token) return;
+    _syncLastPull = Date.now();
+    const base = _syncBaseFor();
+    const res = await fetch('/api/user/data' + (base ? `?since=${encodeURIComponent(base.rev)}` : ''),
+                            { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const body = await res.json();
+    if (!body || body.unchanged) return;
+    const rev = Number.isFinite(body.rev) ? body.rev : 0;
+    if (_syncTakeServer(rev, body.data)) await _syncPushOnce();
+  });
 }
 
 // Push right now, skipping the debounce, and report whether the server
@@ -7989,12 +8138,7 @@ async function flushPushUserData() {
   if (_userSyncTimer) { clearTimeout(_userSyncTimer); _userSyncTimer = null; }
   if (!_userSyncEnabled) return false;
   if (!getSessionToken()) return false;
-  // pushUserDataNow bails while another push is in flight; wait it out rather
-  // than reporting a failure that didn't happen.
-  for (let i = 0; i < 20 && _userSyncing; i++) await new Promise(r => setTimeout(r, 100));
-  const before = _syncPushOk;
   await pushUserDataNow();
-  void before;
   return _syncPushOk === true;
 }
 
@@ -8016,37 +8160,44 @@ function _userSyncRerender() {
   try { if (typeof renderInventory === 'function') renderInventory(); } catch (_) {}
 }
 
+// A page left open (a phone's home-screen app can stay open for days) checks
+// for other devices' saves when it comes back into view, and every minute
+// while it is on screen.
+function _syncMaybePull() {
+  if (!_userSyncEnabled || !getSessionToken()) return;
+  if (document.visibilityState === 'hidden') return;
+  if (Date.now() - _syncLastPull < USER_SYNC_MIN_GAP_MS) return;
+  pullUserData().catch(err => console.warn('[sync] pull failed:', err && err.message));
+}
+function _syncWatch() {
+  if (_syncWatching) return;
+  _syncWatching = true;
+  document.addEventListener('visibilitychange', _syncMaybePull);
+  window.addEventListener('focus', _syncMaybePull);
+  window.addEventListener('online', _syncMaybePull);
+  setInterval(_syncMaybePull, USER_SYNC_POLL_MS);
+}
+
 async function enableUserSync() {
   const token = (typeof getSessionToken === 'function') ? getSessionToken() : null;
   if (!token) return;
   _userSyncEnabled = false; // hold ongoing push off until pull resolves
+  // Data left on this device by a different account that signed in here
+  // before is that account's, not this one's: never merge it in.
+  const prior = _syncBaseGet();
+  const me = _syncOwner();
+  if (prior && prior.owner && me && prior.owner !== me) {
+    for (const key of USER_SYNC_KEYS) localStorage.removeItem(key);
+    localStorage.removeItem(USER_SYNC_BASE_KEY);
+    _userSyncRerender();
+  }
   try {
-    const res = await fetch('/api/user/data', { headers: { Authorization: `Bearer ${token}` } });
-    if (res.ok) {
-      const result = await res.json();
-      const server = result && result.data;
-      if (_userSyncHasContent(server)) {
-        // Server wins on a device with no local data, or whenever the server
-        // already has something for this account. Last-write-wins per key.
-        const keptLocal = _userSyncApply(server);
-        _userSyncRerender();
-        // We held onto local data the server didn't have. Get it up there now,
-        // or it stays a single-device copy and the next pull faces the same
-        // decision again.
-        if (keptLocal) { _userSyncEnabled = true; await pushUserDataNow(); }
-      } else if (_userSyncHasContent(_userSyncPayload())) {
-        // Fresh account on the server but the user already has local data
-        // (e.g. logged in for the first time after using anon on this device).
-        // Push it up so they don't lose it switching devices.
-        _userSyncEnabled = true;
-        await pushUserDataNow();
-        return;
-      }
-    }
+    await pullUserData();
   } catch (err) {
     console.warn('[sync] pull failed:', err && err.message);
   } finally {
     _userSyncEnabled = true;
+    _syncWatch();
   }
 }
 
@@ -8054,6 +8205,14 @@ function disableUserSync() {
   _userSyncEnabled = false;
   if (_userSyncTimer) { clearTimeout(_userSyncTimer); _userSyncTimer = null; }
 }
+
+// A page opened while already signed in syncs too. Only signing in used to
+// turn sync on, so after the first reload a device stopped both sending its
+// changes and receiving anyone else's. After DOMContentLoaded, so everything
+// above has been evaluated.
+document.addEventListener('DOMContentLoaded', () => {
+  if (getSessionToken()) enableUserSync().catch(err => console.warn('[sync] init failed:', err && err.message || err));
+});
 
 // ---- Collection & Portfolio (localStorage) ----
 function getCollection() {
@@ -13616,6 +13775,16 @@ function _invEnsurePhoto(id) {
 
 function saveInventory(inv) {
   _invRecordNetWorth(inv); // keep today's collection-value snapshot current
+  // Stamp every card this save changed, whatever changed it: when two devices
+  // edit the same card, the account sync keeps the later edit by this stamp.
+  let prev = null;
+  try { prev = JSON.parse(localStorage.getItem('cardHuddleInventory') || 'null'); } catch (_) {}
+  const before = new Map(((prev && Array.isArray(prev.items)) ? prev.items : []).map(i => [i && i.id, JSON.stringify(i)]));
+  const now = Date.now();
+  for (const it of inv.items) {
+    const was = before.get(it && it.id);
+    if (was !== undefined && was !== JSON.stringify(it)) it.updatedAt = now;
+  }
   localStorage.setItem('cardHuddleInventory', JSON.stringify(inv));
   schedulePushUserData();
 }
