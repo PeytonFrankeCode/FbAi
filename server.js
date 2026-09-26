@@ -10362,6 +10362,214 @@ async function _warmSoldStats({ onlyMissing = false } = {}) {
   return { ok: true, periods: done };
 }
 
+// ---- Collection health: never lose a day without knowing ----
+//
+// eBay shows about 90 days of sold listings. A day the collector misses is
+// gone for good, and history is what every chart, the 90-day and 1-year views
+// and repeat-sale pricing are built from. Nothing said when collection
+// stalled, dipped, or started parsing worse; this does, once a day from the
+// cron, by email to ALERT_EMAIL (a Worker secret) when there is something new
+// to say, and always at /api/debug/collection-health.
+//
+// Judged on SETTLED days only: the newest two days are still arriving (the
+// collector runs about two days behind), so a thin yesterday is normal.
+const COLLECTION_HEALTH_KEY = 'collhealth:v1';
+const COLLECTION_ALERTED_KEY = 'collhealth:alerted';
+const COLLECTION_WINDOW_DAYS = 35;      // read this far back
+const COLLECTION_SETTLE_DAYS = 2;       // the newest days still filling
+const COLLECTION_STALE_DAYS = 4;        // newest sale older than this: stalled
+const COLLECTION_DIP_SHARE = 0.5;       // a settled day under half its norm
+const COLLECTION_DRIFT_POINTS = 15;     // a column filled 15+ points less than its norm
+const COLLECTION_FIELDS = ['player', 'year', 'set_name', 'card_number', 'parallel'];
+
+// The report from per-day rows { d, n, player, year, set_name, card_number,
+// parallel } (counts), for today `todayIso`. Pure, so it can be tested.
+function _collectionReport(rows, todayIso) {
+  const byDay = new Map((rows || []).map(r => [String(r.d), r]));
+  const days = [...byDay.keys()].sort();
+  const issues = [];
+  const med = (xs) => { const a = xs.filter(Number.isFinite).sort((x, y) => x - y); const m = a.length >> 1; return a.length ? (a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2) : null; };
+  if (!days.length) {
+    return { status: 'problem', issues: [{ id: 'no-data', text: `No sales at all in the last ${COLLECTION_WINDOW_DAYS} days.` }], days: [] };
+  }
+  const newest = days[days.length - 1];
+  const lag = _mkDay(todayIso) - _mkDay(newest);
+  if (lag > COLLECTION_STALE_DAYS) {
+    issues.push({ id: `stalled:${newest}`, text: `Collection has stalled: the newest sale is from ${newest}, ${lag} days ago (normally about ${COLLECTION_SETTLE_DAYS}).` });
+  }
+  // Every calendar day from the first in the window to the newest.
+  const all = [];
+  for (let d = _mkDay(days[0]); d <= _mkDay(newest); d++) all.push(_mkIso(d));
+  const settled = all.filter(d => _mkDay(newest) - _mkDay(d) >= COLLECTION_SETTLE_DAYS);
+  const count = (d) => Number((byDay.get(d) || {}).n) || 0;
+  for (const d of settled) {
+    if (!count(d)) issues.push({ id: `missing:${d}`, text: `No sales stored for ${d}. eBay keeps about 90 days, so it can still be recollected until ${_mkIso(_mkDay(d) + 90)}.` });
+  }
+  // A settled day against the 14 days before it.
+  const recent = settled.slice(-10);
+  for (const d of recent) {
+    const before = all.filter(x => _mkDay(x) < _mkDay(d) && _mkDay(d) - _mkDay(x) <= 14).map(count).filter(n => n > 0);
+    const norm = med(before);
+    if (norm && count(d) && count(d) < norm * COLLECTION_DIP_SHARE) {
+      issues.push({ id: `dip:${d}`, text: `${d} has ${count(d).toLocaleString('en-US')} sales, under half the usual ${Math.round(norm).toLocaleString('en-US')}.` });
+    }
+  }
+  // How much of each column the parser filled, the last settled week against
+  // the fortnight before it: a parser change shows here first.
+  const share = (d, f) => { const r = byDay.get(d); return r && r.n ? (Number(r[f]) || 0) / r.n * 100 : null; };
+  const lastWeek = settled.slice(-7).filter(count);
+  const prior = settled.slice(-21, -7).filter(count);
+  const fill = {};
+  for (const f of COLLECTION_FIELDS) {
+    const now = med(lastWeek.map(d => share(d, f)));
+    const then = med(prior.map(d => share(d, f)));
+    fill[f] = { lastWeek: now == null ? null : Math.round(now * 10) / 10, before: then == null ? null : Math.round(then * 10) / 10 };
+    if (now != null && then != null && then - now >= COLLECTION_DRIFT_POINTS) {
+      issues.push({ id: `drift:${f}`, text: `The ${f.replace('_', ' ')} is being read on ${fill[f].lastWeek}% of sales this week, down from ${fill[f].before}%: the collector's parser may have broken.` });
+    }
+  }
+  return {
+    status: issues.length ? 'problem' : 'ok',
+    issues,
+    newestSale: newest,
+    lagDays: lag,
+    fill,
+    days: all.map(d => ({ date: d, sales: count(d), settled: _mkDay(newest) - _mkDay(d) >= COLLECTION_SETTLE_DAYS })),
+  };
+}
+
+async function _collectionHealthCompute(db) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const since = _mkIso(_mkDay(todayIso) - COLLECTION_WINDOW_DAYS);
+  const filled = (c) => `SUM(CASE WHEN COALESCE(TRIM(${c}), '') <> '' THEN 1 ELSE 0 END) AS ${c}`;
+  const r = await db.prepare(
+    `SELECT sold_date AS d, COUNT(*) AS n, ${COLLECTION_FIELDS.map(filled).join(', ')}
+       FROM sales WHERE sold_date >= ? GROUP BY sold_date ORDER BY sold_date`).bind(since).all();
+  return { ..._collectionReport((r && r.results) || [], todayIso), generatedAt: new Date().toISOString() };
+}
+
+// The cron's daily check: store the report, and email ALERT_EMAIL when the
+// set of problems changes (a new one appears, or they all clear) — not every
+// day a known problem persists.
+async function checkCollectionHealth() {
+  return _asD1Source('collection-health', async () => {
+    const db = getNflDb();
+    if (!db) return { ok: false, reason: 'no dataset' };
+    const report = await _collectionHealthCompute(db);
+    await cachePut(COLLECTION_HEALTH_KEY, report, 60 * 60 * 24 * 3);
+    const sig = report.issues.map(i => i.id).sort().join('|');
+    const prev = (await cacheGet(COLLECTION_ALERTED_KEY)) || { sig: '' };
+    let emailed = false;
+    const to = process.env.ALERT_EMAIL;
+    if (sig !== prev.sig && (sig || prev.sig)) {
+      if (to) {
+        const site = process.env.SITE_URL || 'https://thecardhuddle.com';
+        const html = sig
+          ? `<h2>Sales collection needs a look</h2><ul>${report.issues.map(i => `<li>${_esc(i.text)}</li>`).join('')}</ul>
+             <p>Newest sale: ${_esc(report.newestSale || 'none')}. Full report: <a href="${site}/api/debug/collection-health">${site}/api/debug/collection-health</a></p>`
+          : `<h2>Sales collection is healthy again</h2><p>The problems reported earlier have cleared. Newest sale: ${_esc(report.newestSale)}.</p>`;
+        emailed = await sendEmail({ to, subject: sig ? `Card Huddle: sales collection problem (${report.issues.length})` : 'Card Huddle: sales collection recovered', html });
+      }
+      // Recorded even with no address, so setting one later does not replay
+      // everything at once; the report itself always has the full list.
+      await cachePut(COLLECTION_ALERTED_KEY, { sig, at: new Date().toISOString() }, 60 * 60 * 24 * 90);
+    }
+    if (report.issues.length) console.warn(`[CollectionHealth] ${report.issues.map(i => i.text).join(' | ')}`);
+    return { ok: true, status: report.status, issues: report.issues.length, emailed, alertEmailSet: !!to };
+  });
+}
+
+// GET /api/debug/collection-health — the last daily report (built now if
+// there is none yet).
+app.get('/api/debug/collection-health', async (req, res) => {
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  try {
+    let report = await cacheGet(COLLECTION_HEALTH_KEY);
+    if (!report) {
+      report = await _collectionHealthCompute(db);
+      await cachePut(COLLECTION_HEALTH_KEY, report, 60 * 60 * 24 * 3);
+    }
+    res.json({ available: true, alertEmailSet: !!process.env.ALERT_EMAIL, ..._fromCache(report) });
+  } catch (err) {
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
+// ---- A checklist, drafted from our own sales ----
+//
+// A third of sales are filed under products we hold no checklist for (2025
+// Topps Chrome Black, 2026 Wild Card, 1986 Topps...), so they get no card
+// matching, no Rainbow Mode and no parallel estimates. Typing a checklist is
+// slow; checking one is quick. This lists, for one product, each card number
+// its sales carry and the player they name, with how strongly the sales
+// agree, for scripts/draft-checklist.js to turn into a DRAFT a person checks.
+// It never writes a checklist itself.
+//
+// Admin only (?key= or x-admin-key): it reads every sale of the product.
+function _observedChecklist(rows, minSales = 3, minShare = 0.8) {
+  const byNum = new Map();
+  for (const r of rows || []) {
+    const num = String(r.card_number || '').trim().replace(/^#/, '');
+    if (!num) continue;
+    const name = _boardPlayerName(r.player);
+    const key = String(name).toLowerCase().replace(/[^a-z0-9 ]+/g, '').replace(/\s+/g, ' ').trim();
+    if (!key) continue;
+    if (!byNum.has(num)) byNum.set(num, new Map());
+    const m = byNum.get(num);
+    const e = m.get(key) || { n: 0, spellings: new Map() };
+    e.n += Number(r.n) || 0;
+    e.spellings.set(name, (e.spellings.get(name) || 0) + (Number(r.n) || 0));
+    m.set(key, e);
+  }
+  const cards = [];
+  for (const [number, m] of byNum) {
+    const list = [...m.values()].sort((a, b) => b.n - a.n);
+    const total = list.reduce((t, e) => t + e.n, 0);
+    const top = list[0];
+    const spelling = [...top.spellings.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const share = total ? top.n / total : 0;
+    cards.push({
+      number, player: spelling, sales: total, agreement: Math.round(share * 1000) / 10,
+      confident: top.n >= minSales && share >= minShare,
+      alternatives: list.slice(1, 3).map(e => ({ player: [...e.spellings.keys()][0], sales: e.n })),
+    });
+  }
+  const numeric = (x) => (/^\d+$/.test(x) ? Number(x) : Infinity);
+  cards.sort((a, b) => numeric(a.number) - numeric(b.number) || a.number.localeCompare(b.number));
+  return cards;
+}
+
+app.get('/api/debug/observed-checklist', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const year = String(req.query.year || '').trim();
+  const set = String(req.query.set || '').trim().toLowerCase();
+  if (!/^\d{4}$/.test(year) || !set) return res.status(400).json({ error: 'year (YYYY) and set are required' });
+  try {
+    const [cards, pars] = await Promise.all([
+      db.prepare(`SELECT card_number, player, COUNT(*) AS n FROM sales
+                   WHERE year = ? AND LOWER(TRIM(set_name)) = ? AND confidence >= ?
+                     AND COALESCE(TRIM(card_number), '') <> '' AND COALESCE(TRIM(player), '') <> ''
+                   GROUP BY card_number, player`).bind(year, set, NFLDB_MIN_CONFIDENCE).all(),
+      db.prepare(`SELECT parallel, COUNT(*) AS n FROM sales
+                   WHERE year = ? AND LOWER(TRIM(set_name)) = ? AND COALESCE(TRIM(parallel), '') <> ''
+                   GROUP BY LOWER(TRIM(parallel)) HAVING n >= 3 ORDER BY n DESC LIMIT 80`).bind(year, set).all(),
+    ]);
+    const list = _observedChecklist((cards && cards.results) || []);
+    res.json({
+      available: true, year, set,
+      cards: list,
+      confidentCards: list.filter(c => c.confident).length,
+      parallelsSeen: ((pars && pars.results) || []).map(r => ({ name: r.parallel, sales: r.n })),
+      note: 'Drafted from sales, not from the manufacturer. Confident = 3+ sales, 80%+ naming the same player. Check before use.',
+    });
+  } catch (err) {
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 // ---- The parallel ladder: pricing a parallel that has not sold ----
 //
 // A checklist names every parallel a card was printed in, and most of them
@@ -16348,7 +16556,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

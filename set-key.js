@@ -116,16 +116,27 @@ function saleKeys(year, setName) {
 const SUFFIXES = ['jr', 'sr', 'ii', 'iii', 'iv', 'v'];
 
 function playerVariants(raw) {
-  const s = norm(raw);   // norm() already drops the period from "Jr."
-  if (!s) return [];
-  const out = [s];
-  const parts = s.split(' ');
-  if (parts.length > 2 && SUFFIXES.includes(parts[parts.length - 1])) {
-    // Same guard as the makers: a bare suffix is not a name. Requiring more
-    // than two parts keeps "Deebo Jr" — were such a name to exist — from
-    // collapsing to "Deebo".
-    out.push(parts.slice(0, -1).join(' '));
-  }
+  const out = [];
+  const add = (v) => {
+    const s = norm(v);   // norm() already drops the period from "Jr."
+    if (!s || out.includes(s)) return;
+    out.push(s);
+    const parts = s.split(' ');
+    if (parts.length > 2 && SUFFIXES.includes(parts[parts.length - 1])) {
+      // Same guard as the makers: a bare suffix is not a name. Requiring more
+      // than two parts keeps "Deebo Jr" — were such a name to exist — from
+      // collapsing to "Deebo".
+      const bare = parts.slice(0, -1).join(' ');
+      if (!out.includes(bare)) out.push(bare);
+    }
+  };
+  add(raw);
+  // Sellers stuff the player field: "Jerry Rice / Set Break / Vg-Vgex
+  // Gmcards", "Earl Campbell / Houston Oilers". What follows the first " / "
+  // (spaced — "Amon-Ra St. Brown/Puka Nacua" is a real dual card) is not the
+  // player, so the part before it is tried too, after the whole string.
+  const head = String(raw == null ? '' : raw).split(/\s+\/\s+/)[0];
+  if (head !== String(raw == null ? '' : raw)) add(head);
   return out;
 }
 
@@ -211,7 +222,41 @@ function matchKeys(index, keys) {
 const matchSale = (index, year, setName) => matchKeys(index, saleKeys(year, setName));
 
 // Which player page a sale belongs to, or null.
-const matchPlayer = (index, name) => matchKeys(index, playerVariants(name));
+//
+// Then one more try for a name the collector cut short: "amonra st" is
+// Amon-Ra St. Brown with the name stopped at the period of "St.", and it
+// held 2,578 sales that reached no page. A name of two or more words whose
+// last is one or two letters is completed from the pages, but only when
+// exactly one page's name starts with it — two candidates is a guess.
+const _prefixMaps = new WeakMap();
+function _playerPrefixMap(index) {
+  let m = _prefixMaps.get(index);
+  if (m) return m;
+  m = new Map();
+  for (const [k, page] of index) {
+    const parts = k.split(' ');
+    for (let i = 2; i < parts.length; i++) {
+      const pre = parts.slice(0, i).join(' ');
+      const cur = m.get(pre);
+      if (cur === undefined) m.set(pre, page);
+      else if (cur !== page) m.set(pre, null);
+    }
+  }
+  _prefixMaps.set(index, m);
+  return m;
+}
+function matchPlayer(index, name) {
+  const keys = playerVariants(name);
+  const hit = matchKeys(index, keys);
+  if (hit) return hit;
+  for (const k of keys) {
+    const parts = k.split(' ');
+    if (parts.length < 2 || parts[parts.length - 1].length > 2) continue;
+    const page = _playerPrefixMap(index).get(k);
+    if (page) return page;
+  }
+  return null;
+}
 
 module.exports = {
   norm, variants, productKeys, saleKeys, buildIndex, matchKeys, matchSale, MAKERS,
