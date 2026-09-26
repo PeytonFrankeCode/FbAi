@@ -40,7 +40,7 @@ check('the market basket leaves them out too',
 const src = require('fs').readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 check('search results, card history and the sold archive all apply the filter',
   /rows\.filter\(r => !_isPackListing\(r\.title, r\.player\)\)/.test(src)
-  && /\.results\) \|\| \[\]\)\.filter\(r => !_isPackListing\(r\.title, r\.player\)\)/.test(src)
+  && /\.results\) \|\| \[\]\)\s*\.filter\(r => !_isPackListing\(r\.title, r\.player\)/.test(src)
   && /rec\.sales\.filter\(x => !_isPackListing/.test(src));
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall pack-listing checks passed');
