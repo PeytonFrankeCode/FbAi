@@ -11756,7 +11756,7 @@ function _backtestBuckets(bk, params, testDays, refIso) {
       const runs = _runsOfSet(m.set);
       const pr = runs.get(key) || null;
       const larger = !!pr && known.some(k => (runs.get(k.key) || 0) > pr);
-      cases.push({ pr, larger, actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
+      cases.push({ pr, larger, sales: actualRaw.slice(0, 12), actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
                    basis: e.estimate.basis, lifted: !!e.estimate.lifted, factor: w.factor,
                    // What the estimate stood on, for reading a miss.
                    from: (w.anchors || []).slice(0, 4).map(x => `${x.name} $${x.price}${x.from === 'graded' ? ' (slabs)' : ''} ×${x.sales} at step ${x.factor}`).join(', '),
@@ -11865,6 +11865,10 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       adopted: chosen === baseline ? 'old estimator (nothing beat it by enough)' : 'tuned',
       baseline: baseline.score, chosen: chosen.score, gainPoints: Math.round(gain * 10) / 10,
       judgedOn: byNumbered ? 'numbered' : 'all',
+      // How far one sale lands from the other sales of the same parallel in
+      // the same weeks: the miss even a perfect estimate would have against
+      // single sales. The estimator is as good as it can get near here.
+      noiseFloor: _noiseFloor(chosen.cases),
       evaluated: runs.length,
       numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
       calibration: { adopted: !!calibHelps, multipliers: calib, outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias } },
@@ -11876,6 +11880,21 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
         .slice(0, 10),
     },
   };
+}
+
+function _noiseFloor(cases) {
+  const ape = [], numApe = [];
+  for (const c of cases) {
+    const xs = c.sales || [];
+    if (xs.length < 2) continue;
+    for (let i = 0; i < xs.length; i++) {
+      const rest = xs.filter((_, j) => j !== i);
+      const m = _medOf(rest);
+      if (m > 0) { ape.push(Math.abs(xs[i] - m) / m); if (c.larger) numApe.push(Math.abs(xs[i] - m) / m); }
+    }
+  }
+  const r = (xs) => (xs.length ? Math.round(_medOf(xs) * 1000) / 10 : null);
+  return { mdape: r(ape), numberedMdape: r(numApe), sales: ape.length };
 }
 
 async function runEstimatorBacktest({ save = true, pairs = ESTIMATOR_PAIRS } = {}) {
