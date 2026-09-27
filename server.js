@@ -10644,8 +10644,9 @@ app.get('/api/debug/observed-checklist', async (req, res) => {
 // a short list of parallel words as SUBSTRINGS — cheap, and a false positive
 // ("Jared" holds "red") only drops a base sale from the sample, never mixes a
 // parallel into base.
-const PAR_LADDER_KEY = 'parladder:v3';   // v2: per-kind ladders and pooled curves; v3: example comps per rung
-const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v3';
+const PAR_LADDER_KEY = 'parladder:v4';   // v2: per-kind ladders and pooled curves; v3: example comps per rung; v4: stricter base
+const PAR_LADDER_PREV_KEY = 'parladder:v3';  // served until v4 is built, so estimates never blink out
+const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v4';
 const PAR_LADDER_TTL = 3 * 86400;          // outlives a missed daily run
 // A year: the first live build over 180 days tied most rungs in with a handful
 // of cards (2017 Prizm: 3 to 12), and parallels' relative prices move far more
@@ -10660,6 +10661,13 @@ const PAR_LADDER_EXAMPLES = 4;            // comps kept per rung, to show the wo
 const PAR_LADDER_BASE_BLOCK = ['silver', 'gold', 'holo', 'refractor', 'red', 'blue', 'green',
   'orange', 'purple', 'pink', 'black', 'bronze', 'camo', 'disco', 'wave', 'shimmer', 'mojo',
   'sparkle', 'vinyl', 'finite', 'scope', 'hyper', 'pulsar', 'ice', 'cracked', 'neon', 'tie dye',
+  // v4: finishes that reached "base" with a blank column and inflated it — the
+  // first estimator backtest found 2025 Mosaic's ladder putting Mosaic Green
+  // at 0.33x base and pricing Jaxson Dart's $1.54 base card at $57.
+  'velocity', 'shock', 'fluorescent', 'reactive', 'variation', 'foil', 'lava', 'rainbow', 'mirror',
+  'stained', 'speckle', 'snakeskin', 'zebra', 'glitter', 'marble', 'nebula', 'galactic', 'fotl',
+  'ssp', 'die cut', 'die-cut', 'choice', 'genesis', 'kaleidoscope', 'lime', 'emerald', 'platinum',
+  'copper', 'aqua', 'magenta', 'sapphire',
   'teal', 'yellow', 'white', 'lazer', 'laser', 'prizms', 'parallel', 'xfractor', 'x-fractor'];
 // Autographs and relics are other cards with ladders of their own, told apart
 // by substring tests again, for cost; a sale that could be either counts as
@@ -11039,7 +11047,8 @@ let _ladderMemo = { at: 0, data: null };
 function _primeParallelLadder(data) { _ladderMemo = { at: Date.now(), data }; }
 async function _parallelLadder() {
   if (_ladderMemo.data && Date.now() - _ladderMemo.at < 10 * 60000) return _ladderMemo.data;
-  const data = await cacheGet(PAR_LADDER_KEY).catch(() => null);
+  const data = (await cacheGet(PAR_LADDER_KEY).catch(() => null))
+    || (await cacheGet(PAR_LADDER_PREV_KEY).catch(() => null));
   _ladderMemo = { at: Date.now(), data: data || null };
   return _ladderMemo.data;
 }
@@ -11213,21 +11222,25 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     if (e.keys.includes('')) return { f: 1, lo: 0.85, hi: 1.2, basis: 'base', n: 0 };
     const rung = baseF ? e.keys.map(k => rungs[k]).find(Boolean) : null;
     const lr = e.keys.map(k => lineRungs[k]).find(Boolean);
-    if (rung) {
+    // A parallel is never worth less than the base card it is a parallel of.
+    // A rung under base says the ladder's base was inflated (unnamed
+    // parallels sold as base), not that the parallel is cheap: it is passed
+    // over for the next source, and whatever is used is held to base.
+    if (rung && rung.f / baseF >= 1) {
       // Shrunk toward the line's rung by how thin the product's own is.
       let f = rung.f / baseF;
-      if (lr) f = Math.exp((rung.n * Math.log(f) + PAR_LADDER_LINE_WEIGHT * Math.log(lr.f)) / (rung.n + PAR_LADDER_LINE_WEIGHT));
+      if (lr && lr.f >= 1) f = Math.exp((rung.n * Math.log(f) + PAR_LADDER_LINE_WEIGHT * Math.log(lr.f)) / (rung.n + PAR_LADDER_LINE_WEIGHT));
       return { f, lo: rung.lo, hi: rung.hi, basis: 'ladder', n: rung.n };
     }
-    if (lr) return { f: lr.f, lo: 0.7, hi: 1.45, basis: 'line-ladder', n: lr.p };
+    if (lr && lr.f >= 1) return { f: lr.f, lo: 0.7, hi: 1.45, basis: 'line-ladder', n: lr.p };
     if (e.printRun) {
       for (const [c, basis] of [[baseF ? own : null, 'print-run'], [line, 'line-curve'], [all, 'site-curve']]) {
-        if (c && c.slope != null) return { f: Math.exp(c.icpt + c.slope * Math.log(e.printRun)), lo: 0.6, hi: 1.7, basis, n: 0 };
+        if (c && c.slope != null) return { f: Math.max(1, Math.exp(c.icpt + c.slope * Math.log(e.printRun))), lo: 0.6, hi: 1.7, basis, n: 0 };
       }
       return null;
     }
-    if (baseF && ownUnnumbered.length >= 2) return { f: _medOf(ownUnnumbered), lo: 0.6, hi: 1.7, basis: 'unnumbered', n: 0 };
-    if (line.unnumbered) return { f: line.unnumbered, lo: 0.55, hi: 1.8, basis: 'line-unnumbered', n: 0 };
+    if (baseF && ownUnnumbered.length >= 2) return { f: Math.max(1, _medOf(ownUnnumbered)), lo: 0.6, hi: 1.7, basis: 'unnumbered', n: 0 };
+    if (line.unnumbered) return { f: Math.max(1, line.unnumbered), lo: 0.55, hi: 1.8, basis: 'line-unnumbered', n: 0 };
     return null;
   };
 
