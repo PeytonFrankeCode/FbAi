@@ -19,6 +19,14 @@ check('a browser-looking visitor from AWS is a datacentre visitor', T.classify({
 check('python-requests says it is a bot', T.classify({ ua: 'python-requests/2.31', asn: 14061 }) === 'declaredBot');
 check('Googlebot verified by Cloudflare is not a datacentre bot, though it comes from Google\'s network',
   T.classify({ ua: 'Mozilla/5.0 (compatible; Googlebot/2.1)', asn: 15169, verifiedBot: true }) === 'verifiedBot');
+check('SEO-tool crawlers are blocked, even when Cloudflare verifies them',
+  T.classify({ ua: 'Mozilla/5.0 (compatible; DotBot/1.2; +https://opensiteexplorer.org/dotbot)', asn: 23033, verifiedBot: true }) === 'blockedBot'
+  && T.classify({ ua: 'Mozilla/5.0 (compatible; AhrefsBot/7.0)', asn: 16276 }) === 'blockedBot');
+check('  ...but not search engines or AI assistants', T.classify({ ua: 'Mozilla/5.0 (compatible; bingbot/2.0)', asn: 8075, verifiedBot: true }) === 'verifiedBot'
+  && T.classify({ ua: 'Mozilla/5.0 (compatible; ChatGPT-User/1.0)', asn: 8075, verifiedBot: true }) === 'verifiedBot');
+const robots = fs.readFileSync(path.join(__dirname, '..', 'public', 'robots.txt'), 'utf8');
+check('  ...and robots.txt disallows each of them by name', T.BLOCKED_BOTS.filter(b => b !== 'Linguee')
+  .every(b => new RegExp(`User-agent: ${b}\\nDisallow: /`).test(robots)) && /User-agent: \*\nAllow: \//.test(robots));
 check('no user agent at all is its own kind', T.classify({ ua: '', asn: 7922 }) === 'noUa');
 
 const day = '2026-09-27';
@@ -43,6 +51,8 @@ const countAt = worker.indexOf('_countVisitor(request, url, env, ctx)', fetchAt)
 const assetsAt = worker.indexOf('env.ASSETS.fetch(request)', fetchAt);
 check('the Worker counts every request before it serves pages or assets', fetchAt > 0 && countAt > fetchAt && countAt < assetsAt);
 check('  ...and each isolate writes its own key, not a shared one', /\$\{VISITORS_PREFIX\}\$\{_visitors\.day\}:\$\{_isolateId\}/.test(worker));
+check('blocked crawlers get a 403 everywhere but robots.txt', /visitorKind === 'blockedBot' && url\.pathname !== '\/robots\.txt'/.test(worker)
+  && worker.indexOf("visitorKind === 'blockedBot'") < worker.indexOf('env.ASSETS.fetch(request)'));
 check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(worker));
 
 (async () => {

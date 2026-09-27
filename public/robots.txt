@@ -1,3 +1,47 @@
+# SEO-tool crawlers: they index the site for other tools and send no visitors.
+# The site also refuses them (worker.js), for the ones that ignore this file.
+User-agent: DotBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: Barkrowler
+Disallow: /
+
+User-agent: serpstatbot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: SeekportBot
+Disallow: /
+
+User-agent: MegaIndex
+Disallow: /
+
+User-agent: ZoominfoBot
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
 User-agent: *
 Allow: /
 

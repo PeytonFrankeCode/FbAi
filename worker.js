@@ -3,7 +3,7 @@ let serverInit = null;
 // Lightweight, dependency-free text screen — reused for the public floor chat
 // so broadcast messages get the same profanity/spam check as everything else.
 import { moderateText, stripBidi } from './moderation.js';
-import { noteRequest, newTally, mergeTallies, FLUSH_MS } from './traffic-core.js';
+import { noteRequest, newTally, mergeTallies, FLUSH_MS, isBlockedBot } from './traffic-core.js';
 
 // This isolate's visitor tally (traffic-core.js), written to its own KV key
 // every FLUSH_MS so the report can sum every isolate that served anyone.
@@ -41,7 +41,7 @@ function _countVisitor(request, url, env, ctx) {
 // AdSense crawler) are served the page unchanged. What a bot is: a declared
 // one, one with no user agent, or a browser-looking visitor from a cloud
 // datacentre (traffic-core.js).
-export const NO_TAGS_FOR = new Set(['declaredBot', 'noUa', 'datacenter']);
+export const NO_TAGS_FOR = new Set(['declaredBot', 'noUa', 'datacenter', 'blockedBot']);
 export class BotTagRemover {
   constructor() { this.removed = 0; }
   element(el) {
@@ -721,6 +721,11 @@ export default {
     try {
       const url = new URL(request.url);
       const visitorKind = _countVisitor(request, url, env, ctx);
+      // SEO-tool crawlers (traffic-core.js BLOCKED_BOTS): nothing but
+      // robots.txt, which tells the honest ones to stay away.
+      if (visitorKind === 'blockedBot' && url.pathname !== '/robots.txt') {
+        return new Response('Forbidden', { status: 403, headers: { 'content-type': 'text/plain', 'cache-control': 'no-store' } });
+      }
       if (url.pathname === '/api/debug/visitors') return await visitorsReport(request, url, env);
 
       // Canonical host: www -> apex, keeping the path and query.

@@ -37,6 +37,18 @@ const DATACENTER_ASNS = new Map([
 
 const BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|python-urllib|aiohttp|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|node-fetch|undici|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity|amazonbot|applebot|yandex|baiduspider|sogou/i;
 
+// SEO-tool and scraper crawlers: they index the site for other people's
+// tools and send no visitors. Live, DotBot (Moz, on Wowrack) loaded the home
+// page 123 times in 20 minutes — over half of all page views — and, being a
+// Cloudflare-verified crawler, was served full pages with the ad tag. These
+// get a 403 everywhere but robots.txt (which disallows them by name, for the
+// ones that honour it). Search engines and AI assistants are not on the list:
+// they can send people.
+const BLOCKED_BOTS = ['DotBot', 'AhrefsBot', 'SemrushBot', 'MJ12bot', 'BLEXBot', 'DataForSeoBot', 'PetalBot',
+  'Barkrowler', 'serpstatbot', 'Bytespider', 'SeekportBot', 'MegaIndex', 'ZoominfoBot', 'Linguee', 'ImagesiftBot'];
+const BLOCKED_UA = new RegExp(BLOCKED_BOTS.join('|'), 'i');
+const isBlockedBot = (ua) => BLOCKED_UA.test(String(ua || ''));
+
 const LIMIT = 80;          // keys kept per breakdown, so a botnet cannot grow memory
 // At most one KV write per isolate a minute (on the first request, then when a
 // minute has passed): tail loss per isolate is under a minute, and the write
@@ -45,12 +57,13 @@ const FLUSH_MS = 60000;
 
 function newTally(day) {
   return { day, total: 0, pages: 0, api: 0, assets: 0,
-           verifiedBot: 0, declaredBot: 0, datacenter: 0, human: 0, noUa: 0,
+           verifiedBot: 0, declaredBot: 0, datacenter: 0, human: 0, noUa: 0, blockedBot: 0,
            byAsn: {}, byCountry: {}, byUa: {}, byPath: {}, byKindCountry: {} };
 }
 
 // What kind of visitor this is, in order of how sure we are.
 function classify({ ua = '', asn = null, verifiedBot = false }) {
+  if (isBlockedBot(ua)) return 'blockedBot';
   if (verifiedBot) return 'verifiedBot';
   if (!ua) return 'noUa';
   if (BOT_UA.test(ua)) return 'declaredBot';
@@ -92,7 +105,7 @@ function noteRequest(t, info) {
 function mergeTallies(tallies) {
   const out = newTally(tallies[0] ? tallies[0].day : '');
   for (const t of tallies) {
-    for (const k of ['total', 'pages', 'api', 'assets', 'verifiedBot', 'declaredBot', 'datacenter', 'human', 'noUa']) out[k] += t[k] || 0;
+    for (const k of ['total', 'pages', 'api', 'assets', 'verifiedBot', 'declaredBot', 'datacenter', 'human', 'noUa', 'blockedBot']) out[k] += t[k] || 0;
     for (const b of ['byAsn', 'byCountry', 'byUa', 'byPath', 'byKindCountry']) {
       for (const [k, n] of Object.entries(t[b] || {})) out[b][k] = (out[b][k] || 0) + n;
     }
@@ -101,11 +114,11 @@ function mergeTallies(tallies) {
   return {
     day: out.day, isolates: tallies.length,
     requests: out.total, pages: out.pages, api: out.api, assets: out.assets,
-    visitors: { human: out.human, datacenter: out.datacenter, declaredBot: out.declaredBot, noUa: out.noUa, verifiedBot: out.verifiedBot },
+    visitors: { human: out.human, datacenter: out.datacenter, declaredBot: out.declaredBot, noUa: out.noUa, verifiedBot: out.verifiedBot, blockedBot: out.blockedBot },
     botShare: out.total ? Math.round((1 - out.human / out.total) * 1000) / 10 : null,
     topNetworks: top(out.byAsn), topCountries: top(out.byCountry), topUserAgents: top(out.byUa),
     topPaths: top(out.byPath), byKindAndCountry: top(out.byKindCountry, 40),
   };
 }
 
-module.exports = { DATACENTER_ASNS, BOT_UA, FLUSH_MS, newTally, classify, noteRequest, mergeTallies, pathKind };
+module.exports = { BLOCKED_BOTS, isBlockedBot, DATACENTER_ASNS, BOT_UA, FLUSH_MS, newTally, classify, noteRequest, mergeTallies, pathKind };
