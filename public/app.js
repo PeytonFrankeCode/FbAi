@@ -5216,7 +5216,7 @@ async function loadMarketIndex() {
       <div class="market-comp">
         <div class="market-comp-head"><span class="market-comp-label">Cards tracked</span></div>
         <div class="market-comp-value">${data.matchedCards || 0}</div>
-        <div class="market-comp-prev">of their ${data.cardsPerPlayer || 10} most-traded</div>
+        <div class="market-comp-prev">cards, parallels and grades followed</div>
       </div>
       <div class="market-comp">
         <div class="market-comp-head"><span class="market-comp-label">Sales used</span></div>
@@ -5235,14 +5235,6 @@ async function loadMarketIndex() {
       </div>`}
     </div>
 
-    <div class="market-basket" id="market-basket">
-      <div class="market-basket-head">
-        <span class="market-basket-title">What's driving it</span>
-        <span class="market-basket-sub">most-traded raw base cards in the basket</span>
-      </div>
-      <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
-    </div>
-
     <div class="market-chart-card">
       <div class="market-chart-head">
         <span class="market-chart-title">Index over the last ${data.days} days</span>
@@ -5251,6 +5243,14 @@ async function loadMarketIndex() {
       <p id="market-chart-empty" class="market-chart-empty hidden"></p>
       <div id="market-point" class="chart-readout hidden"></div>
       <p class="chart-readout-hint">Tap any point to see that day's level.</p>
+    </div>
+
+    <div class="market-basket" id="market-basket">
+      <div class="market-basket-head">
+        <span class="market-basket-title">What's driving it</span>
+        <span class="market-basket-sub">most-traded raw base cards in the basket</span>
+      </div>
+      <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
     </div>
 
     <div class="market-notes">
