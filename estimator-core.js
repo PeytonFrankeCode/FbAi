@@ -195,21 +195,19 @@ function crossCalibrated(cases) {
 
 // The settings the tuner tries. Each is a hyperparameter of a per-player fit,
 // not a price: how much a player's own evidence is allowed to say.
-const PARAM_GRID = (() => {
-  const out = [];
-  for (const halfLife of [null, 45]) {
-    for (const trendTau of [0, 0.004]) {
-      for (const spreadTau of [0, 0.2]) {
-        for (const floorBase of [false, true]) {
-          for (const slabs of ['use', 'fallback']) {
-            for (const numberedFrom of ['all', 'larger']) out.push({ halfLife, trendTau, spreadTau, floorBase, slabs, numberedFrom });
-          }
-        }
-      }
-    }
-  }
-  return out;
-})();
+// Each setting and the values the tuner tries. Not every combination: a
+// full grid (64) ran past the Worker's CPU limit on live data, so the tuner
+// walks from the old settings one setting at a time (see server.js
+// _tuneEstimator), keeping each change that helps — ~15 evaluations.
+const PARAM_DIMS = {
+  numberedFrom: ['all', 'larger'],
+  slabs: ['use', 'fallback'],
+  floorBase: [false, true],
+  spreadTau: [0, 0.2],
+  trendTau: [0, 0.004],
+  halfLife: [null, 45],
+};
+const PARAM_START = Object.freeze({ halfLife: null, trendTau: 0, spreadTau: 0, floorBase: false, slabs: 'use', numberedFrom: 'all' });
 
 // Adopt a tuned setting only if it beats the old estimator by a margin the
 // sample can show: at least MIN_CASES cases, and MIN_GAIN points of MdAPE.
@@ -219,7 +217,7 @@ const MIN_CASES = 60, MIN_GAIN = 1;
 const MIN_NUMBERED_CASES = 30;
 
 module.exports = {
-  DEFAULT_PARAMS, PARAM_GRID, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, DAY,
+  DEFAULT_PARAMS, PARAM_DIMS, PARAM_START, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, DAY,
   daysBetween, trendDrift, adjustedMedian, fitSpread,
   scoreCases, calibrate, withCalib, crossCalibrated,
 };
