@@ -3,7 +3,7 @@
 //
 // The matching runs in the browser (public/app.js), so this lifts the pieces it
 // needs out of app.js and runs them against the real checklist file — the same
-// approach search-identity.test.js takes for _isOtherCard. The listings are the
+// approach search-identity.test.js takes for the front end. The listings are the
 // shapes that were checked in a real browser when this was built, including
 // the three it first got wrong.
 const fs = require('fs');
@@ -138,32 +138,20 @@ check(`every listing is tied to the right version, or to none (${CASES.length})`
     wrong2.length === 0, wrong2.join(' | ') || 'Prizmatic, Fireworks, #RI-5, #DT-39, #K41, #325 auto, Draft Picks');
 }
 
-// The page wiring: grouped listings that match nothing leave the main list,
-// the stats skip them, and a new search starts ungrouped.
+// The page wiring: listings the checklist cannot place stay in the main list
+// and count in the stats (the collapsed "couldn't match" section is gone), and
+// a new search starts ungrouped.
 {
-  // The predicate, run: _versionOf stubbed to what the checklist matcher said.
-  const start = src.indexOf('const _isOtherCard'), end = src.indexOf('function renderGradeGroups');
-  const pc = { console };
+  const start = src.indexOf('function _countedResults'), end = src.indexOf('}', start) + 1;
+  const pc = {};
   vm.createContext(pc);
-  vm.runInContext(src.slice(start, end) + `
-    this.setCtx = (on, idn) => { _versionCtx = on ? {} : null; _searchIdentity = idn; };
-    var _versionOf = (r) => r.v === undefined ? null : r.v;
-    this.isOther = _isOtherCard;`, pc);
-  pc.setCtx(true, { parallel: 'Red Sparkle Prizms' });
-  const redSparkle = { card: {}, parallel: 'Red Sparkle' };
-  check('unmatched listings go to the collapsed section, not the comps',
-    pc.isOther({}) === true && pc.isOther({ v: redSparkle }) === false);
-  check('  ...a listing read as a different parallel stays there',
-    pc.isOther({ v: { card: {}, parallel: 'Red' }, sameCard: false }) === true);
-  check('  ...but one the server could not read, which the checklist reads as the searched parallel, comes back',
-    pc.isOther({ v: redSparkle, sameCard: false, sameCardUnread: true }) === false
-    && pc.isOther({ v: { card: {}, parallel: 'Red' }, sameCard: false, sameCardUnread: true }) === true);
-  pc.setCtx(false, null);
-  check('  ...and without the grouping, only an explicit false moves a listing',
-    pc.isOther({ sameCard: false }) === true && pc.isOther({}) === false && pc.isOther({ sameCard: false, sameCardUnread: true }) === true);
+  vm.runInContext(src.slice(start, end) + '\nthis.counted = _countedResults;', pc);
+  const rows = [{ v: null }, { sameCard: false }, { v: { card: {}, parallel: 'Red' } }];
+  check('unmatched listings are counted in the value stats and chart',
+    pc.counted(rows).length === rows.length && /renderStatsBar\(counted, true\)/.test(src));
+  check('  ...and are not split into a separate section',
+    !/function renderOtherCards\(/.test(src) && !/_isOtherCard/.test(src));
 }
-check('  ...and are left out of the value stats and chart',
-  /function _countedResults\(/.test(src) && /renderStatsBar\(counted, true\)/.test(src));
 check('  ...and a new search never inherits the last one\'s grouping',
   /async function buildParallelFilter\(query\) \{[\s\S]{0,200}_versionCtx = null;/.test(src));
 check('the versions container is on the page and styled',
