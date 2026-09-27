@@ -551,14 +551,18 @@
       p.halfLife ? `weights recent sales (half-life ${p.halfLife} days)` : null,
       p.floorBase ? 'never prices a parallel below its base' : null,
       p.slabs === 'fallback' ? 'uses slab-only parallels only when nothing sold raw' : null,
+      p.numberedFrom === 'larger' ? 'prices numbered parallels from the card\'s bigger print runs' : null,
     ].filter(Boolean);
     const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
     const tiers = Object.entries(c.byTier || {}).map(([t, s]) =>
       `<tr><td>${escHtml(t)}</td><td>${s.n}</td><td>${pct(s.mdape)}</td><td>${signed(s.bias)}</td><td>${pct(s.within25)}</td></tr>`).join('');
     const players = (rep.hardestPlayers || []).slice(0, 8).map(x =>
       `<tr><td>${escHtml(x.player)}</td><td>${x.n}</td><td>${pct(x.mdape)}</td><td>${signed(x.bias)}</td></tr>`).join('');
-    const worst = (rep.worstCases || []).slice(0, 8).map(x =>
-      `<tr><td>${escHtml(x.player)} #${escHtml(x.card)} ${escHtml(x.parallel)}${x.from ? `<div style="color:var(--text-muted);font-size:0.74rem">from ${escHtml(x.from)}${x.factor ? ` · step ×${x.factor}` : ''}</div>` : ''}</td><td>$${Math.round(x.predicted * 100) / 100}</td><td>$${Math.round(x.actual * 100) / 100}${x.actualN ? ` <span style="color:var(--text-muted)">(${x.actualN})</span>` : ''}</td><td>${escHtml(x.basis || '')}</td></tr>`).join('');
+    const nb = (rep.numbered && rep.numbered.baseline) || {}, nc = (rep.numbered && rep.numbered.chosen) || {};
+    const missRow = (x) =>
+      `<tr><td>${escHtml(x.player)} #${escHtml(x.card)} ${escHtml(x.parallel)}${x.pr ? ` /${x.pr}` : ""}${x.from ? `<div style="color:var(--text-muted);font-size:0.74rem">from ${escHtml(x.from)}${x.factor ? ` · step ×${x.factor}` : ''}</div>` : ''}</td><td>$${Math.round(x.predicted * 100) / 100}</td><td>$${Math.round(x.actual * 100) / 100}${x.actualN ? ` <span style="color:var(--text-muted)">(${x.actualN})</span>` : ''}</td><td>${escHtml(x.basis || '')}</td></tr>`;
+    const worst = (rep.worstCases || []).slice(0, 8).map(missRow).join('');
+    const worstNum = (rep.worstNumbered || []).slice(0, 8).map(missRow).join('');
     const table = (head, rows) => rows ? `<table style="width:100%;border-collapse:collapse;margin:0.5rem 0 1rem;font-size:0.82rem;">
       <tr style="text-align:left;color:var(--text-secondary)">${head.map(h => `<th style="padding:0.25rem 0.4rem">${h}</th>`).join('')}</tr>${rows}</table>` : '';
     out.innerHTML = `
@@ -569,6 +573,13 @@
         ${card('Cases tested', c.n || 0)}
         ${card('Status', rep.adopted === 'tuned' ? 'New wins' : 'Old kept', rep.adopted === 'tuned' ? 'green' : 'yellow')}
       </div>
+      ${nb.n ? `<div class="stat-label" style="margin-top:0.6rem">Numbered parallels, priced from the card's bigger print runs${rep.judgedOn === 'numbered' ? ' (what the test is judged on)' : ''}</div>
+      <div class="stats-row">
+        ${card('Old miss', pct(nb.mdape), 'red')}
+        ${card('New miss', pct(nc.mdape), 'green')}
+        ${card('Cases', nb.n)}
+        ${card('Within 25% (new)', pct(nc.within25))}
+      </div>` : ''}
       <div style="margin-bottom:0.6rem;">${rep.adopted === 'tuned'
         ? `New settings: ${escHtml(settings.join(', ') || 'default')}. They beat the old estimator by ${rep.gainPoints} points.`
         : 'Nothing beat the old estimator by at least 1 point, so it stays as is.'}
@@ -577,7 +588,8 @@
         ${label.startsWith('Just ran (dry') ? '<br><em>Dry run: prices on the site are unchanged.</em>' : ''}</div>
       ${tiers ? '<div class="stat-label">By price range</div>' : ''}${table(['Range', 'Cases', 'Typical miss', 'Leans', 'Within 25%'], tiers)}
       ${players ? '<div class="stat-label">Hardest players to price</div>' : ''}${table(['Player', 'Cases', 'Typical miss', 'Leans'], players)}
-      ${worst ? '<div class="stat-label">Biggest misses</div>' : ''}${table(['Card', 'We estimated', 'It sold for', 'Estimate type'], worst)}`;
+      ${worstNum ? '<div class="stat-label">Biggest misses: numbered parallels</div>' : ''}${table(['Card', 'We estimated', 'It sold for', 'Estimate type'], worstNum)}
+      ${worst ? '<div class="stat-label">Biggest misses: all parallels</div>' : ''}${table(['Card', 'We estimated', 'It sold for', 'Estimate type'], worst)}`;
   }
 
   async function loadCommunityModeration() {

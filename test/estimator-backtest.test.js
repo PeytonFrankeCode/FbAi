@@ -93,7 +93,8 @@ const S = require(path.join(__dirname, '..', 'server.js'));
 const PID = '2017-panini-prizm-football';
 // The product's ladder: each parallel's step over base for its average player.
 const PARS = [['', 'Base', 1], ['Silver Prizm', 'Prizm', 2], ['Orange', 'Prizm Orange', 4], ['Light Blue', 'Prizm Light Blue', 5],
-  ['Green Scope', 'Prizm Green Scope', 8], ['Red Power', 'Prizm Red Power', 14], ['Camo', 'Prizm Camo', 25]];
+  ['Green Scope', 'Prizm Green Scope', 8], ['Red Power', 'Prizm Red Power', 14], ['Camo', 'Prizm Camo', 25],
+  ['Blue', 'Prizm Blue', 2.5], ['Disco', 'Prizm Disco', 3], ['Pink', 'Prizm Pink', 3.5]];
 // Numbered parallels carry their serial on the title, as real ones do.
 const RUNS = { Orange: 275, 'Light Blue': 199, 'Green Scope': 99, 'Red Power': 49, Camo: 25 };
 const titleOf = (player, num, col) => `2017 Panini Prizm ${player} #${num}${col ? ' ' + col : ''}${RUNS[col] ? ' /' + RUNS[col] : ''} RC`;
@@ -202,6 +203,31 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   const flat = await S.runEstimatorBacktest({ save: false });
   check('on a market the old estimator already fits, it is kept', flat.ok && flat.report.adopted !== 'tuned',
     flat.ok ? `${flat.report.baseline.mdape}% vs best ${flat.report.grid[0].mdape}%` : JSON.stringify(flat));
+
+  // The real market: base and unnumbered parallels are a mess (unnamed
+  // parallels sold as base, slabs of $1 cards, loose colour names), while a
+  // card's numbered parallels keep to their print runs. A /25 priced from the
+  // card's /99 and /49 is right; priced through its base, it is not.
+  db.exec('DELETE FROM sales');
+  for (const [num, player, level] of PLAYERS) {
+    for (const [col, , f] of PARS) {
+      const messy = !RUNS[col];
+      for (let d = -60; d <= -1; d += 6) {
+        // Messy prices also run high on the ladder, as an inflated base does.
+        const noise = messy ? 3 * Math.exp((rnd() - 0.5) * 2) : Math.exp((rnd() - 0.5) * 0.2);
+        ins.run(`s${n++}`, iso(d), titleOf(player, num, col), Math.round(level * f * noise * 100), player, col, num);
+      }
+    }
+  }
+  const messy = await S.runEstimatorBacktest({ save: false });
+  const nm = messy.ok && messy.report.numbered;
+  check('numbered parallels are judged on their own once there are enough', messy.ok && messy.report.judgedOn === 'numbered',
+    messy.ok ? `${nm.baseline.n} numbered cases` : JSON.stringify(messy));
+  check('  ...and priced from the card\'s larger print runs, the old way is beaten', messy.ok
+    && messy.params.numberedFrom === 'larger' && nm.chosen.mdape < nm.baseline.mdape / 2,
+    messy.ok ? `numbered miss ${nm.baseline.mdape}% -> ${nm.chosen.mdape}%, ${JSON.stringify(messy.params)}` : '');
+  check('  ...without the rest getting worse', messy.ok && messy.report.chosen.mdape <= messy.report.baseline.mdape + EST.MIN_GAIN,
+    messy.ok ? `all ${messy.report.baseline.mdape}% -> ${messy.report.chosen.mdape}%` : '');
 
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   check('the cron runs the backtest daily', /getUTCHours\(\) === 8 && aliasTick\)[\s\S]{0,80}runEstimatorBacktest\(\)/.test(src));
