@@ -11356,6 +11356,12 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     if (params.numberedFrom === 'larger' && e.printRun) {
       let cand = points.filter(p => p.pr && p.pr > e.printRun);
       if (cand.some(p => p.raw)) cand = cand.filter(p => p.raw);
+      // params.numberedNearest: only the N closest larger runs — a /99 is
+      // more like the /149 than the /400.
+      if (params.numberedNearest > 0) {
+        const runsUp = [...new Set(cand.map(p => p.pr))].sort((a, b) => a - b).slice(0, params.numberedNearest);
+        cand = cand.filter(p => runsUp.includes(p.pr));
+      }
       if (cand.length) {
         lvl = Math.exp(_medOf(cand.map(p => p.logr - kSpread * p.logf)));
         from = cand.map(p => anchorDetail[p.detail]).filter(Boolean);
@@ -11402,7 +11408,10 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     const tier = [];
     while (i < numbered.length && numbered[i].printRun === run) tier.push(numbered[i++]);
     for (const e of tier) {
-      if (e.estimate && e._price < floor * 1.1) {
+      // params.liftRarer === false: the market does not always agree — a
+      // popular colour at /249 (Cam Ward Prizm Orange, $185) outsells a /200
+      // Hyper ($69) — so whether the lift helps is the backtest's call.
+      if (e.estimate && params.liftRarer !== false && e._price < floor * 1.1) {
         e.estimate.workings.unlifted = Math.round(e._price * 100) / 100;
         e._price = floor * 1.1; e.estimate.lifted = true;
         e.estimate.workings.liftedAbove = floorBy
@@ -11730,7 +11739,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
   const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
-    && (g.numberedFrom || 'all') === 'all';
+    && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest;
   const numberedOf = (cases) => cases.filter(c => c.larger);
   const evalOf = (g) => {
     const cases = casesFor(plain(g));
@@ -11746,7 +11755,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       && (!byNum || r.score.mdape <= baseline.score.mdape + EST.MIN_GAIN)
       ? (byNum ? r.numbered.mdape : r.score.mdape) : Infinity);
     let cur = baseline;
-    for (let pass = 0; pass < 3; pass++) {
+    for (let pass = 0; pass < 2; pass++) {
       let moved = false;
       for (const [dim, values] of Object.entries(EST.PARAM_DIMS)) {
         for (const v of values) {
