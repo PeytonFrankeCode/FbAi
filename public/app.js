@@ -1631,56 +1631,6 @@ async function fetchVariants(query) {
   }
 }
 
-// ---- Estimate from a search query ----
-// Backs the empty state: when a search returns no comps we can often still
-// price the card from what we do hold. How far the match had to widen is
-// always stated, because "this exact card" and "this player's cards" are very
-// different claims.
-async function loadQueryEstimate(query) {
-  const el = document.getElementById('query-estimate');
-  if (!el) return;
-  el.innerHTML = '<p class="qe-loading">Checking whether we can still estimate a price…</p>';
-
-  let data;
-  try {
-    const res = await fetch(`/api/price-estimate?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
-    data = await safeJson(res);
-  } catch (_) { data = null; }
-
-  const cur = document.getElementById('query-estimate');
-  if (!cur) return; // a newer search replaced the grid while we waited
-  if (!data || !data.available || !data.estimate) { cur.innerHTML = ''; return; }
-
-  const e = data.estimate;
-  const basis = {
-    'title': `sales matching your search`,
-    'player-year': `${escHtml(data.player || '')}'s ${escHtml(data.year || '')} cards — we hold no sales of this exact card`,
-    'player': `${escHtml(data.player || '')}'s cards generally — we hold no sales of this exact card`,
-  }[data.matchedOn] || 'what we hold';
-
-  const exact = data.matchedOn === 'title';
-  const range = (e.low != null && e.high != null && e.low !== e.high)
-    ? `<span class="qe-range">$${_caNum(e.low)} – $${_caNum(e.high)}</span>` : '';
-
-  cur.innerHTML = `
-    <div class="qe-card">
-      <div class="qe-head">
-        <span class="qe-label">Estimated price</span>
-        <span class="ca-price-conf ${e.confidence || 'low'}">${e.confidence || 'low'} confidence</span>
-      </div>
-      <div class="qe-main">
-        ${exact
-          ? `<span class="qe-value">$${_caNum(e.price)}</span>${range}`
-          : `${range}<span class="qe-mid">around $${_caNum(e.price)}</span>`}
-      </div>
-      <p class="qe-how">Based on ${e.basedOn} ${escHtml(data.grade || '')} ${e.basedOn === 1 ? 'sale' : 'sales'} — ${basis}.
-        ${exact ? '' : ' Treat the range as the answer: versions of a card vary a lot.'}</p>
-      ${Array.isArray(data.grades) && data.grades.length > 1
-        ? `<p class="qe-grades">Also seen: ${data.grades.filter(g => g.label !== data.grade)
-             .map(g => `${escHtml(g.label)} (${g.sales})`).join(' · ')}</p>` : ''}
-    </div>`;
-}
-
 // ---- Site announcement banner ----
 // One announcement at a time, defined here rather than fetched: it changes
 // when we ship, not at runtime, and a fetch would mean a network round trip
@@ -2110,13 +2060,9 @@ async function fetchDirectSearch(query) {
       // a card with no hits may simply not have traded inside it.
       empty.textContent = isSold ? 'No recent sold listings found. Try a broader search term.' : 'No listings found. Try a broader search term.';
       grid.appendChild(empty);
-      // No comps means no card to click, which means the auto-pricer never
-      // ran — even when we hold sales that could answer the question. Ask it
-      // directly off the query instead of dead-ending.
-      const est = document.createElement('div');
-      est.id = 'query-estimate';
-      grid.appendChild(est);
-      loadQueryEstimate(query);
+      // No estimate here. A search with no comps doesn't say enough to price
+      // one card: it priced "Estimated $10.88" off two PSA 9 sales that merely
+      // matched the words. Same reason as the sold search's estimate box.
     } else {
       if (isSold) {
         renderGradeGroups(grid, _withoutDroppedOffers(results));
