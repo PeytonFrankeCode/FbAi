@@ -163,6 +163,21 @@ for (const [num, player, level, k, drift] of PLAYERS) {
       baseOf(fb) === 2 && baseOf(use) > 2, `use $${baseOf(use)}, fallback $${baseOf(fb)}`);
   }
 
+  // Base is the cheapest version of a card: with baseCap, an estimated base
+  // is never above the cheapest parallel of it that sold raw (Jaxson Dart
+  // #362 2025 Mosaic: $17 off a $12 Silver and a $305 Genesis; it sells for $1).
+  {
+    const set = { parallels: [{ name: 'Silver' }, { name: 'Genesis' }] };
+    const fit = { ref: '', rungs: { '': { f: 1, n: 50, lo: 0.9, hi: 1.1 }, silver: { f: 1.014, n: 50, lo: 0.9, hi: 1.1 },
+                                    genesis: { f: 13.3, n: 50, lo: 0.9, hi: 1.1 } } };
+    const known = [{ key: 'silver', name: 'Silver', raw: 11.97, rawN: 1, sales: 1 },
+                   { key: 'genesis', name: 'Genesis', raw: 304.93, rawN: 3, sales: 3 }];
+    const baseOf = (params) => S._checklistParallels(set, known, fit, null, { params }).find(x => x.name === 'Base').estimate.price;
+    const off = baseOf(EST.DEFAULT_PARAMS), on = baseOf({ ...EST.DEFAULT_PARAMS, baseCap: true });
+    check('with baseCap, an estimated base is never above the cheapest parallel that sold', off > 11.97 && on === 11.97,
+      `off $${off}, on $${on}`);
+  }
+
   const r = await S.runEstimatorBacktest({ save: true });
   check('the backtest runs on the players with the most parallel sales', r.ok && r.report.pairs === PLAYERS.length,
     r.ok ? `${r.report.pairs} pairs, ${r.report.chosen.n} cases` : JSON.stringify(r));

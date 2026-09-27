@@ -11456,6 +11456,19 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
   // ladder rungs too: a thin one (2017 Prizm Blue Wave /149, 1.27x base on
   // four cards) put a /149 at $1,171 beside a /199 that sold raw at $2,050.
   // Sold prices are never moved; they are what the floor is made of.
+  // params.baseCap: base is the cheapest version of a card, so an estimated
+  // base is held to the cheapest parallel of it that sold raw. A ladder
+  // flattened by $0.99 veteran base cards (2025 Mosaic: Silver 1.01x base)
+  // put Jaxson Dart's #362 base at $17 off a $12 Silver; it sells for $1.
+  if (params.baseCap) {
+    const cap = Math.min(...known.filter(k => k.raw > 0 && k.key !== '').map(k => k.raw));
+    for (const x of out) {
+      if (x.estimate && x._keys && x._keys.includes('') && Number.isFinite(cap) && x._price > cap) {
+        x.estimate.workings.capped = { atCheapestParallel: Math.round(cap * 100) / 100, was: Math.round(x._price * 100) / 100 };
+        x._price = cap;
+      }
+    }
+  }
   const bases = out.filter(x => x._base && x._price > 0);
   let floor = Math.max(0, ...bases.map(x => x._price));
   let floorBy = bases.find(x => x._price === floor) || null;
@@ -11799,7 +11812,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
   const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
-    && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest;
+    && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest && !g.baseCap;
   const numberedOf = (cases) => cases.filter(c => c.larger);
   const evalOf = (g) => {
     const cases = casesFor(plain(g));
@@ -11819,7 +11832,9 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   // lowers the objective, for up to three passes (see EST.PARAM_DIMS).
   {
     const byNum = baseline.numbered.n >= EST.MIN_NUMBERED_CASES;
-    const obj = (r) => (eligibleRun(r) ? (byNum ? r.numbered.mdape : r.score.mdape) : Infinity);
+    // Numbered cases first; every case breaks ties, so a setting that only
+    // touches base cards (baseCap) can still win when numbered are unmoved.
+    const obj = (r) => (eligibleRun(r) ? (byNum ? r.numbered.mdape + r.score.mdape / 1000 : r.score.mdape) : Infinity);
     let cur = baseline;
     for (let pass = 0; pass < 2; pass++) {
       let moved = false;
@@ -11838,7 +11853,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   // estimator is for — once there are enough of them, provided the rest do
   // not get worse by more than MIN_GAIN; on every case otherwise.
   const byNumbered = baseline.numbered.n >= EST.MIN_NUMBERED_CASES;
-  const objective = (r) => (byNumbered ? r.numbered.mdape : r.score.mdape);
+  const objective = (r) => (byNumbered ? r.numbered.mdape + r.score.mdape / 1000 : r.score.mdape);
   const eligible = runs.filter(eligibleRun);
   const best = eligible.length ? eligible.reduce((a, b) => (objective(b) < objective(a) ? b : a)) : baseline;
   const gain = baseline.score.n && best.score.n ? objective(baseline) - objective(best) : 0;
