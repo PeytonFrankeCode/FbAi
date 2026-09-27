@@ -11385,7 +11385,27 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
   }
   // With no sale of its own to stand on, a card can be given its level: the
   // player's, or the product's typical card (/api/checklist-prices).
-  const level = anchors.length ? Math.exp(_medOf(anchors)) : (opts.level > 0 ? opts.level : null);
+  // The card's level from its sold parallels: a plain median, or weighted by
+  // how many sales stand behind each (params.weightAnchors).
+  let cardLevel = null;
+  if (anchors.length) {
+    if (params.weightAnchors) {
+      const xs = anchors.map((a, i) => [a, points[i].w || 1]).sort((a, b) => a[0] - b[0]);
+      const tot = xs.reduce((t, [, w]) => t + w, 0);
+      let acc = 0, m = xs[xs.length - 1][0];
+      for (const [a, w] of xs) { acc += w; if (acc >= tot / 2) { m = a; break; } }
+      cardLevel = Math.exp(m);
+    } else cardLevel = Math.exp(_medOf(anchors));
+  }
+  // A card with one or two sold parallels is one odd sale from a wrong level;
+  // the player's other cards in the product say where he sits too
+  // (opts.prior). Blended by evidence: params.levelPrior is how many of the
+  // card's own anchors the prior is worth.
+  const level = cardLevel != null
+    ? (opts.prior > 0 && params.levelPrior > 0
+      ? Math.exp((anchors.length * Math.log(cardLevel) + params.levelPrior * Math.log(opts.prior)) / (anchors.length + params.levelPrior))
+      : cardLevel)
+    : (opts.level > 0 ? opts.level : null);
   const levelFrom = anchors.length ? 'card' : (level ? (opts.levelFrom || 'given') : null);
   const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -11514,7 +11534,9 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
   }
   // The card's own level, for callers pricing its neighbours. A property, not
   // an element: it does not reach the JSON.
-  out.level = anchors.length ? level : null;
+  // The card's own level (no prior), so a player's cards never feed on each
+  // other's blended levels.
+  out.level = cardLevel;
   out.spread = kSpread;
   return out;
 }
@@ -11692,6 +11714,17 @@ function _priceBuckets(bk, params, refIso) {
   for (const p of priced) {
     if (p.list.level > 0) (playerLevel[p.m.set.category] = playerLevel[p.m.set.category] || []).push(p.list.level);
   }
+  // With params.levelPrior, a card with sales of its own is re-priced with
+  // the player's level from his OTHER cards of the category as a prior.
+  if (params.levelPrior > 0) {
+    for (const p of priced) {
+      if (!(p.list.level > 0)) continue;
+      const others = priced.filter(q => q !== p && q.m.set.category === p.m.set.category && q.list.level > 0).map(q => q.list.level);
+      if (!others.length) continue;
+      const list = _checklistParallels(p.m.set, p.known, fitFor(p.kind), pooledFor(p.kind), { params, prior: _medOf(others) });
+      if (list) p.list = Object.assign(list, { level: p.list.level });
+    }
+  }
   const cards = priced.map(p => {
     let list = p.list;
     if (!(list.level > 0) && p.m.set.category !== 'insert') {
@@ -11747,6 +11780,26 @@ function _backtestBuckets(bk, params, testDays, refIso) {
   const t0 = new Date(Date.parse(refIso) - testDays * EST.DAY).toISOString().slice(0, 10);
   const drift = _playerDrift(bk.rows, params, t0);
   const cases = [];
+  // Each card's own level from its sales before the window, for the prior a
+  // card takes from the player's other cards (params.levelPrior).
+  const levels = new Map();
+  if (params.levelPrior > 0) {
+    for (const m of bk.mine) {
+      const kind = _CATEGORY_KIND[m.set.category] || '';
+      const known = [];
+      for (const [k2, b2] of m.keys) {
+        const before = b2.rows.filter(r => String(r.sold_date) < t0);
+        if (before.length) known.push(_knownFromRows(k2, b2, before, params, drift, t0));
+      }
+      if (!known.length) continue;
+      const l = (_checklistParallels(m.set, known, bk.fitFor(kind), bk.pooledFor(kind), { params }) || {}).level;
+      if (l > 0) levels.set(m, l);
+    }
+  }
+  const priorFor = (m) => {
+    const xs = [...levels].filter(([o]) => o !== m && o.set.category === m.set.category).map(([, l]) => l);
+    return xs.length ? _medOf(xs) : null;
+  };
   for (const m of bk.mine) {
     if (m.keys.size < 2) continue;
     const kind = _CATEGORY_KIND[m.set.category] || '';
@@ -11761,7 +11814,7 @@ function _backtestBuckets(bk, params, testDays, refIso) {
         if (before.length) known.push(_knownFromRows(k2, b2, before, params, drift, t0));
       }
       if (!known.length) continue;
-      const list = _checklistParallels(m.set, known, bk.fitFor(kind), bk.pooledFor(kind), { params }) || [];
+      const list = _checklistParallels(m.set, known, bk.fitFor(kind), bk.pooledFor(kind), { params, prior: priorFor(m) }) || [];
       const e = list.find(x => x.estimate && x.keys && x.keys.includes(key));
       if (!e || !(e.estimate.price > 0)) continue;
       const w = e.estimate.workings || {};
@@ -11813,7 +11866,8 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
   const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
-    && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest && !g.baseCap;
+    && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest && !g.baseCap
+    && !g.levelPrior && !g.weightAnchors;
   const numberedOf = (cases) => cases.filter(c => c.larger);
   const evalOf = (g) => {
     const cases = casesFor(plain(g));

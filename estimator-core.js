@@ -40,6 +40,8 @@ const DEFAULT_PARAMS = Object.freeze({
   numberedNearest: 0, // with 'larger': only the N closest larger runs (0 = all of them)
   liftRarer: true,    // lift an estimate above the dearest larger run on the card
   baseCap: false,     // hold an estimated base to the cheapest parallel of the card that sold raw
+  levelPrior: 0,      // how many anchors' worth the player's other cards count for in a card's level
+  weightAnchors: false, // weight each sold parallel by its sales in the card's level
   slabs: 'use',       // 'use': slabs anchor like raw sales; 'fallback': only when nothing sold raw
   calib: {},          // basis -> multiplier
 });
@@ -213,19 +215,20 @@ function crossCalibrated(cases, keyOf = KEY_BASIS) {
 // full grid (64) ran past the Worker's CPU limit on live data, so the tuner
 // walks from the old settings one setting at a time (see server.js
 // _tuneEstimator), keeping each change that helps — ~15 evaluations.
+// Settings that lost every live test are left out to stay inside the CPU
+// budget (numberedFrom 'larger', numberedNearest, floorBase, halfLife); the
+// estimator still takes them.
 const PARAM_DIMS = {
-  numberedFrom: ['all', 'larger'],
+  levelPrior: [0, 1, 3],
+  weightAnchors: [false, true],
   liftRarer: [true, false],
   baseCap: [false, true],
-  numberedNearest: [0, 2],
   slabs: ['use', 'fallback'],
-  floorBase: [false, true],
   spreadTau: [0, 0.2],
   trendTau: [0, 0.004],
-  halfLife: [null, 45],
 };
 const PARAM_START = Object.freeze({ halfLife: null, trendTau: 0, spreadTau: 0, floorBase: false, slabs: 'use', numberedFrom: 'all',
-  liftRarer: true, numberedNearest: 0, baseCap: false });
+  liftRarer: true, numberedNearest: 0, baseCap: false, levelPrior: 0, weightAnchors: false });
 
 // Adopt a tuned setting only if it beats the old estimator by a margin the
 // sample can show: at least MIN_CASES cases, and MIN_GAIN points of MdAPE.
