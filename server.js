@@ -11924,11 +11924,21 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
     ['kind', (cs) => EST.crossCalibrated(cs, EST.KEY_KIND), (cs) => EST.calibrate(cs, EST.KEY_KIND)],
     ['band+kind', (cs) => EST.crossCalibrated(EST.crossCalibrated(cs, EST.KEY_BAND), EST.KEY_KIND),
              (cs) => ({ ...EST.calibrate(cs, EST.KEY_BAND), ...EST.calibrate(EST.withCalib(cs, EST.calibrate(cs, EST.KEY_BAND)), EST.KEY_KIND) })],
-  ].map(([name, crossOf, fitOf]) => ({ name, cross: EST.scoreCases(crossOf(chosen.cases)), fitOf }));
-  const calibBest = calibOptions.reduce((a, b) => ((b.cross.mdape ?? 1e9) < (a.cross.mdape ?? 1e9) ? b : a));
+  ].map(([name, crossOf, fitOf]) => {
+    const cs = crossOf(chosen.cases);
+    return { name, cross: EST.scoreCases(cs), crossNumbered: EST.scoreCases(numberedOf(cs)), fitOf };
+  });
+  // Judged like the settings: numbered cases first once there are enough,
+  // ties on every case, and the rest may not get worse by more than MIN_GAIN.
+  const calObj = (o) => (byNumbered ? (o.crossNumbered.mdape ?? 1e9) + (o.cross.mdape ?? 1e9) / 1000 : (o.cross.mdape ?? 1e9));
+  const baseObj = byNumbered ? chosen.numbered.mdape + chosen.score.mdape / 1000 : chosen.score.mdape;
+  const calOk = (o) => o.cross.n && o.cross.mdape <= chosen.score.mdape + (byNumbered ? EST.MIN_GAIN : -0.5)
+    && Math.abs(o.cross.bias || 0) <= Math.abs(chosen.score.bias || 0) + EST.MAX_EXTRA_BIAS
+    && (!byNumbered || Math.abs(o.crossNumbered.bias || 0) <= Math.abs(chosen.numbered.bias || 0) + EST.MAX_EXTRA_BIAS);
+  const okOptions = calibOptions.filter(calOk);
+  const calibBest = okOptions.length ? okOptions.reduce((a, b) => (calObj(b) < calObj(a) ? b : a)) : calibOptions[0];
   const cross = calibBest.cross;
-  const calibHelps = chosen.score.n >= EST.MIN_CASES && cross.n && cross.mdape <= chosen.score.mdape - 0.5
-    && Math.abs(cross.bias || 0) <= Math.abs(chosen.score.bias || 0) + EST.MAX_EXTRA_BIAS;
+  const calibHelps = chosen.score.n >= EST.MIN_CASES && okOptions.includes(calibBest) && calObj(calibBest) <= baseObj - 0.5;
   const calib = calibHelps ? calibBest.fitOf(chosen.cases) : {};
   const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25,
     numberedN: r.numbered.n, numberedMdape: r.numbered.mdape, numberedBias: r.numbered.bias, eligible: eligibleRun(r) });
@@ -11957,7 +11967,8 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
       calibration: { adopted: !!calibHelps, kind: calibBest.name, multipliers: calib,
         outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias, byEstimateTier: cross.byEstimateTier },
-        options: calibOptions.map(o => ({ kind: o.name, mdape: o.cross.mdape, bias: o.cross.bias })) },
+        options: calibOptions.map(o => ({ kind: o.name, mdape: o.cross.mdape, bias: o.cross.bias,
+          numberedMdape: o.crossNumbered.mdape, numberedBias: o.crossNumbered.bias, eligible: calOk(o) })) },
       grid: [...runs].sort((a, b) => (objective(a) ?? 1e9) - (objective(b) ?? 1e9)).map(brief).slice(0, 8),
       hardestPlayers: players.slice(0, 10),
       worstNumbered: numberedOf(chosen.cases)
