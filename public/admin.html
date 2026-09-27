@@ -367,6 +367,15 @@
   </div>
 
   <div id="community-list"></div>
+
+  <!-- Estimate accuracy -->
+  <div class="page-title" style="margin-top:2.5rem;">Estimate Accuracy</div>
+  <div class="page-subtitle">How close our estimates for unsold parallels come to what they really sell for. The test hides parallels that sold in the last 21 days and prices them from earlier sales. It runs daily at 08:xx UTC; a run takes about 5–30 seconds.</div>
+  <div class="toolbar" style="gap:0.5rem; justify-content:flex-start; flex-wrap:wrap;">
+    <button class="refresh-btn" id="est-run" onclick="runEstimateTest(false)">▶ Test now (changes nothing)</button>
+    <button class="refresh-btn" id="est-save" onclick="runEstimateTest(true)">✓ Test &amp; switch on if better</button>
+  </div>
+  <div id="est-out" class="page-subtitle"></div>
 </div>
 
 <script>
@@ -402,6 +411,7 @@
       updateStats();
       renderList();
       loadCommunityModeration();
+      loadEstimateAccuracy();
       const now = new Date();
       document.getElementById('last-refreshed').textContent =
         `Last refreshed: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -494,6 +504,80 @@
   }
 
   // ---- Community moderation ----
+  // ---- Estimate accuracy (/api/debug/estimate-accuracy) ----
+  async function loadEstimateAccuracy() {
+    try {
+      const r = await fetch('/api/debug/estimate-accuracy', { headers: { 'x-admin-key': adminKey }, cache: 'no-store' });
+      renderEstimate(await r.json(), 'Last saved result');
+    } catch (_) { document.getElementById('est-out').textContent = 'Could not load the last result.'; }
+  }
+
+  async function runEstimateTest(save) {
+    if (save && !confirm('Run the test and switch the new settings on if they beat the current estimator?')) return;
+    const out = document.getElementById('est-out');
+    const btns = [document.getElementById('est-run'), document.getElementById('est-save')];
+    btns.forEach(b => b.disabled = true);
+    const t0 = Date.now();
+    const tick = setInterval(() => { out.textContent = `Running… ${Math.round((Date.now() - t0) / 1000)}s`; }, 500);
+    try {
+      const r = await fetch(`/api/debug/estimate-accuracy?run=1${save ? '&save=1' : ''}`,
+        { headers: { 'x-admin-key': adminKey }, cache: 'no-store' });
+      const text = await r.text();
+      let data;
+      try { data = JSON.parse(text); } catch (_) { throw new Error(`HTTP ${r.status}: ${text.slice(0, 200)}`); }
+      renderEstimate(data, save ? 'Just ran (saved)' : 'Just ran (dry run, nothing changed)');
+    } catch (err) {
+      out.innerHTML = `<span style="color:var(--red)">Test failed: ${escHtml(err.message || String(err))}</span>`;
+    } finally {
+      clearInterval(tick);
+      btns.forEach(b => b.disabled = false);
+    }
+  }
+
+  function renderEstimate(data, label) {
+    const out = document.getElementById('est-out');
+    if (!data || data.ok === false || data.available === false) {
+      out.textContent = (data && (data.reason || data.error)) || 'No result.';
+      return;
+    }
+    const rep = data.report || {};
+    const b = rep.baseline || {}, c = rep.chosen || {};
+    const pct = (v) => v == null ? '—' : `${v}%`;
+    const signed = (v) => v == null ? '—' : `${v > 0 ? '+' : ''}${v}%`;
+    const p = data.params || {};
+    const settings = [
+      p.trendTau ? 'follows each player\'s market trend' : null,
+      p.spreadTau ? 'fits each player\'s parallel spread' : null,
+      p.halfLife ? `weights recent sales (half-life ${p.halfLife} days)` : null,
+    ].filter(Boolean);
+    const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
+    const tiers = Object.entries(c.byTier || {}).map(([t, s]) =>
+      `<tr><td>${escHtml(t)}</td><td>${s.n}</td><td>${pct(s.mdape)}</td><td>${signed(s.bias)}</td><td>${pct(s.within25)}</td></tr>`).join('');
+    const players = (rep.hardestPlayers || []).slice(0, 8).map(x =>
+      `<tr><td>${escHtml(x.player)}</td><td>${x.n}</td><td>${pct(x.mdape)}</td><td>${signed(x.bias)}</td></tr>`).join('');
+    const worst = (rep.worstCases || []).slice(0, 8).map(x =>
+      `<tr><td>${escHtml(x.player)} #${escHtml(x.card)} ${escHtml(x.parallel)}</td><td>$${Math.round(x.predicted * 100) / 100}</td><td>$${Math.round(x.actual * 100) / 100}</td><td>${escHtml(x.basis || '')}</td></tr>`).join('');
+    const table = (head, rows) => rows ? `<table style="width:100%;border-collapse:collapse;margin:0.5rem 0 1rem;font-size:0.82rem;">
+      <tr style="text-align:left;color:var(--text-secondary)">${head.map(h => `<th style="padding:0.25rem 0.4rem">${h}</th>`).join('')}</tr>${rows}</table>` : '';
+    out.innerHTML = `
+      <div style="margin:0.4rem 0 0.8rem;">${escHtml(label)} · ${escHtml(new Date(rep.builtAt || Date.now()).toLocaleString())} · ${rep.pairs || 0} player/set pairs</div>
+      <div class="stats-row">
+        ${card('Old estimator miss (median)', pct(b.mdape), 'red')}
+        ${card('Best new settings miss', pct(c.mdape), 'green')}
+        ${card('Cases tested', c.n || 0)}
+        ${card('Status', rep.adopted === 'tuned' ? 'New wins' : 'Old kept', rep.adopted === 'tuned' ? 'green' : 'yellow')}
+      </div>
+      <div style="margin-bottom:0.6rem;">${rep.adopted === 'tuned'
+        ? `New settings: ${escHtml(settings.join(', ') || 'default')}. They beat the old estimator by ${rep.gainPoints} points.`
+        : 'Nothing beat the old estimator by at least 1 point, so it stays as is.'}
+        Estimates typically run ${c.bias > 0 ? 'high' : c.bias < 0 ? 'low' : 'on target'}${c.bias ? ` by ${pct(Math.abs(c.bias))}` : ''}; ${pct(c.within25)} land within 25% of the real price.
+        ${rep.calibration && rep.calibration.adopted ? ' Per-type corrections are on.' : ''}
+        ${label.startsWith('Just ran (dry') ? '<br><em>Dry run: prices on the site are unchanged.</em>' : ''}</div>
+      ${tiers ? '<div class="stat-label">By price range</div>' : ''}${table(['Range', 'Cases', 'Typical miss', 'Leans', 'Within 25%'], tiers)}
+      ${players ? '<div class="stat-label">Hardest players to price</div>' : ''}${table(['Player', 'Cases', 'Typical miss', 'Leans'], players)}
+      ${worst ? '<div class="stat-label">Biggest misses</div>' : ''}${table(['Card', 'We estimated', 'It sold for', 'Estimate type'], worst)}`;
+  }
+
   async function loadCommunityModeration() {
     try {
       const resp = await fetch(`/api/community/posts?key=${encodeURIComponent(adminKey)}`);
