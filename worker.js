@@ -16,10 +16,11 @@ let _visitorsFlushedAt = 0;
 const VISITORS_PREFIX = 'visitors:v1:';
 
 function _countVisitor(request, url, env, ctx) {
+  let kind = 'human';
   try {
     const cf = request.cf || {};
     const day = new Date().toISOString().slice(0, 10);
-    noteRequest(_visitors, {
+    kind = noteRequest(_visitors, {
       day, path: url.pathname, ua: request.headers.get('user-agent') || '',
       asn: cf.asn != null ? cf.asn : null, asOrg: cf.asOrganization || '', country: cf.country || '',
       verifiedBot: !!((cf.botManagement && cf.botManagement.verifiedBot) || cf.verifiedBotCategory),
@@ -30,6 +31,25 @@ function _countVisitor(request, url, env, ctx) {
       if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(p.catch(() => {}));
     }
   } catch (_) { /* counting must never break a request */ }
+  return kind;
+}
+
+// Visitors who are not people get the page without the AdSense and Google
+// Analytics scripts. An ad shown to a bot is an invalid impression, which is
+// what costs an AdSense account; a bot that runs JavaScript also fakes a
+// visit in Analytics. People and Cloudflare-verified crawlers (Googlebot, the
+// AdSense crawler) are served the page unchanged. What a bot is: a declared
+// one, one with no user agent, or a browser-looking visitor from a cloud
+// datacentre (traffic-core.js).
+export const NO_TAGS_FOR = new Set(['declaredBot', 'noUa', 'datacenter']);
+export class BotTagRemover {
+  constructor() { this.removed = 0; }
+  element(el) {
+    const src = el.getAttribute('src') || '';
+    if (!/adsbygoogle\.js|googletagmanager\.com/.test(src)) return;
+    el.remove();
+    this.removed++;
+  }
 }
 
 // GET /api/debug/visitors[?day=YYYY-MM-DD] — every isolate's tally for the day,
@@ -700,7 +720,7 @@ export default {
     }
     try {
       const url = new URL(request.url);
-      _countVisitor(request, url, env, ctx);
+      const visitorKind = _countVisitor(request, url, env, ctx);
       if (url.pathname === '/api/debug/visitors') return await visitorsReport(request, url, env);
 
       // Canonical host: www -> apex, keeping the path and query.
@@ -846,6 +866,9 @@ export default {
                 } catch (priceErr) {
                   console.error('price block injection skipped:', priceErr && priceErr.message);
                 }
+              }
+              if (NO_TAGS_FOR.has(visitorKind)) {
+                out = new HTMLRewriter().on('script[src]', new BotTagRemover()).transform(out);
               }
               return out;
             }

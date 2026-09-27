@@ -45,5 +45,18 @@ check('the Worker counts every request before it serves pages or assets', fetchA
 check('  ...and each isolate writes its own key, not a shared one', /\$\{VISITORS_PREFIX\}\$\{_visitors\.day\}:\$\{_isolateId\}/.test(worker));
 check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(worker));
 
-console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
-process.exit(failures ? 1 : 0);
+(async () => {
+  const { NO_TAGS_FOR, BotTagRemover } = await import(path.join(__dirname, '..', 'worker.js'));
+  check('bots and datacentre visitors lose the ad and analytics tags; people and verified crawlers keep them',
+    ['declaredBot', 'noUa', 'datacenter'].every(k => NO_TAGS_FOR.has(k)) && !NO_TAGS_FOR.has('human') && !NO_TAGS_FOR.has('verifiedBot'));
+  const r = new BotTagRemover();
+  const el = (src) => ({ removed: false, getAttribute: () => src, remove() { this.removed = true; } });
+  const ads = el('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1');
+  const ga = el('https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH');
+  const app = el('/app.js?v=1');
+  [ads, ga, app].forEach(e => r.element(e));
+  check('  ...the AdSense and Analytics scripts come off, the app does not', ads.removed && ga.removed && !app.removed && r.removed === 2);
+  check('  ...applied to HTML pages by visitor kind', /if \(NO_TAGS_FOR\.has\(visitorKind\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\]', new BotTagRemover\(\)\)/.test(worker));
+  console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
+  process.exit(failures ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });
