@@ -11667,7 +11667,10 @@ function _priceBuckets(bk, params, refIso) {
 // window, so a ladder rung has seen the hidden sales (at most one card in a
 // product's many). Everything card- and player-level is strictly before it.
 const ESTIMATOR_TEST_DAYS = 21;
-const ESTIMATOR_PAIRS = 40;
+// 80: at 40 the numbered cases the tuner is judged on were 42, most priced
+// against one sale. Live CPU: 13-48 evaluations x 40 pairs ran, 64 x 40 did
+// not (error 1102), so 17 x 80 is inside it.
+const ESTIMATOR_PAIRS = 80;
 
 function _backtestBuckets(bk, params, testDays, refIso) {
   const t0 = new Date(Date.parse(refIso) - testDays * EST.DAY).toISOString().slice(0, 10);
@@ -11747,13 +11750,19 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   };
   const baseline = evalOf({ ...EST.PARAM_START });
   const runs = [baseline];
+  // A setting may not make estimates lean further than the old ones by more
+  // than MAX_EXTRA_BIAS points: live, pricing numbered parallels from larger
+  // runs missed less but ran 25.6% high, and a price guide that reads high
+  // is worse than one that misses a little more evenly.
+  const leanOf = (r) => Math.abs((baseline.numbered.n >= EST.MIN_NUMBERED_CASES ? r.numbered.bias : r.score.bias) || 0);
+  const eligibleRun = (r) => r.score.n >= EST.MIN_CASES
+    && (baseline.numbered.n < EST.MIN_NUMBERED_CASES || r.score.mdape <= baseline.score.mdape + EST.MIN_GAIN)
+    && leanOf(r) <= leanOf(baseline) + EST.MAX_EXTRA_BIAS;
   // One setting at a time from the old estimator, keeping each change that
   // lowers the objective, for up to three passes (see EST.PARAM_DIMS).
   {
     const byNum = baseline.numbered.n >= EST.MIN_NUMBERED_CASES;
-    const obj = (r) => (r.score.n >= EST.MIN_CASES
-      && (!byNum || r.score.mdape <= baseline.score.mdape + EST.MIN_GAIN)
-      ? (byNum ? r.numbered.mdape : r.score.mdape) : Infinity);
+    const obj = (r) => (eligibleRun(r) ? (byNum ? r.numbered.mdape : r.score.mdape) : Infinity);
     let cur = baseline;
     for (let pass = 0; pass < 2; pass++) {
       let moved = false;
@@ -11773,8 +11782,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   // not get worse by more than MIN_GAIN; on every case otherwise.
   const byNumbered = baseline.numbered.n >= EST.MIN_NUMBERED_CASES;
   const objective = (r) => (byNumbered ? r.numbered.mdape : r.score.mdape);
-  const eligible = runs.filter(r => r.score.n >= EST.MIN_CASES
-    && (!byNumbered || r.score.mdape <= baseline.score.mdape + EST.MIN_GAIN));
+  const eligible = runs.filter(eligibleRun);
   const best = eligible.length ? eligible.reduce((a, b) => (objective(b) < objective(a) ? b : a)) : baseline;
   const gain = baseline.score.n && best.score.n ? objective(baseline) - objective(best) : 0;
   const chosen = gain >= EST.MIN_GAIN ? best : baseline;
@@ -11782,7 +11790,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const calibHelps = chosen.score.n >= EST.MIN_CASES && cross.n && cross.mdape <= chosen.score.mdape - 0.5;
   const calib = calibHelps ? EST.calibrate(chosen.cases) : {};
   const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25,
-    numberedN: r.numbered.n, numberedMdape: r.numbered.mdape });
+    numberedN: r.numbered.n, numberedMdape: r.numbered.mdape, numberedBias: r.numbered.bias, eligible: eligibleRun(r) });
   // Where it still misses most: per player, by median error.
   const byPlayer = new Map();
   for (const c of chosen.cases) {

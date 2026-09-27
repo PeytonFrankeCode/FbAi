@@ -220,9 +220,12 @@ const MIN_CASES = 60, MIN_GAIN = 1;
 // The case that matters most — a numbered parallel priced from the card's
 // larger print runs — is judged on its own once it has this many cases.
 const MIN_NUMBERED_CASES = 30;
+// How many points further from zero a setting's lean may be than the old
+// estimator's, before it is refused however much less it misses.
+const MAX_EXTRA_BIAS = 10;
 
 module.exports = {
-  DEFAULT_PARAMS, PARAM_DIMS, PARAM_START, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, DAY,
+  DEFAULT_PARAMS, PARAM_DIMS, PARAM_START, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, MAX_EXTRA_BIAS, DAY,
   daysBetween, trendDrift, adjustedMedian, fitSpread,
   scoreCases, calibrate, withCalib, crossCalibrated,
 };
