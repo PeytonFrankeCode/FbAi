@@ -181,6 +181,7 @@ const _PARALLEL_SIGNAL_WORDS = [
   'laser', 'cracked', 'snakeskin', 'zebra', 'galactic', 'nebula', 'fluorescent',
   'velocity', 'scope', 'marble', 'aqueous', 'glitter', 'stained', 'fotl',
   'parallel', 'variation', 'var', 'sp', 'ssp', 'numbered', 'proof', 'plate',
+  'honeycomb', 'stripes',
 ];
 const _PARALLEL_SIGNAL = new RegExp(`\\b(${_PARALLEL_SIGNAL_WORDS.join('|')})\\b`);
 // A print run: "/99", "/ 25", "1/1". Base cards are not serial numbered.
@@ -9316,7 +9317,9 @@ app.get('/api/debug/ladder-sample', async (req, res) => {
     const out = await db.prepare(
       `SELECT sold_date, title, price_cents, parallel, grader, grade, set_name,
               CASE WHEN LOWER(TRIM(COALESCE(parallel, ''))) IN (${baseList})
-                   THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)} THEN '(dropped: parallel word)' ELSE '(base)' END)
+                   THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)}
+                                   OR (${T} LIKE '%prizm%' AND LOWER(COALESCE(set_name, '')) NOT LIKE '%prizm%')
+                              THEN '(dropped: parallel word)' ELSE '(base)' END)
                    ELSE LOWER(TRIM(parallel)) END AS ladder_par,
               CASE WHEN 1 = 1 ${RSI_RAW_ONLY} THEN 1 ELSE 0 END AS raw,
               CASE WHEN ${_rsiJunkSql(T)} THEN 1 ELSE 0 END AS junk
@@ -10690,9 +10693,9 @@ app.get('/api/debug/observed-checklist', async (req, res) => {
 // a short list of parallel words as SUBSTRINGS — cheap, and a false positive
 // ("Jared" holds "red") only drops a base sale from the sample, never mixes a
 // parallel into base.
-const PAR_LADDER_KEY = 'parladder:v4';   // v2: per-kind ladders and pooled curves; v3: example comps per rung; v4: stricter base
-const PAR_LADDER_PREV_KEY = 'parladder:v3';  // served until v4 is built, so estimates never blink out
-const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v4';
+const PAR_LADDER_KEY = 'parladder:v5';   // v2: per-kind ladders and pooled curves; v3: example comps per rung; v4: stricter base; v5: Prizm outside Prizm, junk out
+const PAR_LADDER_PREV_KEY = 'parladder:v4';  // served until v5 is built, so estimates never blink out
+const PAR_LADDER_ATTEMPT_KEY = 'parladder:attempt:v5';
 const PAR_LADDER_TTL = 3 * 86400;          // outlives a missed daily run
 // A year: the first live build over 180 days tied most rungs in with a handful
 // of cards (2017 Prizm: 3 to 12), and parallels' relative prices move far more
@@ -10714,6 +10717,11 @@ const PAR_LADDER_BASE_BLOCK = ['silver', 'gold', 'holo', 'refractor', 'red', 'bl
   'stained', 'speckle', 'snakeskin', 'zebra', 'glitter', 'marble', 'nebula', 'galactic', 'fotl',
   'ssp', 'die cut', 'die-cut', 'choice', 'genesis', 'kaleidoscope', 'lime', 'emerald', 'platinum',
   'copper', 'aqua', 'magenta', 'sapphire',
+  // v5: Jaxson Dart #362 2025 Mosaic read base at $10.50 against real base
+  // sales of $0.99-2.09 — Honeycomb ($300), Stars & Stripes ($36) and
+  // "Mosaic Prizm" silvers were all in it. ("Prizm" itself is below: a
+  // parallel word everywhere but a Prizm product.)
+  'honeycomb', 'stripes',
   'teal', 'yellow', 'white', 'lazer', 'laser', 'prizms', 'parallel', 'xfractor', 'x-fractor'];
 // Autographs and relics are other cards with ladders of their own, told apart
 // by substring tests again, for cost; a sale that could be either counts as
@@ -10754,7 +10762,9 @@ function _ladderSql(noOffer) {
       SELECT year || '|' || set_name AS g, player || '#' || card_number AS c,
              CASE WHEN ${any(PAR_LADDER_AUTO)} THEN 'auto' WHEN ${any(PAR_LADDER_RELIC)} THEN 'relic' ELSE '' END AS kind,
              CASE WHEN LOWER(TRIM(COALESCE(parallel, ''))) IN (${baseList})
-                  THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)} THEN NULL ELSE '' END)
+                  THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)}
+                               OR (${T} LIKE '%prizm%' AND LOWER(COALESCE(set_name, '')) NOT LIKE '%prizm%')
+                             THEN NULL ELSE '' END)
                   ELSE LOWER(TRIM(parallel)) END AS par,
              price_cents
         FROM sales
@@ -10763,6 +10773,7 @@ function _ladderSql(noOffer) {
          AND COALESCE(TRIM(set_name), '') <> ''
          AND COALESCE(TRIM(card_number), '') <> '' AND COALESCE(TRIM(player), '') <> ''
          AND NOT ${any(PAR_LADDER_KIND_BLOCK)}${noOffer}${RSI_RAW_ONLY}
+         AND NOT ( ${_rsiJunkSql(T)} )
     ), m AS (
       SELECT g, kind, c, par, price_cents,
              ROW_NUMBER() OVER (PARTITION BY g, kind, c, par ORDER BY price_cents) AS rn,

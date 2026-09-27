@@ -231,6 +231,39 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   check('  ...without the rest getting worse', messy.ok && messy.report.chosen.mdape <= messy.report.baseline.mdape + EST.MIN_GAIN,
     messy.ok ? `all ${messy.report.baseline.mdape}% -> ${messy.report.chosen.mdape}%` : '');
 
+  // The ladder's base for Jaxson Dart #362 2025 Mosaic, from real titles: it
+  // read $10.50 because Honeycomb, Stars & Stripes and "Mosaic Prizm" silvers
+  // sold with a blank parallel column. The true base sells for $1-2.
+  {
+    const L = new DatabaseSync(':memory:');
+    L.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, grader TEXT, grade TEXT,
+      player TEXT, parallel TEXT, year TEXT, set_name TEXT, card_number TEXT, confidence REAL, best_offer INTEGER)`);
+    const li = L.prepare(`INSERT INTO sales VALUES (?, '2026-09-10', ?, ?, NULL, NULL, 'Jaxson Dart', ?, '2025', ?, '362', 0.9, 0)`);
+    let q = 0;
+    for (const [t, c, set] of [
+      ['2025 Panini Mosaic #362 Jaxson Dart RC Rookie', 99, 'Mosaic'],
+      ['2025 Panini Mosaic Football Jaxson Dart #362 RC', 99, 'Mosaic'],
+      ['Jaxson Dart 2025 Panini Mosaic Football Rookie RC Giants Card #362', 200, 'Mosaic'],
+      ['2025 Panini Mosaic Jaxson Dart Rookies RC Rookie #362 Giants', 132, 'Mosaic'],
+      ['2025 Panini Mosaic - Rookies Jaxson Dart #362 (RC)', 209, 'Mosaic'],
+      ['2025 Panini Mosaic - Rookies Jaxson Dart #362 Honeycomb Prizm (RC)', 30000, 'Mosaic'],
+      ['Panini 2025 Mosaic Honeycomb Jaxson Dart New York Giants Rookie RC #362', 31000, 'Mosaic'],
+      ['2025 Panini Mosaic Stars & Stripes #362 Jaxson Dart Giants RC Rookie', 3600, 'Mosaic'],
+      ['2025 Panini Mosaic - Rookies Jaxson Dart #362 Mosaic Prizm (RC)', 1000, 'Mosaic'],
+      ['Panini 2025 Mosaic Football Jaxson Dart RC Rookies Mosaic Prizm #362 Giants', 1100, 'Mosaic'],
+      ['Jaxson Dart 2025 Mosaic Prizm #362 Giants RC Rookie', 850, 'Mosaic'],
+      ['Lot of 5 2025 Panini Mosaic Jaxson Dart #362 RC', 1500, 'Mosaic'],
+    ]) li.run(`l${q++}`, t, c, '', set);
+    // A Prizm product's base says "Prizm" and is still base.
+    const lp = L.prepare(`INSERT INTO sales VALUES (?, '2026-09-10', ?, ?, NULL, NULL, 'Jaxson Dart', '', '2025', 'Prizm', '301', 0.9, 0)`);
+    lp.run('p1', '2025 Panini Prizm Jaxson Dart #301 RC', 300);
+    const got = L.prepare(S._ladderSql('')).all('2026-01-01', '2025');
+    const base = got.find(r => r.c === 'Jaxson Dart#362' && r.par === '');
+    check('the ladder\'s base leaves out Honeycomb, Stars & Stripes, "Mosaic Prizm" and lots', base && base.n === 5 && base.med === 132,
+      JSON.stringify(base));
+    check('  ...while "Prizm" on a Prizm product\'s base card is still base', got.some(r => r.c === 'Jaxson Dart#301' && r.par === ''));
+  }
+
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   // The report key: dry runs only.
   process.env.ESTIMATOR_REPORT_KEY = 'report-key-123';
