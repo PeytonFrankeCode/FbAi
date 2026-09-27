@@ -177,6 +177,10 @@ const CALIB_PRIOR = 20;
 const tierOf = (p) => (TIERS.find(([lo, hi]) => p >= lo && p < hi) || TIERS[0])[2];
 const KEY_BASIS = (c) => c.basis || 'unknown';
 const KEY_BAND = (c) => 'band:' + tierOf(c.predicted);
+// Numbered or not: known before the sale too. Live, numbered parallels priced
+// off cheap unnumbered sales ran ~15% low — the step up to a serial number is
+// steeper in the market than on the ladder.
+const KEY_KIND = (c) => (c.pr ? 'kind:numbered' : 'kind:unnumbered');
 function calibrate(cases, keyOf = KEY_BASIS) {
   const by = new Map();
   for (const c of cases) {
@@ -194,8 +198,10 @@ function calibrate(cases, keyOf = KEY_BASIS) {
   return out;
 }
 
-const calibFactor = (calib, basis, predicted) => ((calib || {})[basis] || 1) * ((calib || {})['band:' + tierOf(predicted)] || 1);
-const withCalib = (cases, calib) => cases.map(c => ({ ...c, predicted: c.predicted * calibFactor(calib, c.basis, c.predicted) }));
+const calibFactor = (calib, basis, predicted, numbered) => ((calib || {})[basis] || 1)
+  * ((calib || {})['band:' + tierOf(predicted)] || 1)
+  * ((calib || {})[numbered ? 'kind:numbered' : 'kind:unnumbered'] || 1);
+const withCalib = (cases, calib) => cases.map(c => ({ ...c, predicted: c.predicted * calibFactor(calib, c.basis, c.predicted, !!c.pr) }));
 
 // Calibration judged on cases it was not fitted to: two folds by player, so
 // one player's many parallels cannot fit and then grade themselves.
@@ -243,5 +249,5 @@ const MAX_EXTRA_BIAS = 10;
 module.exports = {
   DEFAULT_PARAMS, PARAM_DIMS, PARAM_START, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, MAX_EXTRA_BIAS, DAY,
   daysBetween, trendDrift, adjustedMedian, fitSpread,
-  scoreCases, calibrate, withCalib, crossCalibrated, calibFactor, tierOf, KEY_BASIS, KEY_BAND,
+  scoreCases, calibrate, withCalib, crossCalibrated, calibFactor, tierOf, KEY_BASIS, KEY_BAND, KEY_KIND,
 };
