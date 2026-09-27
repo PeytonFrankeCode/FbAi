@@ -17,6 +17,10 @@ for (let i = 0; i < 3; i++) sale('2017 Panini Prizm Patrick Mahomes II #269 RC',
 for (let i = 0; i < 3; i++) sale('2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm RC', 90000, { num: '269', parallel: 'Silver Prizm' });
 sale('2017 Panini Prizm Patrick Mahomes II #269 RC PSA 10', 150000, { num: '269', grader: 'PSA', grade: '10' });
 for (let i = 0; i < 2; i++) sale('2017 Panini Prizm Instant Impact Patrick Mahomes II #8', 6000, { num: '8' });
+// A column saying "Gold" with no /10 on the title is not the Gold /10, and a
+// title numbered /10 is not the unnumbered Silver.
+sale('2017 Panini Prizm Patrick Mahomes II #269 Gold Prizm RC', 4000, { num: '269', parallel: 'Gold Prizm' });
+sale('2017 Panini Prizm Patrick Mahomes II #269 Silver Prizm 7/10 RC', 5000000, { num: '269', parallel: 'Silver Prizm' });
 // A chase pack is not the card on its photo.
 sale('2017 Prizm Mahomes CHASE PACK #269 Gold?', 500000, { num: '269' });
 
@@ -56,6 +60,9 @@ const check = (label, ok, detail) => {
   const gold = par('Base Set', 'Prizm Gold');
   check('Gold /10 is estimated off the ladder from the card\'s own level ($300 × 40)',
     gold.estimated && Math.abs(gold.price - 12000) < 1, JSON.stringify(gold));
+  check('a "Gold" sale with no /10 on it is not priced as the Gold /10', gold.estimated && gold.sales === 0);
+  check('  ...and a sale numbered /10 is not the unnumbered Silver', par('Base Set', 'Prizm').sales === 3,
+    JSON.stringify(par('Base Set', 'Prizm')));
   check('the slab and the chase pack are not in the raw price', par('Base Set', 'Base').sales === 4);
   check('Instant Impact #8 is placed on its insert and priced', par('Instant Impact', 'Base').price === 60);
   check('an insert with no sale of its own is left unpriced',

@@ -94,6 +94,9 @@ const PID = '2017-panini-prizm-football';
 // The product's ladder: each parallel's step over base for its average player.
 const PARS = [['', 'Base', 1], ['Silver Prizm', 'Prizm', 2], ['Orange', 'Prizm Orange', 4], ['Light Blue', 'Prizm Light Blue', 5],
   ['Green Scope', 'Prizm Green Scope', 8], ['Red Power', 'Prizm Red Power', 14], ['Camo', 'Prizm Camo', 25]];
+// Numbered parallels carry their serial on the title, as real ones do.
+const RUNS = { Orange: 275, 'Light Blue': 199, 'Green Scope': 99, 'Red Power': 49, Camo: 25 };
+const titleOf = (player, num, col) => `2017 Panini Prizm ${player} #${num}${col ? ' ' + col : ''}${RUNS[col] ? ' /' + RUNS[col] : ''} RC`;
 const rungs = {};
 for (const [, name, f] of PARS) rungs[S._ladderKey(name === 'Base' ? '' : name)] = { f, n: 80, lo: 0.9, hi: 1.1 };
 // The column the sales carry must land on the same rung as the checklist name.
@@ -117,7 +120,7 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   for (const [col, , f] of PARS) {
     for (let d = -60; d <= -1; d += 5 + Math.floor(rnd() * 4)) {
       const price = level * Math.pow(f, k) * Math.exp(drift * d) * Math.exp((rnd() - 0.5) * 0.25);
-      ins.run(`s${n++}`, iso(d), `2017 Panini Prizm ${player} #${num}${col ? ' ' + col : ''} RC`, Math.round(price * 100),
+      ins.run(`s${n++}`, iso(d), titleOf(player, num, col), Math.round(price * 100),
               player, col, num);
     }
   }
@@ -159,7 +162,7 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   for (const [num, player, level] of PLAYERS) {
     for (const [col, , f] of PARS) {
       for (let d = -60; d <= -1; d += 6) {
-        ins.run(`s${n++}`, iso(d), `2017 Panini Prizm ${player} #${num}${col ? ' ' + col : ''} RC`,
+        ins.run(`s${n++}`, iso(d), titleOf(player, num, col),
                 Math.round(level * f * Math.exp((rnd() - 0.5) * 0.25) * 100), player, col, num);
       }
     }
