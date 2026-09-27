@@ -5235,8 +5235,16 @@ async function loadMarketIndex() {
   // A player is measured as a price level, the last few days against the
   // first few (see _playerTrendPayload); the market as a chained index. The
   // page says which, so the number means what it reads as.
-  const trend = data.method === 'player-trend';
+  const pooled = data.method === 'player-trend-pooled';
+  const trend = data.method === 'player-trend' || pooled;
   const W = data.windowDays || 7;
+  const sgn = (n) => `${n >= 0 ? '+' : ''}${n}%`;
+  // A thin player's reading (_pooledPlayerTrend): his parallels pooled and the
+  // whole market leaned on by how little he has. Said up front, with its range.
+  const pooledLine = pooled ? `<div class="market-score-note market-pooled-note">Estimate from light trading${
+    data.band ? ` · likely ${sgn(data.band.low)} to ${sgn(data.band.high)}` : ''}${
+    data.ownWeight != null && data.ownWeight < 0.995 ? ` · leans ${Math.round((1 - data.ownWeight) * 100)}% on the whole market${
+      data.marketChangePct != null ? ` (${sgn(data.marketChangePct)})` : ''}` : ''}</div>` : '';
   const span = trend ? `last ${W} days vs first ${W}` : `over ${data.days} days`;
 
   body.innerHTML = `
@@ -5246,6 +5254,7 @@ async function loadMarketIndex() {
         <div class="market-score-side">
           <div class="market-verdict">${v.label}</div>
           <div class="market-score-note">${up ? '+' : ''}${data.changePct}% ${span}${data.through ? ` · through ${_mkDateLabel(data.through)}` : ''}</div>
+          ${pooledLine}
         </div>
       </div>
       <p class="market-score-explain">100 means ${who} is flat. This tracks what cards are <strong>worth</strong>, not how many changed hands &mdash; each card is compared only against ${trend ? 'its own typical price' : 'its own earlier sales'}.</p>
@@ -5299,6 +5308,7 @@ async function loadMarketIndex() {
     </div>
 
     <div class="market-notes">
+      ${pooled ? `<p><strong>Light trading.</strong> ${who}'s cards don't sell often enough to follow card by card, so every sale of a card counts, whatever the parallel: each is divided by its parallel's usual step over the base card (a Silver at about 2&times;, a /99 at about 8&times;) so they share one price line. Where there are only a few of those sales, the reading leans on the whole market's move over the same days, and leans less as ${who}'s own sales add up. The range is where the true change most likely sits.</p>` : ''}
       ${trend ? `<p><strong>How it works.</strong> ${who}'s number follows the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Every sale is compared with that card's own typical price over the period, so a $10 base and a $200 rookie can share one line, and the level on each day is the middle of those comparisons over the ${W} days before it. The headline is the last ${W} days against the first ${W}. Nothing is carried from one day to the next, so a noisy day moves one point and nothing after it, and a day with no sales has no point rather than an invented one. A player without enough sales at both ends gets no number at all.</p>` : `<p><strong>How it works.</strong> The index tracks the ${data.topPlayers || 600} most actively traded players, and for each of them the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Parallels, autographs, relics and numbered cards are left out: a Refractor or a /99 is its own market, and the hardest thing in a listing title to read reliably. Where a card sold more than once on a day, those sales are averaged into one price for that day first. Each price is then compared with what that same card last sold for, converted to a per-day rate over its own gap so a card reappearing after months isn't mistaken for a one-day move. Each player contributes one number however many of their cards sold, and the market is the average across players.</p>`}
       <p><strong>Raw cards only.</strong> Graded sales are left out entirely. A slab's price is partly the grade's price &mdash; a PSA 10 and a PSA 9 of the same card are different assets that move on population reports and grading turnaround as much as on the card itself &mdash; so mixing them in blurs what the card did. Listings whose grade we couldn't read are excluded too if anything in the title suggests a slab, which means the odd genuinely raw card is dropped. That is the safer error: a lost sale costs a little sample, a stray slab costs the number.</p>
       <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded raw base cards, matched on year, set and card number. ${trend
