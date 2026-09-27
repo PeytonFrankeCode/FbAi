@@ -147,39 +147,20 @@ const tag = async (query, titles) => {
     }
   }
 
-  // ---- the front end must default to KEEPING ---------------------------
+  // ---- the front end keeps every listing in the one list ----------------
   //
-  // sameCard is absent on every path that does not tag — a page-2 fetch from
-  // eBay, a mock, a for-sale search. If undefined ever reads as "different",
-  // those screens hide every listing they have.
+  // There used to be a collapsed "Other cards matching your search" section
+  // for listings read as a different card. In use it held the right card
+  // nearly every time, so it hid good comps; every listing now stays in the
+  // main list.
   {
     const src = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
-    const start = src.indexOf('const _isOtherCard');
-    const end = src.indexOf('function renderGradeGroups');
-    check('the front-end predicate is where this check expects it',
-      start > 0 && end > start, `start=${start} end=${end}`);
-
-    const ctx = { console };
-    vm.createContext(ctx);
-    vm.runInContext(src.slice(start, end) + '\nthis.__isOther = _isOtherCard;', ctx);
-
-    check('only an explicit false moves a listing out of the main list',
-      ctx.__isOther({ sameCard: false }) === true
-      && ctx.__isOther({ sameCard: true }) === false
-      && ctx.__isOther({}) === false
-      && ctx.__isOther({ sameCard: undefined }) === false
-      && !ctx.__isOther(null),
-      `false->${ctx.__isOther({ sameCard: false })} undefined->${ctx.__isOther({})}`);
-
-    // The second section has to stay on the page. Deleting listings would look
-    // tidier and would make every identity mistake invisible — to the person
-    // searching and to whoever has to fix it.
-    check('  ...and the other-cards section is rendered, not discarded',
-      /function renderOtherCards\(/.test(src) && /other-cards-toggle/.test(src),
-      'renderOtherCards must exist and be reachable');
-    check('  ...with somewhere to click to see them',
-      /\.other-cards-toggle\s*\{/.test(fs.readFileSync(path.join(ROOT, 'public', 'style.css'), 'utf8')),
-      'style.css must style .other-cards-toggle');
+    check('no second "other cards" section is built',
+      !/function renderOtherCards\(/.test(src) && !/_isOtherCard/.test(src)
+      && !/couldn.t match to the checklist/.test(src),
+      'renderOtherCards / _isOtherCard must be gone');
+    check('  ...and the grouped view renders every result',
+      /function renderGradeGroups\(grid, results\) \{\s*return _renderGradeGroupsInto\(grid, results\);\s*\}/.test(src));
   }
 
   // ---- accurate where we hold the answer key, quiet where we do not -------

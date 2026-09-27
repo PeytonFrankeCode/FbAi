@@ -1389,16 +1389,11 @@ function applySortToResults(sortType) {
   if (currentMode === 'sold' && sortType === 'default') {
     renderGradeGroups(grid, sorted);
   } else {
-    // Grouped by checklist card, the flat sorts keep the same split as the
-    // default view: unmatched listings stay in their own collapsed section.
-    const others = _versionCtx ? sorted.filter(_isOtherCard) : [];
-    if (others.length) sorted = sorted.filter(r => !_isOtherCard(r));
     sorted.forEach((item, i) => {
       const card = buildCard(item);
       card.style.animationDelay = `${i * 0.05}s`;
       grid.appendChild(card);
     });
-    if (others.length) renderOtherCards(grid, others);
   }
 
   // For Sale keeps its "Load more" pager after a re-sort, so paging still works
@@ -2668,94 +2663,17 @@ let _gradeContainers = {};
 // Pagination state for "Show more from eBay" — populated by performSearch.
 let _searchPaging = { query: '', mode: '', offset: 0, hasMore: false, fetching: false };
 
-// Listings the server positively identified as a DIFFERENT card than the one
-// the query asked for.
-//
-// `sameCard` is absent on every path that does not tag (a live eBay page-2
-// fetch, a mock, a non-sold search) and undefined must mean "keep", never
-// "hide". Only an explicit false moves a listing, so a screen that has never
-// heard of this feature renders exactly as it always did.
-//
-// Grouped by checklist card (see "Versions" below), a listing that could not be
-// tied to one of the card's versions also goes to that section. The grouping
-// state lives here so this predicate reads it without depending on anything
-// declared further down.
-//
-// One exception: a listing the server set aside only because it could not
-// READ its parallel (sameCardUnread) comes back when the checklist grouping
-// reads it as the very parallel the search named. "Red Sparkle #138 Kansas
-// City Chiefs" was one: the server could not see past the team name, the
-// checklist could, and the listing sat in the unmatched pile beside two
-// identical ones in the main list.
-const _isOtherCard = (r) => {
-  if (!r) return false;
-  if (_versionCtx) {
-    const v = _versionOf(r);
-    if (v === null) return true;
-    if (r.sameCard !== false) return false;
-    return !(r.sameCardUnread && _searchIdentity && _sameParallelName(v.parallel, _searchIdentity.parallel));
-  }
-  return r.sameCard === false;
-};
-// "Red Sparkle" and "Red Sparkle Prizms" are one parallel; so are "Base" and
-// "base".
-const _parallelNameKey = (s) => String(s || '').toLowerCase()
-  .replace(/\b(prizms?|refractors?|parallels?)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
-const _sameParallelName = (a, b) => !!_parallelNameKey(a) && _parallelNameKey(a) === _parallelNameKey(b);
+// Every listing a search returns is shown in the one list. There used to be a
+// collapsed second section, "Other cards matching your search", for listings the server read as a
+// different card or the checklist could not place. In use it held the right
+// card nearly every time, so it hid good comps behind a click; it is gone.
 // What the server read the search as ({ parallel, kind, printRun }), from the
 // last sold search's cardIdentity; null when it did not split the results.
 let _searchIdentity = null;
 let _versionCtx = null;
 
 function renderGradeGroups(grid, results) {
-  const mine = results.filter(r => !_isOtherCard(r));
-  const others = results.filter(_isOtherCard);
-  // Everything agreed, or nothing was tagged. One list, as before.
-  if (others.length === 0) return _renderGradeGroupsInto(grid, results);
-
-  _renderGradeGroupsInto(grid, mine);
-  renderOtherCards(grid, others);
-}
-
-// The second section: collapsed, counted, and never removed from the page.
-//
-// Hiding these would have been cleaner to look at and is what a competitor
-// does. It is refused here for one reason: when the identity engine gets a card
-// wrong, hiding makes the mistake invisible to the person using the site AND to
-// whoever has to fix it. A labelled pile is a bug report that writes itself.
-function renderOtherCards(grid, others) {
-  // "Load more" is appended by the grade pass and has to stay at the bottom,
-  // so this section is inserted in front of it rather than after.
-  const anchor = grid.querySelector('.load-more-wrap');
-  const place = (el) => anchor ? grid.insertBefore(el, anchor) : grid.appendChild(el);
-
-  const header = document.createElement('div');
-  header.className = 'grade-section-header other-cards-header';
-  header.innerHTML =
-    `<span class="grade-label">${_versionCtx ? 'Listings we couldn\u2019t match to the checklist' : 'Other cards matching your search'}</span>` +
-    `<span class="grade-meta">${others.length} listing${others.length !== 1 ? 's' : ''} ` +
-    `&middot; <button type="button" class="other-cards-toggle" aria-expanded="false">show</button></span>`;
-  place(header);
-
-  const container = document.createElement('div');
-  container.style.display = 'none';
-  place(container);
-
-  const btn = header.querySelector('.other-cards-toggle');
-  let open = false;
-  let drawn = false;
-  btn.onclick = () => {
-    open = !open;
-    // Built on first open rather than up front: a search can return 200
-    // listings and most people never open this.
-    if (open && !drawn) {
-      drawn = true;
-      for (const item of others) container.appendChild(buildCard(item));
-    }
-    container.style.display = open ? 'contents' : 'none';
-    btn.textContent = open ? 'hide' : 'show';
-    btn.setAttribute('aria-expanded', String(open));
-  };
+  return _renderGradeGroupsInto(grid, results);
 }
 
 function _renderGradeGroupsInto(grid, results) {
@@ -2930,7 +2848,7 @@ function _parallelOf(r) {
 // never printed in, or nothing that separates two of his cards, is not
 // guessed at: it goes to the collapsed section below the comps, where it is
 // still one click away and a wrong call stays visible. (_versionCtx, the
-// grouping state, is declared beside _isOtherCard.)
+// grouping state, is declared beside renderGradeGroups.)
 
 const _VERSION_SUFFIX_RE = /\b(ii|iii|iv|jr|sr)\b/g;
 function _versionName(s) {
@@ -3528,11 +3446,11 @@ function _filterResults(skip) {
   return results;
 }
 
-// What the value stats and chart are computed from. Grouped by checklist card,
-// a listing that could not be tied to one is not part of any number on the
-// page; renderGradeGroups still draws it, in the "other listings" section.
+// What the value stats and chart are computed from.
+// Every listing counts in the stats and chart, placed on a version or not:
+// the ones the checklist could not place were nearly always the right card.
 function _countedResults(results) {
-  return _versionCtx ? results.filter(r => _versionOf(r) !== null) : results;
+  return results;
 }
 
 function getFilteredResults() { return _filterResults(null); }
