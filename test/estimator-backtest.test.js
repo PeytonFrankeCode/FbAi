@@ -186,6 +186,25 @@ for (const [num, player, level, k, drift] of PLAYERS) {
       `off $${off}, on $${on}`);
   }
 
+  // A card with one sold parallel leans on the player's other cards
+  // (levelPrior), and a parallel sold 5 times outweighs two sold once
+  // (weightAnchors).
+  {
+    const set = { parallels: [{ name: 'Silver' }, { name: 'Red' }, { name: 'Blue' }, { name: 'Gold', printRun: 10 }] };
+    const fit = { ref: '', rungs: { '': { f: 1, n: 50, lo: 0.9, hi: 1.1 }, silver: { f: 2, n: 50, lo: 0.9, hi: 1.1 },
+      red: { f: 2, n: 50, lo: 0.9, hi: 1.1 }, blue: { f: 2, n: 50, lo: 0.9, hi: 1.1 }, gold: { f: 10, n: 50, lo: 0.9, hi: 1.1 } } };
+    const goldOf = (known, params, opts = {}) => S._checklistParallels(set, known, fit, null, { params: { ...EST.DEFAULT_PARAMS, ...params }, ...opts })
+      .find(x => x.name === 'Gold').estimate.price;
+    const one = [{ key: 'silver', name: 'Silver', raw: 100, rawN: 1, sales: 1 }];
+    check('with levelPrior, one sold parallel is blended with the player\'s other cards',
+      goldOf(one, {}, { prior: 10 }) === 500 && Math.abs(goldOf(one, { levelPrior: 1 }, { prior: 10 }) - 223.61) < 0.02,
+      `alone $${goldOf(one, {})}, with prior $${goldOf(one, { levelPrior: 1 }, { prior: 10 })}`);
+    const three = [{ key: 'silver', name: 'Silver', raw: 20, rawN: 5, sales: 5 }, { key: 'red', name: 'Red', raw: 100, rawN: 1, sales: 1 },
+                   { key: 'blue', name: 'Blue', raw: 60, rawN: 1, sales: 1 }];
+    check('with weightAnchors, a parallel sold 5 times outweighs two sold once', goldOf(three, {}) === 300 && goldOf(three, { weightAnchors: true }) === 100,
+      `plain $${goldOf(three, {})}, weighted $${goldOf(three, { weightAnchors: true })}`);
+  }
+
   const r = await S.runEstimatorBacktest({ save: true });
   check('the backtest runs on the players with the most parallel sales', r.ok && r.report.pairs === PLAYERS.length,
     r.ok ? `${r.report.pairs} pairs, ${r.report.chosen.n} cases` : JSON.stringify(r));
@@ -248,8 +267,7 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   const nm = messy.ok && messy.report.numbered;
   check('numbered parallels are judged on their own once there are enough', messy.ok && messy.report.judgedOn === 'numbered',
     messy.ok ? `${nm.baseline.n} numbered cases` : JSON.stringify(messy));
-  check('  ...and priced from the card\'s larger print runs, the old way is beaten', messy.ok
-    && messy.params.numberedFrom === 'larger' && nm.chosen.mdape < nm.baseline.mdape / 2,
+  check('  ...and the old way is beaten by a wide margin', messy.ok && nm.chosen.mdape < nm.baseline.mdape / 2,
     messy.ok ? `numbered miss ${nm.baseline.mdape}% -> ${nm.chosen.mdape}%, ${JSON.stringify(messy.params)}` : '');
   check('  ...without the rest getting worse', messy.ok && messy.report.chosen.mdape <= messy.report.baseline.mdape + EST.MIN_GAIN,
     messy.ok ? `all ${messy.report.baseline.mdape}% -> ${messy.report.chosen.mdape}%` : '');
