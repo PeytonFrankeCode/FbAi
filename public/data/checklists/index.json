@@ -58,10 +58,9 @@
       "year": 2026,
       "brand": "Topps Heritage",
       "sport": "Football",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+      "setCount": 30,
+      "totalCards": 1484,
+      "note": "Parallels for this product have not been published yet. Card numbers and names are final; parallel lists will be added as Topps publishes them."
     },
     {
       "id": "2026-topps-holiday-football",
@@ -91,10 +90,9 @@
       "year": 2026,
       "brand": "Topps London Games",
       "sport": "Football",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+      "setCount": 3,
+      "totalCards": 500,
+      "note": "London Games exclusive parallels. The 1991 Topps Chrome and 1991 Topps Chrome Rookies card lists are the same as 2026 Topps Flagship; refractor print runs were not published. Base Lenticular London (1:360 packs) is listed as a Base parallel."
     },
     {
       "id": "2025-bowman-football",

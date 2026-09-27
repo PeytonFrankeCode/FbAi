@@ -1,0 +1,1079 @@
+BASE
+BASE CARDS
+1 Myles Garrett Cleveland Browns Record Breakers
+2 Cam Little Jacksonville Jaguars Record Breakers
+3 Josh Allen Buffalo Bills Record Breakers
+4 Patrick Mahomes II Kansas City Chiefs Record Breakers
+5 Brandon Aubrey Dallas Cowboys Record Breakers
+6 Isaiah Rodgers Minnesota Vikings Record Breakers
+7 Trey McBride Arizona Cardinals Record Breakers
+8 Jacoby Brissett Arizona Cardinals Record Breakers
+9 Braelon Allen New York Jets
+10 Sam Darnold Seattle Seahawks
+11 Terry McLaurin Washington Commanders
+12 Deebo Samuel Sr. Washington Commanders
+13 Kevin Coleman Jr. Miami Dolphins Rookie
+14 Dont'e Thornton Jr. Las Vegas Raiders
+15 Elic Ayomanor Tennessee Titans
+16 Kyle Pitts Atlanta Falcons
+17 Miller Moss Chicago Bears Rookie
+18 Makai Lemon Philadelphia Eagles Rookie
+19 Nick Bosa San Francisco 49ers
+20 Keldric Faulk Tennessee Titans Rookie
+21 Mike Sainristil Washington Commanders
+22 Travis Etienne Jr. New Orleans Saints
+23 Lathan Ransom Carolina Panthers
+24 Jam Miller New England Patriots Rookie
+25 Brock Bowers Las Vegas Raiders
+26 Jahdae Barron Denver Broncos
+27 Drew Allar Pittsburgh Steelers Rookie
+28 Eli Stowers Philadelphia Eagles Rookie
+29 Tua Tagovailoa Atlanta Falcons
+30 Behren Morton New England Patriots Rookie
+31 Jauan Jennings Minnesota Vikings
+32 Cyrus Allen Kansas City Chiefs Rookie
+33 Calvin Ridley Tennessee Titans
+34 Jordan Mason Minnesota Vikings
+35 Bijan Robinson Atlanta Falcons
+36 Cashius Howell Cincinnati Bengals Rookie
+37 Drake Maye New England Patriots
+38 Laiatu Latu Indianapolis Colts
+39 Malik Washington Miami Dolphins
+40 Deshaun Watson Cleveland Browns
+41 Tee Higgins Cincinnati Bengals
+42 Chris Bell Miami Dolphins Rookie
+43 Marvin Harrison Jr. Arizona Cardinals
+44 Jalen Hurts Philadelphia Eagles
+45 DJ Moore Buffalo Bills
+46 Isiah Pacheco Detroit Lions
+47 Ashton Jeanty Las Vegas Raiders
+48 Byron Young Los Angeles Rams
+49 Chris Olave New Orleans Saints
+50 Antonio Williams Washington Commanders Rookie
+51 Roquan Smith Baltimore Ravens
+52 Xavier Worthy Kansas City Chiefs
+53 Michael Mayer Las Vegas Raiders
+54 Joe Burrow Cincinnati Bengals
+55 Nate Wiggins Baltimore Ravens
+56 Geno Smith New York Jets
+57 Cooper DeJean Philadelphia Eagles
+58 Dexter Lawrence Cincinnati Bengals
+59 Saquon Barkley Philadelphia Eagles
+60 CJ Daniels Los Angeles Rams Rookie
+61 Zach Ertz Washington Commanders
+62 Jalen Carter Philadelphia Eagles
+63 Kaleb Johnson Pittsburgh Steelers
+64 Pat Bryant Denver Broncos
+65 Brandon Cisse Green Bay Packers Rookie
+66 Reggie Virgil Arizona Cardinals Rookie
+67 Quinn Ewers Miami Dolphins
+68 Kendrick Law Detroit Lions Rookie
+69 Omar Cooper Jr. New York Jets Rookie
+70 Dalton Schultz Houston Texans
+71 Vita Vea Tampa Bay Buccaneers
+72 Nik Bonitto Denver Broncos
+73 Josh Allen Buffalo Bills
+74 Jonah Coleman Denver Broncos Rookie
+75 Aaron Rodgers Pittsburgh Steelers
+76 Tony Pollard Tennessee Titans
+77 Jayden Reed Green Bay Packers
+78 Kenneth Walker III Kansas City Chiefs
+79 Chig Okonkwo Tennessee Titans
+80 Peter Woods Kansas City Chiefs Rookie
+81 Mason Graham Cleveland Browns
+82 Kyle Louis Miami Dolphins Rookie
+83 T.J. Parker Buffalo Bills Rookie
+84 RJ Harvey Denver Broncos
+85 Will Howard Pittsburgh Steelers
+86 Jaylon Johnson Chicago Bears
+87 Matthew Stafford Los Angeles Rams
+88 Brian Thomas Jr. Jacksonville Jaguars
+89 Jake Ferguson Dallas Cowboys
+90 Caleb Banks Minnesota Vikings Rookie
+91 Max Klare Los Angeles Rams Rookie
+92 Kelvin Banks Jr. New Orleans Saints
+93 Cam Skattebo New York Giants
+94 Derrick Henry Baltimore Ravens
+95 Jaylin Noel Houston Texans
+96 Brenen Thompson Los Angeles Chargers Rookie
+97 Tre Harris III Los Angeles Chargers
+98 Christian Gonzalez New England Patriots
+99 Dalton Kincaid Buffalo Bills
+100 Ted Hurst Tampa Bay Buccaneers Rookie
+101 Jalen Coker Carolina Panthers
+102 Danielle Hunter Houston Texans
+103 Haynes King Carolina Panthers Rookie
+104 Jack Sawyer Pittsburgh Steelers
+105 Christen Miller New Orleans Saints Rookie
+106 Leonard Williams Seattle Seahawks
+107 CJ Allen Indianapolis Colts Rookie
+108 Jalen Milroe Seattle Seahawks
+109 Trey McBride Arizona Cardinals
+110 Mansoor Delane Kansas City Chiefs Rookie
+111 Penei Sewell Detroit Lions
+112 Avieon Terrell Atlanta Falcons Rookie
+113 Isaiah Bond Cleveland Browns
+114 David Montgomery Houston Texans
+115 Xavier Watts Atlanta Falcons
+116 Jaycee Horn Carolina Panthers
+117 Rome Odunze Chicago Bears
+118 Elijah Sarratt Baltimore Ravens Rookie
+119 Malaki Starks Baltimore Ravens
+120 Carson Schwesinger Cleveland Browns
+121 Khalil Shakir Buffalo Bills
+122 Trey Benson Arizona Cardinals
+123 Pat Freiermuth Pittsburgh Steelers
+124 Luther Burden III Chicago Bears
+125 Tyjae Spears Tennessee Titans
+126 Ollie Gordon II Miami Dolphins
+127 Tez Johnson Tampa Bay Buccaneers
+128 Justin Herbert Los Angeles Chargers
+129 Gunnar Helm Tennessee Titans
+130 Rachaad White Washington Commanders
+131 George Karlaftis Kansas City Chiefs
+132 Kadyn Proctor Miami Dolphins Rookie
+133 Jeremiyah Love Arizona Cardinals Rookie
+134 Tory Horton Seattle Seahawks
+135 Brandon Aubrey Dallas Cowboys
+136 Cole Payton Philadelphia Eagles Rookie
+137 Zachariah Branch Atlanta Falcons Rookie
+138 Kyle Hamilton Baltimore Ravens
+139 DeVonta Smith Philadelphia Eagles
+140 DK Metcalf Pittsburgh Steelers
+141 Caleb Lomu New England Patriots Rookie
+142 A.J. Terrell Atlanta Falcons
+143 Athan Kaliakmanis Washington Commanders Rookie
+144 Jaelan Phillips Carolina Panthers
+145 Skyler Bell Buffalo Bills Rookie
+146 Omarion Hampton Los Angeles Chargers
+147 Jack Bech Las Vegas Raiders
+148 D'Andre Swift Chicago Bears
+149 Cade Klubnik New York Jets Rookie
+150 Nick Bolton Kansas City Chiefs
+151 D'Angelo Ponds New York Jets Rookie
+152 Michael Penix Jr. Atlanta Falcons
+153 Joey Porter Jr. Pittsburgh Steelers
+154 Jayden Higgins Houston Texans
+155 Daniel Jones Indianapolis Colts
+156 Justin Jefferson Minnesota Vikings
+157 Jihaad Campbell Philadelphia Eagles
+158 Courtland Sutton Denver Broncos
+159 Mykel Williams San Francisco 49ers
+160 Mike Washington Jr. Las Vegas Raiders Rookie
+161 Keon Coleman Buffalo Bills
+162 Jaylen Wright Miami Dolphins
+163 Cam Little Jacksonville Jaguars
+164 George Pickens Dallas Cowboys
+165 J.K. Dobbins Denver Broncos
+166 Arvell Reese New York Giants Rookie
+167 A.J. Haulcy Indianapolis Colts Rookie
+168 Quinshon Judkins Cleveland Browns
+169 Elijah Arroyo Seattle Seahawks
+170 Eli Raridon New England Patriots Rookie
+171 Jacory Croskey-Merritt Washington Commanders
+172 Jahmyr Gibbs Detroit Lions
+173 Seth McGowan Indianapolis Colts Rookie
+174 Maxx Crosby Las Vegas Raiders
+175 De'Von Achane Miami Dolphins
+176 Kaytron Allen Washington Commanders Rookie
+177 Bhayshul Tuten Jacksonville Jaguars
+178 Harold Fannin Jr. Cleveland Browns
+179 Alec Pierce Indianapolis Colts
+180 Armand Membou New York Jets
+181 Colston Loveland Chicago Bears
+182 Josh Jacobs Green Bay Packers
+183 Tahj Brooks Cincinnati Bengals
+184 Ja'Tavion Sanders Carolina Panthers
+185 Xavier Legette Carolina Panthers
+186 Kyle Monangai Chicago Bears
+187 Caleb Downs Dallas Cowboys Rookie
+188 Romello Height San Francisco 49ers Rookie
+189 Tetairoa McMillan Carolina Panthers
+190 J.J. McCarthy Minnesota Vikings
+191 Mike Evans San Francisco 49ers
+192 Oronde Gadsden Los Angeles Chargers
+193 Drake London Atlanta Falcons
+194 Will Campbell New England Patriots
+195 Harold Perkins Jr. Atlanta Falcons Rookie
+196 DaRon Bland Dallas Cowboys
+197 Kaelon Black San Francisco 49ers Rookie
+198 Mason Taylor New York Jets
+199 Rashan Gary Dallas Cowboys
+200 Jordan Addison Minnesota Vikings
+201 Matthew Stafford Los Angeles Rams League Leaders
+201 Drake Maye New England Patriots League Leaders
+202 Ja'Marr Chase Cincinnati Bengals League Leaders
+202 Jaxon Smith-Njigba Seattle Seahawks League Leaders
+203 Bijan Robinson Atlanta Falcons League Leaders
+203 James Cook Buffalo Bills League Leaders
+204 Jahmyr Gibbs Detroit Lions League Leaders
+204 Jonathan Taylor Indianapolis Colts League Leaders
+205 Antonio Johnson Jacksonville Jaguars League Leaders
+205 Kevin Byard Chicago Bears League Leaders
+206 Brian Burns New York Giants League Leaders
+206 Myles Garrett Cleveland Browns League Leaders
+207 Jack Campbell Detroit Lions League Leaders
+207 Jordyn Brooks Miami Dolphins League Leaders
+208 Jason Myers Seattle Seahawks League Leaders
+208 Ka'imi Fairbairn Houston Texans League Leaders
+209 Travis Kelce Kansas City Chiefs
+210 Davison Igbinosun Buffalo Bills Rookie
+211 Jamal Haynes Cincinnati Bengals Rookie
+212 Taylen Green Cleveland Browns Rookie
+213 De'Zhaun Stribling San Francisco 49ers Rookie
+214 Baker Mayfield Tampa Bay Buccaneers
+215 Denzel Boston Cleveland Browns Rookie
+216 Rashid Shaheed Seattle Seahawks
+217 Kayshon Boutte New England Patriots
+218 Demond Claiborne Minnesota Vikings Rookie
+219 Emmett Johnson Kansas City Chiefs Rookie
+220 T.J. Watt Pittsburgh Steelers
+221 Chris Johnson Miami Dolphins Rookie
+222 Budda Baker Arizona Cardinals
+223 Zavion Thomas Chicago Bears Rookie
+224 Malachi Fields New York Giants Rookie
+225 Jordyn Tyson New Orleans Saints Rookie
+226 Kyle Williams New England Patriots
+227 Lamar Jackson Baltimore Ravens
+228 Zach Charbonnet Seattle Seahawks
+229 Chuba Hubbard Carolina Panthers
+230 Abdul Carter New York Giants
+231 Jayden Daniels Washington Commanders
+232 Kayden McDonald Houston Texans Rookie
+233 Cade Otton Tampa Bay Buccaneers
+234 Kyren Williams Los Angeles Rams
+235 Will Anderson Jr. Houston Texans
+236 Shedeur Sanders Cleveland Browns
+237 Jordan Love Green Bay Packers
+238 Bucky Irving Tampa Bay Buccaneers
+239 Jared Goff Detroit Lions
+240 Quinnen Williams Dallas Cowboys
+241 Germie Bernard Pittsburgh Steelers Rookie
+242 Khalil Mack Los Angeles Chargers
+243 R Mason Thomas Kansas City Chiefs Rookie
+244 Tre Tucker Las Vegas Raiders
+245 Olu Fashanu New York Jets
+246 Sauce Gardner Indianapolis Colts
+247 Matthew Golden Green Bay Packers
+248 Malik Willis Miami Dolphins
+249 Pat Surtain II Denver Broncos
+250 Tyrell Shavers Buffalo Bills
+251 Christian McCaffrey San Francisco 49ers
+252 Joe Alt Los Angeles Chargers
+253 Hunter Henry New England Patriots
+254 Brian Burns New York Giants
+255 Kendre Miller New Orleans Saints
+256 Mark Andrews Baltimore Ravens
+257 Adam Randall Baltimore Ravens Rookie
+258 Jaylin Lane Washington Commanders
+259 Aidan Hutchinson Detroit Lions
+260 Trey Hendrickson Baltimore Ravens
+261 Ed Oliver Buffalo Bills
+262 Josh Cameron Jacksonville Jaguars Rookie
+263 Rhamondre Stevenson New England Patriots
+264 Jaylen Warren Pittsburgh Steelers
+265 Jaydon Blue Dallas Cowboys
+266 Shemar Stewart Cincinnati Bengals
+267 Travis Hunter Jacksonville Jaguars
+268 Michael Pittman Jr. Pittsburgh Steelers
+269 Ja'Kobi Lane Baltimore Ravens Rookie
+270 Tyler Higbee Los Angeles Rams
+271 David Bailey New York Jets Rookie
+272 Fernando Mendoza Las Vegas Raiders Rookie
+273 Bo Nix Denver Broncos
+274 George Kittle San Francisco 49ers
+275 Dani Dennis-Sutton Green Bay Packers Rookie
+276 Akheem Mesidor Los Angeles Chargers Rookie
+277 Dillon Thieneman Chicago Bears Rookie
+278 Jaxon Smith-Njigba Seattle Seahawks
+279 Kyler Murray Minnesota Vikings
+280 Colton Hood New York Giants Rookie
+281 Emmanuel McNeil-Warren Cleveland Browns Rookie
+282 Aaron Jones Sr. Minnesota Vikings
+283 Bryce Lance New Orleans Saints Rookie
+284 Chris Jones Kansas City Chiefs
+285 Rueben Bain Jr. Tampa Bay Buccaneers Rookie
+286 Jaxson Dart New York Giants
+287 Jonathan Taylor Indianapolis Colts
+288 Ty Simpson Los Angeles Rams Rookie
+289 Josh Downs Indianapolis Colts
+290 Kaden Wetjen Pittsburgh Steelers Rookie
+291 Colbie Young Cincinnati Bengals Rookie
+292 KC Concepcion Cleveland Browns Rookie
+293 Chase Brown Cincinnati Bengals
+294 Isaac TeSlaa Detroit Lions
+295 Anthony Hill Jr. Tennessee Titans Rookie
+296 Caleb Douglas Miami Dolphins Rookie
+297 Bud Clark Seattle Seahawks Rookie
+298 Quay Walker Las Vegas Raiders
+299 Will Johnson Arizona Cardinals
+300 Brock Purdy San Francisco 49ers
+301 Deion Burks Indianapolis Colts Rookie
+302 Terrance Ferguson Los Angeles Rams
+303 Jacob Rodriguez Miami Dolphins Rookie
+304 Caleb Williams Chicago Bears
+305 Carnell Tate Tennessee Titans Rookie
+306 Treydan Stukes Las Vegas Raiders Rookie
+307 Sonny Styles Washington Commanders Rookie
+308 Patrick Mahomes II Kansas City Chiefs
+309 Eli Heidenreich Pittsburgh Steelers Rookie
+310 Carson Beck Arizona Cardinals Rookie
+311 Joe Royer Cleveland Browns Rookie
+312 Chris Brazzell II Carolina Panthers Rookie
+313 CeeDee Lamb Dallas Cowboys
+314 Derek Stingley Jr. Houston Texans
+315 Emeka Egbuka Tampa Bay Buccaneers
+316 Travon Walker Jacksonville Jaguars
+317 Kenyon Sadiq New York Jets Rookie
+318 Malik Nabers New York Giants
+319 Quinyon Mitchell Philadelphia Eagles
+320 Garrett Nussmeier Kansas City Chiefs Rookie
+321 Jermod McCoy Las Vegas Raiders Rookie
+322 Garrett Wilson New York Jets
+323 Spencer Fano Cleveland Browns Rookie
+324 Bryce Young Carolina Panthers
+325 Nick Singleton Tennessee Titans Rookie
+326 Nico Collins Houston Texans
+327 Troy Franklin Denver Broncos
+328 Jaylen Waddle Denver Broncos
+329 Josh Hines-Allen Jacksonville Jaguars
+330 Puka Nacua Los Angeles Rams
+331 2026 AFC Championship Game
+332 2026 NFC Championship Game
+333 Super Bowl LX
+334 Tyler Shough New Orleans Saints
+335 Jerry Jeudy Cleveland Browns
+336 Tyler Warren Indianapolis Colts
+337 Chimere Dike Tennessee Titans
+338 Ricky Pearsall San Francisco 49ers
+339 Francis Mauigoa New York Giants Rookie
+340 Trevor Lawrence Jacksonville Jaguars
+341 Alvin Kamara New Orleans Saints
+342 Zay Flowers Baltimore Ravens
+343 Blake Corum Los Angeles Rams
+344 Andrew Van Ginkel Minnesota Vikings
+345 Javonte Williams Dallas Cowboys
+346 TreVeyon Henderson New England Patriots
+347 James Cook Buffalo Bills
+348 Fred Warner San Francisco 49ers
+349 Frankie Luvu Washington Commanders
+350 Quenton Nelson Indianapolis Colts
+351 Arizona Cardinals Arizona Cardinals Team Cards
+352 Atlanta Falcons Atlanta Falcons Team Cards
+353 Baltimore Ravens Baltimore Ravens Team Cards
+354 Buffalo Bills Buffalo Bills Team Cards
+355 Carolina Panthers Carolina Panthers Team Cards
+356 Chicago Bears Chicago Bears Team Cards
+357 Cincinnati Bengals Cincinnati Bengals Team Cards
+358 Cleveland Browns Cleveland Browns Team Cards
+359 Dallas Cowboys Dallas Cowboys Team Cards
+360 Denver Broncos Denver Broncos Team Cards
+361 Detroit Lions Detroit Lions Team Cards
+362 Green Bay Packers Green Bay Packers Team Cards
+363 Houston Texans Houston Texans Team Cards
+364 Indianapolis Colts Indianapolis Colts Team Cards
+365 Jacksonville Jaguars Jacksonville Jaguars Team Cards
+366 Kansas City Chiefs Kansas City Chiefs Team Cards
+367 Las Vegas Raiders Las Vegas Raiders Team Cards
+368 Los Angeles Chargers Los Angeles Chargers Team Cards
+369 Los Angeles Rams Los Angeles Rams Team Cards
+370 Miami Dolphins Miami Dolphins Team Cards
+371 Minnesota Vikings Minnesota Vikings Team Cards
+372 New England Patriots New England Patriots Team Cards
+373 New Orleans Saints New Orleans Saints Team Cards
+374 New York Giants New York Giants Team Cards
+375 New York Jets New York Jets Team Cards
+376 Philadelphia Eagles Philadelphia Eagles Team Cards
+377 Pittsburgh Steelers Pittsburgh Steelers Team Cards
+378 San Francisco 49ers San Francisco 49ers Team Cards
+379 Seattle Seahawks Seattle Seahawks Team Cards
+380 Tampa Bay Buccaneers Tampa Bay Buccaneers Team Cards
+381 Tennessee Titans Tennessee Titans Team Cards
+382 Washington Commanders Washington Commanders Team Cards
+383 Myles Garrett Los Angeles Rams
+384 A.J. Brown New England Patriots
+385 Woody Marks Houston Texans
+386 CJ Stroud Houston Texans
+387 Nate Boerkircher Jacksonville Jaguars Rookie
+388 Sam LaPorta Detroit Lions
+389 Cam Ward Tennessee Titans
+390 Davante Adams Los Angeles Rams
+391 Tucker Kraft Green Bay Packers
+392 Will McDonald IV New York Jets
+393 Jadarian Price Seattle Seahawks Rookie
+394 Amon-Ra St. Brown Detroit Lions
+395 Dak Prescott Dallas Cowboys
+396 Breece Hall New York Jets
+397 Ja'Marr Chase Cincinnati Bengals
+398 Ladd McConkey Los Angeles Chargers
+399 Theo Johnson New York Giants
+400 Micah Parsons Green Bay Packers
+INSERT
+BASE CARDS CHROME VARIATION
+@SAMEAS BASE CARDS
+BASE CARDS NO NAME VARIATION
+35 Bijan Robinson Atlanta Falcons
+43 Marvin Harrison Jr. Arizona Cardinals
+54 Joe Burrow Cincinnati Bengals
+59 Saquon Barkley Philadelphia Eagles
+73 Josh Allen Buffalo Bills
+94 Derrick Henry Baltimore Ravens
+114 David Montgomery Houston Texans
+135 Brandon Aubrey Dallas Cowboys
+155 Daniel Jones Indianapolis Colts
+156 Justin Jefferson Minnesota Vikings
+172 Jahmyr Gibbs Detroit Lions
+214 Baker Mayfield Tampa Bay Buccaneers
+231 Jayden Daniels Washington Commanders
+251 Christian McCaffrey San Francisco 49ers
+286 Jaxson Dart New York Giants
+308 Patrick Mahomes II Kansas City Chiefs
+383 Myles Garrett Los Angeles Rams
+389 Cam Ward Tennessee Titans
+395 Dak Prescott Dallas Cowboys
+397 Ja'Marr Chase Cincinnati Bengals
+BASE CARDS IMAGE VARIATION
+18 Makai Lemon Philadelphia Eagles Rookie
+21 Sean Taylor Washington Redskins
+27 Drew Allar Pittsburgh Steelers Rookie
+37 Drake Maye New England Patriots
+44 Jalen Hurts Philadelphia Eagles
+54 Joe Burrow Cincinnati Bengals
+73 Josh Allen Buffalo Bills
+89 Omar Cooper Jr. New York Jets Rookie
+118 Elijah Sarratt Baltimore Ravens Rookie
+133 Jeremiyah Love Arizona Cardinals Rookie
+149 Cade Klubnik New York Jets Rookie
+152 Michael Penix Jr. Atlanta Falcons
+156 Justin Jefferson Minnesota Vikings
+172 Jahmyr Gibbs Detroit Lions
+187 Caleb Downs Dallas Cowboys Rookie
+189 Tetairoa McMillan Carolina Panthers
+190 J.J. McCarthy Minnesota Vikings
+199 Tom Brady New England Patriots
+214 Baker Mayfield Tampa Bay Buccaneers
+215 Denzel Boston Cleveland Browns Rookie
+219 Emmett Johnson Kansas City Chiefs Rookie
+225 Jordyn Tyson New Orleans Saints Rookie
+227 Lamar Jackson Baltimore Ravens
+231 Jayden Daniels Washington Commanders
+237 Jordan Love Green Bay Packers
+241 Germie Bernard Pittsburgh Steelers Rookie
+251 Christian McCaffrey San Francisco 49ers
+267 Travis Hunter Jacksonville Jaguars
+272 Fernando Mendoza Las Vegas Raiders Rookie
+273 Bo Nix Denver Broncos
+278 Jaxon Smith-Njigba Seattle Seahawks
+286 Jaxson Dart New York Giants
+287 Jonathan Taylor Indianapolis Colts
+288 Ty Simpson Los Angeles Rams Rookie
+292 KC Concepcion Cleveland Browns Rookie
+304 Caleb Williams Chicago Bears
+305 Carnell Tate Tennessee Titans Rookie
+308 Patrick Mahomes II Kansas City Chiefs
+310 Carson Beck Arizona Cardinals Rookie
+315 Emeka Egbuka Tampa Bay Buccaneers
+318 Malik Nabers New York Giants
+320 Garrett Nussmeier Kansas City Chiefs Rookie
+325 Nick Singleton Tennessee Titans Rookie
+340 Trevor Lawrence Jacksonville Jaguars
+347 James Cook Buffalo Bills
+386 CJ Stroud Houston Texans
+389 Cam Ward Tennessee Titans
+393 Jadarian Price Seattle Seahawks Rookie
+395 Dak Prescott Dallas Cowboys
+397 Ja'Marr Chase Cincinnati Bengals
+BASE CARDS LEGEND VARIATION
+25 Fred Biletnikoff Oakland Raiders
+75 Terry Bradshaw Pittsburgh Steelers
+128 Dan Fouts San Diego Chargers
+148 Walter Payton Chicago Bears
+220 Jack Lambert Pittsburgh Steelers
+231 Joe Theismann Washington Redskins
+279 Fran Tarkenton Minnesota Vikings
+313 Drew Pearson Dallas Cowboys
+334 Archie Manning New Orleans Saints
+395 Roger Staubach Dallas Cowboys
+BASE CARDS FLIPPED HELMET VARIATION
+41 Tee Higgins Cincinnati Bengals
+52 Xavier Worthy Kansas City Chiefs
+84 RJ Harvey Denver Broncos
+93 Cam Skattebo New York Giants
+97 Tre Harris III Los Angeles Chargers
+117 Rome Odunze Chicago Bears
+138 Kyle Hamilton Baltimore Ravens
+163 Cam Little Jacksonville Jaguars
+164 George Pickens Dallas Cowboys
+182 Josh Jacobs Green Bay Packers
+193 Drake London Atlanta Falcons
+209 Travis Kelce Kansas City Chiefs
+234 Kyren Williams Los Angeles Rams
+238 Bucky Irving Tampa Bay Buccaneers
+247 Matthew Golden Green Bay Packers
+268 Michael Pittman Jr. Pittsburgh Steelers
+326 Nico Collins Houston Texans
+328 Jaylen Waddle Denver Broncos
+396 Breece Hall New York Jets
+398 Ladd McConkey Los Angeles Chargers
+BASE CARDS BLACK AND WHITE IMAGE VARIATION
+7 Tom Brady Tampa Bay Buccaneers
+18 Makai Lemon Philadelphia Eagles Rookie
+27 Drew Allar Pittsburgh Steelers Rookie
+47 Ashton Jeanty Las Vegas Raiders
+54 Joe Burrow Cincinnati Bengals
+73 Josh Allen Buffalo Bills
+78 Kenneth Walker III Kansas City Chiefs
+87 Matthew Stafford Los Angeles Rams
+88 Brian Thomas Jr. Jacksonville Jaguars
+93 Cam Skattebo New York Giants
+124 Luther Burden III Chicago Bears
+133 Jeremiyah Love Arizona Cardinals Rookie
+187 Caleb Downs Dallas Cowboys Rookie
+225 Jordyn Tyson New Orleans Saints Rookie
+237 Jordan Love Green Bay Packers
+249 Pat Surtain II Denver Broncos
+272 Fernando Mendoza Las Vegas Raiders Rookie
+273 Bo Nix Denver Broncos
+288 Ty Simpson Los Angeles Rams Rookie
+292 KC Concepcion Cleveland Browns Rookie
+304 Caleb Williams Chicago Bears
+305 Carnell Tate Tennessee Titans Rookie
+308 Patrick Mahomes II Kansas City Chiefs
+320 Garrett Nussmeier Kansas City Chiefs Rookie
+324 Bryce Young Carolina Panthers
+347 James Cook Buffalo Bills
+383 Myles Garrett Los Angeles Rams
+386 CJ Stroud Houston Texans
+394 Amon-Ra St. Brown Detroit Lions
+400 Micah Parsons Green Bay Packers
+BASE CARDS ALTERNATE JERSEY VARIATION
+35 Bijan Robinson Atlanta Falcons
+37 Drake Maye New England Patriots
+43 Marvin Harrison Jr. Arizona Cardinals
+44 Jalen Hurts Philadelphia Eagles
+54 Joe Burrow Cincinnati Bengals
+59 Saquon Barkley Philadelphia Eagles
+73 Josh Allen Buffalo Bills
+128 Justin Herbert Los Angeles Chargers
+156 Justin Jefferson Minnesota Vikings
+168 Quinshon Judkins Cleveland Browns
+214 Baker Mayfield Tampa Bay Buccaneers
+227 Lamar Jackson Baltimore Ravens
+231 Jayden Daniels Washington Commanders
+251 Christian McCaffrey San Francisco 49ers
+273 Bo Nix Denver Broncos
+278 Jaxon Smith-Njigba Seattle Seahawks
+286 Jaxson Dart New York Giants
+308 Patrick Mahomes II Kansas City Chiefs
+313 CeeDee Lamb Dallas Cowboys
+322 Garrett Wilson New York Jets
+NEW AGE PERFORMERS
+NAP-1 Jaxson Dart New York Giants
+NAP-2 Cam Ward Tennessee Titans
+NAP-3 Ty Simpson Los Angeles Rams Rookie
+NAP-4 Fernando Mendoza Las Vegas Raiders Rookie
+NAP-5 Rome Odunze Chicago Bears
+NAP-6 Caleb Williams Chicago Bears
+NAP-7 Drake Maye New England Patriots
+NAP-8 Bo Nix Denver Broncos
+NAP-9 Bijan Robinson Atlanta Falcons
+NAP-10 Jahmyr Gibbs Detroit Lions
+NAP-11 Jordyn Tyson New Orleans Saints Rookie
+NAP-12 Bryce Young Carolina Panthers
+NAP-13 Jeremiyah Love Arizona Cardinals Rookie
+NAP-14 Malik Nabers New York Giants
+NAP-15 Tetairoa McMillan Carolina Panthers
+NAP-16 CJ Stroud Houston Texans
+NAP-17 Puka Nacua Los Angeles Rams
+NAP-18 De'Von Achane Miami Dolphins
+NAP-19 Jayden Daniels Washington Commanders
+NAP-20 Jaxon Smith-Njigba Seattle Seahawks
+ALL PRO SERIES
+APS-1 Penei Sewell Detroit Lions
+APS-2 Quinn Meinerz Denver Broncos
+APS-3 Trey McBride Arizona Cardinals
+APS-4 Jaxon Smith-Njigba Seattle Seahawks
+APS-5 Zach Allen Denver Broncos
+APS-6 Kevin Byard Chicago Bears
+APS-7 Will Anderson Jr. Houston Texans
+APS-8 Ja'Marr Chase Cincinnati Bengals
+APS-9 Derek Stingley Jr. Houston Texans
+APS-10 Puka Nacua Los Angeles Rams
+APS-11 Quinyon Mitchell Philadelphia Eagles
+APS-12 Kyle Juszczyk San Francisco 49ers
+APS-13 Matthew Stafford Los Angeles Rams
+APS-14 Myles Garrett Cleveland Browns
+APS-15 Jeffery Simmons Tennessee Titans
+APS-16 Jack Campbell Detroit Lions
+APS-17 Micah Parsons Green Bay Packers
+APS-18 Bijan Robinson Atlanta Falcons
+APS-19 Creed Humphrey Kansas City Chiefs
+APS-20 Jordyn Brooks Miami Dolphins
+APS-21 Joe Thuney Chicago Bears
+APS-22 Cooper DeJean Philadelphia Eagles
+APS-23 Kyle Hamilton Baltimore Ravens
+APS-24 Garett Bolles Denver Broncos
+THROUGH THE YEARS
+TTY-1 Jack Lambert Pittsburgh Steelers
+TTY-2 Steve Largent Seattle Seahawks
+TTY-3 Joe Montana San Francisco 49ers
+TTY-4 Dan Marino Miami Dolphins
+TTY-5 Warren Moon Houston Oilers
+TTY-6 Jerry Rice San Francisco 49ers
+TTY-7 John Elway Denver Broncos
+TTY-8 Barry Sanders Detroit Lions
+TTY-9 Emmitt Smith Dallas Cowboys
+TTY-10 Peyton Manning Indianapolis Colts
+TTY-11 Andre Johnson Houston Texans
+TTY-12 Eli Manning New York Giants
+TTY-13 Aaron Rodgers Green Bay Packers
+TTY-14 Tom Brady New England Patriots
+TTY-15 Lamar Jackson Baltimore Ravens
+TTY-16 Dak Prescott Dallas Cowboys
+TTY-17 Joe Burrow Cincinnati Bengals
+TTY-18 Josh Allen Buffalo Bills
+TTY-19 Caleb Williams Chicago Bears
+TTY-20 Cam Ward Tennessee Titans
+SWEETNESS
+S-1 Emmitt Smith Dallas Cowboys
+S-2 Barry Sanders Detroit Lions
+S-3 Eric Dickerson Los Angeles Rams
+S-4 Bijan Robinson Atlanta Falcons
+S-5 Jahmyr Gibbs Detroit Lions
+S-6 Derrick Henry Baltimore Ravens
+S-7 Jonathan Taylor Indianapolis Colts
+S-8 Christian McCaffrey San Francisco 49ers
+THE EXPANSION
+TE-1 Baker Mayfield Tampa Bay Buccaneers
+TE-2 Justin Herbert Los Angeles Chargers
+TE-3 Bo Nix Denver Broncos
+TE-4 Tyler Shough New Orleans Saints
+TE-5 Joe Burrow Cincinnati Bengals
+TE-6 Jonathan Taylor Indianapolis Colts
+TE-7 Marvin Harrison Jr. Arizona Cardinals
+TE-8 Caleb Williams Chicago Bears
+TE-9 Christian McCaffrey San Francisco 49ers
+TE-10 Sam Darnold Seattle Seahawks
+TE-11 Ashton Jeanty Las Vegas Raiders
+TE-12 Patrick Mahomes II Kansas City Chiefs
+TE-13 Josh Allen Buffalo Bills
+TE-14 Amon-Ra St. Brown Detroit Lions
+TE-15 T.J. Watt Pittsburgh Steelers
+TE-16 Jaxson Dart New York Giants
+TE-17 Garrett Wilson New York Jets
+TE-18 Quinshon Judkins Cleveland Browns
+TE-19 Dak Prescott Dallas Cowboys
+TE-20 Drake Maye New England Patriots
+TE-21 Jayden Daniels Washington Commanders
+TE-22 De'Von Achane Miami Dolphins
+TE-23 Saquon Barkley Philadelphia Eagles
+TE-24 Justin Jefferson Minnesota Vikings
+TE-25 Jordan Love Green Bay Packers
+TE-26 Puka Nacua Los Angeles Rams
+TE-27 Cam Ward Tennessee Titans
+TE-28 Drake London Atlanta Falcons
+AUTOGRAPH
+FOUNDING ERA INK
+FEI-AW Antonio Williams Washington Commanders Rookie
+FEI-CB Carson Beck Arizona Cardinals Rookie
+FEI-CK Cade Klubnik New York Jets Rookie
+FEI-CT Carnell Tate Tennessee Titans Rookie
+FEI-DA Drew Allar Pittsburgh Steelers Rookie
+FEI-DBO Denzel Boston Cleveland Browns Rookie
+FEI-DS De'Zhaun Stribling San Francisco 49ers Rookie
+FEI-EJ Emmett Johnson Kansas City Chiefs Rookie
+FEI-ES Elijah Sarratt Baltimore Ravens Rookie
+FEI-FM Fernando Mendoza Las Vegas Raiders Rookie
+FEI-GB Germie Bernard Pittsburgh Steelers Rookie
+FEI-GN Garrett Nussmeier Kansas City Chiefs Rookie
+FEI-JC Jonah Coleman Denver Broncos Rookie
+FEI-JL Jeremiyah Love Arizona Cardinals Rookie
+FEI-JLA Ja'Kobi Lane Baltimore Ravens Rookie
+FEI-JP Jadarian Price Seattle Seahawks Rookie
+FEI-JT Jordyn Tyson New Orleans Saints Rookie
+FEI-KC KC Concepcion Cleveland Browns Rookie
+FEI-KS Kenyon Sadiq New York Jets Rookie
+FEI-ML Makai Lemon Philadelphia Eagles Rookie
+FEI-OC Omar Cooper Jr. New York Jets Rookie
+FEI-SB Skyler Bell Buffalo Bills Rookie
+FEI-SS Sonny Styles Washington Commanders Rookie
+FEI-TH Ted Hurst Tampa Bay Buccaneers Rookie
+FEI-TS Ty Simpson Los Angeles Rams Rookie
+FEI-ZB Zachariah Branch Atlanta Falcons Rookie
+FEI-ZT Zavion Thomas Chicago Bears Rookie
+HERITAGE ROOKIE AUTOGRAPHS
+HRA-AW Antonio Williams Washington Commanders Rookie
+HRA-CB Chris Brazzell II Carolina Panthers Rookie
+HRA-CBE Carson Beck Arizona Cardinals Rookie
+HRA-CBEL Chris Bell Miami Dolphins Rookie
+HRA-CD Caleb Downs Dallas Cowboys Rookie
+HRA-CK Cade Klubnik New York Jets Rookie
+HRA-CP Cole Payton Philadelphia Eagles Rookie
+HRA-CT Carnell Tate Tennessee Titans Rookie
+HRA-DA Drew Allar Pittsburgh Steelers Rookie
+HRA-DB Denzel Boston Cleveland Browns Rookie
+HRA-DS De'Zhaun Stribling San Francisco 49ers Rookie
+HRA-EJ Emmett Johnson Kansas City Chiefs Rookie
+HRA-ES Elijah Sarratt Baltimore Ravens Rookie
+HRA-EST Eli Stowers Philadelphia Eagles Rookie
+HRA-FM Fernando Mendoza Las Vegas Raiders Rookie
+HRA-GB Germie Bernard Pittsburgh Steelers Rookie
+HRA-GN Garrett Nussmeier Kansas City Chiefs Rookie
+HRA-JC Jonah Coleman Denver Broncos Rookie
+HRA-JL Jeremiyah Love Arizona Cardinals Rookie
+HRA-JLA Ja'Kobi Lane Baltimore Ravens Rookie
+HRA-JP Jadarian Price Seattle Seahawks Rookie
+HRA-JT Jordyn Tyson New Orleans Saints Rookie
+HRA-KB Kaelon Black San Francisco 49ers Rookie
+HRA-KC KC Concepcion Cleveland Browns Rookie
+HRA-KS Kenyon Sadiq New York Jets Rookie
+HRA-MF Malachi Fields New York Giants Rookie
+HRA-MK Max Klare Los Angeles Rams Rookie
+HRA-ML Makai Lemon Philadelphia Eagles Rookie
+HRA-NS Nick Singleton Tennessee Titans Rookie
+HRA-SB Skyler Bell Buffalo Bills Rookie
+HRA-SS Sonny Styles Washington Commanders Rookie
+HRA-TG Taylen Green Cleveland Browns Rookie
+HRA-TH Ted Hurst Tampa Bay Buccaneers Rookie
+HRA-TS Ty Simpson Los Angeles Rams Rookie
+HRA-ZB Zachariah Branch Atlanta Falcons Rookie
+HRA-ZT Zavion Thomas Chicago Bears Rookie
+CLASSIC RENDITIONS AUTOGRAPH
+CRA-AB A.J. Brown New England Patriots
+CRA-AJ Andre Johnson Houston Texans
+CRA-AJE Ashton Jeanty Las Vegas Raiders
+CRA-ASB Amon-Ra St. Brown Detroit Lions
+CRA-BE Boomer Esiason Cincinnati Bengals
+CRA-BN Bo Nix Denver Broncos
+CRA-BY Bryce Young Carolina Panthers
+CRA-CWI Caleb Williams Chicago Bears
+CRA-DMC Donovan McNabb Philadelphia Eagles
+CRA-EG Eddie George Tennessee Titans
+CRA-HL Howie Long Los Angeles Raiders
+CRA-JC James Cook Buffalo Bills
+CRA-JE Julian Edelman New England Patriots
+CRA-JH Jack Ham Pittsburgh Steelers
+CRA-JHU Jalen Hurts Philadelphia Eagles
+CRA-JW Jaylen Waddle Denver Broncos
+CRA-KW Kenneth Walker III Kansas City Chiefs
+CRA-ME Mike Evans San Francisco 49ers
+CRA-MP Michael Pittman Jr. Pittsburgh Steelers
+CRA-MS Mike Singletary Chicago Bears
+CRA-MV Mike Vick Atlanta Falcons
+CRA-PS Phil Simms New York Giants
+CRA-RC Randall Cunningham Philadelphia Eagles
+CRA-SD Sam Darnold Seattle Seahawks
+CRA-TB Tom Brady New England Patriots
+CRA-TR Tony Romo Dallas Cowboys
+REAL ONE AUTOGRAPHS
+ROA-AJ Ashton Jeanty Las Vegas Raiders
+ROA-BA Brandon Aubrey Dallas Cowboys
+ROA-BN Bo Nix Denver Broncos
+ROA-BT Bhayshul Tuten Jacksonville Jaguars
+ROA-BTJ Brian Thomas Jr. Jacksonville Jaguars
+ROA-CD Chimere Dike Tennessee Titans
+ROA-CH Chuba Hubbard Carolina Panthers
+ROA-CL Cam Little Jacksonville Jaguars
+ROA-CW Caleb Williams Chicago Bears
+ROA-CWA Cam Ward Tennessee Titans
+ROA-DA De'Von Achane Miami Dolphins
+ROA-DM Drake Maye New England Patriots
+ROA-EE Emeka Egbuka Tampa Bay Buccaneers
+ROA-GW Garrett Wilson New York Jets
+ROA-IB Isaiah Bond Cleveland Browns
+ROA-JA Josh Allen Buffalo Bills
+ROA-JC Jacory Croskey-Merritt Washington Commanders
+ROA-JD Jaxson Dart New York Giants
+ROA-JDA Jayden Daniels Washington Commanders
+ROA-JH Jaycee Horn Carolina Panthers
+ROA-JJ Justin Jefferson Minnesota Vikings
+ROA-JS Jack Sawyer Pittsburgh Steelers
+ROA-KJ Kaleb Johnson Pittsburgh Steelers
+ROA-KM Kyle Monangai Chicago Bears
+ROA-KS Khalil Shakir Buffalo Bills
+ROA-LB Luther Burden III Chicago Bears
+ROA-LM Ladd McConkey Los Angeles Chargers
+ROA-MGO Matthew Golden Green Bay Packers
+ROA-MN Malik Nabers New York Giants
+ROA-OG Ollie Gordon II Miami Dolphins
+ROA-PN Puka Nacua Los Angeles Rams
+ROA-RH RJ Harvey Denver Broncos
+ROA-TB Trey Benson Arizona Cardinals
+ROA-TH Tory Horton Seattle Seahawks
+ROA-THE TreVeyon Henderson New England Patriots
+ROA-TS Tyler Shough New Orleans Saints
+ROA-WJ Will Johnson Arizona Cardinals
+ROA-WM Woody Marks Houston Texans
+REAL ONE ROOKIE AUTOGRAPHS
+RORA-AH Anthony Hill Jr. Tennessee Titans Rookie
+RORA-AR Arvell Reese New York Giants Rookie
+RORA-BC Brandon Cisse Green Bay Packers Rookie
+RORA-CB Chris Brazzell II Carolina Panthers Rookie
+RORA-CBE Carson Beck Arizona Cardinals Rookie
+RORA-CBEL Chris Bell Miami Dolphins Rookie
+RORA-CD Caleb Downs Dallas Cowboys Rookie
+RORA-CDA CJ Daniels Los Angeles Rams Rookie
+RORA-CH Cashius Howell Cincinnati Bengals Rookie
+RORA-CK Cade Klubnik New York Jets Rookie
+RORA-CP Cole Payton Philadelphia Eagles Rookie
+RORA-CT Carnell Tate Tennessee Titans Rookie
+RORA-DA Drew Allar Pittsburgh Steelers Rookie
+RORA-DB Denzel Boston Cleveland Browns Rookie
+RORA-DBU Deion Burks Indianapolis Colts Rookie
+RORA-DC Demond Claiborne Minnesota Vikings Rookie
+RORA-DS De'Zhaun Stribling San Francisco 49ers Rookie
+RORA-EJ Emmett Johnson Kansas City Chiefs Rookie
+RORA-ES Elijah Sarratt Baltimore Ravens Rookie
+RORA-EST Eli Stowers Philadelphia Eagles Rookie
+RORA-FM Fernando Mendoza Las Vegas Raiders Rookie
+RORA-FMA Francis Mauigoa New York Giants Rookie
+RORA-GB Germie Bernard Pittsburgh Steelers Rookie
+RORA-GN Garrett Nussmeier Kansas City Chiefs Rookie
+RORA-JC Jonah Coleman Denver Broncos Rookie
+RORA-JL Jeremiyah Love Arizona Cardinals Rookie
+RORA-JLA Ja'Kobi Lane Baltimore Ravens Rookie
+RORA-JP Jadarian Price Seattle Seahawks Rookie
+RORA-KB Kaelon Black San Francisco 49ers Rookie
+RORA-KC KC Concepcion Cleveland Browns Rookie
+RORA-KF Keldric Faulk Tennessee Titans Rookie
+RORA-KS Kenyon Sadiq New York Jets Rookie
+RORA-MD Mansoor Delane Kansas City Chiefs Rookie
+RORA-ML Makai Lemon Philadelphia Eagles Rookie
+RORA-NS Nick Singleton Tennessee Titans Rookie
+RORA-PW Peter Woods Kansas City Chiefs Rookie
+RORA-RB Rueben Bain Jr. Tampa Bay Buccaneers Rookie
+RORA-SB Skyler Bell Buffalo Bills Rookie
+RORA-SF Spencer Fano Cleveland Browns Rookie
+RORA-SS Sonny Styles Washington Commanders Rookie
+RORA-TG Taylen Green Cleveland Browns Rookie
+RORA-TH Ted Hurst Tampa Bay Buccaneers Rookie
+RORA-TP T.J. Parker Buffalo Bills Rookie
+RORA-TS Ty Simpson Los Angeles Rams Rookie
+RORA-ZB Zachariah Branch Atlanta Falcons Rookie
+BASE CARDS CHROME AUTOGRAPH VARIATION
+BCA-BB Brock Bowers Las Vegas Raiders
+BCA-BI Bucky Irving Tampa Bay Buccaneers
+BCA-BP Brock Purdy San Francisco 49ers
+BCA-BY Bryce Young Carolina Panthers
+BCA-CB Carson Beck Arizona Cardinals Rookie
+BCA-CBR Chris Brazzell II Carolina Panthers Rookie
+BCA-CD Caleb Downs Dallas Cowboys Rookie
+BCA-CK Cade Klubnik New York Jets Rookie
+BCA-CT Carnell Tate Tennessee Titans Rookie
+BCA-DA Davante Adams Los Angeles Rams
+BCA-DB Denzel Boston Cleveland Browns Rookie
+BCA-DP Dak Prescott Dallas Cowboys
+BCA-FM Fernando Mendoza Las Vegas Raiders Rookie
+BCA-GN Garrett Nussmeier Kansas City Chiefs Rookie
+BCA-GP George Pickens Dallas Cowboys
+BCA-JB Joe Burrow Cincinnati Bengals
+BCA-JC James Cook Buffalo Bills
+BCA-JH Jalen Hurts Philadelphia Eagles
+BCA-JL Jeremiyah Love Arizona Cardinals Rookie
+BCA-JP Jadarian Price Seattle Seahawks Rookie
+BCA-KC Keon Coleman Buffalo Bills
+BCA-KS Kenyon Sadiq New York Jets Rookie
+BCA-KW Kyren Williams Los Angeles Rams
+BCA-ME Mike Evans San Francisco 49ers
+BCA-NS Nick Singleton Tennessee Titans Rookie
+BCA-PS Pat Surtain II Denver Broncos
+BCA-QJ Quinshon Judkins Cleveland Browns
+BCA-SB Skyler Bell Buffalo Bills Rookie
+BCA-SD Sam Darnold Seattle Seahawks
+BCA-TMC Terry McLaurin Washington Commanders
+BCA-TS Ty Simpson Los Angeles Rams Rookie
+BCA-TW Tyler Warren Indianapolis Colts
+CUT SIGNATURES
+CA-WP1 Walter Payton Chicago Bears
+CA-WP2 Walter Payton Chicago Bears
+CA-WP3 Walter Payton Chicago Bears
+CA-WP4 Walter Payton Chicago Bears
+CA-WP5 Walter Payton Chicago Bears
+GRIDIRON COLLECTION RELIC AUTOGRAPHS
+GCRA-AW Antonio Williams Washington Commanders Rookie
+GCRA-BT Brenen Thompson Los Angeles Chargers Rookie
+GCRA-CB Carson Beck Arizona Cardinals Rookie
+GCRA-CBEL Chris Bell Miami Dolphins Rookie
+GCRA-CK Cade Klubnik New York Jets Rookie
+GCRA-CT Carnell Tate Tennessee Titans Rookie
+GCRA-DA Drew Allar Pittsburgh Steelers Rookie
+GCRA-EJ Emmett Johnson Kansas City Chiefs Rookie
+GCRA-FM Fernando Mendoza Las Vegas Raiders Rookie
+GCRA-GN Garrett Nussmeier Kansas City Chiefs Rookie
+GCRA-JC Jonah Coleman Denver Broncos Rookie
+GCRA-JL Jeremiyah Love Arizona Cardinals Rookie
+GCRA-JLA Ja'Kobi Lane Baltimore Ravens Rookie
+GCRA-KB Kaelon Black San Francisco 49ers Rookie
+GCRA-MF Malachi Fields New York Giants Rookie
+GCRA-ML Makai Lemon Philadelphia Eagles Rookie
+GCRA-MW Mike Washington Jr. Las Vegas Raiders Rookie
+GCRA-SB Skyler Bell Buffalo Bills Rookie
+GCRA-SS Sonny Styles Washington Commanders Rookie
+GCRA-TH Ted Hurst Tampa Bay Buccaneers Rookie
+GCRA-TS Ty Simpson Los Angeles Rams Rookie
+GCRA-ZB Zachariah Branch Atlanta Falcons Rookie
+GCRA-ZT Zavion Thomas Chicago Bears Rookie
+LOCKER ROOM AUTOGRAPH RELICS
+LRAR-AJ Ashton Jeanty Las Vegas Raiders
+LRAR-BN Bo Nix Denver Broncos
+LRAR-BT Brian Thomas Jr. Jacksonville Jaguars
+LRAR-BY Bryce Young Carolina Panthers
+LRAR-CB Carson Beck Arizona Cardinals Rookie
+LRAR-CW Cam Ward Tennessee Titans
+LRAR-CWI Caleb Williams Chicago Bears
+LRAR-DM Drake Maye New England Patriots
+LRAR-EE Emeka Egbuka Tampa Bay Buccaneers
+LRAR-FM Fernando Mendoza Las Vegas Raiders Rookie
+LRAR-GN Garrett Nussmeier Kansas City Chiefs Rookie
+LRAR-JC James Cook Buffalo Bills
+LRAR-JD Jaxson Dart New York Giants
+LRAR-JDA Jayden Daniels Washington Commanders
+LRAR-JL Jeremiyah Love Arizona Cardinals Rookie
+LRAR-JT Jordyn Tyson New Orleans Saints Rookie
+LRAR-QJ Quinshon Judkins Cleveland Browns
+LRAR-TS Tyler Shough New Orleans Saints
+LRAR-TSI Ty Simpson Los Angeles Rams Rookie
+BICENTENNIAL RELIC AUTOGRAPHS
+BRA-AS Amon-Ra St. Brown Detroit Lions
+BRA-BP Brock Purdy San Francisco 49ers
+BRA-CT Carnell Tate Tennessee Titans Rookie
+BRA-DA De'Von Achane Miami Dolphins
+BRA-DP Dak Prescott Dallas Cowboys
+BRA-EC Earl Campbell Houston Oilers
+BRA-ED Eric Dickerson Los Angeles Rams
+BRA-FM Fernando Mendoza Las Vegas Raiders Rookie
+BRA-GN Garrett Nussmeier Kansas City Chiefs Rookie
+BRA-GW Garrett Wilson New York Jets
+BRA-JG Jared Goff Detroit Lions
+BRA-JL Jeremiyah Love Arizona Cardinals Rookie
+BRA-JT Jordyn Tyson New Orleans Saints Rookie
+BRA-ML Makai Lemon Philadelphia Eagles Rookie
+BRA-TT Thurman Thomas Buffalo Bills
+ROOKIE LINEAGE AUTOGRAPHED RELICS
+RLRA-CB Chris Brazzell II Carolina Panthers Rookie
+RLRA-CBE Carson Beck Arizona Cardinals Rookie
+RLRA-CD Caleb Downs Dallas Cowboys Rookie
+RLRA-CK Cade Klubnik New York Jets Rookie
+RLRA-CP Cole Payton Philadelphia Eagles Rookie
+RLRA-CT Carnell Tate Tennessee Titans Rookie
+RLRA-DA Drew Allar Pittsburgh Steelers Rookie
+RLRA-DB Denzel Boston Cleveland Browns Rookie
+RLRA-DS De'Zhaun Stribling San Francisco 49ers Rookie
+RLRA-ES Elijah Sarratt Baltimore Ravens Rookie
+RLRA-FM Fernando Mendoza Las Vegas Raiders Rookie
+RLRA-GB Germie Bernard Pittsburgh Steelers Rookie
+RLRA-GN Garrett Nussmeier Kansas City Chiefs Rookie
+RLRA-JL Jeremiyah Love Arizona Cardinals Rookie
+RLRA-JP Jadarian Price Seattle Seahawks Rookie
+RLRA-JT Jordyn Tyson New Orleans Saints Rookie
+RLRA-KC KC Concepcion Cleveland Browns Rookie
+RLRA-KS Kenyon Sadiq New York Jets Rookie
+RLRA-MK Max Klare Los Angeles Rams Rookie
+RLRA-ML Makai Lemon Philadelphia Eagles Rookie
+RLRA-NS Nick Singleton Tennessee Titans Rookie
+RLRA-TG Taylen Green Cleveland Browns Rookie
+RLRA-TS Ty Simpson Los Angeles Rams Rookie
+FLASHBACKS AUTOGRAPHED RELICS
+FAR-DF Dan Fouts San Diego Chargers
+FAR-DP Drew Pearson Dallas Cowboys
+FAR-RS Roger Staubach Dallas Cowboys
+FAR-TB Terry Bradshaw Pittsburgh Steelers
+MEMORABILIA
+GRIDIRON COLLECTION RELICS
+GCR-AW Antonio Williams Washington Commanders Rookie
+GCR-BT Brenen Thompson Los Angeles Chargers Rookie
+GCR-CB Carson Beck Arizona Cardinals Rookie
+GCR-CBEL Chris Bell Miami Dolphins Rookie
+GCR-CDO Caleb Douglas Miami Dolphins Rookie
+GCR-CK Cade Klubnik New York Jets Rookie
+GCR-CT Carnell Tate Tennessee Titans Rookie
+GCR-DA Drew Allar Pittsburgh Steelers Rookie
+GCR-DBA David Bailey New York Jets Rookie
+GCR-EJ Emmett Johnson Kansas City Chiefs Rookie
+GCR-FM Fernando Mendoza Las Vegas Raiders Rookie
+GCR-GN Garrett Nussmeier Kansas City Chiefs Rookie
+GCR-JC Jonah Coleman Denver Broncos Rookie
+GCR-JL Jeremiyah Love Arizona Cardinals Rookie
+GCR-JLA Ja'Kobi Lane Baltimore Ravens Rookie
+GCR-KB Kaelon Black San Francisco 49ers Rookie
+GCR-MF Malachi Fields New York Giants Rookie
+GCR-ML Makai Lemon Philadelphia Eagles Rookie
+GCR-MW Mike Washington Jr. Las Vegas Raiders Rookie
+GCR-SB Skyler Bell Buffalo Bills Rookie
+GCR-SS Sonny Styles Washington Commanders Rookie
+GCR-TH Ted Hurst Tampa Bay Buccaneers Rookie
+GCR-TS Ty Simpson Los Angeles Rams Rookie
+GCR-ZB Zachariah Branch Atlanta Falcons Rookie
+GCR-ZT Zavion Thomas Chicago Bears Rookie
+ROOKIE LINEAGE RELICS
+RLR-AR Arvell Reese New York Giants Rookie
+RLR-AW Antonio Williams Washington Commanders Rookie
+RLR-BT Brenen Thompson Los Angeles Chargers Rookie
+RLR-CB Chris Brazzell II Carolina Panthers Rookie
+RLR-CBEC Carson Beck Arizona Cardinals Rookie
+RLR-CBEL Chris Bell Miami Dolphins Rookie
+RLR-CD Caleb Downs Dallas Cowboys Rookie
+RLR-CDO Caleb Douglas Miami Dolphins Rookie
+RLR-CK Cade Klubnik New York Jets Rookie
+RLR-CP Cole Payton Philadelphia Eagles Rookie
+RLR-CT Carnell Tate Tennessee Titans Rookie
+RLR-DA Drew Allar Pittsburgh Steelers Rookie
+RLR-DB Denzel Boston Cleveland Browns Rookie
+RLR-DBAI David Bailey New York Jets Rookie
+RLR-DS De'Zhaun Stribling San Francisco 49ers Rookie
+RLR-EJ Emmett Johnson Kansas City Chiefs Rookie
+RLR-ES Elijah Sarratt Baltimore Ravens Rookie
+RLR-EST Eli Stowers Philadelphia Eagles Rookie
+RLR-FM Fernando Mendoza Las Vegas Raiders Rookie
+RLR-GB Germie Bernard Pittsburgh Steelers Rookie
+RLR-GN Garrett Nussmeier Kansas City Chiefs Rookie
+RLR-JC Jonah Coleman Denver Broncos Rookie
+RLR-JL Jeremiyah Love Arizona Cardinals Rookie
+RLR-JLA Ja'Kobi Lane Baltimore Ravens Rookie
+RLR-JP Jadarian Price Seattle Seahawks Rookie
+RLR-JT Jordyn Tyson New Orleans Saints Rookie
+RLR-KB Kaelon Black San Francisco 49ers Rookie
+RLR-KC KC Concepcion Cleveland Browns Rookie
+RLR-KS Kenyon Sadiq New York Jets Rookie
+RLR-MK Max Klare Los Angeles Rams Rookie
+RLR-ML Makai Lemon Philadelphia Eagles Rookie
+RLR-MW Mike Washington Jr. Las Vegas Raiders Rookie
+RLR-NS Nick Singleton Tennessee Titans Rookie
+RLR-OC Omar Cooper Jr. New York Jets Rookie
+RLR-SB Skyler Bell Buffalo Bills Rookie
+RLR-TG Taylen Green Cleveland Browns Rookie
+RLR-TH Ted Hurst Tampa Bay Buccaneers Rookie
+RLR-TS Ty Simpson Los Angeles Rams Rookie
+RLR-ZB Zachariah Branch Atlanta Falcons Rookie
+RLR-ZT Zavion Thomas Chicago Bears Rookie
+LOCKER ROOM RELICS
+LRR-AJ Ashton Jeanty Las Vegas Raiders
+LRR-BN Bo Nix Denver Broncos
+LRR-BT Brian Thomas Jr. Jacksonville Jaguars
+LRR-BY Bryce Young Carolina Panthers
+LRR-CB Carson Beck Arizona Cardinals Rookie
+LRR-CW Cam Ward Tennessee Titans
+LRR-CWI Caleb Williams Chicago Bears
+LRR-DM Drake Maye New England Patriots
+LRR-EE Emeka Egbuka Tampa Bay Buccaneers
+LRR-FM Fernando Mendoza Las Vegas Raiders Rookie
+LRR-GN Garrett Nussmeier Kansas City Chiefs Rookie
+LRR-JC James Cook Buffalo Bills
+LRR-JD Jaxson Dart New York Giants
+LRR-JDA Jayden Daniels Washington Commanders
+LRR-JG Jahmyr Gibbs Detroit Lions
+LRR-JL Jeremiyah Love Arizona Cardinals Rookie
+LRR-JT Jordyn Tyson New Orleans Saints Rookie
+LRR-OH Omarion Hampton Los Angeles Chargers
+LRR-QJ Quinshon Judkins Cleveland Browns
+LRR-TS Tyler Shough New Orleans Saints
+LRR-TSI Ty Simpson Los Angeles Rams Rookie
+REAL ONE RELICS
+ROR-CS CJ Stroud Houston Texans
+ROR-CW Cam Ward Tennessee Titans
+ROR-DM Drake Maye New England Patriots
+ROR-JDA Jayden Daniels Washington Commanders
+ROR-SB Saquon Barkley Philadelphia Eagles
+INSERT
+WALTER PAYTON ROOKIE REDEMPTION
+@PAYTON
