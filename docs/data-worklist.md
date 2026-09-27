@@ -32,6 +32,15 @@ Live reports: `/api/debug/collection-health`, `/api/debug/price-coverage`,
   - stuffed player fields, like "Jerry Rice / Set Break / Vg-Vgex Gmcards".
 
   Two people sharing a name are never guessed between.
+- **Estimates that learn from what sold.** Every day at 08:xx UTC a backtest takes the 40
+  player/product pairs with the most parallel sales. It hides each parallel that sold in the
+  last 21 days, prices it from what else sold before then, and scores the estimate against the
+  real price.
+  - The estimator fits each player's own drift (is his market rising?) and spread (do his rare
+    parallels run further over his base than the average player's?).
+  - The backtest tunes how far to trust those fits, and a setting is adopted only if it beats
+    the old estimator by 1+ point of median error on 60+ cases.
+  - Report: `/api/debug/estimate-accuracy` (add `?run=1` to run one now).
 - **Checklists drafted from sales.** `scripts/draft-checklist.js` asks the site which player
   each card number's sales name, and writes a draft for you to check.
 
