@@ -3,6 +3,56 @@ let serverInit = null;
 // Lightweight, dependency-free text screen — reused for the public floor chat
 // so broadcast messages get the same profanity/spam check as everything else.
 import { moderateText, stripBidi } from './moderation.js';
+import { noteRequest, newTally, mergeTallies, FLUSH_MS } from './traffic-core.js';
+
+// This isolate's visitor tally (traffic-core.js), written to its own KV key
+// every FLUSH_MS so the report can sum every isolate that served anyone.
+const _isolateId = Math.random().toString(36).slice(2, 10);
+const _visitors = newTally('');
+let _visitorsFlushedAt = Date.now();
+const VISITORS_PREFIX = 'visitors:v1:';
+
+function _countVisitor(request, url, env, ctx) {
+  try {
+    const cf = request.cf || {};
+    const day = new Date().toISOString().slice(0, 10);
+    noteRequest(_visitors, {
+      day, path: url.pathname, ua: request.headers.get('user-agent') || '',
+      asn: cf.asn != null ? cf.asn : null, asOrg: cf.asOrganization || '', country: cf.country || '',
+      verifiedBot: !!((cf.botManagement && cf.botManagement.verifiedBot) || cf.verifiedBotCategory),
+    });
+    if (env.KV && Date.now() - _visitorsFlushedAt > FLUSH_MS) {
+      _visitorsFlushedAt = Date.now();
+      const p = env.KV.put(`${VISITORS_PREFIX}${_visitors.day}:${_isolateId}`, JSON.stringify(_visitors), { expirationTtl: 9 * 86400 });
+      if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(p.catch(() => {}));
+    }
+  } catch (_) { /* counting must never break a request */ }
+}
+
+// GET /api/debug/visitors[?day=YYYY-MM-DD] — every isolate's tally for the day,
+// summed: people vs datacentres vs declared bots, and by network and country.
+// Admin only. Up to FLUSH_MS behind.
+async function visitorsReport(request, url, env) {
+  const key = request.headers.get('x-admin-key') || url.searchParams.get('key') || '';
+  if (!env.ADMIN_PASSWORD || key !== env.ADMIN_PASSWORD) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
+  }
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('day') || '') ? url.searchParams.get('day') : new Date().toISOString().slice(0, 10);
+  const tallies = [];
+  let cursor;
+  do {
+    const page = await env.KV.list({ prefix: `${VISITORS_PREFIX}${day}:`, cursor });
+    for (const k of page.keys) {
+      const t = await env.KV.get(k.name, 'json');
+      if (t) tallies.push(t);
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  const body = { available: true, generatedAt: new Date().toISOString(),
+    note: 'Counted at the front of the Worker for every request, pages included, summed over every isolate. Up to 5 minutes behind.',
+    ...mergeTallies(tallies) };
+  return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+}
 
 // Last-line-of-defense traps. If anything inside the Worker rejects or
 // throws asynchronously without being caught, Cloudflare otherwise serves
@@ -647,6 +697,8 @@ export default {
     }
     try {
       const url = new URL(request.url);
+      _countVisitor(request, url, env, ctx);
+      if (url.pathname === '/api/debug/visitors') return await visitorsReport(request, url, env);
 
       // Canonical host: www -> apex, keeping the path and query.
       //

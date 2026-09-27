@@ -1,0 +1,49 @@
+// Visitors are counted at the front of the Worker, for every request.
+//
+// The old tally sat behind the ASSETS binding (so no page view ever reached
+// it) and was flushed from the cron's isolate (so it always wrote ~0): the
+// report read "1 request today" while bots crawled the site. This checks the
+// counting itself and that the Worker counts before it routes anything.
+const fs = require('fs');
+const path = require('path');
+const T = require(path.join(__dirname, '..', 'traffic-core.js'));
+
+let failures = 0;
+const check = (label, ok, detail) => {
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? '  — ' + detail : ''}`);
+  if (!ok) failures++;
+};
+
+check('a phone on a home ISP is a person', T.classify({ ua: 'Mozilla/5.0 (iPhone)', asn: 7922 }) === 'human');
+check('a browser-looking visitor from AWS is a datacentre visitor', T.classify({ ua: 'Mozilla/5.0 (Windows NT 10.0)', asn: 16509 }) === 'datacenter');
+check('python-requests says it is a bot', T.classify({ ua: 'python-requests/2.31', asn: 14061 }) === 'declaredBot');
+check('Googlebot verified by Cloudflare is not a datacentre bot, though it comes from Google\'s network',
+  T.classify({ ua: 'Mozilla/5.0 (compatible; Googlebot/2.1)', asn: 15169, verifiedBot: true }) === 'verifiedBot');
+check('no user agent at all is its own kind', T.classify({ ua: '', asn: 7922 }) === 'noUa');
+
+const day = '2026-09-27';
+const a = T.newTally(day), b = T.newTally(day);
+T.noteRequest(a, { day, path: '/', ua: 'Mozilla/5.0 (iPhone)', asn: 7922, asOrg: 'Comcast', country: 'US' });
+T.noteRequest(a, { day, path: '/players/bo-nix/', ua: 'Mozilla/5.0 (Windows)', asn: 16509, asOrg: 'AMAZON-02', country: 'US' });
+T.noteRequest(b, { day, path: '/', ua: 'Mozilla/5.0 (X11)', asn: 45102, asOrg: 'Alibaba', country: 'SG' });
+T.noteRequest(b, { day, path: '/app.js', ua: 'Mozilla/5.0 (X11)', asn: 45102, asOrg: 'Alibaba', country: 'SG' });
+T.noteRequest(b, { day, path: '/api/search', ua: 'curl/8', asn: 14061, country: 'NL' });
+const r = T.mergeTallies([a, b]);
+check('isolates are summed', r.requests === 5 && r.isolates === 2 && r.pages === 3 && r.assets === 1 && r.api === 1, JSON.stringify({ req: r.requests, pages: r.pages }));
+check('visitors are split by kind', r.visitors.human === 1 && r.visitors.datacenter === 3 && r.visitors.declaredBot === 1, JSON.stringify(r.visitors));
+check('page views are broken down by network and country', r.topNetworks.some(x => x.name === '45102 Alibaba' && x.hits === 1)
+  && r.topCountries.some(x => x.name === 'SG'), JSON.stringify(r.topNetworks));
+const c = T.newTally('2026-09-26');
+T.noteRequest(c, { day: '2026-09-27', path: '/', ua: 'x', asn: 1 });
+check('a new day starts a new tally', c.day === '2026-09-27' && c.total === 1);
+
+const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+const fetchAt = worker.indexOf('async fetch(request, env, ctx)');
+const countAt = worker.indexOf('_countVisitor(request, url, env, ctx)', fetchAt);
+const assetsAt = worker.indexOf('env.ASSETS.fetch(request)', fetchAt);
+check('the Worker counts every request before it serves pages or assets', fetchAt > 0 && countAt > fetchAt && countAt < assetsAt);
+check('  ...and each isolate writes its own key, not a shared one', /\$\{VISITORS_PREFIX\}\$\{_visitors\.day\}:\$\{_isolateId\}/.test(worker));
+check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(worker));
+
+console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
+process.exit(failures ? 1 : 0);
