@@ -573,6 +573,7 @@
         ${card('Old estimator miss (median)', pct(b.mdape), 'red')}
         ${card('Best new settings miss', pct(c.mdape), 'green')}
         ${card('Cases tested', c.n || 0)}
+        ${rep.noiseFloor && rep.noiseFloor.mdape != null ? card('Best possible (sale-to-sale noise)', pct(rep.noiseFloor.mdape)) : ''}
         ${card('Status', rep.adopted === 'tuned' ? 'New wins' : 'Old kept', rep.adopted === 'tuned' ? 'green' : 'yellow')}
       </div>
       ${nb.n ? `<div class="stat-label" style="margin-top:0.6rem">Numbered parallels, priced from the card's bigger print runs${rep.judgedOn === 'numbered' ? ' (what the test is judged on)' : ''}</div>
