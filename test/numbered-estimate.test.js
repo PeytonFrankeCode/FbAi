@@ -38,5 +38,14 @@ check('with no more-printed numbered sales, there is no estimate rather than a w
 const base = buildSimilarCardEstimate('2024 Prizm Bo Nix Hyper', SALES);
 check('an unnumbered search is still estimated as before', !!base, base ? `$${base.value.toFixed(2)}` : 'none');
 
+// A sold search never shows the estimate as a box: a search often does not
+// say enough to price one card ("/1 prizm" was priced from a $5 base card, a
+// Cracked Ice and a Green Ice insert). Collection values still use it.
+{
+  const app = require('fs').readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  check('a sold search does not show an "estimated value" box',
+    !/buildSimilarEstimateSection/.test(app) && /estimate: data\.estimate \|\| null/.test(app));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall numbered-estimate checks passed');
 process.exit(failures ? 1 : 0);

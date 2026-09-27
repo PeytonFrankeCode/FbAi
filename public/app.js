@@ -2077,12 +2077,12 @@ async function fetchDirectSearch(query) {
       return;
     }
 
-    // Show the print-run estimate when there were no sales at the exact print
-    // run searched; otherwise the broadened approximate value (if any).
-    if (data.estimate) {
-      buildSimilarEstimateSection(data.estimate, query);
-      approxSection.classList.remove('hidden');
-    } else if (searchType === 'broadened' && approximateValue) {
+    // No "estimated value" box on a sold search. A search often does not say
+    // enough to price one card: "/1 prizm" priced a one-of-one from a $5 base
+    // card, a Cracked Ice and a Green Ice insert at ~$290. The estimate is
+    // still computed and still used where the card is known (collection
+    // values, data.estimate); the search just does not show it.
+    if (searchType === 'broadened' && approximateValue) {
       buildApproxValueSection(approximateValue, query);
       approxSection.classList.remove('hidden');
     }
@@ -2235,80 +2235,6 @@ function buildApproxValueSection(approx, originalQuery) {
       <span>Based on ${approx.sampleSize} sale${approx.sampleSize !== 1 ? 's' : ''}</span>
     </div>
     <div class="approx-source">Estimated from: ${escHtml(approx.basedOn)}</div>
-  `;
-}
-
-// ---- Similar-card price estimate (print-run + set adjusted) ----
-// Shown when a sold search finds NO sale of the exact card. The server picks
-// 3–5 of the same player's similar sales and adjusts each for print-run and
-// set differences; we display the estimate crossed against the sold prices used.
-function buildSimilarEstimateSection(est, query) {
-  const fmt = n => `$${Number(n).toFixed(2)}`;
-  const pr = est.targetPrintRun;
-  const targetLabel = pr ? `/${pr}` : (est.targetSet || 'this card');
-
-  const rows = (est.comps || []).map(c => {
-    const dir = c.adjustedPrice >= c.soldPrice ? 'up' : 'down';
-    const dirArrow = dir === 'up' ? '&#9650;' : '&#9660;';
-    const tags = [];
-    if (c.printRun) {
-      const scarcity = pr ? (c.printRun > pr ? 'more common' : 'rarer') : null;
-      tags.push(`<span class="est-comp-prtag">/${c.printRun}${scarcity ? ` <span class="est-comp-scar">(${scarcity})</span>` : ''}</span>`);
-    }
-    if (c.setName && c.setName !== est.targetSet) {
-      tags.push(`<span class="est-comp-prtag est-comp-settag">${escHtml(c.setName)}</span>`);
-    }
-    const img = c.imageUrl
-      ? `<img class="est-comp-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
-      : '<div class="est-comp-img est-comp-img-empty"></div>';
-    const titleInner = escHtml(c.title || '');
-    const titleHtml = c.itemUrl
-      ? `<a class="est-comp-title" href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener">${titleInner}</a>`
-      : `<span class="est-comp-title">${titleInner}</span>`;
-    return `
-      <div class="est-comp">
-        ${img}
-        <div class="est-comp-main">
-          ${titleHtml}
-          <div class="est-comp-sub">
-            ${tags.join('')}
-            ${c.soldDate ? `<span class="est-comp-date">${escHtml(timeAgo(c.soldDate))}</span>` : ''}
-          </div>
-        </div>
-        <div class="est-comp-prices">
-          <span class="est-comp-sold" title="Actual sold price">${fmt(c.soldPrice)}</span>
-          <span class="est-comp-cross est-${dir}">${dirArrow}</span>
-          <span class="est-comp-adj" title="Adjusted to ${escHtml(targetLabel)}">${fmt(c.adjustedPrice)}</span>
-        </div>
-      </div>`;
-  }).join('');
-
-  // Adaptive copy depending on what was adjusted.
-  const adjustedBits = [];
-  if (est.adjustedForPrintRun) adjustedBits.push('print run');
-  if (est.adjustedForSet) adjustedBits.push('set value');
-  const adjustedText = adjustedBits.length ? `, adjusted for ${adjustedBits.join(' and ')}` : '';
-  const noWhat = pr
-    ? `No sold sales found for a <strong>/${pr}</strong>${est.targetSet ? ` ${escHtml(est.targetSet)}` : ''}.`
-    : `No exact sold sales found${est.targetSet ? ` for <strong>${escHtml(est.targetSet)}</strong>` : ''}.`;
-
-  const formulaBits = [];
-  if (est.adjustedForPrintRun) formulaBits.push(`print run by (its run &divide; ${targetLabel})<sup>${est.alpha}</sup> (a /25 &asymp; 2&times; a /99, not 4&times;; unnumbered treated as ~/250)`);
-  if (est.adjustedForSet) formulaBits.push('set by relative set value (e.g. National Treasures &gt; Score)');
-  if (est.neutralized) formulaBits.push('then neutralized toward the comps&rsquo; shared consensus so one off sale can&rsquo;t swing it');
-
-  approxSection.innerHTML = `
-    <div class="approx-badge">ESTIMATED VALUE</div>
-    <div class="approx-note">${noWhat} Estimated from ${est.sampleSize} similar ${est.sampleSize === 1 ? 'sale' : 'sales'} of the same player${adjustedText}.</div>
-    <div class="approx-price">~${fmt(est.value)}</div>
-    <div class="approx-details">
-      <span>Low: ${fmt(est.low)}</span>
-      <span>High: ${fmt(est.high)}</span>
-      <span>${est.sampleSize} adjusted comp${est.sampleSize !== 1 ? 's' : ''}</span>
-    </div>
-    <div class="est-comps-head">Sold comps used &rarr; adjusted to ${escHtml(targetLabel)}</div>
-    <div class="est-comps">${rows}</div>
-    ${formulaBits.length ? `<div class="approx-source">Each sale is adjusted for ${formulaBits.join('; and ')}.</div>` : ''}
   `;
 }
 
@@ -2505,12 +2431,9 @@ async function performSearch(query, opts = {}) {
       return;
     }
 
-    // No sales at the exact print run? Show the print-run-adjusted estimate
-    // built from sales of the same card at other print runs.
-    if (data.estimate) {
-      buildSimilarEstimateSection(data.estimate, query);
-      approxSection.classList.remove('hidden');
-    }
+    // No "estimated value" box here either: see the direct search above.
+    // Sales of the same card at other print runs are still listed below
+    // (similarResults), as sales rather than as a price.
 
     // Stats bar
     if (results.length > 0) {

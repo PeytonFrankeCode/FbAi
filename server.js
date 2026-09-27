@@ -86,6 +86,7 @@ const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./gr
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
 const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql } = require('./card-kind');
+const EST = require('./estimator-core');
 
 // cardKind(), in SQL.
 //
@@ -11043,6 +11044,23 @@ async function _parallelLadder() {
   return _ladderMemo.data;
 }
 
+// The estimator's tuned settings (runEstimatorBacktest), held per isolate like
+// the ladder. Until a backtest has adopted any, the estimator behaves as it
+// always did (EST.DEFAULT_PARAMS).
+const ESTIMATOR_PARAMS_KEY = 'estimator:params:v1';
+let _estMemo = { at: 0, data: null };
+async function _estimatorParams() {
+  if (_estMemo.at && Date.now() - _estMemo.at < 10 * 60000) return _estimatorParamsNow();
+  const data = await cacheGet(ESTIMATOR_PARAMS_KEY).catch(() => null);
+  _estMemo = { at: Date.now(), data: data || null };
+  return _estimatorParamsNow();
+}
+function _estimatorParamsNow() {
+  const d = _estMemo.data;
+  return d && d.params ? { ...EST.DEFAULT_PARAMS, ...d.params, calib: d.calib || {} } : EST.DEFAULT_PARAMS;
+}
+function _primeEstimatorParams(data) { _estMemo = { at: Date.now(), data: data || null }; }
+
 // Checklist products, held per isolate: a card page reads one on every open.
 const _checklistMemo = new Map();
 async function _checklistProduct(id) {
@@ -11233,7 +11251,9 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     return xs.length ? _medOf(xs) : null;
   };
   const entryOf = (k) => list.find(e => e.keys.includes(k.key));
-  const anchors = [];
+  // The tuned settings (runEstimatorBacktest), or the old behaviour.
+  const params = opts.params || _estimatorParamsNow();
+  const points = [];
   // The same, itemised, for the page to show its working: each sold
   // parallel, what it went for raw (or its slabs' raw equivalent), its step
   // on the ladder, and the base price that implies.
@@ -11244,11 +11264,21 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     const e = entryOf(k);
     const fac = e ? factorOf(e) : (baseF && rungs[k.key] ? { f: rungs[k.key].f / baseF } : null);
     if (fac) {
-      anchors.push(Math.log(r) - Math.log(fac.f));
+      points.push({ logf: Math.log(fac.f), logr: Math.log(r), w: Math.max(1, Math.min(5, k.rawN || k.sales || 1)) });
       anchorDetail.push({ name: e ? e.name : (k.name || 'Base'), price: Math.round(r * 100) / 100,
         from: k.raw > 0 ? 'raw' : 'graded', grades: k.raw > 0 ? undefined : Object.keys(k.grades || {}),
-        sales: k.sales || 0, factor: Math.round(fac.f * 1000) / 1000, level: Math.round((r / fac.f) * 100) / 100 });
+        sales: k.sales || 0, factor: Math.round(fac.f * 1000) / 1000, _logf: Math.log(fac.f), _r: r });
     }
+  }
+  // How far THIS player's prices stretch along the ladder (estimator-core
+  // fitSpread): k above 1 where his rare parallels run further over his base
+  // than the product's average player's do. 1 with too little to go on.
+  const spread = EST.fitSpread(points, params.spreadTau);
+  const kSpread = spread.k;
+  const anchors = points.map(p => p.logr - kSpread * p.logf);
+  for (const a of anchorDetail) {
+    a.level = Math.round((a._r / Math.exp(kSpread * a._logf)) * 100) / 100;
+    delete a._logf; delete a._r;
   }
   // With no sale of its own to stand on, a card can be given its level: the
   // player's, or the product's typical card (/api/checklist-prices).
@@ -11271,14 +11301,21 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     if (level == null) continue;
     const fac = factorOf(e);
     if (!fac) continue;
+    // The ladder's step, stretched by the player's spread, and corrected by
+    // what the backtest measured this kind of estimate to miss by.
+    const cal = (params.calib || {})[fac.basis] || 1;
+    const eff = Math.pow(fac.f, kSpread) * cal;
     const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
     const conf = fac.basis === 'ladder' && fac.n >= 8 && levelFrom === 'card' ? 'medium' : 'low';
     const rungHere = e.keys.map(k => rungs[k]).find(Boolean);
-    out.push({ ...entry, _price: level * fac.f, _fac: fac, _base: e.keys.includes('') || e.keys.includes('silver'), estimate: {
+    out.push({ ...entry, _keys: e.keys, _price: level * eff, _fac: fac, _base: e.keys.includes('') || e.keys.includes('silver'), estimate: {
       method: 'parallel-ladder', basis: fac.basis, confidence: conf, basedOnCards: fac.n,
       anchors: anchors.length, oneOfOne, levelFrom,
       workings: {
-        level: Math.round(level * 100) / 100, levelFrom, factor: Math.round(fac.f * 1000) / 1000,
+        level: Math.round(level * 100) / 100, levelFrom, factor: Math.round(eff * 1000) / 1000,
+        ...(eff !== fac.f ? { ladderFactor: Math.round(fac.f * 1000) / 1000 } : {}),
+        ...(kSpread !== 1 ? { spread: Math.round(kSpread * 1000) / 1000 } : {}),
+        ...(cal !== 1 ? { calibration: cal } : {}),
         anchors: anchorDetail.slice(0, 6),
         // Comps from other cards in the product that tie this rung in.
         examples: fac.basis === 'ladder' && rungHere && rungHere.ex ? rungHere.ex : [],
@@ -11323,7 +11360,9 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
         : [Math.min(1, e._fac.lo), Math.max(1, e._fac.hi)];
       Object.assign(e.estimate, { price: round2(p), low: round2(p * lo), high: round2(p * hi) });
     }
-    delete e._price; delete e._fac; delete e._base;
+    // Which checklist keys an entry answers to, for the backtest; not in JSON.
+    if (e._keys) Object.defineProperty(e, 'keys', { value: e._keys, enumerable: false });
+    delete e._price; delete e._fac; delete e._base; delete e._keys;
   }
   // A sold parallel the checklist names some other way ("Blue Red White" for
   // "Red, White and Blue") is still a place to switch to: listed after the
@@ -11334,6 +11373,7 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
   // The card's own level, for callers pricing its neighbours. A property, not
   // an element: it does not reach the JSON.
   out.level = anchors.length ? level : null;
+  out.spread = kSpread;
   return out;
 }
 
@@ -11372,6 +11412,16 @@ app.get('/api/checklist-prices', async (req, res) => {
 });
 
 async function _checklistPrices(pid, player) {
+  const bk = await _checklistBuckets(pid, player);
+  if (!bk.available) return bk;
+  const params = await _estimatorParams();
+  return _priceBuckets(bk, params, new Date().toISOString().slice(0, 10));
+}
+
+// A player's sales in a product, placed on the checklist cards they are:
+// `mine` holds each card with its sales per parallel key (`keys`), `rows`
+// everything read. Shared by the prices above and the estimator's backtest.
+async function _checklistBuckets(pid, player) {
   const doc = await _checklistProduct(pid);
   if (!doc) return { available: false, reason: 'unknown-product' };
   const pl = _plNorm(player);
@@ -11450,15 +11500,49 @@ async function _checklistPrices(pid, player) {
   const pooledFor = (kind) => ladder ? {
     line: (ladder.curves || {})[`${line}|${kind}`] || null, all: (ladder.curves || {})[`*|${kind}`] || null,
   } : null;
+  const kept = rows.filter(r => !_isPackListing(r.title, r.player) && !_isOversize(r.title));
+  return { available: true, pid, player, doc, mine, rows: kept, salesRead: rows.length, ladder, fitFor, pooledFor };
+}
 
+// The player's drift (estimator-core trendDrift) from his sales before
+// `refIso`: repeat sales of one card, parallel and grade, so a dear card
+// selling this week and a cheap one last month is not read as a trend.
+function _playerDrift(rows, params, refIso) {
+  if (!(params.trendTau > 0)) return 0;
+  const obs = [];
+  for (const r of rows) {
+    if (!(r.price_cents > 0) || String(r.sold_date) >= refIso) continue;
+    obs.push({ group: `${r.set_name}|${r.card_number}|${_ladderKey(r.parallel || '')}|${_gradeBucket(r)}`,
+               age: EST.daysBetween(r.sold_date, refIso), logp: Math.log(r.price_cents) });
+  }
+  return EST.trendDrift(obs, params.trendTau).drift;
+}
+
+// One parallel's sales as the estimator takes them: each moved to `refIso`
+// by the player's drift, the raw price a recency-weighted median, each
+// grade's the median of its moved prices. With the default settings this is
+// exactly the plain medians it always was.
+function _knownFromRows(key, b, rows, params, drift, refIso) {
+  const adjust = drift !== 0 || params.halfLife > 0;
+  const ageOf = (r) => Math.max(0, EST.daysBetween(r.sold_date, refIso));
+  const raws = rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
+  const raw = !raws.length ? null : adjust
+    ? EST.adjustedMedian(raws.map(r => ({ price: r.price_cents / 100, age: ageOf(r) })), { drift, halfLife: params.halfLife })
+    : _medOf(raws.map(r => r.price_cents / 100));
+  const moved = !adjust ? rows : rows.map(r => ({ ...r, price_cents: r.price_cents * Math.exp(drift * ageOf(r)) }));
+  return { key, name: b.name, itemId: b.itemId, sales: rows.length, raw, rawN: raws.length,
+           grades: _gradeMedians(moved), gradeN: _gradeCounts(rows) };
+}
+
+function _priceBuckets(bk, params, refIso) {
+  const { pid, player, mine, ladder, fitFor, pooledFor } = bk;
+  const drift = _playerDrift(bk.rows, params, refIso);
   // First the cards with sales of their own, which also say where the player
   // sits in each category; then the rest, priced from that.
   const priced = mine.map(m => {
     const kind = _CATEGORY_KIND[m.set.category] || '';
-    const known = [...m.keys].map(([key, b]) => ({ key, name: b.name, itemId: b.itemId, sales: b.sales,
-      raw: b.raw.length ? _medOf(b.raw) : null, rawN: b.raw.length,
-      grades: _gradeMedians(b.rows), gradeN: _gradeCounts(b.rows) }));
-    const list = _checklistParallels(m.set, known, fitFor(kind), pooledFor(kind)) || [];
+    const known = [...m.keys].map(([key, b]) => _knownFromRows(key, b, b.rows, params, drift, refIso));
+    const list = _checklistParallels(m.set, known, fitFor(kind), pooledFor(kind), { params }) || [];
     return { m, kind, known, list };
   });
   const playerLevel = {};
@@ -11473,7 +11557,7 @@ async function _checklistPrices(pid, player) {
       const level = own && own.length ? _medOf(own) : (fit && fit.levels ? fit.levels.q25 : null);
       if (level) {
         list = _checklistParallels(p.m.set, p.known, fit, pooledFor(p.kind),
-          { level, levelFrom: own && own.length ? 'player' : 'product' }) || list;
+          { params, level, levelFrom: own && own.length ? 'player' : 'product' }) || list;
       }
     }
     return { set: p.m.set.name, category: p.m.set.category, number: p.m.card.number,
@@ -11485,8 +11569,164 @@ async function _checklistPrices(pid, player) {
                   ...(estimate ? { low: estimate.low, high: estimate.high, confidence: estimate.confidence } : {}) })) };
   });
   return { available: true, product: pid, player, builtAt: ladder ? ladder.builtAt : null,
-           salesRead: rows.length, cards };
+           salesRead: bk.salesRead, ...(drift ? { drift: Math.round(drift * 30 * 1000) / 10 } : {}), cards };
 }
+
+// ---- The estimator's backtest ----
+//
+// Does an estimate for a parallel nobody has sold come out near what it then
+// sells for? Every day this takes the players and products with the most
+// parallel sales, and for each parallel that sold in the last TEST_DAYS days
+// it pretends it never had: the parallel's own sales are hidden entirely, the
+// card's other parallels are cut off at the start of the window, and the
+// estimator prices it from those as it would have then. The estimate is
+// scored against what the parallel really sold for raw in the window.
+//
+// Each player's market is different and keeps moving, so the estimator fits
+// the player's own drift and spread (estimator-core). What the backtest tunes
+// is how far those per-player fits are trusted — the half-life, the priors —
+// by trying each setting in EST.PARAM_GRID on the same cases. A setting is
+// adopted only if it beats the old estimator by EST.MIN_GAIN points of median
+// error on EST.MIN_CASES or more cases; otherwise the old behaviour stays.
+// The per-basis calibration is adopted only if it helps on players it was
+// not fitted to (EST.crossCalibrated).
+//
+// Known limit: the product ladders were built from a year that includes the
+// window, so a ladder rung has seen the hidden sales (at most one card in a
+// product's many). Everything card- and player-level is strictly before it.
+const ESTIMATOR_TEST_DAYS = 21;
+const ESTIMATOR_PAIRS = 40;
+
+function _backtestBuckets(bk, params, testDays, refIso) {
+  const t0 = new Date(Date.parse(refIso) - testDays * EST.DAY).toISOString().slice(0, 10);
+  const drift = _playerDrift(bk.rows, params, t0);
+  const cases = [];
+  for (const m of bk.mine) {
+    if (m.keys.size < 2) continue;
+    const kind = _CATEGORY_KIND[m.set.category] || '';
+    for (const [key, b] of m.keys) {
+      const actualRaw = b.rows.filter(r => String(r.sold_date) >= t0 && _gradeBucket(r) === 'Raw' && r.price_cents > 0)
+        .map(r => r.price_cents / 100);
+      if (!actualRaw.length) continue;
+      const known = [];
+      for (const [k2, b2] of m.keys) {
+        if (k2 === key) continue;
+        const before = b2.rows.filter(r => String(r.sold_date) < t0);
+        if (before.length) known.push(_knownFromRows(k2, b2, before, params, drift, t0));
+      }
+      if (!known.length) continue;
+      const list = _checklistParallels(m.set, known, bk.fitFor(kind), bk.pooledFor(kind), { params }) || [];
+      const e = list.find(x => x.estimate && x.keys && x.keys.includes(key));
+      if (!e || !(e.estimate.price > 0)) continue;
+      cases.push({ actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
+                   basis: e.estimate.basis, lifted: !!e.estimate.lifted,
+                   product: bk.pid, player: bk.player, card: m.card.number, parallel: e.name });
+    }
+  }
+  return cases;
+}
+
+// The player/product pairs to test on: the most parallel sales lately, in
+// products we hold a checklist for.
+async function _backtestPairs(db, want) {
+  const since = new Date(Date.now() - 45 * EST.DAY).toISOString().slice(0, 10);
+  const out = await db.prepare(
+    `SELECT player, year, set_name, COUNT(*) AS n FROM sales
+      WHERE sold_date >= ? AND parallel IS NOT NULL AND parallel != '' AND price_cents > 0
+      GROUP BY player, year, set_name ORDER BY n DESC LIMIT 400`
+  ).bind(since).all();
+  const index = await _cataloguedIndex();
+  const pairs = [], seen = new Set();
+  let tried = 0;
+  for (const r of (out && out.results) || []) {
+    if (pairs.length >= want || tried >= want * 3) break;
+    const hit = index ? matchSale(index, String(r.year || ''), String(r.set_name || '')) : null;
+    const pid = hit ? (typeof hit === 'string' ? hit : hit.id) : null;
+    const player = String(r.player || '').split(' / ')[0].trim();
+    if (!pid || !player) continue;
+    const id = `${pid}|${_plNorm(player)}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    tried++;
+    const bk = await _checklistBuckets(pid, player).catch(() => null);
+    if (bk && bk.available) pairs.push(bk);
+  }
+  return pairs;
+}
+
+// Tune on buckets already read: pure apart from the estimator's own reads.
+function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
+  const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
+  const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
+  const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau;
+  const runs = EST.PARAM_GRID.map(g => {
+    const cases = casesFor(plain(g));
+    return { params: g, cases, score: EST.scoreCases(cases) };
+  });
+  const baseline = runs.find(r => isDefault(r.params));
+  const eligible = runs.filter(r => r.score.n >= EST.MIN_CASES);
+  const best = eligible.length ? eligible.reduce((a, b) => (b.score.mdape < a.score.mdape ? b : a)) : baseline;
+  const gain = baseline.score.n && best.score.n ? baseline.score.mdape - best.score.mdape : 0;
+  const chosen = gain >= EST.MIN_GAIN ? best : baseline;
+  const cross = EST.scoreCases(EST.crossCalibrated(chosen.cases));
+  const calibHelps = chosen.score.n >= EST.MIN_CASES && cross.n && cross.mdape <= chosen.score.mdape - 0.5;
+  const calib = calibHelps ? EST.calibrate(chosen.cases) : {};
+  const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25 });
+  // Where it still misses most: per player, by median error.
+  const byPlayer = new Map();
+  for (const c of chosen.cases) {
+    if (!byPlayer.has(c.player)) byPlayer.set(c.player, []);
+    byPlayer.get(c.player).push(c);
+  }
+  const players = [...byPlayer].map(([player, xs]) => ({ player, ...EST.scoreCases(xs) }))
+    .map(({ byTier, byBasis, ...rest }) => rest)
+    .filter(p => p.n >= 3).sort((a, b) => b.mdape - a.mdape);
+  return {
+    params: { halfLife: chosen.params.halfLife, trendTau: chosen.params.trendTau, spreadTau: chosen.params.spreadTau },
+    calib,
+    report: {
+      builtAt: new Date().toISOString(), refIso, testDays, pairs: bks.length,
+      adopted: chosen === baseline ? 'old estimator (nothing beat it by enough)' : 'tuned',
+      baseline: baseline.score, chosen: chosen.score, gainPoints: Math.round(gain * 10) / 10,
+      calibration: { adopted: !!calibHelps, multipliers: calib, outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias } },
+      grid: runs.map(brief).sort((a, b) => (a.mdape ?? 1e9) - (b.mdape ?? 1e9)).slice(0, 8),
+      hardestPlayers: players.slice(0, 10),
+      worstCases: [...chosen.cases].sort((a, b) => Math.abs(Math.log(b.predicted / b.actual)) - Math.abs(Math.log(a.predicted / a.actual)))
+        .slice(0, 10),
+    },
+  };
+}
+
+async function runEstimatorBacktest({ save = true, pairs = ESTIMATOR_PAIRS } = {}) {
+  return _asD1Source('estimator-backtest', async () => {
+    const db = getNflDb();
+    if (!db) return { ok: false, reason: 'no dataset' };
+    await _parallelLadder();
+    const bks = await _backtestPairs(db, pairs);
+    if (!bks.length) return { ok: false, reason: 'no player/product pairs with checklist sales' };
+    const tuned = _tuneEstimator(bks, { refIso: new Date().toISOString().slice(0, 10) });
+    if (save) {
+      await cachePut(ESTIMATOR_PARAMS_KEY, tuned, 60 * 60 * 24 * 14);
+      _primeEstimatorParams(tuned);
+    }
+    return { ok: true, saved: save, ...tuned };
+  });
+}
+
+// GET /api/debug/estimate-accuracy — the last backtest: how close estimates
+// for unsold parallels came, the settings adopted, and where it misses most.
+// ?run=1 runs one now (&save=1 also adopts its result). Admin only.
+app.get('/api/debug/estimate-accuracy', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    if (req.query.run) return res.json(await runEstimatorBacktest({ save: !!req.query.save }));
+    const stored = await cacheGet(ESTIMATOR_PARAMS_KEY);
+    res.json(stored ? { available: true, ..._fromCache(stored) }
+      : { available: false, reason: 'no backtest yet — it runs daily at 08:xx UTC, or ?run=1' });
+  } catch (err) {
+    res.json({ available: false, error: err && err.message });
+  }
+});
 
 // ---- /api/card-analysis ----
 // Everything we hold on ONE card, reached by clicking a sold result. Identity
@@ -12316,6 +12556,18 @@ async function _cardAnalysisRoute(req, res) {
     // the request's whole CPU budget is around 50ms. A count here is a
     // preview; switching re-derives it exactly through the pipeline above.
     const parallels = [];
+    // The estimator's settings, and the player's drift from the rows at hand,
+    // so an unsold parallel here is priced as Rainbow Mode prices it.
+    const estParams = await _estimatorParams();
+    const estRef = new Date().toISOString().slice(0, 10);
+    const estDrift = _playerDrift([...all, ...[...siblingRows.values()].flatMap(b => b.rows)], estParams, estRef);
+    const estAdjust = estDrift !== 0 || estParams.halfLife > 0;
+    const rawNowByKey = new Map();
+    const rawNowOf = (rows) => {
+      const raws = rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
+      return raws.length ? EST.adjustedMedian(raws.map(r => ({ price: r.price_cents / 100,
+        age: Math.max(0, EST.daysBetween(r.sold_date, estRef)) })), { drift: estDrift, halfLife: estParams.halfLife }) : null;
+    };
     {
       const seedRun = _printRun(String(seed.title || ''));
       let subsetBudget = 400;
@@ -12350,6 +12602,7 @@ async function _cardAnalysisRoute(req, res) {
         // Its raw price, for anchoring the ladder: a slab's price says little
         // about where the card's raw copies sit.
         const raw = kept.filter(r => _gradeBucket(r) === 'Raw').map(r => (r.price_cents || 0) / 100).filter(p => p > 0);
+        if (estAdjust) rawNowByKey.set(key, rawNowOf(kept));
         parallels.push({
           key, name: bucket.name, sales: kept.length, itemId: rep.item_id,
           median: Math.round(prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2),
@@ -12379,7 +12632,7 @@ async function _cardAnalysisRoute(req, res) {
       const known = [
         ...(current ? [current] : []),
         ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales,
-          raw: p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts })),
+          raw: rawNowByKey.get(p.key) != null ? rawNowByKey.get(p.key) : p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts })),
       ];
       const ladder = await _parallelLadder();
       const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;
@@ -12390,7 +12643,7 @@ async function _cardAnalysisRoute(req, res) {
         const line = String((doc && doc.brand) || '').toLowerCase() || 'other';
         pooled = { line: (ladder.curves || {})[`${line}|${kind}`] || null, all: (ladder.curves || {})[`*|${kind}`] || null };
       }
-      return _checklistParallels(set, known, fit, pooled);
+      return _checklistParallels(set, known, fit, pooled, { params: estParams });
     };
     // The seed's own parallel, priced off the others, for a card with no sale
     // of its own in it.
@@ -12569,7 +12822,7 @@ async function _cardAnalysisRoute(req, res) {
       const slabs = grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL);
       checklistParallels = await checklistFor({
         key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
-        raw: rawG ? ((rawG.estimate && rawG.estimate.price) || rawG.median) : null,
+        raw: rawG ? ((estAdjust && rawNowOf(all)) || (rawG.estimate && rawG.estimate.price) || rawG.median) : null,
         rawN: rawG ? rawG.sales : 0,
         grades: Object.fromEntries(slabs.map(g => [g.label, g.median])),
         gradeN: Object.fromEntries(slabs.map(g => [g.label, g.sales])),
@@ -16618,7 +16871,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
