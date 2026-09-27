@@ -63,6 +63,14 @@ const check = (label, ok, detail) => {
   const cal = EST.calibrate(cases);
   check('calibration lifts a basis the backtest shows running low, shrunk by its sample',
     cal.ladder > 1.1 && cal.ladder < 1.25, JSON.stringify(cal));
+  // A correction by the estimate's price band: fair, since the band is known
+  // before the sale.
+  const hi = [];
+  for (let i = 0; i < 40; i++) hi.push({ actual: 400, predicted: 300, basis: 'ladder', player: `p${i % 8}` });
+  const band = EST.calibrate(hi, EST.KEY_BAND);
+  check('a band that runs low is lifted by band, and bases and bands multiply',
+    band['band:$250+'] > 1.15 && Math.abs(EST.calibFactor({ 'band:$250+': 1.2, ladder: 1.1 }, 'ladder', 300) - 1.32) < 1e-9
+    && EST.calibFactor({ 'band:$250+': 1.2 }, 'ladder', 30) === 1, JSON.stringify(band));
   const sc = EST.scoreCases(cases);
   check('scores are median error and bias in percent', sc.mdape === 20 && sc.bias === -20, JSON.stringify({ mdape: sc.mdape, bias: sc.bias }));
 }

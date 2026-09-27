@@ -158,6 +158,10 @@ function scoreCases(cases) {
   return {
     ...summarise(ok),
     byTier: by(c => TIERS.find(([lo, hi]) => c.actual >= lo && c.actual < hi)[2]),
+    // By what we ESTIMATED: the fair view of a lean. Grouped by the actual
+    // price, the top tier collects the sales that happened to go high, so it
+    // always looks underestimated (regression to the mean).
+    byEstimateTier: by(c => TIERS.find(([lo, hi]) => c.predicted >= lo && c.predicted < hi)[2]),
     byBasis: by(c => c.basis || 'unknown'),
   };
 }
@@ -165,11 +169,17 @@ function scoreCases(cases) {
 // A multiplier per basis from the backtest's own errors, shrunk toward 1 by
 // how few cases stand behind it and held to ±30%.
 const CALIB_PRIOR = 20;
-function calibrate(cases) {
+// Keyed by basis ('ladder', 'base'...) or by the estimate's price band
+// ('band:$50-250'), which is fair to correct on: the band is known before the
+// sale, unlike the actual price.
+const tierOf = (p) => (TIERS.find(([lo, hi]) => p >= lo && p < hi) || TIERS[0])[2];
+const KEY_BASIS = (c) => c.basis || 'unknown';
+const KEY_BAND = (c) => 'band:' + tierOf(c.predicted);
+function calibrate(cases, keyOf = KEY_BASIS) {
   const by = new Map();
   for (const c of cases) {
     if (!(c.actual > 0 && c.predicted > 0)) continue;
-    const k = c.basis || 'unknown';
+    const k = keyOf(c);
     if (!by.has(k)) by.set(k, []);
     by.get(k).push(Math.log(c.actual / c.predicted));
   }
@@ -182,18 +192,19 @@ function calibrate(cases) {
   return out;
 }
 
-const withCalib = (cases, calib) => cases.map(c => ({ ...c, predicted: c.predicted * ((calib || {})[c.basis] || 1) }));
+const calibFactor = (calib, basis, predicted) => ((calib || {})[basis] || 1) * ((calib || {})['band:' + tierOf(predicted)] || 1);
+const withCalib = (cases, calib) => cases.map(c => ({ ...c, predicted: c.predicted * calibFactor(calib, c.basis, c.predicted) }));
 
 // Calibration judged on cases it was not fitted to: two folds by player, so
 // one player's many parallels cannot fit and then grade themselves.
-function crossCalibrated(cases) {
+function crossCalibrated(cases, keyOf = KEY_BASIS) {
   const fold = (c) => {
     let h = 0;
     for (const ch of String(c.player || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
     return h % 2;
   };
   const a = cases.filter(c => fold(c) === 0), b = cases.filter(c => fold(c) === 1);
-  return [...withCalib(b, calibrate(a)), ...withCalib(a, calibrate(b))];
+  return [...withCalib(b, calibrate(a, keyOf)), ...withCalib(a, calibrate(b, keyOf))];
 }
 
 // The settings the tuner tries. Each is a hyperparameter of a per-player fit,
@@ -229,5 +240,5 @@ const MAX_EXTRA_BIAS = 10;
 module.exports = {
   DEFAULT_PARAMS, PARAM_DIMS, PARAM_START, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, MAX_EXTRA_BIAS, DAY,
   daysBetween, trendDrift, adjustedMedian, fitSpread,
-  scoreCases, calibrate, withCalib, crossCalibrated,
+  scoreCases, calibrate, withCalib, crossCalibrated, calibFactor, tierOf, KEY_BASIS, KEY_BAND,
 };

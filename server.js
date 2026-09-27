@@ -11427,7 +11427,8 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     if (lvl == null) continue;
     // The ladder's step, stretched by the player's spread, and corrected by
     // what the backtest measured this kind of estimate to miss by.
-    const cal = (params.calib || {})[fac.basis] || 1;
+    const raw = lvl != null ? lvl * Math.pow(fac.f, kSpread) : null;
+    const cal = raw != null ? EST.calibFactor(params.calib, fac.basis, raw) : 1;
     const eff = Math.pow(fac.f, kSpread) * cal;
     const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
     const conf = fac.basis === 'ladder' && fac.n >= 8 && levelFrom === 'card' ? 'medium' : 'low';
@@ -11858,9 +11859,20 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const best = eligible.length ? eligible.reduce((a, b) => (objective(b) < objective(a) ? b : a)) : baseline;
   const gain = baseline.score.n && best.score.n ? objective(baseline) - objective(best) : 0;
   const chosen = gain >= EST.MIN_GAIN ? best : baseline;
-  const cross = EST.scoreCases(EST.crossCalibrated(chosen.cases));
-  const calibHelps = chosen.score.n >= EST.MIN_CASES && cross.n && cross.mdape <= chosen.score.mdape - 0.5;
-  const calib = calibHelps ? EST.calibrate(chosen.cases) : {};
+  // Corrections by basis, by the estimate's price band, or both, each judged
+  // on players it was not fitted to; the best is kept if it misses at least
+  // half a point less without leaning further off.
+  const calibOptions = [
+    ['basis', (cs) => EST.crossCalibrated(cs, EST.KEY_BASIS), (cs) => EST.calibrate(cs, EST.KEY_BASIS)],
+    ['band', (cs) => EST.crossCalibrated(cs, EST.KEY_BAND), (cs) => EST.calibrate(cs, EST.KEY_BAND)],
+    ['both', (cs) => EST.crossCalibrated(EST.crossCalibrated(cs, EST.KEY_BAND), EST.KEY_BASIS),
+             (cs) => ({ ...EST.calibrate(cs, EST.KEY_BAND), ...EST.calibrate(EST.withCalib(cs, EST.calibrate(cs, EST.KEY_BAND)), EST.KEY_BASIS) })],
+  ].map(([name, crossOf, fitOf]) => ({ name, cross: EST.scoreCases(crossOf(chosen.cases)), fitOf }));
+  const calibBest = calibOptions.reduce((a, b) => ((b.cross.mdape ?? 1e9) < (a.cross.mdape ?? 1e9) ? b : a));
+  const cross = calibBest.cross;
+  const calibHelps = chosen.score.n >= EST.MIN_CASES && cross.n && cross.mdape <= chosen.score.mdape - 0.5
+    && Math.abs(cross.bias || 0) <= Math.abs(chosen.score.bias || 0) + EST.MAX_EXTRA_BIAS;
+  const calib = calibHelps ? calibBest.fitOf(chosen.cases) : {};
   const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25,
     numberedN: r.numbered.n, numberedMdape: r.numbered.mdape, numberedBias: r.numbered.bias, eligible: eligibleRun(r) });
   // Where it still misses most: per player, by median error.
@@ -11886,7 +11898,9 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       noiseFloor: _noiseFloor(chosen.cases),
       evaluated: runs.length,
       numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
-      calibration: { adopted: !!calibHelps, multipliers: calib, outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias } },
+      calibration: { adopted: !!calibHelps, kind: calibBest.name, multipliers: calib,
+        outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias, byEstimateTier: cross.byEstimateTier },
+        options: calibOptions.map(o => ({ kind: o.name, mdape: o.cross.mdape, bias: o.cross.bias })) },
       grid: [...runs].sort((a, b) => (objective(a) ?? 1e9) - (objective(b) ?? 1e9)).map(brief).slice(0, 8),
       hardestPlayers: players.slice(0, 10),
       worstNumbered: numberedOf(chosen.cases)
