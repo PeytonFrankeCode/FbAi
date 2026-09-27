@@ -230,6 +230,21 @@ for (const [num, player, level, k, drift] of PLAYERS) {
     messy.ok ? `all ${messy.report.baseline.mdape}% -> ${messy.report.chosen.mdape}%` : '');
 
   const src = require('fs').readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+  // The report key: dry runs only.
+  process.env.ESTIMATOR_REPORT_KEY = 'report-key-123';
+  process.env.ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin-pw-456';
+  const server = S.app.listen(3261);
+  const hit = async (q, headers) => (await fetch(`http://127.0.0.1:3261/api/debug/estimate-accuracy${q}`, { headers })).status;
+  const noKey = await hit('?run=1', {});
+  const wrong = await hit('?run=1', { 'x-report-key': 'nope' });
+  const dry = await hit('?run=1', { 'x-report-key': 'report-key-123' });
+  const save = await hit('?run=1&save=1', { 'x-report-key': 'report-key-123' });
+  const adminSave = await hit('?run=1&save=1', { 'x-admin-key': process.env.ADMIN_PASSWORD });
+  server.close();
+  check('the report key runs a dry run, and nothing without it or with a wrong one', dry === 200 && noKey === 403 && wrong === 403,
+    `dry ${dry}, none ${noKey}, wrong ${wrong}`);
+  check('  ...but cannot save settings; the admin password can', save === 403 && adminSave === 200, `key save ${save}, admin save ${adminSave}`);
+
   check('the cron runs the backtest daily', /getUTCHours\(\) === 8 && aliasTick\)[\s\S]{0,80}runEstimatorBacktest\(\)/.test(src));
 
   console.log(failures ? `\n${failures} check(s) failed` : '\nall estimator-backtest checks passed');

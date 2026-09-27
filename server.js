@@ -11800,8 +11800,20 @@ async function runEstimatorBacktest({ save = true, pairs = ESTIMATOR_PAIRS } = {
 // GET /api/debug/estimate-accuracy — the last backtest: how close estimates
 // for unsold parallels came, the settings adopted, and where it misses most.
 // ?run=1 runs one now (&save=1 also adopts its result). Admin only.
+// A narrower key than the admin password (ESTIMATOR_REPORT_KEY, header
+// x-report-key): it reads the report and runs the dry-run test, nothing else
+// — never ?save, never any other admin route. Lets the backtest be worked on
+// without handing out the admin password; delete the secret to revoke it.
+function _isReportKeyReq(req) {
+  const want = process.env.ESTIMATOR_REPORT_KEY;
+  const got = req.headers['x-report-key'];
+  return !!want && !!got && _safeEqual(String(got), want);
+}
+
 app.get('/api/debug/estimate-accuracy', async (req, res) => {
-  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = isAdminReq(req);
+  if (!admin && !_isReportKeyReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  if (req.query.save && !admin) return res.status(403).json({ error: 'Saving settings needs the admin password' });
   try {
     if (req.query.run) return res.json(await runEstimatorBacktest({ save: !!req.query.save }));
     const stored = await cacheGet(ESTIMATOR_PARAMS_KEY);
