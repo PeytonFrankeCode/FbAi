@@ -170,8 +170,13 @@ function scoreCases(cases) {
 }
 
 // A multiplier per basis from the backtest's own errors, shrunk toward 1 by
-// how few cases stand behind it and held to ±30%.
+// how few cases stand behind it and held to CALIB_MIN..CALIB_MAX.
 const CALIB_PRIOR = 20;
+// Wide enough for what the market shows: live, estimates under $10 ran 46%
+// low (a sale rarely clears for under $1-2, so cheap estimates undershoot) and
+// a ±30% cap held the band's correction at 1.3. Every correction is still
+// judged on players it was not fitted to before it is used.
+const CALIB_MIN = 0.55, CALIB_MAX = 1.8;
 // Keyed by basis ('ladder', 'base'...) or by the estimate's price band
 // ('band:$50-250'), which is fair to correct on: the band is known before the
 // sale, unlike the actual price.
@@ -194,7 +199,7 @@ function calibrate(cases, keyOf = KEY_BASIS) {
   for (const [k, xs] of by) {
     if (xs.length < 10) continue;
     const m = _med(xs) * xs.length / (xs.length + CALIB_PRIOR);
-    out[k] = Math.round(Math.max(0.7, Math.min(1.3, Math.exp(m))) * 1000) / 1000;
+    out[k] = Math.round(Math.max(CALIB_MIN, Math.min(CALIB_MAX, Math.exp(m))) * 1000) / 1000;
   }
   return out;
 }

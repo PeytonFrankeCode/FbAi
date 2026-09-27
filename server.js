@@ -11959,8 +11959,15 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso, start = n
   const okOptions = calibOptions.filter(calOk);
   const calibBest = okOptions.length ? okOptions.reduce((a, b) => (calObj(b) < calObj(a) ? b : a)) : calibOptions[0];
   const cross = calibBest.cross;
-  const calibHelps = chosen.score.n >= EST.MIN_CASES && okOptions.includes(calibBest) && calObj(calibBest) <= baseObj - 0.5;
-  const calib = calibHelps ? calibBest.fitOf(chosen.cases) : {};
+  // Kept if it helps numbered cases by half a point, or leaves them no worse
+  // and helps all cases by half a point (a correction for cheap base cards
+  // touches no numbered case).
+  const calHelps = (o) => calObj(o) <= baseObj - 0.5 || (byNumbered
+    && (o.crossNumbered.mdape ?? 1e9) <= chosen.numbered.mdape + 0.1 && o.cross.mdape <= chosen.score.mdape - 0.5);
+  const helping = okOptions.filter(calHelps);
+  const calibPick = helping.length ? helping.reduce((a, b) => ((b.cross.mdape + (b.crossNumbered.mdape ?? 0)) < (a.cross.mdape + (a.crossNumbered.mdape ?? 0)) ? b : a)) : calibBest;
+  const calibHelps = chosen.score.n >= EST.MIN_CASES && helping.length > 0;
+  const calib = calibHelps ? calibPick.fitOf(chosen.cases) : {};
   const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25,
     numberedN: r.numbered.n, numberedMdape: r.numbered.mdape, numberedBias: r.numbered.bias, eligible: eligibleRun(r) });
   // Where it still misses most: per player, by median error.
@@ -11987,8 +11994,8 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso, start = n
       evaluated: runs.length,
       startedFrom: start ? 'saved settings' : 'old estimator',
       numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
-      calibration: { adopted: !!calibHelps, kind: calibBest.name, multipliers: calib,
-        outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias, byEstimateTier: cross.byEstimateTier },
+      calibration: { adopted: !!calibHelps, kind: calibPick.name, multipliers: calib,
+        outOfSample: { n: calibPick.cross.n, mdape: calibPick.cross.mdape, bias: calibPick.cross.bias, byEstimateTier: calibPick.cross.byEstimateTier },
         options: calibOptions.map(o => ({ kind: o.name, mdape: o.cross.mdape, bias: o.cross.bias,
           numberedMdape: o.crossNumbered.mdape, numberedBias: o.crossNumbered.bias, eligible: calOk(o) })) },
       grid: [...runs].sort((a, b) => (objective(a) ?? 1e9) - (objective(b) ?? 1e9)).map(brief).slice(0, 8),
