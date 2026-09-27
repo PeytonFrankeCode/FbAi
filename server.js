@@ -11309,7 +11309,8 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     const e = entryOf(k);
     const fac = e ? factorOf(e) : (baseF && rungs[k.key] ? { f: rungs[k.key].f / baseF } : null);
     if (fac) {
-      points.push({ logf: Math.log(fac.f), logr: Math.log(r), w: Math.max(1, Math.min(5, k.rawN || k.sales || 1)) });
+      points.push({ logf: Math.log(fac.f), logr: Math.log(r), w: Math.max(1, Math.min(5, k.rawN || k.sales || 1)),
+                    pr: e ? e.printRun || null : null, raw: k.raw > 0, detail: anchorDetail.length });
       anchorDetail.push({ name: e ? e.name : (k.name || 'Base'), price: Math.round(r * 100) / 100,
         from: k.raw > 0 ? 'raw' : 'graded', grades: k.raw > 0 ? undefined : Object.keys(k.grades || {}),
         sales: k.sales || 0, factor: Math.round(fac.f * 1000) / 1000, _logf: Math.log(fac.f), _r: r });
@@ -11343,9 +11344,24 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
                  ...(sold.raw > 0 ? { price: round2(sold.raw) } : eq > 0 ? { rawEquivalent: round2(eq) } : {}) });
       continue;
     }
-    if (level == null) continue;
     const fac = factorOf(e);
     if (!fac) continue;
+    // params.numberedFrom === 'larger': a numbered parallel is priced from
+    // this card's numbered parallels printed in LARGER runs — the /25 from
+    // the /99 and /75 that sold — raw where any sold raw. Between two
+    // numbered rungs the ladder's base cancels out, so an inflated base
+    // (unnamed parallels sold as base) cannot reach the estimate, and an
+    // unnumbered or base sale says nothing about a scarce copy.
+    let lvl = level, from = null;
+    if (params.numberedFrom === 'larger' && e.printRun) {
+      let cand = points.filter(p => p.pr && p.pr > e.printRun);
+      if (cand.some(p => p.raw)) cand = cand.filter(p => p.raw);
+      if (cand.length) {
+        lvl = Math.exp(_medOf(cand.map(p => p.logr - kSpread * p.logf)));
+        from = cand.map(p => anchorDetail[p.detail]).filter(Boolean);
+      }
+    }
+    if (lvl == null) continue;
     // The ladder's step, stretched by the player's spread, and corrected by
     // what the backtest measured this kind of estimate to miss by.
     const cal = (params.calib || {})[fac.basis] || 1;
@@ -11353,15 +11369,16 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
     const conf = fac.basis === 'ladder' && fac.n >= 8 && levelFrom === 'card' ? 'medium' : 'low';
     const rungHere = e.keys.map(k => rungs[k]).find(Boolean);
-    out.push({ ...entry, _keys: e.keys, _price: level * eff, _fac: fac, _base: e.keys.includes('') || e.keys.includes('silver'), estimate: {
+    out.push({ ...entry, _keys: e.keys, _price: lvl * eff, _fac: fac, _base: e.keys.includes('') || e.keys.includes('silver'), estimate: {
       method: 'parallel-ladder', basis: fac.basis, confidence: conf, basedOnCards: fac.n,
-      anchors: anchors.length, oneOfOne, levelFrom,
+      anchors: from ? from.length : anchors.length, oneOfOne, levelFrom: from ? 'larger-numbered' : levelFrom,
+      ...(from ? { fromLarger: true } : {}),
       workings: {
-        level: Math.round(level * 100) / 100, levelFrom, factor: Math.round(eff * 1000) / 1000,
+        level: Math.round(lvl * 100) / 100, levelFrom: from ? 'larger-numbered' : levelFrom, factor: Math.round(eff * 1000) / 1000,
         ...(eff !== fac.f ? { ladderFactor: Math.round(fac.f * 1000) / 1000 } : {}),
         ...(kSpread !== 1 ? { spread: Math.round(kSpread * 1000) / 1000 } : {}),
         ...(cal !== 1 ? { calibration: cal } : {}),
-        anchors: anchorDetail.slice(0, 6),
+        anchors: (from || anchorDetail).slice(0, 6),
         // Comps from other cards in the product that tie this rung in.
         examples: fac.basis === 'ladder' && rungHere && rungHere.ex ? rungHere.ex : [],
         refName: baseF ? 'Base' : null,
@@ -11665,7 +11682,12 @@ function _backtestBuckets(bk, params, testDays, refIso) {
       const e = list.find(x => x.estimate && x.keys && x.keys.includes(key));
       if (!e || !(e.estimate.price > 0)) continue;
       const w = e.estimate.workings || {};
-      cases.push({ actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
+      // A numbered parallel with a larger numbered run of the card sold
+      // before the window: the case the estimator exists for.
+      const runs = _runsOfSet(m.set);
+      const pr = runs.get(key) || null;
+      const larger = !!pr && known.some(k => (runs.get(k.key) || 0) > pr);
+      cases.push({ pr, larger, actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
                    basis: e.estimate.basis, lifted: !!e.estimate.lifted, factor: w.factor,
                    // What the estimate stood on, for reading a miss.
                    from: (w.anchors || []).slice(0, 4).map(x => `${x.name} $${x.price}${x.from === 'graded' ? ' (slabs)' : ''} ×${x.sales} at step ${x.factor}`).join(', '),
@@ -11707,20 +11729,29 @@ async function _backtestPairs(db, want) {
 function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
-  const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use';
+  const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
+    && (g.numberedFrom || 'all') === 'all';
+  const numberedOf = (cases) => cases.filter(c => c.larger);
   const runs = EST.PARAM_GRID.map(g => {
     const cases = casesFor(plain(g));
-    return { params: g, cases, score: EST.scoreCases(cases) };
+    return { params: g, cases, score: EST.scoreCases(cases), numbered: EST.scoreCases(numberedOf(cases)) };
   });
   const baseline = runs.find(r => isDefault(r.params));
-  const eligible = runs.filter(r => r.score.n >= EST.MIN_CASES);
-  const best = eligible.length ? eligible.reduce((a, b) => (b.score.mdape < a.score.mdape ? b : a)) : baseline;
-  const gain = baseline.score.n && best.score.n ? baseline.score.mdape - best.score.mdape : 0;
+  // Judged on numbered parallels priced from larger runs — what the
+  // estimator is for — once there are enough of them, provided the rest do
+  // not get worse by more than MIN_GAIN; on every case otherwise.
+  const byNumbered = baseline.numbered.n >= EST.MIN_NUMBERED_CASES;
+  const objective = (r) => (byNumbered ? r.numbered.mdape : r.score.mdape);
+  const eligible = runs.filter(r => r.score.n >= EST.MIN_CASES
+    && (!byNumbered || r.score.mdape <= baseline.score.mdape + EST.MIN_GAIN));
+  const best = eligible.length ? eligible.reduce((a, b) => (objective(b) < objective(a) ? b : a)) : baseline;
+  const gain = baseline.score.n && best.score.n ? objective(baseline) - objective(best) : 0;
   const chosen = gain >= EST.MIN_GAIN ? best : baseline;
   const cross = EST.scoreCases(EST.crossCalibrated(chosen.cases));
   const calibHelps = chosen.score.n >= EST.MIN_CASES && cross.n && cross.mdape <= chosen.score.mdape - 0.5;
   const calib = calibHelps ? EST.calibrate(chosen.cases) : {};
-  const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25 });
+  const brief = (r) => ({ params: r.params, n: r.score.n, mdape: r.score.mdape, bias: r.score.bias, within25: r.score.within25,
+    numberedN: r.numbered.n, numberedMdape: r.numbered.mdape });
   // Where it still misses most: per player, by median error.
   const byPlayer = new Map();
   for (const c of chosen.cases) {
@@ -11737,9 +11768,13 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       builtAt: new Date().toISOString(), refIso, testDays, pairs: bks.length,
       adopted: chosen === baseline ? 'old estimator (nothing beat it by enough)' : 'tuned',
       baseline: baseline.score, chosen: chosen.score, gainPoints: Math.round(gain * 10) / 10,
+      judgedOn: byNumbered ? 'numbered' : 'all',
+      numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
       calibration: { adopted: !!calibHelps, multipliers: calib, outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias } },
-      grid: runs.map(brief).sort((a, b) => (a.mdape ?? 1e9) - (b.mdape ?? 1e9)).slice(0, 8),
+      grid: [...runs].sort((a, b) => (objective(a) ?? 1e9) - (objective(b) ?? 1e9)).map(brief).slice(0, 8),
       hardestPlayers: players.slice(0, 10),
+      worstNumbered: numberedOf(chosen.cases)
+        .sort((a, b) => Math.abs(Math.log(b.predicted / b.actual)) - Math.abs(Math.log(a.predicted / a.actual))).slice(0, 8),
       worstCases: [...chosen.cases].sort((a, b) => Math.abs(Math.log(b.predicted / b.actual)) - Math.abs(Math.log(a.predicted / a.actual)))
         .slice(0, 10),
     },
@@ -11765,8 +11800,20 @@ async function runEstimatorBacktest({ save = true, pairs = ESTIMATOR_PAIRS } = {
 // GET /api/debug/estimate-accuracy — the last backtest: how close estimates
 // for unsold parallels came, the settings adopted, and where it misses most.
 // ?run=1 runs one now (&save=1 also adopts its result). Admin only.
+// A narrower key than the admin password (ESTIMATOR_REPORT_KEY, header
+// x-report-key): it reads the report and runs the dry-run test, nothing else
+// — never ?save, never any other admin route. Lets the backtest be worked on
+// without handing out the admin password; delete the secret to revoke it.
+function _isReportKeyReq(req) {
+  const want = process.env.ESTIMATOR_REPORT_KEY;
+  const got = req.headers['x-report-key'];
+  return !!want && !!got && _safeEqual(String(got), want);
+}
+
 app.get('/api/debug/estimate-accuracy', async (req, res) => {
-  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const admin = isAdminReq(req);
+  if (!admin && !_isReportKeyReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  if (req.query.save && !admin) return res.status(403).json({ error: 'Saving settings needs the admin password' });
   try {
     if (req.query.run) return res.json(await runEstimatorBacktest({ save: !!req.query.save }));
     const stored = await cacheGet(ESTIMATOR_PARAMS_KEY);

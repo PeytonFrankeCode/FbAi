@@ -36,6 +36,7 @@ const DEFAULT_PARAMS = Object.freeze({
   trendTau: 0,        // prior sd of daily drift, log units; 0 = no trend adjustment
   spreadTau: 0,       // prior sd of the spread k around 1; 0 = product spread for all
   floorBase: false,   // hold every parallel's step to at least base
+  numberedFrom: 'all', // 'larger': a numbered parallel is priced from this card's larger print runs
   slabs: 'use',       // 'use': slabs anchor like raw sales; 'fallback': only when nothing sold raw
   calib: {},          // basis -> multiplier
 });
@@ -196,11 +197,13 @@ function crossCalibrated(cases) {
 // not a price: how much a player's own evidence is allowed to say.
 const PARAM_GRID = (() => {
   const out = [];
-  for (const halfLife of [null, 30, 90]) {
+  for (const halfLife of [null, 45]) {
     for (const trendTau of [0, 0.004]) {
       for (const spreadTau of [0, 0.2]) {
         for (const floorBase of [false, true]) {
-          for (const slabs of ['use', 'fallback']) out.push({ halfLife, trendTau, spreadTau, floorBase, slabs });
+          for (const slabs of ['use', 'fallback']) {
+            for (const numberedFrom of ['all', 'larger']) out.push({ halfLife, trendTau, spreadTau, floorBase, slabs, numberedFrom });
+          }
         }
       }
     }
@@ -211,9 +214,12 @@ const PARAM_GRID = (() => {
 // Adopt a tuned setting only if it beats the old estimator by a margin the
 // sample can show: at least MIN_CASES cases, and MIN_GAIN points of MdAPE.
 const MIN_CASES = 60, MIN_GAIN = 1;
+// The case that matters most — a numbered parallel priced from the card's
+// larger print runs — is judged on its own once it has this many cases.
+const MIN_NUMBERED_CASES = 30;
 
 module.exports = {
-  DEFAULT_PARAMS, PARAM_GRID, MIN_CASES, MIN_GAIN, DAY,
+  DEFAULT_PARAMS, PARAM_GRID, MIN_CASES, MIN_GAIN, MIN_NUMBERED_CASES, DAY,
   daysBetween, trendDrift, adjustedMedian, fitSpread,
   scoreCases, calibrate, withCalib, crossCalibrated,
 };
