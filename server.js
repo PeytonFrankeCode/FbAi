@@ -11160,6 +11160,30 @@ function _codeFitsSet(code, name) {
 // print run on the same card (the ladder's own rungs are left as measured),
 // and a 1/1 off the ladder carries a wide range — it has no comps by
 // definition, and the range is the honest answer.
+// Is this sale the checklist's parallel by its serial number? A column saying
+// "Green" is not Green /5 unless the title shows /5: in 2024 Optic, Bo Nix
+// #209 "Green" sold for $13.50 — a Green Velocity or Hyper, not the /5 — and
+// was priced as the /5, and the /5's estimate scored against it. The same
+// both ways: a title numbered /10 is not the unnumbered parallel of that
+// colour. Parallels the checklist does not list are left as they were.
+const _setRunsMemo = new WeakMap();
+function _runsOfSet(set) {
+  if (_setRunsMemo.has(set)) return _setRunsMemo.get(set);
+  const runs = new Map();
+  if (!(set.parallels || []).some(p => _ladderKey(p.name) === '')) runs.set('', null);
+  for (const p of set.parallels || []) {
+    for (const k of [p.name, ...(p.aliases || [])].map(_ladderKey)) if (!runs.has(k)) runs.set(k, p.printRun || null);
+  }
+  _setRunsMemo.set(set, runs);
+  return runs;
+}
+function _saleFitsRun(set, key, title) {
+  const runs = _runsOfSet(set);
+  if (!runs.has(key)) return true;
+  const want = runs.get(key), got = parsePrintRunFromTitle(title);
+  return want ? got === want : got == null;
+}
+
 function _checklistParallels(set, known, fit, pooled, opts = {}) {
   if (!set) return null;
   const list = [];
@@ -11487,6 +11511,7 @@ async function _checklistBuckets(pid, player) {
     else if (_looksLikeParallel(r.title, r.player, r.set_name)) continue;   // a parallel we cannot name
     else key = '';
     const m = fits[0];
+    if (!_saleFitsRun(m.set, key, r.title)) continue;
     if (!m.keys.has(key)) m.keys.set(key, { raw: [], rows: [], sales: 0, itemId: r.item_id, name: col || 'Base' });
     const b = m.keys.get(key);
     b.sales++;
@@ -11618,8 +11643,11 @@ function _backtestBuckets(bk, params, testDays, refIso) {
       const list = _checklistParallels(m.set, known, bk.fitFor(kind), bk.pooledFor(kind), { params }) || [];
       const e = list.find(x => x.estimate && x.keys && x.keys.includes(key));
       if (!e || !(e.estimate.price > 0)) continue;
+      const w = e.estimate.workings || {};
       cases.push({ actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
-                   basis: e.estimate.basis, lifted: !!e.estimate.lifted,
+                   basis: e.estimate.basis, lifted: !!e.estimate.lifted, factor: w.factor,
+                   // What the estimate stood on, for reading a miss.
+                   from: (w.anchors || []).slice(0, 3).map(x => `${x.name} $${x.price}${x.from === 'graded' ? ' (slabs)' : ''} ×${x.sales}`).join(', '),
                    product: bk.pid, player: bk.player, card: m.card.number, parallel: e.name });
     }
   }
@@ -12563,6 +12591,7 @@ async function _cardAnalysisRoute(req, res) {
     const estDrift = _playerDrift([...all, ...[...siblingRows.values()].flatMap(b => b.rows)], estParams, estRef);
     const estAdjust = estDrift !== 0 || estParams.halfLife > 0;
     const rawNowByKey = new Map();
+    const rowsByKey = new Map();
     const rawNowOf = (rows) => {
       const raws = rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
       return raws.length ? EST.adjustedMedian(raws.map(r => ({ price: r.price_cents / 100,
@@ -12603,6 +12632,7 @@ async function _cardAnalysisRoute(req, res) {
         // about where the card's raw copies sit.
         const raw = kept.filter(r => _gradeBucket(r) === 'Raw').map(r => (r.price_cents || 0) / 100).filter(p => p > 0);
         if (estAdjust) rawNowByKey.set(key, rawNowOf(kept));
+        rowsByKey.set(key, kept);
         parallels.push({
           key, name: bucket.name, sales: kept.length, itemId: rep.item_id,
           median: Math.round(prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2),
@@ -12631,8 +12661,22 @@ async function _cardAnalysisRoute(req, res) {
       if (!set) return null;
       const known = [
         ...(current ? [current] : []),
-        ...parallels.map(p => ({ key: _ladderKey(p.key), name: p.name, itemId: p.itemId, sales: p.sales,
-          raw: rawNowByKey.get(p.key) != null ? rawNowByKey.get(p.key) : p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts })),
+        ...parallels.map(p => {
+          const lk = _ladderKey(p.key);
+          const rows = rowsByKey.get(p.key) || [];
+          const fitting = rows.filter(r => _saleFitsRun(set, lk, r.title));
+          if (fitting.length === rows.length) {
+            return { key: lk, name: p.name, itemId: p.itemId, sales: p.sales,
+              raw: rawNowByKey.get(p.key) != null ? rawNowByKey.get(p.key) : p.rawMedian, rawN: p.rawSales, grades: p.gradeMedians, gradeN: p.gradeCounts };
+          }
+          // Some of its sales are another print run of that colour: price it
+          // from the ones that are this checklist parallel, or not at all.
+          if (!fitting.length) return null;
+          const raws = fitting.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
+          return { key: lk, name: p.name, itemId: fitting[0].item_id, sales: fitting.length,
+            raw: estAdjust ? rawNowOf(fitting) : (raws.length ? _medOf(raws.map(r => r.price_cents / 100)) : null),
+            rawN: raws.length, grades: _gradeMedians(fitting), gradeN: _gradeCounts(fitting) };
+        }).filter(Boolean),
       ];
       const ladder = await _parallelLadder();
       const kind = PAR_LADDER_KINDS.includes(seedKind) ? seedKind : null;

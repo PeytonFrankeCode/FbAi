@@ -556,7 +556,7 @@
     const players = (rep.hardestPlayers || []).slice(0, 8).map(x =>
       `<tr><td>${escHtml(x.player)}</td><td>${x.n}</td><td>${pct(x.mdape)}</td><td>${signed(x.bias)}</td></tr>`).join('');
     const worst = (rep.worstCases || []).slice(0, 8).map(x =>
-      `<tr><td>${escHtml(x.player)} #${escHtml(x.card)} ${escHtml(x.parallel)}</td><td>$${Math.round(x.predicted * 100) / 100}</td><td>$${Math.round(x.actual * 100) / 100}</td><td>${escHtml(x.basis || '')}</td></tr>`).join('');
+      `<tr><td>${escHtml(x.player)} #${escHtml(x.card)} ${escHtml(x.parallel)}${x.from ? `<div style="color:var(--text-muted);font-size:0.74rem">from ${escHtml(x.from)}${x.factor ? ` · step ×${x.factor}` : ''}</div>` : ''}</td><td>$${Math.round(x.predicted * 100) / 100}</td><td>$${Math.round(x.actual * 100) / 100}${x.actualN ? ` <span style="color:var(--text-muted)">(${x.actualN})</span>` : ''}</td><td>${escHtml(x.basis || '')}</td></tr>`).join('');
     const table = (head, rows) => rows ? `<table style="width:100%;border-collapse:collapse;margin:0.5rem 0 1rem;font-size:0.82rem;">
       <tr style="text-align:left;color:var(--text-secondary)">${head.map(h => `<th style="padding:0.25rem 0.4rem">${h}</th>`).join('')}</tr>${rows}</table>` : '';
     out.innerHTML = `
