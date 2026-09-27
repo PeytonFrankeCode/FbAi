@@ -208,6 +208,17 @@ for (const [num, player, level, k, drift] of PLAYERS) {
       `plain $${goldOf(three, {})}, weighted $${goldOf(three, { weightAnchors: true })}`);
   }
 
+  // Base read from the low end of its sales (baseQuantile): unnamed
+  // parallels only ever push "base" up.
+  {
+    const rows = [99, 132, 200, 209, 4655, 7800].map((c, i) => ({ price_cents: c, sold_date: '2026-09-01', grader: null, grade: null, title: `t${i}` }));
+    const plain = S._knownFromRows('', { name: 'Base' }, rows, EST.DEFAULT_PARAMS, 0, '2026-09-10').raw;
+    const low = S._knownFromRows('', { name: 'Base' }, rows, { ...EST.DEFAULT_PARAMS, baseQuantile: 0.33 }, 0, '2026-09-10').raw;
+    const par = S._knownFromRows('silver', { name: 'Silver' }, rows, { ...EST.DEFAULT_PARAMS, baseQuantile: 0.33 }, 0, '2026-09-10').raw;
+    check('with baseQuantile, base reads from the low end of its sales (parallels do not)', plain === 2.045 && low === 1.32 && par === 2.045,
+      `median $${plain}, low third $${low}, a parallel $${par}`);
+  }
+
   const r = await S.runEstimatorBacktest({ save: true });
   check('the backtest runs on the players with the most parallel sales', r.ok && r.report.pairs === PLAYERS.length,
     r.ok ? `${r.report.pairs} pairs, ${r.report.chosen.n} cases` : JSON.stringify(r));
@@ -248,6 +259,8 @@ for (const [num, player, level, k, drift] of PLAYERS) {
     }
   }
   const flat = await S.runEstimatorBacktest({ save: false });
+  check('the next run warm-starts from the saved settings', flat.ok && flat.report.startedFrom === 'saved settings'
+    && r.report.startedFrom === 'old estimator', `${r.report.startedFrom} -> ${flat.ok && flat.report.startedFrom}`);
   check('on a market the old estimator already fits, it is kept', flat.ok && flat.report.adopted !== 'tuned',
     flat.ok ? `${flat.report.baseline.mdape}% vs best ${flat.report.grid[0].mdape}%` : JSON.stringify(flat));
 

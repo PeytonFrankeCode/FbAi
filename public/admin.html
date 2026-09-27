@@ -557,6 +557,7 @@
       p.baseCap ? 'never prices a base card above its cheapest sold parallel' : null,
       p.levelPrior ? `leans on the player's other cards (worth ${p.levelPrior} sale${p.levelPrior === 1 ? '' : 's'})` : null,
       p.weightAnchors ? 'counts parallels that sold more often for more' : null,
+      p.baseQuantile ? 'reads a base card from the low end of its sales' : null,
     ].filter(Boolean);
     const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
     const tiers = Object.entries(c.byTier || {}).map(([t, s]) =>
