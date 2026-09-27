@@ -39,6 +39,7 @@ const DEFAULT_PARAMS = Object.freeze({
   numberedFrom: 'all', // 'larger': a numbered parallel is priced from this card's larger print runs
   numberedNearest: 0, // with 'larger': only the N closest larger runs (0 = all of them)
   liftRarer: true,    // lift an estimate above the dearest larger run on the card
+  baseCap: false,     // hold an estimated base to the cheapest parallel of the card that sold raw
   slabs: 'use',       // 'use': slabs anchor like raw sales; 'fallback': only when nothing sold raw
   calib: {},          // basis -> multiplier
 });
@@ -204,6 +205,7 @@ function crossCalibrated(cases) {
 const PARAM_DIMS = {
   numberedFrom: ['all', 'larger'],
   liftRarer: [true, false],
+  baseCap: [false, true],
   numberedNearest: [0, 2],
   slabs: ['use', 'fallback'],
   floorBase: [false, true],
@@ -212,7 +214,7 @@ const PARAM_DIMS = {
   halfLife: [null, 45],
 };
 const PARAM_START = Object.freeze({ halfLife: null, trendTau: 0, spreadTau: 0, floorBase: false, slabs: 'use', numberedFrom: 'all',
-  liftRarer: true, numberedNearest: 0 });
+  liftRarer: true, numberedNearest: 0, baseCap: false });
 
 // Adopt a tuned setting only if it beats the old estimator by a margin the
 // sample can show: at least MIN_CASES cases, and MIN_GAIN points of MdAPE.

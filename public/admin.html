@@ -554,6 +554,7 @@
       p.numberedFrom === 'larger' ? 'prices numbered parallels from the card\'s bigger print runs' : null,
       p.numberedNearest ? `uses only the ${p.numberedNearest} nearest bigger print runs` : null,
       p.liftRarer === false ? 'lets a rarer parallel price under a more common one' : null,
+      p.baseCap ? 'never prices a base card above its cheapest sold parallel' : null,
     ].filter(Boolean);
     const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
     const tiers = Object.entries(c.byTier || {}).map(([t, s]) =>
