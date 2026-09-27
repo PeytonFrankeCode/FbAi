@@ -35,6 +35,8 @@ const DEFAULT_PARAMS = Object.freeze({
   halfLife: null,     // days; null = every sale weighs the same (the old behaviour)
   trendTau: 0,        // prior sd of daily drift, log units; 0 = no trend adjustment
   spreadTau: 0,       // prior sd of the spread k around 1; 0 = product spread for all
+  floorBase: false,   // hold every parallel's step to at least base
+  slabs: 'use',       // 'use': slabs anchor like raw sales; 'fallback': only when nothing sold raw
   calib: {},          // basis -> multiplier
 });
 
@@ -194,9 +196,13 @@ function crossCalibrated(cases) {
 // not a price: how much a player's own evidence is allowed to say.
 const PARAM_GRID = (() => {
   const out = [];
-  for (const halfLife of [null, 21, 45, 90]) {
-    for (const trendTau of [0, 0.002, 0.005]) {
-      for (const spreadTau of [0, 0.15, 0.35]) out.push({ halfLife, trendTau, spreadTau });
+  for (const halfLife of [null, 30, 90]) {
+    for (const trendTau of [0, 0.004]) {
+      for (const spreadTau of [0, 0.2]) {
+        for (const floorBase of [false, true]) {
+          for (const slabs of ['use', 'fallback']) out.push({ halfLife, trendTau, spreadTau, floorBase, slabs });
+        }
+      }
     }
   }
   return out;

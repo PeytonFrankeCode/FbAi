@@ -11195,6 +11195,11 @@ function _saleFitsRun(set, key, title) {
 
 function _checklistParallels(set, known, fit, pooled, opts = {}) {
   if (!set) return null;
+  // The tuned settings (runEstimatorBacktest), or the old behaviour.
+  const params = opts.params || _estimatorParamsNow();
+  // Hold every factor to at least base (params.floorBase): whether that
+  // helps is the backtest's call — it did not, the first time it was forced.
+  const atLeast1 = (f) => (params.floorBase ? Math.max(1, f) : f);
   const list = [];
   const seen = new Set();
   const add = (name, printRun, aliases) => {
@@ -11222,25 +11227,25 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     if (e.keys.includes('')) return { f: 1, lo: 0.85, hi: 1.2, basis: 'base', n: 0 };
     const rung = baseF ? e.keys.map(k => rungs[k]).find(Boolean) : null;
     const lr = e.keys.map(k => lineRungs[k]).find(Boolean);
-    // A parallel is never worth less than the base card it is a parallel of.
-    // A rung under base says the ladder's base was inflated (unnamed
-    // parallels sold as base), not that the parallel is cheap: it is passed
-    // over for the next source, and whatever is used is held to base.
-    if (rung && rung.f / baseF >= 1) {
+    // With floorBase, a rung under base is read as the ladder's base being
+    // inflated (unnamed parallels sold as base), not as a cheap parallel: it
+    // is passed over for the next source.
+    const sane = (f) => !params.floorBase || f >= 1;
+    if (rung && sane(rung.f / baseF)) {
       // Shrunk toward the line's rung by how thin the product's own is.
       let f = rung.f / baseF;
-      if (lr && lr.f >= 1) f = Math.exp((rung.n * Math.log(f) + PAR_LADDER_LINE_WEIGHT * Math.log(lr.f)) / (rung.n + PAR_LADDER_LINE_WEIGHT));
+      if (lr && sane(lr.f)) f = Math.exp((rung.n * Math.log(f) + PAR_LADDER_LINE_WEIGHT * Math.log(lr.f)) / (rung.n + PAR_LADDER_LINE_WEIGHT));
       return { f, lo: rung.lo, hi: rung.hi, basis: 'ladder', n: rung.n };
     }
-    if (lr && lr.f >= 1) return { f: lr.f, lo: 0.7, hi: 1.45, basis: 'line-ladder', n: lr.p };
+    if (lr && sane(lr.f)) return { f: lr.f, lo: 0.7, hi: 1.45, basis: 'line-ladder', n: lr.p };
     if (e.printRun) {
       for (const [c, basis] of [[baseF ? own : null, 'print-run'], [line, 'line-curve'], [all, 'site-curve']]) {
-        if (c && c.slope != null) return { f: Math.max(1, Math.exp(c.icpt + c.slope * Math.log(e.printRun))), lo: 0.6, hi: 1.7, basis, n: 0 };
+        if (c && c.slope != null) return { f: atLeast1(Math.exp(c.icpt + c.slope * Math.log(e.printRun))), lo: 0.6, hi: 1.7, basis, n: 0 };
       }
       return null;
     }
-    if (baseF && ownUnnumbered.length >= 2) return { f: Math.max(1, _medOf(ownUnnumbered)), lo: 0.6, hi: 1.7, basis: 'unnumbered', n: 0 };
-    if (line.unnumbered) return { f: Math.max(1, line.unnumbered), lo: 0.55, hi: 1.8, basis: 'line-unnumbered', n: 0 };
+    if (baseF && ownUnnumbered.length >= 2) return { f: atLeast1(_medOf(ownUnnumbered)), lo: 0.6, hi: 1.7, basis: 'unnumbered', n: 0 };
+    if (line.unnumbered) return { f: atLeast1(line.unnumbered), lo: 0.55, hi: 1.8, basis: 'line-unnumbered', n: 0 };
     return null;
   };
 
@@ -11288,14 +11293,17 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     return xs.length ? _medOf(xs) : null;
   };
   const entryOf = (k) => list.find(e => e.keys.includes(k.key));
-  // The tuned settings (runEstimatorBacktest), or the old behaviour.
-  const params = opts.params || _estimatorParamsNow();
   const points = [];
   // The same, itemised, for the page to show its working: each sold
   // parallel, what it went for raw (or its slabs' raw equivalent), its step
   // on the ladder, and the base price that implies.
   const anchorDetail = [];
+  // params.slabs === 'fallback': a parallel known only from its slabs anchors
+  // the card only when no parallel has sold raw. A graded $1 base card still
+  // cost ~$20 to grade, so its slab says little about its raw price.
+  const anyRaw = known.some(k => k.raw > 0);
   for (const k of known) {
+    if (params.slabs === 'fallback' && anyRaw && !(k.raw > 0)) continue;
     const r = rawEq(k);
     if (!(r > 0)) continue;
     const e = entryOf(k);
@@ -11660,7 +11668,7 @@ function _backtestBuckets(bk, params, testDays, refIso) {
       cases.push({ actual: _medOf(actualRaw), actualN: actualRaw.length, predicted: e.estimate.price,
                    basis: e.estimate.basis, lifted: !!e.estimate.lifted, factor: w.factor,
                    // What the estimate stood on, for reading a miss.
-                   from: (w.anchors || []).slice(0, 3).map(x => `${x.name} $${x.price}${x.from === 'graded' ? ' (slabs)' : ''} ×${x.sales}`).join(', '),
+                   from: (w.anchors || []).slice(0, 4).map(x => `${x.name} $${x.price}${x.from === 'graded' ? ' (slabs)' : ''} ×${x.sales} at step ${x.factor}`).join(', '),
                    product: bk.pid, player: bk.player, card: m.card.number, parallel: e.name });
     }
   }
@@ -11699,7 +11707,7 @@ async function _backtestPairs(db, want) {
 function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
-  const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau;
+  const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use';
   const runs = EST.PARAM_GRID.map(g => {
     const cases = casesFor(plain(g));
     return { params: g, cases, score: EST.scoreCases(cases) };
@@ -11723,7 +11731,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
     .map(({ byTier, byBasis, ...rest }) => rest)
     .filter(p => p.n >= 3).sort((a, b) => b.mdape - a.mdape);
   return {
-    params: { halfLife: chosen.params.halfLife, trendTau: chosen.params.trendTau, spreadTau: chosen.params.spreadTau },
+    params: { ...chosen.params },
     calib,
     report: {
       builtAt: new Date().toISOString(), refIso, testDays, pairs: bks.length,
