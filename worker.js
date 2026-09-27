@@ -9,7 +9,10 @@ import { noteRequest, newTally, mergeTallies, FLUSH_MS } from './traffic-core.js
 // every FLUSH_MS so the report can sum every isolate that served anyone.
 const _isolateId = Math.random().toString(36).slice(2, 10);
 const _visitors = newTally('');
-let _visitorsFlushedAt = Date.now();
+// 0: an isolate writes on its first request. Most isolates live for a few
+// requests and die; waiting FLUSH_MS before the first write lost nearly all
+// of them (61 isolates reported 65 requests in ten minutes).
+let _visitorsFlushedAt = 0;
 const VISITORS_PREFIX = 'visitors:v1:';
 
 function _countVisitor(request, url, env, ctx) {
@@ -49,7 +52,7 @@ async function visitorsReport(request, url, env) {
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
   const body = { available: true, generatedAt: new Date().toISOString(),
-    note: 'Counted at the front of the Worker for every request, pages included, summed over every isolate. Up to 5 minutes behind.',
+    note: 'Counted at the front of the Worker for every request, pages included, summed over every isolate. Up to a minute behind per isolate.',
     ...mergeTallies(tallies) };
   return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 }
