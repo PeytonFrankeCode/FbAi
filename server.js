@@ -11691,9 +11691,17 @@ function _knownFromRows(key, b, rows, params, drift, refIso) {
   const adjust = drift !== 0 || params.halfLife > 0;
   const ageOf = (r) => Math.max(0, EST.daysBetween(r.sold_date, refIso));
   const raws = rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
-  const raw = !raws.length ? null : adjust
+  let raw = !raws.length ? null : adjust
     ? EST.adjustedMedian(raws.map(r => ({ price: r.price_cents / 100, age: ageOf(r) })), { drift, halfLife: params.halfLife })
     : _medOf(raws.map(r => r.price_cents / 100));
+  // params.baseQuantile: a card's base price from the lower part of its raw
+  // sales. What gets into "base" wrongly is always dearer — parallels sold
+  // with no name in the title ("2025 Panini Mosaic - Rookies Jaxson Dart #362
+  // (RC)" at $47-78 against a $1-2 base) — so the median of base reads high.
+  if (key === '' && params.baseQuantile > 0 && params.baseQuantile < 0.5 && raws.length >= 3) {
+    const ps = raws.map(r => (r.price_cents / 100) * (adjust ? Math.exp(drift * ageOf(r)) : 1)).sort((a, b) => a - b);
+    raw = ps[Math.floor(params.baseQuantile * (ps.length - 1))];
+  }
   const moved = !adjust ? rows : rows.map(r => ({ ...r, price_cents: r.price_cents * Math.exp(drift * ageOf(r)) }));
   return { key, name: b.name, itemId: b.itemId, sales: rows.length, raw, rawN: raws.length,
            grades: _gradeMedians(moved), gradeN: _gradeCounts(rows) };
@@ -11775,6 +11783,9 @@ const ESTIMATOR_TEST_DAYS = 21;
 // against one sale. Live CPU: 13-48 evaluations x 40 pairs ran, 64 x 40 did
 // not (error 1102), so 17 x 80 is inside it.
 const ESTIMATOR_PAIRS = 80;
+// Evaluations per run, all settings included: 17-19 x 80 pairs ran live,
+// 64 x 40 hit the CPU limit.
+const ESTIMATOR_MAX_EVALS = 20;
 
 function _backtestBuckets(bk, params, testDays, refIso) {
   const t0 = new Date(Date.parse(refIso) - testDays * EST.DAY).toISOString().slice(0, 10);
@@ -11862,12 +11873,12 @@ async function _backtestPairs(db, want) {
 }
 
 // Tune on buckets already read: pure apart from the estimator's own reads.
-function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
+function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso, start = null } = {}) {
   const casesFor = (p) => bks.flatMap(bk => _backtestBuckets(bk, p, testDays, refIso));
   const plain = (g) => ({ ...EST.DEFAULT_PARAMS, ...g, calib: {} });
   const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
     && (g.numberedFrom || 'all') === 'all' && g.liftRarer !== false && !g.numberedNearest && !g.baseCap
-    && !g.levelPrior && !g.weightAnchors;
+    && !g.levelPrior && !g.weightAnchors && !g.baseQuantile;
   const numberedOf = (cases) => cases.filter(c => c.larger);
   const evalOf = (g) => {
     const cases = casesFor(plain(g));
@@ -11890,12 +11901,22 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
     // Numbered cases first; every case breaks ties, so a setting that only
     // touches base cards (baseCap) can still win when numbered are unmoved.
     const obj = (r) => (eligibleRun(r) ? (byNum ? r.numbered.mdape + r.score.mdape / 1000 : r.score.mdape) : Infinity);
+    // Warm start: from the settings the last run adopted (the market moves
+    // slowly, so each night refines rather than re-derives), capped at
+    // MAX_EVALS so every setting can stay searchable inside the Worker's CPU.
     let cur = baseline;
-    for (let pass = 0; pass < 2; pass++) {
+    const startParams = start ? { ...EST.PARAM_START, ...start } : null;
+    if (startParams && JSON.stringify(startParams) !== JSON.stringify(baseline.params)) {
+      const r = evalOf(startParams);
+      runs.push(r);
+      if (obj(r) < obj(cur)) cur = r;
+    }
+    walk: for (let pass = 0; pass < 3; pass++) {
       let moved = false;
       for (const [dim, values] of Object.entries(EST.PARAM_DIMS)) {
         for (const v of values) {
           if (cur.params[dim] === v) continue;
+          if (runs.length >= ESTIMATOR_MAX_EVALS) break walk;
           const r = evalOf({ ...cur.params, [dim]: v });
           runs.push(r);
           if (obj(r) < obj(cur)) { cur = r; moved = true; }
@@ -11964,6 +11985,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       // single sales. The estimator is as good as it can get near here.
       noiseFloor: _noiseFloor(chosen.cases),
       evaluated: runs.length,
+      startedFrom: start ? 'saved settings' : 'old estimator',
       numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
       calibration: { adopted: !!calibHelps, kind: calibBest.name, multipliers: calib,
         outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias, byEstimateTier: cross.byEstimateTier },
@@ -12001,7 +12023,8 @@ async function runEstimatorBacktest({ save = true, pairs = ESTIMATOR_PAIRS } = {
     await _parallelLadder();
     const bks = await _backtestPairs(db, pairs);
     if (!bks.length) return { ok: false, reason: 'no player/product pairs with checklist sales' };
-    const tuned = _tuneEstimator(bks, { refIso: new Date().toISOString().slice(0, 10) });
+    const saved = await cacheGet(ESTIMATOR_PARAMS_KEY).catch(() => null);
+    const tuned = _tuneEstimator(bks, { refIso: new Date().toISOString().slice(0, 10), start: saved && saved.params });
     if (save) {
       await cachePut(ESTIMATOR_PARAMS_KEY, tuned, 60 * 60 * 24 * 14);
       _primeEstimatorParams(tuned);
@@ -17196,7 +17219,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
