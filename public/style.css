@@ -8488,6 +8488,7 @@ to { opacity: 1; transform: translateY(0); }
 .market-score-side { min-width: 0; }
 .market-verdict { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
 .market-score-note { font-size: 0.76rem; color: var(--text-muted); margin-top: 0.15rem; }
+.market-pooled-note { color: var(--text-secondary); font-style: italic; }
 .market-score-explain {
   font-size: 0.76rem; color: var(--text-secondary); line-height: 1.5;
   margin: 0.9rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--border-primary);

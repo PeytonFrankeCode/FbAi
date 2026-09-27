@@ -9698,7 +9698,8 @@ app.get('/api/player-index', async (req, res) => {
 // adjusting a stale price by it sees the very number the tab shows.
 async function _playerIndexCached(db, days, player) {
   // v8: base cards by checklist, outlier card-days set aside.
-  return await _marketCached(`playerindex:v10:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
+  // v11: a pooled, market-blended reading for players too thin for the measured one.
+  return await _marketCached(`playerindex:v11:${MARKET_CALC_SIG}:${days}:${String(player).toLowerCase()}`,
     () => _computePlayerIndex(db, days, player));
 }
 
@@ -9812,8 +9813,12 @@ async function _playerTrendQuery(db, throughIso, days, player) {
                             extraBinds: [player, NFLDB_MIN_CONFIDENCE] }), periodIso);
 }
 
-function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null) {
+function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null, opts = {}) {
   const round1 = (n) => Math.round(n * 10) / 10;
+  // The defaults are the measured player trend; the pooled reading for thin
+  // players (_pooledPlayerTrend) relaxes the gates and blends with the market.
+  const MIN_WINDOW = opts.minWindow || PLAYER_TREND_MIN_WINDOW;
+  const MIN_CARD_DAYS = opts.minCardDays || PLAYER_TREND_MIN_CARD_DAYS;
   const W = _playerTrendWindow(days);
   const maxW = W * PLAYER_TREND_MAX_WIDEN;
   const newest = _mkDay(throughIso);
@@ -9841,10 +9846,10 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null)
   // same number — and one of them on a thin day moved the whole player.
   const OUT = Math.log(PLAYER_TREND_OUTLIER_X);
   for (const all of byCard.values()) {
-    if (all.length < PLAYER_TREND_MIN_CARD_DAYS) continue;
+    if (all.length < MIN_CARD_DAYS) continue;
     const typical = median(all.map(x => x.logp));
     const list = all.filter(x => Math.abs(x.logp - typical) <= OUT);
-    if (list.length < PLAYER_TREND_MIN_CARD_DAYS) continue;
+    if (list.length < MIN_CARD_DAYS) continue;
     const ref = median(list.map(x => x.logp));
     cards++;
     for (const x of list) { entries.push({ day: x.day, rel: x.logp - ref }); sales += x.n; }
@@ -9857,8 +9862,12 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null)
       const from = endDay - w + 1;
       if (from < floor) break;
       const win = inWin(from, endDay);
-      if (win.length >= PLAYER_TREND_MIN_WINDOW) {
-        return { level: median(win.map(e => e.rel)), n: win.length, from, estimated: w > W };
+      if (win.length >= MIN_WINDOW) {
+        const level = median(win.map(e => e.rel));
+        // Spread of the window's prices about its level (MAD as an sd), for
+        // the pooled reading's band.
+        const sd = 1.4826 * median(win.map(e => Math.abs(e.rel - level)));
+        return { level, n: win.length, from, estimated: w > W, sd };
       }
     }
     return null;
@@ -9890,30 +9899,51 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null)
     }
     return {
       available: false, days, player, reason: 'not enough sales for a reliable reading',
-      method: 'player-trend', windowDays: W, needed: PLAYER_TREND_MIN_WINDOW,
+      method: 'player-trend', windowDays: W, needed: MIN_WINDOW,
       firstWindow: count(newest - days + W), lastWindow: count(newest), through: throughIso,
     };
   }
 
   // A point per day from the first window to the last, estimated where its
   // window had to reach back; a day nothing can be read for is left out.
+  // Pooled readings lean on the market by evidence: a window of n card-days
+  // counts n against opts.shrinkK for the market's own move over the span.
+  const firstEnd = start + W - 1;
+  const blendAt = (at) => {
+    const own = at.level - first.level;
+    if (!(opts.shrinkK > 0) || typeof opts.market !== 'function') return { diff: own, w: 1 };
+    const m = opts.market(firstEnd, _mkDay(_mkIso(at === last ? through : at.day)));
+    if (m == null) return { diff: own, w: 1 };
+    const n = Math.min(at.n, first.n);
+    const w = n / (n + opts.shrinkK);
+    return { diff: w * own + (1 - w) * m, w, m };
+  };
   const series = [];
   let estimatedPoints = 0;
   for (let d = start + W - 1; d <= through; d++) {
     const at = d === through ? last : levelAt(d);
     if (!at) continue;
+    at.day = d;
     if (at.estimated) estimatedPoints++;
-    series.push({ date: _mkIso(d), score: round1(100 * Math.exp(at.level - first.level)),
+    series.push({ date: _mkIso(d), score: round1(100 * Math.exp(blendAt(at).diff)),
                   matched: at.n, ...(at.estimated ? { estimated: true } : {}) });
   }
-  const score = round1(100 * Math.exp(last.level - first.level));
+  const head = blendAt(last);
+  const score = round1(100 * Math.exp(head.diff));
+  // An 80% band on the headline: the two windows' spreads over their counts,
+  // scaled down by how much of the reading is the market's (steadier) move.
+  const se = Math.sqrt((first.sd ** 2) / first.n + (last.sd ** 2) / last.n) * head.w;
+  const band = opts.pooled ? { low: round1(100 * Math.exp(head.diff - 1.2816 * se) - 100),
+                               high: round1(100 * Math.exp(head.diff + 1.2816 * se) - 100) } : null;
   const shiftedDays = newest - through;
   return {
     available: true,
     days,
     player,
     unit: 'card',
-    method: 'player-trend',
+    method: opts.pooled ? 'player-trend-pooled' : 'player-trend',
+    ...(opts.pooled ? { band, ownWeight: Math.round(head.w * 100) / 100,
+                        marketChangePct: head.m != null ? round1(100 * Math.exp(head.m) - 100) : null } : {}),
     through: _mkIso(through),
     dataLagDays: Math.max(0, _mkDay(new Date().toISOString()) - through),
     score: Math.round(score),
@@ -9921,7 +9951,8 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null)
     changePct: round1(score - 100),
     windowDays: W,
     // Set when the headline leans on a reached-back window or an earlier end.
-    estimated: !!(first.estimated || last.estimated || shiftedDays > 0),
+    // A pooled reading is an estimate by construction: it leans on the market.
+    estimated: !!(opts.pooled || first.estimated || last.estimated || shiftedDays > 0),
     estimatedPoints,
     shiftedDays,
     matchedCards: cards,
@@ -9930,6 +9961,153 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null)
     series,
   };
 }
+
+// ---- Thin players: parallels pooled, the market leaned on, a band shown ----
+//
+// The measured trend above needs each series (a card in one parallel and
+// grade) to trade on 3+ days, and 8+ card-days in its first and last windows.
+// A player whose sales are spread one or two to a parallel clears neither:
+// ten one-off parallel sales of one card said nothing. Here:
+//  - a card's parallels are one series, each sale divided by its step on the
+//    product's parallel ladder (a Silver at 2x base reads as half its price),
+//    so every sale of the card speaks to the same level. A parallel with no
+//    rung stays a series of its own;
+//  - the gates drop to 2 card-days a series and 3 a window;
+//  - the reading is blended with the whole market's move over the same span,
+//    n card-days against PLAYER_POOLED_SHRINK_K for the market's: a player
+//    with 3 card-days mostly follows the market, one with 12 mostly himself;
+//  - and it carries an 80% band, so a thin reading says it is thin.
+// Tuned and checked by /api/debug/player-index-accuracy, which thins out
+// well-traded players and compares both readings with their full-data trend.
+const PLAYER_POOLED_MIN_WINDOW = 3;
+const PLAYER_POOLED_MIN_CARD_DAYS = 2;
+const PLAYER_POOLED_SHRINK_K = 6;
+// Off until /api/debug/player-index-accuracy has been read on live data.
+const PLAYER_POOLED_ENABLED = false;
+
+async function _poolParallelRows(rows) {
+  const ladder = await _parallelLadder();
+  const index = await _cataloguedIndex();
+  if (!ladder || !index) return rows;
+  const col = (k, c) => String(k || '').split('|')[RSI_KEY_COLS.indexOf(c)] || '';
+  const pidMemo = new Map();
+  const out = [];
+  for (const r of rows) {
+    const parts = String(r.card || '').split('|');
+    const par = parts.length > RSI_KEY_COLS.length ? parts.slice(RSI_KEY_COLS.length).join('|') : '';
+    const family = parts.slice(0, RSI_KEY_COLS.length).join('|');
+    const gk = `${col(r.card, 'year')}|${col(r.card, 'set_name')}`;
+    if (!pidMemo.has(gk)) {
+      const hit = matchSale(index, col(r.card, 'year'), col(r.card, 'set_name'));
+      pidMemo.set(gk, hit ? (typeof hit === 'string' ? hit : hit.id) : null);
+    }
+    const pid = pidMemo.get(gk);
+    const fit = pid ? (ladder.products || {})[_ladderId(pid, '')] : null;
+    const rungs = (fit && fit.rungs) || {};
+    const baseF = rungs[''] ? rungs[''].f : null;
+    const key = _ladderKey(par);
+    const f = !key ? 1 : (baseF && rungs[key] ? rungs[key].f / baseF : null);
+    if (f > 0) out.push({ ...r, card: family, s: Number(r.s) / f });
+    else out.push(r);
+  }
+  return out;
+}
+
+// The whole market's log move between two days, from its index series.
+function _marketMoveFn(market) {
+  const series = (market && market.available && market.series) || [];
+  if (!series.length) return () => null;
+  const pts = series.map(p => ({ day: _mkDay(p.date), score: p.score })).filter(p => p.score > 0);
+  const at = (d) => { let v = null; for (const p of pts) { if (p.day <= d) v = p.score; else break; } return v ?? (pts[0] && pts[0].score); };
+  return (fromDay, toDay) => {
+    const a = at(fromDay), b = at(toDay);
+    return a > 0 && b > 0 ? Math.log(b / a) : null;
+  };
+}
+
+async function _pooledPlayerTrend(db, list, throughIso, days, player, historyFrom, shrinkK = PLAYER_POOLED_SHRINK_K) {
+  const pooledRows = await _poolParallelRows(list);
+  const market = await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days)).catch(() => null);
+  return _playerTrendPayload(pooledRows, throughIso, days, player, historyFrom, {
+    pooled: true, minWindow: PLAYER_POOLED_MIN_WINDOW, minCardDays: PLAYER_POOLED_MIN_CARD_DAYS,
+    shrinkK, market: _marketMoveFn(market),
+  });
+}
+
+// GET /api/debug/player-index-accuracy?days=30&players=40 — does the pooled
+// reading recover a player's trend from few sales? Well-traded players (whose
+// measured trend is the truth) are thinned to 15/30/50% of their card-days,
+// and each reading is scored by |its change - the full-data change|: the
+// measured reading (and how often it gives one at all), the pooled one at
+// several market weights, and the market's own move. Admin only.
+app.get('/api/debug/player-index-accuracy', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10)) ? parseInt(req.query.days, 10) : 30;
+  const want = Math.min(80, Math.max(5, parseInt(req.query.players, 10) || 40));
+  try {
+    const since = _mkIso(_mkDay(new Date().toISOString()) - 45);
+    const top = await db.prepare(
+      `SELECT player, COUNT(*) AS n FROM sales WHERE sold_date >= ? AND price_cents > 0 AND player IS NOT NULL AND player <> ''
+        GROUP BY player ORDER BY n DESC LIMIT ?`).bind(since, want * 2).all();
+    const market = await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days)).catch(() => null);
+    const marketMove = _marketMoveFn(market);
+    const FRACS = [0.15, 0.3, 0.5], KS = [0, 3, 6, 12];
+    const acc = {};
+    for (const f of FRACS) {
+      acc[f] = { measured: { n: 0, covered: 0, err: [] }, market: { err: [] } };
+      for (const k of KS) acc[f][`pooledK${k}`] = { covered: 0, err: [] };
+    }
+    const hash = (str) => { let h = 2166136261; for (const ch of str) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0; return h % 1000; };
+    let players = 0;
+    for (const { player } of (top && top.results) || []) {
+      if (players >= want) break;
+      const newest = await db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL')
+        .bind(player, NFLDB_MIN_CONFIDENCE).first();
+      if (!newest || !newest.d) continue;
+      const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
+      const rows = await (await _playerTrendQuery(db, throughIso, days, player)).all();
+      const list = await _baseCardRowsOnly((rows && rows.results) || []);
+      const truth = _playerTrendPayload(list, throughIso, days, player);
+      if (!truth.available || truth.estimated) continue;
+      players++;
+      const truthFirstEnd = _mkDay(truth.series[0].date), truthThrough = _mkDay(truth.through);
+      const mm = marketMove(truthFirstEnd, truthThrough);
+      const pooledList = await _poolParallelRows(list);
+      for (const f of FRACS) {
+        const keep = (r) => hash(`${r.card}|${r.sold_date}`) < f * 1000;
+        const sub = list.filter(keep), subPooled = pooledList.filter(keep);
+        const a = acc[f];
+        a.measured.n++;
+        const m = _playerTrendPayload(sub, throughIso, days, player);
+        if (m.available) { a.measured.covered++; a.measured.err.push(Math.abs(m.changePct - truth.changePct)); }
+        if (mm != null) a.market.err.push(Math.abs((Math.exp(mm) - 1) * 100 - truth.changePct));
+        for (const k of KS) {
+          const p = _playerTrendPayload(subPooled, throughIso, days, player, null, {
+            pooled: true, minWindow: PLAYER_POOLED_MIN_WINDOW, minCardDays: PLAYER_POOLED_MIN_CARD_DAYS,
+            shrinkK: k, market: marketMove });
+          if (p.available) { a[`pooledK${k}`].covered++; a[`pooledK${k}`].err.push(Math.abs(p.changePct - truth.changePct)); }
+        }
+      }
+    }
+    const md = (xs) => (xs.length ? Math.round(_medOf(xs) * 10) / 10 : null);
+    const out = {};
+    for (const f of FRACS) {
+      const a = acc[f], n = a.measured.n;
+      out[`keep${Math.round(f * 100)}pct`] = {
+        players: n,
+        measured: { coverage: n ? Math.round(a.measured.covered / n * 100) : null, medianErrPts: md(a.measured.err) },
+        marketOnly: { medianErrPts: md(a.market.err) },
+        ...Object.fromEntries(KS.map(k => [`pooledK${k}`, { coverage: n ? Math.round(a[`pooledK${k}`].covered / n * 100) : null,
+                                                           medianErrPts: md(a[`pooledK${k}`].err) }])),
+      };
+    }
+    res.json({ available: true, days, players, note: 'Errors in percentage points of the period change, against each player\'s full-data measured trend.', ...out });
+  } catch (err) {
+    res.json({ available: false, error: err && err.message });
+  }
+});
 
 async function _computePlayerIndex(db, days, player) {
   try {
@@ -9953,7 +10131,14 @@ async function _computePlayerIndex(db, days, player) {
     // on thin days read as his whole market quadrupling overnight.
     const list = await _baseCardRowsOnly((rows && rows.results) || []);
     if (list.length === 0) return { available: false, days, player, reason: 'no sales for this player' };
-    return _playerTrendPayload(list, throughIso, days, player, newest.first ? _mkDay(newest.first) : null);
+    const historyFrom = newest.first ? _mkDay(newest.first) : null;
+    const measured = _playerTrendPayload(list, throughIso, days, player, historyFrom);
+    // Too few sales for the measured reading: parallels pooled and the market
+    // leaned on (_pooledPlayerTrend). Players who clear the gate keep exactly
+    // the reading they had.
+    if (!PLAYER_POOLED_ENABLED || measured.available || measured.reason !== 'not enough sales for a reliable reading') return measured;
+    const pooled = await _pooledPlayerTrend(db, list, throughIso, days, player, historyFrom);
+    return pooled && pooled.available ? pooled : measured;
   } catch (err) {
     console.error('[PlayerIndex]', err && err.message);
     return { available: false, days, player, reason: 'index unavailable', transient: true, error: err && err.message };
@@ -17226,7 +17411,7 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
