@@ -9296,6 +9296,52 @@ app.get('/api/debug/parallel-ladder', async (req, res) => {
     products: Object.fromEntries(Object.entries(ladder.products).map(([k, v]) => [k, Object.keys(v.rungs).length])) });
 });
 
+// GET /api/debug/ladder-sample?year=2025&set=mosaic&player=Jaxson%20Dart&card=362
+// Every sale of one card and how the parallel ladder reads it: base, which
+// parallel, or left out (graded, a parallel word on a blank column, junk).
+// Admin only, read-only — to see what a ladder rung is made of.
+app.get('/api/debug/ladder-sample', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, reason: 'no dataset' });
+  const year = String(req.query.year || '').trim();
+  const set = String(req.query.set || '').trim().toLowerCase();
+  const player = String(req.query.player || '').trim();
+  const card = String(req.query.card || '').replace(/^#/, '').trim();
+  if (!/^\d{4}$/.test(year) || !set || !player || !card) return res.status(400).json({ error: 'year, set, player and card are required' });
+  try {
+    const T = "COALESCE(title, '')";
+    const any = (ws) => _rsiOrTree(ws.map(w => `${T} LIKE '%${w}%'`));
+    const baseList = RSI_BASE_PARALLELS.map(v => `'${v}'`).join(', ');
+    const out = await db.prepare(
+      `SELECT sold_date, title, price_cents, parallel, grader, grade, set_name,
+              CASE WHEN LOWER(TRIM(COALESCE(parallel, ''))) IN (${baseList})
+                   THEN (CASE WHEN ${T} GLOB '*/[0-9]*' OR ${any(PAR_LADDER_BASE_BLOCK)} THEN '(dropped: parallel word)' ELSE '(base)' END)
+                   ELSE LOWER(TRIM(parallel)) END AS ladder_par,
+              CASE WHEN 1 = 1 ${RSI_RAW_ONLY} THEN 1 ELSE 0 END AS raw,
+              CASE WHEN ${_rsiJunkSql(T)} THEN 1 ELSE 0 END AS junk
+         FROM sales
+        WHERE year = ? AND LOWER(set_name) LIKE ? AND LOWER(player) = LOWER(?) AND card_number = ?
+          AND price_cents > 0
+        ORDER BY sold_date DESC LIMIT 300`
+    ).bind(year, `%${set}%`, player, card).all();
+    const rows = (out && out.results) || [];
+    const by = {};
+    for (const r of rows) {
+      if (!r.raw) continue;
+      const k = r.ladder_par || '(blank)';
+      (by[k] = by[k] || []).push(r.price_cents / 100);
+    }
+    const summary = Object.entries(by).map(([k, ps]) => ({ par: k, sales: ps.length, median: Math.round(_medOf(ps) * 100) / 100 }))
+      .sort((a, b) => b.sales - a.sales);
+    res.json({ available: true, rows: rows.length, rawByLadderKey: summary,
+      sales: rows.map(r => ({ d: r.sold_date, $: r.price_cents / 100, par: r.ladder_par, col: r.parallel, raw: !!r.raw, junk: !!r.junk,
+        set: r.set_name, t: r.title })) });
+  } catch (err) {
+    res.json({ available: false, error: err && err.message });
+  }
+});
+
 app.get('/api/debug/index-health', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no dataset' });
