@@ -45,6 +45,10 @@ check('an unnumbered search is still estimated as before', !!base, base ? `$${ba
   const app = require('fs').readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
   check('a sold search does not show an "estimated value" box',
     !/buildSimilarEstimateSection/.test(app) && /estimate: data\.estimate \|\| null/.test(app));
+  // Nor an empty one: "No recent sold listings found" was followed by
+  // "Estimated $10.88", priced off two PSA 9 sales that merely matched words.
+  check('  ...nor a search with no sales ("Estimated price" under "No recent sold listings")',
+    !/loadQueryEstimate|query-estimate|\/api\/price-estimate/.test(app));
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall numbered-estimate checks passed');
