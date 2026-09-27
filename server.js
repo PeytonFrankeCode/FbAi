@@ -9982,8 +9982,16 @@ function _playerTrendPayload(rows, throughIso, days, player, historyFrom = null,
 const PLAYER_POOLED_MIN_WINDOW = 3;
 const PLAYER_POOLED_MIN_CARD_DAYS = 2;
 const PLAYER_POOLED_SHRINK_K = 6;
-// Off until /api/debug/player-index-accuracy has been read on live data.
-const PLAYER_POOLED_ENABLED = false;
+// The market's weight by period, from /api/debug/player-index-accuracy on
+// live data (38 players thinned to 15/30/50% of their card-days, 30 days;
+// 14 players, 7 days). Over a week a player's own sales are mostly noise and
+// the market's move is the better guess (k=12: 2.2-3.2pp from the full-data
+// trend); over a month his own sales carry more (k=3: 3.8-6.2pp, against
+// 7.7pp for the market alone, and covering 92-100% of players where the
+// measured reading covered 11-89%). 90 days has no full-data truth yet (the
+// sales history is too short), so it takes the middle.
+const PLAYER_POOLED_K_BY_DAYS = { 7: 12, 30: 3, 90: PLAYER_POOLED_SHRINK_K };
+const PLAYER_POOLED_ENABLED = true;
 
 async function _poolParallelRows(rows) {
   const ladder = await _parallelLadder();
@@ -10025,7 +10033,7 @@ function _marketMoveFn(market) {
   };
 }
 
-async function _pooledPlayerTrend(db, list, throughIso, days, player, historyFrom, shrinkK = PLAYER_POOLED_SHRINK_K) {
+async function _pooledPlayerTrend(db, list, throughIso, days, player, historyFrom, shrinkK = PLAYER_POOLED_K_BY_DAYS[days] || PLAYER_POOLED_SHRINK_K) {
   const pooledRows = await _poolParallelRows(list);
   const market = await _marketCached(_marketIndexKey(days), () => _computeMarketIndex(db, days)).catch(() => null);
   return _playerTrendPayload(pooledRows, throughIso, days, player, historyFrom, {
