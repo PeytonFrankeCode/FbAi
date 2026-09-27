@@ -11648,7 +11648,7 @@ function _priceBuckets(bk, params, refIso) {
 // Each player's market is different and keeps moving, so the estimator fits
 // the player's own drift and spread (estimator-core). What the backtest tunes
 // is how far those per-player fits are trusted — the half-life, the priors —
-// by trying each setting in EST.PARAM_GRID on the same cases. A setting is
+// by walking the settings in EST.PARAM_DIMS on the same cases. A setting is
 // adopted only if it beats the old estimator by EST.MIN_GAIN points of median
 // error on EST.MIN_CASES or more cases; otherwise the old behaviour stays.
 // The per-basis calibration is adopted only if it helps on players it was
@@ -11732,11 +11732,33 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
   const isDefault = (g) => !g.halfLife && !g.trendTau && !g.spreadTau && !g.floorBase && (g.slabs || 'use') === 'use'
     && (g.numberedFrom || 'all') === 'all';
   const numberedOf = (cases) => cases.filter(c => c.larger);
-  const runs = EST.PARAM_GRID.map(g => {
+  const evalOf = (g) => {
     const cases = casesFor(plain(g));
     return { params: g, cases, score: EST.scoreCases(cases), numbered: EST.scoreCases(numberedOf(cases)) };
-  });
-  const baseline = runs.find(r => isDefault(r.params));
+  };
+  const baseline = evalOf({ ...EST.PARAM_START });
+  const runs = [baseline];
+  // One setting at a time from the old estimator, keeping each change that
+  // lowers the objective, for up to three passes (see EST.PARAM_DIMS).
+  {
+    const byNum = baseline.numbered.n >= EST.MIN_NUMBERED_CASES;
+    const obj = (r) => (r.score.n >= EST.MIN_CASES
+      && (!byNum || r.score.mdape <= baseline.score.mdape + EST.MIN_GAIN)
+      ? (byNum ? r.numbered.mdape : r.score.mdape) : Infinity);
+    let cur = baseline;
+    for (let pass = 0; pass < 3; pass++) {
+      let moved = false;
+      for (const [dim, values] of Object.entries(EST.PARAM_DIMS)) {
+        for (const v of values) {
+          if (cur.params[dim] === v) continue;
+          const r = evalOf({ ...cur.params, [dim]: v });
+          runs.push(r);
+          if (obj(r) < obj(cur)) { cur = r; moved = true; }
+        }
+      }
+      if (!moved) break;
+    }
+  }
   // Judged on numbered parallels priced from larger runs — what the
   // estimator is for — once there are enough of them, provided the rest do
   // not get worse by more than MIN_GAIN; on every case otherwise.
@@ -11769,6 +11791,7 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
       adopted: chosen === baseline ? 'old estimator (nothing beat it by enough)' : 'tuned',
       baseline: baseline.score, chosen: chosen.score, gainPoints: Math.round(gain * 10) / 10,
       judgedOn: byNumbered ? 'numbered' : 'all',
+      evaluated: runs.length,
       numbered: { baseline: baseline.numbered, chosen: chosen.numbered },
       calibration: { adopted: !!calibHelps, multipliers: calib, outOfSample: { n: cross.n, mdape: cross.mdape, bias: cross.bias } },
       grid: [...runs].sort((a, b) => (objective(a) ?? 1e9) - (objective(b) ?? 1e9)).map(brief).slice(0, 8),

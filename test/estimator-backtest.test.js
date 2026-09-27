@@ -174,6 +174,8 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   check('  ...by a lot, on a market this uneven', got.mdape < base.mdape / 2, `${base.mdape}% -> ${got.mdape}%`);
   check('  ...and it follows each player\'s spread and drift', r.params.spreadTau > 0 && r.params.trendTau > 0,
     JSON.stringify(r.params));
+  check('the tuner stays inside a Worker\'s CPU budget (one setting at a time, not all 64)',
+    r.report.evaluated <= 20, `${r.report.evaluated} evaluations`);
   check('the settings are stored for the estimator to read', store.has('estimator:params:v1'));
 
   // Rainbow Mode prices with them: a star's Gold /10 now sits further over
