@@ -11448,7 +11448,7 @@ function _checklistParallels(set, known, fit, pooled, opts = {}) {
     // The ladder's step, stretched by the player's spread, and corrected by
     // what the backtest measured this kind of estimate to miss by.
     const raw = lvl != null ? lvl * Math.pow(fac.f, kSpread) : null;
-    const cal = raw != null ? EST.calibFactor(params.calib, fac.basis, raw) : 1;
+    const cal = raw != null ? EST.calibFactor(params.calib, fac.basis, raw, !!e.printRun) : 1;
     const eff = Math.pow(fac.f, kSpread) * cal;
     const oneOfOne = e.printRun === 1 && fac.basis !== 'ladder';
     const conf = fac.basis === 'ladder' && fac.n >= 8 && levelFrom === 'card' ? 'medium' : 'low';
@@ -11921,6 +11921,9 @@ function _tuneEstimator(bks, { testDays = ESTIMATOR_TEST_DAYS, refIso } = {}) {
     ['band', (cs) => EST.crossCalibrated(cs, EST.KEY_BAND), (cs) => EST.calibrate(cs, EST.KEY_BAND)],
     ['both', (cs) => EST.crossCalibrated(EST.crossCalibrated(cs, EST.KEY_BAND), EST.KEY_BASIS),
              (cs) => ({ ...EST.calibrate(cs, EST.KEY_BAND), ...EST.calibrate(EST.withCalib(cs, EST.calibrate(cs, EST.KEY_BAND)), EST.KEY_BASIS) })],
+    ['kind', (cs) => EST.crossCalibrated(cs, EST.KEY_KIND), (cs) => EST.calibrate(cs, EST.KEY_KIND)],
+    ['band+kind', (cs) => EST.crossCalibrated(EST.crossCalibrated(cs, EST.KEY_BAND), EST.KEY_KIND),
+             (cs) => ({ ...EST.calibrate(cs, EST.KEY_BAND), ...EST.calibrate(EST.withCalib(cs, EST.calibrate(cs, EST.KEY_BAND)), EST.KEY_KIND) })],
   ].map(([name, crossOf, fitOf]) => ({ name, cross: EST.scoreCases(crossOf(chosen.cases)), fitOf }));
   const calibBest = calibOptions.reduce((a, b) => ((b.cross.mdape ?? 1e9) < (a.cross.mdape ?? 1e9) ? b : a));
   const cross = calibBest.cross;

@@ -71,6 +71,9 @@ const check = (label, ok, detail) => {
   check('a band that runs low is lifted by band, and bases and bands multiply',
     band['band:$250+'] > 1.15 && Math.abs(EST.calibFactor({ 'band:$250+': 1.2, ladder: 1.1 }, 'ladder', 300) - 1.32) < 1e-9
     && EST.calibFactor({ 'band:$250+': 1.2 }, 'ladder', 30) === 1, JSON.stringify(band));
+  check('a numbered correction applies only to numbered targets',
+    EST.calibFactor({ 'kind:numbered': 1.15 }, 'ladder', 100, true) === 1.15 && EST.calibFactor({ 'kind:numbered': 1.15 }, 'ladder', 100, false) === 1
+    && EST.KEY_KIND({ pr: 25 }) === 'kind:numbered' && EST.KEY_KIND({}) === 'kind:unnumbered');
   const sc = EST.scoreCases(cases);
   check('scores are median error and bias in percent', sc.mdape === 20 && sc.bias === -20, JSON.stringify({ mdape: sc.mdape, bias: sc.bias }));
 }
