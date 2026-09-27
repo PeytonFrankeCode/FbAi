@@ -138,12 +138,28 @@ for (const [num, player, level, k, drift] of PLAYERS) {
     const fit = { ref: '', rungs: { '': { f: 1, n: 50, lo: 0.9, hi: 1.1 }, silver: { f: 0.33, n: 30, lo: 0.9, hi: 1.1 },
                                     green: { f: 0.5, n: 30, lo: 0.9, hi: 1.1 } } };
     const out = S._checklistParallels(set, [{ key: 'silver', name: 'Silver', raw: 12, rawN: 3, sales: 3 }], fit, null,
-      { params: EST.DEFAULT_PARAMS });
+      { params: { ...EST.DEFAULT_PARAMS, floorBase: true } });
     const base = out.find(x => x.name === 'Base'), green = out.find(x => x.name === 'Green');
-    check('a rung under base is not believed: base is not priced above the Silver it came from',
+    check('with floorBase, a rung under base is not believed: base is not priced above the Silver it came from',
       !base || !base.estimate || base.estimate.price <= 12, JSON.stringify(base && base.estimate && base.estimate.price));
     check('  ...and no parallel is estimated under base', !green || !green.estimate || !base || !base.estimate
       || green.estimate.price >= base.estimate.price, JSON.stringify(green && green.estimate && green.estimate.price));
+  }
+
+  // Slabs of a cheap card are mostly grading fee: with slabs 'fallback', a
+  // parallel known only from its slabs does not anchor a card that has raw
+  // sales to go on.
+  {
+    const set = { parallels: [{ name: 'Silver' }, { name: 'Red' }] };
+    const fit = { ref: '', rungs: { '': { f: 1, n: 50, lo: 0.9, hi: 1.1 }, silver: { f: 4, n: 30, lo: 0.9, hi: 1.1 },
+                                    red: { f: 6, n: 30, lo: 0.9, hi: 1.1 } } };
+    const known = [{ key: 'silver', name: 'Silver', raw: 8, rawN: 3, sales: 3 },
+                   { key: 'red', name: 'Red', raw: null, rawN: 0, sales: 2, grades: { 'PSA 9': 60 }, gradeN: { 'PSA 9': 2 } }];
+    const use = S._checklistParallels(set, known, fit, null, { params: EST.DEFAULT_PARAMS });
+    const fb = S._checklistParallels(set, known, fit, null, { params: { ...EST.DEFAULT_PARAMS, slabs: 'fallback' } });
+    const baseOf = (o) => o.find(x => x.name === 'Base').estimate.price;
+    check('with slabs "fallback", a slab-only parallel does not pull up a card with raw sales',
+      baseOf(fb) === 2 && baseOf(use) > 2, `use $${baseOf(use)}, fallback $${baseOf(fb)}`);
   }
 
   const r = await S.runEstimatorBacktest({ save: true });

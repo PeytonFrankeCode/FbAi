@@ -549,6 +549,8 @@
       p.trendTau ? 'follows each player\'s market trend' : null,
       p.spreadTau ? 'fits each player\'s parallel spread' : null,
       p.halfLife ? `weights recent sales (half-life ${p.halfLife} days)` : null,
+      p.floorBase ? 'never prices a parallel below its base' : null,
+      p.slabs === 'fallback' ? 'uses slab-only parallels only when nothing sold raw' : null,
     ].filter(Boolean);
     const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
     const tiers = Object.entries(c.byTier || {}).map(([t, s]) =>
