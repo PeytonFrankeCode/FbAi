@@ -130,6 +130,22 @@ for (const [num, player, level, k, drift] of PLAYERS) {
   S._primeParallelLadder({ builtAt: 'test', products: { [PID]: { ref: '', rungs, levels: { q25: 5, q50: 12, cards: 200 } } }, curves: {} });
   S._primeEstimatorParams(null);
 
+  // A ladder whose base was inflated by unnamed parallels says Silver is
+  // worth a third of base. Taken at its word, a $12 Silver made a $1.54 base
+  // card "$36"; a parallel is never worth less than its base.
+  {
+    const set = { parallels: [{ name: 'Silver' }, { name: 'Green' }] };
+    const fit = { ref: '', rungs: { '': { f: 1, n: 50, lo: 0.9, hi: 1.1 }, silver: { f: 0.33, n: 30, lo: 0.9, hi: 1.1 },
+                                    green: { f: 0.5, n: 30, lo: 0.9, hi: 1.1 } } };
+    const out = S._checklistParallels(set, [{ key: 'silver', name: 'Silver', raw: 12, rawN: 3, sales: 3 }], fit, null,
+      { params: EST.DEFAULT_PARAMS });
+    const base = out.find(x => x.name === 'Base'), green = out.find(x => x.name === 'Green');
+    check('a rung under base is not believed: base is not priced above the Silver it came from',
+      !base || !base.estimate || base.estimate.price <= 12, JSON.stringify(base && base.estimate && base.estimate.price));
+    check('  ...and no parallel is estimated under base', !green || !green.estimate || !base || !base.estimate
+      || green.estimate.price >= base.estimate.price, JSON.stringify(green && green.estimate && green.estimate.price));
+  }
+
   const r = await S.runEstimatorBacktest({ save: true });
   check('the backtest runs on the players with the most parallel sales', r.ok && r.report.pairs === PLAYERS.length,
     r.ok ? `${r.report.pairs} pairs, ${r.report.chosen.n} cases` : JSON.stringify(r));
