@@ -8,7 +8,7 @@
 //      wrote ~0, and the report read "1 request today".
 //
 // Here each isolate keeps a running tally for the day and writes it to its OWN
-// KV key every few minutes (no shared key, so isolates never overwrite each
+// KV key at most once a minute (no shared key, so isolates never overwrite each
 // other); the report sums the keys. Pure apart from the tally object, so the
 // tests drive it directly.
 //
@@ -38,7 +38,10 @@ const DATACENTER_ASNS = new Map([
 const BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|playwright|selenium|curl|wget|python-requests|python-urllib|aiohttp|httpclient|scrapy|axios|go-http|java\/|okhttp|libwww|node-fetch|undici|feedfetcher|facebookexternalhit|embedly|semrush|ahrefs|mj12|dotbot|petalbot|dataforseo|bytespider|gptbot|claudebot|ccbot|perplexity|amazonbot|applebot|yandex|baiduspider|sogou/i;
 
 const LIMIT = 80;          // keys kept per breakdown, so a botnet cannot grow memory
-const FLUSH_MS = 5 * 60000;
+// At most one KV write per isolate a minute (on the first request, then when a
+// minute has passed): tail loss per isolate is under a minute, and the write
+// volume stays well inside Workers Paid's KV allowance.
+const FLUSH_MS = 60000;
 
 function newTally(day) {
   return { day, total: 0, pages: 0, api: 0, assets: 0,
