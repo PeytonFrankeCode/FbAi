@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=f9760e7c5b" />
+  <link rel="stylesheet" href="style.css?v=255f1f0e06" />
 
 
 </head>
@@ -1180,12 +1180,18 @@
             <div class="ca-chart-wrap">
               <canvas id="ca-chart" height="150"></canvas>
               <p id="ca-chart-empty" class="ca-chart-empty hidden"></p>
+              <!-- Shown while the card's sales load: a line being drawn and a
+                   spinner, rather than an empty box that reads as broken. -->
+              <div class="ca-loading-art" aria-hidden="true">
+                <svg class="ca-skel-line" viewBox="0 0 300 100" preserveAspectRatio="none"><path d="M0,78 C30,70 45,40 75,48 S120,82 150,60 S200,18 230,34 S275,62 300,40" /></svg>
+                <span class="load-spinner"></span>
+              </div>
             </div>
             <!-- Pinned value for a tapped point. A tooltip disappears the
                  moment a finger lifts, which on a phone means the answer
                  leaves with the question. -->
             <div id="ca-point" class="chart-readout hidden"></div>
-            <p class="chart-readout-hint">Tap any point to see that day's price.</p>
+            <p class="chart-readout-hint">Tap or drag along the chart to see each day's price.</p>
             <p class="ca-note">Each grade is tracked separately — a graded copy and a raw one are the same card but different markets.</p>
 
             <div class="ca-tabs" role="tablist">
@@ -1589,7 +1595,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=825909000d"></script>
+  <script src="app.js?v=3128d74c34"></script>
   <script type="importmap">
   {
     "imports": {
