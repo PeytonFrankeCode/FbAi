@@ -62,6 +62,19 @@ const tier = (name) => RL_TIERS.find(t => t.name === name);
     !!over && over.retryAfter >= 1 && over.retryAfter <= 60, over && over.retryAfter + 's');
 }
 
+// ---- A search that failed its reCAPTCHA check is metered tighter ----
+// It is served rather than refused (see recaptcha.test.js), at a lower rate.
+{
+  const now = Date.now();
+  let served = 0, unverifiedServed = 0;
+  for (let i = 0; i < 50; i++) {
+    if (!rateLimitCheck({ ...req('/api/search', '7.7.7.1') }, now)) served++;
+    if (!rateLimitCheck({ ...req('/api/search', '7.7.7.2'), captchaUnverified: true }, now)) unverifiedServed++;
+  }
+  check('an unverified search is held to a tighter budget than a verified one',
+    served === 50 && unverifiedServed === 30, `verified ${served}/50, unverified ${unverifiedServed}/50`);
+}
+
 // ---- Budgets are per address ----
 {
   const t = tier('search');
