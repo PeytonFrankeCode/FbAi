@@ -9113,3 +9113,21 @@ body.tour-open { overflow: hidden; }
 @media (max-width: 768px) {
   .alerts-tab { position: sticky; right: -0.75rem; z-index: 1; background: var(--header-bg); box-shadow: -10px 0 10px -4px var(--header-bg); }
 }
+
+/* Version cards: every photo in the same, larger frame. The frame used to
+   take the photo's own size, so a small eBay thumbnail made a short card and
+   a big one a tall card. Fixed height, photo fitted inside it whole. */
+.version-card .card-image-wrap {
+  flex: none;
+  height: 260px;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+.version-card .card-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+@media (max-width: 560px) {
+  .version-card .card-image-wrap { height: 220px; }
+}
