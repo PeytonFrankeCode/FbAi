@@ -3053,7 +3053,7 @@ function _buildVersionCard({ v, items }) {
     <div class="card-accent"></div>
     <div class="sold-badge">${items.length} SOLD</div>
     <div class="card-image-wrap">${img
-      ? `<img src="${escHtml(img)}" alt="${escHtml(v.card.player)} ${escHtml(v.parallel)}" loading="lazy" />`
+      ? `<img src="${escHtml(_largeEbayImg(img))}" alt="${escHtml(v.card.player)} ${escHtml(v.parallel)}" loading="lazy" />`
       : `<div class="no-image"><span class="no-image-icon">&#127183;</span><span>No image</span></div>`}</div>
     <div class="card-body">
       <p class="card-tag">${escHtml([_versionCtx.productName, setLabel].filter(Boolean).join(' · '))}</p>
@@ -3792,6 +3792,12 @@ function epnUrl(url) {
 // ($899.99 -> $900, $223.05 -> $223), cents below that, where they matter.
 // Individual sales keep their exact price; this is for comps, estimates,
 // averages and ranges.
+// eBay photo URLs carry their size (…/s-l140.jpg). Search results often come
+// back as small thumbnails, which look tiny, or blurry once enlarged; the
+// version cards ask for the 500px copy, which every eBay photo has.
+function _largeEbayImg(u) {
+  return String(u || '').replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, '/s-l500.$1');
+}
 function roundMoney(n) {
   const v = Number(n) || 0;
   return v >= 10 ? '$' + Math.round(v).toLocaleString('en-US') : '$' + v.toFixed(2);
