@@ -889,7 +889,7 @@ async function loadMarketPulse(days, attempt = 0) {
 
   let data = _mpLoaded[period];
   if (!data) {
-    body.innerHTML = '<div class="mp-loading">Loading…</div>';
+    body.innerHTML = '<div class="mp-loading"><span class="load-spinner sm"></span>Loading…</div>';
     try {
       const res = await fetch(`/api/sold-stats?days=${period}`, { cache: 'no-store' });
       data = await safeJson(res);
@@ -903,7 +903,7 @@ async function loadMarketPulse(days, attempt = 0) {
     if (attempt < MP_RETRY_MS.length) {
       setTimeout(() => loadMarketPulse(period, attempt + 1), MP_RETRY_MS[attempt]);
       // Keep what is showing (another period's boards) rather than blanking.
-      if (!wrap.classList.contains('hidden')) body.innerHTML = '<div class="mp-loading">Loading…</div>';
+      if (!wrap.classList.contains('hidden')) body.innerHTML = '<div class="mp-loading"><span class="load-spinner sm"></span>Loading…</div>';
       return;
     }
     wrap.classList.add('hidden');
@@ -4908,22 +4908,91 @@ function chartIndexAt(chart, clientX) {
   return Math.min(n - 1, Math.max(0, Math.round(raw)));
 }
 
-// Wire a chart so tapping or clicking pins the value under the finger.
+// Wire a chart so tapping or clicking pins the value under the finger, and a
+// finger dragged across it scrubs: a dot and a guide line follow it and the
+// readout updates as it moves, the way the big card apps do it. Tapping a
+// point exactly was the only way in before, and on a phone that mostly missed.
 // `format(index)` returns the readout HTML, or falsy to leave it as it was.
+//
+// The canvas takes horizontal drags (touch-action: pan-y) and leaves vertical
+// ones to the page, so the chart never traps a scroll.
 function attachPointReadout(chart, elId, format) {
   if (!chart || !chart.canvas) return;
-  const handler = (clientX) => {
+  const canvas = chart.canvas;
+  const show = (clientX, live) => {
     const i = chartIndexAt(chart, clientX);
     if (i == null) return;
     const html = format(i);
     if (html) renderChartReadout(elId, html);
+    if (live) _chartScrubTo(chart, i);
   };
-  chart.canvas.addEventListener('click', (e) => handler(e.clientX));
-  // passive: this only reads a coordinate, it never blocks scrolling.
-  chart.canvas.addEventListener('touchend', (e) => {
-    const t = e.changedTouches && e.changedTouches[0];
-    if (t) handler(t.clientX);
-  }, { passive: true });
+  canvas.style.touchAction = 'pan-y';
+  let scrubbing = false;
+  canvas.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse') return;       // a mouse has hover already
+    scrubbing = true;
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    show(e.clientX, true);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (scrubbing) show(e.clientX, true);
+  });
+  const stop = () => { scrubbing = false; };
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);  // the page took a vertical scroll
+  canvas.addEventListener('click', (e) => show(e.clientX, true));
+}
+
+// Point a chart at one index: its dots grow, the tooltip sits on it, and the
+// guide line (below) is drawn through it. Stays after the finger lifts, so
+// the answer does not leave with the question.
+function _chartScrubTo(chart, i) {
+  try {
+    const els = chart.data.datasets.map((d, di) => ({ datasetIndex: di, index: i }))
+      .filter(el => !chart.getDatasetMeta(el.datasetIndex).hidden && chart.getDatasetMeta(el.datasetIndex).data[i]);
+    if (!els.length) return;
+    chart.$scrubIndex = i;
+    chart.setActiveElements(els);
+    if (chart.tooltip) {
+      const pt = chart.getDatasetMeta(els[0].datasetIndex).data[i];
+      chart.tooltip.setActiveElements(els, { x: pt.x, y: pt.y });
+    }
+    chart.update('none');
+  } catch (_) { /* a chart mid-destroy */ }
+}
+
+// The guide line through the scrubbed point. Registered once for every chart;
+// draws only on a chart that has been scrubbed.
+if (typeof Chart !== 'undefined' && !Chart.__scrubLine) {
+  Chart.__scrubLine = true;
+  Chart.register({
+    id: 'scrubLine',
+    afterDatasetsDraw(chart) {
+      const i = chart.$scrubIndex;
+      if (i == null || !chart.chartArea) return;
+      const meta = chart.getDatasetMeta(0);
+      const pt = meta && meta.data && meta.data[i];
+      if (!pt) return;
+      const { ctx, chartArea } = chart;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(148,163,184,0.55)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(pt.x, chartArea.top);
+      ctx.lineTo(pt.x, chartArea.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = (meta.dataset && meta.dataset.options && meta.dataset.options.borderColor) || '#5ece99';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    },
+  });
 }
 
 // Show a clicked point's value in a readout under the chart. Tooltips vanish
@@ -5083,7 +5152,7 @@ async function loadMarketIndex() {
   const loadingTimer = setTimeout(() => {
     if (seq !== _mkSeq) return;
     _mkClearChart();
-    body.innerHTML = '<p class="market-loading">Loading the market…</p>';
+    body.innerHTML = '<p class="market-loading"><span class="load-spinner sm"></span>Loading the market…</p>';
   }, 120);
   const data = await indexP;
   clearTimeout(loadingTimer);
@@ -5207,7 +5276,7 @@ async function loadMarketIndex() {
       <div class="market-chart-wrap"><canvas id="market-chart" height="150"></canvas></div>
       <p id="market-chart-empty" class="market-chart-empty hidden"></p>
       <div id="market-point" class="chart-readout hidden"></div>
-      <p class="chart-readout-hint">Tap any point to see that day's level.</p>
+      <p class="chart-readout-hint">Tap or drag along the chart to see each day's level.</p>
     </div>
 
     <div class="market-basket" id="market-basket">
@@ -15178,7 +15247,7 @@ function _caRenderPrice(estimate) {
 function _caReset(keepVisible) {
   const wrap = document.getElementById('card-analysis');
   if (wrap && !keepVisible) wrap.classList.add('hidden');
-  if (wrap) wrap.classList.remove('ca-estimated');
+  if (wrap) wrap.classList.remove('ca-estimated', 'ca-loading');
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
   _caData = null; // don't let one card's series render under the next card
   _caForSale = null;
@@ -15223,6 +15292,10 @@ async function loadCardAnalysis(item, opts = {}) {
     wrap.classList.remove('hidden');
     if (summaryEl) summaryEl.textContent = 'Loading…';
   }
+  // The chart and the sales list animate while they load (see .ca-loading).
+  wrap.classList.add('ca-loading');
+  const listEl = document.getElementById('ca-list-body');
+  if (listEl) listEl.innerHTML = '<div class="ca-skel-row"></div><div class="ca-skel-row"></div><div class="ca-skel-row"></div>';
 
   let data;
   try {
@@ -15263,7 +15336,7 @@ function _caRenderSoldView() {
   const data = _caData;
   if (!data) return;
   const wrap = document.getElementById('card-analysis');
-  if (wrap) wrap.classList.remove('ca-estimated');
+  if (wrap) wrap.classList.remove('ca-estimated', 'ca-loading');
   const summaryEl = document.getElementById('ca-summary');
   const span = (data.firstSale && data.lastSale && data.firstSale !== data.lastSale)
     ? ` · ${_caDate(data.firstSale)} – ${_caDate(data.lastSale)}`
@@ -15473,7 +15546,7 @@ function _caRenderList() {
   if (!el) return;
 
   if (_caTab === 'forsale') {
-    if (_caForSale === null) { el.innerHTML = '<p class="ca-list-empty">Checking eBay for active listings…</p>'; return; }
+    if (_caForSale === null) { el.innerHTML = '<p class="ca-list-empty"><span class="load-spinner sm"></span>Checking eBay for active listings…</p>'; return; }
     const rows = _caForSale.results || [];
     el.innerHTML = rows.length
       ? rows.map(r => _caRow(r,
