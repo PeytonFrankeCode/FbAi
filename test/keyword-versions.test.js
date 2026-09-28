@@ -98,8 +98,28 @@ const together = (res, a, b) => res.rs.find(r => r.title === a)._kw === res.rs.f
 
 // ---- wiring ----
 check('only versions with two or more sales are shown', /KW_MIN_SALES = 2/.test(src) && /g\.items\.length >= KW_MIN_SALES/.test(src));
-check('grouping runs on what the checklist could not place, or everything when there is none',
-  /_buildKwGroups\(_versionCtx \? currentResults\.filter\(r => !_versionOf\(r\)\) : currentResults, player\)/.test(src));
+check('grouping runs on what the checklist cannot account for, or everything when there is none',
+  /_buildKwGroups\(_versionCtx\s*\? currentResults\.filter\(r => !_versionOf\(r\) && !_checklistCouldPlace\(r\.title, _versionCtx\)\)\s*: currentResults, player\)/.test(src));
+
+// ---- a checklist card never shows in the keyword grouping ----
+{
+  const c2 = {};
+  vm.createContext(c2);
+  vm.runInContext([
+    'const PARALLEL_STRIP_TEAMS = [];',
+    pick('function _cleanForMatch(s) {', '// "Green Ice Prizms"'),
+    pick('function _checklistCouldPlace(title, ctx) {', '// The keyword versions of the current search'),
+    'this.could = _checklistCouldPlace;',
+  ].join('\n'), c2);
+  const ctx = { year: 2025, productName: '2025 Donruss Optic Football', playerRe: /\bjaxson dart\b/g,
+    cards: [{ number: '273', setRe: null }, { number: '11', setRe: /\buptown\b/ }, { number: '2', setRe: /\bpassing grade\b/ }] };
+  check('a listing with one of the checklist\u2019s numbers is the checklist\u2019s, confirmed parallel or not',
+    c2.could('2025 Donruss Optic Jaxson Dart #273 Holo Wave PSA 10', ctx) && c2.could('Jaxson Dart Optic #273 RC Mystery Parallel', ctx));
+  check('  ...as is one naming a checklist insert without a number', c2.could('2025 Optic Jaxson Dart Uptown SSP', ctx));
+  check('  ...but another year, a sibling product or a number not on the checklist is grouped by title',
+    !c2.could('2024 Donruss Optic Jaxson Dart #273', ctx) && !c2.could('2025 Donruss Optic Draft Picks Jaxson Dart #273', ctx)
+    && !c2.could('2025 Donruss Optic Jaxson Dart #999', ctx));
+}
 check('a keyword version filters the comps like a checklist version', /if \(_kwGroups\) return r\._kw \|\| null;/.test(src));
 check('a new search never inherits the last one\'s keyword versions',
   /async function buildParallelFilter\(query\) \{[\s\S]{0,260}_kwGroups = null;/.test(src));
