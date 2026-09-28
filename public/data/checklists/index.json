@@ -3324,6 +3324,16 @@
       "sport": "Football",
       "setCount": 1,
       "totalCards": 440
+    },
+    {
+      "id": "2000-bowman-football",
+      "name": "2000 Bowman Football",
+      "year": 2000,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 240,
+      "note": "Cards #141-240 are rookie cards, including #236 Tom Brady. Gold parallels are numbered to 99."
     }
   ]
 }
