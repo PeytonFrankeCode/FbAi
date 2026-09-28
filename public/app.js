@@ -2121,15 +2121,15 @@ function renderStatsBar(results, isSold) {
     </div>
     <div class="stat-item">
       <span class="stat-label">${isSold ? 'Avg Sale' : 'Avg Price'}${offerNote}</span>
-      <span class="stat-value">$${avg.toFixed(2)}</span>
+      <span class="stat-value">${roundMoney(avg)}</span>
     </div>
     <div class="stat-item">
       <span class="stat-label">Low</span>
-      <span class="stat-value">$${minP.toFixed(2)}</span>
+      <span class="stat-value">${roundMoney(minP)}</span>
     </div>
     <div class="stat-item">
       <span class="stat-label">High</span>
-      <span class="stat-value">$${maxP.toFixed(2)}</span>
+      <span class="stat-value">${roundMoney(maxP)}</span>
     </div>
   `;
   grid.appendChild(statsEl);
@@ -3058,10 +3058,10 @@ function _buildVersionCard({ v, items }) {
     <div class="card-body">
       <p class="card-tag">${escHtml([_versionCtx.productName, setLabel].filter(Boolean).join(' · '))}</p>
       <p class="card-title">${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}</p>
-      <p class="card-price">${avg ? `$${avg.toFixed(2)}` : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
+      <p class="card-price">${avg ? roundMoney(avg) : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
       <div class="card-meta">
         <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${rawTag ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
-        ${prices.length > 1 ? `<span class="card-condition">median $${median.toFixed(2)} &middot; $${prices[0].toFixed(0)}&ndash;$${prices[prices.length - 1].toFixed(0)}</span>` : ''}
+        ${prices.length > 1 ? `<span class="card-condition">median ${roundMoney(median)} &middot; ${roundMoney(prices[0])}&ndash;${roundMoney(prices[prices.length - 1])}</span>` : ''}
       </div>
       ${histFrom ? '<button type="button" class="version-history-btn">&#128200; Sold history &amp; graph</button>' : ''}
     </div>`;
@@ -3151,7 +3151,7 @@ function _versionMarketPrice(card, priced, v) {
     const ratio = Math.min(1 + VERSION_MARKET_MAX_ADJ, Math.max(1 - VERSION_MARKET_MAX_ADJ, end.score / at.score));
     const pct = Math.round((ratio - 1) * 1000) / 10;
     const priceEl = card.querySelector('.card-price');
-    if (priceEl) priceEl.innerHTML = `$${(base * ratio).toFixed(2)} <span class="version-avg">est. value</span>`;
+    if (priceEl) priceEl.innerHTML = `${roundMoney(base * ratio)} <span class="version-avg">est. value</span>`;
     const meta = card.querySelector('.card-meta');
     if (meta) {
       const note = document.createElement('span');
@@ -3788,6 +3788,14 @@ function epnUrl(url) {
 }
 
 // ---- Helpers ----
+// A summary price, for reading at a glance: whole dollars from $10 up
+// ($899.99 -> $900, $223.05 -> $223), cents below that, where they matter.
+// Individual sales keep their exact price; this is for comps, estimates,
+// averages and ranges.
+function roundMoney(n) {
+  const v = Number(n) || 0;
+  return v >= 10 ? '$' + Math.round(v).toLocaleString('en-US') : '$' + v.toFixed(2);
+}
 function escHtml(str) {
   if (!str) return '';
   return String(str)
@@ -5885,7 +5893,7 @@ function _renderScannerSoldResults(query, items) {
     pEl.innerHTML = `
       <div class="stats-bar">
         <div class="stat-item"><span class="stat-label">Results</span><span class="stat-value">${items.length}</span></div>
-        <div class="stat-item"><span class="stat-label">Avg Sale</span><span class="stat-value">$${avg.toFixed(2)}</span></div>
+        <div class="stat-item"><span class="stat-label">Avg Sale</span><span class="stat-value">${roundMoney(avg)}</span></div>
         <div class="stat-item"><span class="stat-label">Median</span><span class="stat-value">$${_scannerLastMedian.toFixed(2)}</span></div>
         <div class="stat-item"><span class="stat-label">Low</span><span class="stat-value">$${Math.min(...prices).toFixed(2)}</span></div>
         <div class="stat-item"><span class="stat-label">High</span><span class="stat-value">$${Math.max(...prices).toFixed(2)}</span></div>
