@@ -2953,6 +2953,134 @@ function _matchVersion(title, ctx) {
   return { key, card, parallel };
 }
 
+// ---- Keyword versions: grouping listings no checklist can place ----
+//
+// Where the search is a card we hold a checklist for, listings are grouped by
+// the checklist card they are. Everything else was a flat list. This groups
+// those by what their titles say: year, card number, parallel, print run,
+// auto / relic, the brand (Topps, Bowman, Donruss...) and the product line
+// (Chrome, Optic, Prizm, Contenders...). Only those words: every other word
+// in a title is left out, because sellers' filler ("Set-Break", "Sharp",
+// "GMCARDS") split one card into many when it counted. So "1986 Topps Jerry
+// Rice #161" and "Topps 1986 Jerry Rice RC #161 Sharp" are one version, and
+// "2024 Topps #100" and "2024 Topps Chrome #100" are two. A title with no
+// number joins the version it otherwise matches; one with no number, brand
+// or line is too vague to place. Only versions with two or more sales show.
+// KW_BEGIN
+const KW_MIN_SALES = 2;
+const KW_MAX_CARDS = 16;
+const _KW_BRANDS = ['upper deck', 'press pass', 'panini', 'topps', 'bowman', 'donruss', 'fleer', 'leaf', 'skybox',
+  'pacific', 'playoff', 'sage', 'score', 'pro set', 'collector\'s edge', 'wild card'];
+const _KW_LINES = ['national treasures', 'gold standard', 'stadium club', 'plates patches', 'rookies stars',
+  'draft picks', 'rookie ticket', 'sp authentic', 'spx', 'chrome', 'prizm', 'select', 'mosaic', 'optic', 'chronicles',
+  'contenders', 'immaculate', 'spectra', 'hoops', 'revolution', 'absolute', 'certified', 'finest', 'heritage', 'gallery',
+  'phoenix', 'origins', 'flawless', 'obsidian', 'elite', 'zenith', 'illusions', 'luminance', 'legacy', 'clearly',
+  'limited', 'playbook', 'encased', 'noir', 'royale', 'prestige', 'ultra', 'update', 'reserve', 'best', 'classic',
+  'impeccable', 'definitive', 'honors', 'momentum', 'vertex', 'photogenic', 'unparalleled', 'composite', 'luxe',
+  'flux', 'xr', 'magnitude', 'certified', 'university', 'sapphire', 'cosmic', 'inception', 'tribute', 'dynasty',
+  'triple threads', 'museum', 'transcendent', 'lineage', 'gridiron kings', 'signature series', 'crown royale', 'jumbo',
+  'impact', 'dominion', 'paramount', 'tradition', 'stickers', 'aurora', 'vanguard', 'showcase', 'mystique', 'focus',
+  'black diamond', 'game time', 'pro visions', 'metal', 'battle arena', 'optichrome', 'rookie rising',
+  'downtown', 'kaboom', 'color blast', 'stained glass', 'sensational', 'fireworks', 'uptown'];
+// Not lines, though they read like them: "Rated Rookie" and parallels such as
+// "Fire Burst" are words some sellers of one card use and others leave out.
+const _kwPhraseRe = (list) => list.map(p => ({ p, re: new RegExp('\\b' + _reEsc(p).replace(/[\s']+/g, "[\\s']*") + '\\b') }));
+const _KW_BRAND_RES = _kwPhraseRe(_KW_BRANDS);
+const _KW_LINE_RES = _kwPhraseRe(_KW_LINES);
+const _KW_AUTO_RE = /\b(auto|autos|autograph|autographs|autographed|signed|signature|signatures)\b/;
+const _KW_MEM_RE = /\b(patch|patches|relic|relics|jersey|jerseys|memorabilia|swatch|swatches|rpa)\b/;
+
+// What one title says, for grouping. ctx: { playerRe, parallel } — the
+// search's player pattern and this listing's parallel (already classified).
+function _kwSignature(title, ctx) {
+  const raw = String(title || '');
+  let hay = _cleanForMatch(raw);
+  if (ctx && ctx.playerRe) hay = hay.replace(ctx.playerRe, ' ');
+  const year = (raw.match(/\b(19[4-9]\d|20[0-4]\d)\b/) || [])[1] || '';
+  // "#FF-6" and "#FF6" are one number.
+  const num = ((raw.match(/#\s*([a-z]{0,5}-?\d{1,4}[a-z]?)\b/i) || [])[1] || '').toUpperCase().replace(/-/g, '');
+  // "/125" or a serial "17/125"; not a grade's "9.5/10".
+  const runM = raw.match(/(?:^|[\s#(]|\b\d{1,4})\s*\/\s*(\d{1,4})\b/);
+  const run = runM && !(runM[1] === '10' && /\d(\.\d)?\s*\/\s*10\b/.test(raw) && /\b(psa|bgs|sgc|cgc|auto)\b/i.test(raw)) ? runM[1] : '';
+  const auto = _KW_AUTO_RE.test(hay);
+  const mem = _KW_MEM_RE.test(hay);
+  const parallel = (ctx && ctx.parallel) || 'Base';
+  // A parallel's own words are not a product line ("Gold" the parallel, not
+  // "Gold Standard" the product): tested on the title without them.
+  let lineHay = hay;
+  if (parallel !== 'Base') lineHay = lineHay.replace(new RegExp('\\b' + _reEsc(parallel.toLowerCase()).replace(/\s+/g, '[\\s-]+') + '\\b', 'g'), ' ');
+  const found = (res, h) => res.map(t => ({ p: t.p, at: h.search(t.re) })).filter(t => t.at >= 0).sort((a, b) => a.at - b.at).map(t => t.p);
+  const brand = found(_KW_BRAND_RES, hay)[0] || '';
+  // A word inside a longer line found too is that line ("crown royale", not
+  // also "royale").
+  const all = found(_KW_LINE_RES, lineHay);
+  const line = all.filter(w => !all.some(o => o !== w && o.split(' ').includes(w)));
+  return { year, num, run, auto, mem, parallel, brand, line, lineKey: line.slice().sort().join('+') };
+}
+
+// Groups listings into versions. Returns the groups (largest first), each
+// { key, sig, items }, and marks every listing with r._kw = its group's key.
+function _kwGroup(results, ctx) {
+  const groups = [];
+  const bucketOf = (s) => `${s.year}|${s.parallel}|${s.run}|${s.auto ? 'A' : ''}${s.mem ? 'M' : ''}|${s.lineKey}`;
+  const sigs = results.map(r => ({ r, sig: _kwSignature(r.title, { playerRe: ctx && ctx.playerRe, parallel: ctx && ctx.parallelOf ? ctx.parallelOf(r) : 'Base' }) }));
+  // Numbered titles first, so an unnumbered one can join the card it matches.
+  sigs.sort((a, b) => (b.sig.num ? 1 : 0) - (a.sig.num ? 1 : 0));
+  let loose = 0;
+  for (const m of sigs) {
+    const s = m.sig;
+    const bucket = bucketOf(s);
+    const vague = !s.num && !s.brand && !s.line.length;
+    const cands = vague ? [] : groups.filter(g => g.bucket === bucket
+      && (!s.num || !g.sig.num || g.sig.num === s.num)
+      // The brand only decides when no product line does: sellers call one
+      // Skybox Dominion card "Fleer" and "Skybox" alike.
+      && (s.lineKey || !s.brand || !g.brand || g.brand === s.brand));
+    // A title with no number joins a numbered card only when just one fits;
+    // otherwise it goes with the other unnumbered ones.
+    const numbered = [...new Set(cands.filter(g => g.sig.num).map(g => g.sig.num))];
+    const fit = s.num ? cands[0]
+      : (cands.find(g => !g.sig.num) || (numbered.length === 1 ? cands.find(g => g.sig.num) : null));
+    if (fit) {
+      fit.members.push(m);
+      if (!fit.brand && s.brand) fit.brand = s.brand;
+      if (!fit.sig.num && s.num) fit.sig = s;
+    } else {
+      groups.push({ bucket: vague ? `loose${loose++}` : bucket, sig: s, brand: s.brand, members: [m] });
+    }
+  }
+  return groups.map((g, i) => {
+    const key = `kw:${g.bucket}|${g.brand}|${g.sig.num}|${i}`;
+    const items = g.members.map(m => m.r);
+    for (const r of items) r._kw = key;
+    return { key, sig: { ...g.sig, brand: g.brand }, items };
+  }).sort((a, b) => b.items.length - a.items.length);
+}
+
+// The version card's labels: a tag ("2025 Donruss Optic") and a title
+// ("Jaxson Dart #273 · Holo /99 Auto").
+function _kwLabels(g, player) {
+  const s = g.sig;
+  const tag = [s.year, _titleCase([s.brand, ...s.line].filter(Boolean).join(' '))].filter(Boolean).join(' ');
+  const version = [s.parallel, s.run ? `/${s.run}` : '', s.mem ? 'Relic' : '', s.auto ? 'Auto' : ''].filter(Boolean).join(' ');
+  const title = `${player || 'Card'}${s.num ? ` #${s.num}` : ''} · ${version}`;
+  return { tag, title };
+}
+// KW_END
+
+// The keyword versions of the current search: the groups with enough sales
+// to show, or null when there are none (the parallel chips then stand).
+let _kwGroups = null;
+function _buildKwGroups(pool, player) {
+  _kwGroups = null;
+  if (!pool.length) return;
+  const groups = _kwGroup(pool, { playerRe: _parallelCtx && _parallelCtx.playerRe, parallelOf: _parallelOf });
+  const shown = groups.filter(g => g.items.length >= KW_MIN_SALES).slice(0, KW_MAX_CARDS);
+  if (!shown.length) return;
+  const name = _titleCase(String(player || '').toLowerCase());
+  _kwGroups = shown.map(g => ({ ...g, ..._kwLabels(g, name) }));
+}
+
 function _versionOf(r) {
   if (!r || !_versionCtx) return null;
   if (r._version === undefined) r._version = _matchVersion(r.title, _versionCtx);
@@ -2962,8 +3090,9 @@ function _versionOf(r) {
 // What the parallel filter compares against: the version key when grouping,
 // the loose parallel name otherwise.
 function _filterKeyOf(r) {
-  if (_versionCtx) { const v = _versionOf(r); return v ? v.key : null; }
-  return _parallelOf(r);
+  if (_versionCtx) { const v = _versionOf(r); if (v) return v.key; }
+  if (_kwGroups) return r._kw || null;
+  return _versionCtx ? null : _parallelOf(r);
 }
 
 // One card per version, in the same design as a sale card, above the comps.
@@ -2971,40 +3100,61 @@ function _renderVersionGroups() {
   const wrap = document.getElementById('version-groups');
   if (!wrap) return;
   wrap.innerHTML = '';
-  if (!_versionCtx || currentMode !== 'sold' || !currentResults.length) { wrap.classList.add('hidden'); return; }
+  if ((!_versionCtx && !_kwGroups) || currentMode !== 'sold' || !currentResults.length) { wrap.classList.add('hidden'); return; }
 
   // Counts follow the grade filter, as the chips did.
   const pool = _filterResults('parallel');
-  const groups = new Map();
-  for (const r of pool) {
-    const v = _versionOf(r);
-    if (!v) continue;
-    if (!groups.has(v.key)) groups.set(v.key, { v, items: [] });
-    groups.get(v.key).items.push(r);
+  const list = [];
+  if (_versionCtx) {
+    const groups = new Map();
+    for (const r of pool) {
+      const v = _versionOf(r);
+      if (!v) continue;
+      if (!groups.has(v.key)) groups.set(v.key, { v, items: [] });
+      groups.get(v.key).items.push(r);
+    }
+    list.push(...[...groups.values()].sort((a, b) =>
+      (b.v.card.base - a.v.card.base) || (a.v.parallel === 'Base' ? -1 : b.v.parallel === 'Base' ? 1 : 0)
+      || b.items.length - a.items.length || a.v.key.localeCompare(b.v.key)));
   }
-  if (!groups.size) { wrap.classList.add('hidden'); return; }
+  // Keyword versions: the listings no checklist placed, grouped by title.
+  const kwList = [];
+  if (_kwGroups) {
+    for (const g of _kwGroups) {
+      const items = pool.filter(r => r._kw === g.key);
+      // Two sales still, once best offers and the grade chip have had their
+      // say; the one being filtered on stays, so there is a way back.
+      if (items.length < KW_MIN_SALES && currentParallelFilter !== g.key) continue;
+      if (!items.length) continue;
+      kwList.push({ v: { key: g.key, card: { player: g.title.split(' · ')[0], number: '', set: '', base: true },
+        parallel: g.sig.parallel, tag: g.tag, title: g.title, byKeywords: true }, items });
+    }
+  }
+  if (!list.length && !kwList.length) { wrap.classList.add('hidden'); return; }
 
-  const list = [...groups.values()].sort((a, b) =>
-    (b.v.card.base - a.v.card.base) || (a.v.parallel === 'Base' ? -1 : b.v.parallel === 'Base' ? 1 : 0)
-    || b.items.length - a.items.length || a.v.key.localeCompare(b.v.key));
-
-  const head = document.createElement('div');
-  head.className = 'grade-section-header version-groups-header';
-  head.innerHTML = `<span class="grade-label">Versions of this card</span>`
-    + `<span class="grade-meta">${list.length} version${list.length === 1 ? '' : 's'} in ${escHtml(_versionCtx.productName)}`
-    + `${currentParallelFilter !== 'all' ? ` &middot; <button type="button" class="other-cards-toggle version-clear">show all</button>` : ''}</span>`;
-  wrap.appendChild(head);
-  const clear = head.querySelector('.version-clear');
-  if (clear) clear.onclick = () => applyParallelFilter('all');
-
-  const row = document.createElement('div');
-  row.className = 'version-grid';
-  list.forEach((g, i) => {
-    const card = _buildVersionCard(g);
-    card.style.animationDelay = `${i * 0.04}s`;
-    row.appendChild(card);
-  });
-  wrap.appendChild(row);
+  const clearBtn = currentParallelFilter !== 'all' ? ` &middot; <button type="button" class="other-cards-toggle version-clear">show all</button>` : '';
+  const section = (label, meta, cards, first) => {
+    const head = document.createElement('div');
+    head.className = 'grade-section-header version-groups-header' + (first ? '' : ' version-groups-sub');
+    head.innerHTML = `<span class="grade-label">${label}</span><span class="grade-meta">${meta}${first ? clearBtn : ''}</span>`;
+    wrap.appendChild(head);
+    const clear = head.querySelector('.version-clear');
+    if (clear) clear.onclick = () => applyParallelFilter('all');
+    const row = document.createElement('div');
+    row.className = 'version-grid';
+    cards.forEach((g, i) => {
+      const card = _buildVersionCard(g);
+      card.style.animationDelay = `${i * 0.04}s`;
+      row.appendChild(card);
+    });
+    wrap.appendChild(row);
+  };
+  const plural = (n) => `${n} version${n === 1 ? '' : 's'}`;
+  if (list.length) section('Versions of this card', `${plural(list.length)} in ${escHtml(_versionCtx.productName)}`, list, true);
+  if (kwList.length) {
+    section(list.length ? 'More versions' : 'Versions of this card',
+      `${plural(kwList.length)} grouped by the words in their titles`, kwList, !list.length);
+  }
   wrap.classList.remove('hidden');
 }
 
@@ -3056,8 +3206,8 @@ function _buildVersionCard({ v, items }) {
       ? `<img src="${escHtml(_largeEbayImg(img))}" alt="${escHtml(v.card.player)} ${escHtml(v.parallel)}" loading="lazy" />`
       : `<div class="no-image"><span class="no-image-icon">&#127183;</span><span>No image</span></div>`}</div>
     <div class="card-body">
-      <p class="card-tag">${escHtml([_versionCtx.productName, setLabel].filter(Boolean).join(' · '))}</p>
-      <p class="card-title">${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}</p>
+      <p class="card-tag">${escHtml(v.tag || [_versionCtx && _versionCtx.productName, setLabel].filter(Boolean).join(' · '))}</p>
+      <p class="card-title">${v.title ? escHtml(v.title).replace(' · ', ' &middot; ') : `${escHtml(v.card.player)}${v.card.number ? ` #${escHtml(v.card.number.toUpperCase())}` : ''} &middot; ${escHtml(versionLabel)}`}</p>
       <p class="card-price">${avg ? roundMoney(avg) : 'Price N/A'} <span class="version-avg">${avgLabel}</span></p>
       <div class="card-meta">
         <span class="card-date">${items.length} sale${items.length === 1 ? '' : 's'}${rawTag ? ` &middot; ${graded} graded` : ''}${offers ? ` &middot; ${clean === items ? 'best offers only' : `${offers} best offer${offers === 1 ? '' : 's'} excluded`}` : ''}</span>
@@ -3359,6 +3509,7 @@ function resetParallelFilter() {
   currentParallelFilter = 'all';
   _parallelCtx = null;
   _versionCtx = null;
+  _kwGroups = null;
   _renderVersionGroups();
   _parallelBuildToken++;
   const wrap = document.getElementById('parallel-filter');
@@ -3411,6 +3562,7 @@ async function buildParallelFilter(query) {
   currentParallelFilter = 'all';
   // A previous search's grouping must never outlive it.
   _versionCtx = null;
+  _kwGroups = null;
   _renderVersionGroups();
   const wrap = document.getElementById('parallel-filter');
   if (!wrap) return;
@@ -3445,13 +3597,13 @@ async function buildParallelFilter(query) {
   _versionCtx = _buildVersionCtx(vocab && vocab.product, player, query);
   if (_versionCtx) {
     for (const r of currentResults) r._version = _matchVersion(r.title, _versionCtx);
-    _renderVersionGroups();
-    renderParallelChips();
-    _reRenderForFilters();
-    return;
   }
+  // What the checklist could not place (everything, when there is none) is
+  // grouped by the words in its titles.
+  _buildKwGroups(_versionCtx ? currentResults.filter(r => !_versionOf(r)) : currentResults, player);
   _renderVersionGroups();
   renderParallelChips();
+  if (_versionCtx || _kwGroups) _reRenderForFilters();
 }
 
 // Counts reflect the grade filter, so switching grade restates them.
@@ -3461,7 +3613,7 @@ function renderParallelChips() {
   wrap.innerHTML = '';
   if (currentMode !== 'sold' || !currentResults.length) { wrap.classList.add('hidden'); return; }
   // The version cards are the parallel filter when the card is catalogued.
-  if (_versionCtx) { wrap.classList.add('hidden'); _renderVersionGroups(); return; }
+  if (_versionCtx || _kwGroups) { wrap.classList.add('hidden'); _renderVersionGroups(); return; }
 
   const pool = _filterResults('parallel');
   const groups = {};
