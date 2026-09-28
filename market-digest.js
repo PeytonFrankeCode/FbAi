@@ -13,6 +13,11 @@
 const SITE = 'https://thecardhuddle.com';
 const EMAIL_RE = /^[^\s@<>"',;]{1,64}@[^\s@<>"',;]+\.[a-z]{2,}$/i;
 
+// eBay Partner Network tracking, the same parameters as epnUrl() in app.js:
+// a click from an email that becomes a sale earns the commission.
+const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&toolid=10001&mkevt=1';
+const epnUrl = (url) => (!url || !String(url).includes('ebay.com')) ? (url || '') : url + (String(url).includes('?') ? '&' : '?') + EPN_PARAMS;
+
 const normEmail = (s) => String(s || '').trim().toLowerCase();
 const validEmail = (s) => { const e = normEmail(s); return e.length <= 254 && EMAIL_RE.test(e); };
 
@@ -109,7 +114,7 @@ function renderDigest(c, { week, unsubUrl, site = SITE }) {
   ${section('Most sold', 'The cards everyone traded this week', c.mostSold.map(r =>
     row(L(r.query), r.imageUrl, r.name, `${r.sales} sales · avg ${money(r.avgPrice)}`, money(r.topPrice) + ' top')))}
   ${section('Biggest sales', 'The week’s priciest cards', c.priciest.map(r =>
-    row(r.itemUrl || site, r.imageUrl, r.title, r.grade && r.grade !== 'Raw' ? r.grade : 'Sold on eBay', money(r.price))))}
+    row(r.itemUrl ? epnUrl(r.itemUrl) : site, r.imageUrl, r.title, r.grade && r.grade !== 'Raw' ? r.grade : 'Sold on eBay', money(r.price))))}
   ${section('Hottest sets', 'By sales this week', c.sets.map(r =>
     row(L(r.query), null, r.name, `${(r.sales || 0).toLocaleString('en-US')} sales · avg ${money(r.avgPrice)}`, money(r.totalValue))))}
   <tr><td align="center" style="padding:26px 0 6px;">
@@ -146,4 +151,4 @@ function confirmEmail({ confirmUrl }) {
   };
 }
 
-module.exports = { SITE, normEmail, validEmail, weekId, inSendWindow, SEND_FROM_HOUR, digestContent, renderDigest, subjectFor, confirmEmail, link };
+module.exports = { epnUrl, SITE, normEmail, validEmail, weekId, inSendWindow, SEND_FROM_HOUR, digestContent, renderDigest, subjectFor, confirmEmail, link };

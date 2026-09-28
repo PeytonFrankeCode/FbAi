@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { recordPut, recordGet, recordList, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
+const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
 const digest = require('./market-digest');
 
 // WHEN WAS THIS COMPUTED, AND HOW OLD IS IT.
@@ -14062,45 +14062,6 @@ async function sendEmail({ to, subject, html, from }) {
 }
 
 // Create alert
-app.post('/api/alerts', (req, res) => {
-  const { username, email, query, label, priceThreshold, priceCondition } = req.body;
-  if (!username || !email || !query) {
-    return res.status(400).json({ error: 'username, email, and query are required' });
-  }
-  if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-    return res.status(400).json({ error: 'Invalid email address' });
-  }
-
-  const data = loadAlerts();
-  // Price alerts are free for everyone — capped at 25/account to keep the cron
-  // check bounded.
-  const userAlerts = data.alerts.filter(a => a.username.toLowerCase() === username.toLowerCase());
-  if (userAlerts.length >= 25) {
-    return res.status(400).json({ error: 'Maximum 25 alerts per account' });
-  }
-  // No duplicate queries for same user
-  if (userAlerts.some(a => a.query.toLowerCase() === query.toLowerCase() && !a.priceThreshold)) {
-    return res.status(400).json({ error: 'You already have an alert for this card' });
-  }
-
-  const alert = {
-    id: crypto.randomUUID(),
-    username: username.toLowerCase(),
-    email,
-    query,
-    label: label || query,
-    priceThreshold: priceThreshold ? parseFloat(priceThreshold) : null,
-    priceCondition: priceCondition || null, // 'below' or 'above'
-    createdAt: new Date().toISOString(),
-    lastChecked: null,
-    lastSeenIds: [],
-  };
-
-  data.alerts.push(alert);
-  saveAlerts(data);
-  res.json({ alert: { id: alert.id, query: alert.query, label: alert.label, createdAt: alert.createdAt, priceThreshold: alert.priceThreshold, priceCondition: alert.priceCondition } });
-});
-
 // ---- /api/scan-lead ----
 // Lightweight email capture from the free Grade My Card scanner. Anyone (no
 // account needed) can ask to be emailed when their scanned card's a good time
@@ -14335,147 +14296,215 @@ if (process.env.CF_WORKER !== '1') {
 }
 
 // List alerts for a user
-app.get('/api/alerts', (req, res) => {
-  const { username } = req.query;
-  if (!username) return res.status(400).json({ error: 'username is required' });
+// ---- Card alerts: tell people when a card they track is listed ----
+//
+// What was broken, all at once: the checker was stubbed to an empty result
+// when the old sold-data source was retired, so no alert could ever fire; the
+// alerts lived in one shared KV blob that any isolate's stale copy could
+// overwrite; and the routes trusted whatever username the page sent, so
+// anyone could list or delete anyone's alerts.
+//
+// Now: one KV record per alert (db.js recordPut), with its owner and when it
+// was last checked in the key's metadata, so a tick picks the alerts due from
+// the key list alone. The check asks eBay's Browse API for the query's newest
+// listings; anything not seen before is a find. Finds are kept on the alert
+// and shown in the Tracked view (so alerts work with or without email), and
+// emailed when the account has an address and email is configured. The routes
+// take the user from the session.
+const ALERT_PREFIX = 'alert:v2:';
+const ALERT_MAX_PER_USER = 25;
+const ALERT_RECHECK_MS = 30 * 60 * 1000;  // each alert at most every half hour
+const ALERTS_PER_TICK = 15;               // eBay calls a tick: <= 1,440 a day
+const ALERT_SEEN_MAX = 300;               // listing ids remembered per alert
+const ALERT_FOUND_MAX = 30;               // finds kept per alert
+const _alertMeta = (a) => ({ u: a.username, lc: a.lastChecked ? Date.parse(a.lastChecked) : 0 });
+async function _alertSave(a) { await recordPut(ALERT_PREFIX + a.id, a, _alertMeta(a)); }
+async function _alertDelete(id) { await recordDelete(ALERT_PREFIX + id); }
+async function _alertKeys() { await _migrateAlerts(); return recordList(ALERT_PREFIX); }
+async function _userAlerts(username) {
+  const keys = (await _alertKeys()).filter(k => k.metadata && k.metadata.u === username);
+  const out = await Promise.all(keys.map(k => recordGet(k.name)));
+  return out.filter(Boolean).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+}
 
-  const data = loadAlerts();
-  const userAlerts = data.alerts
-    .filter(a => a.username === username.toLowerCase())
-    .map(a => ({ id: a.id, query: a.query, label: a.label, createdAt: a.createdAt, priceThreshold: a.priceThreshold || null, priceCondition: a.priceCondition || null }));
+// Alerts made before the rewrite live in the old 'alerts' blob. Copied into
+// records once (the marker is per isolate and in KV), keeping their ids.
+let _alertsMigrated = false;
+async function _migrateAlerts() {
+  if (_alertsMigrated) return;
+  _alertsMigrated = true;
+  try {
+    if (await cacheGet('alerts:migrated:v2')) return;
+    for (const a of (loadAlerts().alerts || [])) {
+      if (!a || !a.id || !a.username || !a.query) continue;
+      if (await recordGet(ALERT_PREFIX + a.id)) continue;
+      await _alertSave({ id: a.id, username: String(a.username).toLowerCase(), query: a.query, label: a.label || a.query,
+        priceThreshold: a.priceThreshold || null, priceCondition: a.priceCondition || null,
+        createdAt: a.createdAt || new Date().toISOString(), lastChecked: null, seen: [], found: [], unread: 0 });
+    }
+    cachePut('alerts:migrated:v2', { at: new Date().toISOString() }, 60 * 60 * 24 * 365);
+  } catch (err) {
+    _alertsMigrated = false;
+    console.error('[Alerts] migration failed:', err && err.message);
+  }
+}
 
-  res.json({ alerts: userAlerts });
+const _alertView = (a) => ({ id: a.id, query: a.query, label: a.label, createdAt: a.createdAt,
+  priceThreshold: a.priceThreshold || null, priceCondition: a.priceCondition || null,
+  lastChecked: a.lastChecked || null, unread: a.unread || 0, found: (a.found || []).slice(0, 10) });
+
+app.get('/api/alerts', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
+  const user = loadServerUsers()[username] || {};
+  res.json({ alerts: (await _userAlerts(username)).map(_alertView),
+    email: user.email || '', emailEnabled: !!(useResend || emailTransporter) });
 });
 
-// Delete alert
-app.delete('/api/alerts/:id', (req, res) => {
-  const { username } = req.query;
-  if (!username) return res.status(400).json({ error: 'username is required' });
+app.post('/api/alerts', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
+  const { query, label, priceThreshold, priceCondition } = req.body || {};
+  const q = String(query || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+  if (q.length < 3) return res.status(400).json({ error: 'Enter a card to track' });
+  const threshold = priceThreshold != null && priceThreshold !== '' ? parseFloat(priceThreshold) : null;
+  if (threshold != null && !(threshold > 0)) return res.status(400).json({ error: 'Enter a price above $0' });
+  const condition = ['below', 'above'].includes(priceCondition) && threshold ? priceCondition : null;
+  const mine = await _userAlerts(username);
+  if (mine.length >= ALERT_MAX_PER_USER) return res.status(400).json({ error: `Maximum ${ALERT_MAX_PER_USER} alerts per account` });
+  if (mine.some(a => a.query.toLowerCase() === q.toLowerCase() && (a.priceThreshold || null) === threshold && (a.priceCondition || null) === condition)) {
+    return res.status(400).json({ error: 'You already have an alert for this card' });
+  }
+  const alert = { id: crypto.randomUUID(), username, query: q, label: String(label || q).slice(0, 120),
+    priceThreshold: condition ? threshold : null, priceCondition: condition,
+    createdAt: new Date().toISOString(), lastChecked: null, seen: [], found: [], unread: 0 };
+  await _alertSave(alert);
+  res.json({ alert: _alertView(alert) });
+});
 
-  const data = loadAlerts();
-  const idx = data.alerts.findIndex(a => a.id === req.params.id && a.username === username.toLowerCase());
-  if (idx === -1) return res.status(404).json({ error: 'Alert not found' });
-
-  data.alerts.splice(idx, 1);
-  saveAlerts(data);
+app.delete('/api/alerts/:id', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
+  const a = await recordGet(ALERT_PREFIX + String(req.params.id));
+  if (!a || a.username !== username) return res.status(404).json({ error: 'Alert not found' });
+  await _alertDelete(a.id);
   res.json({ ok: true });
 });
 
-// ---- Background Alert Checker ----
-const ALERT_CHECK_INTERVAL = 15 * 60 * 1000; // 15 minutes
+// The Tracked view was opened: its finds are no longer new.
+app.post('/api/alerts/seen', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
+  for (const a of await _userAlerts(username)) {
+    if (a.unread) { a.unread = 0; await _alertSave(a); }
+  }
+  res.json({ ok: true });
+});
 
-async function checkAlerts() {
-  const data = loadAlerts();
-  if (!data.alerts.length) return;
+// The newest listings for a query, straight from eBay (no cache: a cached
+// answer is the listings we already saw).
+async function _newestListings(query) {
+  trackApiCall('browse', 'browse/alerts', query, 'alerts');
+  const token = await getOAuthToken();
+  const r = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+    params: { q: query, category_ids: '261328', sort: 'newlyListed', limit: 50 },
+    headers: { Authorization: `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+    timeout: 15000,
+  });
+  return (r.data?.itemSummaries || []).map(it => ({
+    itemId: it.itemId || '', title: it.title || '', price: it.price?.value || null,
+    imageUrl: it.thumbnailImages?.[0]?.imageUrl || it.image?.imageUrl || null,
+    itemUrl: it.itemWebUrl || '', listedAt: it.itemCreationDate || null,
+    buyingOptions: it.buyingOptions || [],
+  })).filter(it => it.itemId);
+}
 
-  console.log(`[Alerts] Checking ${data.alerts.length} alerts...`);
+// One alert against eBay's newest listings: the new finds, and the alert's
+// updated state. Pure, so it can be tested. The first check only learns what
+// is already listed; after that a listing is new when it was never seen and
+// was listed after the alert was made.
+function _alertFinds(alert, listings, now = Date.now()) {
+  const seen = new Set(alert.seen || []);
+  const first = !alert.lastChecked;
+  const since = Date.parse(alert.createdAt) || 0;
+  let finds = first ? [] : listings.filter(it => !seen.has(it.itemId) && (!it.listedAt || Date.parse(it.listedAt) >= since));
+  if (alert.priceThreshold && alert.priceCondition) {
+    finds = finds.filter(it => {
+      const p = parseFloat(it.price);
+      return Number.isFinite(p) && (alert.priceCondition === 'below' ? p <= alert.priceThreshold : p >= alert.priceThreshold);
+    });
+  }
+  const foundAt = new Date(now).toISOString();
+  const next = {
+    ...alert,
+    lastChecked: foundAt,
+    seen: [...listings.map(it => it.itemId), ...(alert.seen || [])].filter((id, i, a) => a.indexOf(id) === i).slice(0, ALERT_SEEN_MAX),
+    found: [...finds.map(it => ({ ...it, foundAt })), ...(alert.found || [])].slice(0, ALERT_FOUND_MAX),
+    unread: (alert.unread || 0) + finds.length,
+  };
+  return { finds, next };
+}
 
-  const usersTable = loadServerUsers();
-  for (const alert of data.alerts) {
+async function checkAlerts({ now = Date.now(), fetchListings = _newestListings } = {}) {
+  if (USE_MOCK_FORSALE && fetchListings === _newestListings) return { ok: false, reason: 'eBay not configured' };
+  const keys = await _alertKeys();
+  const due = keys.filter(k => now - ((k.metadata && k.metadata.lc) || 0) >= ALERT_RECHECK_MS)
+    .sort((a, b) => ((a.metadata && a.metadata.lc) || 0) - ((b.metadata && b.metadata.lc) || 0))
+    .slice(0, ALERTS_PER_TICK);
+  if (!due.length) return { ok: true, checked: 0, alerts: keys.length };
+  const users = loadServerUsers();
+  const byQuery = new Map();  // two people tracking one card: one eBay call
+  let checked = 0, found = 0, emailed = 0;
+  for (const k of due) {
+    const alert = await recordGet(k.name);
+    if (!alert) continue;
     try {
-      // Sold data source retired — price alerts pause until eBay's official
-      // sold-data API is connected. With no results, alerts simply never fire
-      // (the loop below is a no-op) rather than failing the whole run.
-      let searchResult = USE_MOCK ? getMockData(alert.query, 'sold') : { results: [] };
-
-      const currentIds = searchResult.results.map(r => r.itemId);
-      const previousIds = new Set(alert.lastSeenIds || []);
-      let newListings = searchResult.results.filter(r => !previousIds.has(r.itemId));
-
-      // Apply price threshold filter if set
-      if (alert.priceThreshold && alert.priceCondition && newListings.length > 0) {
-        newListings = newListings.filter(r => {
-          const price = parseFloat(r.price);
-          if (isNaN(price)) return false;
-          return alert.priceCondition === 'below' ? price <= alert.priceThreshold : price >= alert.priceThreshold;
-        });
+      const qk = alert.query.toLowerCase();
+      if (!byQuery.has(qk)) byQuery.set(qk, await fetchListings(alert.query));
+      const { finds, next } = _alertFinds(alert, byQuery.get(qk), now);
+      if (finds.length) {
+        found += finds.length;
+        const email = (users[alert.username] || {}).email;
+        if (email && await sendAlertEmail({ ...next, email }, finds)) { emailed++; next.lastEmailAt = new Date(now).toISOString(); }
       }
-
-      alert.lastChecked = new Date().toISOString();
-      alert.lastSeenIds = currentIds;
-
-      if (newListings.length > 0 && previousIds.size > 0) {
-        console.log(`[Alerts] ${newListings.length} new listing(s) for "${alert.query}"${alert.priceThreshold ? ` (${alert.priceCondition} $${alert.priceThreshold})` : ''} -> ${alert.email}`);
-        await sendAlertEmail(alert, newListings);
-      }
-
-      // Small delay between checks to avoid rate limits
-      await new Promise(r => setTimeout(r, 2000));
+      await _alertSave(next);
+      checked++;
     } catch (err) {
       console.error(`[Alerts] Error checking "${alert.query}":`, err.message);
     }
   }
-
-  // Merge rather than overwrite. This loop is long-running and awaits between
-  // alerts, so alerts can be deleted while it works — by the owner, or by an
-  // account deletion. Writing back the snapshot we loaded at the top would
-  // resurrect them, which for account deletion means undoing an erasure we
-  // told the user was permanent. Re-read, and only carry over the check state
-  // for alerts that still exist.
-  const fresh = loadAlerts();
-  const checked = new Map(data.alerts.map(a => [a.id, a]));
-  for (const a of fresh.alerts) {
-    const c = checked.get(a.id);
-    if (!c) continue;
-    a.lastChecked = c.lastChecked;
-    a.lastSeenIds = c.lastSeenIds;
-  }
-  saveAlerts(fresh);
-  console.log('[Alerts] Check complete.');
+  console.log(`[Alerts] checked ${checked} of ${keys.length}: ${found} new listing(s), ${emailed} email(s)`);
+  return { ok: true, checked, alerts: keys.length, found, emailed };
 }
 
 async function sendAlertEmail(alert, newListings) {
-  if (!useResend && !emailTransporter) {
-    console.log(`[Alerts] Email not configured, would notify ${alert.email} about ${newListings.length} new listing(s) for "${alert.query}"`);
-    return;
-  }
-
-  const listingsHtml = newListings.map(item => `
+  if (!useResend && !emailTransporter) return false;
+  const site = (process.env.SITE_URL || 'https://thecardhuddle.com').replace(/\/$/, '');
+  const rows = newListings.slice(0, 20).map(item => `
     <tr>
-      <td style="padding:8px;border-bottom:1px solid #eee;">
-        <a href="${item.itemUrl}" style="color:#2d6a4f;font-weight:600;">${item.title}</a>
-      </td>
-      <td style="padding:8px;border-bottom:1px solid #eee;font-weight:700;color:#2d6a4f;">
-        $${item.price}
-      </td>
-    </tr>
-  `).join('');
-
+      <td style="padding:8px;border-bottom:1px solid #eee;width:56px;">${item.imageUrl ? `<img src="${_esc(item.imageUrl)}" width="48" alt="" style="display:block;border-radius:4px;">` : ''}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;"><a href="${_esc(digest.epnUrl(item.itemUrl))}" style="color:#2d6a4f;font-weight:600;">${_esc(item.title)}</a></td>
+      <td style="padding:8px;border-bottom:1px solid #eee;font-weight:700;color:#2d6a4f;white-space:nowrap;">${item.price ? '$' + _esc(item.price) : ''}</td>
+    </tr>`).join('');
+  const n = newListings.length;
   const html = `
     <div style="font-family:Inter,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-      <h2 style="color:#2d6a4f;margin-bottom:4px;">New Listing Alert</h2>
-      <p style="color:#666;margin-bottom:16px;">
-        ${newListings.length} new listing${newListings.length > 1 ? 's' : ''} found for <strong>${alert.label}</strong>
-      </p>
-      <table style="width:100%;border-collapse:collapse;">
-        <thead>
-          <tr style="background:#f5f7fa;">
-            <th style="text-align:left;padding:8px;font-size:0.85rem;color:#666;">Card</th>
-            <th style="text-align:left;padding:8px;font-size:0.85rem;color:#666;">Price</th>
-          </tr>
-        </thead>
-        <tbody>${listingsHtml}</tbody>
-      </table>
+      <h2 style="color:#2d6a4f;margin-bottom:4px;">Just listed: ${_esc(alert.label)}</h2>
+      <p style="color:#666;margin-bottom:16px;">${n} new listing${n > 1 ? 's' : ''} on eBay${alert.priceThreshold ? ` ${alert.priceCondition} $${_esc(alert.priceThreshold)}` : ''}.</p>
+      <table style="width:100%;border-collapse:collapse;"><tbody>${rows}</tbody></table>
       <p style="color:#999;font-size:0.8rem;margin-top:20px;">
-        You're receiving this because you set up a card alert on The Card Huddle.
+        You're receiving this because you track this card on The Card Huddle.
+        <a href="${site}/?view=alerts" style="color:#999;">Manage your alerts</a>
       </p>
-    </div>
-  `;
-
-  await sendEmail({
-    to: alert.email,
-    subject: `New listing: ${alert.label}`,
-    html,
-  });
+    </div>`;
+  return sendEmail({ to: alert.email, subject: `Just listed: ${alert.label}`, html });
 }
 
-// Start alert checker loop. On Node (local/VPS) we self-schedule; on Cloudflare
-// Workers, setInterval doesn't survive between requests, so a Cron Trigger calls
-// checkAlerts() via the worker's scheduled() handler instead.
+// On Node (local/VPS) we self-schedule; on Cloudflare Workers the cron calls
+// checkAlerts() every tick instead.
 if (process.env.CF_WORKER !== '1') {
-  setInterval(checkAlerts, ALERT_CHECK_INTERVAL);
-  // Run first check 30 seconds after startup
-  setTimeout(checkAlerts, 30000);
+  setInterval(() => checkAlerts().catch(() => {}), 15 * 60 * 1000);
+  setTimeout(() => checkAlerts().catch(() => {}), 30000);
 }
 
 // ---- Marketplace: Browse active eBay listings ----
@@ -14533,7 +14562,7 @@ app.get('/api/marketplace', async (req, res) => {
     }));
 
     const result = { results: items, total: response.data?.total || items.length, offset, limit };
-    setCached(cacheKey, result);
+    setCache(cacheKey, result);
     res.json(result);
   } catch (err) {
     console.error('Marketplace API error:', err.message);
@@ -15118,7 +15147,7 @@ async function collectAccountData(username) {
     account,
     subscription: loadSubscriptions()[key] || null,
     syncedData: (await _userSyncLoad(key)).data,
-    alerts: (loadAlerts().alerts || []).filter(a => String(a.username || '').toLowerCase() === key),
+    alerts: (await _userAlerts(key)).map(_alertView),
     communityPosts: posts.filter(p => String(p.author || '').toLowerCase() === key),
     communityComments: posts.flatMap(p => (p.comments || [])
       .filter(c => String(c.author || '').toLowerCase() === key)
@@ -15228,11 +15257,13 @@ app.post('/api/account/delete', async (req, res) => {
     removed.push(`${convoCount} message threads`);
 
     // 4. Alerts.
+    // The old blob too, so the one-time migration cannot bring them back.
     const alertData = loadAlerts();
-    const alertsBefore = (alertData.alerts || []).length;
     alertData.alerts = (alertData.alerts || []).filter(a => String(a.username || '').toLowerCase() !== key);
     saveAlerts(alertData);
-    removed.push(`${alertsBefore - alertData.alerts.length} card alerts`);
+    const myAlerts = await _userAlerts(key);
+    for (const a of myAlerts) await _alertDelete(a.id);
+    removed.push(`${myAlerts.length} card alerts`);
 
     // 5. Public indexes this user appears in.
     const floor = loadGlobalFloorIndex();
@@ -17628,7 +17659,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _alertFinds, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

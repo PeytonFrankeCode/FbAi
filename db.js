@@ -340,6 +340,10 @@ async function recordGet(key) {
   if (!kv) { const r = _records.get(key); return r ? JSON.parse(JSON.stringify(r.value)) : null; }
   try { return await kv.get(key, 'json'); } catch (_) { return null; }
 }
+async function recordDelete(key) {
+  if (!kv) { _records.delete(key); return; }
+  await kv.delete(key);
+}
 async function recordList(prefix) {
   if (!kv) return [..._records.entries()].filter(([k]) => k.startsWith(prefix)).sort(([a], [b]) => (a < b ? -1 : 1)).map(([name, r]) => ({ name, metadata: r.metadata }));
   const out = [];
@@ -352,4 +356,4 @@ async function recordList(prefix) {
   return out;
 }
 
-module.exports = { recordPut, recordGet, recordList, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos };
+module.exports = { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos };

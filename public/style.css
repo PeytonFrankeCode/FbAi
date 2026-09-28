@@ -9066,3 +9066,50 @@ body.tour-open { overflow: hidden; }
 .digest-msg:empty { display: none; }
 .digest-msg.ok { color: var(--accent); }
 .digest-msg.err { color: #f87171; }
+
+/* ---- Card alerts: header bell, panel, search-result button ---- */
+.alerts-tab { margin-left: auto; position: relative; padding: 0.45rem 0.6rem; flex-shrink: 0; }
+.alerts-tab + .settings-tab { margin-left: 0; }
+.alerts-badge {
+  position: absolute; top: 0; right: 0; min-width: 1rem; height: 1rem; padding: 0 0.25rem;
+  border-radius: 999px; background: #ef4444; color: #fff; font-size: 0.6rem; font-weight: 800;
+  line-height: 1rem; text-align: center;
+}
+.alerts-box { max-width: 560px; }
+.alerts-intro { font-size: 0.8rem; color: var(--text-secondary); margin: -0.4rem 0 0.9rem; line-height: 1.5; }
+.alerts-form { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1rem; }
+.alerts-form input, .alerts-form select {
+  font: inherit; font-size: 0.82rem; padding: 0.5rem 0.6rem; border-radius: 8px; min-width: 0;
+  border: 1px solid var(--border-primary); background: var(--bg-tertiary); color: var(--text-primary);
+}
+.alerts-form-row { display: flex; gap: 0.4rem; }
+.alerts-form-row select { flex: 0 1 auto; }
+.alerts-form-row input { flex: 1 1 5rem; }
+.alerts-form button, .meta-alert-btn {
+  font: inherit; font-size: 0.8rem; font-weight: 700; padding: 0.5rem 0.9rem; border-radius: 8px;
+  border: none; cursor: pointer; background: var(--accent); color: #0b1220; white-space: nowrap;
+}
+.alerts-error { font-size: 0.75rem; color: #f87171; }
+.alerts-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.alerts-empty { font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 1rem 0; }
+.alert-item { border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.65rem 0.75rem; background: var(--bg-tertiary); }
+.alert-head { display: flex; align-items: flex-start; gap: 0.5rem; }
+.alert-title { flex: 1; min-width: 0; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+.alert-sub { font-size: 0.68rem; color: var(--text-muted); font-weight: 500; margin-top: 0.1rem; }
+.alert-new { font-size: 0.62rem; font-weight: 800; color: #0b1220; background: var(--accent); border-radius: 999px; padding: 0.05rem 0.4rem; margin-left: 0.3rem; vertical-align: middle; }
+.alert-del { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; line-height: 1; padding: 0 0.2rem; }
+.alert-finds { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.alert-find a { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--text-primary); }
+.alert-find img, .alert-find .alert-noimg { width: 34px; height: 46px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--bg-secondary); }
+.alert-find-title { flex: 1; min-width: 0; font-size: 0.74rem; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.alert-find-price { font-size: 0.78rem; font-weight: 800; color: var(--accent); white-space: nowrap; }
+.alert-find.is-new .alert-find-title { font-weight: 700; }
+.meta-alert-btn { margin-left: 0.6rem; padding: 0.25rem 0.6rem; font-size: 0.72rem; vertical-align: middle; }
+.meta-alert-btn.is-on { background: transparent; color: var(--accent); border: 1px solid var(--accent); cursor: default; }
+.alerts-form-row select { flex: 1 1 7rem; }
+.alerts-form-row input { flex: 1 1 6rem; }
+/* The nav scrolls sideways on phones, which pushed the bell off-screen: it
+   stays pinned to the right edge while the tabs scroll under it. */
+@media (max-width: 768px) {
+  .alerts-tab { position: sticky; right: -0.75rem; z-index: 1; background: var(--header-bg); box-shadow: -10px 0 10px -4px var(--header-bg); }
+}
