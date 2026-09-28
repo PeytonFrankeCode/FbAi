@@ -55,6 +55,9 @@ const LIMIT = 80;          // keys kept per breakdown, so a botnet cannot grow m
 // volume stays well inside Workers Paid's KV allowance.
 const FLUSH_MS = 60000;
 
+// The headline counts, in the order a KV key's metadata carries them.
+const TALLY_COUNTS = ['total', 'pages', 'api', 'assets', 'verifiedBot', 'declaredBot', 'datacenter', 'human', 'noUa', 'blockedBot'];
+
 function newTally(day) {
   return { day, total: 0, pages: 0, api: 0, assets: 0,
            verifiedBot: 0, declaredBot: 0, datacenter: 0, human: 0, noUa: 0, blockedBot: 0,
@@ -105,7 +108,7 @@ function noteRequest(t, info) {
 function mergeTallies(tallies) {
   const out = newTally(tallies[0] ? tallies[0].day : '');
   for (const t of tallies) {
-    for (const k of ['total', 'pages', 'api', 'assets', 'verifiedBot', 'declaredBot', 'datacenter', 'human', 'noUa', 'blockedBot']) out[k] += t[k] || 0;
+    for (const k of TALLY_COUNTS) out[k] += t[k] || 0;
     for (const b of ['byAsn', 'byCountry', 'byUa', 'byPath', 'byKindCountry']) {
       for (const [k, n] of Object.entries(t[b] || {})) out[b][k] = (out[b][k] || 0) + n;
     }
@@ -121,4 +124,4 @@ function mergeTallies(tallies) {
   };
 }
 
-module.exports = { BLOCKED_BOTS, isBlockedBot, DATACENTER_ASNS, BOT_UA, FLUSH_MS, newTally, classify, noteRequest, mergeTallies, pathKind };
+module.exports = { TALLY_COUNTS, BLOCKED_BOTS, isBlockedBot, DATACENTER_ASNS, BOT_UA, FLUSH_MS, newTally, classify, noteRequest, mergeTallies, pathKind };
