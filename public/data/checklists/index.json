@@ -145,8 +145,8 @@
       "year": 2025,
       "brand": "Donruss",
       "sport": "Football",
-      "setCount": 35,
-      "totalCards": 1072
+      "setCount": 36,
+      "totalCards": 1092
     },
     {
       "id": "2025-panini-absolute-football",
@@ -280,8 +280,8 @@
       "year": 2025,
       "brand": "Prizm Black",
       "sport": "Football",
-      "setCount": 3,
-      "totalCards": 200
+      "setCount": 11,
+      "totalCards": 425
     },
     {
       "id": "2025-panini-prizm-draft-picks-football",
@@ -335,7 +335,7 @@
       "brand": "Score",
       "sport": "Football",
       "setCount": 33,
-      "totalCards": 2149
+      "totalCards": 2150
     },
     {
       "id": "2025-topps-chrome-football",
@@ -379,8 +379,8 @@
       "year": 2025,
       "brand": "Topps Resurgence",
       "sport": "Football",
-      "setCount": 19,
-      "totalCards": 749
+      "setCount": 21,
+      "totalCards": 818
     },
     {
       "id": "2025-topps-signature-class-football",
@@ -451,8 +451,8 @@
       "year": 2024,
       "brand": "Certified",
       "sport": "Football",
-      "setCount": 52,
-      "totalCards": 1327
+      "setCount": 53,
+      "totalCards": 1347
     },
     {
       "id": "2024-panini-contenders-football",
@@ -577,8 +577,8 @@
       "year": 2024,
       "brand": "Obsidian",
       "sport": "Football",
-      "setCount": 31,
-      "totalCards": 1479
+      "setCount": 32,
+      "totalCards": 1494
     },
     {
       "id": "2024-panini-one-football",
@@ -623,7 +623,7 @@
       "brand": "Prestige",
       "sport": "Football",
       "setCount": 32,
-      "totalCards": 1088
+      "totalCards": 1092
     },
     {
       "id": "2024-panini-prizm-deca-football",
@@ -667,8 +667,8 @@
       "year": 2024,
       "brand": "Select",
       "sport": "Football",
-      "setCount": 35,
-      "totalCards": 1626
+      "setCount": 37,
+      "totalCards": 1744
     },
     {
       "id": "2024-panini-spectra-football",
@@ -694,8 +694,8 @@
       "year": 2024,
       "brand": "Zenith",
       "sport": "Football",
-      "setCount": 32,
-      "totalCards": 1128
+      "setCount": 33,
+      "totalCards": 1147
     },
     {
       "id": "2024-score-football",
@@ -740,7 +740,7 @@
       "brand": "Topps Inception",
       "sport": "Football",
       "setCount": 15,
-      "totalCards": 457
+      "totalCards": 458
     },
     {
       "id": "2024-topps-midnight-football",
@@ -767,7 +767,7 @@
       "brand": "Topps Signature Class",
       "sport": "Football",
       "setCount": 26,
-      "totalCards": 1166
+      "totalCards": 1206
     },
     {
       "id": "2023-bowman-best-university-football",
@@ -874,8 +874,8 @@
       "year": 2023,
       "brand": "Contenders",
       "sport": "Football",
-      "setCount": 38,
-      "totalCards": 1381
+      "setCount": 42,
+      "totalCards": 1456
     },
     {
       "id": "2023-panini-contenders-optic-football",
@@ -964,8 +964,8 @@
       "year": 2023,
       "brand": "Limited",
       "sport": "Football",
-      "setCount": 37,
-      "totalCards": 859
+      "setCount": 38,
+      "totalCards": 899
     },
     {
       "id": "2023-panini-luminance-football",
@@ -1126,8 +1126,8 @@
       "year": 2023,
       "brand": "Zenith",
       "sport": "Football",
-      "setCount": 32,
-      "totalCards": 1114
+      "setCount": 36,
+      "totalCards": 1227
     },
     {
       "id": "2023-score-football",
@@ -1144,8 +1144,8 @@
       "year": 2023,
       "brand": "Topps Composite",
       "sport": "Football",
-      "setCount": 21,
-      "totalCards": 530
+      "setCount": 22,
+      "totalCards": 580
     },
     {
       "id": "2023-topps-motif-football",
@@ -1153,8 +1153,8 @@
       "year": 2023,
       "brand": "Topps Motif",
       "sport": "Football",
-      "setCount": 1,
-      "totalCards": 100
+      "setCount": 6,
+      "totalCards": 255
     },
     {
       "id": "2022-bowman-chrome-university-football",
