@@ -14304,45 +14304,72 @@ if (process.env.CF_WORKER !== '1') {
 // overwrite; and the routes trusted whatever username the page sent, so
 // anyone could list or delete anyone's alerts.
 //
-// Now: one KV record per alert (db.js recordPut), with its owner and when it
-// was last checked in the key's metadata, so a tick picks the alerts due from
-// the key list alone. The check asks eBay's Browse API for the query's newest
-// listings; anything not seen before is a find. Finds are kept on the alert
-// and shown in the Tracked view (so alerts work with or without email), and
-// emailed when the account has an address and email is configured. The routes
-// take the user from the session.
-const ALERT_PREFIX = 'alert:v2:';
+// Now: each user's alerts are one KV record (db.js recordPut), read by key.
+// Not one record per alert found by listing keys, which is how this first
+// shipped: KV's list is eventually consistent, so an alert added a moment
+// ago was missing from the list for up to a minute, and the panel showed
+// nothing after "Track". A read by key sees the write at once. Only the
+// checker lists (users with alerts, and the oldest check in the metadata),
+// where a minute's delay does not matter.
+//
+// The check asks eBay's Browse API for the query's newest listings; anything
+// not seen before is a find. Finds are kept on the alert and shown in the
+// alerts panel (so alerts work with or without email), and emailed when the
+// account has an address and email is configured. The routes take the user
+// from the session.
+const ALERT_USER_PREFIX = 'alerts:user:';
+const ALERT_V2_PREFIX = 'alert:v2:';      // the per-alert records that first shipped
 const ALERT_MAX_PER_USER = 25;
 const ALERT_RECHECK_MS = 30 * 60 * 1000;  // each alert at most every half hour
 const ALERTS_PER_TICK = 15;               // eBay calls a tick: <= 1,440 a day
 const ALERT_SEEN_MAX = 300;               // listing ids remembered per alert
 const ALERT_FOUND_MAX = 30;               // finds kept per alert
-const _alertMeta = (a) => ({ u: a.username, lc: a.lastChecked ? Date.parse(a.lastChecked) : 0 });
-async function _alertSave(a) { await recordPut(ALERT_PREFIX + a.id, a, _alertMeta(a)); }
-async function _alertDelete(id) { await recordDelete(ALERT_PREFIX + id); }
-async function _alertKeys() { await _migrateAlerts(); return recordList(ALERT_PREFIX); }
+const _alertTime = (a) => (a.lastChecked ? Date.parse(a.lastChecked) : 0);
+const _sortAlerts = (list) => list.slice().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 async function _userAlerts(username) {
-  const keys = (await _alertKeys()).filter(k => k.metadata && k.metadata.u === username);
-  const out = await Promise.all(keys.map(k => recordGet(k.name)));
-  return out.filter(Boolean).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  await _migrateAlerts();
+  const rec = await recordGet(ALERT_USER_PREFIX + username);
+  return _sortAlerts((rec && rec.alerts) || []);
+}
+async function _saveUserAlerts(username, alerts) {
+  if (!alerts.length) return recordDelete(ALERT_USER_PREFIX + username);
+  await recordPut(ALERT_USER_PREFIX + username, { username, alerts },
+    { n: alerts.length, lc: Math.min(...alerts.map(_alertTime)) });
 }
 
-// Alerts made before the rewrite live in the old 'alerts' blob. Copied into
-// records once (the marker is per isolate and in KV), keeping their ids.
+// Two earlier homes for alerts: the old 'alerts' blob, and the per-alert
+// records this first shipped with. Folded into the per-user records once
+// (the marker is per isolate and in KV), keeping ids; an alert already there
+// is left alone.
 let _alertsMigrated = false;
 async function _migrateAlerts() {
   if (_alertsMigrated) return;
   _alertsMigrated = true;
   try {
-    if (await cacheGet('alerts:migrated:v2')) return;
-    for (const a of (loadAlerts().alerts || [])) {
-      if (!a || !a.id || !a.username || !a.query) continue;
-      if (await recordGet(ALERT_PREFIX + a.id)) continue;
-      await _alertSave({ id: a.id, username: String(a.username).toLowerCase(), query: a.query, label: a.label || a.query,
+    if (await cacheGet('alerts:migrated:v3')) return;
+    const byUser = new Map();
+    const add = (a) => {
+      if (!a || !a.id || !a.username || !a.query) return;
+      const u = String(a.username).toLowerCase();
+      if (!byUser.has(u)) byUser.set(u, []);
+      byUser.get(u).push({ id: a.id, username: u, query: a.query, label: a.label || a.query,
         priceThreshold: a.priceThreshold || null, priceCondition: a.priceCondition || null,
-        createdAt: a.createdAt || new Date().toISOString(), lastChecked: null, seen: [], found: [], unread: 0 });
+        createdAt: a.createdAt || new Date().toISOString(), lastChecked: a.lastChecked && a.seen ? a.lastChecked : null,
+        seen: a.seen || [], found: a.found || [], unread: a.unread || 0 });
+    };
+    for (const a of (loadAlerts().alerts || [])) add(a);
+    for (const k of await recordList(ALERT_V2_PREFIX)) {
+      add(await recordGet(k.name));
+      await recordDelete(k.name);
     }
-    cachePut('alerts:migrated:v2', { at: new Date().toISOString() }, 60 * 60 * 24 * 365);
+    for (const [u, list] of byUser) {
+      const rec = await recordGet(ALERT_USER_PREFIX + u);
+      const have = (rec && rec.alerts) || [];
+      const ids = new Set(have.map(a => a.id));
+      const merged = [...have, ...list.filter(a => !ids.has(a.id))].slice(0, ALERT_MAX_PER_USER);
+      if (merged.length !== have.length) await _saveUserAlerts(u, merged);
+    }
+    cachePut('alerts:migrated:v3', { at: new Date().toISOString() }, 60 * 60 * 24 * 365);
   } catch (err) {
     _alertsMigrated = false;
     console.error('[Alerts] migration failed:', err && err.message);
@@ -14352,15 +14379,20 @@ async function _migrateAlerts() {
 const _alertView = (a) => ({ id: a.id, query: a.query, label: a.label, createdAt: a.createdAt,
   priceThreshold: a.priceThreshold || null, priceCondition: a.priceCondition || null,
   lastChecked: a.lastChecked || null, unread: a.unread || 0, found: (a.found || []).slice(0, 10) });
+const _alertsPayload = (username, alerts) => {
+  const user = loadServerUsers()[username] || {};
+  return { alerts: _sortAlerts(alerts).map(_alertView), email: user.email || '', emailEnabled: !!(useResend || emailTransporter) };
+};
 
 app.get('/api/alerts', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
-  const user = loadServerUsers()[username] || {};
-  res.json({ alerts: (await _userAlerts(username)).map(_alertView),
-    email: user.email || '', emailEnabled: !!(useResend || emailTransporter) });
+  res.set('Cache-Control', 'no-store');
+  res.json(_alertsPayload(username, await _userAlerts(username)));
 });
 
+// Answers with the whole list as saved, so the panel draws from what was
+// written rather than a second read.
 app.post('/api/alerts', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
@@ -14372,32 +14404,33 @@ app.post('/api/alerts', async (req, res) => {
   const condition = ['below', 'above'].includes(priceCondition) && threshold ? priceCondition : null;
   const mine = await _userAlerts(username);
   if (mine.length >= ALERT_MAX_PER_USER) return res.status(400).json({ error: `Maximum ${ALERT_MAX_PER_USER} alerts per account` });
-  if (mine.some(a => a.query.toLowerCase() === q.toLowerCase() && (a.priceThreshold || null) === threshold && (a.priceCondition || null) === condition)) {
+  if (mine.some(a => a.query.toLowerCase() === q.toLowerCase() && (a.priceThreshold || null) === (condition ? threshold : null) && (a.priceCondition || null) === condition)) {
     return res.status(400).json({ error: 'You already have an alert for this card' });
   }
   const alert = { id: crypto.randomUUID(), username, query: q, label: String(label || q).slice(0, 120),
     priceThreshold: condition ? threshold : null, priceCondition: condition,
     createdAt: new Date().toISOString(), lastChecked: null, seen: [], found: [], unread: 0 };
-  await _alertSave(alert);
-  res.json({ alert: _alertView(alert) });
+  const next = [alert, ...mine];
+  await _saveUserAlerts(username, next);
+  res.json({ alert: _alertView(alert), ..._alertsPayload(username, next) });
 });
 
 app.delete('/api/alerts/:id', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
-  const a = await recordGet(ALERT_PREFIX + String(req.params.id));
-  if (!a || a.username !== username) return res.status(404).json({ error: 'Alert not found' });
-  await _alertDelete(a.id);
-  res.json({ ok: true });
+  const mine = await _userAlerts(username);
+  const next = mine.filter(a => a.id !== String(req.params.id));
+  if (next.length === mine.length) return res.status(404).json({ error: 'Alert not found' });
+  await _saveUserAlerts(username, next);
+  res.json({ ok: true, ..._alertsPayload(username, next) });
 });
 
-// The Tracked view was opened: its finds are no longer new.
+// The alerts panel was opened: its finds are no longer new.
 app.post('/api/alerts/seen', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Sign in to track cards' });
-  for (const a of await _userAlerts(username)) {
-    if (a.unread) { a.unread = 0; await _alertSave(a); }
-  }
+  const mine = await _userAlerts(username);
+  if (mine.some(a => a.unread)) await _saveUserAlerts(username, mine.map(a => ({ ...a, unread: 0 })));
   res.json({ ok: true });
 });
 
@@ -14447,34 +14480,52 @@ function _alertFinds(alert, listings, now = Date.now()) {
 
 async function checkAlerts({ now = Date.now(), fetchListings = _newestListings } = {}) {
   if (USE_MOCK_FORSALE && fetchListings === _newestListings) return { ok: false, reason: 'eBay not configured' };
-  const keys = await _alertKeys();
-  const due = keys.filter(k => now - ((k.metadata && k.metadata.lc) || 0) >= ALERT_RECHECK_MS)
-    .sort((a, b) => ((a.metadata && a.metadata.lc) || 0) - ((b.metadata && b.metadata.lc) || 0))
-    .slice(0, ALERTS_PER_TICK);
-  if (!due.length) return { ok: true, checked: 0, alerts: keys.length };
+  await _migrateAlerts();
+  // Users whose oldest check is due, oldest first. The metadata can be a
+  // minute behind; each record is read fresh before it is checked.
+  const keys = (await recordList(ALERT_USER_PREFIX))
+    .filter(k => now - ((k.metadata && k.metadata.lc) || 0) >= ALERT_RECHECK_MS)
+    .sort((a, b) => ((a.metadata && a.metadata.lc) || 0) - ((b.metadata && b.metadata.lc) || 0));
   const users = loadServerUsers();
   const byQuery = new Map();  // two people tracking one card: one eBay call
-  let checked = 0, found = 0, emailed = 0;
-  for (const k of due) {
-    const alert = await recordGet(k.name);
-    if (!alert) continue;
-    try {
-      const qk = alert.query.toLowerCase();
-      if (!byQuery.has(qk)) byQuery.set(qk, await fetchListings(alert.query));
-      const { finds, next } = _alertFinds(alert, byQuery.get(qk), now);
-      if (finds.length) {
-        found += finds.length;
-        const email = (users[alert.username] || {}).email;
-        if (email && await sendAlertEmail({ ...next, email }, finds)) { emailed++; next.lastEmailAt = new Date(now).toISOString(); }
+  let budget = ALERTS_PER_TICK, checked = 0, found = 0, emailed = 0;
+  for (const k of keys) {
+    if (budget <= 0) break;
+    const username = k.name.slice(ALERT_USER_PREFIX.length);
+    const rec = await recordGet(k.name);
+    const due = ((rec && rec.alerts) || []).filter(a => now - _alertTime(a) >= ALERT_RECHECK_MS)
+      .sort((a, b) => _alertTime(a) - _alertTime(b)).slice(0, budget);
+    const updated = new Map();
+    for (const alert of due) {
+      try {
+        const qk = alert.query.toLowerCase();
+        if (!byQuery.has(qk)) { byQuery.set(qk, await fetchListings(alert.query)); budget--; }
+        const { finds, next } = _alertFinds(alert, byQuery.get(qk), now);
+        if (finds.length) {
+          found += finds.length;
+          const email = (users[username] || {}).email;
+          if (email && await sendAlertEmail({ ...next, email }, finds)) { emailed++; next.lastEmailAt = new Date(now).toISOString(); }
+        }
+        updated.set(alert.id, next);
+        checked++;
+      } catch (err) {
+        console.error(`[Alerts] Error checking "${alert.query}":`, err.message);
       }
-      await _alertSave(next);
-      checked++;
-    } catch (err) {
-      console.error(`[Alerts] Error checking "${alert.query}":`, err.message);
     }
+    if (!updated.size) continue;
+    // Re-read before writing: the user may have added or deleted alerts while
+    // eBay was being asked. Only the checked alerts' state is carried over.
+    const fresh = await recordGet(k.name);
+    const list = ((fresh && fresh.alerts) || []).map(a => {
+      const u = updated.get(a.id);
+      return u ? { ...a, lastChecked: u.lastChecked, seen: u.seen, found: u.found,
+        unread: (a.unread || 0) + (u.unread - ((due.find(d => d.id === a.id) || {}).unread || 0)),
+        lastEmailAt: u.lastEmailAt || a.lastEmailAt } : a;
+    });
+    await _saveUserAlerts(username, list);
   }
-  console.log(`[Alerts] checked ${checked} of ${keys.length}: ${found} new listing(s), ${emailed} email(s)`);
-  return { ok: true, checked, alerts: keys.length, found, emailed };
+  console.log(`[Alerts] checked ${checked} alert(s): ${found} new listing(s), ${emailed} email(s)`);
+  return { ok: true, checked, users: keys.length, found, emailed };
 }
 
 async function sendAlertEmail(alert, newListings) {
@@ -15262,7 +15313,7 @@ app.post('/api/account/delete', async (req, res) => {
     alertData.alerts = (alertData.alerts || []).filter(a => String(a.username || '').toLowerCase() !== key);
     saveAlerts(alertData);
     const myAlerts = await _userAlerts(key);
-    for (const a of myAlerts) await _alertDelete(a.id);
+    await _saveUserAlerts(key, []);
     removed.push(`${myAlerts.length} card alerts`);
 
     // 5. Public indexes this user appears in.
