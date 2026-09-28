@@ -33,7 +33,7 @@ function decl(name) {
   }
   throw new Error('could not read ' + name);
 }
-const NAMES = ["_findChecklistPlayer", "_resolveVersionTarget", "_VT_MAKERS", "_VT_WEAK_BRAND", "_vocabFor", "_RELIC_RE", "_AUTO_RE", "_VERSION_SUFFIX_RE", "_titleCase", "SCAN_KEY_SETS", "SCAN_KEY_PARALLEL_PHRASES", "SCAN_KEY_PARALLEL_WORDS", "CLIENT_KNOWN_SETS", "CLIENT_KNOWN_PARALLELS", "NOISE_WORDS", "parseCardTitle", "_reEsc", "_cleanForMatch", "_normalizeParallelName", "_buildParallelMatchers", "_fallbackParallelMatchers", "_versionName", "_setKind", "_BASE_LIKE_SET_RE", "_GENERIC_SET_RE", "_resolveParallelVocab", "_buildVersionCtx"];
+const NAMES = ["_findChecklistPlayer", "_resolveVersionTarget", "_VT_MAKERS", "_VT_WEAK_BRAND", "_vocabFor", "_RELIC_RE", "_AUTO_RE", "_VERSION_SUFFIX_RE", "_titleCase", "SCAN_KEY_SETS", "SCAN_KEY_PARALLEL_PHRASES", "SCAN_KEY_PARALLEL_WORDS", "CLIENT_KNOWN_SETS", "CLIENT_KNOWN_PARALLELS", "NOISE_WORDS", "parseCardTitle", "_reEsc", "_cleanForMatch", "_normalizeParallelName", "_buildParallelMatchers", "VERSION_EXTRA_PARALLEL_WORDS", "_COLOUR_WORDS", "_fallbackParallelMatchers", "_versionName", "_setKind", "_BASE_LIKE_SET_RE", "_GENERIC_SET_RE", "_resolveParallelVocab", "_buildVersionCtx"];
 const ctx = {
   console,
   fetchChecklistsList: async () => JSON.parse(fs.readFileSync(path.join(ROOT, 'public', 'data', 'checklists', 'index.json'), 'utf8')),
