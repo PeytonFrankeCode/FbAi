@@ -78,6 +78,7 @@ const linkFrom = (html, route) => {
 };
 
 (async () => {
+  check('the signup box is offered once email can be sent', (await (await fetch(base + '/api/digest/status')).json()).enabled === true);
   const bad = await post('/api/digest/subscribe', { email: 'nope' });
   check('a bad address is refused', bad.status === 400);
 

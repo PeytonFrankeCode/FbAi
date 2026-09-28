@@ -15503,6 +15503,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnEl = document.getElementById('digest-btn');
   const msg = document.getElementById('digest-msg');
   const say = (text, cls) => { msg.textContent = text; msg.className = 'digest-msg' + (cls ? ' ' + cls : ''); };
+  // Shown only once the server can send email; a form that can only fail is
+  // worse than none.
+  fetch('/api/digest/status').then(r => safeJson(r)).then(d => { if (d && d.enabled) f.classList.remove('hidden'); }).catch(() => {});
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = emailEl.value.trim();
