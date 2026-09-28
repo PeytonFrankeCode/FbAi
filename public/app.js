@@ -15492,3 +15492,52 @@ document.querySelectorAll('.ca-tab').forEach(btn => {
     switchView(view);
   } catch (_) { /* leave the default view alone */ }
 })();
+
+// ---- Market Movers email signup (under the market boards) ----
+// Posts the address; the server mails a confirmation link, and only a
+// confirmed address gets the Monday email.
+document.addEventListener('DOMContentLoaded', () => {
+  const f = document.getElementById('digest-form');
+  if (!f) return;
+  const emailEl = document.getElementById('digest-email');
+  const btnEl = document.getElementById('digest-btn');
+  const msg = document.getElementById('digest-msg');
+  const say = (text, cls) => { msg.textContent = text; msg.className = 'digest-msg' + (cls ? ' ' + cls : ''); };
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = emailEl.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { say('Enter a valid email address.', 'err'); return; }
+    btnEl.disabled = true;
+    say('Signing you up\u2026');
+    try {
+      const res = await fetch('/api/digest/subscribe', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'home' }),
+      });
+      const data = await safeJson(res);
+      if (res.ok && data && data.ok) {
+        say(data.status === 'active' ? "You're already signed up. See you Monday!" : 'Almost done: check your inbox for the confirmation link.', 'ok');
+        emailEl.value = '';
+      } else {
+        say((data && data.error) || 'Something went wrong. Please try again.', 'err');
+      }
+    } catch (_) {
+      say('Something went wrong. Please try again.', 'err');
+    } finally {
+      btnEl.disabled = false;
+    }
+  });
+});
+
+// ?q=<search> opens that sold search: the links in the Market Movers email
+// (and any shared link) land on the card they name, not the front page.
+document.addEventListener('DOMContentLoaded', () => {
+  let q = '';
+  try { q = (new URLSearchParams(location.search).get('q') || '').trim().slice(0, 120); } catch (_) { return; }
+  if (!q || location.pathname !== '/') return;
+  setTimeout(() => {
+    input.value = q;
+    addRecentSearch(q);
+    fetchDirectSearch(q);
+  }, 0);
+});

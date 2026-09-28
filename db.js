@@ -327,4 +327,29 @@ function getNflDb() { return nflDb; }
 function getAssets() { return assets; }
 function getPhotos() { return photos; }
 
-module.exports = { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos };
+// Durable records, one KV key each, listable by prefix with their metadata
+// (no TTL). For data many isolates write at once, which the single-blob
+// loadData/saveData would lose to the last writer: the Market Movers
+// subscribers. A Map stands in off-Workers and in tests.
+const _records = new Map();
+async function recordPut(key, value, metadata) {
+  if (!kv) { _records.set(key, { value: JSON.parse(JSON.stringify(value)), metadata: metadata || null }); return; }
+  await kv.put(key, JSON.stringify(value), metadata ? { metadata } : undefined);
+}
+async function recordGet(key) {
+  if (!kv) { const r = _records.get(key); return r ? JSON.parse(JSON.stringify(r.value)) : null; }
+  try { return await kv.get(key, 'json'); } catch (_) { return null; }
+}
+async function recordList(prefix) {
+  if (!kv) return [..._records.entries()].filter(([k]) => k.startsWith(prefix)).sort(([a], [b]) => (a < b ? -1 : 1)).map(([name, r]) => ({ name, metadata: r.metadata }));
+  const out = [];
+  let cursor;
+  do {
+    const page = await kv.list({ prefix, cursor });
+    out.push(...page.keys);
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return out;
+}
+
+module.exports = { recordPut, recordGet, recordList, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos };

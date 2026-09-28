@@ -143,7 +143,7 @@ async function init(env) {
   // wrap module.exports under `.default`, so reach through both shapes.
   const mod = await import('./server.js');
   const exports = (mod && mod.default) ? mod.default : mod;
-  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
+  const { app, connectDB, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock } = exports;
   if (typeof connectDB !== 'function' || !app) {
     throw new Error('server.js did not export { app, connectDB } — got keys: ' + Object.keys(exports || {}).join(','));
   }
@@ -155,7 +155,7 @@ async function init(env) {
   // Anything the scheduled handler needs must be listed here as well as
   // exported from server.js. This is a whitelist, and forgetting a name here
   // does not fail — the cron just never calls it.
-  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
+  serverInit = { app, getSessionUserByToken, checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic, cacheGet, renderPriceBlock };
   return serverInit;
 }
 
@@ -1012,7 +1012,7 @@ export default {
     }
     ctx.waitUntil((async () => {
       try {
-        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
+        const { checkAlerts, processScanLeadDrip, backfillPlayerAliases, archiveListingPhotos, buildPriceBlocks, warmSoldStats, warmMarket, checkCollectionHealth, sendMarketDigest, warmParallelLadder, parallelLadderMissing, runEstimatorBacktest, priceBlocksMissing, flushD1Usage, flushTraffic } = await init(env);
         // Fills the canonical-name table a slice at a time. Isolated like the
         // others: if it fails the alert checks still run, and the index simply
         // stays on its old grouping until the table is populated.
@@ -1176,6 +1176,17 @@ export default {
           }
         } else {
           console.error('[Cron] runEstimatorBacktest missing from init() — not wired through');
+        }
+
+        // The weekly Market Movers email (server.js sendMarketDigest). Every
+        // tick: outside Monday 14:00+ UTC it returns without touching KV, and
+        // inside it sends the next batches until the week's run is done.
+        if (typeof sendMarketDigest === 'function') {
+          const r = await sendMarketDigest().catch(err => {
+            console.error('[Cron] market digest failed:', err && err.message || err);
+            return null;
+          });
+          if (r && !r.ok) console.error('[Cron] market digest not sent:', r.reason);
         }
 
         // Home-page boards with no current copy (a deploy changed the key, or
