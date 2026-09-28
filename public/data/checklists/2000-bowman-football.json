@@ -1,0 +1,1228 @@
+{
+  "id": "2000-bowman-football",
+  "name": "2000 Bowman Football",
+  "year": 2000,
+  "brand": "Bowman",
+  "sport": "Football",
+  "note": "Cards #141-240 are rookie cards, including #236 Tom Brady. Gold parallels are numbered to 99.",
+  "sets": [
+    {
+      "id": "base-set",
+      "name": "Base Set",
+      "category": "base",
+      "totalCards": 240,
+      "parallels": [
+        {
+          "name": "Base",
+          "printRun": null
+        },
+        {
+          "name": "Gold",
+          "printRun": 99
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Eddie George",
+          "team": ""
+        },
+        {
+          "number": "2",
+          "player": "Ike Hilliard",
+          "team": ""
+        },
+        {
+          "number": "3",
+          "player": "Terrell Owens",
+          "team": ""
+        },
+        {
+          "number": "4",
+          "player": "James Stewart",
+          "team": ""
+        },
+        {
+          "number": "5",
+          "player": "Joey Galloway",
+          "team": ""
+        },
+        {
+          "number": "6",
+          "player": "Jake Reed",
+          "team": ""
+        },
+        {
+          "number": "7",
+          "player": "Derrick Alexander",
+          "team": ""
+        },
+        {
+          "number": "8",
+          "player": "Jeff George",
+          "team": ""
+        },
+        {
+          "number": "9",
+          "player": "Kerry Collins",
+          "team": ""
+        },
+        {
+          "number": "10",
+          "player": "Tony Gonzalez",
+          "team": ""
+        },
+        {
+          "number": "11",
+          "player": "Marcus Robinson",
+          "team": ""
+        },
+        {
+          "number": "12",
+          "player": "Charles Woodson",
+          "team": ""
+        },
+        {
+          "number": "13",
+          "player": "Germane Crowell",
+          "team": ""
+        },
+        {
+          "number": "14",
+          "player": "Yancey Thigpen",
+          "team": ""
+        },
+        {
+          "number": "15",
+          "player": "Tony Martin",
+          "team": ""
+        },
+        {
+          "number": "16",
+          "player": "Frank Sanders",
+          "team": ""
+        },
+        {
+          "number": "17",
+          "player": "Napoleon Kaufman",
+          "team": ""
+        },
+        {
+          "number": "18",
+          "player": "Jay Fiedler",
+          "team": ""
+        },
+        {
+          "number": "19",
+          "player": "Patrick Jeffers",
+          "team": ""
+        },
+        {
+          "number": "20",
+          "player": "Steve McNair",
+          "team": ""
+        },
+        {
+          "number": "21",
+          "player": "Herman Moore",
+          "team": ""
+        },
+        {
+          "number": "22",
+          "player": "Tim Brown",
+          "team": ""
+        },
+        {
+          "number": "23",
+          "player": "Olandis Gary",
+          "team": ""
+        },
+        {
+          "number": "24",
+          "player": "Corey Dillon",
+          "team": ""
+        },
+        {
+          "number": "25",
+          "player": "Warren Sapp",
+          "team": ""
+        },
+        {
+          "number": "26",
+          "player": "Curtis Enis",
+          "team": ""
+        },
+        {
+          "number": "27",
+          "player": "Vinny Testaverde",
+          "team": ""
+        },
+        {
+          "number": "28",
+          "player": "Tim Biakabutuka",
+          "team": ""
+        },
+        {
+          "number": "29",
+          "player": "Kevin Johnson",
+          "team": ""
+        },
+        {
+          "number": "30",
+          "player": "Charlie Batch",
+          "team": ""
+        },
+        {
+          "number": "31",
+          "player": "Jermaine Fazande",
+          "team": ""
+        },
+        {
+          "number": "32",
+          "player": "Shaun King",
+          "team": ""
+        },
+        {
+          "number": "33",
+          "player": "Errict Rhett",
+          "team": ""
+        },
+        {
+          "number": "34",
+          "player": "O.J. McDuffie",
+          "team": ""
+        },
+        {
+          "number": "35",
+          "player": "Bruce Smith",
+          "team": ""
+        },
+        {
+          "number": "36",
+          "player": "Antonio Freeman",
+          "team": ""
+        },
+        {
+          "number": "37",
+          "player": "Tim Couch",
+          "team": ""
+        },
+        {
+          "number": "38",
+          "player": "Duce Staley",
+          "team": ""
+        },
+        {
+          "number": "39",
+          "player": "Jeff Blake",
+          "team": ""
+        },
+        {
+          "number": "40",
+          "player": "Jim Harbaugh",
+          "team": ""
+        },
+        {
+          "number": "41",
+          "player": "Jeff Graham",
+          "team": ""
+        },
+        {
+          "number": "42",
+          "player": "Drew Bledsoe",
+          "team": ""
+        },
+        {
+          "number": "43",
+          "player": "Mike Alstott",
+          "team": ""
+        },
+        {
+          "number": "44",
+          "player": "Terance Mathis",
+          "team": ""
+        },
+        {
+          "number": "45",
+          "player": "Antowain Smith",
+          "team": ""
+        },
+        {
+          "number": "46",
+          "player": "Johnnie Morton",
+          "team": ""
+        },
+        {
+          "number": "47",
+          "player": "Chris Chandler",
+          "team": ""
+        },
+        {
+          "number": "48",
+          "player": "Keith Poole",
+          "team": ""
+        },
+        {
+          "number": "49",
+          "player": "Ricky Watters",
+          "team": ""
+        },
+        {
+          "number": "50",
+          "player": "Darnay Scott",
+          "team": ""
+        },
+        {
+          "number": "51",
+          "player": "Damon Huard",
+          "team": ""
+        },
+        {
+          "number": "52",
+          "player": "Peerless Price",
+          "team": ""
+        },
+        {
+          "number": "53",
+          "player": "Brian Griese",
+          "team": ""
+        },
+        {
+          "number": "54",
+          "player": "Frank Wycheck",
+          "team": ""
+        },
+        {
+          "number": "55",
+          "player": "Kevin Dyson",
+          "team": ""
+        },
+        {
+          "number": "56",
+          "player": "Junior Seau",
+          "team": ""
+        },
+        {
+          "number": "57",
+          "player": "Curtis Conway",
+          "team": ""
+        },
+        {
+          "number": "58",
+          "player": "Jamal Anderson",
+          "team": ""
+        },
+        {
+          "number": "59",
+          "player": "Jim Miller",
+          "team": ""
+        },
+        {
+          "number": "60",
+          "player": "Rob Johnson",
+          "team": ""
+        },
+        {
+          "number": "61",
+          "player": "Mark Brunell",
+          "team": ""
+        },
+        {
+          "number": "62",
+          "player": "Wayne Chrebet",
+          "team": ""
+        },
+        {
+          "number": "63",
+          "player": "James Johnson",
+          "team": ""
+        },
+        {
+          "number": "64",
+          "player": "Sean Dawkins",
+          "team": ""
+        },
+        {
+          "number": "65",
+          "player": "Stephen Davis",
+          "team": ""
+        },
+        {
+          "number": "66",
+          "player": "Daunte Culpepper",
+          "team": ""
+        },
+        {
+          "number": "67",
+          "player": "Doug Flutie",
+          "team": ""
+        },
+        {
+          "number": "68",
+          "player": "Pete Mitchell",
+          "team": ""
+        },
+        {
+          "number": "69",
+          "player": "Bill Schroeder",
+          "team": ""
+        },
+        {
+          "number": "70",
+          "player": "Terrence Wilkins",
+          "team": ""
+        },
+        {
+          "number": "71",
+          "player": "Cade McNown",
+          "team": ""
+        },
+        {
+          "number": "72",
+          "player": "Muhsin Muhammad",
+          "team": ""
+        },
+        {
+          "number": "73",
+          "player": "E.G. Green",
+          "team": ""
+        },
+        {
+          "number": "74",
+          "player": "Edgerrin James",
+          "team": ""
+        },
+        {
+          "number": "75",
+          "player": "Troy Edwards",
+          "team": ""
+        },
+        {
+          "number": "76",
+          "player": "Terry Glenn",
+          "team": ""
+        },
+        {
+          "number": "77",
+          "player": "Tony Banks",
+          "team": ""
+        },
+        {
+          "number": "78",
+          "player": "Derrick Mayes",
+          "team": ""
+        },
+        {
+          "number": "79",
+          "player": "Curtis Martin",
+          "team": ""
+        },
+        {
+          "number": "80",
+          "player": "Kordell Stewart",
+          "team": ""
+        },
+        {
+          "number": "81",
+          "player": "Amani Toomer",
+          "team": ""
+        },
+        {
+          "number": "82",
+          "player": "Dorsey Levens",
+          "team": ""
+        },
+        {
+          "number": "83",
+          "player": "Brad Johnson",
+          "team": ""
+        },
+        {
+          "number": "84",
+          "player": "Ed McCaffrey",
+          "team": ""
+        },
+        {
+          "number": "85",
+          "player": "Charlie Garner",
+          "team": ""
+        },
+        {
+          "number": "86",
+          "player": "Brett Favre",
+          "team": ""
+        },
+        {
+          "number": "87",
+          "player": "J.J. Stokes",
+          "team": ""
+        },
+        {
+          "number": "88",
+          "player": "Steve Young",
+          "team": ""
+        },
+        {
+          "number": "89",
+          "player": "Jonathan Linton",
+          "team": ""
+        },
+        {
+          "number": "90",
+          "player": "Isaac Bruce",
+          "team": ""
+        },
+        {
+          "number": "91",
+          "player": "Shawn Jefferson",
+          "team": ""
+        },
+        {
+          "number": "92",
+          "player": "Rod Smith",
+          "team": ""
+        },
+        {
+          "number": "93",
+          "player": "Champ Bailey",
+          "team": ""
+        },
+        {
+          "number": "94",
+          "player": "Ricky Williams",
+          "team": ""
+        },
+        {
+          "number": "95",
+          "player": "Priest Holmes",
+          "team": ""
+        },
+        {
+          "number": "96",
+          "player": "Corey Bradford",
+          "team": ""
+        },
+        {
+          "number": "97",
+          "player": "Eric Moulds",
+          "team": ""
+        },
+        {
+          "number": "98",
+          "player": "Warrick Dunn",
+          "team": ""
+        },
+        {
+          "number": "99",
+          "player": "Jevon Kearse",
+          "team": ""
+        },
+        {
+          "number": "100",
+          "player": "Albert Connell",
+          "team": ""
+        },
+        {
+          "number": "101",
+          "player": "Az Zahir Hakim",
+          "team": ""
+        },
+        {
+          "number": "102",
+          "player": "Marvin Harrison",
+          "team": ""
+        },
+        {
+          "number": "103",
+          "player": "Qadry Ismail",
+          "team": ""
+        },
+        {
+          "number": "104",
+          "player": "Oronde Gadsden",
+          "team": ""
+        },
+        {
+          "number": "105",
+          "player": "Rob Moore",
+          "team": ""
+        },
+        {
+          "number": "106",
+          "player": "Marshall Faulk",
+          "team": ""
+        },
+        {
+          "number": "107",
+          "player": "Steve Beuerlein",
+          "team": ""
+        },
+        {
+          "number": "108",
+          "player": "Torry Holt",
+          "team": ""
+        },
+        {
+          "number": "109",
+          "player": "Donovan McNabb",
+          "team": ""
+        },
+        {
+          "number": "110",
+          "player": "Rich Gannon",
+          "team": ""
+        },
+        {
+          "number": "111",
+          "player": "Jerome Bettis",
+          "team": ""
+        },
+        {
+          "number": "112",
+          "player": "Peyton Manning",
+          "team": ""
+        },
+        {
+          "number": "113",
+          "player": "Cris Carter",
+          "team": ""
+        },
+        {
+          "number": "114",
+          "player": "Jake Plummer",
+          "team": ""
+        },
+        {
+          "number": "115",
+          "player": "Kent Graham",
+          "team": ""
+        },
+        {
+          "number": "116",
+          "player": "Keenan McCardell",
+          "team": ""
+        },
+        {
+          "number": "117",
+          "player": "Tim Dwight",
+          "team": ""
+        },
+        {
+          "number": "118",
+          "player": "Fred Taylor",
+          "team": ""
+        },
+        {
+          "number": "119",
+          "player": "Jerry Rice",
+          "team": ""
+        },
+        {
+          "number": "120",
+          "player": "Michael Westbrook",
+          "team": ""
+        },
+        {
+          "number": "121",
+          "player": "Kurt Warner",
+          "team": ""
+        },
+        {
+          "number": "122",
+          "player": "Jimmy Smith",
+          "team": ""
+        },
+        {
+          "number": "123",
+          "player": "Emmitt Smith",
+          "team": ""
+        },
+        {
+          "number": "124",
+          "player": "Terrell Davis",
+          "team": ""
+        },
+        {
+          "number": "125",
+          "player": "Randy Moss",
+          "team": ""
+        },
+        {
+          "number": "126",
+          "player": "Akili Smith",
+          "team": ""
+        },
+        {
+          "number": "127",
+          "player": "Rocket Ismail",
+          "team": ""
+        },
+        {
+          "number": "128",
+          "player": "Jon Kitna",
+          "team": ""
+        },
+        {
+          "number": "129",
+          "player": "Elvis Grbac",
+          "team": ""
+        },
+        {
+          "number": "130",
+          "player": "Wesley Walls",
+          "team": ""
+        },
+        {
+          "number": "131",
+          "player": "Torrance Small",
+          "team": ""
+        },
+        {
+          "number": "132",
+          "player": "Tyrone Wheatley",
+          "team": ""
+        },
+        {
+          "number": "133",
+          "player": "Carl Pickens",
+          "team": ""
+        },
+        {
+          "number": "134",
+          "player": "Zach Thomas",
+          "team": ""
+        },
+        {
+          "number": "135",
+          "player": "Jacquez Green",
+          "team": ""
+        },
+        {
+          "number": "136",
+          "player": "Robert Smith",
+          "team": ""
+        },
+        {
+          "number": "137",
+          "player": "Keyshawn Johnson",
+          "team": ""
+        },
+        {
+          "number": "138",
+          "player": "Matthew Hatchette",
+          "team": ""
+        },
+        {
+          "number": "139",
+          "player": "Troy Aikman",
+          "team": ""
+        },
+        {
+          "number": "140",
+          "player": "Charles Johnson",
+          "team": ""
+        },
+        {
+          "number": "141",
+          "player": "Terry Battle",
+          "team": ""
+        },
+        {
+          "number": "142",
+          "player": "Pepe Pearson",
+          "team": ""
+        },
+        {
+          "number": "143",
+          "player": "Cory Sauter",
+          "team": ""
+        },
+        {
+          "number": "144",
+          "player": "Brian Shay",
+          "team": ""
+        },
+        {
+          "number": "145",
+          "player": "Marcus Crandell",
+          "team": ""
+        },
+        {
+          "number": "146",
+          "player": "Danny Wuerffel",
+          "team": ""
+        },
+        {
+          "number": "147",
+          "player": "L.C. Stevens",
+          "team": ""
+        },
+        {
+          "number": "148",
+          "player": "Ted White",
+          "team": ""
+        },
+        {
+          "number": "149",
+          "player": "Matt Lytle",
+          "team": ""
+        },
+        {
+          "number": "150",
+          "player": "Vershan Jackson",
+          "team": ""
+        },
+        {
+          "number": "151",
+          "player": "Mario Bailey",
+          "team": ""
+        },
+        {
+          "number": "152",
+          "player": "Darryl Daniel",
+          "team": ""
+        },
+        {
+          "number": "153",
+          "player": "Sean Morey",
+          "team": ""
+        },
+        {
+          "number": "154",
+          "player": "Jim Kubiak",
+          "team": ""
+        },
+        {
+          "number": "155",
+          "player": "Aaron Stecker",
+          "team": ""
+        },
+        {
+          "number": "156",
+          "player": "Damon Dunn",
+          "team": ""
+        },
+        {
+          "number": "157",
+          "player": "Kevin Daft",
+          "team": ""
+        },
+        {
+          "number": "158",
+          "player": "Corey Thomas",
+          "team": ""
+        },
+        {
+          "number": "159",
+          "player": "Deon Mitchell",
+          "team": ""
+        },
+        {
+          "number": "160",
+          "player": "Todd Floyd",
+          "team": ""
+        },
+        {
+          "number": "161",
+          "player": "Norman Miller",
+          "team": ""
+        },
+        {
+          "number": "162",
+          "player": "Jeremaine Copeland",
+          "team": ""
+        },
+        {
+          "number": "163",
+          "player": "Michael Blair",
+          "team": ""
+        },
+        {
+          "number": "164",
+          "player": "Ron Powlus",
+          "team": ""
+        },
+        {
+          "number": "165",
+          "player": "Pat Barnes",
+          "team": ""
+        },
+        {
+          "number": "166",
+          "player": "Dez White",
+          "team": ""
+        },
+        {
+          "number": "167",
+          "player": "Trung Canidate",
+          "team": ""
+        },
+        {
+          "number": "168",
+          "player": "Thomas Jones",
+          "team": ""
+        },
+        {
+          "number": "169",
+          "player": "Courtney Brown",
+          "team": ""
+        },
+        {
+          "number": "170",
+          "player": "Jamal Lewis",
+          "team": ""
+        },
+        {
+          "number": "171",
+          "player": "Chris Redman",
+          "team": ""
+        },
+        {
+          "number": "172",
+          "player": "Ron Dayne",
+          "team": ""
+        },
+        {
+          "number": "173",
+          "player": "Chad Pennington",
+          "team": ""
+        },
+        {
+          "number": "174",
+          "player": "Plaxico Burress",
+          "team": ""
+        },
+        {
+          "number": "175",
+          "player": "R.Jay Soward",
+          "team": ""
+        },
+        {
+          "number": "176",
+          "player": "Travis Taylor",
+          "team": ""
+        },
+        {
+          "number": "177",
+          "player": "Shaun Alexander",
+          "team": ""
+        },
+        {
+          "number": "178",
+          "player": "Brian Urlacher",
+          "team": ""
+        },
+        {
+          "number": "179",
+          "player": "Danny Farmer",
+          "team": ""
+        },
+        {
+          "number": "180",
+          "player": "Tee Martin",
+          "team": ""
+        },
+        {
+          "number": "181",
+          "player": "Sylvester Morris",
+          "team": ""
+        },
+        {
+          "number": "182",
+          "player": "Curtis Keaton",
+          "team": ""
+        },
+        {
+          "number": "183",
+          "player": "Peter Warrick",
+          "team": ""
+        },
+        {
+          "number": "184",
+          "player": "Anthony Becht",
+          "team": ""
+        },
+        {
+          "number": "185",
+          "player": "Travis Prentice",
+          "team": ""
+        },
+        {
+          "number": "186",
+          "player": "J.R. Redmond",
+          "team": ""
+        },
+        {
+          "number": "187",
+          "player": "Bubba Franks",
+          "team": ""
+        },
+        {
+          "number": "188",
+          "player": "Ron Dugans",
+          "team": ""
+        },
+        {
+          "number": "189",
+          "player": "Reuben Droughns",
+          "team": ""
+        },
+        {
+          "number": "190",
+          "player": "Corey Simon",
+          "team": ""
+        },
+        {
+          "number": "191",
+          "player": "Joe Hamilton",
+          "team": ""
+        },
+        {
+          "number": "192",
+          "player": "Laveranues Coles",
+          "team": ""
+        },
+        {
+          "number": "193",
+          "player": "Todd Pinkston",
+          "team": ""
+        },
+        {
+          "number": "194",
+          "player": "Jerry Porter",
+          "team": ""
+        },
+        {
+          "number": "195",
+          "player": "Dennis Northcutt",
+          "team": ""
+        },
+        {
+          "number": "196",
+          "player": "Tim Rattay",
+          "team": ""
+        },
+        {
+          "number": "197",
+          "player": "Giovanni Carmazzi",
+          "team": ""
+        },
+        {
+          "number": "198",
+          "player": "Mareno Philyaw",
+          "team": ""
+        },
+        {
+          "number": "199",
+          "player": "Avion Black",
+          "team": ""
+        },
+        {
+          "number": "200",
+          "player": "Chafie Fields",
+          "team": ""
+        },
+        {
+          "number": "201",
+          "player": "Rondell Mealey",
+          "team": ""
+        },
+        {
+          "number": "202",
+          "player": "Troy Walters",
+          "team": ""
+        },
+        {
+          "number": "203",
+          "player": "Frank Moreau",
+          "team": ""
+        },
+        {
+          "number": "204",
+          "player": "Vaughn Sanders",
+          "team": ""
+        },
+        {
+          "number": "205",
+          "player": "Sherrod Gideon",
+          "team": ""
+        },
+        {
+          "number": "206",
+          "player": "Doug Chapman",
+          "team": ""
+        },
+        {
+          "number": "207",
+          "player": "Marcus Knight",
+          "team": ""
+        },
+        {
+          "number": "208",
+          "player": "Jamel White",
+          "team": ""
+        },
+        {
+          "number": "209",
+          "player": "Windrell Hayes",
+          "team": ""
+        },
+        {
+          "number": "210",
+          "player": "Reggie Jones",
+          "team": ""
+        },
+        {
+          "number": "211",
+          "player": "Jarious Jackson",
+          "team": ""
+        },
+        {
+          "number": "212",
+          "player": "Ronney Jenkins",
+          "team": ""
+        },
+        {
+          "number": "213",
+          "player": "Quinton Spotwood",
+          "team": ""
+        },
+        {
+          "number": "214",
+          "player": "Rob Morris",
+          "team": ""
+        },
+        {
+          "number": "215",
+          "player": "Gari Scott",
+          "team": ""
+        },
+        {
+          "number": "216",
+          "player": "Kevin Thompson",
+          "team": ""
+        },
+        {
+          "number": "217",
+          "player": "Trevor Insley",
+          "team": ""
+        },
+        {
+          "number": "218",
+          "player": "Frank Murphy",
+          "team": ""
+        },
+        {
+          "number": "219",
+          "player": "Patrick Pass",
+          "team": ""
+        },
+        {
+          "number": "220",
+          "player": "Mike Anderson",
+          "team": ""
+        },
+        {
+          "number": "221",
+          "player": "Derrius Thompson",
+          "team": ""
+        },
+        {
+          "number": "222",
+          "player": "John Abraham",
+          "team": ""
+        },
+        {
+          "number": "223",
+          "player": "Dante Hall",
+          "team": ""
+        },
+        {
+          "number": "224",
+          "player": "Chad Morton",
+          "team": ""
+        },
+        {
+          "number": "225",
+          "player": "Ahmed Plummer",
+          "team": ""
+        },
+        {
+          "number": "226",
+          "player": "Julian Peterson",
+          "team": ""
+        },
+        {
+          "number": "227",
+          "player": "Mike Green",
+          "team": ""
+        },
+        {
+          "number": "228",
+          "player": "Michael Wiley",
+          "team": ""
+        },
+        {
+          "number": "229",
+          "player": "Spergon Wynn",
+          "team": ""
+        },
+        {
+          "number": "230",
+          "player": "Trevor Gaylor",
+          "team": ""
+        },
+        {
+          "number": "231",
+          "player": "Doug Johnson",
+          "team": ""
+        },
+        {
+          "number": "232",
+          "player": "Marc Bulger",
+          "team": ""
+        },
+        {
+          "number": "233",
+          "player": "Ron Dixon",
+          "team": ""
+        },
+        {
+          "number": "234",
+          "player": "Aaron Shea",
+          "team": ""
+        },
+        {
+          "number": "235",
+          "player": "Thomas Hamner",
+          "team": ""
+        },
+        {
+          "number": "236",
+          "player": "Tom Brady",
+          "team": ""
+        },
+        {
+          "number": "237",
+          "player": "Deltha O'Neal",
+          "team": ""
+        },
+        {
+          "number": "238",
+          "player": "Todd Husak",
+          "team": ""
+        },
+        {
+          "number": "239",
+          "player": "Erron Kinney",
+          "team": ""
+        },
+        {
+          "number": "240",
+          "player": "JaJuan Dawson",
+          "team": ""
+        }
+      ]
+    }
+  ]
+}
