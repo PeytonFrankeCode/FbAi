@@ -56,9 +56,14 @@ check('blocked crawlers get a 403 everywhere but robots.txt', /visitorKind === '
 check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(worker));
 
 (async () => {
-  const { NO_TAGS_FOR, BotTagRemover } = await import(path.join(__dirname, '..', 'worker.js'));
-  check('bots and datacentre visitors lose the ad and analytics tags; people and verified crawlers keep them',
-    ['declaredBot', 'noUa', 'datacenter'].every(k => NO_TAGS_FOR.has(k)) && !NO_TAGS_FOR.has('human') && !NO_TAGS_FOR.has('verifiedBot'));
+  const { NO_TAGS_FOR, BotTagRemover, stripsTags } = await import(path.join(__dirname, '..', 'worker.js'));
+  check('bots, datacentre visitors and verified crawlers lose the ad and analytics tags; people keep them',
+    ['declaredBot', 'noUa', 'datacenter', 'verifiedBot'].every(k => NO_TAGS_FOR.has(k)) && !NO_TAGS_FOR.has('human'));
+  const macChrome = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+  check("  ...Bing's renderer, a verified bot with a browser user agent, is stripped",
+    stripsTags('verifiedBot', macChrome) && !stripsTags('human', macChrome));
+  check("  ...but Google's ad crawlers still see the AdSense code",
+    !stripsTags('verifiedBot', 'Mediapartners-Google') && !stripsTags('verifiedBot', 'Mozilla/5.0 (compatible; AdsBot-Google; +http://www.google.com/adsbot.html)'));
   const r = new BotTagRemover();
   const el = (src) => ({ removed: false, getAttribute: () => src, remove() { this.removed = true; } });
   const ads = el('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1');
@@ -66,7 +71,7 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
   const app = el('/app.js?v=1');
   [ads, ga, app].forEach(e => r.element(e));
   check('  ...the AdSense and Analytics scripts come off, the app does not', ads.removed && ga.removed && !app.removed && r.removed === 2);
-  check('  ...applied to HTML pages by visitor kind', /if \(NO_TAGS_FOR\.has\(visitorKind\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\]', new BotTagRemover\(\)\)/.test(worker));
+  check('  ...applied to HTML pages by visitor kind', /if \(stripsTags\(visitorKind, request\.headers\.get\('user-agent'\)\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\]', new BotTagRemover\(\)\)/.test(worker));
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });

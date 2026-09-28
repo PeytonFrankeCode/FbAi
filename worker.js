@@ -3,7 +3,7 @@ let serverInit = null;
 // Lightweight, dependency-free text screen — reused for the public floor chat
 // so broadcast messages get the same profanity/spam check as everything else.
 import { moderateText, stripBidi } from './moderation.js';
-import { noteRequest, newTally, mergeTallies, FLUSH_MS, isBlockedBot } from './traffic-core.js';
+import { noteRequest, newTally, mergeTallies, FLUSH_MS, isBlockedBot, TALLY_COUNTS } from './traffic-core.js';
 
 // This isolate's visitor tally (traffic-core.js), written to its own KV key
 // every FLUSH_MS so the report can sum every isolate that served anyone.
@@ -14,6 +14,7 @@ const _visitors = newTally('');
 // of them (61 isolates reported 65 requests in ten minutes).
 let _visitorsFlushedAt = 0;
 const VISITORS_PREFIX = 'visitors:v1:';
+const VISITORS_READ_MAX = 400;
 
 function _countVisitor(request, url, env, ctx) {
   let kind = 'human';
@@ -27,7 +28,10 @@ function _countVisitor(request, url, env, ctx) {
     });
     if (env.KV && Date.now() - _visitorsFlushedAt > FLUSH_MS) {
       _visitorsFlushedAt = Date.now();
-      const p = env.KV.put(`${VISITORS_PREFIX}${_visitors.day}:${_isolateId}`, JSON.stringify(_visitors), { expirationTtl: 9 * 86400 });
+      // The headline counts ride in the key's metadata too, so the report
+      // can total hundreds of isolates from the key list alone.
+      const p = env.KV.put(`${VISITORS_PREFIX}${_visitors.day}:${_isolateId}`, JSON.stringify(_visitors),
+        { expirationTtl: 9 * 86400, metadata: { c: TALLY_COUNTS.map(k => _visitors[k] || 0) } });
       if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(p.catch(() => {}));
     }
   } catch (_) { /* counting must never break a request */ }
@@ -37,11 +41,17 @@ function _countVisitor(request, url, env, ctx) {
 // Visitors who are not people get the page without the AdSense and Google
 // Analytics scripts. An ad shown to a bot is an invalid impression, which is
 // what costs an AdSense account; a bot that runs JavaScript also fakes a
-// visit in Analytics. People and Cloudflare-verified crawlers (Googlebot, the
-// AdSense crawler) are served the page unchanged. What a bot is: a declared
-// one, one with no user agent, or a browser-looking visitor from a cloud
-// datacentre (traffic-core.js).
-export const NO_TAGS_FOR = new Set(['declaredBot', 'noUa', 'datacenter', 'blockedBot']);
+// visit in Analytics. What a bot is: a declared one, one with no user agent,
+// a browser-looking visitor from a cloud datacentre (traffic-core.js), or a
+// Cloudflare-verified crawler. Verified crawlers used to keep the tags; live,
+// Bing's page renderer (Microsoft's network, an ordinary Mac/Windows Chrome
+// user agent, so Analytics' own bot filter misses it) loaded ~170 pages in
+// two hours and ran the Analytics tag on every one. Search ranking does not
+// read either script. Google's ad crawlers are the exception: AdSense looks
+// for its own code on the page.
+export const NO_TAGS_FOR = new Set(['declaredBot', 'noUa', 'datacenter', 'blockedBot', 'verifiedBot']);
+const AD_CRAWLER = /Mediapartners-Google|AdsBot-Google|Google-Adwords|Google-Display-Ads/i;
+export const stripsTags = (kind, ua) => NO_TAGS_FOR.has(kind) && !AD_CRAWLER.test(String(ua || ''));
 export class BotTagRemover {
   constructor() { this.removed = 0; }
   element(el) {
@@ -61,19 +71,42 @@ async function visitorsReport(request, url, env) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'content-type': 'application/json' } });
   }
   const day = /^\d{4}-\d{2}-\d{2}$/.test(url.searchParams.get('day') || '') ? url.searchParams.get('day') : new Date().toISOString().slice(0, 10);
-  const tallies = [];
+  // A busy day is 500+ isolates. Reading every key one after another took
+  // a minute and ran into the Worker's per-request limits, so: totals come
+  // from the key list's metadata (one call per 1,000 keys), and the
+  // breakdowns (network, country, agent, path) from the busiest isolates'
+  // full tallies, read 50 at a time.
+  const keys = [];
   let cursor;
   do {
     const page = await env.KV.list({ prefix: `${VISITORS_PREFIX}${day}:`, cursor });
-    for (const k of page.keys) {
-      const t = await env.KV.get(k.name, 'json');
-      if (t) tallies.push(t);
-    }
+    keys.push(...page.keys);
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
+  const counted = (k) => k.metadata && Array.isArray(k.metadata.c) ? k.metadata.c : null;
+  const fromMeta = keys.filter(counted);
+  const pick = keys.slice().sort((a, b) => ((counted(b) || [1e9])[0]) - ((counted(a) || [1e9])[0])).slice(0, VISITORS_READ_MAX);
+  const tallies = [];
+  for (let i = 0; i < pick.length; i += 50) {
+    const got = await Promise.all(pick.slice(i, i + 50).map(k => env.KV.get(k.name, 'json').catch(() => null)));
+    tallies.push(...got.filter(Boolean));
+  }
+  const merged = mergeTallies(tallies);
+  // Every key carried its counts: the totals are exact over all of them,
+  // whichever isolates the breakdowns were read from.
+  if (fromMeta.length === keys.length && keys.length) {
+    const sum = TALLY_COUNTS.map((_, i) => fromMeta.reduce((t, k) => t + (Number(counted(k)[i]) || 0), 0));
+    const c = Object.fromEntries(TALLY_COUNTS.map((k, i) => [k, sum[i]]));
+    Object.assign(merged, {
+      isolates: keys.length, requests: c.total, pages: c.pages, api: c.api, assets: c.assets,
+      visitors: { human: c.human, datacenter: c.datacenter, declaredBot: c.declaredBot, noUa: c.noUa, verifiedBot: c.verifiedBot, blockedBot: c.blockedBot },
+      botShare: c.total ? Math.round((1 - c.human / c.total) * 1000) / 10 : null,
+    });
+  }
   const body = { available: true, generatedAt: new Date().toISOString(),
     note: 'Counted at the front of the Worker for every request, pages included, summed over every isolate. Up to a minute behind per isolate.',
-    ...mergeTallies(tallies) };
+    breakdownsFrom: `${tallies.length} of ${keys.length} isolates (the busiest)`,
+    ...merged };
   return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 }
 
@@ -872,7 +905,7 @@ export default {
                   console.error('price block injection skipped:', priceErr && priceErr.message);
                 }
               }
-              if (NO_TAGS_FOR.has(visitorKind)) {
+              if (stripsTags(visitorKind, request.headers.get('user-agent'))) {
                 out = new HTMLRewriter().on('script[src]', new BotTagRemover()).transform(out);
               }
               return out;
