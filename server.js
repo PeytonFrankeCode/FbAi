@@ -4,7 +4,8 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
+const { recordPut, recordGet, recordList, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
+const digest = require('./market-digest');
 
 // WHEN WAS THIS COMPUTED, AND HOW OLD IS IT.
 //
@@ -610,6 +611,9 @@ const RL_DISABLED = process.env.DISABLE_RATE_LIMIT === '1';
 const RL_TIERS = [
   { name: 'scan', minute: 20, hour: 200, match: (p) => p === '/api/scan-card' },
   { name: 'search', minute: 60, hour: 600, match: (p) => p === '/api/search' },
+  // Each signup sends an email: a script must not turn the form into a way
+  // to mail strangers, or into a bill.
+  { name: 'digest', minute: 3, hour: 20, match: (p) => p === '/api/digest/subscribe' },
   { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
 ];
 
@@ -17419,7 +17423,206 @@ function _rsiBaseSql() {
   return { RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST, kind: _kindSql('title') };
 }
 
-module.exports = { app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+// ---- Market Movers: the weekly email (market-digest.js) ----
+//
+// What moved this week, every Monday, to people who asked for it. The point
+// is bringing people back: each item links into the search it names.
+//
+// Subscribers are one KV record each (db.js recordPut), keyed on a hash of the
+// address, with the address, status and unsubscribe token in the key's
+// metadata, so a send lists the keys and never reads a record. Signing up
+// mails a confirmation link; only confirmed addresses get the email.
+const DIGEST_PREFIX = 'digest:sub:';
+const DIGEST_RUN_KEY = (week) => `digest:run:${week}`;
+const DIGEST_BATCH = 100;          // Resend's batch limit
+const DIGEST_BATCHES_PER_TICK = 5; // 500 emails a quarter hour, well inside a tick
+const DIGEST_RESEND_CONFIRM_MS = 10 * 60 * 1000;
+const _digestOrigin = () => (process.env.SITE_URL || 'https://thecardhuddle.com').replace(/\/$/, '');
+const _digestFrom = () => process.env.DIGEST_FROM || RESEND_FROM;
+
+async function _digestId(email) {
+  const buf = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(digest.normEmail(email)));
+  return bufToHex(new Uint8Array(buf)).slice(0, 24);
+}
+const _digestToken = () => bufToHex(globalThis.crypto.getRandomValues(new Uint8Array(16)));
+const _digestUnsubUrl = (id, token) => `${_digestOrigin()}/api/digest/unsubscribe?id=${id}&t=${token}`;
+const _digestMeta = (sub) => ({ s: sub.status, e: sub.email, t: sub.token });
+async function _digestSave(id, sub) { await recordPut(DIGEST_PREFIX + id, sub, _digestMeta(sub)); }
+
+// Many emails in one call. Resend's batch endpoint takes up to 100 and an
+// idempotency key, so a tick that dies after sending but before recording
+// its progress does not mail the same batch twice. SMTP sends one by one.
+async function sendEmailBatch(messages, idempotencyKey) {
+  if (!messages.length) return 0;
+  if (useResend) {
+    try {
+      const res = await axios.post('https://api.resend.com/emails/batch',
+        messages.map(m => ({ from: _digestFrom(), to: [m.to], subject: m.subject, html: m.html, text: m.text, headers: m.headers })),
+        { headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json', ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }, timeout: 20000 });
+      return Array.isArray(res.data && res.data.data) ? res.data.data.length : messages.length;
+    } catch (err) {
+      const detail = err.response?.data ? JSON.stringify(err.response.data).slice(0, 200) : err.message;
+      console.error('[Digest] Resend batch failed:', detail);
+      return -1;
+    }
+  }
+  let n = 0;
+  for (const m of messages) if (await sendEmail({ to: m.to, subject: m.subject, html: m.html, from: _digestFrom() })) n++;
+  return n;
+}
+
+async function _digestContentNow() {
+  const [w, m] = await Promise.all([
+    (async () => (await cacheGet(SOLD_STATS_KEY(7))) || cacheGet(SOLD_STATS_LAST_KEY(7)))(),
+    (async () => (await cacheGet(SOLD_STATS_KEY(30))) || cacheGet(SOLD_STATS_LAST_KEY(30)))(),
+  ]);
+  return digest.digestContent(w, m);
+}
+
+function _digestMessage(content, week, sub) {
+  const unsubUrl = _digestUnsubUrl(sub.id, sub.token);
+  const { subject, html, text } = digest.renderDigest(content, { week, unsubUrl, site: _digestOrigin() });
+  return { to: sub.email, subject, html, text,
+    headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } };
+}
+
+// The confirmed subscribers, in key order: { id, email, token }.
+async function _digestActive() {
+  const keys = await recordList(DIGEST_PREFIX);
+  return keys.filter(k => k.metadata && k.metadata.s === 'active' && k.metadata.e)
+    .map(k => ({ id: k.name.slice(DIGEST_PREFIX.length), email: k.metadata.e, token: k.metadata.t }));
+}
+
+// The cron calls this every tick. Outside Monday's send window it returns at
+// once without touching KV. Inside it, it sends the next batches of the
+// week's run and records how far it got, so the run spreads over as many
+// ticks as the list needs and each address gets the week's email once.
+async function sendMarketDigest({ now = new Date(), force = false, maxBatches = DIGEST_BATCHES_PER_TICK } = {}) {
+  if (!force && !digest.inSendWindow(now)) return { ok: true, skipped: 'not send time' };
+  if (!useResend && !emailTransporter) return { ok: false, reason: 'email not configured' };
+  const week = digest.weekId(now);
+  const run = (await recordGet(DIGEST_RUN_KEY(week))) || { week, cursor: '', sent: 0, failed: 0, done: false };
+  if (run.done) return { ok: true, skipped: 'already sent', run };
+  const content = await _digestContentNow();
+  if (!content) {
+    Object.assign(run, { done: true, skippedReason: 'no boards to send' });
+    await recordPut(DIGEST_RUN_KEY(week), run);
+    return { ok: false, reason: 'no boards to send' };
+  }
+  const todo = (await _digestActive()).filter(s => s.id > run.cursor);
+  for (let b = 0; b < maxBatches && todo.length; b++) {
+    const batch = todo.splice(0, DIGEST_BATCH);
+    const n = await sendEmailBatch(batch.map(s => _digestMessage(content, week, s)), `digest-${week}-${batch[0].id}`);
+    if (n < 0) { run.failed += batch.length; await recordPut(DIGEST_RUN_KEY(week), run); return { ok: false, reason: 'send failed', run }; }
+    run.sent += n;
+    run.cursor = batch[batch.length - 1].id;
+    run.startedAt = run.startedAt || new Date().toISOString();
+    await recordPut(DIGEST_RUN_KEY(week), run);
+    if (todo.length) await new Promise(r => setTimeout(r, 600)); // Resend: 2 requests a second
+  }
+  if (!todo.length) { run.done = true; run.finishedAt = new Date().toISOString(); await recordPut(DIGEST_RUN_KEY(week), run); }
+  console.log(`[Digest] ${week}: ${run.sent} sent${run.done ? ', done' : ', continuing next tick'}`);
+  return { ok: true, run };
+}
+
+app.post('/api/digest/subscribe', async (req, res) => {
+  const email = digest.normEmail(req.body && req.body.email);
+  if (!digest.validEmail(email)) return res.status(400).json({ error: 'That email address does not look right.' });
+  if (!useResend && !emailTransporter) return res.status(503).json({ error: 'Email is not set up yet. Please try again later.' });
+  try {
+    const id = await _digestId(email);
+    const now = Date.now();
+    const sub = (await recordGet(DIGEST_PREFIX + id)) || { id, email, token: _digestToken(), createdAt: new Date(now).toISOString() };
+    if (sub.status === 'active') return res.json({ ok: true, status: 'active' });
+    // Asked again within ten minutes: the first link is on its way.
+    if (sub.status === 'pending' && sub.confirmSentAt && now - Date.parse(sub.confirmSentAt) < DIGEST_RESEND_CONFIRM_MS) {
+      return res.json({ ok: true, status: 'pending' });
+    }
+    Object.assign(sub, { id, email, status: 'pending', confirmSentAt: new Date(now).toISOString(),
+      source: String((req.body && req.body.source) || 'home').slice(0, 40) });
+    await _digestSave(id, sub);
+    const confirmUrl = `${_digestOrigin()}/api/digest/confirm?id=${id}&t=${sub.token}`;
+    const m = digest.confirmEmail({ confirmUrl });
+    const sent = await sendEmail({ to: email, subject: m.subject, html: m.html, from: _digestFrom() });
+    if (!sent) return res.status(502).json({ error: 'We could not send the confirmation email. Please try again.' });
+    res.json({ ok: true, status: 'pending' });
+  } catch (err) {
+    console.error('[Digest] subscribe failed:', err && err.message);
+    res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
+});
+
+function _digestPage(title, body) {
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${_esc(title)}</title>
+    <div style="font-family:system-ui,sans-serif;max-width:480px;margin:80px auto;text-align:center;padding:0 20px;">
+      <h2 style="color:#2d6a4f;">${_esc(title)}</h2><p style="color:#555;line-height:1.6;">${body}</p>
+      <p><a href="${_digestOrigin()}/" style="color:#2d6a4f;font-weight:700;">Go to The Card Huddle</a></p></div>`;
+}
+async function _digestByToken(req) {
+  const id = String((req.query && req.query.id) || '');
+  const t = String((req.query && req.query.t) || '');
+  if (!/^[0-9a-f]{24}$/.test(id) || !t) return null;
+  const sub = await recordGet(DIGEST_PREFIX + id);
+  return sub && sub.token && _safeEqual(t, sub.token) ? sub : null;
+}
+
+app.get('/api/digest/confirm', async (req, res) => {
+  const sub = await _digestByToken(req);
+  res.set('Cache-Control', 'no-store');
+  if (!sub) return res.status(400).send(_digestPage('Link expired', 'We could not confirm that link. Sign up again from the home page.'));
+  if (sub.status !== 'active') {
+    Object.assign(sub, { status: 'active', confirmedAt: new Date().toISOString() });
+    await _digestSave(sub.id, sub);
+  }
+  res.send(_digestPage("You're in", 'Market Movers arrives every Monday: the cards and players moving most, the most-traded cards and the week’s biggest sales.'));
+});
+
+// GET from the link in the email; POST from the one-click List-Unsubscribe
+// button mail apps show, which must work without a page.
+async function _digestUnsubscribe(req, res) {
+  const sub = await _digestByToken(req);
+  res.set('Cache-Control', 'no-store');
+  if (!sub) return res.status(400).send(_digestPage('Link expired', 'We could not process that unsubscribe link.'));
+  if (sub.status !== 'unsubscribed') {
+    Object.assign(sub, { status: 'unsubscribed', unsubscribedAt: new Date().toISOString() });
+    await _digestSave(sub.id, sub);
+  }
+  res.send(_digestPage("You're unsubscribed", "You won't get Market Movers any more. Changed your mind? Sign up again from the home page."));
+}
+app.get('/api/digest/unsubscribe', _digestUnsubscribe);
+app.post('/api/digest/unsubscribe', express.urlencoded({ extended: false, limit: '4kb' }), _digestUnsubscribe);
+
+// GET /api/debug/digest — admin: subscriber counts and this week's run.
+//   &preview=1          the email as it would go out now (HTML)
+//   &to=<email>&send=1  send that preview to one address
+//   &run=1              send the week's batches now, outside the window
+app.get('/api/debug/digest', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const content = await _digestContentNow();
+  const week = digest.weekId(new Date());
+  if (req.query.preview) {
+    if (!content) return res.status(404).send('No boards to build an email from.');
+    return res.send(_digestMessage(content, week, { id: '0'.repeat(24), email: 'preview@example.com', token: 'preview' }).html);
+  }
+  if (req.query.send && req.query.to) {
+    if (!content) return res.status(404).json({ error: 'no boards' });
+    const to = digest.normEmail(req.query.to);
+    if (!digest.validEmail(to)) return res.status(400).json({ error: 'bad address' });
+    const m = _digestMessage(content, week, { id: '0'.repeat(24), email: to, token: 'test' });
+    return res.json({ sent: await sendEmail({ to, subject: '[Test] ' + m.subject, html: m.html, from: _digestFrom() }) });
+  }
+  if (req.query.run) return res.json(await sendMarketDigest({ force: true }));
+  const keys = await recordList(DIGEST_PREFIX);
+  const count = (s) => keys.filter(k => k.metadata && k.metadata.s === s).length;
+  res.json({
+    emailConfigured: !!(useResend || emailTransporter), provider: useResend ? 'resend' : emailTransporter ? 'smtp' : null,
+    from: _digestFrom(), subscribers: { active: count('active'), pending: count('pending'), unsubscribed: count('unsubscribed') },
+    week, run: await recordGet(DIGEST_RUN_KEY(week)), hasContent: !!content,
+    subject: content ? digest.subjectFor(content) : null,
+  });
+});
+
+module.exports = { sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
