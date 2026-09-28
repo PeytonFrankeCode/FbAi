@@ -1,6 +1,16 @@
 {
   "products": [
     {
+      "id": "2026-bowman-football",
+      "name": "2026 Bowman Football",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 40,
+      "totalCards": 2105,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-bowman-sapphire-football",
       "name": "2026 Topps Bowman Sapphire Football",
       "year": 2026,
@@ -113,6 +123,26 @@
       "totalCards": 384
     },
     {
+      "id": "2025-bowman-university-chrome-football",
+      "name": "2025 Bowman University Chrome Football",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 684,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2025-bowman-university-chrome-sapphire-football",
+      "name": "2025 Bowman University Chrome Sapphire Football",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 384,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2025-bowmans-best-football",
       "name": "2025 Bowman's Best Football",
       "year": 2025,
@@ -149,6 +179,26 @@
       "totalCards": 1092
     },
     {
+      "id": "2025-donruss-optic-premium-box-set-football",
+      "name": "2025 Donruss Optic Premium Box Set Football",
+      "year": 2025,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 300,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2025-panini-absolute-countdown-calendar-football",
+      "name": "2025 Panini Absolute Countdown Calendar Football",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 440,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2025-panini-absolute-football",
       "name": "2025 Panini Absolute Football",
       "year": 2025,
@@ -156,6 +206,16 @@
       "sport": "Football",
       "setCount": 46,
       "totalCards": 1396
+    },
+    {
+      "id": "2025-panini-authentically-mahomes-football",
+      "name": "2025 Panini Authentically Mahomes Football",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 35,
+      "totalCards": 127,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-panini-black-football",
@@ -212,6 +272,16 @@
       "totalCards": 650
     },
     {
+      "id": "2025-panini-instant-rated-rookie-holoflex-football",
+      "name": "2025 Panini Instant Rated Rookie Holoflex Football",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 42,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2025-panini-luminance-football",
       "name": "2025 Panini Luminance Football",
       "year": 2025,
@@ -219,6 +289,16 @@
       "sport": "Football",
       "setCount": 45,
       "totalCards": 1083
+    },
+    {
+      "id": "2025-panini-mahomes-icon-collection-football",
+      "name": "2025 Panini Mahomes Icon Collection Football",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 140,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-panini-mosaic-football",
@@ -255,6 +335,16 @@
       "sport": "Football",
       "setCount": 27,
       "totalCards": 737
+    },
+    {
+      "id": "2025-panini-phoenix-factory-set-football",
+      "name": "2025 Panini Phoenix Factory Set Football",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 350,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-panini-phoenix-football",
@@ -302,6 +392,26 @@
       "totalCards": 1648
     },
     {
+      "id": "2025-panini-prizm-premium-football",
+      "name": "2025 Panini Prizm Premium Football Box Set",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 400,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2025-panini-revolution-football",
+      "name": "2025 Panini Revolution Football",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 901,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2025-panini-rookies-stars-football",
       "name": "2025 Panini Rookies & Stars Football",
       "year": 2025,
@@ -329,6 +439,16 @@
       "totalCards": 707
     },
     {
+      "id": "2025-score-a-treat-football",
+      "name": "2025 Score-A-Treat Football",
+      "year": 2025,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 400,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2025-score-football",
       "name": "2025 Score Football",
       "year": 2025,
@@ -336,6 +456,26 @@
       "sport": "Football",
       "setCount": 33,
       "totalCards": 2150
+    },
+    {
+      "id": "2025-score-supplemental-football",
+      "name": "2025 Score Supplemental Football Premium Box Set",
+      "year": 2025,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 150,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2025-topps-chrome-black-football",
+      "name": "2025 Topps Chrome Black Football",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 441,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-topps-chrome-football",
@@ -392,6 +532,26 @@
       "totalCards": 1391
     },
     {
+      "id": "2024-bowman-university-chrome-football",
+      "name": "2024 Bowman University Chrome Football",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 626,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2024-bowman-university-chrome-sapphire-football",
+      "name": "2024 Bowman University Chrome Sapphire Football",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 378,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2024-clearly-donruss-football",
       "name": "2024 Clearly Donruss Football",
       "year": 2024,
@@ -426,6 +586,16 @@
       "sport": "Football",
       "setCount": 36,
       "totalCards": 1029
+    },
+    {
+      "id": "2024-donruss-optic-premium-box-set-football",
+      "name": "2024 Donruss Optic Premium Box Set Football",
+      "year": 2024,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 300,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2024-panini-absolute-football",
@@ -599,6 +769,16 @@
       "totalCards": 721
     },
     {
+      "id": "2024-panini-phoenix-factory-set-football",
+      "name": "2024 Panini Phoenix Factory Set Football",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 350,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2024-panini-phoenix-football",
       "name": "2024 Panini Phoenix Football",
       "year": 2024,
@@ -653,6 +833,16 @@
       "totalCards": 1362
     },
     {
+      "id": "2024-panini-prizm-premium-football",
+      "name": "2024 Panini Prizm Premium Football Factory Set",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 400,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2024-panini-rookies-stars-football",
       "name": "2024 Panini Rookies & Stars Football",
       "year": 2024,
@@ -698,6 +888,16 @@
       "totalCards": 1147
     },
     {
+      "id": "2024-score-a-treat-football",
+      "name": "2024 Score-A-Treat Football",
+      "year": 2024,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 349,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2024-score-football",
       "name": "2024 Score Football",
       "year": 2024,
@@ -714,6 +914,16 @@
       "sport": "Football",
       "setCount": 27,
       "totalCards": 969
+    },
+    {
+      "id": "2024-topps-chrome-sapphire-football",
+      "name": "2024 Topps Chrome Sapphire Football",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 517,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2024-topps-cosmic-chrome-football",
@@ -750,6 +960,16 @@
       "sport": "Football",
       "setCount": 13,
       "totalCards": 476
+    },
+    {
+      "id": "2024-topps-now-rookie-campaign-quarterbacks-football",
+      "name": "2024 Topps Now Rookie Campaign Quarterbacks Football",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 20,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2024-topps-resurgence-football",
@@ -842,6 +1062,26 @@
       "totalCards": 1157
     },
     {
+      "id": "2023-donruss-optic-premium-football",
+      "name": "2023 Donruss Optic Premium Football Factory Set",
+      "year": 2023,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 300,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2023-leaf-draft-football",
+      "name": "2023 Leaf Draft Football Blaster",
+      "year": 2023,
+      "brand": "Leaf",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 100,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2023-panini-absolute-football",
       "name": "2023 Panini Absolute Football",
       "year": 2023,
@@ -867,6 +1107,16 @@
       "sport": "Football",
       "setCount": 40,
       "totalCards": 1209
+    },
+    {
+      "id": "2023-panini-chronicles-draft-picks-football",
+      "name": "2023 Panini Chronicles Draft Picks Football",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 25,
+      "totalCards": 857,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2023-panini-contenders-football",
@@ -1130,6 +1380,16 @@
       "totalCards": 1227
     },
     {
+      "id": "2023-sage-low-series-football",
+      "name": "2023 Sage Low Series Football",
+      "year": 2023,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 26,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2023-score-football",
       "name": "2023 Score Football",
       "year": 2023,
@@ -1238,6 +1498,36 @@
       "totalCards": 824
     },
     {
+      "id": "2022-panini-chronicles-draft-picks-football",
+      "name": "2022 Panini Chronicles Draft Picks Football",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 887,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2022-panini-chronicles-football",
+      "name": "2022 Panini Chronicles Football",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 575,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2022-panini-classics-football",
+      "name": "2022 Panini Classics Football",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 330,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2022-panini-contenders-football",
       "name": "2022 Panini Contenders Football",
       "year": 2022,
@@ -1301,6 +1591,16 @@
       "totalCards": 1184
     },
     {
+      "id": "2022-panini-honors-football",
+      "name": "2022 Panini Honors Football",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 239,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2022-panini-illusions-football",
       "name": "2022 Panini Illusions Football",
       "year": 2022,
@@ -1326,6 +1626,16 @@
       "sport": "Football",
       "setCount": 64,
       "totalCards": 1937
+    },
+    {
+      "id": "2022-panini-legacy-football",
+      "name": "2022 Panini Legacy Football",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 341,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2022-panini-limited-football",
@@ -1380,6 +1690,16 @@
       "sport": "Football",
       "setCount": 61,
       "totalCards": 1712
+    },
+    {
+      "id": "2022-panini-nfl-sticker-card-collection-football",
+      "name": "2022 Panini NFL Sticker & Card Collection Football",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 100,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2022-panini-obsidian-football",
@@ -1490,6 +1810,26 @@
       "totalCards": 904
     },
     {
+      "id": "2022-sage-high-series-football",
+      "name": "2022 Sage High Series Football",
+      "year": 2022,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 212,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2022-sage-low-series-football",
+      "name": "2022 Sage Low Series Football",
+      "year": 2022,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 242,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2022-score-football",
       "name": "2022 Score Football",
       "year": 2022,
@@ -1569,6 +1909,36 @@
       "sport": "Football",
       "setCount": 30,
       "totalCards": 1138
+    },
+    {
+      "id": "2021-panini-chronicles-draft-picks-football",
+      "name": "2021 Panini Chronicles Draft Picks Football",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 797,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2021-panini-chronicles-nfl-football",
+      "name": "2021 Panini Chronicles NFL Football",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 733,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2021-panini-classics-football",
+      "name": "2021 Panini Classics Football",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 100,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2021-panini-contender-football",
@@ -1760,6 +2130,16 @@
       "totalCards": 2043
     },
     {
+      "id": "2021-panini-nfl-sticker-card-collection-football",
+      "name": "2021 Panini NFL Sticker & Card Collection Football",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 100,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2021-panini-obsidian-football",
       "name": "2021 Panini Obsidian Football",
       "year": 2021,
@@ -1949,6 +2329,26 @@
       "totalCards": 952
     },
     {
+      "id": "2020-panini-chronicles-draft-picks-football",
+      "name": "2020 Panini Chronicles Draft Picks Football",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 748,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2020-panini-chronicles-football",
+      "name": "2020 Panini Chronicles Football",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 25,
+      "totalCards": 717,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2020-panini-contenders-draft-picks-football",
       "name": "2020 Panini Contenders Draft Picks Football",
       "year": 2020,
@@ -2120,6 +2520,16 @@
       "totalCards": 2162
     },
     {
+      "id": "2020-panini-obsidian-draft-picks-football",
+      "name": "2020 Panini Obsidian Draft Picks Football",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 20,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2020-panini-obsidian-football",
       "name": "2020 Panini Obsidian Football",
       "year": 2020,
@@ -2246,6 +2656,26 @@
       "totalCards": 1171
     },
     {
+      "id": "2020-sage-aspire-football",
+      "name": "2020 Sage Aspire Football",
+      "year": 2020,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 72,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2020-sage-hit-premier-draft-low-series-football",
+      "name": "2020 Sage Hit Premier Draft Low Series Football",
+      "year": 2020,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 50,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
       "id": "2020-score-football",
       "name": "2020 Score Football",
       "year": 2020,
@@ -2253,6 +2683,16 @@
       "sport": "Football",
       "setCount": 27,
       "totalCards": 1426
+    },
+    {
+      "id": "2020-topps-xfl-football",
+      "name": "2020 Topps XFL Football",
+      "year": 2020,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 175,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2020-zenith-football",
@@ -2316,6 +2756,16 @@
       "sport": "Football",
       "setCount": 25,
       "totalCards": 934
+    },
+    {
+      "id": "2019-panini-chronicles-football",
+      "name": "2019 Panini Chronicles Football",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 393,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2019-panini-contenders-draft-picks-football",
@@ -2604,6 +3054,26 @@
       "sport": "Football",
       "setCount": 20,
       "totalCards": 899
+    },
+    {
+      "id": "2019-sage-hit-premier-draft-high-series-football",
+      "name": "2019 Sage Hit Premier Draft High Series Football",
+      "year": 2019,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 70,
+      "note": "Built from the published checklist at checklistcenter.com."
+    },
+    {
+      "id": "2019-sage-hit-premier-draft-low-series-football",
+      "name": "2019 Sage Hit Premier Draft Low Series Football",
+      "year": 2019,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 70,
+      "note": "Built from the published checklist at checklistcenter.com."
     },
     {
       "id": "2019-score-football",
