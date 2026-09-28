@@ -2684,10 +2684,21 @@ function _fallbackParallelMatchers() {
     _fallbackMatchersCache = _buildParallelMatchers([
       ...SCAN_KEY_PARALLEL_PHRASES,
       ...SCAN_KEY_PARALLEL_WORDS,
+      // Finishes the lists often leave out, so "Purple Shock" is not read as
+      // plain Purple, nor "Blue Glitter" as Blue.
+      ...VERSION_EXTRA_PARALLEL_WORDS,
     ]);
   }
   return _fallbackMatchersCache;
 }
+
+const _COLOUR_WORDS = new Set(['silver', 'gold', 'blue', 'green', 'red', 'purple', 'orange', 'pink', 'black', 'white',
+  'aqua', 'teal', 'emerald', 'ruby', 'copper', 'bronze', 'yellow', 'neon', 'lime', 'magenta', 'maroon', 'platinum',
+  'light', 'tri', 'color']);
+const VERSION_EXTRA_PARALLEL_WORDS = ['press proof', 'die cut', 'x-fractor', 'xfractor', 'shock', 'glitter',
+  'nebula', 'electricity', 'jazz', 'rocket', 'flex', 'vinyl', 'lime', 'magenta', 'maroon', 'platinum', 'fotl',
+  'first off the line', 'wedges', 'checkerboard', 'stripes', 'hyper', 'negative', 'prism', 'geometric', 'speckle',
+  'raywave', 'sepia', 'mini diamond'];
 
 // Context for the active search: which matchers to use and which player name
 // to blank out first (so "A.J. Green" never reads as a Green parallel).
@@ -2762,9 +2773,63 @@ const _BASE_LIKE_SET_RE = /^(rookies?|rated rookies|veterans?|legends?|retired( 
 const _OVERSIZE_RE = /\b(jumbos?|oversized?|over-sized?|box[\s-]?toppers?)\b/;
 
 // Set names that describe nothing a title would single out.
-const _GENERIC_SET_RE = /^(base|rookies?|veterans?|retired|legends?|base rookies?|rookies? and veterans?)$/;
+const _GENERIC_SET_RE = /^(base|rookies?|veterans?|retired|legends?|base rookies?|rookies? and veterans?|inserts?)$/;
 // Sellers mark a variation "variation", "var" or "SP".
 const _VARIATION_RE = /\b(variations?|var|sp|ssp)\b/;
+
+// Product lines a title names that the searched product is not. Not the
+// words that are also parallels or inserts ("Prizm" Silver, "Black",
+// "Playoff" Ticket, "Elite Series").
+const _OTHER_PRODUCT_WORDS = ['optic', 'chrome', 'select', 'mosaic', 'contenders', 'clearly', 'certified', 'absolute',
+  'phoenix', 'spectra', 'obsidian', 'immaculate', 'national treasures', 'flawless', 'origins', 'luminance', 'illusions',
+  'zenith', 'chronicles', 'sapphire', 'cosmic', 'honors', 'prestige', 'gold standard', 'encased', 'playbook',
+  'impeccable', 'plates patches', 'rookies stars', 'heritage', 'finest', 'stadium club', 'bowman'];
+function _otherProductNamed(hay, prodNorm) {
+  if (/\bpreview\b/.test(hay) && /\boptic\b/.test(prodNorm) && !/\bpreview\b/.test(prodNorm)) return true;
+  for (const w of _OTHER_PRODUCT_WORDS) {
+    if (prodNorm.includes(w)) continue;
+    // Donruss's "Optic Preview", however it is worded ("Optic Rated Rookies
+    // Preview").
+    if (w === 'optic' && /\bpreview\b/.test(hay)) continue;
+    if (new RegExp('\\b' + w + '\\b').test(hay)) return true;
+  }
+  return /\belite\b(?!\s+series)/.test(hay) && !/\belite\b/.test(prodNorm);
+}
+
+// Words that are right as written, however close to a vocabulary word.
+const _TYPO_KEEP = new Set(['football', 'panini', 'donruss', 'rookie', 'rookies', 'rated', 'graded', 'insert', 'inserts',
+  'prizm', 'prizms', 'chrome', 'optic', 'select', 'mosaic', 'topps', 'bowman', 'sports', 'cards', 'signed', 'texans',
+  'giants', 'chiefs', 'raiders', 'chargers', 'bengals', 'bears', 'commanders', 'packers', 'eagles', 'steelers',
+  'patriots', 'broncos', 'ravens', 'lions', 'jaguars', 'titans', 'saints', 'falcons', 'panthers', 'rams', 'colts',
+  'cowboys', 'dolphins', 'vikings', 'browns', 'seahawks', 'cardinals', 'bills', 'jets', 'mint', 'gem', 'pristine',
+  'preview', 'shock', 'hyper', 'scope', 'pandora', 'velocity', 'stars', 'glitter', 'rookie', 'retro', 'kings']);
+// Sellers type fast: "Sliver" for Silver, "Prizim", "Refactor", "Draft
+// Licks". A word of five letters or more that is not in the vocabulary but is
+// one letter off a word that is (a letter wrong, missing, extra, or two
+// swapped) is read as that word. Shorter words are left alone: at four
+// letters too many real words sit one letter apart.
+function _fixTypos(hay, vocab) {
+  const near = (a, b) => {
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0, j = 0, edits = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i++; j++; continue; }
+      if (++edits > 1) return false;
+      if (a.length > b.length) i++;
+      else if (a.length < b.length) j++;
+      else if (a[i + 1] === b[j] && a[i] === b[j + 1]) { i += 2; j += 2; }   // swapped pair
+      else { i++; j++; }
+    }
+    return edits + (a.length - i) + (b.length - j) <= 1;
+  };
+  return hay.replace(/[a-z]{5,}/g, (w) => {
+    if (vocab.has(w) || _TYPO_KEEP.has(w)) return w;
+    // A plural is not a typo: "football" is not the "Footballs" parallel.
+    if (vocab.has(w + 's') || vocab.has(w.replace(/s$/, '')) || vocab.has(w.replace(/es$/, ''))) return w;
+    for (const v of vocab) if (v[0] === w[0] || v[1] === w[1]) { if (near(w, v)) return v; }
+    return w;
+  });
+}
 
 // The player's cards in the product, each with its own parallel matchers.
 function _buildVersionCtx(product, player, query) {
@@ -2789,12 +2854,20 @@ function _buildVersionCtx(product, player, query) {
         setNorm,
         // A set name that says something ("Prizmatic", "Rookie Introduction",
         // "Downtown") can be matched in a title; "Rookies" or "Base" cannot.
+        // Each word with or without its plural "s": sellers write "Rated
+        // Rookie" for the Rated Rookies set, "Downtowns" for Downtown.
         setRe: setNorm.length >= 4 && !_GENERIC_SET_RE.test(setNorm)
-          ? new RegExp('\\b' + _reEsc(setNorm).replace(/\s+/g, '[\\s-]+') + '\\b') : null,
+          ? new RegExp('\\b' + setNorm.split(/\s+/).map(w => _reEsc(w.replace(/(?<=[a-z]{3})s$/, '')) + 's?').join('[\\s-]+') + '\\b') : null,
         variation: /\bvariations?\b/.test(setNorm),
         // The rookie run of the base set is often filed as its own "insert"
         // ("Rated Rookies", Mosaic's "Rookies"); it is still the base card.
         base: /^base\b/i.test(set.name || '') || set.category === 'base' || _BASE_LIKE_SET_RE.test(set.name || ''),
+        // How much a title that names no set means this one: the product's
+        // own base run (Base Set, Rookies, Rated Rookies) most, then other
+        // base-category sets, then inserts and parallel runs ("Season Stat
+        // Line", "Red", "Rated Rookies Premium"), which a title names.
+        primary: (/^base\b/i.test(set.name || '') || _BASE_LIKE_SET_RE.test(set.name || '')) && !/\bvariations?\b/i.test(set.name || '') ? 3
+          : set.category === 'base' ? 2 : 0,
         number: String(c.number || '').replace(/^#/, '').toLowerCase(),
         player: c.player || player,
         kind: _setKind(set.name || ''),
@@ -2803,7 +2876,16 @@ function _buildVersionCtx(product, player, query) {
     }
   }
   if (!cards.length) return null;
+  // The words a title is read for, to put right a letter-off spelling.
+  const vocab = new Set();
+  for (const c of cards) {
+    for (const w of c.setNorm.split(/\s+/)) if (w.length >= 5) vocab.add(w);
+    for (const m of c.matchers) for (const w of m.norm.split(/\s+/)) if (w.length >= 5) vocab.add(w);
+  }
+  for (const m of _fallbackParallelMatchers()) for (const w of m.norm.split(/\s+/)) if (w.length >= 5) vocab.add(w);
+  for (const w of ['prizm', 'refractor', 'rookie', 'rookies', 'draft', 'picks', 'variation', 'autograph']) vocab.add(w);
   return {
+    vocab,
     productName: product.name || '',
     // The searched player, as the Market tab's player index knows them.
     player,
@@ -2825,6 +2907,7 @@ function _matchVersion(title, ctx) {
     hay = hay.replace(new RegExp('\\b' + _reEsc(t).replace(/\s+/g, '[\\s-]+') + '\\b', 'g'), ' ');
   }
   hay = hay.replace(/\band\b/g, ' ').replace(/\s+/g, ' ');
+  if (ctx.vocab) hay = _fixTypos(hay, ctx.vocab);
 
   // 1. The card.
   //
@@ -2834,18 +2917,29 @@ function _matchVersion(title, ctx) {
   // title — the set it names, auto or relic words, "variation" — picks
   // among what is left. Two sets still standing is a card we cannot tell.
   const kind = _AUTO_RE.test(hay) ? 'auto' : _RELIC_RE.test(hay) ? 'relic' : 'base';
-  const wantsVar = _VARIATION_RE.test(hay);
+  let wantsVar = _VARIATION_RE.test(hay);
   const narrow = (cands) => {
     const bySet = new Map();
     for (const c of cands) if (!bySet.has(c.set)) bySet.set(c.set, c);
     let list = [...bySet.values()];
     if (list.length <= 1) return list;
     const named = list.filter(c => c.setRe && c.setRe.test(hay)).sort((x, y) => y.setNorm.length - x.setNorm.length);
-    if (named.length) return [named[0]];
+    if (named.length) {
+      // "Rated Rookie ... Holo Prizm Variation": the variation of the named set.
+      const v = wantsVar && !named[0].variation && list.find(c => c.variation && c.setNorm.startsWith(named[0].setNorm));
+      return [v || named[0]];
+    }
     const ofKind = list.filter(c => c.kind === kind);
     if (ofKind.length) list = ofKind;
     const ofVar = list.filter(c => c.variation === wantsVar);
     if (ofVar.length) list = ofVar;
+    // Still more than one, and the title names none of them: the product's
+    // base run, when exactly one candidate is it.
+    if (list.length > 1) {
+      const top = Math.max(...list.map(c => c.primary || 0));
+      const tops = list.filter(c => (c.primary || 0) === top);
+      if (top > 0 && tops.length === 1) { tops[0]._byPrimary = true; return tops; }
+    }
     return list;
   };
 
@@ -2855,15 +2949,55 @@ function _matchVersion(title, ctx) {
   for (const w of ['draft picks', 'collegiate', 'deca', 'update']) {
     if (hay.includes(w) && !prodNorm.includes(w)) return null;
   }
+  // "DP" is how sellers shorten Draft Picks.
+  if (/\bdp\b/.test(hay) && !prodNorm.includes('draft picks')) return null;
+  // Another product line named in the title: "Optic" in a Donruss search,
+  // "Chrome" in a Topps one, "Clearly", "Elite". Donruss's own "Optic
+  // Preview" parallels are the exception; and the other way about, an Optic
+  // search's "Optic Preview" is a Donruss card.
+  if (_otherProductNamed(hay, prodNorm)) return null;
 
   let card = null;
-  const raw = (String(title).match(/#\s*([a-z0-9]+(?:-[a-z0-9]+)*)/i) || [])[1] || '';
+  let noNumberPrimary = false;
+  let raw = (String(title).match(/#\s*([a-z0-9]+(?:-[a-z0-9]+)*)/i) || [])[1] || '';
+  // A number written without its "#" ("2023 Donruss 339 CJ Stroud"), when
+  // it is one of his numbers here and is not a year, a grade, a print run
+  // or a serial ("12/99").
+  if (!raw) {
+    const nums = new Set(ctx.cards.map(c => c.number).filter(n => /^\d+$/.test(n)));
+    // Grades in every form sellers write them: "PSA 10", "PSA GEM MT 10",
+    // "Mint 9", "(10)". Two digits at least, and never 10: a lone "2" or
+    // "10" is far more often a count or a grade than a card number.
+    const bare = String(title)
+      .replace(/\b(psa|bgs|sgc|cgc|csg|hga|tag|beckett|graded?)\b(\s+[a-z-]+){0,3}\s*\d+(\.\d)?/gi, ' ')
+      .replace(/\b(gem|mint|mt|nm|ex|vg|pristine)\s*\d+(\.\d)?/gi, ' ')
+      .replace(/\(\s*\d+(\.\d)?\s*\)/g, ' ')
+      .replace(/\d+\s*\/\s*\d+|\/\s*\d+/g, ' ').match(/(?:^|\s)(\d{2,3})(?=\s|$)/g) || [];
+    const hit = bare.map(x => x.trim()).find(n => +n !== 10 && nums.has(String(+n)));
+    if (hit) raw = String(+hit);
+  }
   const flat = (x) => x.toLowerCase().replace(/-/g, '').replace(/^([a-z]*)0+(?=\d)/, '$1');
   // "#DT-39", "#RI-5", "#K41": the letters are the insert's code, the
   // checklist keeps the number alone. "#RG-JDS" has no number at all.
   const code = /^([a-z]+)-?(\d+)$/i.exec(raw);
   if (/\d/.test(raw)) {
     let cands = ctx.cards.filter(c => flat(c.number) === flat(raw));
+    // "#325b" / "#325A": the variation of #325, where the list has no 325b.
+    const lettered = /^(\d+)[a-z]$/i.exec(raw);
+    if (!cands.length && lettered) {
+      cands = ctx.cards.filter(c => flat(c.number) === lettered[1]);
+      if (cands.length) wantsVar = true;
+    }
+    // "#74TF-12" for the list's "F-12": the same number, and the list's
+    // letters at the end of the title's code.
+    const coded = /^([a-z0-9]*?[a-z]+)-?(\d+)$/i.exec(raw);
+    if (!cands.length && coded) {
+      const letters = coded[1].toLowerCase().replace(/\d/g, '');
+      cands = ctx.cards.filter(c => {
+        const m = /^([a-z]+)(\d+)$/.exec(flat(c.number));
+        return m && String(+m[2]) === String(+coded[2]) && letters.endsWith(m[1]);
+      });
+    }
     if (!cands.length && code) {
       const pre = code[1].toLowerCase(), n = String(+code[2]);
       cands = ctx.cards.filter(c => flat(c.number) === n);
@@ -2875,7 +3009,9 @@ function _matchVersion(title, ctx) {
     }
     // The checklist and the card can number the same insert differently
     // (NFL Debut "#ND-3" is 383 in the list); a set the title names settles it.
-    if (!cands.length) cands = ctx.cards.filter(c => c.setRe && c.setRe.test(hay));
+    // Not the base run: its numbers are the ones a title gets right, so
+    // "Rated Rookie #244" in a search for his #339 is some other product's.
+    if (!cands.length) cands = ctx.cards.filter(c => c.setRe && c.setRe.test(hay) && !(c.primary > 0));
     if (!cands.length) return null;                 // not his card in this product
     const left = narrow(cands);
     if (left.length !== 1) return null;
@@ -2899,6 +3035,10 @@ function _matchVersion(title, ctx) {
       const pool = narrow(ctx.cards.filter(c => kind === 'base' ? c.base && c.kind === 'base' : c.kind === kind));
       if (pool.length !== 1) return null;
       card = pool[0];
+      // Chosen as the base run among several, from a title with no number:
+      // only on the word of a parallel that run lists, or "Rated Rookie".
+      // "My House" with no number is an insert the list may not hold.
+      if (card._byPrimary) noNumberPrimary = true;
     }
   }
 
@@ -2941,7 +3081,20 @@ function _matchVersion(title, ctx) {
     // "Orange" + "Disco", in title order; a listed name that covers them all wins.
     const joined = words.map(w => w.norm).join(' ');
     const listed = card.matchers.find(m => m.norm === joined || m.norm.split(' ').sort().join(' ') === words.map(w => w.norm).sort().join(' '));
-    parallel = listed ? listed.label : _titleCase(joined);
+    // Not a listed name: colours first, then finishes, whatever order the
+    // title used, so "Die-Cut Maroon" and "Maroon Die-Cut" are one version.
+    const colour = (w) => w.norm.split(' ').every(x => _COLOUR_WORDS.has(x));
+    const ordered = [...words.filter(colour), ...words.filter(w => !colour(w))].map(w => w.norm).join(' ');
+    parallel = listed ? listed.label : _titleCase(ordered);
+  }
+
+  if (noNumberPrimary && !words.some(w => w.listed) && !/\brated rookies?\b/.test(hay)) return null;
+  // In Chrome, Finest and Bowman a plain "Refractor" is a version of its
+  // own, not a word to drop: the Refractor and the base card are two cards.
+  // A coloured one ("Magenta Speckle" with or without "Refractor", sellers
+  // write both) keeps its colour's name, so one card is not split in two.
+  if (parallel === 'Base' && /\b(chrome|finest|bowman)\b/.test(_cleanForMatch(ctx.productName)) && /\brefractors?\b/.test(pHay)) {
+    parallel = 'Refractor';
   }
 
   // A jumbo / oversized copy is its own card — a case hit at a different
