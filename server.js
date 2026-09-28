@@ -617,6 +617,11 @@ const RL_TIERS = [
   { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
 ];
 
+// A search or scan whose reCAPTCHA check failed: still served, at half the
+// verified search rate. Enough for a person on a checklist; a script without
+// JavaScript has no token at all and is held to this.
+const RL_UNVERIFIED = { name: 'unverified', minute: 30, hour: 300 };
+
 // Bounded, for the same reason the traffic tally is: one key per source
 // address is a memory leak a botnet controls. Past the cap we stop metering
 // rather than stop serving — a rate limiter that takes the site down has
@@ -645,7 +650,9 @@ function rateLimitCheck(req, now = Date.now()) {
   if (RL_DISABLED) return null;
   const p = String(req.path || '/');
   if (!p.startsWith('/api/')) return null;
-  const tier = RL_TIERS.find(t => t.match(p));
+  // A money-spending call that failed the reCAPTCHA check (see above) meters
+  // at the unverified rate instead of refusing outright.
+  const tier = req.captchaUnverified ? RL_UNVERIFIED : RL_TIERS.find(t => t.match(p));
   if (!tier) return null;
 
   const key = _rlKey(req);
@@ -694,12 +701,21 @@ function _noteLimited(tier) {
 // checked against RECAPTCHA_MIN_SCORE; a v2 one carries no score and only has
 // to succeed. That way the key can be swapped without touching this code.
 const RECAPTCHA_SECRET = process.env.Recaptcha_secret || process.env.RECAPTCHA_SECRET || '';
-const RECAPTCHA_MIN_SCORE = Number(process.env.RECAPTCHA_MIN_SCORE || 0.5);
+// 0.3, not Google's suggested 0.5: real people on Safari with its privacy
+// features on (iCloud Private Relay, tracking prevention) routinely score
+// 0.3-0.4, and that was most of who got turned away.
+const RECAPTCHA_MIN_SCORE = Number(process.env.RECAPTCHA_MIN_SCORE || 0.3);
 // A kill switch that needs no deploy. If this turns real people away, setting
 // it to 0 in the dashboard stops the enforcement on the next request while
 // the counters below keep reporting what it WOULD have done.
 const RECAPTCHA_ENFORCE = process.env.RECAPTCHA_ENFORCE !== '0';
 const RECAPTCHA_PATHS = ['/api/search', '/api/scan-card'];
+// A passed check vouches for its address for ten minutes. A checklist fills
+// its value column with one search per row, and asking Google about each of
+// dozens of tokens in a few seconds is itself what drags the score down.
+const RECAPTCHA_TRUST_MS = 10 * 60 * 1000;
+const RECAPTCHA_TRUST_MAX = 20000;
+const _captchaTrusted = new Map();  // ip -> trusted until
 
 // Verifications are counted the same way refusals are, so /api/debug/traffic
 // answers the question this feature actually raises: how many people is it
@@ -760,23 +776,31 @@ app.use(async (req, res, next) => {
   if (!RECAPTCHA_PATHS.includes(String(req.path || ''))) return next();
   if (isAdminReq(req)) return next();
 
-  const token = String(req.headers['x-recaptcha-token'] || req.query.captcha || '');
   const ip = String(req.headers['cf-connecting-ip'] || '').trim();
+  if (ip && (_captchaTrusted.get(ip) || 0) > Date.now()) { _noteCaptcha('trusted'); return next(); }
+  const token = String(req.headers['x-recaptcha-token'] || req.query.captcha || '');
   const v = await verifyRecaptcha(token, ip);
 
   if (v.degraded) { _noteCaptcha('degraded'); return next(); }
-  if (v.ok) { _noteCaptcha('pass'); return next(); }
+  if (v.ok) {
+    _noteCaptcha('pass');
+    if (ip) {
+      if (_captchaTrusted.size >= RECAPTCHA_TRUST_MAX) _captchaTrusted.clear();
+      _captchaTrusted.set(ip, Date.now() + RECAPTCHA_TRUST_MS);
+    }
+    return next();
+  }
 
   _noteCaptcha(v.why === 'missing' ? 'missing' : 'fail');
-  // Report-only mode still counts, so the damage can be measured before the
-  // gate is trusted with real traffic.
-  if (!RECAPTCHA_ENFORCE) return next();
-
-  return res.status(403).json({
-    error: "Couldn't verify this request came from a browser. Reload the page and try again.",
-    captchaFailed: true,
-    reason: v.why,
-  });
+  // A failed check no longer refuses the request. It used to answer 403
+  // "Couldn't verify this request came from a browser", and the people it
+  // turned away were collectors: every row of a checklist is a search, and
+  // Safari's privacy features score low. Bots are stopped in front of this
+  // (Cloudflare, and the Worker's bot filter); what an unverified caller gets
+  // is the tighter rate limit below, which is what caps the cost of one.
+  if (RECAPTCHA_ENFORCE) req.captchaUnverified = true;
+  res.setHeader('X-Captcha', 'unverified');
+  return next();
 });
 
 // Ahead of express.json on purpose: a refused request must not first cost us

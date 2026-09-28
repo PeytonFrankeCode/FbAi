@@ -54,52 +54,72 @@ const PORT = 3233;
 const server = app.listen(PORT);
 const base = `http://127.0.0.1:${PORT}`;
 
-const call = async (p, headers = {}) => {
-  const r = await fetch(`${base}${p}`, { headers: { 'cf-connecting-ip': '5.5.5.5', ...headers } });
+// A fresh address per case unless one is given: a passed check vouches for
+// its address for ten minutes, which would otherwise carry across cases.
+let _ipN = 10;
+const call = async (p, headers = {}, ip = `5.5.5.${_ipN++}`) => {
+  const r = await fetch(`${base}${p}`, { headers: { 'cf-connecting-ip': ip, ...headers } });
   let body = null;
   try { body = await r.json(); } catch (_) { /* html or empty */ }
-  return { status: r.status, body };
+  return { status: r.status, body, unverified: r.headers.get('x-captcha') === 'unverified' };
 };
 
 (async () => {
   try {
     // ---- A good token passes ----
     verifyReply = { success: true, score: 0.9 };
-    let r = await call('/api/search?q=mahomes&mode=forsale', { 'x-recaptcha-token': 'good' });
+    let r = await call('/api/search?q=mahomes&mode=forsale', { 'x-recaptcha-token': 'good' }, '5.5.5.5');
     check('a verified request is not blocked',
-      r.status !== 403, `status ${r.status}`);
+      r.status !== 403 && !r.unverified, `status ${r.status}`);
     check('  ...and the token was actually sent to Google',
       verifyCalls.some(b => b.includes('response=good') && b.includes('secret=test-secret')),
       verifyCalls[0] || 'no verify call');
     check('  ...along with the caller IP, so Google can score it',
       verifyCalls.some(b => b.includes('remoteip=5.5.5.5')));
+    verifyCalls = [];
+    r = await call('/api/search?q=mahomes&mode=forsale', {}, '5.5.5.5');
+    check('  ...and vouches for that address for a while: no token, no second call to Google',
+      r.status !== 403 && !r.unverified && verifyCalls.length === 0, `status ${r.status}, ${verifyCalls.length} calls`);
 
-    // ---- A missing token is refused, and says why ----
+    // ---- A failed check no longer refuses: it is served, marked unverified ----
+    // It used to answer 403 "Couldn't verify this request came from a
+    // browser", and the people it turned away were collectors on checklists
+    // (a search per row) and on Safari (privacy features score low).
     verifyCalls = [];
     r = await call('/api/search?q=mahomes&mode=forsale');
-    check('a request with no token is refused',
-      r.status === 403 && r.body && r.body.captchaFailed === true,
-      `status ${r.status} ${JSON.stringify(r.body || {}).slice(0, 70)}`);
+    check('a request with no token is served, not refused',
+      r.status !== 403 && r.unverified, `status ${r.status} ${JSON.stringify(r.body || {}).slice(0, 70)}`);
     check('  ...without wasting a call to Google on an empty token',
       verifyCalls.length === 0, `${verifyCalls.length} calls made`);
 
-    // ---- A low v3 score is refused ----
     verifyReply = { success: true, score: 0.1 };
     r = await call('/api/search?q=mahomes&mode=forsale', { 'x-recaptcha-token': 'botlike' });
-    check('a v3 score below the threshold is refused',
-      r.status === 403 && r.body.reason === 'low-score', JSON.stringify(r.body));
+    check('a score below the threshold is served, marked unverified', r.status !== 403 && r.unverified, `status ${r.status}`);
+    verifyReply = { success: true, score: 0.35 };
+    r = await call('/api/search?q=mahomes&mode=forsale', { 'x-recaptcha-token': 'safari' });
+    check('  ...and 0.35, a typical Safari-with-privacy score, passes', r.status !== 403 && !r.unverified);
 
     // ---- v2 has no score, and must still work ----
     verifyReply = { success: true };
     r = await call('/api/search?q=mahomes&mode=forsale', { 'x-recaptcha-token': 'v2ok' });
     check('a v2 response carries no score and still passes',
-      r.status !== 403, `status ${r.status} — the key can be swapped without a code change`);
+      r.status !== 403 && !r.unverified, `status ${r.status} — the key can be swapped without a code change`);
 
-    // ---- An outright rejection is refused ----
     verifyReply = { success: false, 'error-codes': ['timeout-or-duplicate'] };
     r = await call('/api/search?q=mahomes&mode=forsale', { 'x-recaptcha-token': 'stale' });
-    check('a token Google rejects is refused, carrying its reason',
-      r.status === 403 && /timeout-or-duplicate/.test(r.body.reason || ''), JSON.stringify(r.body));
+    check('a token Google rejects is served, marked unverified', r.status !== 403 && r.unverified, `status ${r.status}`);
+
+    // ---- Unverified callers meter at the tighter rate ----
+    {
+      const { rateLimitCheck } = srv;
+      const was = process.env.DISABLE_RATE_LIMIT;
+      const req = (unv, ip) => ({ path: '/api/search', headers: { 'cf-connecting-ip': ip }, captchaUnverified: unv });
+      let ver = 0, unv = 0;
+      const t0 = Date.now();
+      for (let i = 0; i < 50; i++) { if (!rateLimitCheck(req(false, '9.9.9.1'), t0)) ver++; if (!rateLimitCheck(req(true, '9.9.9.2'), t0)) unv++; }
+      check('unverified searches are held to the tighter limit',
+        was ? true : (ver === 50 && unv === 30), was ? 'rate limiting disabled in this test' : `verified ${ver}/50, unverified ${unv}/50`);
+    }
 
     // ---- THE ONE THAT MATTERS: Google down must not take search down ----
     verifyReply = 'NETWORK_ERROR';
@@ -126,7 +146,7 @@ const call = async (p, headers = {}) => {
     const t = await call(`/api/debug/traffic?key=${encodeURIComponent(process.env.ADMIN_PASSWORD)}`);
     const c = t.body && t.body.sinceLastFlush && t.body.sinceLastFlush.captcha;
     check('every outcome is counted where the traffic report can see it',
-      !!c && c.pass > 0 && c.missing > 0 && c.fail > 0 && c.degraded > 0,
+      !!c && c.pass > 0 && c.trusted > 0 && c.missing > 0 && c.fail > 0 && c.degraded > 0,
       JSON.stringify(c));
     check('  ...and the report states the gate\'s configuration',
       t.body && t.body.recaptcha && t.body.recaptcha.enforcing === true
@@ -143,7 +163,7 @@ const call = async (p, headers = {}) => {
       verifyReply = { success: true, score: 0.01 };
       const rr = await fetch('http://127.0.0.1:3234/api/search?q=x&mode=forsale',
         { headers: { 'cf-connecting-ip': '5.5.5.5', 'x-recaptcha-token': 'botlike' } });
-      check('RECAPTCHA_ENFORCE=0 stops blocking without a deploy',
+      check('RECAPTCHA_ENFORCE=0 still serves (and skips the tighter limit)',
         rr.status !== 403,
         `status ${rr.status} — report-only, so a misfiring gate is one dashboard edit to disable`);
       s2.close();
