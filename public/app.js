@@ -4910,37 +4910,83 @@ function chartIndexAt(chart, clientX) {
 
 // Wire a chart so tapping or clicking pins the value under the finger, and a
 // finger dragged across it scrubs: a dot and a guide line follow it and the
-// readout updates as it moves, the way the big card apps do it. Tapping a
-// point exactly was the only way in before, and on a phone that mostly missed.
+// readout updates as it moves, the way the big card apps do it.
 // `format(index)` returns the readout HTML, or falsy to leave it as it was.
 //
-// The canvas takes horizontal drags (touch-action: pan-y) and leaves vertical
-// ones to the page, so the chart never traps a scroll.
+// Touch is handled here, not by the browser (touch-action: none). Leaving
+// vertical panning to the browser (pan-y) still scrolled the page under a
+// finger that was scrubbing, since hardly any drag is perfectly level. So the
+// first few pixels decide: mostly sideways is a scrub, and the page is held
+// still until the finger lifts; mostly up or down is a scroll, which this
+// performs on whatever the chart sits in (the card modal or the page), with a
+// little momentum so it does not feel dead.
+const SCRUB_DECIDE_PX = 6;
 function attachPointReadout(chart, elId, format) {
   if (!chart || !chart.canvas) return;
   const canvas = chart.canvas;
-  const show = (clientX, live) => {
+  const show = (clientX) => {
     const i = chartIndexAt(chart, clientX);
     if (i == null) return;
     const html = format(i);
     if (html) renderChartReadout(elId, html);
-    if (live) _chartScrubTo(chart, i);
+    _chartScrubTo(chart, i);
   };
-  canvas.style.touchAction = 'pan-y';
-  let scrubbing = false;
-  canvas.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse') return;       // a mouse has hover already
-    scrubbing = true;
-    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
-    show(e.clientX, true);
-  });
-  canvas.addEventListener('pointermove', (e) => {
-    if (scrubbing) show(e.clientX, true);
-  });
-  const stop = () => { scrubbing = false; };
-  canvas.addEventListener('pointerup', stop);
-  canvas.addEventListener('pointercancel', stop);  // the page took a vertical scroll
-  canvas.addEventListener('click', (e) => show(e.clientX, true));
+  canvas.style.touchAction = 'none';
+  let g = null;   // the gesture: start point, decided mode, scroll state
+  canvas.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    if (!t || e.touches.length > 1) { g = null; return; }
+    g = { x0: t.clientX, y0: t.clientY, y: t.clientY, mode: null, scroller: null, v: 0, at: performance.now() };
+  }, { passive: true });
+  canvas.addEventListener('touchmove', (e) => {
+    const t = e.touches[0];
+    if (!g || !t) return;
+    e.preventDefault();   // nothing moves but what this decides
+    if (!g.mode) {
+      const dx = Math.abs(t.clientX - g.x0), dy = Math.abs(t.clientY - g.y0);
+      if (dx < SCRUB_DECIDE_PX && dy < SCRUB_DECIDE_PX) return;
+      g.mode = dx >= dy ? 'scrub' : 'scroll';
+      if (g.mode === 'scroll') g.scroller = _scrollParent(canvas);
+    }
+    if (g.mode === 'scrub') { show(t.clientX); return; }
+    const now = performance.now();
+    const step = g.y - t.clientY;
+    g.scroller.scrollBy(0, step);
+    g.v = step / Math.max(1, now - g.at);   // px per ms, for the glide
+    g.y = t.clientY; g.at = now;
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e) => {
+    if (!g) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    if (!g.mode && t) show(t.clientX);            // a tap
+    if (g.mode === 'scroll' && Math.abs(g.v) > 0.05) _scrollGlide(g.scroller, g.v);
+    g = null;
+  }, { passive: true });
+  canvas.addEventListener('touchcancel', () => { g = null; }, { passive: true });
+  // Mouse and pen: a click pins the point; hover shows the tooltip as before.
+  canvas.addEventListener('click', (e) => show(e.clientX));
+}
+
+// The element that scrolls around a chart: the card modal when the chart is
+// in it, the page otherwise.
+function _scrollParent(el) {
+  for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+    const oy = getComputedStyle(n).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) return n;
+  }
+  return document.scrollingElement || document.documentElement;
+}
+// A flick keeps going and slows, as a native scroll would.
+function _scrollGlide(scroller, v) {
+  let last = performance.now();
+  const tick = (now) => {
+    const dt = now - last; last = now;
+    v *= Math.pow(0.95, dt / 16);
+    if (Math.abs(v) < 0.02) return;
+    scroller.scrollBy(0, v * dt);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 // Point a chart at one index: its dots grow, the tooltip sits on it, and the
