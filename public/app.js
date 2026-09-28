@@ -3068,6 +3068,34 @@ function _kwLabels(g, player) {
 }
 // KW_END
 
+// Whether a listing is one of the checklist's cards, placed on a version or
+// not. The checklist matcher declines a listing it cannot confirm (a parallel
+// the set does not list, two sets that both fit), but that listing is still
+// the checklist's card: grouped by its title, it came back as a second box for
+// a card already shown above. So a title that names this product's year (or
+// none), is not a sibling product, and carries one of the checklist's card
+// numbers or names one of its insert sets is left out of the keyword
+// grouping. What remains is what the checklist cannot account for.
+function _checklistCouldPlace(title, ctx) {
+  if (!ctx) return false;
+  const raw = String(title || '');
+  const yr = (raw.match(/\b(19[4-9]\d|20[0-4]\d)\b/) || [])[1];
+  if (yr && ctx.year && String(ctx.year) !== yr) return false;
+  const hay = _cleanForMatch(raw).replace(ctx.playerRe, ' ');
+  const prodNorm = _cleanForMatch(ctx.productName);
+  for (const w of ['draft picks', 'collegiate', 'deca', 'update']) {
+    if (hay.includes(w) && !prodNorm.includes(w)) return false;
+  }
+  const flat = (x) => String(x).toLowerCase().replace(/-/g, '').replace(/^([a-z]*)0+(?=\d)/, '$1');
+  const num = (raw.match(/#\s*([a-z0-9]+(?:-[a-z0-9]+)*)/i) || [])[1] || '';
+  if (/\d/.test(num)) {
+    const code = /^([a-z]+)-?(\d+)$/i.exec(num);
+    const want = [flat(num), code ? String(+code[2]) : null].filter(Boolean);
+    if (ctx.cards.some(c => want.includes(flat(c.number)))) return true;
+  }
+  return ctx.cards.some(c => c.setRe && c.setRe.test(hay));
+}
+
 // The keyword versions of the current search: the groups with enough sales
 // to show, or null when there are none (the parallel chips then stand).
 let _kwGroups = null;
@@ -3600,7 +3628,9 @@ async function buildParallelFilter(query) {
   }
   // What the checklist could not place (everything, when there is none) is
   // grouped by the words in its titles.
-  _buildKwGroups(_versionCtx ? currentResults.filter(r => !_versionOf(r)) : currentResults, player);
+  _buildKwGroups(_versionCtx
+    ? currentResults.filter(r => !_versionOf(r) && !_checklistCouldPlace(r.title, _versionCtx))
+    : currentResults, player);
   _renderVersionGroups();
   renderParallelChips();
   if (_versionCtx || _kwGroups) _reRenderForFilters();
