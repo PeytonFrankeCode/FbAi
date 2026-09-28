@@ -17525,6 +17525,12 @@ async function sendMarketDigest({ now = new Date(), force = false, maxBatches = 
   return { ok: true, run };
 }
 
+// Whether the signup box should show: only when email can be sent.
+app.get('/api/digest/status', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({ enabled: !!(useResend || emailTransporter) });
+});
+
 app.post('/api/digest/subscribe', async (req, res) => {
   const email = digest.normEmail(req.body && req.body.email);
   if (!digest.validEmail(email)) return res.status(400).json({ error: 'That email address does not look right.' });
