@@ -69,8 +69,12 @@ run('2025 Optic Dart: no number, but a parallel his base card lists', '2025-donr
   ['2025 Panini Donruss Optic Jaxson Dart Rated Rookie Red Mojo Prizm Giants SM5', '#273 Red Mojo'],
   ['Jaxson Dart PSA 10 2025 Panini Donruss Optic Rated RC Purple Shock Giants 0208', '#273 Purple Shock'],
   ['2025 Panini Donruss Optic Jaxson Dart Rated Rookie Aqua Prizm #/349 Giants PSA 9', '#273 Aqua'],
-  // An insert the list may not hold is not guessed onto the base card.
-  ['Jaxson Dart 2025 Panini Donruss Optic - My House!  Gem Psa 10', null],
+  // A named insert with no number: My House! is on the list (added from the
+  // published checklist), so it is that card.
+  ['Jaxson Dart 2025 Panini Donruss Optic - My House!  Gem Psa 10', '#2 Base'],
+  ['Panini 2025 Donruss Optic 2015 Retro Jaxson Dart #2 Black Pandora PSA 8', '#2 Black Pandora'],
+  // One the list does not hold is not guessed onto the base card.
+  ['Jaxson Dart 2025 Panini Donruss Optic - Fan Favorite  Gem Psa 10', null],
   // Optic Preview is a Donruss card.
   ['2025 Donruss Optic Preview - Rated Rookie Jaxson Dart - Red Pandora (RC) PSA 9', null],
   // "PSA GEM MT 10" is a grade, not card #10.
