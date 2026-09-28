@@ -734,138 +734,19 @@ function attachChecklistPickerButton(inputId, opts) {
   if (target) target.appendChild(btn);
 }
 
-async function loadTrackedCards() {
-  const user = getCurrentUser();
-  if (!user) return;
-
-  const listEl = document.getElementById('tracked-list');
-  try {
-    const res = await fetch(`/api/alerts?username=${encodeURIComponent(user)}`);
-    const data = await res.json();
-    if (!data.alerts || data.alerts.length === 0) {
-      listEl.innerHTML = '<p class="alerts-empty">No tracked cards yet. Add one above or use the bell icon in Checklists.</p>';
-      return;
-    }
-    listEl.innerHTML = data.alerts.map(a => {
-      const date = new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      const thresholdBadge = a.priceThreshold && a.priceCondition
-        ? `<span class="tracked-threshold-badge">${a.priceCondition === 'below' ? '↓' : '↑'} $${parseFloat(a.priceThreshold).toFixed(2)}</span>`
-        : '';
-      return `
-        <div class="tracked-card-item" data-id="${a.id}">
-          <div class="tracked-card-icon">&#128276;</div>
-          <div class="tracked-card-info">
-            <div class="tracked-card-query">${escHtml(a.label)}${thresholdBadge}</div>
-            <div class="tracked-card-date">Tracking since ${date}</div>
-          </div>
-          <button class="tracked-card-search" onclick="switchView('search'); document.getElementById('search-input').value='${escHtml(a.query).replace(/'/g, "\\'")}'; document.getElementById('search-form').dispatchEvent(new Event('submit'))" title="Search eBay">&#128269;</button>
-          <button class="tracked-card-delete" onclick="deleteTrackedCard('${a.id}')" title="Stop tracking">&times;</button>
-        </div>`;
-    }).join('');
-  } catch (err) {
-    listEl.innerHTML = '<p class="alerts-empty">Failed to load tracked cards.</p>';
-  }
-}
-
-// Form handler for tracked view
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('tracked-add-form');
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const user = getCurrentUser();
-      const users = getUsers();
-      const userData = users[user.toLowerCase()];
-      const email = userData?.email;
-      const input = document.getElementById('tracked-query-input');
-      const query = input.value.trim();
-      const conditionEl = document.getElementById('tracked-condition');
-      const thresholdEl = document.getElementById('tracked-threshold');
-      const priceCondition = conditionEl ? conditionEl.value || null : null;
-      const priceThreshold = thresholdEl && thresholdEl.value ? parseFloat(thresholdEl.value) : null;
-      const errEl = document.getElementById('tracked-error');
-      errEl.classList.add('hidden');
-
-      if (!email) {
-        errEl.textContent = 'Add an email to your account to receive alerts (sign up again with email).';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/alerts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: user, email, query, label: query, priceThreshold, priceCondition }),
-        });
-        const data = await res.json();
-        if (res.status === 402 || (data && data.upgrade)) {
-          showUpgrade(data.error || 'Price Alerts is a Pro feature.');
-          return;
-        }
-        if (!res.ok) {
-          errEl.textContent = data.error || 'Failed to track card';
-          errEl.classList.remove('hidden');
-          return;
-        }
-        input.value = '';
-        if (conditionEl) conditionEl.value = '';
-        if (thresholdEl) thresholdEl.value = '';
-        loadTrackedCards();
-      } catch (err) {
-        errEl.textContent = 'Network error. Try again.';
-        errEl.classList.remove('hidden');
-      }
-    });
-  }
-});
-
-async function deleteTrackedCard(id) {
-  const user = getCurrentUser();
-  if (!user) return;
-  try {
-    await fetch(`/api/alerts/${id}?username=${encodeURIComponent(user)}`, { method: 'DELETE' });
-    loadTrackedCards();
-  } catch (err) {
-    console.error('Failed to delete tracked card:', err);
-  }
-}
+// The Tracked Cards view became the alerts panel (showAlerts); callers of the
+// old loader just refresh the bell.
+async function loadTrackedCards() { return refreshAlertsBadge(); }
 
 async function addAlertForCard(query) {
-  const user = getCurrentUser();
-  if (!user) { showLogin(); return; }
-  const users = getUsers();
-  const userData = users[user.toLowerCase()];
-  if (!userData?.email) {
-    alert('Add an email to your account to use card tracking. Sign up again with an email address.');
-    return;
-  }
-  try {
-    const res = await fetch('/api/alerts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: user, email: userData.email, query, label: query }),
-    });
-    const data = await res.json();
-    if (res.status === 402 || (data && data.upgrade)) {
-      showUpgrade(data.error || 'Price Alerts is a Pro feature.');
-      return;
+  const ok = await createCardAlert(query);
+  if (!ok) return;
+  document.querySelectorAll('.cl-alert-btn').forEach(btn => {
+    if (btn.getAttribute('onclick')?.includes(query.replace(/'/g, "\\'"))) {
+      btn.classList.add('cl-alert-active');
+      btn.title = 'Tracking this card';
     }
-    if (res.ok) {
-      // Visual feedback — find the button that triggered this
-      const btns = document.querySelectorAll('.cl-alert-btn');
-      btns.forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes(query.replace(/'/g, "\\'"))) {
-          btn.classList.add('cl-alert-active');
-          btn.title = 'Tracking this card';
-        }
-      });
-    } else {
-      alert(data.error || 'Failed to track card');
-    }
-  } catch (err) {
-    alert('Network error');
-  }
+  });
 }
 
 // ---- App ----
@@ -2045,7 +1926,7 @@ async function fetchDirectSearch(query) {
     let typeLabel = searchType === 'broadened' ? ' (similar cards)' : '';
     if (searchType === 'relaxed' && relaxedNote) typeLabel = ` <span class="relaxed-badge">${escHtml(relaxedNote)}</span>`;
     const listingWord = isSold ? 'sold listing' : 'listing';
-    meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}`;
+    meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}${_metaAlertBtn(query)}`;
     meta.classList.remove('hidden');
 
     if (results.length === 0) {
@@ -2386,7 +2267,7 @@ async function performSearch(query, opts = {}) {
 
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
     const listingWord = isSold ? 'sold listing' : 'listing';
-    meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${mockBadge}`;
+    meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${mockBadge}${_metaAlertBtn(query)}`;
     meta.classList.remove('hidden');
 
     if (results.length === 0) {
@@ -15543,4 +15424,141 @@ document.addEventListener('DOMContentLoaded', () => {
     addRecentSearch(q);
     fetchDirectSearch(q);
   }, 0);
+});
+
+// ---- Card alerts: the header bell and its panel ----
+// The server checks eBay's newest listings for each tracked card every half
+// hour; new ones are kept on the alert (and emailed when email is set up).
+// The bell shows how many are unread; opening the panel marks them seen.
+let _alertsCache = null;
+function _metaAlertBtn(query) {
+  const q = String(query || '').trim();
+  if (q.length < 3) return '';
+  const on = _alertsCache && _alertsCache.alerts.some(a => a.query.toLowerCase() === q.toLowerCase() && !a.priceThreshold);
+  return on
+    ? ' <button type="button" class="meta-alert-btn is-on" disabled>&#128276; Tracking</button>'
+    : ` <button type="button" class="meta-alert-btn" data-alert-q="${escHtml(q)}">&#128276; Alert me when listed</button>`;
+}
+async function createCardAlert(query, priceCondition = null, priceThreshold = null) {
+  if (!getCurrentUser() || !getSessionToken()) { showLogin(); return false; }
+  try {
+    const res = await authFetch('/api/alerts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, label: query, priceCondition, priceThreshold }),
+    });
+    const data = await safeJson(res);
+    if (res.status === 401) { showLogin(); return false; }
+    if (!res.ok) { window.alert((data && data.error) || 'Could not track that card'); return false; }
+    await refreshAlertsBadge();
+    return true;
+  } catch (_) {
+    window.alert('Network error. Try again.');
+    return false;
+  }
+}
+async function _fetchAlerts() {
+  if (!getSessionToken()) return null;
+  try {
+    const res = await authFetch('/api/alerts');
+    if (!res.ok) return null;
+    _alertsCache = await safeJson(res);
+    return _alertsCache;
+  } catch (_) { return null; }
+}
+async function refreshAlertsBadge() {
+  const badge = document.getElementById('alerts-badge');
+  const data = await _fetchAlerts();
+  if (!badge) return data;
+  const n = data ? data.alerts.reduce((t, a) => t + (a.unread || 0), 0) : 0;
+  badge.textContent = n > 99 ? '99+' : String(n);
+  badge.classList.toggle('hidden', !n);
+  return data;
+}
+function _renderAlerts(data) {
+  const list = document.getElementById('alerts-list');
+  const note = document.getElementById('alerts-email-note');
+  if (note) note.textContent = data && data.emailEnabled && data.email ? ` and we email ${data.email}` : '';
+  if (!list) return;
+  if (!data || !data.alerts.length) {
+    list.innerHTML = '<p class="alerts-empty">No alerts yet. Track a card above, or tap &#128276; on a search or checklist.</p>';
+    return;
+  }
+  const money = (p) => p != null && p !== '' ? '$' + Number(p).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '';
+  list.innerHTML = data.alerts.map(a => {
+    const cond = a.priceThreshold ? ` · ${a.priceCondition === 'below' ? 'at or below' : 'at or above'} ${money(a.priceThreshold)}` : '';
+    const checked = a.lastChecked ? `checked ${new Date(a.lastChecked).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'first check within half an hour';
+    const finds = (a.found || []).map((f, i) => `
+      <li class="alert-find${i < (a.unread || 0) ? ' is-new' : ''}"><a href="${escHtml(epnUrl(f.itemUrl))}" target="_blank" rel="noopener">
+        ${f.imageUrl ? `<img src="${escHtml(f.imageUrl)}" alt="" loading="lazy">` : '<span class="alert-noimg"></span>'}
+        <span class="alert-find-title">${escHtml(f.title)}</span>
+        <span class="alert-find-price">${escHtml(money(f.price))}</span></a></li>`).join('');
+    return `<div class="alert-item" data-id="${escHtml(a.id)}">
+      <div class="alert-head">
+        <div class="alert-title">${escHtml(a.label)}${a.unread ? `<span class="alert-new">${a.unread} new</span>` : ''}
+          <div class="alert-sub">${escHtml(checked + cond)}</div></div>
+        <button class="alert-del" data-del="${escHtml(a.id)}" title="Stop tracking" aria-label="Stop tracking">&times;</button>
+      </div>
+      ${finds ? `<ul class="alert-finds">${finds}</ul>` : ''}
+    </div>`;
+  }).join('');
+}
+async function showAlerts() {
+  if (!getCurrentUser() || !getSessionToken()) { showLogin(); return; }
+  document.getElementById('alerts-overlay').classList.remove('hidden');
+  const data = await _fetchAlerts();
+  _renderAlerts(data);
+  if (data && data.alerts.some(a => a.unread)) {
+    authFetch('/api/alerts/seen', { method: 'POST' }).catch(() => {});
+    const badge = document.getElementById('alerts-badge');
+    if (badge) badge.classList.add('hidden');
+  }
+}
+function closeAlerts() { document.getElementById('alerts-overlay').classList.add('hidden'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('alerts-overlay');
+  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAlerts(); });
+  const list = document.getElementById('alerts-list');
+  if (list) list.addEventListener('click', async (e) => {
+    const del = e.target.closest('[data-del]');
+    if (!del) return;
+    await authFetch(`/api/alerts/${encodeURIComponent(del.dataset.del)}`, { method: 'DELETE' }).catch(() => {});
+    _renderAlerts(await _fetchAlerts());
+  });
+  const f = document.getElementById('alerts-form');
+  if (f) f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = document.getElementById('alerts-error');
+    const q = document.getElementById('alerts-query').value.trim();
+    const cond = document.getElementById('alerts-cond').value || null;
+    const price = document.getElementById('alerts-price').value;
+    err.classList.add('hidden');
+    if (q.length < 3) { err.textContent = 'Enter a card to track.'; err.classList.remove('hidden'); return; }
+    if (cond && !(parseFloat(price) > 0)) { err.textContent = 'Enter a price for that condition.'; err.classList.remove('hidden'); return; }
+    const res = await authFetch('/api/alerts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q, label: q, priceCondition: cond, priceThreshold: cond ? parseFloat(price) : null }),
+    }).catch(() => null);
+    const data = res ? await safeJson(res) : null;
+    if (!res || !res.ok) { err.textContent = (data && data.error) || 'Could not track that card.'; err.classList.remove('hidden'); return; }
+    f.reset();
+    _renderAlerts(await _fetchAlerts());
+  });
+  // "Alert me when listed" on a search's result line.
+  const metaEl = document.getElementById('search-meta');
+  if (metaEl) metaEl.addEventListener('click', async (e) => {
+    const b = e.target.closest('.meta-alert-btn[data-alert-q]');
+    if (!b) return;
+    b.disabled = true;
+    if (await createCardAlert(b.dataset.alertQ)) {
+      b.outerHTML = '<button type="button" class="meta-alert-btn is-on" disabled>&#128276; Tracking</button>';
+    } else {
+      b.disabled = false;
+    }
+  });
+  // The bell's count: now, and every five minutes while the page is open.
+  refreshAlertsBadge();
+  setInterval(() => { if (!document.hidden) refreshAlertsBadge(); }, 5 * 60 * 1000);
+  // The alert email's "Manage your alerts" link.
+  try { if (new URLSearchParams(location.search).get('view') === 'alerts') setTimeout(showAlerts, 0); } catch (_) {}
 });
