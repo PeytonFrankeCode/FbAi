@@ -27,6 +27,14 @@ axios.post = async (url, body) => {
   if (url.endsWith('/emails')) { sent.push({ to: body.to[0], subject: body.subject, html: body.html }); return { data: { id: 'x' } }; }
   throw new Error('unexpected ' + url);
 };
+// Cloudflare KV's list is eventually consistent: a key written a moment ago
+// can be missing from it for up to a minute. The in-memory stand-in is
+// instantly consistent, which is how "Track" showing nothing got past these
+// tests. While staleList is on, list answers as KV can: without new keys.
+const dbMod = require(path.join(ROOT, 'db.js'));
+const realList = dbMod.recordList;
+let staleList = false;
+dbMod.recordList = async (prefix) => (staleList ? [] : realList(prefix));
 const { app, checkAlerts, _alertFinds } = require(path.join(ROOT, 'server.js'));
 
 // ---- the rule, pure --------------------------------------------------------
@@ -64,8 +72,13 @@ const call = (p, { method = 'GET', token, body } = {}) => fetch(base + p, {
   check('alerts need a signed-in user', (await call('/api/alerts')).status === 401
     && (await call('/api/alerts', { method: 'POST', body: { query: 'Josh Allen 304', username: 'alice_' + run } })).status === 401);
 
+  staleList = true;
   const made = await (await call('/api/alerts', { method: 'POST', token: alice, body: { query: '2018 Donruss Josh Allen 304' } })).json();
   check('a signed-in user can track a card', made.alert && made.alert.id);
+  check('  ...and the answer carries the saved list, for the panel to draw', made.alerts && made.alerts.length === 1 && made.alerts[0].id === made.alert.id);
+  const listed = await (await call('/api/alerts', { token: alice })).json();
+  check('  ...and it is there straight away, even while KV\u2019s key list lags', listed.alerts.length === 1 && listed.alerts[0].id === made.alert.id);
+  staleList = false;
   check('  ...but not the same one twice', (await call('/api/alerts', { method: 'POST', token: alice, body: { query: '2018 donruss josh allen 304' } })).status === 400);
   const bobs = await (await call('/api/alerts', { token: bob })).json();
   check("  ...and nobody else can see it", bobs.alerts.length === 0);

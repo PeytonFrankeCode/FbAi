@@ -15449,7 +15449,7 @@ async function createCardAlert(query, priceCondition = null, priceThreshold = nu
     const data = await safeJson(res);
     if (res.status === 401) { showLogin(); return false; }
     if (!res.ok) { window.alert((data && data.error) || 'Could not track that card'); return false; }
-    await refreshAlertsBadge();
+    if (data && data.alerts) _alertsCache = data;
     return true;
   } catch (_) {
     window.alert('Network error. Try again.');
@@ -15459,7 +15459,7 @@ async function createCardAlert(query, priceCondition = null, priceThreshold = nu
 async function _fetchAlerts() {
   if (!getSessionToken()) return null;
   try {
-    const res = await authFetch('/api/alerts');
+    const res = await authFetch('/api/alerts', { cache: 'no-store' });
     if (!res.ok) return null;
     _alertsCache = await safeJson(res);
     return _alertsCache;
@@ -15522,8 +15522,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (list) list.addEventListener('click', async (e) => {
     const del = e.target.closest('[data-del]');
     if (!del) return;
-    await authFetch(`/api/alerts/${encodeURIComponent(del.dataset.del)}`, { method: 'DELETE' }).catch(() => {});
-    _renderAlerts(await _fetchAlerts());
+    const res = await authFetch(`/api/alerts/${encodeURIComponent(del.dataset.del)}`, { method: 'DELETE' }).catch(() => null);
+    const data = res && res.ok ? await safeJson(res) : null;
+    if (data && data.alerts) { _alertsCache = data; _renderAlerts(data); } else { _renderAlerts(await _fetchAlerts()); }
   });
   const f = document.getElementById('alerts-form');
   if (f) f.addEventListener('submit', async (e) => {
@@ -15542,7 +15543,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = res ? await safeJson(res) : null;
     if (!res || !res.ok) { err.textContent = (data && data.error) || 'Could not track that card.'; err.classList.remove('hidden'); return; }
     f.reset();
-    _renderAlerts(await _fetchAlerts());
+    // Drawn from the saved list the server sends back, not a second read.
+    _alertsCache = data;
+    _renderAlerts(data);
   });
   // "Alert me when listed" on a search's result line.
   const metaEl = document.getElementById('search-meta');
