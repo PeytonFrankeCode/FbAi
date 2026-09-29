@@ -12,6 +12,8 @@ node_modules/
 public/sets/
 public/players/
 public/teams/
+public/basketball/
+public/baseball/
 public/sitemap.xml
 
 # Python bytecode

@@ -213,7 +213,12 @@ const { index, ambiguous } = buildIndex(products);
   if (!fs.existsSync(sitemap)) {
     console.log('SKIP  server.js vs sitemap.xml  — run `npm run build:pages` first (CI does)');
   } else {
-    const urls = (fs.readFileSync(sitemap, 'utf8').match(/<loc>/g) || []).length;
+    // Football's URLs: the count is the denominator of price coverage, and
+    // only football pages have sold data behind them. The basketball and
+    // baseball pages (under /basketball/ and /baseball/) are in the same
+    // sitemap but can never be priced, so counting them would understate it.
+    const urls = (fs.readFileSync(sitemap, 'utf8').match(/<loc>[^<]+<\/loc>/g) || [])
+      .filter(l => !/thecardhuddle\.com\/(basketball|baseball)\//.test(l)).length;
     check('server.js knows how many indexable URLs there actually are',
       m && Number(m[1]) === urls,
       `server.js says ${m ? m[1] : 'nothing'}, sitemap.xml has ${urls}`);

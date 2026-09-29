@@ -38,10 +38,6 @@ const { norm: normName } = require(path.join(__dirname, '..', 'set-key.js'));
 const ROOT = path.resolve(__dirname, '..');
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DATA_DIR = path.join(PUBLIC_DIR, 'data');
-const CHECKLIST_DIR = path.join(DATA_DIR, 'checklists');
-const SETS_DIR = path.join(PUBLIC_DIR, 'sets');
-const PLAYERS_DIR = path.join(PUBLIC_DIR, 'players');
-const TEAMS_DIR = path.join(PUBLIC_DIR, 'teams');
 const SITE = 'https://thecardhuddle.com';
 
 // AdSense on the ~8,000 generated pages, off by default.
@@ -85,7 +81,7 @@ const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT !== undefined
 const _adsStats = { withAds: 0, withoutAds: 0 };
 
 const adsenseTag = (noindex) => {
-  const on = !!ADSENSE_CLIENT && !noindex;
+  const on = !!ADSENSE_CLIENT && !noindex && S.ads;
   if (on) _adsStats.withAds++; else _adsStats.withoutAds++;
   return on
     ? `  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
@@ -102,11 +98,11 @@ const TODAY = new Date().toISOString().slice(0, 10);
 // first time a file appears is its most recent change. Needs full history —
 // see fetch-depth in .github/workflows/deploy.yml. Falls back to file mtime,
 // then to today, so a shallow clone or a missing git still builds.
-function checklistCommitDates() {
+function checklistCommitDates(rel = 'public/data/checklists/') {
   const dates = new Map(); // basename -> YYYY-MM-DD
   try {
     const out = execFileSync(
-      'git', ['log', '--name-only', '--format=%cI', '--', 'public/data/checklists/'],
+      'git', ['log', '--name-only', '--format=%cI', '--', rel],
       { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
     );
     let current = null;
@@ -124,14 +120,12 @@ function checklistCommitDates() {
   return dates;
 }
 
-const COMMIT_DATES = checklistCommitDates();
-
 function fileLastmod(fileName) {
   if (!fileName) return TODAY;
-  const fromGit = COMMIT_DATES.get(fileName);
+  const fromGit = S.commitDates.get(fileName);
   if (fromGit) return fromGit;
   try {
-    return fs.statSync(path.join(CHECKLIST_DIR, fileName)).mtime.toISOString().slice(0, 10);
+    return fs.statSync(path.join(S.dir, fileName)).mtime.toISOString().slice(0, 10);
   } catch { return TODAY; }
 }
 
@@ -163,13 +157,82 @@ const TEAM_ALIASES = {
   'Washington Football Team': 'Washington Commanders', 'Washington Redskins': 'Washington Commanders',
   'Houston Oilers': 'Tennessee Titans', 'Tennessee Oilers': 'Tennessee Titans',
 };
-const NFL_TEAM_SET = new Set(NFL_TEAMS);
 function canonicalTeam(t) {
-  const name = (t || '').trim();
-  if (NFL_TEAM_SET.has(name)) return name;
-  if (TEAM_ALIASES[name]) return TEAM_ALIASES[name];
+  const name = S.cleanTeam((t || '').trim());
+  if (S.teamSet.has(name)) return name;
+  if (S.aliases[name]) return S.aliases[name];
   return null; // college / unknown — no page
 }
+
+// The 30 NBA franchises. Relocated ones roll up under today's name, as the
+// football teams do ("Seattle SuperSonics" cards on the Thunder page).
+const NBA_TEAMS = [
+  'Atlanta Hawks', 'Boston Celtics', 'Brooklyn Nets', 'Charlotte Hornets', 'Chicago Bulls',
+  'Cleveland Cavaliers', 'Dallas Mavericks', 'Denver Nuggets', 'Detroit Pistons', 'Golden State Warriors',
+  'Houston Rockets', 'Indiana Pacers', 'Los Angeles Clippers', 'Los Angeles Lakers', 'Memphis Grizzlies',
+  'Miami Heat', 'Milwaukee Bucks', 'Minnesota Timberwolves', 'New Orleans Pelicans', 'New York Knicks',
+  'Oklahoma City Thunder', 'Orlando Magic', 'Philadelphia 76ers', 'Phoenix Suns', 'Portland Trail Blazers',
+  'Sacramento Kings', 'San Antonio Spurs', 'Toronto Raptors', 'Utah Jazz', 'Washington Wizards',
+];
+const NBA_ALIASES = {
+  'Seattle SuperSonics': 'Oklahoma City Thunder', 'Seattle Supersonics': 'Oklahoma City Thunder',
+  'New Jersey Nets': 'Brooklyn Nets', 'Charlotte Bobcats': 'Charlotte Hornets', 'New Orleans Hornets': 'New Orleans Pelicans',
+  'Vancouver Grizzlies': 'Memphis Grizzlies', 'LA Clippers': 'Los Angeles Clippers', 'San Diego Clippers': 'Los Angeles Clippers',
+  'Washington Bullets': 'Washington Wizards', 'Kansas City Kings': 'Sacramento Kings', 'New Orleans Jazz': 'Utah Jazz',
+};
+// The 30 MLB franchises, under today's names ("Cleveland Indians" cards on the
+// Guardians page, the Expos on the Nationals', Oakland's on the Athletics').
+const MLB_TEAMS = [
+  'Arizona Diamondbacks', 'Athletics', 'Atlanta Braves', 'Baltimore Orioles', 'Boston Red Sox',
+  'Chicago Cubs', 'Chicago White Sox', 'Cincinnati Reds', 'Cleveland Guardians', 'Colorado Rockies',
+  'Detroit Tigers', 'Houston Astros', 'Kansas City Royals', 'Los Angeles Angels', 'Los Angeles Dodgers',
+  'Miami Marlins', 'Milwaukee Brewers', 'Minnesota Twins', 'New York Mets', 'New York Yankees',
+  'Philadelphia Phillies', 'Pittsburgh Pirates', 'San Diego Padres', 'San Francisco Giants', 'Seattle Mariners',
+  'St. Louis Cardinals', 'Tampa Bay Rays', 'Texas Rangers', 'Toronto Blue Jays', 'Washington Nationals',
+];
+const MLB_ALIASES = {
+  'Oakland Athletics': 'Athletics', "Oakland A's": 'Athletics', 'Oakland A’s': 'Athletics', 'Philadelphia Athletics': 'Athletics',
+  'Kansas City Athletics': 'Athletics', 'Cleveland Indians': 'Cleveland Guardians', 'Brooklyn Dodgers': 'Los Angeles Dodgers',
+  'New York Giants': 'San Francisco Giants', 'Montreal Expos': 'Washington Nationals', 'Montréal Expos': 'Washington Nationals',
+  'California Angels': 'Los Angeles Angels', 'Anaheim Angels': 'Los Angeles Angels', 'Angels': 'Los Angeles Angels',
+  'Los Angeles Angels of Anaheim': 'Los Angeles Angels', 'Milwaukee Braves': 'Atlanta Braves', 'Boston Braves': 'Atlanta Braves',
+  'Florida Marlins': 'Miami Marlins', 'Tampa Bay Devil Rays': 'Tampa Bay Rays', 'St. Louis Browns': 'Baltimore Orioles',
+  'Seattle Pilots': 'Milwaukee Brewers', 'Houston Colt .45s': 'Houston Astros', 'St Louis Cardinals': 'St. Louis Cardinals',
+};
+
+// One pass per sport. Football is the site as it always was: its pages at
+// /sets/, /players/, /teams/, with the sold-price blocks the Worker fills in,
+// and the only sport whose pages carry ads (the ad rule is "indexable AND
+// priced", and only football has our sales data behind it). Basketball and
+// baseball get the same pages under /basketball/ and /baseball/, built from
+// their own checklist folders, with each card linking into the live search.
+const yy = (y) => String((Number(y) + 1) % 100).padStart(2, '0');
+const SPORT_CONFIGS = [
+  { id: 'football', base: '', Word: 'Football', word: 'football', league: 'NFL', emoji: '&#127944;',
+    folder: 'checklists', teams: NFL_TEAMS, aliases: TEAM_ALIASES, prices: true, ads: true,
+    brandsLine: 'Panini Prizm, Select, Mosaic, Optic, Donruss and more', cleanTeam: (t) => t, yearLabel: (y) => String(y) },
+  { id: 'basketball', base: '/basketball', Word: 'Basketball', word: 'basketball', league: 'NBA', emoji: '&#127936;',
+    folder: 'checklists-basketball', teams: NBA_TEAMS, aliases: NBA_ALIASES, prices: false, ads: false,
+    brandsLine: 'Panini Prizm, Select, Donruss Optic, Topps Chrome and more',
+    cleanTeam: (t) => t.replace(/[®™*]+/g, '').replace(/\s+(RC|SP|SSP)\b.*$/, '').trim(),
+    // Basketball products run by season: its 2023 products are the 2023-24 season.
+    yearLabel: (y) => /^\d{4}$/.test(String(y)) ? `${y}-${yy(y)}` : String(y) },
+  { id: 'baseball', base: '/baseball', Word: 'Baseball', word: 'baseball', league: 'MLB', emoji: '&#9918;',
+    folder: 'checklists-baseball', teams: MLB_TEAMS, aliases: MLB_ALIASES, prices: false, ads: false,
+    brandsLine: 'Topps Series 1, Topps Chrome, Bowman Chrome, Allen & Ginter and more',
+    cleanTeam: (t) => t.replace(/[®™*]+/g, '').replace(/\s+(RC|SP|SSP)\b.*$/, '').trim(),
+    yearLabel: (y) => String(y) },
+].map(c => ({
+  ...c,
+  dir: path.join(DATA_DIR, c.folder),
+  teamSet: new Set(c.teams),
+  wordRe: new RegExp(`\\s+${c.Word}$`, 'i'),
+  setsDir: path.join(PUBLIC_DIR, c.base.slice(1), 'sets'),
+  playersDir: path.join(PUBLIC_DIR, c.base.slice(1), 'players'),
+  teamsDir: path.join(PUBLIC_DIR, c.base.slice(1), 'teams'),
+}));
+// The sport being built. Every page function reads it.
+let S = SPORT_CONFIGS[0];
 
 // Bound page weight: render at most this many cards per page; the rest are
 // reachable via the "search all in the app" CTA.
@@ -248,6 +311,8 @@ function cardMemberKey(c) {
 }
 
 function priceSlot(kind, id) {
+  // Only football has sold data behind its pages for the Worker to put here.
+  if (!S.prices) return '';
   return `    <div class="lp-price-slot" data-price-key="${esc(kind)}:${esc(id)}"></div>`;
 }
 
@@ -262,11 +327,11 @@ function slugify(s) {
 
 // ---- Load + index ---------------------------------------------------------
 function loadChecklists() {
-  const files = fs.readdirSync(CHECKLIST_DIR).filter(f => f.endsWith('.json'));
+  const files = fs.readdirSync(S.dir).filter(f => f.endsWith('.json') && f !== 'index.json');
   const list = [];
   for (const f of files) {
     let j;
-    try { j = JSON.parse(fs.readFileSync(path.join(CHECKLIST_DIR, f), 'utf8')); }
+    try { j = JSON.parse(fs.readFileSync(path.join(S.dir, f), 'utf8')); }
     catch (e) { console.warn('  ! skip (bad JSON):', f, e.message); continue; }
     const sets = Array.isArray(j.sets) ? j.sets : [];
     const cardCount = sets.reduce((n, s) => n + (Array.isArray(s.cards) ? s.cards.length : 0), 0);
@@ -275,7 +340,7 @@ function loadChecklists() {
     list.push({
       file: f,
       id: j.id,
-      name: j.name || ([j.year, j.brand].filter(Boolean).join(' ') + ' Football'),
+      name: j.name || ([j.year, j.brand].filter(Boolean).join(' ') + ' ' + S.Word),
       year: Number.isFinite(j.year) ? j.year : null,
       brand: j.brand || '',
       sets, cardCount, parallelCount,
@@ -356,8 +421,8 @@ ${extraJsonLd || ''}
 function footer() {
   return `
   <footer class="lp-footer">
-    <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>
-    <p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
+    <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for ${S.word} cards, broken down by grade.</p>
+    <p class="lp-muted"><a href="${S.base}/sets/">Checklists</a> &bull; <a href="${S.base}/players/">Players</a> &bull; <a href="${S.base}/teams/">Teams</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
     <p class="lp-muted">Prices are historical sale records, not appraisals or financial advice. As an eBay Partner Network affiliate we may earn a commission on qualifying purchases made through links on this site, at no extra cost to you.</p>
   </footer>
 </body>
@@ -405,8 +470,8 @@ function buildSetPage(cl, related, playerSlug, subsets) {
   // name -> slug for the sets of this product that got their own page.
   const subsetSlug = new Map((subsets || []).map(x => [x.set.name, x.slug]));
   const title = `${cl.name} Checklist & Card Prices | The Card Huddle`;
-  const canonical = `${SITE}/sets/${cl.id}/`;
-  const setLabel = cl.name.replace(/\s+Football$/i, '');
+  const canonical = `${SITE}${S.base}/sets/${cl.id}/`;
+  const setLabel = cl.name.replace(S.wordRe, '');
   const description =
     `Full ${cl.name} checklist — ${cl.cardCount.toLocaleString()} cards across ` +
     `${cl.sets.length} sets with ${cl.parallelCount} parallels. Check real eBay sold ` +
@@ -414,7 +479,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
 
   const crumbs = [
     { label: 'Home', href: '/', absUrl: SITE + '/' },
-    { label: 'Checklists', href: '/sets/', absUrl: SITE + '/sets/' },
+    { label: 'Checklists', href: S.base + '/sets/', absUrl: SITE + S.base + '/sets/' },
     { label: setLabel, absUrl: canonical },
   ];
   const sampleCards = [];
@@ -475,7 +540,7 @@ ${priceSlot('set', cl.id)}
     html += `    <section class="lp-subset">\n`;
     const ownPage = subsetSlug.get(s.name);
     const heading = ownPage
-      ? `<a href="/sets/${cl.id}/${ownPage}/">${esc(s.name || 'Set')}</a>`
+      ? `<a href="${S.base}/sets/${cl.id}/${ownPage}/">${esc(s.name || 'Set')}</a>`
       : esc(s.name || 'Set');
     html += `      <h2>${heading} <span class="lp-count">${cards.length} ${cards.length === 1 ? 'card' : 'cards'}</span></h2>\n`;
     if (parallels.length) {
@@ -496,7 +561,7 @@ ${priceSlot('set', cl.id)}
       // Cross-link to the player's page when one exists; otherwise deep-link
       // straight into a price search.
       const slug = playerSlug.get(player);
-      const href = slug ? `/players/${slug}/` : prefillHref([player, cl.year, cl.brand].filter(Boolean).join(' '));
+      const href = slug ? `${S.base}/players/${slug}/` : prefillHref([player, cl.year, cl.brand].filter(Boolean).join(' '));
       html += `        <li><a href="${href}">${num}${esc(player)}${team}</a></li>\n`;
       rendered++;
     }
@@ -508,8 +573,8 @@ ${priceSlot('set', cl.id)}
   }
   if (related && related.length) {
     html += `    <section class="lp-related">\n      <h2>More checklists</h2>\n      <ul class="lp-related-list">\n`;
-    for (const r of related) html += `        <li><a href="/sets/${r.id}/">${esc(r.name)}</a></li>\n`;
-    html += `      </ul>\n      <p><a href="/sets/">&larr; Browse all football card checklists</a></p>\n    </section>\n`;
+    for (const r of related) html += `        <li><a href="${S.base}/sets/${r.id}/">${esc(r.name)}</a></li>\n`;
+    html += `      </ul>\n      <p><a href="${S.base}/sets/">&larr; Browse all ${S.word} card checklists</a></p>\n    </section>\n`;
   }
   html += faq.html;
   html += `  </main>\n` + footer();
@@ -550,10 +615,10 @@ function eligibleSubsets(cl) {
 function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
   const cards = Array.isArray(s.cards) ? s.cards : [];
   const parallels = Array.isArray(s.parallels) ? s.parallels : [];
-  const productLabel = cl.name.replace(/\s+Football$/i, '');
+  const productLabel = cl.name.replace(S.wordRe, '');
   const setName = (s.name || 'Set').replace(/\s+/g, ' ').trim();
   const fullLabel = `${productLabel} ${setName}`;
-  const canonical = `${SITE}/sets/${cl.id}/${slug}/`;
+  const canonical = `${SITE}${S.base}/sets/${cl.id}/${slug}/`;
   const title = `${fullLabel} Checklist & Card Prices | The Card Huddle`;
   const description =
     `Complete ${fullLabel} checklist — all ${cards.length} cards` +
@@ -562,8 +627,8 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
 
   const crumbs = [
     { label: 'Home', href: '/', absUrl: SITE + '/' },
-    { label: 'Checklists', href: '/sets/', absUrl: SITE + '/sets/' },
-    { label: productLabel, href: `/sets/${cl.id}/`, absUrl: `${SITE}/sets/${cl.id}/` },
+    { label: 'Checklists', href: S.base + '/sets/', absUrl: SITE + S.base + '/sets/' },
+    { label: productLabel, href: `${S.base}/sets/${cl.id}/`, absUrl: `${SITE}${S.base}/sets/${cl.id}/` },
     { label: setName, absUrl: canonical },
   ];
 
@@ -589,7 +654,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
     ...(rarest.length ? [{ q: `What are the rarest ${setName} parallels?`,
       aHtml: `The lowest-numbered are ${esc(rarest.join(', '))}. Printing plates and one-of-ones are rarer still.` }] : []),
     { q: `Where does ${setName} fit in ${productLabel}?`,
-      aHtml: `It is one of ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} in <a href="/sets/${cl.id}/">${esc(cl.name)}</a>, which has ${cl.cardCount.toLocaleString()} cards in total.` },
+      aHtml: `It is one of ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} in <a href="${S.base}/sets/${cl.id}/">${esc(cl.name)}</a>, which has ${cl.cardCount.toLocaleString()} cards in total.` },
   ]);
 
   let html = head({ title, description, canonical, noindex: cards.length < INDEX_MIN_SUBSET_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
@@ -620,7 +685,7 @@ ${priceSlot('subset', cl.id + '/' + slug)}
     const num = c.number != null ? `#${esc(c.number)} ` : '';
     const team = c.team ? ` <span class="lp-team">${esc(c.team)}</span>` : '';
     const pslug = playerSlug.get(player);
-    const href = pslug ? `/players/${pslug}/` : prefillHref([player, cl.year, cl.brand, setName].filter(Boolean).join(' '));
+    const href = pslug ? `${S.base}/players/${pslug}/` : prefillHref([player, cl.year, cl.brand, setName].filter(Boolean).join(' '));
     html += `      <li><a href="${href}">${num}${esc(player)}${team}</a></li>\n`;
     rendered++;
   }
@@ -631,9 +696,9 @@ ${priceSlot('subset', cl.id + '/' + slug)}
   if (siblings && siblings.length) {
     html += `    <section class="lp-related">\n      <h2>Other sets in ${esc(productLabel)}</h2>\n      <ul class="lp-related-list">\n`;
     for (const sib of siblings) {
-      html += `        <li><a href="/sets/${cl.id}/${sib.slug}/">${esc((sib.set.name || '').replace(/\s+/g, ' ').trim())}</a></li>\n`;
+      html += `        <li><a href="${S.base}/sets/${cl.id}/${sib.slug}/">${esc((sib.set.name || '').replace(/\s+/g, ' ').trim())}</a></li>\n`;
     }
-    html += `      </ul>\n      <p><a href="/sets/${cl.id}/">&larr; Full ${esc(cl.name)} checklist</a></p>\n    </section>\n`;
+    html += `      </ul>\n      <p><a href="${S.base}/sets/${cl.id}/">&larr; Full ${esc(cl.name)} checklist</a></p>\n    </section>\n`;
   }
   html += faq.html;
   html += `  </main>\n` + footer();
@@ -644,31 +709,31 @@ ${priceSlot('subset', cl.id + '/' + slug)}
 // The all-years hub competes for every "<year> football card checklist" search
 // at once. A page per year answers one of them properly.
 function buildYearHub(year, products, subsetIndex) {
-  const canonical = `${SITE}/sets/${year}/`;
+  const canonical = `${SITE}${S.base}/sets/${year}/`;
   const cards = products.reduce((n, p) => n + p.cardCount, 0);
-  const title = `${year} Football Card Checklists — Every Set & Prices | The Card Huddle`;
+  const title = `${S.yearLabel(year)} ${S.Word} Card Checklists — Every Set & Prices | The Card Huddle`;
   const description =
-    `Every ${year} football card checklist — ${products.length} products, ` +
+    `Every ${S.yearLabel(year)} ${S.word} card checklist — ${products.length} products, ` +
     `${cards.toLocaleString()} cards. Check real eBay sold prices by grade for any card. Free.`;
   const crumbs = [
     { label: 'Home', href: '/', absUrl: SITE + '/' },
-    { label: 'Checklists', href: '/sets/', absUrl: SITE + '/sets/' },
+    { label: 'Checklists', href: S.base + '/sets/', absUrl: SITE + S.base + '/sets/' },
     { label: String(year), absUrl: canonical },
   ];
   const listLd = ldScript({
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: jsonText(`${year} Football Card Checklists`), url: canonical, description: jsonText(description),
+    name: jsonText(`${S.yearLabel(year)} ${S.Word} Card Checklists`), url: canonical, description: jsonText(description),
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
       '@type': 'ItemList', numberOfItems: products.length,
       itemListElement: products.slice(0, JSONLD_ITEM_CAP).map((p, i) => ({
-        '@type': 'ListItem', position: i + 1, name: jsonText(p.name), url: `${SITE}/sets/${p.id}/` })),
+        '@type': 'ListItem', position: i + 1, name: jsonText(p.name), url: `${SITE}${S.base}/sets/${p.id}/` })),
     },
   });
   const faq = faqSection([
-    { q: `How many ${year} football card sets are there?`,
+    { q: `How many ${S.yearLabel(year)} ${S.word} card sets are there?`,
       aHtml: `${products.length} products are listed here, ${cards.toLocaleString()} cards in total. Every one links to its full checklist.` },
-    { q: `What is the best ${year} football card set to collect?`,
+    { q: `What is the best ${S.yearLabel(year)} ${S.word} card set to collect?`,
       aHtml: `It depends what you are after — flagship sets like Donruss and Prizm are the most affordable, while Immaculate and National Treasures carry the low-numbered patch autographs. Open any checklist to see what its cards actually sell for.` },
     { q: `How do I check what my ${year} card is worth?`,
       aHtml: `Find it in the checklist below and tap it. You will get real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more — rather than asking prices.` },
@@ -678,12 +743,12 @@ function buildYearHub(year, products, subsetIndex) {
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
-    <h1>${year} Football Card Checklists</h1>
-    <p class="lp-lede">All <strong>${products.length}</strong> ${year} football card products — <strong>${cards.toLocaleString()}</strong> cards in total. Tap any set for the full checklist and real eBay sold prices by grade.</p>
+    <h1>${S.yearLabel(year)} ${S.Word} Card Checklists</h1>
+    <p class="lp-lede">All <strong>${products.length}</strong> ${S.yearLabel(year)} ${S.word} card products — <strong>${cards.toLocaleString()}</strong> cards in total. Tap any set for the full checklist and real eBay sold prices by grade.</p>
     <ul class="lp-set-list">
 `;
   for (const p of products) {
-    html += `      <li><a href="/sets/${p.id}/"><span class="lp-set-name">${esc(p.name)}</span><span class="lp-set-meta">${p.cardCount.toLocaleString()} cards</span></a></li>\n`;
+    html += `      <li><a href="${S.base}/sets/${p.id}/"><span class="lp-set-name">${esc(p.name)}</span><span class="lp-set-meta">${p.cardCount.toLocaleString()} cards</span></a></li>\n`;
   }
   html += `    </ul>\n`;
   // Deepest-value internal links: the biggest individual sets of the year.
@@ -698,7 +763,7 @@ function buildYearHub(year, products, subsetIndex) {
     html += `    <section class="lp-related">\n      <h2>Popular ${year} sets</h2>\n      <ul class="lp-related-list">\n`;
     for (const t of topSubsets.slice(0, 24)) {
       const label = `${t.product.brand || t.product.name} ${(t.sub.set.name || '').replace(/\s+/g, ' ').trim()}`;
-      html += `        <li><a href="/sets/${t.product.id}/${t.sub.slug}/">${esc(label)}</a></li>\n`;
+      html += `        <li><a href="${S.base}/sets/${t.product.id}/${t.sub.slug}/">${esc(label)}</a></li>\n`;
     }
     html += `      </ul>\n    </section>\n`;
   }
@@ -709,25 +774,25 @@ function buildYearHub(year, products, subsetIndex) {
 
 // ---- Per-player page ------------------------------------------------------
 function buildPlayerPage(p, related, teamSlug) {
-  const title = `${p.name} Football Cards — Values & Checklist | The Card Huddle`;
-  const canonical = `${SITE}/players/${p.slug}/`;
+  const title = `${p.name} ${S.Word} Cards — Values & Checklist | The Card Huddle`;
+  const canonical = `${SITE}${S.base}/players/${p.slug}/`;
   const years = [...p.years].sort((a, b) => a - b);
   const yearRange = years.length ? (years[0] === years[years.length - 1] ? `${years[0]}` : `${years[0]}–${years[years.length - 1]}`) : '';
   const teams = [...p.teams].slice(0, 2);
   const teamClause = teams.length ? `, including ${teams.join(' and ')} cards` : '';
   const description =
-    `${p.name} football card price guide — see real eBay sold prices by grade ` +
+    `${p.name} ${S.word} card price guide — see real eBay sold prices by grade ` +
     `(Raw, PSA 10, PSA 9) for all ${p.cards.length} of his cards across ${p.setIds.size} sets` +
     `${yearRange ? ` (${yearRange})` : ''}. Rookies, parallels, autos & more. Free.`;
 
   const crumbs = [
     { label: 'Home', href: '/', absUrl: SITE + '/' },
-    { label: 'Players', href: '/players/', absUrl: SITE + '/players/' },
+    { label: 'Players', href: S.base + '/players/', absUrl: SITE + S.base + '/players/' },
     { label: p.name, absUrl: canonical },
   ];
   const collectionLd = ldScript({
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: jsonText(p.name + ' Football Cards'), url: canonical, description: jsonText(description),
+    name: jsonText(p.name + ' ' + S.Word + ' Cards'), url: canonical, description: jsonText(description),
     about: { '@type': 'Person', name: jsonText(p.name) },
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
@@ -767,23 +832,23 @@ function buildPlayerPage(p, related, teamSlug) {
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
-    <h1>${esc(p.name)} Football Card Values</h1>
+    <h1>${esc(p.name)} ${S.Word} Card Values</h1>
     <p class="lp-lede"><strong>${esc(p.name)}</strong> appears on ${p.cards.length} cards across ${p.setIds.size} sets${yearRange ? ` (${yearRange})` : ''}${esc(teamClause)}. Tap any card to see real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more.</p>
     <p class="lp-cta-row">
       <a class="lp-btn" href="${prefillHref(p.name)}">&#128270; See all ${esc(p.name)} prices now</a>
     </p>
 ${priceSlot('player', p.slug)}
-${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a href="/teams/${teamSlug.get(t)}/">${esc(t)}</a>`).join(' ')}</p>\n` : ''}`;
+${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a href="${S.base}/teams/${teamSlug.get(t)}/">${esc(t)}</a>`).join(' ')}</p>\n` : ''}`;
 
   let rendered = 0, truncated = false;
   for (const y of sortedYears) {
     if (truncated) break;
     const setsMap = byYear.get(y);
     const setList = [...setsMap.values()].sort((a, b) => a.name.localeCompare(b.name));
-    html += `    <section class="lp-subset">\n      <h2>${y ? esc(String(y)) + ' ' : ''}${esc(p.name)} Cards</h2>\n`;
+    html += `    <section class="lp-subset">\n      <h2>${y ? esc(S.yearLabel(y)) + ' ' : ''}${esc(p.name)} Cards</h2>\n`;
     for (const set of setList) {
       if (truncated) break;
-      html += `      <h3 class="lp-setrow"><a href="/sets/${set.cards[0].setId}/">${esc(set.name)}</a> <span class="lp-count">${set.cards.length}</span></h3>\n      <ul class="lp-cards">\n`;
+      html += `      <h3 class="lp-setrow"><a href="${S.base}/sets/${set.cards[0].setId}/">${esc(set.name)}</a> <span class="lp-count">${set.cards.length}</span></h3>\n      <ul class="lp-cards">\n`;
       for (const c of set.cards) {
         if (rendered >= PLAYER_CARD_CAP) { truncated = true; break; }
         const num = c.number != null ? `#${esc(c.number)} ` : '';
@@ -801,8 +866,8 @@ ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a
   }
   if (related && related.length) {
     html += `    <section class="lp-related">\n      <h2>Related players</h2>\n      <ul class="lp-related-list">\n`;
-    for (const r of related) html += `        <li><a href="/players/${r.slug}/">${esc(r.name)}</a></li>\n`;
-    html += `      </ul>\n      <p><a href="/players/">&larr; Browse all player price guides</a></p>\n    </section>\n`;
+    for (const r of related) html += `        <li><a href="${S.base}/players/${r.slug}/">${esc(r.name)}</a></li>\n`;
+    html += `      </ul>\n      <p><a href="${S.base}/players/">&larr; Browse all player price guides</a></p>\n    </section>\n`;
   }
   html += faq.html;
   html += `  </main>\n` + footer();
@@ -811,11 +876,10 @@ ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a
 
 // ---- Hubs -----------------------------------------------------------------
 function buildSetsHub(list) {
-  const title = 'Football Card Checklists & Price Guides | The Card Huddle';
-  const canonical = `${SITE}/sets/`;
+  const title = `${S.Word} Card Checklists & Price Guides | The Card Huddle`;
+  const canonical = `${SITE}${S.base}/sets/`;
   const description =
-    `Browse complete football card checklists for ${list.length} sets — Panini Prizm, ` +
-    `Select, Mosaic, Optic, Donruss and more. See real eBay sold prices by grade for ` +
+    `Browse complete ${S.word} card checklists for ${list.length} sets — ${S.brandsLine}. See real eBay sold prices by grade for ` +
     `every card. 100% free.`;
   const crumbs = [{ label: 'Home', href: '/', absUrl: SITE + '/' }, { label: 'Checklists', absUrl: canonical }];
   const byYear = new Map();
@@ -823,31 +887,31 @@ function buildSetsHub(list) {
   const years = [...byYear.keys()].sort((a, b) => (a === 'Other' ? 1 : b === 'Other' ? -1 : b - a));
   const itemListLd = ldScript({
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Football Card Checklists & Price Guides', url: canonical, description: jsonText(description),
+    name: `${S.Word} Card Checklists & Price Guides`, url: canonical, description: jsonText(description),
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
       '@type': 'ItemList', numberOfItems: list.length,
-      itemListElement: list.slice(0, 100).map((cl, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(cl.name), url: `${SITE}/sets/${cl.id}/` })),
+      itemListElement: list.slice(0, 100).map((cl, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(cl.name), url: `${SITE}${S.base}/sets/${cl.id}/` })),
     },
   });
   let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + itemListLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
-    <h1>Football Card Checklists &amp; Price Guides</h1>
-    <p class="lp-lede">Complete checklists for <strong>${list.length} football sets</strong> — every base card, insert and parallel. Tap into any set to see what cards are actually selling for on eBay, broken down by grade. Always free.</p>
-    <p class="lp-cta-row"><a class="lp-btn" href="/players/">&#127944; Browse player price guides &rarr;</a></p>
+    <h1>${S.Word} Card Checklists &amp; Price Guides</h1>
+    <p class="lp-lede">Complete checklists for <strong>${list.length} ${S.word} sets</strong> — every base card, insert and parallel. Tap into any set to see what cards are actually selling for on eBay, broken down by grade. Always free.</p>
+    <p class="lp-cta-row"><a class="lp-btn" href="${S.base}/players/">${S.emoji} Browse player price guides &rarr;</a></p>
 `;
   for (const y of years) {
     const group = byYear.get(y);
     // The heading links to the year's own hub, so crawlers reach it from
     // here rather than only from the sitemap.
     const yHead = (y === 'Other')
-      ? `${esc(String(y))} Football Sets`
-      : `<a href="/sets/${y}/">${esc(String(y))} Football Sets</a>`;
+      ? `${esc(S.yearLabel(y))} ${S.Word} Sets`
+      : `<a href="${S.base}/sets/${y}/">${esc(S.yearLabel(y))} ${S.Word} Sets</a>`;
     html += `    <section class="lp-year">\n      <h2>${yHead} <span class="lp-count">${group.length}</span></h2>\n      <ul class="lp-set-list">\n`;
     for (const cl of group)
-      html += `        <li><a href="/sets/${cl.id}/"><span class="lp-set-name">${esc(cl.name.replace(/\s+Football$/i, ''))}</span><span class="lp-set-meta">${cl.cardCount.toLocaleString()} cards</span></a></li>\n`;
+      html += `        <li><a href="${S.base}/sets/${cl.id}/"><span class="lp-set-name">${esc(cl.name.replace(S.wordRe, ''))}</span><span class="lp-set-meta">${cl.cardCount.toLocaleString()} cards</span></a></li>\n`;
     html += `      </ul>\n    </section>\n`;
   }
   html += `  </main>\n` + footer();
@@ -855,10 +919,10 @@ function buildSetsHub(list) {
 }
 
 function buildPlayersHub(players) {
-  const title = 'Football Card Player Price Guides | The Card Huddle';
-  const canonical = `${SITE}/players/`;
+  const title = `${S.Word} Card Player Price Guides | The Card Huddle`;
+  const canonical = `${SITE}${S.base}/players/`;
   const description =
-    `Look up football card values by player — ${players.length} price guides covering ` +
+    `Look up ${S.word} card values by player — ${players.length} price guides covering ` +
     `Mahomes, Allen, rookies and more. Real eBay sold prices by grade for every card. Free.`;
   const crumbs = [{ label: 'Home', href: '/', absUrl: SITE + '/' }, { label: 'Players', absUrl: canonical }];
 
@@ -874,31 +938,31 @@ function buildPlayersHub(players) {
   const letters = [...groups.keys()].sort();
   const itemListLd = ldScript({
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'Football Card Player Price Guides', url: canonical, description: jsonText(description),
+    name: `${S.Word} Card Player Price Guides`, url: canonical, description: jsonText(description),
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
       '@type': 'ItemList', numberOfItems: players.length,
-      itemListElement: popular.map((p, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(p.name), url: `${SITE}/players/${p.slug}/` })),
+      itemListElement: popular.map((p, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(p.name), url: `${SITE}${S.base}/players/${p.slug}/` })),
     },
   });
   let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + itemListLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
-    <h1>Football Card Player Price Guides</h1>
+    <h1>${S.Word} Card Player Price Guides</h1>
     <p class="lp-lede">Look up what any player's cards are worth — <strong>${players.length} price guides</strong> covering every card a player appears on, across all sets. Tap a name to see real eBay sold prices by grade.</p>
-    <p class="lp-cta-row"><a class="lp-btn" href="/sets/">&#128203; Browse by set checklist &rarr;</a></p>
+    <p class="lp-cta-row"><a class="lp-btn" href="${S.base}/sets/">&#128203; Browse by set checklist &rarr;</a></p>
     <section class="lp-subset">
       <h2>Most-searched players</h2>
       <ul class="lp-related-list">
 `;
-  for (const p of popular) html += `        <li><a href="/players/${p.slug}/">${esc(p.name)}</a></li>\n`;
+  for (const p of popular) html += `        <li><a href="${S.base}/players/${p.slug}/">${esc(p.name)}</a></li>\n`;
   html += `      </ul>\n    </section>\n`;
   html += `    <nav class="lp-aznav" aria-label="Jump to letter">${letters.map(l => `<a href="#l-${l}">${l}</a>`).join('')}</nav>\n`;
   for (const l of letters) {
     html += `    <section class="lp-year" id="l-${l}">\n      <h2>${l}</h2>\n      <ul class="lp-set-list">\n`;
     for (const p of groups.get(l))
-      html += `        <li><a href="/players/${p.slug}/"><span class="lp-set-name">${esc(p.name)}</span><span class="lp-set-meta">${p.cards.length} cards</span></a></li>\n`;
+      html += `        <li><a href="${S.base}/players/${p.slug}/"><span class="lp-set-name">${esc(p.name)}</span><span class="lp-set-meta">${p.cards.length} cards</span></a></li>\n`;
     html += `      </ul>\n    </section>\n`;
   }
   html += `  </main>\n` + footer();
@@ -923,22 +987,22 @@ function buildTeamIndex(checklists) {
 const TEAM_PLAYER_CAP = 250;
 
 function buildTeamPage(team, playerSlug, relatedTeams) {
-  const title = `${team.name} Football Cards — Checklist & Values | The Card Huddle`;
-  const canonical = `${SITE}/teams/${team.slug}/`;
+  const title = `${team.name} ${S.Word} Cards — Checklist & Values | The Card Huddle`;
+  const canonical = `${SITE}${S.base}/teams/${team.slug}/`;
   const players = [...team.players.entries()].sort((a, b) => b[1] - a[1]); // [name, count]
   const topNames = players.slice(0, 4).map(x => x[0]);
   const description =
-    `${team.name} football card price guide — ${team.cardCount.toLocaleString()} cards ` +
+    `${team.name} ${S.word} card price guide — ${team.cardCount.toLocaleString()} cards ` +
     `for ${players.length} players across ${team.setIds.size} sets. Check real eBay sold ` +
     `prices by grade (Raw, PSA 10, PSA 9) for every card. Free.`;
   const crumbs = [
     { label: 'Home', href: '/', absUrl: SITE + '/' },
-    { label: 'Teams', href: '/teams/', absUrl: SITE + '/teams/' },
+    { label: 'Teams', href: S.base + '/teams/', absUrl: SITE + S.base + '/teams/' },
     { label: team.name, absUrl: canonical },
   ];
   const collectionLd = ldScript({
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: jsonText(team.name + ' Football Cards'), url: canonical, description: jsonText(description),
+    name: jsonText(team.name + ' ' + S.Word + ' Cards'), url: canonical, description: jsonText(description),
     about: { '@type': 'SportsTeam', name: jsonText(team.name) },
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
@@ -959,8 +1023,8 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
-    <h1>${esc(team.name)} Football Cards</h1>
-    <p class="lp-lede">Browse <strong>${esc(team.name)}</strong> football cards — ${team.cardCount.toLocaleString()} cards for ${players.length} players across ${team.setIds.size} sets. Tap a player to see real eBay sold prices by grade (Raw, PSA 10, PSA 9 and more).</p>
+    <h1>${esc(team.name)} ${S.Word} Cards</h1>
+    <p class="lp-lede">Browse <strong>${esc(team.name)}</strong> ${S.word} cards — ${team.cardCount.toLocaleString()} cards for ${players.length} players across ${team.setIds.size} sets. Tap a player to see real eBay sold prices by grade (Raw, PSA 10, PSA 9 and more).</p>
     <p class="lp-cta-row"><a class="lp-btn" href="${prefillHref(team.name)}">&#128270; Search ${esc(team.name)} cards on eBay</a></p>
     <section class="lp-subset">
       <h2>Players <span class="lp-count">${players.length}</span></h2>
@@ -970,7 +1034,7 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
   for (const [name, count] of players) {
     if (shown >= TEAM_PLAYER_CAP) break;
     const slug = playerSlug.get(name);
-    const href = slug ? `/players/${slug}/` : prefillHref(`${name} ${team.name}`);
+    const href = slug ? `${S.base}/players/${slug}/` : prefillHref(`${name} ${team.name}`);
     html += `        <li><a href="${href}">${esc(name)} <span class="lp-team">${count}</span></a></li>\n`;
     shown++;
   }
@@ -979,8 +1043,8 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
   html += `    </section>\n`;
   if (relatedTeams && relatedTeams.length) {
     html += `    <section class="lp-related">\n      <h2>Other teams</h2>\n      <ul class="lp-related-list">\n`;
-    for (const r of relatedTeams) html += `        <li><a href="/teams/${r.slug}/">${esc(r.name)}</a></li>\n`;
-    html += `      </ul>\n      <p><a href="/teams/">&larr; Browse all NFL team card guides</a></p>\n    </section>\n`;
+    for (const r of relatedTeams) html += `        <li><a href="${S.base}/teams/${r.slug}/">${esc(r.name)}</a></li>\n`;
+    html += `      </ul>\n      <p><a href="${S.base}/teams/">&larr; Browse all ${S.league} team card guides</a></p>\n    </section>\n`;
   }
   html += faq.html;
   html += `  </main>\n` + footer();
@@ -988,33 +1052,33 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
 }
 
 function buildTeamsHub(teams) {
-  const title = 'NFL Team Football Card Guides & Prices | The Card Huddle';
-  const canonical = `${SITE}/teams/`;
+  const title = `${S.league} Team ${S.Word} Card Guides & Prices | The Card Huddle`;
+  const canonical = `${SITE}${S.base}/teams/`;
   const description =
-    `Browse football cards by NFL team — all 32 franchises. See checklists and real ` +
+    `Browse ${S.word} cards by ${S.league} team — all ${S.teams.length} franchises. See checklists and real ` +
     `eBay sold prices by grade for every team's players. 100% free.`;
   const crumbs = [{ label: 'Home', href: '/', absUrl: SITE + '/' }, { label: 'Teams', absUrl: canonical }];
   const sorted = [...teams].sort((a, b) => a.name.localeCompare(b.name));
   const itemListLd = ldScript({
     '@context': 'https://schema.org', '@type': 'CollectionPage',
-    name: 'NFL Team Football Card Guides', url: canonical, description: jsonText(description),
+    name: `${S.league} Team ${S.Word} Card Guides`, url: canonical, description: jsonText(description),
     isPartOf: { '@type': 'WebSite', name: 'The Card Huddle', url: SITE + '/' },
     mainEntity: {
       '@type': 'ItemList', numberOfItems: sorted.length,
-      itemListElement: sorted.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(t.name), url: `${SITE}/teams/${t.slug}/` })),
+      itemListElement: sorted.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(t.name), url: `${SITE}${S.base}/teams/${t.slug}/` })),
     },
   });
   let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + itemListLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
-    <h1>NFL Team Card Guides</h1>
-    <p class="lp-lede">Browse football cards by team — all <strong>${sorted.length} NFL franchises</strong>. Tap a team to see its players and check real eBay sold prices by grade.</p>
-    <p class="lp-cta-row"><a class="lp-btn" href="/players/">&#127944; Browse player price guides &rarr;</a></p>
+    <h1>${S.league} Team Card Guides</h1>
+    <p class="lp-lede">Browse ${S.word} cards by team — all <strong>${sorted.length} ${S.league} franchises</strong>. Tap a team to see its players and check real eBay sold prices by grade.</p>
+    <p class="lp-cta-row"><a class="lp-btn" href="${S.base}/players/">${S.emoji} Browse player price guides &rarr;</a></p>
     <ul class="lp-set-list">
 `;
   for (const t of sorted)
-    html += `      <li><a href="/teams/${t.slug}/"><span class="lp-set-name">${esc(t.name)}</span><span class="lp-set-meta">${t.cardCount.toLocaleString()} cards</span></a></li>\n`;
+    html += `      <li><a href="${S.base}/teams/${t.slug}/"><span class="lp-set-name">${esc(t.name)}</span><span class="lp-set-meta">${t.cardCount.toLocaleString()} cards</span></a></li>\n`;
   html += `    </ul>\n  </main>\n` + footer();
   return html;
 }
@@ -1127,10 +1191,10 @@ function buildSitemap(list, players, teams, years, subsetIndex) {
   const siteDate = newestDate(setDate.values());
 
   // Hubs move whenever anything under them moves.
-  push(`${SITE}/`, '1.0', 'daily', siteDate);
-  push(`${SITE}/sets/`, '0.9', 'weekly', siteDate);
-  push(`${SITE}/players/`, '0.9', 'weekly', siteDate);
-  push(`${SITE}/teams/`, '0.9', 'weekly', siteDate);
+  if (S.id === 'football') push(`${SITE}/`, '1.0', 'daily', siteDate);
+  push(`${SITE}${S.base}/sets/`, '0.9', 'weekly', siteDate);
+  push(`${SITE}${S.base}/players/`, '0.9', 'weekly', siteDate);
+  push(`${SITE}${S.base}/teams/`, '0.9', 'weekly', siteDate);
 
   // Hand-written pages: who runs the site, how to reach us, and how the prices
   // are arrived at. They are not generated from the checklists, so nothing else
@@ -1143,12 +1207,12 @@ function buildSitemap(list, players, teams, years, subsetIndex) {
   // Their lastmod is the site date rather than a per-file commit date: they are
   // checked in rather than built, so fileLastmod() would need a path for each
   // and gain nothing — these change rarely and together.
-  for (const p of ['about.html', 'methodology.html', 'contact.html']) {
+  if (S.id === 'football') for (const p of ['about.html', 'methodology.html', 'contact.html']) {
     push(`${SITE}/${p}`, '0.5', 'monthly', siteDate);
   }
 
   for (const y of years) {
-    push(`${SITE}/sets/${y}/`, '0.8', 'weekly',
+    push(`${SITE}${S.base}/sets/${y}/`, '0.8', 'weekly',
       newestDate(list.filter(c => c.year === y).map(c => setDate.get(c.id))));
   }
   // Anything carrying noindex is left out: listing a page in the sitemap while
@@ -1156,27 +1220,27 @@ function buildSitemap(list, players, teams, years, subsetIndex) {
   let skipped = 0;
   for (const cl of list) {
     const d = setDate.get(cl.id);
-    if (cl.cardCount >= INDEX_MIN_PRODUCT_CARDS) push(`${SITE}/sets/${cl.id}/`, '0.7', 'weekly', d);
+    if (cl.cardCount >= INDEX_MIN_PRODUCT_CARDS) push(`${SITE}${S.base}/sets/${cl.id}/`, '0.7', 'weekly', d);
     else skipped++;
     // A set page is carved out of its product's file, so it shares the date.
     for (const sub of (subsetIndex.get(cl.id) || [])) {
       if ((sub.set.cards || []).length >= INDEX_MIN_SUBSET_CARDS) {
-        push(`${SITE}/sets/${cl.id}/${sub.slug}/`, '0.6', 'weekly', d);
+        push(`${SITE}${S.base}/sets/${cl.id}/${sub.slug}/`, '0.6', 'weekly', d);
       } else skipped++;
     }
   }
   // Player and team pages are assembled from every checklist they appear in.
   for (const p of players) {
     if (p.cards.length < INDEX_MIN_PLAYER_CARDS) { skipped++; continue; }
-    push(`${SITE}/players/${p.slug}/`, '0.6', 'weekly',
+    push(`${SITE}${S.base}/players/${p.slug}/`, '0.6', 'weekly',
       newestDate([...p.setIds].map(id => setDate.get(id))));
   }
   for (const t of teams) {
-    push(`${SITE}/teams/${t.slug}/`, '0.7', 'weekly',
+    push(`${SITE}${S.base}/teams/${t.slug}/`, '0.7', 'weekly',
       newestDate([...(t.setIds || [])].map(id => setDate.get(id))));
   }
   console.log(`  sitemap: ${urls.length} indexable URLs (${skipped} thin pages built but noindexed)`);
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
+  return urls;
 }
 
 // ---- Wiring ---------------------------------------------------------------
@@ -1190,8 +1254,9 @@ function relatedSets(cl, all) {
 
 function rmDirSafe(dir) { try { fs.rmSync(dir, { recursive: true, force: true }); } catch {} }
 
-function main() {
-  console.log('Building landing pages from', path.relative(ROOT, CHECKLIST_DIR));
+function buildSport() {
+  S.commitDates = checklistCommitDates(`public/data/${S.folder}/`);
+  console.log(`${S.Word}: building landing pages from`, path.relative(ROOT, S.dir));
   const checklists = loadChecklists();
   const playerIndex = buildPlayerIndex(checklists);
 
@@ -1297,18 +1362,19 @@ function main() {
   console.log(`  ${subsetTotal} set pages inside them (>= ${MIN_SUBSET_CARDS} cards, duplicates of a sibling skipped)`);
   console.log(`  ${years.length} year hubs`);
   console.log(`  ${eligible.length} eligible players (>= ${MIN_CARDS} cards in >= ${MIN_SETS} sets)`);
-  console.log(`  ${teams.length} NFL team pages`);
+  console.log(`  ${teams.length} ${S.league} team pages`);
 
   // Fresh dirs so removed entries don't linger.
-  rmDirSafe(SETS_DIR); rmDirSafe(PLAYERS_DIR); rmDirSafe(TEAMS_DIR);
-  fs.mkdirSync(SETS_DIR, { recursive: true });
-  fs.mkdirSync(PLAYERS_DIR, { recursive: true });
-  fs.mkdirSync(TEAMS_DIR, { recursive: true });
-  fs.writeFileSync(path.join(SETS_DIR, 'landing.css'), LANDING_CSS);
+  rmDirSafe(S.setsDir); rmDirSafe(S.playersDir); rmDirSafe(S.teamsDir);
+  fs.mkdirSync(S.setsDir, { recursive: true });
+  fs.mkdirSync(S.playersDir, { recursive: true });
+  fs.mkdirSync(S.teamsDir, { recursive: true });
+  // One stylesheet for every sport's pages, at /sets/landing.css.
+  if (S.id === 'football') fs.writeFileSync(path.join(S.setsDir, 'landing.css'), LANDING_CSS);
 
   let bytes = 0;
   for (const cl of checklists) {
-    const dir = path.join(SETS_DIR, cl.id);
+    const dir = path.join(S.setsDir, cl.id);
     fs.mkdirSync(dir, { recursive: true });
     const subs = subsetIndex.get(cl.id) || [];
     const html = buildSetPage(cl, relatedSets(cl, checklists), playerSlug, subs);
@@ -1322,7 +1388,7 @@ function main() {
     }
   }
   for (const y of years) {
-    const ydir = path.join(SETS_DIR, String(y));
+    const ydir = path.join(S.setsDir, String(y));
     fs.mkdirSync(ydir, { recursive: true });
     const yhtml = buildYearHub(y, byYear.get(y), subsetIndex);
     fs.writeFileSync(path.join(ydir, 'index.html'), yhtml); bytes += Buffer.byteLength(yhtml);
@@ -1331,21 +1397,21 @@ function main() {
     const sorted = [...p.cards].sort((a, b) => (b.year || 0) - (a.year || 0));
     const primarySet = sorted[0].setId;
     const related = (setPlayers.get(primarySet) || []).filter(x => x.name !== p.name).slice(0, 10);
-    const dir = path.join(PLAYERS_DIR, p.slug);
+    const dir = path.join(S.playersDir, p.slug);
     fs.mkdirSync(dir, { recursive: true });
     const html = buildPlayerPage(p, related, teamSlug);
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
   }
   for (const t of teams) {
     const relatedTeams = teams.filter(x => x.slug !== t.slug).slice(0, 8);
-    const dir = path.join(TEAMS_DIR, t.slug);
+    const dir = path.join(S.teamsDir, t.slug);
     fs.mkdirSync(dir, { recursive: true });
     const html = buildTeamPage(t, playerSlug, relatedTeams);
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
   }
 
-  fs.writeFileSync(path.join(SETS_DIR, 'index.html'), buildSetsHub(checklists));
-  fs.writeFileSync(path.join(PLAYERS_DIR, 'index.html'), buildPlayersHub(eligible));
+  fs.writeFileSync(path.join(S.setsDir, 'index.html'), buildSetsHub(checklists));
+  fs.writeFileSync(path.join(S.playersDir, 'index.html'), buildPlayersHub(eligible));
 
   // A machine-readable list of the player pages, for the same reason
   // checklists/index.json exists: the Worker needs to know what pages there
@@ -1430,94 +1496,98 @@ function main() {
   // or "patch", because it is most of the price. The last is what reading
   // insert names is for. Lumping them together pointed the effort at the wrong
   // one, so the kind travels with the key.
-  const AUTOISH = new Set(['autograph', 'memorabilia']);
-  const subsetAmbiguous = {};
-  for (const cl of checklists) {
-    const owners = new Map();
-    for (const x of (cl.sets || [])) {
-      for (const c of (x.cards || [])) {
-        const k = cardMemberKey(c);
-        if (!owners.has(k)) owners.set(k, []);
-        owners.get(k).push(x.category || '');
+  // The sales join's files (attribution, ambiguity, player index, redirects)
+  // are football's: only football has sold data to join.
+  if (S.id === 'football') {
+    const AUTOISH = new Set(['autograph', 'memorabilia']);
+    const subsetAmbiguous = {};
+    for (const cl of checklists) {
+      const owners = new Map();
+      for (const x of (cl.sets || [])) {
+        for (const c of (x.cards || [])) {
+          const k = cardMemberKey(c);
+          if (!owners.has(k)) owners.set(k, []);
+          owners.get(k).push(x.category || '');
+        }
       }
+      const byKind = { auto: [], insert: [], variation: [] };
+      for (const [k, cats] of owners) {
+        if (cats.length < 2) continue;
+        const set = new Set(cats);
+        // An insert in the mix is the hard case and wins the classification: it
+        // is the one a title's insert name has to resolve.
+        if (set.has('insert')) byKind.insert.push(k);
+        else if ([...set].some(c => AUTOISH.has(c))) byKind.auto.push(k);
+        else byKind.variation.push(k);
+      }
+      const out = {};
+      for (const [kind, list] of Object.entries(byKind)) if (list.length) out[kind] = list.sort();
+      if (Object.keys(out).length) subsetAmbiguous[cl.id] = out;
     }
-    const byKind = { auto: [], insert: [], variation: [] };
-    for (const [k, cats] of owners) {
-      if (cats.length < 2) continue;
-      const set = new Set(cats);
-      // An insert in the mix is the hard case and wins the classification: it
-      // is the one a title's insert name has to resolve.
-      if (set.has('insert')) byKind.insert.push(k);
-      else if ([...set].some(c => AUTOISH.has(c))) byKind.auto.push(k);
-      else byKind.variation.push(k);
-    }
-    const out = {};
-    for (const [kind, list] of Object.entries(byKind)) if (list.length) out[kind] = list.sort();
-    if (Object.keys(out).length) subsetAmbiguous[cl.id] = out;
-  }
 
-  for (const cl of checklists) {
-    const sets = (cl.sets || []).filter(x => (x.cards || []).length >= MIN_SUBSET_CARDS);
-    if (!sets.length) continue;
-    const owners = new Map();
-    for (const x of sets) {
-      for (const c of (x.cards || [])) {
-        const k = cardMemberKey(c);
-        owners.set(k, (owners.get(k) || 0) + 1);
+    for (const cl of checklists) {
+      const sets = (cl.sets || []).filter(x => (x.cards || []).length >= MIN_SUBSET_CARDS);
+      if (!sets.length) continue;
+      const owners = new Map();
+      for (const x of sets) {
+        for (const c of (x.cards || [])) {
+          const k = cardMemberKey(c);
+          owners.set(k, (owners.get(k) || 0) + 1);
+        }
+      }
+      // Grouped by subset, { slug: [keys] }, so each slug is written once
+      // rather than once per card: keyed per card, the repeated slugs were a
+      // third of the file and pushed it past what a Worker should load.
+      // server.js inverts it back to key -> slug when it reads it.
+      const m = {};
+      for (const sub of (subsetIndex.get(cl.id) || [])) {
+        if ((sub.set.cards || []).length < INDEX_MIN_SUBSET_CARDS) continue;
+        for (const c of (sub.set.cards || [])) {
+          const k = cardMemberKey(c);
+          if (owners.get(k) === 1) (m[sub.slug] = m[sub.slug] || []).push(k);
+        }
+      }
+      if (Object.keys(m).length) subsetAttribution[cl.id] = m;
+    }
+    fs.mkdirSync(path.join(DATA_DIR, 'subsets'), { recursive: true });
+    // Packed for size. Keys are `player|number`, and the same players recur in
+    // hundreds of products, so each player is written once in `players` and a
+    // key becomes `<index>|<number>`; a subset's keys are one newline-joined
+    // string. { players: [...], products: { id: { slug: "12|4\n97|5" } } }.
+    // server.js (_attributionFor) and subset-attribution.test.js unpack it.
+    const attrPlayers = [], attrIdx = new Map();
+    const packed = {};
+    for (const [id, groups] of Object.entries(subsetAttribution)) {
+      packed[id] = {};
+      for (const [slug, keys] of Object.entries(groups)) {
+        packed[id][slug] = keys.map(k => {
+          const at = k.lastIndexOf('|');
+          const pl = k.slice(0, at);
+          if (!attrIdx.has(pl)) { attrIdx.set(pl, attrPlayers.length); attrPlayers.push(pl); }
+          return `${attrIdx.get(pl)}|${k.slice(at + 1)}`;
+        }).join('\n');
       }
     }
-    // Grouped by subset, { slug: [keys] }, so each slug is written once
-    // rather than once per card: keyed per card, the repeated slugs were a
-    // third of the file and pushed it past what a Worker should load.
-    // server.js inverts it back to key -> slug when it reads it.
-    const m = {};
-    for (const sub of (subsetIndex.get(cl.id) || [])) {
-      if ((sub.set.cards || []).length < INDEX_MIN_SUBSET_CARDS) continue;
-      for (const c of (sub.set.cards || [])) {
-        const k = cardMemberKey(c);
-        if (owners.get(k) === 1) (m[sub.slug] = m[sub.slug] || []).push(k);
-      }
-    }
-    if (Object.keys(m).length) subsetAttribution[cl.id] = m;
-  }
-  fs.mkdirSync(path.join(DATA_DIR, 'subsets'), { recursive: true });
-  // Packed for size. Keys are `player|number`, and the same players recur in
-  // hundreds of products, so each player is written once in `players` and a
-  // key becomes `<index>|<number>`; a subset's keys are one newline-joined
-  // string. { players: [...], products: { id: { slug: "12|4\n97|5" } } }.
-  // server.js (_attributionFor) and subset-attribution.test.js unpack it.
-  const attrPlayers = [], attrIdx = new Map();
-  const packed = {};
-  for (const [id, groups] of Object.entries(subsetAttribution)) {
-    packed[id] = {};
-    for (const [slug, keys] of Object.entries(groups)) {
-      packed[id][slug] = keys.map(k => {
-        const at = k.lastIndexOf('|');
-        const pl = k.slice(0, at);
-        if (!attrIdx.has(pl)) { attrIdx.set(pl, attrPlayers.length); attrPlayers.push(pl); }
-        return `${attrIdx.get(pl)}|${k.slice(at + 1)}`;
-      }).join('\n');
-    }
-  }
-  fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'attribution.json'),
-    JSON.stringify({ players: attrPlayers, products: packed }) + '\n');
-  fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'ambiguous.json'),
-    JSON.stringify(subsetAmbiguous) + '\n');
+    fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'attribution.json'),
+      JSON.stringify({ players: attrPlayers, products: packed }) + '\n');
+    fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'ambiguous.json'),
+      JSON.stringify(subsetAmbiguous) + '\n');
 
-  fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
-  fs.writeFileSync(path.join(DATA_DIR, 'players', 'redirects.json'), JSON.stringify(redirects) + '\n');
-  fs.writeFileSync(path.join(DATA_DIR, 'players', 'index.json'), JSON.stringify({
-    generated: new Date().toISOString().slice(0, 10),
-    minCards: MIN_CARDS, minSets: MIN_SETS, indexMinCards: INDEX_MIN_PLAYER_CARDS,
-    mergedSpellings: merged.length,
-    players: eligible.map(p => ({
-      name: p.name, slug: p.slug, cards: p.cards.length, sets: p.setIds.size,
-      // Built either way; only these are in the sitemap.
-      indexable: p.cards.length >= INDEX_MIN_PLAYER_CARDS,
-    })),
-  }) + '\n');
-  fs.writeFileSync(path.join(TEAMS_DIR, 'index.html'), buildTeamsHub(teams));
-  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'), buildSitemap(checklists, eligible, teams, years, subsetIndex));
+    fs.mkdirSync(path.join(DATA_DIR, 'players'), { recursive: true });
+    fs.writeFileSync(path.join(DATA_DIR, 'players', 'redirects.json'), JSON.stringify(redirects) + '\n');
+    fs.writeFileSync(path.join(DATA_DIR, 'players', 'index.json'), JSON.stringify({
+      generated: new Date().toISOString().slice(0, 10),
+      minCards: MIN_CARDS, minSets: MIN_SETS, indexMinCards: INDEX_MIN_PLAYER_CARDS,
+      mergedSpellings: merged.length,
+      players: eligible.map(p => ({
+        name: p.name, slug: p.slug, cards: p.cards.length, sets: p.setIds.size,
+        // Built either way; only these are in the sitemap.
+        indexable: p.cards.length >= INDEX_MIN_PLAYER_CARDS,
+      })),
+    }) + '\n');
+  }
+  fs.writeFileSync(path.join(S.teamsDir, 'index.html'), buildTeamsHub(teams));
+  const urls = buildSitemap(checklists, eligible, teams, years, subsetIndex);
 
   console.log(`  wrote ${checklists.length} product + ${subsetTotal} set + ${eligible.length} player + ${teams.length} team pages + ${years.length} year hubs + 3 hubs + sitemap`);
   console.log(`  total generated HTML: ${(bytes / 1024 / 1024).toFixed(1)} MB`);
@@ -1530,6 +1600,19 @@ function main() {
         + `the indexable ones; ${withoutAds} noindexed pages carry none`
       : '  AdSense: disabled (ADSENSE_CLIENT empty)');
   }
+  return urls;
+}
+
+function main() {
+  const urls = [];
+  for (const cfg of SPORT_CONFIGS) {
+    if (!fs.existsSync(cfg.dir)) continue;
+    S = cfg;
+    urls.push(...buildSport());
+  }
+  fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
+  console.log(`sitemap: ${urls.length} indexable URLs across every sport`);
   console.log('  done.');
 }
 

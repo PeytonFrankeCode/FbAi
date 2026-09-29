@@ -1731,8 +1731,17 @@ function applySport() {
     sw.innerHTML = p.enabled.map(id => `<button type="button" class="sport-pill${id === p.active ? ' active' : ''}" aria-pressed="${id === p.active}" onclick="setActiveSport('${id}')">
         <span aria-hidden="true">${SPORTS[id].icon}</span> ${SPORTS[id].label}${SPORTS[id].testing ? '<span class="sport-testing-tag">Testing</span>' : ''}</button>`).join('');
   }
+  // The player, set and team guides: every sport has its own, built from its
+  // checklists (football's at /players/ and so on, the others under /basketball/
+  // and /baseball/).
   const guides = document.getElementById('checklist-guide-links');
-  if (guides) guides.classList.toggle('hidden', p.active !== 'football');   // the player/set/team guides are football's
+  if (guides) {
+    const base = p.active === 'football' ? '' : `/${p.active}`;
+    const league = { football: 'NFL', basketball: 'NBA', baseball: 'MLB' }[p.active];
+    guides.innerHTML = `<a class="checklist-guide-link" href="${base}/players/">${sport.icon}&nbsp; Player Price Guides</a>
+          <a class="checklist-guide-link" href="${base}/sets/">&#128203;&nbsp; All Set Checklists &amp; Prices</a>
+          <a class="checklist-guide-link" href="${base}/teams/">${sport.icon}&nbsp; ${league} Team Guides</a>`;
+  }
 
   const input = document.getElementById('search-input');
   if (input) {
