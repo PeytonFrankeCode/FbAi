@@ -15407,6 +15407,10 @@ app.post('/api/account/delete', async (req, res) => {
     for (const h of (inv && Array.isArray(inv.history) ? inv.history : [])) {
       if (h && h.gotPhotoId) photoIds.add(h.gotPhotoId);
       if (h && h.gavePhotoId) photoIds.add(h.gavePhotoId);
+      // A deal with several cards on a side lists each one's photo.
+      for (const c of [...(Array.isArray(h && h.gaveCards) ? h.gaveCards : []), ...(Array.isArray(h && h.gotCards) ? h.gotCards : [])]) {
+        if (c && c.photoId) photoIds.add(c.photoId);
+      }
     }
     for (const pid of photoIds) { try { await deleteUserPhoto(key, pid); } catch {} }
     await _userSyncDelete(key);
