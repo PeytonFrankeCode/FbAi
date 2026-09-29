@@ -559,12 +559,14 @@
       <div style="display:flex;flex-wrap:wrap;gap:2rem;margin:0.5rem 0 1rem;">
         <div><div class="stat-label" style="margin-bottom:0.3rem">What they use it for</div>${(d.uses || []).map(u => bar(u.label, u.count)).join('')}</div>
         <div><div class="stat-label" style="margin-bottom:0.3rem">Ratings</div>${stars}</div>
+        <div><div class="stat-label" style="margin-bottom:0.3rem">Where answers came from</div>${(d.sources || []).map(x => bar(x.label, x.count)).join('')}</div>
       </div>` : '';
     const rs = d.responses || [];
     document.getElementById('survey-count').textContent = `${rs.length} response${rs.length !== 1 ? 's' : ''}`;
     const list = document.getElementById('survey-list');
     if (!rs.length) { list.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>No survey answers yet.</p></div>`; return; }
     const LABEL = Object.fromEntries((d.uses || []).map(u => [u.id, u.label]));
+    const FROM = Object.fromEntries((d.sources || []).map(x => [x.id, x.label]));
     list.innerHTML = rs.map(r => `
       <div class="report-card feedback">
         <div class="report-header">
@@ -577,7 +579,7 @@
         ${(r.uses || []).length ? `<div class="report-message" style="color:var(--text-secondary)">Uses: ${r.uses.map(u => escHtml(LABEL[u] || u)).join(', ')}</div>` : ''}
         ${r.improve ? `<div class="report-message"><strong>Add or improve:</strong> ${escHtml(r.improve)}</div>` : ''}
         ${r.broken ? `<div class="report-message"><strong>Broken or confusing:</strong> ${escHtml(r.broken)}</div>` : ''}
-        <div class="report-message" style="color:var(--text-muted);font-size:0.74rem">${escHtml(r.device || '')} · ${r.searches || 0} searches before answering${r.page ? ` · on ${escHtml(r.page)}` : ''}</div>
+        <div class="report-message" style="color:var(--text-muted);font-size:0.74rem">${escHtml(r.device || '')} · ${r.searches || 0} searches before answering${r.page ? ` · on ${escHtml(r.page)}` : ''} · from: ${escHtml(FROM[r.source || 'unknown'] || r.source || 'unknown')}</div>
       </div>`).join('');
   }
 

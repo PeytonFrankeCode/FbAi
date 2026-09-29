@@ -15,6 +15,18 @@ const USE_LABELS = {
   other: 'Other',
 };
 const FOUND = ['yes', 'mostly', 'no'];
+// Where the person opened the survey from, so the admin page can show which
+// asks work. Answers saved before this was recorded read as 'unknown'.
+const SOURCES = ['banner', 'return', 'footer', 'email', 'announce', 'link'];
+const SOURCE_LABELS = {
+  banner: 'Banner after 3 searches',
+  return: 'Banner on a return visit',
+  footer: 'Footer button',
+  email: 'Weekly email',
+  announce: 'Announcement banner',
+  link: 'Shared link',
+  unknown: 'Not recorded (before tracking)',
+};
 const TEXT_MAX = 1000;
 const EMAIL_RE = /^[^\s@<>"',;]{1,64}@[^\s@<>"',;]+\.[a-z]{2,}$/i;
 
@@ -44,6 +56,7 @@ function validateSurvey(body) {
       // Context, so an answer can be read against what the person did.
       page: clip(b.page, 120),
       searches: Math.max(0, Math.min(10000, Number.isFinite(int(b.searches)) ? Math.round(int(b.searches)) : 0)),
+      source: SOURCES.includes(b.source) ? b.source : 'link',
       device: /Mobi|Android|iPhone|iPad/i.test(String(b.userAgent || '')) ? 'mobile' : 'desktop',
     },
   };
@@ -62,6 +75,9 @@ function summarizeSurveys(responses) {
   const found = Object.fromEntries(FOUND.map(f => [f, list.filter(r => r.found === f).length]));
   const uses = USES.map(u => ({ id: u, label: USE_LABELS[u], count: list.filter(r => (r.uses || []).includes(u)).length }))
     .sort((a, b) => b.count - a.count);
+  const sources = [...SOURCES, 'unknown']
+    .map(id => ({ id, label: SOURCE_LABELS[id], count: list.filter(r => (r.source || 'unknown') === id).length }))
+    .filter(x => x.count).sort((a, b) => b.count - a.count);
   const ratings = [1, 2, 3, 4, 5].map(s => list.filter(r => r.rating === s).length);
   return {
     count: n,
@@ -70,9 +86,10 @@ function summarizeSurveys(responses) {
     nps, npsResponses: npsList.length,
     found,
     uses,
+    sources,
     withEmail: list.filter(r => r.email).length,
     responses: list,
   };
 }
 
-module.exports = { validateSurvey, summarizeSurveys, USES, USE_LABELS, FOUND, TEXT_MAX };
+module.exports = { validateSurvey, summarizeSurveys, USES, USE_LABELS, FOUND, SOURCES, SOURCE_LABELS, TEXT_MAX };

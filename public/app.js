@@ -1516,10 +1516,12 @@ async function fetchVariants(query) {
 // announcement shows it to everyone again instead of staying hidden for
 // anyone who ever dismissed one.
 const BANNER = {
-  id: '2026-topps-heritage',
-  // What clicking it does. A checklist deep-link, so this stays in the SPA
-  // rather than reloading the page.
-  productId: '2026-topps-heritage-football',
+  id: '2026-beta-survey',
+  // What clicking it does: survey opens the beta survey (and the banner is not
+  // shown to anyone who already answered it); productId deep-links a checklist,
+  // staying in the SPA rather than reloading the page.
+  survey: true,
+  productId: null,
 };
 
 function bannerDismissed() {
@@ -1536,6 +1538,7 @@ function dismissSiteBanner() {
 // Opens the announced checklist. Goes through switchView + loadProduct rather
 // than an href so it doesn't reload the app to land two clicks away.
 function openBannerTarget() {
+  if (BANNER.survey) { openSurvey('announce'); return; }
   try {
     switchView('checklist');
     if (typeof loadProduct === 'function') loadProduct(BANNER.productId);
@@ -1548,6 +1551,7 @@ function openBannerTarget() {
 function initSiteBanner() {
   const el = document.getElementById('site-banner');
   if (!el || bannerDismissed()) return;
+  if (BANNER.survey && _surveyState() === 'done') return;
   el.classList.remove('hidden');
 }
 
@@ -5060,7 +5064,9 @@ refreshSoldUsage().catch(() => {});
 //   e.g. { name: 'BCW Supplies', img: '/sponsors/bcw.png', url: 'https://www.bcwsupplies.com/?aff=...' }
 // First-run walkthrough. No-ops for anyone who has already seen it.
 maybeStartTour();
-initSiteBanner();
+// After the rest of this file has run: both read the survey's constants,
+// which are declared further down.
+setTimeout(() => { initSiteBanner(); initSurvey(); }, 0);
 
 // Affiliate / sponsor config. BCW Supplies — card storage & protection.
 // Uses the exact ShareASale tracking link (no edits); we deliberately DON'T use
@@ -13530,33 +13536,115 @@ async function submitFeedback(e) {
 }
 
 // ---- Beta survey ----
-// Seven questions, about two minutes. Opened from the footer any time, and
-// offered once by a banner after a few searches: never again once answered or
-// dismissed, so it asks for two minutes and does not keep asking.
-const SURVEY_KEY = 'chBetaSurvey';          // 'done' | 'dismissed'
+// Seven questions, about two minutes. Opened from the footer any time, from a
+// ?survey=<source> link (the weekly email, the announcement), and offered by a
+// banner: after the third search counted across visits, or 30 seconds into a
+// return visit. A "no" is asked once more 30 days later, then never again;
+// an answer is never asked again.
+const SURVEY_KEY = 'chBetaSurvey';          // '' | 'dismissed' | 'dismissed2' | 'done'
+const SURVEY_META_KEY = 'chBetaSurveyMeta'; // { searches, visits, lastSeen, dismissedAt }
 const SURVEY_AFTER_SEARCHES = 3;
+const SURVEY_RETURN_DELAY_MS = 30 * 1000;
+const SURVEY_REASK_MS = 30 * 24 * 60 * 60 * 1000;
+const SURVEY_VISIT_GAP_MS = 30 * 60 * 1000; // a load this long after the last one is a new visit
 let _surveySearches = 0;
 let _surveySource = 'footer';
+let _surveyOffered = false;                  // the banner shows at most once per page load
 
 function _surveyState() {
-  try { return localStorage.getItem(SURVEY_KEY) || ''; } catch (_) { return 'dismissed'; }
+  try { return localStorage.getItem(SURVEY_KEY) || ''; } catch (_) { return 'done'; }
 }
 function _setSurveyState(v) {
   try { localStorage.setItem(SURVEY_KEY, v); } catch (_) {}
 }
+function _surveyMeta() {
+  try { return JSON.parse(localStorage.getItem(SURVEY_META_KEY) || '{}') || {}; } catch (_) { return {}; }
+}
+function _saveSurveyMeta(m) {
+  try { localStorage.setItem(SURVEY_META_KEY, JSON.stringify(m)); } catch (_) {}
+}
 
-// Called for every search the person runs.
+// Whether the banner may ask now. Pure, so the test reads the rule directly.
+// A "no" saved before dismissals were dated counts from the first time it is
+// seen here.
+function _surveyMayAsk(state, meta, now) {
+  if (state === 'done' || state === 'dismissed2') return false;
+  if (state === 'dismissed') return !!meta.dismissedAt && now - meta.dismissedAt >= SURVEY_REASK_MS;
+  return true;
+}
+
+function _surveyOffer(source) {
+  if (_surveyOffered) return;
+  const m = _surveyMeta();
+  const state = _surveyState();
+  if (state === 'dismissed' && !m.dismissedAt) { m.dismissedAt = Date.now(); _saveSurveyMeta(m); }
+  if (!_surveyMayAsk(state, m, Date.now())) return;
+  // The announcement at the top is already asking; one ask on screen is enough.
+  const top = document.getElementById('site-banner');
+  if (BANNER.survey && top && !top.classList.contains('hidden')) return;
+  const b = document.getElementById('survey-banner');
+  if (!b) return;
+  const text = b.querySelector('.survey-banner-text');
+  if (text) text.innerHTML = source === 'return'
+    ? '<strong>Welcome back!</strong> The Card Huddle is in beta. Tell us what to build next: a 2-minute survey.'
+    : '<strong>The Card Huddle is in beta.</strong> Help shape it: a 2-minute survey.';
+  b.dataset.source = source;
+  b.classList.remove('hidden');
+  _surveyOffered = true;
+  if (typeof gtag === 'function') { try { gtag('event', 'survey_offer', { source }); } catch (_) {} }
+}
+
+// A "no": the first one waits 30 days before asking again, the second is final.
+function _surveyDeclined() {
+  const state = _surveyState();
+  if (state === '') {
+    _setSurveyState('dismissed');
+    const m = _surveyMeta(); m.dismissedAt = Date.now(); _saveSurveyMeta(m);
+  } else if (state === 'dismissed') {
+    _setSurveyState('dismissed2');
+  }
+}
+
+// Called for every search the person runs. The count is kept across visits,
+// so someone who looks up a card or two each time is still asked.
 function _surveyNoteSearch() {
   _surveySearches++;
-  if (_surveySearches !== SURVEY_AFTER_SEARCHES || _surveyState()) return;
-  const b = document.getElementById('survey-banner');
-  if (b) b.classList.remove('hidden');
+  const m = _surveyMeta();
+  m.searches = (m.searches || 0) + 1;
+  _saveSurveyMeta(m);
+  if (m.searches >= SURVEY_AFTER_SEARCHES) _surveyOffer('banner');
+}
+
+// On load: count the visit, open the survey for a ?survey= link, and on a
+// return visit offer it once they have been here half a minute.
+function initSurvey() {
+  const now = Date.now();
+  const m = _surveyMeta();
+  if (!m.lastSeen || now - m.lastSeen > SURVEY_VISIT_GAP_MS) m.visits = (m.visits || 0) + 1;
+  m.lastSeen = now;
+  _saveSurveyMeta(m);
+  let linked = '';
+  try {
+    const url = new URL(location.href);
+    linked = url.searchParams.get('survey') || '';
+    if (linked) {
+      url.searchParams.delete('survey');
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    }
+  } catch (_) {}
+  if (linked) {
+    if (_surveyState() !== 'done') openSurvey(linked.slice(0, 20));
+    return;
+  }
+  if (m.visits >= 2) {
+    setTimeout(() => { if (document.visibilityState !== 'hidden') _surveyOffer('return'); }, SURVEY_RETURN_DELAY_MS);
+  }
 }
 
 function dismissSurveyBanner() {
   const b = document.getElementById('survey-banner');
   if (b) b.classList.add('hidden');
-  if (!_surveyState()) _setSurveyState('dismissed');
+  _surveyDeclined();
 }
 
 function openSurvey(source) {
@@ -13571,8 +13659,9 @@ function openSurvey(source) {
 
 function closeSurvey() {
   document.getElementById('survey-modal').classList.add('hidden');
-  // Closing the one the banner offered counts as a no, so it is not offered again.
-  if (_surveySource === 'banner' && !_surveyState()) _setSurveyState('dismissed');
+  // Closing one we offered, without answering, counts as a no. Opening it from
+  // the footer is the person's own idea, so closing that one asks nothing.
+  if (_surveySource !== 'footer' && _surveyState() !== 'done') _surveyDeclined();
 }
 
 // The form's answers as the server expects them.
@@ -13588,7 +13677,7 @@ function _surveyAnswers(form) {
     email: document.getElementById('survey-email').value.trim(),
     website: document.getElementById('survey-website').value,
     page: location.pathname + location.search,
-    searches: _surveySearches,
+    searches: _surveyMeta().searches || _surveySearches,
     source: _surveySource,
   };
 }

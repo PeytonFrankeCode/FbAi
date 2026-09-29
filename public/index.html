@@ -185,9 +185,9 @@
      for people who dismissed the last one, rather than staying hidden forever. -->
 <div id="site-banner" class="site-banner hidden" role="region" aria-label="Announcement">
   <button type="button" class="site-banner-link" onclick="openBannerTarget()">
-    <span class="site-banner-tag">New</span>
-    <span class="site-banner-text"><strong>2026 Topps Heritage</strong> checklist is live now, all 30 sets and 1,484 cards are available! <strong>London Games</strong> is up too.</span>
-    <span class="site-banner-cta">View checklist &rarr;</span>
+    <span class="site-banner-tag">Beta</span>
+    <span class="site-banner-text"><strong>Help shape The Card Huddle.</strong> Tell us what works, what's broken and what to build next.</span>
+    <span class="site-banner-cta">Take the 2-minute survey &rarr;</span>
   </button>
   <button type="button" class="site-banner-x" onclick="dismissSiteBanner()" aria-label="Dismiss announcement">&times;</button>
 </div>
@@ -1517,7 +1517,7 @@
        searches, and never again once answered or dismissed. -->
   <div id="survey-banner" class="survey-banner hidden" role="region" aria-label="Beta survey">
     <span class="survey-banner-text"><strong>The Card Huddle is in beta.</strong> Help shape it: a 2-minute survey.</span>
-    <button type="button" class="survey-banner-go" onclick="openSurvey('banner')">Take it</button>
+    <button type="button" class="survey-banner-go" onclick="openSurvey(this.closest('.survey-banner').dataset.source || 'banner')">Take it</button>
     <button type="button" class="survey-banner-x" onclick="dismissSurveyBanner()" aria-label="No thanks">&times;</button>
   </div>
   <div id="survey-modal" class="feedback-modal hidden" role="dialog" aria-modal="true" aria-labelledby="survey-title" onclick="if(event.target===this)closeSurvey()">
@@ -1667,7 +1667,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=1144f74ecf"></script>
+  <script src="app.js?v=bdc535e53f"></script>
   <script type="importmap">
   {
     "imports": {
