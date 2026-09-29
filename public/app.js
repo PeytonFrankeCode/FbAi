@@ -4286,42 +4286,46 @@ function toggleAuthDropdown() {
     return;
   }
 
-  const user = getCurrentUser();
-  const users = getUsers();
-  const userData = users[user?.toLowerCase()] || {};
+  const user = getCurrentUser() || '';
+  const userData = getUsers()[user.toLowerCase()] || {};
   const email = userData.email || '';
+  const alertCount = _acctAlertCount();
+  const cardCount = getInventory().items.length;
+  const icon = (d) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const item = (onclick, svg, label, extra = '', cls = '') =>
+    `<button type="button" class="auth-dropdown-item ${cls}" onclick="closeAuthDropdown(); ${onclick}">${icon(svg)}<span class="auth-dropdown-item-label">${label}</span>${extra}</button>`;
+  const count = (n) => n ? `<span class="auth-dropdown-count">${n}</span>` : '';
 
   dropdown = document.createElement('div');
   dropdown.className = 'auth-dropdown';
+  dropdown.setAttribute('role', 'menu');
   dropdown.innerHTML = `
     <div class="auth-dropdown-header">
-      <div class="auth-dropdown-avatar">${(user || '?')[0].toUpperCase()}</div>
+      <div class="auth-dropdown-avatar">${escHtml((user || '?')[0].toUpperCase())}</div>
       <div class="auth-dropdown-info">
-        <div class="auth-dropdown-username">${user}</div>
-        <div class="auth-dropdown-email-display">${email || 'No email added'}</div>
+        <div class="auth-dropdown-username">${escHtml(user)}</div>
+        <div class="auth-dropdown-email-display">${email ? escHtml(email) : 'No email added'}</div>
       </div>
     </div>
-    <div class="auth-dropdown-email-section">
-      <input type="email" class="auth-dropdown-email-input" placeholder="${email ? 'Update email address' : 'Add email address'}" value="${email}" />
-      <button class="auth-dropdown-save-btn" onclick="saveDropdownEmail(this)">Save</button>
+    <div class="auth-dropdown-list">
+      ${item('openAccount()', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 'My Account')}
+      ${item('showAlerts()', '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>', 'Price Alerts', count(alertCount))}
+      ${item("switchView('inventory')", '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>', 'My Collection', count(cardCount))}
+      ${item('openAccount(\'giveaways\')', '<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>', 'Giveaways')}
+      ${item('showSettings()', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>', 'Settings')}
     </div>
     <div class="auth-dropdown-divider"></div>
-    <button onclick="closeAuthDropdown(); showSettings()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Settings
-    </button>
-    <button class="auth-dropdown-logout" onclick="handleLogout()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Log Out
-    </button>
+    ${item('handleLogout()', '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>', 'Log Out', '', 'auth-dropdown-logout')}
   `;
 
-  // Append to body and position using fixed coords to avoid header overflow:hidden clipping
+  // Append to body and position using fixed coords to avoid header overflow:hidden clipping.
+  // Kept inside the screen: on a phone the button sits near the right edge.
   document.body.appendChild(dropdown);
   const btnRect = authBtn.getBoundingClientRect();
   dropdown.style.position = 'fixed';
   dropdown.style.top = (btnRect.bottom + 6) + 'px';
-  dropdown.style.left = btnRect.left + 'px';
+  const w = dropdown.offsetWidth;
+  dropdown.style.left = Math.max(8, Math.min(btnRect.left, window.innerWidth - w - 8)) + 'px';
 
   // Close on outside click
   setTimeout(() => {
@@ -4329,26 +4333,231 @@ function toggleAuthDropdown() {
   }, 0);
 }
 
-function saveDropdownEmail(btn) {
-  const input = btn.previousElementSibling;
-  const email = input.value.trim();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    input.style.borderColor = 'var(--error)';
-    setTimeout(() => { input.style.borderColor = ''; }, 2000);
-    return;
+// How many alerts the signed-in user has, from the last list the alerts code
+// loaded. The menu is opened often; it does not refetch.
+function _acctAlertCount() {
+  return (_alertsCache && Array.isArray(_alertsCache.alerts)) ? _alertsCache.alerts.length : 0;
+}
+
+// ---- My Account ----
+// Profile, the at-a-glance numbers, and the giveaway entry (a shipping address,
+// kept only to mail prizes). Everything is read from and saved to the server,
+// so it follows the account to another device.
+
+const _ACCT_STATES = {
+  US: 'AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY PR GU VI AS MP'.split(' '),
+  CA: 'AB BC MB NB NL NS NT NU ON PE QC SK YT'.split(' '),
+};
+let _acctProfile = null;
+
+async function openAccount(focus) {
+  if (!getSessionToken()) { showLogin(); return; }
+  const overlay = document.getElementById('account-overlay');
+  const body = document.getElementById('account-body');
+  overlay.classList.remove('hidden');
+  body.innerHTML = '<div class="acct-loading">Loading your account…</div>';
+  try {
+    const res = await authFetch('/api/account/profile');
+    if (res.status === 401) { closeAccount(); showLogin(); return; }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not load your account.');
+    _acctProfile = data;
+    _renderAccount();
+    if (focus === 'giveaways') {
+      const g = document.getElementById('acct-giveaways');
+      if (g) g.scrollIntoView({ block: 'start' });
+    }
+  } catch (err) {
+    body.innerHTML = `<div class="acct-error">${escHtml(err.message || 'Could not load your account.')} <button type="button" class="acct-link" onclick="openAccount()">Try again</button></div>`;
   }
-  const user = getCurrentUser();
-  if (!user) return;
-  const users = getUsers();
-  if (!users[user.toLowerCase()]) return;
-  users[user.toLowerCase()].email = email;
-  localStorage.setItem('cardHuddleUsers', JSON.stringify(users));
-  const displayEl = document.querySelector('.auth-dropdown-email-display');
-  if (displayEl) displayEl.textContent = email || 'No email added';
-  btn.textContent = 'Saved!';
-  btn.style.background = 'var(--accent)';
-  btn.style.color = '#0c0e14';
-  setTimeout(() => closeAuthDropdown(), 1200);
+}
+
+function closeAccount() {
+  document.getElementById('account-overlay').classList.add('hidden');
+}
+
+function _acctDate(iso) {
+  const d = iso ? new Date(iso) : null;
+  return d && !isNaN(d) ? d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '';
+}
+
+function _renderAccount() {
+  const p = _acctProfile || {};
+  const s = p.shipping || {};
+  const country = s.country || 'US';
+  const signIn = (p.signIn || []).map(m => ({ password: 'Password', google: 'Google', apple: 'Apple' }[m] || m)).join(' + ') || 'Password';
+  const cards = getInventory().items.length;
+  const weekly = {
+    active: '<span class="acct-pill acct-pill--on">Subscribed</span>',
+    pending: '<span class="acct-pill">Check your inbox to confirm</span>',
+  }[p.weeklyEmail] || (p.email
+    ? '<button type="button" class="acct-btn acct-btn--small" onclick="acctSubscribeWeekly(this)">Subscribe</button>'
+    : '<span class="acct-muted">Add an email first</span>');
+  const field = (id, label, value, attrs = '') =>
+    `<label class="acct-field" for="acct-${id}"><span>${label}</span><input id="acct-${id}" name="${id}" value="${escHtml(value || '')}" ${attrs}></label>`;
+  const stateOpts = (c) => `<option value="">${c === 'CA' ? 'Province' : 'State'}</option>` +
+    _ACCT_STATES[c].map(v => `<option${v === s.state ? ' selected' : ''}>${v}</option>`).join('');
+
+  document.getElementById('account-body').innerHTML = `
+    <div class="acct-hero">
+      <div class="auth-dropdown-avatar acct-avatar">${escHtml((p.username || '?')[0].toUpperCase())}</div>
+      <div>
+        <div class="acct-name">${escHtml(p.username || '')}</div>
+        <div class="acct-muted">${p.memberSince ? 'Member since ' + escHtml(_acctDate(p.memberSince)) + ' · ' : ''}Signs in with ${escHtml(signIn)}</div>
+      </div>
+    </div>
+
+    <div class="acct-stats">
+      <button type="button" class="acct-stat" onclick="closeAccount(); showAlerts()">
+        <span class="acct-stat-num">${(p.alerts && p.alerts.count) || 0}</span><span class="acct-stat-label">Price alerts</span>
+      </button>
+      <button type="button" class="acct-stat" onclick="closeAccount(); switchView('inventory')">
+        <span class="acct-stat-num">${cards}</span><span class="acct-stat-label">Cards in collection</span>
+      </button>
+    </div>
+
+    <section class="acct-section">
+      <h3 class="acct-section-title">Email</h3>
+      <p class="acct-muted">Where price alerts and the weekly market email go.</p>
+      <form class="acct-inline" onsubmit="event.preventDefault(); acctSaveEmail(this)">
+        <input type="email" id="acct-email" value="${escHtml(p.email || '')}" placeholder="you@example.com" autocomplete="email" aria-label="Email address">
+        <button type="submit" class="acct-btn">Save</button>
+      </form>
+      <div class="acct-msg" id="acct-email-msg" role="status"></div>
+      <div class="acct-row"><span>Weekly market email</span>${weekly}</div>
+    </section>
+
+    <section class="acct-section" id="acct-giveaways">
+      <h3 class="acct-section-title">Giveaways</h3>
+      <p class="acct-muted">We give away cards now and then. Opt in and add where to ship, so a prize can go straight out to you if you win.</p>
+      <label class="acct-switch">
+        <input type="checkbox" id="acct-optin" ${p.giveaways ? 'checked' : ''}>
+        <span class="acct-switch-track" aria-hidden="true"></span>
+        <span>Enter me in giveaways</span>
+      </label>
+      <form class="acct-address" id="acct-address" onsubmit="event.preventDefault(); acctSaveGiveaways()" novalidate>
+        ${field('name', 'Full name', s.name, 'autocomplete="name" maxlength="80"')}
+        ${field('line1', 'Street address', s.line1, 'autocomplete="address-line1" maxlength="100"')}
+        ${field('line2', 'Apt, suite (optional)', s.line2, 'autocomplete="address-line2" maxlength="100"')}
+        <div class="acct-grid">
+          ${field('city', 'City', s.city, 'autocomplete="address-level2" maxlength="60"')}
+          <label class="acct-field" for="acct-state"><span>${country === 'CA' ? 'Province' : 'State'}</span>
+            <select id="acct-state" name="state" autocomplete="address-level1">${stateOpts(country)}</select></label>
+        </div>
+        <div class="acct-grid">
+          ${field('zip', country === 'CA' ? 'Postal code' : 'ZIP code', s.zip, 'autocomplete="postal-code" maxlength="12"')}
+          <label class="acct-field" for="acct-country"><span>Country</span>
+            <select id="acct-country" name="country" autocomplete="country" onchange="acctCountryChanged(this.value)">
+              <option value="US"${country === 'US' ? ' selected' : ''}>United States</option>
+              <option value="CA"${country === 'CA' ? ' selected' : ''}>Canada</option>
+            </select></label>
+        </div>
+        ${field('phone', 'Phone (optional, for the carrier)', s.phone, 'type="tel" autocomplete="tel" maxlength="25"')}
+        <p class="acct-fine">Only used to mail a prize you win. Never shared or sold. You can remove it any time.</p>
+        <div class="acct-actions">
+          <button type="submit" class="acct-btn">Save</button>
+          ${p.shipping ? '<button type="button" class="acct-link acct-link--danger" onclick="acctRemoveAddress()">Remove my address</button>' : ''}
+        </div>
+        <div class="acct-msg" id="acct-address-msg" role="status"></div>
+      </form>
+    </section>
+
+    <div class="acct-footer">
+      <button type="button" class="acct-link" onclick="closeAccount(); showSettings()">Settings, export &amp; delete account</button>
+      <button type="button" class="acct-link acct-link--danger" onclick="closeAccount(); handleLogout()">Log out</button>
+    </div>
+  `;
+}
+
+function acctCountryChanged(c) {
+  const sel = document.getElementById('acct-state');
+  sel.innerHTML = `<option value="">${c === 'CA' ? 'Province' : 'State'}</option>` + _ACCT_STATES[c].map(v => `<option>${v}</option>`).join('');
+  sel.previousElementSibling.textContent = c === 'CA' ? 'Province' : 'State';
+  document.querySelector('label[for="acct-zip"] span').textContent = c === 'CA' ? 'Postal code' : 'ZIP code';
+}
+
+function _acctMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle('acct-msg--ok', !!ok);
+  el.classList.toggle('acct-msg--err', !ok);
+}
+
+async function acctSaveEmail(form) {
+  const input = form.querySelector('input');
+  const email = input.value.trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { _acctMsg('acct-email-msg', 'That email address does not look right.'); input.focus(); return; }
+  try {
+    const res = await authFetch('/api/auth/email', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not save.');
+    // The menu reads the email from the local copy of the account.
+    const users = getUsers();
+    const key = (getCurrentUser() || '').toLowerCase();
+    if (users[key]) { users[key].email = data.email; localStorage.setItem('cardHuddleUsers', JSON.stringify(users)); }
+    const changed = (_acctProfile.email || '') !== data.email;
+    _acctProfile.email = data.email;
+    if (changed) _acctProfile.weeklyEmail = null;
+    _renderAccount();
+    _acctMsg('acct-email-msg', data.email ? 'Saved.' : 'Email removed.', true);
+  } catch (err) {
+    _acctMsg('acct-email-msg', err.message);
+  }
+}
+
+async function acctSubscribeWeekly(btn) {
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/digest/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: _acctProfile.email, source: 'account' }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not subscribe.');
+    _acctProfile.weeklyEmail = data.status;
+    _renderAccount();
+  } catch (err) {
+    btn.disabled = false;
+    _acctMsg('acct-email-msg', err.message);
+  }
+}
+
+function _acctAddress() {
+  const v = (id) => (document.getElementById('acct-' + id) || {}).value || '';
+  return { name: v('name'), line1: v('line1'), line2: v('line2'), city: v('city'), state: v('state'), zip: v('zip'), country: v('country'), phone: v('phone') };
+}
+
+async function acctSaveGiveaways() {
+  const optIn = document.getElementById('acct-optin').checked;
+  const addr = _acctAddress();
+  const blank = !addr.name && !addr.line1 && !addr.city && !addr.zip;
+  document.querySelectorAll('#acct-address .acct-field--bad').forEach(el => el.classList.remove('acct-field--bad'));
+  try {
+    const res = await authFetch('/api/account/giveaways', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ optIn, shipping: blank ? null : addr }) });
+    const data = await res.json();
+    if (!res.ok) {
+      const el = data.field && document.getElementById('acct-' + data.field);
+      if (el) { el.closest('.acct-field').classList.add('acct-field--bad'); el.focus(); }
+      throw new Error(data.error || 'Could not save.');
+    }
+    Object.assign(_acctProfile, { giveaways: data.giveaways, shipping: data.shipping, shippingUpdatedAt: data.shippingUpdatedAt });
+    _renderAccount();
+    _acctMsg('acct-address-msg', data.giveaways ? "You're in! We'll email you if you win." : 'Saved. You are not entered in giveaways.', true);
+  } catch (err) {
+    _acctMsg('acct-address-msg', err.message);
+  }
+}
+
+async function acctRemoveAddress() {
+  if (!confirm('Remove your shipping address? This also takes you out of giveaways.')) return;
+  try {
+    const res = await authFetch('/api/account/shipping', { method: 'DELETE' });
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not remove it.');
+    Object.assign(_acctProfile, { giveaways: false, shipping: null, shippingUpdatedAt: null });
+    _renderAccount();
+    _acctMsg('acct-address-msg', 'Address removed.', true);
+  } catch (err) {
+    _acctMsg('acct-address-msg', err.message);
+  }
 }
 
 function closeDropdownOutside(e) {
