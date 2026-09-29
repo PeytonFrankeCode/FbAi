@@ -9007,7 +9007,7 @@ function _d1UsageBody(req, res) {
 const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's own count, checked by test/set-key.test.js so it
 // cannot drift silently away from what build-landing-pages.js emits.
-const INDEXABLE_URLS = 4651;
+const INDEXABLE_URLS = 5756;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
@@ -17209,19 +17209,27 @@ async function buildPriceBlocks() {
 }
 
 
-// subsets/attribution.json is { product: { subset slug: [card keys] } }; the
-// join wants key -> slug. Inverted once per product and kept, since the cron
-// asks about the same few hundred products for thousands of sales.
+// subsets/attribution.json is packed (see build-landing-pages.js):
+// { players: [...], products: { id: { slug: "<player index>|<number>\n..." } } }.
+// The join wants `player|number` -> slug. Unpacked once per product and kept,
+// since the cron asks about the same few hundred products for thousands of sales.
 const _attrInverted = new WeakMap();
 function _attributionFor(attribution, productId) {
-  const groups = attribution && attribution[productId];
+  const groups = attribution && attribution.products && attribution.products[productId];
   if (!groups) return null;
   let byProduct = _attrInverted.get(attribution);
   if (!byProduct) _attrInverted.set(attribution, byProduct = new Map());
   let map = byProduct.get(productId);
   if (!map) {
     map = {};
-    for (const [slug, keys] of Object.entries(groups)) for (const k of keys) map[k] = slug;
+    const players = attribution.players || [];
+    for (const [slug, packed] of Object.entries(groups)) {
+      for (const k of String(packed).split('\n')) {
+        const at = k.indexOf('|');
+        const pl = players[Number(k.slice(0, at))];
+        if (pl != null) map[`${pl}|${k.slice(at + 1)}`] = slug;
+      }
+    }
     byProduct.set(productId, map);
   }
   return map;
@@ -17753,7 +17761,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _alertFinds, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

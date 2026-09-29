@@ -1481,8 +1481,26 @@ function main() {
     if (Object.keys(m).length) subsetAttribution[cl.id] = m;
   }
   fs.mkdirSync(path.join(DATA_DIR, 'subsets'), { recursive: true });
+  // Packed for size. Keys are `player|number`, and the same players recur in
+  // hundreds of products, so each player is written once in `players` and a
+  // key becomes `<index>|<number>`; a subset's keys are one newline-joined
+  // string. { players: [...], products: { id: { slug: "12|4\n97|5" } } }.
+  // server.js (_attributionFor) and subset-attribution.test.js unpack it.
+  const attrPlayers = [], attrIdx = new Map();
+  const packed = {};
+  for (const [id, groups] of Object.entries(subsetAttribution)) {
+    packed[id] = {};
+    for (const [slug, keys] of Object.entries(groups)) {
+      packed[id][slug] = keys.map(k => {
+        const at = k.lastIndexOf('|');
+        const pl = k.slice(0, at);
+        if (!attrIdx.has(pl)) { attrIdx.set(pl, attrPlayers.length); attrPlayers.push(pl); }
+        return `${attrIdx.get(pl)}|${k.slice(at + 1)}`;
+      }).join('\n');
+    }
+  }
   fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'attribution.json'),
-    JSON.stringify(subsetAttribution) + '\n');
+    JSON.stringify({ players: attrPlayers, products: packed }) + '\n');
   fs.writeFileSync(path.join(DATA_DIR, 'subsets', 'ambiguous.json'),
     JSON.stringify(subsetAmbiguous) + '\n');
 
