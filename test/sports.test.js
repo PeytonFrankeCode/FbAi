@@ -87,6 +87,18 @@ check('both searches read their results through the sports turned on',
     all.results.length === 4 && !Object.keys(all.hidden).length && run(['basketball'])._sportFilterResults([L('A NBA'), L('B Basketball'), L('C')]).sport === 'basketball');
 }
 check('the choice follows the account to other devices', /'chSports',\n\];/.test(js) && /applySport\(\);\s*const picker = document\.getElementById\('sports-picker'\)/.test(js));
+// Offline packs in Settings: a sport pick above the years, each sport's files.
+{
+  const opKey = new Function(`${js.slice(js.indexOf('function _opKey('), js.indexOf('function _setOfflineYear('))}; return _opKey;`)();
+  check('offline packs are saved per sport, football under its old keys so existing packs stay saved',
+    opKey('football', 2024) === '2024' && opKey('basketball', 2023) === 'basketball:2023' && opKey('baseball', 2023) !== opKey('basketball', 2023));
+  const panel = js.slice(js.indexOf('async function initOfflinePanel('), js.indexOf('function _yearProductUrls('));
+  check('  ...the sport pick sits above the years, shown when more than one sport is on',
+    /host\.innerHTML = pills \+/.test(panel) && /prefs\.enabled\.length < 2 \? ''/.test(panel) && /onclick="setOfflineSport\('\$\{id\}'\)"/.test(panel));
+  check('  ...and a pack caches its own sport\'s folder', /const dir = CHECKLIST_DIRS\[window\.__offlineSport \|\| 'football'\];/.test(js)
+    && /fetch\(`\$\{dir\}\/index\.json`\)/.test(panel));
+}
+
 check('the sport code runs before the start-up code that calls it', js.indexOf('var SPORTS_KEY') < js.indexOf('\napplySport();\nmaybeAskSports();'));
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sports checks passed');
