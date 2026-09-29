@@ -1830,8 +1830,39 @@ function _hideHomeContent() {
   if (typeof aboutSection !== 'undefined' && aboutSection) aboutSection.classList.add('hidden');
 }
 
+// Every lookup counted in Google Analytics, not just the page load.
+//
+// The site is one page: a search swaps the results without loading anything,
+// so GA saw one pageview for a whole session. Someone pricing cards at a show
+// runs a hundred lookups an hour and looked like a single visit. Each search
+// now sends GA4's standard "search" event (its search terms report reads it)
+// and a pageview of its own. The same search fired twice within a moment
+// (a button and a form submit, say) is counted once.
+let _lastTracked = { key: '', at: 0 };
+function _trackSearch(query, kind) {
+  const q = String(query || '').trim();
+  if (!q || typeof gtag !== 'function') return false;
+  const key = `${kind}|${q.toLowerCase()}`;
+  const now = Date.now();
+  if (key === _lastTracked.key && now - _lastTracked.at < 1500) return false;
+  _lastTracked = { key, at: now, seen: _lastTracked.seen };
+  // A link that opened on this search (/?q=...) already had its pageview
+  // from the page load itself.
+  const opened = !_lastTracked.seen && new URLSearchParams(location.search).get('q') === q;
+  _lastTracked.seen = true;
+  try {
+    gtag('event', 'search', { search_term: q, search_kind: kind });
+    if (!opened) gtag('event', 'page_view', {
+      page_title: `Search: ${q}`,
+      page_location: `${location.origin}/?q=${encodeURIComponent(q)}`,
+    });
+  } catch (_) { /* analytics never breaks a search */ }
+  return true;
+}
+
 async function fetchDirectSearch(query) {
   _hideHomeContent();
+  _trackSearch(query, currentMode === 'sold' ? 'sold' : 'forsale');
   currentSearchMode = 'direct';
   currentResults = [];
 
@@ -2147,6 +2178,8 @@ function renderStatsBar(results, isSold) {
 // soft note" — never a dead-end error wall.
 async function performSearch(query, opts = {}) {
   _hideHomeContent();
+  // Retries (the For Sale fallback) are the same lookup, not another one.
+  if (!opts.fallback) _trackSearch(query, 'version');
   setLoading(true);
   showSkeleton();
   grid.innerHTML = '';
