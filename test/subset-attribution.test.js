@@ -79,15 +79,35 @@ const attrPath = path.join(ROOT, 'public', 'data', 'subsets', 'attribution.json'
 if (!fs.existsSync(attrPath)) {
   console.log('SKIP  subset attribution map  — run `npm run build:pages` first (CI does)');
 } else {
-  // On disk it is { product: { slug: [keys] } }; the checks read key -> slug.
-  const grouped = JSON.parse(fs.readFileSync(attrPath, 'utf8'));
+  // On disk it is packed ({ players, products: { id: { slug: "i|n\n..." } } });
+  // the checks read key -> slug, unpacked the way server.js unpacks it.
+  const packed = JSON.parse(fs.readFileSync(attrPath, 'utf8'));
   const attr = {};
-  for (const [id, groups] of Object.entries(grouped)) {
+  for (const [id, groups] of Object.entries(packed.products || {})) {
     attr[id] = {};
-    for (const [slug, ks] of Object.entries(groups)) for (const k of ks) attr[id][k] = slug;
+    for (const [slug, str] of Object.entries(groups)) {
+      for (const k of String(str).split('\n')) {
+        const at = k.indexOf('|');
+        attr[id][`${packed.players[Number(k.slice(0, at))]}|${k.slice(at + 1)}`] = slug;
+      }
+    }
   }
   const products = Object.keys(attr);
   const keys = products.reduce((n, id) => n + Object.keys(attr[id]).length, 0);
+
+  // server.js unpacks the file itself; it must read the same key -> slug
+  // pairs the checks below are made against, or the cron prices nothing.
+  {
+    process.env.CF_WORKER = '1';
+    const { _attributionFor } = require(path.join(ROOT, 'server.js'));
+    const id = Object.keys(attr).find(x => Object.keys(attr[x]).length > 50);
+    const got = _attributionFor(packed, id) || {};
+    const want = attr[id];
+    const same = Object.keys(want).length === Object.keys(got).length
+      && Object.entries(want).every(([k, v]) => got[k] === v);
+    check('server.js reads the packed map the way it was written', same,
+      `${id}: ${Object.keys(got).length} keys unpacked, ${Object.keys(want).length} expected`);
+  }
 
   check('the attribution map was built', products.length > 100 && keys > 10000,
     `${products.length} products, ${keys} card keys`);
