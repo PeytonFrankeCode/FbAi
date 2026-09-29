@@ -1,0 +1,3184 @@
+{
+  "products": [
+    {
+      "id": "2026-27-topps-flagship-basketball",
+      "name": "2026-27 Topps Flagship Basketball",
+      "year": 2026,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-donruss-wnba-basketball",
+      "name": "2026 Donruss WNBA Basketball",
+      "year": 2026,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 649
+    },
+    {
+      "id": "2026-panini-crown-royale-wnba-basketball",
+      "name": "2026 Panini Crown Royale WNBA Basketball",
+      "year": 2026,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-panini-instant-wnba-draft-night-basketball",
+      "name": "2026 Panini Instant WNBA Draft Night Basketball",
+      "year": 2026,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 18
+    },
+    {
+      "id": "2026-panini-prizm-wnba-basketball",
+      "name": "2026 Panini Prizm WNBA Basketball",
+      "year": 2026,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 402
+    },
+    {
+      "id": "2025-26-bowman-basketball",
+      "name": "2025-26 Bowman Basketball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1503,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-bowman-mega-box-basketball",
+      "name": "2025-26 Bowman Mega Box Basketball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 541
+    },
+    {
+      "id": "2025-26-bowman-sapphire-basketball",
+      "name": "2025-26 Bowman Sapphire Basketball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 447
+    },
+    {
+      "id": "2025-26-bowman-university-best-basketball",
+      "name": "2025-26 Bowman University Best Basketball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 618,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-donruss-basketball",
+      "name": "2025-26 Donruss Basketball",
+      "year": 2025,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 47,
+      "totalCards": 2551
+    },
+    {
+      "id": "2025-26-panini-contenders-euroleague-basketball",
+      "name": "2025-26 Panini Contenders EuroLeague Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 820
+    },
+    {
+      "id": "2025-26-panini-court-kings-basketball",
+      "name": "2025-26 Panini Court Kings Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 39,
+      "totalCards": 939
+    },
+    {
+      "id": "2025-26-panini-noir-basketball",
+      "name": "2025-26 Panini Noir Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 47,
+      "totalCards": 1283,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-panini-origins-basketball",
+      "name": "2025-26 Panini Origins Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1037
+    },
+    {
+      "id": "2025-26-panini-origins-euroleague-basketball",
+      "name": "2025-26 Panini Origins EuroLeague Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 734,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-panini-prizm-basketball",
+      "name": "2025-26 Panini Prizm Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 1133
+    },
+    {
+      "id": "2025-26-panini-select-basketball",
+      "name": "2025-26 Panini Select Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+    },
+    {
+      "id": "2025-26-panini-select-euroleague-basketball",
+      "name": "2025-26 Panini Select EuroLeague Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 1111
+    },
+    {
+      "id": "2025-26-panini-signature-series-basketball",
+      "name": "2025-26 Panini Signature Series Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 772
+    },
+    {
+      "id": "2025-26-topps-basketball",
+      "name": "2025-26 Topps Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 54,
+      "totalCards": 2980,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-chrome-basketball",
+      "name": "2025-26 Topps Chrome Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 42,
+      "totalCards": 1252,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-chrome-black-basketball",
+      "name": "2025-26 Topps Chrome Black Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 556
+    },
+    {
+      "id": "2025-26-topps-chrome-cactus-jack-basketball",
+      "name": "2025-26 Topps Chrome Cactus Jack Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 338,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-chrome-sapphire-basketball",
+      "name": "2025-26 Topps Chrome Sapphire Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 536,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-chrome-update-sapphire-basketball",
+      "name": "2025-26 Topps Chrome Update Sapphire Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 354
+    },
+    {
+      "id": "2025-26-topps-chrome-update-series-basketball",
+      "name": "2025-26 Topps Chrome Update Series Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1194
+    },
+    {
+      "id": "2025-26-topps-cosmic-chrome-basketball",
+      "name": "2025-26 Topps Cosmic Chrome Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 777
+    },
+    {
+      "id": "2025-26-topps-definitive-collection-basketball",
+      "name": "2025-26 Topps Definitive Collection Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 979
+    },
+    {
+      "id": "2025-26-topps-finest-basketball",
+      "name": "2025-26 Topps Finest Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 764
+    },
+    {
+      "id": "2025-26-topps-holiday-basketball",
+      "name": "2025-26 Topps Holiday Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 655
+    },
+    {
+      "id": "2025-26-topps-inception-basketball",
+      "name": "2025-26 Topps Inception Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 488,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-midnight-basketball",
+      "name": "2025-26 Topps Midnight Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 593
+    },
+    {
+      "id": "2025-26-topps-motif-basketball",
+      "name": "2025-26 Topps Motif Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 796,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-nba-hoops-basketball",
+      "name": "2025-26 Topps NBA Hoops Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 981,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-nbl-basketball",
+      "name": "2025-26 Topps NBL Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 323
+    },
+    {
+      "id": "2025-26-topps-pristine-basketball",
+      "name": "2025-26 Topps Pristine Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 717
+    },
+    {
+      "id": "2025-26-topps-signature-class-basketball",
+      "name": "2025-26 Topps Signature Class Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1062
+    },
+    {
+      "id": "2025-26-topps-three-basketball",
+      "name": "2025-26 Topps Three Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 1026,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-26-topps-x-bob-ross-the-joy-of-basketball",
+      "name": "2025-26 Topps X Bob Ross The Joy of Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+    },
+    {
+      "id": "2025-donruss-wnba-basketball",
+      "name": "2025 Donruss WNBA Basketball",
+      "year": 2025,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 553
+    },
+    {
+      "id": "2025-leaf-glory-of-the-game-basketball",
+      "name": "2025 Leaf Glory of the Game Basketball",
+      "year": 2025,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 421,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-panini-impeccable-wnba-basketball",
+      "name": "2025 Panini Impeccable WNBA Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 493
+    },
+    {
+      "id": "2025-panini-one-and-one-wnba-basketball",
+      "name": "2025 Panini One and One WNBA Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 332
+    },
+    {
+      "id": "2025-panini-prizm-wnba-basketball",
+      "name": "2025 Panini Prizm WNBA Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 478
+    },
+    {
+      "id": "2025-panini-select-wnba-basketball",
+      "name": "2025 Panini Select WNBA Basketball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 548
+    },
+    {
+      "id": "2025-topps-chrome-mcdonald-s-all-american-basketball",
+      "name": "2025 Topps Chrome McDonald’s All American Basketball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 400
+    },
+    {
+      "id": "2024-25-bowman-best-university-basketball",
+      "name": "2024-25 Bowman Best University Basketball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 426,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-25-bowman-chrome-university-basketball",
+      "name": "2024-25 Bowman Chrome University Basketball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 620
+    },
+    {
+      "id": "2024-25-bowman-university-chrome-sapphire-basketball",
+      "name": "2024-25 Bowman University Chrome Sapphire Basketball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 234
+    },
+    {
+      "id": "2024-25-donruss-basketball",
+      "name": "2024-25 Donruss Basketball",
+      "year": 2024,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1028
+    },
+    {
+      "id": "2024-25-donruss-euroleague-basketball",
+      "name": "2024-25 Donruss EuroLeague Basketball",
+      "year": 2024,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 693
+    },
+    {
+      "id": "2024-25-donruss-optic-basketball",
+      "name": "2024-25 Donruss Optic Basketball",
+      "year": 2024,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 35,
+      "totalCards": 1136
+    },
+    {
+      "id": "2024-25-donruss-optic-premium-factory-set-basketball",
+      "name": "2024-25 Donruss Optic Premium Basketball Factory Set",
+      "year": 2024,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 312
+    },
+    {
+      "id": "2024-25-nba-hoops-basketball",
+      "name": "2024-25 NBA Hoops Basketball",
+      "year": 2024,
+      "brand": "Hoops",
+      "sport": "Basketball",
+      "setCount": 40,
+      "totalCards": 1254
+    },
+    {
+      "id": "2024-25-panini-court-kings-basketball",
+      "name": "2024-25 Panini Court Kings Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 32,
+      "totalCards": 1025
+    },
+    {
+      "id": "2024-25-panini-crown-royale-euroleague-basketball",
+      "name": "2024-25 Panini Crown Royale EuroLeague Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 703
+    },
+    {
+      "id": "2024-25-panini-eminence-basketball",
+      "name": "2024-25 Panini Eminence Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 63,
+      "totalCards": 1200
+    },
+    {
+      "id": "2024-25-panini-flawless-basketball",
+      "name": "2024-25 Panini Flawless Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 69,
+      "totalCards": 2424
+    },
+    {
+      "id": "2024-25-panini-haunted-hoops-basketball",
+      "name": "2024-25 Panini Haunted Hoops Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 325
+    },
+    {
+      "id": "2024-25-panini-immaculate-collection-basketball",
+      "name": "2024-25 Panini Immaculate Collection Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 115,
+      "totalCards": 3514
+    },
+    {
+      "id": "2024-25-panini-mosaic-basketball",
+      "name": "2024-25 Panini Mosaic Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 48,
+      "totalCards": 1634
+    },
+    {
+      "id": "2024-25-panini-national-treasures-basketball",
+      "name": "2024-25 Panini National Treasures Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 88,
+      "totalCards": 2358
+    },
+    {
+      "id": "2024-25-panini-noir-basketball",
+      "name": "2024-25 Panini Noir Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 73,
+      "totalCards": 1736
+    },
+    {
+      "id": "2024-25-panini-obsidian-nba-basketball",
+      "name": "2024-25 Panini Obsidian NBA Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 39,
+      "totalCards": 1114
+    },
+    {
+      "id": "2024-25-panini-one-and-one-basketball",
+      "name": "2024-25 Panini One and One Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 59,
+      "totalCards": 1166
+    },
+    {
+      "id": "2024-25-panini-origins-basketball",
+      "name": "2024-25 Panini Origins Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 45,
+      "totalCards": 957
+    },
+    {
+      "id": "2024-25-panini-photogenic-basketball",
+      "name": "2024-25 Panini PhotoGenic Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 574
+    },
+    {
+      "id": "2024-25-panini-prizm-basketball",
+      "name": "2024-25 Panini Prizm Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 32,
+      "totalCards": 1333
+    },
+    {
+      "id": "2024-25-panini-prizm-black-basketball",
+      "name": "2024-25 Panini Prizm Black Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 47,
+      "totalCards": 1903
+    },
+    {
+      "id": "2024-25-panini-prizm-deca-basketball",
+      "name": "2024-25 Panini Prizm Deca Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 789
+    },
+    {
+      "id": "2024-25-panini-prizm-euroleague-basketball",
+      "name": "2024-25 Panini Prizm EuroLeague Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 476
+    },
+    {
+      "id": "2024-25-panini-prizm-monopoly-basketball",
+      "name": "2024-25 Panini Prizm Monopoly Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 211,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-25-panini-prizm-premium-factory-set-basketball",
+      "name": "2024-25 Panini Prizm Premium Basketball Factory Set",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 310
+    },
+    {
+      "id": "2024-25-panini-revolution-basketball",
+      "name": "2024-25 Panini Revolution Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 894
+    },
+    {
+      "id": "2024-25-panini-select-basketball",
+      "name": "2024-25 Panini Select Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 48,
+      "totalCards": 1426,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-25-panini-silhouette-basketball",
+      "name": "2024-25 Panini Silhouette Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 70,
+      "totalCards": 2613
+    },
+    {
+      "id": "2024-25-panini-totally-certified-basketball",
+      "name": "2024-25 Panini Totally Certified Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 967
+    },
+    {
+      "id": "2024-25-topps-chrome-basketball",
+      "name": "2024-25 Topps Chrome Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 879,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-25-topps-chrome-nbl-basketball",
+      "name": "2024-25 Topps Chrome NBL Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 311
+    },
+    {
+      "id": "2024-25-topps-chrome-sapphire-basketball",
+      "name": "2024-25 Topps Chrome Sapphire Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 404
+    },
+    {
+      "id": "2024-25-topps-finest-basketball",
+      "name": "2024-25 Topps Finest Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 738,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-25-topps-g-league-basketball",
+      "name": "2024-25 Topps G League Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 300
+    },
+    {
+      "id": "2024-25-topps-inception-basketball",
+      "name": "2024-25 Topps Inception Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 391,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-panini-caitlin-clark-collection-basketball",
+      "name": "2024 Panini Caitlin Clark Collection Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 62
+    },
+    {
+      "id": "2024-panini-origins-wnba-basketball",
+      "name": "2024 Panini Origins WNBA Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 399
+    },
+    {
+      "id": "2024-panini-prizm-draft-picks-basketball",
+      "name": "2024 Panini Prizm Draft Picks Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 42,
+      "totalCards": 1121
+    },
+    {
+      "id": "2024-panini-prizm-monopoly-wnba-basketball",
+      "name": "2024 Panini Prizm Monopoly WNBA Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 136
+    },
+    {
+      "id": "2024-panini-prizm-wnba-basketball",
+      "name": "2024 Panini Prizm WNBA Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 335
+    },
+    {
+      "id": "2024-panini-rookie-royalty-wnba-basketball",
+      "name": "2024 Panini Rookie Royalty WNBA Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 52
+    },
+    {
+      "id": "2024-panini-select-wnba-basketball",
+      "name": "2024 Panini Select WNBA Basketball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 550
+    },
+    {
+      "id": "2024-topps-chrome-mcdonald-s-all-american-basketball",
+      "name": "2024 Topps Chrome McDonald’s All American Basketball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 489
+    },
+    {
+      "id": "2023-24-bowman-best-university-basketball",
+      "name": "2023-24 Bowman Best University Basketball",
+      "year": 2023,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 367
+    },
+    {
+      "id": "2023-24-bowman-chrome-sapphire-university-basketball",
+      "name": "2023-24 Bowman Chrome Sapphire University Basketball",
+      "year": 2023,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 134
+    },
+    {
+      "id": "2023-24-bowman-university-chrome-basketball",
+      "name": "2023-24 Bowman University Chrome Basketball",
+      "year": 2023,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 398
+    },
+    {
+      "id": "2023-24-donruss-basketball",
+      "name": "2023-24 Donruss Basketball",
+      "year": 2023,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 803
+    },
+    {
+      "id": "2023-24-donruss-elite-basketball",
+      "name": "2023-24 Donruss Elite Basketball",
+      "year": 2023,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 794,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-donruss-euroleague-basketball",
+      "name": "2023-24 Donruss EuroLeague Basketball",
+      "year": 2023,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 448
+    },
+    {
+      "id": "2023-24-donruss-optic-basketball",
+      "name": "2023-24 Donruss Optic Basketball",
+      "year": 2023,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 973
+    },
+    {
+      "id": "2023-24-donruss-optic-premium-factory-set-basketball",
+      "name": "2023-24 Donruss Optic Premium Basketball Factory Set",
+      "year": 2023,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 260
+    },
+    {
+      "id": "2023-24-leaf-ink-basketball",
+      "name": "2023-24 Leaf Ink Basketball",
+      "year": 2023,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 89
+    },
+    {
+      "id": "2023-24-nba-hoops-premium-stock-basketball",
+      "name": "2023-24 NBA Hoops Premium Stock Basketball",
+      "year": 2023,
+      "brand": "Hoops",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 625
+    },
+    {
+      "id": "2023-24-panini-black-basketball",
+      "name": "2023-24 Panini Black Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 197
+    },
+    {
+      "id": "2023-24-panini-contenders-basketball",
+      "name": "2023-24 Panini Contenders Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 908
+    },
+    {
+      "id": "2023-24-panini-contenders-optic-basketball",
+      "name": "2023-24 Panini Contenders Optic Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 521
+    },
+    {
+      "id": "2023-24-panini-court-kings-basketball",
+      "name": "2023-24 Panini Court Kings Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 791
+    },
+    {
+      "id": "2023-24-panini-crown-royale-basketball",
+      "name": "2023-24 Panini Crown Royale Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 700
+    },
+    {
+      "id": "2023-24-panini-crown-royale-euroleague-basketball",
+      "name": "2023-24 Panini Crown Royale EuroLeague Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 524,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-panini-euroleague-prizm-basketball",
+      "name": "2023-24 Panini EuroLeague Prizm Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 497
+    },
+    {
+      "id": "2023-24-panini-flawless-basketball",
+      "name": "2023-24 Panini Flawless Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 64,
+      "totalCards": 1756
+    },
+    {
+      "id": "2023-24-panini-haunted-hoops-basketball",
+      "name": "2023-24 Panini Haunted Hoops Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 299
+    },
+    {
+      "id": "2023-24-panini-immaculate-collection-basketball",
+      "name": "2023-24 Panini Immaculate Collection Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 67,
+      "totalCards": 1829,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-panini-immaculate-nba-basketball",
+      "name": "2023-24 Panini Immaculate NBA Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 91,
+      "totalCards": 2697
+    },
+    {
+      "id": "2023-24-panini-impeccable-basketball",
+      "name": "2023-24 Panini Impeccable Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 41,
+      "totalCards": 1136,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-panini-mosaic-basketball",
+      "name": "2023-24 Panini Mosaic Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 41,
+      "totalCards": 1395,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-panini-national-treasures-basketball",
+      "name": "2023-24 Panini National Treasures Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 57,
+      "totalCards": 1875
+    },
+    {
+      "id": "2023-24-panini-nba-hoops-basketball",
+      "name": "2023-24 Panini NBA Hoops Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 41,
+      "totalCards": 1287
+    },
+    {
+      "id": "2023-24-panini-noir-basketball",
+      "name": "2023-24 Panini Noir Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 55,
+      "totalCards": 1495
+    },
+    {
+      "id": "2023-24-panini-obsidian-basketball",
+      "name": "2023-24 Panini Obsidian Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 808,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-panini-one-and-one-basketball",
+      "name": "2023-24 Panini One and One Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 602
+    },
+    {
+      "id": "2023-24-panini-origins-basketball",
+      "name": "2023-24 Panini Origins Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 589
+    },
+    {
+      "id": "2023-24-panini-phoenix-basketball",
+      "name": "2023-24 Panini Phoenix Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 43,
+      "totalCards": 1264
+    },
+    {
+      "id": "2023-24-panini-photogenic-basketball",
+      "name": "2023-24 Panini PhotoGenic Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 474
+    },
+    {
+      "id": "2023-24-panini-prizm-basketball",
+      "name": "2023-24 Panini Prizm Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1053
+    },
+    {
+      "id": "2023-24-panini-prizm-deca-basketball",
+      "name": "2023-24 Panini Prizm Deca Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 648
+    },
+    {
+      "id": "2023-24-panini-prizm-draft-picks-basketball",
+      "name": "2023-24 Panini Prizm Draft Picks Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 669
+    },
+    {
+      "id": "2023-24-panini-prizm-monopoly-basketball",
+      "name": "2023-24 Panini Prizm Monopoly Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 183
+    },
+    {
+      "id": "2023-24-panini-prizm-premium-factory-set-basketball",
+      "name": "2023-24 Panini Prizm Premium Basketball Factory Set",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 310
+    },
+    {
+      "id": "2023-24-panini-recon-basketball",
+      "name": "2023-24 Panini Recon Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 841
+    },
+    {
+      "id": "2023-24-panini-revolution-basketball",
+      "name": "2023-24 Panini Revolution Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 401
+    },
+    {
+      "id": "2023-24-panini-select-basketball",
+      "name": "2023-24 Panini Select Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 41,
+      "totalCards": 1250
+    },
+    {
+      "id": "2023-24-panini-spectra-basketball",
+      "name": "2023-24 Panini Spectra Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 853
+    },
+    {
+      "id": "2023-24-topps-3-basketball",
+      "name": "2023-24 Topps 3 Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 586
+    },
+    {
+      "id": "2023-24-topps-chrome-basketball",
+      "name": "2023-24 Topps Chrome Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 841,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-24-topps-chrome-nbl-basketball",
+      "name": "2023-24 Topps Chrome NBL Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 300
+    },
+    {
+      "id": "2023-24-topps-chrome-overtime-elite-basketball",
+      "name": "2023-24 Topps Chrome Overtime Elite Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 335
+    },
+    {
+      "id": "2023-24-topps-chrome-sapphire-basketball",
+      "name": "2023-24 Topps Chrome Sapphire Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 418
+    },
+    {
+      "id": "2023-24-topps-cosmic-chrome-basketball",
+      "name": "2023-24 Topps Cosmic Chrome Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 638
+    },
+    {
+      "id": "2023-24-topps-finest-basketball",
+      "name": "2023-24 Topps Finest Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 640
+    },
+    {
+      "id": "2023-24-topps-g-league-basketball",
+      "name": "2023-24 Topps G League Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 298
+    },
+    {
+      "id": "2023-24-topps-mercury-victor-wembanyama-basketball",
+      "name": "2023-24 Topps Mercury Victor Wembanyama Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 66
+    },
+    {
+      "id": "2023-24-topps-midnight-basketball",
+      "name": "2023-24 Topps Midnight Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 446
+    },
+    {
+      "id": "2023-24-topps-motif-basketball",
+      "name": "2023-24 Topps Motif Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 686
+    },
+    {
+      "id": "2023-24-topps-nbl-basketball",
+      "name": "2023-24 Topps NBL Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 252
+    },
+    {
+      "id": "2023-24-topps-royalty-basketball",
+      "name": "2023-24 Topps Royalty Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 980
+    },
+    {
+      "id": "2023-panini-origins-wnba-basketball",
+      "name": "2023 Panini Origins WNBA Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 389,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-panini-prizm-wnba-basketball",
+      "name": "2023 Panini Prizm WNBA Basketball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 309
+    },
+    {
+      "id": "2023-topps-chrome-mcdonald-s-all-american-basketball",
+      "name": "2023 Topps Chrome McDonald’s All-American Basketball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 319
+    },
+    {
+      "id": "2022-23-bowman-university-best-basketball",
+      "name": "2022-23 Bowman University Best Basketball",
+      "year": 2022,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 366,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-bowman-university-chrome-basketball",
+      "name": "2022-23 Bowman University Chrome Basketball",
+      "year": 2022,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 343
+    },
+    {
+      "id": "2022-23-donruss-basketball",
+      "name": "2022-23 Donruss Basketball",
+      "year": 2022,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 676
+    },
+    {
+      "id": "2022-23-donruss-elite-basketball",
+      "name": "2022-23 Donruss Elite Basketball",
+      "year": 2022,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 777
+    },
+    {
+      "id": "2022-23-donruss-optic-basketball",
+      "name": "2022-23 Donruss Optic Basketball",
+      "year": 2022,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1134
+    },
+    {
+      "id": "2022-23-donruss-optic-premium-box-set-basketball",
+      "name": "2022-23 Donruss Optic Premium Box Set Basketball",
+      "year": 2022,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 275
+    },
+    {
+      "id": "2022-23-leaf-draft-basketball",
+      "name": "2022-23 Leaf Draft Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 117,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-leaf-exotic-basketball",
+      "name": "2022-23 Leaf Exotic Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 143
+    },
+    {
+      "id": "2022-23-leaf-multigraphics-basketball",
+      "name": "2022-23 Leaf MultiGraphics Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 86
+    },
+    {
+      "id": "2022-23-leaf-optichrome-basketball",
+      "name": "2022-23 Leaf Optichrome Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 316,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-leaf-signature-series-basketball",
+      "name": "2022-23 Leaf Signature Series Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 198
+    },
+    {
+      "id": "2022-23-leaf-trinity-basketball",
+      "name": "2022-23 Leaf Trinity Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 409
+    },
+    {
+      "id": "2022-23-leaf-vivid-basketball",
+      "name": "2022-23 Leaf Vivid Basketball",
+      "year": 2022,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 333
+    },
+    {
+      "id": "2022-23-panini-black-basketball",
+      "name": "2022-23 Panini Black Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 200
+    },
+    {
+      "id": "2022-23-panini-chronicles-basketball",
+      "name": "2022-23 Panini Chronicles Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 40,
+      "totalCards": 1069
+    },
+    {
+      "id": "2022-23-panini-chronicles-draft-picks-basketball",
+      "name": "2022-23 Panini Chronicles Draft Picks Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 32,
+      "totalCards": 939
+    },
+    {
+      "id": "2022-23-panini-contenders-basketball",
+      "name": "2022-23 Panini Contenders Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 701,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-contenders-optic-basketball",
+      "name": "2022-23 Panini Contenders Optic Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 515,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-court-kings-basketball",
+      "name": "2022-23 Panini Court Kings Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 817
+    },
+    {
+      "id": "2022-23-panini-crown-royale-basketball",
+      "name": "2022-23 Panini Crown Royale Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 616,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-flawless-basketball",
+      "name": "2022-23 Panini Flawless Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 45,
+      "totalCards": 1537,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-flawless-collegiate-basketball",
+      "name": "2022-23 Panini Flawless Collegiate Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 576,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-flux-basketball",
+      "name": "2022-23 Panini Flux Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 881
+    },
+    {
+      "id": "2022-23-panini-immaculate-collection-basketball",
+      "name": "2022-23 Panini Immaculate Collection Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 54,
+      "totalCards": 1813,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-immaculate-collection-collegiate-basketball",
+      "name": "2022-23 Panini Immaculate Collection Collegiate Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 415
+    },
+    {
+      "id": "2022-23-panini-impeccable-basketball",
+      "name": "2022-23 Panini Impeccable Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 836
+    },
+    {
+      "id": "2022-23-panini-monopoly-prizm-basketball",
+      "name": "2022-23 Panini Monopoly Prizm Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 93
+    },
+    {
+      "id": "2022-23-panini-mosaic-basketball",
+      "name": "2022-23 Panini Mosaic Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1213
+    },
+    {
+      "id": "2022-23-panini-national-treasures-basketball",
+      "name": "2022-23 Panini National Treasures Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 49,
+      "totalCards": 1722
+    },
+    {
+      "id": "2022-23-panini-national-treasures-collegiate-basketball",
+      "name": "2022-23 Panini National Treasures Collegiate Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 323,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-nba-hoops-basketball",
+      "name": "2022-23 Panini NBA Hoops Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1213
+    },
+    {
+      "id": "2022-23-panini-nba-hoops-premium-box-set-basketball",
+      "name": "2022-23 Panini NBA Hoops Premium Box Set Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 320
+    },
+    {
+      "id": "2022-23-panini-noir-basketball",
+      "name": "2022-23 Panini Noir Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 976
+    },
+    {
+      "id": "2022-23-panini-obsidian-basketball",
+      "name": "2022-23 Panini Obsidian Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 664
+    },
+    {
+      "id": "2022-23-panini-one-and-one-basketball",
+      "name": "2022-23 Panini One and One Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 426
+    },
+    {
+      "id": "2022-23-panini-origins-basketball",
+      "name": "2022-23 Panini Origins Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 600
+    },
+    {
+      "id": "2022-23-panini-photogenic-basketball",
+      "name": "2022-23 Panini PhotoGenic Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 399,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2022-23-panini-prizm-draft-picks-collegiate-basketball",
+      "name": "2022-23 Panini Prizm Draft Picks Collegiate Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 544
+    },
+    {
+      "id": "2022-23-panini-prizm-nba-basketball",
+      "name": "2022-23 Panini Prizm NBA Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 912
+    },
+    {
+      "id": "2022-23-panini-prizm-premium-box-set-basketball",
+      "name": "2022-23 Panini Prizm Basketball Premium Box Set",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 310
+    },
+    {
+      "id": "2022-23-panini-recon-basketball",
+      "name": "2022-23 Panini Recon Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 750
+    },
+    {
+      "id": "2022-23-panini-revolution-basketball",
+      "name": "2022-23 Panini Revolution Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 340
+    },
+    {
+      "id": "2022-23-panini-select-basketball",
+      "name": "2022-23 Panini Select Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 949
+    },
+    {
+      "id": "2022-23-panini-spectra-basketball",
+      "name": "2022-23 Panini Spectra Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 598
+    },
+    {
+      "id": "2022-23-topps-chrome-nbl-basketball",
+      "name": "2022-23 Topps Chrome NBL Basketball",
+      "year": 2022,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 259
+    },
+    {
+      "id": "2022-23-topps-chrome-ote-basketball",
+      "name": "2022-23 Topps Chrome OTE Basketball",
+      "year": 2022,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 280
+    },
+    {
+      "id": "2022-23-topps-chrome-sapphire-edition-ote-basketball",
+      "name": "2022-23 Topps Chrome Sapphire Edition OTE Basketball",
+      "year": 2022,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 146
+    },
+    {
+      "id": "2022-23-topps-nbl-basketball",
+      "name": "2022-23 Topps NBL Basketball",
+      "year": 2022,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 160
+    },
+    {
+      "id": "2022-panini-prizm-wnba-basketball",
+      "name": "2022 Panini Prizm WNBA Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 379
+    },
+    {
+      "id": "2022-panini-prizm-wnba-premium-box-set-basketball",
+      "name": "2022 Panini Prizm WNBA Premium Box Set Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 210
+    },
+    {
+      "id": "2022-panini-revolution-wnba-basketball",
+      "name": "2022 Panini Revolution WNBA Basketball",
+      "year": 2022,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 225
+    },
+    {
+      "id": "2022-topps-chrome-mcdonald-s-all-american-basketball",
+      "name": "2022 Topps Chrome McDonald’s All-American Basketball",
+      "year": 2022,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 230
+    },
+    {
+      "id": "2022-topps-x-chet-holmgren-curated-basketball",
+      "name": "2022 Topps X Chet Holmgren Curated Basketball",
+      "year": 2022,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 44
+    },
+    {
+      "id": "2021-22-bowman-university-basketball",
+      "name": "2021-22 Bowman University Basketball",
+      "year": 2021,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 428
+    },
+    {
+      "id": "2021-22-donruss-basketball",
+      "name": "2021-22 Donruss Basketball",
+      "year": 2021,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 735
+    },
+    {
+      "id": "2021-22-donruss-elite-basketball",
+      "name": "2021-22 Donruss Elite Basketball",
+      "year": 2021,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 668
+    },
+    {
+      "id": "2021-22-donruss-optic-basketball",
+      "name": "2021-22 Donruss Optic Basketball",
+      "year": 2021,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 900,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2021-22-donruss-optic-complete-box-set-basketball",
+      "name": "2021-22 Donruss Optic Basketball Complete Box Set",
+      "year": 2021,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 200
+    },
+    {
+      "id": "2021-22-leaf-memories-basketball",
+      "name": "2021-22 Leaf Memories Basketball",
+      "year": 2021,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 221
+    },
+    {
+      "id": "2021-22-leaf-metal-basketball",
+      "name": "2021-22 Leaf Metal Basketball",
+      "year": 2021,
+      "brand": "Leaf",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 258
+    },
+    {
+      "id": "2021-22-panini-black-basketball",
+      "name": "2021-22 Panini Black Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 200
+    },
+    {
+      "id": "2021-22-panini-chronicles-basketball",
+      "name": "2021-22 Panini Chronicles Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1035
+    },
+    {
+      "id": "2021-22-panini-chronicles-draft-picks-basketball",
+      "name": "2021-22 Panini Chronicles Draft Picks Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 783
+    },
+    {
+      "id": "2021-22-panini-contenders-basketball",
+      "name": "2021-22 Panini Contenders Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 851
+    },
+    {
+      "id": "2021-22-panini-contenders-optic-basketball",
+      "name": "2021-22 Panini Contenders Optic Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 542
+    },
+    {
+      "id": "2021-22-panini-court-kings-basketball",
+      "name": "2021-22 Panini Court Kings Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 32,
+      "totalCards": 843
+    },
+    {
+      "id": "2021-22-panini-crown-royale-basketball",
+      "name": "2021-22 Panini Crown Royale Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 618,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2021-22-panini-eminence-basketball",
+      "name": "2021-22 Panini Eminence Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 492
+    },
+    {
+      "id": "2021-22-panini-flawless-basketball",
+      "name": "2021-22 Panini Flawless Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 39,
+      "totalCards": 1237
+    },
+    {
+      "id": "2021-22-panini-flawless-collegiate-basketball",
+      "name": "2021-22 Panini Flawless Collegiate Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 427
+    },
+    {
+      "id": "2021-22-panini-illusions-basketball",
+      "name": "2021-22 Panini Illusions Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 788
+    },
+    {
+      "id": "2021-22-panini-immaculate-collection-basketball",
+      "name": "2021-22 Panini Immaculate Collection Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 53,
+      "totalCards": 1875
+    },
+    {
+      "id": "2021-22-panini-immaculate-collection-collegiate-basketball",
+      "name": "2021-22 Panini Immaculate Collection Collegiate Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 249
+    },
+    {
+      "id": "2021-22-panini-impeccable-basketball",
+      "name": "2021-22 Panini Impeccable Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 722
+    },
+    {
+      "id": "2021-22-panini-mosaic-basketball",
+      "name": "2021-22 Panini Mosaic Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 964
+    },
+    {
+      "id": "2021-22-panini-national-treasures-basketball",
+      "name": "2021-22 Panini National Treasures Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 49,
+      "totalCards": 1909
+    },
+    {
+      "id": "2021-22-panini-national-treasures-collegiate-basketball",
+      "name": "2021-22 Panini National Treasures Collegiate Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 313,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2021-22-panini-nba-g-league-box-set-basketball",
+      "name": "2021-22 Panini NBA G League Box Set Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 239
+    },
+    {
+      "id": "2021-22-panini-nba-hoops-basketball",
+      "name": "2021-22 Panini NBA Hoops Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 1164,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2021-22-panini-nba-sticker-card-collection-basketball",
+      "name": "2021-22 Panini NBA Sticker & Card Collection Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 100
+    },
+    {
+      "id": "2021-22-panini-noir-basketball",
+      "name": "2021-22 Panini Noir Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 1064,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2021-22-panini-obsidian-basketball",
+      "name": "2021-22 Panini Obsidian Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 692,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2021-22-panini-one-and-one-basketball",
+      "name": "2021-22 Panini One and One Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 420
+    },
+    {
+      "id": "2021-22-panini-origins-basketball",
+      "name": "2021-22 Panini Origins Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 442
+    },
+    {
+      "id": "2021-22-panini-photogenic-debut-edition-basketball",
+      "name": "2021-22 Panini PhotoGenic Debut Edition Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 290
+    },
+    {
+      "id": "2021-22-panini-prizm-basketball",
+      "name": "2021-22 Panini Prizm Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 1015
+    },
+    {
+      "id": "2021-22-panini-prizm-box-set-basketball",
+      "name": "2021-22 Panini Prizm Basketball Box Set",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 330
+    },
+    {
+      "id": "2021-22-panini-prizm-draft-picks-basketball",
+      "name": "2021-22 Panini Prizm Draft Picks Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 430
+    },
+    {
+      "id": "2021-22-panini-recon-basketball",
+      "name": "2021-22 Panini Recon Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 740
+    },
+    {
+      "id": "2021-22-panini-revolution-basketball",
+      "name": "2021-22 Panini Revolution Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 356
+    },
+    {
+      "id": "2021-22-panini-select-nba-basketball",
+      "name": "2021-22 Panini Select NBA Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 899
+    },
+    {
+      "id": "2021-22-panini-spectra-basketball",
+      "name": "2021-22 Panini Spectra Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 649
+    },
+    {
+      "id": "2021-22-pro-set-power-basketball",
+      "name": "2021-22 Pro Set Power Basketball",
+      "year": 2021,
+      "brand": "Pro",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 215
+    },
+    {
+      "id": "2021-22-topps-chrome-ote-overtime-elite-basketball",
+      "name": "2021-22 Topps Chrome OTE Overtime Elite Basketball",
+      "year": 2021,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 213
+    },
+    {
+      "id": "2021-22-topps-inception-ote-basketball",
+      "name": "2021-22 Topps Inception OTE Basketball",
+      "year": 2021,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 328
+    },
+    {
+      "id": "2021-panini-prizm-wnba-basketball",
+      "name": "2021 Panini Prizm WNBA Basketball",
+      "year": 2021,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 245
+    },
+    {
+      "id": "2021-topps-finest-basketball",
+      "name": "2021 Topps Finest Basketball",
+      "year": 2021,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 115
+    },
+    {
+      "id": "2020-21-clearly-donruss-basketball",
+      "name": "2020-21 Clearly Donruss Basketball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 200
+    },
+    {
+      "id": "2020-21-donruss-basketball",
+      "name": "2020-21 Donruss Basketball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1004
+    },
+    {
+      "id": "2020-21-donruss-elite-basketball",
+      "name": "2020-21 Donruss Elite Basketball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 350
+    },
+    {
+      "id": "2020-21-donruss-optic-basketball",
+      "name": "2020-21 Donruss Optic Basketball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 776
+    },
+    {
+      "id": "2020-21-panini-absolute-memorabilia-basketball",
+      "name": "2020-21 Panini Absolute Memorabilia Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 636
+    },
+    {
+      "id": "2020-21-panini-black-basketball",
+      "name": "2020-21 Panini Black Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 196
+    },
+    {
+      "id": "2020-21-panini-certified-basketball",
+      "name": "2020-21 Panini Certified Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 550
+    },
+    {
+      "id": "2020-21-panini-chronicles-basketball",
+      "name": "2020-21 Panini Chronicles Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1039,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2020-21-panini-contenders-optic-basketball",
+      "name": "2020-21 Panini Contenders Optic Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 523
+    },
+    {
+      "id": "2020-21-panini-court-kings-basketball",
+      "name": "2020-21 Panini Court Kings Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 750
+    },
+    {
+      "id": "2020-21-panini-crown-royale-basketball",
+      "name": "2020-21 Panini Crown Royale Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 607
+    },
+    {
+      "id": "2020-21-panini-flawless-basketball",
+      "name": "2020-21 Panini Flawless Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 1178
+    },
+    {
+      "id": "2020-21-panini-flawless-collegiate-basketball",
+      "name": "2020-21 Panini Flawless Collegiate Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 398
+    },
+    {
+      "id": "2020-21-panini-flux-basketball",
+      "name": "2020-21 Panini Flux Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 939
+    },
+    {
+      "id": "2020-21-panini-illusions-basketball",
+      "name": "2020-21 Panini Illusions Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 693
+    },
+    {
+      "id": "2020-21-panini-immaculate-collection-basketball",
+      "name": "2020-21 Panini Immaculate Collection Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 46,
+      "totalCards": 1650
+    },
+    {
+      "id": "2020-21-panini-immaculate-collection-collegiate-basketball",
+      "name": "2020-21 Panini Immaculate Collection Collegiate Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 239
+    },
+    {
+      "id": "2020-21-panini-impeccable-basketball",
+      "name": "2020-21 Panini Impeccable Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 1367,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2020-21-panini-mosaic-basketball",
+      "name": "2020-21 Panini Mosaic Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 913
+    },
+    {
+      "id": "2020-21-panini-national-treasures-basketball",
+      "name": "2020-21 Panini National Treasures Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 48,
+      "totalCards": 1730
+    },
+    {
+      "id": "2020-21-panini-national-treasures-collegiate-basketball",
+      "name": "2020-21 Panini National Treasures Collegiate Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 270
+    },
+    {
+      "id": "2020-21-panini-nba-hoops-basketball",
+      "name": "2020-21 Panini NBA Hoops Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 32,
+      "totalCards": 1154
+    },
+    {
+      "id": "2020-21-panini-nba-hoops-premium-basketball",
+      "name": "2020-21 Panini NBA Hoops Premium Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 290
+    },
+    {
+      "id": "2020-21-panini-nba-stickers-basketball",
+      "name": "2020-21 Panini NBA Stickers Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 100
+    },
+    {
+      "id": "2020-21-panini-noir-basketball",
+      "name": "2020-21 Panini Noir Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 1050
+    },
+    {
+      "id": "2020-21-panini-obsidian-basketball",
+      "name": "2020-21 Panini Obsidian Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 653,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2020-21-panini-one-and-one-basketball",
+      "name": "2020-21 Panini One and One Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 393
+    },
+    {
+      "id": "2020-21-panini-origins-basketball",
+      "name": "2020-21 Panini Origins Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 341
+    },
+    {
+      "id": "2020-21-panini-prizm-basketball",
+      "name": "2020-21 Panini Prizm Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 1014
+    },
+    {
+      "id": "2020-21-panini-prizm-draft-picks-basketball",
+      "name": "2020-21 Panini Prizm Draft Picks Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 246
+    },
+    {
+      "id": "2020-21-panini-recon-basketball",
+      "name": "2020-21 Panini Recon Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 650
+    },
+    {
+      "id": "2020-21-panini-revolution-basketball",
+      "name": "2020-21 Panini Revolution Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 320
+    },
+    {
+      "id": "2020-21-panini-select-basketball",
+      "name": "2020-21 Panini Select Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 899
+    },
+    {
+      "id": "2020-21-panini-spectra-basketball",
+      "name": "2020-21 Panini Spectra Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 521
+    },
+    {
+      "id": "2020-clearly-donruss-basketball",
+      "name": "2020 Clearly Donruss Basketball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 200
+    },
+    {
+      "id": "2020-panini-contenders-draft-picks-basketball",
+      "name": "2020 Panini Contenders Draft Picks Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 625
+    },
+    {
+      "id": "2020-panini-prizm-wnba-basketball",
+      "name": "2020 Panini Prizm WNBA Basketball",
+      "year": 2020,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 247
+    },
+    {
+      "id": "2019-20-donruss-basketball",
+      "name": "2019-20 Donruss Basketball",
+      "year": 2019,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1063
+    },
+    {
+      "id": "2019-20-donruss-elite-basketball",
+      "name": "2019-20 Donruss Elite Basketball",
+      "year": 2019,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 348
+    },
+    {
+      "id": "2019-20-donruss-optic-basketball",
+      "name": "2019-20 Donruss Optic Basketball",
+      "year": 2019,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 812
+    },
+    {
+      "id": "2019-20-nba-hoops-premium-stock-basketball",
+      "name": "2019-20 NBA Hoops Premium Stock Basketball",
+      "year": 2019,
+      "brand": "Hoops",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 649
+    },
+    {
+      "id": "2019-20-panini-absolute-memorabilia-basketball",
+      "name": "2019-20 Panini Absolute Memorabilia Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 656,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-20-panini-black-basketball",
+      "name": "2019-20 Panini Black Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 150
+    },
+    {
+      "id": "2019-20-panini-certified-basketball",
+      "name": "2019-20 Panini Certified Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 544
+    },
+    {
+      "id": "2019-20-panini-chronicles-basketball",
+      "name": "2019-20 Panini Chronicles Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 35,
+      "totalCards": 990,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-20-panini-contenders-basketball",
+      "name": "2019-20 Panini Contenders Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 901
+    },
+    {
+      "id": "2019-20-panini-contenders-draft-picks-ncaa-basketball",
+      "name": "2019-20 Panini Contenders Draft Picks NCAA Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 435
+    },
+    {
+      "id": "2019-20-panini-contenders-optic-basketball",
+      "name": "2019-20 Panini Contenders Optic Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 480,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-20-panini-court-kings-basketball",
+      "name": "2019-20 Panini Court Kings Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 789
+    },
+    {
+      "id": "2019-20-panini-crown-royale-basketball",
+      "name": "2019-20 Panini Crown Royale Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 621
+    },
+    {
+      "id": "2019-20-panini-eminence-basketball",
+      "name": "2019-20 Panini Eminence Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 457
+    },
+    {
+      "id": "2019-20-panini-encased-basketball",
+      "name": "2019-20 Panini Encased Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 592
+    },
+    {
+      "id": "2019-20-panini-flawless-basketball",
+      "name": "2019-20 Panini Flawless Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 2062
+    },
+    {
+      "id": "2019-20-panini-flawless-collegiate-basketball",
+      "name": "2019-20 Panini Flawless Collegiate Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 608
+    },
+    {
+      "id": "2019-20-panini-illusions-basketball",
+      "name": "2019-20 Panini Illusions Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 719
+    },
+    {
+      "id": "2019-20-panini-immaculate-collection-basketball",
+      "name": "2019-20 Panini Immaculate Collection Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 44,
+      "totalCards": 2571
+    },
+    {
+      "id": "2019-20-panini-immaculate-collection-collegiate-basketball",
+      "name": "2019-20 Panini Immaculate Collection Collegiate Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 269
+    },
+    {
+      "id": "2019-20-panini-impeccable-basketball",
+      "name": "2019-20 Panini Impeccable Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 734
+    },
+    {
+      "id": "2019-20-panini-mosaic-nba-basketball",
+      "name": "2019-20 Panini Mosaic NBA Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 803
+    },
+    {
+      "id": "2019-20-panini-national-treasures-basketball",
+      "name": "2019-20 Panini National Treasures Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 44,
+      "totalCards": 2429
+    },
+    {
+      "id": "2019-20-panini-national-treasures-collegiate-basketball",
+      "name": "2019-20 Panini National Treasures Collegiate Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 271
+    },
+    {
+      "id": "2019-20-panini-nba-hoops-basketball",
+      "name": "2019-20 Panini NBA Hoops Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 1184,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-20-panini-noir-basketball",
+      "name": "2019-20 Panini Noir Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 1102,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-20-panini-obsidian-basketball",
+      "name": "2019-20 Panini Obsidian Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 596
+    },
+    {
+      "id": "2019-20-panini-one-and-one-basketball",
+      "name": "2019-20 Panini One and One Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 398
+    },
+    {
+      "id": "2019-20-panini-opulence-basketball",
+      "name": "2019-20 Panini Opulence Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 580
+    },
+    {
+      "id": "2019-20-panini-origins-basketball",
+      "name": "2019-20 Panini Origins Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 342
+    },
+    {
+      "id": "2019-20-panini-prizm-basketball",
+      "name": "2019-20 Panini Prizm Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 1216,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-20-panini-prizm-draft-picks-basketball",
+      "name": "2019-20 Panini Prizm Draft Picks Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 255
+    },
+    {
+      "id": "2019-20-panini-revolution-basketball",
+      "name": "2019-20 Panini Revolution Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 320
+    },
+    {
+      "id": "2019-20-panini-select-basketball",
+      "name": "2019-20 Panini Select Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 664
+    },
+    {
+      "id": "2019-20-panini-spectra-basketball",
+      "name": "2019-20 Panini Spectra Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 629
+    },
+    {
+      "id": "2019-20-panini-status-basketball",
+      "name": "2019-20 Panini Status Basketball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 395
+    },
+    {
+      "id": "2019-donruss-wnba-basketball",
+      "name": "2019 Donruss WNBA Basketball",
+      "year": 2019,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 400
+    },
+    {
+      "id": "2018-19-contenders-draft-picks-basketball",
+      "name": "2018-19 Contenders Draft Picks Basketball",
+      "year": 2018,
+      "brand": "Contenders",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 368
+    },
+    {
+      "id": "2018-19-donruss-basketball",
+      "name": "2018-19 Donruss Basketball",
+      "year": 2018,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 1038
+    },
+    {
+      "id": "2018-19-donruss-optic-basketball",
+      "name": "2018-19 Donruss Optic Basketball",
+      "year": 2018,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1029
+    },
+    {
+      "id": "2018-19-panini-absolute-memorabilia-nba-basketball",
+      "name": "2018-19 Panini Absolute Memorabilia NBA Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 575
+    },
+    {
+      "id": "2018-19-panini-certified-basketball",
+      "name": "2018-19 Panini Certified Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 800
+    },
+    {
+      "id": "2018-19-panini-chronicles-basketball",
+      "name": "2018-19 Panini Chronicles Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 35,
+      "totalCards": 1127,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-19-panini-contenders-basketball",
+      "name": "2018-19 Panini Contenders Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 695
+    },
+    {
+      "id": "2018-19-panini-contenders-optic-basketball",
+      "name": "2018-19 Panini Contenders Optic Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 500
+    },
+    {
+      "id": "2018-19-panini-cornerstones-basketball",
+      "name": "2018-19 Panini Cornerstones Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 543
+    },
+    {
+      "id": "2018-19-panini-court-kings-basketball",
+      "name": "2018-19 Panini Court Kings Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 822
+    },
+    {
+      "id": "2018-19-panini-crown-royale-basketball",
+      "name": "2018-19 Panini Crown Royale Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 657
+    },
+    {
+      "id": "2018-19-panini-dominion-basketball",
+      "name": "2018-19 Panini Dominion Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 700
+    },
+    {
+      "id": "2018-19-panini-encased-basketball",
+      "name": "2018-19 Panini Encased Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 663
+    },
+    {
+      "id": "2018-19-panini-flawless-basketball",
+      "name": "2018-19 Panini Flawless Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 1131,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-19-panini-immaculate-collection-basketball",
+      "name": "2018-19 Panini Immaculate Collection Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1616
+    },
+    {
+      "id": "2018-19-panini-impeccable-basketball",
+      "name": "2018-19 Panini Impeccable Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 737
+    },
+    {
+      "id": "2018-19-panini-national-treasures-basketball",
+      "name": "2018-19 Panini National Treasures Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 38,
+      "totalCards": 1454
+    },
+    {
+      "id": "2018-19-panini-nba-hoops-basketball",
+      "name": "2018-19 Panini NBA Hoops Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 1097
+    },
+    {
+      "id": "2018-19-panini-noir-basketball",
+      "name": "2018-19 Panini Noir Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 975
+    },
+    {
+      "id": "2018-19-panini-obsidian-basketball",
+      "name": "2018-19 Panini Obsidian Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 258
+    },
+    {
+      "id": "2018-19-panini-opulence-basketball",
+      "name": "2018-19 Panini Opulence Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 566
+    },
+    {
+      "id": "2018-19-panini-prizm-basketball",
+      "name": "2018-19 Panini Prizm Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 1269,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-19-panini-prizm-mosaic-basketball",
+      "name": "2018-19 Panini Prizm Mosaic Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 131
+    },
+    {
+      "id": "2018-19-panini-revolution-basketball",
+      "name": "2018-19 Panini Revolution Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 320
+    },
+    {
+      "id": "2018-19-panini-select-basketball",
+      "name": "2018-19 Panini Select Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 761
+    },
+    {
+      "id": "2018-19-panini-spectra-basketball",
+      "name": "2018-19 Panini Spectra Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 672,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-19-panini-status-basketball",
+      "name": "2018-19 Panini Status Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 926
+    },
+    {
+      "id": "2018-19-panini-threads-basketball",
+      "name": "2018-19 Panini Threads Basketball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 891,
+      "note": "Partial checklist: a few sets are missing some cards."
+    }
+  ]
+}

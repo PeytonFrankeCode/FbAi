@@ -97,10 +97,29 @@ async function fetchChecklistsList() {
   return _checklistsIndexCache;
 }
 
+// Each sport's checklists live in their own folder. fetchChecklistsList()
+// stays football: the search, rainbow and suggestion code built on it are
+// football-only. The checklist browser lists the picked sport's products with
+// fetchSportChecklists(); a product's own file is found from its id, which
+// always ends in its sport.
+var CHECKLIST_DIRS = { football: '/data/checklists', basketball: '/data/checklists-basketball', baseball: '/data/checklists-baseball' };
+var _sportChecklistCache = {};
+function _checklistDirFor(productId) {
+  const m = /-(basketball|baseball)$/.exec(String(productId));
+  return CHECKLIST_DIRS[m ? m[1] : 'football'];
+}
+async function fetchSportChecklists(sport) {
+  if (!CHECKLIST_DIRS[sport] || sport === 'football') return fetchChecklistsList();
+  if (!_sportChecklistCache[sport]) {
+    _sportChecklistCache[sport] = await _fetchJson(`${CHECKLIST_DIRS[sport]}/index.json`, `${sport} checklist index`);
+  }
+  return _sportChecklistCache[sport];
+}
+
 // Mimics GET /api/checklists/:productId — fetches the per-product file.
 async function fetchChecklistProduct(productId) {
   if (_checklistProductCache[productId]) return _checklistProductCache[productId];
-  const product = await _fetchJson(`/data/checklists/${encodeURIComponent(productId)}.json`, `checklist product "${productId}"`);
+  const product = await _fetchJson(`${_checklistDirFor(productId)}/${encodeURIComponent(productId)}.json`, `checklist product "${productId}"`);
   _checklistProductCache[productId] = product;
   return product;
 }
@@ -1628,9 +1647,9 @@ function initSiteBanner() {
 
 // ---- Sports ----
 // Football is the live sport; basketball and baseball are under testing: live
-// listings work (the eBay card category covers every sport), but sold history
-// is thin and there are no checklists yet, and the page says so wherever it
-// matters. A first visit asks which sports the person collects; Settings
+// listings work (the eBay card category covers every sport) and they have
+// 2018-2026 checklists, but sold history is thin and the rainbow and market
+// pages are football-only, and the page says so wherever it matters. A first visit asks which sports the person collects; Settings
 // changes it; the switch above the search picks the one in use. Saved as
 // { enabled: [...], active } and synced with the account.
 //
@@ -1719,17 +1738,24 @@ function applySport() {
   if (note) {
     note.classList.toggle('hidden', !sport.testing);
     note.innerHTML = sport.testing
-      ? `<strong>${sport.icon} ${sport.label} is under testing.</strong> Live listings work. Sold prices are still thin and there are no ${sport.label.toLowerCase()} checklists yet, so double-check a price before you buy or sell.`
+      ? `<strong>${sport.icon} ${sport.label} is under testing.</strong> Live listings and 2018&ndash;2026 checklists are in. Sold prices are still thin, so double-check a price before you buy or sell.`
       : '';
   }
-  // The football-only pages say so rather than passing football off as the pick.
+  // Pages still football-only say so rather than passing football off as the
+  // pick. Checklists exist for every sport; theirs is a lighter note.
   for (const [id, what] of [['checklist-view', 'checklists'], ['rainbow-page', 'rainbow tracker'], ['market-view', 'market data']]) {
     const view = document.getElementById(id);
     if (!view) continue;
     let n = view.querySelector(':scope > .sport-view-note');
     if (!sport.testing) { if (n) n.remove(); continue; }
     if (!n) { n = document.createElement('div'); n.className = 'sport-view-note'; view.prepend(n); }
-    n.innerHTML = `${sport.icon} <strong>${sport.label} ${what} are under testing.</strong> Everything here is football for now. <button type="button" class="sport-view-link" onclick="setActiveSport('football')">Switch to football</button>`;
+    n.innerHTML = id === 'checklist-view'
+      ? `${sport.icon} <strong>${sport.label} checklists are new and under testing.</strong> A few sets may be missing cards or parallels. Spot one? Tell us with the feedback button.`
+      : `${sport.icon} <strong>${sport.label} ${what} are under testing.</strong> Everything here is football for now. <button type="button" class="sport-view-link" onclick="setActiveSport('football')">Switch to football</button>`;
+  }
+  // The checklist list on screen belongs to one sport: a new pick reloads it.
+  if (typeof _checklistListSport !== 'undefined' && _checklistListSport && _checklistListSport !== p.active) {
+    try { if (checklistData) checklistBack(); loadChecklistProducts(); } catch (_) {}
   }
   const settings = document.getElementById('settings-sports');
   if (settings) settings.innerHTML = _sportChipsHtml(p.enabled, 'settings');
@@ -8008,10 +8034,15 @@ function _buildPriceShareImage(query, stats) {
   });
 }
 
+var _checklistListSport = null;   // the sport the product list on screen is for
+
 async function loadChecklistProducts() {
   checklistProductGrid.innerHTML = '<div class="checklist-loading"><div class="spinner"></div><span>Loading checklists...</span></div>';
+  const sport = activeSport();
+  _checklistListSport = sport;
   try {
-    const data = await fetchChecklistsList();
+    const data = await fetchSportChecklists(sport);
+    if (_checklistListSport !== sport) return;   // the sport changed while it loaded
     checklistProductGrid.innerHTML = '';
 
     // Group products by year
@@ -8033,8 +8064,11 @@ async function loadChecklistProducts() {
       header.className = 'checklist-year-header';
       // First year expanded by default
       if (idx === 0) header.classList.add('open');
+      // Basketball runs in seasons: its 2023 products are the 2023-24 season.
+      const yearLabel = sport === 'basketball' && /^\d{4}$/.test(year)
+        ? `${year}-${String((+year + 1) % 100).padStart(2, '0')} season` : String(year);
       header.innerHTML = `
-        <span class="checklist-year-label">${escHtml(String(year))}</span>
+        <span class="checklist-year-label">${escHtml(yearLabel)}</span>
         <span class="checklist-year-count">${byYear[year].length} product${byYear[year].length !== 1 ? 's' : ''}</span>
         <span class="checklist-year-toggle">&#9662;</span>
       `;
