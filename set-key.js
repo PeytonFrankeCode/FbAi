@@ -75,7 +75,9 @@ function variants(raw) {
       // The guard that matters, twice over: it stops "Topps Football" from
       // becoming "" and matching every unparseable set name, and it is what
       // lets Donruss and Bowman sit in MAKERS without losing their own pages.
-      if (rest) out.push(rest);
+      // "Chrome" alone is Topps Chrome. Bowman Chrome is always sold as Bowman
+      // Chrome, and in 2014 both exist, so the bare word must stay Topps's.
+      if (rest && !(maker === 'bowman' && rest === 'chrome')) out.push(rest);
     }
   }
   return out;

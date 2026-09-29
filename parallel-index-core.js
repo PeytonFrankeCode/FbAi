@@ -213,7 +213,13 @@ let TOKSET = null;
 function build() {
   if (LOOKUP) return;
   LOOKUP = new Map();
-  for (const list of Object.values(PARALLELS.parallelsByProduct || {})) {
+  // The first spelling seen names the parallel, so the modern checklists go
+  // first: sellers write today's names ("Gold Refractors", "Gold Vinyl"), and
+  // the 2010-2016 catalogues only add the spellings nobody newer uses.
+  const byProduct = Object.entries(PARALLELS.parallelsByProduct || {});
+  const older = ([id]) => /^(19\d\d|20(0\d|1[0-6]))-/.test(id);
+  const ordered = [...byProduct.filter(e => !older(e)), ...byProduct.filter(older)];
+  for (const [, list] of ordered) {
     for (const name of list) {
       for (const v of variants(name)) {
         if (!LOOKUP.has(v)) LOOKUP.set(v, name);

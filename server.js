@@ -9007,7 +9007,7 @@ function _d1UsageBody(req, res) {
 const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's own count, checked by test/set-key.test.js so it
 // cannot drift silently away from what build-landing-pages.js emits.
-const INDEXABLE_URLS = 2368;
+const INDEXABLE_URLS = 3449;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
@@ -12357,7 +12357,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v31: the title sweep — seller and condition words, a player named after the
 // number, word order, and a base reading refused while a parallel word is
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v31';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v32';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12368,7 +12368,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = '27ea3f5012ec';
+const CARD_IDENTITY_FINGERPRINT = 'ff8ee9c13b2b';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
