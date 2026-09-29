@@ -1272,7 +1272,7 @@ function applySortToResults(sortType) {
   } else {
     sorted.forEach((item, i) => {
       const card = buildCard(item);
-      card.style.animationDelay = `${i * 0.05}s`;
+      card.style.animationDelay = _cardDelay(i);
       grid.appendChild(card);
     });
   }
@@ -1403,6 +1403,73 @@ function hideSkeleton() {
   skeletonGrid.classList.add('hidden');
 }
 
+// ---- One search at a time ----
+// The three searches (variants, direct, version) share the loader and the
+// results grid. Without this, starting a search while another was in flight
+// let the older one's `finally` hide the loader over a blank grid, and its
+// results land over the newer ones; a For Sale fallback did the same to its
+// own first attempt. Each search takes a number; only the latest may render
+// or touch the loader, and starting one cancels the request before it.
+let _searchSeq = 0;
+let _searchCtl = null;
+let _searchSlowTimers = [];
+const SEARCH_ATTEMPT_MS = 12000;   // per try (searches take 0.5–3 s); a hung one gets one retry
+
+function _beginSearch() {
+  const seq = ++_searchSeq;
+  if (_searchCtl) _searchCtl.abort();
+  _searchCtl = new AbortController();
+  _searchSlowTimers.forEach(clearTimeout);
+  // A wait with no change on screen reads as frozen, so say it is still going.
+  _searchSlowTimers = [
+    setTimeout(() => { if (seq === _searchSeq) loadingText.textContent = 'Still searching, checking more sales…'; }, 4000),
+    setTimeout(() => { if (seq === _searchSeq) loadingText.textContent = 'Taking longer than usual, hang tight…'; }, 9000),
+  ];
+  return seq;
+}
+
+// True when a newer search has started since `seq`: that one owns the screen.
+function _searchStale(seq) { return seq !== _searchSeq; }
+
+function _endSearch(seq) {
+  if (_searchStale(seq)) return;
+  _searchSlowTimers.forEach(clearTimeout);
+  _searchSlowTimers = [];
+  setLoading(false);
+  hideSkeleton();
+}
+
+// fetch for a search: cancelled when a newer search starts (throws with
+// .superseded), and a try that hangs past SEARCH_ATTEMPT_MS or drops on a
+// flaky connection is retried once before it is reported.
+async function _searchFetch(url, init, seq) {
+  for (let attempt = 1; ; attempt++) {
+    const ctl = new AbortController();
+    const onCancel = () => ctl.abort();
+    if (_searchCtl) _searchCtl.signal.addEventListener('abort', onCancel, { once: true });
+    const timer = setTimeout(() => ctl.abort(), SEARCH_ATTEMPT_MS);
+    try {
+      return await fetch(url, { ...init, signal: ctl.signal });
+    } catch (err) {
+      if (_searchStale(seq)) { const e = new Error('superseded'); e.superseded = true; throw e; }
+      if (attempt >= 2) {
+        throw new Error(err && err.name === 'AbortError'
+          ? 'The search is taking too long. Check your connection and try again.'
+          : 'Could not reach the server. Check your connection and try again.');
+      }
+    } finally {
+      clearTimeout(timer);
+      if (_searchCtl) _searchCtl.signal.removeEventListener('abort', onCancel);
+    }
+  }
+}
+
+// Result cards fade in one after another, but only just: an uncapped stagger
+// kept the 40th card invisible for two seconds after the results arrived.
+function _cardDelay(i) {
+  return `${Math.min(i, 10) * 0.03}s`;
+}
+
 // ---- Form submit ----
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1450,6 +1517,7 @@ async function fetchVariants(query) {
   meta.classList.add('hidden');
   errorMsg.classList.add('hidden');
 
+  const seq = _beginSearch();
   loadingText.textContent = currentMode === 'sold' ? 'Finding sold card variants...' : 'Finding card variants...';
   setLoading(true);
   showSkeleton();
@@ -1462,10 +1530,11 @@ async function fetchVariants(query) {
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
     const token = getSessionToken();
-    const response = await fetch(`/api/variants?${params}`, {
+    const response = await _searchFetch(`/api/variants?${params}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    }, seq);
     const data = await safeJson(response);
+    if (_searchStale(seq)) return;
 
     if (response.status === 401) {
       if (data && (data.noKey || data.badKey)) {
@@ -1498,12 +1567,14 @@ async function fetchVariants(query) {
     displayVariants(cachedVariants, query, data.mock, data.serial);
 
   } catch (err) {
+    if (err.superseded || _searchStale(seq)) return;
     errorMsg.textContent = `Error: ${err.message}`;
     errorMsg.classList.remove('hidden');
   } finally {
-    setLoading(false);
-    hideSkeleton();
-    loadingText.textContent = currentMode === 'sold' ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
+    if (!_searchStale(seq)) {
+      _endSearch(seq);
+      loadingText.textContent = currentMode === 'sold' ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
+    }
   }
 }
 
@@ -1745,7 +1816,7 @@ function displayVariants(variants, query, mock, serial) {
   } else {
     variants.forEach((v, i) => {
       const card = buildVariantCard(v);
-      card.style.animationDelay = `${i * 0.06}s`;
+      card.style.animationDelay = _cardDelay(i);
       variantsGrid.appendChild(card);
     });
   }
@@ -1888,6 +1959,7 @@ async function fetchDirectSearch(query) {
   meta.classList.add('hidden');
   errorMsg.classList.add('hidden');
 
+  const seq = _beginSearch();
   const isSold = currentMode === 'sold';
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
   setLoading(true);
@@ -1901,10 +1973,11 @@ async function fetchDirectSearch(query) {
       if (f.max != null) params.set('maxPrice', String(f.max));
     }
     const token = getSessionToken();
-    const response = await fetch(`/api/direct-search?${params}`, {
+    const response = await _searchFetch(`/api/direct-search?${params}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    }, seq);
     const data = await safeJson(response);
+    if (_searchStale(seq)) return;
 
     if (response.status === 401) {
       if (data && (data.noKey || data.badKey)) {
@@ -1981,7 +2054,7 @@ async function fetchDirectSearch(query) {
       } else {
         results.forEach((item, i) => {
           const card = buildCard(item);
-          card.style.animationDelay = `${i * 0.05}s`;
+          card.style.animationDelay = _cardDelay(i);
           grid.appendChild(card);
         });
         // Paginated Load More for For Sale results. Skip when the server
@@ -1998,11 +2071,11 @@ async function fetchDirectSearch(query) {
     backBtn.classList.remove('hidden');
 
   } catch (err) {
+    if (err.superseded || _searchStale(seq)) return;
     errorMsg.textContent = `Error: ${err.message}`;
     errorMsg.classList.remove('hidden');
   } finally {
-    setLoading(false);
-    hideSkeleton();
+    _endSearch(seq);
   }
 }
 
@@ -2060,7 +2133,7 @@ async function loadMoreForsaleResults(grid) {
       let baseIdx = grid.querySelectorAll('.card').length;
       items.forEach(item => {
         const card = buildCard(item);
-        card.style.animationDelay = `${baseIdx * 0.05}s`;
+        card.style.animationDelay = _cardDelay(baseIdx);
         if (wrap) wrap.before(card); else grid.appendChild(card);
         baseIdx++;
       });
@@ -2185,6 +2258,7 @@ async function performSearch(query, opts = {}) {
   _hideHomeContent();
   // Retries (the For Sale fallback) are the same lookup, not another one.
   if (!opts.fallback) _trackSearch(query, 'version');
+  const seq = _beginSearch();
   setLoading(true);
   showSkeleton();
   grid.innerHTML = '';
@@ -2214,9 +2288,10 @@ async function performSearch(query, opts = {}) {
     // Sold data is retired — the server returns a soldUnavailable response and
     // the authenticated user record. Pass the session token along.
     const token = getSessionToken();
-    const response = await fetch(`/api/search?${params}`, {
+    const response = await _searchFetch(`/api/search?${params}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    }, seq);
+    if (_searchStale(seq)) return;
     if (response.status === 401) {
       const errData = await safeJson(response).catch(() => ({}));
       if (errData && (errData.noKey || errData.badKey)) {
@@ -2227,6 +2302,7 @@ async function performSearch(query, opts = {}) {
       }
     }
     const data = await safeJson(response);
+    if (_searchStale(seq)) return;
 
     if (response.status === 401) { showLogin(); return; }
     if (response.status === 503 && effectiveMode === 'sold') {
@@ -2326,7 +2402,7 @@ async function performSearch(query, opts = {}) {
         similarGrid.innerHTML = '';
         similarResults.forEach((item, i) => {
           const card = buildCard(item, { showPrintRun: true });
-          card.style.animationDelay = `${i * 0.05}s`;
+          card.style.animationDelay = _cardDelay(i);
           similarGrid.appendChild(card);
         });
         similarSection.classList.remove('hidden');
@@ -2337,7 +2413,7 @@ async function performSearch(query, opts = {}) {
       } else {
         results.forEach((item, i) => {
           const card = buildCard(item);
-          card.style.animationDelay = `${i * 0.05}s`;
+          card.style.animationDelay = _cardDelay(i);
           grid.appendChild(card);
         });
         // Forsale Load More — uses /api/search offset that the initial
@@ -2362,7 +2438,7 @@ async function performSearch(query, opts = {}) {
         similarGrid.innerHTML = '';
         similarResults.forEach((item, i) => {
           const card = buildCard(item, { showPrintRun: true });
-          card.style.animationDelay = `${i * 0.05}s`;
+          card.style.animationDelay = _cardDelay(i);
           similarGrid.appendChild(card);
         });
         similarSection.classList.remove('hidden');
@@ -2379,12 +2455,12 @@ async function performSearch(query, opts = {}) {
     }
 
   } catch (err) {
+    if (err.superseded || _searchStale(seq)) return;
     errorMsg.textContent = `Error: ${err.message}`;
     errorMsg.classList.remove('hidden');
   } finally {
-    setLoading(false);
-    hideSkeleton();
-    renderBcwBanner();
+    // A fallback retry is a newer search: it owns the loader from here.
+    if (!_searchStale(seq)) { _endSearch(seq); renderBcwBanner(); }
   }
 }
 
@@ -2620,7 +2696,7 @@ function _renderGradeGroupsInto(grid, results) {
     _gradeShown[group.grade] = shown.length;
     for (const item of shown) {
       const card = buildCard(item);
-      card.style.animationDelay = `${cardIndex * 0.05}s`;
+      card.style.animationDelay = _cardDelay(cardIndex);
       container.appendChild(card);
       cardIndex++;
     }
@@ -3363,7 +3439,7 @@ function _renderVersionGroups() {
     row.className = 'version-grid';
     cards.forEach((g, i) => {
       const card = _buildVersionCard(g);
-      card.style.animationDelay = `${i * 0.04}s`;
+      card.style.animationDelay = _cardDelay(i);
       row.appendChild(card);
     });
     wrap.appendChild(row);
@@ -3979,7 +4055,7 @@ function loadMoreCards(grid) {
     const container = _gradeContainers[group.grade];
     for (const item of toShow) {
       const card = buildCard(item);
-      card.style.animationDelay = `${cardIndex * 0.05}s`;
+      card.style.animationDelay = _cardDelay(cardIndex);
       container.appendChild(card);
       cardIndex++;
     }
@@ -6617,7 +6693,7 @@ function _renderScannerSoldResults(query, items) {
     currentMode = 'sold';
     items.forEach((item, i) => {
       const card = buildCard(item);
-      card.style.animationDelay = `${i * 0.04}s`;
+      card.style.animationDelay = _cardDelay(i);
       salesEl.appendChild(card);
     });
     currentMode = savedMode;
