@@ -13,7 +13,7 @@
 // one function harder than on anything else.
 const path = require('path');
 const {
-  sizedUrl, keyForUrl, isPermanent, nextCursor, summarise, PHOTO_SIZE,
+  sizedUrl, keyForUrl, isPermanent, nextCursor, summarise, PHOTO_SIZE, MAX_RETRIES,
 } = require(path.join(__dirname, '..', 'photo-archive-core.js'));
 
 let failures = 0;
@@ -89,6 +89,35 @@ const check = (label, ok, detail) => {
   check('  ...and a batch that fails immediately keeps the previous position',
     priorHeld && priorHeld.itemId === 'keep', JSON.stringify(priorHeld));
 
+  // The stall that kept the live archive at 67 photos for weeks: a photo
+  // already in R2 read as a transient failure and held the cursor.
+  const already = nextCursor(null, [row(1, true), { itemId: 2, soldDate: '2026-08-02', ok: false, alreadyStored: true }, row(3, true)]);
+  check('a photo already in R2 is finished, not retried: the cursor walks past it',
+    already && String(already.itemId) === '3' && !already.retry, JSON.stringify(already));
+
+  // A photo that fails the same way every tick is given up on after a few,
+  // instead of holding back every photo behind it until they all expire.
+  let cur = { soldDate: '2026-08-01', itemId: '1' };
+  const stuck = () => [row(2, false, false), row(3, true)];
+  cur = nextCursor(cur, stuck());
+  const t1 = cur;
+  cur = nextCursor(cur, stuck());
+  const t2 = cur;
+  const r3 = stuck();
+  cur = nextCursor(cur, r3);
+  check('  ...a transient failure is retried, and the tries are counted',
+    String(t1.itemId) === '1' && t1.retry && t1.retry.count === 1 && t2.retry.count === 2, JSON.stringify([t1, t2]));
+  check(`  ...and given up on after ${MAX_RETRIES} ticks in a row, so the walk moves on`,
+    String(cur.itemId) === '3' && !cur.retry && r3[0].gaveUp === true, JSON.stringify(cur));
+  const fresh = nextCursor({ soldDate: 'a', itemId: '1', retry: { itemId: 9, count: 2 } }, [row(2, false, false)]);
+  check('  ...counting only the same photo: a new failure starts at one', fresh.retry.count === 1, JSON.stringify(fresh));
+
+  // One photo, one key, whatever size the page asks for: serving hashes the
+  // address the page has, the job the one in the sales table.
+  const kA = await keyForUrl('https://i.ebayimg.com/images/g/abc/s-l1600.jpg', subtle);
+  const kB = await keyForUrl('https://i.ebayimg.com/images/g/abc/s-l500.jpg', subtle);
+  check('the key is the same at any size, so the page finds the copy the job stored', kA === kB);
+
   // ---- accounting ----
   const sum = summarise([
     row(1, true), row(2, true),
@@ -114,7 +143,7 @@ const check = (label, ok, detail) => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
 
     const jobAt = src.indexOf('async function archiveListingPhotos');
-    const job = jobAt === -1 ? '' : src.slice(jobAt, jobAt + 2500);
+    const job = jobAt === -1 ? '' : src.slice(jobAt, jobAt + 5000);
     const diagAt = src.indexOf("app.get('/api/debug/photo-archive'");
     const diag = diagAt === -1 ? '' : src.slice(diagAt, diagAt + 2500);
 
@@ -133,6 +162,19 @@ const check = (label, ok, detail) => {
     check('  ...and advances on the same (sold_date, item_id) comparison',
       cursorCmp.test(job) && cursorCmp.test(diag),
       'date alone would double-count or skip within a day');
+
+    // The job cannot spend a subrequest per photo on a lookup: head + fetch +
+    // put for a batch is past a tick's subrequest budget.
+    check('  ...and spends no subrequest checking whether a photo is already stored', !/bucket\.head\(/.test(job));
+
+    // Saved copies are only worth having if the page can show them.
+    const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
+    const app = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+    check('the Worker serves a saved copy at /api/photo, eBay addresses only, cached a year',
+      /url\.pathname === '\/api\/photo'/.test(worker) && /if \(!isEbayImageUrl\(src\)\) return new Response\('Not an eBay image', \{ status: 400 \}\)/.test(worker)
+        && /max-age=31536000, immutable/.test(worker) && /photoKeyForUrl\(src, crypto\.subtle\)/.test(worker));
+    check('  ...and the page swaps it in, once, when an eBay photo fails to load',
+      /document\.addEventListener\('error', \(e\) => \{[\s\S]{0,400}img\.dataset\.archiveTried = '1';\s*img\.src = '\/api\/photo\?u=' \+ encodeURIComponent\(src\);[\s\S]{0,10}\}, true\);/.test(app));
 
     // And it must read the cursor the job writes, not a key of its own.
     check('  ...and reads the very key the job stores',
