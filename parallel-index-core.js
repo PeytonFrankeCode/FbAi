@@ -687,6 +687,14 @@ function resolveParallel(title, opts = {}) {
   // Rookie" were read as base on the first test alone.
   if (!dropSoft(segLeft)) {
     if (namesAParallel(res)) return { parallel: null, how: 'unmatched', segment: res };
+    // Nothing left because an insert's name was taken out: "1996 Fleer Metal
+    // - Gold Fingers Jerry Rice #6" is the Gold Fingers card, not the base
+    // card, and calling it base would merge the two: its #6 is also a base
+    // number. An insert-coded number ("#STN-5") cannot collide, and a
+    // base-like subset ("Rated Rookie", "Rookies") is still base.
+    const num = (t.match(/#\s*([A-Za-z0-9-]+)/) || [])[1] || '';
+    const named = /^\d+$/.test(num) ? resolveSubset(t).subset : null;
+    if (named && !/\b(base|rookies?|rated|rc)\b/.test(named)) return { parallel: null, how: 'unmatched', segment: named };
     return { parallel: null, how: 'base', segment };
   }
   // Something after the number this reader does not know. Base is an

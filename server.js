@@ -9007,7 +9007,7 @@ function _d1UsageBody(req, res) {
 const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's own count, checked by test/set-key.test.js so it
 // cannot drift silently away from what build-landing-pages.js emits.
-const INDEXABLE_URLS = 3579;
+const INDEXABLE_URLS = 4651;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
@@ -12357,7 +12357,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v31: the title sweep — seller and condition words, a player named after the
 // number, word order, and a base reading refused while a parallel word is
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v32';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v33';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12368,7 +12368,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = 'ff8ee9c13b2b';
+const CARD_IDENTITY_FINGERPRINT = '74fde735287d';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -17208,6 +17208,25 @@ async function buildPriceBlocks() {
   return _asD1Source('price-blocks', () => _buildPriceBlocks());
 }
 
+
+// subsets/attribution.json is { product: { subset slug: [card keys] } }; the
+// join wants key -> slug. Inverted once per product and kept, since the cron
+// asks about the same few hundred products for thousands of sales.
+const _attrInverted = new WeakMap();
+function _attributionFor(attribution, productId) {
+  const groups = attribution && attribution[productId];
+  if (!groups) return null;
+  let byProduct = _attrInverted.get(attribution);
+  if (!byProduct) _attrInverted.set(attribution, byProduct = new Map());
+  let map = byProduct.get(productId);
+  if (!map) {
+    map = {};
+    for (const [slug, keys] of Object.entries(groups)) for (const k of keys) map[k] = slug;
+    byProduct.set(productId, map);
+  }
+  return map;
+}
+
 async function _buildPriceBlocks() {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no D1 binding' };
@@ -17353,7 +17372,7 @@ async function _buildPriceBlocks() {
       if (i === -1) continue;
       const product = matchSale(setIndex, String(r.g).slice(0, i), String(r.g).slice(i + 1));
       if (!product) continue;
-      const map = attribution[product.id];
+      const map = _attributionFor(attribution, product.id);
       if (!map) continue;
       // The label is `player #number`; the map is keyed `player|number`. Split
       // on the LAST ' #' so a player whose name contains one still resolves.

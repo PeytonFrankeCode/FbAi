@@ -6086,6 +6086,2661 @@
       "note": "Cards #141-240 are rookie cards, including #236 Tom Brady. Gold parallels are numbered to 99."
     },
     {
+      "id": "1999-bowman-chrome-football",
+      "name": "1999 Bowman Chrome Football",
+      "year": 1999,
+      "brand": "Bowman Chrome",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 267
+    },
+    {
+      "id": "1999-bowman-football",
+      "name": "1999 Bowman Football",
+      "year": 1999,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 256
+    },
+    {
+      "id": "1999-bowmans-best-football",
+      "name": "1999 Bowman's Best Football",
+      "year": 1999,
+      "brand": "Bowman's Best",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 172
+    },
+    {
+      "id": "1999-donruss-elite-football",
+      "name": "1999 Donruss Elite Football",
+      "year": 1999,
+      "brand": "Donruss Elite",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 349
+    },
+    {
+      "id": "1999-donruss-football",
+      "name": "1999 Donruss Football",
+      "year": 1999,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 383
+    },
+    {
+      "id": "1999-donruss-preferred-qbc-football",
+      "name": "1999 Donruss Preferred QBC Football",
+      "year": 1999,
+      "brand": "Donruss Preferred QBC",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 283
+    },
+    {
+      "id": "1999-fleer-mystique-football",
+      "name": "1999 Fleer Mystique Football",
+      "year": 1999,
+      "brand": "Fleer Mystique",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 180
+    },
+    {
+      "id": "1999-fleer-tradition-blitz-collection-football",
+      "name": "1999 Fleer Tradition Blitz Collection Football",
+      "year": 1999,
+      "brand": "Fleer Tradition Blitz Collection",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 232
+    },
+    {
+      "id": "1999-fleer-tradition-football",
+      "name": "1999 Fleer Tradition Football",
+      "year": 1999,
+      "brand": "Fleer Tradition",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 385
+    },
+    {
+      "id": "1999-fleer-ultra-football",
+      "name": "1999 Fleer Ultra Football",
+      "year": 1999,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 385
+    },
+    {
+      "id": "1999-leaf-certified-football",
+      "name": "1999 Leaf Certified Football",
+      "year": 1999,
+      "brand": "Leaf Certified",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 307
+    },
+    {
+      "id": "1999-leaf-rookies-and-stars-football",
+      "name": "1999 Leaf Rookies and Stars Football",
+      "year": 1999,
+      "brand": "Leaf Rookies and Stars",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 487
+    },
+    {
+      "id": "1999-pacific-aurora-football",
+      "name": "1999 Pacific Aurora Football",
+      "year": 1999,
+      "brand": "Pacific Aurora",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 258
+    },
+    {
+      "id": "1999-pacific-crown-royale-football",
+      "name": "1999 Pacific Crown Royale Football",
+      "year": 1999,
+      "brand": "Pacific Crown Royale",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 221
+    },
+    {
+      "id": "1999-pacific-football",
+      "name": "1999 Pacific Football",
+      "year": 1999,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 549
+    },
+    {
+      "id": "1999-pacific-omega-football",
+      "name": "1999 Pacific Omega Football",
+      "year": 1999,
+      "brand": "Pacific Omega",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 336
+    },
+    {
+      "id": "1999-pacific-paramount-football",
+      "name": "1999 Pacific Paramount Football",
+      "year": 1999,
+      "brand": "Pacific Paramount",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 346
+    },
+    {
+      "id": "1999-pacific-prisms-football",
+      "name": "1999 Pacific Prisms Football",
+      "year": 1999,
+      "brand": "Pacific Prisms",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 217
+    },
+    {
+      "id": "1999-pacific-revolution-football",
+      "name": "1999 Pacific Revolution Football",
+      "year": 1999,
+      "brand": "Pacific Revolution",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 271
+    },
+    {
+      "id": "1999-playoff-contenders-football",
+      "name": "1999 Playoff Contenders Football",
+      "year": 1999,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 201
+    },
+    {
+      "id": "1999-press-pass-football",
+      "name": "1999 Press Pass Football",
+      "year": 1999,
+      "brand": "Press Pass",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 87
+    },
+    {
+      "id": "1999-sage-football",
+      "name": "1999 Sage Football",
+      "year": 1999,
+      "brand": "Sage",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 42
+    },
+    {
+      "id": "1999-score-football",
+      "name": "1999 Score Football",
+      "year": 1999,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 637
+    },
+    {
+      "id": "1999-score-supplemental-football",
+      "name": "1999 Score Supplemental Football",
+      "year": 1999,
+      "brand": "Score Supplemental",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 141
+    },
+    {
+      "id": "1999-skybox-premium-football",
+      "name": "1999 SkyBox Premium Football",
+      "year": 1999,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 361
+    },
+    {
+      "id": "1999-sp-authentic-football",
+      "name": "1999 SP Authentic Football",
+      "year": 1999,
+      "brand": "SP Authentic",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 242
+    },
+    {
+      "id": "1999-spx-football",
+      "name": "1999 SPx Football",
+      "year": 1999,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 215
+    },
+    {
+      "id": "1999-topps-chrome-football",
+      "name": "1999 Topps Chrome Football",
+      "year": 1999,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 272
+    },
+    {
+      "id": "1999-topps-finest-football",
+      "name": "1999 Topps Finest Football",
+      "year": 1999,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 275
+    },
+    {
+      "id": "1999-topps-football",
+      "name": "1999 Topps Football",
+      "year": 1999,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 681
+    },
+    {
+      "id": "1999-topps-season-opener-football",
+      "name": "1999 Topps Season Opener Football",
+      "year": 1999,
+      "brand": "Topps Season Opener",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 213
+    },
+    {
+      "id": "1999-topps-stadium-club-chrome-football",
+      "name": "1999 Topps Stadium Club Chrome Football",
+      "year": 1999,
+      "brand": "Topps Stadium Club Chrome",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 251
+    },
+    {
+      "id": "1999-topps-stadium-club-football",
+      "name": "1999 Topps Stadium Club Football",
+      "year": 1999,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 315
+    },
+    {
+      "id": "1999-topps-stars-football",
+      "name": "1999 Topps Stars Football",
+      "year": 1999,
+      "brand": "Topps Stars",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 279
+    },
+    {
+      "id": "1999-upper-deck-black-diamond-football",
+      "name": "1999 Upper Deck Black Diamond Football",
+      "year": 1999,
+      "brand": "Upper Deck Black Diamond",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 231
+    },
+    {
+      "id": "1999-upper-deck-century-legends-football",
+      "name": "1999 Upper Deck Century Legends Football",
+      "year": 1999,
+      "brand": "Upper Deck Century Legends",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 226
+    },
+    {
+      "id": "1999-upper-deck-encore-football",
+      "name": "1999 Upper Deck Encore Football",
+      "year": 1999,
+      "brand": "Upper Deck Encore",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 291
+    },
+    {
+      "id": "1999-upper-deck-football",
+      "name": "1999 Upper Deck Football",
+      "year": 1999,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 474
+    },
+    {
+      "id": "1999-upper-deck-hologrfx-football",
+      "name": "1999 Upper Deck HoloGrFX Football",
+      "year": 1999,
+      "brand": "Upper Deck HoloGrFX",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 131
+    },
+    {
+      "id": "1999-upper-deck-ionix-football",
+      "name": "1999 Upper Deck Ionix Football",
+      "year": 1999,
+      "brand": "Upper Deck Ionix",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 150
+    },
+    {
+      "id": "1999-upper-deck-mvp-football",
+      "name": "1999 Upper Deck MVP Football",
+      "year": 1999,
+      "brand": "Upper Deck MVP",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 319
+    },
+    {
+      "id": "1999-upper-deck-ovation-football",
+      "name": "1999 Upper Deck Ovation Football",
+      "year": 1999,
+      "brand": "Upper Deck Ovation",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 155
+    },
+    {
+      "id": "1999-upper-deck-retro-football",
+      "name": "1999 Upper Deck Retro Football",
+      "year": 1999,
+      "brand": "Upper Deck Retro",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 249
+    },
+    {
+      "id": "1999-upper-deck-victory-football",
+      "name": "1999 Upper Deck Victory Football",
+      "year": 1999,
+      "brand": "Upper Deck Victory",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 432
+    },
+    {
+      "id": "1998-bowman-chrome-football",
+      "name": "1998 Bowman Chrome Football",
+      "year": 1998,
+      "brand": "Bowman Chrome",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 237
+    },
+    {
+      "id": "1998-bowman-football",
+      "name": "1998 Bowman Football",
+      "year": 1998,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 239
+    },
+    {
+      "id": "1998-bowmans-best-football",
+      "name": "1998 Bowman's Best Football",
+      "year": 1998,
+      "brand": "Bowman's Best",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 150
+    },
+    {
+      "id": "1998-fleer-tradition-football",
+      "name": "1998 Fleer Tradition Football",
+      "year": 1998,
+      "brand": "Fleer Tradition",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 383
+    },
+    {
+      "id": "1998-fleer-ultra-football",
+      "name": "1998 Fleer Ultra Football",
+      "year": 1998,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 623
+    },
+    {
+      "id": "1998-leaf-rookies-and-stars-football",
+      "name": "1998 Leaf Rookies and Stars Football",
+      "year": 1998,
+      "brand": "Leaf Rookies and Stars",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 472
+    },
+    {
+      "id": "1998-metal-universe-football",
+      "name": "1998 Metal Universe Football",
+      "year": 1998,
+      "brand": "Metal Universe",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 241
+    },
+    {
+      "id": "1998-pacific-aurora-football",
+      "name": "1998 Pacific Aurora Football",
+      "year": 1998,
+      "brand": "Pacific Aurora",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 293
+    },
+    {
+      "id": "1998-pacific-crown-royale-football",
+      "name": "1998 Pacific Crown Royale Football",
+      "year": 1998,
+      "brand": "Pacific Crown Royale",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 215
+    },
+    {
+      "id": "1998-pacific-football",
+      "name": "1998 Pacific Football",
+      "year": 1998,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 530
+    },
+    {
+      "id": "1998-pacific-omega-football",
+      "name": "1998 Pacific Omega Football",
+      "year": 1998,
+      "brand": "Pacific Omega",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 321
+    },
+    {
+      "id": "1998-pacific-paramount-football",
+      "name": "1998 Pacific Paramount Football",
+      "year": 1998,
+      "brand": "Pacific Paramount",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 301
+    },
+    {
+      "id": "1998-pacific-revolution-football",
+      "name": "1998 Pacific Revolution Football",
+      "year": 1998,
+      "brand": "Pacific Revolution",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 235
+    },
+    {
+      "id": "1998-playoff-contenders-football",
+      "name": "1998 Playoff Contenders Football",
+      "year": 1998,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 535
+    },
+    {
+      "id": "1998-playoff-prestige-football",
+      "name": "1998 Playoff Prestige Football",
+      "year": 1998,
+      "brand": "Playoff Prestige",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 239
+    },
+    {
+      "id": "1998-press-pass-football",
+      "name": "1998 Press Pass Football",
+      "year": 1998,
+      "brand": "Press Pass",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 134
+    },
+    {
+      "id": "1998-score-football",
+      "name": "1998 Score Football",
+      "year": 1998,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 351
+    },
+    {
+      "id": "1998-score-showcase-football",
+      "name": "1998 Score Showcase Football",
+      "year": 1998,
+      "brand": "Score Showcase",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 131
+    },
+    {
+      "id": "1998-skybox-premium-football",
+      "name": "1998 SkyBox Premium Football",
+      "year": 1998,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 309
+    },
+    {
+      "id": "1998-sp-authentic-football",
+      "name": "1998 SP Authentic Football",
+      "year": 1998,
+      "brand": "SP Authentic",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 159
+    },
+    {
+      "id": "1998-spx-finite-football",
+      "name": "1998 SPx Finite Football",
+      "year": 1998,
+      "brand": "SPx Finite",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 521
+    },
+    {
+      "id": "1998-spx-football",
+      "name": "1998 SPx Football",
+      "year": 1998,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 53
+    },
+    {
+      "id": "1998-topps-chrome-football",
+      "name": "1998 Topps Chrome Football",
+      "year": 1998,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 225
+    },
+    {
+      "id": "1998-topps-finest-football",
+      "name": "1998 Topps Finest Football",
+      "year": 1998,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 365
+    },
+    {
+      "id": "1998-topps-football",
+      "name": "1998 Topps Football",
+      "year": 1998,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 823
+    },
+    {
+      "id": "1998-topps-season-opener-football",
+      "name": "1998 Topps Season Opener Football",
+      "year": 1998,
+      "brand": "Topps Season Opener",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 157
+    },
+    {
+      "id": "1998-topps-stadium-club-chrome-football",
+      "name": "1998 Topps Stadium Club Chrome Football",
+      "year": 1998,
+      "brand": "Topps Stadium Club Chrome",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 20
+    },
+    {
+      "id": "1998-topps-stadium-club-football",
+      "name": "1998 Topps Stadium Club Football",
+      "year": 1998,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 289
+    },
+    {
+      "id": "1998-upper-deck-black-diamond-football",
+      "name": "1998 Upper Deck Black Diamond Football",
+      "year": 1998,
+      "brand": "Upper Deck Black Diamond",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 182
+    },
+    {
+      "id": "1998-upper-deck-black-diamond-rookies-football",
+      "name": "1998 Upper Deck Black Diamond Rookies Football",
+      "year": 1998,
+      "brand": "Upper Deck Black Diamond Rookies",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 198
+    },
+    {
+      "id": "1998-upper-deck-choice-football",
+      "name": "1998 Upper Deck Choice Football",
+      "year": 1998,
+      "brand": "Upper Deck Choice",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 631
+    },
+    {
+      "id": "1998-upper-deck-encore-football",
+      "name": "1998 Upper Deck Encore Football",
+      "year": 1998,
+      "brand": "Upper Deck Encore",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 214
+    },
+    {
+      "id": "1998-upper-deck-football",
+      "name": "1998 Upper Deck Football",
+      "year": 1998,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 522
+    },
+    {
+      "id": "1998-upper-deck-ud3-football",
+      "name": "1998 Upper Deck UD3 Football",
+      "year": 1998,
+      "brand": "Upper Deck UD3",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 356
+    },
+    {
+      "id": "1997-action-packed-football",
+      "name": "1997 Action Packed Football",
+      "year": 1997,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 190
+    },
+    {
+      "id": "1997-donruss-elite-football",
+      "name": "1997 Donruss Elite Football",
+      "year": 1997,
+      "brand": "Donruss Elite",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 19
+    },
+    {
+      "id": "1997-donruss-football",
+      "name": "1997 Donruss Football",
+      "year": 1997,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 404
+    },
+    {
+      "id": "1997-donruss-studio-football",
+      "name": "1997 Donruss Studio Football",
+      "year": 1997,
+      "brand": "Donruss Studio",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 55
+    },
+    {
+      "id": "1997-fleer-football",
+      "name": "1997 Fleer Football",
+      "year": 1997,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 593
+    },
+    {
+      "id": "1997-fleer-goudey-i-football",
+      "name": "1997 Fleer Goudey I Football",
+      "year": 1997,
+      "brand": "Fleer Goudey I",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 237
+    },
+    {
+      "id": "1997-fleer-goudey-ii-football",
+      "name": "1997 Fleer Goudey II Football",
+      "year": 1997,
+      "brand": "Fleer Goudey II",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 249
+    },
+    {
+      "id": "1997-fleer-ultra-football",
+      "name": "1997 Fleer Ultra Football",
+      "year": 1997,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 505
+    },
+    {
+      "id": "1997-leaf-football",
+      "name": "1997 Leaf Football",
+      "year": 1997,
+      "brand": "Leaf",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 372
+    },
+    {
+      "id": "1997-pacific-crown-royale-football",
+      "name": "1997 Pacific Crown Royale Football",
+      "year": 1997,
+      "brand": "Pacific Crown Royale",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 153
+    },
+    {
+      "id": "1997-pacific-dynagon-football",
+      "name": "1997 Pacific Dynagon Football",
+      "year": 1997,
+      "brand": "Pacific Dynagon",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 293
+    },
+    {
+      "id": "1997-pacific-football",
+      "name": "1997 Pacific Football",
+      "year": 1997,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 599
+    },
+    {
+      "id": "1997-pacific-invincible-football",
+      "name": "1997 Pacific Invincible Football",
+      "year": 1997,
+      "brand": "Pacific Invincible",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 456
+    },
+    {
+      "id": "1997-pacific-philadelphia-football",
+      "name": "1997 Pacific Philadelphia Football",
+      "year": 1997,
+      "brand": "Pacific Philadelphia",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 818
+    },
+    {
+      "id": "1997-pacific-revolution-football",
+      "name": "1997 Pacific Revolution Football",
+      "year": 1997,
+      "brand": "Pacific Revolution",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 215
+    },
+    {
+      "id": "1997-pinnacle-certified-football",
+      "name": "1997 Pinnacle Certified Football",
+      "year": 1997,
+      "brand": "Pinnacle Certified",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 183
+    },
+    {
+      "id": "1997-pinnacle-football",
+      "name": "1997 Pinnacle Football",
+      "year": 1997,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 685
+    },
+    {
+      "id": "1997-pinnacle-inside-football",
+      "name": "1997 Pinnacle Inside Football",
+      "year": 1997,
+      "brand": "Pinnacle Inside",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 158
+    },
+    {
+      "id": "1997-pinnacle-x-press-football",
+      "name": "1997 Pinnacle X Press Football",
+      "year": 1997,
+      "brand": "Pinnacle X Press",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 222
+    },
+    {
+      "id": "1997-pinnacle-zenith-football",
+      "name": "1997 Pinnacle Zenith Football",
+      "year": 1997,
+      "brand": "Pinnacle Zenith",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 202
+    },
+    {
+      "id": "1997-playoff-absolute-football",
+      "name": "1997 Playoff Absolute Football",
+      "year": 1997,
+      "brand": "Playoff Absolute",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 297
+    },
+    {
+      "id": "1997-playoff-contenders-football",
+      "name": "1997 Playoff Contenders Football",
+      "year": 1997,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 286
+    },
+    {
+      "id": "1997-press-pass-football",
+      "name": "1997 Press Pass Football",
+      "year": 1997,
+      "brand": "Press Pass",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 84
+    },
+    {
+      "id": "1997-pro-line-football",
+      "name": "1997 Pro Line Football",
+      "year": 1997,
+      "brand": "Pro Line",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 635
+    },
+    {
+      "id": "1997-score-football",
+      "name": "1997 Score Football",
+      "year": 1997,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 39,
+      "totalCards": 1187
+    },
+    {
+      "id": "1997-skybox-impact-football",
+      "name": "1997 SkyBox Impact Football",
+      "year": 1997,
+      "brand": "SkyBox Impact",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 354
+    },
+    {
+      "id": "1997-skybox-premium-football",
+      "name": "1997 SkyBox Premium Football",
+      "year": 1997,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 315
+    },
+    {
+      "id": "1997-sp-authentic-football",
+      "name": "1997 SP Authentic Football",
+      "year": 1997,
+      "brand": "SP Authentic",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 238
+    },
+    {
+      "id": "1997-spx-football",
+      "name": "1997 SPx Football",
+      "year": 1997,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 62
+    },
+    {
+      "id": "1997-topps-chrome-football",
+      "name": "1997 Topps Chrome Football",
+      "year": 1997,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 226
+    },
+    {
+      "id": "1997-topps-finest-football",
+      "name": "1997 Topps Finest Football",
+      "year": 1997,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 441
+    },
+    {
+      "id": "1997-topps-football",
+      "name": "1997 Topps Football",
+      "year": 1997,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 551
+    },
+    {
+      "id": "1997-topps-gallery-football",
+      "name": "1997 Topps Gallery Football",
+      "year": 1997,
+      "brand": "Topps Gallery",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 205
+    },
+    {
+      "id": "1997-topps-stadium-club-football",
+      "name": "1997 Topps Stadium Club Football",
+      "year": 1997,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 645
+    },
+    {
+      "id": "1997-topps-stars-football",
+      "name": "1997 Topps Stars Football",
+      "year": 1997,
+      "brand": "Topps Stars",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 182
+    },
+    {
+      "id": "1997-upper-deck-black-diamond-football",
+      "name": "1997 Upper Deck Black Diamond Football",
+      "year": 1997,
+      "brand": "Upper Deck Black Diamond",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 173
+    },
+    {
+      "id": "1997-upper-deck-collectors-choice-football",
+      "name": "1997 Upper Deck Collector's Choice Football",
+      "year": 1997,
+      "brand": "Upper Deck Collector's Choice",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 777
+    },
+    {
+      "id": "1997-upper-deck-collectors-choice-series-2-football",
+      "name": "1997 Upper Deck Collector's Choice Series 2 Football",
+      "year": 1997,
+      "brand": "Upper Deck Collector's Choice Series 2",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 255
+    },
+    {
+      "id": "1997-upper-deck-football",
+      "name": "1997 Upper Deck Football",
+      "year": 1997,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 564
+    },
+    {
+      "id": "1997-upper-deck-legends-football",
+      "name": "1997 Upper Deck Legends Football",
+      "year": 1997,
+      "brand": "Upper Deck Legends",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 285
+    },
+    {
+      "id": "1996-action-packed-football",
+      "name": "1996 Action Packed Football",
+      "year": 1996,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 156
+    },
+    {
+      "id": "1996-collectors-edge-advantage-football",
+      "name": "1996 Collector's Edge Advantage Football",
+      "year": 1996,
+      "brand": "Collector's Edge Advantage",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 193
+    },
+    {
+      "id": "1996-collectors-edge-football",
+      "name": "1996 Collector's Edge Football",
+      "year": 1996,
+      "brand": "Collector's Edge",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 423
+    },
+    {
+      "id": "1996-collectors-edge-presidents-reserve-football",
+      "name": "1996 Collector's Edge Presidents Reserve Football",
+      "year": 1996,
+      "brand": "Collector's Edge Presidents Reserve",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 690
+    },
+    {
+      "id": "1996-donruss-elite-football",
+      "name": "1996 Donruss Elite Football",
+      "year": 1996,
+      "brand": "Donruss Elite",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 20
+    },
+    {
+      "id": "1996-donruss-football",
+      "name": "1996 Donruss Football",
+      "year": 1996,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 297
+    },
+    {
+      "id": "1996-fleer-football",
+      "name": "1996 Fleer Football",
+      "year": 1996,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 354
+    },
+    {
+      "id": "1996-fleer-metal-football",
+      "name": "1996 Fleer Metal Football",
+      "year": 1996,
+      "brand": "Fleer Metal",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 225
+    },
+    {
+      "id": "1996-fleer-ultra-football",
+      "name": "1996 Fleer Ultra Football",
+      "year": 1996,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 413
+    },
+    {
+      "id": "1996-leaf-football",
+      "name": "1996 Leaf Football",
+      "year": 1996,
+      "brand": "Leaf",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 271
+    },
+    {
+      "id": "1996-pacific-crown-royale-football",
+      "name": "1996 Pacific Crown Royale Football",
+      "year": 1996,
+      "brand": "Pacific Crown Royale",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 293
+    },
+    {
+      "id": "1996-pacific-dynagon-football",
+      "name": "1996 Pacific Dynagon Football",
+      "year": 1996,
+      "brand": "Pacific Dynagon",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 283
+    },
+    {
+      "id": "1996-pacific-football",
+      "name": "1996 Pacific Football",
+      "year": 1996,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 1044
+    },
+    {
+      "id": "1996-pacific-invincible-football",
+      "name": "1996 Pacific Invincible Football",
+      "year": 1996,
+      "brand": "Pacific Invincible",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 370
+    },
+    {
+      "id": "1996-pinnacle-football",
+      "name": "1996 Pinnacle Football",
+      "year": 1996,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 390
+    },
+    {
+      "id": "1996-pinnacle-select-certified-football",
+      "name": "1996 Pinnacle Select Certified Football",
+      "year": 1996,
+      "brand": "Pinnacle Select Certified",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 156
+    },
+    {
+      "id": "1996-pinnacle-select-football",
+      "name": "1996 Pinnacle Select Football",
+      "year": 1996,
+      "brand": "Pinnacle Select",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 247
+    },
+    {
+      "id": "1996-pinnacle-summit-football",
+      "name": "1996 Pinnacle Summit Football",
+      "year": 1996,
+      "brand": "Pinnacle Summit",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 242
+    },
+    {
+      "id": "1996-pinnacle-zenith-football",
+      "name": "1996 Pinnacle Zenith Football",
+      "year": 1996,
+      "brand": "Pinnacle Zenith",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 204
+    },
+    {
+      "id": "1996-playoff-absolute-football",
+      "name": "1996 Playoff Absolute Football",
+      "year": 1996,
+      "brand": "Playoff Absolute",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 298
+    },
+    {
+      "id": "1996-playoff-contenders-football",
+      "name": "1996 Playoff Contenders Football",
+      "year": 1996,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 124
+    },
+    {
+      "id": "1996-press-pass-football",
+      "name": "1996 Press Pass Football",
+      "year": 1996,
+      "brand": "Press Pass",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 71
+    },
+    {
+      "id": "1996-pro-line-football",
+      "name": "1996 Pro Line Football",
+      "year": 1996,
+      "brand": "Pro Line",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 1215
+    },
+    {
+      "id": "1996-score-football",
+      "name": "1996 Score Football",
+      "year": 1996,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 575
+    },
+    {
+      "id": "1996-skybox-impact-football",
+      "name": "1996 SkyBox Impact Football",
+      "year": 1996,
+      "brand": "SkyBox Impact",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 263
+    },
+    {
+      "id": "1996-skybox-impact-rookies-football",
+      "name": "1996 SkyBox Impact Rookies Football",
+      "year": 1996,
+      "brand": "SkyBox Impact Rookies",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 186
+    },
+    {
+      "id": "1996-skybox-premium-football",
+      "name": "1996 SkyBox Premium Football",
+      "year": 1996,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 375
+    },
+    {
+      "id": "1996-sp-football",
+      "name": "1996 SP Football",
+      "year": 1996,
+      "brand": "SP",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 275
+    },
+    {
+      "id": "1996-spx-football",
+      "name": "1996 SPx Football",
+      "year": 1996,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 63
+    },
+    {
+      "id": "1996-topps-chrome-football",
+      "name": "1996 Topps Chrome Football",
+      "year": 1996,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 217
+    },
+    {
+      "id": "1996-topps-finest-football",
+      "name": "1996 Topps Finest Football",
+      "year": 1996,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 354
+    },
+    {
+      "id": "1996-topps-football",
+      "name": "1996 Topps Football",
+      "year": 1996,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 646
+    },
+    {
+      "id": "1996-topps-laser-football",
+      "name": "1996 Topps Laser Football",
+      "year": 1996,
+      "brand": "Topps Laser",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 161
+    },
+    {
+      "id": "1996-topps-stadium-club-football",
+      "name": "1996 Topps Stadium Club Football",
+      "year": 1996,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 648
+    },
+    {
+      "id": "1996-upper-deck-collectors-choice-football",
+      "name": "1996 Upper Deck Collector's Choice Football",
+      "year": 1996,
+      "brand": "Upper Deck Collector's Choice",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 596
+    },
+    {
+      "id": "1996-upper-deck-collectors-choice-update-football",
+      "name": "1996 Upper Deck Collector's Choice Update Football",
+      "year": 1996,
+      "brand": "Upper Deck Collector's Choice Update",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 323
+    },
+    {
+      "id": "1996-upper-deck-football",
+      "name": "1996 Upper Deck Football",
+      "year": 1996,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 825
+    },
+    {
+      "id": "1995-action-packed-football",
+      "name": "1995 Action Packed Football",
+      "year": 1995,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 175
+    },
+    {
+      "id": "1995-action-packed-monday-night-football-football",
+      "name": "1995 Action Packed Monday Night Football Football",
+      "year": 1995,
+      "brand": "Action Packed Monday Night Football",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 152
+    },
+    {
+      "id": "1995-action-packed-rookies-and-stars-football",
+      "name": "1995 Action Packed Rookies and Stars Football",
+      "year": 1995,
+      "brand": "Action Packed Rookies and Stars",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 129
+    },
+    {
+      "id": "1995-bowman-football",
+      "name": "1995 Bowman Football",
+      "year": 1995,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 577
+    },
+    {
+      "id": "1995-collectors-edge-excalibur-football",
+      "name": "1995 Collector's Edge Excalibur Football",
+      "year": 1995,
+      "brand": "Collector's Edge Excalibur",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 349
+    },
+    {
+      "id": "1995-collectors-edge-football",
+      "name": "1995 Collector's Edge Football",
+      "year": 1995,
+      "brand": "Collector's Edge",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 551
+    },
+    {
+      "id": "1995-flair-football",
+      "name": "1995 Flair Football",
+      "year": 1995,
+      "brand": "Flair",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 249
+    },
+    {
+      "id": "1995-fleer-football",
+      "name": "1995 Fleer Football",
+      "year": 1995,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 564
+    },
+    {
+      "id": "1995-fleer-metal-football",
+      "name": "1995 Fleer Metal Football",
+      "year": 1995,
+      "brand": "Fleer Metal",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 277
+    },
+    {
+      "id": "1995-fleer-ultra-football",
+      "name": "1995 Fleer Ultra Football",
+      "year": 1995,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 709
+    },
+    {
+      "id": "1995-pacific-crown-royale-football",
+      "name": "1995 Pacific Crown Royale Football",
+      "year": 1995,
+      "brand": "Pacific Crown Royale",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 185
+    },
+    {
+      "id": "1995-pacific-football",
+      "name": "1995 Pacific Football",
+      "year": 1995,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 25,
+      "totalCards": 983
+    },
+    {
+      "id": "1995-pacific-prisms-football",
+      "name": "1995 Pacific Prisms Football",
+      "year": 1995,
+      "brand": "Pacific Prisms",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 316
+    },
+    {
+      "id": "1995-pinnacle-club-collection-football",
+      "name": "1995 Pinnacle Club Collection Football",
+      "year": 1995,
+      "brand": "Pinnacle Club Collection",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 309
+    },
+    {
+      "id": "1995-pinnacle-football",
+      "name": "1995 Pinnacle Football",
+      "year": 1995,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 367
+    },
+    {
+      "id": "1995-pinnacle-select-certified-football",
+      "name": "1995 Pinnacle Select Certified Football",
+      "year": 1995,
+      "brand": "Pinnacle Select Certified",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 191
+    },
+    {
+      "id": "1995-pinnacle-sportflix-football",
+      "name": "1995 Pinnacle Sportflix Football",
+      "year": 1995,
+      "brand": "Pinnacle Sportflix",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 223
+    },
+    {
+      "id": "1995-pinnacle-zenith-football",
+      "name": "1995 Pinnacle Zenith Football",
+      "year": 1995,
+      "brand": "Pinnacle Zenith",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 205
+    },
+    {
+      "id": "1995-playoff-absolute-football",
+      "name": "1995 Playoff Absolute Football",
+      "year": 1995,
+      "brand": "Playoff Absolute",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 313
+    },
+    {
+      "id": "1995-playoff-contenders-football",
+      "name": "1995 Playoff Contenders Football",
+      "year": 1995,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 246
+    },
+    {
+      "id": "1995-pro-line-football",
+      "name": "1995 Pro Line Football",
+      "year": 1995,
+      "brand": "Pro Line",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 913
+    },
+    {
+      "id": "1995-score-football",
+      "name": "1995 Score Football",
+      "year": 1995,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 390
+    },
+    {
+      "id": "1995-score-summit-football",
+      "name": "1995 Score Summit Football",
+      "year": 1995,
+      "brand": "Score Summit",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 248
+    },
+    {
+      "id": "1995-skybox-impact-football",
+      "name": "1995 SkyBox Impact Football",
+      "year": 1995,
+      "brand": "SkyBox Impact",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 273
+    },
+    {
+      "id": "1995-skybox-premium-football",
+      "name": "1995 SkyBox Premium Football",
+      "year": 1995,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 325
+    },
+    {
+      "id": "1995-sp-championship-football",
+      "name": "1995 SP Championship Football",
+      "year": 1995,
+      "brand": "SP Championship",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 234
+    },
+    {
+      "id": "1995-sp-football",
+      "name": "1995 SP Football",
+      "year": 1995,
+      "brand": "SP",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 262
+    },
+    {
+      "id": "1995-topps-finest-football",
+      "name": "1995 Topps Finest Football",
+      "year": 1995,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 305
+    },
+    {
+      "id": "1995-topps-football",
+      "name": "1995 Topps Football",
+      "year": 1995,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 694
+    },
+    {
+      "id": "1995-topps-stadium-club-football",
+      "name": "1995 Topps Stadium Club Football",
+      "year": 1995,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 689
+    },
+    {
+      "id": "1995-upper-deck-collectors-choice-football",
+      "name": "1995 Upper Deck Collector's Choice Football",
+      "year": 1995,
+      "brand": "Upper Deck Collector's Choice",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 445
+    },
+    {
+      "id": "1995-upper-deck-collectors-choice-update-football",
+      "name": "1995 Upper Deck Collector's Choice Update Football",
+      "year": 1995,
+      "brand": "Upper Deck Collector's Choice Update",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 369
+    },
+    {
+      "id": "1995-upper-deck-football",
+      "name": "1995 Upper Deck Football",
+      "year": 1995,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 582
+    },
+    {
+      "id": "1994-action-packed-football",
+      "name": "1994 Action Packed Football",
+      "year": 1994,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 518
+    },
+    {
+      "id": "1994-bowman-football",
+      "name": "1994 Bowman Football",
+      "year": 1994,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 390
+    },
+    {
+      "id": "1994-classic-football",
+      "name": "1994 Classic Football",
+      "year": 1994,
+      "brand": "Classic",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 189
+    },
+    {
+      "id": "1994-classic-images-football",
+      "name": "1994 Classic Images Football",
+      "year": 1994,
+      "brand": "Classic Images",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 154
+    },
+    {
+      "id": "1994-classic-nfl-experience-football",
+      "name": "1994 Classic NFL Experience Football",
+      "year": 1994,
+      "brand": "Classic NFL Experience",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 110
+    },
+    {
+      "id": "1994-collectors-edge-football",
+      "name": "1994 Collector's Edge Football",
+      "year": 1994,
+      "brand": "Collector's Edge",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 451
+    },
+    {
+      "id": "1994-fleer-football",
+      "name": "1994 Fleer Football",
+      "year": 1994,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 724
+    },
+    {
+      "id": "1994-fleer-gameday-football",
+      "name": "1994 Fleer GameDay Football",
+      "year": 1994,
+      "brand": "Fleer GameDay",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 462
+    },
+    {
+      "id": "1994-fleer-ultra-football",
+      "name": "1994 Fleer Ultra Football",
+      "year": 1994,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 632
+    },
+    {
+      "id": "1994-pacific-football",
+      "name": "1994 Pacific Football",
+      "year": 1994,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 622
+    },
+    {
+      "id": "1994-pacific-prisms-football",
+      "name": "1994 Pacific Prisms Football",
+      "year": 1994,
+      "brand": "Pacific Prisms",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 158
+    },
+    {
+      "id": "1994-pinnacle-football",
+      "name": "1994 Pinnacle Football",
+      "year": 1994,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 334
+    },
+    {
+      "id": "1994-pinnacle-select-football",
+      "name": "1994 Pinnacle Select Football",
+      "year": 1994,
+      "brand": "Pinnacle Select",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 244
+    },
+    {
+      "id": "1994-pinnacle-sportflics-football",
+      "name": "1994 Pinnacle Sportflics Football",
+      "year": 1994,
+      "brand": "Pinnacle Sportflics",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 204
+    },
+    {
+      "id": "1994-playoff-contenders-football",
+      "name": "1994 Playoff Contenders Football",
+      "year": 1994,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 191
+    },
+    {
+      "id": "1994-playoff-football",
+      "name": "1994 Playoff Football",
+      "year": 1994,
+      "brand": "Playoff",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 395
+    },
+    {
+      "id": "1994-score-football",
+      "name": "1994 Score Football",
+      "year": 1994,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 366
+    },
+    {
+      "id": "1994-skybox-impact-football",
+      "name": "1994 SkyBox Impact Football",
+      "year": 1994,
+      "brand": "SkyBox Impact",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 362
+    },
+    {
+      "id": "1994-skybox-premium-football",
+      "name": "1994 SkyBox Premium Football",
+      "year": 1994,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 274
+    },
+    {
+      "id": "1994-sp-football",
+      "name": "1994 SP Football",
+      "year": 1994,
+      "brand": "SP",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 243
+    },
+    {
+      "id": "1994-topps-archives-1956-football",
+      "name": "1994 Topps Archives 1956 Football",
+      "year": 1994,
+      "brand": "Topps Archives 1956",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 120
+    },
+    {
+      "id": "1994-topps-archives-1957-football",
+      "name": "1994 Topps Archives 1957 Football",
+      "year": 1994,
+      "brand": "Topps Archives 1957",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 154
+    },
+    {
+      "id": "1994-topps-finest-football",
+      "name": "1994 Topps Finest Football",
+      "year": 1994,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 223
+    },
+    {
+      "id": "1994-topps-football",
+      "name": "1994 Topps Football",
+      "year": 1994,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 734
+    },
+    {
+      "id": "1994-topps-stadium-club-football",
+      "name": "1994 Topps Stadium Club Football",
+      "year": 1994,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 894
+    },
+    {
+      "id": "1994-upper-deck-collectors-choice-football",
+      "name": "1994 Upper Deck Collector's Choice Football",
+      "year": 1994,
+      "brand": "Upper Deck Collector's Choice",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 495
+    },
+    {
+      "id": "1994-upper-deck-football",
+      "name": "1994 Upper Deck Football",
+      "year": 1994,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 425
+    },
+    {
+      "id": "1993-action-packed-football",
+      "name": "1993 Action Packed Football",
+      "year": 1993,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 449
+    },
+    {
+      "id": "1993-bowman-football",
+      "name": "1993 Bowman Football",
+      "year": 1993,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 423
+    },
+    {
+      "id": "1993-classic-football",
+      "name": "1993 Classic Football",
+      "year": 1993,
+      "brand": "Classic",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 171
+    },
+    {
+      "id": "1993-collectors-edge-football",
+      "name": "1993 Collector's Edge Football",
+      "year": 1993,
+      "brand": "Collector's Edge",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 381
+    },
+    {
+      "id": "1993-fleer-football",
+      "name": "1993 Fleer Football",
+      "year": 1993,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 737
+    },
+    {
+      "id": "1993-fleer-gameday-football",
+      "name": "1993 Fleer GameDay Football",
+      "year": 1993,
+      "brand": "Fleer GameDay",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 602
+    },
+    {
+      "id": "1993-fleer-ultra-football",
+      "name": "1993 Fleer Ultra Football",
+      "year": 1993,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 560
+    },
+    {
+      "id": "1993-pacific-football",
+      "name": "1993 Pacific Football",
+      "year": 1993,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 573
+    },
+    {
+      "id": "1993-pacific-prisms-football",
+      "name": "1993 Pacific Prisms Football",
+      "year": 1993,
+      "brand": "Pacific Prisms",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 129
+    },
+    {
+      "id": "1993-pinnacle-football",
+      "name": "1993 Pinnacle Football",
+      "year": 1993,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 465
+    },
+    {
+      "id": "1993-playoff-contenders-football",
+      "name": "1993 Playoff Contenders Football",
+      "year": 1993,
+      "brand": "Playoff Contenders",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 165
+    },
+    {
+      "id": "1993-playoff-football",
+      "name": "1993 Playoff Football",
+      "year": 1993,
+      "brand": "Playoff",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 353
+    },
+    {
+      "id": "1993-pro-set-football",
+      "name": "1993 Pro Set Football",
+      "year": 1993,
+      "brand": "Pro Set",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 502
+    },
+    {
+      "id": "1993-pro-set-power-football",
+      "name": "1993 Pro Set Power Football",
+      "year": 1993,
+      "brand": "Pro Set Power",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 494
+    },
+    {
+      "id": "1993-score-football",
+      "name": "1993 Score Football",
+      "year": 1993,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 512
+    },
+    {
+      "id": "1993-score-select-football",
+      "name": "1993 Score Select Football",
+      "year": 1993,
+      "brand": "Score Select",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 244
+    },
+    {
+      "id": "1993-skybox-impact-football",
+      "name": "1993 SkyBox Impact Football",
+      "year": 1993,
+      "brand": "SkyBox Impact",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 448
+    },
+    {
+      "id": "1993-skybox-premium-football",
+      "name": "1993 SkyBox Premium Football",
+      "year": 1993,
+      "brand": "SkyBox Premium",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 296
+    },
+    {
+      "id": "1993-sp-football",
+      "name": "1993 SP Football",
+      "year": 1993,
+      "brand": "SP",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 285
+    },
+    {
+      "id": "1993-topps-football",
+      "name": "1993 Topps Football",
+      "year": 1993,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 710
+    },
+    {
+      "id": "1993-topps-stadium-club-football",
+      "name": "1993 Topps Stadium Club Football",
+      "year": 1993,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 743
+    },
+    {
+      "id": "1993-upper-deck-football",
+      "name": "1993 Upper Deck Football",
+      "year": 1993,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 686
+    },
+    {
+      "id": "1993-wild-card-football",
+      "name": "1993 Wild Card Football",
+      "year": 1993,
+      "brand": "Wild Card",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 922
+    },
+    {
+      "id": "1992-action-packed-football",
+      "name": "1992 Action Packed Football",
+      "year": 1992,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 466
+    },
+    {
+      "id": "1992-bowman-football",
+      "name": "1992 Bowman Football",
+      "year": 1992,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 573
+    },
+    {
+      "id": "1992-classic-football",
+      "name": "1992 Classic Football",
+      "year": 1992,
+      "brand": "Classic",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 137
+    },
+    {
+      "id": "1992-collectors-edge-football",
+      "name": "1992 Collector's Edge Football",
+      "year": 1992,
+      "brand": "Collector's Edge",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 249
+    },
+    {
+      "id": "1992-fleer-football",
+      "name": "1992 Fleer Football",
+      "year": 1992,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 565
+    },
+    {
+      "id": "1992-fleer-gameday-football",
+      "name": "1992 Fleer GameDay Football",
+      "year": 1992,
+      "brand": "Fleer GameDay",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 499
+    },
+    {
+      "id": "1992-fleer-ultra-football",
+      "name": "1992 Fleer Ultra Football",
+      "year": 1992,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 489
+    },
+    {
+      "id": "1992-pacific-football",
+      "name": "1992 Pacific Football",
+      "year": 1992,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 874
+    },
+    {
+      "id": "1992-pinnacle-football",
+      "name": "1992 Pinnacle Football",
+      "year": 1992,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 396
+    },
+    {
+      "id": "1992-playoff-football",
+      "name": "1992 Playoff Football",
+      "year": 1992,
+      "brand": "Playoff",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 150
+    },
+    {
+      "id": "1992-pro-set-football",
+      "name": "1992 Pro Set Football",
+      "year": 1992,
+      "brand": "Pro Set",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 879
+    },
+    {
+      "id": "1992-pro-set-power-football",
+      "name": "1992 Pro Set Power Football",
+      "year": 1992,
+      "brand": "Pro Set Power",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 326
+    },
+    {
+      "id": "1992-score-football",
+      "name": "1992 Score Football",
+      "year": 1992,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 657
+    },
+    {
+      "id": "1992-skybox-impact-football",
+      "name": "1992 SkyBox Impact Football",
+      "year": 1992,
+      "brand": "SkyBox Impact",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 378
+    },
+    {
+      "id": "1992-skybox-prime-time-football",
+      "name": "1992 SkyBox Prime Time Football",
+      "year": 1992,
+      "brand": "SkyBox Prime Time",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 372
+    },
+    {
+      "id": "1992-topps-finest-football",
+      "name": "1992 Topps Finest Football",
+      "year": 1992,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 45
+    },
+    {
+      "id": "1992-topps-football",
+      "name": "1992 Topps Football",
+      "year": 1992,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 783
+    },
+    {
+      "id": "1992-topps-stadium-club-football",
+      "name": "1992 Topps Stadium Club Football",
+      "year": 1992,
+      "brand": "Topps Stadium Club",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 710
+    },
+    {
+      "id": "1992-upper-deck-football",
+      "name": "1992 Upper Deck Football",
+      "year": 1992,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 803
+    },
+    {
+      "id": "1992-wild-card-football",
+      "name": "1992 Wild Card Football",
+      "year": 1992,
+      "brand": "Wild Card",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 877
+    },
+    {
+      "id": "1991-action-packed-football",
+      "name": "1991 Action Packed Football",
+      "year": 1991,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 525
+    },
+    {
+      "id": "1991-bowman-football",
+      "name": "1991 Bowman Football",
+      "year": 1991,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 556
+    },
+    {
+      "id": "1991-fleer-football",
+      "name": "1991 Fleer Football",
+      "year": 1991,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 468
+    },
+    {
+      "id": "1991-fleer-stars-and-stripes-football",
+      "name": "1991 Fleer Stars and Stripes Football",
+      "year": 1991,
+      "brand": "Fleer Stars and Stripes",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 140
+    },
+    {
+      "id": "1991-fleer-ultra-football",
+      "name": "1991 Fleer Ultra Football",
+      "year": 1991,
+      "brand": "Fleer Ultra",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 418
+    },
+    {
+      "id": "1991-pacific-football",
+      "name": "1991 Pacific Football",
+      "year": 1991,
+      "brand": "Pacific",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 683
+    },
+    {
+      "id": "1991-pinnacle-football",
+      "name": "1991 Pinnacle Football",
+      "year": 1991,
+      "brand": "Pinnacle",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 415
+    },
+    {
+      "id": "1991-pro-set-football",
+      "name": "1991 Pro Set Football",
+      "year": 1991,
+      "brand": "Pro Set",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 1267
+    },
+    {
+      "id": "1991-score-football",
+      "name": "1991 Score Football",
+      "year": 1991,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 753
+    },
+    {
+      "id": "1991-score-supplemental-football",
+      "name": "1991 Score Supplemental Football",
+      "year": 1991,
+      "brand": "Score Supplemental",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 109
+    },
+    {
+      "id": "1991-topps-football",
+      "name": "1991 Topps Football",
+      "year": 1991,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 678
+    },
+    {
+      "id": "1991-topps-stadium-club-football",
+      "name": "1991 Topps Stadium Club Football",
+      "year": 1991,
+      "brand": "Stadium Club",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 500
+    },
+    {
+      "id": "1991-upper-deck-football",
+      "name": "1991 Upper Deck Football",
+      "year": 1991,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 736
+    },
+    {
+      "id": "1991-wild-card-draft-football",
+      "name": "1991 Wild Card Draft Football",
+      "year": 1991,
+      "brand": "Wild Card Draft",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 356
+    },
+    {
+      "id": "1991-wild-card-football",
+      "name": "1991 Wild Card Football",
+      "year": 1991,
+      "brand": "Wild Card",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 231
+    },
+    {
+      "id": "1990-action-packed-football",
+      "name": "1990 Action Packed Football",
+      "year": 1990,
+      "brand": "Action Packed",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 424
+    },
+    {
+      "id": "1990-fleer-football",
+      "name": "1990 Fleer Football",
+      "year": 1990,
+      "brand": "Fleer",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 517
+    },
+    {
+      "id": "1990-fleer-update-football",
+      "name": "1990 Fleer Update Football",
+      "year": 1990,
+      "brand": "Fleer Update",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 120
+    },
+    {
+      "id": "1990-pro-set-football",
+      "name": "1990 Pro Set Football",
+      "year": 1990,
+      "brand": "Pro Set",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 904
+    },
+    {
+      "id": "1990-pro-set-super-bowl-160-football",
+      "name": "1990 Pro Set Super Bowl 160 Football",
+      "year": 1990,
+      "brand": "Pro Set Super Bowl 160",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 161
+    },
+    {
+      "id": "1990-score-football",
+      "name": "1990 Score Football",
+      "year": 1990,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 838
+    },
+    {
+      "id": "1990-score-supplemental-football",
+      "name": "1990 Score Supplemental Football",
+      "year": 1990,
+      "brand": "Score Supplemental",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 110
+    },
+    {
+      "id": "1990-topps-football",
+      "name": "1990 Topps Football",
+      "year": 1990,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 574
+    },
+    {
+      "id": "1990-topps-traded-football",
+      "name": "1990 Topps Traded Football",
+      "year": 1990,
+      "brand": "Topps Traded",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 132
+    },
+    {
+      "id": "1989-pro-set-football",
+      "name": "1989 Pro Set Football",
+      "year": 1989,
+      "brand": "Pro Set",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 619
+    },
+    {
+      "id": "1989-score-football",
+      "name": "1989 Score Football",
+      "year": 1989,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 467
+    },
+    {
+      "id": "1989-score-supplemental-football",
+      "name": "1989 Score Supplemental Football",
+      "year": 1989,
+      "brand": "Score Supplemental",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 110
+    },
+    {
+      "id": "1989-topps-football",
+      "name": "1989 Topps Football",
+      "year": 1989,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 453
+    },
+    {
+      "id": "1989-topps-traded-football",
+      "name": "1989 Topps Traded Football",
+      "year": 1989,
+      "brand": "Topps Traded",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 132
+    },
+    {
+      "id": "1988-topps-football",
+      "name": "1988 Topps Football",
+      "year": 1988,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 498
+    },
+    {
+      "id": "1987-topps-football",
+      "name": "1987 Topps Football",
+      "year": 1987,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 396
+    },
+    {
+      "id": "1986-topps-football",
+      "name": "1986 Topps Football",
+      "year": 1986,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 396
+    },
+    {
+      "id": "1985-topps-football",
+      "name": "1985 Topps Football",
+      "year": 1985,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 396
+    },
+    {
+      "id": "1984-topps-football",
+      "name": "1984 Topps Football",
+      "year": 1984,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 396
+    },
+    {
+      "id": "1983-topps-football",
+      "name": "1983 Topps Football",
+      "year": 1983,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 397
+    },
+    {
+      "id": "1982-topps-football",
+      "name": "1982 Topps Football",
+      "year": 1982,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 528
+    },
+    {
+      "id": "1981-topps-football",
+      "name": "1981 Topps Football",
+      "year": 1981,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 528
+    },
+    {
       "id": "1980-topps-football",
       "name": "1980 Topps Football",
       "year": 1980,

@@ -79,7 +79,13 @@ const attrPath = path.join(ROOT, 'public', 'data', 'subsets', 'attribution.json'
 if (!fs.existsSync(attrPath)) {
   console.log('SKIP  subset attribution map  — run `npm run build:pages` first (CI does)');
 } else {
-  const attr = JSON.parse(fs.readFileSync(attrPath, 'utf8'));
+  // On disk it is { product: { slug: [keys] } }; the checks read key -> slug.
+  const grouped = JSON.parse(fs.readFileSync(attrPath, 'utf8'));
+  const attr = {};
+  for (const [id, groups] of Object.entries(grouped)) {
+    attr[id] = {};
+    for (const [slug, ks] of Object.entries(groups)) for (const k of ks) attr[id][k] = slug;
+  }
   const products = Object.keys(attr);
   const keys = products.reduce((n, id) => n + Object.keys(attr[id]).length, 0);
 
