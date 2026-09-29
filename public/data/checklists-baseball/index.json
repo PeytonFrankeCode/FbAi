@@ -1,0 +1,2420 @@
+{
+  "products": [
+    {
+      "id": "2026-bowman-baseball",
+      "name": "2026 Bowman Baseball",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 1177
+    },
+    {
+      "id": "2026-bowman-chrome-baseball",
+      "name": "2026 Bowman Chrome Baseball",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 32,
+      "totalCards": 1197
+    },
+    {
+      "id": "2026-bowman-chrome-mega-box-baseball",
+      "name": "2026 Bowman Chrome Mega Box Baseball",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 403
+    },
+    {
+      "id": "2026-bowman-chrome-sapphire-baseball",
+      "name": "2026 Bowman Chrome Sapphire Baseball Guide",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-bowman-mega-box-baseball",
+      "name": "2026 Bowman Mega Box Baseball",
+      "year": 2026,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 268
+    },
+    {
+      "id": "2025-bowman-baseball",
+      "name": "2025 Bowman Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 951
+    },
+    {
+      "id": "2025-bowman-chrome-baseball",
+      "name": "2025 Bowman Chrome Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 900
+    },
+    {
+      "id": "2025-bowman-chrome-mega-box-baseball",
+      "name": "2025 Bowman Chrome Mega Box Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 315
+    },
+    {
+      "id": "2025-bowman-chrome-sapphire-baseball",
+      "name": "2025 Bowman Chrome Sapphire Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 283
+    },
+    {
+      "id": "2025-bowman-draft-baseball",
+      "name": "2025 Bowman Draft Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 872
+    },
+    {
+      "id": "2025-bowman-draft-mega-box-baseball",
+      "name": "2025 Bowman Draft Mega Box Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 195
+    },
+    {
+      "id": "2025-bowman-draft-sapphire-baseball",
+      "name": "2025 Bowman Draft Sapphire Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 263
+    },
+    {
+      "id": "2025-bowman-mega-box-baseball",
+      "name": "2025 Bowman Mega Box Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 250
+    },
+    {
+      "id": "2025-bowman-s-best-baseball",
+      "name": "2025 Bowman’s Best Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 433,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-bowman-sapphire-baseball",
+      "name": "2025 Bowman Sapphire Baseball",
+      "year": 2025,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 205
+    },
+    {
+      "id": "2025-donruss-baseball",
+      "name": "2025 Donruss Baseball",
+      "year": 2025,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 1156
+    },
+    {
+      "id": "2025-panini-boys-of-summer-baseball",
+      "name": "2025 Panini Boys of Summer Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 653
+    },
+    {
+      "id": "2025-panini-crusade-baseball",
+      "name": "2025 Panini Crusade Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 745
+    },
+    {
+      "id": "2025-panini-flawless-baseball",
+      "name": "2025 Panini Flawless Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 642,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-panini-impeccable-baseball",
+      "name": "2025 Panini Impeccable Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 998
+    },
+    {
+      "id": "2025-panini-national-treasures-baseball",
+      "name": "2025 Panini National Treasures Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 863
+    },
+    {
+      "id": "2025-panini-prizm-baseball",
+      "name": "2025 Panini Prizm Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 600
+    },
+    {
+      "id": "2025-panini-prizm-premium-baseball",
+      "name": "2025 Panini Prizm Premium Baseball Box Set",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 300
+    },
+    {
+      "id": "2025-panini-prospect-edition-baseball",
+      "name": "2025 Panini Prospect Edition Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 614
+    },
+    {
+      "id": "2025-panini-select-baseball",
+      "name": "2025 Panini Select Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 796
+    },
+    {
+      "id": "2025-panini-stars-stripes-usa-baseball",
+      "name": "2025 Panini Stars & Stripes USA Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1644,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-panini-three-and-two-baseball",
+      "name": "2025 Panini Three and Two Baseball",
+      "year": 2025,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 600
+    },
+    {
+      "id": "2025-topps-all-star-game-mega-box-baseball",
+      "name": "2025 Topps All-Star Game Mega Box Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 360
+    },
+    {
+      "id": "2025-topps-allen-ginter-baseball",
+      "name": "2025 Topps Allen & Ginter Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 36,
+      "totalCards": 2639,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-allen-ginter-x-baseball",
+      "name": "2025 Topps Allen & Ginter X Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 1091,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-archives-baseball",
+      "name": "2025 Topps Archives Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 432
+    },
+    {
+      "id": "2025-topps-baseball",
+      "name": "2025 Topps Baseball Complete Factory Set Exclusives",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 711
+    },
+    {
+      "id": "2025-topps-black-white-baseball",
+      "name": "2025 Topps Black & White Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 225
+    },
+    {
+      "id": "2025-topps-celebration-series-1-baseball",
+      "name": "2025 Topps Celebration Series 1 Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 512
+    },
+    {
+      "id": "2025-topps-chrome-baseball",
+      "name": "2025 Topps Chrome Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 40,
+      "totalCards": 1193,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-chrome-black-baseball",
+      "name": "2025 Topps Chrome Black Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 442
+    },
+    {
+      "id": "2025-topps-chrome-logofractor-baseball",
+      "name": "2025 Topps Chrome LogoFractor Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 481
+    },
+    {
+      "id": "2025-topps-chrome-platinum-baseball",
+      "name": "2025 Topps Chrome Platinum Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 718
+    },
+    {
+      "id": "2025-topps-chrome-sapphire-baseball",
+      "name": "2025 Topps Chrome Sapphire Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 420
+    },
+    {
+      "id": "2025-topps-chrome-update-sapphire-baseball",
+      "name": "2025 Topps Chrome Update Sapphire Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 287
+    },
+    {
+      "id": "2025-topps-chrome-update-series-baseball",
+      "name": "2025 Topps Chrome Update Series Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 1139
+    },
+    {
+      "id": "2025-topps-chrome-x-cactus-jack-baseball",
+      "name": "2025 Topps Chrome X Cactus Jack Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 50
+    },
+    {
+      "id": "2025-topps-cosmic-chrome-baseball",
+      "name": "2025 Topps Cosmic Chrome Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 835,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-definitive-collection-baseball",
+      "name": "2025 Topps Definitive Collection Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1179
+    },
+    {
+      "id": "2025-topps-diamond-icons-baseball",
+      "name": "2025 Topps Diamond Icons Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 32,
+      "totalCards": 1448
+    },
+    {
+      "id": "2025-topps-dynamic-duals-baseball",
+      "name": "2025 Topps Dynamic Duals Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 117
+    },
+    {
+      "id": "2025-topps-dynasty-baseball",
+      "name": "2025 Topps Dynasty Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 1352
+    },
+    {
+      "id": "2025-topps-fanatics-fest-nyc-series-2-baseball",
+      "name": "2025 Topps Fanatics Fest NYC Series 2 Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 125
+    },
+    {
+      "id": "2025-topps-finest-baseball",
+      "name": "2025 Topps Finest Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 804
+    },
+    {
+      "id": "2025-topps-five-star-baseball",
+      "name": "2025 Topps Five Star Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 756
+    },
+    {
+      "id": "2025-topps-gilded-collection-baseball",
+      "name": "2025 Topps Gilded Collection Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 475
+    },
+    {
+      "id": "2025-topps-heritage-baseball",
+      "name": "2025 Topps Heritage Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 567,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-heritage-high-number-baseball",
+      "name": "2025 Topps Heritage High Number Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 845
+    },
+    {
+      "id": "2025-topps-holiday-baseball",
+      "name": "2025 Topps Holiday Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 978,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-inception-baseball",
+      "name": "2025 Topps Inception Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 672
+    },
+    {
+      "id": "2025-topps-lids-baseball",
+      "name": "2025 Topps Lids Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 50
+    },
+    {
+      "id": "2025-topps-mlb-tokyo-series-1-baseball",
+      "name": "2025 Topps MLB Tokyo Series 1 Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 226
+    },
+    {
+      "id": "2025-topps-museum-collection-baseball",
+      "name": "2025 Topps Museum Collection Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1380,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-now-all-star-game-set-baseball",
+      "name": "2025 Topps Now All-Star Game Set Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 34
+    },
+    {
+      "id": "2025-topps-pristine-baseball",
+      "name": "2025 Topps Pristine Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 808
+    },
+    {
+      "id": "2025-topps-pro-debut-baseball",
+      "name": "2025 Topps Pro Debut Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 896
+    },
+    {
+      "id": "2025-topps-series-1-baseball",
+      "name": "2025 Topps Series 1 Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 53,
+      "totalCards": 1826
+    },
+    {
+      "id": "2025-topps-series-2-baseball",
+      "name": "2025 Topps Series 2 Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1374,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-shoebox-treasures-baseball",
+      "name": "2025 Topps Shoebox Treasures Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 161
+    },
+    {
+      "id": "2025-topps-stadium-club-baseball",
+      "name": "2025 Topps Stadium Club Baseball",
+      "year": 2025,
+      "brand": "Stadium Club",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 639
+    },
+    {
+      "id": "2025-topps-sterling-baseball",
+      "name": "2025 Topps Sterling Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 991
+    },
+    {
+      "id": "2025-topps-tier-one-baseball",
+      "name": "2025 Topps Tier One Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 1013,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-transcendent-collection-baseball",
+      "name": "2025 Topps Transcendent Collection Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1012
+    },
+    {
+      "id": "2025-topps-tribute-baseball",
+      "name": "2025 Topps Tribute Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 657
+    },
+    {
+      "id": "2025-topps-update-japan-baseball",
+      "name": "2025 Topps Update Japan Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 82
+    },
+    {
+      "id": "2025-topps-update-series-baseball",
+      "name": "2025 Topps Update Series Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1388,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2025-topps-x-bob-ross-the-joy-of-baseball",
+      "name": "2025 Topps X Bob Ross The Joy of Baseball",
+      "year": 2025,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 255
+    },
+    {
+      "id": "2024-bowman-baseball",
+      "name": "2024 Bowman Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 936
+    },
+    {
+      "id": "2024-bowman-chrome-baseball",
+      "name": "2024 Bowman Chrome Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 689
+    },
+    {
+      "id": "2024-bowman-chrome-mega-box-baseball",
+      "name": "2024 Bowman Chrome Mega Box Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 251
+    },
+    {
+      "id": "2024-bowman-chrome-sapphire-baseball",
+      "name": "2024 Bowman Chrome Sapphire Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 284
+    },
+    {
+      "id": "2024-bowman-draft-baseball",
+      "name": "2024 Bowman Draft Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 723
+    },
+    {
+      "id": "2024-bowman-draft-sapphire-baseball",
+      "name": "2024 Bowman Draft Sapphire Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 267
+    },
+    {
+      "id": "2024-bowman-mega-box-baseball",
+      "name": "2024 Bowman Mega Box Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 211
+    },
+    {
+      "id": "2024-bowman-s-best-baseball",
+      "name": "2024 Bowman’s Best Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 383,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-bowman-sapphire-baseball",
+      "name": "2024 Bowman Sapphire Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 212
+    },
+    {
+      "id": "2024-bowman-sterling-baseball",
+      "name": "2024 Bowman Sterling Baseball",
+      "year": 2024,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 283
+    },
+    {
+      "id": "2024-donruss-baseball",
+      "name": "2024 Donruss Baseball",
+      "year": 2024,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 894
+    },
+    {
+      "id": "2024-panini-boys-of-summer-baseball",
+      "name": "2024 Panini Boys of Summer Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 609
+    },
+    {
+      "id": "2024-panini-crusade-baseball",
+      "name": "2024 Panini Crusade Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 519
+    },
+    {
+      "id": "2024-panini-flawless-baseball",
+      "name": "2024 Panini Flawless Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 27,
+      "totalCards": 714
+    },
+    {
+      "id": "2024-panini-impeccable-baseball",
+      "name": "2024 Panini Impeccable Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 814
+    },
+    {
+      "id": "2024-panini-national-treasures-baseball",
+      "name": "2024 Panini National Treasures Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1153,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-panini-prizm-baseball",
+      "name": "2024 Panini Prizm Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 598
+    },
+    {
+      "id": "2024-panini-prizm-premium-baseball",
+      "name": "2024 Panini Prizm Premium Baseball Factory Set",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 300
+    },
+    {
+      "id": "2024-panini-prospect-edition-baseball",
+      "name": "2024 Panini Prospect Edition Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 620
+    },
+    {
+      "id": "2024-panini-select-baseball",
+      "name": "2024 Panini Select Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 795
+    },
+    {
+      "id": "2024-panini-stars-stripes-usa-baseball",
+      "name": "2024 Panini Stars & Stripes USA Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 1505
+    },
+    {
+      "id": "2024-panini-three-and-two-baseball",
+      "name": "2024 Panini Three and Two Baseball",
+      "year": 2024,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 694
+    },
+    {
+      "id": "2024-topps-50-50-shohei-ohtani-baseball",
+      "name": "2024 Topps 50/50 Shohei Ohtani Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 110
+    },
+    {
+      "id": "2024-topps-allen-ginter-baseball",
+      "name": "2024 Topps Allen & Ginter Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 44,
+      "totalCards": 2655,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-allen-ginter-x-baseball",
+      "name": "2024 Topps Allen & Ginter X Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 1108
+    },
+    {
+      "id": "2024-topps-archives-baseball",
+      "name": "2024 Topps Archives Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 439,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-baseball",
+      "name": "2024 Topps Baseball Complete Factory Set Exclusives",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 718
+    },
+    {
+      "id": "2024-topps-big-league-baseball",
+      "name": "2024 Topps Big League Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 754,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-black-white-baseball",
+      "name": "2024 Topps Black & White Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 165
+    },
+    {
+      "id": "2024-topps-brooklyn-collection-baseball",
+      "name": "2024 Topps Brooklyn Collection Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 197
+    },
+    {
+      "id": "2024-topps-chrome-baseball",
+      "name": "2024 Topps Chrome Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 32,
+      "totalCards": 1041
+    },
+    {
+      "id": "2024-topps-chrome-black-baseball",
+      "name": "2024 Topps Chrome Black Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 301,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-chrome-lids-baseball",
+      "name": "2024 Topps Chrome Lids Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 50
+    },
+    {
+      "id": "2024-topps-chrome-logofractor-baseball",
+      "name": "2024 Topps Chrome LogoFractor Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 303
+    },
+    {
+      "id": "2024-topps-chrome-sapphire-baseball",
+      "name": "2024 Topps Chrome Sapphire Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 787
+    },
+    {
+      "id": "2024-topps-chrome-update-sapphire-baseball",
+      "name": "2024 Topps Chrome Update Sapphire Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 404,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-chrome-update-series-baseball",
+      "name": "2024 Topps Chrome Update Series Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1110
+    },
+    {
+      "id": "2024-topps-cosmic-chrome-baseball",
+      "name": "2024 Topps Cosmic Chrome Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 740
+    },
+    {
+      "id": "2024-topps-definitive-collection-baseball",
+      "name": "2024 Topps Definitive Collection Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 986
+    },
+    {
+      "id": "2024-topps-diamond-icons-baseball",
+      "name": "2024 Topps Diamond Icons Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 1111
+    },
+    {
+      "id": "2024-topps-dynamic-duals-baseball",
+      "name": "2024 Topps Dynamic Duals Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 104
+    },
+    {
+      "id": "2024-topps-dynasty-baseball",
+      "name": "2024 Topps Dynasty Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 1017,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-finest-baseball",
+      "name": "2024 Topps Finest Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 649,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-five-star-baseball",
+      "name": "2024 Topps Five Star Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 521
+    },
+    {
+      "id": "2024-topps-gilded-collection-baseball",
+      "name": "2024 Topps Gilded Collection Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 408
+    },
+    {
+      "id": "2024-topps-heritage-baseball",
+      "name": "2024 Topps Heritage Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 2115,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-heritage-high-number-baseball",
+      "name": "2024 Topps Heritage High Number Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 857
+    },
+    {
+      "id": "2024-topps-heritage-mini-baseball",
+      "name": "2024 Topps Heritage Mini Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 648,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-holiday-baseball",
+      "name": "2024 Topps Holiday Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 647
+    },
+    {
+      "id": "2024-topps-inception-baseball",
+      "name": "2024 Topps Inception Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 584
+    },
+    {
+      "id": "2024-topps-japan-edition-baseball",
+      "name": "2024 Topps Japan Edition Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 329
+    },
+    {
+      "id": "2024-topps-luminaries-baseball",
+      "name": "2024 Topps Luminaries Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 664,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-museum-collection-baseball",
+      "name": "2024 Topps Museum Collection Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 34,
+      "totalCards": 1571
+    },
+    {
+      "id": "2024-topps-pristine-baseball",
+      "name": "2024 Topps Pristine Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 733
+    },
+    {
+      "id": "2024-topps-pro-debut-baseball",
+      "name": "2024 Topps Pro Debut Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 779
+    },
+    {
+      "id": "2024-topps-series-1-baseball",
+      "name": "2024 Topps Series 1 Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 39,
+      "totalCards": 1811
+    },
+    {
+      "id": "2024-topps-series-2-baseball",
+      "name": "2024 Topps Series 2 Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 849
+    },
+    {
+      "id": "2024-topps-spotlight-baseball",
+      "name": "2024 Topps Spotlight Baseball by Andy Friedman",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 187
+    },
+    {
+      "id": "2024-topps-stadium-club-baseball",
+      "name": "2024 Topps Stadium Club Baseball",
+      "year": 2024,
+      "brand": "Stadium Club",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 1292,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-sterling-baseball",
+      "name": "2024 Topps Sterling Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 593
+    },
+    {
+      "id": "2024-topps-tier-one-baseball",
+      "name": "2024 Topps Tier One Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 819
+    },
+    {
+      "id": "2024-topps-transcendent-collection-baseball",
+      "name": "2024 Topps Transcendent Collection Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 1044
+    },
+    {
+      "id": "2024-topps-tribute-baseball",
+      "name": "2024 Topps Tribute Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 617
+    },
+    {
+      "id": "2024-topps-triple-threads-baseball",
+      "name": "2024 Topps Triple Threads Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 2313,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-update-series-baseball",
+      "name": "2024 Topps Update Series Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 1463,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2024-topps-x-chris-berman-boomer-s-baseball",
+      "name": "2024 Topps X Chris Berman Boomer’s Baseball",
+      "year": 2024,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 259
+    },
+    {
+      "id": "2023-bowman-inception-baseball",
+      "name": "2023 Bowman Inception Baseball",
+      "year": 2023,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 303,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-panini-elite-extra-edition-baseball",
+      "name": "2023 Panini Elite Extra Edition Baseball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 757
+    },
+    {
+      "id": "2023-panini-flawless-baseball",
+      "name": "2023 Panini Flawless Baseball",
+      "year": 2023,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 39,
+      "totalCards": 784
+    },
+    {
+      "id": "2023-topps-chrome-platinum-baseball",
+      "name": "2023 Topps Chrome Platinum Baseball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 692
+    },
+    {
+      "id": "2023-topps-dynasty-baseball",
+      "name": "2023 Topps Dynasty Baseball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 863,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-topps-five-star-baseball",
+      "name": "2023 Topps Five Star Baseball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 466,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-topps-luminaries-baseball",
+      "name": "2023 Topps Luminaries Baseball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 596,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2023-topps-transcendent-collection-baseball",
+      "name": "2023 Topps Transcendent Collection Baseball",
+      "year": 2023,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 909,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2020-bowman-baseball",
+      "name": "2020 Bowman Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 816
+    },
+    {
+      "id": "2020-bowman-chrome-baseball",
+      "name": "2020 Bowman Chrome Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 574
+    },
+    {
+      "id": "2020-bowman-draft-baseball",
+      "name": "2020 Bowman Draft Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 619
+    },
+    {
+      "id": "2020-bowman-heritage-baseball",
+      "name": "2020 Bowman Heritage Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 270
+    },
+    {
+      "id": "2020-bowman-mega-box-chrome-baseball",
+      "name": "2020 Bowman Mega Box Chrome Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 190
+    },
+    {
+      "id": "2020-bowman-platinum-baseball",
+      "name": "2020 Bowman Platinum Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 450
+    },
+    {
+      "id": "2020-bowman-s-best-baseball",
+      "name": "2020 Bowman’s Best Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 253
+    },
+    {
+      "id": "2020-bowman-sapphire-edition-baseball",
+      "name": "2020 Bowman Sapphire Edition Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 207
+    },
+    {
+      "id": "2020-bowman-sterling-baseball",
+      "name": "2020 Bowman Sterling Baseball",
+      "year": 2020,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 251
+    },
+    {
+      "id": "2020-donruss-baseball",
+      "name": "2020 Donruss Baseball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 745
+    },
+    {
+      "id": "2020-donruss-optic-baseball",
+      "name": "2020 Donruss Optic Baseball",
+      "year": 2020,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 631
+    },
+    {
+      "id": "2020-leaf-draft-baseball",
+      "name": "2020 Leaf Draft Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 231
+    },
+    {
+      "id": "2020-leaf-flash-baseball",
+      "name": "2020 Leaf Flash Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 185
+    },
+    {
+      "id": "2020-leaf-lumber-kings-baseball",
+      "name": "2020 Leaf Lumber Kings Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 292
+    },
+    {
+      "id": "2020-leaf-metal-draft-baseball",
+      "name": "2020 Leaf Metal Draft Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 211
+    },
+    {
+      "id": "2020-leaf-metal-perfect-game-all-american-baseball",
+      "name": "2020 Leaf Metal Perfect Game All-American Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 162
+    },
+    {
+      "id": "2020-leaf-perfect-game-national-showcase-baseball",
+      "name": "2020 Leaf Perfect Game National Showcase Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 741
+    },
+    {
+      "id": "2020-leaf-pete-rose-charlie-hustle-edition-baseball",
+      "name": "2020 Leaf Pete Rose Charlie Hustle Edition Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 20
+    },
+    {
+      "id": "2020-leaf-trinity-baseball",
+      "name": "2020 Leaf Trinity Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 356
+    },
+    {
+      "id": "2020-leaf-ultimate-draft-baseball",
+      "name": "2020 Leaf Ultimate Draft Baseball",
+      "year": 2020,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 206
+    },
+    {
+      "id": "2019-bowman-baseball",
+      "name": "2019 Bowman Baseball",
+      "year": 2019,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 776
+    },
+    {
+      "id": "2019-bowman-chrome-baseball",
+      "name": "2019 Bowman Chrome Baseball",
+      "year": 2019,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 538
+    },
+    {
+      "id": "2019-bowman-draft-baseball",
+      "name": "2019 Bowman Draft Baseball",
+      "year": 2019,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 587
+    },
+    {
+      "id": "2019-bowman-platinum-baseball",
+      "name": "2019 Bowman Platinum Baseball",
+      "year": 2019,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 608
+    },
+    {
+      "id": "2019-bowman-s-best-baseball",
+      "name": "2019 Bowman’s Best Baseball",
+      "year": 2019,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 214
+    },
+    {
+      "id": "2019-bowman-sterling-baseball",
+      "name": "2019 Bowman Sterling Baseball",
+      "year": 2019,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 256
+    },
+    {
+      "id": "2019-donruss-baseball",
+      "name": "2019 Donruss Baseball",
+      "year": 2019,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 27,
+      "totalCards": 1204
+    },
+    {
+      "id": "2019-donruss-optic-baseball",
+      "name": "2019 Donruss Optic Baseball",
+      "year": 2019,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 538
+    },
+    {
+      "id": "2019-futera-unique-baseball",
+      "name": "2019 Futera Unique Baseball Collection Prospects & Legends",
+      "year": 2019,
+      "brand": "Futera",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 333
+    },
+    {
+      "id": "2019-leaf-flash-baseball",
+      "name": "2019 Leaf Flash Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 166
+    },
+    {
+      "id": "2019-leaf-metal-babe-ruth-collection-baseball",
+      "name": "2019 Leaf Metal Babe Ruth Collection Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 306
+    },
+    {
+      "id": "2019-leaf-metal-draft-baseball",
+      "name": "2019 Leaf Metal Draft Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 184
+    },
+    {
+      "id": "2019-leaf-metal-perfect-game-all-american-classic-baseball",
+      "name": "2019 Leaf Metal Perfect Game All-American Classic Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 330,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-leaf-trinity-baseball",
+      "name": "2019 Leaf Trinity Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 285
+    },
+    {
+      "id": "2019-leaf-ultimate-draft-baseball",
+      "name": "2019 Leaf Ultimate Draft Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 207
+    },
+    {
+      "id": "2019-leaf-valiant-baseball",
+      "name": "2019 Leaf Valiant Baseball",
+      "year": 2019,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 180
+    },
+    {
+      "id": "2019-panini-chronicles-baseball",
+      "name": "2019 Panini Chronicles Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 39,
+      "totalCards": 1075
+    },
+    {
+      "id": "2019-panini-contenders-draft-picks-baseball",
+      "name": "2019 Panini Contenders Draft Picks Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 263
+    },
+    {
+      "id": "2019-panini-diamond-kings-baseball",
+      "name": "2019 Panini Diamond Kings Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 44,
+      "totalCards": 1049
+    },
+    {
+      "id": "2019-panini-flawless-baseball",
+      "name": "2019 Panini Flawless Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 56,
+      "totalCards": 894
+    },
+    {
+      "id": "2019-panini-immaculate-collection-baseball",
+      "name": "2019 Panini Immaculate Collection Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 893
+    },
+    {
+      "id": "2019-panini-leather-lumber-baseball",
+      "name": "2019 Panini Leather & Lumber Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 57,
+      "totalCards": 1118,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-panini-national-treasures-baseball",
+      "name": "2019 Panini National Treasures Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 56,
+      "totalCards": 1557,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-panini-prizm-baseball",
+      "name": "2019 Panini Prizm Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 677,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-panini-prizm-draft-picks-baseball",
+      "name": "2019 Panini Prizm Draft Picks Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 331
+    },
+    {
+      "id": "2019-panini-stars-stripes-usa-baseball",
+      "name": "2019 Panini Stars & Stripes USA Baseball",
+      "year": 2019,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 697,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-allen-ginter-baseball",
+      "name": "2019 Topps Allen & Ginter Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 39,
+      "totalCards": 2082
+    },
+    {
+      "id": "2019-topps-archives-baseball",
+      "name": "2019 Topps Archives Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 528
+    },
+    {
+      "id": "2019-topps-big-league-baseball",
+      "name": "2019 Topps Big League Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 580
+    },
+    {
+      "id": "2019-topps-brooklyn-collection-baseball",
+      "name": "2019 Topps Brooklyn Collection Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 129
+    },
+    {
+      "id": "2019-topps-chrome-baseball",
+      "name": "2019 Topps Chrome Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 453
+    },
+    {
+      "id": "2019-topps-chrome-update-baseball",
+      "name": "2019 Topps Chrome Update Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 187
+    },
+    {
+      "id": "2019-topps-clearly-authentic-baseball",
+      "name": "2019 Topps Clearly Authentic Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 159,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-definitive-collection-baseball",
+      "name": "2019 Topps Definitive Collection Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 700,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-diamond-icons-baseball",
+      "name": "2019 Topps Diamond Icons Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 626
+    },
+    {
+      "id": "2019-topps-finest-baseball",
+      "name": "2019 Topps Finest Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 317
+    },
+    {
+      "id": "2019-topps-fire-baseball",
+      "name": "2019 Topps Fire Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 512
+    },
+    {
+      "id": "2019-topps-five-star-baseball",
+      "name": "2019 Topps Five Star Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 396
+    },
+    {
+      "id": "2019-topps-gallery-baseball",
+      "name": "2019 Topps Gallery Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 549
+    },
+    {
+      "id": "2019-topps-gold-label-baseball",
+      "name": "2019 Topps Gold Label Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 460,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-gypsy-queen-baseball",
+      "name": "2019 Topps Gypsy Queen Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 692
+    },
+    {
+      "id": "2019-topps-heritage-baseball",
+      "name": "2019 Topps Heritage Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 1210,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-heritage-high-number-baseball",
+      "name": "2019 Topps Heritage High Number Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 948
+    },
+    {
+      "id": "2019-topps-heritage-minors-baseball",
+      "name": "2019 Topps Heritage Minors Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 429,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-high-tek-baseball",
+      "name": "2019 Topps High Tek Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 276
+    },
+    {
+      "id": "2019-topps-holiday-mega-box-baseball",
+      "name": "2019 Topps Holiday Mega Box Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 460
+    },
+    {
+      "id": "2019-topps-inception-baseball",
+      "name": "2019 Topps Inception Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 388
+    },
+    {
+      "id": "2019-topps-luminaries-baseball",
+      "name": "2019 Topps Luminaries Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 462
+    },
+    {
+      "id": "2019-topps-museum-collection-baseball",
+      "name": "2019 Topps Museum Collection Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 1242,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-opening-day-baseball",
+      "name": "2019 Topps Opening Day Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 461
+    },
+    {
+      "id": "2019-topps-pro-debut-baseball",
+      "name": "2019 Topps Pro Debut Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 454
+    },
+    {
+      "id": "2019-topps-series-1-baseball",
+      "name": "2019 Topps Series 1 Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 1036,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-series-2-baseball",
+      "name": "2019 Topps Series 2 Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 40,
+      "totalCards": 1473,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-stadium-club-baseball",
+      "name": "2019 Topps Stadium Club Baseball",
+      "year": 2019,
+      "brand": "Stadium Club",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 827,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-tier-one-baseball",
+      "name": "2019 Topps Tier One Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 514
+    },
+    {
+      "id": "2019-topps-transcendent-collection-baseball",
+      "name": "2019 Topps Transcendent Collection Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 594
+    },
+    {
+      "id": "2019-topps-tribute-baseball",
+      "name": "2019 Topps Tribute Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 595
+    },
+    {
+      "id": "2019-topps-triple-threads-baseball",
+      "name": "2019 Topps Triple Threads Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 31,
+      "totalCards": 1547,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-update-series-baseball",
+      "name": "2019 Topps Update Series Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1073,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2019-topps-x-vlad-jr-the-legend-baseball",
+      "name": "2019 Topps X Vlad Jr “The Legend” Baseball",
+      "year": 2019,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 41
+    },
+    {
+      "id": "2018-bowman-baseball",
+      "name": "2018 Bowman Baseball",
+      "year": 2018,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 790,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-bowman-chrome-baseball",
+      "name": "2018 Bowman Chrome Baseball",
+      "year": 2018,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 528
+    },
+    {
+      "id": "2018-bowman-draft-baseball",
+      "name": "2018 Bowman Draft Baseball",
+      "year": 2018,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 565
+    },
+    {
+      "id": "2018-bowman-high-tek-baseball",
+      "name": "2018 Bowman High Tek Baseball",
+      "year": 2018,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 202
+    },
+    {
+      "id": "2018-bowman-s-best-baseball",
+      "name": "2018 Bowman’s Best Baseball",
+      "year": 2018,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 212
+    },
+    {
+      "id": "2018-contenders-draft-picks-baseball",
+      "name": "2018 Contenders Draft Picks Baseball",
+      "year": 2018,
+      "brand": "Contenders",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 257
+    },
+    {
+      "id": "2018-donruss-optic-baseball",
+      "name": "2018 Donruss Optic Baseball",
+      "year": 2018,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 481,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-heritage-high-number-baseball",
+      "name": "2018 Heritage High Number Baseball",
+      "year": 2018,
+      "brand": "Heritage",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 520
+    },
+    {
+      "id": "2018-leaf-flash-baseball",
+      "name": "2018 Leaf Flash Baseball",
+      "year": 2018,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 187
+    },
+    {
+      "id": "2018-leaf-metal-draft-baseball",
+      "name": "2018 Leaf Metal Draft Baseball",
+      "year": 2018,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 232
+    },
+    {
+      "id": "2018-leaf-metal-perfect-game-all-american-baseball",
+      "name": "2018 Leaf Metal Perfect Game All-American Baseball",
+      "year": 2018,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 260
+    },
+    {
+      "id": "2018-leaf-trinity-baseball",
+      "name": "2018 Leaf Trinity Baseball",
+      "year": 2018,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 266,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-leaf-ultimate-draft-baseball",
+      "name": "2018 Leaf Ultimate Draft Baseball",
+      "year": 2018,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 193
+    },
+    {
+      "id": "2018-leaf-valiant-baseball",
+      "name": "2018 Leaf Valiant Baseball",
+      "year": 2018,
+      "brand": "Leaf",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 181
+    },
+    {
+      "id": "2018-panini-chronicles-baseball",
+      "name": "2018 Panini Chronicles Baseball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 59,
+      "totalCards": 1283
+    },
+    {
+      "id": "2018-panini-elite-extra-edition-baseball",
+      "name": "2018 Panini Elite Extra Edition Baseball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1153
+    },
+    {
+      "id": "2018-panini-flawless-baseball",
+      "name": "2018 Panini Flawless Baseball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 59,
+      "totalCards": 1219
+    },
+    {
+      "id": "2018-panini-national-treasures-baseball",
+      "name": "2018 Panini National Treasures Baseball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 80,
+      "totalCards": 1486,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-panini-stars-and-stripes-usa-baseball",
+      "name": "2018 Panini Stars and Stripes USA Baseball",
+      "year": 2018,
+      "brand": "Panini",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 735
+    },
+    {
+      "id": "2018-topps-archives-baseball",
+      "name": "2018 Topps Archives Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 506
+    },
+    {
+      "id": "2018-topps-clearly-authentic-baseball",
+      "name": "2018 Topps Clearly Authentic Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 115
+    },
+    {
+      "id": "2018-topps-diamond-icons-baseball",
+      "name": "2018 Topps Diamond Icons Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 562
+    },
+    {
+      "id": "2018-topps-finest-baseball",
+      "name": "2018 Topps Finest Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 316
+    },
+    {
+      "id": "2018-topps-five-star-baseball",
+      "name": "2018 Topps Five Star Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 283,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-topps-gallery-baseball",
+      "name": "2018 Topps Gallery Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 582
+    },
+    {
+      "id": "2018-topps-gold-label-baseball",
+      "name": "2018 Topps Gold Label Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 425
+    },
+    {
+      "id": "2018-topps-heritage-minor-league-baseball",
+      "name": "2018 Topps Heritage Minor League Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 363
+    },
+    {
+      "id": "2018-topps-high-tek-baseball",
+      "name": "2018 Topps High TEK Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 286
+    },
+    {
+      "id": "2018-topps-holiday-baseball",
+      "name": "2018 Topps Holiday Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 488
+    },
+    {
+      "id": "2018-topps-luminaries-baseball",
+      "name": "2018 Topps Luminaries Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 509
+    },
+    {
+      "id": "2018-topps-national-baseball",
+      "name": "2018 Topps National Baseball Card Day",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 56
+    },
+    {
+      "id": "2018-topps-series-2-baseball",
+      "name": "2018 Topps Series 2 Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 31,
+      "totalCards": 1480,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2018-topps-stadium-club-baseball",
+      "name": "2018 Topps Stadium Club Baseball",
+      "year": 2018,
+      "brand": "Stadium Club",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 731
+    },
+    {
+      "id": "2018-topps-transcendent-baseball",
+      "name": "2018 Topps Transcendent Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 452
+    },
+    {
+      "id": "2018-topps-triple-threads-baseball",
+      "name": "2018 Topps Triple Threads Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 31,
+      "totalCards": 1499
+    },
+    {
+      "id": "2018-topps-update-baseball",
+      "name": "2018 Topps Update Baseball",
+      "year": 2018,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1231,
+      "note": "Partial checklist: a few sets are missing some cards."
+    }
+  ]
+}

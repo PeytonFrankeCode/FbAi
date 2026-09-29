@@ -50,7 +50,7 @@ check('Settings can turn each sport on or off, never all of them', /id="settings
   && /if \(!picked\.length\) \{ box\.checked = true;/.test(js));
 check('the switch above the search shows only with a choice to make', /id="sport-switch"/.test(html) && /sw\.classList\.toggle\('hidden', p\.enabled\.length < 2\)/.test(js));
 check('a testing sport says so on the search page, and hides the football market numbers',
-  /id="sport-note"/.test(html) && /is under testing\.<\/strong> Live listings work/.test(js) && /\.sport-testing #market-pulse \{ display: none !important; \}/.test(css));
+  /id="sport-note"/.test(html) && /is under testing\.<\/strong> Live listings and 2018&ndash;2026 checklists are in\. Sold prices are still thin/.test(js) && /\.sport-testing #market-pulse \{ display: none !important; \}/.test(css));
 check('  ...and on the football-only pages, with a way back to football',
   ['checklist-view', 'rainbow-page', 'market-view'].every(id => js.includes(`['${id}',`)) && /onclick="setActiveSport\('football'\)"/.test(js));
 check('the choice follows the account to other devices', /'chSports',\n\];/.test(js) && /applySport\(\);\s*const picker = document\.getElementById\('sports-picker'\)/.test(js));

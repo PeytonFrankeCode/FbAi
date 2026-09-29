@@ -22,11 +22,18 @@
 //
 // Run: node scripts/rebuild-checklist-index.js [--check]
 //   --check  report drift and exit non-zero, write nothing
+//
+// Every sport has its own folder and index: checklists/ (football),
+// checklists-basketball/, checklists-baseball/. They are kept apart so the
+// football-only builds (card index, landing pages, attribution) never read
+// another sport's cards. Each folder that exists is rebuilt.
 const fs = require('fs');
 const path = require('path');
 
-const DIR = path.join(__dirname, '..', 'public', 'data', 'checklists');
-const INDEX = path.join(DIR, 'index.json');
+const DATA = path.join(__dirname, '..', 'public', 'data');
+const DIRS = ['checklists', 'checklists-basketball', 'checklists-baseball']
+  .map(d => path.join(DATA, d)).filter(d => fs.existsSync(d));
+let DIR, INDEX;
 
 function buildIndex() {
   const products = [];
@@ -71,6 +78,7 @@ function buildIndex() {
 function main() {
   const built = buildIndex();
   const check = process.argv.includes('--check');
+  console.log(`${path.basename(DIR)}:`);
 
   let current = null;
   try { current = JSON.parse(fs.readFileSync(INDEX, 'utf8')); } catch { /* absent */ }
@@ -107,14 +115,17 @@ function main() {
   if (check) {
     if (drifted) {
       console.log(`\nindex.json is out of date. Run: node scripts/rebuild-checklist-index.js`);
-      process.exit(1);
+      return 1;
     }
     console.log('index.json matches the files on disk');
-    return;
+    return 0;
   }
 
   fs.writeFileSync(INDEX, JSON.stringify(built, null, 2) + '\n');
   console.log(drifted ? `\nwrote index.json (${drifted} change(s))` : '\nindex.json was already correct');
+  return 0;
 }
 
-main();
+let bad = 0;
+for (const d of DIRS) { DIR = d; INDEX = path.join(d, 'index.json'); bad += main(); }
+if (bad) process.exit(1);
