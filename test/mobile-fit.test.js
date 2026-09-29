@@ -25,5 +25,10 @@ check('the search tabs never widen the page', /max-width:\s*min\(1200px,\s*100%\
 check('a sponsor\'s logo and coupon wrap within the screen', /max-width:\s*100%/.test(rule('.sponsor-item'))
   && /flex-wrap:\s*wrap/.test(rule('.sponsor-item')));
 
+// Not a width rule, but the same footer: without a rule of their own its
+// links showed the browser's blue underline.
+check('the footer links use the site\'s colours, not the browser\'s blue',
+  /color:\s*var\(--text-secondary\)/.test(rule('.footer-links a')) && /color:\s*var\(--accent\)/.test(rule('.footer-copy a')));
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall mobile-fit checks passed');
 process.exit(failures ? 1 : 0);
