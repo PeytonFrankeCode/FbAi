@@ -9444,8 +9444,9 @@ body.tour-open { overflow: hidden; }
 .sport-view-note { margin: 0 auto 1rem; }
 .sport-view-link { background: none; border: none; padding: 0; margin-left: 0.25rem; color: var(--accent); font-weight: 700; font-size: inherit; text-decoration: underline; cursor: pointer; }
 .sport-view-link:hover { background: none; }
-/* Football market numbers mean nothing next to a basketball search. */
-.sport-testing #market-pulse { display: none !important; }
+/* The football market box, for someone who turned football off. */
+.no-football #market-pulse { display: none !important; }
+#checklist-products .sport-switch { margin: 0.25rem 0 1rem; justify-content: flex-start; }
 .sport-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
 .sport-chip { position: relative; cursor: pointer; }
 .sport-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }

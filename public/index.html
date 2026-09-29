@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=96899f4b67" />
+  <link rel="stylesheet" href="style.css?v=07f64c4cc2" />
 
 
 </head>
@@ -278,9 +278,6 @@
 
   <main>
     <section class="search-section" aria-label="Search">
-      <!-- Which sport the search is for. Filled by applySport() in app.js;
-           shown only when more than one sport is turned on. -->
-      <div id="sport-switch" class="sport-switch hidden" role="group" aria-label="Sport"></div>
       <form id="search-form" role="search">
         <div class="search-input-wrap">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -520,7 +517,10 @@
       <div id="checklist-products" class="checklist-products">
         <h2 class="checklist-page-title">Browse Checklists</h2>
         <p class="checklist-page-subtitle">Explore complete card checklists with every parallel and print run</p>
-        <div class="checklist-guide-links">
+        <!-- Which sport's checklists to list. Search needs no pick: it covers
+             every sport turned on. Filled by applySport(); shown with 2+ on. -->
+        <div id="sport-switch" class="sport-switch hidden" role="group" aria-label="Checklist sport"></div>
+        <div class="checklist-guide-links" id="checklist-guide-links">
           <a class="checklist-guide-link" href="/players/">&#127944;&nbsp; Player Price Guides</a>
           <a class="checklist-guide-link" href="/sets/">&#128203;&nbsp; All Set Checklists &amp; Prices</a>
           <a class="checklist-guide-link" href="/teams/">&#127944;&nbsp; NFL Team Guides</a>
@@ -1693,7 +1693,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=3c531b1554"></script>
+  <script src="app.js?v=1b12a77a62"></script>
   <script type="importmap">
   {
     "imports": {

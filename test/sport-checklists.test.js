@@ -60,6 +60,18 @@ try { out = execFileSync('node', [path.join(ROOT, 'scripts', 'rebuild-checklist-
 catch (e) { ok = false; out = e.stdout || ''; }
 check('each sport\'s index is built from its files', ok && /checklists-basketball:/.test(out) && /checklists-baseball:/.test(out), ok ? '' : out.slice(-300));
 
+// The player list search reads a listing's sport by is built from these files.
+let pok = true, pout = '';
+try { pout = execFileSync('node', [path.join(ROOT, 'scripts', 'build-sport-players.js'), '--check'], { encoding: 'utf8' }); }
+catch (e) { pok = false; pout = e.stdout || ''; }
+check('sport-players.json is built from the checklists as they are', pok, pok ? '' : pout);
+{
+  const players = JSON.parse(fs.readFileSync(path.join(DATA, 'sport-players.json'), 'utf8'));
+  check('  ...it knows the stars, despite their multi-sport insert cards',
+    players.basketball.includes('victor wembanyama') && players.basketball.includes('lebron james') && players.baseball.includes('shohei ohtani')
+    && !players.basketball.includes('patrick mahomes') && !players.baseball.includes('patrick mahomes'));
+}
+
 // The browser: a product's folder comes from its id; the list from the sport picked.
 const js = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
 const start = js.indexOf('var CHECKLIST_DIRS');

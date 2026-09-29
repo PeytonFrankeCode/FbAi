@@ -1436,6 +1436,7 @@ const SEARCH_ATTEMPT_MS = 12000;   // per try (searches take 0.5–3 s); a hung 
 
 function _beginSearch() {
   const seq = ++_searchSeq;
+  _showSportNote(null);
   if (_searchCtl) _searchCtl.abort();
   _searchCtl = new AbortController();
   _searchSlowTimers.forEach(clearTimeout);
@@ -1657,19 +1658,19 @@ function initSiteBanner() {
 // these before this part of the file has finished running.
 var SPORTS_KEY = 'chSports';
 var SPORTS = {
-  football: { label: 'Football', icon: '\u{1F3C8}', testing: false,
+  football: { example: 'Patrick Mahomes', label: 'Football', icon: '\u{1F3C8}', testing: false,
     placeholder: 'e.g. Patrick Mahomes or 2020 Prizm Silver Mahomes',
     chips: [
       ['Patrick Mahomes 2017 Prizm Base', 'Mahomes Prizm Base'], ['Patrick Mahomes 2017 Prizm Silver', 'Mahomes Prizm Silver'],
       ['Joe Burrow 2020 Prizm Base', 'Burrow Prizm Base'], ['Justin Jefferson 2020 Prizm Silver PSA 10', 'Jefferson Prizm Silver PSA 10'],
       ['Josh Allen 2018 Prizm Base', 'Allen Prizm Base'], ["Ja'Marr Chase 2021 Prizm Base", 'Chase Prizm Base']] },
-  basketball: { label: 'Basketball', icon: '\u{1F3C0}', testing: true,
+  basketball: { example: 'Victor Wembanyama', label: 'Basketball', icon: '\u{1F3C0}', testing: true,
     placeholder: 'e.g. Victor Wembanyama or 2023 Prizm Wembanyama',
     chips: [
       ['2023 Prizm Victor Wembanyama', 'Wembanyama Prizm'], ['2003 Topps Chrome LeBron James', 'LeBron Topps Chrome RC'],
       ['2018 Prizm Luka Doncic Silver', 'Doncic Prizm Silver'], ['2019 Prizm Zion Williamson', 'Zion Prizm'],
       ['2009 Topps Stephen Curry', 'Curry Topps RC'], ['2024 Prizm Caitlin Clark', 'Caitlin Clark Prizm']] },
-  baseball: { label: 'Baseball', icon: '\u{26BE}', testing: true,
+  baseball: { example: 'Shohei Ohtani', label: 'Baseball', icon: '\u{26BE}', testing: true,
     placeholder: 'e.g. Shohei Ohtani or 2018 Topps Chrome Ohtani',
     chips: [
       ['2018 Topps Chrome Shohei Ohtani', 'Ohtani Topps Chrome RC'], ['2011 Topps Update Mike Trout', 'Trout Update RC'],
@@ -1712,46 +1713,55 @@ function setActiveSport(id) {
   applySport();
 }
 
-// Everything on the page that depends on the sport in use.
+// Everything on the page that depends on the sports turned on. Search needs
+// no pick: it covers every sport that is on (the hint and example searches mix
+// them, and results from a sport that is off are hidden). The one pick left,
+// `active`, is which sport's checklists the Checklists page lists.
 function applySport() {
   const p = sportsPrefs();
   const sport = SPORTS[p.active];
-  document.body.classList.toggle('sport-testing', sport.testing);
   document.body.dataset.sport = p.active;
+  // The football market box means nothing to someone who turned football off.
+  document.body.classList.toggle('no-football', !p.enabled.includes('football'));
 
-  // The switch above the search: only worth showing with a choice to make.
+  // The checklist sport switch: only worth showing with a choice to make.
   const sw = document.getElementById('sport-switch');
   if (sw) {
     sw.classList.toggle('hidden', p.enabled.length < 2);
     sw.innerHTML = p.enabled.map(id => `<button type="button" class="sport-pill${id === p.active ? ' active' : ''}" aria-pressed="${id === p.active}" onclick="setActiveSport('${id}')">
         <span aria-hidden="true">${SPORTS[id].icon}</span> ${SPORTS[id].label}${SPORTS[id].testing ? '<span class="sport-testing-tag">Testing</span>' : ''}</button>`).join('');
   }
+  const guides = document.getElementById('checklist-guide-links');
+  if (guides) guides.classList.toggle('hidden', p.active !== 'football');   // the player/set/team guides are football's
+
   const input = document.getElementById('search-input');
-  if (input) input.placeholder = sport.placeholder;
-  // Same buttons, new searches: their click handlers read data-query.
+  if (input) {
+    const names = p.enabled.map(id => SPORTS[id].example);
+    input.placeholder = p.enabled.length === 1 ? SPORTS[p.enabled[0]].placeholder
+      : `e.g. ${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
+  }
+  // Same buttons, new searches (their click handlers read data-query): taken
+  // in turn from each sport that is on, so every sport gets a fair share.
+  const mixed = [];
+  for (let i = 0; mixed.length < 6 && i < 6; i++) for (const id of p.enabled) if (SPORTS[id].chips[i] && mixed.length < 6) mixed.push(SPORTS[id].chips[i]);
   document.querySelectorAll('#suggestions-section .chip').forEach((chip, i) => {
-    const c = sport.chips[i];
+    const c = mixed[i];
     chip.classList.toggle('hidden', !c);
     if (c) { chip.dataset.query = c[0]; chip.textContent = c[1]; }
   });
-  const note = document.getElementById('sport-note');
-  if (note) {
-    note.classList.toggle('hidden', !sport.testing);
-    note.innerHTML = sport.testing
-      ? `<strong>${sport.icon} ${sport.label} is under testing.</strong> Live listings and 2018&ndash;2026 checklists are in. Sold prices are still thin, so double-check a price before you buy or sell.`
-      : '';
-  }
-  // Pages still football-only say so rather than passing football off as the
-  // pick. Checklists exist for every sport; theirs is a lighter note.
+
+  // Pages still football-only say so when football is off; the Checklists
+  // page has every sport, and a lighter note for the ones under testing.
   for (const [id, what] of [['checklist-view', 'checklists'], ['rainbow-page', 'rainbow tracker'], ['market-view', 'market data']]) {
     const view = document.getElementById(id);
     if (!view) continue;
     let n = view.querySelector(':scope > .sport-view-note');
-    if (!sport.testing) { if (n) n.remove(); continue; }
+    const show = id === 'checklist-view' ? sport.testing : !p.enabled.includes('football');
+    if (!show) { if (n) n.remove(); continue; }
     if (!n) { n = document.createElement('div'); n.className = 'sport-view-note'; view.prepend(n); }
     n.innerHTML = id === 'checklist-view'
       ? `${sport.icon} <strong>${sport.label} checklists are new and under testing.</strong> A few sets may be missing cards or parallels. Spot one? Tell us with the feedback button.`
-      : `${sport.icon} <strong>${sport.label} ${what} are under testing.</strong> Everything here is football for now. <button type="button" class="sport-view-link" onclick="setActiveSport('football')">Switch to football</button>`;
+      : `<strong>The ${what} is football-only for now.</strong> Basketball and baseball are on the way. Turn football on in Settings to use it.`;
   }
   // The checklist list on screen belongs to one sport: a new pick reloads it.
   if (typeof _checklistListSport !== 'undefined' && _checklistListSport && _checklistListSport !== p.active) {
@@ -1759,6 +1769,85 @@ function applySport() {
   }
   const settings = document.getElementById('settings-sports');
   if (settings) settings.innerHTML = _sportChipsHtml(p.enabled, 'settings');
+}
+
+// Which sport a listing is, from its title: the sport or league named, or a
+// product line only one sport has. null when the title does not say (most
+// football titles don't, and "Prizm" or "Topps Chrome" could be any sport).
+var _SPORT_TITLE = [
+  ['basketball', /\b(basketball|nba|wnba|euroleague|g league|nba hoops|hoops premium stock)\b/i],
+  ['baseball', /\b(baseball|mlb|bowman draft|heritage high number|allen (&|and) ginter|topps update series)\b/i],
+  ['football', /\b(football|nfl)\b/i],
+];
+function _sportOfTitle(title) {
+  const t = String(title || '');
+  const hits = _SPORT_TITLE.filter(([, re]) => re.test(t)).map(([id]) => id);
+  if (hits.length) return hits.length === 1 ? hits[0] : null;
+  // Most titles name only the player: a basketball or baseball player on the
+  // list (scripts/build-sport-players.js) says the sport.
+  if (!_sportPlayers) return null;
+  const w = _sportNorm(t).split(' ');
+  for (let i = 0; i < w.length - 1; i++) {
+    for (const n of [w[i] + ' ' + w[i + 1], i < w.length - 2 ? w[i] + ' ' + w[i + 1] + ' ' + w[i + 2] : '']) {
+      if (!n) continue;
+      if (_sportPlayers.basketball.has(n)) return 'basketball';
+      if (_sportPlayers.baseball.has(n)) return 'baseball';
+    }
+  }
+  return null;
+}
+
+// Same normalisation the list is built with.
+function _sportNorm(s) {
+  return String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^a-z' .-]/g, ' ').replace(/\b(jr|sr|ii|iii|iv)\b\.?/g, '').replace(/[.']/g, '')
+    .replace(/[-\s]+/g, ' ').trim();
+}
+
+// The player list: fetched once, in the background after the page settles,
+// so no search waits on it. Until it arrives, titles are read by their words.
+var _sportPlayers = null;
+function _loadSportPlayers() {
+  if (_sportPlayers || _loadSportPlayers.busy) return;
+  _loadSportPlayers.busy = true;
+  fetch('/data/sport-players.json').then(r => r.ok ? r.json() : null).then(d => {
+    if (d) _sportPlayers = { basketball: new Set(d.basketball || []), baseball: new Set(d.baseball || []) };
+  }).catch(() => {}).finally(() => { _loadSportPlayers.busy = false; });
+}
+
+// A search's results, seen through the sports turned on: listings plainly of a
+// sport that is off are dropped (unless that would leave nothing), and the
+// sport most of the rest belong to is named, so a testing sport can say so.
+function _sportFilterResults(results) {
+  const on = new Set(sportsPrefs().enabled);
+  const tagged = results.map(r => [r, _sportOfTitle(r.title)]);
+  const off = tagged.filter(([, s]) => s && !on.has(s));
+  const kept = off.length && off.length < tagged.length ? tagged.filter(([, s]) => !s || on.has(s)) : tagged;
+  const hidden = {};
+  if (kept !== tagged) for (const [, s] of off) hidden[s] = (hidden[s] || 0) + 1;
+  const counts = {};
+  for (const [, s] of kept) if (s) counts[s] = (counts[s] || 0) + 1;
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const sport = top && top[1] >= Math.max(2, kept.length * 0.4) ? top[0] : null;
+  return { results: kept.map(([r]) => r), hidden, sport };
+}
+
+// The note under the search: a testing sport's caveat, and what was hidden.
+function _showSportNote(f) {
+  const note = document.getElementById('sport-note');
+  if (!note) return;
+  const parts = [];
+  const s = f && f.sport && SPORTS[f.sport];
+  if (s && s.testing) {
+    parts.push(`<strong>${s.icon} ${s.label} is under testing.</strong> Live listings and 2018&ndash;2026 checklists are in. Sold prices are still thin, so double-check a price before you buy or sell.`);
+  }
+  const hid = f ? Object.entries(f.hidden) : [];
+  if (hid.length) {
+    const list = hid.map(([id, n]) => `${n} ${SPORTS[id].label.toLowerCase()}`).join(' and ');
+    parts.push(`Hid ${list} listing${hid.reduce((a, [, n]) => a + n, 0) === 1 ? '' : 's'}: ${hid.length === 1 ? 'that sport is' : 'those sports are'} off. <button type="button" class="sport-view-link" onclick="showSettings()">Change in Settings</button>`);
+  }
+  note.innerHTML = parts.join(' ');
+  note.classList.toggle('hidden', !parts.length);
 }
 
 function _sportChipsHtml(enabled, where) {
@@ -2168,7 +2257,10 @@ async function fetchDirectSearch(query) {
     }
 
     const { mock, searchType, approximateValue, relaxedNote } = data;
-    const results = Array.isArray(data.results) ? data.results : [];
+    // Only the sports turned on; says so when a testing sport is what came back.
+    const sportView = _sportFilterResults(Array.isArray(data.results) ? data.results : []);
+    const results = sportView.results;
+    _showSportNote(sportView);
     currentResults = results;
     _searchIdentity = data.cardIdentity || null;
     recordPriceHistory(query, results);
@@ -2511,7 +2603,10 @@ async function performSearch(query, opts = {}) {
     }
 
     const { mock, serial, similarResults } = data;
-    const results = Array.isArray(data.results) ? data.results : [];
+    // Only the sports turned on; says so when a testing sport is what came back.
+    const sportView = _sportFilterResults(Array.isArray(data.results) ? data.results : []);
+    const results = sportView.results;
+    _showSportNote(sportView);
     currentResults = results;
     _searchIdentity = data.cardIdentity || null;
     currentResultMode = effectiveMode;
@@ -5313,6 +5408,7 @@ refreshSoldUsage().catch(() => {});
 // The sport in use shapes the search page; a first visit is asked which.
 applySport();
 maybeAskSports();
+setTimeout(_loadSportPlayers, 1500);
 // First-run walkthrough. No-ops for anyone who has already seen it.
 maybeStartTour();
 // After the rest of this file has run: both read the survey's constants,
