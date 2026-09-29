@@ -77,8 +77,14 @@ function subjectFor(c) {
   return 'This week in football cards: your market movers';
 }
 
+// The beta survey rides along in the emails sent before this date, then drops
+// out on its own: a few weeks of asking the most engaged readers, not forever.
+const SURVEY_ASK_UNTIL = Date.parse('2026-10-21T00:00:00Z');
+
 // { subject, html, text } for one subscriber (the unsubscribe link is theirs).
-function renderDigest(c, { week, unsubUrl, site = SITE }) {
+function renderDigest(c, { week, unsubUrl, site = SITE, now = Date.now() }) {
+  const surveyUrl = `${site}/?survey=email&utm_source=digest&utm_medium=email&utm_campaign=beta-survey`;
+  const askSurvey = now < SURVEY_ASK_UNTIL;
   const L = (q) => link(q, week, site);
   const section = (title, sub, rows) => rows.length ? `
     <tr><td style="padding:22px 0 6px;">
@@ -117,6 +123,13 @@ function renderDigest(c, { week, unsubUrl, site = SITE }) {
     row(r.itemUrl ? epnUrl(r.itemUrl) : site, r.imageUrl, r.title, r.grade && r.grade !== 'Raw' ? r.grade : 'Sold on eBay', money(r.price))))}
   ${section('Hottest sets', 'By sales this week', c.sets.map(r =>
     row(L(r.query), null, r.name, `${(r.sales || 0).toLocaleString('en-US')} sales · avg ${money(r.avgPrice)}`, money(r.totalValue))))}
+  ${askSurvey ? `<tr><td style="padding:22px 0 0;">
+    <div style="background:#eef6f1;border:1px solid #cfe6d8;border-radius:10px;padding:14px 16px;">
+      <div style="font-size:15px;font-weight:800;color:#2d6a4f;">Help shape The Card Huddle</div>
+      <div style="font-size:13px;color:#444;margin:4px 0 10px;line-height:1.45;">We're in beta. Tell us what works, what's broken and what to build next. It takes 2 minutes.</div>
+      <a href="${esc(surveyUrl)}" style="display:inline-block;background:#fff;color:#2d6a4f;border:1px solid #2d6a4f;text-decoration:none;font-weight:800;font-size:13px;padding:8px 16px;border-radius:8px;">Take the survey</a>
+    </div>
+  </td></tr>` : ''}
   <tr><td align="center" style="padding:26px 0 6px;">
     <a href="${esc(`${site}/?utm_source=digest&utm_medium=email&utm_campaign=${encodeURIComponent(week)}`)}" style="display:inline-block;background:#2d6a4f;color:#fff;text-decoration:none;font-weight:800;padding:12px 24px;border-radius:8px;">See the full market</a>
   </td></tr>
@@ -131,7 +144,7 @@ function renderDigest(c, { week, unsubUrl, site = SITE }) {
 This week in football cards: ${c.sales.toLocaleString('en-US')} sales, ${money(c.value)} changed hands.
 ${t('BIGGEST RISERS', c.risers.map(r => `- ${r.name || r.player} ${pct(r.changePct)}: ${L(r.query)}`))}${t('PLAYERS ON THE MOVE', c.players.map(r => `- ${r.player} ${pct(r.changePct)}: ${L(r.query)}`))}${t('COOLING OFF', c.fallers.map(r => `- ${r.name || r.player} ${pct(r.changePct)}: ${L(r.query)}`))}${t('MOST SOLD', c.mostSold.map(r => `- ${r.name} (${r.sales} sales): ${L(r.query)}`))}
 See the full market: ${site}/
-
+${askSurvey ? `\nHelp shape The Card Huddle (2-minute beta survey): ${surveyUrl}\n` : ''}
 Unsubscribe: ${unsubUrl}
 `;
   return { subject: subjectFor(c), html, text };
@@ -151,4 +164,4 @@ function confirmEmail({ confirmUrl }) {
   };
 }
 
-module.exports = { epnUrl, SITE, normEmail, validEmail, weekId, inSendWindow, SEND_FROM_HOUR, digestContent, renderDigest, subjectFor, confirmEmail, link };
+module.exports = { SURVEY_ASK_UNTIL, epnUrl, SITE, normEmail, validEmail, weekId, inSendWindow, SEND_FROM_HOUR, digestContent, renderDigest, subjectFor, confirmEmail, link };
