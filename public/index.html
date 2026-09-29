@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=77981bb274" />
+  <link rel="stylesheet" href="style.css?v=96899f4b67" />
 
 
 </head>
@@ -278,6 +278,9 @@
 
   <main>
     <section class="search-section" aria-label="Search">
+      <!-- Which sport the search is for. Filled by applySport() in app.js;
+           shown only when more than one sport is turned on. -->
+      <div id="sport-switch" class="sport-switch hidden" role="group" aria-label="Sport"></div>
       <form id="search-form" role="search">
         <div class="search-input-wrap">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -296,6 +299,7 @@
         <button class="mode-tab" data-mode="forsale">For Sale</button>
         <button class="mode-tab active" data-mode="sold">Sold</button>
       </div>
+      <div id="sport-note" class="sport-note hidden" role="note"></div>
       <!-- Price range filter — visible only in For Sale mode. The eBay
            Browse API gets fed minPrice/maxPrice and we also drop anything
            outside the range client-side as a safety net. -->
@@ -1339,6 +1343,15 @@
         <!-- Your data: the self-serve half of the access and erasure rights in
              the privacy policy. Hidden until signed in — both endpoints need a
              session. Wired up in app.js (downloadMyData / openDeleteAccount). -->
+        <div class="settings-row settings-row--stacked">
+          <div class="settings-label">
+            <span class="settings-label-text">Sports</span>
+            <span class="settings-label-desc">Which sports you collect. Basketball and baseball are under testing.</span>
+          </div>
+          <div id="settings-sports" class="sport-chips"></div>
+          <div id="settings-sports-msg" class="sport-msg" role="status"></div>
+        </div>
+
         <div class="settings-row settings-data-row hidden" id="settings-data-row">
           <div class="settings-label">
             <span class="settings-label-text">Your data</span>
@@ -1352,6 +1365,19 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- First visit: which sports? Filled and shown by maybeAskSports(). -->
+  <div id="sports-picker" class="settings-overlay hidden" role="dialog" aria-labelledby="sports-picker-title">
+    <div class="settings-box sports-picker-box">
+      <h2 class="settings-heading" id="sports-picker-title">What do you collect?</h2>
+      <p class="sports-picker-sub">Pick your sports and we'll set up the site for them. You can change this any time in Settings.</p>
+      <div id="sports-picker-options" class="sport-chips sport-chips--big"></div>
+      <p class="sports-picker-fine"><strong>Basketball and baseball are under testing.</strong> Live listings work now; sold prices are still thin and checklists are on the way.</p>
+      <div id="sports-picker-msg" class="sport-msg" role="status"></div>
+      <button type="button" class="acct-btn sports-picker-go" onclick="saveSportsPicker(false)">Continue</button>
+      <button type="button" class="acct-link sports-picker-skip" onclick="saveSportsPicker(true)">Just football for now</button>
     </div>
   </div>
 
@@ -1667,7 +1693,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=ec23a9a14b"></script>
+  <script src="app.js?v=fe9497832b"></script>
   <script type="importmap">
   {
     "imports": {

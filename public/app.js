@@ -1626,6 +1626,151 @@ function initSiteBanner() {
   el.classList.remove('hidden');
 }
 
+// ---- Sports ----
+// Football is the live sport; basketball and baseball are under testing: live
+// listings work (the eBay card category covers every sport), but sold history
+// is thin and there are no checklists yet, and the page says so wherever it
+// matters. A first visit asks which sports the person collects; Settings
+// changes it; the switch above the search picks the one in use. Saved as
+// { enabled: [...], active } and synced with the account.
+//
+// Declared with function/var, not const: the tour and the settings code call
+// these before this part of the file has finished running.
+var SPORTS_KEY = 'chSports';
+var SPORTS = {
+  football: { label: 'Football', icon: '\u{1F3C8}', testing: false,
+    placeholder: 'e.g. Patrick Mahomes or 2020 Prizm Silver Mahomes',
+    chips: [
+      ['Patrick Mahomes 2017 Prizm Base', 'Mahomes Prizm Base'], ['Patrick Mahomes 2017 Prizm Silver', 'Mahomes Prizm Silver'],
+      ['Joe Burrow 2020 Prizm Base', 'Burrow Prizm Base'], ['Justin Jefferson 2020 Prizm Silver PSA 10', 'Jefferson Prizm Silver PSA 10'],
+      ['Josh Allen 2018 Prizm Base', 'Allen Prizm Base'], ["Ja'Marr Chase 2021 Prizm Base", 'Chase Prizm Base']] },
+  basketball: { label: 'Basketball', icon: '\u{1F3C0}', testing: true,
+    placeholder: 'e.g. Victor Wembanyama or 2023 Prizm Wembanyama',
+    chips: [
+      ['2023 Prizm Victor Wembanyama', 'Wembanyama Prizm'], ['2003 Topps Chrome LeBron James', 'LeBron Topps Chrome RC'],
+      ['2018 Prizm Luka Doncic Silver', 'Doncic Prizm Silver'], ['2019 Prizm Zion Williamson', 'Zion Prizm'],
+      ['2009 Topps Stephen Curry', 'Curry Topps RC'], ['2024 Prizm Caitlin Clark', 'Caitlin Clark Prizm']] },
+  baseball: { label: 'Baseball', icon: '\u{26BE}', testing: true,
+    placeholder: 'e.g. Shohei Ohtani or 2018 Topps Chrome Ohtani',
+    chips: [
+      ['2018 Topps Chrome Shohei Ohtani', 'Ohtani Topps Chrome RC'], ['2011 Topps Update Mike Trout', 'Trout Update RC'],
+      ['2019 Bowman Chrome Julio Rodriguez', 'J-Rod Bowman Chrome'], ['2022 Topps Chrome Bobby Witt Jr', 'Witt Jr. Chrome RC'],
+      ['2023 Bowman Chrome Paul Skenes', 'Skenes Bowman Chrome'], ['2019 Topps Chrome Juan Soto', 'Soto Chrome']] },
+};
+var SPORT_IDS = ['football', 'basketball', 'baseball'];
+
+// The saved choice, or null if the person has not been asked yet.
+function _sportsSaved() {
+  try {
+    const v = JSON.parse(localStorage.getItem(SPORTS_KEY) || 'null');
+    if (!v || !Array.isArray(v.enabled)) return null;
+    const enabled = SPORT_IDS.filter(s => v.enabled.includes(s));
+    if (!enabled.length) return null;
+    return { enabled, active: enabled.includes(v.active) ? v.active : enabled[0] };
+  } catch (_) { return null; }
+}
+function sportsPrefs() { return _sportsSaved() || { enabled: ['football'], active: 'football' }; }
+function activeSport() { return sportsPrefs().active; }
+function _saveSports(p) {
+  try { localStorage.setItem(SPORTS_KEY, JSON.stringify(p)); } catch (_) {}
+  if (typeof schedulePushUserData === 'function') schedulePushUserData();
+}
+
+function setSportsEnabled(enabled) {
+  enabled = SPORT_IDS.filter(s => enabled.includes(s));
+  if (!enabled.length) return false;
+  const prev = sportsPrefs();
+  _saveSports({ enabled, active: enabled.includes(prev.active) ? prev.active : enabled[0] });
+  if (typeof gtag === 'function') { try { gtag('event', 'sports_set', { sports: enabled.join(',') }); } catch (_) {} }
+  applySport();
+  return true;
+}
+
+function setActiveSport(id) {
+  const p = sportsPrefs();
+  if (!p.enabled.includes(id)) return;
+  _saveSports({ ...p, active: id });
+  applySport();
+}
+
+// Everything on the page that depends on the sport in use.
+function applySport() {
+  const p = sportsPrefs();
+  const sport = SPORTS[p.active];
+  document.body.classList.toggle('sport-testing', sport.testing);
+  document.body.dataset.sport = p.active;
+
+  // The switch above the search: only worth showing with a choice to make.
+  const sw = document.getElementById('sport-switch');
+  if (sw) {
+    sw.classList.toggle('hidden', p.enabled.length < 2);
+    sw.innerHTML = p.enabled.map(id => `<button type="button" class="sport-pill${id === p.active ? ' active' : ''}" aria-pressed="${id === p.active}" onclick="setActiveSport('${id}')">
+        <span aria-hidden="true">${SPORTS[id].icon}</span> ${SPORTS[id].label}${SPORTS[id].testing ? '<span class="sport-testing-tag">Testing</span>' : ''}</button>`).join('');
+  }
+  const input = document.getElementById('search-input');
+  if (input) input.placeholder = sport.placeholder;
+  // Same buttons, new searches: their click handlers read data-query.
+  document.querySelectorAll('#suggestions-section .chip').forEach((chip, i) => {
+    const c = sport.chips[i];
+    chip.classList.toggle('hidden', !c);
+    if (c) { chip.dataset.query = c[0]; chip.textContent = c[1]; }
+  });
+  const note = document.getElementById('sport-note');
+  if (note) {
+    note.classList.toggle('hidden', !sport.testing);
+    note.innerHTML = sport.testing
+      ? `<strong>${sport.icon} ${sport.label} is under testing.</strong> Live listings work. Sold prices are still thin and there are no ${sport.label.toLowerCase()} checklists yet, so double-check a price before you buy or sell.`
+      : '';
+  }
+  // The football-only pages say so rather than passing football off as the pick.
+  for (const [id, what] of [['checklist-view', 'checklists'], ['rainbow-page', 'rainbow tracker'], ['market-view', 'market data']]) {
+    const view = document.getElementById(id);
+    if (!view) continue;
+    let n = view.querySelector(':scope > .sport-view-note');
+    if (!sport.testing) { if (n) n.remove(); continue; }
+    if (!n) { n = document.createElement('div'); n.className = 'sport-view-note'; view.prepend(n); }
+    n.innerHTML = `${sport.icon} <strong>${sport.label} ${what} are under testing.</strong> Everything here is football for now. <button type="button" class="sport-view-link" onclick="setActiveSport('football')">Switch to football</button>`;
+  }
+  const settings = document.getElementById('settings-sports');
+  if (settings) settings.innerHTML = _sportChipsHtml(p.enabled, 'settings');
+}
+
+function _sportChipsHtml(enabled, where) {
+  return SPORT_IDS.map(id => `<label class="sport-chip">
+      <input type="checkbox" value="${id}" ${enabled.includes(id) ? 'checked' : ''} ${where === 'settings' ? 'onchange="_sportSettingsChanged(this)"' : ''}>
+      <span><span aria-hidden="true">${SPORTS[id].icon}</span> ${SPORTS[id].label}${SPORTS[id].testing ? ' <em>Testing</em>' : ''}</span>
+    </label>`).join('');
+}
+
+function _sportSettingsChanged(box) {
+  const picked = [...document.querySelectorAll('#settings-sports input:checked')].map(i => i.value);
+  const msg = document.getElementById('settings-sports-msg');
+  if (!picked.length) { box.checked = true; if (msg) msg.textContent = 'Keep at least one sport on.'; return; }
+  if (msg) msg.textContent = '';
+  setSportsEnabled(picked);
+}
+
+// The first-visit question. Football starts ticked; the person must leave at
+// least one on. Closing it without choosing keeps football and asks no more.
+function maybeAskSports() {
+  if (_sportsSaved()) return false;
+  const el = document.getElementById('sports-picker');
+  if (!el) return false;
+  document.getElementById('sports-picker-options').innerHTML = _sportChipsHtml(['football'], 'picker');
+  el.classList.remove('hidden');
+  return true;
+}
+function saveSportsPicker(skip) {
+  const picked = skip ? ['football']
+    : [...document.querySelectorAll('#sports-picker-options input:checked')].map(i => i.value);
+  const msg = document.getElementById('sports-picker-msg');
+  if (!picked.length) { if (msg) msg.textContent = 'Pick at least one sport.'; return; }
+  setSportsEnabled(picked);
+  document.getElementById('sports-picker').classList.add('hidden');
+  // The tour waited for this; it can run now.
+  maybeStartTour();
+}
+
 // ---- First-run guided tour ----
 // Runs once for a new visitor and is replayable from Settings. Each step
 // points at a real element; a step whose element isn't on the page is skipped
@@ -1793,7 +1938,8 @@ function _tourRender() {
 // First visit only. Deferred so it never competes with the page's own startup
 // work, and skipped entirely for anyone who has seen it.
 function maybeStartTour() {
-  if (tourSeen()) return;
+  // A first visit answers the sports question first; saving it starts the tour.
+  if (tourSeen() || !_sportsSaved()) return;
   setTimeout(() => { if (!document.querySelector('.modal:not(.hidden), .login-overlay:not(.hidden)')) startTour(false); }, 1200);
 }
 
@@ -5138,6 +5284,9 @@ refreshSoldUsage().catch(() => {});
 // Each: { name, img (logo URL), url (affiliate/landing link) }. The strip stays
 // hidden until at least one is configured, so it never ships empty.
 //   e.g. { name: 'BCW Supplies', img: '/sponsors/bcw.png', url: 'https://www.bcwsupplies.com/?aff=...' }
+// The sport in use shapes the search page; a first visit is asked which.
+applySport();
+maybeAskSports();
 // First-run walkthrough. No-ops for anyone who has already seen it.
 maybeStartTour();
 // After the rest of this file has run: both read the survey's constants,
@@ -8527,6 +8676,7 @@ const USER_SYNC_KEYS = [
   'cardHuddleBoothLayout',
   'cardHuddleBoothHidden',
   'cardHuddlePortfolioHistory',
+  'chSports',
 ];
 const USER_SYNC_DEBOUNCE_MS = 800;
 // What this device and the account last agreed on: { owner, rev, data }. A
@@ -8805,6 +8955,12 @@ function _userSyncRerender() {
   try { if (typeof renderMyListings === 'function') renderMyListings(); } catch (_) {}
   try { if (typeof refreshRainbowPageFromSync === 'function') refreshRainbowPageFromSync(); } catch (_) {}
   try { if (typeof renderInventory === 'function') renderInventory(); } catch (_) {}
+  // Sports chosen on another device: switch, and don't ask this one again.
+  try {
+    applySport();
+    const picker = document.getElementById('sports-picker');
+    if (_sportsSaved() && picker && !picker.classList.contains('hidden')) { picker.classList.add('hidden'); maybeStartTour(); }
+  } catch (_) {}
 }
 
 // A page left open (a phone's home-screen app can stay open for days) checks
