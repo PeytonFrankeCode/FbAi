@@ -6,6 +6,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
 const digest = require('./market-digest');
+const betaSurvey = require('./beta-survey');
 
 // WHEN WAS THIS COMPUTED, AND HOW OLD IS IT.
 //
@@ -614,6 +615,9 @@ const RL_TIERS = [
   // Each signup sends an email: a script must not turn the form into a way
   // to mail strangers, or into a bill.
   { name: 'digest', minute: 3, hour: 20, match: (p) => p === '/api/digest/subscribe' },
+  // A survey answer is a person's two minutes; a script posting hundreds is
+  // noise in the admin tab.
+  { name: 'survey', minute: 3, hour: 10, match: (p) => p === '/api/survey' },
   { name: 'api', minute: 300, hour: 5000, match: (p) => p.startsWith('/api/') },
 ];
 
@@ -655,7 +659,10 @@ function rateLimitCheck(req, now = Date.now()) {
   const tier = req.captchaUnverified ? RL_UNVERIFIED : RL_TIERS.find(t => t.match(p));
   if (!tier) return null;
 
-  const key = _rlKey(req);
+  // One count per budget, not one per caller: with a single shared count, a
+  // visitor's searches and page data used up the 3-a-minute budgets for the
+  // email signup and the survey before they ever reached them.
+  const key = `${tier.name}|${_rlKey(req)}`;
   let e = _rlHits.get(key);
   if (!e) {
     if (_rlHits.size >= RL_MAX_KEYS) _rlSweep(now);
@@ -16773,6 +16780,44 @@ app.get('/api/feedback', (req, res) => {
     res.json(items.slice().reverse()); // newest first
   } catch (err) {
     res.json([]);
+  }
+});
+
+// ---- Beta survey ----
+// One KV record per answer (survey:<time>:<id>), so answers arriving together
+// from different isolates never overwrite each other the way a single blob
+// would. The admin tab lists them; KV's key list can lag a new write by up to
+// a minute, which is fine for a report nobody reads the second it is sent.
+const SURVEY_PREFIX = 'survey:';
+app.post('/api/survey', async (req, res) => {
+  const body = req.body || {};
+  // A field no person sees: a bot that fills every input fills this one too.
+  if (body.website) return res.json({ ok: true });
+  const v = betaSurvey.validateSurvey({ ...body, userAgent: req.headers['user-agent'] || '' });
+  if (!v.ok) return res.status(400).json({ error: v.error });
+  try {
+    const at = new Date().toISOString();
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    await recordPut(`${SURVEY_PREFIX}${at}:${id}`, { id, at, ...v.response }, { r: v.response.rating });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Survey] save failed:', err && err.message);
+    res.status(500).json({ error: 'Could not save your answers. Please try again.' });
+  }
+});
+
+app.get('/api/admin/surveys', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const keys = await recordList(SURVEY_PREFIX);
+    const out = [];
+    for (let i = 0; i < keys.length; i += 50) {
+      out.push(...await Promise.all(keys.slice(i, i + 50).map(k => recordGet(k.name).catch(() => null))));
+    }
+    res.json(betaSurvey.summarizeSurveys(out));
+  } catch (err) {
+    console.error('[Survey] list failed:', err && err.message);
+    res.status(500).json({ error: 'Could not load survey answers.' });
   }
 });
 

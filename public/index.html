@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=255f1f0e06" />
+  <link rel="stylesheet" href="style.css?v=eae3f59e7e" />
 
 
 </head>
@@ -1394,6 +1394,7 @@
       <div class="footer-actions">
         <button class="footer-btn feedback-btn" onclick="openFeedbackModal('feedback')">&#128172; Feedback</button>
         <button class="footer-btn bug-btn" onclick="openFeedbackModal('bug')">&#128027; Report Bug</button>
+        <button class="footer-btn survey-btn" onclick="openSurvey('footer')">&#128221; Beta Survey</button>
       </div>
       <!-- Sponsors — populated by renderSponsors() from the SPONSORS config in
            app.js. Stays hidden until at least one sponsor is configured. -->
@@ -1512,6 +1513,78 @@
     </div>
   </div>
 
+  <!-- Beta survey. Seven questions, about two minutes; answers land in the
+       admin page (Beta Survey). The banner below asks once, after a few
+       searches, and never again once answered or dismissed. -->
+  <div id="survey-banner" class="survey-banner hidden" role="region" aria-label="Beta survey">
+    <span class="survey-banner-text"><strong>The Card Huddle is in beta.</strong> Help shape it: a 2-minute survey.</span>
+    <button type="button" class="survey-banner-go" onclick="openSurvey('banner')">Take it</button>
+    <button type="button" class="survey-banner-x" onclick="dismissSurveyBanner()" aria-label="No thanks">&times;</button>
+  </div>
+  <div id="survey-modal" class="feedback-modal hidden" role="dialog" aria-modal="true" aria-labelledby="survey-title" onclick="if(event.target===this)closeSurvey()">
+    <div class="feedback-modal-box survey-box">
+      <button class="feedback-close" onclick="closeSurvey()" aria-label="Close">&times;</button>
+      <h2 id="survey-title">Beta Survey</h2>
+      <p class="survey-intro">Two minutes, seven questions. Tell us what works and what doesn't.</p>
+      <form id="survey-form" onsubmit="submitSurvey(event)" novalidate>
+        <fieldset class="survey-q">
+          <legend>1. How would you rate The Card Huddle so far? <span class="survey-req">*</span></legend>
+          <div class="survey-stars" role="radiogroup" aria-label="Rating">
+            <label><input type="radio" name="rating" value="1" /><span>1</span></label>
+            <label><input type="radio" name="rating" value="2" /><span>2</span></label>
+            <label><input type="radio" name="rating" value="3" /><span>3</span></label>
+            <label><input type="radio" name="rating" value="4" /><span>4</span></label>
+            <label><input type="radio" name="rating" value="5" /><span>5</span></label>
+          </div>
+          <div class="survey-scale-ends"><span>Poor</span><span>Great</span></div>
+        </fieldset>
+        <fieldset class="survey-q">
+          <legend>2. What do you use it for? <span class="survey-hint">Tap any</span></legend>
+          <div class="survey-chips">
+            <label><input type="checkbox" name="uses" value="price-my-cards" /><span>Pricing my cards</span></label>
+            <label><input type="checkbox" name="uses" value="sold-before-buying" /><span>Sold prices before I buy</span></label>
+            <label><input type="checkbox" name="uses" value="checklists" /><span>Checklists</span></label>
+            <label><input type="checkbox" name="uses" value="alerts" /><span>Price alerts</span></label>
+            <label><input type="checkbox" name="uses" value="market-movers" /><span>Market movers</span></label>
+            <label><input type="checkbox" name="uses" value="card-shows" /><span>Card shows</span></label>
+            <label><input type="checkbox" name="uses" value="other" /><span>Other</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="survey-q">
+          <legend>3. Did you find what you were looking for?</legend>
+          <div class="survey-chips">
+            <label><input type="radio" name="found" value="yes" /><span>Yes</span></label>
+            <label><input type="radio" name="found" value="mostly" /><span>Mostly</span></label>
+            <label><input type="radio" name="found" value="no" /><span>No</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="survey-q">
+          <legend>4. How likely are you to recommend us to a friend?</legend>
+          <div class="survey-nps" role="radiogroup" aria-label="Recommend, 0 to 10">
+            <label><input type="radio" name="nps" value="0" /><span>0</span></label><label><input type="radio" name="nps" value="1" /><span>1</span></label><label><input type="radio" name="nps" value="2" /><span>2</span></label><label><input type="radio" name="nps" value="3" /><span>3</span></label><label><input type="radio" name="nps" value="4" /><span>4</span></label><label><input type="radio" name="nps" value="5" /><span>5</span></label><label><input type="radio" name="nps" value="6" /><span>6</span></label><label><input type="radio" name="nps" value="7" /><span>7</span></label><label><input type="radio" name="nps" value="8" /><span>8</span></label><label><input type="radio" name="nps" value="9" /><span>9</span></label><label><input type="radio" name="nps" value="10" /><span>10</span></label>
+          </div>
+          <div class="survey-scale-ends"><span>Not likely</span><span>Very likely</span></div>
+        </fieldset>
+        <div class="feedback-field">
+          <label for="survey-improve">5. What's one thing we should add or improve?</label>
+          <textarea id="survey-improve" rows="2" maxlength="1000" placeholder="Optional"></textarea>
+        </div>
+        <div class="feedback-field">
+          <label for="survey-broken">6. Anything broken or confusing?</label>
+          <textarea id="survey-broken" rows="2" maxlength="1000" placeholder="Optional"></textarea>
+        </div>
+        <div class="feedback-field">
+          <label for="survey-email">7. Email, if you'd like a reply</label>
+          <input type="email" id="survey-email" placeholder="Optional" autocomplete="email" />
+        </div>
+        <!-- Not for people: bots fill it, and the server drops what they send. -->
+        <input type="text" name="website" id="survey-website" class="survey-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <button type="submit" class="feedback-submit" id="survey-submit">Send answers</button>
+        <p id="survey-status" class="feedback-status hidden" role="status"></p>
+      </form>
+    </div>
+  </div>
+
   <!-- Scan-to-Fill Modal — shared camera scan for any search input -->
   <div id="scan-fill-modal" class="modal-overlay hidden" role="dialog" onclick="if(event.target===this)closeScanFillModal()">
     <div class="modal-box modal-box-lg">
@@ -1595,7 +1668,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=536a5939da"></script>
+  <script src="app.js?v=0500188693"></script>
   <script type="importmap">
   {
     "imports": {

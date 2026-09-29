@@ -9162,3 +9162,54 @@ body.tour-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .load-spinner, .ca-skel-line path, .ca-skel-row { animation-duration: 3s; }
 }
+
+/* ---- Beta survey ---- */
+.survey-box { max-width: 520px; max-height: calc(100vh - 2rem); overflow-y: auto; padding: 1.5rem 1.5rem 1.25rem; }
+.survey-intro { margin: -0.75rem 0 1rem; font-size: 0.85rem; color: var(--text-secondary); }
+.survey-q { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+.survey-q legend { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; padding: 0; }
+.survey-req { color: var(--accent); }
+.survey-hint { font-weight: 400; color: var(--text-secondary); font-size: 0.78rem; margin-left: 0.25rem; }
+.survey-stars, .survey-nps, .survey-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.survey-stars label, .survey-nps label, .survey-chips label { position: relative; cursor: pointer; }
+.survey-stars input, .survey-nps input, .survey-chips input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.survey-stars span, .survey-nps span, .survey-chips span {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg-secondary);
+  color: var(--text-primary); font-size: 0.85rem; transition: border-color 0.15s, background 0.15s;
+}
+.survey-stars span { width: 2.75rem; font-weight: 700; }
+.survey-nps span { width: 2.35rem; }
+.survey-chips span { padding: 0 0.8rem; }
+.survey-stars input:checked + span, .survey-nps input:checked + span, .survey-chips input:checked + span {
+  border-color: var(--accent); background: var(--accent); color: #0c0e14; font-weight: 700;
+}
+.survey-stars input:focus-visible + span, .survey-nps input:focus-visible + span, .survey-chips input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.survey-scale-ends { display: flex; justify-content: space-between; max-width: 28rem; font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.3rem; }
+.survey-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.survey-banner {
+  position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%); z-index: 9000;
+  display: flex; align-items: center; gap: 0.6rem; width: min(560px, calc(100% - 2rem));
+  padding: 0.7rem 0.8rem 0.7rem 1rem; border-radius: 12px; border: 1px solid var(--border-accent);
+  background: var(--bg-secondary); box-shadow: 0 8px 28px rgba(0,0,0,0.35); font-size: 0.85rem; color: var(--text-primary);
+}
+.survey-banner.hidden { display: none; }
+.survey-banner-text { flex: 1; line-height: 1.35; }
+.survey-banner-go { background: var(--accent); color: #0c0e14; border: 0; border-radius: 8px; padding: 0.45rem 0.9rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.survey-banner-x { background: none; border: 0; color: var(--text-secondary); font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; }
+@media (max-width: 480px) {
+  .survey-nps span { width: 2.1rem; font-size: 0.8rem; }
+  .survey-banner { font-size: 0.8rem; }
+}
+
+/* The footer's eleven links in one row made the page 435px wide on a 390px
+   phone, so the browser zoomed the whole site out and anything pinned to the
+   bottom of the screen (the survey banner) sat below it. They wrap. */
+.footer-links { flex-wrap: wrap; justify-content: center; row-gap: 0.25rem; }
+/* The rating and 0-10 rows fill the width, so the end labels sit under the
+   ends and all eleven scores fit on one row on a phone. */
+.survey-stars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem; }
+.survey-nps { display: grid; grid-template-columns: repeat(11, 1fr); gap: 0.25rem; }
+.survey-stars span, .survey-nps span { width: 100%; }
+.survey-scale-ends { max-width: none; }
+@media (max-width: 480px) { .survey-nps span { width: 100%; font-size: 0.78rem; min-height: 2.1rem; } }
