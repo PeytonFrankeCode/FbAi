@@ -1778,6 +1778,9 @@ function applySport() {
   }
   const settings = document.getElementById('settings-sports');
   if (settings) settings.innerHTML = _sportChipsHtml(p.enabled, 'settings');
+  // The offline packs list one sport at a time from the ones that are on.
+  const packs = document.getElementById('offline-packs');
+  if (packs && packs.dataset.loaded && typeof initOfflinePanel === 'function') initOfflinePanel();
 }
 
 // Which sport a listing is, from its title: the sport or league named, or a
@@ -14661,18 +14664,27 @@ function refreshRainbowPageFromSync() {
 // on update, drives the per-year "download for offline" packs, and shows an
 // offline banner so users know live prices may be stale at a card show.
 
+// Saved packs, keyed by year for football (as they always were, so packs
+// downloaded before other sports existed still show as saved) and by
+// "<sport>:<year>" for the others.
 function _getOfflineYears() {
   try { return JSON.parse(localStorage.getItem('cardHuddleOfflineYears') || '{}'); }
   catch { return {}; }
 }
-function _setOfflineYear(y, rec) {
-  const s = _getOfflineYears(); s[y] = rec;
+function _opKey(sport, y) { return sport === 'football' ? String(y) : `${sport}:${y}`; }
+function _setOfflineYear(key, rec) {
+  const s = _getOfflineYears(); s[key] = rec;
   localStorage.setItem('cardHuddleOfflineYears', JSON.stringify(s));
 }
-function _delOfflineYear(y) {
-  const s = _getOfflineYears(); delete s[y];
+function _delOfflineYear(key) {
+  const s = _getOfflineYears(); delete s[key];
   localStorage.setItem('cardHuddleOfflineYears', JSON.stringify(s));
 }
+
+// Which sport's years the panel lists. Starts on the sport the Checklists page
+// is showing; the pills above the years change it.
+var _offlineSport = null;
+function setOfflineSport(id) { _offlineSport = id; initOfflinePanel(); }
 
 async function initOfflinePanel() {
   const host = document.getElementById('offline-packs');
@@ -14681,24 +14693,35 @@ async function initOfflinePanel() {
     host.innerHTML = '<p class="op-note">Offline mode isn’t supported in this browser.</p>';
     return;
   }
+  const prefs = sportsPrefs();
+  if (!_offlineSport || !prefs.enabled.includes(_offlineSport)) _offlineSport = prefs.active;
+  const sport = _offlineSport;
+  const dir = CHECKLIST_DIRS[sport];
   if (!host.dataset.loaded) host.innerHTML = '<p class="op-note">Loading years…</p>';
   let index;
-  try { index = await (await fetch('/data/checklists/index.json')).json(); }
+  try { index = await (await fetch(`${dir}/index.json`)).json(); }
   catch { host.innerHTML = '<p class="op-note">Couldn’t load the checklist list. Connect once to set up offline packs.</p>'; return; }
+  if (sport !== _offlineSport) return;   // the pick changed while it loaded
 
-  const products = index.products || [];
+  const products = (index.products || []).filter(p => !p.unreleased);
   window.__offlineProducts = products;
+  window.__offlineSport = sport;
   const years = [...new Set(products.map(p => p.year))].sort((a, b) => b - a);
   const saved = _getOfflineYears();
+  const label = (y) => sport === 'basketball' ? `${y}-${String((y + 1) % 100).padStart(2, '0')}` : String(y);
+  // The sport pick sits above the downloads, shown when there is a choice.
+  const pills = prefs.enabled.length < 2 ? '' : `<div class="sport-switch op-sports" role="group" aria-label="Offline pack sport">`
+    + prefs.enabled.map(id => `<button type="button" class="sport-pill${id === sport ? ' active' : ''}" aria-pressed="${id === sport}" onclick="setOfflineSport('${id}')"><span aria-hidden="true">${SPORTS[id].icon}</span> ${SPORTS[id].label}</button>`).join('')
+    + `</div>`;
 
   host.dataset.loaded = '1';
-  host.innerHTML = `<p class="op-note">Download a year so its checklists work with no signal at the show. Your collection always works offline; live prices need a connection.</p>`
+  host.innerHTML = pills + `<p class="op-note">Download a year so its ${SPORTS[sport].label.toLowerCase()} checklists work with no signal at the show. Your collection always works offline; live prices need a connection.</p>`
     + years.map(y => {
       const count = products.filter(p => p.year === y).length;
-      const rec = saved[y];
+      const rec = saved[_opKey(sport, y)];
       const status = rec ? `Saved &middot; ${rec.ok}/${count} sets` : `${count} sets`;
       return `<div class="op-row" data-year="${y}">
-        <div class="op-row-main"><span class="op-year">${y}${rec ? ' <span class="op-badge">OFFLINE</span>' : ''}</span><span class="op-status" id="op-status-${y}">${status}</span></div>
+        <div class="op-row-main"><span class="op-year">${label(y)}${rec ? ' <span class="op-badge">OFFLINE</span>' : ''}</span><span class="op-status" id="op-status-${y}">${status}</span></div>
         <div class="op-row-actions">
           ${rec ? `<button class="op-btn op-remove" onclick="removeYearOffline(${y})">Remove</button>` : ''}
           <button class="op-btn op-dl" id="op-dl-${y}" onclick="downloadYearOffline(${y})">${rec ? 'Update' : 'Download'}</button>
@@ -14709,11 +14732,14 @@ async function initOfflinePanel() {
 
 function _yearProductUrls(year) {
   const products = window.__offlineProducts || [];
-  return ['/data/checklists/index.json',
-    ...products.filter(p => p.year === year).map(p => `/data/checklists/${p.id}.json`)];
+  const dir = CHECKLIST_DIRS[window.__offlineSport || 'football'];
+  return [`${dir}/index.json`,
+    ...products.filter(p => p.year === year).map(p => `${dir}/${p.id}.json`)];
 }
 
 function downloadYearOffline(year) {
+  const sport = window.__offlineSport || 'football';
+  const key = _opKey(sport, year);
   const btn = document.getElementById('op-dl-' + year);
   const status = document.getElementById('op-status-' + year);
   const ctrl = navigator.serviceWorker && navigator.serviceWorker.controller;
@@ -14723,23 +14749,26 @@ function downloadYearOffline(year) {
 
   const onMsg = (e) => {
     const d = e.data || {};
-    if (d.tag !== year) return;
+    if (d.tag !== key) return;
     if (d.type === 'CACHE_PROGRESS' && btn) btn.textContent = Math.round((d.done / d.total) * 100) + '%';
     if (d.type === 'CACHE_DONE') {
       navigator.serviceWorker.removeEventListener('message', onMsg);
-      _setOfflineYear(year, { ok: d.ok, total: d.total, at: Date.now() });
+      _setOfflineYear(key, { ok: d.ok, total: d.total, at: Date.now() });
       initOfflinePanel();
     }
   };
   navigator.serviceWorker.addEventListener('message', onMsg);
-  ctrl.postMessage({ type: 'CACHE_URLS', tag: year, urls });
+  ctrl.postMessage({ type: 'CACHE_URLS', tag: key, urls });
 }
 
 function removeYearOffline(year) {
+  const sport = window.__offlineSport || 'football';
+  const key = _opKey(sport, year);
   const ctrl = navigator.serviceWorker && navigator.serviceWorker.controller;
-  const urls = _yearProductUrls(year).filter(u => u !== '/data/checklists/index.json');
-  if (ctrl) ctrl.postMessage({ type: 'UNCACHE_URLS', tag: year, urls });
-  _delOfflineYear(year);
+  // The sport's index stays cached: its other years may still be saved.
+  const urls = _yearProductUrls(year).filter(u => !u.endsWith('/index.json'));
+  if (ctrl) ctrl.postMessage({ type: 'UNCACHE_URLS', tag: key, urls });
+  _delOfflineYear(key);
   initOfflinePanel();
 }
 
