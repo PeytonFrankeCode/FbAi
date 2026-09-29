@@ -1863,6 +1863,7 @@ function _trackSearch(query, kind) {
 async function fetchDirectSearch(query) {
   _hideHomeContent();
   _trackSearch(query, currentMode === 'sold' ? 'sold' : 'forsale');
+  _surveyNoteSearch();
   currentSearchMode = 'direct';
   currentResults = [];
 
@@ -13316,6 +13317,96 @@ async function submitFeedback(e) {
     statusEl.textContent = 'Failed to send. Please try again.';
     statusEl.className = 'feedback-status error';
     statusEl.classList.remove('hidden');
+  }
+}
+
+// ---- Beta survey ----
+// Seven questions, about two minutes. Opened from the footer any time, and
+// offered once by a banner after a few searches: never again once answered or
+// dismissed, so it asks for two minutes and does not keep asking.
+const SURVEY_KEY = 'chBetaSurvey';          // 'done' | 'dismissed'
+const SURVEY_AFTER_SEARCHES = 3;
+let _surveySearches = 0;
+let _surveySource = 'footer';
+
+function _surveyState() {
+  try { return localStorage.getItem(SURVEY_KEY) || ''; } catch (_) { return 'dismissed'; }
+}
+function _setSurveyState(v) {
+  try { localStorage.setItem(SURVEY_KEY, v); } catch (_) {}
+}
+
+// Called for every search the person runs.
+function _surveyNoteSearch() {
+  _surveySearches++;
+  if (_surveySearches !== SURVEY_AFTER_SEARCHES || _surveyState()) return;
+  const b = document.getElementById('survey-banner');
+  if (b) b.classList.remove('hidden');
+}
+
+function dismissSurveyBanner() {
+  const b = document.getElementById('survey-banner');
+  if (b) b.classList.add('hidden');
+  if (!_surveyState()) _setSurveyState('dismissed');
+}
+
+function openSurvey(source) {
+  _surveySource = source || 'footer';
+  const b = document.getElementById('survey-banner');
+  if (b) b.classList.add('hidden');
+  const st = document.getElementById('survey-status');
+  if (st) st.classList.add('hidden');
+  document.getElementById('survey-modal').classList.remove('hidden');
+  if (typeof gtag === 'function') { try { gtag('event', 'survey_open', { source: _surveySource }); } catch (_) {} }
+}
+
+function closeSurvey() {
+  document.getElementById('survey-modal').classList.add('hidden');
+  // Closing the one the banner offered counts as a no, so it is not offered again.
+  if (_surveySource === 'banner' && !_surveyState()) _setSurveyState('dismissed');
+}
+
+// The form's answers as the server expects them.
+function _surveyAnswers(form) {
+  const pick = (name) => { const el = form.querySelector(`input[name="${name}"]:checked`); return el ? el.value : ''; };
+  return {
+    rating: pick('rating'),
+    nps: pick('nps'),
+    found: pick('found'),
+    uses: [...form.querySelectorAll('input[name="uses"]:checked')].map(el => el.value),
+    improve: document.getElementById('survey-improve').value.trim(),
+    broken: document.getElementById('survey-broken').value.trim(),
+    email: document.getElementById('survey-email').value.trim(),
+    website: document.getElementById('survey-website').value,
+    page: location.pathname + location.search,
+    searches: _surveySearches,
+    source: _surveySource,
+  };
+}
+
+async function submitSurvey(e) {
+  e.preventDefault();
+  const form = document.getElementById('survey-form');
+  const st = document.getElementById('survey-status');
+  const btn = document.getElementById('survey-submit');
+  const show = (msg, ok) => { st.textContent = msg; st.className = 'feedback-status ' + (ok ? 'success' : 'error'); };
+  const answers = _surveyAnswers(form);
+  if (!answers.rating) { show('Please pick a rating from 1 to 5 (question 1).', false); return; }
+  btn.disabled = true;
+  try {
+    const resp = await fetch('/api/survey', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(answers),
+    });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(data.error || 'Could not send. Please try again.');
+    _setSurveyState('done');
+    if (typeof gtag === 'function') { try { gtag('event', 'survey_submit', { rating: Number(answers.rating) }); } catch (_) {} }
+    show('Thank you! Your answers help shape the site.', true);
+    setTimeout(() => { form.reset(); closeSurvey(); }, 1800);
+  } catch (err) {
+    show(err.message || 'Could not send. Please try again.', false);
+  } finally {
+    btn.disabled = false;
   }
 }
 

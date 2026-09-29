@@ -86,6 +86,18 @@ const tier = (name) => RL_TIERS.find(t => t.name === name);
 
 // ---- The expensive endpoint is held tighter than the cheap one ----
 {
+  {
+    // A person who has been searching and browsing then signs up for the
+    // email: the signup has its own budget, untouched by what came before.
+    const at = 5_000_000;
+    const who = { headers: { 'cf-connecting-ip': '192.0.2.77' } };
+    for (let i = 0; i < 40; i++) rateLimitCheck({ ...who, path: '/api/search' }, at);
+    for (let i = 0; i < 40; i++) rateLimitCheck({ ...who, path: '/api/sold-stats' }, at);
+    const signup = rateLimitCheck({ ...who, path: '/api/digest/subscribe' }, at);
+    const survey = rateLimitCheck({ ...who, path: '/api/survey' }, at);
+    check('each budget counts its own calls: searching does not use up the signup or survey budget',
+      signup === null && survey === null, JSON.stringify({ signup, survey }));
+  }
   check('the scan budget is tighter than the search budget',
     tier('scan').minute < tier('search').minute,
     `scan ${tier('scan').minute}/min vs search ${tier('search').minute}/min`);
