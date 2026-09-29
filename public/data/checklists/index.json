@@ -3796,6 +3796,2286 @@
       "totalCards": 440
     },
     {
+      "id": "2016-donruss-elite-football",
+      "name": "2016 Donruss Elite Football",
+      "year": 2016,
+      "brand": "Donruss Elite",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 728,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-donruss-football",
+      "name": "2016 Donruss Football",
+      "year": 2016,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 43,
+      "totalCards": 1284,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-donruss-optic-football",
+      "name": "2016 Donruss Optic Football",
+      "year": 2016,
+      "brand": "Donruss Optic",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 626,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-donruss-signature-series-football",
+      "name": "2016 Donruss Signature Series Football",
+      "year": 2016,
+      "brand": "Donruss Signature Series",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 493,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-leaf-draft-football",
+      "name": "2016 Leaf Draft Football",
+      "year": 2016,
+      "brand": "Leaf Draft",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 250,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-leaf-metal-draft-football",
+      "name": "2016 Leaf Metal Draft Football",
+      "year": 2016,
+      "brand": "Leaf Metal Draft",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 110,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-leaf-metal-us-army-all-american-bowl-football",
+      "name": "2016 Leaf Metal US Army All-American Bowl Football",
+      "year": 2016,
+      "brand": "Leaf Metal US Army All-American Bowl",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 353,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-leaf-trinity-football",
+      "name": "2016 Leaf Trinity Football",
+      "year": 2016,
+      "brand": "Leaf Trinity",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 194,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-leaf-ultimate-draft-football",
+      "name": "2016 Leaf Ultimate Draft Football",
+      "year": 2016,
+      "brand": "Leaf Ultimate Draft",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 155,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-absolute-football",
+      "name": "2016 Panini Absolute Football",
+      "year": 2016,
+      "brand": "Absolute",
+      "sport": "Football",
+      "setCount": 41,
+      "totalCards": 1122,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-black-gold-football",
+      "name": "2016 Panini Black Gold Football",
+      "year": 2016,
+      "brand": "Black Gold",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 639,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-certified-football",
+      "name": "2016 Panini Certified Football",
+      "year": 2016,
+      "brand": "Certified",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 696,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-classics-football",
+      "name": "2016 Panini Classics Football",
+      "year": 2016,
+      "brand": "Classics",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 1425,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-clear-vision-football",
+      "name": "2016 Panini Clear Vision Football",
+      "year": 2016,
+      "brand": "Clear Vision",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 574,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-contenders-draft-picks-football",
+      "name": "2016 Panini Contenders Draft Picks Football",
+      "year": 2016,
+      "brand": "Contenders Draft Picks",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 655,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-contenders-football",
+      "name": "2016 Panini Contenders Football",
+      "year": 2016,
+      "brand": "Contenders",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 822,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-crown-royale-football",
+      "name": "2016 Panini Crown Royale Football",
+      "year": 2016,
+      "brand": "Crown Royale",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 298,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-encased-football",
+      "name": "2016 Panini Encased Football",
+      "year": 2016,
+      "brand": "Encased",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 647,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-flawless-football",
+      "name": "2016 Panini Flawless Football",
+      "year": 2016,
+      "brand": "Flawless",
+      "sport": "Football",
+      "setCount": 31,
+      "totalCards": 873,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-football",
+      "name": "2016 Panini Football",
+      "year": 2016,
+      "brand": "Panini",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 771,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-gala-football",
+      "name": "2016 Panini Gala Football",
+      "year": 2016,
+      "brand": "Gala",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 559,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-immaculate-collegiate-football",
+      "name": "2016 Panini Immaculate Collegiate Football",
+      "year": 2016,
+      "brand": "Immaculate Collegiate",
+      "sport": "Football",
+      "setCount": 29,
+      "totalCards": 900,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-immaculate-football",
+      "name": "2016 Panini Immaculate Football",
+      "year": 2016,
+      "brand": "Immaculate",
+      "sport": "Football",
+      "setCount": 43,
+      "totalCards": 1809,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-impeccable-football",
+      "name": "2016 Panini Impeccable Football",
+      "year": 2016,
+      "brand": "Impeccable",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 648,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-infinity-football",
+      "name": "2016 Panini Infinity Football",
+      "year": 2016,
+      "brand": "Infinity",
+      "sport": "Football",
+      "setCount": 23,
+      "totalCards": 627,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-limited-football",
+      "name": "2016 Panini Limited Football",
+      "year": 2016,
+      "brand": "Limited",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 571,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-national-treasures-collegiate-football",
+      "name": "2016 Panini National Treasures Collegiate Football",
+      "year": 2016,
+      "brand": "National Treasures Collegiate",
+      "sport": "Football",
+      "setCount": 35,
+      "totalCards": 946,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-national-treasures-football",
+      "name": "2016 Panini National Treasures Football",
+      "year": 2016,
+      "brand": "National Treasures",
+      "sport": "Football",
+      "setCount": 51,
+      "totalCards": 1481,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-origins-football",
+      "name": "2016 Panini Origins Football",
+      "year": 2016,
+      "brand": "Origins",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 442,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-phoenix-football",
+      "name": "2016 Panini Phoenix Football",
+      "year": 2016,
+      "brand": "Phoenix",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 557,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-plates-and-patches-football",
+      "name": "2016 Panini Plates and Patches Football",
+      "year": 2016,
+      "brand": "Plates and Patches",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 497,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-playbook-football",
+      "name": "2016 Panini Playbook Football",
+      "year": 2016,
+      "brand": "Playbook",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 517,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-playoff-football",
+      "name": "2016 Panini Playoff Football",
+      "year": 2016,
+      "brand": "Playoff",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 824,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-preferred-football",
+      "name": "2016 Panini Preferred Football",
+      "year": 2016,
+      "brand": "Preferred",
+      "sport": "Football",
+      "setCount": 30,
+      "totalCards": 451,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-prestige-football",
+      "name": "2016 Panini Prestige Football",
+      "year": 2016,
+      "brand": "Prestige",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 1198,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-prime-signatures-football",
+      "name": "2016 Panini Prime Signatures Football",
+      "year": 2016,
+      "brand": "Prime Signatures",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 679,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-prizm-collegiate-draft-picks-football",
+      "name": "2016 Panini Prizm Collegiate Draft Picks Football",
+      "year": 2016,
+      "brand": "Prizm Collegiate Draft Picks",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 682,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-prizm-football",
+      "name": "2016 Panini Prizm Football",
+      "year": 2016,
+      "brand": "Prizm",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 685,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-rookies-and-stars-football",
+      "name": "2016 Panini Rookies and Stars Football",
+      "year": 2016,
+      "brand": "Rookies and Stars",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 931,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-select-football",
+      "name": "2016 Panini Select Football",
+      "year": 2016,
+      "brand": "Select",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 816,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-spectra-football",
+      "name": "2016 Panini Spectra Football",
+      "year": 2016,
+      "brand": "Spectra",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 671,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-panini-unparalleled-football",
+      "name": "2016 Panini Unparalleled Football",
+      "year": 2016,
+      "brand": "Unparalleled",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 1049,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-score-football",
+      "name": "2016 Score Football",
+      "year": 2016,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 967,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2016-upper-deck-usa-football",
+      "name": "2016 Upper Deck USA Football",
+      "year": 2016,
+      "brand": "Upper Deck USA",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 430,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-bowman-football",
+      "name": "2015 Bowman Football",
+      "year": 2015,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 614,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-donruss-football",
+      "name": "2015 Donruss Football",
+      "year": 2015,
+      "brand": "Donruss",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 864,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-donruss-signature-series-football",
+      "name": "2015 Donruss Signature Series Football",
+      "year": 2015,
+      "brand": "Donruss Signature Series",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 535,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-leaf-clear-football",
+      "name": "2015 Leaf Clear Football",
+      "year": 2015,
+      "brand": "Leaf Clear",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 99,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-leaf-metal-draft-football",
+      "name": "2015 Leaf Metal Draft Football",
+      "year": 2015,
+      "brand": "Leaf Metal Draft",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 150,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-leaf-trinity-football",
+      "name": "2015 Leaf Trinity Football",
+      "year": 2015,
+      "brand": "Leaf Trinity",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 192,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-leaf-ultimate-draft-football",
+      "name": "2015 Leaf Ultimate Draft Football",
+      "year": 2015,
+      "brand": "Leaf Ultimate Draft",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 99,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-leaf-us-army-all-american-football",
+      "name": "2015 Leaf US Army All-American Football",
+      "year": 2015,
+      "brand": "Leaf US Army All-American",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 407,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-black-gold-football",
+      "name": "2015 Panini Black Gold Football",
+      "year": 2015,
+      "brand": "Black Gold",
+      "sport": "Football",
+      "setCount": 30,
+      "totalCards": 791,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-certified-football",
+      "name": "2015 Panini Certified Football",
+      "year": 2015,
+      "brand": "Certified",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 665,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-clear-vision-football",
+      "name": "2015 Panini Clear Vision Football",
+      "year": 2015,
+      "brand": "Clear Vision",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 786,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-contenders-draft-picks-football",
+      "name": "2015 Panini Contenders Draft Picks Football",
+      "year": 2015,
+      "brand": "Contenders Draft Picks",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 1015,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-contenders-football",
+      "name": "2015 Panini Contenders Football",
+      "year": 2015,
+      "brand": "Contenders",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 757,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-crown-royale-football",
+      "name": "2015 Panini Crown Royale Football",
+      "year": 2015,
+      "brand": "Crown Royale",
+      "sport": "Football",
+      "setCount": 26,
+      "totalCards": 686,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-flawless-football",
+      "name": "2015 Panini Flawless Football",
+      "year": 2015,
+      "brand": "Flawless",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 659,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-gridiron-kings-football",
+      "name": "2015 Panini Gridiron Kings Football",
+      "year": 2015,
+      "brand": "Gridiron Kings",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 727,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-immaculate-football",
+      "name": "2015 Panini Immaculate Football",
+      "year": 2015,
+      "brand": "Immaculate",
+      "sport": "Football",
+      "setCount": 38,
+      "totalCards": 1692,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-luxe-football",
+      "name": "2015 Panini Luxe Football",
+      "year": 2015,
+      "brand": "Luxe",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 424,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-national-treasures-football",
+      "name": "2015 Panini National Treasures Football",
+      "year": 2015,
+      "brand": "National Treasures",
+      "sport": "Football",
+      "setCount": 61,
+      "totalCards": 1630,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-playbook-football",
+      "name": "2015 Panini Playbook Football",
+      "year": 2015,
+      "brand": "Playbook",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 402,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-prestige-football",
+      "name": "2015 Panini Prestige Football",
+      "year": 2015,
+      "brand": "Prestige",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 981,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-prizm-collegiate-draft-picks-football",
+      "name": "2015 Panini Prizm Collegiate Draft Picks Football",
+      "year": 2015,
+      "brand": "Prizm Collegiate Draft Picks",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 832,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-prizm-football",
+      "name": "2015 Panini Prizm Football",
+      "year": 2015,
+      "brand": "Prizm",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 633,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-rookies-and-stars-football",
+      "name": "2015 Panini Rookies and Stars Football",
+      "year": 2015,
+      "brand": "Rookies and Stars",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 692,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-panini-spectra-football",
+      "name": "2015 Panini Spectra Football",
+      "year": 2015,
+      "brand": "Spectra",
+      "sport": "Football",
+      "setCount": 23,
+      "totalCards": 678,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-score-football",
+      "name": "2015 Score Football",
+      "year": 2015,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 963,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-chrome-football",
+      "name": "2015 Topps Chrome Football",
+      "year": 2015,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 849,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-definitive-collection-football",
+      "name": "2015 Topps Definitive Collection Football",
+      "year": 2015,
+      "brand": "Topps Definitive Collection",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 567,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-diamond-football",
+      "name": "2015 Topps Diamond Football",
+      "year": 2015,
+      "brand": "Topps Diamond",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 706,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-field-access-football",
+      "name": "2015 Topps Field Access Football",
+      "year": 2015,
+      "brand": "Topps Field Access",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 574,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-finest-football",
+      "name": "2015 Topps Finest Football",
+      "year": 2015,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 397,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-fire-football",
+      "name": "2015 Topps Fire Football",
+      "year": 2015,
+      "brand": "Topps Fire",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 472,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-football",
+      "name": "2015 Topps Football",
+      "year": 2015,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 32,
+      "totalCards": 1681,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-heritage-football",
+      "name": "2015 Topps Heritage Football",
+      "year": 2015,
+      "brand": "Topps Heritage",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 179,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-high-tek-football",
+      "name": "2015 Topps High Tek Football",
+      "year": 2015,
+      "brand": "Topps High Tek",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 273,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-inception-football",
+      "name": "2015 Topps Inception Football",
+      "year": 2015,
+      "brand": "Topps Inception",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 346,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-mini-chrome-football",
+      "name": "2015 Topps Mini Chrome Football",
+      "year": 2015,
+      "brand": "Topps Mini Chrome",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 573,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-museum-collection-football",
+      "name": "2015 Topps Museum Collection Football",
+      "year": 2015,
+      "brand": "Topps Museum Collection",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 600,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-platinum-football",
+      "name": "2015 Topps Platinum Football",
+      "year": 2015,
+      "brand": "Topps Platinum",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 491,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-strata-football",
+      "name": "2015 Topps Strata Football",
+      "year": 2015,
+      "brand": "Topps Strata",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 165,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-supreme-football",
+      "name": "2015 Topps Supreme Football",
+      "year": 2015,
+      "brand": "Topps Supreme",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 512,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-triple-threads-football",
+      "name": "2015 Topps Triple Threads Football",
+      "year": 2015,
+      "brand": "Topps Triple Threads",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 587,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-topps-valor-football",
+      "name": "2015 Topps Valor Football",
+      "year": 2015,
+      "brand": "Topps Valor",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 550,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-upper-deck-football",
+      "name": "2015 Upper Deck Football",
+      "year": 2015,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 818,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2015-upper-deck-usa-football",
+      "name": "2015 Upper Deck USA Football",
+      "year": 2015,
+      "brand": "Upper Deck USA",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 193,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-bowman-chrome-football",
+      "name": "2014 Bowman Chrome Football",
+      "year": 2014,
+      "brand": "Bowman Chrome",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 486,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-bowman-football",
+      "name": "2014 Bowman Football",
+      "year": 2014,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 8,
+      "totalCards": 620,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-bowman-sterling-football",
+      "name": "2014 Bowman Sterling Football",
+      "year": 2014,
+      "brand": "Bowman Sterling",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 360,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-flair-showcase-football",
+      "name": "2014 Flair Showcase Football",
+      "year": 2014,
+      "brand": "Flair Showcase",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 550,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-leaf-valiant-football",
+      "name": "2014 Leaf Valiant Football",
+      "year": 2014,
+      "brand": "Leaf Valiant",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 99,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-absolute-football",
+      "name": "2014 Panini Absolute Football",
+      "year": 2014,
+      "brand": "Absolute",
+      "sport": "Football",
+      "setCount": 29,
+      "totalCards": 1082,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-black-gold-football",
+      "name": "2014 Panini Black Gold Football",
+      "year": 2014,
+      "brand": "Black Gold",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 569,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-certified-football",
+      "name": "2014 Panini Certified Football",
+      "year": 2014,
+      "brand": "Certified",
+      "sport": "Football",
+      "setCount": 38,
+      "totalCards": 1759,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-contenders-football",
+      "name": "2014 Panini Contenders Football",
+      "year": 2014,
+      "brand": "Contenders",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 838,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-crown-royale-football",
+      "name": "2014 Panini Crown Royale Football",
+      "year": 2014,
+      "brand": "Crown Royale",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 904,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-elite-football",
+      "name": "2014 Panini Elite Football",
+      "year": 2014,
+      "brand": "Elite",
+      "sport": "Football",
+      "setCount": 37,
+      "totalCards": 1894,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-flawless-football",
+      "name": "2014 Panini Flawless Football",
+      "year": 2014,
+      "brand": "Flawless",
+      "sport": "Football",
+      "setCount": 35,
+      "totalCards": 1103,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-immaculate-football",
+      "name": "2014 Panini Immaculate Football",
+      "year": 2014,
+      "brand": "Immaculate",
+      "sport": "Football",
+      "setCount": 37,
+      "totalCards": 1776,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-limited-football",
+      "name": "2014 Panini Limited Football",
+      "year": 2014,
+      "brand": "Limited",
+      "sport": "Football",
+      "setCount": 26,
+      "totalCards": 792,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-national-treasures-football",
+      "name": "2014 Panini National Treasures Football",
+      "year": 2014,
+      "brand": "National Treasures",
+      "sport": "Football",
+      "setCount": 58,
+      "totalCards": 2110,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-playbook-football",
+      "name": "2014 Panini Playbook Football",
+      "year": 2014,
+      "brand": "Playbook",
+      "sport": "Football",
+      "setCount": 44,
+      "totalCards": 1066,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-prestige-football",
+      "name": "2014 Panini Prestige Football",
+      "year": 2014,
+      "brand": "Prestige",
+      "sport": "Football",
+      "setCount": 49,
+      "totalCards": 1668,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-prizm-football",
+      "name": "2014 Panini Prizm Football",
+      "year": 2014,
+      "brand": "Prizm",
+      "sport": "Football",
+      "setCount": 38,
+      "totalCards": 2272,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-select-football",
+      "name": "2014 Panini Select Football",
+      "year": 2014,
+      "brand": "Select",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 735,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-spectra-football",
+      "name": "2014 Panini Spectra Football",
+      "year": 2014,
+      "brand": "Spectra",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 709,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-panini-totally-certified-football",
+      "name": "2014 Panini Totally Certified Football",
+      "year": 2014,
+      "brand": "Totally Certified",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 771,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-score-football",
+      "name": "2014 Score Football",
+      "year": 2014,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 29,
+      "totalCards": 995,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-sp-authentic-football",
+      "name": "2014 SP Authentic Football",
+      "year": 2014,
+      "brand": "SP Authentic",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 819,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-spx-football",
+      "name": "2014 SPx Football",
+      "year": 2014,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 587,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-chrome-football",
+      "name": "2014 Topps Chrome Football",
+      "year": 2014,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 859,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-chrome-mini-football",
+      "name": "2014 Topps Chrome Mini Football",
+      "year": 2014,
+      "brand": "Topps Chrome Mini",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 542,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-finest-football",
+      "name": "2014 Topps Finest Football",
+      "year": 2014,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 451,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-fire-football",
+      "name": "2014 Topps Fire Football",
+      "year": 2014,
+      "brand": "Topps Fire",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 511,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-five-star-football",
+      "name": "2014 Topps Five Star Football",
+      "year": 2014,
+      "brand": "Topps Five Star",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 484,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-museum-collection-football",
+      "name": "2014 Topps Museum Collection Football",
+      "year": 2014,
+      "brand": "Topps Museum Collection",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 584,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-platinum-football",
+      "name": "2014 Topps Platinum Football",
+      "year": 2014,
+      "brand": "Topps Platinum",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 422,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-prime-football",
+      "name": "2014 Topps Prime Football",
+      "year": 2014,
+      "brand": "Topps Prime",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 796,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-strata-football",
+      "name": "2014 Topps Strata Football",
+      "year": 2014,
+      "brand": "Topps Strata",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 570,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-supreme-football",
+      "name": "2014 Topps Supreme Football",
+      "year": 2014,
+      "brand": "Topps Supreme",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 656,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-triple-threads-football",
+      "name": "2014 Topps Triple Threads Football",
+      "year": 2014,
+      "brand": "Topps Triple Threads",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 632,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-topps-valor-football",
+      "name": "2014 Topps Valor Football",
+      "year": 2014,
+      "brand": "Topps Valor",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 456,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-upper-deck-conference-greats-football",
+      "name": "2014 Upper Deck Conference Greats Football",
+      "year": 2014,
+      "brand": "Upper Deck Conference Greats",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 437,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-upper-deck-exquisite-collection-football",
+      "name": "2014 Upper Deck Exquisite Collection Football",
+      "year": 2014,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 557,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-upper-deck-football",
+      "name": "2014 Upper Deck Football",
+      "year": 2014,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 768,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2014-upper-deck-usa-football",
+      "name": "2014 Upper Deck USA Football",
+      "year": 2014,
+      "brand": "Upper Deck USA",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 284,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-bowman-football",
+      "name": "2013 Bowman Football",
+      "year": 2013,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 591,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-bowman-sterling-football",
+      "name": "2013 Bowman Sterling Football",
+      "year": 2013,
+      "brand": "Bowman Sterling",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 407,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-elite-football",
+      "name": "2013 Elite Football",
+      "year": 2013,
+      "brand": "Elite",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 1418,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-fleer-retro-football",
+      "name": "2013 Fleer Retro Football",
+      "year": 2013,
+      "brand": "Fleer Retro",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 987,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-leaf-metal-draft-football",
+      "name": "2013 Leaf Metal Draft Football",
+      "year": 2013,
+      "brand": "Leaf Metal Draft",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 136,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-leaf-trinity-football",
+      "name": "2013 Leaf Trinity Football",
+      "year": 2013,
+      "brand": "Leaf Trinity",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 167,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-leaf-valiant-football",
+      "name": "2013 Leaf Valiant Football",
+      "year": 2013,
+      "brand": "Leaf Valiant",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 113,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-absolute-football",
+      "name": "2013 Panini Absolute Football",
+      "year": 2013,
+      "brand": "Absolute",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 1030,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-black-football",
+      "name": "2013 Panini Black Football",
+      "year": 2013,
+      "brand": "Black",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 860,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-certified-football",
+      "name": "2013 Panini Certified Football",
+      "year": 2013,
+      "brand": "Certified",
+      "sport": "Football",
+      "setCount": 26,
+      "totalCards": 1791,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-contenders-football",
+      "name": "2013 Panini Contenders Football",
+      "year": 2013,
+      "brand": "Contenders",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 707,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-crown-royale-football",
+      "name": "2013 Panini Crown Royale Football",
+      "year": 2013,
+      "brand": "Crown Royale",
+      "sport": "Football",
+      "setCount": 33,
+      "totalCards": 1245,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-limited-football",
+      "name": "2013 Panini Limited Football",
+      "year": 2013,
+      "brand": "Limited",
+      "sport": "Football",
+      "setCount": 35,
+      "totalCards": 1347,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-momentum-football",
+      "name": "2013 Panini Momentum Football",
+      "year": 2013,
+      "brand": "Momentum",
+      "sport": "Football",
+      "setCount": 32,
+      "totalCards": 1554,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-monster-box-football",
+      "name": "2013 Panini Monster Box Football",
+      "year": 2013,
+      "brand": "Monster Box",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 50,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-national-treasures-football",
+      "name": "2013 Panini National Treasures Football",
+      "year": 2013,
+      "brand": "National Treasures",
+      "sport": "Football",
+      "setCount": 99,
+      "totalCards": 4404,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-playbook-football",
+      "name": "2013 Panini Playbook Football",
+      "year": 2013,
+      "brand": "Playbook",
+      "sport": "Football",
+      "setCount": 23,
+      "totalCards": 1170,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-prestige-football",
+      "name": "2013 Panini Prestige Football",
+      "year": 2013,
+      "brand": "Prestige",
+      "sport": "Football",
+      "setCount": 34,
+      "totalCards": 1289,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-prizm-football",
+      "name": "2013 Panini Prizm Football",
+      "year": 2013,
+      "brand": "Prizm",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 1033,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-prominence-football",
+      "name": "2013 Panini Prominence Football",
+      "year": 2013,
+      "brand": "Prominence",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 905,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-rookies-and-stars-football",
+      "name": "2013 Panini Rookies and Stars Football",
+      "year": 2013,
+      "brand": "Rookies and Stars",
+      "sport": "Football",
+      "setCount": 29,
+      "totalCards": 1446,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-select-football",
+      "name": "2013 Panini Select Football",
+      "year": 2013,
+      "brand": "Select",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 874,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-spectra-football",
+      "name": "2013 Panini Spectra Football",
+      "year": 2013,
+      "brand": "Spectra",
+      "sport": "Football",
+      "setCount": 25,
+      "totalCards": 1243,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-panini-totally-certified-football",
+      "name": "2013 Panini Totally Certified Football",
+      "year": 2013,
+      "brand": "Totally Certified",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 1055,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-score-football",
+      "name": "2013 Score Football",
+      "year": 2013,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 26,
+      "totalCards": 1220,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-sp-authentic-football",
+      "name": "2013 SP Authentic Football",
+      "year": 2013,
+      "brand": "SP Authentic",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 878,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-spx-football",
+      "name": "2013 SPx Football",
+      "year": 2013,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 612,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-archives-football",
+      "name": "2013 Topps Archives Football",
+      "year": 2013,
+      "brand": "Topps Archives",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 640,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-chrome-football",
+      "name": "2013 Topps Chrome Football",
+      "year": 2013,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 671,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-finest-football",
+      "name": "2013 Topps Finest Football",
+      "year": 2013,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 415,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-five-star-football",
+      "name": "2013 Topps Five Star Football",
+      "year": 2013,
+      "brand": "Topps Five Star",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 611,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-football",
+      "name": "2013 Topps Football",
+      "year": 2013,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 46,
+      "totalCards": 1867,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-inception-football",
+      "name": "2013 Topps Inception Football",
+      "year": 2013,
+      "brand": "Topps Inception",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 407,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-magic-football",
+      "name": "2013 Topps Magic Football",
+      "year": 2013,
+      "brand": "Topps Magic",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 652,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-mini-football",
+      "name": "2013 Topps Mini Football",
+      "year": 2013,
+      "brand": "Topps Mini",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 570,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-museum-collection-football",
+      "name": "2013 Topps Museum Collection Football",
+      "year": 2013,
+      "brand": "Topps Museum Collection",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 614,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-platinum-football",
+      "name": "2013 Topps Platinum Football",
+      "year": 2013,
+      "brand": "Topps Platinum",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 510,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-prime-football",
+      "name": "2013 Topps Prime Football",
+      "year": 2013,
+      "brand": "Topps Prime",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 691,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-strata-football",
+      "name": "2013 Topps Strata Football",
+      "year": 2013,
+      "brand": "Topps Strata",
+      "sport": "Football",
+      "setCount": 11,
+      "totalCards": 495,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-supreme-football",
+      "name": "2013 Topps Supreme Football",
+      "year": 2013,
+      "brand": "Topps Supreme",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 719,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-triple-threads-football",
+      "name": "2013 Topps Triple Threads Football",
+      "year": 2013,
+      "brand": "Topps Triple Threads",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 596,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-topps-turkey-red-football",
+      "name": "2013 Topps Turkey Red Football",
+      "year": 2013,
+      "brand": "Topps Turkey Red",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 180,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-upper-deck-exquisite-football",
+      "name": "2013 Upper Deck Exquisite Football",
+      "year": 2013,
+      "brand": "Upper Deck Exquisite",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 532,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-upper-deck-football",
+      "name": "2013 Upper Deck Football",
+      "year": 2013,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 934,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-upper-deck-ultimate-collection-football",
+      "name": "2013 Upper Deck Ultimate Collection Football",
+      "year": 2013,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Football",
+      "setCount": 26,
+      "totalCards": 800,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2013-upper-deck-usa-football",
+      "name": "2013 Upper Deck USA Football",
+      "year": 2013,
+      "brand": "Upper Deck USA",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 136,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-bowman-football",
+      "name": "2012 Bowman Football",
+      "year": 2012,
+      "brand": "Bowman",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 573,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-bowman-sterling-football",
+      "name": "2012 Bowman Sterling Football",
+      "year": 2012,
+      "brand": "Bowman Sterling",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 403,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-elite-football",
+      "name": "2012 Elite Football",
+      "year": 2012,
+      "brand": "Elite",
+      "sport": "Football",
+      "setCount": 35,
+      "totalCards": 1366,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-fleer-retro-football",
+      "name": "2012 Fleer Retro Football",
+      "year": 2012,
+      "brand": "Fleer Retro",
+      "sport": "Football",
+      "setCount": 26,
+      "totalCards": 1174,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-leaf-vince-lombardi-legacy-football",
+      "name": "2012 Leaf Vince Lombardi Legacy Football",
+      "year": 2012,
+      "brand": "Leaf Vince Lombardi Legacy",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 97,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-absolute-football",
+      "name": "2012 Panini Absolute Football",
+      "year": 2012,
+      "brand": "Absolute",
+      "sport": "Football",
+      "setCount": 58,
+      "totalCards": 1406,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-black-football",
+      "name": "2012 Panini Black Football",
+      "year": 2012,
+      "brand": "Black",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 1180,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-certified-football",
+      "name": "2012 Panini Certified Football",
+      "year": 2012,
+      "brand": "Certified",
+      "sport": "Football",
+      "setCount": 37,
+      "totalCards": 1900,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-contenders-football",
+      "name": "2012 Panini Contenders Football",
+      "year": 2012,
+      "brand": "Contenders",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 615,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-crown-royale-football",
+      "name": "2012 Panini Crown Royale Football",
+      "year": 2012,
+      "brand": "Crown Royale",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 1252,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-gridiron-football",
+      "name": "2012 Panini Gridiron Football",
+      "year": 2012,
+      "brand": "Gridiron",
+      "sport": "Football",
+      "setCount": 27,
+      "totalCards": 1178,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-limited-football",
+      "name": "2012 Panini Limited Football",
+      "year": 2012,
+      "brand": "Limited",
+      "sport": "Football",
+      "setCount": 47,
+      "totalCards": 1958,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-momentum-football",
+      "name": "2012 Panini Momentum Football",
+      "year": 2012,
+      "brand": "Momentum",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 978,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-national-treasures-football",
+      "name": "2012 Panini National Treasures Football",
+      "year": 2012,
+      "brand": "National Treasures",
+      "sport": "Football",
+      "setCount": 60,
+      "totalCards": 2999,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-playbook-football",
+      "name": "2012 Panini Playbook Football",
+      "year": 2012,
+      "brand": "Playbook",
+      "sport": "Football",
+      "setCount": 18,
+      "totalCards": 812,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-prestige-football",
+      "name": "2012 Panini Prestige Football",
+      "year": 2012,
+      "brand": "Prestige",
+      "sport": "Football",
+      "setCount": 37,
+      "totalCards": 1631,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-prime-signatures-football",
+      "name": "2012 Panini Prime Signatures Football",
+      "year": 2012,
+      "brand": "Prime Signatures",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 691,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-prizm-football",
+      "name": "2012 Panini Prizm Football",
+      "year": 2012,
+      "brand": "Prizm",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 578,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-prominence-football",
+      "name": "2012 Panini Prominence Football",
+      "year": 2012,
+      "brand": "Prominence",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 709,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-rookies-and-stars-football",
+      "name": "2012 Panini Rookies and Stars Football",
+      "year": 2012,
+      "brand": "Rookies and Stars",
+      "sport": "Football",
+      "setCount": 23,
+      "totalCards": 878,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-panini-totally-certified-football",
+      "name": "2012 Panini Totally Certified Football",
+      "year": 2012,
+      "brand": "Totally Certified",
+      "sport": "Football",
+      "setCount": 30,
+      "totalCards": 1407,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-score-football",
+      "name": "2012 Score Football",
+      "year": 2012,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 752,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-sp-authentic-football",
+      "name": "2012 SP Authentic Football",
+      "year": 2012,
+      "brand": "SP Authentic",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 918,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-spx-football",
+      "name": "2012 SPx Football",
+      "year": 2012,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 633,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-chrome-football",
+      "name": "2012 Topps Chrome Football",
+      "year": 2012,
+      "brand": "Topps Chrome",
+      "sport": "Football",
+      "setCount": 12,
+      "totalCards": 529,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-finest-football",
+      "name": "2012 Topps Finest Football",
+      "year": 2012,
+      "brand": "Topps Finest",
+      "sport": "Football",
+      "setCount": 14,
+      "totalCards": 427,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-five-star-football",
+      "name": "2012 Topps Five Star Football",
+      "year": 2012,
+      "brand": "Topps Five Star",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 736,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-football",
+      "name": "2012 Topps Football",
+      "year": 2012,
+      "brand": "Topps",
+      "sport": "Football",
+      "setCount": 43,
+      "totalCards": 1536,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-inception-football",
+      "name": "2012 Topps Inception Football",
+      "year": 2012,
+      "brand": "Topps Inception",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 467,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-magic-football",
+      "name": "2012 Topps Magic Football",
+      "year": 2012,
+      "brand": "Topps Magic",
+      "sport": "Football",
+      "setCount": 21,
+      "totalCards": 1089,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-platinum-football",
+      "name": "2012 Topps Platinum Football",
+      "year": 2012,
+      "brand": "Topps Platinum",
+      "sport": "Football",
+      "setCount": 15,
+      "totalCards": 484,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-prime-football",
+      "name": "2012 Topps Prime Football",
+      "year": 2012,
+      "brand": "Topps Prime",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 690,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-strata-football",
+      "name": "2012 Topps Strata Football",
+      "year": 2012,
+      "brand": "Topps Strata",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 413,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-supreme-football",
+      "name": "2012 Topps Supreme Football",
+      "year": 2012,
+      "brand": "Topps Supreme",
+      "sport": "Football",
+      "setCount": 28,
+      "totalCards": 932,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-triple-threads-football",
+      "name": "2012 Topps Triple Threads Football",
+      "year": 2012,
+      "brand": "Topps Triple Threads",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 617,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-turkey-red-football",
+      "name": "2012 Topps Turkey Red Football",
+      "year": 2012,
+      "brand": "Topps Turkey Red",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 167,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-topps-valor-football",
+      "name": "2012 Topps Valor Football",
+      "year": 2012,
+      "brand": "Topps Valor",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 332,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-upper-deck-exquisite-football",
+      "name": "2012 Upper Deck Exquisite Football",
+      "year": 2012,
+      "brand": "Upper Deck Exquisite",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 615,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-upper-deck-football",
+      "name": "2012 Upper Deck Football",
+      "year": 2012,
+      "brand": "Upper Deck",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 1034,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-upper-deck-university-of-alabama-football",
+      "name": "2012 Upper Deck University of Alabama Football",
+      "year": 2012,
+      "brand": "Upper Deck University of Alabama",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 378,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2012-upper-deck-usa-football",
+      "name": "2012 Upper Deck USA Football",
+      "year": 2012,
+      "brand": "Upper Deck USA",
+      "sport": "Football",
+      "setCount": 5,
+      "totalCards": 206,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2011-national-treasures-football",
+      "name": "2011 National Treasures Football",
+      "year": 2011,
+      "brand": "National Treasures",
+      "sport": "Football",
+      "setCount": 76,
+      "totalCards": 2377,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2011-panini-playbook-football",
+      "name": "2011 Panini Playbook Football",
+      "year": 2011,
+      "brand": "Playbook",
+      "sport": "Football",
+      "setCount": 17,
+      "totalCards": 884,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2011-topps-triple-threads-football",
+      "name": "2011 Topps Triple Threads Football",
+      "year": 2011,
+      "brand": "Topps Triple Threads",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 839,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2011-upper-deck-college-football",
+      "name": "2011 Upper Deck College Football",
+      "year": 2011,
+      "brand": "Upper Deck College",
+      "sport": "Football",
+      "setCount": 9,
+      "totalCards": 449,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2011-upper-deck-exquisite-football",
+      "name": "2011 Upper Deck Exquisite Football",
+      "year": 2011,
+      "brand": "Upper Deck Exquisite",
+      "sport": "Football",
+      "setCount": 19,
+      "totalCards": 524,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2010-panini-epix-football",
+      "name": "2010 Panini Epix Football",
+      "year": 2010,
+      "brand": "Epix",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 487,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2010-panini-prestige-football",
+      "name": "2010 Panini Prestige Football",
+      "year": 2010,
+      "brand": "Prestige",
+      "sport": "Football",
+      "setCount": 13,
+      "totalCards": 500,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2010-score-football",
+      "name": "2010 Score Football",
+      "year": 2010,
+      "brand": "Score",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 369,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2010-spx-football",
+      "name": "2010 SPx Football",
+      "year": 2010,
+      "brand": "SPx",
+      "sport": "Football",
+      "setCount": 3,
+      "totalCards": 235,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2010-topps-platinum-football",
+      "name": "2010 Topps Platinum Football",
+      "year": 2010,
+      "brand": "Topps Platinum",
+      "sport": "Football",
+      "setCount": 6,
+      "totalCards": 308,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2009-upper-deck-exquisite-collection-football",
+      "name": "2009 Upper Deck Exquisite Collection Football",
+      "year": 2009,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Football",
+      "setCount": 24,
+      "totalCards": 802,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
+      "id": "2008-upper-deck-exquisite-collection-football",
+      "name": "2008 Upper Deck Exquisite Collection Football",
+      "year": 2008,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Football",
+      "setCount": 40,
+      "totalCards": 873,
+      "note": "Built from the published checklist at cardboardconnection.com."
+    },
+    {
       "id": "2000-bowman-football",
       "name": "2000 Bowman Football",
       "year": 2000,
