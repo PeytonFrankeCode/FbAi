@@ -1466,12 +1466,16 @@ function main() {
         owners.set(k, (owners.get(k) || 0) + 1);
       }
     }
+    // Grouped by subset, { slug: [keys] }, so each slug is written once
+    // rather than once per card: keyed per card, the repeated slugs were a
+    // third of the file and pushed it past what a Worker should load.
+    // server.js inverts it back to key -> slug when it reads it.
     const m = {};
     for (const sub of (subsetIndex.get(cl.id) || [])) {
       if ((sub.set.cards || []).length < INDEX_MIN_SUBSET_CARDS) continue;
       for (const c of (sub.set.cards || [])) {
         const k = cardMemberKey(c);
-        if (owners.get(k) === 1) m[k] = sub.slug;
+        if (owners.get(k) === 1) (m[sub.slug] = m[sub.slug] || []).push(k);
       }
     }
     if (Object.keys(m).length) subsetAttribution[cl.id] = m;

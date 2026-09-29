@@ -61,13 +61,15 @@ const add = (title, player, num, times) => {
 // A sale that matches NO product, so topUnmatchedSets is not empty and the
 // checks on it are not passing vacuously. Deliberately a throwback shape: the
 // collector filed it under 1989 off the design on the card's face, while the
-// title says it is a 2024 Donruss. Writing a 1989 Score checklist would not
-// move this sale, and the queue has to be able to say so.
+// title says it is a 2024 Donruss. Writing a 1989 checklist would not move
+// this sale, and the queue has to be able to say so. Filed as 1989 Donruss,
+// a football set that never existed, so no checklist added later can match it
+// (it was 1989 Score until the catalogue gained 1989 Score).
 {
   for (let i = 0; i < 4; i++) {
     ins.run('tb' + i, iso(-6 - i),
-      '2024 Panini Donruss 1989 Score Throwback Josh Allen Bills', 10000,
-      'Josh Allen', '1989', 'Score', '', '1', 0.9);
+      '2024 Panini Donruss 1989 Donruss Throwback Josh Allen Bills', 10000,
+      'Josh Allen', '1989', 'Donruss', '', '1', 0.9);
   }
 }
 
