@@ -14962,7 +14962,7 @@ function resetInventory() {
   // Gather every photo id (items + history + local cache) and delete server-side.
   const ids = new Set(Object.keys(getInvPhotos()));
   inv.items.forEach(i => { if (i.hasPhoto) ids.add(i.id); });
-  inv.history.forEach(h => { if (h.gavePhotoId) ids.add(h.gavePhotoId); if (h.gotPhotoId) ids.add(h.gotPhotoId); });
+  inv.history.forEach(h => { ['gave', 'got'].forEach(side => _invHistCards(h, side).forEach(c => { if (c.photoId) ids.add(c.photoId); })); });
   ids.forEach(id => _invServerDeletePhoto(id));
   try { localStorage.setItem(INV_PHOTOS_KEY, '{}'); } catch (_) {}
 
@@ -15088,52 +15088,138 @@ function handleWalletSubmit(e) {
 }
 
 // ==================== Inventory: Log Sale / Trade ====================
-// Record a card leaving (sold or traded) and what came back — cash (optionally
-// credited to the wallet) or another card (added to active inventory). The card
-// given moves out of active cards into the sold/traded history.
-// Each side of a transaction can include a card, cash, or both — driven by the
-// four checkboxes (gave-has-card/cash, got-has-card/cash) read at submit time.
-let _salePhotoDraft = { gave: undefined, got: undefined };
+// Record cards leaving (sold or traded) and what came back — cash (optionally
+// credited to the wallet) and/or cards (added to active inventory). Cards
+// given move out of active cards into the sold/traded history.
+// Each side can hold any number of cards, cash, or both — driven by the four
+// toggles (gave-has-card/cash, got-has-card/cash) read at submit time. The card
+// rows are built here; each keeps its own photo draft, keyed by the row's id.
+let _salePhotoDraft = {};
+let _saleRowSeq = 0;
 
 function openSaleTradeModal() {
-  const inv = getInventory();
   const form = document.getElementById('inv-sale-form');
   if (form) form.reset();
-  _salePhotoDraft = { gave: undefined, got: undefined };
-  _showSalePhoto('gave', null);
-  _showSalePhoto('got', null);
+  _salePhotoDraft = {};
+  document.getElementById('inv-sale-gave-list').innerHTML = '';
+  document.getElementById('inv-sale-got-list').innerHTML = '';
+  _saleAddRow('gave', { focus: false });
+  _saleAddRow('got', { focus: false });
+  _saleError('');
+  setSalePreset('sale');
+  document.getElementById('inv-sale-modal').classList.remove('hidden');
+}
+function closeSaleTradeModal() {
+  document.getElementById('inv-sale-modal').classList.add('hidden');
+  _salePhotoDraft = {};
+}
 
-  // Card-you-gave picker: your active cards, plus a fresh-entry option.
-  const opts = [
+// One-tap shapes for the common deals; the toggles below still allow any mix.
+function setSalePreset(kind) {
+  const set = (id, on) => { document.getElementById(id).checked = on; };
+  set('inv-sale-gave-has-card', kind !== 'buy');
+  set('inv-sale-gave-has-cash', kind === 'buy');
+  set('inv-sale-got-has-card', kind !== 'sale');
+  set('inv-sale-got-has-cash', kind === 'sale');
+  updateSaleGaveUI();
+  updateSaleGotUI();
+}
+
+// The picker for a card you gave: your active cards, plus a fresh entry.
+function _saleGaveOptions() {
+  const inv = getInventory();
+  return [
     ...inv.items.map(i => ({
       value: i.id,
       label: `${i.name}${_invFmtPrintRun(i.printRun) ? ' ' + _invFmtPrintRun(i.printRun) : ''}${(Number(i.qty) || 0) > 1 ? ` (x${i.qty})` : ''}`,
     })),
     { value: '__fresh__', label: '— Another card (not in my inventory) —' },
   ];
-  _invFillSelect(document.getElementById('inv-sale-card'), opts, opts[0] ? opts[0].value : '__fresh__');
-  onSaleCardPick();
-  // Default to a sale: gave a card, got cash.
-  document.getElementById('inv-sale-gave-has-card').checked = true;
-  document.getElementById('inv-sale-gave-has-cash').checked = false;
-  document.getElementById('inv-sale-got-has-cash').checked = true;
-  document.getElementById('inv-sale-got-has-card').checked = false;
-  updateSaleGaveUI();
-  updateSaleGotUI();
-  document.getElementById('inv-sale-modal').classList.remove('hidden');
-}
-function closeSaleTradeModal() {
-  document.getElementById('inv-sale-modal').classList.add('hidden');
-  _salePhotoDraft = { gave: undefined, got: undefined };
 }
 
-// Toggle the fresh-card fields when "Another card" is chosen (or when the
-// inventory is empty so the only option is fresh entry).
-function onSaleCardPick() {
-  const sel = document.getElementById('inv-sale-card');
-  const fresh = document.getElementById('inv-sale-gave-fresh');
-  const isFresh = !sel || sel.value === '__fresh__';
-  if (fresh) fresh.classList.toggle('hidden', !isFresh);
+function _saleAddRow(side, { focus = true } = {}) {
+  const list = document.getElementById(`inv-sale-${side}-list`);
+  const id = 'sr' + (++_saleRowSeq);
+  const row = document.createElement('div');
+  row.className = 'sale-card';
+  row.dataset.row = id;
+  const photo = `
+    <label class="sale-photo" title="Add a photo">
+      <input type="file" accept="image/*" class="inv-photo-input" onchange="handleSalePhotoPick(event, '${id}')" />
+      <span class="sale-photo-empty">&#128247;<br>Photo</span>
+      <img class="sale-photo-img hidden" alt="" />
+    </label>`;
+  const remove = `<button type="button" class="sale-card-x" aria-label="Remove this card" onclick="_saleRemoveRow('${id}')">&times;</button>`;
+  if (side === 'gave') {
+    row.innerHTML = `
+      <div class="sale-card-top">
+        <select class="sale-pick" aria-label="Card you gave" onchange="_saleOnPick(this)"></select>
+        ${remove}
+      </div>
+      <div class="sale-fresh hidden">
+        <div class="sale-card-body">
+          <div class="sale-card-fields">
+            <input type="text" class="sale-name" placeholder="Card name" aria-label="Card name" />
+            <input type="text" class="sale-printrun" placeholder="Print run (optional)" aria-label="Print run" />
+          </div>
+          ${photo}
+        </div>
+      </div>`;
+    const sel = row.querySelector('.sale-pick');
+    const opts = _saleGaveOptions();
+    // A new row defaults to the next card not already picked in another row.
+    const taken = new Set([...list.querySelectorAll('.sale-pick')].map(s => s.value));
+    const next = opts.find(o => o.value === '__fresh__' || !taken.has(o.value));
+    _invFillSelect(sel, opts, next ? next.value : '__fresh__');
+    list.appendChild(row);
+    _saleOnPick(sel);
+  } else {
+    row.innerHTML = `
+      <div class="sale-card-top">
+        <input type="text" class="sale-name" placeholder="Card you received" aria-label="Card you received" />
+        ${remove}
+      </div>
+      <div class="sale-card-body">
+        <div class="sale-card-fields">
+          <div class="sale-card-pair">
+            <input type="text" class="sale-printrun" placeholder="Print run" aria-label="Print run" />
+            <label class="sale-money sale-money--sm"><span aria-hidden="true">$</span><input type="number" class="sale-value" placeholder="Value" min="0" step="0.01" inputmode="decimal" aria-label="Its value (optional)" /></label>
+          </div>
+          <div class="sale-chips sale-chips--sm">
+            <label class="sale-chip"><input type="checkbox" class="sale-auto"><span>Auto</span></label>
+            <label class="sale-chip"><input type="checkbox" class="sale-mem"><span>Memorabilia</span></label>
+          </div>
+        </div>
+        ${photo}
+      </div>`;
+    list.appendChild(row);
+  }
+  _saleSyncRows(side);
+  if (focus) {
+    const f = row.querySelector(side === 'gave' ? '.sale-pick' : '.sale-name');
+    if (f) f.focus();
+  }
+}
+
+function _saleRemoveRow(id) {
+  const row = document.querySelector(`.sale-card[data-row="${id}"]`);
+  if (!row) return;
+  const side = row.parentElement.id.includes('gave') ? 'gave' : 'got';
+  delete _salePhotoDraft[id];
+  row.remove();
+  _saleSyncRows(side);
+}
+
+// The × shows only when there is more than one card to remove.
+function _saleSyncRows(side) {
+  const rows = document.querySelectorAll(`#inv-sale-${side}-list .sale-card`);
+  rows.forEach(r => r.classList.toggle('sale-card--only', rows.length === 1));
+  _updateSaleSubmitLabel();
+}
+
+function _saleOnPick(sel) {
+  const fresh = sel.closest('.sale-card').querySelector('.sale-fresh');
+  if (fresh) fresh.classList.toggle('hidden', sel.value !== '__fresh__');
 }
 
 function _saleChk(id) { const el = document.getElementById(id); return !!(el && el.checked); }
@@ -15151,41 +15237,61 @@ function updateSaleGotUI() {
 }
 
 // Name the button by the dominant shape: card→card = trade, cash→card = buy,
-// card→cash = sale, anything else = a generic log.
+// card→cash = sale, anything else = a generic log. The presets light up to
+// match, and a one-line summary reads the deal back.
 function _updateSaleSubmitLabel() {
   const submit = document.getElementById('inv-sale-submit');
   if (!submit) return;
   const gaveCard = _saleChk('inv-sale-gave-has-card'), gotCard = _saleChk('inv-sale-got-has-card');
-  const gotCash = _saleChk('inv-sale-got-has-cash');
-  submit.textContent = (gaveCard && gotCard) ? 'Log trade'
-    : (!gaveCard && gotCard) ? 'Log purchase'
-    : (gaveCard && gotCash && !gotCard) ? 'Log sale'
-    : 'Log it';
+  const gaveCash = _saleChk('inv-sale-gave-has-cash'), gotCash = _saleChk('inv-sale-got-has-cash');
+  const kind = (gaveCard && gotCard) ? 'trade' : (!gaveCard && gotCard) ? 'buy' : (gaveCard && gotCash && !gotCard) ? 'sale' : '';
+  submit.textContent = { trade: 'Log trade', buy: 'Log purchase', sale: 'Log sale' }[kind] || 'Log it';
+  document.querySelectorAll('.sale-preset').forEach(b => b.classList.toggle('active', b.dataset.preset === kind));
+  const n = (side) => document.querySelectorAll(`#inv-sale-${side}-list .sale-card`).length;
+  const cards = (k) => `${k} card${k === 1 ? '' : 's'}`;
+  const side = (card, cash, k) => [card ? cards(k) : '', cash ? 'cash' : ''].filter(Boolean).join(' + ') || 'nothing';
+  const summary = document.getElementById('inv-sale-summary');
+  if (summary) summary.textContent = `You gave ${side(gaveCard, gaveCash, n('gave'))} → you got ${side(gotCard, gotCash, n('got'))}`;
 }
 
-function _showSalePhoto(which, url) {
-  const wrap = document.getElementById(`inv-sale-${which}-photo-preview`);
-  const img = document.getElementById(`inv-sale-${which}-photo-img`);
-  if (!wrap || !img) return;
-  if (url) { img.src = url; wrap.classList.remove('hidden'); }
-  else { img.src = ''; wrap.classList.add('hidden'); }
+function _saleError(msg, focusEl) {
+  const el = document.getElementById('inv-sale-error');
+  if (el) el.textContent = msg;
+  if (focusEl) focusEl.focus();
+  return false;
 }
-async function handleSalePhotoPick(e, which) {
+
+async function handleSalePhotoPick(e, rowId) {
   const file = e.target.files && e.target.files[0];
   e.target.value = ''; // allow re-picking the same file
   if (!file) return;
   const url = await openInvCropper(file);
   if (!url) return; // cancelled
-  _salePhotoDraft[which] = url;
-  _showSalePhoto(which, url);
+  _salePhotoDraft[rowId] = url;
+  const row = document.querySelector(`.sale-card[data-row="${rowId}"]`);
+  if (!row) return;
+  const img = row.querySelector('.sale-photo-img');
+  img.src = url;
+  img.classList.remove('hidden');
+  row.querySelector('.sale-photo-empty').classList.add('hidden');
 }
-function clearSalePhoto(which) {
-  _salePhotoDraft[which] = null;
-  _showSalePhoto(which, null);
+
+// Split the cash paid across the cards bought: by their values when all have
+// one, else evenly. Whole cents, so the parts add back up to the total.
+function _saleSplitCost(total, values) {
+  if (!total || !values.length) return values.map(() => 0);
+  const cents = Math.round(total * 100);
+  const sum = values.reduce((a, v) => a + v, 0);
+  const weights = values.every(v => v > 0) ? values.map(v => v / sum) : values.map(() => 1 / values.length);
+  const parts = weights.map(w => Math.floor(cents * w));
+  let left = cents - parts.reduce((a, p) => a + p, 0);
+  for (let i = 0; left > 0; i = (i + 1) % parts.length, left--) parts[i]++;
+  return parts.map(p => p / 100);
 }
 
 function handleSaleTradeSubmit(e) {
   e.preventDefault();
+  _saleError('');
   const inv = getInventory();
   const now = Date.now();
   const gaveCard = _saleChk('inv-sale-gave-has-card');
@@ -15193,50 +15299,61 @@ function handleSaleTradeSubmit(e) {
   const gotCard = _saleChk('inv-sale-got-has-card');
   const gotCash = _saleChk('inv-sale-got-has-cash');
 
-  if (!gaveCard && !gaveCash) { alert('Pick what you gave — a card, cash, or both.'); return false; }
-  if (!gotCard && !gotCash) { alert('Pick what you got — a card, cash, or both.'); return false; }
-  if (!gaveCard && !gotCard) {
-    alert('Cash for cash isn’t a sale or trade — use "Add / adjust money" on the wallet instead.');
-    return false;
-  }
+  if (!gaveCard && !gaveCash) return _saleError('Pick what you gave: cards, cash, or both.');
+  if (!gotCard && !gotCash) return _saleError('Pick what you got: cards, cash, or both.');
+  if (!gaveCard && !gotCard) return _saleError('Cash for cash isn’t a sale or trade. Use "Add / adjust money" on the wallet instead.');
 
   // ---- Phase 1: read + validate everything BEFORE mutating (so a bad field
   // never leaves an orphan photo or half-saved item behind). ----
-  const g = {}; // gave-card, resolved
+  const gave = []; // cards given, resolved
   if (gaveCard) {
-    const sel = document.getElementById('inv-sale-card');
-    const givenId = sel ? sel.value : '__fresh__';
-    g.item = (givenId && givenId !== '__fresh__') ? inv.items.find(i => i.id === givenId) : null;
-    if (g.item) {
-      g.name = g.item.name;
-      g.printRun = g.item.printRun || '';
-    } else {
-      g.name = document.getElementById('inv-sale-gave-name').value.trim();
-      g.printRun = document.getElementById('inv-sale-gave-printrun').value.trim().slice(0, 20);
+    const picked = {};
+    for (const row of document.querySelectorAll('#inv-sale-gave-list .sale-card')) {
+      const sel = row.querySelector('.sale-pick');
+      const item = sel.value !== '__fresh__' ? inv.items.find(i => i.id === sel.value) : null;
+      if (item) {
+        picked[item.id] = (picked[item.id] || 0) + 1;
+        if (picked[item.id] > (Number(item.qty) || 1)) return _saleError(`You only have ${Number(item.qty) || 1} of ${item.name}.`, sel);
+        gave.push({ row: row.dataset.row, item, name: item.name, printRun: item.printRun || '' });
+      } else {
+        const nameEl = row.querySelector('.sale-name');
+        const name = nameEl.value.trim();
+        if (!name) return _saleError('Add the name of each card you gave.', nameEl);
+        gave.push({ row: row.dataset.row, item: null, name, printRun: row.querySelector('.sale-printrun').value.trim().slice(0, 20) });
+      }
     }
-    if (!g.name) { alert('Add the name of the card you gave.'); return false; }
+    if (!gave.length) return _saleError('Add the card you gave.');
   }
   const gc = {}; // gave-cash
   if (gaveCash) {
-    gc.amount = Math.max(0, Number(document.getElementById('inv-sale-gave-cash-amount').value) || 0);
-    if (!gc.amount) { alert('Enter the cash amount you paid.'); return false; }
+    const el = document.getElementById('inv-sale-gave-cash-amount');
+    gc.amount = Math.max(0, Number(el.value) || 0);
+    if (!gc.amount) return _saleError('Enter the cash you paid.', el);
     gc.source = document.getElementById('inv-sale-gave-cash-source').value || 'Other';
     gc.fromWallet = document.getElementById('inv-sale-from-wallet').checked;
   }
-  const r = {}; // got-card, resolved
+  const got = []; // cards received, resolved
   if (gotCard) {
-    r.name = document.getElementById('inv-sale-got-name').value.trim();
-    if (!r.name) { alert('Add the name of the card you received.'); return false; }
-    r.printRun = document.getElementById('inv-sale-got-printrun').value.trim().slice(0, 20);
-    r.auto = document.getElementById('inv-sale-got-auto').checked;
-    r.mem = document.getElementById('inv-sale-got-mem').checked;
-    const raw = document.getElementById('inv-sale-got-value').value;
-    r.value = raw === '' ? 0 : Math.max(0, Number(raw) || 0);
+    for (const row of document.querySelectorAll('#inv-sale-got-list .sale-card')) {
+      const nameEl = row.querySelector('.sale-name');
+      const name = nameEl.value.trim();
+      if (!name) return _saleError('Add the name of each card you received.', nameEl);
+      const raw = row.querySelector('.sale-value').value;
+      got.push({
+        row: row.dataset.row, name,
+        printRun: row.querySelector('.sale-printrun').value.trim().slice(0, 20),
+        auto: row.querySelector('.sale-auto').checked,
+        mem: row.querySelector('.sale-mem').checked,
+        value: raw === '' ? 0 : Math.max(0, Number(raw) || 0),
+      });
+    }
+    if (!got.length) return _saleError('Add the card you received.');
   }
   const rc = {}; // got-cash
   if (gotCash) {
-    rc.amount = Math.max(0, Number(document.getElementById('inv-sale-cash-amount').value) || 0);
-    if (!rc.amount) { alert('Enter the cash amount you received.'); return false; }
+    const el = document.getElementById('inv-sale-cash-amount');
+    rc.amount = Math.max(0, Number(el.value) || 0);
+    if (!rc.amount) return _saleError('Enter the cash you received.', el);
     rc.source = document.getElementById('inv-sale-cash-source').value || 'Other';
     rc.toWallet = document.getElementById('inv-sale-to-wallet').checked;
   }
@@ -15246,19 +15363,24 @@ function handleSaleTradeSubmit(e) {
   const kind = (gaveCard && gotCard) ? 'traded' : (gotCard ? 'bought' : 'sold');
   const note = document.getElementById('inv-sale-note').value.trim().slice(0, 120);
   const entry = { id: _invId(), at: now, kind, note };
+  const names = (cards) => cards.map(c => c.name).join(' + ');
 
   if (gaveCard) {
-    let gavePhotoId = null;
-    if (g.item) {
-      if (getInvPhotos()[g.item.id] || g.item.hasPhoto) gavePhotoId = g.item.id;
-    } else if (_salePhotoDraft.gave) {
-      gavePhotoId = _invId();
-      setInvPhotoLocal(gavePhotoId, _salePhotoDraft.gave);
-      _invServerPutPhoto(gavePhotoId, _salePhotoDraft.gave);
-    }
-    entry.gaveName = g.name;
-    entry.gavePrintRun = g.printRun;
-    entry.gavePhotoId = gavePhotoId;
+    entry.gaveCards = gave.map(g => {
+      let photoId = null;
+      if (g.item) {
+        if (getInvPhotos()[g.item.id] || g.item.hasPhoto) photoId = g.item.id;
+      } else if (_salePhotoDraft[g.row]) {
+        photoId = _invId();
+        setInvPhotoLocal(photoId, _salePhotoDraft[g.row]);
+        _invServerPutPhoto(photoId, _salePhotoDraft[g.row]);
+      }
+      return { name: g.name, printRun: g.printRun, photoId };
+    });
+    // The single-card fields that older copies of the page still read.
+    entry.gaveName = names(gave);
+    entry.gavePrintRun = gave.length === 1 ? gave[0].printRun : '';
+    entry.gavePhotoId = entry.gaveCards[0].photoId;
   }
   if (gaveCash) {
     entry.gaveCash = gc.amount;
@@ -15266,29 +15388,34 @@ function handleSaleTradeSubmit(e) {
     entry.fromWallet = gc.fromWallet;
   }
   if (gotCard) {
-    // Cost basis = the cash you put into the deal; default value to it if blank.
-    const boughtCost = gaveCash ? gc.amount : 0;
-    let value = r.value;
-    if (value === 0 && boughtCost > 0) value = boughtCost;
-    const newId = _invId();
-    const hasPhoto = !!_salePhotoDraft.got;
-    if (hasPhoto) {
-      setInvPhotoLocal(newId, _salePhotoDraft.got);
-      _invServerPutPhoto(newId, _salePhotoDraft.got);
-    }
-    inv.items.push({
-      id: newId, name: r.name, printRun: r.printRun, paid: boughtCost, value,
-      auto: r.auto, mem: r.mem, qty: 1, location: inv.locations[0],
-      valueHistory: value > 0 ? [{ at: now, value }] : [],
-      hasPhoto, addedAt: now, updatedAt: now,
+    // Cost basis = the cash you put into the deal, split across the cards;
+    // a card with no value entered defaults to its share.
+    const costs = _saleSplitCost(gaveCash ? gc.amount : 0, got.map(r => r.value));
+    entry.gotCards = got.map((r, i) => {
+      const cost = costs[i];
+      const value = r.value === 0 && cost > 0 ? cost : r.value;
+      const newId = _invId();
+      const hasPhoto = !!_salePhotoDraft[r.row];
+      if (hasPhoto) {
+        setInvPhotoLocal(newId, _salePhotoDraft[r.row]);
+        _invServerPutPhoto(newId, _salePhotoDraft[r.row]);
+      }
+      inv.items.push({
+        id: newId, name: r.name, printRun: r.printRun, paid: cost, value,
+        auto: r.auto, mem: r.mem, qty: 1, location: inv.locations[0],
+        valueHistory: value > 0 ? [{ at: now, value }] : [],
+        hasPhoto, addedAt: now, updatedAt: now,
+      });
+      return { name: r.name, printRun: r.printRun, auto: r.auto, mem: r.mem, value, itemId: newId, photoId: hasPhoto ? newId : null };
     });
-    entry.gotName = r.name;
-    entry.gotPrintRun = r.printRun;
-    entry.gotAuto = r.auto;
-    entry.gotMem = r.mem;
-    entry.gotValue = value;
-    entry.gotItemId = newId;
-    entry.gotPhotoId = hasPhoto ? newId : null;
+    const first = entry.gotCards[0];
+    entry.gotName = names(got);
+    entry.gotPrintRun = got.length === 1 ? first.printRun : '';
+    entry.gotAuto = first.auto;
+    entry.gotMem = first.mem;
+    entry.gotValue = entry.gotCards.reduce((a, c) => a + c.value, 0);
+    entry.gotItemId = first.itemId;
+    entry.gotPhotoId = first.photoId;
   }
   if (gotCash) {
     entry.cashAmount = rc.amount;
@@ -15302,8 +15429,9 @@ function handleSaleTradeSubmit(e) {
     _walletApplyTo(inv, -gc.amount, entry.gotName ? `Bought ${entry.gotName} on ${gc.source}` : `Cash paid (${gc.source})`);
   }
 
-  // ---- Retire the given card (one unit) ----
-  if (gaveCard && g.item) {
+  // ---- Retire the given cards (one unit per row) ----
+  for (const g of gave) {
+    if (!g.item) continue;
     const left = (Number(g.item.qty) || 1) - 1;
     if (left > 0) { g.item.qty = left; g.item.updatedAt = now; }
     else { inv.items = inv.items.filter(i => i.id !== g.item.id); }
@@ -15315,6 +15443,17 @@ function handleSaleTradeSubmit(e) {
   closeSaleTradeModal();
   renderInventory();
   return false;
+}
+
+// The cards on each side of a logged deal. Entries logged before a side could
+// hold several cards carry only the single-card fields.
+function _invHistCards(h, side) {
+  if (side === 'gave') {
+    if (Array.isArray(h.gaveCards)) return h.gaveCards;
+    return h.gaveName != null ? [{ name: h.gaveName, printRun: h.gavePrintRun, photoId: h.gavePhotoId }] : [];
+  }
+  if (Array.isArray(h.gotCards)) return h.gotCards;
+  return h.gotName != null ? [{ name: h.gotName, printRun: h.gotPrintRun, photoId: h.gotPhotoId }] : [];
 }
 
 const INV_HISTORY_SHOWN = 25;
@@ -15346,11 +15485,11 @@ function renderInvHistory() {
 
   el.innerHTML = inv.history.slice(0, INV_HISTORY_SHOWN).map(h => {
     const gaveHtml = side([
-      h.gaveName != null ? cardCell(h.gaveName, h.gavePrintRun, h.gavePhotoId) : '',
+      ..._invHistCards(h, 'gave').map(c => cardCell(c.name, c.printRun, c.photoId)),
       h.gaveCash != null ? cashCell(h.gaveCash, h.gaveSource, h.fromWallet ? 'from wallet' : '') : '',
     ]);
     const gotHtml = side([
-      h.gotName != null ? cardCell(h.gotName, h.gotPrintRun, h.gotPhotoId) : '',
+      ..._invHistCards(h, 'got').map(c => cardCell(c.name, c.printRun, c.photoId)),
       h.cashAmount != null ? cashCell(h.cashAmount, h.cashSource, h.toWallet ? 'to wallet' : '') : '',
     ]);
     return `<div class="inv-hist-row">

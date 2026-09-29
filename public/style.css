@@ -9297,3 +9297,99 @@ body.tour-open { overflow: hidden; }
 @media (max-width: 420px) {
   .acct-grid { grid-template-columns: 1fr; }
 }
+
+/* ---- Log a sale, trade or purchase ---- */
+.sale-box { max-width: 520px; }
+.sale-box h2 { padding-right: 2rem; }
+.sale-presets {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem;
+  padding: 0.3rem; margin: 0.25rem 0 1rem; border-radius: 12px;
+  background: var(--bg-input); border: 1px solid var(--border-primary);
+}
+.sale-preset {
+  padding: 0.5rem 0.4rem; border-radius: 9px; border: 1px solid transparent; background: none;
+  color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; white-space: nowrap; justify-content: center;
+}
+.sale-preset:hover { background: var(--accent-bg); color: var(--text-primary); }
+.sale-preset.active, .sale-preset.active:hover {
+  background: var(--bg-secondary); color: var(--accent); border-color: var(--accent-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+.sale-side {
+  border: 1px solid var(--border-primary); border-radius: 14px; padding: 0.85rem;
+  background: var(--bg-secondary);
+}
+.sale-side-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.7rem; }
+.sale-side-title { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+.sale-chips { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.sale-chip { position: relative; cursor: pointer; }
+.sale-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.sale-chip span {
+  display: inline-block; padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+  border: 1px solid var(--border-primary); color: var(--text-secondary); background: var(--bg-input);
+  transition: all 0.15s; user-select: none;
+}
+.sale-chip:hover span { border-color: var(--accent-border); }
+.sale-chip input:checked + span { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+.sale-chip input:checked + span::before { content: '\2713  '; }
+.sale-chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sale-chips--sm .sale-chip span { padding: 0.2rem 0.6rem; font-size: 0.75rem; }
+.sale-card-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.sale-card {
+  border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.6rem;
+  background: var(--bg-input); animation: fadeIn 0.15s ease;
+}
+.sale-card input[type="text"], .sale-card input[type="number"], .sale-card select { margin-bottom: 0; }
+.sale-card-top { display: flex; align-items: center; gap: 0.4rem; }
+.sale-card-top > select, .sale-card-top > input { flex: 1; min-width: 0; }
+.sale-card-x {
+  flex-shrink: 0; width: 1.9rem; height: 1.9rem; padding: 0; border-radius: 8px; line-height: 1;
+  font-size: 1.1rem; background: none; border: 1px solid transparent; color: var(--text-muted);
+}
+.sale-card-x:hover { color: var(--error); border-color: var(--error); background: none; }
+.sale-card--only .sale-card-x { display: none; }
+.sale-card-body { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: stretch; }
+.sale-card-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.sale-card-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.sale-photo {
+  position: relative; flex-shrink: 0; width: 3.6rem; min-height: 4.8rem; border-radius: 8px; cursor: pointer; overflow: hidden;
+  border: 1px dashed var(--accent-border); background: var(--accent-bg); color: var(--accent);
+  display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.7rem; font-weight: 600; line-height: 1.3;
+}
+.sale-photo:hover { border-color: var(--accent); }
+.sale-photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sale-photo-img.hidden, .sale-photo-empty.hidden { display: none; }
+.sale-add {
+  width: 100%; margin-top: 0.5rem; padding: 0.5rem; border-radius: 10px; font-weight: 600; font-size: 0.82rem;
+  border: 1px dashed var(--border-primary); background: none; color: var(--accent); justify-content: center;
+}
+.sale-add:hover { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+.sale-cash { margin-top: 0.75rem; }
+.hidden + .sale-cash { margin-top: 0; }
+.sale-cash-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.5rem; }
+.sale-cash-row select { margin-bottom: 0; }
+.sale-money {
+  display: flex; align-items: center; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg-main); padding-left: 0.65rem; transition: border-color 0.15s;
+}
+.sale-money:focus-within { border-color: var(--accent); }
+.sale-money span { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
+.modal-box .sale-money input[type="number"] { flex: 1; min-width: 0; border: none; background: none; margin: 0; padding-left: 0.35rem; outline: none; }
+.sale-wallet { display: flex; align-items: center; gap: 0.45rem; margin-top: 0.55rem; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; }
+.sale-wallet input { width: auto; margin: 0; accent-color: var(--accent); }
+.sale-swap {
+  width: 2rem; height: 2rem; margin: -0.35rem auto; position: relative; z-index: 1; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+  background: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--accent);
+}
+.modal-box .sale-note { margin-top: 0.85rem; }
+.sale-summary { font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin: 0.1rem 0 0.2rem; }
+.sale-error { font-size: 0.8rem; color: var(--error); text-align: center; min-height: 0; }
+.sale-error:empty { display: none; }
+.modal-box #inv-sale-submit { justify-content: center; text-align: center; padding: 0.75rem; border-radius: 10px; font-size: 0.95rem; font-weight: 700; color: var(--accent-on); }
+@media (max-width: 420px) {
+  .sale-box { padding: 1.4rem 1rem; }
+  .sale-side { padding: 0.7rem; }
+  .sale-side-head { flex-wrap: wrap; }
+  .sale-preset { font-size: 0.78rem; }
+}
