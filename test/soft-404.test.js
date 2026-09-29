@@ -44,6 +44,10 @@ const check = (label, ok, detail) => {
     ['a player page', '/players/caleb-williams/'],
     ['the players hub', '/players/'],
     ['a team page', '/teams/kansas-city-chiefs/'],
+    ['a basketball player page', '/basketball/players/victor-wembanyama/'],
+    ['a basketball product page', '/basketball/sets/2023-24-panini-prizm-basketball/'],
+    ['a baseball team page', '/baseball/teams/new-york-yankees/'],
+    ['the baseball sets hub', '/baseball/sets/'],
     ['the news index', '/news'],
     ['a news article', '/news/whats-moving-this-week/'],
   ];
@@ -92,6 +96,10 @@ const check = (label, ok, detail) => {
     ['a real page name nested under a path', '/wp/admin'],
     ['a missing image', '/missing.png'],
     ['a missing script', '/vendor/nope.js'],
+    // A sport's prefix alone, or under it anything but the three page kinds.
+    ['a sport with no page kind', '/basketball'],
+    ['a sport with an unknown page kind', '/baseball/wp-admin/'],
+    ['a sport that has no pages', '/hockey/players/'],
   ];
   for (const [label, p] of DROP) {
     check(`404 — ${label} (${p})`, isKnownHtmlPath(p) === false);

@@ -607,7 +607,9 @@ class PriceSlotFiller {
 // that misses and strips the tag. What this closes is the scan traffic, which
 // is the part that generates impressions.
 const SPA_HTML_ROUTES = new Set(['/', '/inventory', '/stats']);
-const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)/];
+const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)/,
+  // The same pages for the other sports (build-landing-pages.js).
+  /^\/(basketball|baseball)\/(sets|players|teams)\//];
 
 // The static pages in public/, WITHOUT their extension.
 //

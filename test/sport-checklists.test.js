@@ -72,6 +72,28 @@ check('sport-players.json is built from the checklists as they are', pok, pok ? 
     && !players.basketball.includes('patrick mahomes') && !players.baseball.includes('patrick mahomes'));
 }
 
+// The guide pages (build-landing-pages.js, which CI runs before every deploy):
+// each sport gets the three hubs football has, under its own prefix.
+{
+  const PUB = path.join(ROOT, 'public');
+  if (!fs.existsSync(path.join(PUB, 'sets', 'index.html'))) {
+    console.log('SKIP  guide pages — run `npm run build:pages` first (CI does)');
+  } else {
+    for (const sport of ['basketball', 'baseball']) {
+      const hubs = ['sets', 'players', 'teams'].map(k => path.join(PUB, sport, k, 'index.html'));
+      const Sport = sport[0].toUpperCase() + sport.slice(1);
+      check(`${sport}: set, player and team guides are built`, hubs.every(f => fs.existsSync(f))
+        && fs.readFileSync(hubs[1], 'utf8').includes(`${Sport} Card Player Price Guides`));
+      const hub = fs.readFileSync(hubs[0], 'utf8');
+      check(`  ...linking within the sport, with no ads or empty price blocks`,
+        hub.includes(`href="/${sport}/sets/`) && !/href="\/(sets|players|teams)\//.test(hub.replace('href="/sets/landing.css', ''))
+        && !hub.includes('adsbygoogle') && !hub.includes('data-price-key'));
+    }
+    const fb = fs.readFileSync(path.join(PUB, 'sets', 'index.html'), 'utf8');
+    check('football\'s guides are unchanged by it', fb.includes('Football Card Checklists &amp; Price Guides') && !/href="\/(basketball|baseball)\//.test(fb));
+  }
+}
+
 // The browser: a product's folder comes from its id; the list from the sport picked.
 const js = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
 const start = js.indexOf('var CHECKLIST_DIRS');

@@ -9013,8 +9013,9 @@ function _d1UsageBody(req, res) {
 //
 // Read-only, and cached, because it is a decision aid rather than a page.
 const PRICE_COVERAGE_TTL = 3600;
-// The sitemap's own count, checked by test/set-key.test.js so it
-// cannot drift silently away from what build-landing-pages.js emits.
+// The sitemap's football URLs, checked by test/set-key.test.js so it cannot
+// drift silently away from what build-landing-pages.js emits. Football only:
+// the basketball and baseball pages have no sold data to be priced by.
 const INDEXABLE_URLS = 5756;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
