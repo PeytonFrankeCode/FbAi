@@ -1646,6 +1646,22 @@ function initSiteBanner() {
   el.classList.remove('hidden');
 }
 
+// ---- Sold photos that eBay has since deleted ----
+// eBay purges a listing's photos some months after it ends. The cron keeps a
+// copy of every sold listing's photo in R2 before that happens, and when an
+// eBay image on the page fails to load, this swaps in the copy (served by the
+// Worker at /api/photo). One listener for every image on every view: error
+// events do not bubble, but they do reach a capturing listener. Tried once
+// per image, so a photo with no copy stays as it was rather than looping.
+document.addEventListener('error', (e) => {
+  const img = e.target;
+  if (!img || img.tagName !== 'IMG' || img.dataset.archiveTried) return;
+  const src = img.currentSrc || img.src || '';
+  if (!/^https:\/\/([a-z0-9-]+\.)*ebayimg\.com\//i.test(src)) return;
+  img.dataset.archiveTried = '1';
+  img.src = '/api/photo?u=' + encodeURIComponent(src);
+}, true);
+
 // ---- Sports ----
 // Football is the live sport; basketball and baseball are under testing: live
 // listings work (the eBay card category covers every sport) and they have

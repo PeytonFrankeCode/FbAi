@@ -36,8 +36,11 @@ function sizedUrl(url, size = PHOTO_SIZE) {
 //
 // So: a hash of the URL, computed the same way on both sides. Async because
 // crypto.subtle is the only hash available in a Worker.
+//
+// Hashed from the SIZED url (sizedUrl), so the same photo asked for at any size
+// (s-l64, s-l500, s-l1600) finds the one copy.
 async function keyForUrl(url, subtle) {
-  const data = new TextEncoder().encode(String(url || ''));
+  const data = new TextEncoder().encode(sizedUrl(String(url || '')));
   const digest = await subtle.digest('SHA-256', data);
   const hex = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
   // Sharded two levels deep. R2 does not need it for lookups, but a flat
@@ -64,11 +67,26 @@ function isPermanent(status) {
 //
 // A row that failed permanently does NOT hold it back: eBay has purged the
 // image, and waiting for it is waiting for something that will never arrive.
-function nextCursor(prev, results) {
-  let cur = prev;
+//
+// A photo ALREADY in R2 is finished too. It used to read as a transient
+// failure (ok false, permanent unset), so once a row ahead of the cursor had
+// been stored, every later tick stopped right there: the archive walked 67
+// rows and then held still for weeks, re-storing the same batch each tick.
+//
+// And a row that keeps failing transiently is given up on after MAX_RETRIES
+// ticks in a row. A timeout is worth retrying; the same timeout on the same
+// photo tick after tick is a photo that will never come, and waiting for it
+// holds back every photo behind it until they have all expired.
+const MAX_RETRIES = 3;
+function nextCursor(prev, results, maxRetries = MAX_RETRIES) {
+  let cur = prev ? { soldDate: prev.soldDate, itemId: prev.itemId } : prev;
   for (const r of results) {
     if (!r) break;
-    if (!r.ok && !r.permanent) break;   // retry this one next tick
+    if (!r.ok && !r.permanent && !r.alreadyStored) {
+      const tries = (prev && prev.retry && prev.retry.itemId === r.itemId ? prev.retry.count : 0) + 1;
+      if (tries >= maxRetries) { r.gaveUp = true; cur = { soldDate: r.soldDate, itemId: r.itemId }; continue; }
+      return { ...(cur || { soldDate: '0000-00-00', itemId: '' }), retry: { itemId: r.itemId, count: tries } };
+    }
     cur = { soldDate: r.soldDate, itemId: r.itemId };
   }
   return cur;
@@ -77,15 +95,16 @@ function nextCursor(prev, results) {
 // A batch is worth stopping early if the source is exhausted — that is what
 // tells the caller it has caught up and can stop asking for more.
 function summarise(results) {
-  const out = { total: results.length, stored: 0, skipped: 0, permanent: 0, retry: 0, bytes: 0 };
+  const out = { total: results.length, stored: 0, skipped: 0, permanent: 0, retry: 0, gaveUp: 0, bytes: 0 };
   for (const r of results) {
     if (!r) continue;
     if (r.ok) { out.stored++; out.bytes += r.bytes || 0; }
     else if (r.alreadyStored) { out.skipped++; }
     else if (r.permanent) { out.permanent++; }
+    else if (r.gaveUp) { out.gaveUp++; }
     else { out.retry++; }
   }
   return out;
 }
 
-module.exports = { PHOTO_SIZE, sizedUrl, keyForUrl, isPermanent, nextCursor, summarise };
+module.exports = { PHOTO_SIZE, MAX_RETRIES, sizedUrl, keyForUrl, isPermanent, nextCursor, summarise };

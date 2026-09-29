@@ -4,6 +4,7 @@ let serverInit = null;
 // so broadcast messages get the same profanity/spam check as everything else.
 import { moderateText, stripBidi } from './moderation.js';
 import { noteRequest, newTally, mergeTallies, FLUSH_MS, isBlockedBot, TALLY_COUNTS } from './traffic-core.js';
+import { keyForUrl as photoKeyForUrl } from './photo-archive-core.js';
 
 // This isolate's visitor tally (traffic-core.js), written to its own KV key
 // every FLUSH_MS so the report can sum every isolate that served anyone.
@@ -671,6 +672,41 @@ export function notFoundResponse() {
   });
 }
 
+// GET /api/photo?u=<eBay image url> -> the archived copy, or a 404.
+export function isEbayImageUrl(u) {
+  try {
+    const x = new URL(String(u || ''));
+    return x.protocol === 'https:' && /(^|\.)ebayimg\.com$/i.test(x.hostname);
+  } catch (_) { return false; }
+}
+
+async function servePhoto(request, env, ctx, url) {
+  const src = url.searchParams.get('u') || '';
+  if (!isEbayImageUrl(src)) return new Response('Not an eBay image', { status: 400 });
+  if (!env.PHOTOS) return new Response('No photo archive', { status: 404 });
+  const cache = (typeof caches !== 'undefined' && caches.default) || null;
+  const cacheKey = new Request(url.toString(), { method: 'GET' });
+  if (cache) {
+    const hit = await cache.match(cacheKey);
+    if (hit) return hit;
+  }
+  const key = await photoKeyForUrl(src, crypto.subtle);
+  const obj = await env.PHOTOS.get(key);
+  if (!obj) {
+    // Not archived (yet, or eBay had already purged it): a short-lived miss, so
+    // a copy the cron stores later is picked up.
+    return new Response('Not archived', { status: 404, headers: { 'Cache-Control': 'public, max-age=3600' } });
+  }
+  const headers = new Headers({
+    'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'image/jpeg',
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'X-Photo-Source': 'archive',
+  });
+  const resp = new Response(request.method === 'HEAD' ? null : obj.body, { status: 200, headers });
+  if (cache && request.method === 'GET') ctx.waitUntil(cache.put(cacheKey, resp.clone()));
+  return resp;
+}
+
 export function priceKeyForPath(pathname) {
   const p = pathname.replace(/\/+$/, '');
   let m = p.match(/^\/players\/([^/]+)$/);
@@ -783,6 +819,16 @@ export default {
         url.hostname = url.hostname.slice(4);
         const permanent = (request.method === 'GET' || request.method === 'HEAD') ? 301 : 308;
         return Response.redirect(url.toString(), permanent);
+      }
+
+      // Saved sold-listing photos. The cron copies each eBay photo into R2
+      // before eBay purges it (~90 days after the sale); when a page's eBay
+      // image stops loading, app.js asks here for the copy. Answered straight
+      // from R2 and cached at the edge for a year: the copy of a sold card's
+      // photo never changes. Only eBay image addresses are looked up, so this
+      // cannot be used to fetch or probe anything else.
+      if (url.pathname === '/api/photo' && (request.method === 'GET' || request.method === 'HEAD')) {
+        return servePhoto(request, env, ctx, url);
       }
 
       // Retired player URLs -> the page that absorbed them.

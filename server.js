@@ -17291,10 +17291,10 @@ app.delete('/api/admin/news/:slug', (req, res) => {
 // go — and at these batch sizes it still clears the backlog well inside the
 // window.
 const {
-  sizedUrl, keyForUrl, isPermanent: photoFailPermanent, nextCursor, summarise,
+  sizedUrl, keyForUrl, isPermanent: photoFailPermanent, nextCursor, summarise, MAX_RETRIES: MAX_PHOTO_RETRIES,
 } = require('./photo-archive-core');
 
-const PHOTO_ARCHIVE_BATCH = 400;      // images per cron tick; see the note below
+const PHOTO_ARCHIVE_BATCH = 300;      // images per cron tick: fetch + put each, inside the tick's subrequest budget
 const PHOTO_ARCHIVE_CONCURRENCY = 12; // parallel fetches inside a batch
 const PHOTO_CURSOR_KEY = 'photoarchive:cursor:v1';
 const PHOTO_FETCH_TIMEOUT_MS = 8000;
@@ -17649,12 +17649,11 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
     try { key = await keyForUrl(row.image_url, subtle); }
     catch (_) { return { ...base, ok: false, permanent: true }; }
 
-    // head() rather than get(): we only need to know whether it is there, and
-    // pulling the bytes back to discard them would double the egress for every
-    // row already done.
-    try {
-      if (await bucket.head(key)) return { ...base, ok: false, alreadyStored: true };
-    } catch (_) { /* treat a head failure as a miss and re-store */ }
+    // No "already there?" check first. The cursor only walks forward, so a row
+    // comes up again only when it is being retried, and the check cost one
+    // more subrequest for every photo: head + fetch + put for 400 rows is past
+    // a Worker invocation's subrequest limit, and a limit hit reads as a
+    // transient failure, which holds the cursor.
 
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), PHOTO_FETCH_TIMEOUT_MS);
@@ -17695,14 +17694,16 @@ async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
     }
   }));
 
+  // Saved whenever it changes, retry count included: the count is how a photo
+  // that fails every tick gets given up on instead of stalling the walk.
   const moved = nextCursor(cursor, results);
-  if (moved && (!cursor || moved.itemId !== cursor.itemId || moved.soldDate !== cursor.soldDate)) {
-    cachePut(PHOTO_CURSOR_KEY, moved, 60 * 60 * 24 * 365);
+  if (moved && JSON.stringify(moved) !== JSON.stringify(cursor)) {
+    await cachePut(PHOTO_CURSOR_KEY, moved, 60 * 60 * 24 * 365);
   }
 
   const sum = summarise(results);
   console.log(`[photos] ${sum.stored} stored, ${sum.skipped} already there, `
-    + `${sum.permanent} gone for good, ${sum.retry} to retry, `
+    + `${sum.permanent} gone for good, ${sum.gaveUp} given up after ${MAX_PHOTO_RETRIES} tries, ${sum.retry} to retry, `
     + `${(sum.bytes / 1048576).toFixed(1)} MB, through ${moved && moved.soldDate}`);
   return { ok: true, done: false, cursor: moved, ...sum };
 }
