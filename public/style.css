@@ -9230,3 +9230,11 @@ body.tour-open { overflow: hidden; }
 }
 .page-subtabs { max-width: min(1200px, 100%); box-sizing: border-box; min-width: 0; }
 .page-subtabs-inner { min-width: 0; }
+
+/* Footer links had no rule of their own, so they showed the browser's blue
+   underline. Muted like the rest of the footer, the accent on hover; the
+   links inside the disclaimer text are the accent, like links elsewhere. */
+.footer-links a { color: var(--text-secondary); text-decoration: none; transition: color 0.15s ease; }
+.footer-links a:hover, .footer-links a:focus-visible { color: var(--accent); }
+.footer-copy a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.footer-copy a:hover, .footer-copy a:focus-visible { text-decoration: underline; }
