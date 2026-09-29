@@ -362,6 +362,16 @@
   </div>
   <div id="survey-list"></div>
 
+  <!-- Giveaway entrants (/api/admin/giveaway-entrants) -->
+  <div class="page-title" style="margin-top:2.5rem;">Giveaway Entrants</div>
+  <div class="page-subtitle">Accounts that opted in on My Account, with where to ship. Only use these addresses to mail prizes.</div>
+  <div class="toolbar">
+    <div class="result-count" id="giveaway-count"></div>
+    <button class="refresh-btn" onclick="downloadEntrantsCsv()">⬇ CSV</button>
+    <button class="refresh-btn" onclick="loadGiveawayEntrants()">↻ Refresh</button>
+  </div>
+  <div id="giveaway-list"></div>
+
   <!-- Community Moderation -->
   <div class="page-title" style="margin-top:2.5rem;">Community Moderation</div>
   <div class="page-subtitle">Delete or hide member posts. Reported posts are listed first; posts auto-hide after 3 reports.</div>
@@ -424,6 +434,7 @@
       loadCommunityModeration();
       loadEstimateAccuracy();
       loadSurveys();
+      loadGiveawayEntrants();
       const now = new Date();
       document.getElementById('last-refreshed').textContent =
         `Last refreshed: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -568,6 +579,51 @@
         ${r.broken ? `<div class="report-message"><strong>Broken or confusing:</strong> ${escHtml(r.broken)}</div>` : ''}
         <div class="report-message" style="color:var(--text-muted);font-size:0.74rem">${escHtml(r.device || '')} · ${r.searches || 0} searches before answering${r.page ? ` · on ${escHtml(r.page)}` : ''}</div>
       </div>`).join('');
+  }
+
+  // ---- Giveaway entrants ----
+  let _entrants = [];
+  async function loadGiveawayEntrants() {
+    const list = document.getElementById('giveaway-list');
+    try {
+      const r = await fetch('/api/admin/giveaway-entrants', { headers: { 'x-admin-key': adminKey }, cache: 'no-store' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      _entrants = (await r.json()).entrants || [];
+    } catch (err) {
+      list.innerHTML = `<div class="empty-state"><p>Could not load entrants (${escHtml(err.message)}).</p></div>`;
+      return;
+    }
+    document.getElementById('giveaway-count').textContent = `${_entrants.length} entrant${_entrants.length !== 1 ? 's' : ''}`;
+    if (!_entrants.length) { list.innerHTML = `<div class="empty-state"><div class="icon">🎁</div><p>No one has entered yet.</p></div>`; return; }
+    list.innerHTML = _entrants.map((e, i) => `
+      <div class="report-card feedback">
+        <div class="report-header">
+          <span class="type-badge feedback">${escHtml(e.username)}</span>
+          ${e.email ? `<span class="report-email">✉ ${escHtml(e.email)}</span>` : ''}
+          ${e.shipping && e.shipping.phone ? `<span class="report-email">☎ ${escHtml(e.shipping.phone)}</span>` : ''}
+          <span class="report-time" title="${escHtml(fullDate(e.updatedAt))}">${timeAgo(e.updatedAt)}</span>
+        </div>
+        <div class="report-message">${escHtml(e.address)}
+          <button class="refresh-btn" style="margin-left:0.5rem;padding:0.15rem 0.5rem;font-size:0.72rem" onclick="copyEntrant(${i}, this)">Copy</button></div>
+      </div>`).join('');
+  }
+  function copyEntrant(i, btn) {
+    const e = _entrants[i];
+    if (!e || !navigator.clipboard) return;
+    navigator.clipboard.writeText(e.address).then(() => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1500); });
+  }
+  function downloadEntrantsCsv() {
+    if (!_entrants.length) return;
+    const cols = ['username', 'email', 'name', 'line1', 'line2', 'city', 'state', 'zip', 'country', 'phone', 'updatedAt'];
+    // A leading = + - @ would run as a formula when the sheet is opened.
+    const cell = (v) => { let t = String(v == null ? '' : v); if (/^[=+\-@]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
+    const rows = _entrants.map(e => cols.map(c => cell(c in e ? e[c] : (e.shipping || {})[c])).join(','));
+    const blob = new Blob([[cols.join(','), ...rows].join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `giveaway-entrants-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
   // ---- Community moderation ----

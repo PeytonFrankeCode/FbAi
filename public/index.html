@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=632398129d" />
+  <link rel="stylesheet" href="style.css?v=0c45949d03" />
 
 
 </head>
@@ -1290,6 +1290,15 @@
     </div>
   </div>
 
+  <!-- My Account: filled by openAccount() in app.js -->
+  <div id="account-overlay" class="settings-overlay hidden" role="dialog" aria-label="My Account" onclick="if (event.target === this) closeAccount()">
+    <div class="settings-box acct-box">
+      <button class="login-close" aria-label="Close" onclick="closeAccount()">&times;</button>
+      <h2 class="settings-heading">My Account</h2>
+      <div id="account-body"></div>
+    </div>
+  </div>
+
   <div id="settings-overlay" class="settings-overlay hidden" role="dialog" aria-label="Settings">
     <div class="settings-box">
       <button class="login-close" aria-label="Close" onclick="closeSettings()">&times;</button>
@@ -1668,7 +1677,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=0500188693"></script>
+  <script src="app.js?v=f40b2ddc23"></script>
   <script type="importmap">
   {
     "imports": {

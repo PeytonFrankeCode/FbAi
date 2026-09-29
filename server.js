@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
 const digest = require('./market-digest');
 const betaSurvey = require('./beta-survey');
+const accountProfile = require('./account-profile');
 
 // WHEN WAS THIS COMPUTED, AND HOW OLD IS IT.
 //
@@ -15189,10 +15190,110 @@ app.get('/api/auth/me', (req, res) => {
 app.put('/api/auth/email', async (req, res) => {
   const username = getSessionUser(req);
   if (!username) return res.status(401).json({ error: 'Not authenticated' });
-  const { email } = req.body;
+  // Checked here, not only in the page: an address saved unchecked is one the
+  // alert emails bounce off.
+  const email = String((req.body && req.body.email) || '').trim().toLowerCase().slice(0, 254);
+  if (email && !digest.validEmail(email)) return res.status(400).json({ error: 'That email address does not look right.' });
   const users = loadServerUsers();
-  if (users[username]) { users[username].email = email || ''; saveServerUsers(users); }
-  res.json({ ok: true });
+  if (users[username]) { users[username].email = email; saveServerUsers(users); }
+  res.json({ ok: true, email });
+});
+
+// ---- My Account: the profile page, and the giveaway entry ----
+// One record per account (profile:user:<username>) rather than a field on the
+// users blob, so saving an address can never race a login rewriting that blob.
+// The address is only ever returned to its owner, or to the admin key through
+// the entrants list; export and account deletion both include it.
+const PROFILE_PREFIX = 'profile:user:';
+const _profileKey = (username) => PROFILE_PREFIX + String(username).toLowerCase();
+
+app.get('/api/account/profile', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  try {
+    const user = loadServerUsers()[username] || {};
+    const profile = (await recordGet(_profileKey(username))) || {};
+    const alerts = await _userAlerts(username);
+    let weeklyEmail = null;
+    if (user.email && digest.validEmail(user.email)) {
+      const sub = await recordGet(DIGEST_PREFIX + await _digestId(user.email));
+      weeklyEmail = sub ? sub.status : 'none';
+    }
+    res.json({
+      username: user.username || username,
+      email: user.email || '',
+      memberSince: user.createdAt || null,
+      // oauth is { google: sub, apple: sub }; an account can have both and a password.
+      signIn: [...(user.passwordHash ? ['password'] : []), ...Object.keys(user.oauth || {})],
+      alerts: { count: alerts.length, unread: alerts.reduce((n, a) => n + (a.unread || 0), 0) },
+      weeklyEmail,
+      giveaways: !!profile.giveaways,
+      shipping: profile.shipping || null,
+      shippingUpdatedAt: profile.updatedAt || null,
+    });
+  } catch (err) {
+    console.error('[account/profile]', err && err.message);
+    res.status(500).json({ error: 'Could not load your account.' });
+  }
+});
+
+// PUT /api/account/giveaways { optIn, shipping } — entering needs an address.
+app.put('/api/account/giveaways', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  const b = req.body || {};
+  try {
+    const prev = (await recordGet(_profileKey(username))) || {};
+    const next = { ...prev, giveaways: !!b.optIn, updatedAt: new Date().toISOString() };
+    if (b.shipping) {
+      const v = accountProfile.validateShipping(b.shipping);
+      if (!v.ok) return res.status(400).json({ error: v.error, field: v.field });
+      next.shipping = v.shipping;
+    }
+    if (next.giveaways && !next.shipping) return res.status(400).json({ error: 'Add a shipping address to enter giveaways.', field: 'name' });
+    await recordPut(_profileKey(username), next, { g: next.giveaways ? 1 : 0 });
+    res.json({ ok: true, giveaways: next.giveaways, shipping: next.shipping || null, shippingUpdatedAt: next.updatedAt });
+  } catch (err) {
+    console.error('[account/giveaways]', err && err.message);
+    res.status(500).json({ error: 'Could not save. Please try again.' });
+  }
+});
+
+// DELETE /api/account/shipping — forget the address, and with it the entry.
+app.delete('/api/account/shipping', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not authenticated' });
+  try {
+    await recordDelete(_profileKey(username));
+    res.json({ ok: true, giveaways: false, shipping: null });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not remove it. Please try again.' });
+  }
+});
+
+// Admin: who has entered, with where to ship. The records carry a flag in
+// their metadata, so only the entrants' records are read.
+app.get('/api/admin/giveaway-entrants', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const keys = (await recordList(PROFILE_PREFIX)).filter(k => !k.metadata || k.metadata.g !== 0);
+    const users = loadServerUsers();
+    const out = [];
+    for (let i = 0; i < keys.length; i += 50) {
+      const recs = await Promise.all(keys.slice(i, i + 50).map(k => recordGet(k.name).catch(() => null)));
+      recs.forEach((r, j) => {
+        if (!r || !r.giveaways || !r.shipping) return;
+        const u = keys[i + j].name.slice(PROFILE_PREFIX.length);
+        out.push({ username: (users[u] && users[u].username) || u, email: (users[u] && users[u].email) || '',
+          shipping: r.shipping, address: accountProfile.formatAddress(r.shipping), updatedAt: r.updatedAt || null });
+      });
+    }
+    out.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    res.json({ count: out.length, entrants: out });
+  } catch (err) {
+    console.error('[admin/giveaway-entrants]', err && err.message);
+    res.status(500).json({ error: 'Could not load entrants.' });
+  }
 });
 
 
@@ -15236,6 +15337,7 @@ async function collectAccountData(username) {
       .map(c => ({ ...c, postId: p.id }))),
     directMessages: myConvos,
     booth: loadGlobalFloorIndex()[key] || null,
+    giveawayProfile: await recordGet(_profileKey(key)),
     feedback: loadData('feedback', FEEDBACK_FILE, [])
       .filter(f => String(f.author || f.username || '').toLowerCase() === key),
   };
@@ -15346,6 +15448,10 @@ app.post('/api/account/delete', async (req, res) => {
     const myAlerts = await _userAlerts(key);
     await _saveUserAlerts(key, []);
     removed.push(`${myAlerts.length} card alerts`);
+
+    // 4b. Giveaway entry and shipping address.
+    await recordDelete(_profileKey(key));
+    removed.push('giveaway entry and shipping address');
 
     // 5. Public indexes this user appears in.
     const floor = loadGlobalFloorIndex();
