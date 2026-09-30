@@ -4,13 +4,13 @@
  * Goal: the app opens instantly and keeps working at a card show on bad or
  * no wifi. Strategy per request type:
  *   - HTML navigations : network-first (new deploys win), cached shell offline
- *   - checklist JSON   : stale-while-revalidate (instant, refreshes in bg)
+ *   - checklist JSON   : network-first, cached copy when offline or slow
  *   - JS/CSS/img/fonts : stale-while-revalidate (versioned URLs self-bust)
  *   - /api/* + pricing : never touched — always live (or fails, handled by app)
  *
  * Bump VERSION to force a clean cache swap on the next visit.
  */
-const VERSION = 'bb427360f1506';
+const VERSION = 'b420419e88905';
 const SHELL_CACHE = `chuddle-shell-${VERSION}`;
 const DATA_CACHE = `chuddle-data-${VERSION}`;
 
@@ -63,8 +63,17 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(req));
     return;
   }
+  // Checklists: the network first, the cached copy when there is none.
+  //
+  // They were stale-while-revalidate, which shows the copy cached on an earlier
+  // visit and refreshes it for the one after. A checklist fixed on the server
+  // (2024 Topps Chrome gaining its 35 parallels) kept showing the old file,
+  // and VERSION does not move for it: it hashes the index, which a fix to one
+  // product's parallels does not touch. The files revalidate by ETag, so an
+  // unchanged one costs a 304; offline, or past the timeout on card-show wifi,
+  // the cached copy (an offline pack's included) answers as before.
   if (url.pathname.startsWith('/data/')) {
-    event.respondWith(staleWhileRevalidate(req, DATA_CACHE));
+    event.respondWith(networkFirstData(req));
     return;
   }
   event.respondWith(staleWhileRevalidate(req, SHELL_CACHE));
@@ -93,6 +102,17 @@ function fetchWithTimeout(req, ms) {
     const t = setTimeout(() => reject(new Error('timeout')), ms);
     fetch(req).then((r) => { clearTimeout(t); resolve(r); }, (e) => { clearTimeout(t); reject(e); });
   });
+}
+
+async function networkFirstData(req) {
+  const cache = await caches.open(DATA_CACHE);
+  try {
+    const res = await fetchWithTimeout(req, 3500);
+    if (res && res.ok) { cache.put(req, res.clone()); return res; }
+    return (await cache.match(req)) || res;
+  } catch (_) {
+    return (await cache.match(req)) || Response.error();
+  }
 }
 
 async function staleWhileRevalidate(req, cacheName) {

@@ -137,5 +137,16 @@ check('the checklist list loads the picked sport', /const data = await fetchSpor
   && /if \(_checklistListSport !== sport\) return;/.test(js));
 check('the football-only features keep reading football', /async function fetchChecklistsList\(\) \{\s*if \(_checklistsIndexCache\) return _checklistsIndexCache;\s*_checklistsIndexCache = await _fetchJson\('\/data\/checklists\/index\.json'/.test(js));
 
+// A checklist fixed on the server shows on the next visit. The service worker
+// served checklists stale-while-revalidate, and its VERSION hashes only the
+// index, so 2024 Topps Chrome's refilled parallels stayed hidden behind the
+// copy each visitor had cached.
+{
+  const sw = fs.readFileSync(path.join(ROOT, 'public', 'sw.js'), 'utf8');
+  check('checklist files are fetched fresh, the cached copy only offline or on a slow line',
+    /if \(url\.pathname\.startsWith\('\/data\/'\)\) \{\s*event\.respondWith\(networkFirstData\(req\)\);/.test(sw)
+      && /async function networkFirstData\(req\)[\s\S]{0,400}cache\.match\(req\)/.test(sw));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall sport-checklist checks passed');
 process.exit(failures ? 1 : 0);
