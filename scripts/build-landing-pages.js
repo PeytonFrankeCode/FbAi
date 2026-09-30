@@ -281,6 +281,59 @@ const INDEX_MIN_PLAYER_CARDS = 50;
 const INDEX_MIN_SUBSET_CARDS = 100;
 const INDEX_MIN_PRODUCT_CARDS = 50;
 
+// One index for every sport, capped at what football alone had.
+//
+// Basketball and baseball brought ~4,800 indexable pages of their own, which
+// would have near doubled the index in one deploy — the scaled-content shape
+// the thresholds above exist to avoid. So the thresholds are floors now, and
+// the sitemap is a budget: every hub, year hub and team page is in, then every
+// product checklist over its floor (the "2023-24 Prizm basketball checklist"
+// page is the one a search lands on), and the rest of the budget goes to the
+// strongest set and player pages across all sports. Football's weakest set
+// and player pages are what make room.
+//
+// "Strongest" is card count against the floor for that kind of page (a player
+// with 150 cards scores 3, as does a set with 300). That is a proxy: the real
+// signal is Search Console clicks, and there is no export to rank on yet.
+// FOOTBALL_WEIGHT counts a football page double, because it carries prices,
+// ads and ranking history the other sports do not have yet. At 1, football
+// would lose 44% of its index; at 2 it keeps about two thirds.
+// New checklists no longer grow the index — they compete for it.
+const INDEX_BUDGET = 5756;
+const FOOTBALL_WEIGHT = 2;
+const INDEX_FLOOR = { product: INDEX_MIN_PRODUCT_CARDS, subset: INDEX_MIN_SUBSET_CARDS, player: INDEX_MIN_PLAYER_CARDS };
+let INDEXED = new Set();   // `${sport}:${kind}:${key}`, filled by planIndex()
+const isIndexed = (kind, key) => INDEXED.has(`${S.id}:${kind}:${key}`);
+
+function planIndex(sports) {
+  let fixed = 0;
+  const cands = [];
+  for (const { cfg, ctx } of sports) {
+    // Hubs (sets, players, teams), year hubs and teams; football also has the
+    // home page and about, methodology and contact. Must match buildSitemap.
+    fixed += 3 + ctx.years.length + ctx.teams.length + (cfg.id === 'football' ? 4 : 0);
+    const add = (kind, key, cards) => {
+      if (cards < INDEX_FLOOR[kind]) return;
+      cands.push({ id: `${cfg.id}:${kind}:${key}`, sport: cfg.id, kind,
+        score: (cards / INDEX_FLOOR[kind]) * (cfg.id === 'football' ? FOOTBALL_WEIGHT : 1) });
+    };
+    for (const cl of ctx.checklists) {
+      add('product', cl.id, cl.cardCount);
+      for (const sub of (ctx.subsetIndex.get(cl.id) || [])) add('subset', `${cl.id}/${sub.slug}`, (sub.set.cards || []).length);
+    }
+    for (const p of ctx.eligible) add('player', p.slug, p.cards.length);
+  }
+  // Stable order for equal scores, so a rebuild picks the same pages.
+  cands.sort((a, b) => (b.kind === 'product') - (a.kind === 'product') || b.score - a.score
+    || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const room = Math.max(0, INDEX_BUDGET - fixed);
+  INDEXED = new Set(cands.slice(0, room).map(c => c.id));
+  const tally = {};
+  for (const c of cands.slice(0, room)) tally[`${c.sport} ${c.kind}`] = (tally[`${c.sport} ${c.kind}`] || 0) + 1;
+  console.log(`index budget: ${INDEX_BUDGET} URLs — ${fixed} hubs and teams, ${Math.min(room, cands.length)} of ${cands.length} pages over the floors`);
+  console.log('  ' + Object.entries(tally).map(([k, n]) => `${k}: ${n}`).join(', '));
+}
+
 // ---- Small helpers --------------------------------------------------------
 function esc(s) {
   return String(s == null ? '' : s)
@@ -520,7 +573,7 @@ function buildSetPage(cl, related, playerSlug, subsets) {
       aHtml: `Right here — every card links to real eBay sold prices broken down by grade (Raw, PSA 10, PSA 9, BGS and more), so you see what collectors actually paid, not asking prices.` },
   ]);
 
-  let html = head({ title, description, canonical, noindex: cl.cardCount < INDEX_MIN_PRODUCT_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: !isIndexed('product', cl.id), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -657,7 +710,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
       aHtml: `It is one of ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} in <a href="${S.base}/sets/${cl.id}/">${esc(cl.name)}</a>, which has ${cl.cardCount.toLocaleString()} cards in total.` },
   ]);
 
-  let html = head({ title, description, canonical, noindex: cards.length < INDEX_MIN_SUBSET_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: !isIndexed('subset', `${cl.id}/${slug}`), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -828,7 +881,7 @@ function buildPlayerPage(p, related, teamSlug) {
       aHtml: `His earliest cards in our database are from ${minYear}. Rookie-year cards are usually the most sought-after — check their sold prices by grade above.` }] : []),
   ]);
 
-  let html = head({ title, description, canonical, noindex: p.cards.length < INDEX_MIN_PLAYER_CARDS, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: !isIndexed('player', p.slug), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -1220,18 +1273,18 @@ function buildSitemap(list, players, teams, years, subsetIndex) {
   let skipped = 0;
   for (const cl of list) {
     const d = setDate.get(cl.id);
-    if (cl.cardCount >= INDEX_MIN_PRODUCT_CARDS) push(`${SITE}${S.base}/sets/${cl.id}/`, '0.7', 'weekly', d);
+    if (isIndexed('product', cl.id)) push(`${SITE}${S.base}/sets/${cl.id}/`, '0.7', 'weekly', d);
     else skipped++;
     // A set page is carved out of its product's file, so it shares the date.
     for (const sub of (subsetIndex.get(cl.id) || [])) {
-      if ((sub.set.cards || []).length >= INDEX_MIN_SUBSET_CARDS) {
+      if (isIndexed('subset', `${cl.id}/${sub.slug}`)) {
         push(`${SITE}${S.base}/sets/${cl.id}/${sub.slug}/`, '0.6', 'weekly', d);
       } else skipped++;
     }
   }
   // Player and team pages are assembled from every checklist they appear in.
   for (const p of players) {
-    if (p.cards.length < INDEX_MIN_PLAYER_CARDS) { skipped++; continue; }
+    if (!isIndexed('player', p.slug)) { skipped++; continue; }
     push(`${SITE}${S.base}/players/${p.slug}/`, '0.6', 'weekly',
       newestDate([...p.setIds].map(id => setDate.get(id))));
   }
@@ -1254,7 +1307,9 @@ function relatedSets(cl, all) {
 
 function rmDirSafe(dir) { try { fs.rmSync(dir, { recursive: true, force: true }); } catch {} }
 
-function buildSport() {
+// Everything a sport's pages are made from, before a page is written. Split
+// from the writing so the index budget can see every sport's candidates first.
+function prepareSport() {
   S.commitDates = checklistCommitDates(`public/data/${S.folder}/`);
   console.log(`${S.Word}: building landing pages from`, path.relative(ROOT, S.dir));
   const checklists = loadChecklists();
@@ -1363,7 +1418,10 @@ function buildSport() {
   console.log(`  ${years.length} year hubs`);
   console.log(`  ${eligible.length} eligible players (>= ${MIN_CARDS} cards in >= ${MIN_SETS} sets)`);
   console.log(`  ${teams.length} ${S.league} team pages`);
+  return { checklists, eligible, merged, redirects, setPlayers, teams, teamSlug, playerSlug, subsetIndex, subsetTotal, years, byYear };
+}
 
+function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams, teamSlug, playerSlug, subsetIndex, subsetTotal, years, byYear }) {
   // Fresh dirs so removed entries don't linger.
   rmDirSafe(S.setsDir); rmDirSafe(S.playersDir); rmDirSafe(S.teamsDir);
   fs.mkdirSync(S.setsDir, { recursive: true });
@@ -1582,7 +1640,7 @@ function buildSport() {
       players: eligible.map(p => ({
         name: p.name, slug: p.slug, cards: p.cards.length, sets: p.setIds.size,
         // Built either way; only these are in the sitemap.
-        indexable: p.cards.length >= INDEX_MIN_PLAYER_CARDS,
+        indexable: isIndexed('player', p.slug),
       })),
     }) + '\n');
   }
@@ -1604,12 +1662,19 @@ function buildSport() {
 }
 
 function main() {
-  const urls = [];
+  const sports = [];
   for (const cfg of SPORT_CONFIGS) {
     if (!fs.existsSync(cfg.dir)) continue;
     S = cfg;
-    urls.push(...buildSport());
+    sports.push({ cfg, ctx: prepareSport() });
   }
+  planIndex(sports);
+  const urls = [];
+  for (const { cfg, ctx } of sports) {
+    S = cfg;
+    urls.push(...buildSport(ctx));
+  }
+  if (urls.length > INDEX_BUDGET) throw new Error(`sitemap has ${urls.length} URLs, over the ${INDEX_BUDGET} budget`);
   fs.writeFileSync(path.join(PUBLIC_DIR, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
   console.log(`sitemap: ${urls.length} indexable URLs across every sport`);

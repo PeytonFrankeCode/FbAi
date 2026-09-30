@@ -105,6 +105,18 @@ check('sport-players.json is built from the checklists as they are', pok, pok ? 
         hub.includes(`href="/${sport}/sets/`) && !/href="\/(sets|players|teams)\//.test(hub.replace('href="/sets/landing.css', ''))
         && !hub.includes('adsbygoogle') && !hub.includes('data-price-key'));
     }
+    // One index budget for all three sports: the new sports took the place of
+    // football's weakest pages instead of adding thousands of their own.
+    const locs = fs.readFileSync(path.join(PUB, 'sitemap.xml'), 'utf8').match(/<loc>[^<]+<\/loc>/g) || [];
+    const per = s => locs.filter(l => l.includes(`thecardhuddle.com/${s}/`)).length;
+    check('the sitemap stays within the index budget, with every sport in it', locs.length <= 5756
+      && per('basketball') > 300 && per('baseball') > 300, `${locs.length} URLs: ${per('basketball')} basketball, ${per('baseball')} baseball`);
+    const demoted = fs.readFileSync(path.join(PUB, 'basketball', 'players', 'index.html'), 'utf8');
+    check('  ...and a page left out of it says noindex', /<meta name="robots" content="index, follow"/.test(demoted)
+      && fs.readdirSync(path.join(PUB, 'basketball', 'players')).some(d => {
+        const f = path.join(PUB, 'basketball', 'players', d, 'index.html');
+        return fs.existsSync(f) && !locs.some(l => l.includes(`/basketball/players/${d}/`)) && /content="noindex, follow"/.test(fs.readFileSync(f, 'utf8'));
+      }));
     const fb = fs.readFileSync(path.join(PUB, 'sets', 'index.html'), 'utf8');
     check('football\'s guides are unchanged by it', fb.includes('Football Card Checklists &amp; Price Guides') && !/href="\/(basketball|baseball)\//.test(fb));
   }
