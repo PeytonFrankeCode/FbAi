@@ -5934,7 +5934,13 @@ function _applyMarketSport() {
   const sub = document.getElementById('market-sub');
   if (sub) sub.textContent = football ? 'How the football-card market is moving, from the sales we track.'
     : `How the ${sport.label.toLowerCase()}-card market is moving.`;
+  const snap = document.getElementById('market-snapshot');
+  if (snap) snap.classList.add('hidden');
   if (!football) {
+    // Only with the Market on screen: applySport() also runs at start-up,
+    // before the Market's code below has been reached.
+    if (!view.classList.contains('hidden')) _mkLoadSnapshot(id);
+    soon.classList.remove('mcs-compact');
     soon.innerHTML = `<div class="mcs-icon" aria-hidden="true">${sport.icon}</div>
       <h3>${sport.label} market data is coming soon</h3>
       <p>We're still collecting ${sport.label.toLowerCase()} sales. The index, movers and player markets arrive once there are enough to be worth reading.</p>
@@ -5950,6 +5956,76 @@ function _applyMarketSport() {
     if (!view.classList.contains('hidden')) initMarketView();
   }
   if (!football) view.dataset.otherShown = '1';
+}
+
+// Basketball and baseball, before there is history: the priciest sales and
+// what sold most over the few days collected (/api/market-snapshot). The
+// "coming soon" panel stays until the first sales are in, and stays below the
+// snapshot as the note on what is still to come.
+let _mkSnapSeq = 0;
+async function _mkLoadSnapshot(id) {
+  const seq = ++_mkSnapSeq;
+  const snap = document.getElementById('market-snapshot');
+  const soon = document.getElementById('market-coming-soon');
+  if (!snap) return;
+  const data = await _mkGet(`/api/market-snapshot?sport=${encodeURIComponent(id)}`);
+  if (seq !== _mkSnapSeq || activeSport() !== id) return;
+  if (!data || !data.available) return;   // "coming soon" as it is
+  const sport = SPORTS[id];
+  const word = sport.label.toLowerCase();
+  const money = (n) => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: n < 100 ? 2 : 0, maximumFractionDigits: n < 100 ? 2 : 0 });
+  const span = data.days > 1 ? `${_mkDateLabel(data.from)} – ${_mkDateLabel(data.through)}` : _mkDateLabel(data.through);
+  const q = (s) => escHtml(JSON.stringify(String(s))).replace(/"/g, '&quot;');
+  const thumb = (src) => src
+    ? `<img class="mb-thumb" src="${escHtml(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+    : `<span class="mb-thumb mb-noimg" aria-hidden="true">${sport.icon}</span>`;
+  const top = data.topSales.map((r, i) => `<li class="ms-row">
+      <span class="ms-rank">${i + 1}</span>${thumb(r.image)}
+      <span class="ms-main"><span class="ms-title">${escHtml(r.title)}</span>
+        <span class="ms-meta">${r.grade ? escHtml(r.grade) + ' · ' : ''}${_mkDateLabel(r.date)}</span></span>
+      <span class="ms-price">${money(r.price)}</span></li>`).join('');
+  const players = data.mostSoldPlayers.map((r, i) => `<li class="ms-row ms-click" role="button" tabindex="0"
+        onclick="_mkSnapSearch(${q(r.player)})" onkeydown="if(event.key==='Enter')_mkSnapSearch(${q(r.player)})">
+      <span class="ms-rank">${i + 1}</span>
+      <span class="ms-main"><span class="ms-title">${escHtml(r.player)}</span>
+        <span class="ms-meta">${r.sales} sale${r.sales === 1 ? '' : 's'}${r.average != null ? ` · avg ${money(r.average)}` : ''} · top ${money(r.top)}</span></span>
+      <span class="ms-price">${money(r.volume)}</span></li>`).join('');
+  const cards = data.mostSoldCards.map((r, i) => {
+    const name = [r.year, r.set, r.player, r.number ? '#' + r.number : ''].filter(Boolean).join(' ');
+    return `<li class="ms-row ms-click" role="button" tabindex="0"
+        onclick="_mkSnapSearch(${q(name)})" onkeydown="if(event.key==='Enter')_mkSnapSearch(${q(name)})">
+      <span class="ms-rank">${i + 1}</span>${thumb(r.image)}
+      <span class="ms-main"><span class="ms-title">${escHtml(name)}</span>
+        <span class="ms-meta">${r.sales} raw sales · ${money(r.low)}–${money(r.high)}</span></span>
+      <span class="ms-price">avg ${money(r.average)}</span></li>`;
+  }).join('');
+  const section = (title, sub, rows) => rows ? `<section class="market-basket ms-section">
+      <div class="market-basket-head"><span class="market-basket-title">${title}</span><span class="market-basket-sub">${sub}</span></div>
+      <ol class="market-basket-list">${rows}</ol></section>` : '';
+  snap.innerHTML = `<div class="ms-summary">
+      <span class="ms-badge">Early look</span>
+      <span class="ms-stat"><strong>${data.sales.toLocaleString('en-US')}</strong> ${word} sales</span>
+      <span class="ms-stat"><strong>${_mkMoney(data.volume)}</strong> sold</span>
+      <span class="ms-stat">${span}${data.days > 1 ? ` · ${data.days} days` : ''}</span>
+    </div>
+    ${section('Most expensive sales', span, top)}
+    ${section('Most sold players', 'tap a player for their sales', players)}
+    ${section('Most sold cards', 'raw copies, sold twice or more', cards)}`;
+  snap.classList.remove('hidden');
+  if (soon) {
+    soon.innerHTML = `<p><strong>The ${word} index, movers and player charts are still coming.</strong>
+      They compare each card with its own earlier sales, so they need a few weeks of ${word} sales.
+      We have ${data.days === 1 ? 'one day' : data.days + ' days'} so far.</p>`;
+    soon.classList.add('mcs-compact');
+  }
+}
+
+function _mkSnapSearch(query) {
+  const input = document.getElementById('search-input');
+  if (input) input.value = query;
+  switchView('search');
+  addRecentSearch(query);
+  fetchDirectSearch(query);
 }
 
 function initMarketView() {
