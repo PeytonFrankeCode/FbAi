@@ -9017,7 +9017,7 @@ const PRICE_COVERAGE_TTL = 3600;
 // drift silently away from what build-landing-pages.js emits. Football only:
 // the basketball and baseball pages have no sold data to be priced by.
 // Football's share of the one index budget all three sports now share.
-const INDEXABLE_URLS = 3793;
+const INDEXABLE_URLS = 3837;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });

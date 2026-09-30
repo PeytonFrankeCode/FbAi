@@ -6037,6 +6037,3119 @@
       "setCount": 33,
       "totalCards": 1231,
       "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-bowman-baseball",
+      "name": "2017 Bowman Baseball",
+      "year": 2017,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 779
+    },
+    {
+      "id": "2017-bowman-chrome-baseball",
+      "name": "2017 Bowman Chrome Baseball",
+      "year": 2017,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 468
+    },
+    {
+      "id": "2017-bowman-chrome-mini-baseball",
+      "name": "2017 Bowman Chrome Mini Baseball",
+      "year": 2017,
+      "brand": "Bowman Chrome Mini",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 273
+    },
+    {
+      "id": "2017-bowman-chrome-national-convention-baseball",
+      "name": "2017 Bowman Chrome National Convention Baseball",
+      "year": 2017,
+      "brand": "Bowman Chrome National Convention",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 78
+    },
+    {
+      "id": "2017-bowman-draft-baseball",
+      "name": "2017 Bowman Draft Baseball",
+      "year": 2017,
+      "brand": "Bowman Draft",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 620
+    },
+    {
+      "id": "2017-bowman-high-tek-baseball",
+      "name": "2017 Bowman High Tek Baseball",
+      "year": 2017,
+      "brand": "Bowman High Tek",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 173
+    },
+    {
+      "id": "2017-bowman-mega-box-chrome-baseball",
+      "name": "2017 Bowman Mega Box Chrome Baseball",
+      "year": 2017,
+      "brand": "Bowman Mega Box Chrome",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 185
+    },
+    {
+      "id": "2017-bowman-platinum-baseball",
+      "name": "2017 Bowman Platinum Baseball",
+      "year": 2017,
+      "brand": "Bowman Platinum",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 434
+    },
+    {
+      "id": "2017-donruss-baseball",
+      "name": "2017 Donruss Baseball",
+      "year": 2017,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 744
+    },
+    {
+      "id": "2017-donruss-optic-baseball",
+      "name": "2017 Donruss Optic Baseball",
+      "year": 2017,
+      "brand": "Donruss Optic",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 503,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-honus-bonus-fantasy-baseball",
+      "name": "2017 Honus Bonus Fantasy Baseball",
+      "year": 2017,
+      "brand": "Honus Bonus Fantasy",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 500
+    },
+    {
+      "id": "2017-leaf-metal-draft-baseball",
+      "name": "2017 Leaf Metal Draft Baseball",
+      "year": 2017,
+      "brand": "Leaf Metal Draft",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 110
+    },
+    {
+      "id": "2017-leaf-metal-perfect-game-all-american-baseball",
+      "name": "2017 Leaf Metal Perfect Game All-American Baseball",
+      "year": 2017,
+      "brand": "Leaf Metal Perfect Game All-American",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 159
+    },
+    {
+      "id": "2017-leaf-perfect-game-national-showcase-baseball",
+      "name": "2017 Leaf Perfect Game National Showcase Baseball",
+      "year": 2017,
+      "brand": "Leaf Perfect Game National Showcase",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 464
+    },
+    {
+      "id": "2017-leaf-trinity-baseball",
+      "name": "2017 Leaf Trinity Baseball",
+      "year": 2017,
+      "brand": "Leaf Trinity",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 278
+    },
+    {
+      "id": "2017-leaf-valiant-baseball",
+      "name": "2017 Leaf Valiant Baseball",
+      "year": 2017,
+      "brand": "Leaf Valiant",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 88
+    },
+    {
+      "id": "2017-panini-chronicles-baseball",
+      "name": "2017 Panini Chronicles Baseball",
+      "year": 2017,
+      "brand": "Chronicles",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 972
+    },
+    {
+      "id": "2017-panini-contenders-draft-picks-baseball",
+      "name": "2017 Panini Contenders Draft Picks Baseball",
+      "year": 2017,
+      "brand": "Contenders Draft Picks",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 224
+    },
+    {
+      "id": "2017-panini-diamond-kings-baseball",
+      "name": "2017 Panini Diamond Kings Baseball",
+      "year": 2017,
+      "brand": "Diamond Kings",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 879
+    },
+    {
+      "id": "2017-panini-elite-extra-edition-baseball",
+      "name": "2017 Panini Elite Extra Edition Baseball",
+      "year": 2017,
+      "brand": "Elite Extra Edition",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 802
+    },
+    {
+      "id": "2017-panini-flawless-baseball",
+      "name": "2017 Panini Flawless Baseball",
+      "year": 2017,
+      "brand": "Flawless",
+      "sport": "Baseball",
+      "setCount": 44,
+      "totalCards": 967
+    },
+    {
+      "id": "2017-panini-immaculate-collection-baseball",
+      "name": "2017 Panini Immaculate Collection Baseball",
+      "year": 2017,
+      "brand": "Immaculate Collection",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 1099
+    },
+    {
+      "id": "2017-panini-national-treasures-baseball",
+      "name": "2017 Panini National Treasures Baseball",
+      "year": 2017,
+      "brand": "National Treasures",
+      "sport": "Baseball",
+      "setCount": 69,
+      "totalCards": 1777
+    },
+    {
+      "id": "2017-panini-stars-and-stripes-usa-baseball",
+      "name": "2017 Panini Stars and Stripes USA Baseball",
+      "year": 2017,
+      "brand": "Stars and Stripes USA",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 901
+    },
+    {
+      "id": "2017-topps-allen-ginter-baseball",
+      "name": "2017 Topps Allen & Ginter Baseball",
+      "year": 2017,
+      "brand": "Topps Allen & Ginter",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1568,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-allen-ginter-x-baseball",
+      "name": "2017 Topps Allen & Ginter X Baseball",
+      "year": 2017,
+      "brand": "Topps Allen & Ginter X",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 552,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-archives-baseball",
+      "name": "2017 Topps Archives Baseball",
+      "year": 2017,
+      "brand": "Topps Archives",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 527
+    },
+    {
+      "id": "2017-topps-archives-snapshots-baseball",
+      "name": "2017 Topps Archives Snapshots Baseball",
+      "year": 2017,
+      "brand": "Topps Archives Snapshots",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 83
+    },
+    {
+      "id": "2017-topps-baseball",
+      "name": "2017 Topps Baseball",
+      "year": 2017,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 25
+    },
+    {
+      "id": "2017-topps-bunt-baseball",
+      "name": "2017 Topps Bunt Baseball",
+      "year": 2017,
+      "brand": "Topps Bunt",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 350
+    },
+    {
+      "id": "2017-topps-chrome-baseball",
+      "name": "2017 Topps Chrome Baseball",
+      "year": 2017,
+      "brand": "Topps Chrome",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 717
+    },
+    {
+      "id": "2017-topps-chrome-update-series-baseball",
+      "name": "2017 Topps Chrome Update Series Baseball",
+      "year": 2017,
+      "brand": "Topps Chrome Update Series",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 196
+    },
+    {
+      "id": "2017-topps-clearly-authentic-baseball",
+      "name": "2017 Topps Clearly Authentic Baseball",
+      "year": 2017,
+      "brand": "Topps Clearly Authentic",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 121
+    },
+    {
+      "id": "2017-topps-definitive-collection-baseball",
+      "name": "2017 Topps Definitive Collection Baseball",
+      "year": 2017,
+      "brand": "Topps Definitive Collection",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 591
+    },
+    {
+      "id": "2017-topps-diamond-icons-baseball",
+      "name": "2017 Topps Diamond Icons Baseball",
+      "year": 2017,
+      "brand": "Topps Diamond Icons",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 531,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-dynasty-baseball",
+      "name": "2017 Topps Dynasty Baseball",
+      "year": 2017,
+      "brand": "Topps Dynasty",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 117
+    },
+    {
+      "id": "2017-topps-finest-baseball",
+      "name": "2017 Topps Finest Baseball",
+      "year": 2017,
+      "brand": "Topps Finest",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 316,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-gallery-baseball",
+      "name": "2017 Topps Gallery Baseball",
+      "year": 2017,
+      "brand": "Topps Gallery",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 500
+    },
+    {
+      "id": "2017-topps-gold-label-baseball",
+      "name": "2017 Topps Gold Label Baseball",
+      "year": 2017,
+      "brand": "Topps Gold Label",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 391
+    },
+    {
+      "id": "2017-topps-gypsy-queen-baseball",
+      "name": "2017 Topps Gypsy Queen Baseball",
+      "year": 2017,
+      "brand": "Topps Gypsy Queen",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 617,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-heritage-baseball",
+      "name": "2017 Topps Heritage Baseball",
+      "year": 2017,
+      "brand": "Topps Heritage",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1231,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-heritage-high-number-baseball",
+      "name": "2017 Topps Heritage High Number Baseball",
+      "year": 2017,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 695
+    },
+    {
+      "id": "2017-topps-heritage-minor-league-baseball",
+      "name": "2017 Topps Heritage Minor League Baseball",
+      "year": 2017,
+      "brand": "Topps Heritage Minor League",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 427,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-high-tek-baseball",
+      "name": "2017 Topps High Tek Baseball",
+      "year": 2017,
+      "brand": "Topps High Tek",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 274
+    },
+    {
+      "id": "2017-topps-holiday-baseball",
+      "name": "2017 Topps Holiday Baseball",
+      "year": 2017,
+      "brand": "Topps Holiday",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 344
+    },
+    {
+      "id": "2017-topps-holiday-bowman-baseball",
+      "name": "2017 Topps Holiday Bowman Baseball",
+      "year": 2017,
+      "brand": "Topps Holiday Bowman",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 142
+    },
+    {
+      "id": "2017-topps-inception-baseball",
+      "name": "2017 Topps Inception Baseball",
+      "year": 2017,
+      "brand": "Topps Inception",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 351
+    },
+    {
+      "id": "2017-topps-luminaries-baseball",
+      "name": "2017 Topps Luminaries Baseball",
+      "year": 2017,
+      "brand": "Topps Luminaries",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 462
+    },
+    {
+      "id": "2017-topps-mlb-sticker-collection-baseball",
+      "name": "2017 Topps MLB Sticker Collection Baseball",
+      "year": 2017,
+      "brand": "Topps MLB Sticker Collection",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 271,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-museum-collection-baseball",
+      "name": "2017 Topps Museum Collection Baseball",
+      "year": 2017,
+      "brand": "Topps Museum Collection",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 1337
+    },
+    {
+      "id": "2017-topps-new-era-baseball",
+      "name": "2017 Topps New Era Baseball",
+      "year": 2017,
+      "brand": "Topps New Era",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 50
+    },
+    {
+      "id": "2017-topps-now-baseball",
+      "name": "2017 Topps Now Baseball",
+      "year": 2017,
+      "brand": "Topps Now",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 26
+    },
+    {
+      "id": "2017-topps-now-off-season-baseball",
+      "name": "2017 Topps Now Off-Season Baseball",
+      "year": 2017,
+      "brand": "Topps Now Off-Season",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 92
+    },
+    {
+      "id": "2017-topps-now-world-baseball",
+      "name": "2017 Topps Now World Baseball",
+      "year": 2017,
+      "brand": "Topps Now World",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 50,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-opening-day-baseball",
+      "name": "2017 Topps Opening Day Baseball",
+      "year": 2017,
+      "brand": "Topps Opening Day",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 484
+    },
+    {
+      "id": "2017-topps-pro-debut-baseball",
+      "name": "2017 Topps Pro Debut Baseball",
+      "year": 2017,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 431
+    },
+    {
+      "id": "2017-topps-series-1-baseball",
+      "name": "2017 Topps Series 1 Baseball",
+      "year": 2017,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1487,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-topps-series-2-baseball",
+      "name": "2017 Topps Series 2 Baseball",
+      "year": 2017,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1493
+    },
+    {
+      "id": "2017-topps-stadium-club-baseball",
+      "name": "2017 Topps Stadium Club Baseball",
+      "year": 2017,
+      "brand": "Topps Stadium Club",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 662
+    },
+    {
+      "id": "2017-topps-throwback-thursday-baseball",
+      "name": "2017 Topps Throwback Thursday Baseball",
+      "year": 2017,
+      "brand": "Topps Throwback Thursday",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 188
+    },
+    {
+      "id": "2017-topps-tier-one-baseball",
+      "name": "2017 Topps Tier One Baseball",
+      "year": 2017,
+      "brand": "Topps Tier One",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 982
+    },
+    {
+      "id": "2017-topps-transcendent-collection-baseball",
+      "name": "2017 Topps Transcendent Collection Baseball",
+      "year": 2017,
+      "brand": "Topps Transcendent Collection",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 446
+    },
+    {
+      "id": "2017-topps-tribute-baseball",
+      "name": "2017 Topps Tribute Baseball",
+      "year": 2017,
+      "brand": "Topps Tribute",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 402
+    },
+    {
+      "id": "2017-topps-triple-threads-baseball",
+      "name": "2017 Topps Triple Threads Baseball",
+      "year": 2017,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 1481
+    },
+    {
+      "id": "2017-topps-update-series-baseball",
+      "name": "2017 Topps Update Series Baseball",
+      "year": 2017,
+      "brand": "Topps Update Series",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1196,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-17-topps-now-off-season-baseball",
+      "name": "2016-17 Topps Now Off-Season Baseball",
+      "year": 2016,
+      "brand": "Topps Now Off-Season",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 60
+    },
+    {
+      "id": "2016-bowman-baseball",
+      "name": "2016 Bowman Baseball",
+      "year": 2016,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 603
+    },
+    {
+      "id": "2016-bowman-chrome-baseball",
+      "name": "2016 Bowman Chrome Baseball",
+      "year": 2016,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 509,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-bowman-draft-baseball",
+      "name": "2016 Bowman Draft Baseball",
+      "year": 2016,
+      "brand": "Bowman Draft",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 559
+    },
+    {
+      "id": "2016-bowman-inception-baseball",
+      "name": "2016 Bowman Inception Baseball",
+      "year": 2016,
+      "brand": "Bowman Inception",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 232
+    },
+    {
+      "id": "2016-bowman-platinum-baseball",
+      "name": "2016 Bowman Platinum Baseball",
+      "year": 2016,
+      "brand": "Bowman Platinum",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 412,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-donruss-baseball",
+      "name": "2016 Donruss Baseball",
+      "year": 2016,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 753,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-donruss-optic-baseball",
+      "name": "2016 Donruss Optic Baseball",
+      "year": 2016,
+      "brand": "Donruss Optic",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 458,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-leaf-metal-draft-baseball",
+      "name": "2016 Leaf Metal Draft Baseball",
+      "year": 2016,
+      "brand": "Leaf Metal Draft",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 79
+    },
+    {
+      "id": "2016-leaf-perfect-game-national-showcase-baseball",
+      "name": "2016 Leaf Perfect Game National Showcase Baseball",
+      "year": 2016,
+      "brand": "Leaf Perfect Game National Showcase",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 753
+    },
+    {
+      "id": "2016-leaf-trinity-baseball",
+      "name": "2016 Leaf Trinity Baseball",
+      "year": 2016,
+      "brand": "Leaf Trinity",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 164
+    },
+    {
+      "id": "2016-panini-diamond-kings-baseball",
+      "name": "2016 Panini Diamond Kings Baseball",
+      "year": 2016,
+      "brand": "Diamond Kings",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 1050,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-panini-elite-extra-edition-baseball",
+      "name": "2016 Panini Elite Extra Edition Baseball",
+      "year": 2016,
+      "brand": "Elite Extra Edition",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 640
+    },
+    {
+      "id": "2016-panini-flawless-baseball",
+      "name": "2016 Panini Flawless Baseball",
+      "year": 2016,
+      "brand": "Flawless",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 654
+    },
+    {
+      "id": "2016-panini-immaculate-baseball",
+      "name": "2016 Panini Immaculate Baseball",
+      "year": 2016,
+      "brand": "Immaculate",
+      "sport": "Baseball",
+      "setCount": 36,
+      "totalCards": 1139,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-panini-national-treasures-baseball",
+      "name": "2016 Panini National Treasures Baseball",
+      "year": 2016,
+      "brand": "National Treasures",
+      "sport": "Baseball",
+      "setCount": 65,
+      "totalCards": 1897
+    },
+    {
+      "id": "2016-panini-pantheon-baseball",
+      "name": "2016 Panini Pantheon Baseball",
+      "year": 2016,
+      "brand": "Pantheon",
+      "sport": "Baseball",
+      "setCount": 34,
+      "totalCards": 703
+    },
+    {
+      "id": "2016-panini-prime-cuts-baseball",
+      "name": "2016 Panini Prime Cuts Baseball",
+      "year": 2016,
+      "brand": "Prime Cuts",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 667
+    },
+    {
+      "id": "2016-topps-allen-ginter-baseball",
+      "name": "2016 Topps Allen & Ginter Baseball",
+      "year": 2016,
+      "brand": "Topps Allen & Ginter",
+      "sport": "Baseball",
+      "setCount": 31,
+      "totalCards": 1477,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-topps-allen-ginter-x-baseball",
+      "name": "2016 Topps Allen & Ginter X Baseball",
+      "year": 2016,
+      "brand": "Topps Allen & Ginter X",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 454,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-topps-archives-65th-anniversary-edition-baseball",
+      "name": "2016 Topps Archives 65th Anniversary Edition Baseball",
+      "year": 2016,
+      "brand": "Topps Archives 65th Anniversary Edition",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 120
+    },
+    {
+      "id": "2016-topps-archives-baseball",
+      "name": "2016 Topps Archives Baseball",
+      "year": 2016,
+      "brand": "Topps Archives",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 464
+    },
+    {
+      "id": "2016-topps-archives-snapshots-baseball",
+      "name": "2016 Topps Archives Snapshots Baseball",
+      "year": 2016,
+      "brand": "Topps Archives Snapshots",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 86
+    },
+    {
+      "id": "2016-topps-baseball",
+      "name": "2016 Topps Baseball",
+      "year": 2016,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 710
+    },
+    {
+      "id": "2016-topps-bunt-baseball",
+      "name": "2016 Topps Bunt Baseball",
+      "year": 2016,
+      "brand": "Topps Bunt",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 368
+    },
+    {
+      "id": "2016-topps-chrome-baseball",
+      "name": "2016 Topps Chrome Baseball",
+      "year": 2016,
+      "brand": "Topps Chrome",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 449
+    },
+    {
+      "id": "2016-topps-chrome-update-series-baseball",
+      "name": "2016 Topps Chrome Update Series Baseball",
+      "year": 2016,
+      "brand": "Topps Chrome Update Series",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 104
+    },
+    {
+      "id": "2016-topps-finest-baseball",
+      "name": "2016 Topps Finest Baseball",
+      "year": 2016,
+      "brand": "Topps Finest",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 257
+    },
+    {
+      "id": "2016-topps-five-star-baseball",
+      "name": "2016 Topps Five Star Baseball",
+      "year": 2016,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 347
+    },
+    {
+      "id": "2016-topps-gold-label-baseball",
+      "name": "2016 Topps Gold Label Baseball",
+      "year": 2016,
+      "brand": "Topps Gold Label",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 369,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-topps-gypsy-queen-baseball",
+      "name": "2016 Topps Gypsy Queen Baseball",
+      "year": 2016,
+      "brand": "Topps Gypsy Queen",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 1188,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-topps-heritage-baseball",
+      "name": "2016 Topps Heritage Baseball",
+      "year": 2016,
+      "brand": "Topps Heritage",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 1225,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-topps-heritage-high-number-baseball",
+      "name": "2016 Topps Heritage High Number Baseball",
+      "year": 2016,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 622
+    },
+    {
+      "id": "2016-topps-heritage-minor-league-baseball",
+      "name": "2016 Topps Heritage Minor League Baseball",
+      "year": 2016,
+      "brand": "Topps Heritage Minor League",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 382
+    },
+    {
+      "id": "2016-topps-high-tek-baseball",
+      "name": "2016 Topps High Tek Baseball",
+      "year": 2016,
+      "brand": "Topps High Tek",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 280
+    },
+    {
+      "id": "2016-topps-holiday-baseball",
+      "name": "2016 Topps Holiday Baseball",
+      "year": 2016,
+      "brand": "Topps Holiday",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 326
+    },
+    {
+      "id": "2016-topps-legacies-of-baseball",
+      "name": "2016 Topps Legacies of Baseball",
+      "year": 2016,
+      "brand": "Topps Legacies of",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 227
+    },
+    {
+      "id": "2016-topps-marketside-pizza-baseball",
+      "name": "2016 Topps Marketside Pizza Baseball",
+      "year": 2016,
+      "brand": "Topps Marketside Pizza",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 50
+    },
+    {
+      "id": "2016-topps-museum-collection-baseball",
+      "name": "2016 Topps Museum Collection Baseball",
+      "year": 2016,
+      "brand": "Topps Museum Collection",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 1385
+    },
+    {
+      "id": "2016-topps-national-baseball",
+      "name": "2016 Topps National Baseball",
+      "year": 2016,
+      "brand": "Topps National",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 63
+    },
+    {
+      "id": "2016-topps-now-baseball",
+      "name": "2016 Topps Now Baseball",
+      "year": 2016,
+      "brand": "Topps Now",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 632
+    },
+    {
+      "id": "2016-topps-opening-day-baseball",
+      "name": "2016 Topps Opening Day Baseball",
+      "year": 2016,
+      "brand": "Topps Opening Day",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 388
+    },
+    {
+      "id": "2016-topps-pro-debut-baseball",
+      "name": "2016 Topps Pro Debut Baseball",
+      "year": 2016,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 372
+    },
+    {
+      "id": "2016-topps-series-1-baseball",
+      "name": "2016 Topps Series 1 Baseball",
+      "year": 2016,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 54,
+      "totalCards": 1294
+    },
+    {
+      "id": "2016-topps-series-2-baseball",
+      "name": "2016 Topps Series 2 Baseball",
+      "year": 2016,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 42,
+      "totalCards": 1180
+    },
+    {
+      "id": "2016-topps-stadium-club-baseball",
+      "name": "2016 Topps Stadium Club Baseball",
+      "year": 2016,
+      "brand": "Topps Stadium Club",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 544
+    },
+    {
+      "id": "2016-topps-strata-baseball",
+      "name": "2016 Topps Strata Baseball",
+      "year": 2016,
+      "brand": "Topps Strata",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 157
+    },
+    {
+      "id": "2016-topps-the-mint-baseball",
+      "name": "2016 Topps The Mint Baseball",
+      "year": 2016,
+      "brand": "Topps The Mint",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 123
+    },
+    {
+      "id": "2016-topps-throwback-thursday-baseball",
+      "name": "2016 Topps Throwback Thursday Baseball",
+      "year": 2016,
+      "brand": "Topps Throwback Thursday",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 186
+    },
+    {
+      "id": "2016-topps-tier-one-baseball",
+      "name": "2016 Topps Tier One Baseball",
+      "year": 2016,
+      "brand": "Topps Tier One",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 833
+    },
+    {
+      "id": "2016-topps-transcendent-collection-baseball",
+      "name": "2016 Topps Transcendent Collection Baseball",
+      "year": 2016,
+      "brand": "Topps Transcendent Collection",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 286,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-topps-tribute-baseball",
+      "name": "2016 Topps Tribute Baseball",
+      "year": 2016,
+      "brand": "Topps Tribute",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 426
+    },
+    {
+      "id": "2016-topps-triple-threads-baseball",
+      "name": "2016 Topps Triple Threads Baseball",
+      "year": 2016,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1385
+    },
+    {
+      "id": "2016-topps-update-series-baseball",
+      "name": "2016 Topps Update Series Baseball",
+      "year": 2016,
+      "brand": "Topps Update Series",
+      "sport": "Baseball",
+      "setCount": 31,
+      "totalCards": 979
+    },
+    {
+      "id": "2015-bowman-baseball",
+      "name": "2015 Bowman Baseball",
+      "year": 2015,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 810
+    },
+    {
+      "id": "2015-bowman-chrome-baseball",
+      "name": "2015 Bowman Chrome Baseball",
+      "year": 2015,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 535
+    },
+    {
+      "id": "2015-bowman-draft-baseball",
+      "name": "2015 Bowman Draft Baseball",
+      "year": 2015,
+      "brand": "Bowman Draft",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 406
+    },
+    {
+      "id": "2015-bowman-inception-baseball",
+      "name": "2015 Bowman Inception Baseball",
+      "year": 2015,
+      "brand": "Bowman Inception",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 271
+    },
+    {
+      "id": "2015-bowman-s-best-baseball",
+      "name": "2015 Bowman’s Best Baseball",
+      "year": 2015,
+      "brand": "Bowman’s Best",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 389
+    },
+    {
+      "id": "2015-donruss-baseball",
+      "name": "2015 Donruss Baseball",
+      "year": 2015,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 739
+    },
+    {
+      "id": "2015-leaf-25th-baseball",
+      "name": "2015 Leaf 25th Baseball",
+      "year": 2015,
+      "brand": "Leaf 25th",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 94,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-leaf-metal-draft-baseball",
+      "name": "2015 Leaf Metal Draft Baseball",
+      "year": 2015,
+      "brand": "Leaf Metal Draft",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 144
+    },
+    {
+      "id": "2015-leaf-perfect-game-national-showcase-baseball",
+      "name": "2015 Leaf Perfect Game National Showcase Baseball",
+      "year": 2015,
+      "brand": "Leaf Perfect Game National Showcase",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 727
+    },
+    {
+      "id": "2015-leaf-trinity-baseball",
+      "name": "2015 Leaf Trinity Baseball",
+      "year": 2015,
+      "brand": "Leaf Trinity",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 203
+    },
+    {
+      "id": "2015-leaf-ultimate-draft-baseball",
+      "name": "2015 Leaf Ultimate Draft Baseball",
+      "year": 2015,
+      "brand": "Leaf Ultimate Draft",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 151
+    },
+    {
+      "id": "2015-panini-cooperstown-baseball",
+      "name": "2015 Panini Cooperstown Baseball",
+      "year": 2015,
+      "brand": "Cooperstown",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 954
+    },
+    {
+      "id": "2015-panini-diamond-kings-baseball",
+      "name": "2015 Panini Diamond Kings Baseball",
+      "year": 2015,
+      "brand": "Diamond Kings",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 1093
+    },
+    {
+      "id": "2015-panini-elite-baseball",
+      "name": "2015 Panini Elite Baseball",
+      "year": 2015,
+      "brand": "Elite",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 753
+    },
+    {
+      "id": "2015-panini-elite-extra-edition-baseball",
+      "name": "2015 Panini Elite Extra Edition Baseball",
+      "year": 2015,
+      "brand": "Elite Extra Edition",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 489
+    },
+    {
+      "id": "2015-panini-immaculate-baseball",
+      "name": "2015 Panini Immaculate Baseball",
+      "year": 2015,
+      "brand": "Immaculate",
+      "sport": "Baseball",
+      "setCount": 40,
+      "totalCards": 1135
+    },
+    {
+      "id": "2015-panini-national-treasures-baseball",
+      "name": "2015 Panini National Treasures Baseball",
+      "year": 2015,
+      "brand": "National Treasures",
+      "sport": "Baseball",
+      "setCount": 46,
+      "totalCards": 1531,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-panini-prizm-baseball",
+      "name": "2015 Panini Prizm Baseball",
+      "year": 2015,
+      "brand": "Prizm",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 489
+    },
+    {
+      "id": "2015-panini-usa-baseball",
+      "name": "2015 Panini USA Baseball",
+      "year": 2015,
+      "brand": "USA",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 319
+    },
+    {
+      "id": "2015-panini-usa-stars-and-stripes-baseball",
+      "name": "2015 Panini USA Stars and Stripes Baseball",
+      "year": 2015,
+      "brand": "USA Stars and Stripes",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 908
+    },
+    {
+      "id": "2015-topps-allen-ginter-baseball",
+      "name": "2015 Topps Allen & Ginter Baseball",
+      "year": 2015,
+      "brand": "Topps Allen & Ginter",
+      "sport": "Baseball",
+      "setCount": 45,
+      "totalCards": 1845,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-topps-allen-ginter-x-10th-anniversary-issue-baseball",
+      "name": "2015 Topps Allen & Ginter X: 10th Anniversary Issue Baseball",
+      "year": 2015,
+      "brand": "Topps Allen & Ginter X: 10th Anniversary Issue",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 945
+    },
+    {
+      "id": "2015-topps-archives-baseball",
+      "name": "2015 Topps Archives Baseball",
+      "year": 2015,
+      "brand": "Topps Archives",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 479
+    },
+    {
+      "id": "2015-topps-chrome-baseball",
+      "name": "2015 Topps Chrome Baseball",
+      "year": 2015,
+      "brand": "Topps Chrome",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 398
+    },
+    {
+      "id": "2015-topps-chrome-update-series-baseball",
+      "name": "2015 Topps Chrome Update Series Baseball",
+      "year": 2015,
+      "brand": "Topps Chrome Update Series",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 110
+    },
+    {
+      "id": "2015-topps-dynasty-baseball",
+      "name": "2015 Topps Dynasty Baseball",
+      "year": 2015,
+      "brand": "Topps Dynasty",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 109
+    },
+    {
+      "id": "2015-topps-finest-baseball",
+      "name": "2015 Topps Finest Baseball",
+      "year": 2015,
+      "brand": "Topps Finest",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 301
+    },
+    {
+      "id": "2015-topps-five-star-baseball",
+      "name": "2015 Topps Five Star Baseball",
+      "year": 2015,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 355
+    },
+    {
+      "id": "2015-topps-gypsy-queen-baseball",
+      "name": "2015 Topps Gypsy Queen Baseball",
+      "year": 2015,
+      "brand": "Topps Gypsy Queen",
+      "sport": "Baseball",
+      "setCount": 22,
+      "totalCards": 1238
+    },
+    {
+      "id": "2015-topps-heritage-51-collection-baseball",
+      "name": "2015 Topps Heritage ’51 Collection Baseball",
+      "year": 2015,
+      "brand": "Topps Heritage ’51 Collection",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 132
+    },
+    {
+      "id": "2015-topps-heritage-baseball",
+      "name": "2015 Topps Heritage Baseball",
+      "year": 2015,
+      "brand": "Topps Heritage",
+      "sport": "Baseball",
+      "setCount": 34,
+      "totalCards": 1175
+    },
+    {
+      "id": "2015-topps-heritage-high-number-baseball",
+      "name": "2015 Topps Heritage High Number Baseball",
+      "year": 2015,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 24,
+      "totalCards": 577
+    },
+    {
+      "id": "2015-topps-heritage-minor-league-baseball",
+      "name": "2015 Topps Heritage Minor League Baseball",
+      "year": 2015,
+      "brand": "Topps Heritage Minor League",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 364
+    },
+    {
+      "id": "2015-topps-high-tek-baseball",
+      "name": "2015 Topps High Tek Baseball",
+      "year": 2015,
+      "brand": "Topps High Tek",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 270
+    },
+    {
+      "id": "2015-topps-museum-collection-baseball",
+      "name": "2015 Topps Museum Collection Baseball",
+      "year": 2015,
+      "brand": "Topps Museum Collection",
+      "sport": "Baseball",
+      "setCount": 25,
+      "totalCards": 1463
+    },
+    {
+      "id": "2015-topps-opening-day-baseball",
+      "name": "2015 Topps Opening Day Baseball",
+      "year": 2015,
+      "brand": "Topps Opening Day",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 390
+    },
+    {
+      "id": "2015-topps-pro-debut-baseball",
+      "name": "2015 Topps Pro Debut Baseball",
+      "year": 2015,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 386
+    },
+    {
+      "id": "2015-topps-series-1-baseball",
+      "name": "2015 Topps Series 1 Baseball",
+      "year": 2015,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 51,
+      "totalCards": 1262,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-topps-series-2-baseball",
+      "name": "2015 Topps Series 2 Baseball",
+      "year": 2015,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 48,
+      "totalCards": 1236,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-topps-stadium-club-baseball",
+      "name": "2015 Topps Stadium Club Baseball",
+      "year": 2015,
+      "brand": "Topps Stadium Club",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 511
+    },
+    {
+      "id": "2015-topps-strata-baseball",
+      "name": "2015 Topps Strata Baseball",
+      "year": 2015,
+      "brand": "Topps Strata",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 169
+    },
+    {
+      "id": "2015-topps-supreme-baseball",
+      "name": "2015 Topps Supreme Baseball",
+      "year": 2015,
+      "brand": "Topps Supreme",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 260
+    },
+    {
+      "id": "2015-topps-tier-one-baseball",
+      "name": "2015 Topps Tier One Baseball",
+      "year": 2015,
+      "brand": "Topps Tier One",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 793
+    },
+    {
+      "id": "2015-topps-tribute-baseball",
+      "name": "2015 Topps Tribute Baseball",
+      "year": 2015,
+      "brand": "Topps Tribute",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 520
+    },
+    {
+      "id": "2015-topps-triple-threads-baseball",
+      "name": "2015 Topps Triple Threads Baseball",
+      "year": 2015,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 1455,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-topps-update-series-baseball",
+      "name": "2015 Topps Update Series Baseball",
+      "year": 2015,
+      "brand": "Topps Update Series",
+      "sport": "Baseball",
+      "setCount": 32,
+      "totalCards": 1009
+    },
+    {
+      "id": "2015-topps-vault-originals-baseball",
+      "name": "2015 Topps Vault Originals Baseball",
+      "year": 2015,
+      "brand": "Topps Vault Originals",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 41
+    },
+    {
+      "id": "2014-bowman-baseball",
+      "name": "2014 Bowman Baseball",
+      "year": 2014,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 942
+    },
+    {
+      "id": "2014-bowman-chrome-baseball",
+      "name": "2014 Bowman Chrome Baseball",
+      "year": 2014,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 561
+    },
+    {
+      "id": "2014-bowman-chrome-mini-baseball",
+      "name": "2014 Bowman Chrome Mini Baseball",
+      "year": 2014,
+      "brand": "Bowman Chrome Mini",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 330
+    },
+    {
+      "id": "2014-bowman-draft-baseball",
+      "name": "2014 Bowman Draft Baseball",
+      "year": 2014,
+      "brand": "Bowman Draft",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 499
+    },
+    {
+      "id": "2014-bowman-inception-baseball",
+      "name": "2014 Bowman Inception Baseball",
+      "year": 2014,
+      "brand": "Bowman Inception",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 324
+    },
+    {
+      "id": "2014-bowman-sterling-baseball",
+      "name": "2014 Bowman Sterling Baseball",
+      "year": 2014,
+      "brand": "Bowman Sterling",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 304
+    },
+    {
+      "id": "2014-donruss-baseball",
+      "name": "2014 Donruss Baseball",
+      "year": 2014,
+      "brand": "Donruss",
+      "sport": "Baseball",
+      "setCount": 27,
+      "totalCards": 1052,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-donruss-series-2-baseball",
+      "name": "2014 Donruss Series 2 Baseball",
+      "year": 2014,
+      "brand": "Donruss Series 2",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1375
+    },
+    {
+      "id": "2014-donruss-the-rookies-baseball",
+      "name": "2014 Donruss The Rookies Baseball",
+      "year": 2014,
+      "brand": "Donruss The Rookies",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 224
+    },
+    {
+      "id": "2014-leaf-metal-draft-baseball",
+      "name": "2014 Leaf Metal Draft Baseball",
+      "year": 2014,
+      "brand": "Leaf Metal Draft",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 146
+    },
+    {
+      "id": "2014-leaf-perfect-game-showcase-baseball",
+      "name": "2014 Leaf Perfect Game Showcase Baseball",
+      "year": 2014,
+      "brand": "Leaf Perfect Game Showcase",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 675
+    },
+    {
+      "id": "2014-leaf-trinity-baseball",
+      "name": "2014 Leaf Trinity Baseball",
+      "year": 2014,
+      "brand": "Leaf Trinity",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 222
+    },
+    {
+      "id": "2014-leaf-valiant-baseball",
+      "name": "2014 Leaf Valiant Baseball",
+      "year": 2014,
+      "brand": "Leaf Valiant",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 145,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-panini-classics-baseball",
+      "name": "2014 Panini Classics Baseball",
+      "year": 2014,
+      "brand": "Classics",
+      "sport": "Baseball",
+      "setCount": 64,
+      "totalCards": 1605,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-panini-elite-extra-edition-baseball",
+      "name": "2014 Panini Elite Extra Edition Baseball",
+      "year": 2014,
+      "brand": "Elite Extra Edition",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 519
+    },
+    {
+      "id": "2014-panini-golden-age-baseball",
+      "name": "2014 Panini Golden Age Baseball",
+      "year": 2014,
+      "brand": "Golden Age",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 398,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-panini-hall-of-fame-75th-anniversary-baseball",
+      "name": "2014 Panini Hall of Fame 75th Anniversary Baseball",
+      "year": 2014,
+      "brand": "Hall of Fame 75th Anniversary",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 1131
+    },
+    {
+      "id": "2014-panini-immaculate-baseball",
+      "name": "2014 Panini Immaculate Baseball",
+      "year": 2014,
+      "brand": "Immaculate",
+      "sport": "Baseball",
+      "setCount": 49,
+      "totalCards": 1466
+    },
+    {
+      "id": "2014-panini-national-treasures-baseball",
+      "name": "2014 Panini National Treasures Baseball",
+      "year": 2014,
+      "brand": "National Treasures",
+      "sport": "Baseball",
+      "setCount": 44,
+      "totalCards": 1728
+    },
+    {
+      "id": "2014-panini-prizm-baseball",
+      "name": "2014 Panini Prizm Baseball",
+      "year": 2014,
+      "brand": "Prizm",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 677
+    },
+    {
+      "id": "2014-panini-prizm-perennial-draft-picks-baseball",
+      "name": "2014 Panini Prizm Perennial Draft Picks Baseball",
+      "year": 2014,
+      "brand": "Prizm Perennial Draft Picks",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 349
+    },
+    {
+      "id": "2014-panini-usa-baseball",
+      "name": "2014 Panini USA Baseball",
+      "year": 2014,
+      "brand": "USA",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 301
+    },
+    {
+      "id": "2014-topps-allen-ginter-baseball",
+      "name": "2014 Topps Allen & Ginter Baseball",
+      "year": 2014,
+      "brand": "Topps Allen & Ginter",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 279,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-topps-archives-baseball",
+      "name": "2014 Topps Archives Baseball",
+      "year": 2014,
+      "brand": "Topps Archives",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 508
+    },
+    {
+      "id": "2014-topps-baseball",
+      "name": "2014 Topps Baseball",
+      "year": 2014,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 660
+    },
+    {
+      "id": "2014-topps-chrome-baseball",
+      "name": "2014 Topps Chrome Baseball",
+      "year": 2014,
+      "brand": "Topps Chrome",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 516,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-topps-five-star-baseball",
+      "name": "2014 Topps Five Star Baseball",
+      "year": 2014,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 494
+    },
+    {
+      "id": "2014-topps-gypsy-queen-baseball",
+      "name": "2014 Topps Gypsy Queen Baseball",
+      "year": 2014,
+      "brand": "Topps Gypsy Queen",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 1806,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-topps-heritage-baseball",
+      "name": "2014 Topps Heritage Baseball",
+      "year": 2014,
+      "brand": "Topps Heritage",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1202
+    },
+    {
+      "id": "2014-topps-heritage-high-number-baseball",
+      "name": "2014 Topps Heritage High Number Baseball",
+      "year": 2014,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 134
+    },
+    {
+      "id": "2014-topps-heritage-minor-league-baseball",
+      "name": "2014 Topps Heritage Minor League Baseball",
+      "year": 2014,
+      "brand": "Topps Heritage Minor League",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 451
+    },
+    {
+      "id": "2014-topps-high-tek-baseball",
+      "name": "2014 Topps High Tek Baseball",
+      "year": 2014,
+      "brand": "Topps High Tek",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 296
+    },
+    {
+      "id": "2014-topps-mini-baseball",
+      "name": "2014 Topps Mini Baseball",
+      "year": 2014,
+      "brand": "Topps Mini",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 742,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-topps-museum-collection-baseball",
+      "name": "2014 Topps Museum Collection Baseball",
+      "year": 2014,
+      "brand": "Topps Museum Collection",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1535
+    },
+    {
+      "id": "2014-topps-opening-day-baseball",
+      "name": "2014 Topps Opening Day Baseball",
+      "year": 2014,
+      "brand": "Topps Opening Day",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 405
+    },
+    {
+      "id": "2014-topps-pro-debut-baseball",
+      "name": "2014 Topps Pro Debut Baseball",
+      "year": 2014,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 360
+    },
+    {
+      "id": "2014-topps-series-1-baseball",
+      "name": "2014 Topps Series 1 Baseball",
+      "year": 2014,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 49,
+      "totalCards": 1583,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-topps-series-2-baseball",
+      "name": "2014 Topps Series 2 Baseball",
+      "year": 2014,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 1424
+    },
+    {
+      "id": "2014-topps-stadium-club-baseball",
+      "name": "2014 Topps Stadium Club Baseball",
+      "year": 2014,
+      "brand": "Topps Stadium Club",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 404
+    },
+    {
+      "id": "2014-topps-supreme-baseball",
+      "name": "2014 Topps Supreme Baseball",
+      "year": 2014,
+      "brand": "Topps Supreme",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 373
+    },
+    {
+      "id": "2014-topps-tier-one-baseball",
+      "name": "2014 Topps Tier One Baseball",
+      "year": 2014,
+      "brand": "Topps Tier One",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 654
+    },
+    {
+      "id": "2014-topps-tribute-baseball",
+      "name": "2014 Topps Tribute Baseball",
+      "year": 2014,
+      "brand": "Topps Tribute",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 671
+    },
+    {
+      "id": "2014-topps-triple-threads-baseball",
+      "name": "2014 Topps Triple Threads Baseball",
+      "year": 2014,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 1362
+    },
+    {
+      "id": "2014-topps-turkey-red-baseball",
+      "name": "2014 Topps Turkey Red Baseball",
+      "year": 2014,
+      "brand": "Topps Turkey Red",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 134
+    },
+    {
+      "id": "2014-topps-update-series-baseball",
+      "name": "2014 Topps Update Series Baseball",
+      "year": 2014,
+      "brand": "Topps Update Series",
+      "sport": "Baseball",
+      "setCount": 41,
+      "totalCards": 1150
+    },
+    {
+      "id": "2013-bowman-baseball",
+      "name": "2013 Bowman Baseball",
+      "year": 2013,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 868
+    },
+    {
+      "id": "2013-bowman-chrome-baseball",
+      "name": "2013 Bowman Chrome Baseball",
+      "year": 2013,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 523
+    },
+    {
+      "id": "2013-bowman-draft-picks-prospects-baseball",
+      "name": "2013 Bowman Draft Picks & Prospects Baseball",
+      "year": 2013,
+      "brand": "Bowman Draft Picks & Prospects",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 668
+    },
+    {
+      "id": "2013-bowman-inception-baseball",
+      "name": "2013 Bowman Inception Baseball",
+      "year": 2013,
+      "brand": "Bowman Inception",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 250
+    },
+    {
+      "id": "2013-bowman-platinum-baseball",
+      "name": "2013 Bowman Platinum Baseball",
+      "year": 2013,
+      "brand": "Bowman Platinum",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 727
+    },
+    {
+      "id": "2013-bowman-sterling-baseball",
+      "name": "2013 Bowman Sterling Baseball",
+      "year": 2013,
+      "brand": "Bowman Sterling",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 267
+    },
+    {
+      "id": "2013-leaf-memories-baseball",
+      "name": "2013 Leaf Memories Baseball",
+      "year": 2013,
+      "brand": "Leaf Memories",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 101
+    },
+    {
+      "id": "2013-leaf-metal-draft-baseball",
+      "name": "2013 Leaf Metal Draft Baseball",
+      "year": 2013,
+      "brand": "Leaf Metal Draft",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 88,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-leaf-perfect-game-showcase-baseball",
+      "name": "2013 Leaf Perfect Game Showcase Baseball",
+      "year": 2013,
+      "brand": "Leaf Perfect Game Showcase",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 710,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-leaf-power-showcase-baseball",
+      "name": "2013 Leaf Power Showcase Baseball",
+      "year": 2013,
+      "brand": "Leaf Power Showcase",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 233
+    },
+    {
+      "id": "2013-leaf-trinity-baseball",
+      "name": "2013 Leaf Trinity Baseball",
+      "year": 2013,
+      "brand": "Leaf Trinity",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 41
+    },
+    {
+      "id": "2013-panini-america-s-pastime-baseball",
+      "name": "2013 Panini America’s Pastime Baseball",
+      "year": 2013,
+      "brand": "America’s Pastime",
+      "sport": "Baseball",
+      "setCount": 84,
+      "totalCards": 2199
+    },
+    {
+      "id": "2013-panini-cooperstown-baseball",
+      "name": "2013 Panini Cooperstown Baseball",
+      "year": 2013,
+      "brand": "Cooperstown",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 704
+    },
+    {
+      "id": "2013-panini-elite-extra-edition-baseball",
+      "name": "2013 Panini Elite Extra Edition Baseball",
+      "year": 2013,
+      "brand": "Elite Extra Edition",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 705
+    },
+    {
+      "id": "2013-panini-golden-age-baseball",
+      "name": "2013 Panini Golden Age Baseball",
+      "year": 2013,
+      "brand": "Golden Age",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 601
+    },
+    {
+      "id": "2013-panini-hometown-heroes-baseball",
+      "name": "2013 Panini Hometown Heroes Baseball",
+      "year": 2013,
+      "brand": "Hometown Heroes",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 620
+    },
+    {
+      "id": "2013-panini-prizm-baseball",
+      "name": "2013 Panini Prizm Baseball",
+      "year": 2013,
+      "brand": "Prizm",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 500
+    },
+    {
+      "id": "2013-panini-prizm-perennial-draft-picks-baseball",
+      "name": "2013 Panini Prizm Perennial Draft Picks Baseball",
+      "year": 2013,
+      "brand": "Prizm Perennial Draft Picks",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 370
+    },
+    {
+      "id": "2013-panini-select-baseball",
+      "name": "2013 Panini Select Baseball",
+      "year": 2013,
+      "brand": "Select",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 700
+    },
+    {
+      "id": "2013-panini-usa-baseball",
+      "name": "2013 Panini USA Baseball",
+      "year": 2013,
+      "brand": "USA",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 957
+    },
+    {
+      "id": "2013-pinnacle-baseball",
+      "name": "2013 Pinnacle Baseball",
+      "year": 2013,
+      "brand": "Pinnacle",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 987
+    },
+    {
+      "id": "2013-topps-allen-ginter-baseball",
+      "name": "2013 Topps Allen & Ginter Baseball",
+      "year": 2013,
+      "brand": "Topps Allen & Ginter",
+      "sport": "Baseball",
+      "setCount": 43,
+      "totalCards": 1411
+    },
+    {
+      "id": "2013-topps-archives-baseball",
+      "name": "2013 Topps Archives Baseball",
+      "year": 2013,
+      "brand": "Topps Archives",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 636
+    },
+    {
+      "id": "2013-topps-chrome-baseball",
+      "name": "2013 Topps Chrome Baseball",
+      "year": 2013,
+      "brand": "Topps Chrome",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 508
+    },
+    {
+      "id": "2013-topps-chrome-update-series-baseball",
+      "name": "2013 Topps Chrome Update Series Baseball",
+      "year": 2013,
+      "brand": "Topps Chrome Update Series",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 110
+    },
+    {
+      "id": "2013-topps-finest-baseball",
+      "name": "2013 Topps Finest Baseball",
+      "year": 2013,
+      "brand": "Topps Finest",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 341
+    },
+    {
+      "id": "2013-topps-five-star-baseball",
+      "name": "2013 Topps Five Star Baseball",
+      "year": 2013,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 717,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-topps-gypsy-queen-baseball",
+      "name": "2013 Topps Gypsy Queen Baseball",
+      "year": 2013,
+      "brand": "Topps Gypsy Queen",
+      "sport": "Baseball",
+      "setCount": 23,
+      "totalCards": 1439
+    },
+    {
+      "id": "2013-topps-heritage-baseball",
+      "name": "2013 Topps Heritage Baseball",
+      "year": 2013,
+      "brand": "Topps Heritage",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1360
+    },
+    {
+      "id": "2013-topps-heritage-high-number-baseball",
+      "name": "2013 Topps Heritage High Number Baseball",
+      "year": 2013,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 131
+    },
+    {
+      "id": "2013-topps-heritage-minor-league-baseball",
+      "name": "2013 Topps Heritage Minor League Baseball",
+      "year": 2013,
+      "brand": "Topps Heritage Minor League",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 486
+    },
+    {
+      "id": "2013-topps-mini-baseball",
+      "name": "2013 Topps Mini Baseball",
+      "year": 2013,
+      "brand": "Topps Mini",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 787,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-topps-museum-collection-baseball",
+      "name": "2013 Topps Museum Collection Baseball",
+      "year": 2013,
+      "brand": "Topps Museum Collection",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 1519
+    },
+    {
+      "id": "2013-topps-opening-day-baseball",
+      "name": "2013 Topps Opening Day Baseball",
+      "year": 2013,
+      "brand": "Topps Opening Day",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 373
+    },
+    {
+      "id": "2013-topps-pro-debut-baseball",
+      "name": "2013 Topps Pro Debut Baseball",
+      "year": 2013,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 402
+    },
+    {
+      "id": "2013-topps-qubi-baseball",
+      "name": "2013 Topps Qubi Baseball",
+      "year": 2013,
+      "brand": "Topps Qubi",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 75
+    },
+    {
+      "id": "2013-topps-series-1-baseball",
+      "name": "2013 Topps Series 1 Baseball",
+      "year": 2013,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 42,
+      "totalCards": 1328
+    },
+    {
+      "id": "2013-topps-series-2-baseball",
+      "name": "2013 Topps Series 2 Baseball",
+      "year": 2013,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 40,
+      "totalCards": 1186
+    },
+    {
+      "id": "2013-topps-supreme-baseball",
+      "name": "2013 Topps Supreme Baseball",
+      "year": 2013,
+      "brand": "Topps Supreme",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 279
+    },
+    {
+      "id": "2013-topps-tier-one-baseball",
+      "name": "2013 Topps Tier One Baseball",
+      "year": 2013,
+      "brand": "Topps Tier One",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 659
+    },
+    {
+      "id": "2013-topps-tribute-baseball",
+      "name": "2013 Topps Tribute Baseball",
+      "year": 2013,
+      "brand": "Topps Tribute",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 762
+    },
+    {
+      "id": "2013-topps-tribute-world-baseball",
+      "name": "2013 Topps Tribute World Baseball",
+      "year": 2013,
+      "brand": "Topps Tribute World",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 405
+    },
+    {
+      "id": "2013-topps-triple-threads-baseball",
+      "name": "2013 Topps Triple Threads Baseball",
+      "year": 2013,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 1711
+    },
+    {
+      "id": "2013-topps-turkey-red-baseball",
+      "name": "2013 Topps Turkey Red Baseball",
+      "year": 2013,
+      "brand": "Topps Turkey Red",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 143
+    },
+    {
+      "id": "2013-topps-update-series-baseball",
+      "name": "2013 Topps Update Series Baseball",
+      "year": 2013,
+      "brand": "Topps Update Series",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 972
+    },
+    {
+      "id": "2013-triple-play-baseball",
+      "name": "2013 Triple Play Baseball",
+      "year": 2013,
+      "brand": "Triple Play",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 221
+    },
+    {
+      "id": "2012-bowman-baseball",
+      "name": "2012 Bowman Baseball",
+      "year": 2012,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 477
+    },
+    {
+      "id": "2012-bowman-chrome-baseball",
+      "name": "2012 Bowman Chrome Baseball",
+      "year": 2012,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 692
+    },
+    {
+      "id": "2012-bowman-draft-picks-and-prospects-baseball",
+      "name": "2012 Bowman Draft Picks and Prospects Baseball",
+      "year": 2012,
+      "brand": "Bowman Draft Picks and Prospects",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 530
+    },
+    {
+      "id": "2012-bowman-platinum-baseball",
+      "name": "2012 Bowman Platinum Baseball",
+      "year": 2012,
+      "brand": "Bowman Platinum",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 543
+    },
+    {
+      "id": "2012-bowman-sterling-baseball",
+      "name": "2012 Bowman Sterling Baseball",
+      "year": 2012,
+      "brand": "Bowman Sterling",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 286
+    },
+    {
+      "id": "2012-leaf-memories-baseball",
+      "name": "2012 Leaf Memories Baseball",
+      "year": 2012,
+      "brand": "Leaf Memories",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 625,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2012-leaf-metal-draft-baseball",
+      "name": "2012 Leaf Metal Draft Baseball",
+      "year": 2012,
+      "brand": "Leaf Metal Draft",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 95
+    },
+    {
+      "id": "2012-leaf-ultimate-draft-baseball",
+      "name": "2012 Leaf Ultimate Draft Baseball",
+      "year": 2012,
+      "brand": "Leaf Ultimate Draft",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 156
+    },
+    {
+      "id": "2012-leaf-valiant-baseball",
+      "name": "2012 Leaf Valiant Baseball",
+      "year": 2012,
+      "brand": "Leaf Valiant",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 95
+    },
+    {
+      "id": "2012-panini-cooperstown-baseball",
+      "name": "2012 Panini Cooperstown Baseball",
+      "year": 2012,
+      "brand": "Cooperstown",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 608
+    },
+    {
+      "id": "2012-panini-elite-extra-edition-baseball",
+      "name": "2012 Panini Elite Extra Edition Baseball",
+      "year": 2012,
+      "brand": "Elite Extra Edition",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 972
+    },
+    {
+      "id": "2012-panini-golden-age-baseball",
+      "name": "2012 Panini Golden Age Baseball",
+      "year": 2012,
+      "brand": "Golden Age",
+      "sport": "Baseball",
+      "setCount": 14,
+      "totalCards": 598
+    },
+    {
+      "id": "2012-panini-national-treasures-baseball",
+      "name": "2012 Panini National Treasures Baseball",
+      "year": 2012,
+      "brand": "National Treasures",
+      "sport": "Baseball",
+      "setCount": 84,
+      "totalCards": 2431
+    },
+    {
+      "id": "2012-panini-prizm-baseball",
+      "name": "2012 Panini Prizm Baseball",
+      "year": 2012,
+      "brand": "Prizm",
+      "sport": "Baseball",
+      "setCount": 12,
+      "totalCards": 388
+    },
+    {
+      "id": "2012-panini-signature-series-baseball",
+      "name": "2012 Panini Signature Series Baseball",
+      "year": 2012,
+      "brand": "Signature Series",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 813
+    },
+    {
+      "id": "2012-panini-usa-baseball",
+      "name": "2012 Panini USA Baseball",
+      "year": 2012,
+      "brand": "USA",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 403
+    },
+    {
+      "id": "2012-playoff-prime-cuts-baseball",
+      "name": "2012 Playoff Prime Cuts Baseball",
+      "year": 2012,
+      "brand": "Playoff Prime Cuts",
+      "sport": "Baseball",
+      "setCount": 81,
+      "totalCards": 2781
+    },
+    {
+      "id": "2012-sp-signature-edition-baseball",
+      "name": "2012 SP Signature Edition Baseball",
+      "year": 2012,
+      "brand": "SP Signature Edition",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 803
+    },
+    {
+      "id": "2012-topps-allen-ginter-baseball",
+      "name": "2012 Topps Allen & Ginter Baseball",
+      "year": 2012,
+      "brand": "Topps Allen & Ginter",
+      "sport": "Baseball",
+      "setCount": 34,
+      "totalCards": 1274
+    },
+    {
+      "id": "2012-topps-archives-baseball",
+      "name": "2012 Topps Archives Baseball",
+      "year": 2012,
+      "brand": "Topps Archives",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 545
+    },
+    {
+      "id": "2012-topps-baseball",
+      "name": "2012 Topps Baseball",
+      "year": 2012,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 661
+    },
+    {
+      "id": "2012-topps-chrome-baseball",
+      "name": "2012 Topps Chrome Baseball",
+      "year": 2012,
+      "brand": "Topps Chrome",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 410,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2012-topps-finest-baseball",
+      "name": "2012 Topps Finest Baseball",
+      "year": 2012,
+      "brand": "Topps Finest",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 278
+    },
+    {
+      "id": "2012-topps-five-star-baseball",
+      "name": "2012 Topps Five Star Baseball",
+      "year": 2012,
+      "brand": "Topps Five Star",
+      "sport": "Baseball",
+      "setCount": 28,
+      "totalCards": 745
+    },
+    {
+      "id": "2012-topps-gypsy-queen-baseball",
+      "name": "2012 Topps Gypsy Queen Baseball",
+      "year": 2012,
+      "brand": "Topps Gypsy Queen",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 1225
+    },
+    {
+      "id": "2012-topps-heritage-baseball",
+      "name": "2012 Topps Heritage Baseball",
+      "year": 2012,
+      "brand": "Topps Heritage",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 864
+    },
+    {
+      "id": "2012-topps-heritage-high-number-baseball",
+      "name": "2012 Topps Heritage High Number Baseball",
+      "year": 2012,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 121
+    },
+    {
+      "id": "2012-topps-heritage-minor-league-baseball",
+      "name": "2012 Topps Heritage Minor League Baseball",
+      "year": 2012,
+      "brand": "Topps Heritage Minor League",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 450
+    },
+    {
+      "id": "2012-topps-mini-baseball",
+      "name": "2012 Topps Mini Baseball",
+      "year": 2012,
+      "brand": "Topps Mini",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 792
+    },
+    {
+      "id": "2012-topps-museum-collection-baseball",
+      "name": "2012 Topps Museum Collection Baseball",
+      "year": 2012,
+      "brand": "Topps Museum Collection",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 744
+    },
+    {
+      "id": "2012-topps-pro-debut-baseball",
+      "name": "2012 Topps Pro Debut Baseball",
+      "year": 2012,
+      "brand": "Topps Pro Debut",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 485
+    },
+    {
+      "id": "2012-topps-series-1-baseball",
+      "name": "2012 Topps Series 1 Baseball",
+      "year": 2012,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 40,
+      "totalCards": 1269
+    },
+    {
+      "id": "2012-topps-series-2-baseball",
+      "name": "2012 Topps Series 2 Baseball",
+      "year": 2012,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 37,
+      "totalCards": 1278
+    },
+    {
+      "id": "2012-topps-tier-one-baseball",
+      "name": "2012 Topps Tier One Baseball",
+      "year": 2012,
+      "brand": "Topps Tier One",
+      "sport": "Baseball",
+      "setCount": 18,
+      "totalCards": 748
+    },
+    {
+      "id": "2012-topps-tribute-baseball",
+      "name": "2012 Topps Tribute Baseball",
+      "year": 2012,
+      "brand": "Topps Tribute",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 574
+    },
+    {
+      "id": "2012-topps-triple-threads-baseball",
+      "name": "2012 Topps Triple Threads Baseball",
+      "year": 2012,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 1248
+    },
+    {
+      "id": "2012-topps-update-series-baseball",
+      "name": "2012 Topps Update Series Baseball",
+      "year": 2012,
+      "brand": "Topps Update Series",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 990
+    },
+    {
+      "id": "2012-triple-play-baseball",
+      "name": "2012 Triple Play Baseball",
+      "year": 2012,
+      "brand": "Triple Play",
+      "sport": "Baseball",
+      "setCount": 10,
+      "totalCards": 340
+    },
+    {
+      "id": "2011-bowman-baseball",
+      "name": "2011 Bowman Baseball",
+      "year": 2011,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 907
+    },
+    {
+      "id": "2011-panini-limited-baseball",
+      "name": "2011 Panini Limited Baseball",
+      "year": 2011,
+      "brand": "Limited",
+      "sport": "Baseball",
+      "setCount": 35,
+      "totalCards": 769
+    },
+    {
+      "id": "2011-playoff-prime-cuts-baseball",
+      "name": "2011 Playoff Prime Cuts Baseball",
+      "year": 2011,
+      "brand": "Playoff Prime Cuts",
+      "sport": "Baseball",
+      "setCount": 83,
+      "totalCards": 1738
+    },
+    {
+      "id": "2011-topps-lineage-baseball",
+      "name": "2011 Topps Lineage Baseball",
+      "year": 2011,
+      "brand": "Topps Lineage",
+      "sport": "Baseball",
+      "setCount": 11,
+      "totalCards": 582
+    },
+    {
+      "id": "2011-topps-series-1-baseball",
+      "name": "2011 Topps Series 1 Baseball",
+      "year": 2011,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 38,
+      "totalCards": 1510,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2011-topps-series-2-baseball",
+      "name": "2011 Topps Series 2 Baseball",
+      "year": 2011,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 30,
+      "totalCards": 1159,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2010-bowman-baseball",
+      "name": "2010 Bowman Baseball",
+      "year": 2010,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 9,
+      "totalCards": 750
+    },
+    {
+      "id": "2010-topps-finest-baseball",
+      "name": "2010 Topps Finest Baseball",
+      "year": 2010,
+      "brand": "Topps Finest",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 229
+    },
+    {
+      "id": "2010-topps-series-1-baseball",
+      "name": "2010 Topps Series 1 Baseball",
+      "year": 2010,
+      "brand": "Topps Series 1",
+      "sport": "Baseball",
+      "setCount": 33,
+      "totalCards": 1364,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2010-topps-series-2-baseball",
+      "name": "2010 Topps Series 2 Baseball",
+      "year": 2010,
+      "brand": "Topps Series 2",
+      "sport": "Baseball",
+      "setCount": 27,
+      "totalCards": 1206
+    },
+    {
+      "id": "2010-topps-triple-threads-baseball",
+      "name": "2010 Topps Triple Threads Baseball",
+      "year": 2010,
+      "brand": "Topps Triple Threads",
+      "sport": "Baseball",
+      "setCount": 15,
+      "totalCards": 717
+    },
+    {
+      "id": "2010-topps-update-baseball",
+      "name": "2010 Topps Update Baseball",
+      "year": 2010,
+      "brand": "Topps Update",
+      "sport": "Baseball",
+      "setCount": 29,
+      "totalCards": 1248,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2008-bowman-chrome-baseball",
+      "name": "2008 Bowman Chrome Baseball",
+      "year": 2008,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 374
+    },
+    {
+      "id": "2008-bowman-draft-picks-prospects-baseball",
+      "name": "2008 Bowman Draft Picks & Prospects Baseball",
+      "year": 2008,
+      "brand": "Bowman Draft Picks & Prospects",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 215
+    },
+    {
+      "id": "2008-topps-baseball",
+      "name": "2008 Topps Baseball",
+      "year": 2008,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 37,
+      "totalCards": 1766
+    },
+    {
+      "id": "2008-topps-heritage-high-number-baseball",
+      "name": "2008 Topps Heritage High Number Baseball",
+      "year": 2008,
+      "brand": "Topps Heritage High Number",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 452
+    },
+    {
+      "id": "2008-topps-updates-highlights-baseball",
+      "name": "2008 Topps Updates & Highlights Baseball",
+      "year": 2008,
+      "brand": "Topps Updates & Highlights",
+      "sport": "Baseball",
+      "setCount": 13,
+      "totalCards": 696
+    },
+    {
+      "id": "2007-bowman-draft-picks-prospects-baseball",
+      "name": "2007 Bowman Draft Picks & Prospects Baseball",
+      "year": 2007,
+      "brand": "Bowman Draft Picks & Prospects",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 306
+    },
+    {
+      "id": "2007-topps-baseball",
+      "name": "2007 Topps Baseball",
+      "year": 2007,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 32,
+      "totalCards": 1905
+    },
+    {
+      "id": "2007-topps-updates-highlights-baseball",
+      "name": "2007 Topps Updates & Highlights Baseball",
+      "year": 2007,
+      "brand": "Topps Updates & Highlights",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 272
+    },
+    {
+      "id": "2006-bowman-draft-picks-and-prospects-baseball",
+      "name": "2006 Bowman Draft Picks and Prospects Baseball",
+      "year": 2006,
+      "brand": "Bowman Draft Picks and Prospects",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 215
+    },
+    {
+      "id": "2006-topps-baseball",
+      "name": "2006 Topps Baseball",
+      "year": 2006,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 966
+    },
+    {
+      "id": "2006-topps-updates-highlights-baseball",
+      "name": "2006 Topps Updates & Highlights Baseball",
+      "year": 2006,
+      "brand": "Topps Updates & Highlights",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 363
+    },
+    {
+      "id": "2005-bowman-draft-picks-prospects-baseball",
+      "name": "2005 Bowman Draft Picks & Prospects Baseball",
+      "year": 2005,
+      "brand": "Bowman Draft Picks & Prospects",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 224
+    },
+    {
+      "id": "2005-topps-baseball",
+      "name": "2005 Topps Baseball",
+      "year": 2005,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 21,
+      "totalCards": 948
+    },
+    {
+      "id": "2005-topps-turkey-red-baseball",
+      "name": "2005 Topps Turkey Red Baseball",
+      "year": 2005,
+      "brand": "Topps Turkey Red",
+      "sport": "Baseball",
+      "setCount": 7,
+      "totalCards": 425,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2005-topps-updates-and-highlights-baseball",
+      "name": "2005 Topps Updates and Highlights Baseball",
+      "year": 2005,
+      "brand": "Topps Updates and Highlights",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 396
+    },
+    {
+      "id": "2004-bowman-draft-picks-prospects-baseball",
+      "name": "2004 Bowman Draft Picks & Prospects Baseball",
+      "year": 2004,
+      "brand": "Bowman Draft Picks & Prospects",
+      "sport": "Baseball",
+      "setCount": 4,
+      "totalCards": 211
+    },
+    {
+      "id": "2004-topps-baseball",
+      "name": "2004 Topps Baseball",
+      "year": 2004,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 17,
+      "totalCards": 991
+    },
+    {
+      "id": "2004-topps-traded-rookies-baseball",
+      "name": "2004 Topps Traded & Rookies Baseball",
+      "year": 2004,
+      "brand": "Topps Traded & Rookies",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 91
+    },
+    {
+      "id": "2003-topps-baseball",
+      "name": "2003 Topps Baseball",
+      "year": 2003,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 19,
+      "totalCards": 1126
+    },
+    {
+      "id": "2003-topps-traded-rookies-baseball",
+      "name": "2003 Topps Traded & Rookies Baseball",
+      "year": 2003,
+      "brand": "Topps Traded & Rookies",
+      "sport": "Baseball",
+      "setCount": 1,
+      "totalCards": 275
+    },
+    {
+      "id": "2003-topps-tribute-world-series-edition-baseball",
+      "name": "2003 Topps Tribute World Series Edition Baseball",
+      "year": 2003,
+      "brand": "Topps Tribute World Series Edition",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 253
+    },
+    {
+      "id": "2002-bowman-chrome-baseball",
+      "name": "2002 Bowman Chrome Baseball",
+      "year": 2002,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 427
+    },
+    {
+      "id": "2002-topps-baseball",
+      "name": "2002 Topps Baseball",
+      "year": 2002,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 26,
+      "totalCards": 1259
+    },
+    {
+      "id": "2002-topps-traded-and-rookies-baseball",
+      "name": "2002 Topps Traded and Rookies Baseball",
+      "year": 2002,
+      "brand": "Topps Traded and Rookies",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 396
+    },
+    {
+      "id": "2001-bowman-baseball",
+      "name": "2001 Bowman Baseball",
+      "year": 2001,
+      "brand": "Bowman",
+      "sport": "Baseball",
+      "setCount": 8,
+      "totalCards": 538
+    },
+    {
+      "id": "2001-bowman-chrome-baseball",
+      "name": "2001 Bowman Chrome Baseball",
+      "year": 2001,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 413
+    },
+    {
+      "id": "2001-spx-baseball",
+      "name": "2001 SPx Baseball",
+      "year": 2001,
+      "brand": "SPx",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 256,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2001-topps-baseball",
+      "name": "2001 Topps Baseball",
+      "year": 2001,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 20,
+      "totalCards": 1272,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2001-topps-traded-and-rookies-baseball",
+      "name": "2001 Topps Traded and Rookies Baseball",
+      "year": 2001,
+      "brand": "Topps Traded and Rookies",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 566
+    },
+    {
+      "id": "2000-bowman-chrome-baseball",
+      "name": "2000 Bowman Chrome Baseball",
+      "year": 2000,
+      "brand": "Bowman Chrome",
+      "sport": "Baseball",
+      "setCount": 6,
+      "totalCards": 498
+    },
+    {
+      "id": "2000-fleer-greats-of-the-game-baseball",
+      "name": "2000 Fleer Greats of the Game Baseball",
+      "year": 2000,
+      "brand": "Fleer Greats of the Game",
+      "sport": "Baseball",
+      "setCount": 5,
+      "totalCards": 141
+    },
+    {
+      "id": "2000-topps-baseball",
+      "name": "2000 Topps Baseball",
+      "year": 2000,
+      "brand": "Topps",
+      "sport": "Baseball",
+      "setCount": 16,
+      "totalCards": 770
+    },
+    {
+      "id": "2000-topps-traded-and-rookies-baseball",
+      "name": "2000 Topps Traded and Rookies Baseball",
+      "year": 2000,
+      "brand": "Topps Traded and Rookies",
+      "sport": "Baseball",
+      "setCount": 2,
+      "totalCards": 214,
+      "note": "Partial checklist: a few sets are missing some cards."
     }
   ]
 }

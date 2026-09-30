@@ -283,39 +283,42 @@ const INDEX_MIN_PRODUCT_CARDS = 50;
 
 // One index for every sport, capped at what football alone had.
 //
-// Basketball and baseball brought ~4,800 indexable pages of their own, which
-// would have near doubled the index in one deploy — the scaled-content shape
-// the thresholds above exist to avoid. So the thresholds are floors now, and
-// the sitemap is a budget: every hub, year hub and team page is in, then every
-// product checklist over its floor (the "2023-24 Prizm basketball checklist"
-// page is the one a search lands on), and the rest of the budget goes to the
-// strongest set and player pages across all sports. Football's weakest set
-// and player pages are what make room.
+// Basketball and baseball brought thousands of indexable pages of their own,
+// which would have near doubled the index in one deploy — the scaled-content
+// shape the thresholds above exist to avoid. So the thresholds are floors now,
+// and the sitemap is a budget, split in two pools:
 //
-// "Strongest" is card count against the floor for that kind of page (a player
-// with 150 cards scores 3, as does a set with 300). That is a proxy: the real
-// signal is Search Console clicks, and there is no export to rank on yet.
-// FOOTBALL_WEIGHT counts a football page double, because it carries prices,
-// ads and ranking history the other sports do not have yet. At 1, football
-// would lose 44% of its index; at 2 it keeps about two thirds.
-// New checklists no longer grow the index — they compete for it.
+//   football        FOOTBALL_SHARE of the budget. Its pages carry prices, ads
+//                   and ranking history the other sports do not have yet.
+//   everything else the rest, basketball and baseball competing for it.
+//
+// A fixed split rather than one open ranking so that adding checklists to one
+// sport (2000-2017 basketball and baseball arrived after the budget did) takes
+// room from that pool, not from football. Within a pool every hub, year hub
+// and team page is in, and the rest goes to the strongest product, set and
+// player pages. "Strongest" is card count against the floor for that kind of
+// page (a player with 150 cards scores 3, as does a set with 300). That is a
+// proxy: the real signal is Search Console clicks, and there is no export to
+// rank on yet.
 const INDEX_BUDGET = 5756;
-const FOOTBALL_WEIGHT = 2;
+const FOOTBALL_SHARE = 2 / 3;
 const INDEX_FLOOR = { product: INDEX_MIN_PRODUCT_CARDS, subset: INDEX_MIN_SUBSET_CARDS, player: INDEX_MIN_PLAYER_CARDS };
 let INDEXED = new Set();   // `${sport}:${kind}:${key}`, filled by planIndex()
 const isIndexed = (kind, key) => INDEXED.has(`${S.id}:${kind}:${key}`);
 
 function planIndex(sports) {
-  let fixed = 0;
-  const cands = [];
+  const footballBudget = Math.floor(INDEX_BUDGET * FOOTBALL_SHARE);
+  const pools = {
+    football: { budget: footballBudget, fixed: 0, cands: [] },
+    other: { budget: INDEX_BUDGET - footballBudget, fixed: 0, cands: [] },
+  };
   for (const { cfg, ctx } of sports) {
+    const pool = pools[cfg.id === 'football' ? 'football' : 'other'];
     // Hubs (sets, players, teams), year hubs and teams; football also has the
     // home page and about, methodology and contact. Must match buildSitemap.
-    fixed += 3 + ctx.years.length + ctx.teams.length + (cfg.id === 'football' ? 4 : 0);
+    pool.fixed += 3 + ctx.years.length + ctx.teams.length + (cfg.id === 'football' ? 4 : 0);
     const add = (kind, key, cards) => {
-      if (cards < INDEX_FLOOR[kind]) return;
-      cands.push({ id: `${cfg.id}:${kind}:${key}`, sport: cfg.id, kind,
-        score: (cards / INDEX_FLOOR[kind]) * (cfg.id === 'football' ? FOOTBALL_WEIGHT : 1) });
+      if (cards >= INDEX_FLOOR[kind]) pool.cands.push({ id: `${cfg.id}:${kind}:${key}`, sport: cfg.id, kind, score: cards / INDEX_FLOOR[kind] });
     };
     for (const cl of ctx.checklists) {
       add('product', cl.id, cl.cardCount);
@@ -323,14 +326,15 @@ function planIndex(sports) {
     }
     for (const p of ctx.eligible) add('player', p.slug, p.cards.length);
   }
-  // Stable order for equal scores, so a rebuild picks the same pages.
-  cands.sort((a, b) => (b.kind === 'product') - (a.kind === 'product') || b.score - a.score
-    || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const room = Math.max(0, INDEX_BUDGET - fixed);
-  INDEXED = new Set(cands.slice(0, room).map(c => c.id));
+  INDEXED = new Set();
   const tally = {};
-  for (const c of cands.slice(0, room)) tally[`${c.sport} ${c.kind}`] = (tally[`${c.sport} ${c.kind}`] || 0) + 1;
-  console.log(`index budget: ${INDEX_BUDGET} URLs — ${fixed} hubs and teams, ${Math.min(room, cands.length)} of ${cands.length} pages over the floors`);
+  for (const [name, pool] of Object.entries(pools)) {
+    // Stable order for equal scores, so a rebuild picks the same pages.
+    pool.cands.sort((a, b) => b.score - a.score || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const picked = pool.cands.slice(0, Math.max(0, pool.budget - pool.fixed));
+    for (const c of picked) { INDEXED.add(c.id); tally[`${c.sport} ${c.kind}`] = (tally[`${c.sport} ${c.kind}`] || 0) + 1; }
+    console.log(`index budget, ${name}: ${pool.budget} URLs — ${pool.fixed} hubs and teams, ${picked.length} of ${pool.cands.length} pages over the floors`);
+  }
   console.log('  ' + Object.entries(tally).map(([k, n]) => `${k}: ${n}`).join(', '));
 }
 

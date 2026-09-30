@@ -3179,6 +3179,1712 @@
       "setCount": 22,
       "totalCards": 891,
       "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-18-donruss-basketball",
+      "name": "2017-18 Donruss Basketball",
+      "year": 2017,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 1016
+    },
+    {
+      "id": "2017-18-donruss-optic-basketball",
+      "name": "2017-18 Donruss Optic Basketball",
+      "year": 2017,
+      "brand": "Donruss Optic",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 749
+    },
+    {
+      "id": "2017-18-panini-absolute-basketball",
+      "name": "2017-18 Panini Absolute Basketball",
+      "year": 2017,
+      "brand": "Absolute",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 587,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-18-panini-ascension-basketball",
+      "name": "2017-18 Panini Ascension Basketball",
+      "year": 2017,
+      "brand": "Ascension",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 508
+    },
+    {
+      "id": "2017-18-panini-chronicles-basketball",
+      "name": "2017-18 Panini Chronicles Basketball",
+      "year": 2017,
+      "brand": "Chronicles",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 632
+    },
+    {
+      "id": "2017-18-panini-contenders-basketball",
+      "name": "2017-18 Panini Contenders Basketball",
+      "year": 2017,
+      "brand": "Contenders",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 727
+    },
+    {
+      "id": "2017-18-panini-contenders-draft-picks-basketball",
+      "name": "2017-18 Panini Contenders Draft Picks Basketball",
+      "year": 2017,
+      "brand": "Contenders Draft Picks",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 305
+    },
+    {
+      "id": "2017-18-panini-cornerstones-basketball",
+      "name": "2017-18 Panini Cornerstones Basketball",
+      "year": 2017,
+      "brand": "Cornerstones",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 574
+    },
+    {
+      "id": "2017-18-panini-court-kings-basketball",
+      "name": "2017-18 Panini Court Kings Basketball",
+      "year": 2017,
+      "brand": "Court Kings",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 879
+    },
+    {
+      "id": "2017-18-panini-crown-royale-basketball",
+      "name": "2017-18 Panini Crown Royale Basketball",
+      "year": 2017,
+      "brand": "Crown Royale",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 797
+    },
+    {
+      "id": "2017-18-panini-dominion-basketball",
+      "name": "2017-18 Panini Dominion Basketball",
+      "year": 2017,
+      "brand": "Dominion",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 702
+    },
+    {
+      "id": "2017-18-panini-encased-basketball",
+      "name": "2017-18 Panini Encased Basketball",
+      "year": 2017,
+      "brand": "Encased",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 588
+    },
+    {
+      "id": "2017-18-panini-essentials-basketball",
+      "name": "2017-18 Panini Essentials Basketball",
+      "year": 2017,
+      "brand": "Essentials",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 793
+    },
+    {
+      "id": "2017-18-panini-flawless-basketball",
+      "name": "2017-18 Panini Flawless Basketball",
+      "year": 2017,
+      "brand": "Flawless",
+      "sport": "Basketball",
+      "setCount": 41,
+      "totalCards": 1686
+    },
+    {
+      "id": "2017-18-panini-flawless-collegiate-basketball",
+      "name": "2017-18 Panini Flawless Collegiate Basketball",
+      "year": 2017,
+      "brand": "Flawless Collegiate",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 153
+    },
+    {
+      "id": "2017-18-panini-immaculate-collection-basketball",
+      "name": "2017-18 Panini Immaculate Collection Basketball",
+      "year": 2017,
+      "brand": "Immaculate Collection",
+      "sport": "Basketball",
+      "setCount": 47,
+      "totalCards": 2168,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-18-panini-impeccable-basketball",
+      "name": "2017-18 Panini Impeccable Basketball",
+      "year": 2017,
+      "brand": "Impeccable",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 646
+    },
+    {
+      "id": "2017-18-panini-instant-nba-basketball",
+      "name": "2017-18 Panini Instant NBA Basketball",
+      "year": 2017,
+      "brand": "Instant NBA",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 139
+    },
+    {
+      "id": "2017-18-panini-kobe-eminence-basketball",
+      "name": "2017-18 Panini Kobe Eminence Basketball",
+      "year": 2017,
+      "brand": "Kobe Eminence",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 334
+    },
+    {
+      "id": "2017-18-panini-mosaic-prizm-basketball",
+      "name": "2017-18 Panini Mosaic Prizm Basketball",
+      "year": 2017,
+      "brand": "Mosaic Prizm",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 133
+    },
+    {
+      "id": "2017-18-panini-national-treasures-basketball",
+      "name": "2017-18 Panini National Treasures Basketball",
+      "year": 2017,
+      "brand": "National Treasures",
+      "sport": "Basketball",
+      "setCount": 48,
+      "totalCards": 1759
+    },
+    {
+      "id": "2017-18-panini-nba-hoops-basketball",
+      "name": "2017-18 Panini NBA Hoops Basketball",
+      "year": 2017,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 1148,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-18-panini-noir-basketball",
+      "name": "2017-18 Panini Noir Basketball",
+      "year": 2017,
+      "brand": "Noir",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 1192
+    },
+    {
+      "id": "2017-18-panini-opulence-basketball",
+      "name": "2017-18 Panini Opulence Basketball",
+      "year": 2017,
+      "brand": "Opulence",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 663
+    },
+    {
+      "id": "2017-18-panini-prestige-basketball",
+      "name": "2017-18 Panini Prestige Basketball",
+      "year": 2017,
+      "brand": "Prestige",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 550
+    },
+    {
+      "id": "2017-18-panini-prizm-basketball",
+      "name": "2017-18 Panini Prizm Basketball",
+      "year": 2017,
+      "brand": "Prizm",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 1219
+    },
+    {
+      "id": "2017-18-panini-revolution-basketball",
+      "name": "2017-18 Panini Revolution Basketball",
+      "year": 2017,
+      "brand": "Revolution",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 244
+    },
+    {
+      "id": "2017-18-panini-select-basketball",
+      "name": "2017-18 Panini Select Basketball",
+      "year": 2017,
+      "brand": "Select",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 686
+    },
+    {
+      "id": "2017-18-panini-spectra-basketball",
+      "name": "2017-18 Panini Spectra Basketball",
+      "year": 2017,
+      "brand": "Spectra",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 527
+    },
+    {
+      "id": "2017-18-panini-status-basketball",
+      "name": "2017-18 Panini Status Basketball",
+      "year": 2017,
+      "brand": "Status",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 913,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2017-18-panini-threads-basketball",
+      "name": "2017-18 Panini Threads Basketball",
+      "year": 2017,
+      "brand": "Threads",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 150
+    },
+    {
+      "id": "2017-18-panini-totally-certified-basketball",
+      "name": "2017-18 Panini Totally Certified Basketball",
+      "year": 2017,
+      "brand": "Totally Certified",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 541
+    },
+    {
+      "id": "2017-18-panini-vanguard-basketball",
+      "name": "2017-18 Panini Vanguard Basketball",
+      "year": 2017,
+      "brand": "Vanguard",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 475
+    },
+    {
+      "id": "2017-18-upper-deck-euroleague-basketball",
+      "name": "2017-18 Upper Deck Euroleague Basketball",
+      "year": 2017,
+      "brand": "Upper Deck Euroleague",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 168
+    },
+    {
+      "id": "2017-rittenhouse-wnba-basketball",
+      "name": "2017 Rittenhouse WNBA Basketball",
+      "year": 2017,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 110
+    },
+    {
+      "id": "2016-17-donruss-basketball",
+      "name": "2016-17 Donruss Basketball",
+      "year": 2016,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 1088
+    },
+    {
+      "id": "2016-17-donruss-optic-basketball",
+      "name": "2016-17 Donruss Optic Basketball",
+      "year": 2016,
+      "brand": "Donruss Optic",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 596
+    },
+    {
+      "id": "2016-17-panini-absolute-basketball",
+      "name": "2016-17 Panini Absolute Basketball",
+      "year": 2016,
+      "brand": "Absolute",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 787
+    },
+    {
+      "id": "2016-17-panini-aficionado-basketball",
+      "name": "2016-17 Panini Aficionado Basketball",
+      "year": 2016,
+      "brand": "Aficionado",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 664
+    },
+    {
+      "id": "2016-17-panini-complete-basketball",
+      "name": "2016-17 Panini Complete Basketball",
+      "year": 2016,
+      "brand": "Complete",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 500
+    },
+    {
+      "id": "2016-17-panini-contenders-draft-picks-basketball",
+      "name": "2016-17 Panini Contenders Draft Picks Basketball",
+      "year": 2016,
+      "brand": "Contenders Draft Picks",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 365
+    },
+    {
+      "id": "2016-17-panini-court-kings-basketball",
+      "name": "2016-17 Panini Court Kings Basketball",
+      "year": 2016,
+      "brand": "Court Kings",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 758
+    },
+    {
+      "id": "2016-17-panini-excalibur-basketball",
+      "name": "2016-17 Panini Excalibur Basketball",
+      "year": 2016,
+      "brand": "Excalibur",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 798
+    },
+    {
+      "id": "2016-17-panini-flawless-basketball",
+      "name": "2016-17 Panini Flawless Basketball",
+      "year": 2016,
+      "brand": "Flawless",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 1422
+    },
+    {
+      "id": "2016-17-panini-gold-standard-basketball",
+      "name": "2016-17 Panini Gold Standard Basketball",
+      "year": 2016,
+      "brand": "Gold Standard",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 1046,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2016-17-panini-grand-reserve-basketball",
+      "name": "2016-17 Panini Grand Reserve Basketball",
+      "year": 2016,
+      "brand": "Grand Reserve",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 662
+    },
+    {
+      "id": "2016-17-panini-immaculate-collection-basketball",
+      "name": "2016-17 Panini Immaculate Collection Basketball",
+      "year": 2016,
+      "brand": "Immaculate Collection",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1476
+    },
+    {
+      "id": "2016-17-panini-impeccable-basketball",
+      "name": "2016-17 Panini Impeccable Basketball",
+      "year": 2016,
+      "brand": "Impeccable",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 439
+    },
+    {
+      "id": "2016-17-panini-limited-basketball",
+      "name": "2016-17 Panini Limited Basketball",
+      "year": 2016,
+      "brand": "Limited",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 602
+    },
+    {
+      "id": "2016-17-panini-mosaic-prizm-basketball",
+      "name": "2016-17 Panini Mosaic Prizm Basketball",
+      "year": 2016,
+      "brand": "Mosaic Prizm",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 127
+    },
+    {
+      "id": "2016-17-panini-national-treasures-basketball",
+      "name": "2016-17 Panini National Treasures Basketball",
+      "year": 2016,
+      "brand": "National Treasures",
+      "sport": "Basketball",
+      "setCount": 39,
+      "totalCards": 1582
+    },
+    {
+      "id": "2016-17-panini-nba-hoops-basketball",
+      "name": "2016-17 Panini NBA Hoops Basketball",
+      "year": 2016,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 1011
+    },
+    {
+      "id": "2016-17-panini-noir-basketball",
+      "name": "2016-17 Panini Noir Basketball",
+      "year": 2016,
+      "brand": "Noir",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 846
+    },
+    {
+      "id": "2016-17-panini-preferred-basketball",
+      "name": "2016-17 Panini Preferred Basketball",
+      "year": 2016,
+      "brand": "Preferred",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 505
+    },
+    {
+      "id": "2016-17-panini-prestige-basketball",
+      "name": "2016-17 Panini Prestige Basketball",
+      "year": 2016,
+      "brand": "Prestige",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 950
+    },
+    {
+      "id": "2016-17-panini-prizm-basketball",
+      "name": "2016-17 Panini Prizm Basketball",
+      "year": 2016,
+      "brand": "Prizm",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 693
+    },
+    {
+      "id": "2016-17-panini-revolution-basketball",
+      "name": "2016-17 Panini Revolution Basketball",
+      "year": 2016,
+      "brand": "Revolution",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 292
+    },
+    {
+      "id": "2016-17-panini-select-basketball",
+      "name": "2016-17 Panini Select Basketball",
+      "year": 2016,
+      "brand": "Select",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 666
+    },
+    {
+      "id": "2016-17-panini-spectra-basketball",
+      "name": "2016-17 Panini Spectra Basketball",
+      "year": 2016,
+      "brand": "Spectra",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 652
+    },
+    {
+      "id": "2016-17-panini-studio-basketball",
+      "name": "2016-17 Panini Studio Basketball",
+      "year": 2016,
+      "brand": "Studio",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 620
+    },
+    {
+      "id": "2016-17-panini-threads-basketball",
+      "name": "2016-17 Panini Threads Basketball",
+      "year": 2016,
+      "brand": "Threads",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 940
+    },
+    {
+      "id": "2016-17-panini-totally-certified-basketball",
+      "name": "2016-17 Panini Totally Certified Basketball",
+      "year": 2016,
+      "brand": "Totally Certified",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 499
+    },
+    {
+      "id": "2016-17-upper-deck-euroleague-basketball",
+      "name": "2016-17 Upper Deck Euroleague Basketball",
+      "year": 2016,
+      "brand": "Upper Deck Euroleague",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 141
+    },
+    {
+      "id": "2016-leaf-greatest-hits-basketball",
+      "name": "2016 Leaf Greatest Hits Basketball",
+      "year": 2016,
+      "brand": "Leaf Greatest Hits",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 18
+    },
+    {
+      "id": "2016-rittenhouse-wnba-basketball",
+      "name": "2016 Rittenhouse WNBA Basketball",
+      "year": 2016,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 110
+    },
+    {
+      "id": "2015-16-donruss-basketball",
+      "name": "2015-16 Donruss Basketball",
+      "year": 2015,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1062
+    },
+    {
+      "id": "2015-16-panini-absolute-basketball",
+      "name": "2015-16 Panini Absolute Basketball",
+      "year": 2015,
+      "brand": "Absolute",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 718
+    },
+    {
+      "id": "2015-16-panini-black-gold-basketball",
+      "name": "2015-16 Panini Black Gold Basketball",
+      "year": 2015,
+      "brand": "Black Gold",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 536
+    },
+    {
+      "id": "2015-16-panini-clear-vision-basketball",
+      "name": "2015-16 Panini Clear Vision Basketball",
+      "year": 2015,
+      "brand": "Clear Vision",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 264
+    },
+    {
+      "id": "2015-16-panini-complete-basketball",
+      "name": "2015-16 Panini Complete Basketball",
+      "year": 2015,
+      "brand": "Complete",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 529,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2015-16-panini-contenders-draft-picks-basketball",
+      "name": "2015-16 Panini Contenders Draft Picks Basketball",
+      "year": 2015,
+      "brand": "Contenders Draft Picks",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 510
+    },
+    {
+      "id": "2015-16-panini-court-kings-basketball",
+      "name": "2015-16 Panini Court Kings Basketball",
+      "year": 2015,
+      "brand": "Court Kings",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 932
+    },
+    {
+      "id": "2015-16-panini-excalibur-basketball",
+      "name": "2015-16 Panini Excalibur Basketball",
+      "year": 2015,
+      "brand": "Excalibur",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 795
+    },
+    {
+      "id": "2015-16-panini-flawless-basketball",
+      "name": "2015-16 Panini Flawless Basketball",
+      "year": 2015,
+      "brand": "Flawless",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 907
+    },
+    {
+      "id": "2015-16-panini-gala-basketball",
+      "name": "2015-16 Panini Gala Basketball",
+      "year": 2015,
+      "brand": "Gala",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 819
+    },
+    {
+      "id": "2015-16-panini-gold-standard-basketball",
+      "name": "2015-16 Panini Gold Standard Basketball",
+      "year": 2015,
+      "brand": "Gold Standard",
+      "sport": "Basketball",
+      "setCount": 29,
+      "totalCards": 1091
+    },
+    {
+      "id": "2015-16-panini-herovillain-kobe-bryant-basketball",
+      "name": "2015-16 Panini HeroVillain Kobe Bryant Basketball",
+      "year": 2015,
+      "brand": "HeroVillain Kobe Bryant",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 63
+    },
+    {
+      "id": "2015-16-panini-immaculate-collection-basketball",
+      "name": "2015-16 Panini Immaculate Collection Basketball",
+      "year": 2015,
+      "brand": "Immaculate Collection",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 1552
+    },
+    {
+      "id": "2015-16-panini-limited-basketball",
+      "name": "2015-16 Panini Limited Basketball",
+      "year": 2015,
+      "brand": "Limited",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 562
+    },
+    {
+      "id": "2015-16-panini-luxe-basketball",
+      "name": "2015-16 Panini Luxe Basketball",
+      "year": 2015,
+      "brand": "Luxe",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 548
+    },
+    {
+      "id": "2015-16-panini-national-treasures-basketball",
+      "name": "2015-16 Panini National Treasures Basketball",
+      "year": 2015,
+      "brand": "National Treasures",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1348
+    },
+    {
+      "id": "2015-16-panini-nba-hoops-basketball",
+      "name": "2015-16 Panini NBA Hoops Basketball",
+      "year": 2015,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 987
+    },
+    {
+      "id": "2015-16-panini-noir-basketball",
+      "name": "2015-16 Panini Noir Basketball",
+      "year": 2015,
+      "brand": "Noir",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 762
+    },
+    {
+      "id": "2015-16-panini-preferred-basketball",
+      "name": "2015-16 Panini Preferred Basketball",
+      "year": 2015,
+      "brand": "Preferred",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 466
+    },
+    {
+      "id": "2015-16-panini-prestige-basketball",
+      "name": "2015-16 Panini Prestige Basketball",
+      "year": 2015,
+      "brand": "Prestige",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 986
+    },
+    {
+      "id": "2015-16-panini-prizm-basketball",
+      "name": "2015-16 Panini Prizm Basketball",
+      "year": 2015,
+      "brand": "Prizm",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 671
+    },
+    {
+      "id": "2015-16-panini-revolution-basketball",
+      "name": "2015-16 Panini Revolution Basketball",
+      "year": 2015,
+      "brand": "Revolution",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 296
+    },
+    {
+      "id": "2015-16-panini-select-basketball",
+      "name": "2015-16 Panini Select Basketball",
+      "year": 2015,
+      "brand": "Select",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 723
+    },
+    {
+      "id": "2015-16-panini-spectra-basketball",
+      "name": "2015-16 Panini Spectra Basketball",
+      "year": 2015,
+      "brand": "Spectra",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 554
+    },
+    {
+      "id": "2015-16-panini-threads-basketball",
+      "name": "2015-16 Panini Threads Basketball",
+      "year": 2015,
+      "brand": "Threads",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1009
+    },
+    {
+      "id": "2015-16-panini-totally-certified-basketball",
+      "name": "2015-16 Panini Totally Certified Basketball",
+      "year": 2015,
+      "brand": "Totally Certified",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 769
+    },
+    {
+      "id": "2015-16-upper-deck-euroleague-basketball",
+      "name": "2015-16 Upper Deck Euroleague Basketball",
+      "year": 2015,
+      "brand": "Upper Deck Euroleague",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 132
+    },
+    {
+      "id": "2014-15-donruss-basketball",
+      "name": "2014-15 Donruss Basketball",
+      "year": 2014,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 933,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-15-panini-court-kings-basketball",
+      "name": "2014-15 Panini Court Kings Basketball",
+      "year": 2014,
+      "brand": "Court Kings",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 1087
+    },
+    {
+      "id": "2014-15-panini-eminence-basketball",
+      "name": "2014-15 Panini Eminence Basketball",
+      "year": 2014,
+      "brand": "Eminence",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 653
+    },
+    {
+      "id": "2014-15-panini-excalibur-basketball",
+      "name": "2014-15 Panini Excalibur Basketball",
+      "year": 2014,
+      "brand": "Excalibur",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 1168
+    },
+    {
+      "id": "2014-15-panini-flawless-basketball",
+      "name": "2014-15 Panini Flawless Basketball",
+      "year": 2014,
+      "brand": "Flawless",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 989,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-15-panini-gala-basketball",
+      "name": "2014-15 Panini Gala Basketball",
+      "year": 2014,
+      "brand": "Gala",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 460
+    },
+    {
+      "id": "2014-15-panini-gold-standard-basketball",
+      "name": "2014-15 Panini Gold Standard Basketball",
+      "year": 2014,
+      "brand": "Gold Standard",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1361
+    },
+    {
+      "id": "2014-15-panini-immaculate-collection-basketball",
+      "name": "2014-15 Panini Immaculate Collection Basketball",
+      "year": 2014,
+      "brand": "Immaculate Collection",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 1536
+    },
+    {
+      "id": "2014-15-panini-luxe-basketball",
+      "name": "2014-15 Panini Luxe Basketball",
+      "year": 2014,
+      "brand": "Luxe",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 467
+    },
+    {
+      "id": "2014-15-panini-national-treasures-basketball",
+      "name": "2014-15 Panini National Treasures Basketball",
+      "year": 2014,
+      "brand": "National Treasures",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 1353
+    },
+    {
+      "id": "2014-15-panini-nba-hoops-basketball",
+      "name": "2014-15 Panini NBA Hoops Basketball",
+      "year": 2014,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 1136
+    },
+    {
+      "id": "2014-15-panini-noir-basketball",
+      "name": "2014-15 Panini Noir Basketball",
+      "year": 2014,
+      "brand": "Noir",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 676
+    },
+    {
+      "id": "2014-15-panini-paramount-basketball",
+      "name": "2014-15 Panini Paramount Basketball",
+      "year": 2014,
+      "brand": "Paramount",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 399
+    },
+    {
+      "id": "2014-15-panini-preferred-basketball",
+      "name": "2014-15 Panini Preferred Basketball",
+      "year": 2014,
+      "brand": "Preferred",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 648
+    },
+    {
+      "id": "2014-15-panini-prestige-basketball",
+      "name": "2014-15 Panini Prestige Basketball",
+      "year": 2014,
+      "brand": "Prestige",
+      "sport": "Basketball",
+      "setCount": 39,
+      "totalCards": 2287
+    },
+    {
+      "id": "2014-15-panini-prizm-basketball",
+      "name": "2014-15 Panini Prizm Basketball",
+      "year": 2014,
+      "brand": "Prizm",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 739
+    },
+    {
+      "id": "2014-15-panini-select-basketball",
+      "name": "2014-15 Panini Select Basketball",
+      "year": 2014,
+      "brand": "Select",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 791
+    },
+    {
+      "id": "2014-15-panini-spectra-basketball",
+      "name": "2014-15 Panini Spectra Basketball",
+      "year": 2014,
+      "brand": "Spectra",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 700
+    },
+    {
+      "id": "2014-15-panini-threads-basketball",
+      "name": "2014-15 Panini Threads Basketball",
+      "year": 2014,
+      "brand": "Threads",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 1089,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2014-15-panini-totally-certified-basketball",
+      "name": "2014-15 Panini Totally Certified Basketball",
+      "year": 2014,
+      "brand": "Totally Certified",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 1216
+    },
+    {
+      "id": "2014-15-sp-authentic-basketball",
+      "name": "2014-15 SP Authentic Basketball",
+      "year": 2014,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 269
+    },
+    {
+      "id": "2014-15-spx-basketball",
+      "name": "2014-15 SPx Basketball",
+      "year": 2014,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 438
+    },
+    {
+      "id": "2014-15-upper-deck-lettermen-basketball",
+      "name": "2014-15 Upper Deck Lettermen Basketball",
+      "year": 2014,
+      "brand": "Upper Deck Lettermen",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 322
+    },
+    {
+      "id": "2014-15-upper-deck-ncaa-march-madness-collection-basketball",
+      "name": "2014-15 Upper Deck NCAA March Madness Collection Basketball",
+      "year": 2014,
+      "brand": "Upper Deck NCAA March Madness Collection",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 471
+    },
+    {
+      "id": "2014-rittenhouse-wnba-basketball",
+      "name": "2014 Rittenhouse WNBA Basketball",
+      "year": 2014,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 100
+    },
+    {
+      "id": "2013-14-fleer-retro-basketball",
+      "name": "2013-14 Fleer Retro Basketball",
+      "year": 2013,
+      "brand": "Fleer Retro",
+      "sport": "Basketball",
+      "setCount": 34,
+      "totalCards": 693
+    },
+    {
+      "id": "2013-14-nba-hoops-basketball",
+      "name": "2013-14 NBA Hoops Basketball",
+      "year": 2013,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 1318
+    },
+    {
+      "id": "2013-14-panini-basketball",
+      "name": "2013-14 Panini Basketball",
+      "year": 2013,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 700
+    },
+    {
+      "id": "2013-14-panini-court-kings-basketball",
+      "name": "2013-14 Panini Court Kings Basketball",
+      "year": 2013,
+      "brand": "Court Kings",
+      "sport": "Basketball",
+      "setCount": 37,
+      "totalCards": 1117,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-14-panini-crusade-basketball",
+      "name": "2013-14 Panini Crusade Basketball",
+      "year": 2013,
+      "brand": "Crusade",
+      "sport": "Basketball",
+      "setCount": 28,
+      "totalCards": 1560
+    },
+    {
+      "id": "2013-14-panini-elite-basketball",
+      "name": "2013-14 Panini Elite Basketball",
+      "year": 2013,
+      "brand": "Elite",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 1530
+    },
+    {
+      "id": "2013-14-panini-flawless-basketball",
+      "name": "2013-14 Panini Flawless Basketball",
+      "year": 2013,
+      "brand": "Flawless",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 827
+    },
+    {
+      "id": "2013-14-panini-gold-standard-basketball",
+      "name": "2013-14 Panini Gold Standard Basketball",
+      "year": 2013,
+      "brand": "Gold Standard",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 1384
+    },
+    {
+      "id": "2013-14-panini-immaculate-collection-basketball",
+      "name": "2013-14 Panini Immaculate Collection Basketball",
+      "year": 2013,
+      "brand": "Immaculate Collection",
+      "sport": "Basketball",
+      "setCount": 36,
+      "totalCards": 1832
+    },
+    {
+      "id": "2013-14-panini-innovation-basketball",
+      "name": "2013-14 Panini Innovation Basketball",
+      "year": 2013,
+      "brand": "Innovation",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 1170
+    },
+    {
+      "id": "2013-14-panini-intrigue-basketball",
+      "name": "2013-14 Panini Intrigue Basketball",
+      "year": 2013,
+      "brand": "Intrigue",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 1175
+    },
+    {
+      "id": "2013-14-panini-national-treasures-basketball",
+      "name": "2013-14 Panini National Treasures Basketball",
+      "year": 2013,
+      "brand": "National Treasures",
+      "sport": "Basketball",
+      "setCount": 49,
+      "totalCards": 2189
+    },
+    {
+      "id": "2013-14-panini-preferred-basketball",
+      "name": "2013-14 Panini Preferred Basketball",
+      "year": 2013,
+      "brand": "Preferred",
+      "sport": "Basketball",
+      "setCount": 45,
+      "totalCards": 2188
+    },
+    {
+      "id": "2013-14-panini-prestige-basketball",
+      "name": "2013-14 Panini Prestige Basketball",
+      "year": 2013,
+      "brand": "Prestige",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 1298
+    },
+    {
+      "id": "2013-14-panini-prizm-basketball",
+      "name": "2013-14 Panini Prizm Basketball",
+      "year": 2013,
+      "brand": "Prizm",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 1021,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-14-panini-select-basketball",
+      "name": "2013-14 Panini Select Basketball",
+      "year": 2013,
+      "brand": "Select",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 1138
+    },
+    {
+      "id": "2013-14-panini-signatures-basketball",
+      "name": "2013-14 Panini Signatures Basketball",
+      "year": 2013,
+      "brand": "Signatures",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 1139
+    },
+    {
+      "id": "2013-14-panini-spectra-basketball",
+      "name": "2013-14 Panini Spectra Basketball",
+      "year": 2013,
+      "brand": "Spectra",
+      "sport": "Basketball",
+      "setCount": 32,
+      "totalCards": 797,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-14-panini-timeless-treasures-basketball",
+      "name": "2013-14 Panini Timeless Treasures Basketball",
+      "year": 2013,
+      "brand": "Timeless Treasures",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 880
+    },
+    {
+      "id": "2013-14-panini-titanium-basketball",
+      "name": "2013-14 Panini Titanium Basketball",
+      "year": 2013,
+      "brand": "Titanium",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 1299
+    },
+    {
+      "id": "2013-14-panini-totally-certified-basketball",
+      "name": "2013-14 Panini Totally Certified Basketball",
+      "year": 2013,
+      "brand": "Totally Certified",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 2829,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2013-14-pinnacle-basketball",
+      "name": "2013-14 Pinnacle Basketball",
+      "year": 2013,
+      "brand": "Pinnacle",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 1015
+    },
+    {
+      "id": "2013-14-sp-authentic-basketball",
+      "name": "2013-14 SP Authentic Basketball",
+      "year": 2013,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 516
+    },
+    {
+      "id": "2013-14-upper-deck-black-basketball",
+      "name": "2013-14 Upper Deck Black Basketball",
+      "year": 2013,
+      "brand": "Upper Deck Black",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 341
+    },
+    {
+      "id": "2013-14-upper-deck-exquisite-collection-basketball",
+      "name": "2013-14 Upper Deck Exquisite Collection Basketball",
+      "year": 2013,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 452
+    },
+    {
+      "id": "2013-rittenhouse-wnba-basketball",
+      "name": "2013 Rittenhouse WNBA Basketball",
+      "year": 2013,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 100
+    },
+    {
+      "id": "2013-upper-deck-michael-jordan-master-collection-basketball",
+      "name": "2013 Upper Deck Michael Jordan Master Collection Basketball",
+      "year": 2013,
+      "brand": "Upper Deck Michael Jordan Master Collection",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 11
+    },
+    {
+      "id": "2013-upper-deck-university-of-kansas-basketball",
+      "name": "2013 Upper Deck University of Kansas Basketball",
+      "year": 2013,
+      "brand": "Upper Deck University of Kansas",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 349
+    },
+    {
+      "id": "2012-13-fleer-retro-basketball",
+      "name": "2012-13 Fleer Retro Basketball",
+      "year": 2012,
+      "brand": "Fleer Retro",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 972
+    },
+    {
+      "id": "2012-13-leaf-metal-basketball",
+      "name": "2012-13 Leaf Metal Basketball",
+      "year": 2012,
+      "brand": "Leaf Metal",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 156
+    },
+    {
+      "id": "2012-13-nba-hoops-basketball",
+      "name": "2012-13 NBA Hoops Basketball",
+      "year": 2012,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 701
+    },
+    {
+      "id": "2012-13-panini-absolute-basketball",
+      "name": "2012-13 Panini Absolute Basketball",
+      "year": 2012,
+      "brand": "Absolute",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 985
+    },
+    {
+      "id": "2012-13-panini-basketball",
+      "name": "2012-13 Panini Basketball",
+      "year": 2012,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 787
+    },
+    {
+      "id": "2012-13-panini-brilliance-basketball",
+      "name": "2012-13 Panini Brilliance Basketball",
+      "year": 2012,
+      "brand": "Brilliance",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 1000
+    },
+    {
+      "id": "2012-13-panini-contenders-basketball",
+      "name": "2012-13 Panini Contenders Basketball",
+      "year": 2012,
+      "brand": "Contenders",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 957
+    },
+    {
+      "id": "2012-13-panini-crusade-basketball",
+      "name": "2012-13 Panini Crusade Basketball",
+      "year": 2012,
+      "brand": "Crusade",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 1292
+    },
+    {
+      "id": "2012-13-panini-elite-basketball",
+      "name": "2012-13 Panini Elite Basketball",
+      "year": 2012,
+      "brand": "Elite",
+      "sport": "Basketball",
+      "setCount": 20,
+      "totalCards": 1461
+    },
+    {
+      "id": "2012-13-panini-elite-series-basketball",
+      "name": "2012-13 Panini Elite Series Basketball",
+      "year": 2012,
+      "brand": "Elite Series",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 944
+    },
+    {
+      "id": "2012-13-panini-flawless-basketball",
+      "name": "2012-13 Panini Flawless Basketball",
+      "year": 2012,
+      "brand": "Flawless",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 911
+    },
+    {
+      "id": "2012-13-panini-gold-standard-basketball",
+      "name": "2012-13 Panini Gold Standard Basketball",
+      "year": 2012,
+      "brand": "Gold Standard",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 1163
+    },
+    {
+      "id": "2012-13-panini-immaculate-collection-basketball",
+      "name": "2012-13 Panini Immaculate Collection Basketball",
+      "year": 2012,
+      "brand": "Immaculate Collection",
+      "sport": "Basketball",
+      "setCount": 31,
+      "totalCards": 2050
+    },
+    {
+      "id": "2012-13-panini-innovation-basketball",
+      "name": "2012-13 Panini Innovation Basketball",
+      "year": 2012,
+      "brand": "Innovation",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 977
+    },
+    {
+      "id": "2012-13-panini-intrigue-basketball",
+      "name": "2012-13 Panini Intrigue Basketball",
+      "year": 2012,
+      "brand": "Intrigue",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 1060
+    },
+    {
+      "id": "2012-13-panini-limited-basketball",
+      "name": "2012-13 Panini Limited Basketball",
+      "year": 2012,
+      "brand": "Limited",
+      "sport": "Basketball",
+      "setCount": 22,
+      "totalCards": 1028
+    },
+    {
+      "id": "2012-13-panini-marquee-basketball",
+      "name": "2012-13 Panini Marquee Basketball",
+      "year": 2012,
+      "brand": "Marquee",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 879
+    },
+    {
+      "id": "2012-13-panini-momentum-basketball",
+      "name": "2012-13 Panini Momentum Basketball",
+      "year": 2012,
+      "brand": "Momentum",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 1585
+    },
+    {
+      "id": "2012-13-panini-national-treasures-basketball",
+      "name": "2012-13 Panini National Treasures Basketball",
+      "year": 2012,
+      "brand": "National Treasures",
+      "sport": "Basketball",
+      "setCount": 50,
+      "totalCards": 1730
+    },
+    {
+      "id": "2012-13-panini-nba-hoops-taco-bell-basketball",
+      "name": "2012-13 Panini NBA Hoops Taco Bell Basketball",
+      "year": 2012,
+      "brand": "NBA Hoops Taco Bell",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 150
+    },
+    {
+      "id": "2012-13-panini-past-present-basketball",
+      "name": "2012-13 Panini Past & Present Basketball",
+      "year": 2012,
+      "brand": "Past & Present",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 927
+    },
+    {
+      "id": "2012-13-panini-preferred-basketball",
+      "name": "2012-13 Panini Preferred Basketball",
+      "year": 2012,
+      "brand": "Preferred",
+      "sport": "Basketball",
+      "setCount": 56,
+      "totalCards": 1497
+    },
+    {
+      "id": "2012-13-panini-prestige-basketball",
+      "name": "2012-13 Panini Prestige Basketball",
+      "year": 2012,
+      "brand": "Prestige",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 648,
+      "note": "Partial checklist: a few sets are missing some cards."
+    },
+    {
+      "id": "2012-13-panini-prizm-basketball",
+      "name": "2012-13 Panini Prizm Basketball",
+      "year": 2012,
+      "brand": "Prizm",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 500
+    },
+    {
+      "id": "2012-13-panini-signatures-basketball",
+      "name": "2012-13 Panini Signatures Basketball",
+      "year": 2012,
+      "brand": "Signatures",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 2516
+    },
+    {
+      "id": "2012-13-panini-threads-basketball",
+      "name": "2012-13 Panini Threads Basketball",
+      "year": 2012,
+      "brand": "Threads",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 729
+    },
+    {
+      "id": "2012-13-panini-totally-certified-basketball",
+      "name": "2012-13 Panini Totally Certified Basketball",
+      "year": 2012,
+      "brand": "Totally Certified",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 2129
+    },
+    {
+      "id": "2012-13-select-basketball",
+      "name": "2012-13 Select Basketball",
+      "year": 2012,
+      "brand": "Select",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 741
+    },
+    {
+      "id": "2012-13-sp-authentic-basketball",
+      "name": "2012-13 SP Authentic Basketball",
+      "year": 2012,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 629
+    },
+    {
+      "id": "2012-13-upper-deck-all-time-greats-basketball",
+      "name": "2012-13 Upper Deck All-Time Greats Basketball",
+      "year": 2012,
+      "brand": "Upper Deck All-Time Greats",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 431
+    },
+    {
+      "id": "2012-13-upper-deck-exquisite-basketball",
+      "name": "2012-13 Upper Deck Exquisite Basketball",
+      "year": 2012,
+      "brand": "Upper Deck Exquisite",
+      "sport": "Basketball",
+      "setCount": 24,
+      "totalCards": 492
+    },
+    {
+      "id": "2011-12-fleer-retro-basketball",
+      "name": "2011-12 Fleer Retro Basketball",
+      "year": 2011,
+      "brand": "Fleer Retro",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 758
+    },
+    {
+      "id": "2011-12-panini-gold-standard-basketball",
+      "name": "2011-12 Panini Gold Standard Basketball",
+      "year": 2011,
+      "brand": "Gold Standard",
+      "sport": "Basketball",
+      "setCount": 25,
+      "totalCards": 1301
+    },
+    {
+      "id": "2011-12-panini-limited-basketball",
+      "name": "2011-12 Panini Limited Basketball",
+      "year": 2011,
+      "brand": "Limited",
+      "sport": "Basketball",
+      "setCount": 47,
+      "totalCards": 1447
+    },
+    {
+      "id": "2011-12-panini-past-present-basketball",
+      "name": "2011-12 Panini Past & Present Basketball",
+      "year": 2011,
+      "brand": "Past & Present",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 839
+    },
+    {
+      "id": "2011-12-upper-deck-exquisite-basketball",
+      "name": "2011-12 Upper Deck Exquisite Basketball",
+      "year": 2011,
+      "brand": "Upper Deck Exquisite",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 523
+    },
+    {
+      "id": "2009-10-panini-court-kings-basketball",
+      "name": "2009-10 Panini Court Kings Basketball",
+      "year": 2009,
+      "brand": "Court Kings",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 345
+    },
+    {
+      "id": "2008-09-topps-chrome-basketball",
+      "name": "2008-09 Topps Chrome Basketball",
+      "year": 2008,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 285
+    },
+    {
+      "id": "2008-09-upper-deck-exquisite-collection-basketball",
+      "name": "2008-09 Upper Deck Exquisite Collection Basketball",
+      "year": 2008,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Basketball",
+      "setCount": 33,
+      "totalCards": 988
+    },
+    {
+      "id": "2005-06-upper-deck-exquisite-collection-basketball",
+      "name": "2005-06 Upper Deck Exquisite Collection Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 771
+    },
+    {
+      "id": "2004-05-upper-deck-exquisite-collection-basketball",
+      "name": "2004-05 Upper Deck Exquisite Collection Basketball",
+      "year": 2004,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 292
+    },
+    {
+      "id": "2003-04-topps-finest-basketball",
+      "name": "2003-04 Topps Finest Basketball",
+      "year": 2003,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 185
+    },
+    {
+      "id": "2003-04-upper-deck-exquisite-collection-basketball",
+      "name": "2003-04 Upper Deck Exquisite Collection Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Exquisite Collection",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 421
     }
   ]
 }
