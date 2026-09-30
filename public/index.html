@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=66fd06b974" />
+  <link rel="stylesheet" href="style.css?v=f7fa0c90cd" />
 
 
 </head>
@@ -622,9 +622,6 @@
         <div id="market-periods" class="market-periods" role="group" aria-label="Time period"></div>
       </div>
 
-      <!-- Basketball and baseball once their first sales are in: the priciest
-           sales and what sold most. No index or trend until there is history. -->
-      <div id="market-snapshot" class="market-snapshot hidden"></div>
       <!-- Basketball and baseball: not enough sales tracked yet for an index. -->
       <div id="market-coming-soon" class="market-coming-soon hidden" role="status"></div>
 
@@ -657,7 +654,7 @@
       <button class="checklist-back-btn" onclick="switchView('search')">&larr; Back</button>
       <div class="stats-header">
         <h2 class="stats-h2">Market leaderboards</h2>
-        <p class="stats-sub">The top 50 of each, from the eBay sales we track. Football only.</p>
+        <p class="stats-sub" id="stats-sub">The top 50 of each, from the eBay sales we track.</p>
       </div>
       <div id="stats-boards" class="stats-boards" role="tablist" aria-label="Leaderboard"></div>
       <div id="stats-periods" class="stats-periods" role="group" aria-label="Time period"></div>
@@ -1703,7 +1700,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=7e86919876"></script>
+  <script src="app.js?v=ef7ccdbd37"></script>
   <script type="importmap">
   {
     "imports": {
