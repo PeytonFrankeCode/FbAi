@@ -168,7 +168,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=2eb7af20a4" />
+  <link rel="stylesheet" href="style.css?v=f7fa0c90cd" />
 
 
 </head>
@@ -519,7 +519,7 @@
         <p class="checklist-page-subtitle">Explore complete card checklists with every parallel and print run</p>
         <!-- Which sport's checklists to list. Search needs no pick: it covers
              every sport turned on. Filled by applySport(); shown with 2+ on. -->
-        <div id="sport-switch" class="sport-switch hidden" role="group" aria-label="Checklist sport"></div>
+        <div id="sport-switch" class="sport-switch page-sport-switch hidden" role="group" aria-label="Checklist sport"></div>
         <div class="checklist-guide-links" id="checklist-guide-links">
           <a class="checklist-guide-link" href="/players/">&#127944;&nbsp; Player Price Guides</a>
           <a class="checklist-guide-link" href="/sets/">&#128203;&nbsp; All Set Checklists &amp; Prices</a>
@@ -569,6 +569,8 @@
       <div class="collection-header">
         <h2 class="collection-title">Rainbow Mode</h2>
         <p class="collection-subtitle">Price and track every parallel of a card. Pick a product and a player to see the rainbow.</p>
+        <!-- The same sport pick as Checklists and Market (applySport). -->
+        <div class="sport-switch page-sport-switch hidden" role="group" aria-label="Rainbow sport"></div>
       </div>
       <div class="completion-controls">
         <div class="cl-combo" id="rb-combo-product" data-target="rainbow-product-select" data-placeholder="Search a product…">
@@ -613,10 +615,15 @@
       <div class="market-header">
         <div>
           <h2 class="market-h2">Market Index</h2>
-          <p class="market-sub">How the football-card market is moving, from the sales we track.</p>
+          <p class="market-sub" id="market-sub">How the football-card market is moving, from the sales we track.</p>
+          <!-- The same sport pick as Checklists and Rainbow (applySport). -->
+          <div class="sport-switch page-sport-switch hidden" role="group" aria-label="Market sport"></div>
         </div>
         <div id="market-periods" class="market-periods" role="group" aria-label="Time period"></div>
       </div>
+
+      <!-- Basketball and baseball: not enough sales tracked yet for an index. -->
+      <div id="market-coming-soon" class="market-coming-soon hidden" role="status"></div>
 
       <!-- Player search. The same index, scoped to one player — so the whole
            market acts as the baseline you read a player against. -->
@@ -1693,7 +1700,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=5b28578a8d"></script>
+  <script src="app.js?v=e6119ce6eb"></script>
   <script type="importmap">
   {
     "imports": {

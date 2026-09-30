@@ -50,6 +50,22 @@ for (const sport of ['basketball', 'baseball']) {
   check(`${sport}: cards on file`, cards > 0, cards.toLocaleString('en-US') + ' cards');
 }
 
+// Parallels are what the rainbow is made of. A base set with none reads as a
+// one-card rainbow: 2023-24 Prizm's base had none when one source's parallel
+// lines ("Prizms Parallels: ...") went unread.
+{
+  const prizm = JSON.parse(fs.readFileSync(path.join(DATA, 'checklists-basketball', '2023-24-panini-prizm-basketball.json'), 'utf8'));
+  const base = prizm.sets.find(s => s.category === 'base');
+  check('2023-24 Prizm basketball lists its base parallels', base && base.parallels.length >= 50, base ? `${base.parallels.length} parallels` : 'no base set');
+  let bases = 0, bare = 0;
+  for (const f of fs.readdirSync(path.join(DATA, 'checklists-basketball')).filter(f => f.endsWith('-basketball.json'))) {
+    for (const st of JSON.parse(fs.readFileSync(path.join(DATA, 'checklists-basketball', f), 'utf8')).sets) {
+      if (st.category === 'base' && /^base$/i.test(st.name)) { bases++; if (!st.parallels.length) bare++; }
+    }
+  }
+  check('  ...and most basketball base sets list theirs', bases > 0 && bare / bases < 0.2, `${bare} of ${bases} base sets without parallels`);
+}
+
 // Football's folder holds football only: the football builds read all of it.
 const football = JSON.parse(fs.readFileSync(path.join(DATA, 'checklists', 'index.json'), 'utf8')).products;
 check('the football index holds no basketball or baseball products', !football.some(p => /-(basketball|baseball)$/.test(p.id) || (p.sport && p.sport !== 'Football')));

@@ -9474,3 +9474,26 @@ body.tour-open { overflow: hidden; }
 /* The sport pick above the offline packs in Settings. */
 .op-sports { justify-content: flex-start; margin: 0 0 0.6rem; }
 .op-sports .sport-pill { padding: 0.35rem 0.8rem; font-size: 0.82rem; }
+
+/* Market for a sport without enough sales yet: the index gives way to "coming soon". */
+.market-other-sport #market-periods, .market-other-sport .market-search,
+.market-other-sport #market-scope, .market-other-sport #market-body { display: none !important; }
+.market-coming-soon {
+  max-width: 560px; margin: 1.5rem auto; padding: 2rem 1.5rem; text-align: center; border-radius: 16px;
+  background: var(--bg-secondary); border: 1px dashed var(--accent-border);
+}
+.market-coming-soon .mcs-icon { font-size: 2.4rem; line-height: 1; margin-bottom: 0.5rem; }
+.market-coming-soon h3 { margin: 0 0 0.6rem; font-size: 1.2rem; color: var(--text-primary); }
+.market-coming-soon p { margin: 0 0 0.6rem; font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); }
+.mcs-actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.mcs-btn { padding: 0.55rem 1rem; border-radius: 10px; font-weight: 700; background: var(--accent); color: var(--accent-on); border: 1px solid var(--accent); }
+.mcs-btn:hover { background: var(--accent); color: var(--accent-on); filter: brightness(1.08); }
+.mcs-btn-alt, .mcs-btn-alt:hover { background: none; color: var(--accent); }
+.market-header .page-sport-switch, .collection-header .page-sport-switch { justify-content: flex-start; margin: 0.6rem 0 0; }
+
+/* Basketball and baseball rainbows: the same ghost card without the football
+   player, so a Wembanyama tile doesn't wait behind a quarterback. */
+body[data-sport="basketball"] .rainbow-tile-img-placeholder,
+body[data-sport="baseball"] .rainbow-tile-img-placeholder {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140'%3E%3Cdefs%3E%3CclipPath id='ph'%3E%3Cpath d='M20 12 L80 12 L88 20 L88 94 L80 102 L20 102 L12 94 L12 20 Z'/%3E%3C/clipPath%3E%3C/defs%3E%3Crect x='5.5' y='5.5' width='89' height='129' rx='7' fill='%23fff' fill-opacity='0.02' stroke='%23fff' stroke-opacity='0.09' stroke-width='1.5'/%3E%3Cpath d='M16 9 L84 9 L91 16 L91 124 L84 131 L16 131 L9 124 L9 16 Z' fill='none' stroke='%23fff' stroke-opacity='0.045' stroke-width='1'/%3E%3Cpath d='M20 12 L80 12 L88 20 L88 94 L80 102 L20 102 L12 94 L12 20 Z' fill='%23fff' fill-opacity='0.05'/%3E%3Cg clip-path='url(%23ph)'%3E%3Cpath d='M30 12 L56 12 L20 102 L8 102 Z' fill='%23fff' fill-opacity='0.03'/%3E%3Cpath d='M64 12 L72 12 L36 102 L28 102 Z' fill='%23fff' fill-opacity='0.02'/%3E%3Ccircle cx='21' cy='21' r='4' fill='none' stroke='%23fff' stroke-opacity='0.08' stroke-width='1.4'/%3E%3Crect x='57' y='16.5' width='22' height='5' rx='2.5' fill='%23fff' fill-opacity='0.08'/%3E%3C/g%3E%3Cg transform='rotate(-4 50 117)'%3E%3Crect x='22' y='111' width='46' height='7.5' rx='3.5' fill='%23fff' fill-opacity='0.09'/%3E%3Crect x='36' y='122' width='34' height='4.8' rx='2.4' fill='%23fff' fill-opacity='0.06'/%3E%3C/g%3E%3Ccircle cx='19.5' cy='123.5' r='5' fill='%23fff' fill-opacity='0.07'/%3E%3C/svg%3E");
+}

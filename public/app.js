@@ -1740,13 +1740,13 @@ function applySport() {
   // The football market box means nothing to someone who turned football off.
   document.body.classList.toggle('no-football', !p.enabled.includes('football'));
 
-  // The checklist sport switch: only worth showing with a choice to make.
-  const sw = document.getElementById('sport-switch');
-  if (sw) {
+  // The sport pick on Checklists, Rainbow and Market: one pick for all three,
+  // only worth showing with a choice to make.
+  document.querySelectorAll('.page-sport-switch').forEach(sw => {
     sw.classList.toggle('hidden', p.enabled.length < 2);
     sw.innerHTML = p.enabled.map(id => `<button type="button" class="sport-pill${id === p.active ? ' active' : ''}" aria-pressed="${id === p.active}" onclick="setActiveSport('${id}')">
         <span aria-hidden="true">${SPORTS[id].icon}</span> ${SPORTS[id].label}${SPORTS[id].testing ? '<span class="sport-testing-tag">Testing</span>' : ''}</button>`).join('');
-  }
+  });
   // The player, set and team guides: every sport has its own, built from its
   // checklists (football's at /players/ and so on, the others under /basketball/
   // and /baseball/).
@@ -1777,16 +1777,20 @@ function applySport() {
 
   // Pages still football-only say so when football is off; the Checklists
   // page has every sport, and a lighter note for the ones under testing.
-  for (const [id, what] of [['checklist-view', 'checklists'], ['rainbow-page', 'rainbow tracker'], ['market-view', 'market data']]) {
+  // Checklists and Rainbow run on the same checklists, so they share the
+  // "new and under testing" note; Market says "coming soon" in its own panel.
+  for (const id of ['checklist-view', 'rainbow-page', 'market-view']) {
     const view = document.getElementById(id);
     if (!view) continue;
     let n = view.querySelector(':scope > .sport-view-note');
-    const show = id === 'checklist-view' ? sport.testing : !p.enabled.includes('football');
-    if (!show) { if (n) n.remove(); continue; }
+    if (!sport.testing || id === 'market-view') { if (n) n.remove(); continue; }
     if (!n) { n = document.createElement('div'); n.className = 'sport-view-note'; view.prepend(n); }
-    n.innerHTML = id === 'checklist-view'
-      ? `${sport.icon} <strong>${sport.label} checklists are new and under testing.</strong> A few sets may be missing cards or parallels. Spot one? Tell us with the feedback button.`
-      : `<strong>The ${what} is football-only for now.</strong> Basketball and baseball are on the way. Turn football on in Settings to use it.`;
+    n.innerHTML = `${sport.icon} <strong>${sport.label} checklists are new and under testing.</strong> A few sets may be missing cards or parallels. Spot one? Tell us with the feedback button.`;
+  }
+  if (typeof _applyMarketSport === 'function') _applyMarketSport();
+  // The rainbow's product list belongs to one sport: a new pick resets it.
+  if (typeof _rainbowListSport !== 'undefined' && _rainbowListSport && _rainbowListSport !== p.active) {
+    try { resetRainbowForSport(); } catch (_) {}
   }
   // The checklist list on screen belongs to one sport: a new pick reloads it.
   if (typeof _checklistListSport !== 'undefined' && _checklistListSport && _checklistListSport !== p.active) {
@@ -5916,7 +5920,41 @@ function _mkPrefetch(days, player) {
   else setTimeout(run, 400);
 }
 
+// Only football has the sales behind a market index. Basketball and baseball
+// say "coming soon" rather than show an index built on too little.
+function _applyMarketSport() {
+  const view = document.getElementById('market-view');
+  const soon = document.getElementById('market-coming-soon');
+  if (!view || !soon) return;
+  const id = activeSport();
+  const sport = SPORTS[id];
+  const football = id === 'football';
+  view.classList.toggle('market-other-sport', !football);
+  soon.classList.toggle('hidden', football);
+  const sub = document.getElementById('market-sub');
+  if (sub) sub.textContent = football ? 'How the football-card market is moving, from the sales we track.'
+    : `How the ${sport.label.toLowerCase()}-card market is moving.`;
+  if (!football) {
+    soon.innerHTML = `<div class="mcs-icon" aria-hidden="true">${sport.icon}</div>
+      <h3>${sport.label} market data is coming soon</h3>
+      <p>We're still collecting ${sport.label.toLowerCase()} sales. The index, movers and player markets arrive once there are enough to be worth reading.</p>
+      <p>Until then, search any ${sport.label.toLowerCase()} card for its live listings and recent sales.</p>
+      <div class="mcs-actions">
+        <button type="button" class="mcs-btn" onclick="switchView('search')">Search ${sport.label.toLowerCase()} cards</button>
+        <button type="button" class="mcs-btn mcs-btn-alt" onclick="switchView('checklist')">Browse ${sport.label.toLowerCase()} checklists</button>
+      </div>`;
+  } else if (view.dataset.otherShown) {
+    // Back to football after another sport: the index was never loaded (or is
+    // stale), so set the page up now if it is on screen.
+    delete view.dataset.otherShown;
+    if (!view.classList.contains('hidden')) initMarketView();
+  }
+  if (!football) view.dataset.otherShown = '1';
+}
+
 function initMarketView() {
+  _applyMarketSport();
+  if (activeSport() !== 'football') return;   // nothing to load: "coming soon" is shown
   const strip = document.getElementById('market-periods');
   if (strip && !strip.dataset.built) {
     strip.innerHTML = MARKET_VIEW_PERIODS
@@ -14426,7 +14464,9 @@ function applyTileImage(tile, imageUrl) {
 // (base) card image alongside a grid of every parallel. Reuses the loaded
 // product (the shared `completionData`) plus the same tile/listing/pricing
 // helpers the old in-checklist rainbow used.
-let _rainbowProductsLoaded = false;
+// The sport whose products the list holds: the sport picked on the page (the
+// same pick as Checklists and Market). null until the list first loads.
+var _rainbowListSport = null;
 
 function initRainbowPage() {
   setupCombobox(document.getElementById('rb-combo-product'));
@@ -14436,20 +14476,32 @@ function initRainbowPage() {
 
 async function loadRainbowProducts() {
   const select = document.getElementById('rainbow-product-select');
-  if (!select || _rainbowProductsLoaded) return;
+  const sport = activeSport();
+  if (!select || _rainbowListSport === sport) return;
+  _rainbowListSport = sport;
   try {
-    const data = await fetchChecklistsList();
+    const data = await fetchSportChecklists(sport);
+    if (_rainbowListSport !== sport) return;   // the pick changed while it loaded
+    select.innerHTML = '<option value="">Select a product...</option>';
     // Same as the completion picker: nothing to pick inside an unreleased product.
     data.products.filter(p => !_isUnreleased(p)).forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      // name already contains the year (e.g. "2025 Bowman Football")
+      // name already contains the year (e.g. "2025 Bowman Football", "2023-24 Panini Prizm Basketball")
       opt.textContent = p.name;
       select.appendChild(opt);
     });
-    _rainbowProductsLoaded = true;
     syncComboboxFromSelect(document.getElementById('rb-combo-product'));
-  } catch (err) { console.error('Failed to load products for rainbow:', err); }
+  } catch (err) { _rainbowListSport = null; console.error('Failed to load products for rainbow:', err); }
+}
+
+// A new sport: clear the product, player and rainbow, and list that sport.
+function resetRainbowForSport() {
+  const select = document.getElementById('rainbow-product-select');
+  if (select) select.value = '';
+  loadRainbowProduct();
+  _rainbowListSport = null;
+  if (rainbowPage && !rainbowPage.classList.contains('hidden')) loadRainbowProducts();
 }
 
 async function loadRainbowProduct() {
