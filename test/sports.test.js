@@ -58,8 +58,13 @@ check('the search hint and example searches mix every sport turned on',
 check('a testing sport says so when its listings come back, and the football market box goes with football',
   /id="sport-note"/.test(html) && /is under testing\.<\/strong> Live listings and 2018&ndash;2026 checklists are in\. Sold prices are still thin/.test(js)
   && /\.no-football #market-pulse \{ display: none !important; \}/.test(css));
-check('  ...the football-only pages say so when football is off',
-  ['checklist-view', 'rainbow-page', 'market-view'].every(id => js.includes(`['${id}',`)) && /is football-only for now\.<\/strong>/.test(js));
+check('  ...Checklists, Rainbow and Market share one sport pick, and Rainbow lists that sport',
+  (html.match(/class="sport-switch page-sport-switch hidden"/g) || []).length === 3 && /document\.querySelectorAll\('\.page-sport-switch'\)/.test(js)
+  && /const data = await fetchSportChecklists\(sport\);\s*if \(_rainbowListSport !== sport\) return;/.test(js));
+check('  ...and Market says "coming soon" for a sport without the sales for an index',
+  /id="market-coming-soon"/.test(html) && /market data is coming soon<\/h3>/.test(js)
+  && /if \(activeSport\(\) !== 'football'\) return;   \/\/ nothing to load/.test(js)
+  && /\.market-other-sport #market-periods/.test(css));
 check('both searches read their results through the sports turned on',
   (js.match(/const sportView = _sportFilterResults\(Array\.isArray\(data\.results\) \? data\.results : \[\]\);/g) || []).length === 2);
 
