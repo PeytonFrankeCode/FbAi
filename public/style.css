@@ -9489,6 +9489,23 @@ body.tour-open { overflow: hidden; }
 .mcs-btn { padding: 0.55rem 1rem; border-radius: 10px; font-weight: 700; background: var(--accent); color: var(--accent-on); border: 1px solid var(--accent); }
 .mcs-btn:hover { background: var(--accent); color: var(--accent-on); filter: brightness(1.08); }
 .mcs-btn-alt, .mcs-btn-alt:hover { background: none; color: var(--accent); }
+/* Basketball and baseball before there is history: what a few days can say. */
+.market-snapshot { margin: 1rem 0 0; }
+.ms-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0 0 1rem; color: var(--text-secondary); font-size: 0.88rem; }
+.ms-summary strong { color: var(--text-primary); }
+.ms-badge { padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; background: var(--accent-bg, rgba(99, 102, 241, 0.12)); color: var(--accent); border: 1px solid var(--accent-border); }
+.ms-section { margin-bottom: 1rem; }
+.ms-row { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0; border-bottom: 1px solid var(--border-primary); }
+.ms-row:last-child { border-bottom: 0; }
+.ms-click { cursor: pointer; border-radius: 8px; }
+.ms-click:hover, .ms-click:focus-visible { background: var(--bg-tertiary, rgba(127, 127, 127, 0.08)); }
+.ms-rank { width: 1.4rem; flex: none; text-align: right; font-weight: 700; color: var(--text-muted); font-size: 0.8rem; }
+.ms-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ms-title { color: var(--text-primary); font-size: 0.86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-meta { color: var(--text-muted); font-size: 0.75rem; }
+.ms-price { flex: none; font-weight: 700; color: var(--text-primary); font-size: 0.9rem; }
+.market-coming-soon.mcs-compact { padding: 1rem 1.25rem; margin-top: 0.5rem; max-width: none; }
+.market-coming-soon.mcs-compact p { margin: 0; }
 .market-header .page-sport-switch, .collection-header .page-sport-switch { justify-content: flex-start; margin: 0.6rem 0 0; }
 
 /* Basketball and baseball rainbows: the same ghost card without the football

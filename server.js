@@ -8444,6 +8444,108 @@ app.get('/api/market-basket', async (req, res) => {
     () => _computeMarketBasket(db, days, player)));
 });
 
+// ---- /api/market-snapshot: basketball and baseball, before there is history ----
+//
+// The market index compares a card's price with its own earlier sales, which
+// takes weeks of them. Basketball and baseball sales only began arriving
+// recently, so for them the market shows what a few days CAN say honestly:
+// the priciest sales, and which players and cards sold most. No trend, no
+// score: nothing here is a comparison with a past the data does not have.
+//
+// The collector tags each sale's sport; the index on (sport, sold_date) keeps
+// every query here to that sport's rows. The spellings are matched in the IN
+// list rather than with LOWER(), which would skip the index.
+const SNAPSHOT_SPORTS = {
+  basketball: ['basketball', 'Basketball', 'BASKETBALL', 'nba', 'NBA'],
+  baseball: ['baseball', 'Baseball', 'BASEBALL', 'mlb', 'MLB'],
+};
+const SNAPSHOT_MAX_DAYS = 7;      // the window: the newest week at most
+const SNAPSHOT_SHOW = 10;
+let _nflSportCol = null;
+async function _nflHasSportColumn(db) {
+  if (_nflSportCol !== null) return _nflSportCol;
+  try { await db.prepare('SELECT sport FROM sales LIMIT 1').first(); _nflSportCol = true; }
+  catch (_) { _nflSportCol = false; }
+  return _nflSportCol;
+}
+
+async function _computeMarketSnapshot(db, sport) {
+  const vals = SNAPSHOT_SPORTS[sport];
+  try {
+    if (!(await _nflHasSportColumn(db))) return { available: false, sport, reason: 'no sales for this sport yet' };
+    const inList = vals.map(() => '?').join(', ');
+    const where = `sport IN (${inList})`;
+    const newest = await db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE ${where}`).bind(...vals).first();
+    if (!newest || !newest.d) return { available: false, sport, reason: 'no sales for this sport yet' };
+    const since = _mkIso(_mkDay(newest.d) - (SNAPSHOT_MAX_DAYS - 1));
+    const scope = `${where} AND sold_date >= ?`;
+    const args = [...vals, since];
+    const priced = `${scope} AND price_cents IS NOT NULL AND price_cents > 0${await _noBestOfferSql(db)}`;
+    const hasImage = await _nflHasImageColumn(db);
+    const img = hasImage ? ', image_url' : '';
+
+    const totals = await db.prepare(
+      `SELECT COUNT(*) AS n, COUNT(DISTINCT sold_date) AS days, MIN(sold_date) AS first,
+              SUM(CASE WHEN price_cents > 0 THEN 1 ELSE 0 END) AS priced,
+              SUM(CASE WHEN price_cents > 0 THEN price_cents ELSE 0 END) AS cents
+         FROM sales WHERE ${scope}`).bind(...args).first();
+    const top = await db.prepare(
+      `SELECT item_id, sold_date, title, price_cents, player, grader, grade${img}
+         FROM sales WHERE ${priced} ORDER BY price_cents DESC LIMIT ?`).bind(...args, SNAPSHOT_SHOW).all();
+    // A player needs a few sales before "typical price" means anything, so the
+    // median is only given from three.
+    const players = await db.prepare(
+      `SELECT player, COUNT(*) AS n, SUM(price_cents) AS cents, MAX(price_cents) AS top
+         FROM sales WHERE ${priced} AND COALESCE(TRIM(player), '') <> '' AND confidence >= ?
+        GROUP BY player ORDER BY n DESC, cents DESC LIMIT ?`).bind(...args, NFLDB_MIN_CONFIDENCE, SNAPSHOT_SHOW).all();
+    // A card: player, year, set and number, raw copies only, so a PSA 10 and
+    // a raw copy of the same card are not counted as one thing selling often.
+    const cards = await db.prepare(
+      `SELECT player, year, set_name, card_number, COUNT(*) AS n, SUM(price_cents) AS cents,
+              MIN(price_cents) AS low, MAX(price_cents) AS high, MAX(title) AS title${hasImage ? ', MAX(image_url) AS image_url' : ''}
+         FROM sales WHERE ${priced} AND confidence >= ?
+          AND COALESCE(TRIM(player), '') <> '' AND COALESCE(TRIM(card_number), '') <> ''
+          AND COALESCE(TRIM(grader), '') = '' AND COALESCE(TRIM(parallel), '') = ''
+        GROUP BY player, year, set_name, card_number HAVING COUNT(*) >= 2
+        ORDER BY n DESC, cents DESC LIMIT ?`).bind(...args, NFLDB_MIN_CONFIDENCE, SNAPSHOT_SHOW).all();
+
+    const n = Number(totals && totals.n) || 0;
+    if (!n) return { available: false, sport, reason: 'no sales for this sport yet' };
+    const $ = (c) => Math.round(Number(c) || 0) / 100;
+    return {
+      available: true, sport, from: totals.first, through: newest.d,
+      days: Number(totals.days) || 1, sales: n, priced: Number(totals.priced) || 0, volume: $(totals.cents),
+      topSales: ((top && top.results) || []).map(r => ({
+        itemId: r.item_id, date: r.sold_date, title: r.title, price: $(r.price_cents), player: r.player || null,
+        grade: r.grader ? `${r.grader}${r.grade != null ? ' ' + Number(r.grade) : ''}` : null,
+        image: hasImage ? r.image_url || null : null,
+      })),
+      mostSoldPlayers: ((players && players.results) || []).map(r => ({
+        player: r.player, sales: Number(r.n), volume: $(r.cents), top: $(r.top),
+        average: Number(r.n) >= 3 ? $(Number(r.cents) / Number(r.n)) : null,
+      })),
+      mostSoldCards: ((cards && cards.results) || []).map(r => ({
+        player: r.player, year: r.year, set: r.set_name, number: r.card_number, sales: Number(r.n),
+        average: $(Number(r.cents) / Number(r.n)), low: $(r.low), high: $(r.high),
+        title: r.title, image: hasImage ? r.image_url || null : null,
+      })),
+    };
+  } catch (err) {
+    console.error('[MarketSnapshot]', err && err.message);
+    return { available: false, sport, reason: 'snapshot unavailable', transient: true, error: err && err.message };
+  }
+}
+
+app.get('/api/market-snapshot', async (req, res) => {
+  const sport = String(req.query.sport || '').toLowerCase();
+  if (!SNAPSHOT_SPORTS[sport]) return res.status(400).json({ available: false, reason: 'sport must be basketball or baseball' });
+  const db = getNflDb();
+  if (!db) return res.json({ available: false, sport, reason: 'no dataset' });
+  _marketCacheHeaders(res);
+  res.json(await _asD1Source('market-snapshot', () =>
+    _marketCached(`marketsnap:v1:${sport}`, () => _computeMarketSnapshot(db, sport))));
+});
+
 // v3: each card's move is second half vs first half. MARKET_CALC_SIG only
 // changes with the INDEX maths, so a change to the basket alone needs its own
 // bump — without it the corrected list waited behind an hour of cached v2
