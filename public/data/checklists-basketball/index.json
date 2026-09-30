@@ -4797,6 +4797,15 @@
       "totalCards": 1301
     },
     {
+      "id": "2011-12-panini-hoops-basketball",
+      "name": "2011-12 Panini Hoops Basketball",
+      "year": 2011,
+      "brand": "Panini Hoops",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 410
+    },
+    {
       "id": "2011-12-panini-limited-basketball",
       "name": "2011-12 Panini Limited Basketball",
       "year": 2011,
@@ -4815,6 +4824,15 @@
       "totalCards": 839
     },
     {
+      "id": "2011-12-sp-authentic-basketball",
+      "name": "2011-12 SP Authentic Basketball",
+      "year": 2011,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 105
+    },
+    {
       "id": "2011-12-upper-deck-exquisite-basketball",
       "name": "2011-12 Upper Deck Exquisite Basketball",
       "year": 2011,
@@ -4822,6 +4840,234 @@
       "sport": "Basketball",
       "setCount": 21,
       "totalCards": 523
+    },
+    {
+      "id": "2010-11-donruss-basketball",
+      "name": "2010-11 Donruss Basketball",
+      "year": 2010,
+      "brand": "Donruss",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 363
+    },
+    {
+      "id": "2010-11-donruss-production-line-basketball",
+      "name": "2010-11 Donruss Production Line Basketball",
+      "year": 2010,
+      "brand": "Donruss Production Line",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 221
+    },
+    {
+      "id": "2010-11-panini-absolute-basketball",
+      "name": "2010-11 Panini Absolute Basketball",
+      "year": 2010,
+      "brand": "Panini Absolute",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 204,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-panini-adrenalyn-xl-basketball",
+      "name": "2010-11 Panini Adrenalyn XL Basketball",
+      "year": 2010,
+      "brand": "Panini Adrenalyn XL",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 315
+    },
+    {
+      "id": "2010-11-panini-classics-basketball",
+      "name": "2010-11 Panini Classics Basketball",
+      "year": 2010,
+      "brand": "Panini Classics",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 277,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-panini-limited-basketball",
+      "name": "2010-11 Panini Limited Basketball",
+      "year": 2010,
+      "brand": "Panini Limited",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 67,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-panini-prestige-basketball",
+      "name": "2010-11 Panini Prestige Basketball",
+      "year": 2010,
+      "brand": "Panini Prestige",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 459
+    },
+    {
+      "id": "2010-11-panini-rookies-and-stars-basketball",
+      "name": "2010-11 Panini Rookies and Stars Basketball",
+      "year": 2010,
+      "brand": "Panini Rookies and Stars",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 351,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-panini-season-update-basketball",
+      "name": "2010-11 Panini Season Update Basketball",
+      "year": 2010,
+      "brand": "Panini Season Update",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 254
+    },
+    {
+      "id": "2010-11-panini-threads-basketball",
+      "name": "2010-11 Panini Threads Basketball",
+      "year": 2010,
+      "brand": "Panini Threads",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 343
+    },
+    {
+      "id": "2010-11-panini-timeless-treasures-basketball",
+      "name": "2010-11 Panini Timeless Treasures Basketball",
+      "year": 2010,
+      "brand": "Panini Timeless Treasures",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 68,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-panini-totally-certified-basketball",
+      "name": "2010-11 Panini Totally Certified Basketball",
+      "year": 2010,
+      "brand": "Panini Totally Certified",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 157,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-playoff-contenders-patches-basketball",
+      "name": "2010-11 Playoff Contenders Patches Basketball",
+      "year": 2010,
+      "brand": "Playoff Contenders Patches",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 199,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-playoff-nt-basketball",
+      "name": "2010-11 Playoff NT Basketball",
+      "year": 2010,
+      "brand": "Playoff NT",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 30,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2010-11-sp-authentic-basketball",
+      "name": "2010-11 SP Authentic Basketball",
+      "year": 2010,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 103
+    },
+    {
+      "id": "2010-11-upper-deck-north-carolina-basketball",
+      "name": "2010-11 Upper Deck North Carolina Basketball",
+      "year": 2010,
+      "brand": "Upper Deck North Carolina",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 188
+    },
+    {
+      "id": "2010-11-upper-deck-ultimate-collection-basketball",
+      "name": "2010-11 Upper Deck Ultimate Collection Basketball",
+      "year": 2010,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 51,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-bowman-48-basketball",
+      "name": "2009-10 Bowman 48 Basketball",
+      "year": 2009,
+      "brand": "Bowman 48",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 135
+    },
+    {
+      "id": "2009-10-donruss-elite-basketball",
+      "name": "2009-10 Donruss Elite Basketball",
+      "year": 2009,
+      "brand": "Donruss Elite",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 302
+    },
+    {
+      "id": "2009-10-panini-absolute-basketball",
+      "name": "2009-10 Panini Absolute Basketball",
+      "year": 2009,
+      "brand": "Panini Absolute",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 120,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-panini-adrenalyn-xl-basketball",
+      "name": "2009-10 Panini Adrenalyn XL Basketball",
+      "year": 2009,
+      "brand": "Panini Adrenalyn XL",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 381
+    },
+    {
+      "id": "2009-10-panini-basketball",
+      "name": "2009-10 Panini Basketball",
+      "year": 2009,
+      "brand": "Panini",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 762
+    },
+    {
+      "id": "2009-10-panini-certified-basketball",
+      "name": "2009-10 Panini Certified Basketball",
+      "year": 2009,
+      "brand": "Panini Certified",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 210,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-panini-classics-basketball",
+      "name": "2009-10 Panini Classics Basketball",
+      "year": 2009,
+      "brand": "Panini Classics",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 229,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
     },
     {
       "id": "2009-10-panini-court-kings-basketball",
@@ -4833,6 +5079,261 @@
       "totalCards": 345
     },
     {
+      "id": "2009-10-panini-crown-royale-basketball",
+      "name": "2009-10 Panini Crown Royale Basketball",
+      "year": 2009,
+      "brand": "Panini Crown Royale",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 213,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-panini-prestige-basketball",
+      "name": "2009-10 Panini Prestige Basketball",
+      "year": 2009,
+      "brand": "Panini Prestige",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 403
+    },
+    {
+      "id": "2009-10-panini-rookies-and-stars-basketball",
+      "name": "2009-10 Panini Rookies and Stars Basketball",
+      "year": 2009,
+      "brand": "Panini Rookies and Stars",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 334,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-panini-season-update-basketball",
+      "name": "2009-10 Panini Season Update Basketball",
+      "year": 2009,
+      "brand": "Panini Season Update",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 239
+    },
+    {
+      "id": "2009-10-panini-studio-basketball",
+      "name": "2009-10 Panini Studio Basketball",
+      "year": 2009,
+      "brand": "Panini Studio",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 259
+    },
+    {
+      "id": "2009-10-panini-threads-basketball",
+      "name": "2009-10 Panini Threads Basketball",
+      "year": 2009,
+      "brand": "Panini Threads",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 262,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-playoff-contenders-basketball",
+      "name": "2009-10 Playoff Contenders Basketball",
+      "year": 2009,
+      "brand": "Playoff Contenders",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 260,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-sp-game-used-basketball",
+      "name": "2009-10 SP Game Used Basketball",
+      "year": 2009,
+      "brand": "SP Game Used",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 169,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-sp-signature-edition-basketball",
+      "name": "2009-10 SP Signature Edition Basketball",
+      "year": 2009,
+      "brand": "SP Signature Edition",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 47,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-topps-basketball",
+      "name": "2009-10 Topps Basketball",
+      "year": 2009,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 408
+    },
+    {
+      "id": "2009-10-topps-chrome-basketball",
+      "name": "2009-10 Topps Chrome Basketball",
+      "year": 2009,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 107
+    },
+    {
+      "id": "2009-10-upper-deck-basketball",
+      "name": "2009-10 Upper Deck Basketball",
+      "year": 2009,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 554
+    },
+    {
+      "id": "2009-10-upper-deck-draft-edition-basketball",
+      "name": "2009-10 Upper Deck Draft Edition Basketball",
+      "year": 2009,
+      "brand": "Upper Deck Draft Edition",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 141
+    },
+    {
+      "id": "2009-10-upper-deck-first-edition-basketball",
+      "name": "2009-10 Upper Deck First Edition Basketball",
+      "year": 2009,
+      "brand": "Upper Deck First Edition",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 264,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2009-10-upper-deck-greats-of-the-game-basketball",
+      "name": "2009-10 Upper Deck Greats of the Game Basketball",
+      "year": 2009,
+      "brand": "Upper Deck Greats of the Game",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 173
+    },
+    {
+      "id": "2008-09-bowman-basketball",
+      "name": "2008-09 Bowman Basketball",
+      "year": 2008,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 162
+    },
+    {
+      "id": "2008-09-bowman-chrome-basketball",
+      "name": "2008-09 Bowman Chrome Basketball",
+      "year": 2008,
+      "brand": "Bowman Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 152,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2008-09-fleer-basketball",
+      "name": "2008-09 Fleer Basketball",
+      "year": 2008,
+      "brand": "Fleer",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 537
+    },
+    {
+      "id": "2008-09-fleer-hot-prospects-basketball",
+      "name": "2008-09 Fleer Hot Prospects Basketball",
+      "year": 2008,
+      "brand": "Fleer Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 226,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2008-09-press-pass-basketball",
+      "name": "2008-09 Press Pass Basketball",
+      "year": 2008,
+      "brand": "Press Pass",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 141
+    },
+    {
+      "id": "2008-09-press-pass-legends-basketball",
+      "name": "2008-09 Press Pass Legends Basketball",
+      "year": 2008,
+      "brand": "Press Pass Legends",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 80
+    },
+    {
+      "id": "2008-09-skybox-basketball",
+      "name": "2008-09 SkyBox Basketball",
+      "year": 2008,
+      "brand": "SkyBox",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 230
+    },
+    {
+      "id": "2008-09-skybox-metal-universe-basketball",
+      "name": "2008-09 Skybox Metal Universe Basketball",
+      "year": 2008,
+      "brand": "Skybox Metal Universe",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 28,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2008-09-sp-authentic-basketball",
+      "name": "2008-09 SP Authentic Basketball",
+      "year": 2008,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 186
+    },
+    {
+      "id": "2008-09-sp-rookie-threads-basketball",
+      "name": "2008-09 SP Rookie Threads Basketball",
+      "year": 2008,
+      "brand": "SP Rookie Threads",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 80,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2008-09-spx-basketball",
+      "name": "2008-09 SPx Basketball",
+      "year": 2008,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 128,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2008-09-topps-basketball",
+      "name": "2008-09 Topps Basketball",
+      "year": 2008,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 17,
+      "totalCards": 827
+    },
+    {
       "id": "2008-09-topps-chrome-basketball",
       "name": "2008-09 Topps Chrome Basketball",
       "year": 2008,
@@ -4840,6 +5341,43 @@
       "sport": "Basketball",
       "setCount": 4,
       "totalCards": 285
+    },
+    {
+      "id": "2008-09-topps-co-signers-basketball",
+      "name": "2008-09 Topps Co Signers Basketball",
+      "year": 2008,
+      "brand": "Topps Co Signers",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 147,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2008-09-topps-hardwood-basketball",
+      "name": "2008-09 Topps Hardwood Basketball",
+      "year": 2008,
+      "brand": "Topps Hardwood",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 266
+    },
+    {
+      "id": "2008-09-topps-signature-basketball",
+      "name": "2008-09 Topps Signature Basketball",
+      "year": 2008,
+      "brand": "Topps Signature",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 95
+    },
+    {
+      "id": "2008-09-upper-deck-basketball",
+      "name": "2008-09 Upper Deck Basketball",
+      "year": 2008,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 26,
+      "totalCards": 1418
     },
     {
       "id": "2008-09-upper-deck-exquisite-collection-basketball",
@@ -4851,6 +5389,734 @@
       "totalCards": 988
     },
     {
+      "id": "2008-09-upper-deck-first-edition-basketball",
+      "name": "2008-09 Upper Deck First Edition Basketball",
+      "year": 2008,
+      "brand": "Upper Deck First Edition",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 282
+    },
+    {
+      "id": "2008-09-upper-deck-mvp-basketball",
+      "name": "2008-09 Upper Deck MVP Basketball",
+      "year": 2008,
+      "brand": "Upper Deck MVP",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 338
+    },
+    {
+      "id": "2008-09-upper-deck-mvp-kobe-mvp-basketball",
+      "name": "2008-09 Upper Deck MVP Kobe MVP Basketball",
+      "year": 2008,
+      "brand": "Upper Deck MVP Kobe MVP",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 132
+    },
+    {
+      "id": "2008-09-upper-deck-mvp-ultimate-victory-basketball",
+      "name": "2008-09 Upper Deck MVP Ultimate Victory Basketball",
+      "year": 2008,
+      "brand": "Upper Deck MVP Ultimate Victory",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 86
+    },
+    {
+      "id": "2008-09-upper-deck-mvp-victory-basketball",
+      "name": "2008-09 Upper Deck MVP Victory Basketball",
+      "year": 2008,
+      "brand": "Upper Deck MVP Victory",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 82
+    },
+    {
+      "id": "2007-08-bowman-basketball",
+      "name": "2007-08 Bowman Basketball",
+      "year": 2007,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 277
+    },
+    {
+      "id": "2007-08-bowman-chrome-basketball",
+      "name": "2007-08 Bowman Chrome Basketball",
+      "year": 2007,
+      "brand": "Bowman Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 154
+    },
+    {
+      "id": "2007-08-fleer-basketball",
+      "name": "2007-08 Fleer Basketball",
+      "year": 2007,
+      "brand": "Fleer",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 478
+    },
+    {
+      "id": "2007-08-fleer-hot-prospects-basketball",
+      "name": "2007-08 Fleer Hot Prospects Basketball",
+      "year": 2007,
+      "brand": "Fleer Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 176,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-fleer-michael-jordan-basketball",
+      "name": "2007-08 Fleer Michael Jordan Basketball",
+      "year": 2007,
+      "brand": "Fleer Michael Jordan",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 195
+    },
+    {
+      "id": "2007-08-fleer-ultra-se-basketball",
+      "name": "2007-08 Fleer Ultra SE Basketball",
+      "year": 2007,
+      "brand": "Fleer Ultra SE",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 424
+    },
+    {
+      "id": "2007-08-press-pass-legends-basketball",
+      "name": "2007-08 Press Pass Legends Basketball",
+      "year": 2007,
+      "brand": "Press Pass Legends",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 100
+    },
+    {
+      "id": "2007-08-rittenhouse-wnba-basketball",
+      "name": "2007-08 Rittenhouse WNBA Basketball",
+      "year": 2007,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 67,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-sp-authentic-basketball",
+      "name": "2007-08 SP Authentic Basketball",
+      "year": 2007,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 170,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-sp-basketball",
+      "name": "2007-08 SP Basketball",
+      "year": 2007,
+      "brand": "SP",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 438,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-spx-basketball",
+      "name": "2007-08 SPx Basketball",
+      "year": 2007,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 134
+    },
+    {
+      "id": "2007-08-topps-1957-58-variations-basketball",
+      "name": "2007-08 Topps 1957 58 Variations Basketball",
+      "year": 2007,
+      "brand": "Topps 1957 58 Variations",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 85,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-topps-basketball",
+      "name": "2007-08 Topps Basketball",
+      "year": 2007,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 467
+    },
+    {
+      "id": "2007-08-topps-chrome-basketball",
+      "name": "2007-08 Topps Chrome Basketball",
+      "year": 2007,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 217
+    },
+    {
+      "id": "2007-08-topps-co-signers-basketball",
+      "name": "2007-08 Topps Co Signers Basketball",
+      "year": 2007,
+      "brand": "Topps Co Signers",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 73,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-topps-finest-basketball",
+      "name": "2007-08 Topps Finest Basketball",
+      "year": 2007,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 118,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-topps-stadium-club-basketball",
+      "name": "2007-08 Topps Stadium Club Basketball",
+      "year": 2007,
+      "brand": "Topps Stadium Club",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 287
+    },
+    {
+      "id": "2007-08-topps-trademark-moves-basketball",
+      "name": "2007-08 Topps Trademark Moves Basketball",
+      "year": 2007,
+      "brand": "Topps Trademark Moves",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 103,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-topps-triple-threads-basketball",
+      "name": "2007-08 Topps Triple Threads Basketball",
+      "year": 2007,
+      "brand": "Topps Triple Threads",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 72,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2007-08-upper-deck-artifacts-basketball",
+      "name": "2007-08 Upper Deck Artifacts Basketball",
+      "year": 2007,
+      "brand": "Upper Deck Artifacts",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 215
+    },
+    {
+      "id": "2007-08-upper-deck-basketball",
+      "name": "2007-08 Upper Deck Basketball",
+      "year": 2007,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 27,
+      "totalCards": 567
+    },
+    {
+      "id": "2007-08-upper-deck-first-edition-basketball",
+      "name": "2007-08 Upper Deck First Edition Basketball",
+      "year": 2007,
+      "brand": "Upper Deck First Edition",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 290,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-bowman-basketball",
+      "name": "2006-07 Bowman Basketball",
+      "year": 2006,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 341
+    },
+    {
+      "id": "2006-07-bowman-chrome-basketball",
+      "name": "2006-07 Bowman Chrome Basketball",
+      "year": 2006,
+      "brand": "Bowman Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 141,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-fleer-basketball",
+      "name": "2006-07 Fleer Basketball",
+      "year": 2006,
+      "brand": "Fleer",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 478
+    },
+    {
+      "id": "2006-07-fleer-hot-prospects-basketball",
+      "name": "2006-07 Fleer Hot Prospects Basketball",
+      "year": 2006,
+      "brand": "Fleer Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 102,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-fleer-ultra-basketball",
+      "name": "2006-07 Fleer Ultra Basketball",
+      "year": 2006,
+      "brand": "Fleer Ultra",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 272
+    },
+    {
+      "id": "2006-07-press-pass-basketball",
+      "name": "2006-07 Press Pass Basketball",
+      "year": 2006,
+      "brand": "Press Pass",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 91
+    },
+    {
+      "id": "2006-07-press-pass-legends-basketball",
+      "name": "2006-07 Press Pass Legends Basketball",
+      "year": 2006,
+      "brand": "Press Pass Legends",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 97
+    },
+    {
+      "id": "2006-07-rittenhouse-wnba-basketball",
+      "name": "2006-07 Rittenhouse WNBA Basketball",
+      "year": 2006,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 110
+    },
+    {
+      "id": "2006-07-sp-authentic-basketball",
+      "name": "2006-07 SP Authentic Basketball",
+      "year": 2006,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 92,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-sp-game-used-basketball",
+      "name": "2006-07 SP Game Used Basketball",
+      "year": 2006,
+      "brand": "SP Game Used",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 88,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-sp-signature-edition-basketball",
+      "name": "2006-07 SP Signature Edition Basketball",
+      "year": 2006,
+      "brand": "SP Signature Edition",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 82,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-spx-basketball",
+      "name": "2006-07 SPx Basketball",
+      "year": 2006,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 223,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-topps-basketball",
+      "name": "2006-07 Topps Basketball",
+      "year": 2006,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 13,
+      "totalCards": 417
+    },
+    {
+      "id": "2006-07-topps-chrome-basketball",
+      "name": "2006-07 Topps Chrome Basketball",
+      "year": 2006,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 220
+    },
+    {
+      "id": "2006-07-topps-finest-basketball",
+      "name": "2006-07 Topps Finest Basketball",
+      "year": 2006,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 125
+    },
+    {
+      "id": "2006-07-topps-full-court-basketball",
+      "name": "2006-07 Topps Full Court Basketball",
+      "year": 2006,
+      "brand": "Topps Full Court",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 248
+    },
+    {
+      "id": "2006-07-topps-luxury-box-basketball",
+      "name": "2006-07 Topps Luxury Box Basketball",
+      "year": 2006,
+      "brand": "Topps Luxury Box",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 93,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-topps-trademark-moves-basketball",
+      "name": "2006-07 Topps Trademark Moves Basketball",
+      "year": 2006,
+      "brand": "Topps Trademark Moves",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 147,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-topps-triple-threads-basketball",
+      "name": "2006-07 Topps Triple Threads Basketball",
+      "year": 2006,
+      "brand": "Topps Triple Threads",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 140
+    },
+    {
+      "id": "2006-07-upper-deck-basketball",
+      "name": "2006-07 Upper Deck Basketball",
+      "year": 2006,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 496
+    },
+    {
+      "id": "2006-07-upper-deck-hardcourt-basketball",
+      "name": "2006-07 Upper Deck Hardcourt Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 137,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-upper-deck-ovation-basketball",
+      "name": "2006-07 Upper Deck Ovation Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Ovation",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 158,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-upper-deck-reserve-basketball",
+      "name": "2006-07 Upper Deck Reserve Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Reserve",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 273,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-upper-deck-rookie-debut-basketball",
+      "name": "2006-07 Upper Deck Rookie Debut Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Rookie Debut",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 146,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-upper-deck-sweet-shot-basketball",
+      "name": "2006-07 Upper Deck Sweet Shot Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Sweet Shot",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 98,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-upper-deck-trilogy-basketball",
+      "name": "2006-07 Upper Deck Trilogy Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Trilogy",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 71,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2006-07-upper-deck-ultimate-collection-basketball",
+      "name": "2006-07 Upper Deck Ultimate Collection Basketball",
+      "year": 2006,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 60,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-bowman-basketball",
+      "name": "2005-06 Bowman Basketball",
+      "year": 2005,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 172
+    },
+    {
+      "id": "2005-06-bowman-chrome-basketball",
+      "name": "2005-06 Bowman Chrome Basketball",
+      "year": 2005,
+      "brand": "Bowman Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 150
+    },
+    {
+      "id": "2005-06-fleer-greats-of-the-game-basketball",
+      "name": "2005-06 Fleer Greats of the Game Basketball",
+      "year": 2005,
+      "brand": "Fleer Greats of the Game",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 107,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-fleer-nba-hoops-basketball",
+      "name": "2005-06 Fleer NBA Hoops Basketball",
+      "year": 2005,
+      "brand": "Fleer NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 247
+    },
+    {
+      "id": "2005-06-press-pass-basketball",
+      "name": "2005-06 Press Pass Basketball",
+      "year": 2005,
+      "brand": "Press Pass",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 72
+    },
+    {
+      "id": "2005-06-rittenhouse-wnba-basketball",
+      "name": "2005-06 Rittenhouse WNBA Basketball",
+      "year": 2005,
+      "brand": "Rittenhouse WNBA",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 136
+    },
+    {
+      "id": "2005-06-sage-basketball",
+      "name": "2005-06 SAGE Basketball",
+      "year": 2005,
+      "brand": "SAGE",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 86
+    },
+    {
+      "id": "2005-06-sp-authentic-basketball",
+      "name": "2005-06 SP Authentic Basketball",
+      "year": 2005,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 107,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-sp-game-used-basketball",
+      "name": "2005-06 SP Game Used Basketball",
+      "year": 2005,
+      "brand": "SP Game Used",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 120,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-sp-signature-edition-basketball",
+      "name": "2005-06 SP Signature Edition Basketball",
+      "year": 2005,
+      "brand": "SP Signature Edition",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 39,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-spx-basketball",
+      "name": "2005-06 SPx Basketball",
+      "year": 2005,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 164,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-topps-basketball",
+      "name": "2005-06 Topps Basketball",
+      "year": 2005,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 463
+    },
+    {
+      "id": "2005-06-topps-bazooka-basketball",
+      "name": "2005-06 Topps Bazooka Basketball",
+      "year": 2005,
+      "brand": "Topps Bazooka",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 293
+    },
+    {
+      "id": "2005-06-topps-chrome-basketball",
+      "name": "2005-06 Topps Chrome Basketball",
+      "year": 2005,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 284
+    },
+    {
+      "id": "2005-06-topps-finest-basketball",
+      "name": "2005-06 Topps Finest Basketball",
+      "year": 2005,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 171,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-topps-first-edition-basketball",
+      "name": "2005-06 Topps First Edition Basketball",
+      "year": 2005,
+      "brand": "Topps First Edition",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 96,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-topps-first-row-basketball",
+      "name": "2005-06 Topps First Row Basketball",
+      "year": 2005,
+      "brand": "Topps First Row",
+      "sport": "Basketball",
+      "setCount": 16,
+      "totalCards": 219,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-topps-luxury-box-basketball",
+      "name": "2005-06 Topps Luxury Box Basketball",
+      "year": 2005,
+      "brand": "Topps Luxury Box",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 197,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-topps-pristine-basketball",
+      "name": "2005-06 Topps Pristine Basketball",
+      "year": 2005,
+      "brand": "Topps Pristine",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 162,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-topps-style-52-basketball",
+      "name": "2005-06 Topps Style 52 Basketball",
+      "year": 2005,
+      "brand": "Topps Style 52",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 188
+    },
+    {
+      "id": "2005-06-topps-total-basketball",
+      "name": "2005-06 Topps Total Basketball",
+      "year": 2005,
+      "brand": "Topps Total",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 518
+    },
+    {
+      "id": "2005-06-upper-deck-basketball",
+      "name": "2005-06 Upper Deck Basketball",
+      "year": 2005,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 12,
+      "totalCards": 412
+    },
+    {
+      "id": "2005-06-upper-deck-espn-basketball",
+      "name": "2005-06 Upper Deck ESPN Basketball",
+      "year": 2005,
+      "brand": "Upper Deck ESPN",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 201
+    },
+    {
       "id": "2005-06-upper-deck-exquisite-collection-basketball",
       "name": "2005-06 Upper Deck Exquisite Collection Basketball",
       "year": 2005,
@@ -4858,6 +6124,387 @@
       "sport": "Basketball",
       "setCount": 23,
       "totalCards": 771
+    },
+    {
+      "id": "2005-06-upper-deck-hardcourt-basketball",
+      "name": "2005-06 Upper Deck Hardcourt Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 150
+    },
+    {
+      "id": "2005-06-upper-deck-reflections-basketball",
+      "name": "2005-06 Upper Deck Reflections Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Reflections",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 122,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-upper-deck-rookie-debut-basketball",
+      "name": "2005-06 Upper Deck Rookie Debut Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Rookie Debut",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 160
+    },
+    {
+      "id": "2005-06-upper-deck-slam-basketball",
+      "name": "2005-06 Upper Deck Slam Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Slam",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 133
+    },
+    {
+      "id": "2005-06-upper-deck-sweet-shot-basketball",
+      "name": "2005-06 Upper Deck Sweet Shot Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Sweet Shot",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 132,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-upper-deck-trilogy-basketball",
+      "name": "2005-06 Upper Deck Trilogy Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Trilogy",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 85,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2005-06-upper-deck-ultimate-collection-basketball",
+      "name": "2005-06 Upper Deck Ultimate Collection Basketball",
+      "year": 2005,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 62,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-bowman-basketball",
+      "name": "2004-05 Bowman Basketball",
+      "year": 2004,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 168
+    },
+    {
+      "id": "2004-05-bowman-chrome-basketball",
+      "name": "2004-05 Bowman Chrome Basketball",
+      "year": 2004,
+      "brand": "Bowman Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 145
+    },
+    {
+      "id": "2004-05-bowman-signature-edition-basketball",
+      "name": "2004-05 Bowman Signature Edition Basketball",
+      "year": 2004,
+      "brand": "Bowman Signature Edition",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 54,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-flair-basketball",
+      "name": "2004-05 Flair Basketball",
+      "year": 2004,
+      "brand": "Flair",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 88,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-fleer-authentix-basketball",
+      "name": "2004-05 Fleer Authentix Basketball",
+      "year": 2004,
+      "brand": "Fleer Authentix",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 131,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-fleer-genuine-basketball",
+      "name": "2004-05 Fleer Genuine Basketball",
+      "year": 2004,
+      "brand": "Fleer Genuine",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 140,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-fleer-hoops-basketball",
+      "name": "2004-05 Fleer Hoops Basketball",
+      "year": 2004,
+      "brand": "Fleer Hoops",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 253
+    },
+    {
+      "id": "2004-05-fleer-hoops-hot-prospects-basketball",
+      "name": "2004-05 Fleer Hoops Hot Prospects Basketball",
+      "year": 2004,
+      "brand": "Fleer Hoops Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 113,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-fleer-showcase-basketball",
+      "name": "2004-05 Fleer Showcase Basketball",
+      "year": 2004,
+      "brand": "Fleer Showcase",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 165
+    },
+    {
+      "id": "2004-05-fleer-sweet-sigs-basketball",
+      "name": "2004-05 Fleer Sweet Sigs Basketball",
+      "year": 2004,
+      "brand": "Fleer Sweet Sigs",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 123,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-fleer-throwbacks-basketball",
+      "name": "2004-05 Fleer Throwbacks Basketball",
+      "year": 2004,
+      "brand": "Fleer Throwbacks",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 98,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-fleer-tradition-basketball",
+      "name": "2004-05 Fleer Tradition Basketball",
+      "year": 2004,
+      "brand": "Fleer Tradition",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 374
+    },
+    {
+      "id": "2004-05-fleer-ultra-basketball",
+      "name": "2004-05 Fleer Ultra Basketball",
+      "year": 2004,
+      "brand": "Fleer Ultra",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 266
+    },
+    {
+      "id": "2004-05-fleer-ultra-wnba-basketball",
+      "name": "2004-05 Fleer Ultra WNBA Basketball",
+      "year": 2004,
+      "brand": "Fleer Ultra WNBA",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 132
+    },
+    {
+      "id": "2004-05-press-pass-basketball",
+      "name": "2004-05 Press Pass Basketball",
+      "year": 2004,
+      "brand": "Press Pass",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 70,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-skybox-autographics-basketball",
+      "name": "2004-05 Skybox Autographics Basketball",
+      "year": 2004,
+      "brand": "Skybox Autographics",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 128,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-skybox-e-xl-basketball",
+      "name": "2004-05 Skybox E XL Basketball",
+      "year": 2004,
+      "brand": "Skybox E XL",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 106
+    },
+    {
+      "id": "2004-05-skybox-fresh-ink-basketball",
+      "name": "2004-05 Skybox Fresh Ink Basketball",
+      "year": 2004,
+      "brand": "Skybox Fresh Ink",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 152,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-skybox-le-basketball",
+      "name": "2004-05 Skybox LE Basketball",
+      "year": 2004,
+      "brand": "Skybox LE",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 113,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-skybox-premium-basketball",
+      "name": "2004-05 Skybox Premium Basketball",
+      "year": 2004,
+      "brand": "Skybox Premium",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 119
+    },
+    {
+      "id": "2004-05-sp-authentic-basketball",
+      "name": "2004-05 SP Authentic Basketball",
+      "year": 2004,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 146,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-sp-game-used-basketball",
+      "name": "2004-05 SP Game Used Basketball",
+      "year": 2004,
+      "brand": "SP Game Used",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 94,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-sp-signature-edition-basketball",
+      "name": "2004-05 SP Signature Edition Basketball",
+      "year": 2004,
+      "brand": "SP Signature Edition",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 76,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-spx-basketball",
+      "name": "2004-05 SPx Basketball",
+      "year": 2004,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 177,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-topps-basketball",
+      "name": "2004-05 Topps Basketball",
+      "year": 2004,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 313
+    },
+    {
+      "id": "2004-05-topps-bazooka-basketball",
+      "name": "2004-05 Topps Bazooka Basketball",
+      "year": 2004,
+      "brand": "Topps Bazooka",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 251
+    },
+    {
+      "id": "2004-05-topps-chrome-basketball",
+      "name": "2004-05 Topps Chrome Basketball",
+      "year": 2004,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 230
+    },
+    {
+      "id": "2004-05-topps-finest-basketball",
+      "name": "2004-05 Topps Finest Basketball",
+      "year": 2004,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 141,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-topps-first-edition-basketball",
+      "name": "2004-05 Topps First Edition Basketball",
+      "year": 2004,
+      "brand": "Topps First Edition",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 235
+    },
+    {
+      "id": "2004-05-topps-luxury-box-basketball",
+      "name": "2004-05 Topps Luxury Box Basketball",
+      "year": 2004,
+      "brand": "Topps Luxury Box",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 193
+    },
+    {
+      "id": "2004-05-topps-pristine-basketball",
+      "name": "2004-05 Topps Pristine Basketball",
+      "year": 2004,
+      "brand": "Topps Pristine",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 113,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-topps-total-basketball",
+      "name": "2004-05 Topps Total Basketball",
+      "year": 2004,
+      "brand": "Topps Total",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 517
+    },
+    {
+      "id": "2004-05-upper-deck-basketball",
+      "name": "2004-05 Upper Deck Basketball",
+      "year": 2004,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 23,
+      "totalCards": 765
     },
     {
       "id": "2004-05-upper-deck-exquisite-collection-basketball",
@@ -4869,6 +6516,280 @@
       "totalCards": 292
     },
     {
+      "id": "2004-05-upper-deck-hardcourt-basketball",
+      "name": "2004-05 Upper Deck Hardcourt Basketball",
+      "year": 2004,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 129
+    },
+    {
+      "id": "2004-05-upper-deck-sweet-shot-basketball",
+      "name": "2004-05 Upper Deck Sweet Shot Basketball",
+      "year": 2004,
+      "brand": "Upper Deck Sweet Shot",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 136
+    },
+    {
+      "id": "2004-05-upper-deck-trilogy-basketball",
+      "name": "2004-05 Upper Deck Trilogy Basketball",
+      "year": 2004,
+      "brand": "Upper Deck Trilogy",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 81,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2004-05-upper-deck-ultimate-collection-basketball",
+      "name": "2004-05 Upper Deck Ultimate Collection Basketball",
+      "year": 2004,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 76,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-bowman-basketball",
+      "name": "2003-04 Bowman Basketball",
+      "year": 2003,
+      "brand": "Bowman",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 159
+    },
+    {
+      "id": "2003-04-bowman-chrome-basketball",
+      "name": "2003-04 Bowman Chrome Basketball",
+      "year": 2003,
+      "brand": "Bowman Chrome",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 147
+    },
+    {
+      "id": "2003-04-bowman-signature-edition-basketball",
+      "name": "2003-04 Bowman Signature Edition Basketball",
+      "year": 2003,
+      "brand": "Bowman Signature Edition",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 62,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-flair-basketball",
+      "name": "2003-04 Flair Basketball",
+      "year": 2003,
+      "brand": "Flair",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 141
+    },
+    {
+      "id": "2003-04-flair-final-edition-basketball",
+      "name": "2003-04 Flair Final Edition Basketball",
+      "year": 2003,
+      "brand": "Flair Final Edition",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 86,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-fleer-authentix-basketball",
+      "name": "2003-04 Fleer Authentix Basketball",
+      "year": 2003,
+      "brand": "Fleer Authentix",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 181
+    },
+    {
+      "id": "2003-04-fleer-avant-basketball",
+      "name": "2003-04 Fleer Avant Basketball",
+      "year": 2003,
+      "brand": "Fleer Avant",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 96
+    },
+    {
+      "id": "2003-04-fleer-e-x-basketball",
+      "name": "2003-04 Fleer E X Basketball",
+      "year": 2003,
+      "brand": "Fleer E X",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 92
+    },
+    {
+      "id": "2003-04-fleer-focus-basketball",
+      "name": "2003-04 Fleer Focus Basketball",
+      "year": 2003,
+      "brand": "Fleer Focus",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 176,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-fleer-genuine-insider-basketball",
+      "name": "2003-04 Fleer Genuine Insider Basketball",
+      "year": 2003,
+      "brand": "Fleer Genuine Insider",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 156,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-fleer-hot-prospects-basketball",
+      "name": "2003-04 Fleer Hot Prospects Basketball",
+      "year": 2003,
+      "brand": "Fleer Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 99,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-fleer-mystique-basketball",
+      "name": "2003-04 Fleer Mystique Basketball",
+      "year": 2003,
+      "brand": "Fleer Mystique",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 116,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-fleer-patchworks-basketball",
+      "name": "2003-04 Fleer Patchworks Basketball",
+      "year": 2003,
+      "brand": "Fleer Patchworks",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 152
+    },
+    {
+      "id": "2003-04-fleer-showcase-basketball",
+      "name": "2003-04 Fleer Showcase Basketball",
+      "year": 2003,
+      "brand": "Fleer Showcase",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 151
+    },
+    {
+      "id": "2003-04-fleer-tradition-basketball",
+      "name": "2003-04 Fleer Tradition Basketball",
+      "year": 2003,
+      "brand": "Fleer Tradition",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 411
+    },
+    {
+      "id": "2003-04-fleer-ultra-basketball",
+      "name": "2003-04 Fleer Ultra Basketball",
+      "year": 2003,
+      "brand": "Fleer Ultra",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 369
+    },
+    {
+      "id": "2003-04-skybox-autographics-basketball",
+      "name": "2003-04 Skybox Autographics Basketball",
+      "year": 2003,
+      "brand": "Skybox Autographics",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 111
+    },
+    {
+      "id": "2003-04-skybox-le-basketball",
+      "name": "2003-04 Skybox LE Basketball",
+      "year": 2003,
+      "brand": "Skybox LE",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 143,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-sp-authentic-basketball",
+      "name": "2003-04 SP Authentic Basketball",
+      "year": 2003,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 139,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-sp-game-used-basketball",
+      "name": "2003-04 SP Game Used Basketball",
+      "year": 2003,
+      "brand": "SP Game Used",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 86,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-sp-signature-edition-basketball",
+      "name": "2003-04 SP Signature Edition Basketball",
+      "year": 2003,
+      "brand": "SP Signature Edition",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 62,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-spx-basketball",
+      "name": "2003-04 SPx Basketball",
+      "year": 2003,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 161,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-topps-basketball",
+      "name": "2003-04 Topps Basketball",
+      "year": 2003,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 19,
+      "totalCards": 782
+    },
+    {
+      "id": "2003-04-topps-bazooka-basketball",
+      "name": "2003-04 Topps Bazooka Basketball",
+      "year": 2003,
+      "brand": "Topps Bazooka",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 338
+    },
+    {
+      "id": "2003-04-topps-chrome-basketball",
+      "name": "2003-04 Topps Chrome Basketball",
+      "year": 2003,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 179
+    },
+    {
       "id": "2003-04-topps-finest-basketball",
       "name": "2003-04 Topps Finest Basketball",
       "year": 2003,
@@ -4878,6 +6799,34 @@
       "totalCards": 185
     },
     {
+      "id": "2003-04-topps-first-edition-basketball",
+      "name": "2003-04 Topps First Edition Basketball",
+      "year": 2003,
+      "brand": "Topps First Edition",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 246
+    },
+    {
+      "id": "2003-04-topps-pristine-basketball",
+      "name": "2003-04 Topps Pristine Basketball",
+      "year": 2003,
+      "brand": "Topps Pristine",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 142,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-basketball",
+      "name": "2003-04 Upper Deck Basketball",
+      "year": 2003,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 871
+    },
+    {
       "id": "2003-04-upper-deck-exquisite-collection-basketball",
       "name": "2003-04 Upper Deck Exquisite Collection Basketball",
       "year": 2003,
@@ -4885,6 +6834,1149 @@
       "sport": "Basketball",
       "setCount": 15,
       "totalCards": 421
+    },
+    {
+      "id": "2003-04-upper-deck-glass-basketball",
+      "name": "2003-04 Upper Deck Glass Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Glass",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 121,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-hardcourt-basketball",
+      "name": "2003-04 Upper Deck Hardcourt Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 116,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-honor-roll-basketball",
+      "name": "2003-04 Upper Deck Honor Roll Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Honor Roll",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 133,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-legends-basketball",
+      "name": "2003-04 Upper Deck Legends Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Legends",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 181,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-mvp-basketball",
+      "name": "2003-04 Upper Deck MVP Basketball",
+      "year": 2003,
+      "brand": "Upper Deck MVP",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 335
+    },
+    {
+      "id": "2003-04-upper-deck-sweet-shot-basketball",
+      "name": "2003-04 Upper Deck Sweet Shot Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Sweet Shot",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 121,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-top-prospects-basketball",
+      "name": "2003-04 Upper Deck Top Prospects Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Top Prospects",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 90
+    },
+    {
+      "id": "2003-04-upper-deck-triple-dimensions-basketball",
+      "name": "2003-04 Upper Deck Triple Dimensions Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Triple Dimensions",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 261,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-ultimate-collection-basketball",
+      "name": "2003-04 Upper Deck Ultimate Collection Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 103,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2003-04-upper-deck-victory-basketball",
+      "name": "2003-04 Upper Deck Victory Basketball",
+      "year": 2003,
+      "brand": "Upper Deck Victory",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 231
+    },
+    {
+      "id": "2002-03-bowman-signature-edition-basketball",
+      "name": "2002-03 Bowman Signature Edition Basketball",
+      "year": 2002,
+      "brand": "Bowman Signature Edition",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 63
+    },
+    {
+      "id": "2002-03-flair-basketball",
+      "name": "2002-03 Flair Basketball",
+      "year": 2002,
+      "brand": "Flair",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 164
+    },
+    {
+      "id": "2002-03-fleer-authentix-basketball",
+      "name": "2002-03 Fleer Authentix Basketball",
+      "year": 2002,
+      "brand": "Fleer Authentix",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 242
+    },
+    {
+      "id": "2002-03-fleer-box-score-basketball",
+      "name": "2002-03 Fleer Box Score Basketball",
+      "year": 2002,
+      "brand": "Fleer Box Score",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 230,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-fleer-genuine-basketball",
+      "name": "2002-03 Fleer Genuine Basketball",
+      "year": 2002,
+      "brand": "Fleer Genuine",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 175
+    },
+    {
+      "id": "2002-03-fleer-hot-shots-basketball",
+      "name": "2002-03 Fleer Hot Shots Basketball",
+      "year": 2002,
+      "brand": "Fleer Hot Shots",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 200,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-fleer-premium-basketball",
+      "name": "2002-03 Fleer Premium Basketball",
+      "year": 2002,
+      "brand": "Fleer Premium",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 208
+    },
+    {
+      "id": "2002-03-fleer-showcase-basketball",
+      "name": "2002-03 Fleer Showcase Basketball",
+      "year": 2002,
+      "brand": "Fleer Showcase",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 171,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-fleer-tradition-basketball",
+      "name": "2002-03 Fleer Tradition Basketball",
+      "year": 2002,
+      "brand": "Fleer Tradition",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 418
+    },
+    {
+      "id": "2002-03-fleer-ultra-basketball",
+      "name": "2002-03 Fleer Ultra Basketball",
+      "year": 2002,
+      "brand": "Fleer Ultra",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 390
+    },
+    {
+      "id": "2002-03-nba-hoops-hot-prospects-basketball",
+      "name": "2002-03 NBA Hoops Hot Prospects Basketball",
+      "year": 2002,
+      "brand": "NBA Hoops Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 121,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-nba-hoops-stars-basketball",
+      "name": "2002-03 NBA Hoops Stars Basketball",
+      "year": 2002,
+      "brand": "NBA Hoops Stars",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 196,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-press-pass-basketball",
+      "name": "2002-03 Press Pass Basketball",
+      "year": 2002,
+      "brand": "Press Pass",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 110
+    },
+    {
+      "id": "2002-03-sage-hit-basketball",
+      "name": "2002-03 SAGE HIT Basketball",
+      "year": 2002,
+      "brand": "SAGE HIT",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 69
+    },
+    {
+      "id": "2002-03-sp-authentic-basketball",
+      "name": "2002-03 SP Authentic Basketball",
+      "year": 2002,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 178,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-sp-game-used-edition-basketball",
+      "name": "2002-03 SP Game Used Edition Basketball",
+      "year": 2002,
+      "brand": "SP Game Used Edition",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 86,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-spx-basketball",
+      "name": "2002-03 SPx Basketball",
+      "year": 2002,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 123,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-topps-basketball",
+      "name": "2002-03 Topps Basketball",
+      "year": 2002,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 14,
+      "totalCards": 615
+    },
+    {
+      "id": "2002-03-topps-chrome-basketball",
+      "name": "2002-03 Topps Chrome Basketball",
+      "year": 2002,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 224
+    },
+    {
+      "id": "2002-03-topps-finest-basketball",
+      "name": "2002-03 Topps Finest Basketball",
+      "year": 2002,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 128
+    },
+    {
+      "id": "2002-03-topps-pristine-basketball",
+      "name": "2002-03 Topps Pristine Basketball",
+      "year": 2002,
+      "brand": "Topps Pristine",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 128
+    },
+    {
+      "id": "2002-03-topps-stadium-club-basketball",
+      "name": "2002-03 Topps Stadium Club Basketball",
+      "year": 2002,
+      "brand": "Topps Stadium Club",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 180
+    },
+    {
+      "id": "2002-03-upper-deck-authentics-basketball",
+      "name": "2002-03 Upper Deck Authentics Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Authentics",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 134
+    },
+    {
+      "id": "2002-03-upper-deck-base-set-series-1-basketball",
+      "name": "2002-03 Upper Deck Base Set Series 1 Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Base Set Series 1",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 210
+    },
+    {
+      "id": "2002-03-upper-deck-base-set-series-2-basketball",
+      "name": "2002-03 Upper Deck Base Set Series 2 Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Base Set Series 2",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 210
+    },
+    {
+      "id": "2002-03-upper-deck-championship-drive-basketball",
+      "name": "2002-03 Upper Deck Championship Drive Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Championship Drive",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 94,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-finite-basketball",
+      "name": "2002-03 Upper Deck Finite Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Finite",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 90,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-generations-basketball",
+      "name": "2002-03 Upper Deck Generations Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Generations",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 203,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-glass-basketball",
+      "name": "2002-03 Upper Deck Glass Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Glass",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 114,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-hardcourt-basketball",
+      "name": "2002-03 Upper Deck Hardcourt Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 110,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-honor-roll-basketball",
+      "name": "2002-03 Upper Deck Honor Roll Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Honor Roll",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 121,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-inspirations-basketball",
+      "name": "2002-03 Upper Deck Inspirations Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Inspirations",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 113,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-mvp-basketball",
+      "name": "2002-03 Upper Deck MVP Basketball",
+      "year": 2002,
+      "brand": "Upper Deck MVP",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 369
+    },
+    {
+      "id": "2002-03-upper-deck-ovation-basketball",
+      "name": "2002-03 Upper Deck Ovation Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Ovation",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 107,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-sweet-shot-basketball",
+      "name": "2002-03 Upper Deck Sweet Shot Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Sweet Shot",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 97,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2002-03-upper-deck-ultimate-collection-basketball",
+      "name": "2002-03 Upper Deck Ultimate Collection Basketball",
+      "year": 2002,
+      "brand": "Upper Deck Ultimate Collection",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 26,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-flair-basketball",
+      "name": "2001-02 Flair Basketball",
+      "year": 2001,
+      "brand": "Flair",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 114,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-fleer-authentix-basketball",
+      "name": "2001-02 Fleer Authentix Basketball",
+      "year": 2001,
+      "brand": "Fleer Authentix",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 165
+    },
+    {
+      "id": "2001-02-fleer-e-x-basketball",
+      "name": "2001-02 Fleer E X Basketball",
+      "year": 2001,
+      "brand": "Fleer E X",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 162
+    },
+    {
+      "id": "2001-02-fleer-focus-basketball",
+      "name": "2001-02 Fleer Focus Basketball",
+      "year": 2001,
+      "brand": "Fleer Focus",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 142,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-fleer-force-basketball",
+      "name": "2001-02 Fleer Force Basketball",
+      "year": 2001,
+      "brand": "Fleer Force",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 200
+    },
+    {
+      "id": "2001-02-fleer-genuine-basketball",
+      "name": "2001-02 Fleer Genuine Basketball",
+      "year": 2001,
+      "brand": "Fleer Genuine",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 176
+    },
+    {
+      "id": "2001-02-fleer-greats-of-the-game-basketball",
+      "name": "2001-02 Fleer Greats of the Game Basketball",
+      "year": 2001,
+      "brand": "Fleer Greats of the Game",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 123
+    },
+    {
+      "id": "2001-02-fleer-marquee-basketball",
+      "name": "2001-02 Fleer Marquee Basketball",
+      "year": 2001,
+      "brand": "Fleer Marquee",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 134
+    },
+    {
+      "id": "2001-02-fleer-maximum-basketball",
+      "name": "2001-02 Fleer Maximum Basketball",
+      "year": 2001,
+      "brand": "Fleer Maximum",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 206,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-fleer-premium-basketball",
+      "name": "2001-02 Fleer Premium Basketball",
+      "year": 2001,
+      "brand": "Fleer Premium",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 240
+    },
+    {
+      "id": "2001-02-fleer-shoebox-collection-basketball",
+      "name": "2001-02 Fleer Shoebox Collection Basketball",
+      "year": 2001,
+      "brand": "Fleer Shoebox Collection",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 207
+    },
+    {
+      "id": "2001-02-fleer-showcase-basketball",
+      "name": "2001-02 Fleer Showcase Basketball",
+      "year": 2001,
+      "brand": "Fleer Showcase",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 95,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-fleer-ultra-basketball",
+      "name": "2001-02 Fleer Ultra Basketball",
+      "year": 2001,
+      "brand": "Fleer Ultra",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 342
+    },
+    {
+      "id": "2001-02-fleer-wnba-basketball",
+      "name": "2001-02 Fleer WNBA Basketball",
+      "year": 2001,
+      "brand": "Fleer WNBA",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 190,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-nba-hoops-hot-prospects-basketball",
+      "name": "2001-02 NBA Hoops Hot Prospects Basketball",
+      "year": 2001,
+      "brand": "NBA Hoops Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 85,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-sage-basketball",
+      "name": "2001-02 SAGE Basketball",
+      "year": 2001,
+      "brand": "SAGE",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 75
+    },
+    {
+      "id": "2001-02-sp-authentic-basketball",
+      "name": "2001-02 SP Authentic Basketball",
+      "year": 2001,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 146,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-spx-basketball",
+      "name": "2001-02 SPx Basketball",
+      "year": 2001,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 118,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-topps-basketball",
+      "name": "2001-02 Topps Basketball",
+      "year": 2001,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 433
+    },
+    {
+      "id": "2001-02-topps-chrome-basketball",
+      "name": "2001-02 Topps Chrome Basketball",
+      "year": 2001,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 218
+    },
+    {
+      "id": "2001-02-topps-heritage-basketball",
+      "name": "2001-02 Topps Heritage Basketball",
+      "year": 2001,
+      "brand": "Topps Heritage",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 305
+    },
+    {
+      "id": "2001-02-topps-pristine-basketball",
+      "name": "2001-02 Topps Pristine Basketball",
+      "year": 2001,
+      "brand": "Topps Pristine",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 101
+    },
+    {
+      "id": "2001-02-topps-stadium-club-basketball",
+      "name": "2001-02 Topps Stadium Club Basketball",
+      "year": 2001,
+      "brand": "Topps Stadium Club",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 175
+    },
+    {
+      "id": "2001-02-topps-tcc-basketball",
+      "name": "2001-02 Topps TCC Basketball",
+      "year": 2001,
+      "brand": "Topps TCC",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 176,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-topps-xpectations-basketball",
+      "name": "2001-02 Topps Xpectations Basketball",
+      "year": 2001,
+      "brand": "Topps Xpectations",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 185
+    },
+    {
+      "id": "2001-02-upper-deck-basketball",
+      "name": "2001-02 Upper Deck Basketball",
+      "year": 2001,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 30,
+      "totalCards": 1167
+    },
+    {
+      "id": "2001-02-upper-deck-hardcourt-basketball",
+      "name": "2001-02 Upper Deck Hardcourt Basketball",
+      "year": 2001,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 170,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-upper-deck-honor-roll-basketball",
+      "name": "2001-02 Upper Deck Honor Roll Basketball",
+      "year": 2001,
+      "brand": "Upper Deck Honor Roll",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 130,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-upper-deck-mvp-basketball",
+      "name": "2001-02 Upper Deck MVP Basketball",
+      "year": 2001,
+      "brand": "Upper Deck MVP",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 264
+    },
+    {
+      "id": "2001-02-upper-deck-ovation-basketball",
+      "name": "2001-02 Upper Deck Ovation Basketball",
+      "year": 2001,
+      "brand": "Upper Deck Ovation",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 112,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2001-02-upper-deck-sweet-shot-basketball",
+      "name": "2001-02 Upper Deck Sweet Shot Basketball",
+      "year": 2001,
+      "brand": "Upper Deck Sweet Shot",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 96,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-bowman-best-basketball",
+      "name": "2000-01 Bowman Best Basketball",
+      "year": 2000,
+      "brand": "Bowman Best",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 187
+    },
+    {
+      "id": "2000-01-fleer-authority-basketball",
+      "name": "2000-01 Fleer Authority Basketball",
+      "year": 2000,
+      "brand": "Fleer Authority",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 137,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-e-x-basketball",
+      "name": "2000-01 Fleer E X Basketball",
+      "year": 2000,
+      "brand": "Fleer E X",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 165
+    },
+    {
+      "id": "2000-01-fleer-focus-basketball",
+      "name": "2000-01 Fleer Focus Basketball",
+      "year": 2000,
+      "brand": "Fleer Focus",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 235,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-futures-basketball",
+      "name": "2000-01 Fleer Futures Basketball",
+      "year": 2000,
+      "brand": "Fleer Futures",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 244,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-game-time-basketball",
+      "name": "2000-01 Fleer Game Time Basketball",
+      "year": 2000,
+      "brand": "Fleer Game Time",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 180,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-genuine-basketball",
+      "name": "2000-01 Fleer Genuine Basketball",
+      "year": 2000,
+      "brand": "Fleer Genuine",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 110,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-legacy-basketball",
+      "name": "2000-01 Fleer Legacy Basketball",
+      "year": 2000,
+      "brand": "Fleer Legacy",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 116,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-mystique-basketball",
+      "name": "2000-01 Fleer Mystique Basketball",
+      "year": 2000,
+      "brand": "Fleer Mystique",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 183
+    },
+    {
+      "id": "2000-01-fleer-premium-basketball",
+      "name": "2000-01 Fleer Premium Basketball",
+      "year": 2000,
+      "brand": "Fleer Premium",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 237,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-fleer-showcase-basketball",
+      "name": "2000-01 Fleer Showcase Basketball",
+      "year": 2000,
+      "brand": "Fleer Showcase",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 157
+    },
+    {
+      "id": "2000-01-fleer-tradition-basketball",
+      "name": "2000-01 Fleer Tradition Basketball",
+      "year": 2000,
+      "brand": "Fleer Tradition",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 370
+    },
+    {
+      "id": "2000-01-fleer-triple-crown-basketball",
+      "name": "2000-01 Fleer Triple Crown Basketball",
+      "year": 2000,
+      "brand": "Fleer Triple Crown",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 277
+    },
+    {
+      "id": "2000-01-fleer-ultra-basketball",
+      "name": "2000-01 Fleer Ultra Basketball",
+      "year": 2000,
+      "brand": "Fleer Ultra",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 285
+    },
+    {
+      "id": "2000-01-fleer-ultra-wnba-basketball",
+      "name": "2000-01 Fleer Ultra WNBA Basketball",
+      "year": 2000,
+      "brand": "Fleer Ultra WNBA",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 164
+    },
+    {
+      "id": "2000-01-nba-hoops-basketball",
+      "name": "2000-01 NBA Hoops Basketball",
+      "year": 2000,
+      "brand": "NBA Hoops",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 66
+    },
+    {
+      "id": "2000-01-nba-hoops-hot-prospects-basketball",
+      "name": "2000-01 NBA Hoops Hot Prospects Basketball",
+      "year": 2000,
+      "brand": "NBA Hoops Hot Prospects",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 109,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-press-pass-basketball",
+      "name": "2000-01 Press Pass Basketball",
+      "year": 2000,
+      "brand": "Press Pass",
+      "sport": "Basketball",
+      "setCount": 15,
+      "totalCards": 283
+    },
+    {
+      "id": "2000-01-sage-basketball",
+      "name": "2000-01 SAGE Basketball",
+      "year": 2000,
+      "brand": "SAGE",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 126
+    },
+    {
+      "id": "2000-01-skybox-dominion-wnba-basketball",
+      "name": "2000-01 SkyBox Dominion WNBA Basketball",
+      "year": 2000,
+      "brand": "SkyBox Dominion WNBA",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 213
+    },
+    {
+      "id": "2000-01-sp-authentic-basketball",
+      "name": "2000-01 SP Authentic Basketball",
+      "year": 2000,
+      "brand": "SP Authentic",
+      "sport": "Basketball",
+      "setCount": 10,
+      "totalCards": 195
+    },
+    {
+      "id": "2000-01-sp-game-floor-authentic-floor-basketball",
+      "name": "2000-01 SP Game Floor Authentic Floor Basketball",
+      "year": 2000,
+      "brand": "SP Game Floor Authentic Floor",
+      "sport": "Basketball",
+      "setCount": 2,
+      "totalCards": 57
+    },
+    {
+      "id": "2000-01-sp-game-floor-edition-basketball",
+      "name": "2000-01 SP Game Floor Edition Basketball",
+      "year": 2000,
+      "brand": "SP Game Floor Edition",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 100
+    },
+    {
+      "id": "2000-01-sp-top-prospects-basketball",
+      "name": "2000-01 SP Top Prospects Basketball",
+      "year": 2000,
+      "brand": "SP Top Prospects",
+      "sport": "Basketball",
+      "setCount": 4,
+      "totalCards": 77
+    },
+    {
+      "id": "2000-01-spx-basketball",
+      "name": "2000-01 SPx Basketball",
+      "year": 2000,
+      "brand": "SPx",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 136,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-topps-basketball",
+      "name": "2000-01 Topps Basketball",
+      "year": 2000,
+      "brand": "Topps",
+      "sport": "Basketball",
+      "setCount": 18,
+      "totalCards": 773
+    },
+    {
+      "id": "2000-01-topps-chrome-basketball",
+      "name": "2000-01 Topps Chrome Basketball",
+      "year": 2000,
+      "brand": "Topps Chrome",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 294
+    },
+    {
+      "id": "2000-01-topps-finest-basketball",
+      "name": "2000-01 Topps Finest Basketball",
+      "year": 2000,
+      "brand": "Topps Finest",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 220
+    },
+    {
+      "id": "2000-01-topps-gallery-basketball",
+      "name": "2000-01 Topps Gallery Basketball",
+      "year": 2000,
+      "brand": "Topps Gallery",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 184
+    },
+    {
+      "id": "2000-01-topps-heritage-basketball",
+      "name": "2000-01 Topps Heritage Basketball",
+      "year": 2000,
+      "brand": "Topps Heritage",
+      "sport": "Basketball",
+      "setCount": 9,
+      "totalCards": 291
+    },
+    {
+      "id": "2000-01-topps-stadium-club-basketball",
+      "name": "2000-01 Topps Stadium Club Basketball",
+      "year": 2000,
+      "brand": "Topps Stadium Club",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 233
+    },
+    {
+      "id": "2000-01-topps-stars-basketball",
+      "name": "2000-01 Topps Stars Basketball",
+      "year": 2000,
+      "brand": "Topps Stars",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 172,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-upper-deck-basketball",
+      "name": "2000-01 Upper Deck Basketball",
+      "year": 2000,
+      "brand": "Upper Deck",
+      "sport": "Basketball",
+      "setCount": 21,
+      "totalCards": 640
+    },
+    {
+      "id": "2000-01-upper-deck-century-legends-basketball",
+      "name": "2000-01 Upper Deck Century Legends Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Century Legends",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 124
+    },
+    {
+      "id": "2000-01-upper-deck-encore-basketball",
+      "name": "2000-01 Upper Deck Encore Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Encore",
+      "sport": "Basketball",
+      "setCount": 8,
+      "totalCards": 193,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-upper-deck-hardcourt-basketball",
+      "name": "2000-01 Upper Deck Hardcourt Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Hardcourt",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 160,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-upper-deck-legends-basketball",
+      "name": "2000-01 Upper Deck Legends Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Legends",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 163
+    },
+    {
+      "id": "2000-01-upper-deck-mvp-basketball",
+      "name": "2000-01 Upper Deck MVP Basketball",
+      "year": 2000,
+      "brand": "Upper Deck MVP",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 277
+    },
+    {
+      "id": "2000-01-upper-deck-ovation-basketball",
+      "name": "2000-01 Upper Deck Ovation Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Ovation",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 136
+    },
+    {
+      "id": "2000-01-upper-deck-pros-and-prospects-basketball",
+      "name": "2000-01 Upper Deck Pros and Prospects Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Pros and Prospects",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 123,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-upper-deck-reserve-basketball",
+      "name": "2000-01 Upper Deck Reserve Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Reserve",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 129,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-upper-deck-slam-basketball",
+      "name": "2000-01 Upper Deck Slam Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Slam",
+      "sport": "Basketball",
+      "setCount": 5,
+      "totalCards": 130
+    },
+    {
+      "id": "2000-01-upper-deck-ultimate-victory-basketball",
+      "name": "2000-01 Upper Deck Ultimate Victory Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Ultimate Victory",
+      "sport": "Basketball",
+      "setCount": 7,
+      "totalCards": 143,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
+    },
+    {
+      "id": "2000-01-upper-deck-victory-basketball",
+      "name": "2000-01 Upper Deck Victory Basketball",
+      "year": 2000,
+      "brand": "Upper Deck Victory",
+      "sport": "Basketball",
+      "setCount": 1,
+      "totalCards": 259,
+      "note": "Partial checklist: some of the rarer numbered cards aren't listed yet."
     }
   ]
 }
