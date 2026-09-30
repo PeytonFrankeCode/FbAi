@@ -4973,7 +4973,7 @@ function _rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere
   // each parallel is its own card (the key carries it), measured only against
   // itself, so a Silver is never read as the base card's price.
   const colTests = `price_cents IS NOT NULL AND price_cents > 0
-          AND sold_date > ? AND sold_date <= ?${parallels ? RSI_ANY_PAR_CARD : RSI_BASE_CARD}${extraWhere}`;
+          AND sold_date > ? AND sold_date <= ?${parallels ? RSI_ANY_PAR_CARD : RSI_BASE_CARD}${extraWhere}${_footballSql()}`;
   // `graded` lets slabs in whose grade was parsed into the columns: the card
   // key carries grader and grade, so each grade is its own card, measured only
   // against itself. Slabs the parser could not grade stay out, as for raw.
@@ -8459,6 +8459,14 @@ const SNAPSHOT_SPORTS = {
   basketball: ['basketball', 'Basketball', 'BASKETBALL', 'nba', 'NBA'],
   baseball: ['baseball', 'Baseball', 'BASEBALL', 'mlb', 'MLB'],
 };
+// Football's aggregates read the same table, and a whole-market query with no
+// sport test would count basketball and baseball in (Michael Jordan alone sold
+// 1,224 cards on the first day they arrived). Only the other sports' tags are
+// excluded, so an untagged row, which is every football row from before the
+// column existed, stays exactly as it was. '' until the column is known.
+const OTHER_SPORT_TAGS = [...SNAPSHOT_SPORTS.basketball, ...SNAPSHOT_SPORTS.baseball];
+const _footballSql = (col = 'sport') => _nflSportCol
+  ? ` AND (${col} IS NULL OR ${col} NOT IN (${OTHER_SPORT_TAGS.map(t => `'${t}'`).join(', ')}))` : '';
 const SNAPSHOT_MAX_DAYS = 7;      // the window: the newest week at most
 const SNAPSHOT_SHOW = 10;
 let _nflSportCol = null;
@@ -8562,7 +8570,7 @@ async function _computeMarketBasket(db, days, player) {
       ? await db.prepare(
           'SELECT MAX(sold_date) AS d FROM sales WHERE player = ? AND confidence >= ? AND price_cents IS NOT NULL'
         ).bind(player, NFLDB_MIN_CONFIDENCE).first()
-      : await db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+      : await db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${(await _nflHasSportColumn(db), _footballSql())}`).first();
     if (!newest || !newest.d) return { available: false, days, reason: 'no data in range' };
 
     const throughIso = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
@@ -9696,9 +9704,10 @@ async function _computeMarketIndex(db, days) {
     // the page can say which, rather than blaming the data density. Both ends
     // are read at once: they are independent, and serially they were two round
     // trips before the real query could start.
+    await _nflHasSportColumn(db);
     const [newest, oldest] = await Promise.all([
-      db.prepare('SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first(),
-      db.prepare('SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first(),
+      db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_footballSql()}`).first(),
+      db.prepare(`SELECT MIN(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_footballSql()}`).first(),
     ]);
     if (!newest || !newest.d) return { available: false, days, reason: 'no data in range' };
 
@@ -9772,11 +9781,12 @@ async function _playerRoster(db) {
   const cached = await cacheGet('playerroster:v1');
   if (cached) return cached;
   const since = _mkIso(_mkDay(new Date().toISOString()) - PLAYER_LIST_WINDOW_DAYS);
+  await _nflHasSportColumn(db);
   const rows = await db.prepare(
     `SELECT player, COUNT(*) AS n
        FROM sales
       WHERE player IS NOT NULL AND player != ''
-        AND confidence >= ? AND sold_date >= ?
+        AND confidence >= ? AND sold_date >= ?${_footballSql()}
       GROUP BY player
       ORDER BY n DESC
       LIMIT ?`
@@ -10383,7 +10393,9 @@ async function _computeSoldStats(db, days) {
   const imgCol = img ? ', image_url' : '';
   // Boards are aggregates too — biggest sellers, movers, top sets. See
   // _noBestOfferSql: an accepted offer settled under an ask nobody published.
-  const noOffer = await _noBestOfferSql(db);
+  // Football's boards: see _footballSql. Put in with the best-offer test, which
+  // every per-sale query here already carries.
+  const noOffer = await _noBestOfferSql(db) + (await _nflHasSportColumn(db), _footballSql());
 
   // The movers board's filters, split as the index splits them: cheap column
   // tests in the WHERE, title-substring tests (print run, best offer, slab
@@ -10392,7 +10404,7 @@ async function _computeSoldStats(db, days) {
   // paid, and a move computed from asks is not a move in price.
   const moverColTests = `price_cents IS NOT NULL AND sold_date >= ?
                        AND confidence >= ?
-                       AND COALESCE(TRIM(player), '') <> ''${RSI_BASE_CARD}`;
+                       AND COALESCE(TRIM(player), '') <> ''${RSI_BASE_CARD}${_footballSql()}`;
   const moverSaleTests = `${RSI_BASE_SERIAL}${noOffer}${RSI_RAW_ONLY}`;
 
   try {
@@ -10443,7 +10455,7 @@ async function _computeSoldStats(db, days) {
                       ON s.player = g.player AND s.year IS g.year
                      AND s.set_name IS g.set_name AND s.card_number IS g.card_number
                    WHERE s.price_cents IS NOT NULL AND s.sold_date >= ?
-                     AND s.confidence >= ?
+                     AND s.confidence >= ?${_footballSql('s.sport')}
                    LIMIT ?`)
         .bind(since, NFLDB_MIN_CONFIDENCE, MOST_SOLD_MIN_GROUP, MOST_SOLD_MAX_GROUPS,
               since, NFLDB_MIN_CONFIDENCE, MOST_SOLD_MAX_ROWS).all(),
@@ -10458,7 +10470,7 @@ async function _computeSoldStats(db, days) {
                          COUNT(DISTINCT player) AS players
                   FROM sales
                   WHERE price_cents IS NOT NULL AND sold_date >= ?
-                    AND confidence >= ? AND COALESCE(TRIM(set_name), '') <> ''
+                    AND confidence >= ? AND COALESCE(TRIM(set_name), '') <> ''${_footballSql()}
                   GROUP BY year, set_name
                   ORDER BY n DESC LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, SOLD_STATS_TOP).all(),
 
@@ -17139,8 +17151,9 @@ async function newsSoldTable(db, args) {
   if (!player) return null;
   const days = Math.min(365, Math.max(7, parseInt(args.days, 10) || 30));
   try {
+    await _nflHasSportColumn(db);
     const newest = await db.prepare(
-      'SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL').first();
+      `SELECT MAX(sold_date) AS d FROM sales WHERE price_cents IS NOT NULL${_footballSql()}`).first();
     if (!newest || !newest.d) return null;
     const through = _mkIso(_mkDay(newest.d) - MARKET_EXCLUDE_TRAILING_DAYS);
     const since = _mkIso(_mkDay(through) - days);

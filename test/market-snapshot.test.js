@@ -23,7 +23,8 @@ db.exec(`CREATE TABLE sales (
   year TEXT, set_name TEXT, card_number TEXT, confidence REAL,
   best_offer INTEGER, bids INTEGER, image_url TEXT, sport TEXT
 )`);
-const day = '2026-09-28';
+db.exec('CREATE TABLE daily (sold_date TEXT, sales INTEGER, priced INTEGER, total_cents INTEGER)');
+const day = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
 const ins = db.prepare(`INSERT INTO sales (item_id, sold_date, title, price_cents, player, year, set_name,
   card_number, parallel, grader, grade, confidence, best_offer, sport) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 let n = 0;
@@ -35,6 +36,7 @@ add({ title: '2023 Prizm Brock Purdy', cents: 900000, player: 'Brock Purdy', spo
 // Basketball: Wembanyama sells most, one big graded LeBron, and a best offer
 // at a price that would top the list if it counted.
 for (let i = 0; i < 6; i++) add({ title: '2023-24 Prizm Victor Wembanyama #136', cents: 4000 + i * 100, player: 'Victor Wembanyama', num: '136', sport: 'basketball' });
+add({ title: '1986 Fleer Michael Jordan PSA 10', cents: 9000000, player: 'Michael Jordan', num: '57', grader: 'PSA', grade: '10', sport: 'NBA' });
 add({ title: '2003-04 Topps Chrome LeBron James PSA 10', cents: 250000, player: 'LeBron James', num: '111', grader: 'PSA', grade: '10', sport: 'Basketball' });
 add({ title: 'Best offer Wemby auto', cents: 999999, player: 'Victor Wembanyama', num: 'A-VW', bo: true, sport: 'basketball' });
 add({ title: '2023-24 Prizm Victor Wembanyama Silver #136', cents: 30000, player: 'Victor Wembanyama', num: '136', par: 'Silver', sport: 'basketball' });
@@ -79,12 +81,12 @@ const check = (label, ok, detail) => {
   const bb = (await call('/api/market-snapshot?sport=basketball')).body;
   check('basketball has a snapshot once its first sales are in', bb.available === true && bb.days === 1 && bb.through === day,
     JSON.stringify({ available: bb.available, days: bb.days, reason: bb.reason }));
-  check('  ...counting only basketball sales, whatever the tag\'s case', bb.sales === 9, `${bb.sales} sales`);
+  check('  ...counting only basketball sales, whatever the tag\'s case', bb.sales === 10, `${bb.sales} sales`);
   const titles = (bb.topSales || []).map(r => r.title);
   check('  ...with no football sale in it', !titles.some(t => /Stroud|Purdy/.test(t)));
   check('  ...the most expensive first, and an accepted best offer left out',
-    titles[0] === '2003-04 Topps Chrome LeBron James PSA 10' && !titles.includes('Best offer Wemby auto')
-      && bb.topSales[0].price === 2500 && bb.topSales[0].grade === 'PSA 10', titles.slice(0, 3).join(' | '));
+    titles[0] === '1986 Fleer Michael Jordan PSA 10' && titles[1] === '2003-04 Topps Chrome LeBron James PSA 10'
+      && !titles.includes('Best offer Wemby auto') && bb.topSales[0].price === 90000 && bb.topSales[0].grade === 'PSA 10', titles.slice(0, 3).join(' | '));
   const top = (bb.mostSoldPlayers || [])[0] || {};
   check('  ...the most sold player, with a typical price once there are three sales',
     top.player === 'Victor Wembanyama' && top.sales === 7 && top.average > 0, JSON.stringify(top));
@@ -99,6 +101,14 @@ const check = (label, ok, detail) => {
   queries = 0;
   await call('/api/market-snapshot?sport=basketball');
   check('a second visitor is served from the cache', queries === 0, `${queries} queries`);
+
+  // Football's own boards read the same table. A basketball sale there would
+  // be wrong on its face, and 1,224 Michael Jordan sales a day would own them.
+  const fb = (await call('/api/sold-stats?days=30')).body;
+  const fbTitles = (fb.priciest || []).map(r => r.title);
+  check('football\'s boards leave basketball out, and keep untagged football sales',
+    fbTitles.includes('2023 Prizm Brock Purdy') && fbTitles.some(t => /Stroud/.test(t))
+      && !fbTitles.some(t => /Jordan|LeBron|Wembanyama|Wemby/.test(t)), JSON.stringify({ a: fb.available, n: fbTitles.length, t: fbTitles }));
 
   const js = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
   check('the Market loads the snapshot for basketball and baseball', /if \(!view\.classList\.contains\('hidden'\)\) _mkLoadSnapshot\(id\);/.test(js)
