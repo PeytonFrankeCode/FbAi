@@ -2409,7 +2409,9 @@ async function fetchDirectSearch(query) {
         // had to broaden the query — pagination of a broadened search
         // would pull unrelated items.
         if (searchType !== 'broadened') {
-          _forsalePaging = { query, offset: results.length, hasMore: true, fetching: false };
+          // The server says where eBay's page ended; the survivors of its
+          // filters are fewer, and paging after them re-read listings.
+          _forsalePaging = { query, offset: data.nextOffset || results.length, hasMore: data.hasMore !== false, fetching: false };
           addForsaleLoadMore(grid);
         }
       }
@@ -2450,7 +2452,24 @@ function addForsaleLoadMore(grid) {
   wrap.appendChild(btn);
 }
 
-async function loadMoreForsaleResults(grid) {
+// A failed page, with the way back: eBay's API drops a request now and then,
+// and the listings are still there a moment later.
+function _loadMoreFailed(grid, retry) {
+  const wrap = grid.querySelector('.load-more-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const note = document.createElement('span');
+  note.className = 'no-results';
+  note.textContent = "eBay didn't answer that time.";
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'load-more-btn load-more-retry';
+  btn.textContent = 'Try again';
+  btn.addEventListener('click', retry);
+  wrap.append(note, btn);
+}
+
+async function loadMoreForsaleResults(grid, skipped = 0) {
   if (_forsalePaging.fetching || !_forsalePaging.hasMore) return;
   _forsalePaging.fetching = true;
   addForsaleLoadMore(grid);
@@ -2462,12 +2481,18 @@ async function loadMoreForsaleResults(grid) {
     const res = await fetch(`/api/search?${params}`);
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
-    const items = data.results || [];
+    // A listing already on screen is not shown twice (eBay's pages shift as
+    // listings end between one request and the next).
+    const seen = new Set(currentResults.map(r => r.itemId));
+    const items = (data.results || []).filter(r => !seen.has(r.itemId));
+    _forsalePaging.offset = data.nextOffset || _forsalePaging.offset + 40;
+    // eBay's total decides, not how many survived the filters: a page the
+    // filters emptied is not the end of the list.
+    _forsalePaging.hasMore = data.hasMore != null ? !!data.hasMore : items.length >= 40;
     if (items.length === 0) {
-      _forsalePaging.hasMore = false;
+      // Straight on to the next page, a few times at most; then the button.
+      if (_forsalePaging.hasMore && skipped < 3) { _forsalePaging.fetching = false; return loadMoreForsaleResults(grid, skipped + 1); }
     } else {
-      _forsalePaging.offset += items.length;
-      _forsalePaging.hasMore = items.length >= 40;
       currentResults.push(...items);
       const activeSort = document.querySelector('.sort-btn.active')?.dataset.sort;
       if (activeSort && activeSort !== 'default') {
@@ -2487,10 +2512,10 @@ async function loadMoreForsaleResults(grid) {
       });
     }
   } catch (err) {
-    const wrap = grid.querySelector('.load-more-wrap');
-    if (wrap) wrap.innerHTML = `<span class="no-results">Could not load more — ${escHtml(err.message)}</span>`;
-    _forsalePaging.hasMore = false;
+    // Not the end of the list: eBay had a moment. Say so and offer the retry,
+    // with the page left where it was.
     _forsalePaging.fetching = false;
+    _loadMoreFailed(grid, () => loadMoreForsaleResults(grid));
     return;
   }
   _forsalePaging.fetching = false;
@@ -2771,7 +2796,7 @@ async function performSearch(query, opts = {}) {
         // performSearch already consumed, so we pick up where it left off.
         _forsalePaging = {
           query,
-          offset: (_searchPaging.offset || 0) + results.length,
+          offset: data.nextOffset || (_searchPaging.offset || 0) + results.length,
           hasMore: !!_searchPaging.hasMore,
           fetching: false,
         };
@@ -4385,11 +4410,12 @@ async function fetchMoreFromServer(grid) {
       loadMoreCards(grid);
     }
   } catch (err) {
-    const wrap = grid.querySelector('.load-more-wrap');
-    if (wrap) wrap.innerHTML = `<span class="no-results">Could not load more — ${escHtml(err.message)}</span>`;
+    _searchPaging.fetching = false;
+    _loadMoreFailed(grid, () => fetchMoreFromServer(grid));
+    return;
   } finally {
     _searchPaging.fetching = false;
-    updateLoadMoreButton(grid);
+    if (grid.querySelector('.load-more-wrap .load-more-retry') == null) updateLoadMoreButton(grid);
   }
 }
 

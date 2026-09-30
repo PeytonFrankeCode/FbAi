@@ -1248,26 +1248,31 @@ async function getOAuthToken() {
   return oauthToken;
 }
 
-// ---- Retry helper (network errors only, NOT rate limits) ----
-async function withRetry(fn, maxRetries = 1) {
+// ---- Retry helper ----
+//
+// "Could not load more — Failed to fetch from eBay" was mostly a request that
+// would have worked a moment later. The retry only knew three Node error codes,
+// and on Workers a dropped connection or a timeout reports none of them, so a
+// single hiccup ended the list. Now retried: no response at all (network,
+// timeout), a 429, a 5xx, and a 401 once with a fresh token (a token eBay
+// revoked early). Anything else — a bad query, a 404 — fails at once.
+const _retryableStatus = (s) => s === 429 || (s >= 500 && s <= 504);
+async function withRetry(fn, maxRetries = 2) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await fn();
-      // If the function returned a rateLimited response, don't retry
-      if (result && result.rateLimited) return result;
-      return result;
+      return await fn();
     } catch (err) {
-      // eBay API errors should not be retried
-      if (err.isEbayError) throw err;
-      // Only retry on network/timeout errors, not HTTP errors
-      const isNetworkError = !err.response && (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND');
-      if (isNetworkError && attempt < maxRetries) {
-        const delay = (attempt + 1) * 2000;
-        console.log(`Network error, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})`);
-        await new Promise(r => setTimeout(r, delay));
-        continue;
-      }
-      throw err;
+      // eBay said no in its own words (an ack failure): retrying repeats it.
+      if (err.isEbayError || attempt >= maxRetries) throw err;
+      const status = err.response && err.response.status;
+      if (status === 401) { oauthToken = null; oauthExpiry = 0; }
+      else if (status && !_retryableStatus(status)) throw err;
+      // A 429 says to slow down; its Retry-After, if any, is capped so a
+      // visitor is not left waiting on it.
+      const after = Number(err.response && err.response.headers && err.response.headers['retry-after']);
+      const delay = Math.min(Number.isFinite(after) && after > 0 ? after * 1000 : 600 * (attempt + 1), 3000);
+      console.log(`[eBay] ${status || err.code || 'network error'}, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, delay));
     }
   }
 }
@@ -2459,7 +2464,7 @@ async function fetchEbayItems(keywords, limit = 20, mode = 'forsale', source = '
   // uses (reprints, customs, proxies, lots, bundles, fakes) so For Sale
   // listings come back as clean as Sold listings already are.
   const response = await withRetry(() => fetchViaBrowseAPI(keywords, limit, source, offset));
-  return { ...response, results: filterJunkListings(response.results || []) };
+  return { ...response, rawCount: (response.results || []).length, results: filterJunkListings(response.results || []) };
 }
 
 // Extract print run serial like /4, /25, /99 from a query
@@ -2471,7 +2476,9 @@ function extractSerial(text) {
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
-  const offset = Math.max(0, Math.min(parseInt(req.query.offset) || 0, 500));
+  // eBay pages up to offset + limit = 10,000; past 500 this used to clamp, so
+  // every later page quietly repeated page 500.
+  const offset = Math.max(0, Math.min(parseInt(req.query.offset) || 0, 10000 - limit));
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
   // Price range filter — only applied in forsale mode (the UI only shows it
   // there). Bounds are inclusive; anything outside the range is dropped.
@@ -2595,7 +2602,15 @@ app.get('/api/search', async (req, res) => {
         // listing is a real result, not noise. The junk filter (applied in
         // fetchEbayItems) already removes reprints/lots/customs.
         const filtered = applyVariantFilter(applyPriceFilter(searchData.results));
-        return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, hasMore: searchData.results.length >= limit });
+        // More is eBay's to say, from its own total. It was read off how many
+        // listings survived the junk filter, so a page that lost one listing
+        // to it (39 of 40) ended the list with hundreds still to come. And the
+        // next page starts where eBay's page ended, not after the survivors,
+        // or the next request re-reads the tail of this one.
+        const nextOffset = offset + limit;
+        const ebayTotal = Number(searchData.total) || 0;
+        const hasMore = ebayTotal ? nextOffset < Math.min(ebayTotal, 10000) : searchData.rawCount >= limit;
+        return res.json({ results: filtered, total: filtered.length, mock: false, mode, serial: null, similarResults: [], searchType: 'exact', broadenedQuery: null, approximateValue: null, offset, nextOffset, hasMore });
       }
 
       // No results — try broadened search (same as main search)
@@ -3832,7 +3847,10 @@ app.get('/api/direct-search', async (req, res) => {
     const exact = await fetchEbayItems(query, 20, mode, 'variants');
     if (exact.results.length > 0) {
       const filtered = applyVariantFilter(applyPriceFilter(exact.results));
-      return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode });
+      // Where Load more picks up: after the 20 eBay returned, however many of
+      // them the filters kept.
+      return res.json({ results: filtered, total: filtered.length, mock: false, searchType: 'exact', broadenedQuery: null, approximateValue: null, mode,
+        nextOffset: 20, hasMore: (Number(exact.total) || 0) > 20 });
     }
 
     // No exact results — try broadening

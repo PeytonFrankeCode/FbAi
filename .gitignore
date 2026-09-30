@@ -32,6 +32,8 @@ data/sessions.json
 data/community.json
 data/dms.json
 data/feedback.json
+# Runtime log of eBay API calls, written by the Node server (and its tests).
+data/api-call-log.json
 data/userdata/
 data/userphotos/
 
