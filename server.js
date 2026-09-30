@@ -131,6 +131,9 @@ const _KIND_LABEL = { auto: 'Auto', relic: 'Relic', redemption: 'Redemption' };
 // 50, and splitting one pre-split group by parallel and kind yields a handful
 // of rows, so 150 groups is ample headroom for a 50-row board.
 const MOST_SOLD_MIN_GROUP = 25;
+// Basketball and baseball began with a day of sales, where 25 of one card is a
+// handful of cards at most. Their bar is lower until they have football's depth.
+const MOST_SOLD_MIN_GROUP_NEW_SPORT = 3;
 const MOST_SOLD_MAX_GROUPS = 150;
 // A safety valve, not a working limit. If this binds, the shape of the data has
 // changed and the board reports truncated:true rather than presenting a partial
@@ -8444,31 +8447,15 @@ app.get('/api/market-basket', async (req, res) => {
     () => _computeMarketBasket(db, days, player)));
 });
 
-// ---- /api/market-snapshot: basketball and baseball, before there is history ----
+// ---- Sports in the sales table ----
 //
-// The market index compares a card's price with its own earlier sales, which
-// takes weeks of them. Basketball and baseball sales only began arriving
-// recently, so for them the market shows what a few days CAN say honestly:
-// the priciest sales, and which players and cards sold most. No trend, no
-// score: nothing here is a comparison with a past the data does not have.
-//
-// The collector tags each sale's sport; the index on (sport, sold_date) keeps
-// every query here to that sport's rows. The spellings are matched in the IN
-// list rather than with LOWER(), which would skip the index.
-const SNAPSHOT_SPORTS = {
+// The collector tags each sale's sport, and the (sport, sold_date) index keeps
+// a query for one sport to that sport's rows. The spellings are matched in an
+// IN list rather than with LOWER(), which would skip the index.
+const SPORT_TAGS = {
   basketball: ['basketball', 'Basketball', 'BASKETBALL', 'nba', 'NBA'],
   baseball: ['baseball', 'Baseball', 'BASEBALL', 'mlb', 'MLB'],
 };
-// Football's aggregates read the same table, and a whole-market query with no
-// sport test would count basketball and baseball in (Michael Jordan alone sold
-// 1,224 cards on the first day they arrived). Only the other sports' tags are
-// excluded, so an untagged row, which is every football row from before the
-// column existed, stays exactly as it was. '' until the column is known.
-const OTHER_SPORT_TAGS = [...SNAPSHOT_SPORTS.basketball, ...SNAPSHOT_SPORTS.baseball];
-const _footballSql = (col = 'sport') => _nflSportCol
-  ? ` AND (${col} IS NULL OR ${col} NOT IN (${OTHER_SPORT_TAGS.map(t => `'${t}'`).join(', ')}))` : '';
-const SNAPSHOT_MAX_DAYS = 7;      // the window: the newest week at most
-const SNAPSHOT_SHOW = 10;
 let _nflSportCol = null;
 async function _nflHasSportColumn(db) {
   if (_nflSportCol !== null) return _nflSportCol;
@@ -8477,82 +8464,20 @@ async function _nflHasSportColumn(db) {
   return _nflSportCol;
 }
 
-async function _computeMarketSnapshot(db, sport) {
-  const vals = SNAPSHOT_SPORTS[sport];
-  try {
-    if (!(await _nflHasSportColumn(db))) return { available: false, sport, reason: 'no sales for this sport yet' };
-    const inList = vals.map(() => '?').join(', ');
-    const where = `sport IN (${inList})`;
-    const newest = await db.prepare(`SELECT MAX(sold_date) AS d FROM sales WHERE ${where}`).bind(...vals).first();
-    if (!newest || !newest.d) return { available: false, sport, reason: 'no sales for this sport yet' };
-    const since = _mkIso(_mkDay(newest.d) - (SNAPSHOT_MAX_DAYS - 1));
-    const scope = `${where} AND sold_date >= ?`;
-    const args = [...vals, since];
-    const priced = `${scope} AND price_cents IS NOT NULL AND price_cents > 0${await _noBestOfferSql(db)}`;
-    const hasImage = await _nflHasImageColumn(db);
-    const img = hasImage ? ', image_url' : '';
-
-    const totals = await db.prepare(
-      `SELECT COUNT(*) AS n, COUNT(DISTINCT sold_date) AS days, MIN(sold_date) AS first,
-              SUM(CASE WHEN price_cents > 0 THEN 1 ELSE 0 END) AS priced,
-              SUM(CASE WHEN price_cents > 0 THEN price_cents ELSE 0 END) AS cents
-         FROM sales WHERE ${scope}`).bind(...args).first();
-    const top = await db.prepare(
-      `SELECT item_id, sold_date, title, price_cents, player, grader, grade${img}
-         FROM sales WHERE ${priced} ORDER BY price_cents DESC LIMIT ?`).bind(...args, SNAPSHOT_SHOW).all();
-    // A player needs a few sales before "typical price" means anything, so the
-    // median is only given from three.
-    const players = await db.prepare(
-      `SELECT player, COUNT(*) AS n, SUM(price_cents) AS cents, MAX(price_cents) AS top
-         FROM sales WHERE ${priced} AND COALESCE(TRIM(player), '') <> '' AND confidence >= ?
-        GROUP BY player ORDER BY n DESC, cents DESC LIMIT ?`).bind(...args, NFLDB_MIN_CONFIDENCE, SNAPSHOT_SHOW).all();
-    // A card: player, year, set and number, raw copies only, so a PSA 10 and
-    // a raw copy of the same card are not counted as one thing selling often.
-    const cards = await db.prepare(
-      `SELECT player, year, set_name, card_number, COUNT(*) AS n, SUM(price_cents) AS cents,
-              MIN(price_cents) AS low, MAX(price_cents) AS high, MAX(title) AS title${hasImage ? ', MAX(image_url) AS image_url' : ''}
-         FROM sales WHERE ${priced} AND confidence >= ?
-          AND COALESCE(TRIM(player), '') <> '' AND COALESCE(TRIM(card_number), '') <> ''
-          AND COALESCE(TRIM(grader), '') = '' AND COALESCE(TRIM(parallel), '') = ''
-        GROUP BY player, year, set_name, card_number HAVING COUNT(*) >= 2
-        ORDER BY n DESC, cents DESC LIMIT ?`).bind(...args, NFLDB_MIN_CONFIDENCE, SNAPSHOT_SHOW).all();
-
-    const n = Number(totals && totals.n) || 0;
-    if (!n) return { available: false, sport, reason: 'no sales for this sport yet' };
-    const $ = (c) => Math.round(Number(c) || 0) / 100;
-    return {
-      available: true, sport, from: totals.first, through: newest.d,
-      days: Number(totals.days) || 1, sales: n, priced: Number(totals.priced) || 0, volume: $(totals.cents),
-      topSales: ((top && top.results) || []).map(r => ({
-        itemId: r.item_id, date: r.sold_date, title: r.title, price: $(r.price_cents), player: r.player || null,
-        grade: r.grader ? `${r.grader}${r.grade != null ? ' ' + Number(r.grade) : ''}` : null,
-        image: hasImage ? r.image_url || null : null,
-      })),
-      mostSoldPlayers: ((players && players.results) || []).map(r => ({
-        player: r.player, sales: Number(r.n), volume: $(r.cents), top: $(r.top),
-        average: Number(r.n) >= 3 ? $(Number(r.cents) / Number(r.n)) : null,
-      })),
-      mostSoldCards: ((cards && cards.results) || []).map(r => ({
-        player: r.player, year: r.year, set: r.set_name, number: r.card_number, sales: Number(r.n),
-        average: $(Number(r.cents) / Number(r.n)), low: $(r.low), high: $(r.high),
-        title: r.title, image: hasImage ? r.image_url || null : null,
-      })),
-    };
-  } catch (err) {
-    console.error('[MarketSnapshot]', err && err.message);
-    return { available: false, sport, reason: 'snapshot unavailable', transient: true, error: err && err.message };
-  }
-}
-
-app.get('/api/market-snapshot', async (req, res) => {
-  const sport = String(req.query.sport || '').toLowerCase();
-  if (!SNAPSHOT_SPORTS[sport]) return res.status(400).json({ available: false, reason: 'sport must be basketball or baseball' });
-  const db = getNflDb();
-  if (!db) return res.json({ available: false, sport, reason: 'no dataset' });
-  _marketCacheHeaders(res);
-  res.json(await _asD1Source('market-snapshot', () =>
-    _marketCached(`marketsnap:v1:${sport}`, () => _computeMarketSnapshot(db, sport))));
-});
+// Football's aggregates read the same table, and a whole-market query with no
+// sport test would count basketball and baseball in (Michael Jordan alone sold
+// 1,224 cards on the first day they arrived). Only the other sports' tags are
+// excluded, so an untagged row, which is every football row from before the
+// column existed, stays exactly as it was. '' until the column is known.
+const OTHER_SPORT_TAGS = [...SPORT_TAGS.basketball, ...SPORT_TAGS.baseball];
+const _footballSql = (col = 'sport') => _nflSportCol
+  ? ` AND (${col} IS NULL OR ${col} NOT IN (${OTHER_SPORT_TAGS.map(t => `'${t}'`).join(', ')}))` : '';
+// One sport's own rows: basketball or baseball. Literal tags, not binds, so a
+// query's bind order is the same whichever sport it is built for.
+const _sportOnlySql = (sport, col = 'sport') => ` AND ${col} IN (${SPORT_TAGS[sport].map(t => `'${t}'`).join(', ')})`;
+// The rows a sport's boards read: football by exclusion (_footballSql), the
+// others by their tags.
+const _sportRowsSql = (sport, col = 'sport') => sport === 'football' ? _footballSql(col) : _sportOnlySql(sport, col);
 
 // v3: each card's move is second half vs first half. MARKET_CALC_SIG only
 // changes with the INDEX maths, so a change to the basket alone needs its own
@@ -10374,16 +10299,43 @@ const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
 // insert names, which the movers boards share.
 // v9: Players on the move is read from the market index (playerMoves).
 // v10: player names without what a seller wrote after " / ".
-const SOLD_STATS_KEY = (days) => `soldstats:v10:${days}`;
+// Basketball and baseball have their own boards, keyed with the sport; football
+// keeps the keys it always had.
+const _ssSport = (sport) => (sport && sport !== 'football' ? `:${sport}` : '');
+// v11: football's totals count its own rows once other sports share the table.
+const SOLD_STATS_KEY = (days, sport) => `soldstats:v11:${days}${_ssSport(sport)}`;
 // The version before, served on a cold key like the last good copy: until a
 // build has stored one, it is the last good copy.
-const SOLD_STATS_PREV_KEY = (days) => `soldstats:v9:${days}`;
+const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v10:${days}${_ssSport(sport)}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
 // response, and never throws: a stats widget must not break the page it sits
 // on, and must not fail a cron run either.
-async function _computeSoldStats(db, days) {
+// The period's totals. `daily` is pre-aggregated by the collector and has no
+// sport, so it holds every sport from the day the others began. Football reads
+// it only before that day and counts its own rows after; basketball and
+// baseball count theirs, which the (sport, sold_date) index keeps cheap.
+async function _soldStatsTotals(db, since, sport, hasSport) {
+  const direct = (from) => db.prepare(
+    `SELECT COUNT(*) AS sales, SUM(CASE WHEN price_cents IS NOT NULL THEN 1 ELSE 0 END) AS priced,
+            SUM(COALESCE(price_cents, 0)) AS total
+       FROM sales WHERE sold_date >= ?${_sportRowsSql(sport)}`).bind(from).first();
+  if (sport !== 'football') return direct(since);
+  const daily = (to) => db.prepare(
+    `SELECT SUM(sales) AS sales, SUM(priced) AS priced, SUM(total_cents) AS total FROM daily WHERE sold_date >= ?${to ? ' AND sold_date < ?' : ''}`)
+    .bind(...(to ? [since, to] : [since])).first();
+  if (!hasSport) return daily(null);
+  const first = await db.prepare(
+    `SELECT MIN(sold_date) AS d FROM sales WHERE sport IN (${OTHER_SPORT_TAGS.map(t => `'${t}'`).join(', ')})`).first();
+  if (!first || !first.d) return daily(null);
+  const cut = first.d > since ? first.d : since;
+  const [a, b] = await Promise.all([cut > since ? daily(cut) : null, direct(cut)]);
+  const add = (k) => (Number(a && a[k]) || 0) + (Number(b && b[k]) || 0);
+  return { sales: add('sales'), priced: add('priced'), total: add('total') };
+}
+
+async function _computeSoldStats(db, days, sport = 'football') {
   const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
   // The split point for "before and after". Half the window each side, so both
   // halves cover the same span and a ratio between them is comparing like with
@@ -10395,7 +10347,11 @@ async function _computeSoldStats(db, days) {
   // _noBestOfferSql: an accepted offer settled under an ask nobody published.
   // Football's boards: see _footballSql. Put in with the best-offer test, which
   // every per-sale query here already carries.
-  const noOffer = await _noBestOfferSql(db) + (await _nflHasSportColumn(db), _footballSql());
+  const hasSport = await _nflHasSportColumn(db);
+  if (sport !== 'football' && !hasSport) return { available: false, days, sport, reason: 'no sales for this sport yet' };
+  const sportSql = _sportRowsSql(sport);
+  const minGroup = sport === 'football' ? MOST_SOLD_MIN_GROUP : MOST_SOLD_MIN_GROUP_NEW_SPORT;
+  const noOffer = await _noBestOfferSql(db) + sportSql;
 
   // The movers board's filters, split as the index splits them: cheap column
   // tests in the WHERE, title-substring tests (print run, best offer, slab
@@ -10404,14 +10360,13 @@ async function _computeSoldStats(db, days) {
   // paid, and a move computed from asks is not a move in price.
   const moverColTests = `price_cents IS NOT NULL AND sold_date >= ?
                        AND confidence >= ?
-                       AND COALESCE(TRIM(player), '') <> ''${RSI_BASE_CARD}${_footballSql()}`;
+                       AND COALESCE(TRIM(player), '') <> ''${RSI_BASE_CARD}${sportSql}`;
   const moverSaleTests = `${RSI_BASE_SERIAL}${noOffer}${RSI_RAW_ONLY}`;
 
   try {
     const [totals, priciest, mostSold, topSets, movers] = await Promise.all([
       // Pre-aggregated: cheap regardless of how many sales the period holds.
-      db.prepare('SELECT SUM(sales) AS sales, SUM(priced) AS priced, SUM(total_cents) AS total FROM daily WHERE sold_date >= ?')
-        .bind(since).first(),
+      _soldStatsTotals(db, since, sport, hasSport),
 
       // Priciest individual sales in the window.
       db.prepare(`SELECT item_id, title, price_cents, sold_date, grader, grade${imgCol}
@@ -10455,9 +10410,9 @@ async function _computeSoldStats(db, days) {
                       ON s.player = g.player AND s.year IS g.year
                      AND s.set_name IS g.set_name AND s.card_number IS g.card_number
                    WHERE s.price_cents IS NOT NULL AND s.sold_date >= ?
-                     AND s.confidence >= ?${_footballSql('s.sport')}
+                     AND s.confidence >= ?${_sportRowsSql(sport, 's.sport')}
                    LIMIT ?`)
-        .bind(since, NFLDB_MIN_CONFIDENCE, MOST_SOLD_MIN_GROUP, MOST_SOLD_MAX_GROUPS,
+        .bind(since, NFLDB_MIN_CONFIDENCE, minGroup, MOST_SOLD_MAX_GROUPS,
               since, NFLDB_MIN_CONFIDENCE, MOST_SOLD_MAX_ROWS).all(),
 
       // Highest demand by set: how many cards of it actually changed hands.
@@ -10470,7 +10425,7 @@ async function _computeSoldStats(db, days) {
                          COUNT(DISTINCT player) AS players
                   FROM sales
                   WHERE price_cents IS NOT NULL AND sold_date >= ?
-                    AND confidence >= ? AND COALESCE(TRIM(set_name), '') <> ''${_footballSql()}
+                    AND confidence >= ? AND COALESCE(TRIM(set_name), '') <> ''${sportSql}
                   GROUP BY year, set_name
                   ORDER BY n DESC LIMIT ?`).bind(since, NFLDB_MIN_CONFIDENCE, SOLD_STATS_TOP).all(),
 
@@ -10580,7 +10535,7 @@ async function _computeSoldStats(db, days) {
     // history yet") takes the longest shorter period it does have, and says
     // which, rather than showing an empty board.
     let market = null, pm = null, pmDays = null;
-    for (const d of [days, ...MARKET_PERIODS.filter(d => d < days).sort((a, b) => b - a)]) {
+    for (const d of sport === 'football' ? [days, ...MARKET_PERIODS.filter(d => d < days).sort((a, b) => b - a)] : []) {
       const m = await _marketCached(_marketIndexKey(d), () => _computeMarketIndex(db, d)).catch(() => null);
       if (m && m.playerMoves && (m.playerMoves.players || []).length) { market = m; pm = m.playerMoves; pmDays = d; break; }
     }
@@ -10592,6 +10547,7 @@ async function _computeSoldStats(db, days) {
     const payload = {
       available: priced > 0,
       days,
+      sport,
       since,
       hasPhotos: img,
       // `sales` counts every tracked sale; `priced` excludes best-offer rows,
@@ -10649,7 +10605,7 @@ async function _computeSoldStats(db, days) {
         // could not read, or the sale has no card number. Kept off rather than
         // pooled with base, so a base tile holds only base cards.
         unplacedParallelSales: _mostSoldDropped,
-        minGroupSize: MOST_SOLD_MIN_GROUP,
+        minGroupSize: minGroup,
         // True when the row ceiling bit, so a truncated ranking is never
         // presented as a complete one.
         truncated: _mostSoldRaw.length >= MOST_SOLD_MAX_ROWS,
@@ -10703,10 +10659,13 @@ app.get('/api/sold-stats', async (req, res) => {
   const days = SOLD_STATS_PERIODS.includes(parseInt(req.query.days, 10))
     ? parseInt(req.query.days, 10)
     : 30;
+  // Football unless another sport is asked for; the page merges the sports
+  // its visitor has switched on.
+  const sport = SPORT_TAGS[String(req.query.sport || '').toLowerCase()] ? String(req.query.sport).toLowerCase() : 'football';
   const db = getNflDb();
-  if (!db) return res.json({ available: false, days });
+  if (!db) return res.json({ available: false, days, sport });
 
-  const cached = await cacheGet(SOLD_STATS_KEY(days));
+  const cached = await cacheGet(SOLD_STATS_KEY(days, sport));
   if (cached) return res.json(_fromCache(cached));
 
   // Cold cache: a deploy that changed the key, or an eviction. A build takes
@@ -10714,37 +10673,38 @@ app.get('/api/sold-stats', async (req, res) => {
   // a visitor's request arrived in that window (a phone gives up long before
   // 40s). So the last good boards are served at once, whatever version
   // built them, and the new ones are built behind the visitor.
-  const last = await cacheGet(SOLD_STATS_LAST_KEY(days)) || await cacheGet(SOLD_STATS_PREV_KEY(days));
+  const last = await cacheGet(SOLD_STATS_LAST_KEY(days, sport)) || await cacheGet(SOLD_STATS_PREV_KEY(days, sport));
   if (last && last.available) {
-    if (!_soldStatsInFlight.has(days)) {
-      const p = _soldStatsBuild(db, days)
+    if (!_soldStatsInFlight.has(`${days}${_ssSport(sport)}`)) {
+      const p = _soldStatsBuild(db, days, sport)
         .catch(err => console.error('[SoldStats] background build failed', days, err && err.message));
       if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
     }
     return res.json({ ..._fromCache(last), refreshing: true });
   }
   // Nothing at all to show: the first build ever for this period.
-  res.json(await _soldStatsBuild(db, days));
+  res.json(await _soldStatsBuild(db, days, sport));
 });
 
 // The version-free copy of the last good boards for a period, served while
 // the current version is being built. Kept far longer than the boards.
-const SOLD_STATS_LAST_KEY = (days) => `soldstats:last:${days}`;
+const SOLD_STATS_LAST_KEY = (days, sport) => `soldstats:last:${days}${_ssSport(sport)}`;
 const SOLD_STATS_LAST_TTL = 60 * 60 * 24 * 30;
 const _soldStatsInFlight = new Map();
-async function _soldStatsStore(days, payload) {
-  await cachePut(SOLD_STATS_KEY(days), payload, SOLD_STATS_TTL);
-  await cachePut(SOLD_STATS_LAST_KEY(days), payload, SOLD_STATS_LAST_TTL);
+async function _soldStatsStore(days, payload, sport) {
+  await cachePut(SOLD_STATS_KEY(days, sport), payload, SOLD_STATS_TTL);
+  await cachePut(SOLD_STATS_LAST_KEY(days, sport), payload, SOLD_STATS_LAST_TTL);
 }
 // One build per period at a time, stored only when it worked.
-function _soldStatsBuild(db, days) {
-  if (_soldStatsInFlight.has(days)) return _soldStatsInFlight.get(days);
+function _soldStatsBuild(db, days, sport = 'football') {
+  const slot = `${days}${_ssSport(sport)}`;
+  if (_soldStatsInFlight.has(slot)) return _soldStatsInFlight.get(slot);
   const p = (async () => {
-    const payload = await _computeSoldStats(db, days);
-    if (payload.available) await _soldStatsStore(days, payload);
+    const payload = await _computeSoldStats(db, days, sport);
+    if (payload.available) await _soldStatsStore(days, payload, sport);
     return payload;
-  })().finally(() => _soldStatsInFlight.delete(days));
-  _soldStatsInFlight.set(days, p);
+  })().finally(() => _soldStatsInFlight.delete(slot));
+  _soldStatsInFlight.set(slot, p);
   return p;
 }
 
