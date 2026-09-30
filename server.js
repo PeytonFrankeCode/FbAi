@@ -9016,7 +9016,8 @@ const PRICE_COVERAGE_TTL = 3600;
 // The sitemap's football URLs, checked by test/set-key.test.js so it cannot
 // drift silently away from what build-landing-pages.js emits. Football only:
 // the basketball and baseball pages have no sold data to be priced by.
-const INDEXABLE_URLS = 5756;
+// Football's share of the one index budget all three sports now share.
+const INDEXABLE_URLS = 3793;
 app.get('/api/debug/price-coverage', async (req, res) => {
   const db = getNflDb();
   if (!db) return res.json({ available: false, reason: 'no D1 binding' });
