@@ -27,6 +27,19 @@ check('2017 Prizm Rookie Autographs lists its Gold /10',
 check('2021 Prizm Rookie Autographs lists its Black Finite 1/1',
   has(par('2021-panini-prizm-football', 'Rookie Autographs'), 'Black Finite Prizms', 1));
 
+// 2024 Topps Chrome: every set's only parallel was "Base", so a Gold /50 or
+// a SuperFractor had nothing to match. Filled from Checklist Insider and
+// Checklist Center, which list each set's rainbow.
+{
+  const base = par('2024-topps-chrome-football', 'Base Set');
+  check('2024 Topps Chrome lists its base rainbow', base.length >= 30 && has(base, 'Refractor') && has(base, 'SuperFractor', 1)
+    && base.some(p => /^Gold/.test(p.name) && p.printRun === 50), `${base.length}: ` + base.slice(0, 8).map(p => p.name).join(', '));
+  check('  ...and its autographs theirs', par('2024-topps-chrome-football', 'Rookie Autographs').filter(p => p.name !== 'Base').length >= 10);
+  // Into Existence is a case hit: neither source lists a parallel for it.
+  const bare = (load('2024-topps-chrome-football').sets || []).filter(s => !(s.parallels || []).some(p => p.name !== 'Base') && s.name !== 'Into Existence');
+  check('  ...and no set is left with "Base" alone', bare.length === 0, bare.map(s => s.name).join(', '));
+}
+
 // No junk anywhere: page furniture, notes, a set's sections or another set.
 const JUNK = /(19|20)\d{2}|https?:|www\.|explore|buy on|checklist|:$|\(no |list below|print runs vary|[–—] \/?\d/i;
 const SECTION = /^(rookies?|veterans?(\/.*)?|pro bowl|nfl debut|hall of fame|mvps?)$/i;
