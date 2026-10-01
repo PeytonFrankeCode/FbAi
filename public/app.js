@@ -2913,11 +2913,22 @@ function getTeamColor(title) {
 }
 
 // ---- Date helpers ----
+// Whole calendar days from a sale date to today, in the visitor's own
+// calendar. A bare "2026-09-29" parsed as a timestamp is midnight UTC, which
+// is the evening before in the US, so it read a day off either way.
+function _calendarDaysSince(dateStr) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr || '').slice(0, 10));
+  if (!m) return null;
+  const now = new Date();
+  return Math.round((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 86400000);
+}
+
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) return '';
-  const days = Math.floor((Date.now() - date.getTime()) / 86400000);
+  const cal = /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr)) ? _calendarDaysSince(dateStr) : null;
+  const days = cal != null ? Math.max(0, cal) : Math.floor((Date.now() - date.getTime()) / 86400000);
   if (days === 0) return 'today';
   if (days === 1) return '1 day ago';
   if (days < 7) return `${days} days ago`;
@@ -16585,13 +16596,13 @@ const CA_FALLBACK = ['#5ece99', '#a06ff0', '#f2b544', '#7fb3ff', '#e0655f', '#94
 // make them look the same.
 const CA_PRICE_METHODS = {
   // Not sold in over a week: its last price, moved by the player's market since.
-  'market-adjusted': { label: 'Estimated', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago at $${_caNum(e.unadjustedPrice)}${e.compBasis === 'recent-average' ? ` (average of ${e.compCount} sales within three days)` : ''}. Moved ${e.marketPct >= 0 ? 'up' : 'down'} ${Math.abs(e.marketPct)}% with this player's market since then.` },
+  'market-adjusted': { label: 'Estimated', how: (e) => `Last sold ${_caSoldAgo(e)} at $${_caNum(e.unadjustedPrice)}${e.compBasis === 'recent-average' ? ` (average of ${e.compCount} sales within three days)` : ''}. Moved ${e.marketPct >= 0 ? 'up' : 'down'} ${Math.abs(e.marketPct)}% with this player's market since then.` },
   // The last comp, or the average of the comps within three days of it.
   'recent-sales': { label: 'Last comp', how: (e) => e.compBasis === 'recent-average'
-    ? `Average of the ${e.compCount} sales within three days of the latest, ${_caDaysWord(e.newestSaleDays)} ago.`
-    : `The latest sale, ${_caDaysWord(e.newestSaleDays)} ago.` },
-  'trend-adjusted': { label: 'Estimated', how: (e) => `No sale in ${_caDaysWord(e.newestSaleDays)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
-  'stale-sales': { label: 'Last sold', how: (e) => `Last sold ${_caDaysWord(e.newestSaleDays)} ago; this is its most recent price.` },
+    ? `Average of the ${e.compCount} sales within three days of the latest, ${_caSoldAgo(e)}.`
+    : `The latest sale, ${_caSoldAgo(e)}.` },
+  'trend-adjusted': { label: 'Estimated', how: (e) => `No sale since ${_caSoldAgo(e)}. Last sold around $${_caNum(e.unadjustedPrice)}, adjusted ${e.trendPct >= 0 ? 'up' : 'down'} ${Math.abs(e.trendPct)}% for how this player's prices have moved since.${e.trendClamped ? ' The move was capped — the underlying swing was larger than we\'ll apply to one card.' : ''}` },
+  'stale-sales': { label: 'Last sold', how: (e) => `Last sold ${_caSoldAgo(e)}; this is its most recent price.` },
   // A checklist parallel this card has not sold in, priced off its sold ones.
   'parallel-ladder': { label: 'Estimated', how: (e) => (e.oneOfOne
       ? `A 1/1 has no comps of its own, so treat the range as the answer. `
@@ -16613,6 +16624,19 @@ function _caNum(n) {
   const v = Number(n) || 0;
   return v >= 1000 ? v.toLocaleString('en-US', { maximumFractionDigits: 0 })
                    : v.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+// When this card last sold, as a date and its age from today: "2 days ago
+// (Sep 29)". The server's day count runs from the newest sale in the dataset,
+// which is a day or two behind the calendar — a sale on that day read "a day
+// ago" two days after it.
+function _caSoldAgo(e) {
+  const iso = e && e.newestSaleDate;
+  const n = iso ? _calendarDaysSince(iso) : null;
+  if (n == null) return `${_caDaysWord(e && e.newestSaleDays)} ago`;
+  const d = new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(n > 300 ? { year: 'numeric' } : {}), timeZone: 'UTC' });
+  const ago = n <= 0 ? 'today' : n === 1 ? 'yesterday' : `${_caDaysWord(n)} ago`;
+  return `${ago} (${d})`;
 }
 
 function _caDaysWord(d) {
