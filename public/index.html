@@ -63,7 +63,7 @@
   <meta name="apple-mobile-web-app-title" content="Card Huddle" />
 
   <!-- Google Analytics, for people.
-       It loads on the first real tap, scroll, key or mouse move, not on page
+       It loads on the first real tap, wheel turn, key or mouse move, not on page
        load: a bot that loads the page and sits there (the 7-second "users")
        never does any of those, so it is never counted. A person who opens the
        site and leaves without touching it is not counted either — a visit
@@ -79,7 +79,11 @@
         if (done || arguments[0] === 'consent') return real.apply(this, arguments);
         held.push(arguments);
       };
-      var ON = ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'];
+      // Not 'scroll': a script's window.scrollTo() fires a scroll event the
+      // browser marks as trusted, so a bot only had to scroll the page. A
+      // person's scroll always comes with one of these: a touch on a phone,
+      // a wheel turn on a mouse, a key, a press on the scrollbar.
+      var ON = ['pointerdown', 'touchstart', 'keydown', 'wheel', 'mousemove'];
       function start(e) {
         // A script can dispatch events; only the browser's own count.
         if (done || (e && e.isTrusted === false)) return;
