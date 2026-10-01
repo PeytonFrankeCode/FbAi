@@ -62,12 +62,40 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Card Huddle" />
 
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH"></script>
-  <script>
-    // dataLayer and gtag() are already defined by the consent block above.
-    gtag('js', new Date());
-    gtag('config', 'G-37RKDTRBCH');
+  <!-- Google Analytics, for people.
+       It loads on the first real tap, scroll, key or mouse move, not on page
+       load: a bot that loads the page and sits there (the 7-second "users")
+       never does any of those, so it is never counted. A person who opens the
+       site and leaves without touching it is not counted either — a visit
+       that did nothing. The Worker removes this block for known bots and
+       datacentre traffic, as it removes the other tags (data-ga). -->
+  <script data-ga>
+    (function () {
+      var ID = 'G-37RKDTRBCH', done = false, held = [];
+      var real = window.gtag;   // defined by the consent block above
+      // Until then, the app's events wait here rather than in dataLayer
+      // ahead of the config; consent updates go straight through.
+      window.gtag = function () {
+        if (done || arguments[0] === 'consent') return real.apply(this, arguments);
+        held.push(arguments);
+      };
+      var ON = ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'];
+      function start(e) {
+        // A script can dispatch events; only the browser's own count.
+        if (done || (e && e.isTrusted === false)) return;
+        done = true;
+        ON.forEach(function (n) { removeEventListener(n, start, true); });
+        window.gtag = real;
+        real('js', new Date());
+        real('config', ID);
+        held.forEach(function (a) { real.apply(null, a); });
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + ID;
+        document.head.appendChild(s);
+      }
+      ON.forEach(function (n) { addEventListener(n, start, { capture: true, passive: true }); });
+    })();
   </script>
 
   <!-- Open Graph -->
