@@ -56,8 +56,10 @@ export const stripsTags = (kind, ua) => NO_TAGS_FOR.has(kind) && !AD_CRAWLER.tes
 export class BotTagRemover {
   constructor() { this.removed = 0; }
   element(el) {
+    // The analytics loader is inline (data-ga): it injects gtag.js itself.
+    const isGaLoader = el.getAttribute('data-ga') != null;
     const src = el.getAttribute('src') || '';
-    if (!/adsbygoogle\.js|googletagmanager\.com/.test(src)) return;
+    if (!isGaLoader && !/adsbygoogle\.js|googletagmanager\.com/.test(src)) return;
     el.remove();
     this.removed++;
   }
@@ -954,7 +956,7 @@ export default {
                 }
               }
               if (stripsTags(visitorKind, request.headers.get('user-agent'))) {
-                out = new HTMLRewriter().on('script[src]', new BotTagRemover()).transform(out);
+                out = new HTMLRewriter().on('script[src], script[data-ga]', new BotTagRemover()).transform(out);
               }
               return out;
             }

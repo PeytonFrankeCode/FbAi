@@ -65,13 +65,24 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
   check("  ...but Google's ad crawlers still see the AdSense code",
     !stripsTags('verifiedBot', 'Mediapartners-Google') && !stripsTags('verifiedBot', 'Mozilla/5.0 (compatible; AdsBot-Google; +http://www.google.com/adsbot.html)'));
   const r = new BotTagRemover();
-  const el = (src) => ({ removed: false, getAttribute: () => src, remove() { this.removed = true; } });
+  const el = (src) => ({ removed: false, getAttribute: (k) => (k === 'src' ? src : null), remove() { this.removed = true; } });
   const ads = el('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1');
   const ga = el('https://www.googletagmanager.com/gtag/js?id=G-37RKDTRBCH');
   const app = el('/app.js?v=1');
   [ads, ga, app].forEach(e => r.element(e));
   check('  ...the AdSense and Analytics scripts come off, the app does not', ads.removed && ga.removed && !app.removed && r.removed === 2);
-  check('  ...applied to HTML pages by visitor kind', /if \(stripsTags\(visitorKind, request\.headers\.get\('user-agent'\)\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\]', new BotTagRemover\(\)\)/.test(worker));
+  check('  ...applied to HTML pages by visitor kind', /if \(stripsTags\(visitorKind, request\.headers\.get\('user-agent'\)\)\) \{\s*out = new HTMLRewriter\(\)\.on\('script\[src\], script\[data-ga\]', new BotTagRemover\(\)\)/.test(worker));
+  // Analytics loads on a person's first action, from an inline loader; it
+  // comes off for bots too.
+  const loader = { removed: false, getAttribute: (k) => (k === 'data-ga' ? '' : null), remove() { this.removed = true; } };
+  const plain = { removed: false, getAttribute: () => null, remove() { this.removed = true; } };
+  r.element(loader); r.element(plain);
+  check('  ...the analytics loader comes off too, other inline scripts stay', loader.removed && !plain.removed);
+  const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  check('Analytics waits for a person: no gtag.js on load, a loader that starts on a trusted tap, scroll, key or mouse move',
+    !/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js/.test(html) && /<script data-ga>/.test(html)
+      && /e\.isTrusted === false/.test(html) && /'pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'/.test(html)
+      && /held\.forEach/.test(html));
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
