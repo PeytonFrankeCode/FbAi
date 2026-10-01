@@ -17216,6 +17216,9 @@ const NEWS_CSS = [
   '@media(max-width:640px){h1{font-size:30px}article{font-size:16px}}',
 ].join('\n');
 
+// AdSense on an article: written content, the one kind of page here that is
+// ours in words as well as numbers. Not on the index, which is a list.
+const NEWS_AD_TAG = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>';
 function newsShell(opts) {
   const jsonLd = opts.jsonLd
     ? '<script type="application/ld+json">' + opts.jsonLd + '</script>' : '';
@@ -17228,6 +17231,8 @@ function newsShell(opts) {
     + '<meta property="og:description" content="' + NEWS.esc(opts.description) + '">'
     + '<meta property="og:type" content="article">'
     + '<meta property="og:url" content="' + NEWS.esc(opts.canonical) + '">'
+    + '<meta name="robots" content="' + (opts.noindex ? 'noindex, follow' : 'index, follow') + '">'
+    + (opts.ads ? NEWS_AD_TAG : '')
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
@@ -17236,10 +17241,12 @@ function newsShell(opts) {
     + '<header class="site"><div class="wrap">'
     + '<a class="brand" href="/">The Card Huddle</a>'
     + '<nav class="site"><a href="/">Search</a><a href="/sets/">Checklists</a>'
-    + '<a href="/">Market</a><a class="on" href="/news">News</a></nav>'
+    + '<a href="/">Market</a><a class="on" href="/news">Guides &amp; News</a></nav>'
     + '</div></header><main class="wrap">' + opts.body + '</main>'
     + '<footer class="site"><div class="wrap">&copy; ' + new Date().getFullYear()
-    + ' The Card Huddle &middot; <a href="/news">News</a> &middot; <a href="/">Prices</a>'
+    + ' The Card Huddle &middot; <a href="/news">Guides &amp; News</a> &middot; <a href="/">Prices</a>'
+    + ' &middot; <a href="/about.html">About</a> &middot; <a href="/methodology.html">How prices work</a>'
+    + ' &middot; <a href="/contact.html">Contact</a> &middot; <a href="/privacy.html">Privacy</a>'
     + '</div></footer></body></html>';
 }
 
@@ -17252,17 +17259,20 @@ app.get('/news', (req, res) => {
     + '<div class="foot"><span>' + NEWS.esc(String(a.publishedAt || '').slice(0, 10)) + '</span>'
     + '<span>&middot;</span><span>' + NEWS.readingMinutes(a.body) + ' min</span></div>'
     + '</div>').join('');
-  const body = '<div style="padding:36px 0 0"><h1>News &amp; Analysis</h1>'
+  const body = '<div style="padding:36px 0 0"><h1>Guides &amp; News</h1>'
     + '<p class="lede">Written from our own sold data &mdash; what actually changed hands, '
     + 'and what it means for what you hold.</p></div>'
     + (list.length ? '<div class="grid">' + cards + '</div>'
-                   : '<p class="lede" style="margin:32px 0 56px">No articles yet.</p>');
+                   : '<p class="lede" style="margin:32px 0 56px">The first guides are being written.</p>');
   res.set('Content-Type', 'text/html; charset=utf-8');
   res.set('Cache-Control', 'public, max-age=300');
   res.send(newsShell({
-    title: 'News & Analysis · The Card Huddle',
-    description: 'Football card market analysis built from real sold data.',
+    title: 'Guides & News · The Card Huddle',
+    description: 'Card collecting guides and market analysis, written from real sold data.',
     canonical: NEWS_SITE + '/news', body: body,
+    // An empty section is exactly what a low-value review counts against a
+    // site; it joins the index with its first article.
+    noindex: !list.length,
   }));
 });
 
@@ -17274,7 +17284,7 @@ app.get('/news/:slug', async (req, res) => {
     return res.send(newsShell({
       title: 'Not found · The Card Huddle',
       description: 'That article does not exist.',
-      canonical: NEWS_SITE + '/news',
+      canonical: NEWS_SITE + '/news', noindex: true,
       body: '<div style="padding:56px 0"><h1>Not found</h1>'
           + '<p class="lede">That article does not exist. <a href="/news">Back to news</a>.</p></div>',
     }));
@@ -17309,7 +17319,7 @@ app.get('/news/:slug', async (req, res) => {
   res.set('Content-Type', 'text/html; charset=utf-8');
   res.set('Cache-Control', 'public, max-age=300');
   res.send(newsShell({ title: a.title + ' · The Card Huddle', description: desc,
-                       canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd }));
+                       canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd, ads: true }));
 });
 
 // Its own sitemap, because articles appear between deploys while the main
