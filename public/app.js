@@ -10821,9 +10821,9 @@ function listingCardHtml(item) {
 // sentinel at the bottom of the scrollable grid comes into view. If the
 // strict filter wipes the first page, falls back to showing the unfiltered
 // API results under a "Similar listings" header.
-async function fetchVariantListings(container, query, variantName, printRun) {
+async function fetchVariantListings(container, query, variantName, printRun, fopts) {
   const state = {
-    query, variantName, printRun,
+    query, variantName, printRun, fopts: fopts || {},
     offset: 0, pageSize: 40,
     loading: false, hasMore: true,
     mode: 'strict',
@@ -10845,13 +10845,20 @@ async function loadVariantPage(container) {
   }
   try {
     const params = new URLSearchParams({ q: s.query, mode: 'forsale', limit: String(s.pageSize), offset: String(s.offset) });
+    if (s.fopts.clientFilter) params.set('filter', 'client');
     const res = await fetch(`/api/search?${params}`);
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
     const raw = data.results || [];
     let items = (s.mode === 'strict' && s.variantName)
-      ? filterStrictVariant(raw, s.variantName, s.printRun)
+      ? filterStrictVariant(raw, s.variantName, s.printRun, { ...s.fopts, relaxPrintRun: s.relaxed })
       : raw;
+    // Before falling back to "similar": the same parallel, with the print run
+    // allowed to be missing from the title.
+    if (s.offset === 0 && !items.length && s.mode === 'strict' && s.variantName && s.printRun && !s.relaxed) {
+      s.relaxed = true;
+      items = filterStrictVariant(raw, s.variantName, s.printRun, { ...s.fopts, relaxPrintRun: true });
+    }
     if (s.offset === 0 && items.length === 0 && raw.length > 0 && s.mode === 'strict') {
       s.mode = 'similar';
       items = raw;
@@ -10923,11 +10930,24 @@ const _RB_GENERIC_WORDS = new Set(['prizm', 'prizms', 'parallel', 'parallels', '
 const _RB_EXCLUSIVE_EFFECTS = ['cracked ice', 'tie-dye', 'tie dye', 'snake skin', 'fast break',
   'ice', 'wave', 'disco', 'mojo', 'shimmer', 'velocity', 'genesis', 'reactive', 'flash',
   'pulsar', 'sparkle', 'hyper', 'cosmic', 'lava', 'tiger', 'snakeskin', 'galaxy', 'choice',
-  'scope', 'atomic', 'dragon', 'butterfly', 'seismic', 'concourse', 'pandora', 'camo'];
+  'scope', 'atomic', 'dragon', 'butterfly', 'seismic', 'concourse', 'pandora', 'camo',
+  // Topps Chrome's rainbow: each of these is its own parallel, so a plain
+  // "Aqua Refractor" is not an "Aqua RayWave", nor a "Refractor" an X-Fractor.
+  'raywave', 'sonar', 'geometric', 'speckle', 'xfractor', 'superfractor', 'negative', 'sepia',
+  'logofractor', 'vinyl', 'checker', 'zebra', 'peacock', 'fireworks', 'kaleidoscope', 'lazer'];
+
+// One spelling per effect before it is looked for: "X-Fractor", "Xfractor"
+// and "X Fractor" are one parallel, as are "Ray Wave" and "RayWave".
+function _rbEffectText(s) {
+  return String(s || '').replace(/\bx[\s-]?fractors?\b/g, 'xfractor').replace(/\bray[\s-]?wave\b/g, 'raywave')
+    .replace(/\bsuper[\s-]?fractors?\b/g, 'superfractor').replace(/\blogo[\s-]?fractors?\b/g, 'logofractor')
+    .replace(/\blaser\b/g, 'lazer');
+}
 
 // Which exclusive effects appear in a string (phrases by substring, single
 // words on token boundaries so 'ice' doesn't match "price").
 function _rbEffectsIn(s) {
+  s = _rbEffectText(s);
   const found = new Set();
   for (const e of _RB_EXCLUSIVE_EFFECTS) {
     const hit = /[ -]/.test(e) ? s.includes(e) : new RegExp('\\b' + e + '\\b').test(s);
@@ -10940,16 +10960,53 @@ function _rbEffectsIn(s) {
 // Thorough but precise: handles the Base tier (exclude any parallel/numbering),
 // color exclusivity (a Blue variant never matches a Green listing), multi-color
 // parallels, bounded print runs (/25 != /250), and auto/relic exclusion.
+// Team names that carry a colour. "Green Bay Packers" is not a Green parallel,
+// and before these were taken out, a Packers card could match no parallel but
+// Green (and its base card none at all): the colour test read the team.
+const _RB_TEAM_COLOR_PHRASES = ['green bay', 'red sox', 'white sox', 'blue jays', 'red wings',
+  'blue jackets', 'blue devils', 'black knights', 'red raiders', 'golden state', 'silver knights',
+  'orange county', 'red storm', 'blue hens', 'scarlet knights', 'red wolves'];
+function _rbWithoutTeams(t) {
+  let s = t;
+  for (const ph of _RB_TEAM_COLOR_PHRASES) if (s.includes(ph)) s = s.split(ph).join(' ');
+  return s;
+}
+// One word of a parallel's name, the way titles spell it: no plural ("Pink
+// Refractors" is "Pink Refractor" on eBay), no punctuation.
+const _rbWord = (w) => { w = w.replace(/[^a-z0-9]/g, ''); return w.length > 4 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w; };
+
+// Product lines a title can name that make it another product: a 2024 Topps
+// Chrome rainbow is not 2024 Topps Chrome Update, Sapphire or Logofractor.
+const _RB_PRODUCT_LINES = ['update', 'sapphire', 'logofractor', 'heritage', 'optic', 'mosaic', 'select',
+  'chronicles', 'finest', 'bowman', 'stadium club', 'cosmic', 'gilded', 'obsidian', 'phoenix', 'absolute',
+  'certified', 'contenders', 'spectra', 'prestige', 'illusions', 'flawless', 'immaculate', 'national treasures',
+  'zenith', 'hoops', 'revolution', 'court kings', 'recon', 'noir', 'photogenic', 'draft picks', 'luminance'];
+const _RB_SET_GENERIC = /^(base( set)?|rookies?|base rookies|veterans?|rookie variations?|base variations?|legends?|retired)$/;
+
 function filterStrictVariant(items, variantName, printRun, opts) {
   const relaxPrintRun = !!(opts && opts.relaxPrintRun);
+  // The product's own name, and its other sets: a title naming a line the
+  // product is not, or another of its sets ("Youthquake" on a base card's
+  // rainbow), is another card.
+  const productName = String((opts && opts.product) || '').toLowerCase();
+  const foreignLines = productName ? _RB_PRODUCT_LINES.filter(w => !productName.includes(w)) : [];
+  const ownSet = String((opts && opts.setName) || '').toLowerCase();
+  const otherSets = ((opts && opts.otherSets) || []).map(n => String(n).toLowerCase().replace(/\s+/g, ' ').trim())
+    .filter(n => n.length >= 5 && !_RB_SET_GENERIC.test(n) && !ownSet.includes(n) && !n.includes(ownSet || '\u0000'));
   const v = (variantName || '').toLowerCase().trim();
   const isBase = !v || v === 'base';
-  const wantsAuto = /\bauto/.test(v);
-  const wantsRelic = /\b(patch|relic|jersey|memorabilia)\b/.test(v);
+  // An autograph or relic SET's parallels are autographs and relics: its
+  // listings say "Auto", and the parallel's own name ("Gold") never does. They
+  // used to be thrown out for it, so an autograph rainbow matched nothing.
+  const cat = String((opts && opts.category) || '').toLowerCase();
+  const setName = String((opts && opts.setName) || '').toLowerCase();
+  const wantsAuto = /\bauto/.test(v) || cat === 'autograph' || /\b(auto|autographs?|signatures?|ink)\b/.test(setName);
+  const wantsRelic = /\b(patch|relic|jersey|memorabilia)\b/.test(v) || cat === 'memorabilia'
+    || /\b(patch|patches|relics?|jerseys?|memorabilia|materials?|swatch|swatches|fabrics?|threads|gear)\b/.test(setName);
 
   // Distinctive words the title must contain (skip generic filler).
-  const words = v.split(/\s+/)
-    .map(w => w.replace(/[^a-z0-9]/g, ''))
+  const words = v.split(/[\s,]+/)
+    .map(_rbWord)
     .filter(w => w.length > 2 && !_RB_GENERIC_WORDS.has(w));
   // Colors named in the variant — used for exclusivity (and to allow
   // multi-color parallels like "Red White Blue").
@@ -10958,8 +11015,12 @@ function filterStrictVariant(items, variantName, printRun, opts) {
   const prRe = printRun ? new RegExp('/\\s*' + printRun + '(?![0-9])') : null;
 
   return items.filter(item => {
-    const title = String(item.title || '').toLowerCase();
+    const full = String(item.title || '').toLowerCase();
+    // Colours and effects are read with team names taken out.
+    const title = _rbWithoutTeams(full);
     const tokens = new Set(title.split(/[^a-z0-9]+/).filter(Boolean));
+    // "X-Fractor" and "Xfractor", "Tie-Dye" and "Tie Dye": one spelling.
+    const compact = full.replace(/[^a-z0-9]/g, '');
 
     // Print run, bounded so /25 never matches /250. Relaxed mode keeps it as a
     // positive-only signal — many sellers omit "/25" from the title, so a hard
@@ -10975,6 +11036,9 @@ function filterStrictVariant(items, variantName, printRun, opts) {
       }
     }
 
+    if (foreignLines.some(w => new RegExp('\\b' + w + '\\b').test(title))) return false;
+    if (otherSets.some(n => title.includes(n))) return false;
+
     if (isBase) {
       // Base = no parallel wording, no color, no serial numbering.
       if (_PARALLEL_COLORS.some(c => tokens.has(c))) return false;
@@ -10983,21 +11047,26 @@ function filterStrictVariant(items, variantName, printRun, opts) {
       if (!printRun && /\/\s*\d{1,4}\b/.test(title)) return false;
     } else {
       // Every distinctive word of the parallel must appear.
-      for (const w of words) if (!title.includes(w)) return false;
-      // Color exclusivity: drop listings that carry a color the variant doesn't.
-      if (variantColors.length) {
-        const bad = _PARALLEL_COLORS.filter(c => !variantColors.includes(c));
-        if (bad.some(c => tokens.has(c))) return false;
-      }
+      for (const w of words) if (!full.includes(w) && !compact.includes(w)) return false;
+      // Color exclusivity: drop listings that carry a color the variant doesn't
+      // — a plain "Refractor" included, which took the Pink Refractor's price
+      // when the test only ran for parallels that name a colour.
+      const bad = _PARALLEL_COLORS.filter(c => !variantColors.includes(c));
+      if (bad.some(c => tokens.has(c))) return false;
       // Effect exclusivity: a plain "Blue" shouldn't match a "Blue Ice" — drop
       // listings carrying a distinct parallel effect the variant doesn't name.
       for (const e of _rbEffectsIn(title)) {
         if (!variantEffects.has(e)) return false;
       }
+      // And the variant's own effects must be there ("X-Fractor" is not a
+      // plain Refractor listing).
+      for (const e of variantEffects) if (!_rbEffectsIn(title).has(e)) return false;
     }
 
     if (!wantsAuto && /\bauto(graph)?\b/.test(title)) return false;
     if (!wantsRelic && /\b(patch|relic|jersey number|memorabilia|logoman)\b/.test(title)) return false;
+    // And the other way: an autograph set's rainbow is autographs.
+    if (wantsAuto && cat === 'autograph' && !/\b(auto|autograph|autographed|signed|signature|ink)\b/.test(full)) return false;
     return true;
   });
 }
@@ -11077,21 +11146,25 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
   // aware cheapest pick. Returns { listing, pool } | null.
   async function priceVariant(v) {
     const baseQuery = buildChecklistQuery(player, year, brand, setName, category, v.printRun || '');
-    const q = `${baseQuery} ${v.name}`.trim();
+    const q = `${baseQuery} ${_rbQueryName(v.name)}`.trim();
     if (_rbListingCache.has(q)) return _rbListingCache.get(q);
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 12000);
     try {
       // Pull a wider pool (50) so the cheapest true match isn't missed when
       // eBay returns lots of near-matches ahead of the right parallel.
-      const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '50' })}`, { signal: ctrl.signal });
+      const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '50', filter: 'client' })}`, { signal: ctrl.signal });
       const data = await safeJson(res);
       const raw = data.results || [];
-      let matched = filterStrictVariant(raw, v.name, v.printRun || '');
+      const fopts = _rbFilterOpts(targetSet);
+      let matched = filterStrictVariant(raw, v.name, v.printRun || '', fopts);
       if (matched.length === 0 && v.printRun) {
-        matched = filterStrictVariant(raw, v.name, v.printRun || '', { relaxPrintRun: true });
+        matched = filterStrictVariant(raw, v.name, v.printRun || '', { ...fopts, relaxPrintRun: true });
       }
-      const picked = pickRainbowListing(matched);
+      // The cheapest listing of THIS card when any name its number; the
+      // cheapest of the parallel only when none do.
+      const numbered = _rbNumbered(matched, card.number);
+      const picked = pickRainbowListing(numbered.length ? numbered : matched);
       _rbListingCache.set(q, picked); // cache success (incl. genuine empties)
       return picked;
     } catch (_) {
@@ -14438,10 +14511,10 @@ function openRainbowListings(tile, card, set, variantName, printRun) {
       const body = slot.querySelector('.cl-listings-body');
       body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
       if (mode === 'sold') {
-        fetchRainbowSoldListings(body, baseQuery, variantName, printRun);
+        fetchRainbowSoldListings(body, baseQuery, variantName, printRun, _rbFilterOpts(set));
       } else {
-        const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
-        fetchVariantListings(body, q, variantName, printRun);
+        const q = variantName ? `${baseQuery} ${_rbQueryName(variantName)}` : baseQuery;
+        fetchVariantListings(body, q, variantName, printRun, { ..._rbFilterOpts(set), clientFilter: true });
       }
     });
   });
@@ -14452,19 +14525,20 @@ function openRainbowListings(tile, card, set, variantName, printRun) {
     tile.classList.remove('active');
   });
 
-  const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
-  fetchVariantListings(slot.querySelector('.cl-listings-body'), q, variantName, printRun);
+  const q = variantName ? `${baseQuery} ${_rbQueryName(variantName)}` : baseQuery;
+  fetchVariantListings(slot.querySelector('.cl-listings-body'), q, variantName, printRun, { ..._rbFilterOpts(set), clientFilter: true });
 
   slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-async function fetchRainbowSoldListings(container, baseQuery, variantName, printRun) {
-  const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+async function fetchRainbowSoldListings(container, baseQuery, variantName, printRun, fopts) {
+  const q = variantName ? `${baseQuery} ${_rbQueryName(variantName)}` : baseQuery;
   try {
     const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'sold', limit: '40' })}`);
     const data = await safeJson(res);
     const raw = data.results || [];
-    let items = variantName ? filterStrictVariant(raw, variantName, printRun) : raw;
+    let items = variantName ? filterStrictVariant(raw, variantName, printRun, fopts) : raw;
+    if (variantName && !items.length && printRun) items = filterStrictVariant(raw, variantName, printRun, { ...fopts, relaxPrintRun: true });
     if (items.length === 0 && raw.length > 0) items = raw;
     if (items.length === 0) {
       container.innerHTML = '<div class="cl-listings-empty">No sold listings found for this parallel.</div>';
@@ -14497,15 +14571,20 @@ async function loadRainbowTileImages(grid, productKey, si, ci, card, set) {
       const variantName = tile.dataset.variantName || '';
       const printRun = tile.dataset.variantPr || '';
       const baseQuery = buildChecklistQuery(player, year, brand, setName, category, printRun);
-      const q = variantName ? `${baseQuery} ${variantName}` : baseQuery;
+      const q = variantName ? `${baseQuery} ${_rbQueryName(variantName)}` : baseQuery;
       try {
-        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '12' })}`);
+        // 40, not 12: the right parallel is often not in eBay's first dozen.
+        const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '40', filter: 'client' })}`);
         const data = await safeJson(res);
         const raw = data.results || [];
-        const strict = filterStrictVariant(raw, variantName, printRun);
-        const verified = strict
-          .filter(r => parseFloat(r.price) > 0 && r.imageUrl && titleContainsParallel(r.title, variantName))
-          .sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        const fopts = _rbFilterOpts(set);
+        // A print run in the title is welcome, not required: many sellers
+        // leave "/25" out. A title naming a different one is still refused.
+        let strict = filterStrictVariant(raw, variantName, printRun, fopts);
+        if (!strict.length && printRun) strict = filterStrictVariant(raw, variantName, printRun, { ...fopts, relaxPrintRun: true });
+        const verified = _rbNumberFirst(strict
+          .filter(r => parseFloat(r.price) > 0 && r.imageUrl)
+          .sort((a, b) => parseFloat(a.price) - parseFloat(b.price)), card.number);
         if (verified.length > 0) {
           applyTileImage(tile, verified[0].imageUrl);
         } else {
@@ -14517,6 +14596,38 @@ async function loadRainbowTileImages(grid, productKey, si, ci, card, set) {
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+}
+
+// A parallel's name as a search says it: "Blue Prizms" is searched as "Blue
+// Prizm" and "Red, White, and Blue" without its commas and "and", the way
+// sellers write them. The filter decides what matches; this only widens what
+// eBay sends back to filter.
+// What the rainbow's filter is told about the card it is matching.
+function _rbFilterOpts(set) {
+  const product = (typeof completionData !== 'undefined' && completionData) || {};
+  return {
+    category: (set && set.category) || '',
+    setName: (set && set.name) || '',
+    product: [product.name, product.brand].filter(Boolean).join(' '),
+    otherSets: (product.sets || []).filter(x => x !== set).map(x => x.name),
+  };
+}
+// A listing that names the card's number is the card; one that does not may
+// be another card of the player in the same parallel. Those come first.
+function _rbNumbered(items, number) {
+  const n = String(number || '').toLowerCase().replace(/^#/, '');
+  if (!n) return [];
+  const re = new RegExp('(#\\s*|\\bno\\.?\\s*)' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![0-9a-z])', 'i');
+  return items.filter(r => re.test(r.title || ''));
+}
+function _rbNumberFirst(items, number) {
+  const yes = _rbNumbered(items, number);
+  return yes.length ? [...yes, ...items.filter(r => !yes.includes(r))] : items;
+}
+
+function _rbQueryName(variantName) {
+  return String(variantName || '').replace(/[,&]/g, ' ').replace(/\band\b/gi, ' ')
+    .replace(/\b(Prizms|Refractors)\b/g, (w) => w.slice(0, -1)).replace(/\s+/g, ' ').trim();
 }
 
 function titleContainsParallel(title, variantName) {

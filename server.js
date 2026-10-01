@@ -2490,7 +2490,13 @@ app.get('/api/search', async (req, res) => {
   // For Sale mode applies the same strict variant filter as Sold, but without
   // the silent fallback — users want listings that actually match their query,
   // not "similar" junk. Sold-mode keeps the fallback so the chart isn't blank.
-  const applyVariantFilter = (items) => mode === 'forsale'
+  // filter=client: the caller reads the parallel itself. The rainbow does,
+  // with rules that know a parallel's name from its set's ("Rookie
+  // Autographs" listings say "Auto"; "Red White and Blue" names three colours),
+  // and this filter, applied first, left it nothing: every query word must be
+  // in the title, and a second colour excludes. Junk is still filtered.
+  const clientFilters = req.query.filter === 'client';
+  const applyVariantFilter = (items) => mode === 'forsale' && !clientFilters
     ? filterByVariant(items, query, { strict: true })
     : items;
 
