@@ -82,6 +82,13 @@ const check = (label, ok, detail) => {
   check('  ...and the About page says which pages are offered to search, and why',
     /Which pages we put in front of search engines/.test(about) && /href="\/news"/.test(about));
 
+  // The templated FAQ: the same four answers with the names swapped, on every
+  // set and player page — the scaled-content shape a low-value review counts.
+  const builder = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build-landing-pages.js'), 'utf8');
+  check('generated pages carry no templated FAQ', !/faqSection|FAQPage|lp-faq/.test(builder));
+  const home = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  check('  ...and the homepage states the checklists as they are now', !/more than 360 products/.test(home) && /1,381 football products/.test(home));
+
   console.log(failures ? `\n${failures} check(s) failed` : '\nall priced-index checks passed');
   process.exit(failures ? 1 : 0);
 })().catch(e => { console.error('THREW:', e && e.stack || e); process.exit(1); });

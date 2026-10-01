@@ -501,26 +501,6 @@ function breadcrumbJsonLd(items) {
   });
 }
 
-// Renders a visible FAQ (<details> accordions) plus the matching FAQPage
-// JSON-LD — the combination that makes a page eligible for Google's
-// "People Also Ask" / FAQ rich results. `items` is [{ q, aHtml, aText }].
-function faqSection(items) {
-  const list = items.filter(it => it && it.q && it.aHtml);
-  if (!list.length) return { html: '', jsonLd: '' };
-  let html = `    <section class="lp-faq">\n      <h2>Frequently asked questions</h2>\n`;
-  for (const it of list) {
-    html += `      <details class="lp-faq-item"><summary>${esc(it.q)}</summary><div class="lp-faq-a">${it.aHtml}</div></details>\n`;
-  }
-  html += `    </section>\n`;
-  const jsonLd = ldScript({
-    '@context': 'https://schema.org', '@type': 'FAQPage',
-    mainEntity: list.map(it => ({
-      '@type': 'Question', name: jsonText(it.q),
-      acceptedAnswer: { '@type': 'Answer', text: jsonText(it.aText || it.aHtml.replace(/<[^>]+>/g, ' ')) },
-    })),
-  });
-  return { html, jsonLd };
-}
 
 // ---- Per-set page ---------------------------------------------------------
 function buildSetPage(cl, related, playerSlug, subsets) {
@@ -557,27 +537,8 @@ function buildSetPage(cl, related, playerSlug, subsets) {
     },
   });
 
-  // Rarest parallels (lowest print runs) for the FAQ.
-  const prs = [];
-  for (const s of cl.sets) for (const par of (s.parallels || [])) {
-    if (par && par.printRun) prs.push({ name: (par.name || '').replace(/\s+/g, ' ').trim(), run: par.printRun });
-  }
-  prs.sort((a, b) => a.run - b.run);
-  const rarest = []; const seenPar = new Set();
-  for (const par of prs) { if (!par.name || seenPar.has(par.name)) continue; seenPar.add(par.name); rarest.push(`${par.name} /${par.run}`); if (rarest.length >= 4) break; }
-  const topNames = sampleCards.slice(0, 3);
-  const faq = faqSection([
-    { q: `How much is ${setLabel} worth?`,
-      aHtml: `Prices depend heavily on the player, parallel and grade. Base cards in raw condition often sell for a few dollars, while low-numbered parallels, rookies and autographs${topNames.length ? ` of stars like ${esc(topNames.join(', '))}` : ''} can reach hundreds or thousands. Tap any card above for real eBay sold prices by grade.` },
-    { q: `How many cards are in ${cl.name}?`,
-      aHtml: `There are ${cl.cardCount.toLocaleString()} cards across ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'}, with ${cl.parallelCount} different parallels.` },
-    ...(rarest.length ? [{ q: `What are the rarest ${setLabel} parallels?`,
-      aHtml: `Some of the toughest pulls are ${esc(rarest.join(', '))}. One-of-one Superfractors and printing plates are the rarest of all.` }] : []),
-    { q: `Where can I check ${setLabel} card prices?`,
-      aHtml: `Right here — every card links to real eBay sold prices broken down by grade (Raw, PSA 10, PSA 9, BGS and more), so you see what collectors actually paid, not asking prices.` },
-  ]);
 
-  let html = head({ title, description, canonical, noindex: !isIndexed('product', cl.id), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: !isIndexed('product', cl.id), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -633,7 +594,6 @@ ${priceSlot('set', cl.id)}
     for (const r of related) html += `        <li><a href="${S.base}/sets/${r.id}/">${esc(r.name)}</a></li>\n`;
     html += `      </ul>\n      <p><a href="${S.base}/sets/">&larr; Browse all ${S.word} card checklists</a></p>\n    </section>\n`;
   }
-  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
@@ -701,20 +661,7 @@ function buildSubsetPage(cl, s, slug, siblings, playerSlug) {
     },
   });
 
-  const numbered = parallels.filter(p => p && p.printRun).sort((a, b) => a.printRun - b.printRun);
-  const rarest = numbered.slice(0, 4).map(p => `${(p.name || '').replace(/\s+/g, ' ').trim()} /${p.printRun}`);
-  const faq = faqSection([
-    { q: `How many cards are in ${fullLabel}?`,
-      aHtml: `${cards.length} cards${parallels.length ? `, plus ${parallels.length} parallel ${parallels.length === 1 ? 'version' : 'versions'}` : ''}. The full checklist is listed above.` },
-    { q: `How much is a ${fullLabel} card worth?`,
-      aHtml: `It depends on the player, the parallel and the grade${names.length ? ` — a ${esc(names[0])} sells for very different money to a common` : ''}. Tap any card above to see real eBay sold prices broken down by grade.` },
-    ...(rarest.length ? [{ q: `What are the rarest ${setName} parallels?`,
-      aHtml: `The lowest-numbered are ${esc(rarest.join(', '))}. Printing plates and one-of-ones are rarer still.` }] : []),
-    { q: `Where does ${setName} fit in ${productLabel}?`,
-      aHtml: `It is one of ${cl.sets.length} ${cl.sets.length === 1 ? 'set' : 'sets'} in <a href="${S.base}/sets/${cl.id}/">${esc(cl.name)}</a>, which has ${cl.cardCount.toLocaleString()} cards in total.` },
-  ]);
-
-  let html = head({ title, description, canonical, noindex: !isIndexed('subset', `${cl.id}/${slug}`), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: !isIndexed('subset', `${cl.id}/${slug}`), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -757,7 +704,6 @@ ${priceSlot('subset', cl.id + '/' + slug)}
     }
     html += `      </ul>\n      <p><a href="${S.base}/sets/${cl.id}/">&larr; Full ${esc(cl.name)} checklist</a></p>\n    </section>\n`;
   }
-  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
@@ -787,16 +733,8 @@ function buildYearHub(year, products, subsetIndex) {
         '@type': 'ListItem', position: i + 1, name: jsonText(p.name), url: `${SITE}${S.base}/sets/${p.id}/` })),
     },
   });
-  const faq = faqSection([
-    { q: `How many ${S.yearLabel(year)} ${S.word} card sets are there?`,
-      aHtml: `${products.length} products are listed here, ${cards.toLocaleString()} cards in total. Every one links to its full checklist.` },
-    { q: `What is the best ${S.yearLabel(year)} ${S.word} card set to collect?`,
-      aHtml: `It depends what you are after — flagship sets like Donruss and Prizm are the most affordable, while Immaculate and National Treasures carry the low-numbered patch autographs. Open any checklist to see what its cards actually sell for.` },
-    { q: `How do I check what my ${year} card is worth?`,
-      aHtml: `Find it in the checklist below and tap it. You will get real eBay sold prices by grade — Raw, PSA 10, PSA 9 and more — rather than asking prices.` },
-  ]);
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + listLd + faq.jsonLd });
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + listLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -824,7 +762,6 @@ function buildYearHub(year, products, subsetIndex) {
     }
     html += `      </ul>\n    </section>\n`;
   }
-  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
@@ -874,18 +811,8 @@ function buildPlayerPage(p, related, teamSlug) {
   const minYear = years.length ? years[0] : null;
   const teamLinks = [...new Set([...p.teams].map(canonicalTeam).filter(Boolean))].filter(t => teamSlug && teamSlug.has(t));
 
-  const faq = faqSection([
-    { q: `How much is a ${p.name} card worth?`,
-      aHtml: `It depends on the set, parallel and grade. ${esc(p.name)}'s cards${yearRange ? ` span ${yearRange} across` : ` appear across`} ${p.setIds.size} sets — base cards stay affordable, while rookie-year cards, low-numbered parallels and autographs command the most. Tap any card above for real eBay sold prices by grade.` },
-    { q: `What is ${p.name}'s most valuable card?`,
-      aHtml: `Typically his rookie-year cards and rare parallels or autographs — especially one-of-one Superfractors and low /numbered cards — are worth the most. Compare the sold prices on each card to see current values.` },
-    { q: `How many ${p.name} cards are there?`,
-      aHtml: `He appears on ${p.cards.length} different cards across ${p.setIds.size} sets in our checklist database${yearRange ? ` (${yearRange})` : ''}.` },
-    ...(minYear ? [{ q: `Does ${p.name} have rookie cards?`,
-      aHtml: `His earliest cards in our database are from ${minYear}. Rookie-year cards are usually the most sought-after — check their sold prices by grade above.` }] : []),
-  ]);
 
-  let html = head({ title, description, canonical, noindex: !isIndexed('player', p.slug), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, noindex: !isIndexed('player', p.slug), extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -926,7 +853,6 @@ ${teamLinks.length ? `    <p class="lp-teamline">Teams: ${teamLinks.map(t => `<a
     for (const r of related) html += `        <li><a href="${S.base}/players/${r.slug}/">${esc(r.name)}</a></li>\n`;
     html += `      </ul>\n      <p><a href="${S.base}/players/">&larr; Browse all player price guides</a></p>\n    </section>\n`;
   }
-  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
@@ -1047,7 +973,6 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
   const title = `${team.name} ${S.Word} Cards — Checklist & Values | The Card Huddle`;
   const canonical = `${SITE}${S.base}/teams/${team.slug}/`;
   const players = [...team.players.entries()].sort((a, b) => b[1] - a[1]); // [name, count]
-  const topNames = players.slice(0, 4).map(x => x[0]);
   const description =
     `${team.name} ${S.word} card price guide — ${team.cardCount.toLocaleString()} cards ` +
     `for ${players.length} players across ${team.setIds.size} sets. Check real eBay sold ` +
@@ -1067,16 +992,8 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
       itemListElement: players.slice(0, JSONLD_ITEM_CAP).map(([n], i) => ({ '@type': 'ListItem', position: i + 1, name: jsonText(n) })),
     },
   });
-  const faq = faqSection([
-    { q: `How much are ${team.name} cards worth?`,
-      aHtml: `It varies by player, set, parallel and grade. Common base cards sell for a few dollars, while star rookies, low-numbered parallels and autographs${topNames.length ? ` of players like ${esc(topNames.slice(0, 3).join(', '))}` : ''} can reach hundreds or thousands. Tap any player below for real eBay sold prices by grade.` },
-    { q: `Who are the most-collected ${team.name} players?`,
-      aHtml: `${topNames.length ? esc(topNames.join(', ')) + ' are among the most-collected on the team.' : 'See the full player list below.'} Tap any name to view their cards and values.` },
-    { q: `Where can I check ${team.name} card prices?`,
-      aHtml: `Right here — every player links to real eBay sold prices broken down by grade (Raw, PSA 10, PSA 9, BGS and more), so you see what collectors actually paid.` },
-  ]);
 
-  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd + faq.jsonLd });
+  let html = head({ title, description, canonical, extraJsonLd: breadcrumbJsonLd(crumbs) + collectionLd });
   html += `
   <main class="lp-main">
     ${breadcrumb(crumbs)}
@@ -1103,7 +1020,6 @@ function buildTeamPage(team, playerSlug, relatedTeams) {
     for (const r of relatedTeams) html += `        <li><a href="${S.base}/teams/${r.slug}/">${esc(r.name)}</a></li>\n`;
     html += `      </ul>\n      <p><a href="${S.base}/teams/">&larr; Browse all ${S.league} team card guides</a></p>\n    </section>\n`;
   }
-  html += faq.html;
   html += `  </main>\n` + footer();
   return html;
 }
@@ -1224,13 +1140,6 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-price-note{font-size:.8rem;margin:.75rem 0 0}
 /* A long card label must not push the page sideways on a phone. */
 @media (max-width:560px){.lp-prices{overflow-x:auto}.lp-price-table{min-width:100%}}
-.lp-faq{border-top:1px solid var(--border);margin-top:2.25rem;padding-top:.5rem}
-.lp-faq-item{background:var(--card);border:1px solid var(--border);border-radius:10px;margin:.5rem 0;padding:.2rem .9rem}
-.lp-faq-item summary{cursor:pointer;font-weight:600;padding:.65rem 0;list-style:none}
-.lp-faq-item summary::-webkit-details-marker{display:none}
-.lp-faq-item summary::after{content:'+';float:right;color:var(--accent);font-weight:700}
-.lp-faq-item[open] summary::after{content:'\\2212'}
-.lp-faq-a{color:#c8cedb;font-size:.95rem;padding:0 0 .8rem}
 .lp-muted{color:var(--muted)}
 .lp-footer{border-top:1px solid var(--border);padding:1.75rem 1.25rem;text-align:center;color:var(--muted);font-size:.9rem}
 .lp-footer a{color:var(--accent)}
