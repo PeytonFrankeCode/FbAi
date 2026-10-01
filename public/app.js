@@ -10934,7 +10934,8 @@ const _RB_EXCLUSIVE_EFFECTS = ['cracked ice', 'tie-dye', 'tie dye', 'snake skin'
   // Topps Chrome's rainbow: each of these is its own parallel, so a plain
   // "Aqua Refractor" is not an "Aqua RayWave", nor a "Refractor" an X-Fractor.
   'raywave', 'sonar', 'geometric', 'speckle', 'xfractor', 'superfractor', 'negative', 'sepia',
-  'logofractor', 'vinyl', 'checker', 'zebra', 'peacock', 'fireworks', 'kaleidoscope', 'lazer'];
+  'logofractor', 'vinyl', 'checker', 'checkerboard', 'zebra', 'peacock', 'fireworks', 'kaleidoscope', 'lazer',
+  'pigskin', 'leather', 'pulse', 'mini diamond', 'diamond', 'prism refractor'];
 
 // One spelling per effect before it is looked for: "X-Fractor", "Xfractor"
 // and "X Fractor" are one parallel, as are "Ray Wave" and "RayWave".
@@ -10977,7 +10978,7 @@ const _rbWord = (w) => { w = w.replace(/[^a-z0-9]/g, ''); return w.length > 4 &&
 
 // Product lines a title can name that make it another product: a 2024 Topps
 // Chrome rainbow is not 2024 Topps Chrome Update, Sapphire or Logofractor.
-const _RB_PRODUCT_LINES = ['update', 'sapphire', 'logofractor', 'heritage', 'optic', 'mosaic', 'select',
+const _RB_PRODUCT_LINES = ['donruss', 'update', 'sapphire', 'logofractor', 'heritage', 'optic', 'mosaic', 'select',
   'chronicles', 'finest', 'bowman', 'stadium club', 'cosmic', 'gilded', 'obsidian', 'phoenix', 'absolute',
   'certified', 'contenders', 'spectra', 'prestige', 'illusions', 'flawless', 'immaculate', 'national treasures',
   'zenith', 'hoops', 'revolution', 'court kings', 'recon', 'noir', 'photogenic', 'draft picks', 'luminance'];
@@ -10991,6 +10992,8 @@ function filterStrictVariant(items, variantName, printRun, opts) {
   const productName = String((opts && opts.product) || '').toLowerCase();
   const foreignLines = productName ? _RB_PRODUCT_LINES.filter(w => !productName.includes(w)) : [];
   const ownSet = String((opts && opts.setName) || '').toLowerCase();
+  const year = String((opts && opts.year) || '');
+  const number = String((opts && opts.number) || '').toLowerCase().replace(/^#/, '').replace(/-/g, '');
   const otherSets = ((opts && opts.otherSets) || []).map(n => String(n).toLowerCase().replace(/\s+/g, ' ').trim())
     .filter(n => n.length >= 5 && !_RB_SET_GENERIC.test(n) && !ownSet.includes(n) && !n.includes(ownSet || '\u0000'));
   const v = (variantName || '').toLowerCase().trim();
@@ -11037,6 +11040,18 @@ function filterStrictVariant(items, variantName, printRun, opts) {
     }
 
     if (foreignLines.some(w => new RegExp('\\b' + w + '\\b').test(title))) return false;
+    // Another year is another card: "2025 Topps Chrome" on 2024's rainbow.
+    // A season ("2023-24") carries its first year, which is the product's.
+    if (year) {
+      const years = (full.match(/\b(19[5-9]\d|20[0-3]\d)\b/g) || []);
+      if (years.length && !years.includes(year)) return false;
+    }
+    // Another card number is another card: #USC200 or SITP-8 is not #88.
+    if (number) {
+      // "#1/1" and "#5/25" are print runs, not card numbers.
+      const nums = [...full.matchAll(/#\s*([a-z]{0,6}-?\d{1,4}[a-z]?)\b(?!\s*\/)/g)].map(m => m[1].replace(/-/g, ''));
+      if (nums.length && !nums.includes(number)) return false;
+    }
     if (otherSets.some(n => title.includes(n))) return false;
 
     if (isBase) {
@@ -11156,7 +11171,7 @@ async function calculateRainbowCost(btn, productKey, cardKey, player, year, bran
       const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '50', filter: 'client' })}`, { signal: ctrl.signal });
       const data = await safeJson(res);
       const raw = data.results || [];
-      const fopts = _rbFilterOpts(targetSet);
+      const fopts = _rbFilterOpts(targetSet, card);
       let matched = filterStrictVariant(raw, v.name, v.printRun || '', fopts);
       if (matched.length === 0 && v.printRun) {
         matched = filterStrictVariant(raw, v.name, v.printRun || '', { ...fopts, relaxPrintRun: true });
@@ -14511,10 +14526,10 @@ function openRainbowListings(tile, card, set, variantName, printRun) {
       const body = slot.querySelector('.cl-listings-body');
       body.innerHTML = '<div class="cl-listings-loading"><div class="spinner"></div><span>Searching eBay...</span></div>';
       if (mode === 'sold') {
-        fetchRainbowSoldListings(body, baseQuery, variantName, printRun, _rbFilterOpts(set));
+        fetchRainbowSoldListings(body, baseQuery, variantName, printRun, _rbFilterOpts(set, card));
       } else {
         const q = variantName ? `${baseQuery} ${_rbQueryName(variantName)}` : baseQuery;
-        fetchVariantListings(body, q, variantName, printRun, { ..._rbFilterOpts(set), clientFilter: true });
+        fetchVariantListings(body, q, variantName, printRun, { ..._rbFilterOpts(set, card), clientFilter: true });
       }
     });
   });
@@ -14526,7 +14541,7 @@ function openRainbowListings(tile, card, set, variantName, printRun) {
   });
 
   const q = variantName ? `${baseQuery} ${_rbQueryName(variantName)}` : baseQuery;
-  fetchVariantListings(slot.querySelector('.cl-listings-body'), q, variantName, printRun, { ..._rbFilterOpts(set), clientFilter: true });
+  fetchVariantListings(slot.querySelector('.cl-listings-body'), q, variantName, printRun, { ..._rbFilterOpts(set, card), clientFilter: true });
 
   slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -14577,7 +14592,7 @@ async function loadRainbowTileImages(grid, productKey, si, ci, card, set) {
         const res = await fetch(`/api/search?${new URLSearchParams({ q, mode: 'forsale', limit: '40', filter: 'client' })}`);
         const data = await safeJson(res);
         const raw = data.results || [];
-        const fopts = _rbFilterOpts(set);
+        const fopts = _rbFilterOpts(set, card);
         // A print run in the title is welcome, not required: many sellers
         // leave "/25" out. A title naming a different one is still refused.
         let strict = filterStrictVariant(raw, variantName, printRun, fopts);
@@ -14603,9 +14618,11 @@ async function loadRainbowTileImages(grid, productKey, si, ci, card, set) {
 // sellers write them. The filter decides what matches; this only widens what
 // eBay sends back to filter.
 // What the rainbow's filter is told about the card it is matching.
-function _rbFilterOpts(set) {
+function _rbFilterOpts(set, card) {
   const product = (typeof completionData !== 'undefined' && completionData) || {};
   return {
+    year: product.year ? String(product.year) : '',
+    number: (card && card.number) || '',
     category: (set && set.category) || '',
     setName: (set && set.name) || '',
     product: [product.name, product.brand].filter(Boolean).join(' '),
