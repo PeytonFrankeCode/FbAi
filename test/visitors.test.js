@@ -79,9 +79,9 @@ check('the visitors report is admin only', /key !== env\.ADMIN_PASSWORD/.test(wo
   r.element(loader); r.element(plain);
   check('  ...the analytics loader comes off too, other inline scripts stay', loader.removed && !plain.removed);
   const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
-  check('Analytics waits for a person: no gtag.js on load, a loader that starts on a trusted tap, scroll, key or mouse move',
+  check('Analytics waits for a person: no gtag.js on load, a loader that starts on a trusted tap, wheel, key or mouse move (not a scroll, which a script can trigger)',
     !/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js/.test(html) && /<script data-ga>/.test(html)
-      && /e\.isTrusted === false/.test(html) && /'pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'/.test(html)
+      && /e\.isTrusted === false/.test(html) && /'pointerdown', 'touchstart', 'keydown', 'wheel', 'mousemove'\]/.test(html) && !/var ON = \[[^\]]*'scroll'/.test(html)
       && /held\.forEach/.test(html));
   console.log(failures ? `\n${failures} check(s) failed` : '\nall visitors checks passed');
   process.exit(failures ? 1 : 0);
