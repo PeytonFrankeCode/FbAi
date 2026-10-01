@@ -722,6 +722,45 @@ export function priceKeyForPath(pathname) {
   return null;
 }
 
+// Which generated pages need a price block to be worth indexing, and the key
+// it would be under. Product, set and player pages are a reformatted checklist
+// without one: the same card lists Checklist Insider and Cardboard Connection
+// publish, which is what AdSense rejected the site for, three times, as low
+// value content. Hubs, year hubs and team pages are navigation and stay.
+// Basketball and baseball keys carry their sport; the price blocks are built
+// from football's sales only, so for now those pages are never priced.
+export function pricedPageKey(pathname) {
+  const m = pathname.replace(/\/+$/, '').match(/^\/(?:(basketball|baseball)\/)?(sets|players)\/([^/]+)(?:\/([^/]+))?$/);
+  if (!m) return null;
+  const [, sport, kind, id, sub] = m;
+  if (kind === 'sets' && !sub && /^\d{4}(-\d{2})?$/.test(id)) return null;   // a year hub
+  if (kind === 'players' && sub) return null;
+  const key = kind === 'players' ? `player:${id}` : sub ? `subset:${id}/${sub}` : `set:${id}`;
+  return sport ? `${sport}:${key}` : key;
+}
+
+// noindex on a page the price blocks say has nothing of ours on it. The build
+// cannot decide this — it runs before the cron has priced anything — so it
+// is decided here, from the same map that fills the slot, and a page that
+// gains enough sales is indexed again without a rebuild.
+export class RobotsNoindex {
+  element(el) { el.setAttribute('content', 'noindex, follow'); }
+}
+
+// The sitemap, without the pages the price blocks leave unpriced: a URL Google
+// is invited to index and then told not to is a contradictory signal.
+export function filterSitemap(xml, blocks) {
+  const pages = (blocks && blocks.pages) || {};
+  if (!Object.keys(pages).length) return xml;        // no map: change nothing
+  return xml.replace(/[ \t]*<url>[\s\S]*?<\/url>\s*/g, (entry) => {
+    const loc = (entry.match(/<loc>([^<]+)<\/loc>/) || [])[1] || '';
+    let path = '';
+    try { path = new URL(loc).pathname; } catch (_) { return entry; }
+    const key = pricedPageKey(path);
+    return key && !pages[key] ? '' : entry;
+  });
+}
+
 // Take the ad tag back off a page that turned out to have nothing to say.
 //
 // The generated pages are built from one template over checklist data, and
@@ -901,6 +940,15 @@ export default {
         if (env.ASSETS) {
           try {
             const resp = await env.ASSETS.fetch(request);
+            if (url.pathname === '/sitemap.xml' && resp.status === 200) {
+              try {
+                const xml = filterSitemap(await resp.text(), await priceBlocks(env));
+                return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
+              } catch (smErr) {
+                console.error('sitemap filter skipped:', smErr && smErr.message);
+                return env.ASSETS.fetch(request);
+              }
+            }
             // Never let HTML (index.html + the SPA fallback) be cached: it
             // carries the ?v= references to app.js/style.css, so a
             // stale copy pins the browser to old code and silently swallows
@@ -919,7 +967,23 @@ export default {
               h.set('Cache-Control', 'no-cache, no-store, must-revalidate');
               h.set('Pragma', 'no-cache');
               h.set('Expires', '0');
+              // A generated page with no price block of its own: noindex.
+              // Only when the map loaded, as for the ad tag below: an empty
+              // map is a KV failure, and de-indexing the site over one would
+              // be far worse than an unpriced page staying in for a day.
+              let unpriced = false;
+              if (resp.status === 200) {
+                const key = pricedPageKey(url.pathname);
+                if (key) {
+                  try {
+                    const blocks = await priceBlocks(env);
+                    unpriced = !!(blocks && Object.keys(blocks.pages).length && !blocks.pages[key]);
+                  } catch (_) { unpriced = false; }
+                }
+              }
+              if (unpriced) h.set('X-Robots-Tag', 'noindex, follow');
               let out = new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
+              if (unpriced) out = new HTMLRewriter().on('meta[name="robots"]', new RobotsNoindex()).transform(out);
 
               // Fill the sold-price block on checklist and player pages.
               //

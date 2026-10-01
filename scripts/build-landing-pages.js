@@ -479,7 +479,7 @@ function footer() {
   return `
   <footer class="lp-footer">
     <p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for ${S.word} cards, broken down by grade.</p>
-    <p class="lp-muted"><a href="${S.base}/sets/">Checklists</a> &bull; <a href="${S.base}/players/">Players</a> &bull; <a href="${S.base}/teams/">Teams</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
+    <p class="lp-muted"><a href="${S.base}/sets/">Checklists</a> &bull; <a href="${S.base}/players/">Players</a> &bull; <a href="${S.base}/teams/">Teams</a> &bull; <a href="/news">Guides</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
     <p class="lp-muted">Prices are historical sale records, not appraisals or financial advice. As an eBay Partner Network affiliate we may earn a commission on qualifying purchases made through links on this site, at no extra cost to you.</p>
   </footer>
 </body>
