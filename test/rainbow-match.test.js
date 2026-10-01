@@ -79,6 +79,19 @@ check('  ...and other products of the line (Update, Sapphire, Logofractor)',
     && !hit('2024 Topps Chrome Logofractor Jackson Holliday #88 Gold Refractor /50', 'Gold Refractor', '50', CHROME));
 check('Boston Red Sox is not a Red parallel', hit('2024 Topps Chrome #50 Triston Casas Boston Red Sox Blue Refractor /150', 'Blue Refractor', '150', CHROME, true));
 
+check('a Prism Refractor is not the plain Refractor, and is its own tile',
+  !hit('2024 Topps Chrome - Rookies Caleb Williams #202 Prism Refractor (RC)', 'Refractor', '', CHROME)
+    && hit('2024 Topps Chrome - Rookies Caleb Williams #202 Prism Refractor (RC)', 'Prism Refractor', '', CHROME));
+check('a checkerboard is not a plain Refractor', !hit('Caleb Williams CHECKERBOARD REFRACTOR CHROME TOPPS CHROME BEARS', 'Refractor', '', CHROME));
+const CW = { ...CHROME, year: '2024', number: '202' };
+check('another year is another card', !hit('2025 Topps Chrome Caleb Williams Green Refractor 42/99', 'Green Refractor', '99', CW)
+  && hit('2024 Topps Chrome #202 Caleb Williams Green Refractor 42/99', 'Green Refractor', '99', CW));
+check('  ...but a season carries its first year', hit('2023-24 Panini Prizm #136 Victor Wembanyama Green Prizm', 'Green', '', { category: 'base', setName: 'Base', product: '2023-24 Panini Prizm Basketball Prizm', year: '2023', number: '136' }));
+check('another card number is another card, and a print run is not a number',
+  !hit('2024 Topps Chrome Jackson Holliday Aqua Refractor #USC200 RC /199', 'Aqua Refractor', '199', { ...CHROME, year: '2024', number: '88' })
+    && hit('2024 Topps Chrome Jackson Holliday #88 SuperFractor #1/1', 'SuperFractor', '1', { ...CHROME, year: '2024', number: '88' }));
+check('a Donruss card is not on a Prizm rainbow', !hit('2024 Panini Donruss-Rated Rookie Jayden Daniels #389 Red Wave Prizm', 'Red Wave Prizms', '', PRIZM));
+
 // ---- this card first ----
 const ranked = M._rbNumberFirst([{ title: '2024 Topps Chrome Caleb Williams Gold Refractor 1974' }, { title: '2024 Topps Chrome #202 Caleb Williams Gold Refractor' }], '202');
 check('a listing naming the card\'s number comes before one that does not', /#202/.test(ranked[0].title));
