@@ -12646,6 +12646,10 @@ function _estimateGrade(list, todayDay, trend) {
       low: round2(ps[0]),
       high: round2(ps[ps.length - 1]),
       newestSaleDays: todayDay - priced[0].day,
+      // The date itself: the days above count from the newest sale in the
+      // dataset, which runs a day or two behind the calendar, so the page
+      // says how old a sale is from the date, not from this.
+      newestSaleDate: _mkIso(priced[0].day),
     };
   }
 
@@ -12668,6 +12672,7 @@ function _estimateGrade(list, todayDay, trend) {
       basedOn: cluster.length,
       low: round2(ps[0]), high: round2(ps[ps.length - 1]),
       newestSaleDays: staleDays,
+      newestSaleDate: _mkIso(newestDay),
     };
   }
   return {
@@ -12680,6 +12685,7 @@ function _estimateGrade(list, todayDay, trend) {
     trendClamped: !!trend.clamped,
     low: round2(ps[0] * trend.ratio), high: round2(ps[ps.length - 1] * trend.ratio),
     newestSaleDays: staleDays,
+    newestSaleDate: _mkIso(newestDay),
   };
 }
 
@@ -12719,6 +12725,7 @@ function _marketEstimate(list, nowDay, adj) {
     marketThrough: m.throughDate,
     low: round2(ps[0] * m.ratio), high: round2(ps[ps.length - 1] * m.ratio),
     newestSaleDays: staleDays,
+    newestSaleDate: _mkIso(newest),
   };
 }
 
