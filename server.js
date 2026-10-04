@@ -3689,7 +3689,10 @@ app.get('/api/grading-advisor', async (req, res) => {
 
     // Variant-strict filter so each grade's comps reflect the actual card
     // searched (excludes wrong colors, wrong sets, autos/relics not asked for).
-    const filterFor = (items) => filterPriceOutliers(filterByVariant(_dropOversizeUnlessAsked(items, baseQ), baseQ));
+    // Autos and relics come off after it, on their own: filterByVariant hands
+    // back its whole input when nothing passes, so a grade whose only sale was
+    // an auto showed that auto as the card's PSA 10.
+    const filterFor = (items) => filterPriceOutliers(_dropAutoMemUnlessAsked(filterByVariant(_dropOversizeUnlessAsked(items, baseQ), baseQ), baseQ));
     const rawItems   = filterFor(rawData.results);
     const psa8Items  = filterFor(psa8Data.results);
     const psa9Items  = filterFor(psa9Data.results);
@@ -6867,6 +6870,21 @@ function _isOversize(title) {
 // Sold listings without the jumbo / oversized copies — a different, bigger
 // card at a different price ("Downtown" and "Jumbo Downtown") — unless the
 // search asked for them by name.
+// Autographs and memorabilia unless the search asks for them: "Ken Griffey Jr
+// 1989 Upper Deck" is the plain card, and a signed copy is priced on the
+// signature. Each is dropped only when the query does not name it.
+function _dropAutoMemUnlessAsked(results, query) {
+  const want = classifyCardType(String(query || '').toLowerCase());
+  const keepAuto = want === 'auto' || want === 'both';
+  const keepMem = want === 'mem' || want === 'both';
+  return (results || []).filter(r => {
+    const t = String((r && r.title) || '').toLowerCase();
+    if (!keepAuto && titleHasAuto(t)) return false;
+    if (!keepMem && titleHasMem(t)) return false;
+    return true;
+  });
+}
+
 function _dropOversizeUnlessAsked(results, query) {
   if (_isOversize(query)) return results || [];
   return (results || []).filter(r => !_isOversize(r && r.title));
@@ -18044,7 +18062,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
