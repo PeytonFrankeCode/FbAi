@@ -117,6 +117,13 @@ const check = (label, ok, detail) => {
     /const _mpSports = \(\) => sportsPrefs\(\)\.enabled;/.test(js) && /&sport=' \+ sp/.test(js)
       && /_mpRefreshForSports\(\);/.test(js) && /_mpTitle\(\);/.test(js));
 
+  // The nightly warm builds every sport's boards, so a basketball board built
+  // before its photos arrived is replaced by the next morning.
+  const srv = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  check('the nightly warm rebuilds basketball and baseball boards too',
+    /const SOLD_STATS_SPORTS = \['football', 'basketball', 'baseball'\];/.test(srv)
+      && /_computeSoldStats\(db, days, sport\)/.test(srv) && /_soldStatsStore\(days, payload, sport\)/.test(srv));
+
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall sport-sold-stats checks passed');
   process.exit(failures ? 1 : 0);

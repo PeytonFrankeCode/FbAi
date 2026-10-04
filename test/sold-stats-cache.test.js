@@ -112,8 +112,9 @@ const check = (label, ok, detail) => {
   queries = 0;
   const warm = await warmSoldStats();
   const warmCost = queries;
-  check('the warm job builds every period the UI can ask for',
-    warm && warm.ok && (warm.periods || []).length === 4,
+  check('the warm job builds every period the UI can ask for, for each sport',
+    warm && warm.ok && (warm.periods || []).length === 12
+      && ['7d', '30d', '90d', '365d'].every(d => warm.periods.some(p => p.startsWith(d + ':'))),
     warm ? JSON.stringify(warm.periods) : 'no result');
   check('  ...and that costs real queries, paid by the cron',
     warmCost > 0, `${warmCost} queries`);

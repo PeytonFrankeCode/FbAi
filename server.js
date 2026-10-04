@@ -10760,33 +10760,42 @@ async function warmSoldStats(opts = {}) {
   return _asD1Source('sold-stats-warm', () => _warmSoldStats(opts));
 }
 
+// Every sport's boards, not football's alone. Basketball's and baseball's were
+// built only when a visitor asked and then kept for two days, so a board built
+// while their first sales still had no photos showed placeholders long after
+// the photos arrived.
+const SOLD_STATS_SPORTS = ['football', 'basketball', 'baseball'];
+
 async function _warmSoldStats({ onlyMissing = false } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   const done = [];
-  for (const days of SOLD_STATS_PERIODS) {
-    if (onlyMissing) {
-      const cur = await cacheGet(SOLD_STATS_KEY(days));
-      if (cur) {
-        // Boards built before the last-good copy existed seed it, so the next
-        // key change already has something to serve.
-        if (cur.available && !(await cacheGet(SOLD_STATS_LAST_KEY(days)))) {
-          await cachePut(SOLD_STATS_LAST_KEY(days), cur, SOLD_STATS_LAST_TTL);
+  for (const sport of SOLD_STATS_SPORTS) {
+    const tag = sport === 'football' ? '' : `${sport}:`;
+    for (const days of SOLD_STATS_PERIODS) {
+      if (onlyMissing) {
+        const cur = await cacheGet(SOLD_STATS_KEY(days, sport));
+        if (cur) {
+          // Boards built before the last-good copy existed seed it, so the next
+          // key change already has something to serve.
+          if (cur.available && !(await cacheGet(SOLD_STATS_LAST_KEY(days, sport)))) {
+            await cachePut(SOLD_STATS_LAST_KEY(days, sport), cur, SOLD_STATS_LAST_TTL);
+          }
+          done.push(`${tag}${days}d:cached`);
+          continue;
         }
-        done.push(`${days}d:cached`);
+      }
+      const payload = await _computeSoldStats(db, days, sport);
+      if (!payload.available) {
+        // Do not overwrite a good cached payload with an unavailable one. A
+        // transient D1 failure would otherwise replace working boards with an
+        // error for a whole day.
+        done.push(`${tag}${days}d:skipped`);
         continue;
       }
+      await _soldStatsStore(days, payload, sport);
+      done.push(`${tag}${days}d:${(payload.cardMovers || []).length}`);
     }
-    const payload = await _computeSoldStats(db, days);
-    if (!payload.available) {
-      // Do not overwrite a good cached payload with an unavailable one. A
-      // transient D1 failure would otherwise replace working boards with an
-      // error for a whole day.
-      done.push(`${days}d:skipped`);
-      continue;
-    }
-    await _soldStatsStore(days, payload);
-    done.push(`${days}d:${(payload.cardMovers || []).length}`);
   }
   console.log(`[SoldStats] warmed ${done.join(' ')}`);
   return { ok: true, periods: done };
