@@ -8102,13 +8102,13 @@ function renderGradingResults(data) {
     const label = bestGrade === 'psa10' ? 'PSA 10' : bestGrade === 'psa9' ? 'PSA 9' : 'PSA 8';
     const net   = premiums[bestGrade].net;
     recBox.className = 'grading-recommendation grading-rec-yes';
-    recBox.innerHTML = `<span class="grading-rec-icon">✅</span> <strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the ${feeTxt} grading fee.`;
+    recBox.innerHTML = `<span class="grading-rec-icon">✅</span><span class="grading-rec-text"><strong>Grading looks worth it!</strong> A ${label} nets you an estimated <strong>+$${net.toFixed(2)}</strong> after the ${feeTxt} grading fee.</span>`;
   } else if (!grades.psa10 && !grades.psa9 && !grades.psa8) {
     recBox.className = 'grading-recommendation grading-rec-unknown';
-    recBox.innerHTML = `<span class="grading-rec-icon">❓</span> <strong>Not enough data</strong> — no recent graded sales found for this card.`;
+    recBox.innerHTML = `<span class="grading-rec-icon">❓</span><span class="grading-rec-text"><strong>Not enough data</strong> — no recent graded sales found for this card.</span>`;
   } else {
     recBox.className = 'grading-recommendation grading-rec-no';
-    recBox.innerHTML = `<span class="grading-rec-icon">❌</span> <strong>Probably not worth grading</strong> — the grade premium doesn't cover the ${feeTxt} fee based on recent sales.`;
+    recBox.innerHTML = `<span class="grading-rec-icon">❌</span><span class="grading-rec-text"><strong>Probably not worth grading</strong> — the grade premium doesn't cover the ${feeTxt} fee based on recent sales.</span>`;
   }
 
   results.classList.remove('hidden');

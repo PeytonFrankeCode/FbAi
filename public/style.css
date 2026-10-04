@@ -6168,6 +6168,11 @@ tr:hover .cl-alert-btn {
 .collection-view {
   padding: 2rem 0;
   animation: fadeUp 0.3s ease both;
+  /* A view is centred with auto margins in the body's flex column, which sizes
+     it to its content: the grading table's seven columns made the whole view
+     twice a phone's width. Capped at the screen, the table scrolls in its own
+     box instead. */
+  max-width: min(960px, 100%);
 }
 .collection-container {
   max-width: 100%;
