@@ -3,7 +3,7 @@
 // without the split every row showed the same sales: Raw and PSA 10 alike.
 const path = require('path');
 process.env.CF_WORKER = '1';
-const { _matchesGradeOpts } = require(path.join(__dirname, '..', 'server.js'));
+const { _matchesGradeOpts, _dropAutoMemUnlessAsked } = require(path.join(__dirname, '..', 'server.js'));
 
 let failures = 0;
 const check = (label, ok, detail) => {
@@ -36,6 +36,26 @@ check('PSA 9 holds only the PSA 9', split.psa9.length === 1 && /PSA 9/.test(spli
 check('PSA 10 holds both PSA 10s and no SGC 10', split.psa10.length === 2 && split.psa10.every(t => /PSA 10/.test(t)), JSON.stringify(split.psa10));
 const all = Object.values(split).flat();
 check('no sale lands in two grades', new Set(all).size === all.length);
+
+// ---- Autos stay out unless asked for ----
+// The 1989 Upper Deck Griffey's PSA 10 row showed one sale: a "PSA Authentic
+// 10 Auto", a signed copy priced on the signature. filterByVariant drops autos
+// but hands its whole input back when nothing passes, so a lone auto survived.
+{
+  const comps = [
+    { title: '1989 Upper Deck Baseball Star Rookie Ken Griffey Jr #1 PSA Authentic 10 Auto' },
+    { title: '1989 Upper Deck Ken Griffey Jr #1 Signed PSA/DNA' },
+    { title: '1989 Upper Deck Ken Griffey Jr #1 Game Used Jersey Relic' },
+    { title: '1989 Upper Deck Ken Griffey Jr Star Rookie #1 PSA 10 GEM MINT' },
+  ];
+  const plain = _dropAutoMemUnlessAsked(comps, '1989 Upper Deck Ken Griffey');
+  check('a search without "auto" keeps no autographed or relic sale', plain.length === 1 && /GEM MINT/.test(plain[0].title), JSON.stringify(plain.map(c => c.title)));
+  const auto = _dropAutoMemUnlessAsked(comps, '1989 Upper Deck Ken Griffey auto');
+  check('  ...and one with "auto" keeps the signed copies', auto.length === 3 && !auto.some(c => /Relic/.test(c.title)), JSON.stringify(auto.map(c => c.title)));
+  const srv = require('fs').readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  check('  ...applied after the variant filter, every grade',
+    /_dropAutoMemUnlessAsked\(filterByVariant\(_dropOversizeUnlessAsked\(items, baseQ\), baseQ\), baseQ\)/.test(srv));
+}
 
 // ---- The grading fee: PSA's $74.99, in one place, and the page quotes it ----
 // PSA shut its cheaper tiers to work down its backlog; the advisor still
