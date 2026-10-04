@@ -74,5 +74,18 @@ check('no sale lands in two grades', new Set(all).size === all.length);
     /data\.gradingCost/.test(render) && !/\$25/.test(render) && !/\$25/.test(html));
 }
 
+// ---- Fits a phone ----
+// The views sit in the body's flex column with auto margins, which sizes them
+// to their content: the seven-column table made the page twice a phone's width
+// and the banner's words stood in columns.
+{
+  const fs = require('fs');
+  const css = fs.readFileSync(path.join(__dirname, '..', 'public', 'style.css'), 'utf8');
+  const app = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  check('a view is never wider than the screen', /\.collection-view \{[^}]*max-width: min\(960px, 100%\);/.test(css));
+  check('  ...and the advice reads as one line of text beside its icon',
+    (app.match(/<span class="grading-rec-icon">[^<]+<\/span><span class="grading-rec-text">/g) || []).length === 3);
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall grading-advisor checks passed');
 process.exit(failures ? 1 : 0);
