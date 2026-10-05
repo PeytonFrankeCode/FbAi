@@ -296,5 +296,24 @@ check('stripGrade keeps a laundry tag in the title',
     'GRADE_ORDER and GRADE_SORT_DESC must both list Graded (other)');
 }
 
+// A dual-graded slab: grader, card grade, autograph grade. "BGS 9/10" is a
+// card graded 9 with a 10 auto. The card's grade is the first number, and the
+// "/10" goes with it when the grade is stripped, so no reader takes it for a
+// print run. "TAG 1/1" is still a serial: an auto grade runs 5 to 10.
+{
+  const dual = [
+    ['2020 Phoenix Joe Burrow Rising Rookie Material Gloves Auto #/35 BGS 9/10', 'BGS 9'],
+    ['SGC 9.5/10 Caleb Williams RPA /125', 'SGC 9.5'],
+    ['2023 Prizm Auto PSA 8/10', 'PSA 8'],
+    ['2024 Select Auto CGC 9.5 / 10 /99', 'CGC 9.5'],
+  ];
+  const wrong = dual.filter(([t, want]) => gradeBucket({ title: t }) !== want);
+  check('a dual-graded slab is filed under the card grade',
+    wrong.length === 0, wrong.map(([t]) => `"${t}" -> ${gradeBucket({ title: t })}`).join('; ') || `all ${dual.length}`);
+  check('  ...and stripping the grade takes the auto grade with it',
+    !/\/\s*10\b/.test(stripGrade('2020 Phoenix Joe Burrow Auto #/35 BGS 9/10')));
+  check('  ...while "TAG 1/1" is still not a grade', gradeBucket({ title: 'Flawless LAUNDRY TAG 1/1 Patch' }) === 'Raw');
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall grade-core checks passed');
 process.exit(failures ? 1 : 0);

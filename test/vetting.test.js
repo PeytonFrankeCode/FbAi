@@ -43,6 +43,9 @@ const moved = [
   [sale('2022 Panini Score Kansas City Chiefs Travis Kelce 1 Of 1 metal Printing Plate',
         { year: 2022 }), 'parallel'],
   [sale('2023 Panini Prizm Tom Brady #1 Silver', { year: 2021 }), 'year'],
+  // The import read "BGS 9/10" (card 9, auto 10) as a /10 serial.
+  [sale('2020 Phoenix Joe Burrow Rising Rookie Material Gloves Auto #/35 BGS 9/10',
+        { year: 2020, is_auto: 1, is_relic: 1, print_run: 10, grader: 'BGS', grade: 9 }), 'parallel'],
   [sale('2008 Topps Chrome Football Lot of 31 includes  30 Diff w/rookies & stars', { year: 2008 }), 'category:lot'],
   [sale('2015 Donruss Optic #1 TOM BRADY Lot (5 Cards) Mint G.O.A.T.', { year: 2015 }), 'category:lot'],
   [sale('2025 TOPPS CHROME FOOTBALL 1975 RC LOT18'), 'category:lot'],
@@ -63,6 +66,9 @@ for (const [row, want] of moved) {
 // Reprint" for $2 is not. Text cannot tell them apart, so neither moves alone.
 check('an art card waits for a person (Bowman U Now Art Cards are official)',
       dest(sale('Fernando Mendoza 2025-26 Bowman U Now #CSFM-A Art Card BGS-10 Black Label')).confidence === 'low');
+check('a dual grade the import took for a print run is fixed without a person',
+      dest(sale('2020 Phoenix Joe Burrow Rising Rookie Material Gloves Auto #/35 BGS 9/10',
+                { year: 2020, is_auto: 1, is_relic: 1, print_run: 10, grader: 'BGS', grade: 9 })).confidence === 'high');
 check('a reprint is never moved without a person',
       dest(sale('1996 Topps Namath Reprint Joe Namath New York Jets #122 PSA 9 Rc', { year: 1996 })).confidence === 'low');
 
@@ -96,6 +102,9 @@ const stays = [
   sale('2025 Panini Prizm - Rookies Jaxson Dart #332 Silver Prizm (RC)',
        { parallel: 'Silver Prizm', set_name: 'Prizm' }),
   sale('1988 Topps Bo Jackson Rookie RC #327 Raiders', { year: 1988 }),
+  // The Star Company's 1984 card, not a "Stars" parallel.
+  sale('1984 STAR #12 LARRY BIRD PSA 7', { player: 'Larry Bird', year: 1984, set_name: null,
+       grader: 'PSA', grade: 7, sport: 'basketball' }),
   // A real card sold in or with something custom.
   sale('2020 Panini Donruss Optic - Downtown Pat Tillman #DT-1 HGA 9.5 Custom Slab',
        { year: 2020, grader: 'HGA', grade: 9.5 }),

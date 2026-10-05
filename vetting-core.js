@@ -203,6 +203,11 @@ function sameParallel(a, b) {
 
 // Parallel names that are base under another name.
 const BASE_NAMES = new Set(['base', 'rookie', 'rookies', 'rated rookie', 'rc', 'base set', 'regular']);
+// Brands whose name is also a parallel's, read from the title when the row has
+// no set. Each one is a lesson from the vetting desk: "1984 STAR #12 LARRY
+// BIRD" is the Star Company's card, not a Stars parallel.
+const TITLE_BRANDS = new Set(['star']);
+
 // What the reader sometimes hands back that is a kind or a seller word, not a
 // parallel. Kinds are judged by kindOf(); these never move a sale.
 const NOT_PARALLELS = /^(?:autographs?|signatures?|jerseys?|patch(?:es)?|relics?|memorabilia|fotl|first off the line|variations?|ssp|sp|case hit)$/i;
@@ -303,10 +308,26 @@ function resortSale(row, pi, opts) {
     const run = printRun(cleanTitle(title));
     const rowRun = r.print_run == null || r.print_run === '' ? null : parseInt(r.print_run, 10);
     if (run != null && rowRun != null && run !== rowRun) {
-      add('parallel', 'low', `title says /${run}, row says /${rowRun}`, `/${run}`);
+      // "BGS 9/10" is card grade 9, auto grade 10. When the row's run is that
+      // auto grade the import read the slab as a serial, and the title's own
+      // run is the answer: no person needed.
+      const autoGrade = (title.match(/(?<![a-z])(?:psa|bgs|bvg|sgc|cgc|csg|hga|beckett)[\s._#:-]*(?:10|[1-9](?:\.5)?)\s*\/\s*(?:auto\s*)?(10|[5-9](?:\.5)?)(?![\d./])/i) || [])[1];
+      const misread = autoGrade != null && parseFloat(autoGrade) === rowRun;
+      add('parallel', misread ? 'high' : 'low',
+          misread ? `title says /${run}; the row's /${rowRun} is the auto grade of a dual-graded slab`
+                  : `title says /${run}, row says /${rowRun}`, `/${run}`);
     }
     const read = readParallel(r, pi);
-    if (read && read.parallel && !BASE_NAMES.has(_n(read.parallel)) && !NOT_PARALLELS.test(_n(read.parallel))) {
+    // A "parallel" spelled by the product's own name is the product: "1984
+    // STAR #12 LARRY BIRD" is the Star Company's card, not a Stars parallel.
+    // The import often leaves the set empty on vintage cards, so a brand named
+    // right after the year in the title counts too.
+    const titleBrand = (title.match(/(?<!\d)(?:19|20)\d{2}(?:\s*[-/]\s*\d{2})?\s+([a-z]+)/i) || [])[1] || '';
+    const productWords = new Set(_parallelWords(`${r.brand || ''} ${r.set_name || ''} ${
+      TITLE_BRANDS.has(titleBrand.toLowerCase()) ? titleBrand : ''}`));
+    const isProductName = (name) => { const w = _parallelWords(name); return w.length > 0 && w.every(x => productWords.has(x)); };
+    if (read && read.parallel && !BASE_NAMES.has(_n(read.parallel)) && !NOT_PARALLELS.test(_n(read.parallel))
+        && !isProductName(read.parallel)) {
       if (rowParIsBase) {
         const conf = read.how === 'matched' ? _readConfidence(r, read.parallel, pi, opts) : 'low';
         add('parallel', conf, `title reads ${read.parallel}, row says base`, read.parallel);

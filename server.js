@@ -12687,7 +12687,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v31: the title sweep — seller and condition words, a player named after the
 // number, word order, and a base reading refused while a parallel word is
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v33';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v34';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12698,7 +12698,9 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // kindSql() and exported its word lists, and cardKind() itself is unchanged.
 // And again: kindSql()'s substring pre-check dropped a redundant LOWER().
 // cardKind() is untouched, so no cached analysis groups differently.
-const CARD_IDENTITY_FINGERPRINT = '74fde735287d';
+// v34: dual-graded slabs ("BGS 9/10" = card 9, auto 10) are filed under the card
+// grade, and their "/10" is no longer read as a print run.
+const CARD_IDENTITY_FINGERPRINT = '2def9f31b6a0';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
