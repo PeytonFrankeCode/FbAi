@@ -40,6 +40,21 @@ const GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
                  // AGC: "AGC 10 Gem Mint" slabs read as Raw sold at ~3x the raw price.
                  'AGC'];
 
+// Small third-party graders. Real slabs, and they were reading as Raw: across
+// 1.05M sales (Oct 2026) CCG alone had 294 raw-filed slabs, then MBA, MPE,
+// MCG, WCG, FCG, DSG and a long tail ("1984 Topps John Elway ASG 10" in the
+// raw list at $71-86, four times in one day).
+//
+// Unlike the names above, these count ONLY with a grade number right after
+// them and never as part of a card code. Several are also ordinary letters on
+// a card: "Ace of Hearts", "MBA Diamond", "ASG3-JMA" (a Wild Card number),
+// "#PCA-5" (Play Call Autographs). PCA, PGA, SGA, BGA, TGS and ODIZ were left
+// out because in the data they were codes or unconfirmed at least as often.
+const MINOR_GRADERS = ['ASG', 'CCG', 'MBA', 'MPE', 'MCG', 'DSG', 'PGI', 'WCG', 'PGS', 'GAI',
+                       'UCG', 'SCD', 'GSG', 'CGA', 'SCG', 'FCG', 'CGS', 'BCG', 'ICG', 'PSG',
+                       'DCG', 'APG', 'EGS', 'FGS', 'ACE'];
+const _MINOR = new Set(MINOR_GRADERS);
+
 // Letters, not word characters. See the header: this is the whole fix.
 const GRADER_RE = new RegExp(`(?<![A-Za-z])(${GRADERS.join('|')})(?![A-Za-z])`, 'i');
 
@@ -115,7 +130,12 @@ const GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-
 // same reason.
 const TAG_QUALIFIER = /(laundry|jersey|dual|quad|triple|jumbo|nike|shield|brand|size|name|price|hang|woven|patch|logo|manufacturer)[\s-]*$/i;
 
-function _graderCounts(grader, before, grade) {
+// `tail` is the text after the grade. A minor grader needs its number, and
+// neither a "#" in front ("#PCA-5") nor a code running on behind ("ASG3-JMA").
+function _graderCounts(grader, before, grade, tail) {
+  if (_MINOR.has(grader)) {
+    return grade != null && !/#\s*$/.test(before) && !/^-[A-Za-z0-9]/.test(tail || '');
+  }
   if (grader !== 'TAG') return true;
   return grade != null && !TAG_QUALIFIER.test(before);
 }
@@ -133,7 +153,7 @@ function gradeFromTitle(title) {
     const after = t.slice(m.index + m[1].length);
     const g = GRADE_AFTER.exec(after);
     const grade = g ? g[1].replace(/\.0$/, '') : null;
-    if (!_graderCounts(grader, t.slice(0, m.index), grade)) continue;
+    if (!_graderCounts(grader, t.slice(0, m.index), grade, g ? after.slice(g[0].length) : after)) continue;
     return { grader, grade };
   }
   return null;
@@ -206,7 +226,7 @@ const isRaw = (r) => gradeBucket(r) === 'Raw';
 // altogether. Stripping the grade first is the honest order of operations — a
 // grade is not part of a parallel's name, and no parallel in any product
 // contains a grader token.
-const GRADER_GLOBAL = new RegExp(`(?<![A-Za-z])(${GRADERS.join('|')})(?![A-Za-z])`, 'gi');
+const GRADER_GLOBAL = new RegExp(`(?<![A-Za-z])(${GRADERS.concat(MINOR_GRADERS).join('|')})(?![A-Za-z])`, 'gi');
 
 function stripGrade(title) {
   const t = String(title || '');
@@ -222,7 +242,7 @@ function stripGrade(title) {
     // A disqualified TAG is part of the card's name, not grading noise.
     // Stripping it would delete "Laundry Tag" from the title and hand the
     // parallel reader a different card than the one that sold.
-    if (!_graderCounts(m[1].toUpperCase(), t.slice(0, m.index), grade)) continue;
+    if (!_graderCounts(m[1].toUpperCase(), t.slice(0, m.index), grade, g ? after.slice(g[0].length) : after)) continue;
     out += t.slice(last, m.index);
     last = m.index + m[1].length + (g ? g[0].length : 0);
     out += ' ';
@@ -231,4 +251,4 @@ function stripGrade(title) {
   return out.replace(/\s{2,}/g, ' ').trim();
 }
 
-module.exports = { GRADERS, GRADER_RE, SLAB_RE, RAW_RE, LABEL_GRADE_RE, HOPE_RE, gradeFromTitle, gradeBucket, isRaw, stripGrade };
+module.exports = { GRADERS, MINOR_GRADERS, GRADER_RE, SLAB_RE, RAW_RE, LABEL_GRADE_RE, HOPE_RE, gradeFromTitle, gradeBucket, isRaw, stripGrade };
