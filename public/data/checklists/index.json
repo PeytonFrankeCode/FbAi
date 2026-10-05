@@ -22,6 +22,16 @@
       "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
     },
     {
+      "id": "2026-bowman-university-best-football",
+      "name": "2026 Bowman University Best Football",
+      "year": 2026,
+      "brand": "Bowman University Best",
+      "sport": "Football",
+      "setCount": 22,
+      "totalCards": 676,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-bowman-university-football",
       "name": "2026 Bowman University Football",
       "year": 2026,
@@ -43,10 +53,32 @@
       "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
     },
     {
+      "id": "2026-panini-absolute-countdown-calendar-football",
+      "name": "2026 Panini Absolute Countdown Calendar Football",
+      "year": 2026,
+      "brand": "Panini Absolute",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
       "id": "2026-panini-obsidian-football",
       "name": "2026 Panini Obsidian Football",
       "year": 2026,
       "brand": "Obsidian",
+      "sport": "Football",
+      "setCount": 0,
+      "totalCards": 0,
+      "unreleased": true,
+      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+    },
+    {
+      "id": "2026-topps-chrome-football",
+      "name": "2026 Topps Chrome Football",
+      "year": 2026,
+      "brand": "Topps Chrome",
       "sport": "Football",
       "setCount": 0,
       "totalCards": 0,
@@ -78,10 +110,9 @@
       "year": 2026,
       "brand": "Topps Holiday",
       "sport": "Football",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+      "setCount": 10,
+      "totalCards": 763,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-topps-inception-football",
@@ -89,10 +120,9 @@
       "year": 2026,
       "brand": "Topps Inception",
       "sport": "Football",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet — it will be added here as soon as the publisher releases it."
+      "setCount": 16,
+      "totalCards": 523,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-topps-london-games-football",
@@ -103,6 +133,16 @@
       "setCount": 3,
       "totalCards": 500,
       "note": "London Games exclusive parallels. The 1991 Topps Chrome and 1991 Topps Chrome Rookies card lists are the same as 2026 Topps Flagship; refractor print runs were not published. Base Lenticular London (1:360 packs) is listed as a Base parallel."
+    },
+    {
+      "id": "2026-topps-midnight-football",
+      "name": "2026 Topps Midnight Football",
+      "year": 2026,
+      "brand": "Topps Midnight",
+      "sport": "Football",
+      "setCount": 20,
+      "totalCards": 636,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-bowman-football",
