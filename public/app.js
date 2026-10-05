@@ -2973,7 +2973,8 @@ const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.concat(APP_MINOR_G
 // The number belonging to THIS grader. '/' is excluded along with the digits
 // because a number in front of a slash is a print run: "LAUNDRY TAG 1/1" is a
 // one-of-one patch card, not a card graded 1.
-const APP_GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?![\d./])/i;
+// Same as grade-core.js GRADE_AFTER, dual-graded slabs included ("BGS 9/10" = card 9).
+const APP_GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?:\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])|(?![\d./]))/i;
 // TAG is a grading company and also a part of a card — the manufacturer's tag
 // cut from a jersey, which is usually the most valuable card in the product.
 // See grade-core.js: measured over 30 days, every common "graded card with no
@@ -3013,12 +3014,19 @@ function detectGrade(title) {
       return num === '10' ? 'PSA 10' : num === '9.5' ? 'PSA 9.5'
            : num === '9' ? 'PSA 9' : num === '8' ? 'PSA 8' : 'PSA Other';
     }
+    // Each top grade is its own market, and everything under them is one
+    // "Other" group, as PSA has always been. A single "BGS" group used to hold
+    // 9s, 8.5s and a 7.5 Marino at a quarter of their price, so its price
+    // described none of them; "SGC" and "CGC" put a 10 with a 5 the same way.
     if (grader === 'BGS') {
       if (num === '10' || /BGS\s*PRISTINE/i.test(t)) return 'BGS 10';
-      return num === '9.5' ? 'BGS 9.5' : 'BGS';
+      return num === '9.5' ? 'BGS 9.5' : num === '9' ? 'BGS 9'
+           : num === '8.5' ? 'BGS 8.5' : num === '8' ? 'BGS 8' : 'BGS Other';
     }
-    if (grader === 'SGC') return 'SGC';
-    if (grader === 'CGC') return 'CGC';
+    if (grader === 'SGC' || grader === 'CGC') {
+      return num === '10' ? `${grader} 10` : num === '9.5' ? `${grader} 9.5`
+           : num === '9' ? `${grader} 9` : `${grader} Other`;
+    }
     // Named, real, and not one of the five the page prices separately. Its own
     // group rather than folded into Raw — these are slabs, and slab money in a
     // raw group is the whole problem.
@@ -3030,10 +3038,14 @@ function detectGrade(title) {
   return 'Raw / Ungraded';
 }
 
-const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other', 'BGS 10', 'BGS 9.5', 'BGS', 'SGC', 'CGC', 'Graded (other)'];
+const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other',
+  'BGS 10', 'BGS 9.5', 'BGS 9', 'BGS 8.5', 'BGS 8', 'BGS Other',
+  'SGC 10', 'SGC 9.5', 'SGC 9', 'SGC Other', 'CGC 10', 'CGC 9.5', 'CGC 9', 'CGC Other', 'Graded (other)'];
 
 // Ranking for the "Grade" sort — best grade first, raw/ungraded last.
-const GRADE_SORT_DESC = ['PSA 10', 'BGS 10', 'PSA 9.5', 'BGS 9.5', 'PSA 9', 'BGS', 'PSA 8', 'SGC', 'CGC', 'PSA Other', 'Graded (other)', 'Raw / Ungraded'];
+const GRADE_SORT_DESC = ['PSA 10', 'BGS 10', 'SGC 10', 'CGC 10', 'PSA 9.5', 'BGS 9.5', 'SGC 9.5', 'CGC 9.5',
+  'PSA 9', 'BGS 9', 'SGC 9', 'CGC 9', 'BGS 8.5', 'PSA 8', 'BGS 8',
+  'PSA Other', 'BGS Other', 'SGC Other', 'CGC Other', 'Graded (other)', 'Raw / Ungraded'];
 function gradeSortRank(title) {
   const i = GRADE_SORT_DESC.indexOf(detectGrade(title));
   return i < 0 ? GRADE_SORT_DESC.length : i;
