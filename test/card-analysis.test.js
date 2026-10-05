@@ -340,9 +340,15 @@ const rawTitles = (d) => {
         murky.identity ? JSON.stringify(murky.identity) : 'no identity block');
 
   const wild = (murky.grades || []).find(g => g.label === 'Raw');
+  // Two "raw" sales of one card at $12,500 and $18 cannot both be it. The
+  // spread guard used to be what stopped a trend across them; the raw-outlier
+  // guard (_holdOutRawOutliers) now gets there first and holds the dear one out
+  // of Raw as likely graded. Either way the Raw line must publish no trend and
+  // must not carry the $12,500.
+  const held = (murky.grades || []).find(g => /priced like a slab/.test(g.label));
   check('  ...and refuses a trend across prices that cannot be one card',
-        wild && wild.changePct === null && !!wild.trendSuppressed,
-        wild ? `changePct=${wild.changePct} low=${wild.low} high=${wild.high} suppressed=${wild.trendSuppressed || 'no'}`
+        wild && wild.changePct === null && (!!wild.trendSuppressed || (wild.high < 12500 && !!held)),
+        wild ? `changePct=${wild.changePct} low=${wild.low} high=${wild.high} suppressed=${wild.trendSuppressed || 'no'} held=${held ? held.label : 'none'}`
              : 'no Raw series');
 
   // ---- the autograph of the same card is a different card -----------------

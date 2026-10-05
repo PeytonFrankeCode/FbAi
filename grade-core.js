@@ -36,7 +36,9 @@
 // empty columns was landing in Raw. Safe as a bare token for the same reason
 // PSA and BGS are: 'bvg' does not occur inside an ordinary word.
 const GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
-                 'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT'];
+                 'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT',
+                 // AGC: "AGC 10 Gem Mint" slabs read as Raw sold at ~3x the raw price.
+                 'AGC'];
 
 // Letters, not word characters. See the header: this is the whole fix.
 const GRADER_RE = new RegExp(`(?<![A-Za-z])(${GRADERS.join('|')})(?![A-Za-z])`, 'i');
@@ -63,7 +65,13 @@ const RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
 // condition claims SLAB_RE already refuses to read as a slab ("gem mint
 // corners!"). And not when the title is hoping — "gem mint 10 candidate",
 // "could be a Mint 9" — which is a raw card being described, not a label.
-const LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mt|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|\bblack\s+label\b/i;
+//
+// "Gem Mint 10" WITH its number is a label too. It was held back as a condition
+// claim until there was data, and the data says slab: across 1.05M sales (Oct
+// 2026), the 292 titles read as Raw that said "Gem Mint 10" sold at a median
+// 3.5x their card's raw price, and "Gem 10" / "10 Gem Mint" at 2-3x. Bare "gem
+// mint", with no number, is still a seller's claim about corners.
+const LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mint|gem\s*-?\s*mt|gem(?:\s+elite)?|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|(?<![\d./#])10\s+gem(?![a-z])|\bblack\s+label\b/i;
 const HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible|looks?|like)\b/i;
 
 // The grader and its number, pulled out of a title.

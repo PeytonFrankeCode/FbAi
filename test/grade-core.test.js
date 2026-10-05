@@ -53,7 +53,7 @@ const STAY_RAW = [
   '2020 Prizm Isaiah Simmons #150 Silver',            // 'isa' inside Isaiah
   '2017 Vintage Football Mahomes #269',               // 'tag' inside vintage
   '1994 Flags of the League #12 Young',               // 'ags' inside flags
-  '2017 Prizm Mahomes #269 Silver GEM MINT 10',       // a seller's claim, not a slab
+  '2017 Prizm Mahomes #269 Silver GEM MINT',          // a seller's claim, not a slab: no grade number
   '2017 Prizm Mahomes #269 Silver (RC)',              // nothing at all
   '2017 Prizm Mahomes #269 raw ungraded PSA 10 candidate', // explicit raw wins
 ];
@@ -241,7 +241,10 @@ check('stripGrade keeps a laundry tag in the title',
     !!ctx.__label && ctx.__label.source === core.LABEL_GRADE_RE.source
     && !!ctx.__hope && ctx.__hope.source === core.HOPE_RE.source
     && LABEL_SLABS.every(t => ctx.detectGrade(t) === 'Graded (other)')
-    && LABEL_HOPES.concat(['2017 Prizm Mahomes #269 Silver GEM MINT 10']).every(t => ctx.detectGrade(t) === 'Raw / Ungraded'),
+    && LABEL_HOPES.concat(['2017 Prizm Mahomes #269 Silver GEM MINT']).every(t => ctx.detectGrade(t) === 'Raw / Ungraded')
+    // With its number it is a label: these sold at ~3.5x the raw price (Oct 2026 audit).
+    && ['2017 Prizm Mahomes #269 Silver GEM MINT 10', '1990 Score Emmitt Smith #101T GEM 10',
+        '2018 Donruss Josh Allen #304 AGC 10 Gem Mint'].every(t => ctx.detectGrade(t) !== 'Raw / Ungraded'),
     'patterns must match grade-core.js character for character');
 
   // The cases that used to land in the raw group. Each is a slab.

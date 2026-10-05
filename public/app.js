@@ -2963,7 +2963,7 @@ function timeAgo(dateStr) {
 // Grading) was added there after the raw-filter diagnostic found 102 sales
 // carrying it, and a browser list one short would badge those as Ungraded.
 const APP_GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
-                     'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT'];
+                     'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT', 'AGC'];
 const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.join('|')})(?![A-Za-z])`, 'gi');
 // The number belonging to THIS grader. '/' is excluded along with the digits
 // because a number in front of a slash is a print run: "LAUNDRY TAG 1/1" is a
@@ -2979,7 +2979,7 @@ const APP_SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|i
 // The label's own wording with no grader named ("GEM MT 10", "MINT 9"): the
 // slab is in the photo, not the text. Same patterns as grade-core.js, checked
 // character for character by grade-core.test.
-const APP_LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mt|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|\bblack\s+label\b/i;
+const APP_LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mint|gem\s*-?\s*mt|gem(?:\s+elite)?|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|(?<![\d./#])10\s+gem(?![a-z])|\bblack\s+label\b/i;
 const APP_HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible|looks?|like)\b/i;
 
 function detectGrade(title) {

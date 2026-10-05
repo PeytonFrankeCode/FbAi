@@ -4554,14 +4554,16 @@ function _cardKeySql(playerExpr) {
 // raw-filter diagnostic found 102 sales carrying it in the grader column, and
 // it is as safe a substring as the rest — it occurs inside no ordinary word.
 const RSI_GRADER_WORDS = ['psa', 'bgs', 'bvg', 'bccg', 'beckett', 'sgc', 'cgc', 'csg',
-                          'hga', 'ksa', 'gma', 'rcg', 'mnt'];
+                          'hga', 'ksa', 'gma', 'rcg', 'mnt', 'agc'];
 const RSI_SLAB_WORDS = ['slab', 'encapsulated', 'cert'];
 // The label's own grade wording with the grader's name left off (see
 // grade-core.js LABEL_GRADE_RE). Substrings, and without the JS reader's
 // "candidate"/"could be" exemption: here a dropped raw sale costs sample and an
 // admitted slab costs the raw series, so the filter errs toward dropping.
 // Grouped in their own bracket so they add one level to the OR chain, not seven.
-const RSI_LABEL_WORDS = ['gem mt', 'mint 9', 'nm-mt', 'pristine 1', 'black label'];
+const RSI_LABEL_WORDS = ['gem mt', 'mint 9', 'nm-mt', 'pristine 1', 'black label',
+                         // grade-core LABEL_GRADE_RE: "Gem Mint 10" with its number is a slab.
+                         'gem mint 10', 'gem 10', '10 gem'];
 
 // Where the errors land is a deliberate choice. Dropping a genuinely raw sale
 // costs a little sample out of thousands; admitting one slab puts graded money
@@ -12241,7 +12243,7 @@ function _playerDrift(rows, params, refIso) {
 function _knownFromRows(key, b, rows, params, drift, refIso) {
   const adjust = drift !== 0 || params.halfLife > 0;
   const ageOf = (r) => Math.max(0, EST.daysBetween(r.sold_date, refIso));
-  const raws = rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
+  const raws = _rawRows(rows);
   let raw = !raws.length ? null : adjust
     ? EST.adjustedMedian(raws.map(r => ({ price: r.price_cents / 100, age: ageOf(r) })), { drift, halfLife: params.halfLife })
     : _medOf(raws.map(r => r.price_cents / 100));
@@ -12366,7 +12368,7 @@ function _backtestBuckets(bk, params, testDays, refIso) {
     if (m.keys.size < 2) continue;
     const kind = _CATEGORY_KIND[m.set.category] || '';
     for (const [key, b] of m.keys) {
-      const actualRaw = b.rows.filter(r => String(r.sold_date) >= t0 && _gradeBucket(r) === 'Raw' && r.price_cents > 0)
+      const actualRaw = _rawRows(b.rows.filter(r => String(r.sold_date) >= t0))
         .map(r => r.price_cents / 100);
       if (!actualRaw.length) continue;
       const known = [];
@@ -12687,7 +12689,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v31: the title sweep — seller and condition words, a player named after the
 // number, word order, and a base reading refused while a parallel word is
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v34';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v35';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12700,7 +12702,9 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // cardKind() is untouched, so no cached analysis groups differently.
 // v34: dual-graded slabs ("BGS 9/10" = card 9, auto 10) are filed under the card
 // grade, and their "/10" is no longer read as a print run.
-const CARD_IDENTITY_FINGERPRINT = '2def9f31b6a0';
+// v35: "Gem Mint 10" with its number, and AGC, read as slabs; raw sales priced like
+// something else held out of every raw price, at any number of sales.
+const CARD_IDENTITY_FINGERPRINT = '4a4be6ef1d08';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -12720,9 +12724,58 @@ const SLAB_PRICE_MIN_RAW = 5;
 const SLAB_PRICE_X = 3;
 const SLAB_PRICE_X_NO_SLAB_EVIDENCE = 5;
 const SUSPECTED_SLAB_LABEL = 'Likely graded (priced like a slab)';
+
+// THE SAME GUARD FOR A CARD WITH FEW RAW SALES, AND FOR EVERY RAW PRICE.
+//
+// Below SLAB_PRICE_MIN_RAW there was no guard at all, and that is where one
+// sale does the most damage: across 1.05M sales (Oct 2026), 1 card in 20 with
+// three or four raw sales had its raw median pushed up 1.5x or more by a single
+// one. Not always a slab — as often a /25 auto or a 1/1 filed under the plain
+// card — but the remedy is the same, so the test does not need to know which.
+//
+// With few sales a median of all of them is no reference (the outlier is in
+// it), so each sale is measured against the OTHERS: 4x their median at three
+// or four sales, and with two, the dearer is held out at 6x the cheaper. A
+// floor keeps it to money: a $9 sale beside two $1 ones is noise, not a slab.
+//
+// And it is one function, called by every raw price on the site — the card
+// page, the estimator, the parallel ladder — because a guard on one screen and
+// not the others is a fix that works on the chart and not on the price.
+const SLAB_PRICE_X_FEW = 4;
+const SLAB_PRICE_X_PAIR = 6;
+const SLAB_PRICE_FLOOR_CENTS = 2000;
+function _holdOutRawOutliers(raws) {
+  const c = (r) => r.price_cents || 0;
+  const n = raws.length;
+  if (n < 2) return raws;
+  const med = (xs) => { const a = xs.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+  const out = (r, ref, x) => c(r) >= SLAB_PRICE_FLOOR_CENTS && ref > 0 && c(r) >= x * ref;
+  if (n === 2) {
+    const [lo, hi] = raws.slice().sort((a, b) => c(a) - c(b));
+    return out(hi, c(lo), SLAB_PRICE_X_PAIR) ? [lo] : raws;
+  }
+  if (n < SLAB_PRICE_MIN_RAW) {
+    return raws.filter((r, i) => !out(r, med(raws.filter((_, j) => j !== i).map(c)), SLAB_PRICE_X_FEW));
+  }
+  const m = med(raws.map(c));
+  return raws.filter(r => !out(r, m, SLAB_PRICE_X));
+}
+
+// A card's raw sales, with the ones priced like something else held out.
+function _rawRows(rows) {
+  return _holdOutRawOutliers(rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0));
+}
+
 function _flagSlabPricedRaw(byGrade) {
   const raw = byGrade.get('Raw') || [];
-  if (raw.length < SLAB_PRICE_MIN_RAW) return 0;
+  if (raw.length < SLAB_PRICE_MIN_RAW) {
+    const kept = _holdOutRawOutliers(raw.filter(r => r.price_cents > 0));
+    const moved = raw.filter(r => r.price_cents > 0 && !kept.includes(r));
+    if (!moved.length) return 0;
+    byGrade.set('Raw', raw.filter(r => !moved.includes(r)));
+    byGrade.set(SUSPECTED_SLAB_LABEL, (byGrade.get(SUSPECTED_SLAB_LABEL) || []).concat(moved));
+    return moved.length;
+  }
   const cents = (r) => r.price_cents || 0;
   const med = (xs) => { const a = xs.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
   const rawMed = med(raw.map(cents).filter(c => c > 0));
@@ -13464,7 +13517,7 @@ async function _cardAnalysisRoute(req, res) {
     const rawNowByKey = new Map();
     const rowsByKey = new Map();
     const rawNowOf = (rows) => {
-      const raws = rows.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
+      const raws = _rawRows(rows);
       return raws.length ? EST.adjustedMedian(raws.map(r => ({ price: r.price_cents / 100,
         age: Math.max(0, EST.daysBetween(r.sold_date, estRef)) })), { drift: estDrift, halfLife: estParams.halfLife }) : null;
     };
@@ -13501,7 +13554,7 @@ async function _cardAnalysisRoute(req, res) {
           String(r.sold_date || '') > String(best.sold_date || '') ? r : best, kept[0]);
         // Its raw price, for anchoring the ladder: a slab's price says little
         // about where the card's raw copies sit.
-        const raw = kept.filter(r => _gradeBucket(r) === 'Raw').map(r => (r.price_cents || 0) / 100).filter(p => p > 0);
+        const raw = _rawRows(kept).map(r => r.price_cents / 100);
         if (estAdjust) rawNowByKey.set(key, rawNowOf(kept));
         rowsByKey.set(key, kept);
         parallels.push({
@@ -13543,7 +13596,7 @@ async function _cardAnalysisRoute(req, res) {
           // Some of its sales are another print run of that colour: price it
           // from the ones that are this checklist parallel, or not at all.
           if (!fitting.length) return null;
-          const raws = fitting.filter(r => _gradeBucket(r) === 'Raw' && r.price_cents > 0);
+          const raws = _rawRows(fitting);
           return { key: lk, name: p.name, itemId: fitting[0].item_id, sales: fitting.length,
             raw: estAdjust ? rawNowOf(fitting) : (raws.length ? _medOf(raws.map(r => r.price_cents / 100)) : null),
             rawN: raws.length, grades: _gradeMedians(fitting), gradeN: _gradeCounts(fitting) };
@@ -18259,7 +18312,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
