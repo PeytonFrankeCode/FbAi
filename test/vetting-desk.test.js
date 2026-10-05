@@ -32,6 +32,10 @@ ins.run('LOT', DAY, '2015 Donruss Optic #1 TOM BRADY Lot (5 Cards) Mint', 2900,
         'Tom Brady', 2015, 'Donruss Optic', null, '1', null, null, 0, '2015-donruss-optic-n1', null);
 ins.run('FINE', DAY, '2025 Panini Prizm - Rookies Jaxson Dart #332 Silver Prizm (RC)', 5000,
         'Jaxson Dart', 2025, 'Prizm', 'Silver Prizm', '332', null, null, 0, '2025-prizm-n332-silver-prizm', null);
+// One the reader cannot settle alone: an official reprint insert and a fake
+// read the same, so it waits for a person.
+ins.run('REPRINT', DAY, '1996 Topps Namath Reprint Joe Namath New York Jets #122 PSA 9 Rc', 4600,
+        'Joe Namath', 1996, 'Topps', null, '122', 'PSA', 9, 0, '1996-topps-n122', null);
 // Under the default $20 floor: not scanned at all.
 ins.run('CHEAP', DAY, '2024 Prizm Caleb Williams Auto', 500,
         'Caleb Williams', 2024, 'Prizm', null, '1', null, null, 0, '2024-prizm-n1', null);
@@ -78,10 +82,15 @@ const answer = async (body, key = K) => {
     check('the queue is admin-only', (await fetch(BASE)).status === 403);
     check('...and so are answers', (await answer({ itemId: 'AUTO', action: 'move' }, 'wrong')).status === 403);
 
-    const q = await queue();
+    const mine = await queue();
+    check('by default only the sales that need a person are shown',
+          mine.queue.map(x => x.itemId).join(',') === 'REPRINT', mine.queue.map(x => x.itemId).join(','));
+    check('...while the sure ones are still counted',
+          mine.counts.filter(c => c.confidence === 'high').reduce((a, c) => a + c.open, 0) === 3);
+    const q = await queue('&confidence=all');
     const ids = q.queue.map(x => x.itemId);
     check('the queue reads the newest day', q.available && q.window.through === DAY, JSON.stringify(q.window));
-    check('mis-filed sales are queued, dearest first', ids.join(',') === 'AUTH,AUTO,LOT', ids.join(','));
+    check('mis-filed sales are queued, dearest first', ids.join(',') === 'AUTH,AUTO,REPRINT,LOT', ids.join(','));
     check('a sale filed right is not queued', !ids.includes('FINE'));
     check('a sale under the price floor is not scanned', !ids.includes('CHEAP'));
     const auto = q.queue.find(x => x.itemId === 'AUTO');
@@ -89,7 +98,7 @@ const answer = async (body, key = K) => {
           auto && `${auto.dest}: ${auto.reason}`);
     check('the photo comes along', auto && auto.imageUrl === 'https://img/a.jpg');
     check('a category filter narrows the queue',
-          (await queue('&dest=category')).queue.map(x => x.itemId).join(',') === 'LOT');
+          (await queue('&confidence=all&dest=category:lot')).queue.map(x => x.itemId).join(',') === 'LOT');
 
     const before = db.prepare("SELECT * FROM sales WHERE item_id = 'AUTO'").get();
     const m = await answer({ itemId: 'AUTO', action: 'move', note: 'on-card auto' });
@@ -103,8 +112,8 @@ const answer = async (body, key = K) => {
     check('"keep as filed" is an answer too', k.body.status === 'kept' &&
           db.prepare("SELECT suggested FROM sale_corrections WHERE item_id = 'AUTH'").get().suggested === 'authentic');
 
-    const q2 = await queue();
-    check('answered sales leave the queue', q2.queue.map(x => x.itemId).join(',') === 'LOT', q2.queue.map(x => x.itemId).join(','));
+    const q2 = await queue('&confidence=all');
+    check('answered sales leave the queue', q2.queue.map(x => x.itemId).join(',') === 'REPRINT,LOT', q2.queue.map(x => x.itemId).join(','));
     check('...and are counted', q2.decided.moved === 1 && q2.decided.kept === 1, JSON.stringify(q2.decided));
 
     const l = await answer({ itemId: 'FINE', action: 'category', category: 'reprint' });
@@ -118,7 +127,7 @@ const answer = async (body, key = K) => {
     await answer({ itemId: 'AUTO', action: 'undo' });
     check('undo forgets the answer and the sale comes back',
           !db.prepare("SELECT 1 FROM sale_corrections WHERE item_id = 'AUTO'").get()
-          && (await queue()).queue.some(x => x.itemId === 'AUTO'));
+          && (await queue('&confidence=all')).queue.some(x => x.itemId === 'AUTO'));
   } catch (err) {
     console.error(err); failures++;
   } finally {

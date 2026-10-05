@@ -7710,7 +7710,10 @@ app.get('/api/admin/vetting', async (req, res) => {
     const days = Math.min(VETTING_MAX_DAYS, Math.max(1, parseInt(req.query.days, 10) || 1));
     const minDollars = Math.max(0, parseFloat(req.query.min) || 20);
     const want = String(req.query.dest || 'all');
-    const wantConf = String(req.query.confidence || 'all');
+    // Only the sales the reader is unsure of need a person. The sure ones are
+    // left to the rules (the owner's call after reviewing the audit), and are
+    // still counted below so the page can say how many it handled.
+    const wantConf = String(req.query.confidence || 'low');
 
     // The newest sale through the date index: one row read, never MIN/MAX,
     // which scans the table on D1.
