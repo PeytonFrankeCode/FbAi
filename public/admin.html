@@ -345,13 +345,10 @@
 <div id="admin-screen">
   <!-- Sales vetting (/api/admin/vetting) — docs/vetting-plan.md -->
   <div class="page-title">Sales Vetting</div>
-  <div class="page-subtitle">Sales the title says are filed under the wrong card, dearest first. Open the listing to check the photo, then answer with one tap. Answers are saved apart from the sales and can be undone; nothing is deleted. <b style="color:var(--accent)">Green</b> = the reader is sure; <b style="color:var(--yellow)">yellow</b> = it needs your eye.</div>
+  <div class="page-subtitle">Sales the title says are filed under the wrong card, dearest first. Open the listing to check the photo, then answer with one tap. Only the sales the reader can't settle on its own are shown; the ones it is sure of are handled without you. Answers are saved apart from the sales and can be undone; nothing is deleted.</div>
   <div class="stats-row" id="vet-stats"></div>
   <div class="vet-controls">
     <select id="vet-dest" onchange="loadVetting()" aria-label="Category"><option value="all">All categories</option></select>
-    <select id="vet-conf" onchange="loadVetting()" aria-label="Confidence">
-      <option value="all">Sure and unsure</option><option value="high">Reader is sure</option><option value="low">Needs my eye</option>
-    </select>
     <select id="vet-days" onchange="loadVetting()" aria-label="Window">
       <option value="1">Newest day</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option>
     </select>
@@ -644,7 +641,7 @@
   let _vet = null;
   async function loadVetting() {
     const list = document.getElementById('vet-list');
-    const q = new URLSearchParams({ dest: document.getElementById('vet-dest').value, confidence: document.getElementById('vet-conf').value,
+    const q = new URLSearchParams({ dest: document.getElementById('vet-dest').value, confidence: 'low',
       days: document.getElementById('vet-days').value, min: document.getElementById('vet-min').value });
     list.innerHTML = `<div class="empty-state"><p>Reading sales… the first load of a window takes a few seconds.</p></div>`;
     try {
@@ -658,20 +655,23 @@
   }
   function renderVetting() {
     const d = _vet;
-    const open = d.counts.reduce((a, c) => a + c.open, 0);
+    const mine = d.counts.filter(c => c.confidence === 'low');
+    const open = mine.reduce((a, c) => a + c.open, 0);
+    const handled = d.counts.filter(c => c.confidence === 'high').reduce((a, c) => a + c.open + c.done, 0);
     const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
     document.getElementById('vet-stats').innerHTML = card('Waiting', open, 'yellow') + card('Moved', d.decided.moved, 'green')
-      + card('Kept as filed', d.decided.kept) + card('Sales checked', d.scanned.toLocaleString());
+      + card('Kept as filed', d.decided.kept) + card('Reader handled', handled.toLocaleString(), 'green')
+      + card('Sales checked', d.scanned.toLocaleString());
     const sel = document.getElementById('vet-dest'), cur = sel.value;
-    const dests = [...new Set(d.counts.map(c => c.dest))];
+    const dests = [...new Set(mine.map(c => c.dest))];
     sel.innerHTML = `<option value="all">All categories (${open})</option>`
-      + dests.map(x => { const n = d.counts.filter(c => c.dest === x).reduce((a, c) => a + c.open, 0);
+      + dests.map(x => { const n = mine.filter(c => c.dest === x).reduce((a, c) => a + c.open, 0);
           return `<option value="${escHtml(x)}">${escHtml(vetLabel(x))} (${n})</option>`; }).join('');
     sel.value = dests.includes(cur) ? cur : 'all';
     document.getElementById('vet-window').textContent = `Sales sold ${d.window.since === d.window.through ? d.window.through : d.window.since + ' to ' + d.window.through}, $${d.minDollars} and up`
       + (d.truncated ? ` · only the ${d.scanned.toLocaleString()} dearest were read; raise the price floor to reach the rest` : '');
     const list = document.getElementById('vet-list');
-    if (!d.queue.length) { list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Nothing waiting here. Try another category or a wider window.</p></div>`; return; }
+    if (!d.queue.length) { list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Nothing needs your eye here. Try another category or a wider window.</p></div>`; return; }
     list.innerHTML = d.queue.map((it, i) => {
       const cat = it.dest.startsWith('category:');
       const moveTxt = cat ? `Not one card: <b>${escHtml(vetLabel(it.dest))}</b>`
@@ -681,7 +681,6 @@
         ${it.imageUrl ? `<img class="vet-photo" src="${escHtml(it.imageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<div class="vet-photo none">No photo</div>`}
         <div class="vet-body">
           <div class="vet-top"><span class="vet-price">$${Number(it.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-            <span class="vet-pill ${it.confidence}">${it.confidence === 'high' ? 'Reader is sure' : 'Needs your eye'}</span>
             <span class="vet-meta">${escHtml(it.soldDate)}</span></div>
           <a class="vet-title" href="https://www.ebay.com/itm/${encodeURIComponent(it.itemId)}" target="_blank" rel="noopener">${escHtml(it.title)}</a>
           <div class="vet-meta">Filed as <code>${escHtml(it.filedAs || '(no card)')}</code></div>
@@ -713,7 +712,7 @@
       const c = _vet.counts.find(x => x.dest === it.dest && x.confidence === it.confidence); if (c) { c.open--; c.done++; }
       it._answered = d.status; it._said = said;
       const cards = document.querySelectorAll('#vet-stats .stat-value');
-      cards[0].textContent = _vet.counts.reduce((a, x) => a + x.open, 0); cards[1].textContent = s.moved; cards[2].textContent = s.kept;
+      cards[0].textContent = _vet.counts.filter(x => x.confidence === 'low').reduce((a, x) => a + x.open, 0); cards[1].textContent = s.moved; cards[2].textContent = s.kept;
     } catch (err) {
       el.querySelectorAll('button').forEach(b => { b.disabled = false; });
       alertVet(el, `Not saved: ${err.message}`);
