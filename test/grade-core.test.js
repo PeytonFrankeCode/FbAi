@@ -229,12 +229,18 @@ check('stripGrade keeps a laundry tag in the title',
   // of the global object, so it has to be handed out explicitly. A function
   // declaration does become one, which is why detectGrade needs no help — and
   // why the first run of this check reported "browser=0" against correct code.
-  vm.runInContext(src.slice(start, end) + '\nthis.__graders = APP_GRADERS;'
+  vm.runInContext(src.slice(start, end) + '\nthis.__graders = APP_GRADERS; this.__minor = APP_MINOR_GRADERS;'
     + ' this.__label = APP_LABEL_GRADE_RE; this.__hope = APP_HOPE_RE;', ctx);
 
   check('the browser knows exactly the graders the server knows',
     JSON.stringify(ctx.__graders) === JSON.stringify(GRADERS),
     `browser=${(ctx.__graders || []).length} server=${GRADERS.length}`);
+  check('  ...and the same small third-party graders, read the same way',
+    JSON.stringify(ctx.__minor) === JSON.stringify(require('../grade-core').MINOR_GRADERS)
+    && ctx.detectGrade('1984 Topps John Elway Rookie RC #63 Broncos ASG 10 (104)') === 'Graded (other)'
+    && ctx.detectGrade('2026 Wild Card Comix John Mateer Auto ASG3-JMA') === 'Raw / Ungraded'
+    && ctx.detectGrade('2024 Wild Card 5 Card Draw McMillan Ace Of Heart Auto') === 'Raw / Ungraded',
+    `browser=${(ctx.__minor || []).length}`);
 
   const core = require('../grade-core');
   check('  ...and reads a slab label with no grader exactly as the server does',
@@ -316,6 +322,24 @@ check('stripGrade keeps a laundry tag in the title',
   check('  ...and stripping the grade takes the auto grade with it',
     !/\/\s*10\b/.test(stripGrade('2020 Phoenix Joe Burrow Auto #/35 BGS 9/10')));
   check('  ...while "TAG 1/1" is still not a grade', gradeBucket({ title: 'Flawless LAUNDRY TAG 1/1 Patch' }) === 'Raw');
+}
+
+// Small third-party graders count only with a number, never inside a card code.
+{
+  const slabs = [['1984 Topps John Elway Rookie RC #63 Broncos ASG 10 (104)', 'ASG 10'],
+                 ['2023 Leaf Draft JJ McCarthy Rookie #22 CCG 10', 'CCG 10'],
+                 ['1958 Topps Jim Brown Rookie MBA 7 NRMT', 'MBA 7'],
+                 ['2021 Mosaic Aaron Rodgers #289 Green Swirl /11. Fcg 9.5', 'FCG 9.5']];
+  const notSlabs = ['2026 Wild Card Comix John Mateer Auto true 1of1 ASG3-JMA NCAA',
+                    'Patrick Mahomes II 2025 Panini Authentically #PCA-5 Red Play Call Auto /10',
+                    '2024 Wild Card 5 Card Draw Tetairoa McMillan Ace Of Heart Silver Orange Auto 1/1',
+                    '1987 Fleer #59 Michael Jordan MBA Diamond'];
+  const bad = slabs.filter(([t, w]) => gradeBucket({ title: t }) !== w);
+  check('a small third-party grader with a grade is a slab',
+    !bad.length, bad.map(([t]) => `"${t}" -> ${gradeBucket({ title: t })}`).join('; ') || `all ${slabs.length}`);
+  const wrong = notSlabs.filter(t => gradeBucket({ title: t }) !== 'Raw');
+  check('  ...but its letters in a card code or a name are not',
+    !wrong.length, wrong.map(t => `"${t}" -> ${gradeBucket({ title: t })}`).join('; ') || `all ${notSlabs.length}`);
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall grade-core checks passed');

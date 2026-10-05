@@ -2964,7 +2964,12 @@ function timeAgo(dateStr) {
 // carrying it, and a browser list one short would badge those as Ungraded.
 const APP_GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
                      'HGA', 'TAG', 'ISA', 'GMA', 'KSA', 'AGS', 'RCG', 'MNT', 'AGC'];
-const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.join('|')})(?![A-Za-z])`, 'gi');
+// Small third-party graders: slabs only with a grade number right after the
+// name and never inside a card code. Same list as grade-core.js MINOR_GRADERS.
+const APP_MINOR_GRADERS = ['ASG', 'CCG', 'MBA', 'MPE', 'MCG', 'DSG', 'PGI', 'WCG', 'PGS', 'GAI',
+                           'UCG', 'SCD', 'GSG', 'CGA', 'SCG', 'FCG', 'CGS', 'BCG', 'ICG', 'PSG',
+                           'DCG', 'APG', 'EGS', 'FGS', 'ACE'];
+const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.concat(APP_MINOR_GRADERS).join('|')})(?![A-Za-z])`, 'gi');
 // The number belonging to THIS grader. '/' is excluded along with the digits
 // because a number in front of a slash is a print run: "LAUNDRY TAG 1/1" is a
 // one-of-one patch card, not a card graded 1.
@@ -2998,6 +3003,11 @@ function detectGrade(title) {
     // rather than returned, because a title can name a laundry tag and then a
     // real grader — "Laundry Tag ... PSA 10".
     if (grader === 'TAG' && (num === null || APP_TAG_QUALIFIER.test(t.slice(0, m.index)))) continue;
+    if (APP_MINOR_GRADERS.includes(grader)) {
+      const tail = t.slice(m.index + m[1].length + (g ? g[0].length : 0));
+      if (num === null || /#\s*$/.test(t.slice(0, m.index)) || /^-[A-Za-z0-9]/.test(tail)) continue;
+      return 'Graded (other)';
+    }
     if (grader === 'BECKETT') grader = 'BGS';   // the same company, two names
     if (grader === 'PSA') {
       return num === '10' ? 'PSA 10' : num === '9.5' ? 'PSA 9.5'

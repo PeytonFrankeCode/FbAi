@@ -12689,7 +12689,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v31: the title sweep — seller and condition words, a player named after the
 // number, word order, and a base reading refused while a parallel word is
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v35';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v36';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12704,7 +12704,9 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // grade, and their "/10" is no longer read as a print run.
 // v35: "Gem Mint 10" with its number, and AGC, read as slabs; raw sales priced like
 // something else held out of every raw price, at any number of sales.
-const CARD_IDENTITY_FINGERPRINT = '4a4be6ef1d08';
+// v36: small third-party graders (ASG, CCG, MBA, MPE, MCG, ...) read as slabs when a
+// grade number follows them, never inside a card code.
+const CARD_IDENTITY_FINGERPRINT = 'd3d9ae24253d';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
