@@ -208,10 +208,31 @@ for (const [num, player, level, k, drift] of PLAYERS) {
       `plain $${goldOf(three, {})}, weighted $${goldOf(three, { weightAnchors: true })}`);
   }
 
+  // The raw-outlier guard: one slab (or a /25 auto filed under the plain card)
+  // among a card's raw sales must not set its raw price, however few sales
+  // the card has. Real shapes from the Oct 2026 audit.
+  {
+    const G = S._holdOutRawOutliers;
+    const raws = (...d) => d.map((v, i) => ({ price_cents: Math.round(v * 100), id: i }));
+    const kept = (rows) => G(rows).map(r => r.price_cents / 100).join(',');
+    check('raw guard: a slab-priced sale among three is held out',
+      kept(raws(1500, 350, 300, 110.5)) === '350,300,110.5', kept(raws(1500, 350, 300, 110.5)));
+    check('  ...and of a pair, the dearer one at 6x the other',
+      kept(raws(6044.66, 20)) === '20' && kept(raws(30, 20)) === '30,20');
+    check('  ...but a cheap card\'s noise is not a slab (under the $20 floor)',
+      kept(raws(9, 1, 1.5)) === '9,1,1.5');
+    check('  ...and five or more sales keep the 3x rule',
+      kept(raws(10, 11, 12, 9, 10, 40)) === '10,11,12,9,10');
+    check('  ...and one sale is left alone', kept(raws(5000)) === '5000');
+  }
+
   // Base read from the low end of its sales (baseQuantile): unnamed
   // parallels only ever push "base" up.
   {
-    const rows = [99, 132, 200, 209, 4655, 7800].map((c, i) => ({ price_cents: c, sold_date: '2026-09-01', grader: null, grade: null, title: `t${i}` }));
+    // The dear two stay under SLAB_PRICE_FLOOR_CENTS: above it, the raw-outlier
+    // guard (_holdOutRawOutliers) holds them out before any quantile is taken,
+    // and this checks the quantile, not the guard.
+    const rows = [99, 132, 200, 209, 465, 780].map((c, i) => ({ price_cents: c, sold_date: '2026-09-01', grader: null, grade: null, title: `t${i}` }));
     const plain = S._knownFromRows('', { name: 'Base' }, rows, EST.DEFAULT_PARAMS, 0, '2026-09-10').raw;
     const low = S._knownFromRows('', { name: 'Base' }, rows, { ...EST.DEFAULT_PARAMS, baseQuantile: 0.33 }, 0, '2026-09-10').raw;
     const par = S._knownFromRows('silver', { name: 'Silver' }, rows, { ...EST.DEFAULT_PARAMS, baseQuantile: 0.33 }, 0, '2026-09-10').raw;
