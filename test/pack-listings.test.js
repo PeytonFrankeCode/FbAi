@@ -43,5 +43,34 @@ check('search results, card history and the sold archive all apply the filter',
   && /\.results\) \|\| \[\]\)\s*\.filter\(r => !_isPackListing\(r\.title, r\.player\)/.test(src)
   && /rec\.sales\.filter\(x => !_isPackListing/.test(src));
 
+// ---- not a card at all: app-only digital cards and "1st Graded" ----
+// Kept out of every card's sales (owner, Oct 2026). "Digital" alone is not
+// enough: Resurgence "Digital Surge", "Digital Camo" and Leaf "Digital Foil"
+// are physical cards and must stay.
+{
+  const blocked = [
+    '2025 Topps NFL Chrome Autograph Rookie RC - TYLER SHOUGH  (TOPPS NFL DigitalCard',
+    'DIGITAL Topps NFL Collect Drake Maye 2025 Cosmic Chrome Black Equinox Auto /10',
+    '2025 Topps Finest Digital Jaydon Blue Rookie Auto Legendary 50cc Cowboys',
+    '2024 Topps Bowman Chrome 1st Rookie RC - JAC CAGLIANONE (TOPPS Bunt Dlgital card',
+    'Jaxson Dart 2025 Topps Chrome #306 New York Giants Rookie Card RC 1st Graded 10',
+  ];
+  const kept = [
+    '2025 Topps Resurgence Riley Leonard Digital Surge Refractor /100 Colts',
+    'ISAAC TESLAA 2025 TOPPS CHROME TEAM DIGITAL CAMO REFRACTOR ROOKIE RC #320',
+    '2026 Leaf Electrum Achromatic Red Gold Digital Foil 1/1 Mike Schmidt Auto',
+    'Jerry Rice 1998 Fleer Ultra #6CC Canton Classics 49ers SSP RARE PSA 9',
+    'Tom Brady MINT PANINI PRIZM FIREWORKS SP INSERT NFL COLLECTION CARD - MINT!',
+    '2025 Topps Chrome Jaxson Dart #306 RC 1st Bowman Refractor',
+  ];
+  const wrongB = blocked.filter(t => !_isPackListing(t));
+  check('app-only digital cards and "1st Graded" are not a card',
+    !wrongB.length, wrongB.join(' | ') || `all ${blocked.length}`);
+  const wrongK = kept.filter(t => _isPackListing(t));
+  check('  ...while physical "Digital" parallels and look-alikes stay',
+    !wrongK.length, wrongK.join(' | ') || `all ${kept.length}`);
+
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall pack-listing checks passed');
 process.exit(failures ? 1 : 0);
