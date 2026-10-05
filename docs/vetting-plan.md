@@ -41,7 +41,11 @@ close to Card Ladder's without throwing sales away.
 - **Volume**: about 205,000 sales in 7 days, roughly 29,000 a day across the
   three sports. That's too many to vet all of them by hand, hence the tiers.
 
-## Next step: the audit (nothing visible changes)
+## The audit (nothing visible changes) — done Oct 5, 2026
+
+Results: [vetting-audit-2026-10.md](vetting-audit-2026-10.md). The re-sort
+reader is `vetting-core.js`; re-run with `scripts/d1-export.py` then
+`scripts/vetting-audit.js`.
 
 Read-only, over the last 90 days of D1 `sales`. Needs
 `CLOUDFLARE_ACCOUNT_ID` and a **D1 read-only** `CLOUDFLARE_API_TOKEN` in

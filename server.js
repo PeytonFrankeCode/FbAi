@@ -7635,6 +7635,198 @@ app.post('/api/review/sales', async (req, res) => {
   }
 });
 
+// ---- sales vetting (docs/vetting-plan.md) ---------------------------------
+//
+// RE-SORT, NEVER DELETE. vetting-core.js reads each sale's title against how
+// it was filed and says where it belongs: another card (auto, relic,
+// parallel, year, Authentic) or no single card at all (lot, reprint, custom).
+// This is the person's half of that: an impact-ranked queue on /admin, one tap
+// per sale, and every answer kept in its own table.
+//
+// THE SALES ROW IS NEVER EDITED. A correction lives in sale_corrections keyed
+// by item_id, so every answer can be undone, and a re-import (d1-import.py
+// does INSERT OR REPLACE of whole rows) cannot wipe one. Features that read
+// "sale + correction" come next; this collects the answers they will read.
+//
+// The audit (docs/vetting-audit-2026-10.md) puts the queue at ~620 a day, so
+// it is ranked by price: the dearest sales move averages the most.
+const { resortSale: _resortSale, productParallelsFrom: _productParallelsFrom } = require('./vetting-core');
+const VETTING_TABLE = 'sale_corrections';
+// One scan per window, cached: the queue reads every sale in the window that
+// clears the price floor, and D1 bills by rows read.
+const VETTING_CACHE_TTL = 1800;
+const VETTING_MAX_DAYS = 7;
+const VETTING_SCAN_MAX = 6000;
+const VETTING_QUEUE_MAX = 150;
+// "Not one card" answers a person can give with one tap.
+const VETTING_CATEGORIES = ['lot', 'reprint', 'custom', 'you-pick', 'break', 'repack', 'redemption'];
+
+let _vettingTableReady = null;     // null = unknown, false = cannot write
+async function _ensureVettingTable(db) {
+  if (_vettingTableReady !== null) return _vettingTableReady;
+  try {
+    await db.prepare(
+      `CREATE TABLE IF NOT EXISTS ${VETTING_TABLE} (
+         item_id     TEXT PRIMARY KEY,
+         status      TEXT NOT NULL,      -- moved | kept
+         dest        TEXT NOT NULL,      -- where it belongs: keep, auto, category:lot, ...
+         to_value    TEXT,               -- the parallel, year or print run it moves to
+         suggested   TEXT,               -- what the reader said, to measure it against people
+         note        TEXT,
+         title       TEXT,
+         sold_date   TEXT,
+         price_cents INTEGER,
+         decided_at  TEXT NOT NULL
+       )`).run();
+    _vettingTableReady = true;
+  } catch (err) {
+    console.error('[vetting] corrections table unavailable:', err && err.message);
+    _vettingTableReady = false;
+  }
+  return _vettingTableReady;
+}
+
+let _vetReaders = null;
+async function _vettingReaders() {
+  if (_vetReaders) return _vetReaders;
+  const pi = await parallelIndex().catch(() => null);
+  let pp = null;
+  if (pi) {
+    try { pp = _productParallelsFrom(await _loadJson('parallel-index.json'), pi.norm); }
+    catch (err) { console.error('[vetting] product parallels unavailable:', err && err.message); }
+  }
+  _vetReaders = { pi, opts: pp ? { productParallels: pp } : {} };
+  return _vetReaders;
+}
+
+const VETTING_COLS = 'item_id, sold_date, title, price_cents, player, year, brand, set_name, parallel, ' +
+  'card_number, grader, grade, is_rookie, is_auto, is_relic, print_run, card_key, card_name, sport';
+
+app.get('/api/admin/vetting', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const db = getNflDb();
+    if (!db) return res.json({ available: false, reason: 'no database' });
+    const days = Math.min(VETTING_MAX_DAYS, Math.max(1, parseInt(req.query.days, 10) || 1));
+    const minDollars = Math.max(0, parseFloat(req.query.min) || 20);
+    const want = String(req.query.dest || 'all');
+    const wantConf = String(req.query.confidence || 'all');
+
+    // The newest sale through the date index: one row read, never MIN/MAX,
+    // which scans the table on D1.
+    const newest = await db.prepare('SELECT sold_date FROM sales ORDER BY sold_date DESC LIMIT 1').first();
+    if (!newest || !newest.sold_date) return res.json({ available: false, reason: 'no sales' });
+    const through = String(newest.sold_date).slice(0, 10);
+    const since = _mkIso(_mkDay(through) - (days - 1));
+
+    const key = `vetting:v1:${since}:${through}:${minDollars}`;
+    let scan = await cacheGet(key);
+    if (!scan || !Array.isArray(scan.items)) {
+      const img = await _nflHasImageColumn(db);
+      const rows = ((await db.prepare(
+        `SELECT ${VETTING_COLS}${img ? ', image_url' : ''} FROM sales
+          WHERE sold_date >= ? AND sold_date <= ? AND price_cents >= ?
+          ORDER BY price_cents DESC LIMIT ?`)
+        .bind(since, through, Math.round(minDollars * 100), VETTING_SCAN_MAX).all()) || {}).results || [];
+      const { pi, opts } = await _vettingReaders();
+      const items = [];
+      for (const r of rows) {
+        const d = _resortSale(r, pi, opts);
+        // Unplaced is an import failure (no player or year), not a sale a
+        // person can re-file from here.
+        if (d.dest === 'keep' || d.dest === 'unplaced') continue;
+        items.push({ itemId: String(r.item_id), soldDate: r.sold_date, title: r.title,
+                     price: r.price_cents / 100, imageUrl: r.image_url || null,
+                     filedAs: r.card_key || r.card_name || '', dest: d.dest, confidence: d.confidence,
+                     reason: d.reason, to: d.to == null ? null : String(d.to),
+                     also: d.flags.filter(f => f.dest !== d.dest).map(f => f.reason) });
+      }
+      scan = { scanned: rows.length, truncated: rows.length >= VETTING_SCAN_MAX, items };
+      cachePut(key, scan, VETTING_CACHE_TTL);
+    }
+
+    // Answers are read live, so the queue shrinks as they are given even
+    // while the scan above is cached.
+    const decided = new Map();
+    if (await _ensureVettingTable(db)) {
+      const done = ((await db.prepare(
+        `SELECT item_id, status, dest FROM ${VETTING_TABLE} WHERE sold_date >= ? AND sold_date <= ?`)
+        .bind(since, through).all()) || {}).results || [];
+      for (const d of done) decided.set(String(d.item_id), d);
+    }
+    const counts = {};
+    let moved = 0, kept = 0;
+    for (const it of scan.items) {
+      const k = `${it.dest}|${it.confidence}`;
+      const c = (counts[k] = counts[k] || { dest: it.dest, confidence: it.confidence, open: 0, done: 0 });
+      const d = decided.get(it.itemId);
+      if (d) { c.done++; if (d.status === 'kept') kept++; else moved++; } else c.open++;
+    }
+    const queue = scan.items
+      .filter(it => !decided.has(it.itemId))
+      .filter(it => want === 'all' || it.dest === want || (want === 'category' && it.dest.startsWith('category:')))
+      .filter(it => wantConf === 'all' || it.confidence === wantConf)
+      .slice(0, VETTING_QUEUE_MAX);
+    res.json({ available: true, window: { since, through, days }, minDollars,
+               scanned: scan.scanned, truncated: scan.truncated, flagged: scan.items.length,
+               decided: { moved, kept }, counts: Object.values(counts).sort((a, b) => (b.open + b.done) - (a.open + a.done)),
+               categories: VETTING_CATEGORIES, queue });
+  } catch (err) {
+    console.error('[vetting:get]', err && err.stack || err);
+    res.status(500).json({ available: false, error: err && err.message });
+  }
+});
+
+// One answer for one sale.
+//   move      the reader is right: file it where it says
+//   keep      the reader is wrong: the sale stays as filed
+//   category  not one card at all (`category` names which)
+//   undo      forget the answer
+// The suggestion is recomputed here from the sale itself rather than taken
+// from the request, so what is stored is what the reader really said.
+app.post('/api/admin/vetting', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
+  const { itemId, action, category, note } = req.body || {};
+  if (!itemId || typeof itemId !== 'string') return res.status(400).json({ error: 'itemId required' });
+  if (!['move', 'keep', 'category', 'undo'].includes(action)) {
+    return res.status(400).json({ error: 'action must be move, keep, category or undo' });
+  }
+  if (action === 'category' && !VETTING_CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: `category must be one of ${VETTING_CATEGORIES.join(', ')}` });
+  }
+  try {
+    const db = getNflDb();
+    if (!db) return res.status(503).json({ error: 'no database' });
+    if (!(await _ensureVettingTable(db))) return res.status(503).json({ error: 'corrections table unavailable' });
+    if (action === 'undo') {
+      await db.prepare(`DELETE FROM ${VETTING_TABLE} WHERE item_id = ?`).bind(itemId).run();
+      return res.json({ ok: true, itemId, status: null });
+    }
+    const row = await db.prepare(`SELECT ${VETTING_COLS} FROM sales WHERE item_id = ?`).bind(itemId).first();
+    if (!row) return res.status(404).json({ error: 'no sale with that item id' });
+    const { pi, opts } = await _vettingReaders();
+    const s = _resortSale(row, pi, opts);
+    let status, dest, to = null;
+    if (action === 'keep') { status = 'kept'; dest = 'keep'; }
+    else if (action === 'category') { status = 'moved'; dest = `category:${category}`; }
+    else {
+      if (s.dest === 'keep' || s.dest === 'unplaced') return res.status(409).json({ error: 'nothing to move: the reader keeps this sale where it is' });
+      status = 'moved'; dest = s.dest; to = s.to == null ? null : String(s.to);
+    }
+    const at = new Date().toISOString();
+    await db.prepare(
+      `INSERT OR REPLACE INTO ${VETTING_TABLE}
+         (item_id, status, dest, to_value, suggested, note, title, sold_date, price_cents, decided_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(itemId, status, dest, to, s.dest, typeof note === 'string' ? note.slice(0, 300) : null,
+            row.title, row.sold_date, row.price_cents, at).run();
+    res.json({ ok: true, itemId, status, dest, to, suggested: s.dest });
+  } catch (err) {
+    console.error('[vetting:post]', err && err.stack || err);
+    res.status(500).json({ error: err && err.message });
+  }
+});
+
 // One decision. `parallel` names it; an empty string means "not a parallel",
 // which reads the card as base; omitting it entirely undoes the decision.
 app.post('/api/review/parallels', async (req, res) => {
