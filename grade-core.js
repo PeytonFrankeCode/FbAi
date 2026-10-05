@@ -80,7 +80,14 @@ const HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible
 // in front of a slash is a print run. "LAUNDRY TAG 1/1" was being read as a
 // grade of 1 and filed in a price series called "TAG 1" — a Flawless one-of-one
 // patch card, priced against graded cards, in a bucket no grader ever issued.
-const GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?![\d./])/i;
+//
+// The one slash that IS a grade: a dual-graded slab. "BGS 9/10" is a card
+// graded 9 with its autograph graded 10, written grader, card grade, auto
+// grade. The card's grade is the first number, and the second is taken along
+// so stripGrade() removes "/10" too and nothing downstream reads it as a print
+// run (the importer stored "/10" for a Burrow #/35 sold as "BGS 9/10"). An
+// auto grade runs 5 to 10, so "TAG 1/1" is still refused.
+const GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?:\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])|(?![\d./]))/i;
 
 // TAG is a grading company AND a part of a football card, which no other name
 // on the list is.

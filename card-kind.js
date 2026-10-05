@@ -120,8 +120,13 @@ function serialStamp(t) {
   return null;
 }
 
+// A dual-graded slab's grades, "BGS 9.5 / 10": card 9.5, autograph 10. The
+// slash is a grade, not a run, and read as one it filed a 1/1 as a /10. The
+// grader must sit right before it, so a plain "9/10" serial still counts.
+const DUAL_GRADE = /(?<![a-z])(?:psa|bgs|bvg|sgc|cgc|csg|hga|beckett|bccg|isa|ksa|gma)[\s._#:-]*(?:gem\s*)?(?:mint\s*)?(?:10|[1-9](?:\.5)?)\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])/gi;
+
 function printRun(title) {
-  const t = String(title || '');
+  const t = String(title || '').replace(DUAL_GRADE, ' ');
   const stamped = serialStamp(t);
   if (stamped) return stamped;
   if (ONE_OF_ONE.test(t)) return 1;

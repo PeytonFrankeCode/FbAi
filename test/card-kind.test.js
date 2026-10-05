@@ -127,6 +127,10 @@ expect([
     // ...but not a date, however serial it looks.
     ['2025 Prizm Cam Ward RC #14 sold 9/16 1/1', 1],
     ['2025 Prizm Cam Ward RC 9/16/25', null],
+    // A dual-graded slab: "BGS 9/10" is card 9, autograph 10. Never a run.
+    ['2020 Phoenix Joe Burrow Rising Rookie Material Gloves Auto #/35 BGS 9/10', 35],
+    ['2021 Optic Auto BGS 9.5 / 10 Auto 1/1', 1],
+    ['2023 Prizm Auto PSA 8/10', null],
   ];
   const wrong = runs.filter(([t, want]) => printRun(t) !== want);
   check('the print run is read when stated, and refused when it is not',
