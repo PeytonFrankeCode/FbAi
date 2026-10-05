@@ -290,7 +290,14 @@ check('stripGrade keeps a laundry tag in the title',
     ['2017 Prizm Mahomes #269 PSA 9.5', 'PSA 9.5'],
     ['2017 Prizm Mahomes #269 BGS9.5', 'BGS 9.5'],
     ['2017 Prizm Mahomes #269 BGS PRISTINE', 'BGS 10'],
-    ['2017 Prizm Mahomes #269 SGC 10', 'SGC'],
+    ['2017 Prizm Mahomes #269 SGC 10', 'SGC 10'],
+    // Under the top grades, one "Other" group per grader, as PSA always had:
+    // a BGS 7.5 is not priced with BGS 9s.
+    ['1984 Topps Dan Marino #123 Rookie Card Graded BGS 7.5 Near Mint+', 'BGS Other'],
+    ['1984 Topps Dan Marino #123 BGS 9 Mint', 'BGS 9'],
+    ['1984 Topps Dan Marino #123 BGS 8.5', 'BGS 8.5'],
+    ['1984 Topps Dan Marino #123 SGC 5', 'SGC Other'],
+    ['2020 Phoenix Joe Burrow Rising Rookie Material Gloves Auto #/35 BGS 9/10', 'BGS 9'],
     ['2017 Prizm Mahomes #269 Silver Prizm', 'Raw / Ungraded'],
   ];
   const moved = labels.filter(([t, want]) => ctx.detectGrade(t) !== want);
