@@ -3645,6 +3645,10 @@ function _matchVersion(title, ctx) {
 // KW_BEGIN
 const KW_MIN_SALES = 2;
 const KW_MAX_CARDS = 16;
+// When an unnumbered title could be one of several numbered cards, it joins
+// the one that leads by this much (sales, at least KW_LEAD_MIN of them).
+const KW_LEAD_X = 2;
+const KW_LEAD_MIN = 3;
 const _KW_BRANDS = ['upper deck', 'press pass', 'panini', 'topps', 'bowman', 'donruss', 'fleer', 'leaf', 'skybox',
   'pacific', 'playoff', 'sage', 'score', 'pro set', 'collector\'s edge', 'wild card'];
 const _KW_LINES = ['national treasures', 'gold standard', 'stadium club', 'plates patches', 'rookies stars',
@@ -3674,7 +3678,8 @@ function _kwSignature(title, ctx) {
   if (ctx && ctx.playerRe) hay = hay.replace(ctx.playerRe, ' ');
   const year = (raw.match(/\b(19[4-9]\d|20[0-4]\d)\b/) || [])[1] || '';
   // "#FF-6" and "#FF6" are one number.
-  const num = ((raw.match(/#\s*([a-z]{0,5}-?\d{1,4}[a-z]?)\b/i) || [])[1] || '').toUpperCase().replace(/-/g, '');
+  // So are Topps' year-coded inserts, "#91TR-1" and "#75TF-3".
+  const num = ((raw.match(/#\s*(\d{2}[a-z]{1,4}-?\d{1,4}|[a-z]{0,5}-?\d{1,4}[a-z]?)\b/i) || [])[1] || '').toUpperCase().replace(/-/g, '');
   // "/125" or a serial "17/125"; not a grade's "9.5/10".
   const runM = raw.match(/(?:^|[\s#(]|\b\d{1,4})\s*\/\s*(\d{1,4})\b/);
   const run = runM && !(runM[1] === '10' && /\d(\.\d)?\s*\/\s*10\b/.test(raw) && /\b(psa|bgs|sgc|cgc|auto)\b/i.test(raw)) ? runM[1] : '';
@@ -3712,11 +3717,20 @@ function _kwGroup(results, ctx) {
       // The brand only decides when no product line does: sellers call one
       // Skybox Dominion card "Fleer" and "Skybox" alike.
       && (s.lineKey || !s.brand || !g.brand || g.brand === s.brand));
-    // A title with no number joins a numbered card only when just one fits;
-    // otherwise it goes with the other unnumbered ones.
-    const numbered = [...new Set(cands.filter(g => g.sig.num).map(g => g.sig.num))];
+    // A title with no number joins a numbered card when just one fits, or when
+    // one clearly leads the others: a player's base rookie (#301) sells far more
+    // than the inserts in the same product (#91TR-1, #BTP-7), and "2026 Topps
+    // Fernando Mendoza RC" is that base rookie far more often than not. Without
+    // this, the base card showed as two versions, "#301 · Base" and "· Base".
+    // Every numbered card is grouped before any unnumbered one, so the counts
+    // compared here are final. Too close to call, it stays apart, as before.
+    const numberedGroups = cands.filter(g => g.sig.num);
+    const numbered = [...new Set(numberedGroups.map(g => g.sig.num))];
+    const leader = numberedGroups.slice().sort((a, b) => b.members.length - a.members.length);
+    const leads = leader.length > 1 && leader[0].members.length >= KW_LEAD_MIN
+      && leader[0].members.length >= KW_LEAD_X * leader[1].members.length ? leader[0] : null;
     const fit = s.num ? cands[0]
-      : (cands.find(g => !g.sig.num) || (numbered.length === 1 ? cands.find(g => g.sig.num) : null));
+      : (numbered.length === 1 ? cands.find(g => g.sig.num) : leads) || cands.find(g => !g.sig.num) || null;
     if (fit) {
       fit.members.push(m);
       if (!fit.brand && s.brand) fit.brand = s.brand;

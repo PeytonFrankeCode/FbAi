@@ -94,6 +94,23 @@ const together = (res, a, b) => res.rs.find(r => r.title === a)._kw === res.rs.f
   check('  ...but joins the one numbered card it matches', together(one, n1, bare));
   const vague = ctx.group(['CJ Stroud Rookie PSA 10', 'CJ Stroud RC Texans'], 'CJ Stroud');
   check('a title with no number, brand or line is too vague to group', vague.groups.every(g => g.n === 1));
+
+  // The base card in two piles, "#301 · Base" and "· Base" (owner, Oct 2026):
+  // Mendoza's 2026 Topps also has numbered inserts, so an unnumbered title
+  // could not choose. When one numbered card clearly leads, it is that card.
+  const base = Array.from({ length: 5 }, (_, i) => `2026 Topps Fernando Mendoza #301 RC Raiders ${'abcde'[i]}`);
+  const insert = ['2026 Topps Fernando Mendoza #BTP-7 Raiders', '2026 Topps Fernando Mendoza #BTP-7 RC'];
+  const bares = ['2026 Topps Fernando Mendoza RC Raiders', 'Topps 2026 Fernando Mendoza Rookie Card Las Vegas'];
+  const lead = ctx.group([...base, ...insert, ...bares], 'Fernando Mendoza');
+  check('  ...unless one numbered card clearly leads: then it is that card (the base rookie)',
+    bares.every(b => together(lead, base[0], b)) && !together(lead, base[0], insert[0]),
+    lead.groups.map(g => `${g.title}:${g.n}`).join(', '));
+  const yearCoded = ctx.group(['2026 Topps Fernando Mendoza #91TR-1 Raiders', '2026 Topps Fernando Mendoza #301 RC'], 'Fernando Mendoza');
+  check('  ...and a year-coded insert number (#91TR-1) is a number, not part of the base card',
+    yearCoded.groups.length === 2 && yearCoded.groups.some(g => /#91TR1/.test(g.title)), yearCoded.groups.map(g => g.title).join(', '));
+  const close = ctx.group([...base.slice(0, 3), ...insert, insert[0] + ' x', bares[0]], 'Fernando Mendoza');
+  check('  ...and a close call still does not guess',
+    !together(close, base[0], bares[0]) && !together(close, insert[0], bares[0]));
 }
 
 // ---- wiring ----

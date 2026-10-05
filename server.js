@@ -1451,9 +1451,34 @@ function saleTypeOf({ bestOffer, listingFormat }) {
 // "Mystery Rookie" and "Mystery Autograph" are real checklist cards.
 const _PACK_LISTING_RE = /\b(chasers?|chase\s+(packs?|box(es)?|breaks?|bags?)|mystery\s+(packs?|box(es)?|bags?|mailers?))\b/i;
 const _CHASE_NAME_RE = /\bja['’]?\s*marr\s+chase\b|\bjamarr\s+chase\b|\bchase\s+(brown|young|claypool|daniel|edmonds|winovich|lucas|allen|mclaughlin|roullier|cota|stuart|hayden|wilson|jackson|davis|thomas|williams|smith|johnson|harrell|chandler)\b|\b(burrow|joe\s+burrow)\s*[&/+]\s*chase\b|\bchase\s*[&/+]\s*(burrow|higgins)\b/i;
+// ---- Not a card at all: app-only digital cards, and "1st Graded" ----
+//
+// "Topps NFL Collect", "(TOPPS NFL DigitalCard)", "Topps Bunt Digital card",
+// "DIGITAL ... Legendary 50cc": a card in an app, sold on eBay at app prices,
+// under the same player, set and number as the physical card. And "1st Graded",
+// a cheap grading service whose "10"s are not comparable to anything. Neither
+// belongs in a card's sales (owner's call, Oct 2026). 353 sales, $22.8k, in the
+// Oct 2026 data.
+//
+// "Digital" alone is NOT enough: Topps Resurgence "Digital Surge" /100, "Digital
+// Camo", Leaf "Digital Foil" and Movi "Digital Replays" are physical cards.
+// So the word counts only beside the app's own vocabulary: Collect, DigitalCard,
+// Bunt, "Digital" leading the title, or with an app rarity tier (Legendary,
+// Super Rare, Epic) or a copy count ("237cc").
+const _DIGITAL_TIER = '(?:super\\s*rare|legendary|epic|\\d+\\s*cc)';
+const _NOT_A_CARD_RE = new RegExp(
+  '(?<![a-z])(?:(?:nfl|nba|mlb)\\s*collect(?!ion)|topps\\s*collect|topps\\s*(?:digital|bunt)|d[il]gital\\s*-?\\s*cards?|d[il]gitalcards?|' +
+  'd[il]gital\\s+(?:only|item|collectible|asset|download|copy|version|code|redemption|nfl|trading\\s*cards?|legendary|topps|20\\d\\d)|' +
+  '(?:topps|panini)\\s+(?:app|nft)|nfts?|1st\\s*graded)(?![a-z])' +
+  '|^\\W*d[il]gital(?![a-z])|\\*\\s*d[il]gital\\s*\\*' +
+  `|(?<![a-z])d[il]gital(?![a-z])(?=.*(?<![a-z])${_DIGITAL_TIER}(?![a-z]))` +
+  `|(?<![a-z])${_DIGITAL_TIER}(?![a-z])(?=.*(?<![a-z])d[il]gital(?![a-z]))`, 'i');
+const _isNotACard = (title) => _NOT_A_CARD_RE.test(String(title || ''));
+
 function _isPackListing(title, player) {
   const t = String(title || '');
   if (_PACK_LISTING_RE.test(t)) return true;
+  if (_isNotACard(t)) return true;
   if (!/\bchase\b/i.test(t)) return false;
   if (/\bchase\b/i.test(String(player || ''))) return false;
   return !_CHASE_NAME_RE.test(t);
@@ -12689,7 +12714,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v31: the title sweep — seller and condition words, a player named after the
 // number, word order, and a base reading refused while a parallel word is
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v36';
+// v37: app-only digital cards and "1st Graded" are not a card (_isNotACard).
+const CARD_IDENTITY_VERSION = 'cardanalysis:v37';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -18314,7 +18340,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
