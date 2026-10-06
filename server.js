@@ -85,6 +85,11 @@ const { createParallelIndex, parallelKey: _parallelKey, stripColorTeams: _stripC
 // "Ungraded" badge on every sold tile AND which sales reach the Raw price
 // series, and it was calling every PSA10/BGS9.5 slab raw — see grade-core.js.
 const { gradeBucket: _gradeBucketCore, stripGrade: _stripGrade } = require('./grade-core');
+// Slab or raw, read from the sale's photo where its title never says. The
+// scores are written by a CI job; this side only reads them. See
+// photo-slab-core.js.
+const { PHOTO_SLAB_TABLE, PHOTO_SLAB_MIN_CENTS, PHOTO_SLAB_LABEL, photoPricedSlabs: _photoPricedSlabs }
+  = require('./photo-slab-core');
 // Base vs autograph vs relic — the largest single source of merged cards.
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
@@ -1512,7 +1517,40 @@ function mapNflDbSale(r) {
     // The query already enforces the confidence floor, so a player name is the
     // only remaining condition for /api/card-analysis to return something.
     hasAnalysis: !!r.player,
+    // The title reads raw and the photo shows a slab: the browser groups it
+    // with the slabs it cannot name, rather than in Raw.
+    ...(bucket === PHOTO_SLAB_LABEL ? { photoGraded: true } : {}),
   };
+}
+
+// Each raw-reading sale's photo score (photo-slab-core.js), as r.slab_score,
+// so gradeBucket and the raw-price guards can use it. One query for any number
+// of rows: the ids go as one JSON array, since D1 caps bound parameters at 100.
+// Only rows that could have a score are asked about: no grade in the columns,
+// and dear enough to have been scored. The title is not read here (2,000 rows
+// of it is ~5ms of a page's CPU): a sale its title grades was stored with no
+// score, and gradeBucket reads the title before the photo anyway. No table
+// yet, or D1 refusing, leaves the rows as they were, which is exactly how the
+// site read them before photos counted.
+async function _attachSlabScores(db, rows) {
+  if (!db || !Array.isArray(rows) || !rows.length) return rows;
+  const want = rows.filter(r => r && r.item_id != null && r.slab_score === undefined
+    && (r.price_cents || 0) >= PHOTO_SLAB_MIN_CENTS
+    && (r.grade == null || r.grade === '') && !String(r.grader || '').trim());
+  if (!want.length) return rows;
+  try {
+    const ids = [...new Set(want.map(r => String(r.item_id)))];
+    const out = await db.prepare(
+      `SELECT item_id, score FROM ${PHOTO_SLAB_TABLE}
+        WHERE item_id IN (SELECT value FROM json_each(?)) AND score IS NOT NULL`
+    ).bind(JSON.stringify(ids)).all();
+    _d1Usage.queries++;
+    _d1Usage.rowsRead += (out && out.meta && Number(out.meta.rows_read)) || 0;
+    const by = new Map();
+    for (const x of (out && out.results) || []) if (typeof x.score === 'number') by.set(String(x.item_id), x.score);
+    for (const r of want) if (by.has(String(r.item_id))) r.slab_score = by.get(String(r.item_id));
+  } catch (_) { /* see above */ }
+  return rows;
 }
 
 // D1 bills rows READ, and this query is the one that reads them.
@@ -1774,7 +1812,7 @@ async function _fetchViaNflCardDbUncached(db, cleaned, terms, limit, source, cac
     console.log(`[NflCardDB] "${cleaned}" -> ${rows.length} sales, `
       + `${read.toLocaleString('en-US')} rows read, ${elapsed}ms (${source})`);
 
-    const cards = rows.filter(r => !_isPackListing(r.title, r.player));
+    const cards = await _attachSlabScores(db, rows.filter(r => !_isPackListing(r.title, r.player)));
     const payload = { results: cards.map(mapNflDbSale), total: cards.length };
     cachePut(cacheKey, payload, NFLDB_SEARCH_TTL);
     return payload;
@@ -12206,7 +12244,7 @@ async function _checklistBuckets(pid, player) {
           AND price_cents IS NOT NULL AND price_cents > 0 AND confidence >= ?${noOffer}
         ORDER BY sold_date DESC LIMIT 3000`
     ).bind(...names, String(doc.year || ''), NFLDB_MIN_CONFIDENCE).all();
-    rows = (out && out.results) || [];
+    rows = await _attachSlabScores(db, (out && out.results) || []);
   }
 
   const index = await _cataloguedIndex();
@@ -12726,8 +12764,9 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // left over ("Holo Prizm #273", "Mojo Refractor RC #91TRC-1" were base).
 // v37: app-only digital cards and "1st Graded" are not a card (_isNotACard).
 // v38: a season ("2025/26") is not read as a print run.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v38';
-const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js'];
+// v39: a sale's photo can call it a slab (photo-slab-core.js).
+const CARD_IDENTITY_VERSION = 'cardanalysis:v39';
+const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
 // grouping. The guard cannot tell a cosmetic edit from a behavioural one, and
@@ -12743,7 +12782,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // something else held out of every raw price, at any number of sales.
 // v36: small third-party graders (ASG, CCG, MBA, MPE, MCG, ...) read as slabs when a
 // grade number follows them, never inside a card code.
-const CARD_IDENTITY_FINGERPRINT = 'd3d9ae24253d';
+const CARD_IDENTITY_FINGERPRINT = '576179f4585a';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -12784,6 +12823,9 @@ const SLAB_PRICE_X_FEW = 4;
 const SLAB_PRICE_X_PAIR = 6;
 const SLAB_PRICE_FLOOR_CENTS = 2000;
 function _holdOutRawOutliers(raws) {
+  // First the sales the photo and the price agree are slabs (photo-slab-core).
+  const photo = _photoPricedSlabs(raws);
+  if (photo.length) raws = raws.filter(r => !photo.includes(r));
   const c = (r) => r.price_cents || 0;
   const n = raws.length;
   if (n < 2) return raws;
@@ -12806,19 +12848,26 @@ function _rawRows(rows) {
 }
 
 function _flagSlabPricedRaw(byGrade) {
+  // The photo and the price agreeing is the stronger evidence, and says why,
+  // so those go under the photo's label before the price-only tests run.
+  const photo = _photoPricedSlabs((byGrade.get('Raw') || []).filter(r => r.price_cents > 0));
+  if (photo.length) {
+    byGrade.set('Raw', byGrade.get('Raw').filter(r => !photo.includes(r)));
+    byGrade.set(PHOTO_SLAB_LABEL, (byGrade.get(PHOTO_SLAB_LABEL) || []).concat(photo));
+  }
   const raw = byGrade.get('Raw') || [];
   if (raw.length < SLAB_PRICE_MIN_RAW) {
     const kept = _holdOutRawOutliers(raw.filter(r => r.price_cents > 0));
     const moved = raw.filter(r => r.price_cents > 0 && !kept.includes(r));
-    if (!moved.length) return 0;
+    if (!moved.length) return photo.length;
     byGrade.set('Raw', raw.filter(r => !moved.includes(r)));
     byGrade.set(SUSPECTED_SLAB_LABEL, (byGrade.get(SUSPECTED_SLAB_LABEL) || []).concat(moved));
-    return moved.length;
+    return photo.length + moved.length;
   }
   const cents = (r) => r.price_cents || 0;
   const med = (xs) => { const a = xs.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
   const rawMed = med(raw.map(cents).filter(c => c > 0));
-  if (!(rawMed > 0)) return 0;
+  if (!(rawMed > 0)) return photo.length;
   // Do this card's high-grade slabs sell for clearly more than a raw copy?
   let slabsPricier = false;
   for (const [label, list] of byGrade) {
@@ -12829,10 +12878,10 @@ function _flagSlabPricedRaw(byGrade) {
   const cut = rawMed * (slabsPricier ? SLAB_PRICE_X : SLAB_PRICE_X_NO_SLAB_EVIDENCE);
   const keep = [], moved = [];
   for (const r of raw) (cents(r) >= cut ? moved : keep).push(r);
-  if (!moved.length) return 0;
+  if (!moved.length) return photo.length;
   byGrade.set('Raw', keep);
   byGrade.set(SUSPECTED_SLAB_LABEL, (byGrade.get(SUSPECTED_SLAB_LABEL) || []).concat(moved));
-  return moved.length;
+  return photo.length + moved.length;
 }
 
 // How far one card's prices may spread before a trend across them is refused.
@@ -13351,8 +13400,8 @@ async function _cardAnalysisRoute(req, res) {
     // A jumbo copy is its own card: comps for a standard one leave them out,
     // and comps for a jumbo keep only jumbos.
     const seedJumbo = _isOversize(seed.title);
-    const candidates = ((rows && rows.results) || [])
-      .filter(r => !_isPackListing(r.title, r.player) && _isOversize(r.title) === seedJumbo);
+    const candidates = await _attachSlabScores(db, ((rows && rows.results) || [])
+      .filter(r => !_isPackListing(r.title, r.player) && _isOversize(r.title) === seedJumbo));
     // The same base card in its OTHER parallels, bucketed as they are excluded.
     // These rows were already read and identified; throwing them away wastes
     // the only expensive part of this request, and they are precisely what
@@ -13826,7 +13875,7 @@ async function _cardAnalysisRoute(req, res) {
     let checklistParallels = null;
     try {
       const rawG = grades.find(g => g.label === 'Raw');
-      const slabs = grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL);
+      const slabs = grades.filter(g => g.label !== 'Raw' && g.label !== SUSPECTED_SLAB_LABEL && g.label !== PHOTO_SLAB_LABEL);
       checklistParallels = await checklistFor({
         key: _ladderKey(seedKey.key), name: seedName || 'Base', itemId, sales: all.length,
         raw: rawG ? ((estAdjust && rawNowOf(all)) || (rawG.estimate && rawG.estimate.price) || rawG.median) : null,
@@ -18351,7 +18400,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

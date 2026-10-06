@@ -48,3 +48,7 @@ public/build.json
 
 # Written by the post-deploy check when it runs locally during tests.
 marker.json
+
+# Training photos for the photo slab head (scripts/train-slab-head.mjs).
+.slab-photos/
+.model-cache/
