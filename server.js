@@ -5491,9 +5491,18 @@ function _basketMove(dayPrices, points, ends) {
   const out = { typicalCents: med(kept.map(x => x.p)), changePct: null, outlierDays: days.length - kept.length };
   let olderDays, recentDays;
   if (ends && ends.startBefore && ends.endFrom) {
+    // A card that did not trade in both end windows still has an oldest and
+    // a newest sale in the period, and those are its move (owner, Oct 2026: a
+    // dash for every card that skipped an end said nothing). Two trading days
+    // are enough; one is not a move.
+    if (kept.length < 2) return out;
     olderDays = kept.filter(x => x.d < ends.startBefore);
     recentDays = kept.filter(x => x.d >= ends.endFrom);
-    if (!olderDays.length || !recentDays.length || kept.length < 3) return out;
+    if (!olderDays.length) olderDays = [kept[0]];
+    if (!recentDays.length) recentDays = [kept[kept.length - 1]];
+    if (olderDays[olderDays.length - 1].d >= recentDays[0].d) {
+      olderDays = [kept[0]]; recentDays = [kept[kept.length - 1]];
+    }
   } else {
     const half = kept.length >> 1;
     if (half < 2 || kept.length - half < 2) return out;
@@ -8853,7 +8862,7 @@ const _sportRowsSql = (sport, col = 'sport') => sport === 'football' ? _football
 // v5: checklist deny list and robust per-card moves (#658/#659), not in the sig.
 // v6: a player's list follows parallels and graded copies, as their chart does.
 const _marketBasketKey = (days, player) =>
-  `marketbasket:v6:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
+  `marketbasket:v7:${MARKET_CALC_SIG}:${days}:${String(player || '').toLowerCase()}`;
 
 async function _computeMarketBasket(db, days, player) {
   try {
