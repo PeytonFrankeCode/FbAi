@@ -29,6 +29,7 @@
 
 const { cardKind, printRun, POP_COUNT } = require('./card-kind');
 const { gradeFromTitle, stripGrade } = require('./grade-core');
+const { SELF_EVIDENT_PARALLELS } = require('./parallel-index-core');
 
 // ---- not one card ----------------------------------------------------------
 //
@@ -273,6 +274,9 @@ function seasonOf(title) {
 // actually has that parallel. Without the product, only a name that is a
 // parallel everywhere (never also an insert set) counts as HIGH.
 function _readConfidence(row, name, pi, opts) {
+  // "Tiffany" is a parallel in every product that has one, whether or not the
+  // checklist we hold lists it (parallel-index-core.js SELF_EVIDENT).
+  if (SELF_EVIDENT_PARALLELS.includes(name)) return 'high';
   const listed = opts && typeof opts.productParallels === 'function' ? opts.productParallels(row) : null;
   if (listed) {
     const n = pi.norm(name);

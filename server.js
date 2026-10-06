@@ -80,7 +80,8 @@ function _fromCache(v) {
 // In Node there is no assets binding, so the committed files are read directly
 // and the same resolvers are built from them — which is what the tests drive.
 const { createCardIndex } = require('./card-index-core');
-const { createParallelIndex, parallelKey: _parallelKey, stripColorTeams: _stripColorTeams } = require('./parallel-index-core');
+const { createParallelIndex, parallelKey: _parallelKey, stripColorTeams: _stripColorTeams,
+        NFL_NICKNAMES: _NFL_NICKNAMES } = require('./parallel-index-core');
 // Grade bucketing, split out so it can be tested directly. It decides the
 // "Ungraded" badge on every sold tile AND which sales reach the Raw price
 // series, and it was calling every PSA10/BGS9.5 slab raw — see grade-core.js.
@@ -4366,12 +4367,52 @@ async function backfillPlayerAliases(opts) {
 // a daily pass keeps up; the marker expires on its own, which means a quiet
 // period cannot wedge it off permanently.
 const ALIAS_CAUGHTUP_KEY = 'alias:caughtup:v1';
+
+// Names resolved before teams came out of the player dictionary (Oct 2026):
+// "earl campbell houston oilers" was mapped to a player of that whole name,
+// and "steelers" to a player called Steelers. Existing rows are never looked
+// at again, so the ones naming an NFL team are re-resolved once against the
+// current dictionary. A few hundred rows, once; the marker keeps it once.
+const ALIAS_TEAMFIX_KEY = 'alias:teamfix:v1';
+async function _reresolveTeamAliases(db, { resolve = null } = {}) {
+  if (!resolve && await cacheGet(ALIAS_TEAMFIX_KEY)) return { skipped: true };
+  const resolveOne = resolve || ((await cardIndex()) || {}).resolvePlayer;
+  if (!resolveOne) return { skipped: 'no dictionary' };
+  const rows = ((await db.prepare(
+    `SELECT variant, n FROM ${ALIAS_TABLE} WHERE ${_NFL_NICKNAMES.map(() => 'canonical LIKE ?').join(' OR ')}`
+  ).bind(..._NFL_NICKNAMES.map(w => `%${w}%`)).all()) || {}).results || [];
+  const now = new Date().toISOString();
+  const nick = new RegExp(`\\b(?:${_NFL_NICKNAMES.join('|')})\\b`, 'i');
+  const stmts = [];
+  for (const r of rows) {
+    const hit = resolveOne(r.variant);
+    const ok = !!(hit && hit.confident && !nick.test(hit.key));
+    stmts.push(db.prepare(
+      `INSERT OR REPLACE INTO ${ALIAS_TABLE} (variant, canonical, display, how, resolved, n, updated_at)
+       VALUES (?,?,?,?,?,?,?)`
+    ).bind(r.variant, ok ? hit.key : r.variant, ok ? hit.canonical : r.variant,
+           ok ? hit.how : 'team', ok ? 1 : 0, r.n, now));
+  }
+  for (let i = 0; i < stmts.length; i += 50) {
+    const slice = stmts.slice(i, i + 50);
+    if (typeof db.batch === 'function') await db.batch(slice);
+    else for (const st of slice) await st.run();
+  }
+  if (!resolve) await cachePut(ALIAS_TEAMFIX_KEY, { at: now, rows: stmts.length }, 60 * 60 * 24 * 365);
+  console.log(`[alias] re-resolved ${stmts.length} names that carried a team`);
+  return { rewritten: stmts.length };
+}
 const ALIAS_CAUGHTUP_TTL = 60 * 60 * 23;
 
 async function _backfillPlayerAliases({ limit = ALIAS_BACKFILL_BATCH, resolve = null } = {}) {
   const db = getNflDb();
   if (!db) return { ok: false, reason: 'no dataset' };
   if (!await _aliasEnsure(db)) return { ok: false, reason: 'table unavailable' };
+
+  if (!resolve) {
+    try { await _reresolveTeamAliases(db); }
+    catch (err) { console.error('[alias] team re-resolve failed:', err && err.message); }
+  }
 
   // Before the expensive part, and deliberately not after it: the whole point
   // is to avoid the scan, so a check that runs afterwards would save nothing.
@@ -12767,7 +12808,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v38: a season ("2025/26") is not read as a print run.
 // v39: a sale's photo can call it a slab (photo-slab-core.js).
 // v40: a grading population ("Pop 1/1") is not a print run.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v40';
+// v41: Tiffany is a parallel wherever it is written; teams are not players.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v41';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12784,7 +12826,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // something else held out of every raw price, at any number of sales.
 // v36: small third-party graders (ASG, CCG, MBA, MPE, MCG, ...) read as slabs when a
 // grade number follows them, never inside a card code.
-const CARD_IDENTITY_FINGERPRINT = 'a68dd7ad68a6';
+const CARD_IDENTITY_FINGERPRINT = 'f61ccbea277f';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -13215,15 +13257,23 @@ async function _cardAnalysisRoute(req, res) {
     // below, from the column where it exists and from the title where it does
     // not, and the grouping happens in JS where a title can actually be read.
     const eq = (col, val) => val == null || val === '' ? `${col} IS NULL OR ${col} = ''` : `${col} = ?`;
+    // A player field with a team glued on ("Earl Campbell / Houston Oilers")
+    // is still the player's card, so his plainly named sales count too. A
+    // team is never a player (owner, Oct 2026).
+    const seedPlayers = [seed.player];
+    if (new RegExp(`\\b(?:${_NFL_NICKNAMES.join('|')})\\b`, 'i').test(seed.player)) {
+      const hit = ((await cardIndex().catch(() => null)) || { resolvePlayer: () => null }).resolvePlayer(seed.player);
+      if (hit && hit.confident && hit.canonical && hit.canonical !== seed.player) seedPlayers.push(hit.canonical);
+    }
     const where = [
       'price_cents IS NOT NULL',
       `confidence >= ?`,
-      'player = ?',
+      seedPlayers.length > 1 ? `player IN (${seedPlayers.map(() => '?').join(', ')})` : 'player = ?',
       `(${eq('year', seed.year)})`,
       `(${eq('set_name', seed.set_name)})`,
       `(${eq('card_number', seed.card_number)})`,
     ].join(' AND ');
-    const binds = [NFLDB_MIN_CONFIDENCE, seed.player];
+    const binds = [NFLDB_MIN_CONFIDENCE, ...seedPlayers];
     for (const v of [seed.year, seed.set_name, seed.card_number]) {
       if (v != null && v !== '') binds.push(v);
     }
@@ -18402,7 +18452,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

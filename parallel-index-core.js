@@ -74,6 +74,15 @@ function parallelKey(name) {
   return toks.join(' ');
 }
 
+// Parallels that say what they are wherever they sit in a title. "Tiffany" is
+// the glossy factory parallel of a whole set (Topps and Topps Traded 1984-91,
+// Bowman 1989-90, Fleer Tradition 2002-03) and is never a product, an insert
+// or a player (owner, Oct 2026). Read first, because it is usually written
+// beside the product name, ahead of a player this reader may not know: "1987
+// TOPPS TIFFANY #366 MARK MCGWIRE" and "1984 Topps Tiffany Set-Break #300"
+// were read as nothing.
+const SELF_EVIDENT = [{ re: /(?<![a-z])tiffany(?![a-z])/i, name: 'Tiffany' }];
+
 // Team names with a colour (or a parallel word) in them. Rookie cards show
 // the college, and sellers write it: "2017 Score Patrick Mahomes II #403 Red
 // Raiders RC" read as the Red parallel, because "raiders" is NFL filler and
@@ -108,6 +117,13 @@ const NFL_TEAM_PHRASES = [
   'kansas city', 'new england', 'new orleans', 'tampa bay', 'las vegas',
   'los angeles', 'san francisco', 'new york', 'green bay',
 ];
+// NFL nicknames on their own. A team is never a player: the card index build
+// strips these from checklist player fields, and the alias table is cleaned
+// of names resolved before it did (owner, Oct 2026).
+const NFL_NICKNAMES = ['cardinals', 'falcons', 'ravens', 'bills', 'panthers', 'bears', 'bengals', 'browns',
+  'cowboys', 'broncos', 'lions', 'packers', 'texans', 'colts', 'jaguars', 'chiefs', 'raiders', 'chargers',
+  'rams', 'dolphins', 'vikings', 'patriots', 'saints', 'giants', 'jets', 'eagles', 'steelers', '49ers',
+  'niners', 'seahawks', 'buccaneers', 'bucs', 'titans', 'oilers', 'commanders', 'redskins'];
 const _TEAM_STRIP = [...new Set([...COLOR_TEAM_PHRASES, ...NFL_TEAM_PHRASES])].sort((a, b) => b.length - a.length);
 const _COLOR_TEAM_RE = new RegExp(`\\b(?:${_TEAM_STRIP.map(p => p.replace(/ /g, '\\s+')).join('|')})\\b`, 'gi');
 // The text with those team names (both lists) blanked out.
@@ -638,6 +654,7 @@ const GENERIC_SUBSET = new Set([
 
 function resolveParallel(title, opts = {}) {
   const t = String(title || '');
+  for (const s of SELF_EVIDENT) if (s.re.test(t)) return { parallel: s.name, how: 'matched', segment: s.name };
   build();
   // The words before the number with everything known taken out: product,
   // subset, year, player, filler, seller words. What is left, if anything, is
@@ -745,4 +762,6 @@ function resolveParallel(title, opts = {}) {
   };
 }
 
-module.exports = { createParallelIndex, norm, parallelKey, COLOR_TEAM_PHRASES, NFL_TEAM_PHRASES, stripColorTeams };
+const SELF_EVIDENT_PARALLELS = SELF_EVIDENT.map(s => s.name);
+module.exports = { createParallelIndex, norm, parallelKey, COLOR_TEAM_PHRASES, NFL_TEAM_PHRASES, stripColorTeams,
+                   SELF_EVIDENT_PARALLELS, NFL_NICKNAMES };

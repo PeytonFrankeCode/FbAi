@@ -173,4 +173,17 @@ async function main() {
   console.log(`score-slab-photos: wrote ${safe.length} rows`);
 }
 
-main().catch(err => { console.error(err.message || err); process.exit(1); });
+main().catch(err => {
+  // A token without D1 access fails the same way every hour until someone
+  // edits it, and an hourly red run is an hourly email. Say it once as a
+  // warning (it shows on the run) and stop cleanly; anything else is a real
+  // failure.
+  if (err && err.fatal) {
+    console.log(`::warning title=Photo scoring is waiting on the Cloudflare token::${err.message} `
+      + 'Cloudflare dashboard -> My Profile -> API Tokens -> edit the token in the CLOUDFLARE_API_TOKEN secret -> '
+      + 'add Account | D1 | Edit.');
+    process.exit(0);
+  }
+  console.error(err.message || err);
+  process.exit(1);
+});

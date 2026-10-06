@@ -93,6 +93,18 @@ check('a dual grade the import took for a print run is fixed without a person',
   check('  ...but with no other run in the title (a true 1/1?) a person decides',
         diamond.flags.some(f => f.dest === 'parallel' && f.confidence === 'low' && f.to === 'not numbered'));
 }
+// Tiffany is a parallel wherever the title puts it (owner, Oct 2026).
+{
+  const pi2 = require('../parallel-index');
+  const t = ['1987 TOPPS TIFFANY #366 MARK MCGWIRE PSA 10', '1984 Topps Tiffany Set-Break #300 Pete Rose PSA 10',
+             '1989 Topps Traded Tiffany #41T Ken Griffey Jr Limited Collectors Edition PSA 10',
+             '2003 Fleer Tradition Jerry Rice Tiffany /200', '1990 BOWMAN TIFFANY #481 KEN GRIFFEY JR'];
+  const unread = t.filter(x => (pi2.resolveParallel(x, {}) || {}).parallel !== 'Tiffany');
+  check('Tiffany reads as a parallel in every layout', !unread.length, unread.join(' | '));
+  const d = dest(sale('1987 TOPPS TIFFANY #366 MARK MCGWIRE PSA 10', { player: 'Mark McGwire', year: 1987, grader: 'PSA', grade: 10 }));
+  check('  ...and a Tiffany filed as the base card moves without a person',
+    d.dest === 'parallel' && d.confidence === 'high' && d.to === 'Tiffany', `${d.dest}/${d.confidence} ${d.to}`);
+}
 check('a reprint is never moved without a person',
       dest(sale('1996 Topps Namath Reprint Joe Namath New York Jets #122 PSA 9 Rc', { year: 1996 })).confidence === 'low');
 
