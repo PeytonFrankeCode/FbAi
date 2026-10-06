@@ -81,6 +81,18 @@ check('a dual grade the import took for a print run is fixed without a person',
   check('  ...while a real serial beside a season still reads',
         dest(sale('2024/25 Topps Chrome Wembanyama Gold /50', { print_run: 50, parallel: 'Gold', sport: 'basketball' })).dest === 'keep');
 }
+// "Pop 1/1" is the slab's population, not a serial (owner, Oct 2026).
+{
+  const favre = sale('Pop 1/1 Highest 2011 Panini Prime Signatures #/20 Brett Favre Auto Gold PSA 9',
+                     { player: 'Brett Favre', year: 2011, parallel: 'Gold', print_run: 1, is_auto: 1, grader: 'PSA', grade: 9 });
+  const d = dest(favre);
+  check('a population the import read as a print run is fixed without a person',
+        d.dest === 'parallel' && d.confidence === 'high' && d.to === '/20' && /population/.test(d.reason), `${d.dest}/${d.confidence}: ${d.reason}`);
+  const diamond = dest(sale('2021 Panini Flawless Collegiate Emmitt Smith Diamond Gem PSA 10 POP 1/1',
+                            { player: 'Emmitt Smith', year: 2021, parallel: 'Diamond', print_run: 1, grader: 'PSA', grade: 10 }));
+  check('  ...but with no other run in the title (a true 1/1?) a person decides',
+        diamond.flags.some(f => f.dest === 'parallel' && f.confidence === 'low' && f.to === 'not numbered'));
+}
 check('a reprint is never moved without a person',
       dest(sale('1996 Topps Namath Reprint Joe Namath New York Jets #122 PSA 9 Rc', { year: 1996 })).confidence === 'low');
 

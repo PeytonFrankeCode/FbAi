@@ -93,7 +93,7 @@ const { PHOTO_SLAB_TABLE, PHOTO_SLAB_MIN_CENTS, PHOTO_SLAB_LABEL, photoPricedSla
 // Base vs autograph vs relic — the largest single source of merged cards.
 // See card-kind.js: autograph sets reuse the base set's numbering, and 65.5% of
 // all ambiguous (player, number) keys in the catalogue are exactly that.
-const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql } = require('./card-kind');
+const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql, stripPop: _stripPop } = require('./card-kind');
 const EST = require('./estimator-core');
 
 // cardKind(), in SQL.
@@ -3532,7 +3532,8 @@ function _stripSeason(title) {
 
 function parsePrintRunFromTitle(title) {
   if (!title) return null;
-  const s = _stripSeason(title);
+  // Nor is a grading population ("Pop 1/1", "POP 12"): see card-kind.js.
+  const s = _stripSeason(_stripPop(title));
   const t = s.toLowerCase();
   // A serial stamp over more than one ("8/8") is what the card says, and
   // beats a "1/1" beside it: the last of eight sold as a one-of-one.
@@ -12765,7 +12766,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v37: app-only digital cards and "1st Graded" are not a card (_isNotACard).
 // v38: a season ("2025/26") is not read as a print run.
 // v39: a sale's photo can call it a slab (photo-slab-core.js).
-const CARD_IDENTITY_VERSION = 'cardanalysis:v39';
+// v40: a grading population ("Pop 1/1") is not a print run.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v40';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -12782,7 +12784,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // something else held out of every raw price, at any number of sales.
 // v36: small third-party graders (ASG, CCG, MBA, MPE, MCG, ...) read as slabs when a
 // grade number follows them, never inside a card code.
-const CARD_IDENTITY_FINGERPRINT = '576179f4585a';
+const CARD_IDENTITY_FINGERPRINT = 'a68dd7ad68a6';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //

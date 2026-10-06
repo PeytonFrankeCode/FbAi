@@ -27,7 +27,7 @@
 // feature reads "sale + correction".
 'use strict';
 
-const { cardKind, printRun } = require('./card-kind');
+const { cardKind, printRun, POP_COUNT } = require('./card-kind');
 const { gradeFromTitle, stripGrade } = require('./grade-core');
 
 // ---- not one card ----------------------------------------------------------
@@ -281,6 +281,14 @@ function _readConfidence(row, name, pi, opts) {
   return typeof pi.classify === 'function' && pi.classify(name) === 'parallel' ? 'high' : 'low';
 }
 
+// The population phrase in a title ("Pop 1/1") that holds `n`, or null.
+function popWith(title, n) {
+  for (const m of String(title || '').matchAll(POP_COUNT)) {
+    if ((m[0].match(/\d+/g) || []).map(Number).includes(n)) return m[0].trim();
+  }
+  return null;
+}
+
 function resortSale(row, pi, opts) {
   const r = row || {};
   const title = String(r.title || '');
@@ -329,9 +337,18 @@ function resortSale(row, pi, opts) {
       // run is the answer: no person needed.
       const autoGrade = (title.match(/(?<![a-z])(?:psa|bgs|bvg|sgc|cgc|csg|hga|beckett)[\s._#:-]*(?:10|[1-9](?:\.5)?)\s*\/\s*(?:auto\s*)?(10|[5-9](?:\.5)?)(?![\d./])/i) || [])[1];
       const misread = autoGrade != null && parseFloat(autoGrade) === rowRun;
-      add('parallel', misread ? 'high' : 'low',
+      // "Pop 1/1" is the slab's population; read as a run it filed a /20 Favre
+      // as a 1/1 (owner, Oct 2026).
+      const pop = popWith(title, rowRun);
+      add('parallel', misread || pop ? 'high' : 'low',
           misread ? `title says /${run}; the row's /${rowRun} is the auto grade of a dual-graded slab`
-                  : `title says /${run}, row says /${rowRun}`, `/${run}`);
+          : pop ? `title says /${run}; the row's /${rowRun} is the slab's population ("${pop}"), not a print run`
+                : `title says /${run}, row says /${rowRun}`, `/${run}`);
+    } else if (run == null && rowRun != null && popWith(title, rowRun)) {
+      // No other run in the title: not numbered, or a true 1/1 whose seller
+      // only wrote the pop. The checklist knows; a person decides.
+      add('parallel', 'low', `the row's /${rowRun} may be the slab's population ("${popWith(title, rowRun)}")`,
+          'not numbered');
     }
     const read = readParallel(r, pi);
     // A "parallel" spelled by the product's own name is the product: "1984
