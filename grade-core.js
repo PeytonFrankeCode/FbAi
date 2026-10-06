@@ -24,6 +24,8 @@
 // there is a letter — while admitting the numbers.
 'use strict';
 
+const { photoSlabSure, PHOTO_SLAB_LABEL } = require('./photo-slab-core');
+
 // Grading companies as they appear in listing titles.
 //
 // The market index carries its own copy of this list as lowercase substrings,
@@ -52,7 +54,7 @@ const GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG',
 // out because in the data they were codes or unconfirmed at least as often.
 const MINOR_GRADERS = ['ASG', 'CCG', 'MBA', 'MPE', 'MCG', 'DSG', 'PGI', 'WCG', 'PGS', 'GAI',
                        'UCG', 'SCD', 'GSG', 'CGA', 'SCG', 'FCG', 'CGS', 'BCG', 'ICG', 'PSG',
-                       'DCG', 'APG', 'EGS', 'FGS', 'ACE'];
+                       'DCG', 'APG', 'EGS', 'FGS', 'ACE', 'PTA', 'TFG'];
 const _MINOR = new Set(MINOR_GRADERS);
 
 // Letters, not word characters. See the header: this is the whole fix.
@@ -86,7 +88,11 @@ const RAW_RE = /\b(raw|ungraded|not\s+graded|no\s+grade)\b/i;
 // 2026), the 292 titles read as Raw that said "Gem Mint 10" sold at a median
 // 3.5x their card's raw price, and "Gem 10" / "10 Gem Mint" at 2-3x. Bare "gem
 // mint", with no number, is still a seller's claim about corners.
-const LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mint|gem\s*-?\s*mt|gem(?:\s+elite)?|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|(?<![\d./#])10\s+gem(?![a-z])|\bblack\s+label\b/i;
+//
+// "GM 10" is the same label, shortened: all 15 such titles read as Raw in the
+// Oct 2026 copy were slabs. Only 10, and never "#GM 2" or "GM-5": GM is also
+// the code of Mosaic's Glass Mosaic insert.
+const LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mint|gem\s*-?\s*mt|gem(?:\s+elite)?|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|(?<![\d./#])10\s+gem(?![a-z])|(?<![a-z])(?<![#-]\s?)gm\s?10(?![\d./%])|\bblack\s+label\b/i;
 const HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible|looks?|like)\b/i;
 
 // The grader and its number, pulled out of a title.
@@ -110,7 +116,7 @@ const HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible
 // so stripGrade() removes "/10" too and nothing downstream reads it as a print
 // run (the importer stored "/10" for a Burrow #/35 sold as "BGS 9/10"). An
 // auto grade runs 5 to 10, so "TAG 1/1" is still refused.
-const GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?:\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])|(?![\d./]))/i;
+const GRADE_AFTER = /^[\s._#:-]*(?:gem\s*|gm\s?(?=\d))?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?:\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])|(?![\d./]))/i;
 
 // TAG is a grading company AND a part of a football card, which no other name
 // on the list is.
@@ -206,6 +212,10 @@ function gradeBucket(r) {
   // joins the other slabs whose grader could not be read rather than
   // inventing a PSA series for it.
   if (LABEL_GRADE_RE.test(title) && !HOPE_RE.test(title)) return 'Graded (ungraded number)';
+  // The title never says, and the photo does: a clear holder with a label
+  // across the top (photo-slab-core.js). Only where the row carries a photo
+  // score, and only after every title rule, so an explicit "raw" still wins.
+  if (photoSlabSure(row)) return PHOTO_SLAB_LABEL;
   return 'Raw';
 }
 

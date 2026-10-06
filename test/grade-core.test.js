@@ -243,6 +243,26 @@ check('stripGrade keeps a laundry tag in the title',
     `browser=${(ctx.__minor || []).length}`);
 
   const core = require('../grade-core');
+  // "GM 10" is Gem Mint 10 shortened; GM is also Glass Mosaic's card code.
+  // PTA and TFG are small graders; PTA is also Prizm Triple Autos' code.
+  const GM_SLABS = [['2024 Panini Prizm Rookies Bo Nix #309 GM 10', 'Graded (ungraded number)', 'Graded (other)'],
+                    ['2022 Bowman University Chrome Josh Downs Auto #30 GM10', 'Graded (ungraded number)', 'Graded (other)'],
+                    ['1989 Pro Set Barry Sanders Rookie Card Autograph #494 PSA GM 10', 'PSA 10', 'PSA 10'],
+                    ['2024 Topps Cosmic Chrome Drake Maye #272 (RC) SGC GM 10 POP 1', 'SGC 10', 'SGC 10'],
+                    ['2025 Topps Resurgence Jaxson Dart Rookie Giants GEM MINT PTA 10', 'PTA 10', 'Graded (other)'],
+                    ['1990 Skybox Michael Jordan #41 TFG 10', 'TFG 10', 'Graded (other)'],
+                    // A word before it is fine; only "#" or "-" make it a code.
+                    ['1996-97 Michael Jordan Skybox EX2000 Credentials Gold Card GM 10', 'Graded (ungraded number)', 'Graded (other)']];
+  const GM_CODES = ['2021 Panini Mosaic - Glass Mosaic Dak Prescott #GM-5', '2021 Mosaic Glass Mosaic #GM 10 Josh Allen',
+                    'Panini Mosaic GM-10 Insert Dak Prescott', '2025 Prizm Black Triple Autos #PTA-DE Mojo Prizm /25',
+                    'Prizm Black PTA-CHI Singletary/Dent/Hampton Triple Auto'];
+  const gmWrong = GM_SLABS.filter(([t, server, app]) => core.gradeBucket({ title: t }) !== server || ctx.detectGrade(t) !== app)
+    .concat(GM_CODES.filter(t => core.gradeBucket({ title: t }) !== 'Raw' || ctx.detectGrade(t) !== 'Raw / Ungraded').map(t => [t]));
+  check('"GM 10" is a label, and PTA and TFG are graders, on both sides; their card codes are not',
+    !gmWrong.length, gmWrong.map(([t]) => `"${t}" -> ${core.gradeBucket({ title: t })} / ${ctx.detectGrade(t)}`).join('; '));
+  check('  ...and the grade after a grader is read the same way on both sides',
+    /const APP_GRADE_AFTER = (\/.*\/i);/.test(src) && src.match(/const APP_GRADE_AFTER = (\/.*\/i);/)[1]
+      === fs.readFileSync(path.join(__dirname, '..', 'grade-core.js'), 'utf8').match(/const GRADE_AFTER = (\/.*\/i);/)[1]);
   check('  ...and reads a slab label with no grader exactly as the server does',
     !!ctx.__label && ctx.__label.source === core.LABEL_GRADE_RE.source
     && !!ctx.__hope && ctx.__hope.source === core.HOPE_RE.source

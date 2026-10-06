@@ -1,0 +1,71 @@
+name: Score sale photos for slabs
+
+# Titles like "1989 Score - 1989 Rookie Barry Sanders #257 (RC)" read the same
+# for a raw card and a PSA 7, and one hidden slab in a card's raw sales moves
+# the raw price. The photo does not hide it. This job runs an image model over
+# the photos of raw-filed sales and stores one score per sale in D1
+# (photo_slab); the site reads the scores. See photo-slab-core.js.
+#
+# Here and not in the Worker for the reason fingerprint.yml gives: a Worker
+# cannot decode a JPEG, and a 350 MB model has no place in its bundle. The
+# model is installed with --no-save, so it never enters package.json either.
+
+on:
+  schedule:
+    # Hourly. Recent days bring 35-40k raw-filed sales of $10+ a day; 4,000 an
+    # hour is ~96k a day, so the job keeps up and catches up after a gap. Newest
+    # first, so a backlog delays old sales, never today's.
+    - cron: '41 * * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'How many days back to look'
+        required: false
+        default: '2'
+      limit:
+        description: 'How many sales to score this run'
+        required: false
+        default: '4000'
+      dry:
+        description: 'Dry run: score and print, write nothing (yes/no)'
+        required: false
+        default: 'no'
+
+# One at a time: two runs would pick the same unscored sales.
+concurrency:
+  group: score-slab-photos
+  cancel-in-progress: false
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install --no-save @huggingface/transformers@3.8.1
+
+      # The model's weights (~350 MB) from Hugging Face, once, not every hour.
+      - uses: actions/cache@v4
+        with:
+          path: .model-cache
+          key: clip-vit-base-patch32-fp32-v1
+
+      # Inputs go through env, never pasted into the command line.
+      - name: Score photos
+        run: node scripts/score-slab-photos.mjs --days "$DAYS" --limit "$LIMIT" $([ "$DRY" = yes ] && echo --dry)
+        env:
+          DAYS: ${{ github.event.inputs.days || '2' }}
+          LIMIT: ${{ github.event.inputs.limit || '4000' }}
+          DRY: ${{ github.event.inputs.dry || 'no' }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MODEL_CACHE: ${{ github.workspace }}/.model-cache

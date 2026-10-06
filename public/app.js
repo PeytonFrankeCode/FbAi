@@ -1327,7 +1327,7 @@ function applySortToResults(sortType) {
       break;
     case 'grade':
       // Best grade first, raw last; ties keep their original relative order.
-      sorted.sort((a, b) => gradeSortRank(a.title) - gradeSortRank(b.title));
+      sorted.sort((a, b) => gradeSortRank(a) - gradeSortRank(b));
       break;
     default: // 'default' — keep original order
       sorted = [...base];
@@ -2968,13 +2968,13 @@ const APP_GRADERS = ['PSA', 'BGS', 'BVG', 'BCCG', 'BECKETT', 'SGC', 'CGC', 'CSG'
 // name and never inside a card code. Same list as grade-core.js MINOR_GRADERS.
 const APP_MINOR_GRADERS = ['ASG', 'CCG', 'MBA', 'MPE', 'MCG', 'DSG', 'PGI', 'WCG', 'PGS', 'GAI',
                            'UCG', 'SCD', 'GSG', 'CGA', 'SCG', 'FCG', 'CGS', 'BCG', 'ICG', 'PSG',
-                           'DCG', 'APG', 'EGS', 'FGS', 'ACE'];
+                           'DCG', 'APG', 'EGS', 'FGS', 'ACE', 'PTA', 'TFG'];
 const APP_GRADER_RE = new RegExp(`(?<![A-Za-z])(${APP_GRADERS.concat(APP_MINOR_GRADERS).join('|')})(?![A-Za-z])`, 'gi');
 // The number belonging to THIS grader. '/' is excluded along with the digits
 // because a number in front of a slash is a print run: "LAUNDRY TAG 1/1" is a
 // one-of-one patch card, not a card graded 1.
 // Same as grade-core.js GRADE_AFTER, dual-graded slabs included ("BGS 9/10" = card 9).
-const APP_GRADE_AFTER = /^[\s._#:-]*(?:gem\s*)?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?:\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])|(?![\d./]))/i;
+const APP_GRADE_AFTER = /^[\s._#:-]*(?:gem\s*|gm\s?(?=\d))?(?:mt|mint)?[\s._#:-]*(10(?:\.0)?|[1-9](?:\.5)?)(?:\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])|(?![\d./]))/i;
 // TAG is a grading company and also a part of a card — the manufacturer's tag
 // cut from a jersey, which is usually the most valuable card in the product.
 // See grade-core.js: measured over 30 days, every common "graded card with no
@@ -2985,7 +2985,7 @@ const APP_SLAB_RE = /\b(slab(bed)?|graded|encapsulated|pop\s*\d|cert(ification|i
 // The label's own wording with no grader named ("GEM MT 10", "MINT 9"): the
 // slab is in the photo, not the text. Same patterns as grade-core.js, checked
 // character for character by grade-core.test.
-const APP_LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mint|gem\s*-?\s*mt|gem(?:\s+elite)?|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|(?<![\d./#])10\s+gem(?![a-z])|\bblack\s+label\b/i;
+const APP_LABEL_GRADE_RE = /(?<![a-z])(gem\s*-?\s*mint|gem\s*-?\s*mt|gem(?:\s+elite)?|(?<!gem\s*-?\s*)mint|nm\s*-?\s*mt\+?|near\s+mint\s*-?\s*mint|pristine)\s*(10|[1-9](?:\.5)?)(?![\d./%])|(?<![\d./#])10\s+gem(?![a-z])|(?<![a-z])(?<![#-]\s?)gm\s?10(?![\d./%])|\bblack\s+label\b/i;
 const APP_HOPE_RE = /\b(candidate|potential|could|would|should|ready|worthy|possible|looks?|like)\b/i;
 
 function detectGrade(title) {
@@ -3038,6 +3038,14 @@ function detectGrade(title) {
   return 'Raw / Ungraded';
 }
 
+// A sale's grade group: its title's, unless the title reads raw and the
+// server says its photo shows a slab (photo-slab-core.js). The photo cannot
+// say whose slab or what grade, so it joins the slabs the title cannot name.
+function itemGrade(item) {
+  const g = detectGrade(item && item.title);
+  return g === 'Raw / Ungraded' && item && item.photoGraded ? 'Graded (other)' : g;
+}
+
 const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'PSA Other',
   'BGS 10', 'BGS 9.5', 'BGS 9', 'BGS 8.5', 'BGS 8', 'BGS Other',
   'SGC 10', 'SGC 9.5', 'SGC 9', 'SGC Other', 'CGC 10', 'CGC 9.5', 'CGC 9', 'CGC Other', 'Graded (other)'];
@@ -3046,15 +3054,15 @@ const GRADE_ORDER = ['Raw / Ungraded', 'PSA 10', 'PSA 9.5', 'PSA 9', 'PSA 8', 'P
 const GRADE_SORT_DESC = ['PSA 10', 'BGS 10', 'SGC 10', 'CGC 10', 'PSA 9.5', 'BGS 9.5', 'SGC 9.5', 'CGC 9.5',
   'PSA 9', 'BGS 9', 'SGC 9', 'CGC 9', 'BGS 8.5', 'PSA 8', 'BGS 8',
   'PSA Other', 'BGS Other', 'SGC Other', 'CGC Other', 'Graded (other)', 'Raw / Ungraded'];
-function gradeSortRank(title) {
-  const i = GRADE_SORT_DESC.indexOf(detectGrade(title));
+function gradeSortRank(item) {
+  const i = GRADE_SORT_DESC.indexOf(itemGrade(item));
   return i < 0 ? GRADE_SORT_DESC.length : i;
 }
 
 function groupByGrade(results) {
   const groups = {};
   for (const item of results) {
-    const grade = detectGrade(item.title);
+    const grade = itemGrade(item);
     if (!groups[grade]) groups[grade] = [];
     groups[grade].push(item);
   }
@@ -3892,7 +3900,7 @@ function _buildVersionCard({ v, items }) {
   // restates every card for that grade.
   // Best offers are counted as sales but priced as nothing: the figure we hold
   // for one is the seller's ask (see _isBestOffer).
-  const isRaw = (r) => detectGrade(r.title) === 'Raw / Ungraded';
+  const isRaw = (r) => itemGrade(r) === 'Raw / Ungraded';
   const offers = items.filter(_isBestOffer).length;
   const clean = offers < items.length ? items.filter(r => !_isBestOffer(r)) : items;
   const raw = clean.filter(isRaw);
@@ -4196,7 +4204,7 @@ function _vocabFor(data, fallbackName, player) {
 function _filterResults(skip) {
   let results = _withoutDroppedOffers(currentResults);
   if (skip !== 'grade' && currentGradeFilter !== 'all') {
-    results = results.filter(r => detectGrade(r.title) === currentGradeFilter);
+    results = results.filter(r => itemGrade(r) === currentGradeFilter);
   }
   if (skip !== 'parallel' && currentParallelFilter !== 'all') {
     results = results.filter(r => _filterKeyOf(r) === currentParallelFilter);
@@ -7690,7 +7698,7 @@ async function runAutoPricer() {
         // numbers (the same rule as the sold search's estimate): those are
         // ticked; unnumbered and rarer ones start unticked, one click away.
         const include = !_apUserPR || (pr != null && pr > 1 && pr >= _apUserPR);
-        return { ...it, pr, set: detectSetTier(it.title), grade: detectGrade(it.title), include };
+        return { ...it, pr, set: detectSetTier(it.title), grade: itemGrade(it), include };
       });
     renderApComps(out);
   } catch (e) { out.innerHTML = `<p class="pp-error">Error: ${escHtml(e.message)}</p>`; }
