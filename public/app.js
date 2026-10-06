@@ -1207,7 +1207,10 @@ async function initStatsView() {
   if (basisEl) {
     let note = '';
     if (_statsBoard === 'cardMovers' && b) {
-      note = `Raw (ungraded) sales only, split at ${b.splitDate}. A card needs ${b.minSalesPerHalf}+ sales `
+      note = (b.endFrom
+          ? `Raw (ungraded) sales only: each card's first ${b.endDays} days of the period (before ${b.startBefore}) `
+            + `against its last ${b.endDays} (from ${b.endFrom}). A card needs ${b.minSalesPerHalf}+ sales `
+          : `Raw (ungraded) sales only, split at ${b.splitDate}. A card needs ${b.minSalesPerHalf}+ sales `)
         + `on each side and an average above $${b.minPrice} to qualify. `
         + `${b.cardsConsidered.toLocaleString('en-US')} cards cleared that bar.`;
     } else if (_statsBoard === 'playerMovers' && pb) {
@@ -16956,7 +16959,7 @@ function _caRenderChart(label) {
       // number that silently vanishes reads as the page being broken — which
       // is roughly how the five-figure percentages it replaced read too.
       const chg = g.changePct != null
-        ? `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}%</span>`
+        ? `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}" title="Latest sales against sales ${g.changeFrom ? 'on ' + escHtml(g.changeFrom) : 'about 30 days earlier'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}% <small>vs 30d ago</small></span>`
         : g.trendSuppressed
         ? `<span class="ca-chg flat" title="${escHtml(g.trendSuppressed)}">no trend</span>`
         : '';

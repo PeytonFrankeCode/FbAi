@@ -59,7 +59,7 @@ const check = (label, ok, detail) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? '  — ' + detail : ''}`);
   if (!ok) failures++;
 };
-const currentKey = (days) => [...store.keys()].find(k => new RegExp(`^soldstats:v\\d+:${days}$`).test(k) && k !== `soldstats:v10:${days}`);
+const currentKey = (days) => [...store.keys()].find(k => new RegExp(`^soldstats:v\\d+:${days}$`).test(k) && k !== `soldstats:v11:${days}`);
 const waitFor = async (fn, ms = 20000) => { const t = Date.now(); while (!fn() && Date.now() - t < ms) await new Promise(r => setTimeout(r, 50)); return fn(); };
 
 (async () => {
@@ -79,11 +79,11 @@ const waitFor = async (fn, ms = 20000) => { const t = Date.now(); while (!fn() &
 
   // ---- a key change: the previous version's boards stand in ----
   store.delete('soldstats:last:30'); store.delete(currentKey(30));
-  store.set('soldstats:v10:30', JSON.stringify({ available: true, days: 30, marker: 'previous version', generatedAt: new Date().toISOString() }));
+  store.set('soldstats:v11:30', JSON.stringify({ available: true, days: 30, marker: 'previous version', generatedAt: new Date().toISOString() }));
   const rp = await call('/api/sold-stats?days=30');
   check('after a key change, the previous version is served while the new one builds', rp.marker === 'previous version' && rp.refreshing === true);
   await waitFor(() => currentKey(30) && store.has('soldstats:last:30'));
-  store.delete('soldstats:v10:30');
+  store.delete('soldstats:v11:30');
 
   // ---- nothing at all: built inline, both copies stored ----
   const r7 = await call('/api/sold-stats?days=7');
