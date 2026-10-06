@@ -16878,6 +16878,7 @@ async function loadCardAnalysis(item, opts = {}) {
   wrap.classList.remove('hidden');
 
   _caData = data;
+  _caRange = null;   // each card opens on its own default period
   _caRenderParallels(data);
   _caRenderSoldView();
   _caLoadForSale(item.itemId);
@@ -16940,12 +16941,72 @@ const _caParallelLabel = (e) => `${e.name}${e.printRun ? (e.printRun === 1 ? ' 1
 
 // Draw one grade's price history. Kept separate from the fetch so switching
 // grades re-renders from data already in hand.
+// The chart's time period (owner, Oct 2026): 7, 30 and 90 days, a year, or
+// everything. The price, the change and the sale count above the chart all
+// follow it. null = not chosen yet, so each card opens on 30 days when it sold
+// on two days or more in them, and on all time when it did not.
+const CA_RANGES = [['7', '7D'], ['30', '30D'], ['90', '90D'], ['365', '1Y'], ['all', 'All']];
+let _caRange = null;
+
+function _caRangePoints(g, r) {
+  if (!g || r === 'all') return (g && g.points) || [];
+  const cut = new Date(Date.now() - Number(r) * 864e5).toISOString().slice(0, 10);
+  return g.points.filter(p => p.date >= cut);
+}
+
+// One period's price, sales and change. The change is the period's start
+// against its end, as everywhere on the site: the median of its first sixth
+// of days against its last, or its first sale day against its last when
+// those overlap. Two sale days at least; one is not a move.
+function _caRangeStats(pts) {
+  const sales = pts.reduce((a, p) => a + (p.sales || 0), 0);
+  const med = (xs) => { const a = xs.slice().sort((x, y) => x - y), m = a.length >> 1; return a.length ? (a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2) : null; };
+  // Each day's median, counted once per sale, so a busy day weighs more.
+  const all = []; for (const p of pts) for (let i = 0; i < Math.max(1, p.sales || 1); i++) all.push(p.median);
+  const out = { sales, median: med(all), changePct: null, from: null };
+  if (pts.length < 2) return out;
+  const day = (d) => Date.parse(d + 'T12:00:00Z') / 864e5;
+  const first = day(pts[0].date), last = day(pts[pts.length - 1].date);
+  const w = Math.max(1, Math.round((last - first) / 6));
+  let start = pts.filter(p => day(p.date) < first + w), end = pts.filter(p => day(p.date) > last - w);
+  if (!start.length || !end.length || start[start.length - 1].date >= end[0].date) { start = [pts[0]]; end = [pts[pts.length - 1]]; }
+  const a = med(start.map(p => p.median)), b = med(end.map(p => p.median));
+  if (a > 0 && b > 0) { out.changePct = Math.round(((b - a) / a) * 1000) / 10; out.from = pts[0].date; }
+  return out;
+}
+
+function _caRenderRange(g) {
+  const el = document.getElementById('ca-range');
+  if (!el) return;
+  el.innerHTML = CA_RANGES.map(([k, t]) => {
+    const n = _caRangePoints(g, k).length;
+    return `<button type="button" data-range="${k}" class="${k === _caRange ? 'active' : ''}"${n ? '' : ' disabled'}`
+      + ` aria-pressed="${k === _caRange}">${t}</button>`;
+  }).join('');
+  el.onclick = (e) => {
+    const b = e.target.closest('button[data-range]');
+    if (!b || b.disabled) return;
+    _caRange = b.dataset.range;
+    _caRenderChart(_caSelectedGrade);
+  };
+}
+
 function _caRenderChart(label) {
   const canvas = document.getElementById('ca-chart');
   const empty = document.getElementById('ca-chart-empty');
   if (!canvas || !_caData) return;
-  const g = _caData.grades.find(x => x.label === label) || _caData.grades[0];
+  const gAll = _caData.grades.find(x => x.label === label) || _caData.grades[0];
   if (_caChart) { try { _caChart.destroy(); } catch (_) {} _caChart = null; }
+  if (_caRange === null || (gAll && !_caRangePoints(gAll, _caRange).length)) {
+    _caRange = gAll && _caRangePoints(gAll, '30').length >= 2 ? '30' : 'all';
+  }
+  _caRenderRange(gAll);
+  const rangePts = _caRangePoints(gAll, _caRange);
+  const rs = _caRangeStats(rangePts);
+  const span = { '7': '7d', '30': '30d', '90': '90d', '365': '1y' }[_caRange];
+  // The grade, narrowed to the period: its points and its headline figures.
+  const g = gAll && { ...gAll, points: rangePts, median: rs.median != null ? Math.round(rs.median * 100) / 100 : gAll.median,
+    sales: rs.sales || gAll.sales, changePct: gAll.trendSuppressed ? null : rs.changePct, changeFrom: rs.from };
 
   // Headline figure for the selected grade only. Median rather than mean:
   // card sales carry big outliers (one graded copy in a raw run drags a mean
@@ -16959,7 +17020,7 @@ function _caRenderChart(label) {
       // number that silently vanishes reads as the page being broken — which
       // is roughly how the five-figure percentages it replaced read too.
       const chg = g.changePct != null
-        ? `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}" title="Latest sales against sales ${g.changeFrom ? 'on ' + escHtml(g.changeFrom) : 'about 30 days earlier'}">${g.changePct >= 0 ? '+' : ''}${g.changePct}% <small>vs 30d ago</small></span>`
+        ? `<span class="ca-chg ${g.changePct >= 0 ? 'up' : 'down'}" title="Latest sales against the first in this period${g.changeFrom ? ' (' + escHtml(g.changeFrom) + ')' : ''}">${g.changePct >= 0 ? '+' : ''}${g.changePct}% <small>${span ? 'vs ' + span + ' ago' : 'all time'}</small></span>`
         : g.trendSuppressed
         ? `<span class="ca-chg flat" title="${escHtml(g.trendSuppressed)}">no trend</span>`
         : '';
@@ -16972,7 +17033,7 @@ function _caRenderChart(label) {
 
   _caRenderPrice(g && g.estimate);
 
-  _caSelectedGrade = g ? g.label : null;
+  _caSelectedGrade = gAll ? gAll.label : null;
   _caSyncTabLabels();
   if (_caTab === 'sold') _caRenderList();
 
@@ -17048,7 +17109,9 @@ function _caRenderChart(label) {
 }
 
 function _caDate(d) {
-  const t = new Date(d);
+  // A bare "2026-09-13" parses as UTC midnight, which is the 12th in every US
+  // time zone: the readout said Sep 12 under a point labelled 09-13.
+  const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(String(d)) ? `${d}T12:00:00` : d);
   return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
