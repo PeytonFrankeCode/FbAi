@@ -108,6 +108,9 @@ const together = (res, a, b) => res.rs.find(r => r.title === a)._kw === res.rs.f
   const yearCoded = ctx.group(['2026 Topps Fernando Mendoza #91TR-1 Raiders', '2026 Topps Fernando Mendoza #301 RC'], 'Fernando Mendoza');
   check('  ...and a year-coded insert number (#91TR-1) is a number, not part of the base card',
     yearCoded.groups.length === 2 && yearCoded.groups.some(g => /#91TR1/.test(g.title)), yearCoded.groups.map(g => g.title).join(', '));
+  const seasons = ctx.group(['2025/26 Topps Chrome Cooper Flagg #1 RC', '2025-26 Topps Chrome Cooper Flagg #1 Rookie'], 'Cooper Flagg');
+  check('  ...and a season year ("2025/26") is not a print run',
+    seasons.groups.length === 1 && !/\/26/.test(seasons.groups[0].title), seasons.groups.map(g => g.title).join(', '));
   const close = ctx.group([...base.slice(0, 3), ...insert, insert[0] + ' x', bares[0]], 'Fernando Mendoza');
   check('  ...and a close call still does not guess',
     !together(close, base[0], bares[0]) && !together(close, insert[0], bares[0]));

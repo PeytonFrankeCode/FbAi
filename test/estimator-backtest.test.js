@@ -208,6 +208,13 @@ for (const [num, player, level, k, drift] of PLAYERS) {
       `plain $${goldOf(three, {})}, weighted $${goldOf(three, { weightAnchors: true })}`);
   }
 
+  // A season ("2025/26") is not a print run (owner, Oct 2026).
+  check('the estimator does not read a season as a print run',
+    S.parsePrintRunFromTitle('2025/26 Bowman Chrome Cooper Flagg RC') === null
+    && S.parsePrintRunFromTitle('2024/25 Topps Chrome Wembanyama Gold /50') === 50
+    && S.parsePrintRunFromTitle('2025/26 Topps Motif Jrue Holiday True 1/1 Auto') === 1
+    && S.parsePrintRunFromTitle('2024/50 Prizm Gold') === 50);
+
   // The raw-outlier guard: one slab (or a /25 auto filed under the plain card)
   // among a card's raw sales must not set its raw price, however few sales
   // the card has. Real shapes from the Oct 2026 audit.

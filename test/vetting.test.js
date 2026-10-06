@@ -69,6 +69,18 @@ check('an art card waits for a person (Bowman U Now Art Cards are official)',
 check('a dual grade the import took for a print run is fixed without a person',
       dest(sale('2020 Phoenix Joe Burrow Rising Rookie Material Gloves Auto #/35 BGS 9/10',
                 { year: 2020, is_auto: 1, is_relic: 1, print_run: 10, grader: 'BGS', grade: 9 })).confidence === 'high');
+// "2025/26" is a season (basketball, hockey, soccer), not "/26" (owner, Oct 2026).
+{
+  const holiday = sale('2025/26 Topps Motif Jrue Holiday Halo On Card True 1/1 Auto Bucks Blazers Boston',
+                       { player: 'Jrue Holiday', is_auto: 1, print_run: 26, card_number: '2025', sport: 'basketball' });
+  const d = dest(holiday);
+  check('a season the import read as a print run is fixed without a person',
+        d.dest === 'parallel' && d.confidence === 'high' && /season/.test(d.reason), `${d.dest}/${d.confidence}: ${d.reason}`);
+  check('  ...and so is a season year read as the card number',
+        d.flags.some(f => f.dest === 'card-number' && f.confidence === 'high'));
+  check('  ...while a real serial beside a season still reads',
+        dest(sale('2024/25 Topps Chrome Wembanyama Gold /50', { print_run: 50, parallel: 'Gold', sport: 'basketball' })).dest === 'keep');
+}
 check('a reprint is never moved without a person',
       dest(sale('1996 Topps Namath Reprint Joe Namath New York Jets #122 PSA 9 Rc', { year: 1996 })).confidence === 'low');
 
