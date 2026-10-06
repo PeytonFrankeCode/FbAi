@@ -1479,7 +1479,25 @@ const _NOT_A_CARD_RE = new RegExp(
   '|^\\W*d[il]gital(?![a-z])|\\*\\s*d[il]gital\\s*\\*' +
   `|(?<![a-z])d[il]gital(?![a-z])(?=.*(?<![a-z])${_DIGITAL_TIER}(?![a-z]))` +
   `|(?<![a-z])${_DIGITAL_TIER}(?![a-z])(?=.*(?<![a-z])d[il]gital(?![a-z]))`, 'i');
-const _isNotACard = (title) => _NOT_A_CARD_RE.test(String(title || ''));
+// A poster: "Jerry Rice 1986 Topps Rookie Card Poster 11x17" is a print of the
+// card for a wall, not the card (owner, Oct 2026). "Poster" alone is not
+// enough: 1968/1971 Topps and O-Pee-Chee Poster inserts, Prizm World Cup
+// "Host City Posters", Nike 5x7 Poster Cards, Americana "Movie Poster" relics
+// and a Contenders Brady a seller called a "GOAT Poster" are all cards. So
+// only a wall poster's own signs count: "card poster", a wall size (both
+// sides 8 inches or more: 11x17, 18x24), "mini poster", or poster beside
+// print, canvas, framed or wall art.
+const _POSTER_RE = new RegExp(
+  '(?<![a-z])card\\s+posters?(?![a-z])|(?<![a-z])mini[\\s-]*posters?(?![a-z])' +
+  '|(?<![a-z])posters?(?![a-z])(?=.*(?<![\\d.])(?:[89]|[1-9]\\d)(?:\\.\\d+)?\\s*["”]?\\s*[x×]\\s*(?:[89]|[1-9]\\d)(?![\\d]))' +
+  '|(?<![\\d.])(?:[89]|[1-9]\\d)(?:\\.\\d+)?\\s*["”]?\\s*[x×]\\s*(?:[89]|[1-9]\\d)(?![\\d]).*(?<![a-z])posters?(?![a-z])' +
+  '|(?<![a-z])posters?\\s+(?:print|or\\s+canvas)|(?<![a-z])(?:canvas|framed|wall\\s+art)(?![a-z]).*(?<![a-z])posters?(?![a-z])' +
+  '|(?<![a-z])posters?(?![a-z]).*(?<![a-z])(?:canvas|framed|wall\\s+art)(?![a-z])', 'i');
+// Topps' and O-Pee-Chee's own 1968-71 mini posters were pack inserts, and a
+// seller saying "insert" means the same: collected with the cards, kept.
+const _POSTER_INSERT_RE = /(?<![a-z])inserts?(?![a-z])|(?<![a-z])(?:topps|opc|o-pee-chee)(?![a-z]).*(?<![a-z])mini[\s-]*posters?(?![a-z])/i;
+const _isPoster = (t) => _POSTER_RE.test(t) && !_POSTER_INSERT_RE.test(t);
+const _isNotACard = (title) => _NOT_A_CARD_RE.test(String(title || '')) || _isPoster(String(title || ''));
 
 function _isPackListing(title, player) {
   const t = String(title || '');
@@ -12850,7 +12868,8 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v39: a sale's photo can call it a slab (photo-slab-core.js).
 // v40: a grading population ("Pop 1/1") is not a print run.
 // v41: Tiffany is a parallel wherever it is written; teams are not players.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v41';
+// v42: a poster of a card is not the card.
+const CARD_IDENTITY_VERSION = 'cardanalysis:v42';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a

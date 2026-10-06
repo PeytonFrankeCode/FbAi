@@ -72,5 +72,24 @@ check('search results, card history and the sold archive all apply the filter',
 
 }
 
+// A poster of a card is not the card (owner, Oct 2026); cards called posters are.
+{
+  const posters = ['Jerry Rice 1986 Topps Rookie Card Poster 11×17 MINT San Francisco 49ers',
+    'Patrick Mahomes 2023 Optic Downtown Super Bowl Poster 11x17 Kansas City Chiefs',
+    'Josh Allen Jim Kelly Buffalo Bills NFL Football Downtown Poster Canvas',
+    '2018 National Treasures Baker Mayfield Patch Auto Rookie Card Poster MINT Browns',
+    '1978 marketcom mini poster paper stock Reggie McKenzie Buffalo Bills 5x8"'];
+  const cards = ['1968 Topps Posters Inserts Set-Break # 1 Johnny Unitas *GMCARDS*',
+    '2026 Panini Prizm FIFA World Cup Host City Posters Dallas #2 SSP',
+    '1982-92 Nike 5x7 Poster Cards #290983 Barry Sanders LIONS HOF',
+    '1971 O-Pee-Chee CFL Posters Al Phaneuf #15 2vh',
+    '2000 Playoff Contenders Tom Brady Rookie #144 Ultra-Rare GOAT Poster /50!',
+    'NFL Vikings Signed Fran Tarkenton 1968 Topps Mini Poster Insert & COA'];
+  const missed = posters.filter(t => !_isPackListing(t, ''));
+  const wrong = cards.filter(t => _isPackListing(t, ''));
+  check('a poster of a card is left out', !missed.length, missed.join(' | '));
+  check('  ...and cards called posters stay', !wrong.length, wrong.join(' | '));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall pack-listing checks passed');
 process.exit(failures ? 1 : 0);
