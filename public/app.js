@@ -3643,6 +3643,15 @@ function _matchVersion(title, ctx) {
 // number joins the version it otherwise matches; one with no number, brand
 // or line is too vague to place. Only versions with two or more sales show.
 // KW_BEGIN
+// A season year, "2025/26" or "2025-26", reads as its first year: the second
+// half is the next year, never a print run. Basketball, hockey and soccer write
+// their years this way, and a "/26" read off "2025/26" filed a 1/1 auto as a /26.
+// Only when the two halves really are consecutive years, so "2024/50" (a
+// serial) is left alone.
+function _stripSeason(title) {
+  return String(title || '').replace(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/g,
+    (m, y, yy) => ((+y + 1) % 100 === +yy ? y : m));
+}
 const KW_MIN_SALES = 2;
 const KW_MAX_CARDS = 16;
 // When an unnumbered title could be one of several numbered cards, it joins
@@ -3681,7 +3690,7 @@ function _kwSignature(title, ctx) {
   // So are Topps' year-coded inserts, "#91TR-1" and "#75TF-3".
   const num = ((raw.match(/#\s*(\d{2}[a-z]{1,4}-?\d{1,4}|[a-z]{0,5}-?\d{1,4}[a-z]?)\b/i) || [])[1] || '').toUpperCase().replace(/-/g, '');
   // "/125" or a serial "17/125"; not a grade's "9.5/10".
-  const runM = raw.match(/(?:^|[\s#(]|\b\d{1,4})\s*\/\s*(\d{1,4})\b/);
+  const runM = _stripSeason(raw).match(/(?:^|[\s#(]|\b\d{1,4})\s*\/\s*(\d{1,4})\b/);
   const run = runM && !(runM[1] === '10' && /\d(\.\d)?\s*\/\s*10\b/.test(raw) && /\b(psa|bgs|sgc|cgc|auto)\b/i.test(raw)) ? runM[1] : '';
   const auto = _KW_AUTO_RE.test(hay);
   const mem = _KW_MEM_RE.test(hay);
@@ -7639,6 +7648,7 @@ function detectSetTier(text) {
 // "one of one", "numbered to 99". Skips season ranges like "2020/21".
 function parsePrintRun(title) {
   if (!title) return null;
+  title = _stripSeason(title);
   const t = title.toLowerCase();
   // X/Y serial stamp — take the denominator, ignoring year ranges (2020/21).
   // One over more than one ("8/8") beats a "1/1" beside it: the last of eight
@@ -11081,7 +11091,10 @@ function filterStrictVariant(items, variantName, printRun, opts) {
       if (!relaxPrintRun) {
         if (!prRe.test(title)) return false;
       } else {
-        const other = title.match(/\/\s*(\d{1,4})(?![0-9])/);
+        // A season ("2025/26") is not a print run; inlined, as this function is
+        // also run on its own by rainbow-match.test.
+        const other = String(title).replace(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/g,
+          (m, y, yy) => ((+y + 1) % 100 === +yy ? y : m)).match(/\/\s*(\d{1,4})(?![0-9])/);
         if (other && other[1] !== String(printRun)) return false;
       }
     }

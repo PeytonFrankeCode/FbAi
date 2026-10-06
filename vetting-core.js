@@ -250,6 +250,15 @@ function readParallel(row, pi) {
 const LABEL_NOISE = /(?<![a-z])(?:w\/\s*\d+(?:\s*auto)?|pop(?:ulation)?\s*\d+(?:\s*\/\s*\d+)?|mba\s+(?:diamond|silver|gold|platinum|elite|black)(?:\s+candidate)?)(?![a-z])/gi;
 const cleanTitle = (t) => String(t || '').replace(LABEL_NOISE, ' ').replace(/\s{2,}/g, ' ').trim();
 
+// "2025/26" or "2024-25": two consecutive years, the way basketball, hockey
+// and soccer date a season. Returns its first year and the second half's two
+// digits, or null.
+function seasonOf(title) {
+  const m = String(title || '').match(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/);
+  if (!m || (+m[1] + 1) % 100 !== +m[2]) return null;
+  return { year: +m[1], suffix: +m[2], text: m[0].replace(/\s+/g, '') };
+}
+
 // ---- the decision ----------------------------------------------------------
 
 // row: a `sales` row (title, player, year, parallel, print_run, is_auto,
@@ -277,6 +286,7 @@ function resortSale(row, pi, opts) {
   const title = String(r.title || '');
   const flags = [];
   const add = (dest, confidence, reason, to) => flags.push({ dest, confidence, reason, to: to === undefined ? null : to });
+  const season = seasonOf(title);
 
   const cat = categoryOf(title);
   if (cat === 'reprint') {
@@ -307,7 +317,13 @@ function resortSale(row, pi, opts) {
   } else {
     const run = printRun(cleanTitle(title));
     const rowRun = r.print_run == null || r.print_run === '' ? null : parseInt(r.print_run, 10);
-    if (run != null && rowRun != null && run !== rowRun) {
+    // A season ("2025/26", "2024-25") the import read as a serial: the row's
+    // run is the second half of the year, and the card is whatever the title's
+    // own run says, or not numbered at all. 1,107 sales in the Oct 2026 data.
+    if (season && rowRun != null && rowRun === season.suffix && run !== rowRun) {
+      add('parallel', 'high', `the row's /${rowRun} is the season ${season.text}, not a print run`,
+          run != null ? `/${run}` : 'not numbered');
+    } else if (run != null && rowRun != null && run !== rowRun) {
       // "BGS 9/10" is card grade 9, auto grade 10. When the row's run is that
       // auto grade the import read the slab as a serial, and the title's own
       // run is the answer: no person needed.
@@ -341,6 +357,12 @@ function resortSale(row, pi, opts) {
     }
   }
 
+  // The import also took the season's first year for a card number: "2025/26
+  // Topps Motif ..." filed as #2025. 494 sales in the Oct 2026 data.
+  if (season && String(r.card_number || '').trim() === String(season.year)) {
+    add('card-number', 'high', `card number #${r.card_number} is the season year ${season.text}`, null);
+  }
+
   if (!flags.length && (!r.player || !Number.isFinite(parseInt(r.year, 10)))) {
     add('unplaced', 'low', 'no player or year to file it under');
   }
@@ -349,7 +371,7 @@ function resortSale(row, pi, opts) {
   // A category outranks everything (a lot of autos is a lot); then the slab
   // type, then what kind of card, then the year, then the parallel. A low
   // read never outranks a high one.
-  const ORDER = ['category', 'authentic', 'auto', 'relic', 'not-auto', 'year', 'parallel', 'unplaced'];
+  const ORDER = ['category', 'authentic', 'auto', 'relic', 'not-auto', 'year', 'parallel', 'card-number', 'unplaced'];
   const rank = (f) => (f.confidence === 'high' ? 0 : 100) + ORDER.indexOf(f.dest.split(':')[0]);
   const top = flags.slice().sort((a, b) => rank(a) - rank(b))[0];
   return { dest: top.dest, confidence: top.confidence, reason: top.reason, to: top.to, flags };
@@ -390,5 +412,5 @@ function productParallelsFrom(dict, norm) {
 // Everything else either moved to another card or is not one card at all.
 const counts = (decision) => !!decision && decision.dest === 'keep';
 
-module.exports = { resortSale, counts, productParallelsFrom, categoryOf, isAuthenticSlab, kindOf, titleYears,
+module.exports = { resortSale, counts, productParallelsFrom, seasonOf, categoryOf, isAuthenticSlab, kindOf, titleYears,
                    yearMove, sameParallel, parallelIsPlayerName, AUTHENTIC_RE };
