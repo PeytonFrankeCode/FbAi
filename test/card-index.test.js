@@ -119,5 +119,52 @@ check(`  ...and strings with no player in them are declined`,
         + `(${out.resolved} resolved, ${out.unresolved.length} declined)`);
 }
 
-console.log(failures ? `\n${failures} check(s) failed` : '\nall card-index checks passed');
-process.exit(failures ? 1 : 0);
+// ---- a team is never a player (owner, Oct 2026) ------------------------
+{
+  const { NFL_NICKNAMES } = require('../parallel-index-core');
+  const built = require('../public/data/card-index.json');
+  const nick = new RegExp(`\\b(?:${NFL_NICKNAMES.join('|')})\\b`);
+  const teamy = Object.keys(built.players).filter(k => nick.test(k));
+  check('no player in the dictionary carries an NFL team', teamy.length === 0, teamy.slice(0, 5).join(' | '));
+  const r = (p) => { const h = resolvePlayer(p); return h ? h.canonical : null; };
+  check('  ...so a team resolves to no player',
+    r('Steelers') === null && r('Houston Oilers') === null && r('Chicago Bears') === null, `${r('Steelers')}, ${r('Houston Oilers')}`);
+  check('  ...and a player with his team glued on resolves to the player',
+    r('Earl Campbell / Houston Oilers') === 'Earl Campbell' && r('Aaron Rodgers Green Bay Packers') === 'Aaron Rodgers'
+    && r('Houston Oilers / Ken Houston') === 'Ken Houston' && r('Arch Manning Texas Longhorns') === 'Arch Manning');
+  check('  ...while names that are also team words stay people',
+    r('Jim Brown') === 'Jim Brown' && r('Jerry Rice') === 'Jerry Rice' && r('Desmond Howard') === 'Desmond Howard');
+  // A team word left as somebody's last token made "Tigers" a unique surname,
+  // and every "... Detroit Tigers" title resolved to Dutch Clark.
+  check('  ...and a team\'s last word is never a surname to resolve by',
+    !['tigers', 'irish', 'buckeyes', 'gamecocks', 'bulldogs'].some(w => w in built.uniqueSurnames)
+    && resolvePlayer('Topps 2021 Chrome Tarik Skubal RC Refractor #103 Detroit Tigers') === null);
+  check('  ...and a multi-player card keeps its name exactly',
+    r('Aaron Donald / Bobby Wagner / Jalen Ramsey') === 'Aaron Donald / Bobby Wagner / Jalen Ramsey');
+}
+
+// Names the market's alias table resolved before teams came out of the
+// dictionary are re-resolved once (server.js _reresolveTeamAliases).
+(async () => {
+  process.env.CF_WORKER = '1';
+  const S = require('../server.js');
+  const { DatabaseSync } = require('node:sqlite');
+  const sq = new DatabaseSync(':memory:');
+  sq.exec(`CREATE TABLE player_alias (variant TEXT PRIMARY KEY, canonical TEXT NOT NULL, display TEXT NOT NULL,
+           how TEXT, resolved INTEGER NOT NULL DEFAULT 1, n INTEGER, updated_at TEXT)`);
+  const put = sq.prepare('INSERT INTO player_alias VALUES (?,?,?,?,?,?,?)');
+  put.run('earl campbell houston oilers', 'earl campbell houston oilers', 'Earl Campbell Houston Oilers', 'exact', 1, 148, 'x');
+  put.run('steelers', 'steelers', 'Steelers', 'exact', 1, 6, 'x');
+  put.run('patrick mahomes ii', 'patrick mahomes ii', 'Patrick Mahomes II', 'exact', 1, 900, 'x');
+  const stmt = (sql) => ({ bind: (...b) => ({ all: async () => ({ results: sq.prepare(sql).all(...b) }),
+                                              run: async () => sq.prepare(sql).run(...b) }) });
+  const db = { prepare: stmt };
+  const out = await S._reresolveTeamAliases(db, { resolve: resolvePlayer });
+  const row = (v) => sq.prepare('SELECT canonical, resolved FROM player_alias WHERE variant = ?').get(v);
+  check('names resolved with a team in them are re-resolved once',
+    out.rewritten === 2 && row('earl campbell houston oilers').canonical === 'earl campbell'
+    && row('steelers').resolved === 0 && row('patrick mahomes ii').canonical === 'patrick mahomes ii',
+    JSON.stringify([out, row('earl campbell houston oilers'), row('steelers')]));
+  console.log(failures ? `\n${failures} check(s) failed` : '\nall card-index checks passed');
+  process.exit(failures ? 1 : 0);
+})();

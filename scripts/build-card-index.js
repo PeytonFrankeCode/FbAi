@@ -62,6 +62,51 @@ const LISTING_JARGON = [
   'nice', 'clean', 'great', 'look', 'wow', 'l@@k', 'combined',
 ];
 
+// A team is never a player (owner, Oct 2026). Checklist rows put teams in
+// the player field three ways: team cards ("Steelers", "49ers Team", "Bears
+// Logo"), a player with his team glued on ("Aaron Rodgers Green Bay Packers",
+// "Earl Campbell / Houston Oilers"), and matchup cards ("Bengals vs Oilers
+// Playoffs"). 705 dictionary "players" carried a team, so the reader resolved
+// "Earl Campbell / Houston Oilers" to a player of that whole name, and
+// "Steelers" to a player called Steelers.
+//
+// Stripped: every team phrase of two words or more the checklists use as a
+// team, and NFL nicknames on their own. A glued-on team left behind is worse
+// than useless: "Earl Dutch Clark/Colorado College Tigers" made "Tigers" a
+// unique surname, and every "... Detroit Tigers" title resolved to Dutch
+// Clark. NOT stripped: one-word college names, which are also surnames
+// (Brown, Rice, Howard, Washington), and a phrase some checklist lists as a
+// person on another team ("James Madison", Idaho State), unless it names an
+// NFL team.
+const { NFL_NICKNAMES } = require('../parallel-index-core');
+const NFL_NICK_RE = new RegExp(`\\b(?:${NFL_NICKNAMES.join('|')})\\b`, 'i');
+// What is left of a team card once the team is gone.
+const TEAM_CARD_WORDS = new Set(['team', 'teams', 'checklist', 'checklists', 'logo', 'logos', 'pennant',
+  'leaders', 'teamleaders', 'defense', 'offense', 'road', 'home', 'record', 'playoffs', 'playoff', 'vs',
+  'v', 'at', 'and', 'champs', 'champions', 'championship', 'afc', 'nfc', 'sb', 'super', 'bowl', 'roster',
+  'schedule', 'helmet', 'stadium', 'go', 'set', 'break', 'card', 'cards', 'the', 'of', 'in', 'season',
+  'highlights', 'action', 'mascot', 'cheerleaders', 'franchise', 'history', 'rc']);
+
+function teamStripper(teamCounts, personTeam) {
+  const phrases = [...teamCounts].filter(([t]) => t.split(' ').length >= 2 && /[a-z]/.test(t)
+      && !(personTeam.has(t) && !NFL_NICK_RE.test(t)))
+    .map(([t]) => t).sort((a, b) => b.length - a.length);
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s.,\'’-]+');
+  const phraseRe = new RegExp(`(?<![a-z0-9])(?:${phrases.map(esc).join('|')})(?![a-z0-9])`, 'gi');
+  const nickRe = new RegExp(NFL_NICK_RE.source, 'gi');
+  // The player with every team taken out, "/"-separated players kept apart;
+  // null when nothing but a team (and team-card words) was there.
+  return function cleanPlayer(raw) {
+    const given = String(raw);
+    // "Joe Theismann Go Irish", "Barry Sanders Go Cowboys!!": a cheer, not a name.
+    const t = given.replace(/(?<![a-z])go\s+[a-z]+!*/gi, ' ').replace(phraseRe, ' ').replace(nickRe, ' ');
+    if (t === given) return given;          // no team in it: left exactly as it was
+    const parts = t.split('/').map(part => part.replace(/\s+/g, ' ').replace(/^[\s,;:&+-]+|[\s,;:&+-]+$/g, '').trim());
+    const kept = parts.filter(x => norm(x).split(' ').some(w => w && !TEAM_CARD_WORDS.has(w) && /[a-z]/.test(w)));
+    return kept.length ? kept.join(/\s\/\s/.test(given) ? ' / ' : '/') : null;
+  };
+}
+
 function collect() {
   const players = new Map();      // norm -> canonical spelling
   const teamNames = new Set();    // norm team name, e.g. "minnesota vikings"
@@ -71,6 +116,9 @@ function collect() {
   const noise = new Set(LISTING_JARGON);
   const products = [];
   const setNames = new Set();   // subset names: "Rookies", "Concourse", "Fearless"
+  const teamCounts = new Map();   // norm team -> cards listing it
+  const personTeam = new Set();   // norm player names listed beside some other team
+  const rawPlayers = [];          // { raw, team }, read once every team is known
 
   let cardCount = 0;
   const files = fs.readdirSync(CHECKLIST_DIR).filter(f => f.endsWith('.json'));
@@ -140,21 +188,36 @@ function collect() {
       for (const card of (set.cards || [])) {
         cardCount++;
         if (card.team) {
-          teamNames.add(norm(card.team));
-          for (const w of norm(card.team).split(' ')) if (w.length > 1) noise.add(w);
+          const t = norm(card.team);
+          teamNames.add(t);
+          teamCounts.set(t, (teamCounts.get(t) || 0) + 1);
+          for (const w of t.split(' ')) if (w.length > 1) noise.add(w);
         }
         const raw = String(card.player || '').trim();
         if (!raw) continue;
         const n = norm(raw);
         if (!n) continue;
-        if (!players.has(n)) players.set(n, raw);
-        if (card.team) {
-          if (!playerTeams.has(n)) playerTeams.set(n, new Set());
-          playerTeams.get(n).add(card.team);
-        }
+        if (card.team && norm(card.team) !== n) personTeam.add(n);
+        rawPlayers.push({ raw, team: card.team || '' });
       }
     }
     parallelsByProduct[doc.id || file.replace(/\.json$/, '')] = [...pset].sort();
+  }
+
+  // Players, with teams taken out (see teamStripper above).
+  const cleanPlayer = teamStripper(teamCounts, personTeam);
+  let teamsStripped = 0;
+  for (const { raw: given, team } of rawPlayers) {
+    const raw = cleanPlayer(given);
+    if (raw !== given) teamsStripped++;
+    if (!raw) continue;
+    const n = norm(raw);
+    if (!n) continue;
+    if (!players.has(n)) players.set(n, raw);
+    if (team) {
+      if (!playerTeams.has(n)) playerTeams.set(n, new Set());
+      playerTeams.get(n).add(team);
+    }
   }
 
   // Sets catalogue team cards, so "Minnesota Vikings" arrives as a player name.
@@ -210,9 +273,14 @@ function collect() {
   const nameTokens = new Set();
   for (const n of players.keys()) for (const w of n.split(' ')) nameTokens.add(w);
 
+  // The last word of every team of two words or more: "tigers", "irish",
+  // "buckeyes". Never a surname to resolve a title by (see main()).
+  const teamLast = new Set([...teamCounts.keys()].filter(t => t.split(' ').length >= 2)
+    .map(t => t.split(' ').pop()).filter(w => /^[a-z]+$/.test(w)));
+
   return { players, playerTeams, surnames, parallelsByProduct, noise, products,
            cardCount, nameTokens, teamNames, droppedTeams, suffixless, baseAmbiguous,
-           setNames };
+           setNames, teamsStripped, teamLast };
 }
 
 // Restores the display spelling for the common case where a canonical name is
@@ -228,7 +296,12 @@ function main() {
 
   const uniqueSurnames = {};
   let ambiguous = 0;
+  // A team's last word that is one player's last token is a team left in a
+  // player field, not a surname: "Tigers" resolved every "... Detroit Tigers"
+  // title to Earl "Dutch" Clark of the Colorado College Tigers. Declined.
+  let teamWords = 0;
   for (const [sur, set] of c.surnames) {
+    if (set.size === 1 && c.teamLast.has(sur)) { teamWords++; continue; }
     if (set.size === 1) uniqueSurnames[sur] = [...set][0];
     else ambiguous++;
   }
@@ -276,8 +349,8 @@ function main() {
   console.log(`card index -> ${path.relative(process.cwd(), OUT)}  (${kb} KB, ${Date.now() - t0}ms)`);
   console.log(`  products            ${c.products.length}`);
   console.log(`  catalogued cards    ${c.cardCount.toLocaleString('en-US')}`);
-  console.log(`  canonical players   ${c.players.size.toLocaleString('en-US')} (${c.droppedTeams} team cards dropped)`);
-  console.log(`  unique surnames     ${Object.keys(uniqueSurnames).length.toLocaleString('en-US')} usable, ${ambiguous} ambiguous (declined)`);
+  console.log(`  canonical players   ${c.players.size.toLocaleString('en-US')} (${c.droppedTeams} team cards dropped, ${c.teamsStripped} entries had a team taken out)`);
+  console.log(`  unique surnames     ${Object.keys(uniqueSurnames).length.toLocaleString("en-US")} usable, ${ambiguous} ambiguous (declined), ${teamWords} team words refused`);
   console.log(`  suffix-optional     ${Object.keys(c.suffixless).length.toLocaleString('en-US')} names ("Luther Burden" -> "Luther Burden III"), ${c.baseAmbiguous} ambiguous (declined)`);
   console.log(`  noise vocabulary    ${safeNoise.length.toLocaleString('en-US')} words, ${collides} dropped for colliding with real names`);
   console.log(`  parallel sets       ${Object.keys(c.parallelsByProduct).length} (${pkb} KB, separate artifact)`);
