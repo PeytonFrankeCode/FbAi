@@ -3656,9 +3656,13 @@ function _matchVersion(title, ctx) {
 // their years this way, and a "/26" read off "2025/26" filed a 1/1 auto as a /26.
 // Only when the two halves really are consecutive years, so "2024/50" (a
 // serial) is left alone.
+// And a grading population, "Pop 1/1" or "POP 12", is how many the grader has
+// seen, not how many were printed; "POP 1 /25" keeps its /25. Same pattern as
+// card-kind.js POP_COUNT, checked by card-kind.test.
+const APP_POP_COUNT = /(?<![a-z])pop(?:ulation)?\.?\s*(?:of\s*)?[:#=-]?\s*\d{1,5}(?:\/\s*\d{1,5}|\s*of\s*\d{1,5})?/gi;
 function _stripSeason(title) {
-  return String(title || '').replace(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/g,
-    (m, y, yy) => ((+y + 1) % 100 === +yy ? y : m));
+  return String(title || '').replace(APP_POP_COUNT, ' ')
+    .replace(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/g, (m, y, yy) => ((+y + 1) % 100 === +yy ? y : m));
 }
 const KW_MIN_SALES = 2;
 const KW_MAX_CARDS = 16;
@@ -11097,11 +11101,12 @@ function filterStrictVariant(items, variantName, printRun, opts) {
     // numbered parallel and stays excluded.
     if (prRe) {
       if (!relaxPrintRun) {
-        if (!prRe.test(title)) return false;
+        if (!prRe.test(title.replace(/(?<![a-z])pop(?:ulation)?\.?\s*(?:of\s*)?[:#=-]?\s*\d{1,5}(?:\/\s*\d{1,5}|\s*of\s*\d{1,5})?/gi, ' '))) return false;
       } else {
-        // A season ("2025/26") is not a print run; inlined, as this function is
-        // also run on its own by rainbow-match.test.
-        const other = String(title).replace(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/g,
+        // A season ("2025/26") is not a print run, nor a population ("Pop 1/1");
+        // inlined, as this function is also run on its own by rainbow-match.test.
+        const other = String(title).replace(/(?<![a-z])pop(?:ulation)?\.?\s*(?:of\s*)?[:#=-]?\s*\d{1,5}(?:\/\s*\d{1,5}|\s*of\s*\d{1,5})?/gi, ' ')
+          .replace(/(?<!\d)((?:19|20)\d{2})\s*[\/-]\s*(\d{2})(?!\d)/g,
           (m, y, yy) => ((+y + 1) % 100 === +yy ? y : m)).match(/\/\s*(\d{1,4})(?![0-9])/);
         if (other && other[1] !== String(printRun)) return false;
       }

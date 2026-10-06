@@ -198,5 +198,37 @@ expect([
   }
 }
 
+// ---- a grading population is not a print run (owner, Oct 2026) ----------
+{
+  const { printRun: pr, POP_COUNT } = require('../card-kind');
+  const cases = [
+    ['Pop 1/1 Highest 2011 Panini Prime Signatures #/20 Brett Favre Auto Gold PSA 9', 20],
+    ['2020 Panini Donruss - Lamar Jackson #33 Black Press Proof /10 PSA 10 Pop 1 Of 1', 10],
+    ['2021 Select Mac Jones Pop 2/5 PSA 10 Zebra', null],
+    ['2020 Prizm Justin Herbert Silver PSA 10 POP 12', null],
+    ['2019 Select Tom Brady White Prizm #6/35 PSA 9 LOW POP of 8', 35],
+    ['LIONEL MESSI 2022-23 Topps FCB Gold Drip /99 Pink PSA 10 GEM POP=1', 99],
+    // A space before the slash: pop 1 of a card numbered /20.
+    ['2024 Topps Finest Keon Coleman Oil Spill Refractor PSA 10 POP 1 /20 RC #271', 20],
+    // A stated pop says slab, and a slab title does not date its sale.
+    ['2023 Panini Contenders Optic #36 Justin Jefferson 1/4 Neon Marble PSA 9 POP 1/1', 4],
+    ['2025 Panini Phoenix Caleb Williams #11 GOLD WINTER RARE 05/10 PSA 10 POP 1', 10],
+    // "Pop" in a name or a phrase with no number is left alone.
+    ['2025 Topps Chrome Pop Warner Rookie Gold /50', 50],
+    ['2023 Select Puka Nacua Blue Disco Prizm 7/25 Rookie PSA 10 LOW POP', 25],
+  ];
+  const wrong = cases.filter(([t, want]) => pr(t) !== want);
+  check('a grading population ("Pop 1/1", "POP 12") is not a print run', !wrong.length,
+    wrong.map(([t, w]) => `"${t.slice(0, 60)}" -> ${pr(t)}, wanted ${w}`).join('; ') || `all ${cases.length}`);
+
+  // The browser carries the same pattern, in its version grouping and twice in
+  // the rainbow filter (which is also run on its own).
+  const app = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  const src = POP_COUNT.source.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+  check('  ...and the browser reads it with exactly the same pattern',
+    (app.match(new RegExp('/' + src + '/gi', 'g')) || []).length === 3,
+    `${(app.match(new RegExp('/' + src + '/gi', 'g')) || []).length} copies`);
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall card-kind checks passed');
 process.exit(failures ? 1 : 0);

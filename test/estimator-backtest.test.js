@@ -214,6 +214,11 @@ for (const [num, player, level, k, drift] of PLAYERS) {
     && S.parsePrintRunFromTitle('2024/25 Topps Chrome Wembanyama Gold /50') === 50
     && S.parsePrintRunFromTitle('2025/26 Topps Motif Jrue Holiday True 1/1 Auto') === 1
     && S.parsePrintRunFromTitle('2024/50 Prizm Gold') === 50);
+  // Nor is a grading population ("Pop 1/1"), owner, Oct 2026.
+  check('the estimator does not read a population as a print run',
+    S.parsePrintRunFromTitle('Pop 1/1 Highest 2011 Panini Prime Signatures #/20 Brett Favre Auto Gold PSA 9') === 20
+    && S.parsePrintRunFromTitle('2021 Select Mac Jones Pop 2/5 PSA 10 Zebra') === null
+    && S.parsePrintRunFromTitle('2024 Topps Finest Keon Coleman Oil Spill PSA 10 POP 1 /20 RC') === 20);
 
   // The raw-outlier guard: one slab (or a /25 auto filed under the plain card)
   // among a card's raw sales must not set its raw price, however few sales

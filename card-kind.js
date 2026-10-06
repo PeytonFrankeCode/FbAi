@@ -109,13 +109,16 @@ const NUMBERED = /(?:\bnumbered\s*(?:to\s*)?|#\s*\/|(?<![\d])\/)\s*(\d{1,4})\b/i
 // last copy), a "#" in front, or a "1/1" elsewhere in the same title. Never
 // when it is a full date (9/16/25) or follows "sold", "ended" or "on".
 const SERIAL_STAMP = /(^|[^\d/])(#\s*)?(\d{1,4})\s*\/\s*(\d{1,4})(?![\d/])/g;
-function serialStamp(t) {
+// `graded`: the title states a population ("PSA 9 POP 1/1"), which a listing
+// only does for a slab, and slab titles do not date the sale: "1/4 Neon
+// Marble PSA 9 POP 1/1" is copy 1 of 4.
+function serialStamp(t, graded) {
   for (const m of t.matchAll(SERIAL_STAMP)) {
     const n = parseInt(m[3], 10), run = parseInt(m[4], 10);
     if (!(run >= 2 && run <= 5000 && n >= 1 && n <= run)) continue;
     const before = t.slice(Math.max(0, m.index - 8), m.index + m[1].length).toLowerCase();
     if (/\b(sold|ended|on|date)\s*$/.test(before)) continue;
-    if (run > 31 || n === run || m[2] || ONE_OF_ONE.test(t)) return run;
+    if (run > 31 || n === run || m[2] || graded || ONE_OF_ONE.test(t)) return run;
   }
   return null;
 }
@@ -125,9 +128,20 @@ function serialStamp(t) {
 // grader must sit right before it, so a plain "9/10" serial still counts.
 const DUAL_GRADE = /(?<![a-z])(?:psa|bgs|bvg|sgc|cgc|csg|hga|beckett|bccg|isa|ksa|gma)[\s._#:-]*(?:gem\s*)?(?:mint\s*)?(?:10|[1-9](?:\.5)?)\s*\/\s*(?:auto\s*)?(?:10|[5-9](?:\.5)?)(?![\d./])/gi;
 
+// A grading population: "Pop 1/1", "POP 12", "pop 2 of 5", "Low Pop of 3",
+// "POP=1". How many copies the grader has seen at that grade, not how many
+// were printed, and read as a run it filed "Pop 1/1 ... Prime Signatures #/20
+// Brett Favre" as a 1/1 (owner, Oct 2026). A slash with a space before it is
+// not the pop's: "PSA 10 POP 1 /25" is pop 1 of a card numbered /25, and the
+// Oct 2026 titles write it that way, so "/25" stays.
+const POP_COUNT = /(?<![a-z])pop(?:ulation)?\.?\s*(?:of\s*)?[:#=-]?\s*\d{1,5}(?:\/\s*\d{1,5}|\s*of\s*\d{1,5})?/gi;
+const stripPop = (title) => String(title || '').replace(POP_COUNT, ' ');
+// "Low pop" with no number says the same: a slab.
+const LOW_POP = /\blow[\s-]*pop\b/i;
+
 function printRun(title) {
-  const t = String(title || '').replace(DUAL_GRADE, ' ');
-  const stamped = serialStamp(t);
+  const t = stripPop(title).replace(DUAL_GRADE, ' ');
+  const stamped = serialStamp(t, String(title || '').search(POP_COUNT) >= 0 || LOW_POP.test(String(title || '')));
   if (stamped) return stamped;
   if (ONE_OF_ONE.test(t)) return 1;
   const m = NUMBERED.exec(t);
@@ -182,4 +196,4 @@ function kindSql(titleCol = 'title') {
 }
 
 module.exports = { AUTO_RE, RELIC_RE, REDEMPTION_RE, AUTO_WORDS, RELIC_WORDS,
-                   REDEMPTION_WORDS, cardKind, kindKey, kindSql, printRun };
+                   REDEMPTION_WORDS, cardKind, kindKey, kindSql, printRun, stripPop, POP_COUNT };

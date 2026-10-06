@@ -11,6 +11,16 @@ name: Score sale photos for slabs
 # model is installed with --no-save, so it never enters package.json either.
 
 on:
+  # A changed scorer or head runs at once, rather than at the next hourly slot.
+  # It is also how the job gets going at all: GitHub cannot be asked to run it
+  # from here, and a new schedule can sit idle for its first hours.
+  push:
+    branches: [main]
+    paths:
+      - scripts/score-slab-photos.mjs
+      - scripts/data/slab-head.json
+      - photo-slab-core.js
+      - .github/workflows/score-slab-photos.yml
   schedule:
     # Hourly. Recent days bring 35-40k raw-filed sales of $10+ a day; 4,000 an
     # hour is ~96k a day, so the job keeps up and catches up after a gap. Newest
