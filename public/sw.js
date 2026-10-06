@@ -10,7 +10,7 @@
  *
  * Bump VERSION to force a clean cache swap on the next visit.
  */
-const VERSION = 'bbc6b17beb5b0';
+const VERSION = 'bebcf03c0760a';
 const SHELL_CACHE = `chuddle-shell-${VERSION}`;
 const DATA_CACHE = `chuddle-data-${VERSION}`;
 

@@ -5473,10 +5473,13 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
 // sales priced as the base card on some days, averaged in. So each trading
 // day's price is first compared with the card's typical day (the median): a
 // day over 3x or under a third of it is not this card's price and is set
-// aside. The card's later trading days are then compared with its earlier ones
-// by MEDIAN, needing two days a side, and bounded as before.
+// aside. Then the period's start against its end (_periodEnds): the median
+// trading day in its first days against the median in its last, needing one
+// trading day at each end and three overall, and bounded as before.
+// `ends` = { startBefore, endFrom }; without it the earlier and later halves
+// of the card's own trading days stand in.
 const BASKET_OUTLIER_X = 3;
-function _basketMove(dayPrices, points) {
+function _basketMove(dayPrices, points, ends) {
   const days = String(dayPrices || '').split(',').map(x => {
     const [d, p] = x.split(':');
     return { d, p: Number(p) };
@@ -5486,10 +5489,18 @@ function _basketMove(dayPrices, points) {
   const typical = med(days.map(x => x.p));
   const kept = days.filter(x => x.p <= typical * BASKET_OUTLIER_X && x.p >= typical / BASKET_OUTLIER_X);
   const out = { typicalCents: med(kept.map(x => x.p)), changePct: null, outlierDays: days.length - kept.length };
-  const half = kept.length >> 1;
-  if (half < 2 || kept.length - half < 2) return out;
-  const older = med(kept.slice(0, half).map(x => x.p));
-  const recent = med(kept.slice(half).map(x => x.p));
+  let olderDays, recentDays;
+  if (ends && ends.startBefore && ends.endFrom) {
+    olderDays = kept.filter(x => x.d < ends.startBefore);
+    recentDays = kept.filter(x => x.d >= ends.endFrom);
+    if (!olderDays.length || !recentDays.length || kept.length < 3) return out;
+  } else {
+    const half = kept.length >> 1;
+    if (half < 2 || kept.length - half < 2) return out;
+    olderDays = kept.slice(0, half); recentDays = kept.slice(half);
+  }
+  const older = med(olderDays.map(x => x.p));
+  const recent = med(recentDays.map(x => x.p));
   if (!(older > 0) || !(recent > 0)) return out;
   const lo = Math.pow(RSI_BUCKET_MOVE_FLOOR, points), hi = Math.pow(RSI_BUCKET_MOVE_CEIL, points);
   const ratio = Math.min(hi, Math.max(lo, recent / older));
@@ -5499,7 +5510,8 @@ function _basketMove(dayPrices, points) {
 
 // Turn basket rows into something displayable: a label, how much it traded,
 // its typical price, and its own move over the period.
-function _rsiBasketRows(rows, days, bucketDays, points) {
+function _rsiBasketRows(rows, days, bucketDays, points, throughIso) {
+  const ends = throughIso ? _periodEnds(days, Date.parse(String(throughIso).slice(0, 10) + 'T00:00:00Z')) : null;
   const out = [];
   for (const r of (rows || [])) {
     const parts = [r.year, r.set_name, _boardPlayerName(r.player)].filter(Boolean).map(String);
@@ -5512,7 +5524,7 @@ function _rsiBasketRows(rows, days, bucketDays, points) {
     // Later trading days against earlier ones (see the basket query's moves
     // CTE), needing two trading days on each side, and bounded as the
     // index bounds a period: at most halving or doubling per bucket.
-    const mv = _basketMove(r.day_prices, points);
+    const mv = _basketMove(r.day_prices, points, ends);
     const changePct = mv ? mv.changePct : null;
     // Drop the sort-key date the query prefixed to the photo URL.
     let imageUrl = null;
@@ -8872,7 +8884,7 @@ async function _computeMarketBasket(db, days, player) {
 
     return {
       available: true, days, player: player || null, through: throughIso,
-      cards: _rsiBasketRows(base.slice(0, show), days, g.bucketDays, g.points),
+      cards: _rsiBasketRows(base.slice(0, show), days, g.bucketDays, g.points, throughIso),
     };
   } catch (err) {
     console.error('[MarketBasket]', err && err.message);
@@ -10632,7 +10644,19 @@ const SOLD_STATS_TOP = 50;
 //   worth reporting a floor price, so a $1 -> $4 common cannot lead the board.
 //
 // What survives is a smaller list than a naive query returns. That is the point.
-const MOVERS_MIN_HALF = 5;       // sales required in EACH half of the window
+const MOVERS_MIN_HALF = 3;       // sales required at EACH end of the window
+// A move is the price at the START of the period against the price at its END:
+// the sales of ~30 days ago against today's, not the average of the last half
+// against the first (owner, Oct 2026). A card rarely sells on one exact day, so
+// each end is the first or last sixth of the period: 5 days of a 30-day view,
+// 3 of a 7-day one. Shared by every move the site shows (card movers, the
+// market's basket cards, a card page's change).
+const _endDays = (days) => Math.max(3, Math.round(days / 6));
+function _periodEnds(days, throughMs = Date.now()) {
+  const d = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const w = _endDays(days);
+  return { startBefore: d(throughMs - (days - w) * 86400000), endFrom: d(throughMs - w * 86400000), endDays: w };
+}
 const MOVERS_MIN_CENTS = 500;    // $5 — below this, percentages stop meaning much
 const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
 
@@ -10657,10 +10681,11 @@ const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
 // keeps the keys it always had.
 const _ssSport = (sport) => (sport && sport !== 'football' ? `:${sport}` : '');
 // v11: football's totals count its own rows once other sports share the table.
-const SOLD_STATS_KEY = (days, sport) => `soldstats:v11:${days}${_ssSport(sport)}`;
+// v12: a move is the start of the period against its end, not half against half.
+const SOLD_STATS_KEY = (days, sport) => `soldstats:v12:${days}${_ssSport(sport)}`;
 // The version before, served on a cold key like the last good copy: until a
 // build has stored one, it is the last good copy.
-const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v10:${days}${_ssSport(sport)}`;
+const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v11:${days}${_ssSport(sport)}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -10695,6 +10720,8 @@ async function _computeSoldStats(db, days, sport = 'football') {
   // halves cover the same span and a ratio between them is comparing like with
   // like.
   const mid = new Date(Date.now() - (days / 2) * 86400000).toISOString().slice(0, 10);
+  // The two ends a move compares (see _periodEnds).
+  const ends = _periodEnds(days);
   const img = await _nflHasImageColumn(db);
   const imgCol = img ? ', image_url' : '';
   // Boards are aggregates too — biggest sellers, movers, top sets. See
@@ -10835,9 +10862,9 @@ async function _computeSoldStats(db, days, sport = 'football') {
                    GROUP BY player, year, set_name, card_number
                   HAVING n_recent >= ? AND n_older >= ? AND older_cents >= ?
                    ORDER BY n DESC LIMIT ?`)
-        .bind(since, NFLDB_MIN_CONFIDENCE, mid, MOVERS_MIN_HALF, mid, MOVERS_MIN_HALF,
+        .bind(since, NFLDB_MIN_CONFIDENCE, ends.endFrom, MOVERS_MIN_HALF, ends.startBefore, MOVERS_MIN_HALF,
               since, NFLDB_MIN_CONFIDENCE,
-              mid, mid, mid, mid,
+              ends.endFrom, ends.startBefore, ends.endFrom, ends.startBefore,
               MOVERS_MIN_HALF, MOVERS_MIN_HALF, MOVERS_MIN_CENTS, MOVERS_MAX_GROUPS).all(),
     ]);
 
@@ -10997,6 +11024,11 @@ async function _computeSoldStats(db, days, sport = 'football') {
         minSalesPerHalf: MOVERS_MIN_HALF,
         minPrice: MOVERS_MIN_CENTS / 100,
         splitDate: mid,
+        // Start of the period against its end: sales before startBefore
+        // against sales from endFrom on.
+        startBefore: ends.startBefore,
+        endFrom: ends.endFrom,
+        endDays: ends.endDays,
         rawOnly: true,
       },
     };
@@ -12842,6 +12874,10 @@ const CARD_IDENTITY_FINGERPRINT = 'f61ccbea277f';
 // high "raw" price is weaker evidence). The sales are not deleted: they move to
 // a series of their own, named for what they are suspected of, so the reader
 // can still see them and the raw line no longer carries them.
+// A card page's change: latest sales against sales this many days before.
+const CARD_CHANGE_DAYS = 30;
+const CARD_CHANGE_END_DAYS = 5;     // each end: its trading days within this many
+const CARD_CHANGE_MAX_BACK = 90;    // furthest back a stand-in start may be
 const SLAB_PRICE_MIN_RAW = 5;
 const SLAB_PRICE_X = 3;
 const SLAB_PRICE_X_NO_SLAB_EVIDENCE = 5;
@@ -13864,8 +13900,7 @@ async function _cardAnalysisRoute(req, res) {
         .map(([date, ps]) => { ps.sort((a, b) => a - b); return { date, median: Math.round(_median(ps) * 100) / 100, sales: ps.length }; })
         .sort((a, b) => a.date.localeCompare(b.date));
 
-      // Trend: latest point against the median of everything before it, which
-      // is steadier on thin data than comparing two fixed windows.
+      // Trend: see the change below.
       //
       // Suppressed when the bucket's own prices span more than PRICE_SPREAD_MAX.
       // A percentage change only means anything if both sides are samples of
@@ -13875,17 +13910,31 @@ async function _cardAnalysisRoute(req, res) {
       // the second line of defence behind the grouping fix above: that stops
       // the merge happening, and this stops a merge that slips through being
       // published as a 44,446,000% rise, which is how the problem was reported.
-      let changePct = null;
+      // The change: this grade's latest sales against its sales 30 days before
+      // them (owner, Oct 2026), not against its whole history. Each end is
+      // the median of its trading days within CARD_CHANGE_END_DAYS, since a
+      // card rarely sells on one exact day; with no sale near 30 days back, the
+      // last one before then stands in, up to CARD_CHANGE_MAX_BACK days.
+      let changePct = null, changeFrom = null;
       let trendSuppressed = null;
       if (points.length >= 2) {
-        const prior = points.slice(0, -1).map(p => p.median).sort((a, b) => a - b);
-        const base = _median(prior);
-        const last = points[points.length - 1].median;
+        const lastDay = _mkDay(points[points.length - 1].date);
+        const thenDay = lastDay - CARD_CHANGE_DAYS;
+        const near = (from, to) => points.filter(p => { const d = _mkDay(p.date); return d >= from && d <= to; });
+        const end = near(lastDay - CARD_CHANGE_END_DAYS + 1, lastDay);
+        let start = near(thenDay - CARD_CHANGE_END_DAYS, thenDay + CARD_CHANGE_END_DAYS);
+        if (!start.length) {
+          const before = points.filter(p => { const d = _mkDay(p.date); return d < thenDay && d >= lastDay - CARD_CHANGE_MAX_BACK; });
+          if (before.length) start = [before[before.length - 1]];
+        }
+        const base = start.length ? _median(start.map(p => p.median).sort((a, b) => a - b)) : null;
+        const last = _median(end.map(p => p.median).sort((a, b) => a - b));
         const lo = prices[0], hi = prices[prices.length - 1];
         if (lo > 0 && hi / lo > PRICE_SPREAD_MAX) {
           trendSuppressed = 'prices in this group span too wide a range to be one card';
-        } else if (base > 0) {
+        } else if (base > 0 && last > 0) {
           changePct = Math.round(((last - base) / base) * 1000) / 10;
+          changeFrom = start[0].date;
         }
       }
 
@@ -13912,6 +13961,8 @@ async function _cardAnalysisRoute(req, res) {
         high: prices[prices.length - 1] ?? null,
         lastSale: list[0] ? { price: (list[0].price_cents || 0) / 100, date: list[0].sold_date } : null,
         changePct,
+        // The sales the change is measured from (~30 days before the latest).
+        changeFrom,
         trendSuppressed,
         points,
       };
@@ -17026,16 +17077,22 @@ app.get('/api/market-movers', requirePlan('pro'), async (req, res) => {
     if (items.length < 6) return res.json({ results: [], message: 'Not enough recent sold data to detect a trend' });
 
     items.sort((a, b) => b.date - a.date);
-    // Split at the midpoint of the data we actually have rather than a fixed
-    // 7-day cutoff: the sold feed's lookback window depends on the plan (as
+    // Ends measured on the span of the data we actually have rather than a
+    // fixed 7-day cutoff: the sold feed's lookback window depends on the plan (as
     // little as 3 days), and a hardcoded cutoff would leave the "older" bucket
     // permanently empty and report "insufficient data" forever.
     const newest = items[0].date.getTime();
     const oldest = items[items.length - 1].date.getTime();
     const spanDays = Math.max(1, Math.round((newest - oldest) / 86400000));
-    const cutoff = new Date((newest + oldest) / 2);
-    const recent = items.filter(i => i.date >= cutoff).map(i => i.price);
-    const older = items.filter(i => i.date < cutoff).map(i => i.price);
+    // The oldest sales against the newest (owner, Oct 2026: the start of the
+    // period against today, not half against half): each end is the first or
+    // last sixth of the span, or its three sales nearest the end where that
+    // sixth holds fewer than two.
+    const w = Math.max(86400000, (newest - oldest) / 6);
+    let recent = items.filter(i => i.date.getTime() >= newest - w).map(i => i.price);
+    let older = items.filter(i => i.date.getTime() <= oldest + w).map(i => i.price);
+    if (recent.length < 2) recent = items.slice(0, 3).map(i => i.price);
+    if (older.length < 2) older = items.slice(-3).map(i => i.price);
 
     if (recent.length < 2 || older.length < 2) return res.json({ results: [], message: 'Insufficient data to detect trend' });
 

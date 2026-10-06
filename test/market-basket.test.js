@@ -25,6 +25,14 @@ const check = (label, ok, detail) => {
   const up = S._basketMove([day(1, 400), day(3, 420), day(10, 600), day(12, 640)].join(','), 1);
   check('a real move still reads', up && up.changePct > 40 && up.changePct < 60, JSON.stringify(up));
   check('  ...and too few days read none', S._basketMove([day(1, 400), day(3, 900)].join(','), 1).changePct === null);
+  // The period's start against its end (owner, Oct 2026), not half against half:
+  // a card that rose early and has sat flat since reads its whole rise.
+  const ends = { startBefore: '2026-09-06', endFrom: '2026-09-26' };
+  const climb = [day(1, 400), day(3, 400), day(8, 800), day(12, 800), day(20, 800), day(27, 820), day(29, 800)].join(',');
+  const pp = S._basketMove(climb, 1, ends);
+  check('a move is the period\'s first days against its last', pp && pp.changePct > 95 && pp.changePct <= 100, JSON.stringify(pp));
+  check('  ...and a card with no sale at one end reads none',
+    S._basketMove([day(8, 400), day(12, 500), day(27, 600)].join(','), 1, ends).changePct === null);
 
   // ---- base cards only ----
   const row = (set_name, card_number) => ({ year: '2025', set_name, card_number, player: 'Jaxson Dart' });

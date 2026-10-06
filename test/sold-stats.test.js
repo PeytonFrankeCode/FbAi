@@ -38,10 +38,11 @@ const ins = db.prepare(
    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`);
 let n = 0;
 
-// days: -29..0, so the split lands at -15.
+// days: -29..0. A move is the period's start against its end (owner, Oct
+// 2026): the first 5 days (-30..-26) against the last 5 (-5..0).
 const WINDOW = 30;
-const RECENT = -7;   // comfortably in the recent half
-const OLDER = -25;   // comfortably in the older half
+const RECENT = -2;   // in the last days of the period
+const OLDER = -29;   // in its first days
 
 // `sales` per half, at `price` dollars. A title is supplied because the raw-only
 // filter reads it, not just the grade columns.
