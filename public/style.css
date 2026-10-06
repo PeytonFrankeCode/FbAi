@@ -8346,6 +8346,12 @@ to { opacity: 1; transform: translateY(0); }
 .ca-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
 .ca-title { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); }
 .ca-summary { font-size: 0.68rem; color: var(--text-muted); }
+.ca-range { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.4rem; width: 100%; }
+.ca-range button { font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.ca-range button.active { background: var(--accent, #2f7d4f); border-color: var(--accent, #2f7d4f); color: #fff; }
+.ca-range button:disabled { opacity: 0.35; cursor: default; }
+.ca-chg small { font-weight: 500; opacity: 0.8; }
 .ca-chg { font-size: 0.68rem; font-weight: 700; padding: 0.02rem 0.3rem; border-radius: 4px; }
 .ca-chg.up { color: #5ece99; background: rgba(94,206,153,0.12); }
 .ca-chg.down { color: #e0655f; background: rgba(224,101,95,0.12); }
