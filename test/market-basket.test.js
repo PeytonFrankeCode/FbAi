@@ -31,8 +31,10 @@ const check = (label, ok, detail) => {
   const climb = [day(1, 400), day(3, 400), day(8, 800), day(12, 800), day(20, 800), day(27, 820), day(29, 800)].join(',');
   const pp = S._basketMove(climb, 1, ends);
   check('a move is the period\'s first days against its last', pp && pp.changePct > 95 && pp.changePct <= 100, JSON.stringify(pp));
-  check('  ...and a card with no sale at one end reads none',
-    S._basketMove([day(8, 400), day(12, 500), day(27, 600)].join(','), 1, ends).changePct === null);
+  check('  ...and a card with no sale at one end reads its oldest sale against its newest',
+    S._basketMove([day(8, 400), day(12, 500), day(27, 600)].join(','), 1, ends).changePct === 50);
+  check('  ...and one trading day is no move',
+    S._basketMove([day(12, 500)].join(','), 1, ends).changePct === null);
 
   // ---- base cards only ----
   const row = (set_name, card_number) => ({ year: '2025', set_name, card_number, player: 'Jaxson Dart' });
