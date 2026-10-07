@@ -917,6 +917,33 @@ function _mpMerge(parts) {
     playerMovers: fb.playerMovers || [],
   };
 }
+// Live eBay listings priced under what the card has been selling for
+// (server.js _dealsBuild). Each tile goes to the listing through the eBay
+// Partner Network link, like every other listing on the site.
+let _mpDeals = null;
+async function _mpLoadDeals(thumb, head, homeN) {
+  const el = document.getElementById('mp-deals');
+  if (!el) return;
+  try {
+    if (!_mpDeals) _mpDeals = await (await fetch('/api/deals')).json();
+  } catch (_) { _mpDeals = null; }
+  const list = _mpDeals && _mpDeals.available ? (_mpDeals.deals || []) : [];
+  if (!list.length || !document.body.contains(el)) { el.innerHTML = ''; return; }
+  const n = Math.max(homeN, 6);
+  el.innerHTML = '<div class="mp-section mp-deals">' +
+    head('Deals right now', 'live on eBay, under recent sold prices', '', 0) +
+    '<div class="mp-tiles">' + list.slice(0, n).map(d =>
+      '<a class="mp-tile mp-deal" href="' + escHtml(epnUrl(d.itemUrl)) + '" target="_blank" rel="noopener sponsored">' +
+      thumb(d.imageUrl, d.title) +
+      '<span class="mp-tile-price">' + _mpMoney(d.price) + ' <span class="mp-deal-off">' + d.pctUnder + '% under</span></span>' +
+      '<span class="mp-tile-name">' + escHtml(String(d.name || d.title).slice(0, 70)) + '</span>' +
+      '<span class="mp-tile-meta">sells ~' + _mpMoney(d.market) + ' &middot; ' +
+        (d.shipping == null ? '+ shipping' : d.shipping > 0 ? '+' + _mpMoney(d.shipping) + ' ship' : 'free shipping') + '</span>' +
+      '</a>').join('') + '</div>' +
+    '<p class="mp-deals-note">Buy It Now listings priced at least 15% under what the same raw card sold for over the last 30 days. ' +
+    'Prices change fast; check the photos and condition before you buy. Links go to eBay; we may earn a commission.</p></div>';
+}
+
 async function _mpFetch(period) {
   const sports = _mpSports();
   const key = period + ':' + sports.join(',');
@@ -1021,6 +1048,10 @@ async function loadMarketPulse(days, attempt = 0) {
   const rows = (title, sub, list, render) =>
     rowsFor(title, sub, BOARD_OF[title], list, render);
 
+  // Deals right now: filled in from /api/deals, which does not depend on the
+  // period and must never hold the rest of the panel up.
+  parts.push('<div id="mp-deals"></div>');
+
   parts.push(tiles('Most expensive', label, data.priciest, (r) =>
     '<a class="mp-tile" href="' + escHtml(epnUrl(r.itemUrl)) + '" target="_blank" rel="noopener">' +
     thumb(r.imageUrl, r.title) +
@@ -1063,6 +1094,7 @@ async function loadMarketPulse(days, attempt = 0) {
     '</button>'));
 
   body.innerHTML = parts.join('');
+  _mpLoadDeals(thumb, head, HOME_N);
 
   // Tiles and rows run that search — the panel is a way in, not a dead end.
   body.querySelectorAll('[data-query]').forEach(btn => {

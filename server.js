@@ -1288,7 +1288,7 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
   // KV cache: shared across isolates so a launch-day spike on a popular card
   // doesn't burn one eBay Browse call per request. Keyed by the exact params
   // that determine eBay's response.
-  const cacheKey = `browse:v1:${limit}:${offset}:${String(keywords).toLowerCase().trim()}`;
+  const cacheKey = `browse:v2:${limit}:${offset}:${String(keywords).toLowerCase().trim()}`;
   const cached = await cacheGet(cacheKey);
   if (cached && Array.isArray(cached.results)) {
     console.log(`[Browse API] KV cache hit for "${keywords}" (${cached.results.length} items)`);
@@ -1329,6 +1329,13 @@ async function fetchViaBrowseAPI(keywords, limit, source = 'unknown', offset = 0
     itemUrl: item.itemWebUrl || '',
     condition: item.condition || 'Unknown',
     buyingOptions: Array.isArray(item.buyingOptions) ? item.buyingOptions : [],
+    // The cheapest shipping eBay quotes, so a deal is judged on what it costs
+    // delivered. null when the listing does not say.
+    shipping: (() => {
+      const v = (item.shippingOptions || []).map(o => Number(o && o.shippingCost && o.shippingCost.value))
+        .filter(Number.isFinite);
+      return v.length ? Math.min(...v) : null;
+    })(),
   }));
 
   const out = { results, total: res.data?.total || results.length };
@@ -10709,10 +10716,11 @@ const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
 const _ssSport = (sport) => (sport && sport !== 'football' ? `:${sport}` : '');
 // v11: football's totals count its own rows once other sports share the table.
 // v12: a move is the start of the period against its end, not half against half.
-const SOLD_STATS_KEY = (days, sport) => `soldstats:v12:${days}${_ssSport(sport)}`;
+// v13: carries dealCandidates.
+const SOLD_STATS_KEY = (days, sport) => `soldstats:v13:${days}${_ssSport(sport)}`;
 // The version before, served on a cold key like the last good copy: until a
 // build has stored one, it is the last good copy.
-const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v11:${days}${_ssSport(sport)}`;
+const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v12:${days}${_ssSport(sport)}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -10932,6 +10940,8 @@ async function _computeSoldStats(db, days, sport = 'football') {
       itemUrl: linkOf(r),
       query: [r.year, r.set_name, _boardPlayerName(r.player), _moverPar(r.parallel)]
         .filter(Boolean).join(' ').trim() || r.title,
+      // What the deals finder needs to recognise this card in a listing.
+      year: r.year, set: r.set_name, number: r.card_number, playerFull: r.player,
     })).filter(m => Number.isFinite(m.changePct));
 
     const byChange = (a, b) => b.changePct - a.changePct;
@@ -11030,6 +11040,12 @@ async function _computeSoldStats(db, days, sport = 'football') {
       })),
 
       cardMovers: moverRows.slice().sort(byChange).slice(0, SOLD_STATS_TOP),
+      // The busiest raw base cards with a price at both ends of the period:
+      // what the deals finder looks for under market (_dealsBuild).
+      dealCandidates: moverRows.filter(m => m.recent >= DEAL_MIN_PRICE && m.older >= DEAL_MIN_PRICE && m.number)
+        .sort((a, b) => b.sales - a.sales).slice(0, DEAL_CANDIDATES)
+        .map(m => ({ name: m.name, query: m.query, year: m.year, set: m.set, number: m.number,
+                     player: m.playerFull, recent: m.recent, older: m.older, sales: m.sales, imageUrl: m.imageUrl })),
       playerMovers: playerMovers.slice(0, SOLD_STATS_TOP),
       // What Players on the move measured: the market index's players.
       playerMovesBasis: pm ? {
@@ -11145,6 +11161,114 @@ function _soldStatsBuild(db, days, sport = 'football') {
 // runs every tick, so a deploy that changes the key is rebuilt within the
 // quarter hour instead of at 05:00 the next day. A few KV reads when nothing
 // is missing.
+// ---- Deals: live listings under what the card has been selling for ----
+//
+// Owner, Oct 2026: a front-page section that sends buyers to eBay. Every deal
+// is a Buy It Now listing of a busy raw base card (the movers' cards, which
+// have a price at both ends of the last 30 days) asking clearly less than
+// that card has sold for: DEAL_MAX_RATIO of the LOWER of its recent and
+// earlier average, delivered (shipping counted when eBay states it). The
+// listing must read as the same card: the year, the number and the player's
+// surname in its title, raw, the base card (no parallel, no print run, no
+// auto or relic), and not a lot, pack, reprint or custom.
+//
+// Listed "below market" is a fact about prices, not advice: the page says to
+// check the photos and condition.
+const DEAL_CANDIDATES = 40;
+const DEAL_MIN_PRICE = 10;          // dollars: under this a "deal" is pocket change
+const DEAL_MAX_RATIO = 0.85;        // at least 15% under market, delivered
+const DEAL_SEARCHES = 25;           // eBay Browse calls per build
+const DEALS_KEY = 'deals:v1';
+const DEALS_FRESH_MS = 3 * 3600 * 1000;
+const DEALS_KEEP_TTL = 3 * 86400;
+let _dealsInFlight = null;
+
+function _dealMatches(listing, cand, pi) {
+  const t = String(listing && listing.title || '');
+  if (!t || !cand) return false;
+  const opts = Array.isArray(listing.buyingOptions) ? listing.buyingOptions : [];
+  if (opts.length && !opts.includes('FIXED_PRICE')) return false;
+  const words = t.toLowerCase();
+  const surname = String(cand.player || '').trim().split(/\s+/).filter(w => !/^(jr|sr|ii|iii|iv|v)\.?$/i.test(w)).pop() || '';
+  if (!surname || !words.includes(surname.toLowerCase())) return false;
+  if (cand.year && !new RegExp(`(?<!\\d)${cand.year}(?!\\d)`).test(t)) return false;
+  const num = String(cand.number || '').replace(/^#/, '').trim();
+  if (!num || !new RegExp(`(?:#|no\\.?\\s*|(?<![\\w/]))${num.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w/])`, 'i').test(t)) return false;
+  if (_gradeBucketCore({ title: t }) !== 'Raw') return false;
+  if (_isPackListing(t, cand.player) || _isOversize(t)) return false;
+  if (_cardKind(t) !== '' || _printRun(t) != null) return false;
+  if (/(?<![a-z])(?:lot|lots|reprint|custom|rp|break|you\s*pick|pick\s*your|choose)(?![a-z])/i.test(t)) return false;
+  // The reader must positively call it the base card: a title it cannot
+  // place ("Holo Press Proof") is more likely a parallel than a bargain.
+  if (pi) {
+    const hit = pi.resolveParallel(t, { player: cand.player });
+    if (!hit || !(hit.how === 'base' || /^rated rookie$/i.test(hit.parallel || ''))) return false;
+  }
+  return true;
+}
+
+// The deal a listing is, or null: its delivered price against the card's market.
+function _dealOf(listing, cand) {
+  const price = Number(listing.price);
+  if (!(price > 0)) return null;
+  const ship = Number.isFinite(listing.shipping) ? listing.shipping : 0;
+  const market = Math.min(Number(cand.recent) || 0, Number(cand.older) || 0);
+  if (!(market >= DEAL_MIN_PRICE)) return null;
+  const total = price + ship;
+  if (total > market * DEAL_MAX_RATIO) return null;
+  return {
+    name: cand.name, title: String(listing.title).slice(0, 110), price, shipping: listing.shipping,
+    total: Math.round(total * 100) / 100, market, pctUnder: Math.round((1 - total / market) * 100),
+    sales: cand.sales, imageUrl: listing.imageUrl || cand.imageUrl || null, itemUrl: listing.itemUrl,
+    query: cand.query,
+  };
+}
+
+async function _dealsBuild() {
+  // Without eBay keys the listings are mock data, and a mock deal is a lie.
+  if (USE_MOCK_FORSALE) return { available: false, reason: 'no eBay listings source' };
+  const stats = await cacheGet(SOLD_STATS_KEY(30, 'football')) || await cacheGet(SOLD_STATS_LAST_KEY(30, 'football'));
+  const cands = ((stats && stats.dealCandidates) || []).slice(0, DEAL_SEARCHES);
+  if (!cands.length) return { available: false, reason: 'no candidates yet' };
+  const pi = await parallelIndex().catch(() => null);
+  const deals = [];
+  let searched = 0, i = 0;
+  await Promise.all(Array.from({ length: 5 }, async () => {
+    while (i < cands.length) {
+      const c = cands[i++];
+      try {
+        const q = [c.year, c.set, c.player, c.number].filter(Boolean).join(' ');
+        const r = await fetchEbayItems(q, 40, 'forsale', 'deals');
+        searched++;
+        const best = (r.results || []).filter(l => _dealMatches(l, c, pi)).map(l => _dealOf(l, c)).filter(Boolean)
+          .sort((a, b) => b.pctUnder - a.pctUnder)[0];
+        if (best) deals.push(best);
+      } catch (err) { console.error('[deals] search failed:', c.name, err && err.message); }
+    }
+  }));
+  deals.sort((a, b) => b.pctUnder - a.pctUnder);
+  const out = { available: true, generatedAt: new Date().toISOString(), searched, deals: deals.slice(0, 24),
+                basis: { maxRatio: DEAL_MAX_RATIO, minPrice: DEAL_MIN_PRICE, window: 30 } };
+  await cachePut(DEALS_KEY, out, DEALS_KEEP_TTL);
+  return out;
+}
+
+app.get('/api/deals', async (req, res) => {
+  const cached = await cacheGet(DEALS_KEY);
+  const fresh = cached && cached.generatedAt && Date.now() - Date.parse(cached.generatedAt) < DEALS_FRESH_MS;
+  if (fresh) return res.json(_fromCache(cached));
+  if (!_dealsInFlight) {
+    _dealsInFlight = _dealsBuild().catch(err => {
+      console.error('[deals] build failed:', err && err.message);
+      return { available: false, reason: 'build failed' };
+    }).finally(() => { _dealsInFlight = null; });
+    if (cached && typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(_dealsInFlight);
+  }
+  // A stale list is still a list: shown at once while the new one builds.
+  if (cached && cached.available) return res.json({ ..._fromCache(cached), refreshing: true });
+  res.json(await _dealsInFlight);
+});
+
 async function warmSoldStats(opts = {}) {
   return _asD1Source('sold-stats-warm', () => _warmSoldStats(opts));
 }
@@ -18537,7 +18661,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

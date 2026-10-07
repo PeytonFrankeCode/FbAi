@@ -50,7 +50,7 @@ check('  ...with the reader’s own unsubscribe link, in HTML and text',
 check('  ...and listing titles cannot inject markup', !m.html.includes('<script>') && m.html.includes('&lt;script&gt;'));
 
 // ---- the flow, against the real app ---------------------------------------
-const boards = { 'soldstats:v12:7': week7, 'soldstats:v12:30': month30 };   // SOLD_STATS_KEY in server.js
+const boards = { 'soldstats:v13:7': week7, 'soldstats:v13:30': month30 };   // SOLD_STATS_KEY in server.js
 const dbMod = require(path.join(ROOT, 'db.js'));
 dbMod.cacheGet = async (k) => boards[k] || null;
 process.env.CF_WORKER = '1';
