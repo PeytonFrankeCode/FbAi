@@ -1739,13 +1739,20 @@ function initSiteBanner() {
 // Worker at /api/photo). One listener for every image on every view: error
 // events do not bubble, but they do reach a capturing listener. Tried once
 // per image, so a photo with no copy stays as it was rather than looping.
+//
+// RETIRED (owner, Oct 2026): we no longer keep copies of sellers' photos. An
+// eBay image that no longer loads is swapped for a plain card placeholder
+// instead, so the tile keeps its shape rather than showing a broken image.
+const _PHOTO_GONE = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 84"><rect width="60" height="84" rx="6" fill="#e5e7eb"/>'
+  + '<rect x="12" y="14" width="36" height="44" rx="3" fill="#cbd5e1"/></svg>');
 document.addEventListener('error', (e) => {
   const img = e.target;
   if (!img || img.tagName !== 'IMG' || img.dataset.archiveTried) return;
   const src = img.currentSrc || img.src || '';
   if (!/^https:\/\/([a-z0-9-]+\.)*ebayimg\.com\//i.test(src)) return;
   img.dataset.archiveTried = '1';
-  img.src = '/api/photo?u=' + encodeURIComponent(src);
+  img.src = _PHOTO_GONE;
 }, true);
 
 // ---- Sports ----

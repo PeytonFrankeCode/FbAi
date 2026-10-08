@@ -18346,8 +18346,34 @@ async function _buildPriceBlocks() {
   return { ok: true, pages: kept, bytes, from: payload.from, to: payload.to };
 }
 
+// RETIRED (owner, Oct 2026). Listing photos belong to the sellers who took
+// them; keeping our own copies was the riskiest part of using eBay sale data,
+// so the site no longer stores any. The cron that used to copy them now
+// deletes what was copied, a batch per tick, and the page shows eBay's own
+// image (or a placeholder once eBay has removed it). _archiveListingPhotos is
+// kept below, unused, so the decision can be reversed by a person, not by
+// accident.
+const PHOTO_ARCHIVE_RETIRED = true;
+const PHOTO_PURGE_BATCH = 1000;          // R2 deletes up to 1,000 keys a call
 async function archiveListingPhotos(opts) {
+  if (PHOTO_ARCHIVE_RETIRED) return _purgeListingPhotos(opts || {});
   return _asD1Source('photo-archive', () => _archiveListingPhotos(opts || {}));
+}
+
+// Delete stored listing photos: everything under p/ (photo-archive-core
+// keyForUrl). Users' own card photos live in KV, not here, and are untouched.
+async function _purgeListingPhotos({ batches = 3, bucket = getPhotos() } = {}) {
+  if (!bucket) return { ok: false, reason: 'no R2 binding' };
+  let purged = 0;
+  for (let i = 0; i < batches; i++) {
+    const page = await bucket.list({ prefix: 'p/', limit: PHOTO_PURGE_BATCH });
+    const keys = ((page && page.objects) || []).map(o => o.key).filter(k => k.startsWith('p/'));
+    if (!keys.length) { if (purged) console.log(`[photos] purged ${purged}; none left`); return { ok: true, purged, done: true }; }
+    await bucket.delete(keys);
+    purged += keys.length;
+  }
+  console.log(`[photos] purged ${purged} stored listing photos this tick`);
+  return { ok: true, purged, done: false };
 }
 
 async function _archiveListingPhotos({ limit = PHOTO_ARCHIVE_BATCH } = {}) {
@@ -18661,7 +18687,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
