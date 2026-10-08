@@ -4718,10 +4718,36 @@ document.addEventListener('keydown', (e) => {
 
 // ---- eBay Partner Network Affiliate Tracking ----
 const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&toolid=10001&mkevt=1';
+// The site's own accounts never send affiliate clicks (EPN, Oct 2026: clicks
+// and purchases by the publisher through its own links are not allowed). Once
+// one of these signs in on a device, the device is marked and stays excluded
+// after signing out, so a card bought from the owner's phone never earns the
+// site a commission. The landing pages honour the same mark.
+const NO_AFFILIATE_ACCOUNTS = ['cardhuddlecollectors'];
+const NO_AFFILIATE_KEY = 'chNoAffiliate';
+function _noAffiliate() {
+  try {
+    const u = String(localStorage.getItem('cardHuddleCurrentUser') || '').toLowerCase();
+    if (NO_AFFILIATE_ACCOUNTS.includes(u)) { localStorage.setItem(NO_AFFILIATE_KEY, '1'); return true; }
+    return localStorage.getItem(NO_AFFILIATE_KEY) === '1';
+  } catch (_) { return false; }
+}
+// An eBay address with the tracking taken back out.
+function _stripEpn(url) {
+  return String(url).replace(/([?&])(?:mkcid|mkrid|siteid|campid|toolid|mkevt|customid)=[^&#]*/g, '$1')
+    .replace(/[?&]+(?=#|$)/, '').replace(/\?&+/, '?').replace(/&{2,}/g, '&');
+}
 function epnUrl(url) {
   if (!url || typeof url !== 'string' || !url.includes('ebay.com')) return url || '#';
+  if (_noAffiliate()) return _stripEpn(url);
   return url + (url.includes('?') ? '&' : '?') + EPN_PARAMS;
 }
+// Any tracked link built elsewhere (an email, a cached block) is cleaned at
+// the moment it is clicked.
+document.addEventListener('click', (e) => {
+  const a = e.target && e.target.closest && e.target.closest('a[href*="campid="]');
+  if (a && _noAffiliate()) a.href = _stripEpn(a.href);
+}, true);
 
 // ---- Helpers ----
 // A summary price, for reading at a glance: whole dollars from $10 up

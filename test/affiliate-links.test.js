@@ -137,5 +137,26 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     !noShop.includes('ebay.com'), 'the block is data first, link second');
 }
 
+// ---- the site's own account never sends affiliate clicks (EPN, Oct 2026) ----
+{
+  const vm = require('vm');
+  const grab = (name) => { const i = app.indexOf(`function ${name}(`); return app.slice(i, app.indexOf('\n}\n', i) + 3); };
+  const store = new Map();
+  const ctx = { localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) } };
+  vm.createContext(ctx);
+  const decl = app.match(/const EPN_PARAMS = [^\n]+/)[0] + '\n' + app.match(/const NO_AFFILIATE_ACCOUNTS = [^\n]+/)[0] + '\n'
+    + app.match(/const NO_AFFILIATE_KEY = [^\n]+/)[0];
+  vm.runInContext(decl + '\n' + ['_noAffiliate', '_stripEpn', 'epnUrl'].map(grab).join('\n') + '\nthis.epnUrl = epnUrl;', ctx);
+  const item = 'https://www.ebay.com/itm/1234567890';
+  check('a visitor gets the tracked link', /campid=5339145753/.test(ctx.epnUrl(item)));
+  store.set('cardHuddleCurrentUser', 'cardhuddlecollectors');
+  check('  ...the site\'s own account gets the plain eBay link', ctx.epnUrl(item) === item, ctx.epnUrl(item));
+  store.delete('cardHuddleCurrentUser');
+  check('  ...and so does its device after signing out', ctx.epnUrl(item) === item && store.get('chNoAffiliate') === '1');
+  check('  ...and a link tracked elsewhere is cleaned when clicked, on the app and the landing pages',
+    /closest\('a\[href\*="campid="\]'\)/.test(app)
+    && /localStorage\.getItem\('chNoAffiliate'\)!=='1'/.test(fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8')));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);

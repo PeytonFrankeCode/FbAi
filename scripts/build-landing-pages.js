@@ -482,6 +482,8 @@ function footer() {
     <p class="lp-muted"><a href="${S.base}/sets/">Checklists</a> &bull; <a href="${S.base}/players/">Players</a> &bull; <a href="${S.base}/teams/">Teams</a> &bull; <a href="/news">Guides</a> &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a> &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a> &bull; Data sourced from eBay &bull; Not affiliated with, endorsed by or sponsored by eBay Inc.</p>
     <p class="lp-muted">Prices are historical sale records, not appraisals or financial advice. As an eBay Partner Network affiliate we may earn a commission on qualifying purchases made through links on this site, at no extra cost to you.</p>
   </footer>
+  <script>/* The site's own devices never send affiliate clicks (see epnUrl in app.js). */
+  document.addEventListener('click',function(e){try{if(localStorage.getItem('chNoAffiliate')!=='1')return;var a=e.target.closest&&e.target.closest('a[href*="campid="]');if(a)a.href=a.href.replace(/([?&])(?:mkcid|mkrid|siteid|campid|toolid|mkevt|customid)=[^&#]*/g,'$1').replace(/[?&]+(?=#|$)/,'').replace(/\?&+/,'?').replace(/&{2,}/g,'&');}catch(_){}},true);</script>
 </body>
 </html>`;
 }
