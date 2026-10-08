@@ -170,11 +170,32 @@ const check = (label, ok, detail) => {
     // Saved copies are only worth having if the page can show them.
     const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
     const app = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
-    check('the Worker serves a saved copy at /api/photo, eBay addresses only, cached a year',
-      /url\.pathname === '\/api\/photo'/.test(worker) && /if \(!isEbayImageUrl\(src\)\) return new Response\('Not an eBay image', \{ status: 400 \}\)/.test(worker)
-        && /max-age=31536000, immutable/.test(worker) && /photoKeyForUrl\(src, crypto\.subtle\)/.test(worker));
-    check('  ...and the page swaps it in, once, when an eBay photo fails to load',
-      /document\.addEventListener\('error', \(e\) => \{[\s\S]{0,400}img\.dataset\.archiveTried = '1';\s*img\.src = '\/api\/photo\?u=' \+ encodeURIComponent\(src\);[\s\S]{0,10}\}, true\);/.test(app));
+    // RETIRED (owner, Oct 2026): sellers' photos are no longer copied or
+    // served from a copy. /api/photo answers 410, and a failed eBay photo
+    // becomes a placeholder.
+    check('the Worker no longer serves saved copies: /api/photo is gone (410)',
+      /url\.pathname === '\/api\/photo'/.test(worker) && /const PHOTO_ARCHIVE_RETIRED = true;/.test(worker)
+        && /if \(PHOTO_ARCHIVE_RETIRED\) \{\s*return new Response\('Photo archive retired', \{ status: 410/.test(worker));
+    check('  ...and the page shows a placeholder, once, when an eBay photo fails to load',
+      /img\.dataset\.archiveTried = '1';\s*img\.src = _PHOTO_GONE;/.test(app) && !/img\.src = '\/api\/photo/.test(app));
+
+    {
+      process.env.CF_WORKER = '1';
+      const S = require(path.join(__dirname, '..', 'server.js'));
+      const store = new Map();
+      for (let i = 0; i < 2500; i++) store.set(`p/aa/bb/${i}`, 1);
+      store.set('other/keep-me', 1);
+      const bucket = {
+        async list({ prefix, limit }) { return { objects: [...store.keys()].filter(k => k.startsWith(prefix)).slice(0, limit).map(key => ({ key })) }; },
+        async delete(keys) { for (const k of [].concat(keys)) store.delete(k); },
+      };
+      const first = await S._purgeListingPhotos({ batches: 2, bucket });
+      const second = await S._purgeListingPhotos({ batches: 2, bucket });
+      check('the cron deletes the stored listing photos a batch at a time',
+        S.PHOTO_ARCHIVE_RETIRED === true && first.purged === 2000 && !first.done && second.purged === 500 && second.done,
+        JSON.stringify([first, second]));
+      check('  ...and only listing photos: nothing outside p/ is touched', store.has('other/keep-me') && store.size === 1);
+    }
 
     // And it must read the cursor the job writes, not a key of its own.
     check('  ...and reads the very key the job stores',

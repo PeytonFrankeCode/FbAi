@@ -682,7 +682,13 @@ export function isEbayImageUrl(u) {
   } catch (_) { return false; }
 }
 
+const PHOTO_ARCHIVE_RETIRED = true;
 async function servePhoto(request, env, ctx, url) {
+  // Retired (owner, Oct 2026): the site no longer keeps copies of sellers'
+  // listing photos (server.js archiveListingPhotos). Gone, and cached as gone.
+  if (PHOTO_ARCHIVE_RETIRED) {
+    return new Response('Photo archive retired', { status: 410, headers: { 'Cache-Control': 'public, max-age=86400' } });
+  }
   const src = url.searchParams.get('u') || '';
   if (!isEbayImageUrl(src)) return new Response('Not an eBay image', { status: 400 });
   if (!env.PHOTOS) return new Response('No photo archive', { status: 404 });
