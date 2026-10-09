@@ -2444,6 +2444,17 @@ main {
   color: var(--text-secondary);
 }
 .card-link:hover .aff-tag { color: var(--accent-on); }
+/* eBay Partner Network: every affiliate link says plainly where it goes. */
+.ebay-tag {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.gc-comp-title .ebay-tag,
+.seller-listing-title-text .ebay-tag { display: inline; margin-left: 0.35rem; text-decoration: none; }
 /* ---- Back Button ---- */
 .back-btn {
   display: inline-flex;
