@@ -197,7 +197,7 @@ function render(summary, opts) {
   const shopUrl = o.shopQuery ? ebaySearchUrl(o.shopQuery) : '';
   if (shopUrl) {
     html += `  <p class="lp-price-shop"><a href="${esc(shopUrl)}" target="_blank" rel="sponsored nofollow noopener">`;
-    html += `See current ${esc(noun)} listings on eBay</a></p>\n`;
+    html += `Shop current ${esc(noun)} listings on eBay &#8599;</a></p>\n`;
   }
 
   // The honesty line. These are mixed conditions — a raw base card and a PSA

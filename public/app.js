@@ -939,7 +939,7 @@ async function _mpLoadDeals(thumb, head, homeN) {
       '<span class="mp-tile-name">' + escHtml(String(d.name || d.title).slice(0, 70)) + '</span>' +
       '<span class="mp-tile-meta">sells ~' + _mpMoney(d.market) + ' &middot; ' +
         (d.shipping == null ? '+ shipping' : d.shipping > 0 ? '+' + _mpMoney(d.shipping) + ' ship' : 'free shipping') + '</span>' +
-      '</a>').join('') + '</div>' +
+      EBAY_TAG + '</a>').join('') + '</div>' +
     '<p class="mp-deals-note">Buy It Now listings priced at least 15% under what the same raw card sold for over the last 30 days. ' +
     'Prices change fast; check the photos and condition before you buy. Links go to eBay; we may earn a commission.</p></div>';
 }
@@ -1058,7 +1058,7 @@ async function loadMarketPulse(days, attempt = 0) {
     '<span class="mp-tile-price">' + _mpMoney(r.price) + '</span>' +
     '<span class="mp-tile-name">' + escHtml(String(r.title).slice(0, 70)) + '</span>' +
     (r.grade ? '<span class="mp-tile-meta">' + escHtml(r.grade) + '</span>' : '') +
-    '</a>'));
+    EBAY_TAG + '</a>'));
 
   parts.push(tiles('Most sold', label, data.mostSold, (r) =>
     '<button class="mp-tile" data-query="' + escHtml(r.query) + '">' +
@@ -1175,7 +1175,7 @@ function _statsRow(board, r, i) {
 
   if (board === 'priciest') {
     return '<a class="' + cls + '" href="' + escHtml(epnUrl(r.itemUrl)) + '" target="_blank" rel="noopener">' + rank + photo +
-      '<span class="st-name">' + escHtml(String(r.title).slice(0, 90)) + '</span>' +
+      '<span class="st-name">' + escHtml(String(r.title).slice(0, 90)) + EBAY_TAG + '</span>' +
       '<span class="st-meta">' + escHtml(r.grade || 'raw') + '</span>' +
       '<span class="st-n">' + _mpMoney(r.price) + '</span></a>';
   }
@@ -4737,6 +4737,10 @@ function _stripEpn(url) {
   return String(url).replace(/([?&])(?:mkcid|mkrid|siteid|campid|toolid|mkevt|customid)=[^&#]*/g, '$1')
     .replace(/[?&]+(?=#|$)/, '').replace(/\?&+/, '?').replace(/&{2,}/g, '&');
 }
+// eBay Partner Network requires every affiliate link to say where it goes.
+// Every epnUrl() anchor carries this (or its own "View on eBay" wording).
+const EBAY_TAG = '<span class="ebay-tag">View on eBay &#8599;</span>';
+
 function epnUrl(url) {
   if (!url || typeof url !== 'string' || !url.includes('ebay.com')) return url || '#';
   if (_noAffiliate()) return _stripEpn(url);
@@ -7623,10 +7627,11 @@ async function runFlipFinder() {
       <div class="pp-summary">Sold median: <strong>$${data.soldMedian}</strong> &nbsp;·&nbsp; ${data.soldSampleSize} recent sales &nbsp;·&nbsp; ${data.results.length} flip${data.results.length !== 1 ? 's' : ''} found</div>
       <div class="ff-grid">
         ${data.results.map(r => `
-          <a class="ff-card" href="${escHtml(epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(r.title)}`))}  " target="_blank" rel="noopener noreferrer">
+          <a class="ff-card" href="${escHtml(epnUrl(`https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(r.title)}`))}" target="_blank" rel="noopener noreferrer">
             ${r.imageUrl ? `<img class="ff-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />` : '<div class="ff-img ff-noimg">No Image</div>'}
             <div class="ff-body">
               <p class="ff-title">${escHtml(r.title)}</p>
+              ${EBAY_TAG}
               <div class="ff-prices">
                 <span class="ff-listing-price">Listed: <strong>$${r.listingPrice.toFixed(2)}</strong></span>
                 <span class="ff-sold-median">Sold median: $${r.soldMedian.toFixed(2)}</span>
@@ -8059,7 +8064,7 @@ function renderBulkCompsPanel(i) {
           ${c.image ? `<img class="bulk-comp-img" src="${escHtml(c.image)}" onerror="this.style.visibility='hidden'" loading="lazy" alt="" />` : '<span class="bulk-comp-img"></span>'}
           <span class="bulk-comp-title">${escHtml(c.title)}</span>
           <span class="bulk-comp-price ${high ? 'bulk-comp-high' : ''}">$${c.price.toFixed(2)}${high ? ' <span class="bulk-high-tag">high</span>' : ''}</span>
-          ${c.url ? `<a class="bulk-comp-link" href="${escHtml(epnUrl(c.url))}" target="_blank" rel="noopener">view</a>` : '<span class="bulk-comp-link"></span>'}
+          ${c.url ? `<a class="bulk-comp-link" href="${escHtml(epnUrl(c.url))}" target="_blank" rel="noopener">View on eBay &#8599;</a>` : '<span class="bulk-comp-link"></span>'}
         </label>`;
       }).join('')}
     </div>`;
@@ -8268,7 +8273,7 @@ function openGradingComps(key) {
         ? `<img class="gc-comp-img" src="${escHtml(c.imageUrl)}" alt="" loading="lazy" />`
         : '<div class="gc-comp-img gc-comp-noimg">&#127944;</div>';
       const titleHtml = c.itemUrl
-        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener">${escHtml(c.title || '')}</a>`
+        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(c.itemUrl))}" target="_blank" rel="noopener">${escHtml(c.title || '')}${EBAY_TAG}</a>`
         : `<span class="gc-comp-title">${escHtml(c.title || '')}</span>`;
       return `<div class="gc-comp">
         ${img}
@@ -9061,6 +9066,7 @@ function buildClListingCard(item, mode, opts = {}) {
         ${badge}
         ${buyOptBadge}
         ${dateStr ? `<span class="cl-item-date">${dateStr}</span>` : ''}
+        ${EBAY_TAG}
       </div>
     </a>
   `;
@@ -10185,7 +10191,7 @@ function renderCardCompsModal() {
       if (x.printRun) tags.push(`/${x.printRun}`);
       if (x.setName && x.setName !== est.targetSet) tags.push(escHtml(x.setName));
       const titleHtml = x.itemUrl
-        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(x.itemUrl))}" target="_blank" rel="noopener">${escHtml(x.title)}</a>`
+        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(x.itemUrl))}" target="_blank" rel="noopener">${escHtml(x.title)}${EBAY_TAG}</a>`
         : `<span class="gc-comp-title">${escHtml(x.title)}</span>`;
       return `<div class="gc-comp">
         ${img}
@@ -10210,7 +10216,7 @@ function renderCardCompsModal() {
         : '<div class="gc-comp-img gc-comp-noimg">&#127944;</div>';
       const when = _gradingCompDate(x.soldDate);
       const titleHtml = x.url
-        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(x.url))}" target="_blank" rel="noopener">${escHtml(x.title)}</a>`
+        ? `<a class="gc-comp-title" href="${escHtml(epnUrl(x.url))}" target="_blank" rel="noopener">${escHtml(x.title)}${EBAY_TAG}</a>`
         : `<span class="gc-comp-title">${escHtml(x.title)}</span>`;
       return `<div class="gc-comp">
         ${img}
@@ -10951,6 +10957,7 @@ function listingCardHtml(item) {
       <div class="cl-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
       ${buyingOptionBadgeHtml(item)}
       <div class="cl-listing-title">${escHtml(item.title)}</div>
+      ${EBAY_TAG}
     </a>`;
 }
 
@@ -11412,6 +11419,7 @@ function showRainbowBreakdown(btn) {
       <div class="rainbow-breakdown-meta">
         <div class="rainbow-breakdown-name">${escHtml(v.name)}${pr}</div>
         <div class="rainbow-breakdown-title">${escHtml(item.title)}</div>
+        ${EBAY_TAG}
       </div>
       <div class="rainbow-breakdown-price">$${parseFloat(item.price).toFixed(2)}</div>
     </a>`;
@@ -12425,7 +12433,7 @@ function renderMyListings() {
     const date = new Date(l.createdAt).toLocaleDateString();
     return `<div class="seller-listing-card">
       <div class="seller-listing-info">
-        <span class="seller-listing-title-text">${l.listingUrl ? `<a href="${escHtml(epnUrl(l.listingUrl))}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escHtml(l.title)}</a>` : escHtml(l.title)}</span>
+        <span class="seller-listing-title-text">${l.listingUrl ? `<a href="${escHtml(epnUrl(l.listingUrl))}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escHtml(l.title)}${EBAY_TAG}</a>` : escHtml(l.title)}</span>
         <div class="seller-listing-meta">
           <span class="seller-listing-badge ${l.format}">${l.format === 'auction' ? 'Auction' : 'BIN'}</span>
           <span>${conditionLabels[l.condition] || l.condition}</span>
@@ -13658,6 +13666,7 @@ async function searchMarketplace(loadMore) {
         ${item.imageUrl ? `<img class="marketplace-card-img" src="${escHtml(item.imageUrl)}" alt="" loading="lazy" />` : '<div class="marketplace-card-img marketplace-no-img">No Image</div>'}
         <div class="marketplace-card-body">
           <p class="marketplace-card-title">${escHtml(item.title)}</p>
+          ${EBAY_TAG}
           <div class="marketplace-card-meta">
             <span class="marketplace-card-price">$${parseFloat(item.price).toFixed(2)}</span>
             <span class="marketplace-card-shipping">${shipping}</span>
@@ -17187,7 +17196,7 @@ function _caRow(r, right) {
     : `<div class="ca-row-img ca-row-noimg"><span>&#127183;</span></div>`;
   return `<a class="ca-row" href="${escHtml(epnUrl(r.itemUrl))}" target="_blank" rel="noopener">
     ${thumb}
-    <span class="ca-row-title">${escHtml(String(r.title || '').slice(0, 95))}</span>
+    <span class="ca-row-title">${escHtml(String(r.title || '').slice(0, 95))}${EBAY_TAG}</span>
     <span class="ca-row-right">${right}</span>
   </a>`;
 }
@@ -17410,7 +17419,7 @@ function _renderAlerts(data) {
     const finds = (a.found || []).map((f, i) => `
       <li class="alert-find${i < (a.unread || 0) ? ' is-new' : ''}"><a href="${escHtml(epnUrl(f.itemUrl))}" target="_blank" rel="noopener">
         ${f.imageUrl ? `<img src="${escHtml(f.imageUrl)}" alt="" loading="lazy">` : '<span class="alert-noimg"></span>'}
-        <span class="alert-find-title">${escHtml(f.title)}</span>
+        <span class="alert-find-title">${escHtml(f.title)}${EBAY_TAG}</span>
         <span class="alert-find-price">${escHtml(money(f.price))}</span></a></li>`).join('');
     return `<div class="alert-item" data-id="${escHtml(a.id)}">
       <div class="alert-head">

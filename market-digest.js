@@ -97,7 +97,8 @@ function renderDigest(c, { week, unsubUrl, site = SITE, now = Date.now() }) {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>
           ${img ? `<td width="52" style="padding-right:10px;"><img src="${esc(img)}" width="44" height="60" alt="" style="display:block;border-radius:4px;object-fit:cover;"></td>` : ''}
           <td style="font-size:14px;line-height:1.35;"><div style="font-weight:700;">${esc(name)}</div>
-            <div style="font-size:12px;color:#777;">${esc(detail)}</div></td>
+            <div style="font-size:12px;color:#777;">${esc(detail)}</div>
+            ${String(href).includes('ebay.com') ? '<div style="font-size:12px;font-weight:700;color:#2d6a4f;">View on eBay &#8599;</div>' : ''}</td>
           <td align="right" style="font-size:15px;font-weight:800;color:${rightColor || '#111'};white-space:nowrap;padding-left:8px;">${esc(right)}</td>
         </tr></table>
       </a></td></tr>`;

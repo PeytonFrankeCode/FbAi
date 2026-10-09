@@ -158,5 +158,26 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     && /localStorage\.getItem\('chNoAffiliate'\)!=='1'/.test(fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8')));
 }
 
+// ---- every affiliate link says it goes to eBay (EPN, Oct 2026) -------------
+// EPN reversed commission over links that did not say where they went: a
+// photo tile or a bare title is not "clearly labeled". Each epnUrl() anchor
+// must carry EBAY_TAG or its own "on eBay" wording before it closes.
+{
+  const unlabeled = [];
+  const re = /href="\$\{escHtml\(epnUrl\(|href="' \+ escHtml\(epnUrl\(/g;
+  let m;
+  while ((m = re.exec(app))) {
+    const close = app.indexOf('</a>', m.index);
+    const body = app.slice(m.index, close);
+    if (!/EBAY_TAG|on eBay/.test(body)) unlabeled.push(app.slice(0, m.index).split('\n').length);
+  }
+  check('every eBay affiliate link in the app is labeled "View on eBay"', unlabeled.length === 0,
+    unlabeled.length ? 'unlabeled at app.js lines ' + unlabeled.join(', ') : '');
+  check('  ...and the label reads "View on eBay"', /const EBAY_TAG = '<span class="ebay-tag">View on eBay &#8599;<\/span>'/.test(app));
+  const digest = fs.readFileSync(path.join(ROOT, 'market-digest.js'), 'utf8');
+  check('  ...in the Market Movers email too', /includes\('ebay\.com'\) \? '<div[^']*>View on eBay &#8599;<\/div>'/.test(digest));
+  check('  ...and on the landing pages\' shop link', /Shop current \$\{esc\(noun\)\} listings on eBay/.test(fs.readFileSync(path.join(ROOT, 'price-block-core.js'), 'utf8')));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);
