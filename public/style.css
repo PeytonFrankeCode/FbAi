@@ -4503,6 +4503,9 @@ to { opacity: 1; transform: translateY(0); }
   background: var(--text-muted);
 }
 .theme-toggle-icon {
+  width: 18px;
+  text-align: center;
+  line-height: 1;
   font-size: 0.85rem;
   z-index: 1;
   transition: opacity 0.3s;
@@ -6583,49 +6586,6 @@ tr:hover .cl-alert-btn {
   color: var(--accent);
   background: var(--accent-bg);
   box-shadow: 0 4px 16px rgba(94, 206, 153, 0.1);
-}
-/* ---- Toggle Switches ---- */
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 999px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  cursor: pointer;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-.theme-toggle:hover {
-  border-color: var(--accent-border);
-  color: var(--text-primary);
-}
-.theme-toggle-thumb {
-  width: 32px;
-  height: 18px;
-  border-radius: 999px;
-  background: var(--border-primary);
-  position: relative;
-  transition: background var(--transition-fast);
-}
-.theme-toggle-thumb::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  transition: transform var(--transition-fast), background var(--transition-fast);
-}
-[data-theme="light"] .theme-toggle-thumb {
-  background: var(--accent-bg);
-}
-[data-theme="light"] .theme-toggle-thumb::after {
-  transform: translateX(14px);
-  background: var(--accent);
 }
 /* ---- Layout Toggle Buttons ---- */
 .layout-toggle-btns {
@@ -9573,6 +9533,44 @@ body[data-sport="baseball"] .rainbow-tile-img-placeholder {
 }
 .mobile-layout .nav-views > .nav-tab.active { background: var(--accent-bg); color: var(--accent); }
 .mobile-layout .alerts-tab { position: relative; right: auto; margin-left: auto; box-shadow: none; }
+
+/* Any phone-sized screen gets the menu, whatever the layout setting says:
+   the setting is saved on a first visit, so a phone once set to desktop
+   layout kept the row of tabs. */
+@media (max-width: 768px) {
+.nav-bar { overflow: visible; position: relative; z-index: 60; touch-action: auto; }
+.header-nav { position: relative; }
+.nav-menu-btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  font: inherit; font-size: 0.85rem; font-weight: 700;
+  color: var(--accent); background: var(--accent-bg);
+  border: 1px solid var(--accent-border); border-radius: 999px;
+  cursor: pointer;
+}
+.nav-menu-caret { transition: transform var(--transition-fast); }
+.nav-bar.menu-open .nav-menu-caret { transform: rotate(180deg); }
+.nav-views {
+  display: none;
+  position: absolute; top: calc(100% + 0.45rem); left: 0;
+  min-width: 13rem;
+  flex-direction: column; gap: 0.15rem;
+  padding: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+}
+.nav-bar.menu-open .nav-views { display: flex; }
+.nav-views > .nav-tab {
+  margin: 0; width: 100%; justify-content: flex-start;
+  font-size: 0.95rem; padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md); border-color: transparent;
+  box-shadow: none;
+}
+.nav-views > .nav-tab.active { background: var(--accent-bg); color: var(--accent); }
+.alerts-tab { position: relative; right: auto; margin-left: auto; box-shadow: none; }
+}
 
 /* ---- Main search typeahead ---- */
 .search-suggest {

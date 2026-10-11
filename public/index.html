@@ -200,7 +200,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=8a8da336fa" />
+  <link rel="stylesheet" href="style.css?v=f9d14661cb" />
 
 
 </head>
@@ -1365,7 +1365,7 @@
             <span class="settings-label-text">Appearance</span>
             <span class="settings-label-desc">Switch between dark and light mode</span>
           </div>
-          <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" role="button" tabindex="0" aria-label="Toggle theme">
+          <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleTheme(); }" role="button" tabindex="0" aria-label="Toggle theme">
             <span class="theme-toggle-icon" id="theme-icon-dark">&#9790;</span>
             <span class="theme-toggle-icon" id="theme-icon-light">&#9788;</span>
             <div class="theme-toggle-thumb" id="theme-thumb"></div>
