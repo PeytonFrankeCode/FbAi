@@ -5971,15 +5971,43 @@ function toggleNavMenu(open) {
   const bar = document.querySelector('.nav-bar');
   const btn = document.getElementById('nav-menu-btn');
   if (!bar || !btn) return;
-  const on = typeof open === 'boolean' ? open : !bar.classList.contains('menu-open');
+  const was = bar.classList.contains('menu-open');
+  const on = typeof open === 'boolean' ? open : !was;
+  if (on === was) return;
   bar.classList.toggle('menu-open', on);
   btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+  // The drawer covers the page, so the page must not scroll under it.
+  document.documentElement.classList.toggle('nav-locked', on && _navIsDrawer());
+  if (on) {
+    const cur = document.querySelector('.nav-views .nav-tab.active') || document.querySelector('.nav-views .nav-tab');
+    if (cur && _navIsDrawer()) setTimeout(() => cur.focus({ preventScroll: true }), 60);
+  } else if (bar.contains(document.activeElement)) {
+    btn.focus({ preventScroll: true });
+  }
+}
+// The menu button only shows where .nav-views is the drawer.
+function _navIsDrawer() {
+  const btn = document.getElementById('nav-menu-btn');
+  return !!btn && getComputedStyle(btn).display !== 'none';
 }
 document.addEventListener('click', (e) => {
   const bar = document.querySelector('.nav-bar.menu-open');
   if (bar && !bar.contains(e.target)) toggleNavMenu(false);
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleNavMenu(false); });
+// A swipe toward the left edge closes the drawer, as it does in apps.
+(function navSwipe() {
+  const drawer = document.getElementById('nav-views');
+  if (!drawer) return;
+  let x0 = null, y0 = 0;
+  drawer.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  drawer.addEventListener('touchend', (e) => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.5) toggleNavMenu(false);
+  }, { passive: true });
+})();
 
 function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
