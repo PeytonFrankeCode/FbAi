@@ -1079,8 +1079,9 @@ async function _mpLoadDeals(thumb, head, homeN) {
       '<span class="mp-tile-meta">sells ~' + _mpMoney(d.market) + ' &middot; ' +
         (d.shipping == null ? '+ shipping' : d.shipping > 0 ? '+' + _mpMoney(d.shipping) + ' ship' : 'free shipping') + '</span>' +
       EBAY_TAG + '</a>').join('') + '</div>' +
-    '<p class="mp-deals-note">Buy It Now listings priced at least 15% under what the same raw card sold for over the last 30 days. ' +
-    'Prices change fast; check the photos and condition before you buy. Links go to eBay; we may earn a commission.</p></div>';
+    '<p class="mp-deals-note"><svg class="mp-deals-note-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>' +
+    '<span>Buy It Now listings priced at least 15% under what the same raw card sold for over the last 30 days. ' +
+    'Prices change fast; check the photos and condition before you buy. Links go to eBay; we may earn a commission.</span></p></div>';
 }
 
 async function _mpFetch(period) {

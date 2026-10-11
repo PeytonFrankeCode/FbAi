@@ -9495,7 +9495,17 @@ body[data-sport="baseball"] .rainbow-tile-img-placeholder {
 /* Deals right now (front page) */
 .mp-deal-off { font-size: 0.68rem; font-weight: 700; color: #1f9d55; background: rgba(31,157,85,0.12);
   padding: 0.05rem 0.3rem; border-radius: 4px; margin-left: 0.25rem; vertical-align: middle; }
-.mp-deals-note { font-size: 0.7rem; color: var(--text-secondary); margin: 0.4rem 0 0; }
+/* The deals note, in its own box so it reads as a note, not loose text. */
+.mp-deals-note {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  margin: 0.7rem 0 0; padding: 0.7rem 0.85rem;
+  font-size: 0.74rem; line-height: 1.5; color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+}
+.mp-deals-note-ico { flex-shrink: 0; margin-top: 0.1rem; color: var(--accent); }
 
 /* ---- The menu: one button opening a drawer from the side ----
    The same on every screen (owner, Oct 2026): the pages sit in a panel
