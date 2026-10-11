@@ -136,7 +136,8 @@ check('  ...which is what the Search subtab strip depends on',
 // the edge. It opens the same .nav-tab buttons, so switchView stays the only
 // thing that decides which view is active, and the menu names it.
 {
-  const views = (html.match(/<div class="nav-views" id="nav-views">([\s\S]*?)<\/div>/) || [])[1] || '';
+  const vi = html.indexOf('<div class="nav-views" id="nav-views"');
+  const views = vi < 0 ? '' : html.slice(vi, html.indexOf('<button class="nav-tab alerts-tab"', vi));
   check('the phone menu holds every view tab',
     ['search', 'checklist', 'rainbow', 'market', 'community', 'inventory'].every(v => views.includes(`data-view="${v}"`)));
   check('  ...but not the bell or the gear, which stay on the bar',
@@ -168,8 +169,19 @@ check('the theme switch is styled once, so its knob stays inside the pill',
 check('  ...and Enter or Space flips it, like a click',
   /id="theme-toggle"[^>]*onkeydown="[^"]*toggleTheme\(\)/.test(html));
 
-check('any phone-sized screen gets the menu, even one saved to desktop layout',
-  /@media \(max-width: 768px\) \{\n\.nav-bar \{ overflow: visible;[\s\S]{0,1800}\.nav-bar\.menu-open \.nav-views \{ display: flex; \}/.test(css));
+// One menu on every screen (owner, Oct 2026): the drawer is not scoped to
+// phones or to the saved layout setting, so desktop gets it too.
+check('every screen gets the same drawer menu, not tabs on desktop',
+  /^\.nav-menu-btn \{\n  display: inline-flex;/m.test(css) && !/\.nav-views \{ display: contents; \}/.test(css)
+  && !/\.mobile-layout \.nav-views/.test(css));
+check('  ...a drawer that slides in from the left over a backdrop',
+  /\.nav-views \{[^}]*position: fixed;[^}]*transform: translateX\(-104%\);/.test(css)
+  && /id="nav-backdrop" onclick="toggleNavMenu\(false\)"/.test(html)
+  && /\.nav-bar\.menu-open \.nav-backdrop \{ opacity: 1; pointer-events: auto; \}/.test(css));
+check('  ...that locks the page under it, closes on a swipe, and respects reduced motion',
+  /classList\.toggle\('nav-locked'/.test(app) && /html\.nav-locked, html\.nav-locked body \{ overflow: hidden; \}/.test(css)
+  && /dx < -60/.test(app) && /prefers-reduced-motion: reduce\) \{\n  \.nav-views/.test(css));
+
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

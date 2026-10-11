@@ -9496,48 +9496,9 @@ body[data-sport="baseball"] .rainbow-tile-img-placeholder {
   padding: 0.05rem 0.3rem; border-radius: 4px; margin-left: 0.25rem; vertical-align: middle; }
 .mp-deals-note { font-size: 0.7rem; color: var(--text-secondary); margin: 0.4rem 0 0; }
 
-/* ---- Phone menu: one dropdown in place of the row of tabs ----
-   On desktop the wrapper is invisible to layout and the tabs sit as before. */
-.nav-menu-btn { display: none; }
-.nav-views { display: contents; }
-.nav-views > .nav-tab:first-child { margin-left: auto; }
-.mobile-layout .nav-bar { overflow: visible; position: relative; z-index: 60; touch-action: auto; }
-.mobile-layout .header-nav { position: relative; }
-.mobile-layout .nav-menu-btn {
-  display: inline-flex; align-items: center; gap: 0.45rem;
-  padding: 0.45rem 0.85rem;
-  font: inherit; font-size: 0.85rem; font-weight: 700;
-  color: var(--accent); background: var(--accent-bg);
-  border: 1px solid var(--accent-border); border-radius: 999px;
-  cursor: pointer;
-}
-.mobile-layout .nav-menu-caret { transition: transform var(--transition-fast); }
-.mobile-layout .nav-bar.menu-open .nav-menu-caret { transform: rotate(180deg); }
-.mobile-layout .nav-views {
-  display: none;
-  position: absolute; top: calc(100% + 0.45rem); left: 0;
-  min-width: 13rem;
-  flex-direction: column; gap: 0.15rem;
-  padding: 0.35rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-modal);
-}
-.mobile-layout .nav-bar.menu-open .nav-views { display: flex; }
-.mobile-layout .nav-views > .nav-tab {
-  margin: 0; width: 100%; justify-content: flex-start;
-  font-size: 0.95rem; padding: 0.65rem 0.85rem;
-  border-radius: var(--radius-md); border-color: transparent;
-  box-shadow: none;
-}
-.mobile-layout .nav-views > .nav-tab.active { background: var(--accent-bg); color: var(--accent); }
-.mobile-layout .alerts-tab { position: relative; right: auto; margin-left: auto; box-shadow: none; }
-
-/* Any phone-sized screen gets the menu, whatever the layout setting says:
-   the setting is saved on a first visit, so a phone once set to desktop
-   layout kept the row of tabs. */
-@media (max-width: 768px) {
+/* ---- The menu: one button opening a drawer from the side ----
+   The same on every screen (owner, Oct 2026): the pages sit in a panel
+   parked off-screen to the left, and the button slides it in. */
 .nav-bar { overflow: visible; position: relative; z-index: 60; touch-action: auto; }
 .header-nav { position: relative; }
 .nav-menu-btn {
@@ -9547,29 +9508,81 @@ body[data-sport="baseball"] .rainbow-tile-img-placeholder {
   color: var(--accent); background: var(--accent-bg);
   border: 1px solid var(--accent-border); border-radius: 999px;
   cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
 }
-.nav-menu-caret { transition: transform var(--transition-fast); }
-.nav-bar.menu-open .nav-menu-caret { transform: rotate(180deg); }
-.nav-views {
-  display: none;
-  position: absolute; top: calc(100% + 0.45rem); left: 0;
-  min-width: 13rem;
-  flex-direction: column; gap: 0.15rem;
-  padding: 0.35rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-modal);
-}
-.nav-bar.menu-open .nav-views { display: flex; }
-.nav-views > .nav-tab {
-  margin: 0; width: 100%; justify-content: flex-start;
-  font-size: 0.95rem; padding: 0.65rem 0.85rem;
-  border-radius: var(--radius-md); border-color: transparent;
-  box-shadow: none;
-}
-.nav-views > .nav-tab.active { background: var(--accent-bg); color: var(--accent); }
+.nav-menu-btn:active { transform: scale(0.96); }
+.nav-menu-caret { display: none; }
 .alerts-tab { position: relative; right: auto; margin-left: auto; box-shadow: none; }
+/* The drawer: always laid out, parked off-screen to the left, so opening
+   and closing are one transform each way rather than a pop. */
+.nav-backdrop {
+  display: block; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(3, 7, 18, 0.55);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.nav-bar.menu-open .nav-backdrop { opacity: 1; pointer-events: auto; }
+.nav-views {
+  display: flex; flex-direction: column; gap: 0.2rem;
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 1001;
+  width: min(80vw, 300px);
+  padding: max(0.9rem, env(safe-area-inset-top)) 0.75rem max(1rem, env(safe-area-inset-bottom));
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-primary);
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+  box-shadow: 18px 0 48px rgba(0, 0, 0, 0.45);
+  overflow-y: auto; overscroll-behavior: contain;
+  transform: translateX(-104%);
+  visibility: hidden;
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.38s;
+}
+.nav-bar.menu-open .nav-views {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+}
+.nav-drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.2rem 0.25rem 0.85rem 0.5rem; margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-primary);
+}
+.nav-drawer-logo { height: 46px; width: auto; }
+.nav-drawer-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; padding: 0; flex-shrink: 0; border-radius: 50%;
+  border: 1px solid var(--border-primary); background: transparent;
+  color: var(--text-secondary); cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.nav-drawer-close:hover { background: var(--accent-bg); color: var(--accent); transform: rotate(90deg); }
+.nav-views > .nav-tab {
+  margin: 0; width: 100%; justify-content: flex-start; gap: 0.85rem;
+  font-size: 1rem; font-weight: 600; padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-md); border-color: transparent;
+  background: transparent; box-shadow: none; color: var(--text-secondary);
+  opacity: 0; transform: translateX(-14px);
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, color 0.2s ease;
+}
+.nav-bar.menu-open .nav-views > .nav-tab { opacity: 1; transform: none; }
+.nav-bar.menu-open .nav-views > .nav-tab:nth-of-type(1) { transition-delay: 0.06s, 0.06s, 0s, 0s; }
+.nav-bar.menu-open .nav-views > .nav-tab:nth-of-type(2) { transition-delay: 0.1s, 0.1s, 0s, 0s; }
+.nav-bar.menu-open .nav-views > .nav-tab:nth-of-type(3) { transition-delay: 0.14s, 0.14s, 0s, 0s; }
+.nav-bar.menu-open .nav-views > .nav-tab:nth-of-type(4) { transition-delay: 0.18s, 0.18s, 0s, 0s; }
+.nav-bar.menu-open .nav-views > .nav-tab:nth-of-type(5) { transition-delay: 0.22s, 0.22s, 0s, 0s; }
+.nav-bar.menu-open .nav-views > .nav-tab:nth-of-type(6) { transition-delay: 0.26s, 0.26s, 0s, 0s; }
+.nav-views > .nav-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.nav-views > .nav-tab.active {
+  background: var(--accent-bg); color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.nav-views .nav-ico { display: block; flex-shrink: 0; opacity: 0.85; }
+.nav-views > .nav-tab.active .nav-ico { opacity: 1; }
+
+/* The page under an open drawer stays put. */
+html.nav-locked, html.nav-locked body { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .nav-views, .nav-views > .nav-tab, .nav-backdrop { transition-duration: 0.01s !important; transition-delay: 0s !important; }
 }
 
 /* ---- Main search typeahead ---- */

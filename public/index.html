@@ -200,7 +200,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=f9d14661cb" />
+  <link rel="stylesheet" href="style.css?v=b1b391cff5" />
 
 
 </head>
@@ -254,13 +254,22 @@
         <span id="nav-menu-label">Search</span>
         <svg class="nav-menu-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
-      <div class="nav-views" id="nav-views">
-      <button class="nav-tab active" data-view="search" onclick="switchView('search')">Search</button>
-      <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')">Checklists</button>
-      <button class="nav-tab" data-view="rainbow" onclick="switchView('rainbow')">Rainbow</button>
-      <button class="nav-tab" data-view="market" onclick="switchView('market')">Market</button>
-      <button class="nav-tab" data-view="community" onclick="switchView('community')">Community</button>
-      <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')">Inventory</button>
+      <!-- On phones .nav-views is a drawer that slides in from the left; the
+           head and backdrop exist only there (style.css hides them on desktop). -->
+      <div class="nav-backdrop" id="nav-backdrop" onclick="toggleNavMenu(false)" aria-hidden="true"></div>
+      <div class="nav-views" id="nav-views" aria-label="Pages">
+      <div class="nav-drawer-head">
+        <img src="logo.png" alt="" class="nav-drawer-logo" />
+        <button type="button" class="nav-drawer-close" onclick="toggleNavMenu(false)" aria-label="Close menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <button class="nav-tab active" data-view="search" onclick="switchView('search')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="nav-label">Search</span></button>
+      <button class="nav-tab" data-view="checklist" onclick="switchView('checklist')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg><span class="nav-label">Checklists</span></button>
+      <button class="nav-tab" data-view="rainbow" onclick="switchView('rainbow')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M7 17a5 5 0 0 1 10 0"/></svg><span class="nav-label">Rainbow</span></button>
+      <button class="nav-tab" data-view="market" onclick="switchView('market')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg><span class="nav-label">Market</span></button>
+      <button class="nav-tab" data-view="community" onclick="switchView('community')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5a3 3 0 0 1 0 6M18 19a6 6 0 0 0-3-5.2"/></svg><span class="nav-label">Community</span></button>
+      <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg><span class="nav-label">Inventory</span></button>
       </div>
       <button class="nav-tab alerts-tab" onclick="showAlerts()" title="Card alerts" aria-label="Card alerts">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1748,7 +1757,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=d640a95f11"></script>
+  <script src="app.js?v=7b776f7053"></script>
   <script type="importmap">
   {
     "imports": {
