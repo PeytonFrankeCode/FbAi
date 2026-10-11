@@ -1152,10 +1152,11 @@ async function loadMarketPulse(days, attempt = 0) {
 
   // Compact context line — the card grids are the point, this is background.
   parts.push(
+    // Total value is the headline (owner, Oct 2026); the other two sit under it.
     '<div class="mp-figures">' +
-    '<div class="mp-figure"><span class="mp-figure-k">Sales tracked</span><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span></div>' +
-    '<div class="mp-figure"><span class="mp-figure-k">Total value</span><span class="mp-figure-n">' + _mpMoney(data.totalValue) + '</span></div>' +
-    '<div class="mp-figure"><span class="mp-figure-k">Average sale</span><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span></div>' +
+    '<div class="mp-figure mp-figure-hero"><span class="mp-figure-k">Total value</span><span class="mp-figure-n">' + _mpMoney(data.totalValue) + '</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span><span class="mp-figure-k">sales tracked</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span><span class="mp-figure-k">average sale</span></div>' +
     '</div>');
 
   // Photo when we have one, the existing placeholder when we don't, so a card

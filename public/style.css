@@ -8247,24 +8247,25 @@ to { opacity: 1; transform: translateY(0); }
 .mp-loading { color: var(--text-muted); font-size: 0.8rem; padding: 0.5rem 0; }
 /* Headline sale — the fun bit, so it gets the visual weight */
 
-/* The three headline numbers, each on its own stat card. */
-.mp-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-bottom: 0.9rem; }
-.mp-figure {
-  display: flex; flex-direction: column; gap: 0.2rem; min-width: 0;
-  padding: 0.7rem 0.85rem;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-top: 2px solid var(--accent);
-  border-radius: var(--radius-md);
-}
-.mp-figure-n { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* The market's numbers: total value as the headline card, the sales count
+   and average sale on one line beneath it. */
+.mp-figures { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.55rem 1.4rem; margin-bottom: 1rem; }
+.mp-figure { display: flex; align-items: baseline; gap: 0.4rem; min-width: 0; }
+.mp-figure-n { font-size: 1rem; font-weight: 800; color: var(--text-primary); line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .mp-figure-k { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.mp-figure-hero {
+  flex: 1 1 100%;
+  flex-direction: column; align-items: flex-start; gap: 0.25rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(94, 206, 153, 0.16), rgba(94, 206, 153, 0.03));
+  border: 1px solid var(--accent-border);
+}
+.mp-figure-hero .mp-figure-n { font-size: clamp(1.7rem, 7vw, 2.4rem); color: var(--accent); letter-spacing: -0.02em; line-height: 1.05; }
+.mp-figure-hero + .mp-figure { padding-left: 0.3rem; }
 @media (max-width: 560px) {
   .mp-lists { grid-template-columns: 1fr; gap: 0.75rem; }
-.mp-figures { gap: 0.4rem; }
-.mp-figure { padding: 0.55rem 0.6rem; }
-.mp-figure-n { font-size: 0.95rem; }
-.mp-figure-k { font-size: 0.56rem; }
+.mp-figures { gap: 0.5rem 1.1rem; }
 /* Single column so the label can't wrap around the price column. Price
      leads, since that's the number people are here for. */
   .mp-grail { grid-template-columns: 1fr; gap: 0.1rem; }
@@ -8321,7 +8322,7 @@ to { opacity: 1; transform: translateY(0); }
 .mp-tile { padding: 0.4rem; }
 .mp-tile-price { font-size: 0.82rem; }
 .mp-tile-name { font-size: 0.65rem; }
-.mp-figures { gap: 0.4rem; }
+.mp-figures { gap: 0.5rem 1.1rem; }
 }
 /* ---- Card analysis: our own sale history inside the card modal ---- */
 .card-analysis { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
