@@ -160,5 +160,16 @@ check('  ...which is what the Search subtab strip depends on',
     && /\/api\/player-cards\?player=/.test(app) && !/currentMode[^\n]{0,40}_ssUpdate/.test(app));
 }
 
+// The theme switch (Oct 2026): a second, later set of .theme-toggle rules
+// turned its sliding knob into a little switch of its own, which stuck out of
+// the side of the pill. One set of rules for it, and it works from the keyboard.
+check('the theme switch is styled once, so its knob stays inside the pill',
+  (css.match(/^\.theme-toggle-thumb \{/gm) || []).length === 1 && !/\.theme-toggle-thumb::after/.test(css));
+check('  ...and Enter or Space flips it, like a click',
+  /id="theme-toggle"[^>]*onkeydown="[^"]*toggleTheme\(\)/.test(html));
+
+check('any phone-sized screen gets the menu, even one saved to desktop layout',
+  /@media \(max-width: 768px\) \{\n\.nav-bar \{ overflow: visible;[\s\S]{0,1800}\.nav-bar\.menu-open \.nav-views \{ display: flex; \}/.test(css));
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
