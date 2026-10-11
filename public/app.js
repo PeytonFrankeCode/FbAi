@@ -857,6 +857,145 @@ function renderRecentSearches() {
   recentSection.classList.remove('hidden');
 }
 
+// ---- Search typeahead ----
+// Under the main search box, for sold and for sale alike: recent searches,
+// then players (the Market tab's roster, fetched once and filtered here), then,
+// once a whole player name is typed, that player's most-sold cards as searches
+// ready to run (/api/player-cards).
+const searchSuggest = document.getElementById('search-suggest');
+let _ssItems = [];
+let _ssActive = -1;
+let _ssSeq = 0;
+let _ssTimer = null;
+const _ssCards = new Map();
+
+function _ssPlayerCards(name) {
+  const k = name.toLowerCase();
+  if (!_ssCards.has(k)) {
+    _ssCards.set(k, fetch('/api/player-cards?player=' + encodeURIComponent(name)).then(safeJson)
+      .then(d => (d && d.available && Array.isArray(d.cards) ? d.cards : []))
+      .catch(() => { _ssCards.delete(k); return []; }));
+  }
+  return _ssCards.get(k);
+}
+
+// The longest roster name the box starts with, as a whole word: "patrick
+// mahomes prizm" names Patrick Mahomes and leaves "prizm" to narrow his cards.
+function _ssWholePlayer(roster, q) {
+  let best = null;
+  for (const p of roster) {
+    const n = p.player.toLowerCase();
+    if ((q === n || q.startsWith(n + ' ')) && (!best || n.length > best.player.length)) best = p;
+  }
+  return best;
+}
+
+function _ssHide() {
+  _ssItems = []; _ssActive = -1;
+  if (searchSuggest) { searchSuggest.classList.add('hidden'); searchSuggest.innerHTML = ''; }
+  input.setAttribute('aria-expanded', 'false');
+}
+
+function _ssRender() {
+  if (!searchSuggest || !_ssItems.length) { _ssHide(); return; }
+  searchSuggest.innerHTML = _ssItems.map((it, i) =>
+    `<button type="button" role="option" id="ss-opt-${i}" class="search-suggest-item ss-${it.kind}${i === _ssActive ? ' active' : ''}" data-i="${i}" aria-selected="${i === _ssActive}">`
+    + `<span class="search-suggest-text">${escHtml(it.text)}</span>`
+    + (it.sub ? `<span class="search-suggest-sub">${escHtml(it.sub)}</span>` : '')
+    + '</button>').join('');
+  searchSuggest.classList.remove('hidden');
+  input.setAttribute('aria-expanded', 'true');
+  if (_ssActive >= 0) input.setAttribute('aria-activedescendant', 'ss-opt-' + _ssActive);
+  else input.removeAttribute('aria-activedescendant');
+}
+
+async function _ssUpdate() {
+  if (!searchSuggest) return;
+  const q = input.value.trim().toLowerCase().replace(/\s+/g, ' ');
+  const seq = ++_ssSeq;
+  const items = [];
+  getRecentSearches()
+    .filter(r => !q || (r.toLowerCase().includes(q) && r.toLowerCase() !== q))
+    .slice(0, q ? 3 : 6)
+    .forEach(r => items.push({ text: r, sub: 'recent', kind: 'recent' }));
+
+  if (q.length >= 2) {
+    const roster = await _mkRoster();
+    if (seq !== _ssSeq) return;
+    if (roster) {
+      const whole = _ssWholePlayer(roster, q);
+      if (whole) {
+        const words = q.slice(whole.player.length).trim().split(' ').filter(Boolean);
+        if (!words.length) items.push({ text: whole.player, sub: 'all cards', kind: 'search' });
+        const cards = await _ssPlayerCards(whole.player);
+        if (seq !== _ssSeq) return;
+        cards.filter(c => words.every(w => c.query.toLowerCase().includes(w)))
+          .slice(0, 6)
+          .forEach(c => items.push({ text: c.query, sub: `${(c.sales || 0).toLocaleString('en-US')} sold`, kind: 'card' }));
+      } else {
+        _mkFilterRoster(roster, q).slice(0, 6)
+          .forEach(p => items.push({ text: p.player, sub: `${(p.sales || 0).toLocaleString('en-US')} sold`, kind: 'player' }));
+      }
+    }
+  }
+  if (seq !== _ssSeq) return;
+  // Never offer exactly what is already in the box.
+  _ssItems = items.filter((it, i) => it.kind === 'player' || it.kind === 'search' || it.text.toLowerCase() !== q)
+    .filter((it, i, all) => all.findIndex(o => o.text.toLowerCase() === it.text.toLowerCase()) === i)
+    .slice(0, 9);
+  _ssActive = -1;
+  _ssRender();
+}
+
+function _ssPick(i) {
+  const it = _ssItems[i];
+  if (!it) return;
+  if (it.kind === 'player') {
+    // A player opens their cards rather than searching every card of theirs.
+    input.value = it.text + ' ';
+    input.focus();
+    _ssUpdate();
+    return;
+  }
+  input.value = it.text;
+  _ssHide();
+  if (form.requestSubmit) form.requestSubmit();
+  else form.dispatchEvent(new Event('submit', { cancelable: true }));
+}
+
+if (searchSuggest) {
+  input.addEventListener('input', () => {
+    clearTimeout(_ssTimer);
+    // No wait once the roster is here: filtering it costs nothing.
+    if (typeof _mkRosterReady !== 'undefined' && _mkRosterReady) _ssUpdate();
+    else _ssTimer = setTimeout(_ssUpdate, 150);
+  });
+  input.addEventListener('focus', () => _ssUpdate());
+  input.addEventListener('blur', () => setTimeout(_ssHide, 120));
+  input.addEventListener('keydown', (e) => {
+    if (searchSuggest.classList.contains('hidden') || !_ssItems.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const n = _ssItems.length;
+      _ssActive = e.key === 'ArrowDown' ? (_ssActive + 1) % n : (_ssActive <= 0 ? n - 1 : _ssActive - 1);
+      _ssRender();
+    } else if (e.key === 'Enter' && _ssActive >= 0) {
+      e.preventDefault();
+      _ssPick(_ssActive);
+    } else if (e.key === 'Escape') {
+      _ssHide();
+    }
+  });
+  // Keep the box focused while a suggestion is pressed, so blur does not
+  // close the list before the click lands.
+  searchSuggest.addEventListener('mousedown', (e) => e.preventDefault());
+  searchSuggest.addEventListener('click', (e) => {
+    const b = e.target.closest('.search-suggest-item');
+    if (b) _ssPick(Number(b.dataset.i));
+  });
+  form.addEventListener('submit', () => { clearTimeout(_ssTimer); _ssSeq++; _ssHide(); });
+}
+
 // Show recent on load
 renderRecentSearches();
 
@@ -1014,9 +1153,9 @@ async function loadMarketPulse(days, attempt = 0) {
   // Compact context line — the card grids are the point, this is background.
   parts.push(
     '<div class="mp-figures">' +
-    '<div class="mp-figure"><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span><span class="mp-figure-k">sales tracked</span></div>' +
-    '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.totalValue) + '</span><span class="mp-figure-k">total value</span></div>' +
-    '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span><span class="mp-figure-k">average sale</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-k">Sales tracked</span><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-k">Total value</span><span class="mp-figure-n">' + _mpMoney(data.totalValue) + '</span></div>' +
+    '<div class="mp-figure"><span class="mp-figure-k">Average sale</span><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span></div>' +
     '</div>');
 
   // Photo when we have one, the existing placeholder when we don't, so a card
@@ -2270,6 +2409,7 @@ function goBackToVariants() {
     // Return to search home
     currentSearchMode = 'variants';
     input.value = '';
+    document.body.classList.remove('has-searched');
     suggestionsSection.classList.remove('hidden');
     if (aboutSection) aboutSection.classList.remove('hidden');
     renderRecentSearches();
@@ -2288,6 +2428,9 @@ function goBackToVariants() {
 // is how a board click came to leave it sitting under the results. It stays in
 // the HTML, so the home page still carries it; "back to search" shows it again.
 function _hideHomeContent() {
+  // The market panel too (movers, deals, most expensive): it is the home
+  // page's, and under a search it pushed the results down a screen.
+  document.body.classList.add('has-searched');
   if (typeof suggestionsSection !== 'undefined' && suggestionsSection) suggestionsSection.classList.add('hidden');
   if (typeof aboutSection !== 'undefined' && aboutSection) aboutSection.classList.add('hidden');
 }
@@ -5818,6 +5961,26 @@ const rainbowPage = document.getElementById('rainbow-page');
 // aliases below all funnel through here.
 const RETIRED_VIEWS = new Set(['floor', 'seller', 'proplus']);
 
+// The phone menu (index.html, .nav-menu-btn): one button naming the current
+// view, opening the same tabs as a list. Desktop keeps the row of tabs.
+function _setNavMenuLabel(tab) {
+  const label = document.getElementById('nav-menu-label');
+  if (label && tab) label.textContent = tab.textContent.trim();
+}
+function toggleNavMenu(open) {
+  const bar = document.querySelector('.nav-bar');
+  const btn = document.getElementById('nav-menu-btn');
+  if (!bar || !btn) return;
+  const on = typeof open === 'boolean' ? open : !bar.classList.contains('menu-open');
+  bar.classList.toggle('menu-open', on);
+  btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+}
+document.addEventListener('click', (e) => {
+  const bar = document.querySelector('.nav-bar.menu-open');
+  if (bar && !bar.contains(e.target)) toggleNavMenu(false);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleNavMenu(false); });
+
 function switchView(view) {
   // Map legacy top-level view names onto the new 5-tab structure so
   // any deep links / older code paths still route somewhere sensible.
@@ -5838,6 +6001,8 @@ function switchView(view) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   const activeTab = document.querySelector(`.nav-tab[data-view="${view}"]`);
   if (activeTab) activeTab.classList.add('active');
+  _setNavMenuLabel(activeTab);
+  toggleNavMenu(false);
 
   const communityView = document.getElementById('community-view');
   const scannerView = document.getElementById('scanner-view');

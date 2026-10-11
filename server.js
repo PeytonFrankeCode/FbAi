@@ -10151,6 +10151,50 @@ app.get('/api/player-search', async (req, res) => {
   }
 });
 
+// Typeahead for the main search, second step: once a player is typed, the
+// cards of theirs that sell most, as searches ready to run. Only players on
+// the roster, so a stray string cannot fill the cache with junk keys.
+const PLAYER_CARDS_DAYS = 90;
+const PLAYER_CARDS_MAX = 8;
+const PLAYER_CARDS_TTL = 6 * 3600;
+function _playerCardQuery(r) {
+  const num = String(r.card_number || '').trim().replace(/^#/, '');
+  return [r.year, r.set_name, _boardPlayerName(r.player)].filter(Boolean).map(String).join(' ') + (num ? ` #${num}` : '');
+}
+app.get('/api/player-cards', async (req, res) => {
+  const want = String(req.query.player || '').trim().toLowerCase();
+  const db = getNflDb();
+  if (!db || !want) return res.json({ available: false, cards: [] });
+  try {
+    const roster = await _playerRoster(db);
+    const hit = roster.find(p => p.player.toLowerCase() === want);
+    if (!hit) return res.json({ available: true, player: null, cards: [] });
+    const key = 'playercards:v1:' + want;
+    let cards = await cacheGet(key);
+    if (!cards) {
+      const since = _mkIso(_mkDay(new Date().toISOString()) - PLAYER_CARDS_DAYS);
+      await _nflHasSportColumn(db);
+      const rows = await db.prepare(
+        `SELECT year, set_name, card_number, MAX(player) AS player, COUNT(*) AS n
+           FROM sales
+          WHERE player = ? AND confidence >= ? AND sold_date >= ? AND price_cents IS NOT NULL
+            AND year IS NOT NULL AND COALESCE(TRIM(set_name), '') <> ''
+            AND COALESCE(TRIM(card_number), '') <> ''${_footballSql()}
+          GROUP BY year, set_name, card_number
+          ORDER BY n DESC
+          LIMIT ?`
+      ).bind(hit.player, NFLDB_MIN_CONFIDENCE, since, PLAYER_CARDS_MAX).all();
+      cards = ((rows && rows.results) || []).map(r => ({ query: _playerCardQuery(r), sales: r.n }));
+      cachePut(key, cards, PLAYER_CARDS_TTL);
+    }
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.json({ available: true, player: hit.player, cards });
+  } catch (err) {
+    console.error('[PlayerCards]', err && err.message);
+    res.json({ available: false, cards: [] });
+  }
+});
+
 app.get('/api/player-index', async (req, res) => {
   const days = MARKET_PERIODS.includes(parseInt(req.query.days, 10))
     ? parseInt(req.query.days, 10)
@@ -18687,7 +18731,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

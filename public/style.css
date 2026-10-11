@@ -8287,13 +8287,24 @@ to { opacity: 1; transform: translateY(0); }
 .mp-loading { color: var(--text-muted); font-size: 0.8rem; padding: 0.5rem 0; }
 /* Headline sale — the fun bit, so it gets the visual weight */
 
-.mp-figures { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-.mp-figure { display: flex; flex-direction: column; }
-.mp-figure-n { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
-.mp-figure-k { font-size: 0.64rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+/* The three headline numbers, each on its own stat card. */
+.mp-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; margin-bottom: 0.9rem; }
+.mp-figure {
+  display: flex; flex-direction: column; gap: 0.2rem; min-width: 0;
+  padding: 0.7rem 0.85rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-top: 2px solid var(--accent);
+  border-radius: var(--radius-md);
+}
+.mp-figure-n { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.mp-figure-k { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
 @media (max-width: 560px) {
   .mp-lists { grid-template-columns: 1fr; gap: 0.75rem; }
-.mp-figures { gap: 1.1rem; }
+.mp-figures { gap: 0.4rem; }
+.mp-figure { padding: 0.55rem 0.6rem; }
+.mp-figure-n { font-size: 0.95rem; }
+.mp-figure-k { font-size: 0.56rem; }
 /* Single column so the label can't wrap around the price column. Price
      leads, since that's the number people are here for. */
   .mp-grail { grid-template-columns: 1fr; gap: 0.1rem; }
@@ -8350,7 +8361,7 @@ to { opacity: 1; transform: translateY(0); }
 .mp-tile { padding: 0.4rem; }
 .mp-tile-price { font-size: 0.82rem; }
 .mp-tile-name { font-size: 0.65rem; }
-.mp-figures { gap: 1.1rem; }
+.mp-figures { gap: 0.4rem; }
 }
 /* ---- Card analysis: our own sale history inside the card modal ---- */
 .card-analysis { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
@@ -9524,3 +9535,70 @@ body[data-sport="baseball"] .rainbow-tile-img-placeholder {
 .mp-deal-off { font-size: 0.68rem; font-weight: 700; color: #1f9d55; background: rgba(31,157,85,0.12);
   padding: 0.05rem 0.3rem; border-radius: 4px; margin-left: 0.25rem; vertical-align: middle; }
 .mp-deals-note { font-size: 0.7rem; color: var(--text-secondary); margin: 0.4rem 0 0; }
+
+/* ---- Phone menu: one dropdown in place of the row of tabs ----
+   On desktop the wrapper is invisible to layout and the tabs sit as before. */
+.nav-menu-btn { display: none; }
+.nav-views { display: contents; }
+.nav-views > .nav-tab:first-child { margin-left: auto; }
+.mobile-layout .nav-bar { overflow: visible; position: relative; z-index: 60; touch-action: auto; }
+.mobile-layout .header-nav { position: relative; }
+.mobile-layout .nav-menu-btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  font: inherit; font-size: 0.85rem; font-weight: 700;
+  color: var(--accent); background: var(--accent-bg);
+  border: 1px solid var(--accent-border); border-radius: 999px;
+  cursor: pointer;
+}
+.mobile-layout .nav-menu-caret { transition: transform var(--transition-fast); }
+.mobile-layout .nav-bar.menu-open .nav-menu-caret { transform: rotate(180deg); }
+.mobile-layout .nav-views {
+  display: none;
+  position: absolute; top: calc(100% + 0.45rem); left: 0;
+  min-width: 13rem;
+  flex-direction: column; gap: 0.15rem;
+  padding: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+}
+.mobile-layout .nav-bar.menu-open .nav-views { display: flex; }
+.mobile-layout .nav-views > .nav-tab {
+  margin: 0; width: 100%; justify-content: flex-start;
+  font-size: 0.95rem; padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md); border-color: transparent;
+  box-shadow: none;
+}
+.mobile-layout .nav-views > .nav-tab.active { background: var(--accent-bg); color: var(--accent); }
+.mobile-layout .alerts-tab { position: relative; right: auto; margin-left: auto; box-shadow: none; }
+
+/* ---- Main search typeahead ---- */
+.search-suggest {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 40;
+  background: var(--bg-secondary); border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md); overflow-y: auto; max-height: min(60vh, 380px);
+  box-shadow: var(--shadow-modal);
+  padding: 0.25rem;
+}
+.search-suggest.hidden { display: none; }
+.search-suggest-item {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem;
+  width: 100%; padding: 0.6rem 0.75rem; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text-primary);
+  font: inherit; font-size: 0.9rem; text-align: left; cursor: pointer;
+}
+.search-suggest-item:hover, .search-suggest-item.active { background: var(--accent-bg); }
+.search-suggest-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-suggest-sub { flex-shrink: 0; font-size: 0.72rem; color: var(--text-muted); }
+.search-suggest-item.ss-recent .search-suggest-text { color: var(--text-secondary); }
+.search-suggest-item.ss-search .search-suggest-text { font-weight: 700; color: var(--accent); }
+.search-suggest-item.ss-player .search-suggest-text { font-weight: 600; }
+
+/* Once a search runs, the home page's market panel steps aside. */
+body.has-searched #market-pulse { display: none !important; }
+
+/* The logo goes home. */
+.header-logo-link { display: inline-block; line-height: 0; border-radius: var(--radius-md); }
+.header-logo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

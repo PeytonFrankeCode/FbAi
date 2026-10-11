@@ -23,6 +23,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
 const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
+const css = fs.readFileSync(path.join(ROOT, 'public', 'style.css'), 'utf8');
 
 let failures = 0;
 const check = (label, ok, detail) => {
@@ -130,6 +131,34 @@ check('  ...which is what the Search subtab strip depends on',
   /id="search-subtabs"/.test(html)
     ? 'the strip is hidden in the markup and un-hidden by switchView alone'
     : 'the strip is gone from the markup');
+
+// The phone menu (Oct 2026): one dropdown in place of tabs that scrolled off
+// the edge. It opens the same .nav-tab buttons, so switchView stays the only
+// thing that decides which view is active, and the menu names it.
+{
+  const views = (html.match(/<div class="nav-views" id="nav-views">([\s\S]*?)<\/div>/) || [])[1] || '';
+  check('the phone menu holds every view tab',
+    ['search', 'checklist', 'rainbow', 'market', 'community', 'inventory'].every(v => views.includes(`data-view="${v}"`)));
+  check('  ...but not the bell or the gear, which stay on the bar',
+    !/alerts-tab|settings-tab/.test(views) && /alerts-tab/.test(html) && /settings-tab/.test(html));
+  const sv = app.slice(app.indexOf('function switchView('), app.indexOf('function switchView(') + 1500);
+  check('  ...and switchView names the view on the button and closes the menu',
+    /_setNavMenuLabel\(activeTab\)/.test(sv) && /toggleNavMenu\(false\)/.test(sv));
+}
+
+// Search home (Oct 2026): the logo goes home, a search puts the market panel
+// away (and "back to search" brings it back), and the box offers typeahead.
+{
+  check('the logo links to the home page', /<a href="\/" class="header-logo-link"[^>]*><img src="logo\.png"/.test(html));
+  const hide = app.slice(app.indexOf('function _hideHomeContent('), app.indexOf('function _hideHomeContent(') + 400);
+  check('every search hides the market panel, and going back shows it',
+    /document\.body\.classList\.add\('has-searched'\)/.test(hide)
+    && /document\.body\.classList\.remove\('has-searched'\)/.test(app)
+    && /body\.has-searched #market-pulse \{ display: none/.test(css));
+  check('the search box has its typeahead list, for sold and for sale alike',
+    /id="search-suggest"/.test(html) && /aria-controls="search-suggest"/.test(html)
+    && /\/api\/player-cards\?player=/.test(app) && !/currentMode[^\n]{0,40}_ssUpdate/.test(app));
+}
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
