@@ -81,7 +81,7 @@ if (!script) {
 // is reporting, not logic.
 const body = script.split('# Now the numbers')[0];
 
-function simulate(edgeResponds) {
+function simulate(edgeResponds, directResponds = edgeResponds) {
   const stub = [
     // Stand in for the network. Everything else is the real script.
     //
@@ -90,10 +90,12 @@ function simulate(edgeResponds) {
     // while the old build was still serving. A stub that ignored -o would
     // silently test a script nobody runs.
     `curl() {`,
-    `  local out=""; local prev=""`,
+    `  local out=""; local prev=""; local body=${JSON.stringify(edgeResponds)}`,
     `  for a in "$@"; do if [ "$prev" = "-o" ]; then out="$a"; fi; prev="$a"; done`,
-    `  if [ -n "$out" ]; then printf '%s' ${JSON.stringify(edgeResponds)} > "$out"`,
-    `  else printf '%s' ${JSON.stringify(edgeResponds)}; fi`,
+    // The Worker's workers.dev address answers for itself, past the bot wall.
+    `  case "$*" in *workers.dev*) body=${JSON.stringify(directResponds)};; esac`,
+    `  if [ -n "$out" ]; then printf '%s' "$body" > "$out"`,
+    `  else printf '%s' "$body"; fi`,
     `}`,
     'sleep() { :; }',
     'seq() { command seq 1 2; }',   // two attempts, not twenty
@@ -183,6 +185,22 @@ function simulate(edgeResponds) {
   check('  ...but says nothing extra when the deploy verified',
     good.code === 0 && !/actually returned/.test(good.out),
     good.out.trim().slice(0, 80));
+}
+
+// ---- a challenged check asks the Worker directly ----------------------------
+// Bot Fight Mode challenged this check on every deploy (Oct 2026): two minutes
+// of retries and a red run with the site fine. The Worker's workers.dev address
+// is the same deploy without the zone's bot wall, so a challenge sends the
+// check there, and a matching marker there passes.
+{
+  const CH = '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title></head></html>';
+  const r = simulate(CH, '{"sha":"SHA123","ref":"main"}');
+  check('a challenged check is verified at workers.dev instead, and passes',
+    r.code === 0 && /bot challenge; asking the Worker at workers.dev/.test(r.out) && /serving SHA123/.test(r.out),
+    `exit ${r.code}: ${r.out.trim().slice(0, 160)}`);
+  const stale = simulate(CH, '{"sha":"OLDSHA","ref":"main"}');
+  check('  ...and an old build there still fails the run',
+    stale.code !== 0 && /still serving OLDSHA/.test(stale.out), `exit ${stale.code}`);
 }
 
 // ---- and a bot challenge is called a bot challenge ------------------------
