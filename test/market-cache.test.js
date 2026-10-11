@@ -190,6 +190,20 @@ const check = (label, ok, detail) => {
     roster.body.available === true && roster.body.players.length > 12,
     `${(roster.body.players || []).length} players`);
 
+  // ---- the main search's typeahead: a player's most-sold cards -----------
+  const cards = await call('/api/player-cards?player=' + encodeURIComponent('player 7'));
+  check('a rostered player\'s top cards come back as ready searches',
+    cards.body.available === true && cards.body.player === 'Player 7'
+    && cards.body.cards.length === 1 && cards.body.cards[0].query === '2020 Prizm Player 7 #7'
+    && cards.body.cards[0].sales > 0, JSON.stringify(cards.body).slice(0, 160));
+  queries = 0;
+  await call('/api/player-cards?player=Player%207');
+  check('  ...cached, so typing the name twice costs no second query', queries === 0, `${queries} queries`);
+  const stranger = await call('/api/player-cards?player=' + encodeURIComponent("anything'; drop table"));
+  check('  ...and a name off the roster is answered empty, never queried or cached',
+    stranger.body.player === null && stranger.body.cards.length === 0
+    && ![...store.keys()].some(k => k.includes('drop table')));
+
   // ---- ten visitors on one cold view cost one query ---------------------
   store.clear();
   queries = 0;
