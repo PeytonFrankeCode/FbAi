@@ -93,13 +93,47 @@ function teamStripper(teamCounts, personTeam) {
     .map(([t]) => t).sort((a, b) => b.length - a.length);
   const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s.,\'’-]+');
   const phraseRe = new RegExp(`(?<![a-z0-9])(?:${phrases.map(esc).join('|')})(?![a-z0-9])`, 'gi');
+  // One pattern of every team phrase, tried against all 800k checklist names,
+  // took over five minutes of every deploy. A phrase can only match where a
+  // word of the name begins with the phrase's leading letters, so each name is
+  // tried against just the phrases that could match it, in the same order:
+  // the same replacements, without walking a thousand alternatives each time.
+  const lead = (t) => (t.match(/^[a-z0-9]+/) || [''])[0];
+  const leads = phrases.map(lead);
+  const byLead = new Map();
+  for (const [i, t] of phrases.entries()) {
+    const k = leads[i];
+    if (!byLead.has(k)) byLead.set(k, []);
+    byLead.get(k).push(t);
+  }
+  const leadLens = [...new Set([...byLead.keys()].map(k => k.length))].filter(n => n > 0);
+  const anyLead = byLead.has('');          // a phrase that opens on punctuation: no shortcut
+  const reFor = new Map();
+  const phrasesFor = (given) => {
+    if (anyLead) return phraseRe;
+    const found = new Set();
+    for (const w of given.toLowerCase().split(/[^a-z0-9]+/)) {
+      for (const n of leadLens) if (w.length >= n && byLead.has(w.slice(0, n))) found.add(w.slice(0, n));
+    }
+    if (!found.size) return null;
+    const key = [...found].sort().join(' ');
+    let re = reFor.get(key);
+    if (!re) {
+      const keep = phrases.filter((t, i) => found.has(leads[i]));
+      re = new RegExp(`(?<![a-z0-9])(?:${keep.map(esc).join('|')})(?![a-z0-9])`, 'gi');
+      reFor.set(key, re);
+    }
+    return re;
+  };
   const nickRe = new RegExp(NFL_NICK_RE.source, 'gi');
   // The player with every team taken out, "/"-separated players kept apart;
   // null when nothing but a team (and team-card words) was there.
   return function cleanPlayer(raw) {
     const given = String(raw);
     // "Joe Theismann Go Irish", "Barry Sanders Go Cowboys!!": a cheer, not a name.
-    const t = given.replace(/(?<![a-z])go\s+[a-z]+!*/gi, ' ').replace(phraseRe, ' ').replace(nickRe, ' ');
+    const cheered = given.replace(/(?<![a-z])go\s+[a-z]+!*/gi, ' ');
+    const re = phrasesFor(cheered);
+    const t = (re ? cheered.replace(re, ' ') : cheered).replace(nickRe, ' ');
     if (t === given) return given;          // no team in it: left exactly as it was
     const parts = t.split('/').map(part => part.replace(/\s+/g, ' ').replace(/^[\s,;:&+-]+|[\s,;:&+-]+$/g, '').trim());
     const kept = parts.filter(x => norm(x).split(' ').some(w => w && !TEAM_CARD_WORDS.has(w) && /[a-z]/.test(w)));
