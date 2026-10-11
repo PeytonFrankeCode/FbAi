@@ -5995,18 +5995,82 @@ document.addEventListener('click', (e) => {
   if (bar && !bar.contains(e.target)) toggleNavMenu(false);
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') toggleNavMenu(false); });
-// A swipe toward the left edge closes the drawer, as it does in apps.
+// Swipe to open and close the drawer, as in apps (owner, Oct 2026): a swipe
+// to the right from the left side of the screen pulls it out, a swipe to the
+// left pushes it back. It follows the finger, then settles open or shut by how
+// far and how fast it was moved.
+//
+// What it must not take: the vertical scroll (decided in the first few pixels),
+// anything that scrolls sideways itself (tile rows, tables, charts), form
+// fields and sliders, the outer 20px where iOS Safari swipes back, and touches
+// while a dialog is up.
 (function navSwipe() {
+  const bar = document.querySelector('.nav-bar');
   const drawer = document.getElementById('nav-views');
-  if (!drawer) return;
-  let x0 = null, y0 = 0;
-  drawer.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-  drawer.addEventListener('touchend', (e) => {
-    if (x0 == null) return;
-    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
-    x0 = null;
-    if (dx < -60 && Math.abs(dx) > Math.abs(dy) * 1.5) toggleNavMenu(false);
+  const backdrop = document.getElementById('nav-backdrop');
+  if (!bar || !drawer || !backdrop) return;
+  const EDGE_SKIP = 20;        // iOS back gesture
+  const OPEN_ZONE = 0.5;       // an opening swipe starts in the left half
+  const DECIDE = 10;           // px before the direction is decided
+  let g = null;
+
+  const scrollsSideways = (el) => {
+    for (; el && el !== document.body; el = el.parentElement) {
+      if (el.scrollWidth > el.clientWidth + 1) {
+        const ox = getComputedStyle(el).overflowX;
+        if (ox === 'auto' || ox === 'scroll') return true;
+      }
+    }
+    return false;
+  };
+  const dialogUp = () => !!document.querySelector(
+    '.settings-overlay:not(.hidden), .login-overlay:not(.hidden), .modal:not(.hidden), [role="dialog"]:not(.hidden):not(#sports-picker)');
+
+  document.addEventListener('touchstart', (e) => {
+    g = null;
+    if (e.touches.length !== 1 || !_navIsDrawer()) return;
+    const t = e.touches[0];
+    const open = bar.classList.contains('menu-open');
+    if (!open) {
+      if (t.clientX < EDGE_SKIP || t.clientX > window.innerWidth * OPEN_ZONE) return;
+      if (e.target.closest('input, textarea, select, canvas, [contenteditable], .no-swipe') || scrollsSideways(e.target)) return;
+      if (dialogUp()) return;
+    }
+    g = { open, x0: t.clientX, y0: t.clientY, t0: e.timeStamp, dx: 0, w: drawer.offsetWidth || 300, live: false };
   }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!g) return;
+    const t = e.touches[0];
+    const dx = t.clientX - g.x0, dy = t.clientY - g.y0;
+    if (!g.live) {
+      if (Math.abs(dx) < DECIDE && Math.abs(dy) < DECIDE) return;
+      // Mostly sideways, and the way that moves the drawer, or it is a scroll.
+      if (Math.abs(dx) < Math.abs(dy) * 1.3 || (g.open ? dx > 0 : dx < 0)) { g = null; return; }
+      g.live = true;
+      bar.classList.add('nav-dragging');
+    }
+    e.preventDefault();
+    g.dx = dx;
+    const shown = g.open ? Math.min(g.w, Math.max(0, g.w + dx)) : Math.min(g.w, Math.max(0, dx));
+    drawer.style.transform = `translateX(${shown - g.w}px)`;
+    backdrop.style.opacity = String(shown / g.w);
+  }, { passive: false });
+
+  const settle = (e) => {
+    if (!g) return;
+    const was = g; g = null;
+    if (!was.live) return;
+    const moved = Math.abs(was.dx), speed = moved / Math.max(1, e.timeStamp - was.t0);
+    const commit = moved > was.w * 0.35 || speed > 0.5;
+    const wantOpen = was.open ? !commit : commit;
+    bar.classList.remove('nav-dragging');
+    drawer.style.transform = '';
+    backdrop.style.opacity = '';
+    if (wantOpen !== was.open) toggleNavMenu(wantOpen);
+  };
+  document.addEventListener('touchend', settle, { passive: true });
+  document.addEventListener('touchcancel', settle, { passive: true });
 })();
 
 function switchView(view) {

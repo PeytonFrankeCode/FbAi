@@ -180,8 +180,23 @@ check('  ...a drawer that slides in from the left over a backdrop',
   && /\.nav-bar\.menu-open \.nav-backdrop \{ opacity: 1; pointer-events: auto; \}/.test(css));
 check('  ...that locks the page under it, closes on a swipe, and respects reduced motion',
   /classList\.toggle\('nav-locked'/.test(app) && /html\.nav-locked, html\.nav-locked body \{ overflow: hidden; \}/.test(css)
-  && /dx < -60/.test(app) && /prefers-reduced-motion: reduce\) \{\n  \.nav-views/.test(css));
+  && /prefers-reduced-motion: reduce\) \{\n  \.nav-views/.test(css));
 
+
+// Swipe (owner, Oct 2026): right from the left half opens, left closes, the
+// drawer following the finger. It leaves the iOS back edge, vertical scrolls,
+// sideways-scrolling rows and form fields alone.
+{
+  const sw = app.slice(app.indexOf('(function navSwipe() {'), app.indexOf('function switchView(view) {'));
+  check('the drawer opens and closes with a swipe that follows the finger',
+    /document\.addEventListener\('touchmove'[\s\S]*\{ passive: false \}/.test(sw)
+    && /drawer\.style\.transform = `translateX\(\$\{shown - g\.w\}px\)`/.test(sw)
+    && /toggleNavMenu\(wantOpen\)/.test(sw)
+    && /\.nav-bar\.nav-dragging \.nav-views \{ visibility: visible; transition: none; \}/.test(css));
+  check('  ...and leaves the back edge, scrolling, sideways rows and fields alone',
+    /const EDGE_SKIP = 20;/.test(sw) && /Math\.abs\(dx\) < Math\.abs\(dy\) \* 1\.3/.test(sw)
+    && /scrollsSideways\(e\.target\)/.test(sw) && /input, textarea, select/.test(sw));
+}
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

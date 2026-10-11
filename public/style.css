@@ -9579,6 +9579,11 @@ body[data-sport="baseball"] .rainbow-tile-img-placeholder {
 .nav-views .nav-ico { display: block; flex-shrink: 0; opacity: 0.85; }
 .nav-views > .nav-tab.active .nav-ico { opacity: 1; }
 
+/* While a finger drags the drawer it follows the finger exactly: no easing,
+   visible from the first pixel, the pages already in place. */
+.nav-bar.nav-dragging .nav-views { visibility: visible; transition: none; }
+.nav-bar.nav-dragging .nav-backdrop { transition: none; pointer-events: none; }
+.nav-bar.nav-dragging .nav-views > .nav-tab { opacity: 1; transform: none; transition: none; }
 /* The page under an open drawer stays put. */
 html.nav-locked, html.nav-locked body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
