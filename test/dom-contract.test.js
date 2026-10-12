@@ -267,5 +267,21 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
     && /initMarketView\(\);\n      _mkSeatAd\(\);/.test(app));
 }
 
+// The login screen (owner, Oct 2026): form on the left, a drawn showcase on
+// the right; phones stack the art on top as a short banner.
+{
+  const box = html.slice(html.indexOf('<div class="login-box">'), html.indexOf('<!-- Search top-tab subtab strip'));
+  check('the login box splits into a form column and a showcase panel',
+    /<div class="login-main">/.test(box) && /<aside class="login-showcase" aria-hidden="true">/.test(box)
+    && box.indexOf('login-main') < box.indexOf('login-showcase')
+    && ['login-heading', 'login-subtext', 'social-auth', 'login-form', 'auth-username', 'auth-password', 'auth-confirm', 'auth-email', 'auth-submit-btn', 'login-error', 'login-toggle-link']
+      .every(id => box.indexOf(`id="${id}"`) > box.indexOf('login-main') && box.indexOf(`id="${id}"`) < box.indexOf('login-showcase')));
+  check('  ...side by side on wide screens, art banner on top for phones',
+    /grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1\.05fr\);/.test(css)
+    && /@media \(max-width: 760px\) \{\n  \.login-box \{ grid-template-columns: 1fr;[^}]*\}\n  \.login-showcase \{ order: -1;/.test(css)
+    && /\.mobile-layout \.login-showcase \{ order: -1;/.test(css)
+    && /@media \(prefers-reduced-motion: reduce\) \{\n  \.ls-c3, \.ls-chart, \.ls-shine \{ animation: none; \}/.test(css));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
