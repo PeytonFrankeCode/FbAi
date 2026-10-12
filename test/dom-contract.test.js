@@ -255,5 +255,17 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
     && /\.cl-ad-row:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
 }
 
+// The Market tab ad (owner, Oct 2026): a strip under the index chart, one per
+// visit, put back after every redraw, asked of Google only when on screen.
+{
+  const f = app.slice(app.indexOf('function _mkSeatAd('), app.indexOf('function _mkSeatAd(') + 1100);
+  check('the Market tab carries one strip under the index chart',
+    /MARKET_AD_SLOT = '1900496256'/.test(app) && /<\/div>\n\n    <div id="market-ad-slot" class="market-ad-slot"><\/div>\n\n    <div class="market-basket"/.test(app)
+    && /_mkRenderChart\(data\);\n  _mkSeatAd\(\);/.test(app) && /if \(_adFree\(\)\) return;/.test(f));
+  check('  ...asked of Google once, and only once the tab is on screen',
+    /if \(!_mkAd\.asked && slot\.offsetWidth > 0\)/.test(f) && (f.match(/\.push\(\{\}\)/g) || []).length === 1
+    && /initMarketView\(\);\n      _mkSeatAd\(\);/.test(app));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

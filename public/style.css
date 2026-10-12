@@ -9714,3 +9714,14 @@ body.has-searched #market-pulse { display: none !important; }
 @media (max-width: 760px) { .cl-ad .cl-ad-ins { max-width: 320px; height: 100px; } }
 .mobile-layout .cl-ad .cl-ad-ins { zoom: 1.1765; }
 .cl-ad-row:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
+
+/* ---- Market tab ad: a strip under the index chart ---- */
+.market-ad { max-width: 760px; margin: 0.9rem auto; text-align: center; }
+.market-ad .ad-label {
+  margin: 0 0 0.3rem; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.market-ad .market-ad-ins { display: block; width: 100%; max-width: 728px; height: 90px; margin: 0 auto; }
+@media (max-width: 760px) { .market-ad .market-ad-ins { max-width: 320px; height: 100px; } }
+.mobile-layout .market-ad .market-ad-ins { zoom: 1.1765; }
+.market-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }

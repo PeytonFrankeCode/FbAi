@@ -6458,6 +6458,7 @@ function switchView(view) {
     if (marketView) {
       marketView.classList.remove('hidden');
       initMarketView();
+      _mkSeatAd();
     }
   } else if (view === 'stats') {
     if (statsView) {
@@ -6972,6 +6973,8 @@ async function loadMarketIndex() {
       <p class="chart-readout-hint">Tap or drag along the chart to see each day's level.</p>
     </div>
 
+    <div id="market-ad-slot" class="market-ad-slot"></div>
+
     <div class="market-basket" id="market-basket">
       <div class="market-basket-head">
         <span class="market-basket-title">What's driving it</span>
@@ -6991,8 +6994,34 @@ async function loadMarketIndex() {
   `;
 
   _mkRenderChart(data);
+  _mkSeatAd();
   loadMarketBasket(basketP, seq);
   _mkPrefetch(days, player);
+}
+
+// The Market tab ad (owner, Oct 2026): a strip under the index chart. The view
+// redraws on every period or player change, so one strip per visit is kept and
+// put back in its slot after each redraw; Google is asked once, and only when
+// the tab is on screen, since a hidden slot cannot be filled.
+const MARKET_AD_SLOT = '1900496256';
+let _mkAd = { el: null, asked: false };
+function _mkSeatAd() {
+  if (_adFree()) return;
+  const slot = document.getElementById('market-ad-slot');
+  if (!slot) return;
+  if (!_mkAd.el) {
+    const el = document.createElement('aside');
+    el.className = 'market-ad';
+    el.setAttribute('aria-label', 'Advertisement');
+    el.innerHTML = '<p class="ad-label">Advertisement</p>'
+      + `<ins class="adsbygoogle market-ad-ins" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${MARKET_AD_SLOT}" data-ad-format="horizontal"></ins>`;
+    _mkAd.el = el;
+  }
+  if (_mkAd.el.parentElement !== slot) slot.appendChild(_mkAd.el);
+  if (!_mkAd.asked && slot.offsetWidth > 0) {
+    _mkAd.asked = true;
+    try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the strip collapses */ }
+  }
 }
 
 // The basket is drawn separately from the index so a slow constituent query
