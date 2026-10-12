@@ -227,5 +227,13 @@ check('  ...that locks the page under it, closes on a swipe, and respects reduce
     /\.results-ad \{\n  grid-column: 1 \/ -1;/.test(css) && /\.results-ad:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
 }
 
+// The front panel (owner, Oct 2026): Deals right now is off it, and the total
+// value card counts up to its number, says its period, and carries ornament
+// that draws no data.
+check('Deals right now is off the front page', !/parts\.push\('<div id="mp-deals"><\/div>'\)/.test(app) && !/\n  _mpLoadDeals\(/.test(app));
+check('  ...and the total value counts up, names its period, honours reduced motion',
+  /_mpCountUp\(body\.querySelector\('\.mp-figure-hero \.mp-figure-n'\)\)/.test(app) && /mp-hero-period/.test(app)
+  && /prefers-reduced-motion: reduce\)'\)\.matches/.test(app) && /\.mp-figure-hero::after \{ animation: none; \}/.test(css));
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

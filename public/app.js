@@ -1201,6 +1201,38 @@ renderRecentSearches();
 // data behind it — an empty stats panel is worse than no stats panel.
 const _mpLoaded = {}; // days -> payload, so switching back to a tab is instant
 
+// The total-value card's decoration: a fanned stack of three trading cards,
+// faint, behind the number. Ornament only; it draws no data.
+const MP_HERO_ART = '<svg class="mp-hero-art" viewBox="0 0 160 120" aria-hidden="true" focusable="false">'
+  + [[-14, 34], [0, 62], [14, 90]].map(([r, x]) =>
+    `<g transform="rotate(${r} ${x} 60)"><rect x="${x - 22}" y="22" width="44" height="62" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/>`
+    + `<rect x="${x - 16}" y="28" width="32" height="34" rx="2" fill="currentColor" opacity=".35"/>`
+    + `<line x1="${x - 16}" y1="70" x2="${x + 12}" y2="70" stroke="currentColor" stroke-width="2"/>`
+    + `<line x1="${x - 16}" y1="76" x2="${x + 4}" y2="76" stroke="currentColor" stroke-width="2"/></g>`).join('')
+  + '</svg>';
+
+// The headline number rolls up to its value, from wherever it last stood, so a
+// period switch reads as the market moving. Off under reduced motion.
+let _mpHeroShown = 0;
+function _mpCountUp(el) {
+  if (!el) return;
+  const to = Number(el.dataset.count) || 0;
+  const from = _mpHeroShown;
+  _mpHeroShown = to;
+  let reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+  if (reduce || from === to || typeof requestAnimationFrame !== 'function') { el.textContent = _mpMoney(to); return; }
+  const t0 = performance.now(), ms = 900;
+  const step = (now) => {
+    if (!el.isConnected) return;
+    const k = Math.min(1, (now - t0) / ms);
+    const eased = 1 - Math.pow(1 - k, 3);
+    el.textContent = _mpMoney(from + (to - from) * eased);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 function _mpMoney(n) {
   return '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
 }
@@ -1352,7 +1384,9 @@ async function loadMarketPulse(days, attempt = 0) {
   parts.push(
     // Total value is the headline (owner, Oct 2026); the other two sit under it.
     '<div class="mp-figures">' +
-    '<div class="mp-figure mp-figure-hero"><span class="mp-figure-k">Total value</span><span class="mp-figure-n">' + _mpMoney(data.totalValue) + '</span></div>' +
+    '<div class="mp-figure mp-figure-hero">' + MP_HERO_ART +
+      '<span class="mp-figure-k">Total value <span class="mp-hero-period">' + (period === 365 ? 'Last year' : `Last ${period} days`) + '</span></span>' +
+      '<span class="mp-figure-n" data-count="' + Math.round(Number(data.totalValue) || 0) + '">' + _mpMoney(data.totalValue) + '</span></div>' +
     '<div class="mp-figure"><span class="mp-figure-n">' + (data.pricedSales || 0).toLocaleString('en-US') + '</span><span class="mp-figure-k">sales tracked</span></div>' +
     '<div class="mp-figure"><span class="mp-figure-n">' + _mpMoney(data.avgPrice) + '</span><span class="mp-figure-k">average sale</span></div>' +
     '</div>');
@@ -1386,9 +1420,9 @@ async function loadMarketPulse(days, attempt = 0) {
   const rows = (title, sub, list, render) =>
     rowsFor(title, sub, BOARD_OF[title], list, render);
 
-  // Deals right now: filled in from /api/deals, which does not depend on the
-  // period and must never hold the rest of the panel up.
-  parts.push('<div id="mp-deals"></div>');
+  // Deals right now came off the front page (owner, Oct 2026: it made the
+  // panel feel cluttered). /api/deals and _mpLoadDeals stay, unused, so it can
+  // come back; nothing builds deals while nothing asks.
 
   parts.push(tiles('Most expensive', label, data.priciest, (r) =>
     '<a class="mp-tile" href="' + escHtml(epnUrl(r.itemUrl)) + '" target="_blank" rel="noopener">' +
@@ -1432,7 +1466,7 @@ async function loadMarketPulse(days, attempt = 0) {
     '</button>'));
 
   body.innerHTML = parts.join('');
-  _mpLoadDeals(thumb, head, HOME_N);
+  _mpCountUp(body.querySelector('.mp-figure-hero .mp-figure-n'));
 
   // Tiles and rows run that search — the panel is a way in, not a dead end.
   body.querySelectorAll('[data-query]').forEach(btn => {
