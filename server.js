@@ -96,6 +96,7 @@ const { PHOTO_SLAB_TABLE, PHOTO_SLAB_MIN_CENTS, PHOTO_SLAB_LABEL, photoPricedSla
 // all ambiguous (player, number) keys in the catalogue are exactly that.
 const { cardKind: _cardKind, printRun: _printRun, kindSql: _kindSql, stripPop: _stripPop } = require('./card-kind');
 const EST = require('./estimator-core');
+const WEBPUSH = require('./web-push-core');
 
 // cardKind(), in SQL.
 //
@@ -15286,7 +15287,7 @@ function _alertFinds(alert, listings, now = Date.now()) {
   return { finds, next };
 }
 
-async function checkAlerts({ now = Date.now(), fetchListings = _newestListings } = {}) {
+async function checkAlerts({ now = Date.now(), fetchListings = _newestListings, sendPush = sendPushToUser } = {}) {
   if (USE_MOCK_FORSALE && fetchListings === _newestListings) return { ok: false, reason: 'eBay not configured' };
   await _migrateAlerts();
   // Users whose oldest check is due, oldest first. The metadata can be a
@@ -15296,7 +15297,7 @@ async function checkAlerts({ now = Date.now(), fetchListings = _newestListings }
     .sort((a, b) => ((a.metadata && a.metadata.lc) || 0) - ((b.metadata && b.metadata.lc) || 0));
   const users = loadServerUsers();
   const byQuery = new Map();  // two people tracking one card: one eBay call
-  let budget = ALERTS_PER_TICK, checked = 0, found = 0, emailed = 0;
+  let budget = ALERTS_PER_TICK, checked = 0, found = 0, emailed = 0, pushed = 0;
   for (const k of keys) {
     if (budget <= 0) break;
     const username = k.name.slice(ALERT_USER_PREFIX.length);
@@ -15313,6 +15314,7 @@ async function checkAlerts({ now = Date.now(), fetchListings = _newestListings }
           found += finds.length;
           const email = (users[username] || {}).email;
           if (email && await sendAlertEmail({ ...next, email }, finds)) { emailed++; next.lastEmailAt = new Date(now).toISOString(); }
+          try { if (await sendPush(username, _alertPushMessage(next, finds))) pushed++; } catch (err) { console.error('[Push] alert push failed:', err && err.message); }
         }
         updated.set(alert.id, next);
         checked++;
@@ -15332,8 +15334,8 @@ async function checkAlerts({ now = Date.now(), fetchListings = _newestListings }
     });
     await _saveUserAlerts(username, list);
   }
-  console.log(`[Alerts] checked ${checked} alert(s): ${found} new listing(s), ${emailed} email(s)`);
-  return { ok: true, checked, users: keys.length, found, emailed };
+  console.log(`[Alerts] checked ${checked} alert(s): ${found} new listing(s), ${emailed} email(s), ${pushed} push(es)`);
+  return { ok: true, checked, users: keys.length, found, emailed, pushed };
 }
 
 async function sendAlertEmail(alert, newListings) {
@@ -15358,6 +15360,137 @@ async function sendAlertEmail(alert, newListings) {
     </div>`;
   return sendEmail({ to: alert.email, subject: `Just listed: ${alert.label}`, html });
 }
+
+// ---- Phone notifications for alerts (Web Push) ----
+// An alert's finds go to every device the account turned notifications on
+// for, as well as by email. web-push-core.js does the signing and encryption.
+//
+// The server's VAPID keys come from VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY when
+// set; otherwise they are made once and kept in KV, so push works with no
+// setup. Each subscription remembers the key it was made with: one made with
+// another key (keys rotated, or two isolates racing to make the first pair)
+// would be refused by the push service, so it is dropped instead of sent, and
+// the device subscribes again the next time the alerts panel opens.
+const PUSH_USER_PREFIX = 'push:user:';
+const PUSH_KEYS_RECORD = 'push:vapid';
+const PUSH_MAX_DEVICES = 8;
+let _vapid = null;
+async function _vapidKeys() {
+  if (_vapid) return _vapid;
+  if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    _vapid = WEBPUSH.vapidFromEnv(process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+    return _vapid;
+  }
+  let rec = await recordGet(PUSH_KEYS_RECORD);
+  if (!rec || !rec.publicKey || !rec.privateJwk) {
+    rec = { ...(await WEBPUSH.generateVapidKeys()), createdAt: new Date().toISOString() };
+    await recordPut(PUSH_KEYS_RECORD, rec);
+  }
+  _vapid = { publicKey: rec.publicKey, privateJwk: rec.privateJwk };
+  return _vapid;
+}
+const _pushSubject = () => process.env.VAPID_SUBJECT || (process.env.SITE_URL || 'https://thecardhuddle.com').replace(/\/$/, '');
+async function _pushSubs(username) {
+  const rec = await recordGet(PUSH_USER_PREFIX + username);
+  return (rec && Array.isArray(rec.subs)) ? rec.subs : [];
+}
+async function _savePushSubs(username, subs) {
+  if (!subs.length) return recordDelete(PUSH_USER_PREFIX + username);
+  await recordPut(PUSH_USER_PREFIX + username, { username, subs });
+}
+
+// Send one message to every device of an account; drops the ones that are
+// gone. Resolves to how many devices it reached.
+async function sendPushToUser(username, message, { fetchFn } = {}) {
+  const subs = await _pushSubs(username);
+  if (!subs.length) return 0;
+  const vapid = await _vapidKeys();
+  let sent = 0;
+  const keep = [];
+  for (const sub of subs) {
+    if (sub.vapidKey && sub.vapidKey !== vapid.publicKey) continue;
+    try {
+      const r = await WEBPUSH.sendPush(sub, message, vapid, { subject: _pushSubject(), ...(fetchFn ? { fetchFn } : {}) });
+      if (r.ok) sent++;
+      if (!r.gone) keep.push(sub);
+      else console.log(`[Push] dropped a gone subscription for ${username} (${r.status})`);
+    } catch (err) {
+      keep.push(sub);
+      console.error('[Push] send failed:', err && err.message);
+    }
+  }
+  if (keep.length !== subs.length) await _savePushSubs(username, keep);
+  return sent;
+}
+
+// What a phone shows for an alert's finds.
+function _alertPushMessage(alert, finds) {
+  const n = finds.length;
+  const prices = finds.map(f => parseFloat(f.price)).filter(Number.isFinite);
+  const low = prices.length ? Math.min(...prices) : null;
+  const money = (v) => '$' + (v >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2).replace(/\.00$/, ''));
+  const body = n === 1
+    ? `${low != null ? money(low) + ' · ' : ''}${String(finds[0].title || '').slice(0, 110)}`
+    : `${n} new listings on eBay${low != null ? `, from ${money(low)}` : ''}`;
+  return {
+    title: `Just listed: ${String(alert.label || alert.query).slice(0, 80)}`,
+    body,
+    url: '/?view=alerts',
+    tag: `alert-${alert.id}`,
+    icon: '/icon-192.png',
+    image: n === 1 && finds[0].imageUrl ? finds[0].imageUrl : undefined,
+  };
+}
+
+app.get('/api/push/key', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    res.json({ publicKey: (await _vapidKeys()).publicKey });
+  } catch (err) {
+    console.error('[Push] keys unavailable:', err && err.message);
+    res.status(503).json({ error: 'Notifications are unavailable right now' });
+  }
+});
+
+// Turn notifications on for this device. Same endpoint again just refreshes it.
+app.post('/api/push/subscribe', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Sign in to get notifications' });
+  const sub = WEBPUSH.cleanSubscription(req.body && req.body.subscription);
+  if (!sub) return res.status(400).json({ error: 'That browser subscription is not one we can send to' });
+  const vapid = await _vapidKeys();
+  const others = (await _pushSubs(username)).filter(s => s.endpoint !== sub.endpoint);
+  const ua = String(req.headers['user-agent'] || '').slice(0, 160);
+  const next = [{ ...sub, vapidKey: vapid.publicKey, ua, createdAt: new Date().toISOString() }, ...others].slice(0, PUSH_MAX_DEVICES);
+  await _savePushSubs(username, next);
+  res.json({ ok: true, devices: next.length });
+});
+
+app.post('/api/push/unsubscribe', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not signed in' });
+  const endpoint = String((req.body && req.body.endpoint) || '');
+  const subs = await _pushSubs(username);
+  const next = subs.filter(s => s.endpoint !== endpoint);
+  if (next.length !== subs.length) await _savePushSubs(username, next);
+  res.json({ ok: true, devices: next.length });
+});
+
+// "Send a test" in the alerts panel. Once every 20 seconds per account.
+const _pushTestAt = new Map();
+app.post('/api/push/test', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Not signed in' });
+  const last = _pushTestAt.get(username) || 0;
+  if (Date.now() - last < 20000) return res.status(429).json({ error: 'Give it a few seconds' });
+  _pushTestAt.set(username, Date.now());
+  const sent = await sendPushToUser(username, {
+    title: 'Notifications are on 🏈',
+    body: "We'll ping you here when a card you track gets listed.",
+    url: '/?view=alerts', tag: 'push-test', icon: '/icon-192.png',
+  });
+  res.json({ ok: sent > 0, sent });
+});
 
 // On Node (local/VPS) we self-schedule; on Cloudflare Workers the cron calls
 // checkAlerts() every tick instead.
@@ -16190,6 +16323,7 @@ app.post('/api/account/delete', async (req, res) => {
     }
     for (const pid of photoIds) { try { await deleteUserPhoto(key, pid); } catch {} }
     await _userSyncDelete(key);
+    try { await recordDelete(PUSH_USER_PREFIX + key); } catch {}
     removed.push('collection, inventory, watchlist and portfolio history', `${photoIds.size} card photos`);
 
     // 2. Community posts, plus this user's comments, reactions and reports on
@@ -18803,7 +18937,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

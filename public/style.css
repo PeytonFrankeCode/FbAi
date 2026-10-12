@@ -10023,3 +10023,42 @@ html.install-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .install-hint, .install-box, .nav-install { animation: none; transition: none; }
 }
+
+/* ---- Alerts panel: phone notifications row ---- */
+.push-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  margin: 0 0 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(20, 83, 45, 0.18));
+  border: 1px solid rgba(74, 222, 128, 0.28);
+}
+.push-row.hidden { display: none; }
+.push-ico { display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 50%; flex-shrink: 0; background: var(--bg-primary); color: var(--text-secondary); }
+.push-ico.on { background: var(--accent); color: var(--accent-on); }
+.push-text { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
+.push-text strong { font-size: 0.88rem; color: var(--text-primary); }
+.push-text span { font-size: 0.76rem; line-height: 1.4; color: var(--text-secondary); }
+.push-btns { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.push-btn {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+}
+.push-btn.ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-primary); }
+.push-btn.ghost:hover { color: var(--text-primary); border-color: var(--accent); }
+.push-btn:disabled { opacity: 0.6; cursor: wait; }
+@media (max-width: 480px) {
+  .push-row { flex-wrap: wrap; }
+  .push-btns { width: 100%; justify-content: flex-end; }
+}
