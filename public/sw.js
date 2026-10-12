@@ -10,7 +10,7 @@
  *
  * Bump VERSION to force a clean cache swap on the next visit.
  */
-const VERSION = 'be054d642156f';
+const VERSION = 'bc2dd14049270';
 const SHELL_CACHE = `chuddle-shell-${VERSION}`;
 const DATA_CACHE = `chuddle-data-${VERSION}`;
 
@@ -171,4 +171,41 @@ self.addEventListener('message', (event) => {
     })());
     return;
   }
+});
+
+// ---- Phone notifications (card alerts) ----
+// The server encrypts a small JSON message ({ title, body, url, tag, icon,
+// image }); the browser has already decrypted it by the time it lands here.
+self.addEventListener('push', (event) => {
+  let msg = {};
+  try { msg = event.data ? event.data.json() : {}; } catch (_) { msg = { body: event.data ? event.data.text() : '' }; }
+  const title = msg.title || 'The Card Huddle';
+  const opts = {
+    body: msg.body || '',
+    icon: msg.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: msg.tag || undefined,
+    renotify: !!msg.tag,
+    data: { url: msg.url || '/?view=alerts' },
+  };
+  if (msg.image) opts.image = msg.image;
+  // Every push must show something, or browsers revoke the permission.
+  event.waitUntil(self.registration.showNotification(title, opts));
+});
+
+// Tapping it opens (or focuses) the site on the alert's page.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL((event.notification.data && event.notification.data.url) || '/', self.location.origin);
+  if (target.origin !== self.location.origin) return;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) {
+      if (new URL(w.url).origin === self.location.origin && 'focus' in w) {
+        try { await w.navigate(target.href); } catch (_) {}
+        return w.focus();
+      }
+    }
+    return self.clients.openWindow(target.href);
+  })());
 });

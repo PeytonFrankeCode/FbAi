@@ -6212,6 +6212,7 @@ function handleLogout() {
   closeAuthDropdown();
   const token = getSessionToken();
   if (token) fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+  if (token) _pushForgetDevice(token);
   disableUserSync();
   setSessionToken(null);
   setCurrentUser(null);
@@ -18262,6 +18263,7 @@ function _renderAlerts(data) {
 async function showAlerts() {
   if (!getCurrentUser() || !getSessionToken()) { showLogin(); return; }
   document.getElementById('alerts-overlay').classList.remove('hidden');
+  _renderPushRow();
   const data = await _fetchAlerts();
   _renderAlerts(data);
   if (data && data.alerts.some(a => a.unread)) {
@@ -18322,6 +18324,120 @@ document.addEventListener('DOMContentLoaded', () => {
   // The alert email's "Manage your alerts" link.
   try { if (new URLSearchParams(location.search).get('view') === 'alerts') setTimeout(showAlerts, 0); } catch (_) {}
 });
+
+// ===== Phone notifications for alerts (owner, Oct 2026) =====
+// A row in the alerts panel turns on push for this device; the server sends
+// one when an alert finds a listing (web-push-core.js). iPhones only allow it
+// from the home-screen app, so there the row points at the install steps.
+function _pushSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+}
+function _keyBytes(b64) {
+  const s = b64.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(s + '='.repeat((4 - (s.length % 4)) % 4));
+  return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+async function _pushReg() {
+  // ready never settles when the worker failed to register; don't hang on it.
+  return Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 4000))]);
+}
+async function _pushServerKey() {
+  const r = await fetch('/api/push/key').catch(() => null);
+  const j = r && r.ok ? await safeJson(r) : null;
+  return j && j.publicKey;
+}
+async function _pushState() {
+  if (_installOS() === 'ios' && !_isInstalled()) return { state: 'ios-install' };
+  if (!_pushSupported()) return { state: 'unsupported' };
+  if (Notification.permission === 'denied') return { state: 'denied' };
+  const reg = await _pushReg();
+  if (!reg) return { state: 'unsupported' };
+  const sub = await reg.pushManager.getSubscription().catch(() => null);
+  return { state: sub && Notification.permission === 'granted' ? 'on' : 'off', reg, sub };
+}
+function _sameKey(sub, key) {
+  try {
+    const a = new Uint8Array(sub.options.applicationServerKey), b = _keyBytes(key);
+    return a.length === b.length && a.every((v, i) => v === b[i]);
+  } catch (_) { return true; } // can't tell: leave it be
+}
+async function _pushSend(sub) {
+  const res = await authFetch('/api/push/subscribe', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }),
+  }).catch(() => null);
+  return !!(res && res.ok);
+}
+async function _renderPushRow(note) {
+  const row = document.getElementById('push-row');
+  if (!row) return;
+  const st = await _pushState();
+  // Keep the server in step with this device: the account may have changed,
+  // or the server's keys (then the old subscription can't be sent to).
+  if (st.state === 'on') {
+    const key = await _pushServerKey();
+    if (key && !_sameKey(st.sub, key)) {
+      try { await st.sub.unsubscribe(); st.sub = await st.reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _keyBytes(key) }); } catch (_) {}
+    }
+    _pushSend(st.sub);
+  }
+  const bell = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+  const html = {
+    on: `<span class="push-ico on">${bell}</span><div class="push-text"><strong>Notifications on</strong><span>${note || 'This device gets a ping when a tracked card is listed.'}</span></div>
+         <div class="push-btns"><button type="button" class="push-btn ghost" onclick="pushTest()">Test</button><button type="button" class="push-btn ghost" onclick="pushOff()">Turn off</button></div>`,
+    off: `<span class="push-ico">${bell}</span><div class="push-text"><strong>Get notified on this device</strong><span>${note || 'A ping the moment a tracked card is listed.'}</span></div>
+          <div class="push-btns"><button type="button" class="push-btn" onclick="pushOn()">Turn on</button></div>`,
+    denied: `<span class="push-ico">${bell}</span><div class="push-text"><strong>Notifications are blocked</strong><span>Allow notifications for thecardhuddle.com in your browser's site settings, then reopen this panel.</span></div>`,
+    'ios-install': `<span class="push-ico">${bell}</span><div class="push-text"><strong>Want alerts on your iPhone?</strong><span>iPhones send notifications from the home-screen app. Add it, open it from there, and turn them on here.</span></div>
+          <div class="push-btns"><button type="button" class="push-btn" onclick="closeAlerts(); openInstallApp('push')">How to add it</button></div>`,
+  }[st.state];
+  row.innerHTML = html || '';
+  row.classList.toggle('hidden', !html);
+}
+async function pushOn() {
+  const btn = document.querySelector('#push-row .push-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Turning on…'; }
+  try {
+    // Asked from the tap itself: iPhones refuse the prompt otherwise.
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { _installTrack('push_denied', { os: _installOS() }); return _renderPushRow(); }
+    const [reg, key] = await Promise.all([_pushReg(), _pushServerKey()]);
+    if (!reg || !key) throw new Error('unavailable');
+    const old = await reg.pushManager.getSubscription();
+    if (old && !_sameKey(old, key)) await old.unsubscribe();
+    const sub = (old && _sameKey(old, key) && old) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _keyBytes(key) });
+    if (!(await _pushSend(sub))) throw new Error('save failed');
+    _installTrack('push_on', { os: _installOS(), installed: _isInstalled() });
+    _renderPushRow('All set! Tap Test to see one.');
+  } catch (_) {
+    _renderPushRow("Couldn't turn them on just now. Try again in a moment.");
+  }
+}
+async function pushOff() {
+  const st = await _pushState();
+  if (st.sub) {
+    await authFetch('/api/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: st.sub.endpoint }) }).catch(() => {});
+    await st.sub.unsubscribe().catch(() => {});
+  }
+  _installTrack('push_off', {});
+  _renderPushRow('Turned off. You can turn them back on any time.');
+}
+async function pushTest() {
+  const res = await authFetch('/api/push/test', { method: 'POST' }).catch(() => null);
+  const j = res ? await safeJson(res) : null;
+  _renderPushRow(res && res.status === 429 ? 'Give it a few seconds between tests.'
+    : j && j.sent ? 'Test sent! It should pop up in a few seconds.' : "That one didn't go through. Try turning notifications off and on.");
+}
+// Signing out: this device should stop getting that account's alerts.
+async function _pushForgetDevice(token) {
+  try {
+    if (!_pushSupported()) return;
+    const reg = await _pushReg();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (!sub) return;
+    await fetch('/api/push/unsubscribe', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
+    await sub.unsubscribe();
+  } catch (_) {}
+}
 
 // ===== Get the app (owner, Oct 2026) =====
 // The site installs as a full-screen app (manifest.json + sw.js). Chrome and

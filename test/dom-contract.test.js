@@ -298,5 +298,22 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
     && /if \(visits < 2 \|\| _lsGet\('chInstalled'\) === '1'\) return;/.test(f) && /INSTALL_SNOOZE_MS = 21 \* 24 \* 3600 \* 1000/.test(f));
 }
 
+// Phone notifications (owner, Oct 2026): a row in the alerts panel; the
+// service worker shows each push and opens the alerts page when tapped.
+{
+  const sw = fs.readFileSync(path.join(ROOT, 'public', 'sw.js'), 'utf8');
+  const f = app.slice(app.indexOf('// ===== Phone notifications'), app.indexOf('// ===== Get the app'));
+  check('the alerts panel has a notifications row, drawn when it opens',
+    /<div id="push-row" class="push-row hidden" aria-live="polite"><\/div>/.test(html) && /_renderPushRow\(\);\n  const data = await _fetchAlerts\(\);/.test(app));
+  check('  ...asking permission from the tap, subscribing with the server key',
+    /const perm = await Notification\.requestPermission\(\);/.test(f) && /userVisibleOnly: true, applicationServerKey: _keyBytes\(key\)/.test(f) && /'\/api\/push\/subscribe'/.test(f));
+  check('  ...pointing iPhones in a Safari tab at the home-screen steps',
+    /if \(_installOS\(\) === 'ios' && !_isInstalled\(\)\) return \{ state: 'ios-install' \};/.test(f) && /openInstallApp\('push'\)/.test(f));
+  check('  ...and signing out stops this device getting that account\'s alerts', /if \(token\) _pushForgetDevice\(token\);\n  disableUserSync\(\);/.test(app));
+  check('the service worker shows every push and opens the page on tap',
+    /addEventListener\('push'/.test(sw) && /event\.waitUntil\(self\.registration\.showNotification\(title, opts\)\)/.test(sw)
+    && /addEventListener\('notificationclick'/.test(sw) && /if \(target\.origin !== self\.location\.origin\) return;/.test(sw));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

@@ -35,7 +35,8 @@ const dbMod = require(path.join(ROOT, 'db.js'));
 const realList = dbMod.recordList;
 let staleList = false;
 dbMod.recordList = async (prefix) => (staleList ? [] : realList(prefix));
-const { app, checkAlerts, _alertFinds } = require(path.join(ROOT, 'server.js'));
+const { app, checkAlerts, _alertFinds, sendPushToUser, _alertPushMessage } = require(path.join(ROOT, 'server.js'));
+const nodeCrypto = require('crypto');
 
 // ---- the rule, pure --------------------------------------------------------
 {
@@ -94,12 +95,48 @@ const call = (p, { method = 'GET', token, body } = {}) => fetch(base + p, {
   check('  ...and an alert is not rechecked within half an hour', r1b.checked === 0);
 
   listings = [{ itemId: 'v1|200|0', title: '2018 Donruss Josh Allen #304 <b>PSA 10</b>', price: '450.00', listedAt: new Date(t0 + 60000).toISOString(), itemUrl: 'https://www.ebay.com/itm/200', imageUrl: 'https://i.ebayimg.com/x.jpg' }, ...listings];
-  const r2 = await checkAlerts({ now: t0 + 31 * 60 * 1000, fetchListings });
+  // Phone notifications: alice turns them on for one device.
+  const ua = nodeCrypto.createECDH('prime256v1'); ua.generateKeys();
+  const b64u = (b) => Buffer.from(b).toString('base64url');
+  const subscription = { endpoint: 'https://fcm.googleapis.com/fcm/send/alice-phone', expirationTime: null,
+    keys: { p256dh: b64u(ua.getPublicKey()), auth: b64u(nodeCrypto.randomBytes(16)) } };
+  const key = await (await call('/api/push/key')).json();
+  check('the push key is served for subscribe()', typeof key.publicKey === 'string' && Buffer.from(key.publicKey, 'base64url').length === 65);
+  check('  ...and the same key every time', (await (await call('/api/push/key')).json()).publicKey === key.publicKey);
+  check('turning on notifications needs a signed-in user', (await call('/api/push/subscribe', { method: 'POST', body: { subscription } })).status === 401);
+  check('  ...and a real push service, not any URL',
+    (await call('/api/push/subscribe', { method: 'POST', token: alice, body: { subscription: { ...subscription, endpoint: 'https://169.254.169.254/x' } } })).status === 400);
+  const subd = await (await call('/api/push/subscribe', { method: 'POST', token: alice, body: { subscription } })).json();
+  const subd2 = await (await call('/api/push/subscribe', { method: 'POST', token: alice, body: { subscription } })).json();
+  check('  ...and the same device twice is still one device', subd.ok && subd.devices === 1 && subd2.devices === 1);
+  const pushes = [];
+  const pushFetch = async (url, init) => { pushes.push({ url, init }); return { status: 201 }; };
+  const sendPush = (u, m) => sendPushToUser(u, m, { fetchFn: pushFetch });
+
+  const r2 = await checkAlerts({ now: t0 + 31 * 60 * 1000, fetchListings, sendPush });
   check('a new listing is found on the next check', r2.found === 1, JSON.stringify(r2));
   const mail = sent.find(m => m.to === 'alice@example.com');
   check('  ...and emailed to the owner', mail && /Just listed: 2018 Donruss Josh Allen 304/.test(mail.subject));
   check('  ...with the eBay link carrying the affiliate tag', mail && /itm\/200\?mkcid=1&amp;.*campid=5339145753/.test(mail.html));
   check('  ...with listing text escaped', mail && mail.html.includes('&lt;b&gt;PSA 10&lt;/b&gt;') && !mail.html.includes('<b>PSA 10</b>'));
+
+  check('  ...and pushed to the owner\'s phone', r2.pushed === 1 && pushes.length === 1 && pushes[0].url === subscription.endpoint
+    && pushes[0].init.headers['Content-Encoding'] === 'aes128gcm' && /^vapid t=.+, k=/.test(pushes[0].init.headers.Authorization));
+  const msg = _alertPushMessage({ id: 'x', label: '2018 Donruss Josh Allen 304' }, [{ title: '2018 Donruss Josh Allen #304 PSA 10', price: '450.00', imageUrl: 'https://i.ebayimg.com/x.jpg' }]);
+  check('  ...saying what was listed and for how much, opening the alerts panel',
+    msg.title === 'Just listed: 2018 Donruss Josh Allen 304' && msg.body === '$450 · 2018 Donruss Josh Allen #304 PSA 10' && msg.url === '/?view=alerts' && msg.tag === 'alert-x');
+  const many = _alertPushMessage({ id: 'y', label: 'Mahomes Prizm' }, [{ title: 'a', price: '35.5' }, { title: 'b', price: '120' }, { title: 'c', price: null }]);
+  check('  ...or how many, from what price', many.body === '3 new listings on eBay, from $35.50');
+
+  pushes.length = 0;
+  const gone = await sendPushToUser('alice_' + run, { title: 't' }, { fetchFn: async (url, init) => { pushes.push(url); return { status: 410 }; } });
+  const after410 = await sendPushToUser('alice_' + run, { title: 't' }, { fetchFn: pushFetch });
+  check('a device the push service says is gone is dropped', gone === 0 && pushes.length === 1 && after410 === 0);
+  await call('/api/push/subscribe', { method: 'POST', token: alice, body: { subscription } });
+  check('turning notifications off removes the device',
+    (await (await call('/api/push/unsubscribe', { method: 'POST', token: alice, body: { endpoint: subscription.endpoint } })).json()).devices === 0);
+  check("  ...and bob's test reaches nobody, not alice's phone",
+    (await (await call('/api/push/test', { method: 'POST', token: bob })).json()).sent === 0);
 
   const mine = await (await call('/api/alerts', { token: alice })).json();
   const a = mine.alerts[0];
