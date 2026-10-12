@@ -9296,7 +9296,36 @@ let clQueueRunning = false;
 function toggleChecklistSet(header) {
   const setEl = header.parentElement;
   setEl.classList.toggle('expanded');
-  if (setEl.classList.contains('expanded')) loadChecklistSetValues(setEl);
+  if (setEl.classList.contains('expanded')) { loadChecklistSetValues(setEl); _clSeatAd(setEl); }
+}
+
+// The checklist ad (owner, Oct 2026): a strip after the 25th card of the first
+// long set opened. Asked of Google once per product; filtering redraws the
+// tables, and opening a set again puts the same strip back rather than asking
+// again. Only an opened set gets it: Google cannot fill a hidden slot.
+const CL_AD_SLOT = '5664392157';
+const CL_AD_AFTER = 25;
+let _clAd = { data: null, el: null };
+function _clSeatAd(setEl) {
+  if (_adFree() || !setEl) return;
+  if (_clAd.data !== checklistData) _clAd = { data: checklistData, el: null };
+  if (_clAd.el && _clAd.el.isConnected) return;         // already showing in an open set
+  const rows = setEl.querySelectorAll('.checklist-table tbody tr:not(.cl-ad-row)');
+  if (rows.length < CL_AD_AFTER + 1) return;             // a short set stays clean
+  const cols = setEl.querySelectorAll('.checklist-table thead th').length || 6;
+  const fresh = !_clAd.el;
+  if (fresh) {
+    const tr = document.createElement('tr');
+    tr.className = 'cl-ad-row';
+    tr.innerHTML = `<td colspan="${cols}"><div class="cl-ad" aria-label="Advertisement"><p class="ad-label">Advertisement</p>`
+      + `<ins class="adsbygoogle cl-ad-ins" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${CL_AD_SLOT}" data-ad-format="horizontal"></ins></div></td>`;
+    _clAd.el = tr;
+  } else {
+    const td = _clAd.el.querySelector('td');
+    if (td) td.colSpan = cols;
+  }
+  rows[CL_AD_AFTER - 1].after(_clAd.el);
+  if (fresh) { try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the strip collapses */ } }
 }
 
 function loadChecklistSetValues(setEl) {
