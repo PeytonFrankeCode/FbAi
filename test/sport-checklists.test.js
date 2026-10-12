@@ -34,7 +34,8 @@ for (const sport of ['basketball', 'baseball']) {
     const Sport = sport[0].toUpperCase() + sport.slice(1);
     if (!id.endsWith(`-${sport}`)) bad.push(`${id}: id does not end in -${sport}`);
     if (doc.sport !== Sport) bad.push(`${id}: sport is ${doc.sport}`);
-    if (!(doc.year >= 2000 && doc.year <= 2026)) bad.push(`${id}: year ${doc.year}`);
+    // Basketball from 1948, baseball from the 1880s (pre-2000 files, Oct 2026).
+    if (!(doc.year >= 1869 && doc.year <= 2026)) bad.push(`${id}: year ${doc.year}`);
     if (!new RegExp(`^${doc.year}(-\\d\\d)? `).test(doc.name)) bad.push(`${id}: name "${doc.name}" does not start with its year`);
     // An announced product whose checklist is not out yet has no sets, by design.
     if (!Array.isArray(doc.sets) || (!doc.sets.length && !doc.unreleased)) bad.push(`${id}: no sets`);

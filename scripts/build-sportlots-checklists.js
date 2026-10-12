@@ -57,7 +57,8 @@ function parseCard(r) {
   const m = /^#\s*(\S+)\s+(.*)$/.exec(String(r.card || '').trim());
   if (!m) return null;
   let player = m[2].split('|').map(s => s.trim()).filter(Boolean).join('/');
-  if (!player) return null;
+  // A name, not "/ 67 / 251" (the other cards of a panel).
+  if (!player || !/[a-z]/i.test(player)) return null;
   const card = { number: m[1], player };
   if (r.v) card.note = String(r.v).trim();
   return card;
@@ -101,6 +102,7 @@ function buildYear(sport, year, rows, existing) {
   const products = new Map();
   for (const n of names) {
     const owner = / Base Set$/.test(n) ? n.replace(/ Base Set$/, '')
+      : / Base Set /.test(n) ? n.split(' Base Set ')[0]
       : lines.includes(n) ? n
       : bases.find(b => n.startsWith(b + ' ')) || n;
     if (!products.has(owner)) products.set(owner, []);
@@ -122,7 +124,7 @@ function buildYear(sport, year, rows, existing) {
     if (baseSet) { sets.push(baseSet); partial = partial || base.partial; }
     for (const n of setNames) {
       if (n === baseName) continue;
-      const rest = (n.slice(prod.length + 1).trim() || n.slice(year.length + 1)).replace(/\s*\|\s*/g, '/');
+      const rest = (n.slice(prod.length + 1).replace(/^Base Set\s+/, '').trim() || n.slice(year.length + 1)).replace(/\s*\|\s*/g, '/');
       const s = buildSet(bySet.get(n));
       if (!s.cards.length) continue;
       const repeats = s.cards.filter(c => baseNums.has(c.number)).length;
@@ -155,7 +157,7 @@ const key = (c) => `${nnum(c.number)}|${npl(c.player)}`;
 function ccSets(html) {
   const sets = parsePage(html).filter(st => !/review this product|cancel reply|team checklist/i.test(st.name));
   for (const st of sets) {
-    st.name = st.name.replace(/\s+Set$/i, '').replace(/^Base Set$/i, 'Base') || st.name;
+    st.name = st.name.replace(/\s+/g, ' ').replace(/\s+Set$/i, '').replace(/^Base Set$/i, 'Base') || st.name;
     if (/^base$/i.test(st.name)) { st.name = 'Base'; st.id = 'base'; st.category = 'base'; }
     for (const c of st.cards) {
       // "Detroit Pistons DP": a double print, said after the team.
@@ -169,16 +171,24 @@ const ccTitle = (html) => (((html.match(/<title>([^<]*)/) || [])[1] || '').repla
   .split(/\s+Checklist/)[0]).trim();
 const ccPages = CC && fs.existsSync(CC) ? new Set(fs.readdirSync(CC).filter(f => f.endsWith('.html')).map(f => f.slice(0, -5))) : new Set();
 const ccUsed = new Set();
+// "1996-97-flair-showcase" -> "Flair Showcase", to say what is left of a piece's brand.
+const brandOfStem = (stem, y) => stem.replace(/^\d{4}(-\d{2})?-/, '').split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 // The product's page, by the id it would have there.
+// The same product under the name the other site gives it.
+const ccSlugs = (id) => [`${id}-cards`, `${id}-cards`.replace(/^(\d{4}(?:-\d{2})?)-(finest|chrome|stadium-club|gallery)-/, '$1-topps-$2-')];
 function withCC(doc) {
-  const slug = `${doc.id}-cards`;
-  if (!ccPages.has(slug)) return doc;
+  const slug = ccSlugs(doc.id).find(x => ccPages.has(x));
+  if (!slug) return doc;
   const sets = ccSets(fs.readFileSync(path.join(CC, slug + '.html'), 'utf8'));
   const ccCards = sets.reduce((a, st) => a + st.cards.length, 0);
   if (!sets.length || ccCards < 10) return doc;
   ccUsed.add(slug);
   const held = new Set(sets.flatMap(st => st.cards.map(key)));
-  const extra = doc.sets.filter(st => st.cards.filter(c => held.has(key(c))).length < 0.2 * st.cards.length);
+  // Not a set it has: by cards, and by name ("Dish & Swish" is its "Dish and
+  // Swish", numbered DS1 there and 1 here).
+  const ccNames = new Set(sets.map(st => slugify(st.name)));
+  const extra = doc.sets.filter(st => st.cards.filter(c => held.has(key(c))).length < 0.2 * st.cards.length
+    && !ccNames.has(slugify(st.name)));
   const ids = new Set(sets.map(st => st.id));
   for (const st of extra) { let i = st.id, k = 2; while (ids.has(i)) i = `${st.id}-${k++}`; st.id = i; ids.add(i); }
   // Partial only if a SportLots set it kept is.
@@ -188,7 +198,7 @@ function withCC(doc) {
 }
 // A page with no SportLots product behind it (vintage basketball, which
 // SportLots barely stocks): a product of its own.
-function ccOnly(sport, existing) {
+function ccOnly(sport, existing, slDocs) {
   const out = [];
   const re = new RegExp(`^(\\d{4})(-\\d{2})?-(.+)-${sport.toLowerCase()}-cards$`);
   for (const slug of ccPages) {
@@ -201,6 +211,22 @@ function ccOnly(sport, existing) {
     const html = fs.readFileSync(path.join(CC, slug + '.html'), 'utf8');
     const sets = ccSets(html);
     if (sets.reduce((a, st) => a + st.cards.length, 0) < 10) continue;
+    // SportLots' pieces of the same product ("Flair Showcase Row 0", "Topps
+    // Base Set Grey Stock Back"): their sets join it, they go.
+    const stem = id.replace(new RegExp(`-${sport.toLowerCase()}$`), '');
+    const held = new Set(sets.flatMap(st => st.cards.map(key)));
+    for (let i = slDocs.length - 1; i >= 0; i--) {
+      const d = slDocs[i];
+      if (!d.id.startsWith(stem + '-') || d.year !== Number(m[1])) continue;
+      for (const st of d.sets) {
+        if (st.cards.filter(c => held.has(key(c))).length >= 0.2 * st.cards.length) continue;
+        if (sets.some(x => slugify(x.name) === slugify(st.name)) && st.name !== 'Base') continue;
+        const nm = `${d.brand.slice(brandOfStem(stem, m[1]).length).trim() || d.brand} ${st.name === 'Base' ? '' : st.name}`.trim();
+        sets.push({ ...st, id: slugify(nm) || st.id, name: nm });
+      }
+      slDocs.splice(i, 1);
+    }
+    { const seen = new Set(); for (const st of sets) { let x = st.id, k = 2; while (seen.has(x)) x = `${st.id}-${k++}`; st.id = x; seen.add(x); } }
     const title = ccTitle(html);
     const brand = title.replace(/^\d{4}(-\d{2})?\s+/, '').replace(new RegExp(`\\s+${sport}$`, 'i'), '').trim();
     out.push({ id, name: sport === 'Basketball' && !m[2] ? `${season(m[1])} ${brand} ${sport}` : title, year: Number(m[1]), brand, sport,
@@ -216,32 +242,26 @@ for (const sport of Object.keys(DIRS)) {
   const dir = path.join(ROOT, 'public', 'data', DIRS[sport]);
   const existing = new Set(fs.readdirSync(dir).map(f => f.replace(/\.json$/, '')));
   const files = fs.readdirSync(RAW).filter(f => f.startsWith(sport + '-') && f.endsWith('.jsonl')).sort();
-  let products = 0, cards = 0, partial = 0;
+  const all = [];
   for (const f of files) {
     const year = f.slice(sport.length + 1, -6);
     if (Number(year) >= 2000) continue;
     const rows = fs.readFileSync(path.join(RAW, f), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l));
-    const docs = buildYear(sport, year, rows, existing).map(withCC);
-    for (const d of docs) {
-      products++; cards += d.sets.reduce((a, s) => a + s.cards.length, 0); if (d.note && d.note.includes(NOTE)) partial++;
-      existing.add(d.id);
-      if (WRITE || OUT) {
-        const to = OUT ? path.join(OUT, DIRS[sport]) : dir;
-        fs.mkdirSync(to, { recursive: true });
-        fs.writeFileSync(path.join(to, d.id + '.json'), JSON.stringify(d) + '\n');
-      }
-    }
+    for (const d of buildYear(sport, year, rows, existing).map(withCC)) { existing.add(d.id); all.push(d); }
   }
-  let fromCC = 0;
-  for (const d of ccOnly(sport, existing)) {
-    products++; fromCC++; cards += d.sets.reduce((a, st) => a + st.cards.length, 0);
+  const extra = ccOnly(sport, existing, all);
+  const docs = [...all, ...extra];
+  let cards = 0, partial = 0;
+  for (const d of docs) {
+    cards += d.sets.reduce((a, st) => a + st.cards.length, 0);
+    if (d.note && d.note.includes(NOTE)) partial++;
     if (WRITE || OUT) {
       const to = OUT ? path.join(OUT, DIRS[sport]) : dir;
       fs.mkdirSync(to, { recursive: true });
       fs.writeFileSync(path.join(to, d.id + '.json'), JSON.stringify(d) + '\n');
     }
   }
-  summary[sport] = { products, cards, partial, cardboardConnection: ccUsed.size, ccOnly: fromCC };
+  summary[sport] = { products: docs.length, cards, partial, cardboardConnection: ccUsed.size, ccOnly: extra.length };
 }
 console.log(JSON.stringify(summary));
 if (!WRITE) console.log('report only; --write to write the files');

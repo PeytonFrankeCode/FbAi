@@ -25,7 +25,9 @@ const decode = (s) => String(s)
   .replace(/<[^>]+>/g, '')
   .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#8217;|&rsquo;/g, "'")
   .replace(/&#8211;|&ndash;/g, '-').replace(/&#8220;|&#8221;|&quot;/g, '"').replace(/&#039;|&#39;/g, "'")
-  .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+  .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+  .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCharCode(parseInt(n, 16)))
+  .replace(/\u00a0/g, ' ');
 
 const slug = (s) => String(s).toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
