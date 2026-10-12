@@ -5122,12 +5122,17 @@ function _adFree() {
       email = String((rec && rec.email) || '').toLowerCase();
     } catch (_) { /* no local accounts */ }
     if (NO_AFFILIATE_ACCOUNTS.includes(name.toLowerCase()) || AD_FREE_EMAILS.includes(email)) {
-      localStorage.setItem(AD_FREE_KEY, '1');
-      (window.adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 1;
+      _markOwnerAdFree();
       return true;
     }
   } catch (_) { /* storage blocked: ads as normal */ }
   return false;
+}
+// The owner's mark: no source, so it is never taken back. Ads already on the
+// page (it was opened signed out) go at once, not on the next visit.
+function _markOwnerAdFree() {
+  try { localStorage.setItem(AD_FREE_KEY, '1'); localStorage.removeItem('chAdFreeSrc'); } catch (_) {}
+  _removeAds();
 }
 _adFree();
 
@@ -5161,6 +5166,14 @@ async function _refreshAdFreePlan() {
     if (r.status === 401) { _dropPlanAdFree(); _adFreeState = null; return null; }
     if (!r.ok) return _adFreeState;
     const d = await r.json();
+    // A home-screen app on iPhone starts with storage of its own, without the
+    // local copy of the account _adFree() reads the email from, so the owner
+    // is also recognised by the address the server has.
+    if (d && AD_FREE_EMAILS.includes(String(d.email || '').toLowerCase())) {
+      _markOwnerAdFree();
+      _adFreeState = { on: true, billing: !!(d.subscription && d.subscription.stripeCustomerId) };
+      return _adFreeState;
+    }
     const sub = d && d.subscription;
     const on = !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
     _adFreeState = { on, billing: !!(sub && sub.stripeCustomerId) };
@@ -6232,6 +6245,9 @@ document.addEventListener('keydown', (e) => {
 
 // Init auth state on load
 updateAuthButton();
+// Signed in already (a reopened tab, the home-screen app): ask the server
+// whether this account is ad-free, so a new device learns it too.
+if (getSessionToken() && getCurrentUser()) _refreshAdFreePlan();
 
 // ---- Soft Limits (Free tier) ----
 // Free users get a generous but capped slice of every feature. Pro
