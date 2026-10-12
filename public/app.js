@@ -18323,4 +18323,115 @@ document.addEventListener('DOMContentLoaded', () => {
   try { if (new URLSearchParams(location.search).get('view') === 'alerts') setTimeout(showAlerts, 0); } catch (_) {}
 });
 
+// ===== Get the app (owner, Oct 2026) =====
+// The site installs as a full-screen app (manifest.json + sw.js). Chrome and
+// Edge hand us a one-tap install (beforeinstallprompt); iPhones and the other
+// browsers can't be prompted, so they get the steps instead. The menu always
+// offers it until installed; phones also get one quiet banner, a few seconds
+// into a second visit, that "Not now" puts away for three weeks.
+const INSTALL_SNOOZE_MS = 21 * 24 * 3600 * 1000;
+let _installPrompt = null;
+function _isInstalled() {
+  try { if (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: fullscreen)').matches) return true; } catch (_) {}
+  return window.navigator.standalone === true;
+}
+function _installOS() {
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'desktop';
+}
+function _installTrack(name, extra) {
+  if (typeof gtag === 'function') { try { gtag('event', name, extra || {}); } catch (_) {} }
+}
+function _lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
+function _lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); // we show our own button rather than Chrome's mini-bar
+  _installPrompt = e;
+  _syncInstallUI();
+});
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  _lsSet('chInstalled', '1');
+  _installTrack('app_installed', { os: _installOS() });
+  closeInstallApp();
+  _syncInstallUI();
+});
+
+function _syncInstallUI() {
+  const installed = _isInstalled();
+  const nav = document.getElementById('nav-install');
+  // Desktop browsers without a one-tap install have no home screen to add to.
+  if (nav) nav.classList.toggle('hidden', installed || (_installOS() === 'desktop' && !_installPrompt));
+  const now = document.getElementById('install-now');
+  if (now) now.classList.toggle('hidden', !_installPrompt);
+  if (installed) document.getElementById('install-hint')?.classList.add('hidden');
+}
+
+function openInstallApp(source) {
+  _installTrack('install_open', { source, os: _installOS(), prompt: !!_installPrompt });
+  document.getElementById('install-hint')?.classList.add('hidden');
+  // Where Chrome can install in one tap, the banner's button just does it.
+  if (_installPrompt && source === 'banner') { installNow(); return; }
+  const sheet = document.getElementById('install-sheet');
+  if (!sheet) return;
+  setInstallTab(_installOS() === 'android' ? 'android' : 'ios');
+  document.getElementById('install-phone-label')?.classList.toggle('hidden', _installOS() !== 'desktop');
+  _syncInstallUI();
+  sheet.classList.remove('hidden');
+  document.documentElement.classList.add('install-open');
+}
+function closeInstallApp() {
+  document.getElementById('install-sheet')?.classList.add('hidden');
+  document.documentElement.classList.remove('install-open');
+}
+function setInstallTab(os) {
+  document.querySelectorAll('.install-tabs [data-os]').forEach(b => b.setAttribute('aria-selected', b.dataset.os === os ? 'true' : 'false'));
+  document.querySelectorAll('.install-steps[data-os]').forEach(el => el.classList.toggle('hidden', el.dataset.os !== os));
+}
+async function installNow() {
+  const p = _installPrompt;
+  if (!p) { openInstallApp('fallback'); return; }
+  _installPrompt = null; // a prompt can be shown only once
+  try {
+    p.prompt();
+    const choice = await p.userChoice;
+    _installTrack('install_choice', { outcome: choice && choice.outcome });
+    if (choice && choice.outcome === 'dismissed') _lsSet('chInstallSnooze', String(Date.now()));
+  } catch (_) {}
+  closeInstallApp();
+  _syncInstallUI();
+}
+function dismissInstallHint() {
+  document.getElementById('install-hint')?.classList.add('hidden');
+  _lsSet('chInstallSnooze', String(Date.now()));
+  _installTrack('install_hint_dismiss', { os: _installOS() });
+}
+
+(function initInstallHint() {
+  const visits = (parseInt(_lsGet('chVisits') || '0', 10) || 0) + 1;
+  _lsSet('chVisits', String(visits));
+  const start = () => {
+    _syncInstallUI();
+    if (_isInstalled() || _installOS() === 'desktop') return;
+    if (visits < 2 || _lsGet('chInstalled') === '1') return;
+    const snoozed = parseInt(_lsGet('chInstallSnooze') || '0', 10) || 0;
+    if (Date.now() - snoozed < INSTALL_SNOOZE_MS) return;
+    setTimeout(function show(tries) {
+      // Never over a dialog, the login, or an open menu; try again shortly.
+      const busy = document.querySelector('.login-overlay:not(.hidden), .settings-overlay:not(.hidden), .modal-overlay:not(.hidden), .install-sheet:not(.hidden), .nav-bar.menu-open, #tour:not(.hidden)');
+      if (busy) { if ((tries || 0) < 10) setTimeout(() => show((tries || 0) + 1), 6000); return; }
+      document.getElementById('install-hint')?.classList.remove('hidden');
+      _installTrack('install_hint_show', { os: _installOS() });
+    }, 5000);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+document.addEventListener('keydown', (e) => {
+  const s = document.getElementById('install-sheet');
+  if (e.key === 'Escape' && s && !s.classList.contains('hidden')) closeInstallApp();
+});
+
 _mountHomeAd();

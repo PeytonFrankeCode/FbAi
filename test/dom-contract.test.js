@@ -283,5 +283,20 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
     && /@media \(prefers-reduced-motion: reduce\) \{\n  \.ls-c3, \.ls-chart, \.ls-shine \{ animation: none; \}/.test(css));
 }
 
+// Get the app (owner, Oct 2026): a menu item until installed, a phone banner
+// on a second visit that "Not now" snoozes, and steps for iPhone and Android.
+{
+  const f = app.slice(app.indexOf('// ===== Get the app'), app.indexOf('// ===== Get the app') + 6000);
+  check('the menu offers Get the app, and an installed copy hides it',
+    /<div class="nav-install-wrap hidden" id="nav-install">/.test(html) && html.indexOf('id="nav-install"') < html.indexOf('class="nav-tab alerts-tab"')
+    && /display-mode: standalone/.test(f) && /navigator\.standalone === true/.test(f));
+  check('  ...the how-to sheet has steps for both iPhone and Android',
+    /class="install-steps" data-os="ios"/.test(html) && /class="install-steps" data-os="android"/.test(html)
+    && /Add to Home Screen/.test(html) && /Add to Home screen/.test(html));
+  check('  ...one-tap install where the browser offers it, banner on second visit, snoozed 21 days',
+    /addEventListener\('beforeinstallprompt'/.test(f) && /e\.preventDefault\(\)/.test(f) && /p\.prompt\(\)/.test(f)
+    && /if \(visits < 2 \|\| _lsGet\('chInstalled'\) === '1'\) return;/.test(f) && /INSTALL_SNOOZE_MS = 21 \* 24 \* 3600 \* 1000/.test(f));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
