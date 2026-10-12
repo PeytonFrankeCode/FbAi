@@ -211,5 +211,18 @@ check('  ...that locks the page under it, closes on a swipe, and respects reduce
   check('  ...and an unfilled slot leaves no empty box', /\.home-ad:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
 }
 
+// The results ad (owner, Oct 2026): one full-width tile after the sixth card,
+// one ad request per search, kept in place through the redraws that follow.
+{
+  const pr = app.slice(app.indexOf('function _placeResultsAd('), app.indexOf('function _placeResultsAd(') + 1200);
+  check('search results carry one ad tile, after the sixth card, never on an ad-free device',
+    /RESULTS_AD_SLOT = '9669331752'/.test(app) && /RESULTS_AD_AFTER = 6/.test(app) && /if \(_adFree\(\) \|\| !grid\) return;/.test(pr)
+    && (app.match(/_placeResultsAd\(\);/g) || []).length >= 2);
+  check('  ...asked of Google once a search, and put back after a redraw instead of re-asked',
+    /new MutationObserver\([\s\S]{0,260}_seatResultsAd\(\)/.test(app) && (pr.match(/\.push\(\{\}\)/g) || []).length === 1);
+  check('  ...the full width of the grid, collapsing when unfilled',
+    /\.results-ad \{\n  grid-column: 1 \/ -1;/.test(css) && /\.results-ad:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

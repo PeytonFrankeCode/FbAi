@@ -9643,3 +9643,18 @@ body.has-searched #market-pulse { display: none !important; }
 }
 /* Google found no ad: no empty box, no orphaned label. */
 .home-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
+
+/* ---- Results ad: a full-width tile in the results feed ---- */
+.results-ad {
+  grid-column: 1 / -1;
+  margin: 0.5rem 0; padding: 0.6rem 0.75rem 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+}
+.results-ad .ad-label {
+  margin: 0 0 0.35rem; text-align: center;
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.results-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
