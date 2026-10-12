@@ -201,7 +201,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=26cec58c49" />
+  <link rel="stylesheet" href="style.css?v=89a3ad39d2" />
 
 
 </head>
@@ -271,6 +271,12 @@
       <button class="nav-tab" data-view="market" onclick="switchView('market')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 5-6"/></svg><span class="nav-label">Market</span></button>
       <button class="nav-tab" data-view="community" onclick="switchView('community')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5a3 3 0 0 1 0 6M18 19a6 6 0 0 0-3-5.2"/></svg><span class="nav-label">Community</span></button>
       <button class="nav-tab" data-view="inventory" onclick="switchView('inventory')"><svg class="nav-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg><span class="nav-label">Inventory</span></button>
+      <div class="nav-install-wrap hidden" id="nav-install">
+        <button type="button" class="nav-install" onclick="toggleNavMenu(false); openInstallApp('menu')">
+          <span class="nav-install-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></svg></span>
+          <span class="nav-install-text"><strong>Get the app</strong><small>Add it to your home screen</small></span>
+        </button>
+      </div>
       </div>
       <button class="nav-tab alerts-tab" onclick="showAlerts()" title="Card alerts" aria-label="Card alerts">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -280,6 +286,50 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </nav>
+  </div>
+
+  <!-- Get-the-app hint (phones) and how-to sheet. An installed copy opens
+       full-screen from the home screen; Chrome/Android installs in one tap,
+       iPhones and other browsers get the steps. -->
+  <div id="install-hint" class="install-hint hidden" role="region" aria-label="Get the app">
+    <img src="/icon-192.png" alt="" class="install-hint-icon" width="40" height="40" />
+    <div class="install-hint-text"><strong>Get the Card Huddle app</strong><span>Free · full-screen · works at the show</span></div>
+    <button type="button" class="install-hint-go" onclick="openInstallApp('banner')">Install</button>
+    <button type="button" class="install-hint-x" aria-label="Not now" onclick="dismissInstallHint()">&times;</button>
+  </div>
+  <div id="install-sheet" class="install-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="install-title" onclick="if (event.target === this) closeInstallApp()">
+    <div class="install-box">
+      <button class="login-close" aria-label="Close" onclick="closeInstallApp()">&times;</button>
+      <div class="install-head">
+        <img src="/icon-192.png" alt="" width="56" height="56" />
+        <div>
+          <h2 id="install-title">Add Card Huddle to your home screen</h2>
+          <p>Opens full-screen like any app, with your checklists ready even on bad show wifi.</p>
+        </div>
+      </div>
+      <button type="button" id="install-now" class="install-now hidden" onclick="installNow()">Install now</button>
+      <p class="install-phone-label hidden" id="install-phone-label">Want it on your phone too? Open thecardhuddle.com there and follow these steps:</p>
+      <div class="install-tabs" role="tablist">
+        <button type="button" role="tab" data-os="ios" onclick="setInstallTab('ios')">iPhone / iPad</button>
+        <button type="button" role="tab" data-os="android" onclick="setInstallTab('android')">Android</button>
+      </div>
+      <div class="install-steps" data-os="ios">
+        <ol>
+          <li><span class="is-num">1</span><span>In <strong>Safari</strong>, tap the <strong>Share</strong> button <svg class="is-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Share icon"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg> at the bottom of the screen (top-right on iPad).</span></li>
+          <li><span class="is-num">2</span><span>Scroll down and tap <strong>Add to Home Screen</strong> <svg class="is-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-label="Add icon"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>.</span></li>
+          <li><span class="is-num">3</span><span>Tap <strong>Add</strong> in the top corner. Card Huddle is now on your home screen.</span></li>
+        </ol>
+        <p class="install-note">Using Chrome on iPhone? Tap the Share button <svg class="is-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg> next to the address bar, then <strong>Add to Home Screen</strong>.</p>
+      </div>
+      <div class="install-steps" data-os="android">
+        <ol>
+          <li><span class="is-num">1</span><span>In <strong>Chrome</strong>, tap the menu <svg class="is-ico" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-label="Three dots icon"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg> in the top-right corner.</span></li>
+          <li><span class="is-num">2</span><span>Tap <strong>Add to Home screen</strong> (some phones say <strong>Install app</strong>).</span></li>
+          <li><span class="is-num">3</span><span>Tap <strong>Install</strong>. Card Huddle is now in your apps.</span></li>
+        </ol>
+        <p class="install-note">Using Samsung Internet? Tap the menu <svg class="is-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg> at the bottom, then <strong>Add page to</strong> → <strong>Home screen</strong>.</p>
+      </div>
+    </div>
   </div>
 
   <!-- Login / Sign Up Modal -->
@@ -1838,7 +1888,7 @@
        "protected by reCAPTCHA" text instead. -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LezKsUtAAAAAAszKWqdj9D2ijSOVesaXh6IBBrE" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="app.js?v=a8844c867f"></script>
+  <script src="app.js?v=2f58eee051"></script>
   <script type="importmap">
   {
     "imports": {
