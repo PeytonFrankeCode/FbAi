@@ -17966,6 +17966,14 @@ function _caRenderChart(label) {
 
   _caRenderPrice(g && g.estimate);
 
+  // Sales left off the chart as spikes (3x or more of the sales around them).
+  const spikeEl = document.getElementById('ca-spikes');
+  if (spikeEl) {
+    const n = (gAll && gAll.spikesHidden) || 0;
+    spikeEl.textContent = n ? `${n} sale${n === 1 ? '' : 's'} at 3× or more of the typical price ${n === 1 ? 'is' : 'are'} left off the chart, as one-off spikes.` : '';
+    spikeEl.classList.toggle('hidden', !n);
+  }
+
   _caSelectedGrade = gAll ? gAll.label : null;
   _caSyncTabLabels();
   if (_caTab === 'sold') _caRenderList();
