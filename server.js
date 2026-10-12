@@ -5029,12 +5029,16 @@ function _rsiBucketBounds(bucketDays) {
 // independent read on that player. Depth is spent on players, not on cards.
 const MARKET_TOP_PLAYERS = 600;
 const MARKET_CARDS_PER_PLAYER = 10;
-// Which series the whole-market index follows beyond raw base cards, for
-// measuring a wider basket before adopting it: MARKET_SERIES=graded,parallels.
-// Unset, the index is exactly as it was. Each graded copy and each parallel is
-// then its own card (the key carries grade and parallel), so a PSA 10 or a
-// Silver is only ever compared with itself.
-const MARKET_SERIES = new Set(String(process.env.MARKET_SERIES || '').split(',').map(s => s.trim()).filter(Boolean));
+// Which series the whole-market index follows beyond raw base cards. Graded
+// copies since Oct 2026: each grade is its own card (the key carries grader
+// and grade), so a PSA 10 is only ever compared with PSA 10s of that card.
+// Measured on Sep 5 - Oct 5 sales (scripts/market-analysis/compare-series.js):
+// players with a reading each day 110 -> 154, sales used 3,201 -> 4,826, a
+// smoother line, for about a second more per query. Parallels as well
+// (MARKET_SERIES=graded,parallels) added little more for twice the query time,
+// so they stay out; MARKET_SERIES=base is the raw-only index.
+const MARKET_SERIES = new Set(String(process.env.MARKET_SERIES || 'graded').split(',')
+  .map(s => s.trim()).filter(s => s && s !== 'base'));
 const _mkSeriesOpts = () => ({ graded: MARKET_SERIES.has('graded'), parallels: MARKET_SERIES.has('parallels') });
 const _mkCardKey = (playerExpr) => (MARKET_SERIES.has('parallels')
   ? `${_cardKeySql(playerExpr)} || '|' || ${RSI_PAR_KEY_SQL}` : _cardKeySql(playerExpr));
@@ -5062,7 +5066,7 @@ const MARKET_CALC_SIG = (() => {
     MARKET_EXCLUDE_TRAILING_DAYS, RSI_TARGET_POINTS, RSI_MIN_BUCKET_DAYS,
     RSI_MAX_GAP_DAYS, RSI_RATIO_FLOOR, RSI_RATIO_CEIL,
     RSI_BUCKET_MOVE_FLOOR, RSI_BUCKET_MOVE_CEIL, RSI_DAILY_MIN_DAYS,
-    RSI_KEY_COLS.join(','), RSI_RAW_ONLY, RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST,
+    RSI_KEY_COLS.join(','), [...MARKET_SERIES].sort().join('+'), RSI_RAW_ONLY, RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST,
     _kindSql('s.title'),
     JSON.stringify(RSI_TIERS), JSON.stringify(RSI_TIERS_PLAYER),
   ].join('|');

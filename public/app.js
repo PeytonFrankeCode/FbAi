@@ -1622,7 +1622,7 @@ async function initStatsView() {
           ? `The market doesn't have ${_statsDays === 365 ? 'a year' : _statsDays + ' days'} of history yet, `
             + `so this is the last ${pb.days} days. ` : '')
         + `The market index's own players, each moved the way the market is: resales of their `
-        + `raw base cards, compared card against itself. A player needs ${pb.minResales}+ resales `
+        + `base cards (raw, and each grade on its own), compared card against itself. A player needs ${pb.minResales}+ resales `
         + `to be ranked; ${Number(pb.playersConsidered).toLocaleString('en-US')} of the market's `
         + `${Number(pb.playersInMarket).toLocaleString('en-US')} players did.`;
     }
@@ -7181,7 +7181,7 @@ async function loadMarketIndex() {
     <div class="market-basket" id="market-basket">
       <div class="market-basket-head">
         <span class="market-basket-title">What's driving it</span>
-        <span class="market-basket-sub">most-traded raw base cards in the basket</span>
+        <span class="market-basket-sub">most-traded base cards in the basket, raw and graded</span>
       </div>
       <p class="market-basket-loading" id="market-basket-loading">Loading the cards behind this&hellip;</p>
     </div>
@@ -7189,8 +7189,8 @@ async function loadMarketIndex() {
     <div class="market-notes">
       ${pooled ? `<p><strong>Light trading.</strong> ${who}'s cards don't sell often enough to follow card by card, so every sale of a card counts, whatever the parallel: each is divided by its parallel's usual step over the base card (a Silver at about 2&times;, a /99 at about 8&times;) so they share one price line. Where there are only a few of those sales, the reading leans on the whole market's move over the same days, and leans less as ${who}'s own sales add up. The range is where the true change most likely sits.</p>` : ''}
       ${trend ? `<p><strong>How it works.</strong> ${who}'s number follows the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Every sale is compared with that card's own typical price over the period, so a $10 base and a $200 rookie can share one line, and the level on each day is the middle of those comparisons over the ${W} days before it. The headline is the last ${W} days against the first ${W}. Nothing is carried from one day to the next, so a noisy day moves one point and nothing after it, and a day with no sales has no point rather than an invented one. A player without enough sales at both ends gets no number at all.</p>` : `<p><strong>How it works.</strong> The index tracks the ${data.topPlayers || 600} most actively traded players, and for each of them the ${data.cardsPerPlayer || 10} base cards of theirs that trade most &mdash; the base rookie, the Rated Rookie, each identified by its card number. Parallels, autographs, relics and numbered cards are left out: a Refractor or a /99 is its own market, and the hardest thing in a listing title to read reliably. Where a card sold more than once on a day, those sales are averaged into one price for that day first. Each price is then compared with what that same card last sold for, converted to a per-day rate over its own gap so a card reappearing after months isn't mistaken for a one-day move. Each player contributes one number however many of their cards sold, and the market is the average across players.</p>`}
-      <p><strong>Raw cards only.</strong> Graded sales are left out entirely. A slab's price is partly the grade's price &mdash; a PSA 10 and a PSA 9 of the same card are different assets that move on population reports and grading turnaround as much as on the card itself &mdash; so mixing them in blurs what the card did. Listings whose grade we couldn't read are excluded too if anything in the title suggests a slab, which means the odd genuinely raw card is dropped. That is the safer error: a lost sale costs a little sample, a stray slab costs the number.</p>
-      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded raw base cards, matched on year, set and card number. ${trend
+      <p><strong>Raw and graded, never mixed.</strong> A slab's price is partly the grade's price &mdash; a PSA 10 and a PSA 9 of the same card are different assets that move on population reports and grading turnaround as much as on the card itself &mdash; so each grade is followed as a card of its own and only ever compared with itself. A PSA 10's sale never moves the raw card's line, or the other way round. Listings whose grade we couldn't read are excluded too if anything in the title suggests a slab, which means the odd genuinely raw card is dropped. That is the safer error: a lost sale costs a little sample, a stray slab costs the number.</p>
+      <p><strong>What it covers.</strong> ${_mkPlayer ? escHtml(_mkPlayer) + "'s" : 'The'} most-traded base cards, raw and each grade separately, matched on year, set and card number. ${trend
         ? `It rests on ${data.matchedCards || 0} card${data.matchedCards === 1 ? '' : 's'} and ${(data.totalObservations || 0).toLocaleString('en-US')} sales across the period.`
         : `A typical point rests on ${(data.matchedCards || 0).toLocaleString('en-US')} players${data.totalObservations ? `, built from ${data.totalObservations.toLocaleString('en-US')} price comparisons across the period` : ''}.`} Both the player list and each player's cards are picked by how much they actually trade, not by hand. Best-offer sales are excluded, because eBay publishes the asking price rather than what was paid.</p>
     </div>
@@ -7243,7 +7243,7 @@ async function loadMarketBasket(basketP, seq = _mkSeq) {
   wrap.innerHTML = `
     <div class="market-basket-head">
       <span class="market-basket-title">What's driving it</span>
-      <span class="market-basket-sub">${cards.length} most-traded raw base card${cards.length === 1 ? '' : 's'} in the basket</span>
+      <span class="market-basket-sub">${cards.length} most-traded base card${cards.length === 1 ? '' : 's'} in the basket, raw and graded</span>
     </div>
     <ul class="market-basket-list">
       ${cards.map(c => `
