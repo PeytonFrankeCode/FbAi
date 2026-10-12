@@ -67,10 +67,34 @@ function norm(s) {
 const PRODUCT_WORD = new Set(['prizm', 'prizms', 'refractor', 'refractors',
                               'parallel', 'parallels']);
 
-function parallelKey(name) {
+// "Silver" on the end is shine, not a parallel, when the rest is one we know
+// (owner, Oct 2026). A Prizm Red White Blue is silvery by nature, and sellers
+// write "Red White Blue Silver", which split 2024 Prizm Bo Nix #309 Red White
+// Blue into two tiles. So with `isKnown` (the vocabulary's own test), a
+// trailing Silver goes when the name with it is not a parallel we know and the
+// name without it is. Holo Silver, Mirror Silver, Press Proof Silver are real
+// parallels and stay whole; "Silver" alone is the Silver parallel and stays.
+// Without `isKnown` nothing changes: no vocabulary, no evidence to merge on.
+const SHINE_WORD = new Set(['silver', 'silvers']);
+
+function parallelKey(name, isKnown) {
   const toks = norm(name).split(' ').filter(Boolean);
-  while (toks.length > 1 && PRODUCT_WORD.has(toks[toks.length - 1])) toks.pop();
-  while (toks.length > 1 && PRODUCT_WORD.has(toks[0])) toks.shift();
+  const trim = () => {
+    while (toks.length > 1 && PRODUCT_WORD.has(toks[toks.length - 1])) toks.pop();
+    while (toks.length > 1 && PRODUCT_WORD.has(toks[0])) toks.shift();
+  };
+  trim();
+  // "Red White & Blue" and "Red White Blue" are one parallel (norm turns "&"
+  // into "and"; variants() already indexes both). Only inside a longer name:
+  // a two-word key keeps its "and".
+  if (toks.length > 3) for (let i = toks.length - 2; i > 0; i--) if (toks[i] === 'and') toks.splice(i, 1);
+  if (typeof isKnown === 'function') {
+    while (toks.length > 1 && SHINE_WORD.has(toks[toks.length - 1])
+           && !isKnown(toks.join(' ')) && isKnown(toks.slice(0, -1).join(' '))) {
+      toks.pop();
+      trim();
+    }
+  }
   return toks.join(' ');
 }
 
@@ -728,6 +752,12 @@ function resolveParallel(title, opts = {}) {
   // it writes "Downtown" in the parallel field, where the catalogue calls
   // Downtown! a set. Telling them apart is what separates the reader being
   // wrong from the column being loose, and they need opposite fixes.
+  // A parallel we know by this name, in any product. What parallelKey() takes
+  // as `isKnown`.
+  isParallelName(name) {
+    const c = this.classify(name);
+    return c === 'parallel' || c === 'both';
+  },
   classify(name) {
     build();
     const n = norm(name);

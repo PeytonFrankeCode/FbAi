@@ -80,8 +80,12 @@ function _fromCache(v) {
 // In Node there is no assets binding, so the committed files are read directly
 // and the same resolvers are built from them — which is what the tests drive.
 const { createCardIndex } = require('./card-index-core');
-const { createParallelIndex, parallelKey: _parallelKey, stripColorTeams: _stripColorTeams,
+const { createParallelIndex, parallelKey: _parallelKeyCore, stripColorTeams: _stripColorTeams,
         NFL_NICKNAMES: _NFL_NICKNAMES } = require('./parallel-index-core');
+// Every grouping key goes through the vocabulary once it is loaded, so a
+// seller's "Red White Blue Silver" lands on Red White Blue (parallelKey).
+let _parKnown = null;
+const _parallelKey = (name) => _parallelKeyCore(name, _parKnown);
 // Grade bucketing, split out so it can be tested directly. It decides the
 // "Ungraded" badge on every sold tile AND which sales reach the Raw price
 // series, and it was calling every PSA10/BGS9.5 slab raw — see grade-core.js.
@@ -255,9 +259,12 @@ function _groupMostSold(rows, pi, pAliases, overrides) {
     if (!g) {
       g = { player: r.player, year: r.year, set_name: r.set_name,
             card_number: r.card_number, kind, parallel: name,
-            n: 0, total: 0, max: -1, rows: [] };
+            n: 0, total: 0, max: -1, rows: [], names: new Map() };
       groups.set(id, g);
     }
+    // One key can be spelled several ways ("Red White Blue", "... Silver");
+    // the tile is named by the commonest, the shorter on a tie.
+    if (name) g.names.set(name, (g.names.get(name) || 0) + 1);
     g.n++;
     g.total += (r.price_cents || 0);
     g.max = Math.max(g.max, r.price_cents || 0);
@@ -269,6 +276,10 @@ function _groupMostSold(rows, pi, pAliases, overrides) {
   // parallel, so the tile advertised the wrong card.
   const out = [...groups.values()];
   for (const g of out) {
+    if (g.names.size > 1) {
+      g.parallel = [...g.names.entries()].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0][0];
+    }
+    delete g.names;
     const byPrice = g.rows.slice().sort((a, b) => (a.price_cents || 0) - (b.price_cents || 0));
     const mid = byPrice.length >> 1;
     let best = mid;
@@ -326,6 +337,8 @@ async function parallelIndex() {
       _dict.parallel = createParallelIndex(
         await _loadJson('parallel-index.json'),
         ci ? ci.resolvePlayer : () => null);
+      const pi = _dict.parallel;
+      _parKnown = (n) => pi.isParallelName(n);
     } catch (err) {
       console.error('[dict] parallel index unavailable:', err && err.message);
       _dict.parallel = false;
@@ -13056,7 +13069,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v40: a grading population ("Pop 1/1") is not a print run.
 // v41: Tiffany is a parallel wherever it is written; teams are not players.
 // v42: a poster of a card is not the card.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v42';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v43';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -13073,7 +13086,7 @@ const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-
 // something else held out of every raw price, at any number of sales.
 // v36: small third-party graders (ASG, CCG, MBA, MPE, MCG, ...) read as slabs when a
 // grade number follows them, never inside a card code.
-const CARD_IDENTITY_FINGERPRINT = 'f61ccbea277f';
+const CARD_IDENTITY_FINGERPRINT = 'a8dbdc00aa5c';
 
 // A "raw" sale priced like a slab, moved out of the Raw series.
 //
@@ -13623,7 +13636,10 @@ async function _cardAnalysisRoute(req, res) {
       else if (!words.size && !serial) { key = ''; from = 'no-parallel-words'; }
       if (key == null) return { key: null, known: false, from };
       const named = new Set(String(key).split(/[^a-z0-9]+/).filter(Boolean));
-      const extra = [...words].filter(w => !named.has(w));
+      // "Silver" on a parallel that is silvery anyway is shine, not a second
+      // parallel: the key already decided that (parallelKey), so ask it again.
+      const extra = [...words].filter(w => !named.has(w)
+        && !(key && w === 'silver' && _parallelKey(`${key} silver`) === key));
       if (extra.length) return { key: null, known: false, from: `title also says ${extra.join(' ')}` };
       return { key, known: true, from };
     };

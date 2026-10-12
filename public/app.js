@@ -4025,7 +4025,21 @@ function _matchVersion(title, ctx) {
   taken.sort((x, y) => x.at - y.at);
   // "Holo" beside another word is that word's finish ("Silver Holo"); alone,
   // it is a version only where the set lists one (Optic's Holo).
-  const words = taken.filter(t => t.norm !== 'holo' || (taken.length === 1 && t.listed));
+  let words = taken.filter(t => t.norm !== 'holo' || (taken.length === 1 && t.listed));
+  // "Silver" beside another parallel is its shine (owner, Oct 2026): a Prizm
+  // Red White Blue is silvery anyway, and "Red White Blue Silver" was made a
+  // version of its own. Unless the set lists the pairing as one name. The
+  // server's grouping key does the same (parallel-index-core.js parallelKey).
+  // Word by word: Donruss lists "Press Proof Silver Die-Cut", where Silver is
+  // the colour that tells it from the Gold one, and that stays.
+  if (words.length > 1 && words.some(w => w.norm === 'silver')) {
+    const rest = new Set(words.filter(w => w.norm !== 'silver').flatMap(w => w.norm.split(' ')));
+    const listsIt = card.matchers.some(m => {
+      const t = m.norm.split(' ');
+      return t.length > 1 && t.includes('silver') && t.some(x => rest.has(x)) && t.every(x => x === 'silver' || rest.has(x));
+    });
+    if (!listsIt) words = words.filter(w => w.norm !== 'silver');
+  }
   let parallel = 'Base';
   if (words.length === 1) parallel = words[0].label;
   else if (words.length > 1) {
