@@ -1,0 +1,1408 @@
+{
+  "id": "2025-sp-game-used-cfl-football",
+  "name": "2025 SP Game Used CFL Football",
+  "year": 2025,
+  "brand": "SP Game Used CFL",
+  "sport": "Football",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base-cfl-autographs",
+      "name": "Base CFL Autographs",
+      "category": "autograph",
+      "totalCards": 52,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CFL-AH",
+          "player": "Alexander Hollins",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-AN",
+          "player": "Nick Arbuckle",
+          "team": "Toronto Argonauts SP"
+        },
+        {
+          "number": "CFL-AO",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-AP",
+          "player": "Adarius Pickett",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-BF",
+          "player": "Benjie Franklin",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-BO",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers SP"
+        },
+        {
+          "number": "CFL-BR",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-CC",
+          "player": "Christian Covington",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-CJ",
+          "player": "Cameron Judge",
+          "team": "Calgary Stampeders SP"
+        },
+        {
+          "number": "CFL-DA",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-DB",
+          "player": "Devodric Bynum",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-DD",
+          "player": "Drew Desjarlais",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-DH",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders SSP"
+        },
+        {
+          "number": "CFL-DM",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "CFL-DR",
+          "player": "Dru Brown",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-DS",
+          "player": "Darnell Sankey",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-EL",
+          "player": "Eugene Lewis",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-GC",
+          "player": "Geoffrey Cantin-Arku",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-GP",
+          "player": "Garry Peters",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-IA",
+          "player": "Isaac Adeyemi-Berglund",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-JB",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-JC",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-JL",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-JP",
+          "player": "Jamal Peters",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-KC",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts SP"
+        },
+        {
+          "number": "CFL-KG",
+          "player": "Kurleigh Gittens Jr.",
+          "team": "Edmonton Elks SP"
+        },
+        {
+          "number": "CFL-KJ",
+          "player": "Keesean Johnson",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-LF",
+          "player": "Logan Ferland",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-LH",
+          "player": "Lirim Hajrullahu",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-LM",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-MA",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-MB",
+          "player": "McLeod Bethel-Thompson",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-MC",
+          "player": "Justin McInnis",
+          "team": "BC Lions SSP"
+        },
+        {
+          "number": "CFL-MM",
+          "player": "Marken Michel",
+          "team": "Calgary Stampeders SP"
+        },
+        {
+          "number": "CFL-MS",
+          "player": "Marcus Sayles",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-MW",
+          "player": "Michael Wakefield",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-NA",
+          "player": "Nick Anderson",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-ND",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-RM",
+          "player": "Rolan Milligan Jr.",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-SB",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-SD",
+          "player": "Steven Dunbar Jr.",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-SE",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders SP"
+        },
+        {
+          "number": "CFL-SK",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-SM",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders SSP"
+        },
+        {
+          "number": "CFL-SW",
+          "player": "Sean Whyte",
+          "team": "BC Lions SP"
+        },
+        {
+          "number": "CFL-TB",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-TF",
+          "player": "Tyrell Ford",
+          "team": "Winnipeg Blue Bombers SP"
+        },
+        {
+          "number": "CFL-TH",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders SSP"
+        },
+        {
+          "number": "CFL-TW",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-WF",
+          "player": "Walter Fletcher",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-WS",
+          "player": "William Stanback",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-ZC",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-jerseys",
+      "name": "Base CFL Jerseys",
+      "category": "base",
+      "totalCards": 59,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CFL-AH",
+          "player": "Alexander Hollins",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-AN",
+          "player": "Nick Arbuckle",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-AO",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-AP",
+          "player": "Adarius Pickett",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-BF",
+          "player": "Benjie Franklin",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-BM",
+          "player": "Bo Levi Mitchell",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-BO",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-BR",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-CC",
+          "player": "Christian Covington",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-CF",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-CJ",
+          "player": "Cameron Judge",
+          "team": "Calgary Stampeders SP"
+        },
+        {
+          "number": "CFL-CR",
+          "player": "Charleston Rambo",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-DA",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-DB",
+          "player": "Devodric Bynum",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-DD",
+          "player": "Drew Desjarlais",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-DH",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "CFL-DM",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "CFL-DR",
+          "player": "Dru Brown",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-DS",
+          "player": "Darnell Sankey",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-EL",
+          "player": "Eugene Lewis",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-GC",
+          "player": "Geoffrey Cantin-Arku",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-GP",
+          "player": "Garry Peters",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-JB",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-JC",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-JH",
+          "player": "Justin Hardy",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-JL",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-JM",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "CFL-JP",
+          "player": "Jamal Peters",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-KC",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-KG",
+          "player": "Kurleigh Gittens Jr.",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-KJ",
+          "player": "Keesean Johnson",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-KW",
+          "player": "Kyle Wilson",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-LF",
+          "player": "Logan Ferland",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-LH",
+          "player": "Lirim Hajrullahu",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "CFL-LM",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-LP",
+          "player": "Loucheiz Purifoy",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-MA",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-MB",
+          "player": "McLeod Bethel-Thompson",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-MC",
+          "player": "Justin McInnis",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-MS",
+          "player": "Marcus Sayles",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-MW",
+          "player": "Michael Wakefield",
+          "team": "Ottawa REDBLACKS"
+        },
+        {
+          "number": "CFL-NA",
+          "player": "Nick Anderson",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "CFL-ND",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-PL",
+          "player": "Pier-Olivier Lestage",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-RB",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "CFL-RM",
+          "player": "Rolan Milligan Jr.",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-SB",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-SD",
+          "player": "Steven Dunbar Jr.",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-SE",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-SK",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-SW",
+          "player": "Sean Whyte",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-TB",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "CFL-TF",
+          "player": "Tyrell Ford",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-TH",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "CFL-TW",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "CFL-VA",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-WJ",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "CFL-WS",
+          "player": "William Stanback",
+          "team": "BC Lions"
+        },
+        {
+          "number": "CFL-ZC",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-patches",
+      "name": "Base CFL Patches",
+      "category": "memorabilia",
+      "totalCards": 50,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CFL-AN",
+          "player": "Nick Arbuckle",
+          "team": "Toronto Argonauts /75"
+        },
+        {
+          "number": "CFL-AO",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-AP",
+          "player": "Adarius Pickett",
+          "team": "Ottawa REDBLACKS /75"
+        },
+        {
+          "number": "CFL-BF",
+          "player": "Benjie Franklin",
+          "team": "Toronto Argonauts /75"
+        },
+        {
+          "number": "CFL-BM",
+          "player": "Bo Levi Mitchell",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-BO",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /75"
+        },
+        {
+          "number": "CFL-BR",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-CC",
+          "player": "Christian Covington",
+          "team": "BC Lions /75"
+        },
+        {
+          "number": "CFL-CF",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-CR",
+          "player": "Charleston Rambo",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-DB",
+          "player": "Devodric Bynum",
+          "team": "Edmonton Elks /75"
+        },
+        {
+          "number": "CFL-DD",
+          "player": "Drew Desjarlais",
+          "team": "Ottawa REDBLACKS /75"
+        },
+        {
+          "number": "CFL-DM",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders /75"
+        },
+        {
+          "number": "CFL-DS",
+          "player": "Darnell Sankey",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-EL",
+          "player": "Eugene Lewis",
+          "team": "Edmonton Elks /75"
+        },
+        {
+          "number": "CFL-GC",
+          "player": "Geoffrey Cantin-Arku",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-GP",
+          "player": "Garry Peters",
+          "team": "BC Lions /75"
+        },
+        {
+          "number": "CFL-JB",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-JC",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts /75"
+        },
+        {
+          "number": "CFL-JH",
+          "player": "Justin Hardy",
+          "team": "Ottawa REDBLACKS /75"
+        },
+        {
+          "number": "CFL-JL",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks /75"
+        },
+        {
+          "number": "CFL-JM",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders /75"
+        },
+        {
+          "number": "CFL-JP",
+          "player": "Jamal Peters",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-KC",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts /75"
+        },
+        {
+          "number": "CFL-KG",
+          "player": "Kurleigh Gittens Jr.",
+          "team": "Edmonton Elks /75"
+        },
+        {
+          "number": "CFL-KJ",
+          "player": "Keesean Johnson",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-KW",
+          "player": "Kyle Wilson",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-LF",
+          "player": "Logan Ferland",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-LH",
+          "player": "Lirim Hajrullahu",
+          "team": "Toronto Argonauts /75"
+        },
+        {
+          "number": "CFL-LM",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa REDBLACKS /75"
+        },
+        {
+          "number": "CFL-LP",
+          "player": "Loucheiz Purifoy",
+          "team": "Edmonton Elks /75"
+        },
+        {
+          "number": "CFL-MA",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-MC",
+          "player": "Justin McInnis",
+          "team": "BC Lions /75"
+        },
+        {
+          "number": "CFL-MS",
+          "player": "Marcus Sayles",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-MW",
+          "player": "Michael Wakefield",
+          "team": "Ottawa REDBLACKS /75"
+        },
+        {
+          "number": "CFL-NA",
+          "player": "Nick Anderson",
+          "team": "Edmonton Elks /75"
+        },
+        {
+          "number": "CFL-ND",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers /75"
+        },
+        {
+          "number": "CFL-PL",
+          "player": "Pier-Olivier Lestage",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-RB",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders /75"
+        },
+        {
+          "number": "CFL-RM",
+          "player": "Rolan Milligan Jr.",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-SB",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers /75"
+        },
+        {
+          "number": "CFL-SE",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-SK",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-SW",
+          "player": "Sean Whyte",
+          "team": "BC Lions /75"
+        },
+        {
+          "number": "CFL-TB",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes /75"
+        },
+        {
+          "number": "CFL-TH",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders /75"
+        },
+        {
+          "number": "CFL-TW",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats /75"
+        },
+        {
+          "number": "CFL-VA",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions /75"
+        },
+        {
+          "number": "CFL-WJ",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers /75"
+        },
+        {
+          "number": "CFL-ZC",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /75"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-autograph-patches",
+      "name": "Base CFL Autograph Patches",
+      "category": "autograph",
+      "totalCards": 44,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CFL-AH",
+          "player": "Alexander Hollins",
+          "team": "BC Lions /50"
+        },
+        {
+          "number": "CFL-AN",
+          "player": "Nick Arbuckle",
+          "team": "Toronto Argonauts /50"
+        },
+        {
+          "number": "CFL-AO",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-AP",
+          "player": "Adarius Pickett",
+          "team": "Ottawa REDBLACKS /50"
+        },
+        {
+          "number": "CFL-BF",
+          "player": "Benjie Franklin",
+          "team": "Toronto Argonauts /50"
+        },
+        {
+          "number": "CFL-BO",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /50"
+        },
+        {
+          "number": "CFL-BR",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats /50"
+        },
+        {
+          "number": "CFL-CC",
+          "player": "Christian Covington",
+          "team": "BC Lions /50"
+        },
+        {
+          "number": "CFL-DA",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts /50"
+        },
+        {
+          "number": "CFL-DB",
+          "player": "Devodric Bynum",
+          "team": "Edmonton Elks /50"
+        },
+        {
+          "number": "CFL-DD",
+          "player": "Drew Desjarlais",
+          "team": "Ottawa REDBLACKS /50"
+        },
+        {
+          "number": "CFL-DM",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders /50"
+        },
+        {
+          "number": "CFL-DR",
+          "player": "Dru Brown",
+          "team": "Ottawa REDBLACKS /50"
+        },
+        {
+          "number": "CFL-DS",
+          "player": "Darnell Sankey",
+          "team": "Montreal Alouettes /50"
+        },
+        {
+          "number": "CFL-EL",
+          "player": "Eugene Lewis",
+          "team": "Edmonton Elks /50"
+        },
+        {
+          "number": "CFL-GC",
+          "player": "Geoffrey Cantin-Arku",
+          "team": "Montreal Alouettes /50"
+        },
+        {
+          "number": "CFL-GP",
+          "player": "Garry Peters",
+          "team": "BC Lions /50"
+        },
+        {
+          "number": "CFL-JB",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats /50"
+        },
+        {
+          "number": "CFL-JC",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts /50"
+        },
+        {
+          "number": "CFL-JL",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks /50"
+        },
+        {
+          "number": "CFL-JP",
+          "player": "Jamal Peters",
+          "team": "Hamilton Tiger Cats /50"
+        },
+        {
+          "number": "CFL-KC",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts /50"
+        },
+        {
+          "number": "CFL-KG",
+          "player": "Kurleigh Gittens Jr.",
+          "team": "Edmonton Elks /50"
+        },
+        {
+          "number": "CFL-KJ",
+          "player": "Keesean Johnson",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-LF",
+          "player": "Logan Ferland",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-LH",
+          "player": "Lirim Hajrullahu",
+          "team": "Toronto Argonauts /50"
+        },
+        {
+          "number": "CFL-LM",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa REDBLACKS /50"
+        },
+        {
+          "number": "CFL-MA",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes /50"
+        },
+        {
+          "number": "CFL-MC",
+          "player": "Justin McInnis",
+          "team": "BC Lions /50"
+        },
+        {
+          "number": "CFL-MS",
+          "player": "Marcus Sayles",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-MW",
+          "player": "Michael Wakefield",
+          "team": "Ottawa REDBLACKS /50"
+        },
+        {
+          "number": "CFL-NA",
+          "player": "Nick Anderson",
+          "team": "Edmonton Elks /50"
+        },
+        {
+          "number": "CFL-ND",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers /50"
+        },
+        {
+          "number": "CFL-RM",
+          "player": "Rolan Milligan Jr.",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-SB",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers /50"
+        },
+        {
+          "number": "CFL-SE",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-SK",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats /50"
+        },
+        {
+          "number": "CFL-SM",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders /50"
+        },
+        {
+          "number": "CFL-SW",
+          "player": "Sean Whyte",
+          "team": "BC Lions /50"
+        },
+        {
+          "number": "CFL-TB",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes /50"
+        },
+        {
+          "number": "CFL-TH",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders /50"
+        },
+        {
+          "number": "CFL-TW",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats /50"
+        },
+        {
+          "number": "CFL-WS",
+          "player": "William Stanback",
+          "team": "BC Lions /50"
+        },
+        {
+          "number": "CFL-ZC",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /50"
+        }
+      ]
+    },
+    {
+      "id": "cfl-dual-autographs",
+      "name": "CFL Dual Autographs",
+      "category": "autograph",
+      "totalCards": 14,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CDA-BL",
+          "player": "Eugene Lewis/McLeod Bethel-Thompson",
+          "team": "Alouettes/Elks /10"
+        },
+        {
+          "number": "CDA-CD",
+          "player": "Zach Collaros/Nic Demski",
+          "team": "Winnipeg Blue Bombers /10"
+        },
+        {
+          "number": "CDA-CO",
+          "player": "Ka'Deem Carey/Brady Oliveira",
+          "team": "Argonauts/Blue Bombers /10"
+        },
+        {
+          "number": "CDA-HE",
+          "player": "Samuel Emilus/Trevor Harris",
+          "team": "Saskatchewan Roughriders /10"
+        },
+        {
+          "number": "CDA-MA",
+          "player": "Nick Anderson/Nyles Morgan",
+          "team": "Edmonton Elks /10"
+        },
+        {
+          "number": "CDA-MR",
+          "player": "Brandon Revenberg/Bo Levi Mitchell",
+          "team": "Hamilton Tiger Cats /10"
+        },
+        {
+          "number": "CDA-MS",
+          "player": "Rolan Milligan Jr./Marcus Sayles",
+          "team": "Saskatchewan Roughriders /10"
+        },
+        {
+          "number": "CDA-MW",
+          "player": "Bo Levi Mitchell/Tim White",
+          "team": "Hamilton Tiger Cats /10"
+        },
+        {
+          "number": "CDA-OB",
+          "player": "Brady Oliveira/Stanley Bryant",
+          "team": "Winnipeg Blue Bombers /10"
+        },
+        {
+          "number": "CDA-OC",
+          "player": "Jake Ceresna/Folarin Orimolade",
+          "team": "Toronto Argonauts /10"
+        },
+        {
+          "number": "CDA-SM",
+          "player": "William Stanback/Dedrick Mills",
+          "team": "Lions/Stampeders /10"
+        },
+        {
+          "number": "CDA-WH",
+          "player": "Sean Whyte/Lirim Hajrullahu",
+          "team": "Lions/Argonauts /10"
+        },
+        {
+          "number": "CDA-WM",
+          "player": "Lorenzo Mauldin IV/Michael Wakefield",
+          "team": "Ottawa REDBLACKS /10"
+        },
+        {
+          "number": "CDA-WW",
+          "player": "Michael Wakefield/Damon Webb",
+          "team": "Ottawa REDBLACKS /10"
+        }
+      ]
+    },
+    {
+      "id": "cfl-salute-jumbo-autograph-patch",
+      "name": "CFL Salute Jumbo Autograph Patch",
+      "category": "autograph",
+      "totalCards": 21,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CS-AH",
+          "player": "Alexander Hollins",
+          "team": "BC Lions /25"
+        },
+        {
+          "number": "CS-AO",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders /25"
+        },
+        {
+          "number": "CS-BO",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /25"
+        },
+        {
+          "number": "CS-DB",
+          "player": "Dru Brown",
+          "team": "Ottawa REDBLACKS /25"
+        },
+        {
+          "number": "CS-DH",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders /25"
+        },
+        {
+          "number": "CS-DM",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders /25"
+        },
+        {
+          "number": "CS-EL",
+          "player": "Eugene Lewis",
+          "team": "Edmonton Elks /25"
+        },
+        {
+          "number": "CS-JB",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats /25"
+        },
+        {
+          "number": "CS-JL",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks /25"
+        },
+        {
+          "number": "CS-JP",
+          "player": "Jamal Peters",
+          "team": "Hamilton Tiger Cats /25"
+        },
+        {
+          "number": "CS-KC",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts /25"
+        },
+        {
+          "number": "CS-MC",
+          "player": "Justin McInnis",
+          "team": "BC Lions /25"
+        },
+        {
+          "number": "CS-MW",
+          "player": "Michael Wakefield",
+          "team": "Ottawa REDBLACKS /25"
+        },
+        {
+          "number": "CS-NA",
+          "player": "Nick Anderson",
+          "team": "Edmonton Elks /25"
+        },
+        {
+          "number": "CS-ND",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers /25"
+        },
+        {
+          "number": "CS-RM",
+          "player": "Rolan Milligan Jr.",
+          "team": "Saskatchewan Roughriders /25"
+        },
+        {
+          "number": "CS-SE",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders /25"
+        },
+        {
+          "number": "CS-TB",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes /25"
+        },
+        {
+          "number": "CS-TH",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders /25"
+        },
+        {
+          "number": "CS-WS",
+          "player": "William Stanback",
+          "team": "BC Lions /25"
+        },
+        {
+          "number": "CS-ZC",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /25"
+        }
+      ]
+    },
+    {
+      "id": "cfl-salute-logo-patch",
+      "name": "CFL Salute Logo Patch",
+      "category": "memorabilia",
+      "totalCards": 27,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CS-AH",
+          "player": "Alexander Hollins",
+          "team": "BC Lions /1"
+        },
+        {
+          "number": "CS-AO",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders /1"
+        },
+        {
+          "number": "CS-BM",
+          "player": "Bo Levi Mitchell",
+          "team": "Hamilton Tiger Cats /1"
+        },
+        {
+          "number": "CS-BO",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /1"
+        },
+        {
+          "number": "CS-CF",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes /1"
+        },
+        {
+          "number": "CS-DA",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts /1"
+        },
+        {
+          "number": "CS-DB",
+          "player": "Dru Brown",
+          "team": "Ottawa REDBLACKS /1"
+        },
+        {
+          "number": "CS-DM",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "CS-DW",
+          "player": "Damon Webb",
+          "team": "Ottawa REDBLACKS /1"
+        },
+        {
+          "number": "CS-EL",
+          "player": "Eugene Lewis",
+          "team": "Edmonton Elks /1"
+        },
+        {
+          "number": "CS-JB",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats /1"
+        },
+        {
+          "number": "CS-JH",
+          "player": "Justin Hardy",
+          "team": "Ottawa REDBLACKS /1"
+        },
+        {
+          "number": "CS-JL",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks /1"
+        },
+        {
+          "number": "CS-JM",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "CS-JP",
+          "player": "Jamal Peters",
+          "team": "Hamilton Tiger Cats /1"
+        },
+        {
+          "number": "CS-KC",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts /1"
+        },
+        {
+          "number": "CS-MC",
+          "player": "Justin McInnis",
+          "team": "BC Lions /1"
+        },
+        {
+          "number": "CS-MW",
+          "player": "Michael Wakefield",
+          "team": "Ottawa REDBLACKS /1"
+        },
+        {
+          "number": "CS-NA",
+          "player": "Nick Anderson",
+          "team": "Edmonton Elks /1"
+        },
+        {
+          "number": "CS-ND",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers /1"
+        },
+        {
+          "number": "CS-RB",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "CS-RM",
+          "player": "Rolan Milligan Jr.",
+          "team": "Saskatchewan Roughriders /1"
+        },
+        {
+          "number": "CS-SE",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders /1"
+        },
+        {
+          "number": "CS-TB",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes /1"
+        },
+        {
+          "number": "CS-TH",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders /1"
+        },
+        {
+          "number": "CS-WS",
+          "player": "William Stanback",
+          "team": "BC Lions /1"
+        },
+        {
+          "number": "CS-ZC",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /1"
+        }
+      ]
+    }
+  ]
+}

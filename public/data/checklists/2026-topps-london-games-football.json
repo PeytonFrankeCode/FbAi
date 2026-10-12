@@ -2603,6 +2603,20 @@
           "team": "Chicago Bears"
         }
       ]
+    },
+    {
+      "id": "base-lenticular-london",
+      "name": "Base Lenticular London",
+      "category": "base",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "LL-10",
+          "player": "Lamar Jackson & London Eye",
+          "team": "Baltimore Ravens"
+        }
+      ]
     }
   ]
 }

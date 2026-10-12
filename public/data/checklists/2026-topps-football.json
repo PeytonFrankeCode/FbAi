@@ -9803,7 +9803,7 @@
       "id": "real-one-autographs",
       "name": "Real One Autographs",
       "category": "autograph",
-      "totalCards": 134,
+      "totalCards": 154,
       "printRun": 250,
       "parallels": [
         {
@@ -10501,6 +10501,106 @@
           "number": "256",
           "player": "T’Vondre Sweat",
           "team": "New York Jets"
+        },
+        {
+          "number": "271",
+          "player": "Team Cards",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "272",
+          "player": "Team Cards",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "273",
+          "player": "Team Cards",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "274",
+          "player": "Team Cards",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "275",
+          "player": "Team Cards",
+          "team": "New York Giants"
+        },
+        {
+          "number": "276",
+          "player": "Team Cards",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "277",
+          "player": "Team Cards",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "278",
+          "player": "Team Cards",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "279",
+          "player": "Team Cards",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "280",
+          "player": "Team Cards",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "291",
+          "player": "Combo Cards",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "292",
+          "player": "Combo Cards",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "293",
+          "player": "Combo Cards",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "294",
+          "player": "Combo Cards",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "295",
+          "player": "Combo Cards",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "296",
+          "player": "Combo Cards",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "297",
+          "player": "Combo Cards",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "298",
+          "player": "Combo Cards",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "299",
+          "player": "Combo Cards",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "300",
+          "player": "Combo Cards",
+          "team": "Baltimore Ravens"
         }
       ]
     },
@@ -10508,7 +10608,7 @@
       "id": "rookie-real-one-autographs",
       "name": "Rookie Real One Autographs",
       "category": "autograph",
-      "totalCards": 77,
+      "totalCards": 78,
       "printRun": 250,
       "parallels": [
         {
@@ -10921,6 +11021,11 @@
           "number": "400",
           "player": "Uar Bernard",
           "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "267",
+          "player": "Theo Johnson",
+          "team": "New York Giants"
         }
       ]
     },

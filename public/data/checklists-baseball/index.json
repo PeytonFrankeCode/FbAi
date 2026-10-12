@@ -33,10 +33,9 @@
       "year": 2026,
       "brand": "Bowman",
       "sport": "Baseball",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+      "setCount": 6,
+      "totalCards": 270,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-bowman-mega-box-baseball",
@@ -199,8 +198,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 33,
-      "totalCards": 2735,
+      "setCount": 37,
+      "totalCards": 2968,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -281,8 +280,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 22,
-      "totalCards": 893,
+      "setCount": 25,
+      "totalCards": 928,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -397,6 +396,16 @@
       "totalCards": 2029
     },
     {
+      "id": "2026-topps-series-2-japan-edition-baseball",
+      "name": "2026 Topps Series 2 Japan Edition Baseball",
+      "year": 2026,
+      "brand": "Topps Series 2 Japan Edition",
+      "sport": "Baseball",
+      "setCount": 3,
+      "totalCards": 450,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2026-topps-tier-one-baseball",
       "name": "2026 Topps Tier One Baseball",
       "year": 2026,
@@ -421,8 +430,8 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 50,
-      "totalCards": 2287,
+      "setCount": 62,
+      "totalCards": 2908,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -751,8 +760,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 9,
-      "totalCards": 225
+      "setCount": 12,
+      "totalCards": 316
     },
     {
       "id": "2025-topps-celebration-series-1-baseball",
@@ -816,7 +825,7 @@
       "brand": "Topps",
       "sport": "Baseball",
       "setCount": 5,
-      "totalCards": 287
+      "totalCards": 288
     },
     {
       "id": "2025-topps-chrome-update-series-baseball",
@@ -915,8 +924,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 26,
-      "totalCards": 756
+      "setCount": 32,
+      "totalCards": 807
     },
     {
       "id": "2025-topps-gilded-collection-baseball",
@@ -1026,7 +1035,7 @@
       "brand": "Topps",
       "sport": "Baseball",
       "setCount": 17,
-      "totalCards": 906
+      "totalCards": 907
     },
     {
       "id": "2025-topps-series-1-baseball",
@@ -1752,8 +1761,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 8,
-      "totalCards": 187
+      "setCount": 9,
+      "totalCards": 195
     },
     {
       "id": "2024-topps-stadium-club-baseball",
@@ -1789,8 +1798,8 @@
       "year": 2024,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 23,
-      "totalCards": 1077
+      "setCount": 26,
+      "totalCards": 1277
     },
     {
       "id": "2024-topps-tribute-baseball",
@@ -2223,8 +2232,8 @@
       "year": 2023,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 3,
-      "totalCards": 693
+      "setCount": 5,
+      "totalCards": 798
     },
     {
       "id": "2023-topps-chrome-update-sapphire-edition-baseball",
@@ -2495,8 +2504,8 @@
       "year": 2023,
       "brand": "Topps",
       "sport": "Baseball",
-      "setCount": 15,
-      "totalCards": 914,
+      "setCount": 21,
+      "totalCards": 1281,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {

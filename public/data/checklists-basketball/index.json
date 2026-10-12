@@ -6,10 +6,9 @@
       "year": 2026,
       "brand": "Topps",
       "sport": "Basketball",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+      "setCount": 59,
+      "totalCards": 2647,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2026-donruss-wnba-basketball",
@@ -76,6 +75,16 @@
       "sport": "Basketball",
       "setCount": 8,
       "totalCards": 447
+    },
+    {
+      "id": "2025-26-bowman-u-now-march-madness-basketball",
+      "name": "2025-26 Bowman U Now March Madness Basketball",
+      "year": 2025,
+      "brand": "Bowman U Now March Madness",
+      "sport": "Basketball",
+      "setCount": 6,
+      "totalCards": 239,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-26-bowman-university-best-basketball",
@@ -158,10 +167,9 @@
       "year": 2025,
       "brand": "Panini",
       "sport": "Basketball",
-      "setCount": 0,
-      "totalCards": 0,
-      "unreleased": true,
-      "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+      "setCount": 51,
+      "totalCards": 1244,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-26-panini-select-euroleague-basketball",
@@ -356,8 +364,8 @@
       "year": 2025,
       "brand": "Topps",
       "sport": "Basketball",
-      "setCount": 27,
-      "totalCards": 1026,
+      "setCount": 29,
+      "totalCards": 1138,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -370,6 +378,16 @@
       "totalCards": 0,
       "unreleased": true,
       "note": "Checklist not released yet: it will be added as soon as the publisher releases it."
+    },
+    {
+      "id": "2025-bowman-u-now-ncaa-march-madness-basketball",
+      "name": "2025 Bowman U Now NCAA March Madness Basketball",
+      "year": 2025,
+      "brand": "Bowman U Now NCAA March Madness",
+      "sport": "Basketball",
+      "setCount": 3,
+      "totalCards": 32,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2025-donruss-wnba-basketball",
@@ -441,8 +459,8 @@
       "year": 2024,
       "brand": "Bowman",
       "sport": "Basketball",
-      "setCount": 17,
-      "totalCards": 426,
+      "setCount": 18,
+      "totalCards": 526,
       "note": "Partial checklist: a few sets are missing some cards."
     },
     {
@@ -596,7 +614,7 @@
       "brand": "Panini",
       "sport": "Basketball",
       "setCount": 39,
-      "totalCards": 1114
+      "totalCards": 1116
     },
     {
       "id": "2024-25-panini-one-and-one-basketball",
@@ -716,6 +734,16 @@
       "sport": "Basketball",
       "setCount": 37,
       "totalCards": 967
+    },
+    {
+      "id": "2024-25-panini-uconn-basketball",
+      "name": "2024-25 Panini UConn Basketball",
+      "year": 2024,
+      "brand": "Panini UConn",
+      "sport": "Basketball",
+      "setCount": 11,
+      "totalCards": 115,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2024-25-topps-chrome-basketball",
@@ -852,8 +880,8 @@
       "year": 2023,
       "brand": "Bowman",
       "sport": "Basketball",
-      "setCount": 15,
-      "totalCards": 367
+      "setCount": 16,
+      "totalCards": 465
     },
     {
       "id": "2023-24-bowman-chrome-sapphire-university-basketball",

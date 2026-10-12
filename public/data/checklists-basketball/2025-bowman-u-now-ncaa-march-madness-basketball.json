@@ -1,0 +1,197 @@
+{
+  "id": "2025-bowman-u-now-ncaa-march-madness-basketball",
+  "name": "2025 Bowman U Now NCAA March Madness Basketball",
+  "year": 2025,
+  "brand": "Bowman U Now NCAA March Madness",
+  "sport": "Basketball",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base-on-demand-set",
+      "name": "Base On Demand Set",
+      "category": "base",
+      "totalCards": 16,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "JuJu Watkins",
+          "team": "USC"
+        },
+        {
+          "number": "2",
+          "player": "Cooper Flagg",
+          "team": "Duke"
+        },
+        {
+          "number": "3",
+          "player": "Hannah Hidalgo",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "4",
+          "player": "Kon Knueppel",
+          "team": "Duke"
+        },
+        {
+          "number": "5",
+          "player": "Syla Swords",
+          "team": "Michigan"
+        },
+        {
+          "number": "6",
+          "player": "Liam McNeeley",
+          "team": "UConn"
+        },
+        {
+          "number": "7",
+          "player": "Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "8",
+          "player": "Derik Queen",
+          "team": "Maryland"
+        },
+        {
+          "number": "9",
+          "player": "Mikayla Blakes",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "10",
+          "player": "Asa Newell",
+          "team": "Georgia"
+        },
+        {
+          "number": "11",
+          "player": "Jaloni Cambridge",
+          "team": "Ohio State"
+        },
+        {
+          "number": "12",
+          "player": "Johni Broome",
+          "team": "Auburn"
+        },
+        {
+          "number": "13",
+          "player": "Kiki Iriafen",
+          "team": "USC"
+        },
+        {
+          "number": "14",
+          "player": "Mark Sears",
+          "team": "Alabama"
+        },
+        {
+          "number": "15",
+          "player": "Joyce Edwards",
+          "team": "South Carolina"
+        },
+        {
+          "number": "16",
+          "player": "Braden Smith",
+          "team": "Purdue"
+        }
+      ]
+    },
+    {
+      "id": "autographs",
+      "name": "Autographs",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "JuJu Watkins",
+          "team": "USC"
+        },
+        {
+          "number": "2",
+          "player": "Cooper Flagg",
+          "team": "Duke"
+        },
+        {
+          "number": "3",
+          "player": "Hannah Hidalgo",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "4",
+          "player": "Syla Swords",
+          "team": "Michigan"
+        },
+        {
+          "number": "5",
+          "player": "Liam McNeeley",
+          "team": "UConn"
+        },
+        {
+          "number": "6",
+          "player": "Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "7",
+          "player": "Derik Queen",
+          "team": "Maryland"
+        },
+        {
+          "number": "8",
+          "player": "Mikayla Blakes",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "9",
+          "player": "Asa Newell",
+          "team": "Georgia"
+        },
+        {
+          "number": "10",
+          "player": "Braden Smith",
+          "team": "Purdue"
+        }
+      ]
+    },
+    {
+      "id": "autograph-relics-redemptions",
+      "name": "Autograph Relics (Redemptions)",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "JuJu Watkins",
+          "team": "USC"
+        },
+        {
+          "number": "2",
+          "player": "Cooper Flagg",
+          "team": "Duke"
+        },
+        {
+          "number": "3",
+          "player": "Hannah Hidalgo",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "4",
+          "player": "Syla Swords",
+          "team": "Michigan"
+        },
+        {
+          "number": "5",
+          "player": "Liam McNeeley",
+          "team": "UConn"
+        },
+        {
+          "number": "6",
+          "player": "Derik Queen",
+          "team": "Maryland"
+        }
+      ]
+    }
+  ]
+}

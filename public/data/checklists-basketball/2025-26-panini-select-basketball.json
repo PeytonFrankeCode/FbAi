@@ -1,1 +1,6898 @@
-{"id":"2025-26-panini-select-basketball","name":"2025-26 Panini Select Basketball","year":2025,"brand":"Panini","sport":"Basketball","unreleased":true,"note":"Checklist not released yet: it will be added as soon as the publisher releases it.","sets":[]}
+{
+  "id": "2025-26-panini-select-basketball",
+  "name": "2025-26 Panini Select Basketball",
+  "year": 2025,
+  "brand": "Panini",
+  "sport": "Basketball",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base-concourse",
+      "name": "Base Concourse",
+      "category": "base",
+      "totalCards": 100,
+      "parallels": [
+        {
+          "name": "Blue Cracked Ice Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "2",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "3",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "4",
+          "player": "Taelon Peter",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "5",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors"
+        },
+        {
+          "number": "6",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "7",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "8",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "9",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "10",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "11",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "12",
+          "player": "Sion James",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "13",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "14",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "15",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "16",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "17",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "18",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "19",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "20",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "21",
+          "player": "Lachlan Olbrich",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "22",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers"
+        },
+        {
+          "number": "23",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "24",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "25",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "26",
+          "player": "Amari Williams",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "27",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "28",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "29",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "30",
+          "player": "Javon Small",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "31",
+          "player": "Alex Toohey",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "32",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "33",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "34",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "35",
+          "player": "Jahmai Mashack",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "36",
+          "player": "Will Richard",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "37",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "38",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "39",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "40",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "41",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "42",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "43",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "44",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "45",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "46",
+          "player": "Vlad Goldin",
+          "team": "Miami Heat"
+        },
+        {
+          "number": "47",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "48",
+          "player": "Shaquille O'Neal",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "49",
+          "player": "Patrick Ngongba II",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "50",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat"
+        },
+        {
+          "number": "51",
+          "player": "Lauren Betts",
+          "team": "UCLA Bruins"
+        },
+        {
+          "number": "52",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers"
+        },
+        {
+          "number": "53",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "54",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "55",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "56",
+          "player": "Andrej Stojakovic",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "57",
+          "player": "Matt Able",
+          "team": "NC State Wolfpack"
+        },
+        {
+          "number": "58",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "59",
+          "player": "Alex Karaban",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "60",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "61",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "62",
+          "player": "Xaivian Lee",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "63",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "64",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "65",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "66",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "67",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "68",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "69",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "70",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "71",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "72",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "73",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "74",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "75",
+          "player": "Jason Crowe Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "76",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "77",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "78",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "79",
+          "player": "John Calipari",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "80",
+          "player": "Spike Lee",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "81",
+          "player": "Percy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "82",
+          "player": "Jeremy Lin",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "83",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "84",
+          "player": "Larry Bird",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "85",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "86",
+          "player": "Neoklis Avdalas",
+          "team": "Virginia Tech Hokies"
+        },
+        {
+          "number": "87",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "88",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "89",
+          "player": "Kevin Garnett",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "90",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets"
+        },
+        {
+          "number": "91",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "92",
+          "player": "Chris Webber",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "93",
+          "player": "Dennis Rodman",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "94",
+          "player": "Karl Malone",
+          "team": "Utah Jazz"
+        },
+        {
+          "number": "95",
+          "player": "Julius Erving",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "96",
+          "player": "Patrick Ewing",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "97",
+          "player": "Isiah Thomas",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "98",
+          "player": "John Stockton",
+          "team": "Utah Jazz"
+        },
+        {
+          "number": "99",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "100",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        }
+      ]
+    },
+    {
+      "id": "base-premier-level",
+      "name": "Base Premier Level",
+      "category": "base",
+      "totalCards": 100,
+      "parallels": [
+        {
+          "name": "Blue Cracked Ice Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "101",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "102",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "103",
+          "player": "Lachlan Olbrich",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "104",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "105",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "106",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "107",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "108",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "109",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "110",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "111",
+          "player": "Sion James",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "112",
+          "player": "Taelon Peter",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "113",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "114",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "115",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "116",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "117",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "118",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "119",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "120",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "121",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "122",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "123",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "124",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "125",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "126",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "127",
+          "player": "Javon Small",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "128",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "129",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers"
+        },
+        {
+          "number": "130",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors"
+        },
+        {
+          "number": "131",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "132",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "133",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "134",
+          "player": "Amari Williams",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "135",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "136",
+          "player": "Jahmai Mashack",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "137",
+          "player": "Will Richard",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "138",
+          "player": "Alex Toohey",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "139",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "140",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "141",
+          "player": "Neoklis Avdalas",
+          "team": "Virginia Tech Hokies"
+        },
+        {
+          "number": "142",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "143",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "144",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "145",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "146",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "147",
+          "player": "Hunter Sallis",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "148",
+          "player": "Patrick Ngongba II",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "149",
+          "player": "Jason Kidd",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "150",
+          "player": "Shaquille O'Neal",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "151",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat"
+        },
+        {
+          "number": "152",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "153",
+          "player": "Kalek House",
+          "team": "High School"
+        },
+        {
+          "number": "154",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "155",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "156",
+          "player": "Tajh Ariza",
+          "team": "High School"
+        },
+        {
+          "number": "157",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "158",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "159",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "160",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "161",
+          "player": "Donnie Freeman",
+          "team": "Syracuse Orange"
+        },
+        {
+          "number": "162",
+          "player": "Flory Bidunga",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "163",
+          "player": "Otega Oweh",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "164",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "165",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "166",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "167",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "168",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "169",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "170",
+          "player": "Kaden House",
+          "team": "High School"
+        },
+        {
+          "number": "171",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "172",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers"
+        },
+        {
+          "number": "173",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "174",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "175",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "176",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "177",
+          "player": "Jason Crowe Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "178",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "179",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "180",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "181",
+          "player": "Spike Lee",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "182",
+          "player": "Geno Auriemma",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "183",
+          "player": "John Calipari",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "184",
+          "player": "Dick Vitale",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "185",
+          "player": "Percy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "186",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "187",
+          "player": "Jeremy Lin",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "188",
+          "player": "Larry Bird",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "189",
+          "player": "Julius Erving",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "190",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "191",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "192",
+          "player": "Anfernee Hardaway",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "193",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "194",
+          "player": "Dominique Wilkins",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "195",
+          "player": "Dennis Rodman",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "196",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "197",
+          "player": "Patrick Ewing",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "198",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets"
+        },
+        {
+          "number": "199",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "200",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        }
+      ]
+    },
+    {
+      "id": "base-courtside",
+      "name": "Base Courtside",
+      "category": "base",
+      "totalCards": 100,
+      "parallels": [
+        {
+          "name": "Blue Cracked Ice Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "201",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "202",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "203",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "204",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors"
+        },
+        {
+          "number": "205",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "206",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "207",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "208",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "209",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "210",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "211",
+          "player": "Will Richard",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "212",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "213",
+          "player": "Taelon Peter",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "214",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "215",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "216",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "217",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "218",
+          "player": "Alex Toohey",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "219",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "220",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "221",
+          "player": "Javon Small",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "222",
+          "player": "Jahmai Mashack",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "223",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "224",
+          "player": "Amari Williams",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "225",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "226",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "227",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "228",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "229",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "230",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "231",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "232",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "233",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "234",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "235",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "236",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "237",
+          "player": "Neoklis Avdalas",
+          "team": "Virginia Tech Hokies"
+        },
+        {
+          "number": "238",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "239",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "240",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "241",
+          "player": "Sion James",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "242",
+          "player": "Lachlan Olbrich",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "243",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "244",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "245",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "246",
+          "player": "Shaquille O'Neal",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "247",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat"
+        },
+        {
+          "number": "248",
+          "player": "Bryson Howard",
+          "team": "High School"
+        },
+        {
+          "number": "249",
+          "player": "Chris Webber",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "250",
+          "player": "Ray Allen",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "251",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "252",
+          "player": "Xaivian Lee",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "253",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "254",
+          "player": "Jason Crowe Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "255",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "256",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "257",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "258",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "259",
+          "player": "Alex Karaban",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "260",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "261",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "262",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "263",
+          "player": "Andrej Stojakovic",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "264",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "265",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "266",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers"
+        },
+        {
+          "number": "267",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "268",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "269",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "270",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "271",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "272",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "273",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "274",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "275",
+          "player": "Matt Able",
+          "team": "NC State Wolfpack"
+        },
+        {
+          "number": "276",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "277",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "278",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "279",
+          "player": "Spike Lee",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "280",
+          "player": "Geno Auriemma",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "281",
+          "player": "Percy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "282",
+          "player": "Ludacris",
+          "team": "Music"
+        },
+        {
+          "number": "283",
+          "player": "John Calipari",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "284",
+          "player": "Jeremy Lin",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "285",
+          "player": "Anfernee Hardaway",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "286",
+          "player": "Gary Payton",
+          "team": "Seattle Supersonics"
+        },
+        {
+          "number": "287",
+          "player": "Larry Bird",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "288",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "289",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets"
+        },
+        {
+          "number": "290",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "291",
+          "player": "Patrick Ewing",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "292",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "293",
+          "player": "Dennis Rodman",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "294",
+          "player": "Brandon Roy",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "295",
+          "player": "Julius Erving",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "296",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "297",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "298",
+          "player": "Kevin Garnett",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "299",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "300",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        }
+      ]
+    },
+    {
+      "id": "base-mezzanine-level",
+      "name": "Base Mezzanine Level",
+      "category": "base",
+      "totalCards": 100,
+      "parallels": [
+        {
+          "name": "Blue Cracked Ice Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "301",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "302",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "303",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "304",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "305",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "306",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "307",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "308",
+          "player": "Taelon Peter",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "309",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "310",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "311",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "312",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "313",
+          "player": "Jahmai Mashack",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "314",
+          "player": "Will Richard",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "315",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers"
+        },
+        {
+          "number": "316",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "317",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors"
+        },
+        {
+          "number": "318",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "319",
+          "player": "Javon Small",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "320",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "321",
+          "player": "Lachlan Olbrich",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "322",
+          "player": "Alex Toohey",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "323",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "324",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "325",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "326",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "327",
+          "player": "Sion James",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "328",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "329",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "330",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "331",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "332",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "333",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "334",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "335",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "336",
+          "player": "Amari Williams",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "337",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "338",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "339",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "340",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "341",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "342",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "343",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "344",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "345",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "346",
+          "player": "Dink Pate",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "347",
+          "player": "Patrick Ngongba II",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "348",
+          "player": "Bryson Howard",
+          "team": "High School"
+        },
+        {
+          "number": "349",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat"
+        },
+        {
+          "number": "350",
+          "player": "Shaquille O'Neal",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "351",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "352",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "353",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "354",
+          "player": "Andrej Stojakovic",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "355",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "356",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "357",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "358",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "359",
+          "player": "Alex Constanza",
+          "team": "High School"
+        },
+        {
+          "number": "360",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "361",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "362",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers"
+        },
+        {
+          "number": "363",
+          "player": "Flory Bidunga",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "364",
+          "player": "Matt Able",
+          "team": "NC State Wolfpack"
+        },
+        {
+          "number": "365",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "366",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "367",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "368",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "369",
+          "player": "Xaivian Lee",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "370",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "371",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "372",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "373",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "374",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "375",
+          "player": "Ryan Hampton",
+          "team": "High School"
+        },
+        {
+          "number": "376",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "377",
+          "player": "Jason Crowe Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "378",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "379",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "380",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "381",
+          "player": "Bobby Knight",
+          "team": "Indiana Hoosiers"
+        },
+        {
+          "number": "382",
+          "player": "Jim Boeheim",
+          "team": "Syracuse Orange"
+        },
+        {
+          "number": "383",
+          "player": "Spike Lee",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "384",
+          "player": "Roy Williams",
+          "team": "North Carolina Tar Heels"
+        },
+        {
+          "number": "385",
+          "player": "John Calipari",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "386",
+          "player": "Percy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "387",
+          "player": "Julius Erving",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "388",
+          "player": "Jeremy Lin",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "389",
+          "player": "Larry Bird",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "390",
+          "player": "Neoklis Avdalas",
+          "team": "Virginia Tech Hokies"
+        },
+        {
+          "number": "391",
+          "player": "Gary Payton",
+          "team": "Seattle Supersonics"
+        },
+        {
+          "number": "392",
+          "player": "Kevin Garnett",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "393",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "394",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets"
+        },
+        {
+          "number": "395",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "396",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "397",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "398",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "399",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "400",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        }
+      ]
+    },
+    {
+      "id": "colorgraphs",
+      "name": "Colorgraphs",
+      "category": "autograph",
+      "totalCards": 26,
+      "parallels": [
+        {
+          "name": "Blue Prizms",
+          "printRun": 49
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "2",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "3",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "4",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "5",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "6",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "7",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "9",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls /99"
+        },
+        {
+          "number": "10",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "11",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "12",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "13",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "14",
+          "player": "Kevin Garnett",
+          "team": "Minnesota Timberwolves /35"
+        },
+        {
+          "number": "15",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers /35"
+        },
+        {
+          "number": "16",
+          "player": "Anfernee Hardaway",
+          "team": "Orlando Magic /35"
+        },
+        {
+          "number": "19",
+          "player": "Miikka Muurinen",
+          "team": "International /49"
+        },
+        {
+          "number": "20",
+          "player": "Julius Erving",
+          "team": "Philadelphia 76ers /35"
+        },
+        {
+          "number": "21",
+          "player": "Tyran Stokes",
+          "team": "High School /99"
+        },
+        {
+          "number": "22",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks /99"
+        },
+        {
+          "number": "24",
+          "player": "Paul Pierce",
+          "team": "Boston Celtics /35"
+        },
+        {
+          "number": "25",
+          "player": "Dominique Wilkins",
+          "team": "Atlanta Hawks /75"
+        },
+        {
+          "number": "26",
+          "player": "Trae Young",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "27",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars /99"
+        },
+        {
+          "number": "28",
+          "player": "Jason Kidd",
+          "team": "Dallas Mavericks /49"
+        },
+        {
+          "number": "29",
+          "player": "Shaquille O'Neal",
+          "team": "Los Angeles Lakers /49"
+        },
+        {
+          "number": "30",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat /49"
+        }
+      ]
+    },
+    {
+      "id": "flawless-autographs",
+      "name": "Flawless Autographs",
+      "category": "autograph",
+      "totalCards": 3,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 15
+        }
+      ],
+      "cards": [
+        {
+          "number": "4",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /25"
+        },
+        {
+          "number": "5",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /25"
+        },
+        {
+          "number": "18",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats /25"
+        }
+      ]
+    },
+    {
+      "id": "flawless-phrases-signatures",
+      "name": "Flawless Phrases Signatures",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "5",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies /5"
+        }
+      ]
+    },
+    {
+      "id": "immaculate-rookie-introductions",
+      "name": "Immaculate Rookie Introductions",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "4",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "7",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "9",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "13",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "15",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        }
+      ]
+    },
+    {
+      "id": "immaculate-rookie-patch-autographs",
+      "name": "Immaculate Rookie Patch Autographs",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "2",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "5",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "10",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "12",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        }
+      ]
+    },
+    {
+      "id": "immaculate-signatures",
+      "name": "Immaculate Signatures",
+      "category": "autograph",
+      "totalCards": 3,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "7",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "9",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        }
+      ]
+    },
+    {
+      "id": "international-notoriety-signatures",
+      "name": "International Notoriety Signatures",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        }
+      ]
+    },
+    {
+      "id": "jumbo-rookie-signature-swatches",
+      "name": "Jumbo Rookie Signature Swatches",
+      "category": "autograph",
+      "totalCards": 30,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "2",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "3",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "4",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "5",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls /99"
+        },
+        {
+          "number": "6",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "7",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers 1/1",
+          "note": "no base"
+        },
+        {
+          "number": "9",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "10",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "11",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "12",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "13",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "14",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "15",
+          "player": "Will Riley",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "16",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "17",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers /99"
+        },
+        {
+          "number": "18",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "19",
+          "player": "Noah Penda",
+          "team": "Orlando Magic /99"
+        },
+        {
+          "number": "20",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons /99"
+        },
+        {
+          "number": "21",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "22",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "23",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "24",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "25",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "26",
+          "player": "L.J. Cryer",
+          "team": "Golden State Warriors /99"
+        },
+        {
+          "number": "27",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers /99"
+        },
+        {
+          "number": "28",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers /99"
+        },
+        {
+          "number": "29",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /99"
+        },
+        {
+          "number": "30",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        }
+      ]
+    },
+    {
+      "id": "nt-rookie-patch-autographs",
+      "name": "NT Rookie Patch Autographs",
+      "category": "autograph",
+      "totalCards": 3,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "5",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "7",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "14",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        }
+      ]
+    },
+    {
+      "id": "nt-signatures",
+      "name": "NT Signatures",
+      "category": "autograph",
+      "totalCards": 4,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "7",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "9",
+          "player": "Babatunde Oladotun",
+          "team": "High School /99"
+        },
+        {
+          "number": "10",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        }
+      ]
+    },
+    {
+      "id": "one-and-one-rookie-seasons-signatures",
+      "name": "One and One Rookie Seasons Signatures",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /25"
+        },
+        {
+          "number": "2",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /25"
+        },
+        {
+          "number": "5",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /25"
+        },
+        {
+          "number": "7",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /25"
+        },
+        {
+          "number": "8",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /25"
+        }
+      ]
+    },
+    {
+      "id": "premium-patch-autographs",
+      "name": "Premium Patch Autographs",
+      "category": "autograph",
+      "totalCards": 5,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "5",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "10",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "12",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "16",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        }
+      ]
+    },
+    {
+      "id": "rookie-jersey-autographs",
+      "name": "Rookie Jersey Autographs",
+      "category": "autograph",
+      "totalCards": 40,
+      "parallels": [
+        {
+          "name": "Base Auto",
+          "printRun": 99
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "2",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers /99"
+        },
+        {
+          "number": "3",
+          "player": "RJ Luis",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "4",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "5",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "6",
+          "player": "Noah Penda",
+          "team": "Orlando Magic /99"
+        },
+        {
+          "number": "7",
+          "player": "Sion James",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "8",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "9",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "10",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "11",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers 1/1",
+          "note": "no base"
+        },
+        {
+          "number": "12",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "13",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "14",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "15",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "16",
+          "player": "Will Riley",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "17",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls /99"
+        },
+        {
+          "number": "18",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "19",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "20",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "21",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "22",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "23",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers /99"
+        },
+        {
+          "number": "24",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers /99"
+        },
+        {
+          "number": "25",
+          "player": "Will Richard",
+          "team": "Golden State Warriors /3",
+          "note": "no base"
+        },
+        {
+          "number": "26",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors /99"
+        },
+        {
+          "number": "27",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "28",
+          "player": "Amari Williams",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "29",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /99"
+        },
+        {
+          "number": "30",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers /99"
+        },
+        {
+          "number": "31",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "32",
+          "player": "Javon Small",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "33",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "34",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers /99"
+        },
+        {
+          "number": "35",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers /99"
+        },
+        {
+          "number": "36",
+          "player": "Alex Toohey",
+          "team": "Golden State Warriors /99"
+        },
+        {
+          "number": "37",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "38",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "39",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons /99"
+        },
+        {
+          "number": "40",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns /99"
+        }
+      ]
+    },
+    {
+      "id": "rookie-signatures",
+      "name": "Rookie Signatures",
+      "category": "autograph",
+      "totalCards": 40,
+      "parallels": [
+        {
+          "name": "Base Auto",
+          "printRun": 249
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /249"
+        },
+        {
+          "number": "2",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /249"
+        },
+        {
+          "number": "3",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /249"
+        },
+        {
+          "number": "4",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /249"
+        },
+        {
+          "number": "5",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /249"
+        },
+        {
+          "number": "6",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /249"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /249"
+        },
+        {
+          "number": "8",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies /99",
+          "note": "no base"
+        },
+        {
+          "number": "9",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /249"
+        },
+        {
+          "number": "10",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /249"
+        },
+        {
+          "number": "11",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves /249"
+        },
+        {
+          "number": "12",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers /1",
+          "note": "no base"
+        },
+        {
+          "number": "13",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /249"
+        },
+        {
+          "number": "14",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder /249"
+        },
+        {
+          "number": "15",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls /249"
+        },
+        {
+          "number": "16",
+          "player": "Will Riley",
+          "team": "Washington Wizards /75",
+          "note": "no base"
+        },
+        {
+          "number": "17",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers /249"
+        },
+        {
+          "number": "18",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks /249"
+        },
+        {
+          "number": "19",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers /249"
+        },
+        {
+          "number": "20",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans /249"
+        },
+        {
+          "number": "21",
+          "player": "Noah Penda",
+          "team": "Orlando Magic /249"
+        },
+        {
+          "number": "22",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns /249"
+        },
+        {
+          "number": "23",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers /249"
+        },
+        {
+          "number": "24",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons /249"
+        },
+        {
+          "number": "25",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns /249"
+        },
+        {
+          "number": "26",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings /249"
+        },
+        {
+          "number": "27",
+          "player": "Sion James",
+          "team": "Charlotte Hornets /249"
+        },
+        {
+          "number": "28",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets /249"
+        },
+        {
+          "number": "29",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards /249"
+        },
+        {
+          "number": "30",
+          "player": "L.J. Cryer",
+          "team": "Golden State Warriors /249"
+        },
+        {
+          "number": "31",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /249"
+        },
+        {
+          "number": "32",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder /249"
+        },
+        {
+          "number": "33",
+          "player": "Amari Williams",
+          "team": "Boston Celtics /249"
+        },
+        {
+          "number": "34",
+          "player": "Javon Small",
+          "team": "Memphis Grizzlies /249"
+        },
+        {
+          "number": "35",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers /249"
+        },
+        {
+          "number": "36",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers /249"
+        },
+        {
+          "number": "37",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers /249"
+        },
+        {
+          "number": "38",
+          "player": "Will Richard",
+          "team": "Golden State Warriors /1",
+          "note": "no base"
+        },
+        {
+          "number": "39",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves /249"
+        },
+        {
+          "number": "40",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors /249"
+        }
+      ]
+    },
+    {
+      "id": "select-few-signatures",
+      "name": "Select Few Signatures",
+      "category": "autograph",
+      "totalCards": 9,
+      "parallels": [
+        {
+          "name": "Base Auto /49 or",
+          "printRun": 35
+        }
+      ],
+      "cards": [
+        {
+          "number": "2",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks /49"
+        },
+        {
+          "number": "3",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies /49"
+        },
+        {
+          "number": "4",
+          "player": "Trae Young",
+          "team": "Washington Wizards /49"
+        },
+        {
+          "number": "5",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /35"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /49"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /35"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers /1",
+          "note": "no base"
+        },
+        {
+          "number": "9",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers /49"
+        },
+        {
+          "number": "10",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers /49"
+        }
+      ]
+    },
+    {
+      "id": "select-pairings-signatures",
+      "name": "Select Pairings Signatures",
+      "category": "autograph",
+      "totalCards": 10,
+      "parallels": [
+        {
+          "name": "Tie-Dye Prizms",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Clyde Drexler/Hakeem Olajuwon",
+          "team": "Houston Rockets /49"
+        },
+        {
+          "number": "2",
+          "player": "Julius Erving/VJ Edgecombe",
+          "team": "Philadelphia 76ers /49"
+        },
+        {
+          "number": "3",
+          "player": "Derik Queen/Jeremiah Fears",
+          "team": "New Orleans Pelicans /49"
+        },
+        {
+          "number": "4",
+          "player": "Cade Cunningham/Giannis Antetokounmpo",
+          "team": "Detroit Pistons/Milwaukee Bucks /35"
+        },
+        {
+          "number": "5",
+          "player": "Tre Johnson III/Carter Bryant",
+          "team": "Washington Wizards/San Antonio Spurs /49"
+        },
+        {
+          "number": "6",
+          "player": "Ja Morant/Cedric Coward",
+          "team": "Memphis Grizzlies /49"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears/VJ Edgecombe",
+          "team": "New Orleans Pelicans/Philadelphia 76ers /49"
+        },
+        {
+          "number": "8",
+          "player": "Alijah Arenas/Gilbert Arenas",
+          "team": "USC Trojans/Washington Wizards /49"
+        },
+        {
+          "number": "9",
+          "player": "Spike Lee/Patrick Ewing",
+          "team": "New York Knicks /49"
+        },
+        {
+          "number": "10",
+          "player": "Percy Miller/Ludacris",
+          "team": "Houston Cougars/Music /49"
+        }
+      ]
+    },
+    {
+      "id": "selection-committee-signatures",
+      "name": "Selection Committee Signatures",
+      "category": "autograph",
+      "totalCards": 19,
+      "parallels": [
+        {
+          "name": "Orange Flash Prizms",
+          "printRun": 99
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Jalen Montonati",
+          "team": "High School"
+        },
+        {
+          "number": "2",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "3",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "5",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "6",
+          "player": "Kaden House",
+          "team": "High School"
+        },
+        {
+          "number": "7",
+          "player": "Zoom Diallo",
+          "team": "Washington Huskies"
+        },
+        {
+          "number": "8",
+          "player": "Kalek House",
+          "team": "High School"
+        },
+        {
+          "number": "9",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "10",
+          "player": "Alex Constanza",
+          "team": "High School"
+        },
+        {
+          "number": "11",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "12",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "13",
+          "player": "Kanon Catchings",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "14",
+          "player": "Andrej Stojakovic",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "15",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "16",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "17",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "18",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "19",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "20",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        }
+      ]
+    },
+    {
+      "id": "signature-selections",
+      "name": "Signature Selections",
+      "category": "autograph",
+      "totalCards": 40,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /99",
+          "note": "no base"
+        },
+        {
+          "number": "2",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "3",
+          "player": "Hunter Sallis",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "4",
+          "player": "Dink Pate",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "5",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "6",
+          "player": "Winters Grady",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "7",
+          "player": "Jaylin Stewart",
+          "team": "UConn Huskies /35",
+          "note": "no base"
+        },
+        {
+          "number": "8",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "9",
+          "player": "Xaivian Lee",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "10",
+          "player": "Jahmai Mashack",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "11",
+          "player": "Matt Able",
+          "team": "NC State Wolfpack"
+        },
+        {
+          "number": "12",
+          "player": "Alex Karaban",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "13",
+          "player": "Flory Bidunga",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "14",
+          "player": "Jamari Phillips",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "15",
+          "player": "KJ Lewis",
+          "team": "Georgetown Hoyas"
+        },
+        {
+          "number": "16",
+          "player": "Zeke Mayo",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "17",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "18",
+          "player": "Lachlan Olbrich",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "19",
+          "player": "Isaiah Denis",
+          "team": "North Carolina Tar Heels"
+        },
+        {
+          "number": "20",
+          "player": "Ian Jackson",
+          "team": "St. John's Red Storm"
+        },
+        {
+          "number": "21",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "22",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "23",
+          "player": "KJ Adams",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "24",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "25",
+          "player": "Will Richard",
+          "team": "Golden State Warriors /1",
+          "note": "no base"
+        },
+        {
+          "number": "26",
+          "player": "Johnell Davis",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "27",
+          "player": "Alex Toohey",
+          "team": "Golden State Warriors"
+        },
+        {
+          "number": "28",
+          "player": "Neoklis Avdalas",
+          "team": "Virginia Tech Hokies"
+        },
+        {
+          "number": "29",
+          "player": "Otega Oweh",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "30",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "31",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "32",
+          "player": "Amari Williams",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "33",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans /99",
+          "note": "no base"
+        },
+        {
+          "number": "34",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors"
+        },
+        {
+          "number": "35",
+          "player": "Kobe Sanders",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "36",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "37",
+          "player": "Taelon Peter",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "38",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "39",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers"
+        },
+        {
+          "number": "40",
+          "player": "Norchad Omier",
+          "team": "Cleveland Cavaliers"
+        }
+      ]
+    },
+    {
+      "id": "signatures",
+      "name": "Signatures",
+      "category": "autograph",
+      "totalCards": 40,
+      "parallels": [
+        {
+          "name": "Orange Prizms",
+          "printRun": 149
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Jason Crowe Jr.",
+          "team": "High School /249"
+        },
+        {
+          "number": "2",
+          "player": "Bryson Howard",
+          "team": "High School /249"
+        },
+        {
+          "number": "3",
+          "player": "Trae Young",
+          "team": "Washington Wizards /149"
+        },
+        {
+          "number": "4",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars /249"
+        },
+        {
+          "number": "5",
+          "player": "Patrick Ngongba II",
+          "team": "Duke Blue Devils /249"
+        },
+        {
+          "number": "6",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies /249"
+        },
+        {
+          "number": "7",
+          "player": "Caleb Holt",
+          "team": "High School /249"
+        },
+        {
+          "number": "8",
+          "player": "Tyran Stokes",
+          "team": "High School /249"
+        },
+        {
+          "number": "9",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks /249"
+        },
+        {
+          "number": "10",
+          "player": "Karim Lopez",
+          "team": "International /249"
+        },
+        {
+          "number": "11",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans /249"
+        },
+        {
+          "number": "12",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats /249"
+        },
+        {
+          "number": "13",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks /249"
+        },
+        {
+          "number": "14",
+          "player": "Babatunde Oladotun",
+          "team": "High School /249"
+        },
+        {
+          "number": "15",
+          "player": "Alex Constanza",
+          "team": "High School /249"
+        },
+        {
+          "number": "16",
+          "player": "Kaden House",
+          "team": "High School /249"
+        },
+        {
+          "number": "17",
+          "player": "Kalek House",
+          "team": "High School /249"
+        },
+        {
+          "number": "18",
+          "player": "Kameron Mercer",
+          "team": "High School /249"
+        },
+        {
+          "number": "19",
+          "player": "DeVaughn Dorrough",
+          "team": "High School /249"
+        },
+        {
+          "number": "20",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines /249"
+        },
+        {
+          "number": "21",
+          "player": "Tajh Ariza",
+          "team": "High School /249"
+        },
+        {
+          "number": "22",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies /49"
+        },
+        {
+          "number": "23",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs /49"
+        },
+        {
+          "number": "24",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies /49"
+        },
+        {
+          "number": "25",
+          "player": "Peja Stojakovic",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "26",
+          "player": "Patrick Ewing",
+          "team": "New York Knicks /99"
+        },
+        {
+          "number": "27",
+          "player": "Chris Webber",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "28",
+          "player": "Spike Lee",
+          "team": "New York Knicks /75"
+        },
+        {
+          "number": "29",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers /149"
+        },
+        {
+          "number": "30",
+          "player": "George Gervin",
+          "team": "San Antonio Spurs /149"
+        },
+        {
+          "number": "31",
+          "player": "Miikka Muurinen",
+          "team": "International /125"
+        },
+        {
+          "number": "32",
+          "player": "Dominique Wilkins",
+          "team": "Atlanta Hawks /149"
+        },
+        {
+          "number": "33",
+          "player": "Richard Hamilton",
+          "team": "Detroit Pistons /125"
+        },
+        {
+          "number": "34",
+          "player": "Amar'e Stoudemire",
+          "team": "New York Knicks /125"
+        },
+        {
+          "number": "35",
+          "player": "Steve Nash",
+          "team": "Phoenix Suns /75"
+        },
+        {
+          "number": "36",
+          "player": "Larry Bird",
+          "team": "Boston Celtics /35"
+        },
+        {
+          "number": "37",
+          "player": "Brandon Roy",
+          "team": "Portland Trail Blazers /75"
+        },
+        {
+          "number": "38",
+          "player": "Shawn Kemp",
+          "team": "Seattle Supersonics /149"
+        },
+        {
+          "number": "39",
+          "player": "Dwight Howard",
+          "team": "Orlando Magic /99"
+        },
+        {
+          "number": "40",
+          "player": "LaMarcus Aldridge",
+          "team": "Portland Trail Blazers /49"
+        }
+      ]
+    },
+    {
+      "id": "silhouette-autographs",
+      "name": "Silhouette Autographs",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "2",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "5",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "9",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "11",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "14",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        }
+      ]
+    },
+    {
+      "id": "star-swatch-signatures",
+      "name": "Star Swatch Signatures",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 15
+        }
+      ],
+      "cards": [
+        {
+          "number": "4",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /25"
+        },
+        {
+          "number": "6",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /25"
+        },
+        {
+          "number": "7",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /25"
+        },
+        {
+          "number": "10",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /25"
+        }
+      ]
+    },
+    {
+      "id": "treasured-talents-signatures",
+      "name": "Treasured Talents Signatures",
+      "category": "autograph",
+      "totalCards": 3,
+      "parallels": [
+        {
+          "name": "Pink",
+          "printRun": 25
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "4",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "6",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        }
+      ]
+    },
+    {
+      "id": "youth-explosion-signatures",
+      "name": "Youth Explosion Signatures",
+      "category": "autograph",
+      "totalCards": 39,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Vlad Goldin",
+          "team": "Miami Heat"
+        },
+        {
+          "number": "2",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "3",
+          "player": "Will Richard",
+          "team": "Golden State Warriors /1",
+          "note": "no base"
+        },
+        {
+          "number": "4",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /99",
+          "note": "no base"
+        },
+        {
+          "number": "5",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "6",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "7",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "8",
+          "player": "Lachlan Olbrich",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "9",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "10",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "11",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "13",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "14",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "15",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "16",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "17",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99",
+          "note": "no base"
+        },
+        {
+          "number": "18",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies /10",
+          "note": "no base"
+        },
+        {
+          "number": "19",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers /10",
+          "note": "no base"
+        },
+        {
+          "number": "20",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "21",
+          "player": "Sion James",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "22",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "23",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "24",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors"
+        },
+        {
+          "number": "25",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "26",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "27",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "28",
+          "player": "Rocco Zikarsky",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "29",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "30",
+          "player": "Will Riley",
+          "team": "Washington Wizards /35",
+          "note": "no base"
+        },
+        {
+          "number": "31",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "32",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "33",
+          "player": "Amari Williams",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "34",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans /99",
+          "note": "no base"
+        },
+        {
+          "number": "35",
+          "player": "Bogoljub Markovic",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "36",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "37",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "38",
+          "player": "Saliou Niang",
+          "team": "Cleveland Cavaliers"
+        },
+        {
+          "number": "39",
+          "player": "RJ Luis",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "40",
+          "player": "Taelon Peter",
+          "team": "Indiana Pacers"
+        }
+      ]
+    },
+    {
+      "id": "debut-memorabilia",
+      "name": "Debut Memorabilia",
+      "category": "memorabilia",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Blue Flash Prizms",
+          "printRun": 35
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "2",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "3",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "4",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "5",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "6",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "7",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "8",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "9",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "10",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "11",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "12",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "13",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz"
+        },
+        {
+          "number": "14",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "15",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "16",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "17",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "18",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "19",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "20",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "21",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "22",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "23",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "24",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "25",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        }
+      ]
+    },
+    {
+      "id": "draft-selections-memorabilia",
+      "name": "Draft Selections Memorabilia",
+      "category": "memorabilia",
+      "totalCards": 20,
+      "parallels": [
+        {
+          "name": "Red Prizms",
+          "printRun": 75
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "2",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "3",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers /99"
+        },
+        {
+          "number": "4",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "5",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls /99"
+        },
+        {
+          "number": "6",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "7",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "8",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz /99"
+        },
+        {
+          "number": "9",
+          "player": "Sion James",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "10",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "11",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "12",
+          "player": "Will Riley",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "13",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "14",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "15",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers /99"
+        },
+        {
+          "number": "16",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "17",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "18",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "19",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "20",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        }
+      ]
+    },
+    {
+      "id": "jumbo-rookie-swatches",
+      "name": "Jumbo Rookie Swatches",
+      "category": "memorabilia",
+      "totalCards": 30,
+      "parallels": [
+        {
+          "name": "Red Prizms",
+          "printRun": 75
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "2",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "3",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "4",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "5",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves /99"
+        },
+        {
+          "number": "6",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "7",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons /99"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers /99"
+        },
+        {
+          "number": "9",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "10",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder /99"
+        },
+        {
+          "number": "11",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks /99"
+        },
+        {
+          "number": "12",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "13",
+          "player": "Sion James",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "14",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers /99"
+        },
+        {
+          "number": "15",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "16",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /99"
+        },
+        {
+          "number": "17",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "18",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "19",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets /99"
+        },
+        {
+          "number": "20",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers /99"
+        },
+        {
+          "number": "21",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers /99"
+        },
+        {
+          "number": "22",
+          "player": "Will Riley",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "23",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings /99"
+        },
+        {
+          "number": "24",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "25",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "26",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "27",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "28",
+          "player": "Noah Penda",
+          "team": "Orlando Magic /99"
+        },
+        {
+          "number": "29",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors /99"
+        },
+        {
+          "number": "30",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls /99"
+        }
+      ]
+    },
+    {
+      "id": "select-memorabilia",
+      "name": "Select Memorabilia",
+      "category": "memorabilia",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Blue Flash Prizms",
+          "printRun": 35
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "2",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "3",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "4",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "5",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "6",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "7",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "8",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "9",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "10",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "11",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "12",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "13",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "14",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "15",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "16",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "17",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "18",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "19",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "20",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "21",
+          "player": "Caleb Love",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "22",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "23",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "24",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers"
+        },
+        {
+          "number": "25",
+          "player": "Chris Cenac Jr.",
+          "team": "Houston Cougars"
+        }
+      ]
+    },
+    {
+      "id": "select-relics",
+      "name": "Select Relics",
+      "category": "memorabilia",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Blue Flash Prizms",
+          "printRun": 35
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "2",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "3",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "4",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "5",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "9",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "10",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "11",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "12",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "13",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "14",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "15",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "16",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "17",
+          "player": "Flory Bidunga",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "18",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "19",
+          "player": "Otega Oweh",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "20",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "21",
+          "player": "Andrej Stojakovic",
+          "team": "Illinois Fighting Illini"
+        },
+        {
+          "number": "22",
+          "player": "Matt Able",
+          "team": "NC State Wolfpack"
+        },
+        {
+          "number": "23",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "24",
+          "player": "Cameron Carr",
+          "team": "Baylor Bears"
+        },
+        {
+          "number": "25",
+          "player": "Ebuka Okorie",
+          "team": "Stanford Cardinal"
+        }
+      ]
+    },
+    {
+      "id": "select-swatches",
+      "name": "Select Swatches",
+      "category": "memorabilia",
+      "totalCards": 24,
+      "parallels": [
+        {
+          "name": "Red Prizms",
+          "printRun": 75
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "2",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "3",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "4",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "5",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "6",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "7",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers /99"
+        },
+        {
+          "number": "8",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "9",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats /99"
+        },
+        {
+          "number": "10",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils /99"
+        },
+        {
+          "number": "11",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks /99"
+        },
+        {
+          "number": "12",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers /99"
+        },
+        {
+          "number": "13",
+          "player": "Jerry Easter II",
+          "team": "USC Trojans /99"
+        },
+        {
+          "number": "14",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide /99"
+        },
+        {
+          "number": "15",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines /99"
+        },
+        {
+          "number": "16",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies /99"
+        },
+        {
+          "number": "17",
+          "player": "Neoklis Avdalas",
+          "team": "Virginia Tech Hokies /99"
+        },
+        {
+          "number": "18",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks /99"
+        },
+        {
+          "number": "19",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks /99"
+        },
+        {
+          "number": "21",
+          "player": "Kevin Garnett",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "22",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets /99"
+        },
+        {
+          "number": "23",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks /99"
+        },
+        {
+          "number": "24",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "25",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks /99"
+        }
+      ]
+    },
+    {
+      "id": "select-threads",
+      "name": "Select Threads",
+      "category": "memorabilia",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Blue Flash Prizms",
+          "printRun": 35
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "2",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "3",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "4",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "5",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "6",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "7",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "8",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "9",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "10",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "11",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "12",
+          "player": "Tahaad Pettiford",
+          "team": "Auburn Tigers"
+        },
+        {
+          "number": "13",
+          "player": "Alex Karaban",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "14",
+          "player": "Dailyn Swain",
+          "team": "Texas Longhorns"
+        },
+        {
+          "number": "15",
+          "player": "Kanon Catchings",
+          "team": "Georgia Bulldogs"
+        },
+        {
+          "number": "16",
+          "player": "Xaivian Lee",
+          "team": "Florida Gators"
+        },
+        {
+          "number": "17",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "18",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "19",
+          "player": "Jamari Phillips",
+          "team": "Oregon Ducks"
+        },
+        {
+          "number": "20",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "21",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "22",
+          "player": "Elliot Cadeau",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "23",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders"
+        },
+        {
+          "number": "24",
+          "player": "Flory Bidunga",
+          "team": "Kansas Jayhawks"
+        },
+        {
+          "number": "25",
+          "player": "Bennett Stirtz",
+          "team": "Iowa Hawkeyes"
+        }
+      ]
+    },
+    {
+      "id": "sparks-relics",
+      "name": "Sparks Relics",
+      "category": "memorabilia",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Red Prizms",
+          "printRun": 75
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns /99"
+        },
+        {
+          "number": "2",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies /99"
+        },
+        {
+          "number": "3",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs /99"
+        },
+        {
+          "number": "4",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards /99"
+        },
+        {
+          "number": "5",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans /99"
+        },
+        {
+          "number": "6",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "7",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers /99"
+        },
+        {
+          "number": "8",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "9",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans /99"
+        },
+        {
+          "number": "10",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines /99"
+        },
+        {
+          "number": "11",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies /99"
+        },
+        {
+          "number": "12",
+          "player": "Flory Bidunga",
+          "team": "Kansas Jayhawks /99"
+        },
+        {
+          "number": "13",
+          "player": "JT Toppin",
+          "team": "Texas Tech Red Raiders /99"
+        },
+        {
+          "number": "14",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars /99"
+        },
+        {
+          "number": "15",
+          "player": "Alex Karaban",
+          "team": "UConn Huskies /99"
+        },
+        {
+          "number": "16",
+          "player": "Xaivian Lee",
+          "team": "Florida Gators /99"
+        },
+        {
+          "number": "17",
+          "player": "Andrej Stojakovic",
+          "team": "Illinois Fighting Illini /99"
+        },
+        {
+          "number": "18",
+          "player": "Otega Oweh",
+          "team": "Kentucky Wildcats /99"
+        },
+        {
+          "number": "19",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers /99"
+        },
+        {
+          "number": "20",
+          "player": "Larry Bird",
+          "team": "Boston Celtics /99"
+        },
+        {
+          "number": "21",
+          "player": "Dwight Howard",
+          "team": "Orlando Magic /99"
+        },
+        {
+          "number": "22",
+          "player": "Patrick Ewing",
+          "team": "New York Knicks /99"
+        },
+        {
+          "number": "23",
+          "player": "Carmelo Anthony",
+          "team": "New York Knicks /99"
+        },
+        {
+          "number": "24",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons /99"
+        },
+        {
+          "number": "25",
+          "player": "Trae Young",
+          "team": "Washington Wizards /99"
+        }
+      ]
+    },
+    {
+      "id": "color-wheel",
+      "name": "Color Wheel",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "2",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "3",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "4",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "5",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "9",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "10",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "11",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "12",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "13",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "14",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "15",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "16",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "17",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "18",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "19",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "20",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "21",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "22",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "23",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "24",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "25",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        }
+      ]
+    },
+    {
+      "id": "crown-jewels",
+      "name": "Crown Jewels",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "2",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "3",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "4",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "5",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "6",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "7",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "8",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "9",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "10",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "11",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "12",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "13",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "14",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "15",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "16",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "17",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "18",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "19",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "20",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        }
+      ]
+    },
+    {
+      "id": "en-fuego",
+      "name": "En Fuego",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Silver Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "2",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "3",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "4",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "5",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "9",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "10",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "11",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "12",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "13",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "14",
+          "player": "Larry Bird",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "15",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        }
+      ]
+    },
+    {
+      "id": "hot-stars",
+      "name": "Hot Stars",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Green Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "2",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "3",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "4",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "5",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "6",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "7",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "8",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "9",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "10",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "11",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "12",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "13",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "14",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "15",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        }
+      ]
+    },
+    {
+      "id": "introductions",
+      "name": "Introductions",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [
+        {
+          "name": "Silver Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "2",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "3",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "4",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "5",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "6",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "9",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "10",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "11",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "12",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "13",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "14",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "15",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "16",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "17",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "18",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "19",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "20",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        }
+      ]
+    },
+    {
+      "id": "lodestars",
+      "name": "Lodestars",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Green Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "2",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "3",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "4",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "5",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "6",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "7",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "8",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "9",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "10",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "11",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "12",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "13",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "14",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "15",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        }
+      ]
+    },
+    {
+      "id": "micro-mosaic",
+      "name": "Micro Mosaic",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "2",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "3",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "4",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "5",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "6",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "7",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "9",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "10",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "11",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "12",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "13",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "14",
+          "player": "Shaquille O'Neal",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "15",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        }
+      ]
+    },
+    {
+      "id": "neon-icon",
+      "name": "Neon Icon",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Green Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "2",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "3",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "4",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "5",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "6",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "7",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "8",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "9",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "10",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "11",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "12",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "13",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "14",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "15",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "16",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "17",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "18",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "19",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "20",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "21",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "22",
+          "player": "Ludacris",
+          "team": "Music"
+        },
+        {
+          "number": "23",
+          "player": "Spike Lee",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "24",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "25",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        }
+      ]
+    },
+    {
+      "id": "notoriety",
+      "name": "Notoriety",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Silver Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "2",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "3",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "4",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "5",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "9",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "10",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "11",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "12",
+          "player": "Jayden Quaintance",
+          "team": "Kentucky Wildcats"
+        },
+        {
+          "number": "13",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "14",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "15",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "16",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "17",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "18",
+          "player": "Babatunde Oladotun",
+          "team": "High School"
+        },
+        {
+          "number": "19",
+          "player": "Mercy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "20",
+          "player": "Spike Lee",
+          "team": "New York Knicks"
+        },
+        {
+          "number": "21",
+          "player": "Percy Miller",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "22",
+          "player": "Ludacris",
+          "team": "Music"
+        },
+        {
+          "number": "23",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "24",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "25",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        }
+      ]
+    },
+    {
+      "id": "rookie-revolution",
+      "name": "Rookie Revolution",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Green Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "2",
+          "player": "Noah Penda",
+          "team": "Orlando Magic"
+        },
+        {
+          "number": "3",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "4",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "5",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        },
+        {
+          "number": "6",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "7",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "8",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "9",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "10",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "11",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "12",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "13",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "14",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "15",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "16",
+          "player": "Yanic Konan Niederhauser",
+          "team": "Los Angeles Clippers"
+        },
+        {
+          "number": "17",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "18",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "19",
+          "player": "Will Riley",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "20",
+          "player": "Ryan Nembhard",
+          "team": "Dallas Mavericks"
+        },
+        {
+          "number": "21",
+          "player": "Sion James",
+          "team": "Charlotte Hornets"
+        },
+        {
+          "number": "22",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "23",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "24",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers"
+        },
+        {
+          "number": "25",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        }
+      ]
+    },
+    {
+      "id": "select-buckets",
+      "name": "Select Buckets",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [
+        {
+          "name": "Silver Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "2",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "3",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "4",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "5",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "6",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "7",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "9",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "10",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "11",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "12",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "13",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "14",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "15",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        }
+      ]
+    },
+    {
+      "id": "select-certified",
+      "name": "Select Certified",
+      "category": "insert",
+      "totalCards": 20,
+      "parallels": [
+        {
+          "name": "Green Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "2",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "3",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "4",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "5",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "9",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "10",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "11",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "12",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "13",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "14",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "15",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "16",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "17",
+          "player": "Alijah Arenas",
+          "team": "USC Trojans"
+        },
+        {
+          "number": "18",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        },
+        {
+          "number": "19",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers"
+        },
+        {
+          "number": "20",
+          "player": "Larry Bird",
+          "team": "Boston Celtics"
+        }
+      ]
+    },
+    {
+      "id": "select-future",
+      "name": "Select Future",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [
+        {
+          "name": "Silver Prizms",
+          "printRun": null
+        }
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "2",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "3",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "4",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "5",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "6",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "7",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "8",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves"
+        },
+        {
+          "number": "9",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "10",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "11",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder"
+        },
+        {
+          "number": "12",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "13",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "14",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "15",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "16",
+          "player": "Azzi Fudd",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "17",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "18",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "19",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "20",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "21",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "22",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "23",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "24",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "25",
+          "player": "Nikolas Khamenia",
+          "team": "Duke Blue Devils"
+        }
+      ]
+    },
+    {
+      "id": "solar-eclipse",
+      "name": "Solar Eclipse",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "2",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "3",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "4",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "5",
+          "player": "Walter Clayton Jr.",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "8",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "9",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "10",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "11",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "12",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "13",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "14",
+          "player": "Derrick Rose",
+          "team": "Chicago Bulls"
+        },
+        {
+          "number": "15",
+          "player": "Sarah Strong",
+          "team": "UConn Huskies"
+        }
+      ]
+    },
+    {
+      "id": "stained-glass",
+      "name": "Stained Glass",
+      "category": "insert",
+      "totalCards": 25,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies"
+        },
+        {
+          "number": "2",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons"
+        },
+        {
+          "number": "3",
+          "player": "Trae Young",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "4",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks"
+        },
+        {
+          "number": "5",
+          "player": "Hansen Yang",
+          "team": "Portland Trail Blazers"
+        },
+        {
+          "number": "6",
+          "player": "Christian Collins",
+          "team": "High School"
+        },
+        {
+          "number": "7",
+          "player": "Hugo Gonzalez",
+          "team": "Boston Celtics"
+        },
+        {
+          "number": "8",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers"
+        },
+        {
+          "number": "9",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards"
+        },
+        {
+          "number": "10",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans"
+        },
+        {
+          "number": "11",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs"
+        },
+        {
+          "number": "12",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings"
+        },
+        {
+          "number": "13",
+          "player": "Jordan Smith Jr.",
+          "team": "High School"
+        },
+        {
+          "number": "14",
+          "player": "Tyran Stokes",
+          "team": "High School"
+        },
+        {
+          "number": "15",
+          "player": "Kingston Flemings",
+          "team": "Houston Cougars"
+        },
+        {
+          "number": "16",
+          "player": "Yaxel Lendeborg",
+          "team": "Michigan Wolverines"
+        },
+        {
+          "number": "17",
+          "player": "Meleek Thomas",
+          "team": "Arkansas Razorbacks"
+        },
+        {
+          "number": "18",
+          "player": "Karim Lopez",
+          "team": "International"
+        },
+        {
+          "number": "19",
+          "player": "Labaron Philon",
+          "team": "Alabama Crimson Tide"
+        },
+        {
+          "number": "20",
+          "player": "Lauren Betts",
+          "team": "UCLA Bruins"
+        },
+        {
+          "number": "21",
+          "player": "Olivia Miles",
+          "team": "TCU Horned Frogs"
+        },
+        {
+          "number": "22",
+          "player": "Miikka Muurinen",
+          "team": "International"
+        },
+        {
+          "number": "23",
+          "player": "Caleb Holt",
+          "team": "High School"
+        },
+        {
+          "number": "24",
+          "player": "Braylon Mullins",
+          "team": "UConn Huskies"
+        },
+        {
+          "number": "25",
+          "player": "Darius Acuff Jr.",
+          "team": "Arkansas Razorbacks"
+        }
+      ]
+    },
+    {
+      "id": "2025-26-all-star-game-instant-access-update-autographs",
+      "name": "2025-26 All-Star Game Instant Access Update Autographs",
+      "category": "autograph",
+      "totalCards": 1,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "18",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks"
+        }
+      ]
+    }
+  ]
+}
