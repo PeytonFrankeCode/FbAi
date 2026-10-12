@@ -241,5 +241,19 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
   /\.tracked-checklist-grid > \* \{ min-width: 0; \}/.test(css)
   && /\.cl-picker-box \.tracked-checklist-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/.test(css));
 
+// The checklist ad (owner, Oct 2026): a strip after the 25th card of an opened
+// long set, asked of Google once per product, never on an ad-free device.
+{
+  const f = app.slice(app.indexOf('function _clSeatAd('), app.indexOf('function _clSeatAd(') + 1700);
+  check('a long checklist set carries one strip after its 25th card',
+    /CL_AD_SLOT = '5664392157'/.test(app) && /CL_AD_AFTER = 25/.test(app) && /rows\[CL_AD_AFTER - 1\]\.after\(_clAd\.el\)/.test(f)
+    && /if \(_adFree\(\) \|\| !setEl\) return;/.test(f) && /loadChecklistSetValues\(setEl\); _clSeatAd\(setEl\);/.test(app));
+  check('  ...asked of Google once per product, however often the tables redraw',
+    /if \(_clAd\.data !== checklistData\)/.test(f) && /if \(fresh\) \{ try \{ \(window\.adsbygoogle/.test(f) && (f.match(/\.push\(\{\}\)/g) || []).length === 1);
+  check('  ...a strip at a set height, collapsing when unfilled',
+    /\.cl-ad \.cl-ad-ins \{ display: block; width: 100%; max-width: 728px; height: 90px;/.test(css)
+    && /\.cl-ad-row:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

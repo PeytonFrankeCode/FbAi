@@ -9702,3 +9702,15 @@ body.has-searched #market-pulse { display: none !important; }
   color: var(--text-muted);
 }
 .results-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
+
+/* ---- Checklist ad: a strip between rows of a long set ---- */
+.cl-ad-row td { padding: 0.75rem 0.25rem !important; border: 0 !important; background: transparent !important; }
+.cl-ad { max-width: 760px; margin: 0 auto; text-align: center; }
+.cl-ad .ad-label {
+  margin: 0 0 0.3rem; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cl-ad .cl-ad-ins { display: block; width: 100%; max-width: 728px; height: 90px; margin: 0 auto; }
+@media (max-width: 760px) { .cl-ad .cl-ad-ins { max-width: 320px; height: 100px; } }
+.mobile-layout .cl-ad .cl-ad-ins { zoom: 1.1765; }
+.cl-ad-row:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
