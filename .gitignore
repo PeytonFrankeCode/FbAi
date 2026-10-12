@@ -15,6 +15,9 @@ public/teams/
 public/basketball/
 public/baseball/
 public/sitemap.xml
+# Card-title typeahead shards (scripts/build-card-suggest.js), ~70 MB, built
+# from the checklists before every deploy.
+public/data/suggest/
 
 # Python bytecode
 __pycache__/

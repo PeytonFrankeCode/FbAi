@@ -909,6 +909,191 @@ function _ssRender() {
   else input.removeAttribute('aria-activedescendant');
 }
 
+// ---- Card-title typeahead from the checklists ----
+// Finishes whatever has been typed into the closest real card titles (owner,
+// Oct 2026): "elway 84" into "1984 Topps John Elway #63", "mahomes prizm silver"
+// into "2017 Panini Prizm Patrick Mahomes II #269 Silver", in any word order,
+// including cards that have not sold lately. scripts/build-card-suggest.js
+// cuts the checklists into shards by the first letters of a player's surname;
+// sets.json names every product and set once, and the parallels sit apart,
+// fetched only when a typed word might be one.
+const CS_BASE = '/data/suggest/';
+// Words that say something about the copy, not the card. A grade is carried
+// onto the suggestion ("psa 10"), the rest are simply not matched.
+const CS_GRADERS = new Set(['psa', 'bgs', 'sgc', 'cgc', 'csg', 'hga', 'tag', 'beckett']);
+const CS_SKIP = new Set(['raw', 'graded', 'card', 'cards', 'the', 'of', 'and', 'gem', 'mint', 'mt', 'nm']);
+const CS_CAT_WORDS = { b: ['base'], i: ['insert'], a: ['auto', 'autograph', 'autographs', 'signed', 'signature'], m: ['relic', 'memorabilia', 'patch', 'jersey', 'mem'] };
+const CS_SPORT = { f: 'football', b: 'basketball', s: 'baseball' };
+
+function _csFold(s) {
+  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+// Words of a string, as the matcher sees them: "#RA-PM" gives "ra-pm", "ra", "pm".
+function _csWords(s) {
+  const out = [];
+  for (const w of _csFold(s).replace(/[^a-z0-9/\-#. ]+/g, ' ').split(/\s+/)) {
+    const t = w.replace(/^#+/, '').replace(/\.+$/, '').replace(/\./g, '');
+    if (!t) continue;
+    out.push(t);
+    if (/[-/]/.test(t)) for (const part of t.split(/[-/]/)) if (part) out.push(part);
+  }
+  return out;
+}
+// What was typed, split into the words to match and a grade to carry along.
+function _csQuery(q) {
+  const raw = _csWords(q);
+  const words = [];
+  let grade = '';
+  for (let i = 0; i < raw.length; i++) {
+    const w = raw[i];
+    if (CS_GRADERS.has(w)) {
+      const g = raw[i + 1] && /^\d{1,2}(\.5)?$/.test(raw[i + 1]) ? raw[++i] : '';
+      grade = (w === 'beckett' ? 'BGS' : w.toUpperCase()) + (g ? ' ' + g : '');
+      continue;
+    }
+    if (CS_SKIP.has(w)) continue;
+    words.push(w);
+  }
+  // A hyphenated word was also pushed in parts; matching the whole is enough.
+  const whole = words.filter((w, i) => !(i > 0 && /[-/]/.test(words[i - 1]) && words[i - 1].split(/[-/]/).includes(w)));
+  return { words: whole, grade };
+}
+// The shard a typed word would live in, or null when it is too short to say.
+function _csShardKey(word, split) {
+  if (!/^[a-z]/.test(word) || word.length < 2) return null;
+  const two = word.slice(0, 2);
+  if (split && split.includes(two)) return word.length >= 3 ? word.slice(0, 3) : null;
+  return two;
+}
+// Every card of the shard's players that fits every typed word, best first.
+// dict: sets.json. shard: one shard. pars: Map(chunk -> parallels array).
+// sold: Map("year|number|player") -> sales, from the sold data, to rank.
+const _csCardWords = new WeakMap();
+function _csMatch(dict, shard, query, opts = {}) {
+  const words = query.words;
+  if (!words.length) return { cards: [], needPar: [] };
+  const sports = opts.sports ? new Set(opts.sports) : null;
+  const pars = opts.pars || new Map();
+  const sold = opts.sold || new Map();
+  const last = words.length - 1;
+  const hit = (w, i, toks) => toks.some(t => t === w || (i === last || /^[a-z]/.test(w)) && w.length >= 2 && t.startsWith(w));
+  const out = [];
+  const needPar = new Set();
+  for (const p of shard.players || []) {
+    const sport = CS_SPORT[p.s] || p.s;
+    if (sports && !sports.has(sport)) continue;
+    const nameToks = p._t || (p._t = _csWords(p.n));
+    // The player must be named: some typed word is (the start of) their
+    // surname, or their whole first name ("lebron").
+    const core = nameToks.filter(t => !/^(jr|sr|ii|iii|iv|v)$/.test(t));
+    const sur = core[core.length - 1], first = core.length > 1 ? core[0] : '';
+    if (!sur || !words.some((w, i) => /^[a-z]/.test(w)
+      && (sur === w || sur.startsWith(w) && (i === last || w.length >= 3) || first && first.length >= 4 && (first === w || i === last && w.length >= 4 && first.startsWith(w))))) continue;
+    for (const c of p.c) {
+      const [si, num, rookie, pr] = c;
+      const set = dict.sets[si]; if (!set) continue;
+      const [pi, setName, cat] = set;
+      const prod = dict.products[pi]; if (!prod) continue;
+      const [year, prodName] = prod;
+      const yy = String(year % 100).padStart(2, '0');
+      // A card's words, worked out once per visit: typing re-runs this per key.
+      let toks = _csCardWords.get(c);
+      if (!toks) {
+        toks = [String(year), yy, ..._csWords(prodName), ..._csWords(setName), ...nameToks, ..._csWords(num),
+          ...(rookie ? ['rookie', 'rc', 'rookies'] : []), ...(CS_CAT_WORDS[cat] || []), ...(pr ? [String(pr), '/' + pr] : [])];
+        _csCardWords.set(c, toks);
+      }
+      const left = words.filter((w, i) => !hit(w, i, toks));
+      let parallel = '';
+      if (left.length) {
+        // What is left may name a parallel of the set: "silver", "gold /10".
+        const chunk = Math.floor(si / (dict.parChunk || 2000));
+        const list = pars.get(chunk);
+        if (!list) { needPar.add(chunk); continue; }
+        const options = (list[si % (dict.parChunk || 2000)] || [])
+          .map(name => /^prizms?$/i.test(name) ? 'Silver Prizm' : name)   // Panini's plain "Prizm" is the Silver
+          .filter(name => { const pt = _csWords(name); return left.every(w => pt.some(t => t === w || t.startsWith(w) && w.length >= 2)); })
+          .sort((a, b) => a.length - b.length);
+        if (!options.length) continue;
+        parallel = options[0];
+      }
+      // Words the card itself answers count for more than words only a
+      // parallel's name answers: "prizm" is the product, not "Silver Prizm".
+      let score = 2 * (words.length - left.length);
+      if (cat === 'b') score += 3;
+      if (rookie) score += 2;
+      if (words.includes(_csFold(num))) score += 4;
+      if (words.includes(String(year)) || words.includes(yy)) score += 2;
+      if (!parallel) score += 1;
+      if (!pr || words.includes(String(pr))) score += 1;   // the common card before its short prints
+      const sales = sold.get(year + '|' + _csFold(num) + '|' + _csFold(p.n)) || 0;
+      score += Math.min(6, Math.log2(1 + sales));
+      const title = [String(year), prodName, setName, p.n, num ? '#' + String(num).replace(/^#/, '') : '', parallel, query.grade]
+        .filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+      out.push({ title, score, year, rookie: !!rookie, cat, sport, pr: pr || null, sales, player: p.n });
+    }
+  }
+  out.sort((a, b) => b.score - a.score || a.year - b.year || (a.title < b.title ? -1 : 1));
+  const seen = new Set();
+  const cards = out.filter(c => { const k = c.title.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+  return { cards, needPar: [...needPar] };
+}
+
+// Fetching, each file once per visit.
+const _csFiles = new Map();
+function _csGet(path) {
+  if (!_csFiles.has(path)) {
+    _csFiles.set(path, fetch(CS_BASE + path).then(r => (r.ok ? r.json() : null)).catch(() => null)
+      .then(j => { if (!j) _csFiles.delete(path); return j; }));
+  }
+  return _csFiles.get(path);
+}
+const _csDict = () => _csGet('sets.json');
+
+// The checklist suggestions for what is typed, ranked with what actually sells.
+async function _csSuggest(q, seq) {
+  const query = _csQuery(q);
+  if (!query.words.some(w => /^[a-z]{3,}/.test(w))) return [];
+  const dict = await _csDict();
+  if (!dict || seq !== _ssSeq) return [];
+  const keys = [...new Set(query.words.map(w => _csShardKey(w, dict.split)).filter(Boolean))].slice(0, 3);
+  const shards = (await Promise.all(keys.map(k => _csGet(k + '.json')))).filter(Boolean);
+  if (seq !== _ssSeq || !shards.length) return [];
+  let sports = null;
+  try { sports = sportsPrefs().enabled; } catch (_) { /* every sport */ }
+  const sold = new Map();
+  const pars = new Map();
+  const run = () => {
+    const all = [];
+    const need = new Set();
+    for (const sh of shards) {
+      const r = _csMatch(dict, sh, query, { sports, pars, sold });
+      all.push(...r.cards); r.needPar.forEach(n => need.add(n));
+    }
+    all.sort((a, b) => b.score - a.score || a.year - b.year);
+    return { all, need: [...need] };
+  };
+  let r = run();
+  // Rank by what sells: the sold data's busiest cards for the players in play.
+  const names = [...new Set(r.all.slice(0, 12).map(c => c.player))].slice(0, 2);
+  if (names.length) {
+    const lists = await Promise.all(names.map(n => _ssPlayerCards(n)));
+    if (seq !== _ssSeq) return [];
+    lists.forEach((list, i) => (list || []).forEach(c => {
+      const m = String(c.query || '').match(/^(\d{4})\b.*#(\S+)$/);
+      if (m) sold.set(m[1] + '|' + _csFold(m[2]) + '|' + _csFold(names[i]), c.sales || 0);
+    }));
+    if (sold.size) r = run();
+  }
+  if (r.need.length && r.all.length < 6) {
+    const got = await Promise.all(r.need.slice(0, 4).map(n => _csGet('p/' + n + '.json')));
+    if (seq !== _ssSeq) return [];
+    r.need.slice(0, 4).forEach((n, i) => { if (got[i]) pars.set(n, got[i]); });
+    r = run();
+  }
+  return r.all.slice(0, 8);
+}
+
 async function _ssUpdate() {
   if (!searchSuggest) return;
   const q = input.value.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -932,17 +1117,29 @@ async function _ssUpdate() {
         cards.filter(c => words.every(w => c.query.toLowerCase().includes(w)))
           .slice(0, 6)
           .forEach(c => items.push({ text: c.query, sub: `${(c.sales || 0).toLocaleString('en-US')} sold`, kind: 'card' }));
-      } else {
-        _mkFilterRoster(roster, q).slice(0, 6)
-          .forEach(p => items.push({ text: p.player, sub: `${(p.sales || 0).toLocaleString('en-US')} sold`, kind: 'player' }));
       }
+    }
+  }
+  // Every card the checklists know, finished from what is typed.
+  if (q.length >= 3) {
+    const cards = await _csSuggest(q, seq);
+    if (seq !== _ssSeq) return;
+    cards.forEach(c => items.push({ text: c.title, sub: c.rookie ? 'RC' : c.pr ? '/' + c.pr : c.sales ? `${c.sales.toLocaleString('en-US')} sold` : '', kind: 'card' }));
+  }
+  // Names only when no card fits yet: "mah" is still a player being typed.
+  if (q.length >= 2 && !items.some(it => it.kind === 'card')) {
+    const roster = await _mkRoster();
+    if (seq !== _ssSeq) return;
+    if (roster && !_ssWholePlayer(roster, q)) {
+      _mkFilterRoster(roster, q).slice(0, 6)
+        .forEach(p => items.push({ text: p.player, sub: `${(p.sales || 0).toLocaleString('en-US')} sold`, kind: 'player' }));
     }
   }
   if (seq !== _ssSeq) return;
   // Never offer exactly what is already in the box.
   _ssItems = items.filter((it, i) => it.kind === 'player' || it.kind === 'search' || it.text.toLowerCase() !== q)
     .filter((it, i, all) => all.findIndex(o => o.text.toLowerCase() === it.text.toLowerCase()) === i)
-    .slice(0, 9);
+    .slice(0, 10);
   _ssActive = -1;
   _ssRender();
 }
@@ -970,7 +1167,7 @@ if (searchSuggest) {
     if (typeof _mkRosterReady !== 'undefined' && _mkRosterReady) _ssUpdate();
     else _ssTimer = setTimeout(_ssUpdate, 150);
   });
-  input.addEventListener('focus', () => _ssUpdate());
+  input.addEventListener('focus', () => { _csDict(); _ssUpdate(); });
   input.addEventListener('blur', () => setTimeout(_ssHide, 120));
   input.addEventListener('keydown', (e) => {
     if (searchSuggest.classList.contains('hidden') || !_ssItems.length) return;

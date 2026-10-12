@@ -53,6 +53,12 @@ jobs:
       - name: Build card and parallel indexes from the checklists
         run: npm run build:card-index
 
+      # The search box's card-title typeahead: the checklists cut into small
+      # files by surname (scripts/build-card-suggest.js). Stable output, so an
+      # unchanged checklist uploads nothing new. Before build:sw and the tests.
+      - name: Build card-title typeahead shards
+        run: npm run build:suggest
+
       # After build:pages, which regenerates the checklist index this hashes;
       # BEFORE the tests, which assert index.html's ?v= asset versions match
       # the content they point at. Run it after them and any commit touching

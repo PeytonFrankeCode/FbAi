@@ -9622,6 +9622,10 @@ html.nav-locked, html.nav-locked body { overflow: hidden; }
 .search-suggest-item.ss-recent .search-suggest-text { color: var(--text-secondary); }
 .search-suggest-item.ss-search .search-suggest-text { font-weight: 700; color: var(--accent); }
 .search-suggest-item.ss-player .search-suggest-text { font-weight: 600; }
+/* A card title is the whole point of the suggestion: up to two lines, not cut. */
+.search-suggest-item.ss-card .search-suggest-text {
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3;
+}
 
 /* Once a search runs, the home page's market panel steps aside. */
 body.has-searched #market-pulse { display: none !important; }
