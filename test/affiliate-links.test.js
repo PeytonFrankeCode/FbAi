@@ -186,10 +186,11 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   const vm = require('vm');
   const grab = (name) => { const i = app.indexOf(`function ${name}(`); return app.slice(i, app.indexOf('\n}\n', i) + 3); };
   const store = new Map();
-  const ctx = { window: {}, localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) } };
+  const ctx = { window: {}, document: { querySelectorAll: () => [] },
+    localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) } };
   vm.createContext(ctx);
   const decl = ['NO_AFFILIATE_ACCOUNTS', 'AD_FREE_EMAILS', 'AD_FREE_KEY'].map(n => app.match(new RegExp(`const ${n} = [^\\n]+`))[0]).join('\n');
-  vm.runInContext(decl + '\n' + grab('_adFree') + '\nthis._adFree = _adFree;', ctx);
+  vm.runInContext(decl + '\n' + grab('_adFree') + grab('_markOwnerAdFree') + grab('_removeAds') + '\nthis._adFree = _adFree;', ctx);
   check('a visitor gets ads', ctx._adFree() === false && !store.has('chAdFree'));
   store.set('cardHuddleCurrentUser', 'PeytonF');
   store.set('cardHuddleUsers', JSON.stringify({ peytonf: { email: 'CardHuddleOffical@gmail.com' } }));
