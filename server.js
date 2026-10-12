@@ -17895,7 +17895,7 @@ const NEWS_CSS = [
 
 // AdSense on an article: written content, the one kind of page here that is
 // ours in words as well as numbers. Not on the index, which is a list.
-const NEWS_AD_TAG = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>';
+const NEWS_AD_TAG = `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1}}catch(e){}</script>` + '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3644779384068007" crossorigin="anonymous"></script>';
 function newsShell(opts) {
   const jsonLd = opts.jsonLd
     ? '<script type="application/ld+json">' + opts.jsonLd + '</script>' : '';

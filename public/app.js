@@ -5067,6 +5067,33 @@ const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&t
 // site a commission. The landing pages honour the same mark.
 const NO_AFFILIATE_ACCOUNTS = ['cardhuddlecollectors'];
 const NO_AFFILIATE_KEY = 'chNoAffiliate';
+// Ad-free (owner, Oct 2026): the site's own accounts never see Google ads, and
+// an ad-free plan can set the same flag later. The flag is read by a guard in
+// each page's <head> that pauses AdSense's ad requests before its script runs
+// (Google's own switch: nothing requested, nothing hidden). It sticks to the
+// device, as the affiliate one does, so signing out does not bring ads back
+// to the owner's phone.
+const AD_FREE_EMAILS = ['cardhuddleoffical@gmail.com'];
+const AD_FREE_KEY = 'chAdFree';
+function _adFree() {
+  try {
+    if (localStorage.getItem(AD_FREE_KEY) === '1') return true;
+    const name = String(localStorage.getItem('cardHuddleCurrentUser') || '');
+    let email = '';
+    try {
+      const users = JSON.parse(localStorage.getItem('cardHuddleUsers') || '{}');
+      const rec = users[name.toLowerCase()] || users[name];
+      email = String((rec && rec.email) || '').toLowerCase();
+    } catch (_) { /* no local accounts */ }
+    if (NO_AFFILIATE_ACCOUNTS.includes(name.toLowerCase()) || AD_FREE_EMAILS.includes(email)) {
+      localStorage.setItem(AD_FREE_KEY, '1');
+      (window.adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 1;
+      return true;
+    }
+  } catch (_) { /* storage blocked: ads as normal */ }
+  return false;
+}
+_adFree();
 function _noAffiliate() {
   try {
     const u = String(localStorage.getItem('cardHuddleCurrentUser') || '').toLowerCase();
@@ -5198,6 +5225,7 @@ function setCurrentUser(username) {
     localStorage.removeItem('cardHuddleCurrentUser');
   }
   updateAuthButton();
+  _adFree();
   if (username) { if (typeof startDmPoller === 'function') startDmPoller(); }
   else { if (typeof updateDmBadge === 'function') updateDmBadge(0); if (typeof disconnectDmSocket === 'function') disconnectDmSocket(); }
 }
@@ -5435,6 +5463,7 @@ async function acctSaveEmail(form) {
     const users = getUsers();
     const key = (getCurrentUser() || '').toLowerCase();
     if (users[key]) { users[key].email = data.email; localStorage.setItem('cardHuddleUsers', JSON.stringify(users)); }
+    _adFree();
     const changed = (_acctProfile.email || '') !== data.email;
     _acctProfile.email = data.email;
     if (changed) _acctProfile.weeklyEmail = null;

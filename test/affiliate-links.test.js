@@ -179,5 +179,33 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   check('  ...and on the landing pages\' shop link', /Shop current \$\{esc\(noun\)\} listings on eBay/.test(fs.readFileSync(path.join(ROOT, 'price-block-core.js'), 'utf8')));
 }
 
+// ---- the site's own accounts see no ads (owner, Oct 2026) -----------------
+// Paused with AdSense's own pauseAdRequests, before its script loads: nothing
+// requested and nothing hidden (hiding ads breaks AdSense policy).
+{
+  const vm = require('vm');
+  const grab = (name) => { const i = app.indexOf(`function ${name}(`); return app.slice(i, app.indexOf('\n}\n', i) + 3); };
+  const store = new Map();
+  const ctx = { window: {}, localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) } };
+  vm.createContext(ctx);
+  const decl = ['NO_AFFILIATE_ACCOUNTS', 'AD_FREE_EMAILS', 'AD_FREE_KEY'].map(n => app.match(new RegExp(`const ${n} = [^\\n]+`))[0]).join('\n');
+  vm.runInContext(decl + '\n' + grab('_adFree') + '\nthis._adFree = _adFree;', ctx);
+  check('a visitor gets ads', ctx._adFree() === false && !store.has('chAdFree'));
+  store.set('cardHuddleCurrentUser', 'PeytonF');
+  store.set('cardHuddleUsers', JSON.stringify({ peytonf: { email: 'CardHuddleOffical@gmail.com' } }));
+  check('  ...the owner\'s Gmail account does not', ctx._adFree() === true && store.get('chAdFree') === '1' && ctx.window.adsbygoogle.pauseAdRequests === 1);
+  store.delete('cardHuddleCurrentUser');
+  check('  ...nor that device after signing out', ctx._adFree() === true);
+  const pages = [];
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.name.endsWith('.html')) pages.push(f); } };
+  walk(path.join(ROOT, 'public'));
+  const tagged = pages.filter(f => fs.readFileSync(f, 'utf8').includes('adsbygoogle.js'));
+  const unguarded = tagged.filter(f => !/<script data-adfree>[^<]*pauseAdRequests=1[^<]*<\/script>\s*<script async src="https:\/\/pagead2\.googlesyndication\.com/.test(fs.readFileSync(f, 'utf8')));
+  check('every page with the ad tag pauses it first for an ad-free device', tagged.length > 0 && unguarded.length === 0,
+    unguarded.length ? unguarded.slice(0, 3).map(f => path.relative(ROOT, f)).join(', ') : `${tagged.length} pages`);
+  check('  ...the landing pages and news pages too', /\$\{AD_FREE_GUARD\}\\n  <script async src="https:\/\/pagead2/.test(fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8'))
+    && /const NEWS_AD_TAG = `<script data-adfree>/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8')));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);

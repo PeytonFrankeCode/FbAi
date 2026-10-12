@@ -74,6 +74,11 @@ const SITE = 'https://thecardhuddle.com';
 // have told Google not to index.
 //
 // Set ADSENSE_CLIENT='' to turn the tag off everywhere again.
+// The site's own accounts, and later ad-free subscribers, see no ads (owner,
+// Oct 2026): the app sets chAdFree on such a device, and this pauses AdSense's
+// ad requests before its script loads. Google's own switch, so nothing is
+// requested and nothing is hidden, which its policies forbid.
+const AD_FREE_GUARD = `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1}}catch(e){}</script>`;
 const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT !== undefined
   ? process.env.ADSENSE_CLIENT
   : 'ca-pub-3644779384068007';
@@ -84,7 +89,7 @@ const adsenseTag = (noindex) => {
   const on = !!ADSENSE_CLIENT && !noindex && S.ads;
   if (on) _adsStats.withAds++; else _adsStats.withoutAds++;
   return on
-    ? `  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
+    ? `  ${AD_FREE_GUARD}\n  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>\n`
     : '';
 };
 const TODAY = new Date().toISOString().slice(0, 10);
