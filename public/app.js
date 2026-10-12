@@ -5108,8 +5108,11 @@ function _mountHomeAd() {
   if (_adFree()) { el.remove(); return; }
   el.dataset.mounted = '1';
   el.innerHTML = '<p class="ad-label">Advertisement</p>'
-    + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${HOME_AD_SLOT}"`
-    + ' data-ad-format="auto" data-full-width-responsive="true"></ins>';
+    // A strip, not a block (owner, Oct 2026: the auto size was too big). Google's
+    // own way to size a responsive unit: horizontal formats only, and a height
+    // set in CSS (.home-ad ins), never a clip.
+    + `<ins class="adsbygoogle home-ad-ins" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${HOME_AD_SLOT}"`
+    + ' data-ad-format="horizontal"></ins>';
   try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the box collapses */ }
 }
 
