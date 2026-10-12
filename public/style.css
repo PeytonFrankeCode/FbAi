@@ -9725,3 +9725,62 @@ body.has-searched #market-pulse { display: none !important; }
 @media (max-width: 760px) { .market-ad .market-ad-ins { max-width: 320px; height: 100px; } }
 .mobile-layout .market-ad .market-ad-ins { zoom: 1.1765; }
 .market-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
+
+/* ---- "Remove ads" link beside every ad label ---- */
+.ad-remove-link {
+  background: none; border: 0; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit;
+  color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.ad-remove-link:hover { color: var(--accent-light); }
+
+/* ---- Ad-free plan box ---- */
+.adfree-modal { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.adfree-modal.hidden { display: none; }
+.adfree-overlay { position: absolute; inset: 0; background: rgba(3, 7, 18, 0.6); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.adfree-box {
+  position: relative; width: 100%; max-width: 420px; text-align: center;
+  padding: 1.6rem 1.4rem 1.3rem;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(94, 206, 153, 0.16), transparent 60%),
+    var(--bg-secondary);
+  border: 1px solid var(--accent-border); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
+  animation: adfree-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes adfree-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .adfree-box { animation: none; } }
+.adfree-close {
+  position: absolute; top: 0.6rem; right: 0.6rem; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border-primary); background: transparent; color: var(--text-secondary);
+  font-size: 1.2rem; line-height: 1; cursor: pointer;
+}
+.adfree-icon { font-size: 1.9rem; line-height: 1; margin-bottom: 0.4rem; }
+.adfree-title { margin: 0 0 0.35rem; font-size: 1.35rem; font-weight: 800; color: var(--text-primary); }
+.adfree-sub { margin: 0 auto 1.1rem; max-width: 320px; font-size: 0.86rem; line-height: 1.5; color: var(--text-secondary); }
+.adfree-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.adfree-plans.hidden { display: none; }
+.adfree-plan {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+  padding: 1rem 0.5rem 0.85rem; border-radius: var(--radius-lg); cursor: pointer;
+  border: 1px solid var(--border-primary); background: var(--bg-tertiary); color: var(--text-primary);
+  font: inherit; transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.adfree-plan:hover { transform: translateY(-2px); border-color: var(--accent-border); box-shadow: 0 10px 24px -14px rgba(94, 206, 153, 0.6); }
+.adfree-plan:disabled { opacity: 0.6; cursor: progress; transform: none; }
+.adfree-plan-best { border-color: var(--accent); background: var(--accent-bg); }
+.adfree-badge {
+  position: absolute; top: -0.6rem; left: 50%; transform: translateX(-50%);
+  padding: 0.12rem 0.5rem; border-radius: 999px; white-space: nowrap;
+  font-size: 0.6rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--accent); color: var(--accent-on);
+}
+.adfree-price { font-size: 1.45rem; font-weight: 800; }
+.adfree-per { font-size: 0.72rem; color: var(--text-muted); }
+.adfree-fine { margin: 0.9rem 0 0; font-size: 0.72rem; color: var(--text-muted); }
+.adfree-fine.hidden, .adfree-done.hidden, .adfree-manage.hidden, .adfree-sub.hidden { display: none; }
+.adfree-msg { margin: 0.5rem 0 0; min-height: 1em; font-size: 0.78rem; color: var(--text-secondary); }
+.adfree-done-text { margin: 0.2rem 0 0.9rem; font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
+.adfree-manage {
+  padding: 0.6rem 1.2rem; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 700;
+  border: 1px solid var(--accent-border); background: var(--accent-bg); color: var(--accent);
+}
