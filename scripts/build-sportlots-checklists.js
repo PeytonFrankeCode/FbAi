@@ -45,7 +45,7 @@ const CC = args.includes('--cc') ? args[args.indexOf('--cc') + 1] : null;
 if (!RAW) { console.error('usage: build-sportlots-checklists.js <raw-dir> [--write] [--sport S]'); process.exit(2); }
 
 const DIRS = { Basketball: 'checklists-basketball', Baseball: 'checklists-baseball' };
-const JUNK = /\b(promos?|promotional|prototypes?|samples?|sheets?|uncut|panels?|proofs?|test issue|wrappers?|box bottoms?|unopened)\b/i;
+const JUNK = /\b(reprints?|promos?|promotional|prototypes?|samples?|sheets?|uncut|panels?|proofs?|test issue|wrappers?|box bottoms?|unopened)\b/i;
 // A one-word remainder that names a parallel ("Gold", "Tiffany", "Glossy").
 const PARALLEL_WORD = /^(gold|silver|bronze|platinum|black|red|blue|green|purple|orange|tiffany|glossy|refractors?|foil|electric|holo|holographic|emerald|ruby|sapphire|press proofs?|artist'?s proofs?|members only|first day issue|special forces|1st day issue|gold signature|gold medallion|copper|xfractors?|super ?fractors?|rainbow|prismatic|die ?cut|mirror|parallel|desert shield)$/i;
 const NOTE = 'Partial checklist: some of the rarer cards aren\'t listed yet.';
