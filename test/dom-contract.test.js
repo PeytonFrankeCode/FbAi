@@ -198,5 +198,18 @@ check('  ...that locks the page under it, closes on a swipe, and respects reduce
     && /scrollsSideways\(e\.target\)/.test(sw) && /input, textarea, select/.test(sw));
 }
 
+// The front page ad (owner, Oct 2026): below the market panel, above the
+// searches and the about text; built by the app, never on an ad-free device.
+{
+  const ad = html.indexOf('id="home-ad"');
+  check('the front page ad sits below the market panel and above the searches',
+    ad > html.indexOf('id="market-pulse"') && ad < html.indexOf('id="recent-section"') && ad < html.indexOf('id="about-section"'));
+  const m = app.slice(app.indexOf('function _mountHomeAd('), app.indexOf('function _mountHomeAd(') + 900);
+  check('  ...with the owner\'s unit, pushed once, and left out where ads are off',
+    /HOME_AD_SLOT = '4014689556'/.test(app) && /if \(_adFree\(\)\) \{ el\.remove\(\); return; \}/.test(m)
+    && /el\.dataset\.mounted/.test(m) && /\n_mountHomeAd\(\);\n$/.test(app));
+  check('  ...and an unfilled slot leaves no empty box', /\.home-ad:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);

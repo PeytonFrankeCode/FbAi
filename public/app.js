@@ -5094,6 +5094,22 @@ function _adFree() {
   return false;
 }
 _adFree();
+
+// The front page's ad unit, below the market panel. Built here rather than in
+// the HTML so an ad-free device never has an ad slot at all, and pushed once:
+// the page is one app, so it never reloads to ask again.
+const ADSENSE_CLIENT = 'ca-pub-3644779384068007';
+const HOME_AD_SLOT = '4014689556';
+function _mountHomeAd() {
+  const el = document.getElementById('home-ad');
+  if (!el || el.dataset.mounted) return;
+  if (_adFree()) { el.remove(); return; }
+  el.dataset.mounted = '1';
+  el.innerHTML = '<p class="ad-label">Advertisement</p>'
+    + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${HOME_AD_SLOT}"`
+    + ' data-ad-format="auto" data-full-width-responsive="true"></ins>';
+  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the box collapses */ }
+}
 function _noAffiliate() {
   try {
     const u = String(localStorage.getItem('cardHuddleCurrentUser') || '').toLowerCase();
@@ -17979,3 +17995,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // The alert email's "Manage your alerts" link.
   try { if (new URLSearchParams(location.search).get('view') === 'alerts') setTimeout(showAlerts, 0); } catch (_) {}
 });
+
+_mountHomeAd();

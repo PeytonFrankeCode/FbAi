@@ -9633,3 +9633,13 @@ body.has-searched #market-pulse { display: none !important; }
 /* The logo goes home. */
 .header-logo-link { display: inline-block; line-height: 0; border-radius: var(--radius-md); }
 .header-logo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ---- Front page ad ---- */
+.home-ad { max-width: 960px; margin: 1.25rem auto 0.5rem; padding: 0 1rem; min-height: 0; }
+.home-ad .ad-label {
+  margin: 0 0 0.3rem; text-align: center;
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* Google found no ad: no empty box, no orphaned label. */
+.home-ad:has(ins.adsbygoogle[data-ad-status="unfilled"]) { display: none; }
