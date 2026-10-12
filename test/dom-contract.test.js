@@ -235,5 +235,11 @@ check('  ...and the total value counts up, names its period, honours reduced mot
   /_mpCountUp\(body\.querySelector\('\.mp-figure-hero \.mp-figure-n'\)\)/.test(app) && /mp-hero-period/.test(app)
   && /prefers-reduced-motion: reduce\)'\)\.matches/.test(app) && /\.mp-figure-hero::after \{ animation: none; \}/.test(css));
 
+// Pick a card (owner, Oct 2026): the dropdowns overlapped, wider than their
+// columns. They may shrink, and the box lays them out two by two.
+check('the Pick-a-card dropdowns shrink to their columns instead of overlapping',
+  /\.tracked-checklist-grid > \* \{ min-width: 0; \}/.test(css)
+  && /\.cl-picker-box \.tracked-checklist-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/.test(css));
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
