@@ -2800,6 +2800,7 @@ async function fetchDirectSearch(query) {
         }
       }
       if (isSold) { buildGradeFilter(); buildParallelFilter(query); }
+      _placeResultsAd();
     }
 
     backBtn.classList.remove('hidden');
@@ -3213,6 +3214,7 @@ async function performSearch(query, opts = {}) {
       note.innerHTML = `<span class="sold-fallback-icon">&#128161;</span> <span>Showing <strong>live asking prices</strong> for &ldquo;${escHtml(query)}&rdquo;. Sold price history is temporarily unavailable.</span>`;
       grid.insertBefore(note, grid.firstChild);
     }
+    _placeResultsAd();
 
   } catch (err) {
     if (err.superseded || _searchStale(seq)) return;
@@ -5109,6 +5111,50 @@ function _mountHomeAd() {
     + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${HOME_AD_SLOT}"`
     + ' data-ad-format="auto" data-full-width-responsive="true"></ins>';
   try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the box collapses */ }
+}
+
+// The results ad (owner, Oct 2026): one tile in the results, after the sixth
+// card, the width of the grid, so it reads as part of the feed and sits clear
+// of any card's "View on eBay" link. Placed once per search, when the results
+// land: a re-sort or filter redraws the grid without it and does not ask
+// Google again, since refreshing ads on anything short of new content is
+// against AdSense policy. Fewer than four results: no ad.
+const RESULTS_AD_SLOT = '9669331752';
+const RESULTS_AD_AFTER = 6;
+let _resultsAdEl = null;
+// Where the tile goes: after the sixth card, or the last when there are fewer.
+function _seatResultsAd() {
+  const el = _resultsAdEl;
+  if (!el || !grid) return;
+  const cards = grid.querySelectorAll('.card');
+  if (cards.length < 4) return;
+  const at = cards[Math.min(RESULTS_AD_AFTER, cards.length) - 1];
+  if (at.nextElementSibling !== el) at.after(el);
+}
+// A new search's tile, asked of Google once. The results redraw after they
+// land (versions, parallels, filters), so the same tile is put back in its
+// place on every redraw rather than a new one requested.
+function _placeResultsAd() {
+  if (_adFree() || !grid) return;
+  const el = document.createElement('div');
+  el.className = 'results-ad';
+  el.setAttribute('aria-label', 'Advertisement');
+  el.innerHTML = '<p class="ad-label">Advertisement</p>'
+    + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${RESULTS_AD_SLOT}"`
+    + ' data-ad-format="auto" data-full-width-responsive="true"></ins>';
+  if (_resultsAdEl) _resultsAdEl.remove();
+  _resultsAdEl = el;
+  _seatResultsAd();
+  if (!el.isConnected) { _resultsAdEl = null; return; }   // too few results: no ad
+  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the tile collapses */ }
+}
+if (typeof MutationObserver === 'function' && grid) {
+  let queued = false;
+  new MutationObserver(() => {
+    if (queued || !_resultsAdEl || _resultsAdEl.isConnected && grid.contains(_resultsAdEl)) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; _seatResultsAd(); });
+  }).observe(grid, { childList: true, subtree: true });
 }
 function _noAffiliate() {
   try {
