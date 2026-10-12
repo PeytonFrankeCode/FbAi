@@ -13069,7 +13069,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v40: a grading population ("Pop 1/1") is not a print run.
 // v41: Tiffany is a parallel wherever it is written; teams are not players.
 // v42: a poster of a card is not the card.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v43';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v44';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -13207,6 +13207,35 @@ const PRICE_SPREAD_MAX = 40;
 // grader hard against its number — one of the commonest spellings on eBay —
 // was being called Raw, both in this chart and on the sold tiles.
 const _gradeBucket = _gradeBucketCore;
+
+// Sales priced at SPIKE_X times or more of the sales around them: a slab in a
+// raw run, a shill bid, a mislisted parallel. The chart leaves them out, as
+// the price guides do (owner, Oct 2026). "Around" is the median of the
+// SPIKE_NEIGHBOURS sales nearest in date, not the whole history, so a card
+// that really has tripled over a year keeps its recent sales. With fewer than
+// SPIKE_MIN_NEIGHBOURS to compare against, nothing is called a spike.
+const SPIKE_X = 3;
+const SPIKE_NEIGHBOURS = 10;
+const SPIKE_MIN_NEIGHBOURS = 3;
+function _priceSpikes(list) {
+  const rows = list.filter(r => (r.price_cents || 0) > 0 && r.sold_date)
+    .slice().sort((a, b) => String(a.sold_date).localeCompare(String(b.sold_date)));
+  const out = new Set();
+  if (rows.length < SPIKE_MIN_NEIGHBOURS + 1) return out;
+  const half = SPIKE_NEIGHBOURS / 2;
+  for (let i = 0; i < rows.length; i++) {
+    // The nearest sales either side, shifted inward at the ends.
+    let from = Math.max(0, i - half), to = Math.min(rows.length, from + SPIKE_NEIGHBOURS + 1);
+    from = Math.max(0, to - SPIKE_NEIGHBOURS - 1);
+    const near = [];
+    for (let j = from; j < to; j++) if (j !== i) near.push(rows[j].price_cents);
+    if (near.length < SPIKE_MIN_NEIGHBOURS) continue;
+    near.sort((a, b) => a - b);
+    const m = near.length % 2 ? near[near.length >> 1] : (near[near.length / 2 - 1] + near[near.length / 2]) / 2;
+    if (m > 0 && rows[i].price_cents >= SPIKE_X * m) out.add(rows[i]);
+  }
+  return out;
+}
 
 function _median(sorted) {
   if (!sorted.length) return null;
@@ -14120,7 +14149,11 @@ async function _cardAnalysisRoute(req, res) {
     const grades = Array.from(byGrade.entries()).map(([label, list]) => {
       const prices = list.map(r => (r.price_cents || 0) / 100).filter(p => p > 0).sort((a, b) => a - b);
       const byDay = new Map();
+      // The chart leaves out spikes (owner, Oct 2026): a sale at 3x or more
+      // of the sales around it, as the price guides do.
+      const spikes = _priceSpikes(list);
       for (const r of list) {
+        if (spikes.has(r)) continue;
         const d = String(r.sold_date || '').slice(0, 10);
         const p = (r.price_cents || 0) / 100;
         if (!d || p <= 0) continue;
@@ -14196,6 +14229,8 @@ async function _cardAnalysisRoute(req, res) {
         changeFrom,
         trendSuppressed,
         points,
+        // Sales left off the chart as spikes.
+        spikesHidden: spikes.size,
       };
     }).sort((a, b) => b.sales - a.sales);
 
@@ -18966,7 +19001,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
