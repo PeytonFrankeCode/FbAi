@@ -9635,7 +9635,13 @@ body.has-searched #market-pulse { display: none !important; }
 .header-logo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* ---- Front page ad ---- */
-.home-ad { max-width: 960px; margin: 1.25rem auto 0.5rem; padding: 0 1rem; min-height: 0; }
+.home-ad { max-width: 760px; margin: 1.25rem auto 0.5rem; padding: 0 1rem; min-height: 0; }
+/* A leaderboard strip: 728x90 where it fits, 320x100 on a phone. */
+.home-ad .home-ad-ins { display: block; width: 100%; max-width: 728px; height: 90px; margin: 0 auto; }
+@media (max-width: 760px) { .home-ad .home-ad-ins { max-width: 320px; height: 100px; } }
+/* The phone layout zooms the page to 0.85, which would make that 272x85: too
+   narrow for Google's 320x100. Undone for the slot alone. */
+.mobile-layout .home-ad .home-ad-ins { zoom: 1.1765; }
 .home-ad .ad-label {
   margin: 0 0 0.3rem; text-align: center;
   font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;

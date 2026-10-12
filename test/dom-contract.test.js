@@ -208,6 +208,9 @@ check('  ...that locks the page under it, closes on a swipe, and respects reduce
   check('  ...with the owner\'s unit, pushed once, and left out where ads are off',
     /HOME_AD_SLOT = '4014689556'/.test(app) && /if \(_adFree\(\)\) \{ el\.remove\(\); return; \}/.test(m)
     && /el\.dataset\.mounted/.test(m) && /\n_mountHomeAd\(\);\n$/.test(app));
+  check('  ...as a strip (horizontal, height set in CSS), not a full-width block',
+    /data-ad-slot="\$\{HOME_AD_SLOT\}"`\n    \+ ' data-ad-format="horizontal"><\/ins>'/.test(app)
+    && /\.home-ad \.home-ad-ins \{ display: block; width: 100%; max-width: 728px; height: 90px;/.test(css));
   check('  ...and an unfilled slot leaves no empty box', /\.home-ad:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
 }
 
