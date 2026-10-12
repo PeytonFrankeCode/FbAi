@@ -89,6 +89,14 @@ check(`every listing is tied to the right version, or to none (${CASES.length})`
       ['2024 Panini Prizm - Fireworks Bo Nix #23 Green Wave Prizm (RC)', '#23 Fireworks Wave Green'],
       ['2024 Panini Prizm Bo Nix Rookie Orange Lazer Prizm #309 RC Broncos', '#309 Rookies Orange Lazer'],
       ['2024 PANINI PRIZM BO NIX RC ROOKIE PSA 9 MINT', '#309 Rookies Base'],
+      // "Silver" on a Red White Blue is the shine every Prizm has: one card,
+      // not a "Red White Blue Silver" version of its own (owner, Oct 2026).
+      ['2024 Panini Prizm Bo Nix #309 Red White Blue RC Broncos', '#309 Rookies Red White Blue'],
+      ['2024 Panini Prizm Bo Nix #309 Red White Blue Silver Prizm RC', '#309 Rookies Red White Blue'],
+      ['2024 Prizm Bo Nix Rookie RC #309 Red White & Blue Silver Broncos', '#309 Rookies Red White Blue'],
+      ['2024 Panini Prizm Bo Nix #309 Orange Ice Silver Prizm RC', '#309 Rookies Orange Ice'],
+      // Silver alone is still the Silver Prizm.
+      ['2024 Panini Prizm Bo Nix #309 Silver Prizm RC', '#309 Rookies Silver'],
       ['113277948 Bo Nix 2024 Panini Prizm Collegiate Draft Picks #HP-BN Hype RC PSA 10', null],
     ]],
     ['2020-panini-prizm-football', 'Justin Herbert', [
