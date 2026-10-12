@@ -45,7 +45,7 @@ const CC = args.includes('--cc') ? args[args.indexOf('--cc') + 1] : null;
 if (!RAW) { console.error('usage: build-sportlots-checklists.js <raw-dir> [--write] [--sport S]'); process.exit(2); }
 
 const DIRS = { Basketball: 'checklists-basketball', Baseball: 'checklists-baseball' };
-const JUNK = /\b(promos?|promotional|prototypes?|samples?|sheets?|uncut|panels?|proofs?|test issue|wrappers?|box bottoms?|unopened)\b/i;
+const JUNK = /\b(reprints?|promos?|promotional|prototypes?|samples?|sheets?|uncut|panels?|proofs?|test issue|wrappers?|box bottoms?|unopened)\b/i;
 // A one-word remainder that names a parallel ("Gold", "Tiffany", "Glossy").
 const PARALLEL_WORD = /^(gold|silver|bronze|platinum|black|red|blue|green|purple|orange|tiffany|glossy|refractors?|foil|electric|holo|holographic|emerald|ruby|sapphire|press proofs?|artist'?s proofs?|members only|first day issue|special forces|1st day issue|gold signature|gold medallion|copper|xfractors?|super ?fractors?|rainbow|prismatic|die ?cut|mirror|parallel|desert shield)$/i;
 const NOTE = 'Partial checklist: some of the rarer cards aren\'t listed yet.';
@@ -154,8 +154,50 @@ function buildYear(sport, year, rows, existing) {
 const npl = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\b(jr|sr|ii|iii|iv)\b/g, '').replace(/[^a-z]+/g, '');
 const nnum = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '').replace(/^0+(?=\d)/, '');
 const key = (c) => `${nnum(c.number)}|${npl(c.player)}`;
+// Older pages write "3 Hughie Critz RC", with no " - Team". Read each set
+// heading's lines as "<number> <name>" when the main parser finds less.
+const decodeHtml = (x) => String(x).replace(/<br\s*\/?>|<\/?(?:div|p|li|ul|ol)[^>]*>/gi, '\n').replace(/<[^>]+>/g, '')
+  .replace(/&nbsp;|&#xA0;|&#160;/gi, ' ').replace(/&amp;/g, '&').replace(/&#8217;|&rsquo;|&#039;|&#39;/g, "'")
+  .replace(/&#8211;|&ndash;/g, '-').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+function ccLoose(html) {
+  const start = html.search(/<h2[^>]*>[^<]*Checklist<\/h2>/i);
+  if (start < 0) return [];
+  let body = html.slice(start);
+  const end = body.search(/Team Checklist<\/h2>|Review This Product|id="comments"|class="comment-respond"/i);
+  if (end > 0) body = body.slice(0, end);
+  const parts = body.split(/(<h[23][^>]*>[\s\S]*?<\/h[23]>)/i);
+  const sets = [];
+  for (let i = 0; i < parts.length; i++) {
+    const h = /^<h([23])[^>]*>([\s\S]*?)<\/h\1>$/i.exec(parts[i]);
+    if (!h) continue;
+    const name = decodeHtml(h[2]).replace(/\s*(Set\s+)?Checklist\s*$/i, '').replace(/^\d{4}(-\d{2})?\s+\S.*?\s+(Baseball|Basketball)\s*(Set)?$/i, 'Base')
+      .replace(/^\d{4}(-\d{2})?\s+\S.*?\s+(Baseball|Basketball)\s+/i, '').trim();
+    if (!name || /^checklist$/i.test(name)) continue;
+    const text = decodeHtml(parts[i + 1] || '');
+    const cards = [];
+    for (const raw of text.split('\n')) {
+      const line = raw.replace(/\s+/g, ' ').trim();
+      const m = /^([A-Za-z]{0,4}-?\d+[A-Za-z]?)\s+(.+)$/.exec(line);
+      if (!m || /^\d+ cards?\.?$/i.test(line) || /^(\d+)\s+cards/i.test(line)) continue;
+      let who = m[2], team = '', rookie = false;
+      if (/\bRC\b/.test(who)) { rookie = true; who = who.replace(/\s*\bRC\b\s*/g, ' ').trim(); }
+      const dash = who.split(/\s+-\s+/);
+      if (dash.length > 1) { team = dash.slice(1).join(' - '); who = dash[0]; }
+      const c = { number: m[1], player: who, team };
+      if (rookie) c.rookie = true;
+      cards.push(c);
+    }
+    if (!cards.length) continue;
+    const count = (text.match(/(\d+)\s+cards?\./i) || [])[1];
+    sets.push({ id: slugify(name), name, category: categoryOf('', name), totalCards: count ? Number(count) : cards.length, parallels: [], cards });
+  }
+  return sets;
+}
 function ccSets(html) {
-  const sets = parsePage(html).filter(st => !/review this product|cancel reply|team checklist/i.test(st.name));
+  let sets = parsePage(html).filter(st => !/review this product|cancel reply|team checklist/i.test(st.name));
+  const loose = ccLoose(html);
+  const n = (a) => a.reduce((x, st) => x + st.cards.length, 0);
+  if (n(loose) > n(sets)) sets = loose;
   for (const st of sets) {
     st.name = st.name.replace(/\s+/g, ' ').replace(/\s+Set$/i, '').replace(/^Base Set$/i, 'Base') || st.name;
     if (/^base$/i.test(st.name)) { st.name = 'Base'; st.id = 'base'; st.category = 'base'; }
