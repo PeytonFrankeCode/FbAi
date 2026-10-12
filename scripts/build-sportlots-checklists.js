@@ -47,7 +47,7 @@ if (!RAW) { console.error('usage: build-sportlots-checklists.js <raw-dir> [--wri
 const DIRS = { Basketball: 'checklists-basketball', Baseball: 'checklists-baseball' };
 const JUNK = /\b(promos?|promotional|prototypes?|samples?|sheets?|uncut|panels?|proofs?|test issue|wrappers?|box bottoms?|unopened)\b/i;
 // A one-word remainder that names a parallel ("Gold", "Tiffany", "Glossy").
-const PARALLEL_WORD = /^(gold|silver|bronze|platinum|black|red|blue|green|purple|orange|tiffany|glossy|refractors?|foil|electric|holo|holographic|emerald|ruby|sapphire|diamond|star|stars|press proofs?|artist'?s proofs?|members only|first day issue|special forces|1st day issue|gold signature|gold medallion|copper|chrome|xfractors?|super ?fractors?|rainbow|prism|prismatic|die ?cut|mirror|parallel|limited|limited edition|collectors choice|desert shield|o-pee-chee|opc)$/i;
+const PARALLEL_WORD = /^(gold|silver|bronze|platinum|black|red|blue|green|purple|orange|tiffany|glossy|refractors?|foil|electric|holo|holographic|emerald|ruby|sapphire|press proofs?|artist'?s proofs?|members only|first day issue|special forces|1st day issue|gold signature|gold medallion|copper|xfractors?|super ?fractors?|rainbow|prismatic|die ?cut|mirror|parallel|desert shield)$/i;
 const NOTE = 'Partial checklist: some of the rarer cards aren\'t listed yet.';
 
 const slugify = (s) => String(s).toLowerCase().replace(/['’]/g, '').replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -91,11 +91,17 @@ function buildYear(sport, year, rows, existing) {
     bySet.get(name).push(r);
   }
   const names = [...bySet.keys()];
-  const bases = names.filter(n => / Base Set$/.test(n)).map(n => n.replace(/ Base Set$/, ''))
+  // A product is "<X> Base Set", or a set of 50+ cards that other sets build
+  // on: "1996 Topps Chrome" is its own product (its Refractors and ProFiles
+  // are its sets), not a parallel of 1996 Topps.
+  const size = (n) => new Set(bySet.get(n).map(r => r.q)).size;
+  const lines = names.filter(n => !/ Base Set$/.test(n) && size(n) >= 50 && names.some(m => m !== n && m.startsWith(n + ' ')));
+  const bases = [...names.filter(n => / Base Set$/.test(n)).map(n => n.replace(/ Base Set$/, '')), ...lines]
     .sort((a, b) => b.length - a.length);
   const products = new Map();
   for (const n of names) {
     const owner = / Base Set$/.test(n) ? n.replace(/ Base Set$/, '')
+      : lines.includes(n) ? n
       : bases.find(b => n.startsWith(b + ' ')) || n;
     if (!products.has(owner)) products.set(owner, []);
     products.get(owner).push(n);
@@ -106,7 +112,8 @@ function buildYear(sport, year, rows, existing) {
     const yr = sport === 'Basketball' ? season(year) : year;
     const id = `${slugify(yr + ' ' + title)}-${sport.toLowerCase()}`;
     if (existing.has(id)) continue;
-    const baseName = setNames.find(n => n === prod + ' Base Set') || (setNames.length === 1 ? setNames[0] : null);
+    const baseName = setNames.find(n => n === prod + ' Base Set') || setNames.find(n => n === prod)
+      || (setNames.length === 1 ? setNames[0] : null);
     const sets = [];
     let partial = false;
     const base = baseName ? buildSet(bySet.get(baseName)) : null;
