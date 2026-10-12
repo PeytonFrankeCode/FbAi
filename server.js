@@ -5029,6 +5029,19 @@ function _rsiBucketBounds(bucketDays) {
 // independent read on that player. Depth is spent on players, not on cards.
 const MARKET_TOP_PLAYERS = 600;
 const MARKET_CARDS_PER_PLAYER = 10;
+// Which series the whole-market index follows beyond raw base cards. Graded
+// copies since Oct 2026: each grade is its own card (the key carries grader
+// and grade), so a PSA 10 is only ever compared with PSA 10s of that card.
+// Measured on Sep 5 - Oct 5 sales (scripts/market-analysis/compare-series.js):
+// players with a reading each day 110 -> 154, sales used 3,201 -> 4,826, a
+// smoother line, for about a second more per query. Parallels as well
+// (MARKET_SERIES=graded,parallels) added little more for twice the query time,
+// so they stay out; MARKET_SERIES=base is the raw-only index.
+const MARKET_SERIES = new Set(String(process.env.MARKET_SERIES || 'graded').split(',')
+  .map(s => s.trim()).filter(s => s && s !== 'base'));
+const _mkSeriesOpts = () => ({ graded: MARKET_SERIES.has('graded'), parallels: MARKET_SERIES.has('parallels') });
+const _mkCardKey = (playerExpr) => (MARKET_SERIES.has('parallels')
+  ? `${_cardKeySql(playerExpr)} || '|' || ${RSI_PAR_KEY_SQL}` : _cardKeySql(playerExpr));
 // A player needs this many priced comparisons inside a bucket to contribute.
 // One is enough: that player then casts a single vote among the basket, and
 // the robustness comes from the tier gate on how many players report, not from
@@ -5053,7 +5066,7 @@ const MARKET_CALC_SIG = (() => {
     MARKET_EXCLUDE_TRAILING_DAYS, RSI_TARGET_POINTS, RSI_MIN_BUCKET_DAYS,
     RSI_MAX_GAP_DAYS, RSI_RATIO_FLOOR, RSI_RATIO_CEIL,
     RSI_BUCKET_MOVE_FLOOR, RSI_BUCKET_MOVE_CEIL, RSI_DAILY_MIN_DAYS,
-    RSI_KEY_COLS.join(','), RSI_RAW_ONLY, RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST,
+    RSI_KEY_COLS.join(','), [...MARKET_SERIES].sort().join('+'), RSI_RAW_ONLY, RSI_BASE_CARD, RSI_BASE_SERIAL, RSI_BASE_TITLE_WORDS, RSI_BASE_TITLE_TEST,
     _kindSql('s.title'),
     JSON.stringify(RSI_TIERS), JSON.stringify(RSI_TIERS_PLAYER),
   ].join('|');
@@ -5288,9 +5301,9 @@ async function _rsiQuery(db, throughIso, days, extraWhere = '', extraBinds = [],
   const PLAYER = useAlias ? `COALESCE(al.canonical, ${P})` : P;
   const JOIN = useAlias ? `LEFT JOIN ${ALIAS_TABLE} al ON al.variant = ${P}` : '';
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
-  const CARD = _cardKeySql(PLAYER);
+  const CARD = _mkCardKey(PLAYER);
   return db.prepare(
-    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny })},
+    `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere, deny, ..._mkSeriesOpts() })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -5409,7 +5422,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   const PLAYER = useAlias ? `COALESCE(al.canonical, ${P})` : P;
   const JOIN = useAlias ? `LEFT JOIN ${ALIAS_TABLE} al ON al.variant = ${P}` : '';
   const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
-  const CARD = follow ? `${_cardKeySql(PLAYER)} || '|' || ${RSI_PAR_KEY_SQL}` : _cardKeySql(PLAYER);
+  const CARD = follow ? `${_cardKeySql(PLAYER)} || '|' || ${RSI_PAR_KEY_SQL}` : _mkCardKey(PLAYER);
   // The photo comes from the newest sale of that card that carried one. Dates
   // are ISO, so their lexical maximum is also their chronological one — the
   // date is glued on only to rank by, and stripped off again on the way out.
@@ -5419,7 +5432,7 @@ async function _rsiBasketQuery(db, throughIso, days, limit = 24, extraWhere = ''
   return db.prepare(
     `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere,
                           junk: true, labels: true, hasImage, useAlias, deny,
-                          ...(follow ? { perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true } : {}) })},
+                          ...(follow ? { perPlayer: PLAYER_TREND_CARDS, graded: true, parallels: true } : _mkSeriesOpts()) })},
      top_players AS (
        SELECT player_n FROM base GROUP BY player_n
         ORDER BY SUM(c) DESC, player_n LIMIT ${MARKET_TOP_PLAYERS}
@@ -9021,9 +9034,9 @@ async function _marketDenied(db, throughIso, days, useAlias) {
     const PLAYER = useAlias ? `COALESCE(al.canonical, ${P})` : P;
     const JOIN = useAlias ? `LEFT JOIN ${ALIAS_TABLE} al ON al.variant = ${P}` : '';
     const ALIAS_FILTER = useAlias ? ' AND (al.variant IS NULL OR al.resolved = 1)' : '';
-    const CARD = _cardKeySql(PLAYER);
+    const CARD = _mkCardKey(PLAYER);
     const rows = await db.prepare(
-      `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere: '' })},
+      `WITH ${_rsiBaseCtes({ PLAYER, CARD, P, JOIN, ALIAS_FILTER, noOffer, extraWhere: '', ..._mkSeriesOpts() })},
        ranked AS (
          SELECT k.card, MAX(k.year) AS year, MAX(k.set_name) AS set_name, MAX(k.player) AS player,
                 MAX(k.card_number) AS card_number,
