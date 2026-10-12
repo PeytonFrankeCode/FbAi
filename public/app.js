@@ -5131,6 +5131,183 @@ function _adFree() {
 }
 _adFree();
 
+// Every ad's label offers the way out: the Ad-free plan.
+const AD_LABEL = '<p class="ad-label">Advertisement<span aria-hidden="true"> &middot; </span>'
+  + '<button type="button" class="ad-remove-link" onclick="openAdFree()">Remove ads</button></p>';
+
+// ---- The Ad-free plan (owner, Oct 2026): $2.99/mo or $24.99/yr ----
+// A paid plan marks the device the way the owner's account does (chAdFree),
+// with chAdFreeSrc saying it came from a subscription, so it is taken back
+// when the plan ends or the account signs out. The owner's mark has no source
+// and is never taken back.
+const AD_FREE_SRC_KEY = 'chAdFreeSrc';
+let _adFreeState = null;   // { on, billing } from the last check
+function _removeAds() {
+  document.querySelectorAll('#home-ad, .results-ad, .cl-ad-row, .market-ad').forEach(el => el.remove());
+  (window.adsbygoogle = window.adsbygoogle || []).pauseAdRequests = 1;
+}
+function _dropPlanAdFree() {
+  try {
+    if (localStorage.getItem(AD_FREE_SRC_KEY) === 'sub') {
+      localStorage.removeItem(AD_FREE_KEY);
+      localStorage.removeItem(AD_FREE_SRC_KEY);
+    }
+  } catch (_) {}
+}
+async function _refreshAdFreePlan() {
+  if (!getSessionToken()) { _dropPlanAdFree(); _adFreeState = null; return null; }
+  try {
+    const r = await authFetch('/api/auth/me');
+    if (r.status === 401) { _dropPlanAdFree(); _adFreeState = null; return null; }
+    if (!r.ok) return _adFreeState;
+    const d = await r.json();
+    const sub = d && d.subscription;
+    const on = !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
+    _adFreeState = { on, billing: !!(sub && sub.stripeCustomerId) };
+    if (on) {
+      try {
+        if (localStorage.getItem(AD_FREE_KEY) !== '1') { localStorage.setItem(AD_FREE_KEY, '1'); localStorage.setItem(AD_FREE_SRC_KEY, 'sub'); }
+      } catch (_) {}
+      _removeAds();
+    } else {
+      _dropPlanAdFree();
+    }
+    return _adFreeState;
+  } catch (_) { return _adFreeState; }
+}
+
+function _adFreeModal() {
+  let m = document.getElementById('adfree-modal');
+  if (m) return m;
+  m = document.createElement('div');
+  m.id = 'adfree-modal';
+  m.className = 'adfree-modal hidden';
+  m.setAttribute('role', 'dialog');
+  m.setAttribute('aria-modal', 'true');
+  m.setAttribute('aria-labelledby', 'adfree-title');
+  m.innerHTML = `
+    <div class="adfree-overlay" onclick="closeAdFree()"></div>
+    <div class="adfree-box">
+      <button type="button" class="adfree-close" onclick="closeAdFree()" aria-label="Close">&times;</button>
+      <div class="adfree-icon" aria-hidden="true">&#10024;</div>
+      <h3 id="adfree-title" class="adfree-title">Go ad-free</h3>
+      <p class="adfree-sub">No ads anywhere on The Card Huddle. Your plan also helps keep the site free for every collector.</p>
+      <div class="adfree-plans" id="adfree-plans">
+        <button type="button" class="adfree-plan" data-period="monthly">
+          <span class="adfree-price">$2.99</span><span class="adfree-per">per month</span>
+        </button>
+        <button type="button" class="adfree-plan adfree-plan-best" data-period="yearly">
+          <span class="adfree-badge">Save 30%</span>
+          <span class="adfree-price">$24.99</span><span class="adfree-per">per year</span>
+        </button>
+      </div>
+      <div class="adfree-done hidden" id="adfree-done">
+        <p class="adfree-done-text">&#127881; Thanks for supporting The Card Huddle! No more ads on your account.</p>
+        <button type="button" class="adfree-manage" id="adfree-manage">Manage billing</button>
+      </div>
+      <p class="adfree-fine" id="adfree-fine">Cancel anytime. Secure checkout by Stripe.</p>
+      <p class="adfree-msg" id="adfree-msg" role="status" aria-live="polite"></p>
+    </div>`;
+  document.body.appendChild(m);
+  m.querySelectorAll('.adfree-plan').forEach(b => b.addEventListener('click', () => _startAdFreeCheckout(b.dataset.period, b)));
+  m.querySelector('#adfree-manage').addEventListener('click', _openAdFreeBilling);
+  return m;
+}
+async function openAdFree() {
+  const m = _adFreeModal();
+  const msg = m.querySelector('#adfree-msg');
+  msg.textContent = '';
+  const showDone = (billing) => {
+    m.querySelector('#adfree-title').textContent = "You're ad-free";
+    m.querySelector('.adfree-sub').classList.add('hidden');
+    m.querySelector('#adfree-plans').classList.add('hidden');
+    m.querySelector('#adfree-fine').classList.add('hidden');
+    m.querySelector('#adfree-done').classList.remove('hidden');
+    m.querySelector('#adfree-manage').classList.toggle('hidden', !billing);
+  };
+  const showPlans = () => {
+    m.querySelector('#adfree-title').textContent = 'Go ad-free';
+    m.querySelector('.adfree-sub').classList.remove('hidden');
+    m.querySelector('#adfree-plans').classList.remove('hidden');
+    m.querySelector('#adfree-fine').classList.remove('hidden');
+    m.querySelector('#adfree-done').classList.add('hidden');
+  };
+  if (_adFree()) showDone(_adFreeState && _adFreeState.billing); else showPlans();
+  m.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  const first = m.querySelector('.adfree-plan:not(.hidden), #adfree-manage, .adfree-close');
+  if (first) setTimeout(() => first.focus(), 30);
+  if (getSessionToken()) {
+    const st = await _refreshAdFreePlan();
+    if (st && st.on) showDone(st.billing);
+  }
+}
+function closeAdFree() {
+  const m = document.getElementById('adfree-modal');
+  if (m) m.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', (e) => {
+  const m = document.getElementById('adfree-modal');
+  if (e.key === 'Escape' && m && !m.classList.contains('hidden')) closeAdFree();
+});
+async function _startAdFreeCheckout(period, btn) {
+  const msg = document.getElementById('adfree-msg');
+  if (!getSessionToken()) {
+    // An account to put the plan on first; the box comes back after logging in.
+    try { localStorage.setItem('chAdFreeAfterLogin', period || 'monthly'); } catch (_) {}
+    closeAdFree();
+    showLogin();
+    return;
+  }
+  document.querySelectorAll('.adfree-plan').forEach(b => { b.disabled = true; });
+  if (btn) btn.classList.add('is-loading');
+  msg.textContent = 'Opening secure checkout…';
+  try {
+    const r = await authFetch('/api/stripe/create-checkout-adfree', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ period }),
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.url) { location.href = d.url; return; }
+    if (r.status === 401) { closeAdFree(); showLogin(); return; }
+    if (r.status === 409) { await _refreshAdFreePlan(); openAdFree(); return; }
+    msg.textContent = d.error || 'Checkout is not available right now. Please try again soon.';
+  } catch (_) {
+    msg.textContent = 'Could not reach checkout. Check your connection and try again.';
+  }
+  document.querySelectorAll('.adfree-plan').forEach(b => { b.disabled = false; });
+  if (btn) btn.classList.remove('is-loading');
+}
+async function _openAdFreeBilling() {
+  const msg = document.getElementById('adfree-msg');
+  msg.textContent = 'Opening billing…';
+  try {
+    const r = await authFetch('/api/stripe/create-portal-session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.url) { location.href = d.url; return; }
+    msg.textContent = d.error || 'Billing is not available right now.';
+  } catch (_) { msg.textContent = 'Could not reach billing. Try again soon.'; }
+}
+// Back from Stripe: say thanks, and wait for the payment to land on the
+// account (the webhook can trail the redirect by a few seconds).
+(function adFreeReturn() {
+  let params;
+  try { params = new URLSearchParams(location.search); } catch (_) { return; }
+  if (params.get('payment') === 'success' && params.get('plan') === 'adfree') {
+    try { history.replaceState(history.state, '', location.pathname + location.hash); } catch (_) {}
+    let tries = 0;
+    const poll = async () => {
+      const st = await _refreshAdFreePlan();
+      if (st && st.on) { openAdFree(); return; }
+      if (++tries < 8) setTimeout(poll, 2000);
+    };
+    poll();
+  } else if (getSessionToken()) {
+    // Every visit: is the plan still on? Off when it lapsed or was cancelled.
+    setTimeout(_refreshAdFreePlan, 1500);
+  }
+})();
+
 // The front page's ad unit, below the market panel. Built here rather than in
 // the HTML so an ad-free device never has an ad slot at all, and pushed once:
 // the page is one app, so it never reloads to ask again.
@@ -5141,7 +5318,7 @@ function _mountHomeAd() {
   if (!el || el.dataset.mounted) return;
   if (_adFree()) { el.remove(); return; }
   el.dataset.mounted = '1';
-  el.innerHTML = '<p class="ad-label">Advertisement</p>'
+  el.innerHTML = AD_LABEL
     // A strip, not a block (owner, Oct 2026: the auto size was too big). Google's
     // own way to size a responsive unit: horizontal formats only, and a height
     // set in CSS (.home-ad ins), never a clip.
@@ -5176,7 +5353,7 @@ function _placeResultsAd() {
   const el = document.createElement('div');
   el.className = 'results-ad';
   el.setAttribute('aria-label', 'Advertisement');
-  el.innerHTML = '<p class="ad-label">Advertisement</p>'
+  el.innerHTML = AD_LABEL
     + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${RESULTS_AD_SLOT}"`
     + ' data-ad-format="auto" data-full-width-responsive="true"></ins>';
   if (_resultsAdEl) _resultsAdEl.remove();
@@ -5325,6 +5502,15 @@ function setCurrentUser(username) {
   }
   updateAuthButton();
   _adFree();
+  if (username) {
+    _refreshAdFreePlan().then(() => {
+      let pending = null;
+      try { pending = localStorage.getItem('chAdFreeAfterLogin'); localStorage.removeItem('chAdFreeAfterLogin'); } catch (_) {}
+      if (pending) openAdFree();
+    });
+  } else {
+    _dropPlanAdFree();
+  }
   if (username) { if (typeof startDmPoller === 'function') startDmPoller(); }
   else { if (typeof updateDmBadge === 'function') updateDmBadge(0); if (typeof disconnectDmSocket === 'function') disconnectDmSocket(); }
 }
@@ -7013,7 +7199,7 @@ function _mkSeatAd() {
     const el = document.createElement('aside');
     el.className = 'market-ad';
     el.setAttribute('aria-label', 'Advertisement');
-    el.innerHTML = '<p class="ad-label">Advertisement</p>'
+    el.innerHTML = AD_LABEL
       + `<ins class="adsbygoogle market-ad-ins" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${MARKET_AD_SLOT}" data-ad-format="horizontal"></ins>`;
     _mkAd.el = el;
   }
@@ -9346,7 +9532,7 @@ function _clSeatAd(setEl) {
   if (fresh) {
     const tr = document.createElement('tr');
     tr.className = 'cl-ad-row';
-    tr.innerHTML = `<td colspan="${cols}"><div class="cl-ad" aria-label="Advertisement"><p class="ad-label">Advertisement</p>`
+    tr.innerHTML = `<td colspan="${cols}"><div class="cl-ad" aria-label="Advertisement">${AD_LABEL}`
       + `<ins class="adsbygoogle cl-ad-ins" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${CL_AD_SLOT}" data-ad-format="horizontal"></ins></div></td>`;
     _clAd.el = tr;
   } else {

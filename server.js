@@ -419,8 +419,13 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
   try {
     if (STRIPE_WEBHOOK_SECRET && !STRIPE_WEBHOOK_SECRET.includes('REPLACE')) {
       event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET);
+    } else if (process.env.CF_WORKER) {
+      // No signing secret on the live site: an unsigned event is anyone's
+      // say-so, and it would grant a paid plan. Refuse rather than trust it.
+      console.error('Stripe webhook refused: STRIPE_WEBHOOK_SECRET is not set');
+      return res.status(503).json({ error: 'Webhook signing secret not configured' });
     } else {
-      event = JSON.parse(req.body);
+      event = JSON.parse(req.body);   // local development only
     }
   } catch (err) {
     console.error('Stripe webhook signature verification failed:', err.message);
@@ -17136,6 +17141,9 @@ app.get('/api/stripe/config', (req, res) => {
 });
 
 app.post('/api/stripe/create-checkout', async (req, res) => {
+  // Pro and Pro+ were retired (owner, Oct 2026): no checkout for a plan that
+  // gives nothing. The Ad-free plan is /api/stripe/create-checkout-adfree.
+  return res.status(410).json({ error: 'This plan is no longer offered.' });
   if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured. Add your Stripe keys to .env' });
 
@@ -17180,8 +17188,68 @@ app.post('/api/stripe/create-checkout', async (req, res) => {
   }
 });
 
+// ---- Ad-free plan (owner, Oct 2026) ----
+// $2.99 a month or $24.99 a year; Google ads are switched off for the account.
+// The Stripe product is found or made on first use (by its metadata) and its
+// id cached, so there is nothing to set up in the dashboard; STRIPE_PRODUCT_ADFREE
+// overrides it.
+const ADFREE_PRICES = { monthly: { unit_amount: 299, recurring: { interval: 'month' } }, yearly: { unit_amount: 2499, recurring: { interval: 'year' } } };
+const ADFREE_PRODUCT_KEY = 'stripe:adfree-product:v1';
+let _adFreeProduct = process.env.STRIPE_PRODUCT_ADFREE || null;
+async function _adFreeProductId() {
+  if (_adFreeProduct) return _adFreeProduct;
+  const cached = await cacheGet(ADFREE_PRODUCT_KEY);
+  if (cached && cached.id) return (_adFreeProduct = cached.id);
+  let id = null;
+  try {
+    const found = await stripe.products.search({ query: "metadata['plan']:'adfree' AND active:'true'", limit: 1 });
+    id = found && found.data && found.data[0] && found.data[0].id;
+  } catch (_) { /* search unavailable: create below */ }
+  if (!id) {
+    const made = await stripe.products.create({ name: 'The Card Huddle Ad-free', description: 'No ads on thecardhuddle.com.', metadata: { plan: 'adfree' } });
+    id = made.id;
+  }
+  cachePut(ADFREE_PRODUCT_KEY, { id }, 365 * 86400);
+  return (_adFreeProduct = id);
+}
+function isAdFreeUser(username) {
+  const sub = username ? getEffectiveSubscription(username) : null;
+  return !!(sub && sub.plan === 'adfree' && (sub.status === 'active' || sub.status === 'trialing'));
+}
+app.post('/api/stripe/create-checkout-adfree', async (req, res) => {
+  if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
+  if (!stripeEnabled) return res.status(503).json({ error: 'Payments are not set up yet.' });
+  // The plan goes on the signed-in account, never on a name the page sends.
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Log in to go ad-free.' });
+  if (isAdFreeUser(username)) return res.status(409).json({ error: 'This account is already ad-free.' });
+  const period = (req.body || {}).period === 'yearly' ? 'yearly' : 'monthly';
+  try {
+    const product = await _adFreeProductId();
+    const existing = (loadSubscriptions()[username] || {}).stripeCustomerId;
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price_data: { currency: 'usd', product, ...ADFREE_PRICES[period] }, quantity: 1 }],
+      allow_promotion_codes: true,
+      ...(existing ? { customer: existing } : {}),
+      client_reference_id: username,
+      metadata: { username, period, plan: 'adfree' },
+      subscription_data: { metadata: { username, plan: 'adfree' } },
+      success_url: `${siteOrigin(req)}/?payment=success&plan=adfree`,
+      cancel_url: `${siteOrigin(req)}/?payment=cancelled`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe ad-free checkout error:', err && err.message);
+    res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+  }
+});
+
 // Create checkout session for Pro+ subscription
 app.post('/api/stripe/create-checkout-proplus', async (req, res) => {
+  // Pro and Pro+ were retired (owner, Oct 2026): no checkout for a plan that
+  // gives nothing. The Ad-free plan is /api/stripe/create-checkout-adfree.
+  return res.status(410).json({ error: 'This plan is no longer offered.' });
   if (!CHECKOUT_ENABLED) return res.status(503).json({ error: CHECKOUT_PAUSED_MSG });
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
   const { username, period } = req.body;
@@ -17525,11 +17593,15 @@ app.get('/api/stripe/subscription', async (req, res) => {
 app.post('/api/stripe/create-portal-session', async (req, res) => {
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe is not configured.' });
 
-  const { username } = req.body || {};
-  if (!username) return res.status(400).json({ error: 'Username required' });
+  // The signed-in account's own billing, never a username the page sends:
+  // a portal session can cancel a plan or change the card on it.
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Log in to manage billing.' });
+  const asked = String((req.body || {}).username || '').toLowerCase();
+  if (asked && asked !== username) return res.status(403).json({ error: 'That is not your account.' });
 
   const subs = loadSubscriptions();
-  const userSub = subs[String(username).toLowerCase()];
+  const userSub = subs[username];
   if (!userSub || !userSub.stripeCustomerId) {
     // Legacy/manual subscription (e.g. 'permanent: true' lifetime grants and
     // anything created before Stripe was wired in) has no Stripe customer to
@@ -18731,7 +18803,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
