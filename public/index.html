@@ -201,7 +201,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=790c7b5470" />
+  <link rel="stylesheet" href="style.css?v=26cec58c49" />
 
 
 </head>
@@ -286,7 +286,8 @@
   <div id="login-overlay" class="login-overlay hidden" role="dialog" aria-label="Login">
     <div class="login-box">
       <button class="login-close" aria-label="Close" onclick="closeLogin()">&times;</button>
-      <div class="login-icon">&#127944;</div>
+      <div class="login-main">
+      <div class="login-brand"><span class="login-icon">&#127944;</span><span>The Card Huddle</span></div>
       <h2 id="login-heading">Log In</h2>
       <p id="login-subtext">Welcome back to The Card Huddle</p>
 
@@ -314,6 +315,71 @@
         <span id="login-toggle-text">Don't have an account?</span>
         <a href="#" id="login-toggle-link" onclick="toggleAuthMode(event)">Sign Up</a>
       </p>
+      </div>
+      <!-- Decorative showcase panel (hidden on narrow screens). Drawn inline
+           so there's no image to license or load. -->
+      <aside class="login-showcase" aria-hidden="true">
+        <div class="ls-glow"></div>
+        <svg class="ls-art" viewBox="0 0 360 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lsCardA" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#15803d"/>
+            </linearGradient>
+            <linearGradient id="lsCardB" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#b45309"/>
+            </linearGradient>
+            <linearGradient id="lsCardC" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#4338ca"/>
+            </linearGradient>
+            <linearGradient id="lsShine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".5" stop-color="#fff" stop-opacity=".55"/>
+              <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="lsClip"><rect x="0" y="0" width="120" height="168" rx="10"/></clipPath>
+          </defs>
+          <g class="ls-card ls-c1" transform="translate(70 70) rotate(-16 60 84)">
+            <rect width="120" height="168" rx="10" fill="url(#lsCardC)"/>
+            <rect x="8" y="8" width="104" height="112" rx="6" fill="#fff" fill-opacity=".14"/>
+            <rect x="14" y="132" width="70" height="8" rx="4" fill="#fff" fill-opacity=".7"/>
+            <rect x="14" y="146" width="44" height="6" rx="3" fill="#fff" fill-opacity=".45"/>
+          </g>
+          <g class="ls-card ls-c2" transform="translate(170 62) rotate(14 60 84)">
+            <rect width="120" height="168" rx="10" fill="url(#lsCardB)"/>
+            <rect x="8" y="8" width="104" height="112" rx="6" fill="#fff" fill-opacity=".16"/>
+            <rect x="14" y="132" width="70" height="8" rx="4" fill="#fff" fill-opacity=".7"/>
+            <rect x="14" y="146" width="44" height="6" rx="3" fill="#fff" fill-opacity=".45"/>
+          </g>
+          <g class="ls-card ls-c3" transform="translate(120 40)">
+            <g clip-path="url(#lsClip)">
+              <rect width="120" height="168" rx="10" fill="url(#lsCardA)"/>
+              <rect x="8" y="8" width="104" height="112" rx="6" fill="#fff" fill-opacity=".16"/>
+              <ellipse cx="60" cy="64" rx="30" ry="18" fill="#7c2d12" transform="rotate(-25 60 64)"/>
+              <path d="M44 64 L76 64 M54 58 L54 70 M60 58 L60 70 M66 58 L66 70" stroke="#fff" stroke-width="2.4" stroke-linecap="round" transform="rotate(-25 60 64)"/>
+              <rect x="14" y="132" width="70" height="8" rx="4" fill="#fff" fill-opacity=".8"/>
+              <rect x="14" y="146" width="44" height="6" rx="3" fill="#fff" fill-opacity=".5"/>
+              <rect class="ls-shine" x="-80" y="-20" width="60" height="220" fill="url(#lsShine)" transform="rotate(20)"/>
+            </g>
+            <rect width="120" height="168" rx="10" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/>
+          </g>
+          <g class="ls-chart" transform="translate(196 196)">
+            <rect width="148" height="86" rx="12" fill="#0b1f14" fill-opacity=".88" stroke="#22c55e" stroke-opacity=".5"/>
+            <text x="12" y="22" fill="#9ca3af" font-size="10" font-family="system-ui, sans-serif">Last sold</text>
+            <text x="12" y="42" fill="#fff" font-size="17" font-weight="700" font-family="system-ui, sans-serif">$184</text>
+            <text x="74" y="42" fill="#4ade80" font-size="11" font-weight="700" font-family="system-ui, sans-serif">▲ 12%</text>
+            <polyline points="12,74 32,68 50,71 70,60 90,63 110,52 136,46" fill="none" stroke="#4ade80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="136" cy="46" r="3.5" fill="#4ade80"/>
+          </g>
+        </svg>
+        <div class="ls-copy">
+          <h3>Know what your cards are really worth</h3>
+          <ul>
+            <li>Real sold prices, not asking prices</li>
+            <li>Track your collection's value over time</li>
+            <li>Price alerts when the market moves</li>
+          </ul>
+        </div>
+      </aside>
     </div>
   </div>
   <!-- Search top-tab subtab strip — visible only when switchView('search')
