@@ -6009,7 +6009,7 @@
       "id": "real-one-autographs",
       "name": "Real One Autographs",
       "category": "autograph",
-      "totalCards": 38,
+      "totalCards": 39,
       "parallels": [
         {
           "name": "Base",
@@ -6206,6 +6206,11 @@
           "number": "ROA-WM",
           "player": "Woody Marks",
           "team": "Houston Texans"
+        },
+        {
+          "number": "ROA-JSN",
+          "player": "Jaxon Smith-Njigba",
+          "team": "Seattle Seahawks"
         }
       ]
     },
@@ -6452,7 +6457,7 @@
       "id": "chrome-autograph-variation",
       "name": "Chrome Autograph Variation",
       "category": "autograph",
-      "totalCards": 32,
+      "totalCards": 33,
       "parallels": [
         {
           "name": "Base",
@@ -6619,6 +6624,11 @@
           "number": "BCA-TW",
           "player": "Tyler Warren",
           "team": "Indianapolis Colts"
+        },
+        {
+          "number": "BCA-DAL",
+          "player": "Drew Allar",
+          "team": "Pittsburgh Steelers"
         }
       ]
     },
@@ -6794,7 +6804,7 @@
       "id": "locker-room-autograph-relics",
       "name": "Locker Room Autograph Relics",
       "category": "autograph",
-      "totalCards": 19,
+      "totalCards": 20,
       "parallels": [
         {
           "name": "Base",
@@ -6896,6 +6906,11 @@
           "number": "LRAR-TSI",
           "player": "Ty Simpson",
           "team": "Los Angeles Rams"
+        },
+        {
+          "number": "LRAR-JA",
+          "player": "Josh Allen",
+          "team": "Buffalo Bills"
         }
       ]
     },

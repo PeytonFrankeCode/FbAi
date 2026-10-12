@@ -92,7 +92,7 @@
       "brand": "Topps",
       "sport": "Football",
       "setCount": 72,
-      "totalCards": 4037
+      "totalCards": 4058
     },
     {
       "id": "2026-topps-heritage-football",
@@ -101,7 +101,7 @@
       "brand": "Topps Heritage",
       "sport": "Football",
       "setCount": 30,
-      "totalCards": 1484,
+      "totalCards": 1487,
       "note": "Parallels for this product have not been published yet. Card numbers and names are final; parallel lists will be added as Topps publishes them."
     },
     {
@@ -130,8 +130,8 @@
       "year": 2026,
       "brand": "Topps London Games",
       "sport": "Football",
-      "setCount": 3,
-      "totalCards": 500,
+      "setCount": 4,
+      "totalCards": 501,
       "note": "London Games exclusive parallels. The 1991 Topps Chrome and 1991 Topps Chrome Rookies card lists are the same as 2026 Topps Flagship; refractor print runs were not published. Base Lenticular London (1:360 packs) is listed as a Base parallel."
     },
     {
@@ -142,6 +142,16 @@
       "sport": "Football",
       "setCount": 20,
       "totalCards": 636,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2026-upper-deck-cfl-football",
+      "name": "2026 Upper Deck CFL Football",
+      "year": 2026,
+      "brand": "Upper Deck CFL",
+      "sport": "Football",
+      "setCount": 4,
+      "totalCards": 177,
       "note": "Built from the published checklist at checklistinsider.com."
     },
     {
@@ -188,8 +198,8 @@
       "year": 2025,
       "brand": "Bowman's Best",
       "sport": "Football",
-      "setCount": 15,
-      "totalCards": 516
+      "setCount": 17,
+      "totalCards": 542
     },
     {
       "id": "2025-donruss-elite-football",
@@ -226,6 +236,16 @@
       "sport": "Football",
       "setCount": 2,
       "totalCards": 300,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2025-donruss-rookies-highlights-football",
+      "name": "2025 Donruss Rookies & Highlights Football Box",
+      "year": 2025,
+      "brand": "Donruss Rookies & Highlights Football Box",
+      "sport": "Football",
+      "setCount": 2,
+      "totalCards": 110,
       "note": "Built from the published checklist at checklistinsider.com."
     },
     {
@@ -299,8 +319,8 @@
       "year": 2025,
       "brand": "Panini Immaculate",
       "sport": "Football",
-      "setCount": 89,
-      "totalCards": 2664
+      "setCount": 90,
+      "totalCards": 2687
     },
     {
       "id": "2025-panini-impeccable-football",
@@ -508,6 +528,16 @@
       "note": "Built from the published checklist at checklistinsider.com."
     },
     {
+      "id": "2025-sp-game-used-cfl-football",
+      "name": "2025 SP Game Used CFL Football",
+      "year": 2025,
+      "brand": "SP Game Used CFL",
+      "sport": "Football",
+      "setCount": 7,
+      "totalCards": 267,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
       "id": "2025-topps-chrome-black-football",
       "name": "2025 Topps Chrome Black Football",
       "year": 2025,
@@ -570,6 +600,26 @@
       "sport": "Football",
       "setCount": 32,
       "totalCards": 1391
+    },
+    {
+      "id": "2025-upper-deck-cfl-football",
+      "name": "2025 Upper Deck CFL Football",
+      "year": 2025,
+      "brand": "Upper Deck CFL",
+      "sport": "Football",
+      "setCount": 1,
+      "totalCards": 100,
+      "note": "Built from the published checklist at checklistinsider.com."
+    },
+    {
+      "id": "2024-bowman-university-best-football",
+      "name": "2024 Bowman University Best Football",
+      "year": 2024,
+      "brand": "Bowman University Best",
+      "sport": "Football",
+      "setCount": 16,
+      "totalCards": 492,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2024-bowman-university-chrome-football",
@@ -1028,6 +1078,16 @@
       "sport": "Football",
       "setCount": 26,
       "totalCards": 1206
+    },
+    {
+      "id": "2024-upper-deck-cfl-football",
+      "name": "2024 Upper Deck CFL Football",
+      "year": 2024,
+      "brand": "Upper Deck CFL",
+      "sport": "Football",
+      "setCount": 10,
+      "totalCards": 372,
+      "note": "Built from the published checklist at checklistinsider.com."
     },
     {
       "id": "2023-bowman-best-university-football",

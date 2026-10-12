@@ -1,0 +1,578 @@
+{
+  "id": "2025-donruss-rookies-highlights-football",
+  "name": "2025 Donruss Rookies & Highlights Football Box",
+  "year": 2025,
+  "brand": "Donruss Rookies & Highlights Football Box",
+  "sport": "Football",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base-set",
+      "name": "Base Set",
+      "category": "base",
+      "totalCards": 100,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DRH-1",
+          "player": "Jackson Hawes",
+          "team": "Buffalo Bills"
+        },
+        {
+          "number": "DRH-2",
+          "player": "Ollie Gordon II",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "DRH-3",
+          "player": "Kenneth Grant",
+          "team": "Miami Dolphins"
+        },
+        {
+          "number": "DRH-4",
+          "player": "TreVeyon Henderson",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "DRH-5",
+          "player": "Andres Borregales",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "DRH-6",
+          "player": "Mason Taylor",
+          "team": "New York Jets"
+        },
+        {
+          "number": "DRH-7",
+          "player": "Donovan Ezeiruaku",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "DRH-8",
+          "player": "Jaydon Blue",
+          "team": "Dallas Cowboys"
+        },
+        {
+          "number": "DRH-9",
+          "player": "Jaxon Dart",
+          "team": "New York Giants"
+        },
+        {
+          "number": "DRH-10",
+          "player": "Cam Skattebo",
+          "team": "New York Giants"
+        },
+        {
+          "number": "DRH-11",
+          "player": "Abdul Carter",
+          "team": "New York Giants"
+        },
+        {
+          "number": "DRH-12",
+          "player": "Jihaad Campbell",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "DRH-13",
+          "player": "Andrew Mukuba",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "DRH-14",
+          "player": "Jacory Croskey-Merritt",
+          "team": "Washington Commanders"
+        },
+        {
+          "number": "DRH-15",
+          "player": "Jaylin Lane",
+          "team": "Washington Commanders"
+        },
+        {
+          "number": "DRH-16",
+          "player": "Jahdae Barron",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "DRH-17",
+          "player": "Pat Bryant",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "DRH-18",
+          "player": "RJ Harvey",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "DRH-19",
+          "player": "Jeremy Crawshaw",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "DRH-20",
+          "player": "Brashard Smith",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "DRH-21",
+          "player": "Ashton Jeanty",
+          "team": "Las Vegas Raiders"
+        },
+        {
+          "number": "DRH-22",
+          "player": "Jack Bech",
+          "team": "Las Vegas Raiders"
+        },
+        {
+          "number": "DRH-23",
+          "player": "Dont'e Thornton Jr",
+          "team": "Las Vegas Raiders"
+        },
+        {
+          "number": "DRH-24",
+          "player": "Oronde Gadsden II",
+          "team": "Los Angeles Chargers"
+        },
+        {
+          "number": "DRH-25",
+          "player": "Tre Harris",
+          "team": "Los Angeles Chargers"
+        },
+        {
+          "number": "DRH-26",
+          "player": "Omarion Hampton",
+          "team": "Los Angeles Chargers"
+        },
+        {
+          "number": "DRH-27",
+          "player": "R.J. Mickens",
+          "team": "Los Angeles Chargers"
+        },
+        {
+          "number": "DRH-28",
+          "player": "Will Johnson",
+          "team": "Arizona Cardinals"
+        },
+        {
+          "number": "DRH-29",
+          "player": "Alfred Collins",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "DRH-30",
+          "player": "Upton Stout",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "DRH-31",
+          "player": "Mykel Williams",
+          "team": "San Francisco 49ers"
+        },
+        {
+          "number": "DRH-32",
+          "player": "Elijah Arroyo",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "DRH-33",
+          "player": "Nick Emmanwori",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "DRH-34",
+          "player": "Tory Horton",
+          "team": "Seattle Seahawks"
+        },
+        {
+          "number": "DRH-35",
+          "player": "Jayden Higgins",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "DRH-36",
+          "player": "Woody Marks",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "DRH-37",
+          "player": "Jaylin Noel",
+          "team": "Houston Texans"
+        },
+        {
+          "number": "DRH-38",
+          "player": "DJ Giddens",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "DRH-39",
+          "player": "Tyler Warren",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "DRH-40",
+          "player": "Travis Hunter",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "DRH-41",
+          "player": "Bhayshul Tuten",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "DRH-42",
+          "player": "Cam Ward",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "DRH-43",
+          "player": "Eric Ayomanor",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "DRH-44",
+          "player": "Chimere Dike",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "DRH-45",
+          "player": "Gunnar Helm",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "DRH-46",
+          "player": "Kevin Winston Jr",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "DRH-47",
+          "player": "Jalon Walker",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "DRH-48",
+          "player": "Xavier Watts",
+          "team": "Atlanta Falcons"
+        },
+        {
+          "number": "DRH-49",
+          "player": "Mitchell Evans",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-50",
+          "player": "Ryan Fitzgerald",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-51",
+          "player": "Jimmy Horn Jr",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-52",
+          "player": "Tetairoa McMillan",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-53",
+          "player": "Nic Scourton",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-54",
+          "player": "Tyler Shough",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "DRH-55",
+          "player": "Devin Neal",
+          "team": "New Orleans Saints"
+        },
+        {
+          "number": "DRH-56",
+          "player": "Emeka Egbuka",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "DRH-57",
+          "player": "Tez Johnson",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "DRH-58",
+          "player": "Teddye Buchanan",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "DRH-59",
+          "player": "Tyler Loop",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "DRH-60",
+          "player": "Malaki Starks",
+          "team": "Baltimore Ravens"
+        },
+        {
+          "number": "DRH-61",
+          "player": "Barrett Carter",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "DRH-62",
+          "player": "Demetrius Knight Jr",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "DRH-63",
+          "player": "Isaiah Bond",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-64",
+          "player": "Harold Fannin Jr",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-65",
+          "player": "Dillon Gabriel",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-66",
+          "player": "Mason Graham",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-67",
+          "player": "Quinshon Judkins",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-68",
+          "player": "Dylan Sampson",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-69",
+          "player": "Carson Schwesinger",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-70",
+          "player": "Shedeur Sanders",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-71",
+          "player": "Derrick Harmon",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "DRH-72",
+          "player": "Caleb Johnson",
+          "team": "Pittsburgh Steelers"
+        },
+        {
+          "number": "DRH-73",
+          "player": "Luther Burden III",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "DRH-74",
+          "player": "Colston Loveland",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "DRH-75",
+          "player": "Kyle Monangai",
+          "team": "Chicago Bears"
+        },
+        {
+          "number": "DRH-76",
+          "player": "Isaac TeSlaa",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "DRH-77",
+          "player": "Tyleik Williams",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "DRH-78",
+          "player": "Matthew Golden",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "DRH-79",
+          "player": "Savion Williams",
+          "team": "Green Bay Packers"
+        },
+        {
+          "number": "DRH-80",
+          "player": "Max Brosmer/Highlights",
+          "team": "Minnesota Vikings/20 cards"
+        },
+        {
+          "number": "DRH-81",
+          "player": "Champions",
+          "team": "Philadelphia Eagles"
+        },
+        {
+          "number": "DRH-82",
+          "player": "Ashton Jeanty",
+          "team": "Las Vegas Raiders"
+        },
+        {
+          "number": "DRH-83",
+          "player": "Emeka Egbuka",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "DRH-84",
+          "player": "Cam Skattebo",
+          "team": "New York Giants"
+        },
+        {
+          "number": "DRH-85",
+          "player": "Quinshon Judkins",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-86",
+          "player": "Patrick Mahomes II",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "DRH-87",
+          "player": "RJ Harvey",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "DRH-88",
+          "player": "Rico Dowdle",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-89",
+          "player": "Cam Ward",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "DRH-90",
+          "player": "Trevor Lawrence",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "DRH-91",
+          "player": "Jaxon Dart",
+          "team": "New York Giants"
+        },
+        {
+          "number": "DRH-92",
+          "player": "Tetairoa McMillan",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "DRH-93",
+          "player": "Ja'Marr Chase",
+          "team": "Cincinnati Bengals"
+        },
+        {
+          "number": "DRH-94",
+          "player": "Travis Hunter",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "DRH-95",
+          "player": "Bo Nix",
+          "team": "Denver Broncos"
+        },
+        {
+          "number": "DRH-96",
+          "player": "Jahmyr Gibbs",
+          "team": "Detroit Lions"
+        },
+        {
+          "number": "DRH-97",
+          "player": "Cam Little",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "DRH-98",
+          "player": "Travis Kelce",
+          "team": "Kansas City Chiefs"
+        },
+        {
+          "number": "DRH-99",
+          "player": "Shedeur Sanders",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "DRH-100",
+          "player": "Josh Allen",
+          "team": "Buffalo Bills"
+        }
+      ]
+    },
+    {
+      "id": "the-rookies-uptowns-horizontal-green",
+      "name": "The Rookies Uptowns Horizontal Green",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "TRU-1",
+          "player": "Jaxson Dart",
+          "team": "New York Giants"
+        },
+        {
+          "number": "TRU-2",
+          "player": "Cam Skattebo",
+          "team": "New York Giants"
+        },
+        {
+          "number": "TRU-3",
+          "player": "Cam Ward",
+          "team": "Tennessee Titans"
+        },
+        {
+          "number": "TRU-4",
+          "player": "Quinshon Judkins",
+          "team": "Cleveland Browns"
+        },
+        {
+          "number": "TRU-5",
+          "player": "Emeka Egbuka",
+          "team": "Tampa Bay Buccaneers"
+        },
+        {
+          "number": "TRU-6",
+          "player": "TreVeyon Henderson",
+          "team": "New England Patriots"
+        },
+        {
+          "number": "TRU-7",
+          "player": "Tetairoa McMillan",
+          "team": "Carolina Panthers"
+        },
+        {
+          "number": "TRU-8",
+          "player": "Tyler Warren",
+          "team": "Indianapolis Colts"
+        },
+        {
+          "number": "TRU-9",
+          "player": "Travis Hunter",
+          "team": "Jacksonville Jaguars"
+        },
+        {
+          "number": "TRU-10",
+          "player": "Ashton Jeanty",
+          "team": "Las Vegas Raiders"
+        }
+      ]
+    }
+  ]
+}

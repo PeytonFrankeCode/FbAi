@@ -1,0 +1,574 @@
+{
+  "id": "2024-25-panini-uconn-basketball",
+  "name": "2024-25 Panini UConn Basketball",
+  "year": 2024,
+  "brand": "Panini UConn",
+  "sport": "Basketball",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base-contenders-college-ticket",
+      "name": "Base Contenders College Ticket",
+      "category": "base",
+      "totalCards": 35,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2",
+          "player": "KK Arnold",
+          "team": ""
+        },
+        {
+          "number": "3",
+          "player": "Jana El Alfy",
+          "team": ""
+        },
+        {
+          "number": "4",
+          "player": "Qadence Samuels",
+          "team": ""
+        },
+        {
+          "number": "5",
+          "player": "Allie Ziebell",
+          "team": ""
+        },
+        {
+          "number": "6",
+          "player": "Ashlynn Shade",
+          "team": ""
+        },
+        {
+          "number": "7",
+          "player": "Kaitlyn Chen",
+          "team": ""
+        },
+        {
+          "number": "8",
+          "player": "Sarah Strong",
+          "team": ""
+        },
+        {
+          "number": "9",
+          "player": "Morgan Cheli",
+          "team": ""
+        },
+        {
+          "number": "10",
+          "player": "Ice Brady",
+          "team": ""
+        },
+        {
+          "number": "11",
+          "player": "Caroline Ducharme",
+          "team": ""
+        },
+        {
+          "number": "12",
+          "player": "Ayanna Patterson",
+          "team": ""
+        },
+        {
+          "number": "13",
+          "player": "Azzi Fudd",
+          "team": ""
+        },
+        {
+          "number": "14",
+          "player": "Aubrey Griffin",
+          "team": ""
+        },
+        {
+          "number": "15",
+          "player": "Alex Karaban",
+          "team": ""
+        },
+        {
+          "number": "16",
+          "player": "Solo Ball",
+          "team": ""
+        },
+        {
+          "number": "17",
+          "player": "Jaylin Stewart",
+          "team": ""
+        },
+        {
+          "number": "18",
+          "player": "Isaiah Abraham",
+          "team": ""
+        },
+        {
+          "number": "19",
+          "player": "Tarris Reed Jr.",
+          "team": ""
+        },
+        {
+          "number": "20",
+          "player": "Hassan Diarra",
+          "team": ""
+        },
+        {
+          "number": "21",
+          "player": "Alex Karaban",
+          "team": ""
+        },
+        {
+          "number": "22",
+          "player": "Aidan Mahaney",
+          "team": ""
+        },
+        {
+          "number": "23",
+          "player": "Jayden Ross",
+          "team": ""
+        },
+        {
+          "number": "24",
+          "player": "Youssouf Singare",
+          "team": ""
+        },
+        {
+          "number": "25",
+          "player": "Samson Johnson",
+          "team": ""
+        },
+        {
+          "number": "26",
+          "player": "Souleymane Diaby",
+          "team": ""
+        },
+        {
+          "number": "27",
+          "player": "Paige Bueckers",
+          "team": ""
+        },
+        {
+          "number": "28",
+          "player": "Sarah Strong",
+          "team": ""
+        },
+        {
+          "number": "29",
+          "player": "Azzi Fudd",
+          "team": ""
+        },
+        {
+          "number": "30",
+          "player": "Ben Gordon",
+          "team": ""
+        },
+        {
+          "number": "31",
+          "player": "Napheesa Collier",
+          "team": ""
+        },
+        {
+          "number": "32",
+          "player": "Tristen Newton",
+          "team": ""
+        },
+        {
+          "number": "33",
+          "player": "Donovan Clingan",
+          "team": ""
+        },
+        {
+          "number": "34",
+          "player": "Nika Muhl",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "base-legendary-contenders-sp",
+      "name": "Base Legendary Contenders SP",
+      "category": "base",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "37",
+          "player": "Jen Rizzotti",
+          "team": ""
+        },
+        {
+          "number": "38",
+          "player": "Rebecca Lobo",
+          "team": ""
+        },
+        {
+          "number": "39",
+          "player": "Sue Bird",
+          "team": ""
+        },
+        {
+          "number": "40",
+          "player": "Diana Taurasi",
+          "team": ""
+        },
+        {
+          "number": "41",
+          "player": "Maya Moore",
+          "team": ""
+        },
+        {
+          "number": "42",
+          "player": "Cam Spencer",
+          "team": ""
+        },
+        {
+          "number": "43",
+          "player": "Tina Charles",
+          "team": ""
+        },
+        {
+          "number": "44",
+          "player": "Ray Allen",
+          "team": ""
+        },
+        {
+          "number": "45",
+          "player": "Richard Hamilton",
+          "team": ""
+        },
+        {
+          "number": "46",
+          "player": "Caron Butler",
+          "team": ""
+        },
+        {
+          "number": "47",
+          "player": "Jim Calhoun",
+          "team": ""
+        },
+        {
+          "number": "48",
+          "player": "Stefanie Dolson",
+          "team": ""
+        },
+        {
+          "number": "49",
+          "player": "Katie Lou Samuelson",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "contenders-campus-legends",
+      "name": "Contenders Campus Legends",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2",
+          "player": "Maya Moore",
+          "team": ""
+        },
+        {
+          "number": "3",
+          "player": "Rebecca Lobo",
+          "team": ""
+        },
+        {
+          "number": "4",
+          "player": "Richard Hamilton",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "contenders-school-colors",
+      "name": "Contenders School Colors",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2",
+          "player": "Sarah Strong",
+          "team": ""
+        },
+        {
+          "number": "3",
+          "player": "Solo Ball",
+          "team": ""
+        },
+        {
+          "number": "4",
+          "player": "Alex Karaban",
+          "team": ""
+        },
+        {
+          "number": "5",
+          "player": "Dorka Juhasz",
+          "team": ""
+        },
+        {
+          "number": "6",
+          "player": "Donyell Marshall",
+          "team": ""
+        },
+        {
+          "number": "7",
+          "player": "Chris Smith",
+          "team": ""
+        },
+        {
+          "number": "8",
+          "player": "Crystal Dangerfield",
+          "team": ""
+        },
+        {
+          "number": "9",
+          "player": "Sue Bird",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm",
+      "name": "Prizm",
+      "category": "insert",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "2",
+          "player": "Aidan Mahaney",
+          "team": ""
+        },
+        {
+          "number": "3",
+          "player": "Jayden Ross",
+          "team": ""
+        },
+        {
+          "number": "4",
+          "player": "Kaitlyn Chen",
+          "team": ""
+        },
+        {
+          "number": "5",
+          "player": "Ashlynn Shade",
+          "team": ""
+        },
+        {
+          "number": "6",
+          "player": "Solo Ball",
+          "team": ""
+        },
+        {
+          "number": "7",
+          "player": "Jaylin Stewart",
+          "team": ""
+        },
+        {
+          "number": "8",
+          "player": "Tarris Reed Jr.",
+          "team": ""
+        },
+        {
+          "number": "9",
+          "player": "Hassan Diarra",
+          "team": ""
+        },
+        {
+          "number": "10",
+          "player": "Paige Bueckers",
+          "team": ""
+        },
+        {
+          "number": "11",
+          "player": "KK Arnold",
+          "team": ""
+        },
+        {
+          "number": "12",
+          "player": "Ice Brady",
+          "team": ""
+        },
+        {
+          "number": "13",
+          "player": "Azzi Fudd",
+          "team": ""
+        },
+        {
+          "number": "14",
+          "player": "Sarah Strong",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm-color-blast-ssp",
+      "name": "Prizm Color Blast SSP",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "CB-2",
+          "player": "Breanna Stewart",
+          "team": ""
+        },
+        {
+          "number": "CB-3",
+          "player": "Sue Bird",
+          "team": ""
+        },
+        {
+          "number": "CB-4",
+          "player": "Sarah Strong",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm-draft-picks-trophy-hunting",
+      "name": "Prizm Draft Picks Trophy Hunting",
+      "category": "insert",
+      "totalCards": 10,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "TH-2",
+          "player": "Sarah Strong",
+          "team": ""
+        },
+        {
+          "number": "TH-3",
+          "player": "Azzi Fudd",
+          "team": ""
+        },
+        {
+          "number": "TH-4",
+          "player": "Jana El Alfy",
+          "team": ""
+        },
+        {
+          "number": "TH-5",
+          "player": "Katilyn Chen",
+          "team": ""
+        },
+        {
+          "number": "TH-6",
+          "player": "Ashlynn Shade",
+          "team": ""
+        },
+        {
+          "number": "TH-7",
+          "player": "KK Arnold",
+          "team": ""
+        },
+        {
+          "number": "TH-8",
+          "player": "Ice Brady",
+          "team": ""
+        },
+        {
+          "number": "TH-9",
+          "player": "Geno Auriemma",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm-fearless",
+      "name": "Prizm Fearless",
+      "category": "insert",
+      "totalCards": 4,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "F-2",
+          "player": "Breanna Stewart",
+          "team": ""
+        },
+        {
+          "number": "F-3",
+          "player": "Diana Taurasi",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm-on-campus-ssp",
+      "name": "Prizm On Campus SSP",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "OC-2",
+          "player": "Sarah Strong",
+          "team": ""
+        },
+        {
+          "number": "OC-3",
+          "player": "Alex Karaban",
+          "team": ""
+        },
+        {
+          "number": "OC-4",
+          "player": "Diana Taurasi",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm-student-orientation",
+      "name": "Prizm Student Orientation",
+      "category": "insert",
+      "totalCards": 5,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "SO-2",
+          "player": "Isaiah Abraham",
+          "team": ""
+        },
+        {
+          "number": "SO-3",
+          "player": "Morgan Cheli",
+          "team": ""
+        },
+        {
+          "number": "SO-4",
+          "player": "Azzi Fudd",
+          "team": ""
+        }
+      ]
+    },
+    {
+      "id": "prizm-thunder-ssp",
+      "name": "Prizm Thunder SSP",
+      "category": "insert",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "T-2",
+          "player": "Alex Karaban",
+          "team": ""
+        },
+        {
+          "number": "T-3",
+          "player": "Azzi Fudd",
+          "team": ""
+        },
+        {
+          "number": "T-4",
+          "player": "Tarris Reed Jr.",
+          "team": ""
+        },
+        {
+          "number": "T-5",
+          "player": "Solo Ball",
+          "team": ""
+        }
+      ]
+    }
+  ]
+}

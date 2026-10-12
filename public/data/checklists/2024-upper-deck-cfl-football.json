@@ -1,0 +1,1960 @@
+{
+  "id": "2024-upper-deck-cfl-football",
+  "name": "2024 Upper Deck CFL Football",
+  "year": 2024,
+  "brand": "Upper Deck CFL",
+  "sport": "Football",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 80,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions"
+        },
+        {
+          "number": "2",
+          "player": "Dominique Rhymes",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "3",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "5",
+          "player": "Cameron Judge",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "6",
+          "player": "Brandin Dandridge",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "7",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "8",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "9",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "10",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "11",
+          "player": "Brandon Alexander",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "12",
+          "player": "Tibo Debaillie",
+          "team": "BC Lions"
+        },
+        {
+          "number": "13",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "14",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "15",
+          "player": "Casey Sayles",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "16",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "17",
+          "player": "Bryce Carter",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "18",
+          "player": "Jameer Thurman",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "19",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "20",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "21",
+          "player": "Keon Hatcher",
+          "team": "BC Lions"
+        },
+        {
+          "number": "22",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "23",
+          "player": "David Beard",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "24",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "25",
+          "player": "Damon Webb",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "26",
+          "player": "Mario Alford",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "27",
+          "player": "Michael Couture",
+          "team": "BC Lions"
+        },
+        {
+          "number": "28",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "29",
+          "player": "William Stanback",
+          "team": "BC Lions"
+        },
+        {
+          "number": "30",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "31",
+          "player": "Kyran Moore",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "32",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "33",
+          "player": "Mustafa Johnson",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "34",
+          "player": "Jovan Santos-Knox",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "35",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "36",
+          "player": "Darius Ciraco",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "37",
+          "player": "Evan Holm",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "38",
+          "player": "DaVaris Daniels",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "39",
+          "player": "Jermarcus Hardrick",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "40",
+          "player": "Sean Whyte",
+          "team": "BC Lions"
+        },
+        {
+          "number": "41",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "42",
+          "player": "Martez Ivey",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "43",
+          "player": "Loucheiz Purifoy",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "44",
+          "player": "Nick Callender",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "45",
+          "player": "Justin Hardy",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "46",
+          "player": "Peter Godber",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "47",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "48",
+          "player": "Kyrie Wilson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "49",
+          "player": "Sukh Chungh",
+          "team": "BC Lions"
+        },
+        {
+          "number": "50",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "51",
+          "player": "Tre Ford",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "52",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "53",
+          "player": "Reggie Stubblefield",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "54",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "55",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "56",
+          "player": "Folarin Orimolade",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "57",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "58",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "59",
+          "player": "Patrick Neufeld",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "60",
+          "player": "T.J. Lee",
+          "team": "BC Lions"
+        },
+        {
+          "number": "61",
+          "player": "Tre Roberson",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "62",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "63",
+          "player": "Tyson Philpot",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "64",
+          "player": "Richie Leone",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "65",
+          "player": "Shawn Bane Jr.",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "66",
+          "player": "Mason Pierce",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "67",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "68",
+          "player": "Terry Williams",
+          "team": "BC Lions"
+        },
+        {
+          "number": "69",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "70",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "71",
+          "player": "Alexander Hollins",
+          "team": "BC Lions"
+        },
+        {
+          "number": "72",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "73",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "74",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "75",
+          "player": "Ryan Hunter",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "76",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "77",
+          "player": "Wesley Sutton",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "78",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "79",
+          "player": "Micah Awe/Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "80",
+          "player": "Brady Oliveira/Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-greatness",
+      "name": "Base CFL Greatness",
+      "category": "base",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "81",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions"
+        },
+        {
+          "number": "82",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "83",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "84",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "85",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "86",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "87",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "88",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "89",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "90",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "91",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "92",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "93",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "94",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "95",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "96",
+          "player": "Javon Leake",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "97",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "98",
+          "player": "AJ Ouellette",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "99",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "100",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes"
+        }
+      ]
+    },
+    {
+      "id": "base-autographs",
+      "name": "Base Autographs",
+      "category": "autograph",
+      "totalCards": 57,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "3",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "5",
+          "player": "Cameron Judge",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "6",
+          "player": "Brandin Dandridge",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "7",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "8",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "9",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers SP"
+        },
+        {
+          "number": "10",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "11",
+          "player": "Brandon Alexander",
+          "team": "Winnipeg Blue Bombers SP"
+        },
+        {
+          "number": "13",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders SP"
+        },
+        {
+          "number": "14",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "15",
+          "player": "Casey Sayles",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "17",
+          "player": "Bryce Carter",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "18",
+          "player": "Jameer Thurman",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "20",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "23",
+          "player": "David Beard",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "26",
+          "player": "Mario Alford",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "27",
+          "player": "Michael Couture",
+          "team": "BC Lions"
+        },
+        {
+          "number": "28",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "30",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "31",
+          "player": "Kyran Moore",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "32",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "34",
+          "player": "Jovan Santos-Knox",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "35",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders SP"
+        },
+        {
+          "number": "36",
+          "player": "Darius Ciraco",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "37",
+          "player": "Evan Holm",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "38",
+          "player": "DaVaris Daniels",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "39",
+          "player": "Jermarcus Hardrick",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "40",
+          "player": "Sean Whyte",
+          "team": "BC Lions"
+        },
+        {
+          "number": "41",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "46",
+          "player": "Peter Godber",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "47",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "49",
+          "player": "Sukh Chungh",
+          "team": "BC Lions SP"
+        },
+        {
+          "number": "50",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "51",
+          "player": "Tre Ford",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "52",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "54",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "55",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "56",
+          "player": "Folarin Orimolade",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "57",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "58",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "59",
+          "player": "Patrick Neufeld",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "60",
+          "player": "T.J. Lee",
+          "team": "BC Lions SSP"
+        },
+        {
+          "number": "61",
+          "player": "Tre Roberson",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "62",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats SP"
+        },
+        {
+          "number": "63",
+          "player": "Tyson Philpot",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "64",
+          "player": "Richie Leone",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "65",
+          "player": "Shawn Bane Jr.",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "67",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers SSP"
+        },
+        {
+          "number": "69",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "70",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts SP"
+        },
+        {
+          "number": "72",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes SP"
+        },
+        {
+          "number": "73",
+          "player": "Ka'Deem Carey",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "74",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers SP"
+        },
+        {
+          "number": "76",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "77",
+          "player": "Wesley Sutton",
+          "team": "Montreal Alouettes SP"
+        },
+        {
+          "number": "78",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-greatness-autographs",
+      "name": "Base CFL Greatness Autographs",
+      "category": "autograph",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "82",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers SP"
+        },
+        {
+          "number": "83",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats SP"
+        },
+        {
+          "number": "84",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "85",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "86",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "88",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "89",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "90",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "91",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "92",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "93",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "94",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "95",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders SP"
+        },
+        {
+          "number": "96",
+          "player": "Javon Leake",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "98",
+          "player": "AJ Ouellette",
+          "team": "Toronto Argonauts"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-greatness-printing-plates-auto-achievements",
+      "name": "Base CFL Greatness Printing Plates Auto Achievements",
+      "category": "autograph",
+      "totalCards": 18,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "82",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "83",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "84",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "85",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "86",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "87",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "88",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "89",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "90",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "91",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "92",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "93",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "94",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "95",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "96",
+          "player": "Javon Leake",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "97",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "98",
+          "player": "AJ Ouellette",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "99",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks"
+        }
+      ]
+    },
+    {
+      "id": "base-jersey",
+      "name": "Base Jersey",
+      "category": "base",
+      "totalCards": 54,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions"
+        },
+        {
+          "number": "2",
+          "player": "Dominique Rhymes",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "3",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "5",
+          "player": "Cameron Judge",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "7",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "8",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "9",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "10",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "13",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "14",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "15",
+          "player": "Casey Sayles",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "16",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "19",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "20",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "21",
+          "player": "Keon Hatcher",
+          "team": "BC Lions"
+        },
+        {
+          "number": "22",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "24",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "25",
+          "player": "Damon Webb",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "28",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "29",
+          "player": "William Stanback",
+          "team": "BC Lions"
+        },
+        {
+          "number": "30",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "32",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "33",
+          "player": "Mustafa Johnson",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "34",
+          "player": "Jovan Santos-Knox",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "35",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "38",
+          "player": "DaVaris Daniels",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "39",
+          "player": "Jermarcus Hardrick",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "41",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "42",
+          "player": "Martez Ivey",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "43",
+          "player": "Loucheiz Purifoy",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "47",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "49",
+          "player": "Sukh Chungh",
+          "team": "BC Lions"
+        },
+        {
+          "number": "50",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "51",
+          "player": "Tre Ford",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "52",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "53",
+          "player": "Reggie Stubblefield",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "54",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "55",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "57",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "58",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "59",
+          "player": "Patrick Neufeld",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "60",
+          "player": "T.J. Lee",
+          "team": "BC Lions"
+        },
+        {
+          "number": "62",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "63",
+          "player": "Tyson Philpot",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "67",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "69",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "70",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "71",
+          "player": "Alexander Hollins",
+          "team": "BC Lions"
+        },
+        {
+          "number": "72",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "74",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "76",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "77",
+          "player": "Wesley Sutton",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "78",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        }
+      ]
+    },
+    {
+      "id": "base-cfl-greatness-jersey",
+      "name": "Base CFL Greatness Jersey",
+      "category": "base",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "81",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions"
+        },
+        {
+          "number": "82",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "83",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats"
+        },
+        {
+          "number": "84",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "85",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "86",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "87",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "88",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "89",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders"
+        },
+        {
+          "number": "90",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "91",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers"
+        },
+        {
+          "number": "92",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks"
+        },
+        {
+          "number": "93",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "94",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "95",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders"
+        },
+        {
+          "number": "96",
+          "player": "Javon Leake",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "97",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes"
+        },
+        {
+          "number": "98",
+          "player": "AJ Ouellette",
+          "team": "Toronto Argonauts"
+        },
+        {
+          "number": "99",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks"
+        },
+        {
+          "number": "100",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes"
+        }
+      ]
+    },
+    {
+      "id": "base-game-patch",
+      "name": "Base Game Patch",
+      "category": "memorabilia",
+      "totalCards": 50,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions /35"
+        },
+        {
+          "number": "2",
+          "player": "Dominique Rhymes",
+          "team": "Ottawa Redblacks /35"
+        },
+        {
+          "number": "3",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders /35"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats /35"
+        },
+        {
+          "number": "7",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders /35"
+        },
+        {
+          "number": "8",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders /35"
+        },
+        {
+          "number": "9",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "10",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks /35"
+        },
+        {
+          "number": "14",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts /35"
+        },
+        {
+          "number": "15",
+          "player": "Casey Sayles",
+          "team": "Hamilton Tiger Cats /35"
+        },
+        {
+          "number": "16",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "19",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks /35"
+        },
+        {
+          "number": "20",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "21",
+          "player": "Keon Hatcher",
+          "team": "BC Lions /35"
+        },
+        {
+          "number": "22",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks /35"
+        },
+        {
+          "number": "24",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "25",
+          "player": "Damon Webb",
+          "team": "Ottawa Redblacks /35"
+        },
+        {
+          "number": "29",
+          "player": "William Stanback",
+          "team": "BC Lions /35"
+        },
+        {
+          "number": "30",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders /35"
+        },
+        {
+          "number": "33",
+          "player": "Mustafa Johnson",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "34",
+          "player": "Jovan Santos-Knox",
+          "team": "Ottawa Redblacks /35"
+        },
+        {
+          "number": "35",
+          "player": "Trevor Harris",
+          "team": "Saskatchewan Roughriders /35"
+        },
+        {
+          "number": "38",
+          "player": "DaVaris Daniels",
+          "team": "Toronto Argonauts /35"
+        },
+        {
+          "number": "39",
+          "player": "Jermarcus Hardrick",
+          "team": "Saskatchewan Roughriders /35"
+        },
+        {
+          "number": "41",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders /35"
+        },
+        {
+          "number": "42",
+          "player": "Martez Ivey",
+          "team": "Edmonton Elks /35"
+        },
+        {
+          "number": "43",
+          "player": "Loucheiz Purifoy",
+          "team": "Edmonton Elks /35"
+        },
+        {
+          "number": "47",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts /35"
+        },
+        {
+          "number": "49",
+          "player": "Sukh Chungh",
+          "team": "BC Lions /35"
+        },
+        {
+          "number": "50",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders /35"
+        },
+        {
+          "number": "51",
+          "player": "Tre Ford",
+          "team": "Edmonton Elks /35"
+        },
+        {
+          "number": "52",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats /35"
+        },
+        {
+          "number": "53",
+          "player": "Reggie Stubblefield",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "54",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa Redblacks /35"
+        },
+        {
+          "number": "55",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders /35"
+        },
+        {
+          "number": "57",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "58",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks /35"
+        },
+        {
+          "number": "59",
+          "player": "Patrick Neufeld",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "60",
+          "player": "T.J. Lee",
+          "team": "BC Lions /35"
+        },
+        {
+          "number": "62",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats /35"
+        },
+        {
+          "number": "63",
+          "player": "Tyson Philpot",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "67",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "69",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "70",
+          "player": "DaShaun Amos",
+          "team": "Toronto Argonauts /35"
+        },
+        {
+          "number": "71",
+          "player": "Alexander Hollins",
+          "team": "BC Lions /35"
+        },
+        {
+          "number": "72",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "74",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /35"
+        },
+        {
+          "number": "76",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders /35"
+        },
+        {
+          "number": "77",
+          "player": "Wesley Sutton",
+          "team": "Montreal Alouettes /35"
+        },
+        {
+          "number": "78",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts /35"
+        }
+      ]
+    },
+    {
+      "id": "base-cgl-greatness-game-patch",
+      "name": "Base CGL Greatness Game Patch",
+      "category": "memorabilia",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "81",
+          "player": "Vernon Adams Jr.",
+          "team": "BC Lions /1"
+        },
+        {
+          "number": "82",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /1"
+        },
+        {
+          "number": "83",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats /1"
+        },
+        {
+          "number": "84",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers /1"
+        },
+        {
+          "number": "85",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "86",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "87",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks /1"
+        },
+        {
+          "number": "88",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers /1"
+        },
+        {
+          "number": "89",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders /1"
+        },
+        {
+          "number": "90",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts /1"
+        },
+        {
+          "number": "91",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /1"
+        },
+        {
+          "number": "92",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks /1"
+        },
+        {
+          "number": "93",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "94",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts /1"
+        },
+        {
+          "number": "95",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders /1"
+        },
+        {
+          "number": "96",
+          "player": "Javon Leake",
+          "team": "Toronto Argonauts /1"
+        },
+        {
+          "number": "97",
+          "player": "Marc-Antoine Dequoy",
+          "team": "Montreal Alouettes /1"
+        },
+        {
+          "number": "98",
+          "player": "AJ Ouellette",
+          "team": "Toronto Argonauts /1"
+        },
+        {
+          "number": "99",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks /1"
+        },
+        {
+          "number": "100",
+          "player": "Cody Fajardo",
+          "team": "Montreal Alouettes /1"
+        }
+      ]
+    },
+    {
+      "id": "base-game-patch-auto",
+      "name": "Base Game Patch Auto",
+      "category": "autograph",
+      "totalCards": 38,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "3",
+          "player": "Jake Maier",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "4",
+          "player": "Brandon Revenberg",
+          "team": "Hamilton Tiger Cats /99"
+        },
+        {
+          "number": "5",
+          "player": "Cameron Judge",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "7",
+          "player": "Adam Korsak",
+          "team": "Saskatchewan Roughriders /99"
+        },
+        {
+          "number": "8",
+          "player": "AJ Ouellette",
+          "team": "Saskatchewan Roughriders /99"
+        },
+        {
+          "number": "9",
+          "player": "Brady Oliveira",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "10",
+          "player": "Adarius Pickett",
+          "team": "Ottawa Redblacks /99"
+        },
+        {
+          "number": "13",
+          "player": "Micah Awe",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "14",
+          "player": "Jake Ceresna",
+          "team": "Toronto Argonauts /99"
+        },
+        {
+          "number": "15",
+          "player": "Casey Sayles",
+          "team": "Hamilton Tiger Cats /99"
+        },
+        {
+          "number": "19",
+          "player": "Boris Bede",
+          "team": "Edmonton Elks /99"
+        },
+        {
+          "number": "20",
+          "player": "Dalton Schoen",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "22",
+          "player": "Kevin Brown",
+          "team": "Edmonton Elks /99"
+        },
+        {
+          "number": "28",
+          "player": "Demerio Houston",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "30",
+          "player": "Mike Rose",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "32",
+          "player": "James Butler",
+          "team": "Hamilton Tiger Cats /99"
+        },
+        {
+          "number": "34",
+          "player": "Jovan Santos-Knox",
+          "team": "Ottawa Redblacks /99"
+        },
+        {
+          "number": "38",
+          "player": "DaVaris Daniels",
+          "team": "Toronto Argonauts /99"
+        },
+        {
+          "number": "39",
+          "player": "Jermarcus Hardrick",
+          "team": "Saskatchewan Roughriders /99"
+        },
+        {
+          "number": "41",
+          "player": "Reggie Begelton",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "47",
+          "player": "Dejon Allen",
+          "team": "Toronto Argonauts /99"
+        },
+        {
+          "number": "50",
+          "player": "Sean McEwen",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "51",
+          "player": "Tre Ford",
+          "team": "Edmonton Elks /99"
+        },
+        {
+          "number": "52",
+          "player": "Stavros Katsantonis",
+          "team": "Hamilton Tiger Cats /99"
+        },
+        {
+          "number": "54",
+          "player": "Lorenzo Mauldin IV",
+          "team": "Ottawa Redblacks /99"
+        },
+        {
+          "number": "55",
+          "player": "Samuel Emilus",
+          "team": "Saskatchewan Roughriders /99"
+        },
+        {
+          "number": "57",
+          "player": "Nic Demski",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "58",
+          "player": "Javon Leake",
+          "team": "Edmonton Elks /99"
+        },
+        {
+          "number": "59",
+          "player": "Patrick Neufeld",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "60",
+          "player": "T.J. Lee",
+          "team": "BC Lions /99"
+        },
+        {
+          "number": "62",
+          "player": "Tim White",
+          "team": "Hamilton Tiger Cats /99"
+        },
+        {
+          "number": "63",
+          "player": "Tyson Philpot",
+          "team": "Montreal Alouettes /99"
+        },
+        {
+          "number": "67",
+          "player": "Stanley Bryant",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "69",
+          "player": "Willie Jefferson",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "72",
+          "player": "Tyrice Beverette",
+          "team": "Montreal Alouettes /99"
+        },
+        {
+          "number": "74",
+          "player": "Zach Collaros",
+          "team": "Winnipeg Blue Bombers /99"
+        },
+        {
+          "number": "76",
+          "player": "Dedrick Mills",
+          "team": "Calgary Stampeders /99"
+        },
+        {
+          "number": "78",
+          "player": "Wynton McManis",
+          "team": "Toronto Argonauts /99"
+        }
+      ]
+    }
+  ]
+}

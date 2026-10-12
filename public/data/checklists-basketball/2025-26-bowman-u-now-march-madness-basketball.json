@@ -1,0 +1,1259 @@
+{
+  "id": "2025-26-bowman-u-now-march-madness-basketball",
+  "name": "2025-26 Bowman U Now March Madness Basketball",
+  "year": 2025,
+  "brand": "Bowman U Now March Madness",
+  "sport": "Basketball",
+  "note": "Built from the published checklist at checklistinsider.com.",
+  "sets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "category": "base",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Darryn Peterson",
+          "team": "Kansas"
+        },
+        {
+          "number": "2",
+          "player": "Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "3",
+          "player": "AJ Dybantsa",
+          "team": "BYU"
+        },
+        {
+          "number": "4",
+          "player": "Mikayla Blakes",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "5",
+          "player": "Caleb Wilson",
+          "team": "North Carolina"
+        },
+        {
+          "number": "6",
+          "player": "Clara Strack",
+          "team": "Kentucky"
+        },
+        {
+          "number": "7",
+          "player": "Koa Peat",
+          "team": "Arizona"
+        },
+        {
+          "number": "8",
+          "player": "Olivia Olson",
+          "team": "Michigan"
+        },
+        {
+          "number": "9",
+          "player": "Nate Ament",
+          "team": "Tennessee"
+        },
+        {
+          "number": "10",
+          "player": "Addie Deal",
+          "team": "Iowa"
+        },
+        {
+          "number": "11",
+          "player": "Bennett Stirtz",
+          "team": "Iowa"
+        },
+        {
+          "number": "12",
+          "player": "Raegan Beers",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "13",
+          "player": "Bryce Lindsay",
+          "team": "Villanova"
+        },
+        {
+          "number": "14",
+          "player": "Kara Dunn",
+          "team": "USC"
+        },
+        {
+          "number": "15",
+          "player": "Braden Smith",
+          "team": "Purdue"
+        },
+        {
+          "number": "16",
+          "player": "Kaelyn Carroll",
+          "team": "Kentucky"
+        },
+        {
+          "number": "17",
+          "player": "John Blackwell",
+          "team": "Wisconsin"
+        },
+        {
+          "number": "18",
+          "player": "Aaliyah Crump",
+          "team": "Texas"
+        },
+        {
+          "number": "19",
+          "player": "Mikel Brown Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "20",
+          "player": "Hannah Stuelke",
+          "team": "Iowa"
+        },
+        {
+          "number": "21",
+          "player": "Milos Uzan",
+          "team": "Houston"
+        },
+        {
+          "number": "22",
+          "player": "Sienna Betts",
+          "team": "UCLA"
+        },
+        {
+          "number": "23",
+          "player": "Trey Kaufman-Renn",
+          "team": "Purdue"
+        },
+        {
+          "number": "24",
+          "player": "Tessa Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "25",
+          "player": "Boopie Miller",
+          "team": "SMU"
+        },
+        {
+          "number": "26",
+          "player": "Nyla Brooks",
+          "team": "North Carolina"
+        },
+        {
+          "number": "27",
+          "player": "Xaivian Lee",
+          "team": "Florida"
+        },
+        {
+          "number": "28",
+          "player": "Agot Makeer",
+          "team": "South Carolina"
+        },
+        {
+          "number": "29",
+          "player": "Zuby Ejiofor",
+          "team": "St. John's"
+        },
+        {
+          "number": "30",
+          "player": "Cotie McMahon",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "31",
+          "player": "Tarris Reed Jr.",
+          "team": "UConn"
+        },
+        {
+          "number": "32",
+          "player": "Chance Gray",
+          "team": "Ohio State"
+        },
+        {
+          "number": "33",
+          "player": "Tamin Lipsey",
+          "team": "Iowa State"
+        },
+        {
+          "number": "34",
+          "player": "Grace VanSlooten",
+          "team": "Michigan State"
+        },
+        {
+          "number": "35",
+          "player": "Ryan Conwell",
+          "team": "Louisville"
+        },
+        {
+          "number": "36",
+          "player": "Yarden Garzon",
+          "team": "Maryland"
+        },
+        {
+          "number": "37",
+          "player": "Cameron Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "38",
+          "player": "Madison Booker",
+          "team": "Texas"
+        },
+        {
+          "number": "39",
+          "player": "Jeremiah Wilkinson",
+          "team": "Georgia"
+        },
+        {
+          "number": "40",
+          "player": "Taliah Scott",
+          "team": "Baylor"
+        },
+        {
+          "number": "41",
+          "player": "Coen Carr",
+          "team": "Michigan State"
+        },
+        {
+          "number": "42",
+          "player": "Zoe Brooks",
+          "team": "NC State"
+        },
+        {
+          "number": "43",
+          "player": "Ja'Kobi Gillespie",
+          "team": "Tennessee"
+        },
+        {
+          "number": "44",
+          "player": "Mikaylah Williams",
+          "team": "LSU"
+        },
+        {
+          "number": "45",
+          "player": "Otega Oweh",
+          "team": "Kentucky"
+        },
+        {
+          "number": "46",
+          "player": "ZaKiyah Johnson",
+          "team": "LSU"
+        },
+        {
+          "number": "47",
+          "player": "Shelton Henderson",
+          "team": "Miami"
+        },
+        {
+          "number": "48",
+          "player": "Londynn Jones",
+          "team": "USC"
+        },
+        {
+          "number": "49",
+          "player": "Christian Anderson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "50",
+          "player": "Grace Knox",
+          "team": "LSU"
+        },
+        {
+          "number": "51",
+          "player": "Caleb Foster",
+          "team": "Duke"
+        },
+        {
+          "number": "52",
+          "player": "Berry Wallace",
+          "team": "Illinois"
+        },
+        {
+          "number": "53",
+          "player": "Malik Reneau",
+          "team": "Miami"
+        },
+        {
+          "number": "54",
+          "player": "Vanessa de Jesus",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "55",
+          "player": "Brayden Burries",
+          "team": "Arizona"
+        },
+        {
+          "number": "56",
+          "player": "Talaysia Cooper",
+          "team": "Tennessee"
+        },
+        {
+          "number": "57",
+          "player": "Cayden Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "58",
+          "player": "Ta’Niya Latson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "59",
+          "player": "Darrion Williams",
+          "team": "NC State"
+        },
+        {
+          "number": "60",
+          "player": "KK Bransford",
+          "team": "Notre Dame"
+        }
+      ]
+    },
+    {
+      "id": "base-autographs",
+      "name": "Base Autographs",
+      "category": "autograph",
+      "totalCards": 60,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1-A",
+          "player": "Darryn Peterson",
+          "team": "Kansas"
+        },
+        {
+          "number": "2-A",
+          "player": "Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "3-A",
+          "player": "AJ Dybantsa",
+          "team": "BYU"
+        },
+        {
+          "number": "4-A",
+          "player": "Mikayla Blakes",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "5-A",
+          "player": "Caleb Wilson",
+          "team": "North Carolina"
+        },
+        {
+          "number": "6-A",
+          "player": "Clara Strack",
+          "team": "Kentucky"
+        },
+        {
+          "number": "7-A",
+          "player": "Koa Peat",
+          "team": "Arizona"
+        },
+        {
+          "number": "8-A",
+          "player": "Olivia Olson",
+          "team": "Michigan"
+        },
+        {
+          "number": "9-A",
+          "player": "Nate Ament",
+          "team": "Tennessee"
+        },
+        {
+          "number": "10-A",
+          "player": "Addie Deal",
+          "team": "Iowa"
+        },
+        {
+          "number": "11-A",
+          "player": "Bennett Stirtz",
+          "team": "Iowa"
+        },
+        {
+          "number": "12-A",
+          "player": "Raegan Beers",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "13-A",
+          "player": "Bryce Lindsay",
+          "team": "Villanova"
+        },
+        {
+          "number": "14-A",
+          "player": "Kara Dunn",
+          "team": "USC"
+        },
+        {
+          "number": "15-A",
+          "player": "Braden Smith",
+          "team": "Purdue"
+        },
+        {
+          "number": "16-A",
+          "player": "Kaelyn Carroll",
+          "team": "Kentucky"
+        },
+        {
+          "number": "17-A",
+          "player": "John Blackwell",
+          "team": "Wisconsin"
+        },
+        {
+          "number": "18-A",
+          "player": "Aaliyah Crump",
+          "team": "Texas"
+        },
+        {
+          "number": "19-A",
+          "player": "Mikel Brown Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "20-A",
+          "player": "Hannah Stuelke",
+          "team": "Iowa"
+        },
+        {
+          "number": "21-A",
+          "player": "Milos Uzan",
+          "team": "Houston"
+        },
+        {
+          "number": "22-A",
+          "player": "Sienna Betts",
+          "team": "UCLA"
+        },
+        {
+          "number": "23-A",
+          "player": "Trey Kaufman-Renn",
+          "team": "Purdue"
+        },
+        {
+          "number": "24-A",
+          "player": "Tessa Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "25-A",
+          "player": "Boopie Miller",
+          "team": "SMU"
+        },
+        {
+          "number": "26-A",
+          "player": "Nyla Brooks",
+          "team": "North Carolina"
+        },
+        {
+          "number": "27-A",
+          "player": "Xaivian Lee",
+          "team": "Florida"
+        },
+        {
+          "number": "28-A",
+          "player": "Agot Makeer",
+          "team": "South Carolina"
+        },
+        {
+          "number": "29-A",
+          "player": "Zuby Ejiofor",
+          "team": "St. John's"
+        },
+        {
+          "number": "30-A",
+          "player": "Cotie McMahon",
+          "team": "Ole Miss"
+        },
+        {
+          "number": "31-A",
+          "player": "Tarris Reed Jr.",
+          "team": "UConn"
+        },
+        {
+          "number": "32-A",
+          "player": "Chance Gray",
+          "team": "Ohio State"
+        },
+        {
+          "number": "33-A",
+          "player": "Tamin Lipsey",
+          "team": "Iowa State"
+        },
+        {
+          "number": "34-A",
+          "player": "Grace VanSlooten",
+          "team": "Michigan State"
+        },
+        {
+          "number": "35-A",
+          "player": "Ryan Conwell",
+          "team": "Louisville"
+        },
+        {
+          "number": "36-A",
+          "player": "Yarden Garzon",
+          "team": "Maryland"
+        },
+        {
+          "number": "37-A",
+          "player": "Cameron Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "38-A",
+          "player": "Madison Booker",
+          "team": "Texas"
+        },
+        {
+          "number": "39-A",
+          "player": "Jeremiah Wilkinson",
+          "team": "Georgia"
+        },
+        {
+          "number": "40-A",
+          "player": "Taliah Scott",
+          "team": "Baylor"
+        },
+        {
+          "number": "41-A",
+          "player": "Coen Carr",
+          "team": "Michigan State"
+        },
+        {
+          "number": "42-A",
+          "player": "Zoe Brooks",
+          "team": "NC State"
+        },
+        {
+          "number": "43-A",
+          "player": "Ja'Kobi Gillespie",
+          "team": "Tennessee"
+        },
+        {
+          "number": "44-A",
+          "player": "Mikaylah Williams",
+          "team": "LSU"
+        },
+        {
+          "number": "45-A",
+          "player": "Otega Oweh",
+          "team": "Kentucky"
+        },
+        {
+          "number": "46-A",
+          "player": "ZaKiyah Johnson",
+          "team": "LSU"
+        },
+        {
+          "number": "47-A",
+          "player": "Shelton Henderson",
+          "team": "Miami"
+        },
+        {
+          "number": "48-A",
+          "player": "Londynn Jones",
+          "team": "USC"
+        },
+        {
+          "number": "49-A",
+          "player": "Christian Anderson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "50-A",
+          "player": "Grace Knox",
+          "team": "LSU"
+        },
+        {
+          "number": "51-A",
+          "player": "Caleb Foster",
+          "team": "Duke"
+        },
+        {
+          "number": "52-A",
+          "player": "Berry Wallace",
+          "team": "Illinois"
+        },
+        {
+          "number": "53-A",
+          "player": "Malik Reneau",
+          "team": "Miami"
+        },
+        {
+          "number": "54-A",
+          "player": "Vanessa de Jesus",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "55-A",
+          "player": "Brayden Burries",
+          "team": "Arizona"
+        },
+        {
+          "number": "56-A",
+          "player": "Talaysia Cooper",
+          "team": "Tennessee"
+        },
+        {
+          "number": "57-A",
+          "player": "Cayden Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "58-A",
+          "player": "Ta’Niya Latson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "59-A",
+          "player": "Darrion Williams",
+          "team": "NC State"
+        },
+        {
+          "number": "60-A",
+          "player": "KK Bransford",
+          "team": "Notre Dame"
+        }
+      ]
+    },
+    {
+      "id": "dual-autographs",
+      "name": "Dual Autographs",
+      "category": "autograph",
+      "totalCards": 15,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "DA-BB",
+          "player": "DA-BB Cameron Boozer/Cayden Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "DA-BC",
+          "player": "Madison Booker/Aaliyah Crump",
+          "team": "Texas"
+        },
+        {
+          "number": "DA-BE",
+          "player": "Mikayla Blakes/Raegan Beers",
+          "team": "Vanderbilt/Oklahoma"
+        },
+        {
+          "number": "DA-BS",
+          "player": "Mikayla Blakes/Sarah Strong",
+          "team": "Vanderbilt/UConn"
+        },
+        {
+          "number": "DA-BW",
+          "player": "Cameron Boozer/Caleb Wilson",
+          "team": "Duke/North Carolina"
+        },
+        {
+          "number": "DA-CV",
+          "player": "Coen Carr/Grace Van Slooten",
+          "team": "Michigan State"
+        },
+        {
+          "number": "DA-DP",
+          "player": "AJ Dybantsa/Darryn Peterson",
+          "team": "BYU/Kansas"
+        },
+        {
+          "number": "DA-GC",
+          "player": "Ja'Kobi Gillespie/Talaysia Cooper",
+          "team": "Tennessee"
+        },
+        {
+          "number": "DA-LJ",
+          "player": "Ta’Niya Latson/Tessa Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "DA-OS",
+          "player": "Otega Oweh/Clara Strack",
+          "team": "Kentucky"
+        },
+        {
+          "number": "DA-OW",
+          "player": "Olivia Olson/Berry Wallace",
+          "team": "Michigan/Illinois"
+        },
+        {
+          "number": "DA-PB",
+          "player": "Koa Peat/Brayden Burries",
+          "team": "Arizona"
+        },
+        {
+          "number": "DA-RS",
+          "player": "Tarris Reed Jr./Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "DA-SK",
+          "player": "Braden Smith/Trey Kaufman-Renn",
+          "team": "Purdue"
+        },
+        {
+          "number": "DA-SS",
+          "player": "Bennett Stirtz/Hannah Stuelke",
+          "team": "Iowa"
+        }
+      ]
+    },
+    {
+      "id": "triple-autographs",
+      "name": "Triple Autographs",
+      "category": "autograph",
+      "totalCards": 6,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "TA-BWS",
+          "player": "Raegan Beers/Mikaylah Williams/Clara Strack",
+          "team": "Oklahoma/LSU/Kentucky"
+        },
+        {
+          "number": "TA-DPB",
+          "player": "AJ Dybantsa/Darryn Peterson/Cameron Boozer",
+          "team": "BYU/Kansas/Duke"
+        },
+        {
+          "number": "TA-SBB",
+          "player": "Sarah Strong/Mikayla Blakes/Madison Booker",
+          "team": "UConn/Vanderbilt/Texas"
+        },
+        {
+          "number": "TA-SSC",
+          "player": "Braden Smith/Bennett Stirtz/Coen Carr",
+          "team": "Purdue/Iowa/Michigan State"
+        },
+        {
+          "number": "TA-VOG",
+          "player": "Grace Van Slooten/Olivia Olson/Chance Gray",
+          "team": "Michigan State/Michigan/Ohio State"
+        },
+        {
+          "number": "TA-WBA",
+          "player": "Caleb Wilson/Mikel Brown Jr./Nate Ament",
+          "team": "North Carolina/Louisville/Tennessee"
+        }
+      ]
+    },
+    {
+      "id": "base-autograph-relics",
+      "name": "Base Autograph Relics",
+      "category": "autograph",
+      "totalCards": 20,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "1-AR",
+          "player": "Darryn Peterson",
+          "team": "Kansas"
+        },
+        {
+          "number": "2-AR",
+          "player": "Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "3-AR",
+          "player": "AJ Dybantsa",
+          "team": "BYU"
+        },
+        {
+          "number": "4-AR",
+          "player": "Mikayla Blakes",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "5-AR",
+          "player": "Caleb Wilson",
+          "team": "North Carolina"
+        },
+        {
+          "number": "6-AR",
+          "player": "Clara Strack",
+          "team": "Kentucky"
+        },
+        {
+          "number": "7-AR",
+          "player": "Koa Peat",
+          "team": "Arizona"
+        },
+        {
+          "number": "8-AR",
+          "player": "Olivia Olson",
+          "team": "Michigan"
+        },
+        {
+          "number": "9-AR",
+          "player": "Nate Ament",
+          "team": "Tennessee"
+        },
+        {
+          "number": "11-AR",
+          "player": "Bennett Stirtz",
+          "team": "Iowa"
+        },
+        {
+          "number": "12-AR",
+          "player": "Raegan Beers",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "15-AR",
+          "player": "Braden Smith",
+          "team": "Purdue"
+        },
+        {
+          "number": "19-AR",
+          "player": "Mikel Brown Jr.",
+          "team": "Louisville"
+        },
+        {
+          "number": "22-AR",
+          "player": "Sienna Betts",
+          "team": "UCLA"
+        },
+        {
+          "number": "37-AR",
+          "player": "Cameron Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "38-AR",
+          "player": "Madison Booker",
+          "team": "Texas"
+        },
+        {
+          "number": "40-AR",
+          "player": "Taliah Scott",
+          "team": "Baylor"
+        },
+        {
+          "number": "52-AR",
+          "player": "Berry Wallace",
+          "team": "Illinois"
+        },
+        {
+          "number": "55-AR",
+          "player": "Brayden Burries",
+          "team": "Arizona"
+        },
+        {
+          "number": "58-AR",
+          "player": "Ta’Niya Latson",
+          "team": "South Carolina"
+        }
+      ]
+    },
+    {
+      "id": "autograph-ncaa-patch-relics",
+      "name": "Autograph NCAA Patch Relics",
+      "category": "autograph",
+      "totalCards": 78,
+      "parallels": [],
+      "cards": [
+        {
+          "number": "MMP-AC",
+          "player": "Aaliyah Crump",
+          "team": "Texas"
+        },
+        {
+          "number": "MMP-AL",
+          "player": "Acaden Lewis",
+          "team": "Villanova"
+        },
+        {
+          "number": "MMP-ADE",
+          "player": "Addie Deal",
+          "team": "Iowa"
+        },
+        {
+          "number": "MMP-AD",
+          "player": "AJ Dybantsa",
+          "team": "BYU"
+        },
+        {
+          "number": "MMP-AM",
+          "player": "Ayla McDowell",
+          "team": "South Carolina"
+        },
+        {
+          "number": "MMP-BST",
+          "player": "Bennett Stirtz",
+          "team": "Iowa"
+        },
+        {
+          "number": "MMP-BW",
+          "player": "Berry Wallace",
+          "team": "Illinois"
+        },
+        {
+          "number": "MMP-BMI",
+          "player": "Boopie Miller",
+          "team": "SMU"
+        },
+        {
+          "number": "MMP-BS",
+          "player": "Braden Smith",
+          "team": "Purdue"
+        },
+        {
+          "number": "MMP-BG",
+          "player": "Brandon Garrison",
+          "team": "Kentucky"
+        },
+        {
+          "number": "MMP-BB",
+          "player": "Brayden Burries",
+          "team": "Arizona"
+        },
+        {
+          "number": "MMP-BL",
+          "player": "Bryce Lindsay",
+          "team": "Villanova"
+        },
+        {
+          "number": "MMP-BM",
+          "player": "Brynn McGaughy",
+          "team": "Washington"
+        },
+        {
+          "number": "MMP-BT",
+          "player": "Bryson Tiller",
+          "team": "Kansas"
+        },
+        {
+          "number": "MMP-CW",
+          "player": "Cam Ward",
+          "team": "Michigan State"
+        },
+        {
+          "number": "MMP-CB",
+          "player": "Cameron Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "MMP-CAB",
+          "player": "Cayden Boozer",
+          "team": "Duke"
+        },
+        {
+          "number": "MMP-CG",
+          "player": "Chance Gray",
+          "team": "Ohio State"
+        },
+        {
+          "number": "MMP-CA",
+          "player": "Christian Anderson",
+          "team": "Texas Tech"
+        },
+        {
+          "number": "MMP-CS",
+          "player": "Clara Strack",
+          "team": "Kentucky"
+        },
+        {
+          "number": "MMP-CC",
+          "player": "Coen Carr",
+          "team": "Michigan State"
+        },
+        {
+          "number": "MMP-DW",
+          "player": "Darrion Williams",
+          "team": "NC State"
+        },
+        {
+          "number": "MMP-DP",
+          "player": "Darryn Peterson",
+          "team": "Kansas"
+        },
+        {
+          "number": "MMP-DF",
+          "player": "Davis Fogle",
+          "team": "Gonzaga"
+        },
+        {
+          "number": "MMP-DPR",
+          "player": "Deniya Prawl",
+          "team": "Tennessee"
+        },
+        {
+          "number": "MMP-DD",
+          "player": "Derek Dixon",
+          "team": "North Carolina"
+        },
+        {
+          "number": "MMP-DM",
+          "player": "Devin McGlockton",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "MMP-DA",
+          "player": "Dwayne Aristode",
+          "team": "Arizona"
+        },
+        {
+          "number": "MMP-GK",
+          "player": "Grace Knox",
+          "team": "LSU"
+        },
+        {
+          "number": "MMP-GV",
+          "player": "Grace Van Slooten",
+          "team": "Michigan State"
+        },
+        {
+          "number": "MMP-HS",
+          "player": "Hannah Stuelke",
+          "team": "Iowa"
+        },
+        {
+          "number": "MMP-IH",
+          "player": "Isiah Harwell",
+          "team": "Houston"
+        },
+        {
+          "number": "MMP-JG",
+          "player": "Ja'Kobi Gillespie",
+          "team": "Tennessee"
+        },
+        {
+          "number": "MMP-JC",
+          "player": "Jaida Civil",
+          "team": "Tennessee"
+        },
+        {
+          "number": "MMP-JJ",
+          "player": "Jasper Johnson",
+          "team": "Kentucky"
+        },
+        {
+          "number": "MMP-JW",
+          "player": "Jeremiah Wilkinson",
+          "team": "Georgia"
+        },
+        {
+          "number": "MMP-JF",
+          "player": "Jeremy Fears Jr.",
+          "team": "Michigan State"
+        },
+        {
+          "number": "MMP-JB",
+          "player": "John Blackwell",
+          "team": "Wisconsin"
+        },
+        {
+          "number": "MMP-KC",
+          "player": "Kaelyn Carroll",
+          "team": "Kentucky"
+        },
+        {
+          "number": "MMP-KD",
+          "player": "Kara Dunn",
+          "team": "USC"
+        },
+        {
+          "number": "MMP-KF",
+          "player": "Kelis Fisher",
+          "team": "UConn"
+        },
+        {
+          "number": "MMP-KB",
+          "player": "KK Bransford",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "MMP-KP",
+          "player": "Koa Peat",
+          "team": "Arizona"
+        },
+        {
+          "number": "MMP-KR",
+          "player": "Kohl Rosario",
+          "team": "Kansas"
+        },
+        {
+          "number": "MMP-LJ",
+          "player": "Londynn Jones",
+          "team": "USC"
+        },
+        {
+          "number": "MMP-MBO",
+          "player": "Madison Booker",
+          "team": "Texas"
+        },
+        {
+          "number": "MMP-MRE",
+          "player": "Malik Reneau",
+          "team": "Miami"
+        },
+        {
+          "number": "MMP-MB",
+          "player": "Mikayla Blakes",
+          "team": "Vanderbilt"
+        },
+        {
+          "number": "MMP-MW",
+          "player": "Mikaylah Williams",
+          "team": "LSU"
+        },
+        {
+          "number": "MMP-MU",
+          "player": "Milos Uzan",
+          "team": "Houston"
+        },
+        {
+          "number": "MMP-NA",
+          "player": "Nate Ament",
+          "team": "Tennessee"
+        },
+        {
+          "number": "MMP-NB",
+          "player": "Nyla Brooks",
+          "team": "North Carolina"
+        },
+        {
+          "number": "MMP-OO",
+          "player": "Olivia Olson",
+          "team": "Michigan"
+        },
+        {
+          "number": "MMP-OOW",
+          "player": "Otega Oweh",
+          "team": "Kentucky"
+        },
+        {
+          "number": "MMP-OS",
+          "player": "Oziyah Sellers",
+          "team": "St. John's"
+        },
+        {
+          "number": "MMP-RBE",
+          "player": "Raegan Beers",
+          "team": "Oklahoma"
+        },
+        {
+          "number": "MMP-RC",
+          "player": "Ryan Conwell",
+          "team": "Louisville"
+        },
+        {
+          "number": "MMP-SS",
+          "player": "Sarah Strong",
+          "team": "UConn"
+        },
+        {
+          "number": "MMP-SW",
+          "player": "Serah Williams",
+          "team": "UConn"
+        },
+        {
+          "number": "MMP-SH",
+          "player": "Shelton Henderson",
+          "team": "Miami"
+        },
+        {
+          "number": "MMP-SB",
+          "player": "Sienna Betts",
+          "team": "UCLA"
+        },
+        {
+          "number": "MMP-SD",
+          "player": "Silas Demary Jr.",
+          "team": "UConn"
+        },
+        {
+          "number": "MMP-TL",
+          "player": "Ta’Niya Latson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "MMP-TC",
+          "player": "Talaysia Cooper",
+          "team": "Tennessee"
+        },
+        {
+          "number": "MMP-TS",
+          "player": "Taliah Scott",
+          "team": "Baylor"
+        },
+        {
+          "number": "MMP-TLI",
+          "player": "Tamin Lipsey",
+          "team": "Iowa State"
+        },
+        {
+          "number": "MMP-TRE",
+          "player": "Tarris Reed Jr.",
+          "team": "UConn"
+        },
+        {
+          "number": "MMP-TJ",
+          "player": "Tessa Johnson",
+          "team": "South Carolina"
+        },
+        {
+          "number": "MMMP-TA",
+          "player": "Tobe Awaka",
+          "team": "Arizona"
+        },
+        {
+          "number": "MMP-TD",
+          "player": "Tre Donaldson",
+          "team": "Miami"
+        },
+        {
+          "number": "MMP-TH",
+          "player": "Tre Holloman",
+          "team": "NC State"
+        },
+        {
+          "number": "MMP-TR",
+          "player": "Trey Kaufman-Renn",
+          "team": "Purdue"
+        },
+        {
+          "number": "MMP-VD",
+          "player": "Vanessa de Jesus",
+          "team": "Notre Dame"
+        },
+        {
+          "number": "MMP-XL",
+          "player": "Xaivian Lee",
+          "team": "Florida"
+        },
+        {
+          "number": "MMP-YG",
+          "player": "Yarden Garzon",
+          "team": "Maryland"
+        },
+        {
+          "number": "MMP-ZJ",
+          "player": "ZaKiyah Johnson",
+          "team": "LSU"
+        },
+        {
+          "number": "MMP-ZB",
+          "player": "Zoe Brooks",
+          "team": "NC State"
+        },
+        {
+          "number": "MMP-ZE",
+          "player": "Zuby Ejiofor",
+          "team": "St. John's"
+        }
+      ]
+    }
+  ]
+}
