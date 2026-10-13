@@ -31,7 +31,9 @@ const PAR_CHUNK = 2000;
 const SUFFIX = new Set(['jr', 'sr', 'ii', 'iii', 'iv', 'v']);
 
 const fold = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const nameTokens = (n) => fold(n).replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(t => t && !SUFFIX.has(t));
+// "C.J. Stroud" and "CJ Stroud" are one player: initials lose their dots
+// before the name is split, and so do apostrophes ("Ja'Marr").
+const nameTokens = (n) => fold(n).replace(/[.'’]/g, '').replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(t => t && !SUFFIX.has(t));
 const SPORT_WORD = /\s+(football|basketball|baseball)$/i;
 const productName = (d) => String(d.name || '').replace(/^\d{4}(?:-\d{2,4})?\s+/, '').replace(SPORT_WORD, '').trim();
 // Category, one letter: base, insert, autograph, memorabilia.
@@ -66,7 +68,9 @@ function collect() {
             const key = nameTokens(name).join(' ');
             if (!key) continue;
             let p = players.get(key + '|' + sport);
-            if (!p) players.set(key + '|' + sport, p = { n: name, s: sport, c: [] });
+            if (!p) players.set(key + '|' + sport, p = { n: name, s: sport, c: [], spell: new Map() });
+            // Shown as the spelling most of their cards use.
+            p.spell.set(name, (p.spell.get(name) || 0) + 1);
             const row = [idx, String(c.number == null ? '' : c.number), c.rookie || starred ? 1 : 0];
             if (c.printRun) row.push(Number(c.printRun) || String(c.printRun));
             p.c.push(row);
@@ -90,9 +94,10 @@ function shardKeys(name, len, cards = 0) {
   return [...new Set(keys)];
 }
 
+const spelling = (p) => [...p.spell].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0][0];
 function writeShard(dir, key, entries) {
   const players = entries.sort((a, b) => a.k < b.k ? -1 : a.k > b.k ? 1 : 0)
-    .map(({ p }) => ({ n: p.n, s: SPORT_CODE[p.s] || p.s, c: p.c }));
+    .map(({ p }) => ({ n: spelling(p), s: SPORT_CODE[p.s] || p.s, c: p.c }));
   const body = JSON.stringify({ v: 2, players });
   fs.writeFileSync(path.join(dir, key + '.json'), body);
   return body.length;

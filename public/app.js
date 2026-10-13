@@ -924,6 +924,9 @@ const CS_GRADERS = new Set(['psa', 'bgs', 'sgc', 'cgc', 'csg', 'hga', 'tag', 'be
 const CS_SKIP = new Set(['raw', 'graded', 'card', 'cards', 'the', 'of', 'and', 'gem', 'mint', 'mt', 'nm']);
 const CS_CAT_WORDS = { b: ['base'], i: ['insert'], a: ['auto', 'autograph', 'autographs', 'signed', 'signature'], m: ['relic', 'memorabilia', 'patch', 'jersey', 'mem'] };
 const CS_SPORT = { f: 'football', b: 'basketball', s: 'baseball' };
+const CS_VARIANT_SET = /variation|oversize|box set|factory set|blaster|sticker|jumbo|reprint|companion|premium set|funko|tattoo|magnet|\bmini/i;
+// Brand words a product name carries whether or not anyone types them.
+const CS_BRAND = new Set(['panini', 'topps', 'upper', 'deck', 'leaf', 'the']);
 
 function _csFold(s) {
   return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -931,7 +934,7 @@ function _csFold(s) {
 // Words of a string, as the matcher sees them: "#RA-PM" gives "ra-pm", "ra", "pm".
 function _csWords(s) {
   const out = [];
-  for (const w of _csFold(s).replace(/[^a-z0-9/\-#. ]+/g, ' ').split(/\s+/)) {
+  for (const w of _csFold(s).replace(/['’`]/g, '').replace(/[^a-z0-9/\-#. ]+/g, ' ').split(/\s+/)) {
     const t = w.replace(/^#+/, '').replace(/\.+$/, '').replace(/\./g, '');
     if (!t) continue;
     out.push(t);
@@ -965,9 +968,41 @@ function _csShardKey(word, split) {
   if (split && split.includes(two)) return word.length >= 3 ? word.slice(0, 3) : null;
   return two;
 }
+// One typo apart: a letter added, dropped or changed ("mahommes", "wemby").
+function _csNear(a, b) {
+  if (a === b) return true;
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, ed = 0;
+  while (i < la && j < lb) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++ed > 1) return false;
+    if (la > lb) i++; else if (lb > la) j++; else { i++; j++; }
+  }
+  return ed + (la - i) + (lb - j) <= 1;
+}
+// How a typed word names one word of a player's name: 3 the word itself,
+// 2 the start of it (the word still being typed, or 3+ letters), 1 one typo
+// off (4+ letters), 0 not at all.
+function _csNameHit(w, t, isLast) {
+  if (w === t) return 3;
+  if (w.length >= 2 && t.startsWith(w) && (isLast || w.length >= 3)) return 2;
+  if (w.length >= 4 && t.length >= 4 && /^[a-z]+$/.test(w)) {
+    if (_csNear(w, t)) return 1;
+    // The start of a longer name, one typo off: "wemby" for Wembanyama.
+    if (w.length >= 5 && t.length > w.length + 1 && (_csNear(w, t.slice(0, w.length)) || _csNear(w, t.slice(0, w.length + 1)))) return 1;
+  }
+  return 0;
+}
+
 // Every card of the shard's players that fits every typed word, best first.
 // dict: sets.json. shard: one shard. pars: Map(chunk -> parallels array).
 // sold: Map("year|number|player") -> sales, from the sold data, to rank.
+//
+// Ranked by how well the words name the player first (Oct 2026): "bo nix" is
+// Bo Nix, not the 1951 Bowman Willard Nixon that "bo" + "nix..." also fits,
+// and then by how many cards the player has, which is how famous they are:
+// "mahomes" is Patrick Mahomes II's 2,000 cards before Pat Mahomes's 80.
 const _csCardWords = new WeakMap();
 function _csMatch(dict, shard, query, opts = {}) {
   const words = query.words;
@@ -978,17 +1013,54 @@ function _csMatch(dict, shard, query, opts = {}) {
   const last = words.length - 1;
   const hit = (w, i, toks) => toks.some(t => t === w || (i === last || /^[a-z]/.test(w)) && w.length >= 2 && t.startsWith(w));
   const out = [];
-  const needPar = new Set();
+  // Parallel files still wanted, each with the best card waiting on it, so the
+  // caller fetches the ones that matter: "mahomes prizm silver" waits on the
+  // 2017 Prizm file, not on whichever four came first.
+  const needPar = new Map();
   for (const p of shard.players || []) {
     const sport = CS_SPORT[p.s] || p.s;
     if (sports && !sports.has(sport)) continue;
     const nameToks = p._t || (p._t = _csWords(p.n));
-    // The player must be named: some typed word is (the start of) their
-    // surname, or their whole first name ("lebron").
+    // The player must be named: some typed word is (the start of, or one typo
+    // off) their surname, or their whole first name ("lebron").
     const core = nameToks.filter(t => !/^(jr|sr|ii|iii|iv|v)$/.test(t));
     const sur = core[core.length - 1], first = core.length > 1 ? core[0] : '';
-    if (!sur || !words.some((w, i) => /^[a-z]/.test(w)
-      && (sur === w || sur.startsWith(w) && (i === last || w.length >= 3) || first && first.length >= 4 && (first === w || i === last && w.length >= 4 && first.startsWith(w))))) continue;
+    if (!sur) continue;
+    // Which typed words the name answers, and how well.
+    const nameBy = words.map((w, i) => (/^[a-z]/.test(w) ? Math.max(0, ...core.map(t => _csNameHit(w, t, i === last))) : 0));
+    const surHit = words.some((w, i) => _csNameHit(w, sur, i === last) > 0);
+    const firstHit = first && first.length >= 2 && words.some((w, i) => first === w || (first.length >= 4 && (i === last && w.length >= 4 && first.startsWith(w) || w.length >= 5 && _csNear(w, first))));
+    if (!surHit && !firstHit) continue;
+    const nameScore = nameBy.reduce((a, b) => a + b, 0);
+    const pop = Math.log2(1 + p.c.length);
+    // Their rookie year, read off the checklists: the first year with a
+    // quarter as many cards as their biggest. A pre-draft Leaf set or two
+    // comes before it and does not count. A search naming no year leads with
+    // the rookie cards, which is what most people are after.
+    // A checklist that flags rookie cards says so outright, and the year with
+    // the most flagged wins: older years are too thin to count (Jordan's 1986
+    // is one product, against 32 in his biggest year). With no flags, the
+    // first year with a quarter as many products as their biggest: Brady's
+    // 2000 has 20, and a pre-draft Leaf or college set or two does not count.
+    if (p._ry === undefined) {
+      const prods = new Map(), flags = new Map();
+      for (const c of p.c) {
+        const set0 = dict.sets[c[0]]; const pr0 = set0 && dict.products[set0[0]]; if (!pr0) continue;
+        if (!prods.has(pr0[0])) prods.set(pr0[0], new Set());
+        prods.get(pr0[0]).add(set0[0]);
+        if (c[2]) flags.set(pr0[0], (flags.get(pr0[0]) || 0) + 1);
+      }
+      const byFlag = [...flags].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+      const max = Math.max(0, ...[...prods.values()].map(x => x.size));
+      const counted = [...prods.keys()].sort((a, b) => a - b).find(y => prods.get(y).size >= Math.max(2, max / 4)) || null;
+      // A flag in a modern year with only a stray product or two (Ohtani's
+      // 2017 Leaf) is not their rookie year; before 1995 the checklists are
+      // thin, and the flag is the better witness.
+      p._ry = byFlag && (byFlag[0] < 1995 || prods.get(byFlag[0]).size >= max / 4) ? byFlag[0] : counted;
+    }
+    const namesYear = words.some(w => /^(\d{2}|\d{4})$/.test(w));
+    // A word the name answers is spent; only the rest must be found on the card.
+    const rest = words.map((w, i) => (nameBy[i] ? null : w));
     for (const c of p.c) {
       const [si, num, rookie, pr] = c;
       const set = dict.sets[si]; if (!set) continue;
@@ -1003,13 +1075,17 @@ function _csMatch(dict, shard, query, opts = {}) {
           ...(rookie ? ['rookie', 'rc', 'rookies'] : []), ...(CS_CAT_WORDS[cat] || []), ...(pr ? [String(pr), '/' + pr] : [])];
         _csCardWords.set(c, toks);
       }
-      const left = words.filter((w, i) => !hit(w, i, toks));
+      const left = rest.filter((w, i) => w != null && !hit(w, i, toks));
       let parallel = '';
       if (left.length) {
         // What is left may name a parallel of the set: "silver", "gold /10".
         const chunk = Math.floor(si / (dict.parChunk || 2000));
         const list = pars.get(chunk);
-        if (!list) { needPar.add(chunk); continue; }
+        if (!list) {
+          const pre = 2 * nameScore + 2 * (rest.filter(w => w != null).length - left.length) + pop + (cat === 'b' ? 3 : 0);
+          needPar.set(chunk, Math.max(needPar.get(chunk) || 0, pre));
+          continue;
+        }
         const options = (list[si % (dict.parChunk || 2000)] || [])
           .map(name => /^prizms?$/i.test(name) ? 'Silver Prizm' : name)   // Panini's plain "Prizm" is the Silver
           .filter(name => { const pt = _csWords(name); return left.every(w => pt.some(t => t === w || t.startsWith(w) && w.length >= 2)); })
@@ -1019,24 +1095,77 @@ function _csMatch(dict, shard, query, opts = {}) {
       }
       // Words the card itself answers count for more than words only a
       // parallel's name answers: "prizm" is the product, not "Silver Prizm".
-      let score = 2 * (words.length - left.length);
+      let score = 2 * nameScore + 2 * (rest.filter(w => w != null).length - left.length) + pop;
       if (cat === 'b') score += 3;
       if (rookie) score += 2;
+      // A variation, box-set or oversized printing after the card itself,
+      // unless the words ask for it.
+      if (CS_VARIANT_SET.test(setName) && !rest.some(w => w && CS_VARIANT_SET.test(w))) score -= 2;
       if (words.includes(_csFold(num))) score += 4;
-      if (words.includes(String(year)) || words.includes(yy)) score += 2;
+      // A typed year beats a card number of the same digits: "elway 84" is
+      // his 1984 rookie before his 1995 #84.
+      if (words.includes(String(year)) || words.includes(yy)) score += 3;
+      else if (!namesYear && year === p._ry) score += 3;
+      // Words of the product nobody typed: "2024 prizm" is Prizm before
+      // Prizm Deca, once a word names the product at all.
+      const prodToks = _csWords(prodName).filter(t => !CS_BRAND.has(t));
+      if (rest.some(w => w && prodToks.some(t => t.startsWith(w)))) score -= 0.75 * prodToks.filter(t => !rest.some(w => w && t.startsWith(w))).length;
       if (!parallel) score += 1;
       if (!pr || words.includes(String(pr))) score += 1;   // the common card before its short prints
       const sales = sold.get(year + '|' + _csFold(num) + '|' + _csFold(p.n)) || 0;
       score += Math.min(6, Math.log2(1 + sales));
       const title = [String(year), prodName, setName, p.n, num ? '#' + String(num).replace(/^#/, '') : '', parallel, query.grade]
         .filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
-      out.push({ title, score, year, rookie: !!rookie, cat, sport, pr: pr || null, sales, player: p.n });
+      out.push({ title, score, year, rookie: !!rookie, cat, sport, pr: pr || null, sales, player: p.n,
+                 nameScore, nameOnly: rest.every(w => w == null), playerCards: p.c.length });
     }
   }
-  out.sort((a, b) => b.score - a.score || a.year - b.year || (a.title < b.title ? -1 : 1));
+  out.sort((a, b) => b.score - a.score || b.year - a.year || (a.title < b.title ? -1 : 1));
   const seen = new Set();
   const cards = out.filter(c => { const k = c.title.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
-  return { cards, needPar: [...needPar] };
+  return { cards, needPar: [...needPar].sort((a, b) => b[1] - a[1]).map(x => x[0]), needScore: needPar };
+}
+
+// Products and sets for what is typed, when the words name no player:
+// "2020 prizm" -> 2020 Panini Prizm, "topps chrome" -> each year of it,
+// "prizm color blast" -> that insert. Every word must be in the name.
+const _csSetWords = new WeakMap();
+function _csProducts(dict, query, opts = {}) {
+  const words = query.words;
+  if (!words.length || !words.some(w => /^[a-z]{3,}/.test(w))) return [];
+  const sports = opts.sports ? new Set(opts.sports) : null;
+  const last = words.length - 1;
+  const sizes = dict._sizes || (dict._sizes = (() => { const n = new Array(dict.products.length).fill(0); for (const st of dict.sets) n[st[0]]++; return n; })());
+  const out = [];
+  for (const st of dict.sets) {
+    const [pi, setName] = st;
+    const prod = dict.products[pi]; if (!prod) continue;
+    const [year, prodName, sport] = prod;
+    if (sports && !sports.has(sport)) continue;
+    let toks = _csSetWords.get(st);
+    if (!toks) {
+      toks = { prod: [String(year), String(year % 100).padStart(2, '0'), ..._csWords(prodName)], set: _csWords(setName) };
+      _csSetWords.set(st, toks);
+    }
+    const all = toks.prod.concat(toks.set);
+    const ok = words.every((w, i) => all.some(t => t === w || (i === last || w.length >= 3) && t.startsWith(w)));
+    if (!ok) continue;
+    // The product itself unless a word is only in the set's name.
+    const needsSet = words.some((w, i) => !toks.prod.some(t => t === w || (i === last || w.length >= 3) && t.startsWith(w)));
+    if (needsSet && !setName) continue;
+    if (!needsSet && setName) continue;
+    const exact = words.filter(w => all.includes(w)).length;
+    const extra = toks.prod.slice(2).filter(t => !CS_BRAND.has(t) && !words.some(w => t.startsWith(w))).length;
+    // The product itself before one of its sets: "2020 prizm" is 2020 Panini
+    // Prizm, not a Select insert called "Black Prizm".
+    let score = 2 * exact + Math.log2(1 + sizes[pi]) + (needsSet ? 0 : 6) - 1.5 * extra;
+    if (words.includes(String(year)) || words.includes(String(year % 100).padStart(2, '0'))) score += 3;
+    score += (year - 1900) / 60;   // the newer of two equal matches
+    out.push({ title: [String(year), prodName, setName].filter(Boolean).join(' '), score, sport, year, set: !!setName });
+  }
+  out.sort((a, b) => b.score - a.score);
+  const seen = new Set();
+  return out.filter(x => { const k = x.title.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 // Fetching, each file once per visit.
@@ -1050,35 +1179,38 @@ function _csGet(path) {
 }
 const _csDict = () => _csGet('sets.json');
 
-// The checklist suggestions for what is typed, ranked with what actually sells.
+// The checklist suggestions for what is typed, ranked with what actually sells:
+// { players, cards, products }.
 async function _csSuggest(q, seq) {
+  const none = { players: [], cards: [], products: [] };
   const query = _csQuery(q);
-  if (!query.words.some(w => /^[a-z]{3,}/.test(w))) return [];
+  if (!query.words.some(w => /^[a-z]{2,}/.test(w))) return none;
   const dict = await _csDict();
-  if (!dict || seq !== _ssSeq) return [];
-  const keys = [...new Set(query.words.map(w => _csShardKey(w, dict.split)).filter(Boolean))].slice(0, 3);
-  const shards = (await Promise.all(keys.map(k => _csGet(k + '.json')))).filter(Boolean);
-  if (seq !== _ssSeq || !shards.length) return [];
+  if (!dict || seq !== _ssSeq) return none;
   let sports = null;
   try { sports = sportsPrefs().enabled; } catch (_) { /* every sport */ }
+  const keys = [...new Set(query.words.map(w => _csShardKey(w, dict.split)).filter(Boolean))].slice(0, 3);
+  const shards = (await Promise.all(keys.map(k => _csGet(k + '.json')))).filter(Boolean);
+  if (seq !== _ssSeq) return none;
   const sold = new Map();
   const pars = new Map();
   const run = () => {
     const all = [];
-    const need = new Set();
+    const need = new Map();
     for (const sh of shards) {
       const r = _csMatch(dict, sh, query, { sports, pars, sold });
-      all.push(...r.cards); r.needPar.forEach(n => need.add(n));
+      all.push(...r.cards);
+      r.needScore.forEach((v, n) => need.set(n, Math.max(need.get(n) || 0, v)));
     }
-    all.sort((a, b) => b.score - a.score || a.year - b.year);
-    return { all, need: [...need] };
+    all.sort((a, b) => b.score - a.score || b.year - a.year);
+    return { all, need: [...need].sort((a, b) => b[1] - a[1]).map(x => x[0]) };
   };
   let r = run();
   // Rank by what sells: the sold data's busiest cards for the players in play.
   const names = [...new Set(r.all.slice(0, 12).map(c => c.player))].slice(0, 2);
   if (names.length) {
     const lists = await Promise.all(names.map(n => _ssPlayerCards(n)));
-    if (seq !== _ssSeq) return [];
+    if (seq !== _ssSeq) return none;
     lists.forEach((list, i) => (list || []).forEach(c => {
       const m = String(c.query || '').match(/^(\d{4})\b.*#(\S+)$/);
       if (m) sold.set(m[1] + '|' + _csFold(m[2]) + '|' + _csFold(names[i]), c.sales || 0);
@@ -1087,11 +1219,49 @@ async function _csSuggest(q, seq) {
   }
   if (r.need.length && r.all.length < 6) {
     const got = await Promise.all(r.need.slice(0, 4).map(n => _csGet('p/' + n + '.json')));
-    if (seq !== _ssSeq) return [];
+    if (seq !== _ssSeq) return none;
     r.need.slice(0, 4).forEach((n, i) => { if (got[i]) pars.set(n, got[i]); });
     r = run();
   }
-  return r.all.slice(0, 8);
+  return _csCompose(r.all, _csProducts(dict, query, { sports }));
+}
+
+// What the list shows, from the ranked matches. Pure, so it can be tested.
+//  - A query that is only a name ("patrick", "lebron jam") offers the players
+//    it could be, most cards first, before any card.
+//  - No player holds more than four of the card rows while another is in play.
+//  - Products and sets come first when nothing names a player ("2020 prizm").
+function _csCompose(all, products) {
+  // A star is filed under their first name as well as their surname, so two
+  // shards can both hold their cards.
+  const once = new Set();
+  all = all.filter(c => { const k = c.title.toLowerCase(); if (once.has(k)) return false; once.add(k); return true; });
+  const players = [];
+  const best = new Map();
+  for (const c of all) {
+    if (!c.nameOnly) continue;
+    const k = c.player + '|' + c.sport;
+    const cur = best.get(k);
+    if (!cur || c.nameScore > cur.nameScore) best.set(k, { name: c.player, sport: c.sport, cards: c.playerCards, nameScore: c.nameScore });
+  }
+  const top = Math.max(0, ...[...best.values()].map(p => p.nameScore));
+  const most = Math.max(0, ...[...best.values()].map(p => p.cards));
+  // Players the words name as well as the best one does, most cards first.
+  // A handful of cards next to a star's thousands is a crossover set filing
+  // the star under another sport, or a namesake nobody is looking for.
+  players.push(...[...best.values()].filter(p => p.nameScore >= top - 1 && p.cards >= Math.max(3, most / 50))
+    .sort((a, b) => b.nameScore - a.nameScore || b.cards - a.cards).slice(0, 3));
+  const per = new Map();
+  const many = new Set(all.slice(0, 20).map(c => c.player)).size > 1;
+  const cards = [];
+  for (const c of all) {
+    const n = per.get(c.player) || 0;
+    if (many && n >= 4) continue;
+    per.set(c.player, n + 1);
+    cards.push(c);
+    if (cards.length >= 8) break;
+  }
+  return { players, cards, products: all.length ? (products || []).slice(0, 2) : (products || []).slice(0, 6) };
 }
 
 async function _ssUpdate() {
@@ -1104,40 +1274,47 @@ async function _ssUpdate() {
     .slice(0, q ? 3 : 6)
     .forEach(r => items.push({ text: r, sub: 'recent', kind: 'recent' }));
 
-  if (q.length >= 2) {
-    const roster = await _mkRoster();
-    if (seq !== _ssSeq) return;
-    if (roster) {
-      const whole = _ssWholePlayer(roster, q);
-      if (whole) {
-        const words = q.slice(whole.player.length).trim().split(' ').filter(Boolean);
-        if (!words.length) items.push({ text: whole.player, sub: 'all cards', kind: 'search' });
-        const cards = await _ssPlayerCards(whole.player);
-        if (seq !== _ssSeq) return;
-        cards.filter(c => words.every(w => c.query.toLowerCase().includes(w)))
-          .slice(0, 6)
-          .forEach(c => items.push({ text: c.query, sub: `${(c.sales || 0).toLocaleString('en-US')} sold`, kind: 'card' }));
-      }
+  // The checklists answer from files, the sold roster from the network: the
+  // two run side by side so neither waits on the other.
+  const checklist = q.length >= 2 ? _csSuggest(q, seq) : Promise.resolve(null);
+  const rosterP = q.length >= 2 ? _mkRoster() : Promise.resolve(null);
+
+  const roster = await rosterP;
+  if (seq !== _ssSeq) return;
+  if (roster) {
+    const whole = _ssWholePlayer(roster, q);
+    if (whole) {
+      const words = q.slice(whole.player.length).trim().split(' ').filter(Boolean);
+      if (!words.length) items.push({ text: whole.player, sub: 'all cards', kind: 'search' });
+      const cards = await _ssPlayerCards(whole.player);
+      if (seq !== _ssSeq) return;
+      cards.filter(c => words.every(w => c.query.toLowerCase().includes(w)))
+        .slice(0, 4)
+        .forEach(c => items.push({ text: c.query, sub: `${(c.sales || 0).toLocaleString('en-US')} sold`, kind: 'card' }));
     }
   }
-  // Every card the checklists know, finished from what is typed.
-  if (q.length >= 3) {
-    const cards = await _csSuggest(q, seq);
-    if (seq !== _ssSeq) return;
-    cards.forEach(c => items.push({ text: c.title, sub: c.rookie ? 'RC' : c.pr ? '/' + c.pr : c.sales ? `${c.sales.toLocaleString('en-US')} sold` : '', kind: 'card' }));
-  }
-  // Names only when no card fits yet: "mah" is still a player being typed.
-  if (q.length >= 2 && !items.some(it => it.kind === 'card')) {
-    const roster = await _mkRoster();
-    if (seq !== _ssSeq) return;
-    if (roster && !_ssWholePlayer(roster, q)) {
-      _mkFilterRoster(roster, q).slice(0, 6)
-        .forEach(p => items.push({ text: p.player, sub: `${(p.sales || 0).toLocaleString('en-US')} sold`, kind: 'player' }));
+  // Every card, player and product the checklists know, from what is typed.
+  const cs = await checklist;
+  if (seq !== _ssSeq) return;
+  if (cs) {
+    const sportNote = (s) => (s && s !== 'football' ? ' · ' + s : '');
+    if (!cs.cards.length || !cs.players.length) {
+      cs.products.forEach(p => items.push({ text: p.title, sub: (p.set ? 'set' : 'checklist') + sportNote(p.sport), kind: 'product' }));
     }
+    cs.players.forEach(p => items.push({ text: p.name, sub: `${p.cards.toLocaleString('en-US')} cards${sportNote(p.sport)}`, kind: 'player' }));
+    cs.cards.forEach(c => items.push({ text: c.title, sub: c.rookie ? 'RC' : c.pr ? '/' + c.pr : c.sales ? `${c.sales.toLocaleString('en-US')} sold` : '', kind: 'card' }));
+    if (cs.cards.length && cs.players.length) {
+      cs.products.forEach(p => items.push({ text: p.title, sub: (p.set ? 'set' : 'checklist') + sportNote(p.sport), kind: 'product' }));
+    }
+  }
+  // The sold roster's names only when the checklists named nobody.
+  if (roster && q.length >= 2 && !items.some(it => it.kind === 'card' || it.kind === 'player') && !_ssWholePlayer(roster, q)) {
+    _mkFilterRoster(roster, q).slice(0, 6)
+      .forEach(p => items.push({ text: p.player, sub: `${(p.sales || 0).toLocaleString('en-US')} sold`, kind: 'player' }));
   }
   if (seq !== _ssSeq) return;
   // Never offer exactly what is already in the box.
-  _ssItems = items.filter((it, i) => it.kind === 'player' || it.kind === 'search' || it.text.toLowerCase() !== q)
+  _ssItems = items.filter((it) => it.kind === 'player' || it.kind === 'search' || it.text.toLowerCase() !== q)
     .filter((it, i, all) => all.findIndex(o => o.text.toLowerCase() === it.text.toLowerCase()) === i)
     .slice(0, 10);
   _ssActive = -1;
@@ -1147,8 +1324,9 @@ async function _ssUpdate() {
 function _ssPick(i) {
   const it = _ssItems[i];
   if (!it) return;
-  if (it.kind === 'player') {
-    // A player opens their cards rather than searching every card of theirs.
+  if (it.kind === 'player' || it.kind === 'product') {
+    // A player opens their cards rather than searching every card of theirs;
+    // a product waits for the player ("2020 Panini Prizm " then "herbert").
     input.value = it.text + ' ';
     input.focus();
     _ssUpdate();
