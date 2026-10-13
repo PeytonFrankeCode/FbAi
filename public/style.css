@@ -10062,3 +10062,14 @@ html.install-open { overflow: hidden; }
   .push-row { flex-wrap: wrap; }
   .push-btns { width: 100%; justify-content: flex-end; }
 }
+
+/* A gone eBay photo replaced by another photo of the same card (app.js
+   _photoLabel): said on the photo, so nobody takes it for the copy that sold. */
+.photo-sub-host { position: relative; }
+.photo-sub-tag {
+  position: absolute; left: 6px; bottom: 6px; z-index: 1;
+  padding: 2px 6px; border-radius: 999px;
+  font-size: 10px; font-weight: 600; line-height: 1.4; letter-spacing: .01em;
+  color: #fff; background: rgba(15, 23, 42, .78);
+  pointer-events: none; white-space: nowrap;
+}

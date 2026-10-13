@@ -1523,9 +1523,9 @@ function _statsThumbUrl(url) {
 // carries the placeholder, and onerror hides only the image: a dead photo
 // leaves the card glyph and the row keeps its shape, rather than showing a
 // browser's broken-image icon fifty times.
-function _statsThumb(url, alt) {
+function _statsThumb(url, alt, sale) {
   const u = _statsThumbUrl(url);
-  return '<span class="st-thumb">' + (u
+  return '<span class="st-thumb"' + _itemAttr(sale) + '>' + (u
     ? '<img class="st-img" src="' + escHtml(u) + '" alt="' + escHtml(alt || '') +
       '" loading="lazy" onerror="this.style.display=\'none\'" />'
     : '') + '</span>';
@@ -1540,7 +1540,7 @@ function _statsRow(board, r, i) {
   const rank = '<span class="st-rank">' + (i + 1) + '</span>';
   const q = r.query ? ' data-query="' + escHtml(r.query) + '"' : '';
   const photo = _STATS_WITH_PHOTOS[board]
-    ? _statsThumb(r.imageUrl, r.name || r.title)
+    ? _statsThumb(r.imageUrl, r.name || r.title, r)
     : '';
   const cls = photo ? 'st-row st-row-img' : 'st-row';
   const open = '<button class="' + cls + '"' + q + '>' + rank + photo;
@@ -2124,13 +2124,147 @@ function initSiteBanner() {
 const _PHOTO_GONE = 'data:image/svg+xml,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 84"><rect width="60" height="84" rx="6" fill="#e5e7eb"/>'
   + '<rect x="12" y="14" width="36" height="44" rx="3" fill="#cbd5e1"/></svg>');
+
+// A gone photo is replaced, best first, with (Oct 2026):
+//   1. a newer sale of the same card whose eBay photo is still up,
+//   2. a photo from a current eBay listing of the same card,
+//   3. a drawn tile naming the card,
+// found by /api/card-photo from the sale's item id. Every photo is eBay's own.
+//
+// A gone eBay photo usually does NOT fail to load: eBay answers 200 with an
+// 80x80 grey square at whatever size was asked for. So load is watched as
+// well as error, and an 80x80 eBay image counts as gone.
+const _isEbayImg = (src) => /^https:\/\/([a-z0-9-]+\.)*ebayimg\.com\//i.test(String(src || ''));
+function _ebayPhotoGone(img) {
+  return img.naturalWidth === 80 && img.naturalHeight === 80;
+}
+// The sale an image belongs to: data-item on it or a parent, else the eBay
+// item link the row already is.
+function _photoItemId(img) {
+  const tagged = img.closest('[data-item]');
+  if (tagged && /^\d{6,20}$/.test(tagged.dataset.item)) return tagged.dataset.item;
+  const a = img.closest('a[href*="/itm/"]');
+  const m = a && String(a.getAttribute('href')).match(/\/itm\/(?:[^/?#]*\/)?(\d{6,20})/);
+  return m ? m[1] : null;
+}
+// ` data-item="…"` for a sale, from its id or its eBay link.
+function _itemAttr(x) {
+  const id = x && (x.itemId || (String(x.itemUrl || '').match(/\/itm\/(?:[^/?#]*\/)?(\d{6,20})/) || [])[1]);
+  return id && /^\d{6,20}$/.test(String(id)) ? ` data-item="${escHtml(String(id))}"` : '';
+}
+
+const _cardPhotoReq = new Map();   // item id -> Promise of /api/card-photo's answer
+let _cardPhotoActive = 0;
+const _cardPhotoWait = [];
+function _cardPhoto(itemId) {
+  if (_cardPhotoReq.has(itemId)) return _cardPhotoReq.get(itemId);
+  // Four at a time: a board of old sales should not fire fifty at once.
+  const p = new Promise((resolve) => {
+    const run = () => {
+      _cardPhotoActive++;
+      fetch(`/api/card-photo?itemId=${encodeURIComponent(itemId)}`)
+        .then(r => (r.ok ? r.json() : null)).catch(() => null)
+        .then((d) => {
+          resolve(d);
+          _cardPhotoActive--;
+          const next = _cardPhotoWait.shift();
+          if (next) next();
+        });
+    };
+    if (_cardPhotoActive < 4) run(); else _cardPhotoWait.push(run);
+  });
+  _cardPhotoReq.set(itemId, p);
+  return p;
+}
+
+// The last resort: a card-shaped tile with the card's own details on it.
+function _cardTileSvg(card) {
+  const x = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const cut = (t, n) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+  const top = cut([card.year, card.set].filter(Boolean).join(' '), 20);
+  const name = String(card.player || '').split(/\s+/);
+  const last = name.length > 1 ? name.pop() : '';
+  const l1 = cut(name.join(' '), 14), l2 = cut(last, 14);
+  const num = card.number ? '#' + String(card.number).replace(/^#/, '') : '';
+  const par = cut(card.parallel && !/^base$/i.test(card.parallel) ? card.parallel : '', 18);
+  return 'data:image/svg+xml,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 168">'
+    + '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e293b"/><stop offset="1" stop-color="#334155"/></linearGradient></defs>'
+    + '<rect width="120" height="168" rx="10" fill="url(#g)"/>'
+    + '<rect x="7" y="7" width="106" height="154" rx="7" fill="none" stroke="#f59e0b" stroke-opacity=".55" stroke-width="1.5"/>'
+    + '<text x="60" y="30" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#cbd5e1">' + x(top) + '</text>'
+    + '<text x="60" y="76" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#f8fafc">' + x(l1) + '</text>'
+    + '<text x="60" y="94" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" font-weight="700" fill="#f8fafc">' + x(l2) + '</text>'
+    + (par ? '<text x="60" y="118" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" fill="#fbbf24">' + x(par) + '</text>' : '')
+    + (num ? '<text x="60" y="148" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#94a3b8">' + x(num) + '</text>' : '')
+    + '</svg>');
+}
+
+// Show an image again that a row's own onerror hid.
+function _photoReveal(img) {
+  img.style.display = '';
+  img.style.visibility = '';
+  if (img.parentElement) img.parentElement.classList.remove('no-img');
+}
+const _PHOTO_SOURCE_LABEL = { sale: 'Photo from a later sale', listing: 'Photo from a current listing' };
+function _photoLabel(img, source) {
+  const text = _PHOTO_SOURCE_LABEL[source];
+  if (!text) return;
+  img.title = text + ' of this card';
+  img.dataset.photoSource = source;
+  const host = img.parentElement;
+  // Only where there is room to read it; small thumbnails keep the tooltip.
+  if (!host || img.getBoundingClientRect().width < 90 || host.querySelector(':scope > .photo-sub-tag')) return;
+  host.classList.add('photo-sub-host');
+  const tag = document.createElement('span');
+  tag.className = 'photo-sub-tag';
+  tag.textContent = source === 'sale' ? 'Later sale photo' : 'Current listing photo';
+  host.appendChild(tag);
+}
+
+function _photoGone(img) {
+  const stage = img.dataset.photoFix;
+  if (stage === 'tile' || stage === 'none') return;
+  const id = _photoItemId(img);
+  if (stage === 'swapped') {
+    // The stand-in itself failed: the tile, if the card is known.
+    const card = img._photoCard;
+    img.dataset.photoFix = card ? 'tile' : 'none';
+    img.src = card ? _cardTileSvg(card) : _PHOTO_GONE;
+    return;
+  }
+  const size = (String(img.currentSrc || img.src).match(/\/s-l(\d+)\./) || [])[1];
+  img.dataset.photoFix = 'pending';
+  img.src = _PHOTO_GONE;
+  if (!id) { img.dataset.photoFix = 'none'; return; }
+  _cardPhoto(id).then((d) => {
+    if (!img.isConnected) return;
+    img._photoCard = (d && d.card) || null;
+    if (d && d.photo && d.photo.url) {
+      img.dataset.photoFix = 'swapped';
+      img.src = size ? String(d.photo.url).replace(/\/s-l\d+\./, `/s-l${size}.`) : d.photo.url;
+      _photoReveal(img);
+      _photoLabel(img, d.photo.source);
+    } else if (d && d.card && d.card.player) {
+      img.dataset.photoFix = 'tile';
+      img.src = _cardTileSvg(d.card);
+      img.title = 'No photo of this card is up on eBay right now';
+      _photoReveal(img);
+    } else {
+      img.dataset.photoFix = 'none';
+    }
+  });
+}
+
 document.addEventListener('error', (e) => {
   const img = e.target;
-  if (!img || img.tagName !== 'IMG' || img.dataset.archiveTried) return;
-  const src = img.currentSrc || img.src || '';
-  if (!/^https:\/\/([a-z0-9-]+\.)*ebayimg\.com\//i.test(src)) return;
-  img.dataset.archiveTried = '1';
-  img.src = _PHOTO_GONE;
+  if (!img || img.tagName !== 'IMG') return;
+  if (img.dataset.photoFix === 'swapped' || _isEbayImg(img.currentSrc || img.src)) _photoGone(img);
+}, true);
+document.addEventListener('load', (e) => {
+  const img = e.target;
+  if (!img || img.tagName !== 'IMG' || !_isEbayImg(img.currentSrc || img.src)) return;
+  if (_ebayPhotoGone(img)) _photoGone(img);
 }, true);
 
 // ---- Sports ----
@@ -4987,7 +5121,7 @@ function buildCard(item, opts = {}) {
     : '<div class="for-sale-badge">FOR SALE</div>';
 
   const imageHtml = item.imageUrl
-    ? `<img src="${escHtml(item.imageUrl)}" alt="${escHtml(item.title)}" loading="lazy" />`
+    ? `<img src="${escHtml(item.imageUrl)}" alt="${escHtml(item.title)}" loading="lazy"${_itemAttr(item)} />`
     : `<div class="no-image">
          <span class="no-image-icon">&#127183;</span>
          <span>No image</span>
@@ -18065,7 +18199,7 @@ function _caDate(d) {
 // One row per listing. Shared by both lists so sold and for-sale look alike.
 function _caRow(r, right) {
   const thumb = r.imageUrl
-    ? `<img class="ca-row-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />`
+    ? `<img class="ca-row-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy"${_itemAttr(r)} />`
     : `<div class="ca-row-img ca-row-noimg"><span>&#127183;</span></div>`;
   return `<a class="ca-row" href="${escHtml(epnUrl(r.itemUrl))}" target="_blank" rel="noopener">
     ${thumb}
