@@ -176,8 +176,8 @@ const check = (label, ok, detail) => {
     check('the Worker no longer serves saved copies: /api/photo is gone (410)',
       /url\.pathname === '\/api\/photo'/.test(worker) && /const PHOTO_ARCHIVE_RETIRED = true;/.test(worker)
         && /if \(PHOTO_ARCHIVE_RETIRED\) \{\s*return new Response\('Photo archive retired', \{ status: 410/.test(worker));
-    check('  ...and the page shows a placeholder, once, when an eBay photo fails to load',
-      /img\.dataset\.archiveTried = '1';\s*img\.src = _PHOTO_GONE;/.test(app) && !/img\.src = '\/api\/photo/.test(app));
+    check('  ...and a gone eBay photo is replaced from eBay itself, never from a copy (card-photo.test)',
+      /fetch\(`\/api\/card-photo\?itemId=/.test(app) && /img\.src = _PHOTO_GONE;/.test(app) && !/img\.src = '\/api\/photo/.test(app));
 
     {
       process.env.CF_WORKER = '1';

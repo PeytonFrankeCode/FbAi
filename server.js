@@ -641,6 +641,9 @@ const RL_DISABLED = process.env.DISABLE_RATE_LIMIT === '1';
 const RL_TIERS = [
   { name: 'scan', minute: 20, hour: 200, match: (p) => p === '/api/scan-card' },
   { name: 'search', minute: 60, hour: 600, match: (p) => p === '/api/search' },
+  // A page of old sales asks once per gone photo, and each may cost an eBay
+  // listing search on a miss.
+  { name: 'photo', minute: 120, hour: 1200, match: (p) => p === '/api/card-photo' },
   // Each signup sends an email: a script must not turn the form into a way
   // to mail strangers, or into a bill.
   { name: 'digest', minute: 3, hour: 20, match: (p) => p === '/api/digest/subscribe' },
@@ -14644,6 +14647,129 @@ app.get('/api/card-forsale', async (req, res) => {
   }
 });
 
+// ---- /api/card-photo ----
+// A stand-in photo for a sale whose own eBay photo is gone.
+//
+// eBay removes listing photos about 90 days after a sale, and we no longer
+// keep copies of sellers' photos (PHOTO_ARCHIVE_RETIRED). For a card that
+// sells every week that is invisible: the newer sales have photos. For one
+// that sells once a quarter, every row went grey. So, by the sale's item id:
+//
+//   1. a newer sale of the same card whose eBay photo is still up;
+//   2. else a photo from a current eBay listing of the same card;
+//   3. else nothing, plus the card's details, so the page can draw a tile.
+//
+// Every photo is a link to eBay's own copy. Nothing is stored but the link.
+const CARD_PHOTO_TTL = 24 * 3600;          // a found photo, re-checked daily
+const CARD_PHOTO_MISS_TTL = 6 * 3600;      // nothing found: try again later
+const CARD_PHOTO_SALE_DAYS = 85;           // eBay keeps photos about 90 days
+const CARD_PHOTO_CHECKS = 3;               // newer sales whose photo is tested
+
+// Whether an eBay photo is still up. A removed one is NOT an error: eBay
+// answers 200 with an 80x80 grey stand-in, under 1 KB at any size (696 bytes
+// as webp). A real photo at 140px is several KB. Fetches the small copy.
+function _ebayThumb(url) {
+  return String(url || '').replace(/\/s-l\d+\.(jpg|jpeg|png|webp)/i, '/s-l140.webp');
+}
+async function _ebayPhotoLive(url, fetchFn = fetch) {
+  if (!/^https:\/\/([a-z0-9-]+\.)*ebayimg\.com\//i.test(String(url || ''))) return false;
+  try {
+    const r = await fetchFn(_ebayThumb(url));
+    if (!r || !r.ok) return false;
+    const buf = await r.arrayBuffer();
+    return buf.byteLength > 1000;
+  } catch (_) { return false; }
+}
+
+// Pure: does a listing title name this card number? "#309" always counts; a
+// bare "309" does for numbers of three or more characters, not after a "/"
+// (a print run) and not inside a longer number. A bare "7" is any 7 in the
+// title, so a short number has to carry its "#".
+function _titleHasCardNumber(title, num) {
+  const n = String(num || '').replace(/^#/, '').trim().replace(/[^a-z0-9-]/gi, '');
+  if (!n) return false;
+  const t = String(title || '');
+  if (new RegExp(`(?:#|\\bno\\.\\s*)${n}(?![a-z0-9])`, 'i').test(t)) return true;
+  return n.length >= 3 && new RegExp(`(?<![/a-z0-9-])${n}(?![a-z0-9]|/)`, 'i').test(t);
+}
+
+// Pure: which of a card's other sales to try, best first. The same grade
+// first (a slab's photo for a slab), then newest.
+function _cardPhotoCandidates(seed, rows) {
+  const g = (r) => `${r.grader || ''}|${r.grade == null ? '' : r.grade}`;
+  const want = g(seed);
+  return (rows || [])
+    .filter(r => r.image_url && String(r.item_id) !== String(seed.item_id))
+    .sort((a, b) => ((g(b) === want) - (g(a) === want)) || String(b.sold_date).localeCompare(String(a.sold_date)));
+}
+
+async function _cardPhotoLookup(db, itemId) {
+  const seed = await db.prepare(
+    `SELECT item_id, player, year, set_name, parallel, card_number, grader, grade, confidence
+       FROM sales WHERE item_id = ?`).bind(itemId).first();
+  if (!seed || !seed.player || (seed.confidence || 0) < NFLDB_MIN_CONFIDENCE) return { photo: null, card: null };
+  const card = { player: _boardPlayerName(seed.player), year: seed.year || null, set: seed.set_name || null,
+                 number: seed.card_number || null, parallel: seed.parallel || null };
+
+  // 1. A newer sale of the same card. Only when the card number is known:
+  // without it "same player, set and parallel" is a whole set's worth of
+  // different cards. player = ? is served by idx_sales_player.
+  if (String(seed.card_number || '').trim()) {
+    const since = new Date(Date.now() - CARD_PHOTO_SALE_DAYS * 86400000).toISOString().slice(0, 10);
+    const out = await db.prepare(
+      `SELECT item_id, image_url, sold_date, grader, grade FROM sales
+        WHERE player = ? AND year IS ? AND set_name IS ? AND card_number = ?
+          AND COALESCE(parallel, '') = ? AND image_url IS NOT NULL AND sold_date >= ?
+          AND confidence >= ?
+        ORDER BY sold_date DESC LIMIT 12`)
+      .bind(seed.player, seed.year, seed.set_name, seed.card_number, seed.parallel || '', since, NFLDB_MIN_CONFIDENCE).all();
+    const cands = _cardPhotoCandidates(seed, out && out.results).slice(0, CARD_PHOTO_CHECKS);
+    for (const c of cands) {
+      if (await _ebayPhotoLive(c.image_url)) {
+        return { photo: { url: c.image_url, source: 'sale', soldDate: c.sold_date || null }, card };
+      }
+    }
+  }
+
+  // 2. A current listing of the same card: live by definition.
+  const query = [seed.year, seed.set_name, seed.player, seed.parallel].filter(Boolean).join(' ').trim();
+  if (query) {
+    // eBay down or out of quota: the tile below still has the card to draw.
+    const data = await fetchEbayItems(query, 24, 'forsale', 'card-photo').catch(() => ({ results: [] }));
+    let list = filterByVariant(data.results || [], query, { strict: true }).filter(r => r.imageUrl);
+    const num = String(seed.card_number || '').replace(/^#/, '').trim();
+    if (num) {
+      // The number is how a listing says which card of the set it is. Without
+      // it in the title, a listing may be another card of the same set, so it
+      // is not used at all.
+      list = list.filter(r => _titleHasCardNumber(r.title, num));
+    }
+    if (list.length) {
+      return { photo: { url: list[0].imageUrl, source: 'listing', itemUrl: list[0].itemUrl || null }, card };
+    }
+  }
+  return { photo: null, card };
+}
+
+app.get('/api/card-photo', async (req, res) => {
+  const itemId = String(req.query.itemId || '').trim();
+  if (!/^[0-9]{6,20}$/.test(itemId)) return res.status(400).json({ error: 'itemId is required' });
+  const db = getNflDb();
+  if (!db) return res.json({ photo: null, card: null });
+  const key = `cardphoto:v1:${itemId}`;
+  const cached = await cacheGet(key);
+  if (cached) return res.json(_fromCache(cached));
+  try {
+    const out = await _cardPhotoLookup(db, itemId);
+    cachePut(key, out, out.photo ? CARD_PHOTO_TTL : CARD_PHOTO_MISS_TTL);
+    res.json(out);
+  } catch (err) {
+    // A missing photo is never an error the page should show.
+    console.error('[CardPhoto]', err && err.message);
+    res.json({ photo: null, card: null });
+  }
+});
+
 // ---- /api/sold-history ----
 // A card's accumulated sale history from our own archive. Reads only what we
 // already stored — never calls the provider, so it costs nothing and works
@@ -19047,7 +19173,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
