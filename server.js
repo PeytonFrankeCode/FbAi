@@ -11156,9 +11156,27 @@ async function _computeSoldStats(db, days, sport = 'football') {
   } catch (err) {
     // A stats widget must never break the page it sits on.
     console.error('[SoldStats]', err && err.message);
+    _soldStatsLastError.set(`${days}${_ssSport(sport)}`, String((err && err.message) || err).slice(0, 300));
     return { available: false, days, error: 'stats unavailable' };
   }
 }
+const _soldStatsLastError = new Map();
+
+// Which boards are current, which are served from an older copy, and why a
+// failed build failed. Read-only: KV reads only, no D1.
+app.get('/api/debug/sold-stats-builds', async (req, res) => {
+  const out = [];
+  for (const sport of SOLD_STATS_SPORTS) {
+    for (const days of SOLD_STATS_PERIODS) {
+      const [cur, last, fail] = await Promise.all([
+        cacheGet(SOLD_STATS_KEY(days, sport)), cacheGet(SOLD_STATS_LAST_KEY(days, sport)),
+        cacheGet(SOLD_STATS_FAIL_KEY(days, sport))]);
+      out.push({ sport, days, current: !!cur, servedFrom: (cur || last || {}).generatedAt || null,
+                 failedAt: fail ? fail.at : null, error: fail ? fail.error : null });
+    }
+  }
+  res.json({ boards: out, backoffHours: SOLD_STATS_FAIL_TTL / 3600 });
+});
 
 app.get('/api/sold-stats', async (req, res) => {
   const days = SOLD_STATS_PERIODS.includes(parseInt(req.query.days, 10))
@@ -11180,7 +11198,7 @@ app.get('/api/sold-stats', async (req, res) => {
   // built them, and the new ones are built behind the visitor.
   const last = await cacheGet(SOLD_STATS_LAST_KEY(days, sport)) || await cacheGet(SOLD_STATS_PREV_KEY(days, sport));
   if (last && last.available) {
-    if (!_soldStatsInFlight.has(`${days}${_ssSport(sport)}`)) {
+    if (!_soldStatsInFlight.has(`${days}${_ssSport(sport)}`) && !(await _soldStatsBackingOff(days, sport))) {
       const p = _soldStatsBuild(db, days, sport)
         .catch(err => console.error('[SoldStats] background build failed', days, err && err.message));
       if (typeof globalThis.__kvWaitUntil === 'function') globalThis.__kvWaitUntil(p);
@@ -11200,6 +11218,28 @@ async function _soldStatsStore(days, payload, sport) {
   await cachePut(SOLD_STATS_KEY(days, sport), payload, SOLD_STATS_TTL);
   await cachePut(SOLD_STATS_LAST_KEY(days, sport), payload, SOLD_STATS_LAST_TTL);
 }
+// A board whose build failed is not tried again for a while.
+//
+// A build is five passes over `sales`, and on the live table the 90 and
+// 365-day football boards read about 3 million rows. D1 runs one query at a
+// time, so while a build runs every sold search waits behind it: searches
+// that take 1-3 s took 27-29 s just after a cron tick (measured Oct 13). Once
+// a build failed nothing remembered it, so the gap warm retried it on every
+// tick, 96 times a day, and every home-page visit started another one, each
+// failing the same way and stalling searches each time. The last good boards
+// are already being served meanwhile, so waiting costs nobody anything.
+// The daily warm still tries regardless, and the error is kept for
+// /api/debug/sold-stats-builds.
+const SOLD_STATS_FAIL_KEY = (days, sport) => `soldstats:fail:${days}${_ssSport(sport)}`;
+const SOLD_STATS_FAIL_TTL = 6 * 60 * 60;
+async function _soldStatsBackingOff(days, sport) {
+  return !!(await cacheGet(SOLD_STATS_FAIL_KEY(days, sport)).catch(() => null));
+}
+async function _soldStatsNoteFailure(days, sport) {
+  const slot = `${days}${_ssSport(sport)}`;
+  await cachePut(SOLD_STATS_FAIL_KEY(days, sport),
+    { at: new Date().toISOString(), error: _soldStatsLastError.get(slot) || 'unavailable' }, SOLD_STATS_FAIL_TTL);
+}
 // One build per period at a time, stored only when it worked.
 function _soldStatsBuild(db, days, sport = 'football') {
   const slot = `${days}${_ssSport(sport)}`;
@@ -11207,6 +11247,7 @@ function _soldStatsBuild(db, days, sport = 'football') {
   const p = (async () => {
     const payload = await _computeSoldStats(db, days, sport);
     if (payload.available) await _soldStatsStore(days, payload, sport);
+    else await _soldStatsNoteFailure(days, sport);
     return payload;
   })().finally(() => _soldStatsInFlight.delete(slot));
   _soldStatsInFlight.set(slot, p);
@@ -11373,12 +11414,17 @@ async function _warmSoldStats({ onlyMissing = false } = {}) {
           done.push(`${tag}${days}d:cached`);
           continue;
         }
+        if (await _soldStatsBackingOff(days, sport)) {
+          done.push(`${tag}${days}d:backoff`);
+          continue;
+        }
       }
       const payload = await _computeSoldStats(db, days, sport);
       if (!payload.available) {
         // Do not overwrite a good cached payload with an unavailable one. A
         // transient D1 failure would otherwise replace working boards with an
         // error for a whole day.
+        await _soldStatsNoteFailure(days, sport);
         done.push(`${tag}${days}d:skipped`);
         continue;
       }
