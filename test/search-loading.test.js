@@ -1,4 +1,4 @@
-// The search loader: one search owns the screen, a hung request is retried,
+// The search loader: one search owns the screen, a slow request is waited on,
 // and nothing on screen waits on the main thread to keep moving.
 //
 // Each rule here fixed something measured in Chromium: the older of two
@@ -46,21 +46,23 @@ const hangs = (signal) => new Promise((_, reject) => signal.addEventListener('ab
 (async () => {
   {
     let tries = 0;
-    const f = make((url, init) => (++tries === 1 ? hangs(init.signal) : Promise.resolve({ ok: true, tries })), 40);
-    const r = await f('/api/x', {}, 1);
-    check('a try that hangs is given up on and retried once', r.tries === 2 && tries === 2);
+    const f = make((url, init) => { tries++; return hangs(init.signal); }, 40);
+    const err = await f('/api/x', {}, 1).catch(e => e);
+    check('a try still waiting at the limit is reported, not restarted from zero', tries === 1 && /taking too long/.test(err.message), err.message);
   }
   {
     let tries = 0;
-    const f = make((url, init) => { tries++; return hangs(init.signal); }, 30);
-    const err = await f('/api/x', {}, 1).catch(e => e);
-    check('  ...a second hang is reported plainly, not spun on', tries === 2 && /taking too long/.test(err.message), err.message);
+    const f = make(() => (++tries === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve({ ok: true, tries })), 1000);
+    const r = await f('/api/x', {}, 1);
+    check('  ...a dropped connection is sent again', r.tries === 2 && tries === 2);
   }
   {
     const f = make(() => Promise.reject(new TypeError('Failed to fetch')), 1000);
     const err = await f('/api/x', {}, 1).catch(e => e);
-    check('  ...a dropped connection is retried, then reported', /Could not reach the server/.test(err.message));
+    check('  ...and a second drop is reported plainly', /Could not reach the server/.test(err.message));
   }
+  check('  ...and the limit leaves room for a search queued behind background work',
+    Number((js.match(/const SEARCH_ATTEMPT_MS = (\d+)/) || [])[1]) >= 30000);
   {
     make.state = { seq: 1, ctl: new AbortController() };
     const f = make((url, init) => hangs(init.signal), 5000);

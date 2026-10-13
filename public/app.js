@@ -1890,7 +1890,13 @@ function hideSkeleton() {
 let _searchSeq = 0;
 let _searchCtl = null;
 let _searchSlowTimers = [];
-const SEARCH_ATTEMPT_MS = 12000;   // per try (searches take 0.5–3 s); a hung one gets one retry
+// How long a search may take before it is reported. Most answer in 0.5–3 s,
+// but one queued behind the database's background work can take 15–20 s, and
+// a try abandoned at 12 s and sent again started that wait over from zero:
+// the second try was as slow as the first, and the search failed at 24 s
+// when it would have answered at 18. So one try is given the whole budget,
+// and only a dropped connection, which never reached the server, is re-sent.
+const SEARCH_ATTEMPT_MS = 35000;
 
 function _beginSearch() {
   const seq = ++_searchSeq;
@@ -1902,6 +1908,7 @@ function _beginSearch() {
   _searchSlowTimers = [
     setTimeout(() => { if (seq === _searchSeq) loadingText.textContent = 'Still searching, checking more sales…'; }, 4000),
     setTimeout(() => { if (seq === _searchSeq) loadingText.textContent = 'Taking longer than usual, hang tight…'; }, 9000),
+    setTimeout(() => { if (seq === _searchSeq) loadingText.textContent = 'Almost there, the sales database is busy…'; }, 18000),
   ];
   return seq;
 }
@@ -1918,8 +1925,8 @@ function _endSearch(seq) {
 }
 
 // fetch for a search: cancelled when a newer search starts (throws with
-// .superseded), and a try that hangs past SEARCH_ATTEMPT_MS or drops on a
-// flaky connection is retried once before it is reported.
+// .superseded). A try that drops on a flaky connection is retried once; one
+// still waiting at SEARCH_ATTEMPT_MS is reported, not sent again (see above).
 async function _searchFetch(url, init, seq) {
   for (let attempt = 1; ; attempt++) {
     const ctl = new AbortController();
@@ -1930,11 +1937,10 @@ async function _searchFetch(url, init, seq) {
       return await fetch(url, { ...init, signal: ctl.signal });
     } catch (err) {
       if (_searchStale(seq)) { const e = new Error('superseded'); e.superseded = true; throw e; }
-      if (attempt >= 2) {
-        throw new Error(err && err.name === 'AbortError'
-          ? 'The search is taking too long. Check your connection and try again.'
-          : 'Could not reach the server. Check your connection and try again.');
+      if (err && err.name === 'AbortError') {
+        throw new Error('The search is taking too long. Try again in a moment.');
       }
+      if (attempt >= 2) throw new Error('Could not reach the server. Check your connection and try again.');
     } finally {
       clearTimeout(timer);
       if (_searchCtl) _searchCtl.signal.removeEventListener('abort', onCancel);
