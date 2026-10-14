@@ -10078,3 +10078,17 @@ html.install-open { overflow: hidden; }
    added sales are, and each one is marked on the card. */
 .fallback-badge { display: inline; white-space: normal; line-height: 1.5; background: rgba(245, 158, 11, .14); color: #fbbf24; }
 .sold-badge.similar-badge { background: #b45309; }
+
+/* The logo in each theme (owner, Oct 2026). logo.png is drawn for a light
+   background, and on the dark theme its charcoal all but vanished, even
+   screen-blended. logo-dark.png (scripts/build-logo-dark.py) is the same
+   logo with the charcoal turned soft white; it needs no blend. Each place
+   the logo goes holds both, and the theme shows one. */
+.logo-for-light { display: none; }
+[data-theme="light"] .logo-for-dark { display: none; }
+[data-theme="light"] .logo-for-light { display: inline; }
+/* The header is dark in both themes: the light theme's is a deep green
+   band, where even the brand green sinks, so it gets logo-on-green.png
+   (the green lifted to mint). Neither is blended. */
+.header-logo, [data-theme="light"] .header-logo { mix-blend-mode: normal; filter: none; }
+.footer-logo-img.logo-for-dark { mix-blend-mode: normal; opacity: 1; filter: none; }
