@@ -25,7 +25,9 @@ let n = 500000000;
 const add = (title, cents, d, player, year, set, num) => { const id = String(n++); ins.run(id, iso(d), title, cents, player, year, set, num); return id; };
 
 for (let i = 0; i < 12; i++) add(`1986 Topps Jerry Rice #161 RC 49ers`, 5000 + i * 100, -i - 1, 'Jerry Rice', '1986', 'Topps', '161');
-const sharp = add('Sharp 1986 Topps San Francisco 49ers Jerry Rice Rookie Card RC GOAT', 4800, -2, 'Jerry Rice', '1986', 'Topps', '');
+// The live sale, word for word: no number, and "Hall of Fame" at the end,
+// which read as an insert that 1986 Topps does not have.
+const sharp = add('Sharp 1986 Topps San Francisco 49ers Jerry Rice Rookie Card RC GOAT Hall of Fame', 4800, -2, 'Jerry Rice', '1986', 'Topps', '');
 // Two cards of one player in one set, sold evenly: no number is "the" card.
 for (let i = 0; i < 6; i++) add(`1990 Score Barry Sanders #${i % 2 ? '255' : '336'}`, 900, -i - 1, 'Barry Sanders', '1990', 'Score', i % 2 ? '255' : '336');
 const sanders = add('1990 Score Barry Sanders Rookie Detroit Lions', 900, -3, 'Barry Sanders', '1990', 'Score', '');
@@ -51,7 +53,7 @@ const open = async (id) => (await fetch(`http://127.0.0.1:${port}/api/card-analy
 
 (async () => {
   const r = await open(sharp);
-  check('a sale whose title has no number opens its card\'s whole history',
+  check('a sale whose title has no number (and says "Hall of Fame") opens its card\'s whole history',
     r.available && r.totalSales === 13 && r.card && r.card.cardNumber === '161', `${r.totalSales} sales, #${r.card && r.card.cardNumber}`);
 
   const s2 = await open(sanders);
