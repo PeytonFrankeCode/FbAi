@@ -4682,9 +4682,17 @@ function _buildVersionCard({ v, items }) {
   // opened on one of its own sales — a typically priced raw sale where there
   // is one — since that view resolves a sale to its card and charts every
   // sale of it we hold, by grade. Only our own rows can be resolved that way.
+  //
+  // A sale whose title says the card's number first: one that never does
+  // ("Sharp 1986 Topps 49ers Jerry Rice Rookie Card") is stored with no
+  // number, and its page could hold only itself: "1 sale" under a box that
+  // said 31.
   const histPool = clean.filter(r => r.source === 'nflcarddb' && r.itemId && r.hasAnalysis);
-  const histFrom = (raw.length ? histPool.filter(isRaw) : []).concat(histPool)
-    .sort((a, b) => Math.abs(parseFloat(a.price) - median) - Math.abs(parseFloat(b.price) - median))[0] || null;
+  const num = String((v.card && v.card.number) || '').replace(/^#/, '').toLowerCase();
+  const saysNum = (r) => !num || new RegExp(`#\\s*${num.replace(/[^a-z0-9-]/g, '')}(?![0-9a-z])`, 'i').test(String(r.title || ''));
+  const histFrom = histPool.slice()
+    .sort((a, b) => (saysNum(b) - saysNum(a)) || (raw.length ? isRaw(b) - isRaw(a) : 0)
+      || Math.abs(parseFloat(a.price) - median) - Math.abs(parseFloat(b.price) - median))[0] || null;
 
   const card = document.createElement('div');
   card.className = 'card version-card' + (currentParallelFilter === v.key ? ' active' : '');

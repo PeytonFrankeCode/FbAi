@@ -13224,7 +13224,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v40: a grading population ("Pop 1/1") is not a print run.
 // v41: Tiffany is a parallel wherever it is written; teams are not players.
 // v42: a poster of a card is not the card.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v44';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v45';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -13625,6 +13625,34 @@ async function _similarVariantEstimate(db, seed) {
   };
 }
 
+// Whether a title names a card number: "#161", "No. 161", "RC-12". A bare
+// number is not counted (it may be a year, a grade or a print run), so a
+// title with only those still has its number inferred.
+function _titleNamesANumber(title) {
+  return /#\s*[a-z]{0,4}-?\d|\bno\.\s*\d/i.test(String(title || ''));
+}
+// The card number most of a player's sales in one year and set carry, when
+// it is nearly all of them: 85% of at least 5 numbered sales. A set where the
+// player has two cards (a base card and a record-breaker) splits its sales
+// and names none.
+const DOMINANT_NUMBER_SHARE = 0.85;
+const DOMINANT_NUMBER_MIN = 5;
+async function _dominantCardNumber(db, seed) {
+  if (!seed || !seed.player) return null;
+  const eq = (col, val) => (val == null || val === '' ? `(${col} IS NULL OR ${col} = '')` : `${col} = ?`);
+  const binds = [seed.player, NFLDB_MIN_CONFIDENCE];
+  for (const v of [seed.year, seed.set_name]) if (v != null && v !== '') binds.push(v);
+  const out = await db.prepare(
+    `SELECT card_number AS n, COUNT(*) AS c FROM sales
+      WHERE player = ? AND confidence >= ? AND ${eq('year', seed.year)} AND ${eq('set_name', seed.set_name)}
+        AND card_number IS NOT NULL AND card_number <> ''
+      GROUP BY card_number ORDER BY c DESC LIMIT 5`).bind(...binds).all();
+  const rows = (out && out.results) || [];
+  const total = rows.reduce((a, r) => a + (Number(r.c) || 0), 0);
+  if (!rows.length || total < DOMINANT_NUMBER_MIN) return null;
+  return rows[0].c / total >= DOMINANT_NUMBER_SHARE ? String(rows[0].n) : null;
+}
+
 async function _cardAnalysisRoute(req, res) {
   const itemId = String(req.query.itemId || '').trim();
   if (!itemId) return res.status(400).json({ error: 'itemId is required' });
@@ -13704,6 +13732,16 @@ async function _cardAnalysisRoute(req, res) {
     // year, one set, one card number — so the parallel is resolved per row
     // below, from the column where it exists and from the title where it does
     // not, and the grouping happens in JS where a title can actually be read.
+    // A sale whose title never says the number ("Sharp 1986 Topps 49ers Jerry
+    // Rice Rookie Card RC GOAT") is stored with none, and its page grouped it
+    // with the other number-less sales: one, itself, where the card has 467.
+    // When the title has no number at all and one number accounts for nearly
+    // all of this player's sales in this year and set, it is that card.
+    let inferredNumber = null;
+    if ((seed.card_number == null || seed.card_number === '') && !_titleNamesANumber(seed.title)) {
+      inferredNumber = await _dominantCardNumber(db, seed).catch(() => null);
+      if (inferredNumber) seed.card_number = inferredNumber;
+    }
     const eq = (col, val) => val == null || val === '' ? `${col} IS NULL OR ${col} = ''` : `${col} = ?`;
     // A player field with a team glued on ("Earl Campbell / Houston Oilers")
     // is still the player's card, so his plainly named sales count too. A
@@ -13719,12 +13757,14 @@ async function _cardAnalysisRoute(req, res) {
       seedPlayers.length > 1 ? `player IN (${seedPlayers.map(() => '?').join(', ')})` : 'player = ?',
       `(${eq('year', seed.year)})`,
       `(${eq('set_name', seed.set_name)})`,
-      `(${eq('card_number', seed.card_number)})`,
+      // The opened sale stays on its own page when its number was inferred.
+      inferredNumber ? `(card_number = ? OR item_id = ?)` : `(${eq('card_number', seed.card_number)})`,
     ].join(' AND ');
     const binds = [NFLDB_MIN_CONFIDENCE, ...seedPlayers];
     for (const v of [seed.year, seed.set_name, seed.card_number]) {
       if (v != null && v !== '') binds.push(v);
     }
+    if (inferredNumber) binds.push(seed.item_id);
 
     const img = await _nflHasImageColumn(db);
     // A card's price chart is the clearest place an accepted offer misleads:
@@ -19279,7 +19319,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
