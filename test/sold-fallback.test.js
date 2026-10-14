@@ -29,6 +29,7 @@ add('2024 Panini Mosaic Troy Franklin Orange /25', 4000, -3, 'Mosaic', 'Orange')
 add('2024 Panini Select Troy Franklin Tie-Dye /25', 4500, -12, 'Select', 'Tie-Dye');
 add('2024 Panini Prizm Troy Franklin Blue /199', 1500, -2, 'Prizm', 'Blue');
 add('2024 Panini Prizm Troy Franklin #333 Rookie', 300, -1);
+add('2024 National Treasures Troy Franklin Rookie Patch Auto /6', 40000, -1, 'National Treasures');
 add('2024 Donruss Rated Rookie Troy Franklin #340', 250, -4, 'Donruss');
 add('2023 Bowman Chrome University Troy Franklin #77', 200, -6, 'Bowman Chrome');
 // Not him.
@@ -61,6 +62,10 @@ const call = async (q) => (await fetch(`http://127.0.0.1:${port}/api/direct-sear
     `${r.fallbackNote} | ${runs.join(',')}`);
   check('  ...every one of them his, and marked as similar', (r.results || []).every(x => /Troy Franklin/.test(x.title))
     && (r.results || []).filter(x => !x.similar).length === (r.exactCount || 0));
+  check('  ...and no autograph or patch card when the search asked for none',
+    !(r.results || []).some(x => /auto|patch/i.test(x.title)));
+  const ra = await call('2024 Troy Franklin auto /5');
+  check('  ...but an autograph search gets its nearest autos', (ra.results || []).some(x => /Patch Auto \/6/.test(x.title)));
   check('  ...with no value box priced off other cards', r.approximateValue === null && r.searchType === 'broadened');
 
   const r2 = await call('2024 Troy Franklin Superfractor 1/1');
