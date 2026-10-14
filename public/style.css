@@ -10073,3 +10073,8 @@ html.install-open { overflow: hidden; }
   color: #fff; background: rgba(15, 23, 42, .78);
   pointer-events: none; white-space: nowrap;
 }
+
+/* Sold search fallback (app.js fetchDirectSearch): the note says what the
+   added sales are, and each one is marked on the card. */
+.fallback-badge { display: inline; white-space: normal; line-height: 1.5; background: rgba(245, 158, 11, .14); color: #fbbf24; }
+.sold-badge.similar-badge { background: #b45309; }

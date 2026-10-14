@@ -3076,7 +3076,7 @@ async function fetchDirectSearch(query) {
       throw new Error(msg);
     }
 
-    const { mock, searchType, approximateValue, relaxedNote } = data;
+    const { mock, searchType, approximateValue, relaxedNote, fallbackNote } = data;
     // Only the sports turned on; says so when a testing sport is what came back.
     const sportView = _sportFilterResults(Array.isArray(data.results) ? data.results : []);
     const results = sportView.results;
@@ -3106,9 +3106,12 @@ async function fetchDirectSearch(query) {
       approxSection.classList.remove('hidden');
     }
 
-    // Stats bar
-    if (results.length > 0) {
-      renderStatsBar(isSold ? _withoutDroppedOffers(results) : results, isSold);
+    // Stats bar. Over the card's own sales only: the similar sales added when
+    // there were too few (fallbackNote) are other cards, and their average
+    // is not this card's.
+    const statRows = fallbackNote ? results.filter(r => !r.similar) : results;
+    if (statRows.length > 0) {
+      renderStatsBar(isSold ? _withoutDroppedOffers(statRows) : statRows, isSold);
       sortControls.classList.remove('hidden');
       // Reset sort to default
       document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
@@ -3118,6 +3121,7 @@ async function fetchDirectSearch(query) {
     const mockBadge = mock ? ' <span class="mock-badge">DEMO DATA</span>' : '';
     let typeLabel = searchType === 'broadened' ? ' (similar cards)' : '';
     if (searchType === 'relaxed' && relaxedNote) typeLabel = ` <span class="relaxed-badge">${escHtml(relaxedNote)}</span>`;
+    if (fallbackNote) typeLabel = ` <span class="relaxed-badge fallback-badge">${escHtml(fallbackNote)}</span>`;
     const listingWord = isSold ? 'sold listing' : 'listing';
     meta.innerHTML = `${results.length} ${listingWord}${results.length !== 1 ? 's' : ''} for &ldquo;${escHtml(query)}&rdquo;${typeLabel}${mockBadge}${_metaAlertBtn(query)}`;
     meta.classList.remove('hidden');
@@ -5294,8 +5298,10 @@ function buildCard(item, opts = {}) {
     ? `<span class="card-date">Ends: ${dateStr}</span>`
     : '';
 
+  // A sale added because the card itself had too few (/api/direct-search's
+  // fallback) says so on the card, not only in the line above the list.
   const badgeHtml = isSold
-    ? '<div class="sold-badge">SOLD</div>'
+    ? (item.similar ? '<div class="sold-badge similar-badge" title="A close card, not this exact one">SIMILAR</div>' : '<div class="sold-badge">SOLD</div>')
     : '<div class="for-sale-badge">FOR SALE</div>';
 
   const imageHtml = item.imageUrl
