@@ -1615,6 +1615,25 @@ async function _attachSlabScores(db, rows) {
 // is that the bill scales with the square of success unless the reads are cut.
 //
 // Three things below, cheapest first. None of them changes what a user sees.
+// See fetchViaNflCardDb: never required of a title, only ranked on.
+const SOLD_SOFT_WORDS = new Set([
+  'rc', 'rookie', 'rookies', 'card', 'cards', 'nfl', 'nba', 'mlb', 'football', 'basketball', 'baseball',
+  // NFL
+  'cardinals', 'falcons', 'ravens', 'bills', 'panthers', 'bears', 'bengals', 'browns', 'cowboys', 'broncos',
+  'lions', 'packers', 'texans', 'colts', 'jaguars', 'chiefs', 'raiders', 'chargers', 'rams', 'dolphins',
+  'vikings', 'patriots', 'saints', 'giants', 'jets', 'eagles', 'steelers', '49ers', 'niners', 'seahawks',
+  'buccaneers', 'bucs', 'titans', 'commanders',
+  // NBA
+  'hawks', 'celtics', 'nets', 'hornets', 'bulls', 'cavaliers', 'cavs', 'mavericks', 'mavs', 'nuggets',
+  'pistons', 'warriors', 'rockets', 'pacers', 'clippers', 'lakers', 'grizzlies', 'bucks',
+  'timberwolves', 'pelicans', 'knicks', '76ers', 'sixers', 'suns', 'blazers', 'spurs', 'raptors', 'wizards',
+  // Heat, Magic, Thunder, Jazz and Kings stay required: each is also an
+  // insert's name ("Rookie Kings"), and dropping it would mix the insert in.
+  // MLB (colour names left out: "Red Sox" must not lose its "red")
+  'diamondbacks', 'braves', 'orioles', 'cubs', 'guardians', 'rockies', 'tigers', 'astros', 'royals',
+  'angels', 'dodgers', 'marlins', 'brewers', 'twins', 'mets', 'yankees', 'athletics', 'phillies',
+  'pirates', 'padres', 'mariners', 'rays', 'rangers', 'nationals',
+]);
 const NFLDB_SEARCH_TTL = 3600;         // 1h — see the cache note in the body
 // A floor on how far back a search may walk. Deliberately generous: three years
 // covers essentially every comp anyone looks up, and the purpose here is to cap
@@ -1766,7 +1785,13 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   // title word, "Mahomes Prizm Base" (a popular-search chip) found next to
   // nothing. It is a filter, not a word — matchSoldListings and tagSameCard
   // keep the parallels out.
-  const terms = cleaned.split(/\s+/).filter(t => t.length > 1 && !/^base$/i.test(t)).slice(0, 8);
+  // Words a seller often leaves out of a title that is still this card: the
+  // team ("Broncos") and the rookie mark ("RC", "Rookie"). Required, they
+  // threw out most of a card's sales: "2024 Troy Franklin RC #/5 Broncos"
+  // found one. They still rank (matchSoldListings), they just do not exclude.
+  const all = cleaned.split(/\s+/).filter(t => t.length > 1 && !/^base$/i.test(t));
+  const hard = all.filter(t => !SOLD_SOFT_WORDS.has(t.toLowerCase()));
+  const terms = (hard.length ? hard : all).slice(0, 8);
   if (terms.length === 0) return { results: [], total: 0 };
 
   // Cache on our own data, which is a different question from caching the paid
@@ -1779,7 +1804,7 @@ async function fetchViaNflCardDb(keywords, limit = 50, source = 'unknown') {
   // repeating it is pure waste. The cost is that a card added by the importer
   // stays invisible for up to an hour after it lands.
   // v2: words match as words, not fragments (see the WHERE below).
-  const cacheKey = `nfldb:v2:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
+  const cacheKey = `nfldb:v3:${Math.min(limit, 500)}:${cleaned.toLowerCase()}`;
   // Callers asking the same question at once (the grading advisor's four
   // grades read one pool) share one query rather than racing four to D1.
   const inflight = _nflDbInflight.get(cacheKey);
@@ -3026,8 +3051,10 @@ function filterByVariant(results, query, opts) {
     : [];
   const queryHasSpecial = titleHasSpecialCard(qLower);
 
+  // A team name or "RC" is not required either (SOLD_SOFT_WORDS): sellers
+  // leave them out of titles that are still this card.
   const qTokens = qLower.split(/\s+/).filter(t =>
-    t.length > 1 && !VARIANT_STOP_WORDS.has(t) && !(isBaseSearch && t === 'base')
+    t.length > 1 && !VARIANT_STOP_WORDS.has(t) && !SOLD_SOFT_WORDS.has(t) && !(isBaseSearch && t === 'base')
   );
 
   if (qTokens.length === 0) return results;
@@ -3874,6 +3901,62 @@ app.get('/api/grading-advisor', async (req, res) => {
 // ---- /api/direct-search ----
 // Primary search endpoint for the main Search button. For Sale mode runs live
 // off the eBay Browse API; Sold mode runs off The Card API.
+// ---- When a sold search finds (nearly) nothing ----
+// A search for a rare card ("2024 Troy Franklin RC #/5 Broncos") often has
+// no sale of that exact card, and the page said "No recent sold listings".
+// Something close is still worth more than nothing, as long as it says what
+// it is. Best first:
+//   1. the same card at the nearest print runs (a /5 search: /3, /10, /15 ...),
+//   2. that player's other cards from that year (and set, when named),
+//   3. any of that player's cards.
+// Returns null when the query names no player we know: a comp for some other
+// player is never useful.
+const SOLD_FALLBACK_MIN = 3;
+const SOLD_FALLBACK_MAX = 40;
+async function _soldFallback(query, serial, have = []) {
+  const ci = await cardIndex();
+  const kw = extractSearchKeywords(query);
+  const who = ci && kw.player ? ci.resolvePlayer(kw.player) : null;
+  if (!who || !who.confident) return null;
+  const player = who.canonical;
+  const year = kw.year || '';
+  const set = extractSet(query) || '';
+  const seen = new Set(have.map(r => r.itemId));
+  const fresh = (rows) => rows.filter(r => r && r.itemId && !seen.has(r.itemId));
+  const runOf = (r) => (Number.isFinite(r.printRun) ? r.printRun : parsePrintRunFromTitle(r.title));
+  const ladder = [];
+  if (year || set) ladder.push({ q: [year, set, player].filter(Boolean).join(' '), scope: [year, set].filter(Boolean).join(' ') });
+  if (year && set) ladder.push({ q: [year, player].join(' '), scope: year });
+  ladder.push({ q: player, scope: '' });
+  for (const step of ladder) {
+    // Our own sales only: the paid feed bills per row returned, and a
+    // fallback of 200 rows would be the dearest search there is.
+    const data = await fetchViaNflCardDb(step.q, 200, 'sold-fallback');
+    if (data.unavailable) return null;
+    const pool = fresh(_dropOversizeUnlessAsked(filterJunkListings(data.results || []), query));
+    if (!pool.length) continue;
+    const label = [step.scope, player].filter(Boolean).join(' ');
+    if (serial) {
+      // The nearest print runs, closest first by ratio: /3 and /10 are both
+      // near a /5, a /99 is not.
+      const want = Number(serial);
+      const numbered = pool.filter(r => { const n = runOf(r); return n && n !== want; })
+        .sort((a, b) => Math.abs(Math.log(runOf(a) / want)) - Math.abs(Math.log(runOf(b) / want))
+          || String(b.soldDate).localeCompare(String(a.soldDate)));
+      if (numbered.length) {
+        return { results: numbered.slice(0, SOLD_FALLBACK_MAX), query: step.q,
+                 note: `No sales of a /${want} yet. Showing the nearest print runs of ${label}.` };
+      }
+    }
+    // The ones sharing the most words with the search, newest first.
+    const ranked = matchSoldListings(pool, query).results;
+    const rows = (ranked.length ? ranked : pool).slice(0, SOLD_FALLBACK_MAX);
+    return { results: rows, query: step.q,
+             note: `No sales of this exact card yet. Showing ${step.scope ? `other ${label}` : `${player}'s other`} cards.` };
+  }
+  return null;
+}
+
 app.get('/api/direct-search', async (req, res) => {
   const query = req.query.q;
   const mode = req.query.mode === 'sold' ? 'sold' : 'forsale';
@@ -3905,7 +3988,7 @@ app.get('/api/direct-search', async (req, res) => {
           rateLimited: true, rateLimitMessage: searchData.rateLimitMessage,
         });
       }
-      const variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
+      let variantFiltered = filterPriceOutliers(filterByVariant(searchData.results, query));
       // Which of these are actually the card that was asked for.
       //
       // This endpoint is the SECOND sold-search path and it is the one the
@@ -3920,6 +4003,23 @@ app.get('/api/direct-search', async (req, res) => {
       const estimate = hasExactCardSales(query, searchData.results)
         ? null
         : buildSimilarCardEstimate(query, searchData.results);
+      // Too few to go on: add the closest sales there are, and say so.
+      // Only the sales read as this card count; the rest (other print runs,
+      // other parallels) go to the fallback, which labels them.
+      const exact = variantFiltered.filter(r => r.sameCard !== false);
+      if (exact.length < SOLD_FALLBACK_MIN) {
+        const fb = await _soldFallback(query, serial, exact).catch(() => null);
+        if (fb && fb.results.length) {
+          const results = [...exact, ...fb.results.map(r => ({ ...r, similar: true }))];
+          return res.json({
+            results, total: results.length, mock: false,
+            // The page shows no value box for these: they price other cards.
+            searchType: 'broadened', broadenedQuery: fb.query, approximateValue: null,
+            fallbackNote: fb.note, exactCount: exact.length,
+            estimate, mode, serial: serial || null, similarResults: [], cardIdentity,
+          });
+        }
+      }
       return res.json({
         results: variantFiltered, total: variantFiltered.length, mock: false,
         searchType: 'exact', broadenedQuery: null, approximateValue: approx,
@@ -19173,7 +19273,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
