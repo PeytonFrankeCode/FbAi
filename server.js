@@ -3933,7 +3933,11 @@ async function _soldFallback(query, serial, have = []) {
     // fallback of 200 rows would be the dearest search there is.
     const data = await fetchViaNflCardDb(step.q, 200, 'sold-fallback');
     if (data.unavailable) return null;
-    const pool = fresh(_dropOversizeUnlessAsked(filterJunkListings(data.results || []), query));
+    // Autographs and relics only when the search asked for one, as in
+    // filterByVariant: an RPA is not a near print run of a base parallel.
+    const special = titleHasSpecialCard(String(query).toLowerCase());
+    const pool = fresh(_dropOversizeUnlessAsked(filterJunkListings(data.results || []), query))
+      .filter(r => special || !titleHasSpecialCard(String(r.title || '').toLowerCase()));
     if (!pool.length) continue;
     const label = [step.scope, player].filter(Boolean).join(' ');
     if (serial) {
