@@ -13224,7 +13224,7 @@ const CARD_ANALYSIS_TTL = 1800; // 30m
 // v40: a grading population ("Pop 1/1") is not a print run.
 // v41: Tiffany is a parallel wherever it is written; teams are not players.
 // v42: a poster of a card is not the card.
-const CARD_IDENTITY_VERSION = 'cardanalysis:v45';
+const CARD_IDENTITY_VERSION = 'cardanalysis:v46';
 const CARD_IDENTITY_MODULES = ['grade-core.js', 'card-kind.js', 'parallel-index-core.js', 'photo-slab-core.js'];
 // Re-fingerprinted at v8 without bumping the version: the only change since it
 // was set was removing unused exports from card-kind.js, which cannot alter a
@@ -14109,13 +14109,25 @@ async function _cardAnalysisRoute(req, res) {
       // reaches the card page. Wiring it into one screen and not the others is
       // how this codebase has lost a day twice.
       const ctx = { productId: seedProductId, player: seed.player, cardNumber: seed.card_number };
-      const seedSubset = resolveSubsetAliased(pi, seed.title, ctx, iAliases).subset;
+      // An insert read off a title counts only if this product has one by
+      // that name. "…Jerry Rice Rookie Card RC GOAT Hall of Fame" read as the
+      // Hall of Fame insert some products have and 1986 Topps does not, and
+      // its page set aside all 471 of the card's other sales. A decision
+      // made on the insert desk is kept as it is.
+      const product = seedProductId ? await _checklistProduct(seedProductId).catch(() => null) : null;
+      const productSets = product && Array.isArray(product.sets) ? product.sets.map(st => _subsetKey(st.name)).filter(Boolean) : null;
+      const inProduct = (hit) => {
+        const key = _subsetKey(hit && hit.subset);
+        if (key && hit.how !== 'alias' && productSets && !productSets.some(n => n === key || n.includes(key) || key.includes(n))) return '';
+        return key;
+      };
+      const seedSubset = resolveSubsetAliased(pi, seed.title, ctx, iAliases);
       // Compared without punctuation: "Downtown!" and "Downtown" are one insert.
-      seedSubsetResolved = _subsetKey(seedSubset);
+      seedSubsetResolved = inProduct(seedSubset);
       const kept = all.filter(r =>
-        _subsetKey(resolveSubsetAliased(pi, r.title,
+        inProduct(resolveSubsetAliased(pi, r.title,
           { productId: seedProductId, player: r.player, cardNumber: r.card_number },
-          iAliases).subset) === seedSubsetResolved);
+          iAliases)) === seedSubsetResolved);
       excludedOtherSubset = all.length - kept.length;
       all = kept;
     }
