@@ -3025,7 +3025,9 @@ const SPECIAL_CARD_KEYWORDS = ['autograph', 'patch', 'rpa', 'relic', 'jersey', '
 
 function titleHasSpecialCard(title) {
   if (SPECIAL_CARD_KEYWORDS.some(kw => title.includes(kw))) return true;
-  if (/\bauto\b/.test(title)) return true; // 'auto' as a standalone word
+  // 'auto' as a standalone word, and its plural: insert names say "Autos"
+  // ("Golden Debuts Autos") as often as "Autographs".
+  if (/\bautos?\b/.test(title)) return true;
   return false;
 }
 
