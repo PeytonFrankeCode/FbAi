@@ -10,7 +10,7 @@
  *
  * Bump VERSION to force a clean cache swap on the next visit.
  */
-const VERSION = 'bb1af7b5991dd';
+const VERSION = 'b01747f9d0fb0';
 const SHELL_CACHE = `chuddle-shell-${VERSION}`;
 const DATA_CACHE = `chuddle-data-${VERSION}`;
 
@@ -23,6 +23,8 @@ const CORE = [
   '/icon-192.png',
   '/icon-512.png',
   '/logo.png',
+  '/logo-dark.png',
+  '/logo-on-green.png',
   '/data/checklists/index.json',
 ];
 

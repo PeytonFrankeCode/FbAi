@@ -475,7 +475,7 @@ ${extraJsonLd || ''}
 </head>
 <body>
   <header class="lp-header">
-    <a class="lp-brand" href="/"><img src="/logo.png" alt="The Card Huddle" /></a>
+    <a class="lp-brand" href="/"><img src="/logo-dark.png" alt="The Card Huddle" /></a>
     <a class="lp-cta-top" href="/">Search Card Prices &rarr;</a>
   </header>`;
 }
