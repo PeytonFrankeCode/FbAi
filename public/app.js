@@ -5750,12 +5750,48 @@ function epnUrl(url) {
   if (_noAffiliate()) return _stripEpn(url);
   return url + (url.includes('?') ? '&' : '?') + EPN_PARAMS;
 }
+// Where on the site an eBay link was clicked, as eBay's customid (Oct 2026).
+// Every link used to carry the same tracking, so the eBay Partner Network
+// report could say a click earned but not which part of the site sent it.
+// Read at click time from the link's surroundings, so the two dozen places
+// that build these links need not each remember to say. Short and fixed:
+// eBay shows it as a column, and it must never carry anything about a person.
+const _EPN_PLACES = [
+  ['.mp-deal', 'home-deals'], ['.mp-tile', 'home-market'], ['.st-row', 'market-boards'],
+  ['.ca-row', 'card-page'], ['.alert-find', 'alerts'], ['.ff-card', 'flip-finder'],
+  ['.bulk-comp-link', 'bulk-value'], ['.gc-comp-title', 'grading'], ['.cl-listing-item', 'checklist'],
+  ['.rainbow-breakdown-row', 'rainbow'], ['.marketplace-card', 'marketplace'],
+  ['.seller-listing-title-text', 'seller'], ['.version-card', 'versions'],
+];
+function _epnPlacement(a) {
+  const tagged = a.closest('[data-epn]');
+  if (tagged) return tagged.dataset.epn;
+  for (const [sel, name] of _EPN_PLACES) if (a.closest(sel)) return name;
+  if (a.closest('.card')) return currentMode === 'sold' ? 'search-sold' : 'search-forsale';
+  // Else the tab it was on: "other-inventory", "other-stats".
+  const tab = document.querySelector('.nav-tab.active');
+  const view = tab && tab.dataset && tab.dataset.view;
+  return 'other' + (view ? '-' + String(view).replace(/[^a-z0-9-]/gi, '').slice(0, 20).toLowerCase() : '');
+}
 // Any tracked link built elsewhere (an email, a cached block) is cleaned at
-// the moment it is clicked.
-document.addEventListener('click', (e) => {
+// the moment it is clicked; every other one is labelled with where it was.
+function _onEbayClick(e) {
   const a = e.target && e.target.closest && e.target.closest('a[href*="campid="]');
-  if (a && _noAffiliate()) a.href = _stripEpn(a.href);
-}, true);
+  if (!a) return;
+  if (_noAffiliate()) { a.href = _stripEpn(a.href); return; }
+  const place = _epnPlacement(a).toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32) || 'other';
+  a.href = a.href.replace(/([?&])customid=[^&#]*&?/, '$1').replace(/[?&]$/, '')
+    + (a.href.includes('?') ? '&' : '?') + 'customid=' + place;
+  try {
+    const body = new Blob([JSON.stringify({ p: place })], { type: 'application/json' });
+    if (!(navigator.sendBeacon && navigator.sendBeacon('/api/epn-click', body))) {
+      fetch('/api/epn-click', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(() => {});
+    }
+  } catch (_) { /* a count is never worth a broken click */ }
+}
+document.addEventListener('click', _onEbayClick, true);
+// A middle-click or ctrl-click opens a tab without a click event.
+document.addEventListener('auxclick', _onEbayClick, true);
 
 // ---- Helpers ----
 // A summary price, for reading at a glance: whole dollars from $10 up

@@ -104,7 +104,9 @@ const EPN_PARAMS = 'mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339145753&t
 function ebaySearchUrl(query) {
   const q = String(query || '').trim();
   if (!q) return '';
-  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&${EPN_PARAMS}`;
+  // customid: these links are on the checklist landing pages, which the
+  // eBay Partner Network report then shows apart from the app's own.
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&${EPN_PARAMS}&customid=landing`;
 }
 
 // The card photo, sized to the cell and safe when it is gone.
