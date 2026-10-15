@@ -10921,10 +10921,12 @@ const _ssSport = (sport) => (sport && sport !== 'football' ? `:${sport}` : '');
 // v11: football's totals count its own rows once other sports share the table.
 // v12: a move is the start of the period against its end, not half against half.
 // v13: carries dealCandidates.
-const SOLD_STATS_KEY = (days, sport) => `soldstats:v13:${days}${_ssSport(sport)}`;
+// v14: each window ends at the newest sale held, not today, so v13 boards
+// hold a 7-day movers board with nothing in its last days.
+const SOLD_STATS_KEY = (days, sport) => `soldstats:v14:${days}${_ssSport(sport)}`;
 // The version before, served on a cold key like the last good copy: until a
 // build has stored one, it is the last good copy.
-const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v12:${days}${_ssSport(sport)}`;
+const SOLD_STATS_PREV_KEY = (days, sport) => `soldstats:v13:${days}${_ssSport(sport)}`;
 
 // The boards, computed. Lifted out of the request handler so the cron can call
 // it too — see warmSoldStats below. Returns the payload rather than writing a
@@ -10953,14 +10955,32 @@ async function _soldStatsTotals(db, since, sport, hasSport) {
   return { sales: add('sales'), priced: add('priced'), total: add('total') };
 }
 
+// The end of the newest day with sales (00:00 UTC the day after it), capped
+// at now; now when the table says nothing. MAX(sold_date) is answered from
+// the sold_date index.
+async function _salesThroughMs(db) {
+  try {
+    const row = await db.prepare('SELECT MAX(sold_date) AS d FROM sales').first();
+    const d = row && row.d ? Date.parse(String(row.d).slice(0, 10) + 'T00:00:00Z') : NaN;
+    if (Number.isFinite(d)) return Math.min(Date.now(), d + 86400000);
+  } catch (_) { /* fall back to today */ }
+  return Date.now();
+}
+
 async function _computeSoldStats(db, days, sport = 'football') {
-  const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  // The window ends at the newest sale held, not at today (Oct 2026). Sales
+  // arrive a few days behind, so "the last 7 days" from today had little or
+  // nothing in its last days, and the 7-day movers board compared a start
+  // with no end: 0 cards considered, no risers, no fallers, in the board and
+  // in the weekly report and email built from it.
+  const through = await _salesThroughMs(db);
+  const since = new Date(through - days * 86400000).toISOString().slice(0, 10);
   // The split point for "before and after". Half the window each side, so both
   // halves cover the same span and a ratio between them is comparing like with
   // like.
-  const mid = new Date(Date.now() - (days / 2) * 86400000).toISOString().slice(0, 10);
+  const mid = new Date(through - (days / 2) * 86400000).toISOString().slice(0, 10);
   // The two ends a move compares (see _periodEnds).
-  const ends = _periodEnds(days);
+  const ends = _periodEnds(days, through);
   const img = await _nflHasImageColumn(db);
   const imgCol = img ? ', image_url' : '';
   // Boards are aggregates too — biggest sellers, movers, top sets. See
@@ -18599,14 +18619,18 @@ async function _reportIndex() {
 }
 async function _reportFor(week, { build = false, now = new Date() } = {}) {
   const have = await cacheGet(REPORT_KEY(week)).catch(() => null);
-  if (have && have.content) return have;
-  if (!build) return null;
+  // A week filed without its risers and fallers (the boards had none) is
+  // filed again, in its own week, once they do; a full one is kept as it was.
+  if (have && have.content && !(have.partial && build)) return have;
+  if (!build) return have && have.content ? have : null;
   // The boards are rebuilt at 05:00 UTC Monday; before then they still hold
   // last week, which must not be filed under this one.
   if (now.getUTCDay() === 1 && now.getUTCHours() < 6) return null;
   const content = await _digestContentNow();
-  if (!content) return null;
-  const rec = { week, content, builtAt: now.toISOString() };
+  if (!content) return have && have.content ? have : null;
+  const partial = !((content.risers || []).length || (content.fallers || []).length);
+  if (have && have.content && partial) return have;   // no better than what is filed
+  const rec = { week, content, builtAt: now.toISOString(), partial };
   await cachePut(REPORT_KEY(week), rec, REPORT_KEEP);
   const ix = await _reportIndex();
   if (!ix.some(x => x.week === week)) {
