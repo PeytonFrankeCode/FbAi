@@ -80,6 +80,12 @@ store.set('soldstats:last:30', JSON.stringify(month30));
     const full = await get('/news/market-movers');
     check('  ...and filed again, whole, once the movers are in', full.text.includes('<h2>Biggest risers</h2>')
       && JSON.parse(store.get(`mmreport:v1:${week}`)).partial === false);
+    // A week filed before the partial mark existed, with no movers, is
+    // treated as partial too.
+    const legacy = JSON.parse(store.get(`mmreport:v1:${week}`));
+    store.set(`mmreport:v1:${week}`, JSON.stringify({ week, content: { ...legacy.content, risers: [], fallers: [] }, builtAt: legacy.builtAt }));
+    const relegacy = await get('/news/market-movers');
+    check('  ...including a week filed before the mark existed', relegacy.text.includes('<h2>Biggest risers</h2>'));
     store.set('soldstats:last:7', JSON.stringify({ ...week7, cardMovers: [mover('2020 Prizm Someone Else #1', 99, 9)] }));
     const kept = await get('/news/market-movers');
     check('  ...after which it is kept as it stood', kept.text.includes('2024 Prizm Bo Nix #309') && !kept.text.includes('Someone Else'));

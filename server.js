@@ -18621,14 +18621,17 @@ async function _reportFor(week, { build = false, now = new Date() } = {}) {
   const have = await cacheGet(REPORT_KEY(week)).catch(() => null);
   // A week filed without its risers and fallers (the boards had none) is
   // filed again, in its own week, once they do; a full one is kept as it was.
-  if (have && have.content && !(have.partial && build)) return have;
+  // Read off the content, not only the mark: weeks filed before the mark
+  // existed carry none.
+  const thin = (c) => !(((c && c.risers) || []).length || ((c && c.fallers) || []).length);
+  if (have && have.content && !((have.partial || thin(have.content)) && build)) return have;
   if (!build) return have && have.content ? have : null;
   // The boards are rebuilt at 05:00 UTC Monday; before then they still hold
   // last week, which must not be filed under this one.
   if (now.getUTCDay() === 1 && now.getUTCHours() < 6) return null;
   const content = await _digestContentNow();
   if (!content) return have && have.content ? have : null;
-  const partial = !((content.risers || []).length || (content.fallers || []).length);
+  const partial = thin(content);
   if (have && have.content && partial) return have;   // no better than what is filed
   const rec = { week, content, builtAt: now.toISOString(), partial };
   await cachePut(REPORT_KEY(week), rec, REPORT_KEEP);
