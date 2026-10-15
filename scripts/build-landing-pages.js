@@ -78,12 +78,51 @@ const SITE = 'https://thecardhuddle.com';
 // Oct 2026): the app sets chAdFree on such a device, and this pauses AdSense's
 // ad requests before its script loads. Google's own switch, so nothing is
 // requested and nothing is hidden, which its policies forbid.
-const AD_FREE_GUARD = `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1}}catch(e){}</script>`;
+// It also marks the page, so the boxes the in-content units sit in (below)
+// are not left on screen as empty "Advertisement" labels.
+const AD_FREE_GUARD = `<script data-adfree>try{if(localStorage.getItem('chAdFree')==='1'){(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1;document.documentElement.className+=' ch-adfree'}}catch(e){}</script>`;
 const ADSENSE_CLIENT = process.env.ADSENSE_CLIENT !== undefined
   ? process.env.ADSENSE_CLIENT
   : 'ca-pub-3644779384068007';
 
 const _adsStats = { withAds: 0, withoutAds: 0 };
+
+// ---- Hand-placed ad units (owner, Oct 2026) ----
+// Auto ads alone placed whatever Google chose, and on most of these pages
+// that was little or nothing. One display unit ("Landing Page AD") goes
+// after the page's opening, before the checklist, and on a long page a
+// second goes after the checklist, before the links to other pages. Only on
+// pages that already carry the AdSense tag (indexable, monetised: see
+// adsenseTag), never between a card and its price, and labelled, so no ad
+// reads as part of the checklist.
+const LANDING_AD_SLOT = process.env.LANDING_AD_SLOT !== undefined ? process.env.LANDING_AD_SLOT : '4442737418';
+const LANDING_AD_LONG = 2;         // checklist sections before a page earns a second unit
+const LANDING_AD_LONG_CARDS = 40;  // or cards on a single-list page
+const _adUnit = () => `    <div class="lp-ad"><span class="lp-ad-label">Advertisement</span>
+      <ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${LANDING_AD_SLOT}" data-ad-format="auto" data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+`;
+function withAdSlots(html) {
+  if (!LANDING_AD_SLOT || !ADSENSE_CLIENT || !html.includes('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')) return html;
+  // The checklist: its sections, or on an insert's own page its card list,
+  // or on a hub its list of sets.
+  const content = /[ ]*<section class="lp-(?:subset|year)"|[ ]*<ul class="lp-(?:cards|set-list)"/g;
+  const sections = html.match(content) || [];
+  if (!sections.length) return html;
+  // Before the first of it.
+  const first = html.search(content);
+  let out = html.slice(0, first) + _adUnit() + html.slice(first);
+  // After it, before the related links, when there is enough of it: two
+  // sections, or one list of LANDING_AD_LONG_CARDS cards.
+  const cards = (html.match(/<li/g) || []).length;
+  if (sections.length >= LANDING_AD_LONG || cards >= LANDING_AD_LONG_CARDS) {
+    const rel = out.indexOf('    <section class="lp-related">');
+    if (rel > 0) out = out.slice(0, rel) + _adUnit() + out.slice(rel);
+  }
+  _adsStats.units = (_adsStats.units || 0) + (out.split('class="lp-ad"').length - 1);
+  return out;
+}
 
 const adsenseTag = (noindex) => {
   const on = !!ADSENSE_CLIENT && !noindex && S.ads;
@@ -1148,6 +1187,9 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 /* A long card label must not push the page sideways on a phone. */
 @media (max-width:560px){.lp-prices{overflow-x:auto}.lp-price-table{min-width:100%}}
 .lp-muted{color:var(--muted)}
+.lp-ad{margin:1.5rem 0;min-height:120px}
+.lp-ad-label{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.ch-adfree .lp-ad{display:none}
 .lp-footer{border-top:1px solid var(--border);padding:1.75rem 1.25rem;text-align:center;color:var(--muted);font-size:.9rem}
 .lp-footer a{color:var(--accent)}
 @media(max-width:600px){h1{font-size:1.6rem}.lp-main{padding:1rem .9rem 2.5rem}.lp-aznav{top:60px}}
@@ -1355,20 +1397,20 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
     const dir = path.join(S.setsDir, cl.id);
     fs.mkdirSync(dir, { recursive: true });
     const subs = subsetIndex.get(cl.id) || [];
-    const html = buildSetPage(cl, relatedSets(cl, checklists), playerSlug, subs);
+    const html = withAdSlots(buildSetPage(cl, relatedSets(cl, checklists), playerSlug, subs));
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
     for (const sub of subs) {
       const siblings = subs.filter(x => x.slug !== sub.slug).slice(0, 12);
       const sdir = path.join(dir, sub.slug);
       fs.mkdirSync(sdir, { recursive: true });
-      const shtml = buildSubsetPage(cl, sub.set, sub.slug, siblings, playerSlug);
+      const shtml = withAdSlots(buildSubsetPage(cl, sub.set, sub.slug, siblings, playerSlug));
       fs.writeFileSync(path.join(sdir, 'index.html'), shtml); bytes += Buffer.byteLength(shtml);
     }
   }
   for (const y of years) {
     const ydir = path.join(S.setsDir, String(y));
     fs.mkdirSync(ydir, { recursive: true });
-    const yhtml = buildYearHub(y, byYear.get(y), subsetIndex);
+    const yhtml = withAdSlots(buildYearHub(y, byYear.get(y), subsetIndex));
     fs.writeFileSync(path.join(ydir, 'index.html'), yhtml); bytes += Buffer.byteLength(yhtml);
   }
   for (const p of eligible) {
@@ -1377,19 +1419,19 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
     const related = (setPlayers.get(primarySet) || []).filter(x => x.name !== p.name).slice(0, 10);
     const dir = path.join(S.playersDir, p.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const html = buildPlayerPage(p, related, teamSlug);
+    const html = withAdSlots(buildPlayerPage(p, related, teamSlug));
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
   }
   for (const t of teams) {
     const relatedTeams = teams.filter(x => x.slug !== t.slug).slice(0, 8);
     const dir = path.join(S.teamsDir, t.slug);
     fs.mkdirSync(dir, { recursive: true });
-    const html = buildTeamPage(t, playerSlug, relatedTeams);
+    const html = withAdSlots(buildTeamPage(t, playerSlug, relatedTeams));
     fs.writeFileSync(path.join(dir, 'index.html'), html); bytes += Buffer.byteLength(html);
   }
 
-  fs.writeFileSync(path.join(S.setsDir, 'index.html'), buildSetsHub(checklists));
-  fs.writeFileSync(path.join(S.playersDir, 'index.html'), buildPlayersHub(eligible));
+  fs.writeFileSync(path.join(S.setsDir, 'index.html'), withAdSlots(buildSetsHub(checklists)));
+  fs.writeFileSync(path.join(S.playersDir, 'index.html'), withAdSlots(buildPlayersHub(eligible)));
 
   // A machine-readable list of the player pages, for the same reason
   // checklists/index.json exists: the Worker needs to know what pages there
@@ -1564,7 +1606,7 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
       })),
     }) + '\n');
   }
-  fs.writeFileSync(path.join(S.teamsDir, 'index.html'), buildTeamsHub(teams));
+  fs.writeFileSync(path.join(S.teamsDir, 'index.html'), withAdSlots(buildTeamsHub(teams)));
   const urls = buildSitemap(checklists, eligible, teams, years, subsetIndex);
 
   console.log(`  wrote ${checklists.length} product + ${subsetTotal} set + ${eligible.length} player + ${teams.length} team pages + ${years.length} year hubs + 3 hubs + sitemap`);
@@ -1575,7 +1617,8 @@ function buildSport({ checklists, eligible, merged, redirects, setPlayers, teams
     console.log(ADSENSE_CLIENT
       ? `  AdSense: ${withAds}/${total} pages carry the tag `
         + `(${total ? Math.round((withAds / total) * 100) : 0}%) — `
-        + `the indexable ones; ${withoutAds} noindexed pages carry none`
+        + `the indexable ones; ${withoutAds} noindexed pages carry none; `
+        + `${_adsStats.units || 0} hand-placed ad units`
       : '  AdSense: disabled (ADSENSE_CLIENT empty)');
   }
   return urls;

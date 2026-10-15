@@ -259,5 +259,30 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   check('  ...never a broadened search\'s other cards', /if \(data\.searchType === 'broadened'\) return;/.test(app));
 }
 
+// ---- hand-placed ad units on the landing pages (Oct 2026) ------------------
+{
+  const vm = require('vm');
+  const src = fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8');
+  const grab = (name) => { const i = src.indexOf(`function ${name}(`); return src.slice(i, src.indexOf('\n}\n', i) + 3); };
+  const ctx = { ADSENSE_CLIENT: 'ca-pub-3644779384068007', _adsStats: {} };
+  vm.createContext(ctx);
+  vm.runInContext(src.match(/const LANDING_AD_SLOT = [^\n]+/)[0].replace(/process\.env\.LANDING_AD_SLOT !== undefined \? process\.env\.LANDING_AD_SLOT : /, '')
+    + '\n' + src.match(/const LANDING_AD_LONG = \d+;/)[0] + '\n' + src.match(/const LANDING_AD_LONG_CARDS = \d+;/)[0]
+    + '\n' + src.match(/const _adUnit = \(\) => `[\s\S]*?`;/)[0] + '\n' + grab('withAdSlots') + '\nthis.f = withAdSlots;', ctx);
+  const tag = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=x"></script>';
+  const page = (body, ads = true) => `<head>${ads ? tag : ''}</head><body><p>intro</p>\n${body}\n    <section class="lp-related">x</section></body>`;
+  const two = '    <section class="lp-subset"><ul><li>a</li></ul></section>\n    <section class="lp-subset"><ul><li>b</li></ul></section>';
+  const out = ctx.f(page(two));
+  const units = out.split('class="lp-ad"').length - 1;
+  check('landing pages get the "Landing Page AD" unit before the checklist and after a long one',
+    units === 2 && out.indexOf('lp-ad') < out.indexOf('lp-subset') && out.lastIndexOf('lp-ad') < out.indexOf('lp-related')
+    && /data-ad-slot="4442737418"/.test(out));
+  check('  ...one on a short page', ctx.f(page('    <section class="lp-subset"><ul><li>a</li></ul></section>')).split('class="lp-ad"').length - 1 === 1);
+  check('  ...and none on a page without the AdSense tag (the noindexed ones)', ctx.f(page(two, false)) === page(two, false));
+  check('  ...labelled as an ad, and hidden on ad-free devices whose requests are paused',
+    /Advertisement<\/span>/.test(out) && /\.ch-adfree \.lp-ad\{display:none\}/.test(src)
+    && /pauseAdRequests=1;document\.documentElement\.className\+=' ch-adfree'/.test(src));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);
