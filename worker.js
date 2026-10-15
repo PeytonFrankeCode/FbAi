@@ -790,6 +790,14 @@ export class AdTagRemover {
   }
 }
 
+// The hand-placed units' boxes (build-landing-pages.js withAdSlots), taken
+// off wherever the AdSense script is: without it a box is only an empty
+// "Advertisement" label holding open a gap in the page.
+export class AdSlotRemover {
+  constructor() { this.removed = 0; }
+  element(el) { el.remove(); this.removed++; }
+}
+
 // The retired-player-slug map, loaded once per isolate.
 //
 // Cached in module scope rather than fetched per request: a player page is the
@@ -1017,6 +1025,7 @@ export default {
                       const key = priceKeyForPath(url.pathname);
                       if (key && !blocks.pages[key]) {
                         rw.on('script[src]', new AdTagRemover());
+                        rw.on('div.lp-ad', new AdSlotRemover());
                       }
                       out = rw.transform(out);
                     }
@@ -1026,7 +1035,8 @@ export default {
                 }
               }
               if (stripsTags(visitorKind, request.headers.get('user-agent'))) {
-                out = new HTMLRewriter().on('script[src], script[data-ga]', new BotTagRemover()).transform(out);
+                out = new HTMLRewriter().on('script[src], script[data-ga]', new BotTagRemover())
+                  .on('div.lp-ad', new AdSlotRemover()).transform(out);
               }
               return out;
             }
