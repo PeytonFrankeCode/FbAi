@@ -7138,7 +7138,43 @@ function switchView(view) {
 // hover — a mouse-only readout is unusable on a phone, which is where most of
 // this gets looked at. hitRadius is generous because a fingertip is nowhere
 // near as precise as a cursor.
-if (typeof Chart !== 'undefined') {
+// ---- Chart.js, loaded when wanted (Oct 2026) ----
+// 205 KB from a CDN, and it used to be a plain <script> ahead of app.js:
+// nothing in the app ran, no search result showed and no ad was asked for
+// until it had downloaded and run, though a chart appears only once someone
+// opens a card, the Market tab or their collection. It now loads once the
+// page is idle, and a chart wanted before then draws when it lands
+// (_chartReady). If the CDN fails, each chart says so as it did before.
+const CHART_SRC = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
+let _chartP = null;
+let _chartFailed = false;
+function _loadChart() {
+  if (typeof Chart !== 'undefined') return Promise.resolve();
+  if (!_chartP) {
+    _chartP = new Promise((resolve) => {
+      const s = document.createElement('script');
+      s.src = CHART_SRC;
+      s.async = true;
+      s.onload = () => { _chartDefaults(); _chartScrubPlugin(); resolve(); };
+      s.onerror = () => { _chartFailed = true; resolve(); };
+      document.head.appendChild(s);
+    });
+  }
+  return _chartP;
+}
+// True when a chart can be drawn now. Otherwise starts the load, calls
+// redraw once it lands (unless it failed), and returns false.
+function _chartReady(redraw) {
+  if (typeof Chart !== 'undefined') return true;
+  if (!_chartFailed) _loadChart().then(() => { if (typeof Chart !== 'undefined' && redraw) redraw(); });
+  return false;
+}
+// Fetched in the background once the page has settled, so it is usually
+// there before anyone opens a chart.
+(window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => _loadChart(), { timeout: 4000 });
+
+function _chartDefaults() {
+  if (typeof Chart === 'undefined') return;
   Chart.defaults.elements.point.hitRadius = 14;
   Chart.defaults.elements.point.hoverRadius = 6;
   Chart.defaults.interaction.mode = 'index';
@@ -7269,7 +7305,8 @@ function _chartScrubTo(chart, i) {
 
 // The guide line through the scrubbed point. Registered once for every chart;
 // draws only on a chart that has been scrubbed.
-if (typeof Chart !== 'undefined' && !Chart.__scrubLine) {
+function _chartScrubPlugin() {
+  if (typeof Chart === 'undefined' || Chart.__scrubLine) return;
   Chart.__scrubLine = true;
   Chart.register({
     id: 'scrubLine',
@@ -7716,6 +7753,7 @@ function _mkRenderChart(data) {
 
   // Chart.js loads from a CDN. If it didn't, say so plainly instead of
   // leaving an empty rectangle that looks like missing data.
+  if (!_chartReady(() => _mkRenderChart(data)) && !_chartFailed) return;
   if (typeof Chart === 'undefined') {
     canvas.classList.add('hidden');
     if (empty) { empty.textContent = 'Chart unavailable right now — the numbers above are unaffected.'; empty.classList.remove('hidden'); }
@@ -10874,7 +10912,7 @@ function renderPortfolioAnalytics(coll, totalValue) {
       </div>
     </div>`;
 
-  if (hist.length >= 2 && typeof Chart !== 'undefined') {
+  if (hist.length >= 2 && _chartReady(() => { if (document.getElementById('pf-value-chart')) renderPortfolioAnalytics(coll, totalValue); })) {
     const ctx = document.getElementById('pf-value-chart');
     if (ctx) {
       if (_pfChart) { try { _pfChart.destroy(); } catch {} }
@@ -17795,7 +17833,8 @@ function openInvDetail(id) {
 
   document.getElementById('inv-detail-modal').classList.remove('hidden');
 
-  if (hist.length >= 2 && typeof Chart !== 'undefined') {
+  const detailOpen = () => !document.getElementById('inv-detail-modal').classList.contains('hidden');
+  if (hist.length >= 2 && _chartReady(() => { if (detailOpen()) openInvDetail(id); })) {
     const ctx = document.getElementById('inv-detail-chart');
     if (ctx) {
       if (_invDetailChart) { try { _invDetailChart.destroy(); } catch (_) {} }
@@ -17859,6 +17898,7 @@ function renderNetWorthChart() {
   const hist = Array.isArray(inv.netWorthHistory) ? inv.netWorthHistory : [];
   if (!canvas) return;
 
+  if (hist.length >= 2 && !_chartReady(() => renderNetWorthChart()) && !_chartFailed) return;
   if (hist.length < 2 || typeof Chart === 'undefined') {
     if (_invNetWorthChart) { try { _invNetWorthChart.destroy(); } catch (_) {} _invNetWorthChart = null; }
     canvas.classList.add('hidden');
@@ -18412,6 +18452,7 @@ function _caRenderChart(label) {
   // Every sale is charted, however few: one sale is a dot, two a line between
   // them. The trend figure above is what is held back on thin data, not the
   // sales themselves.
+  if (g && g.points.length && !_chartReady(() => _caRenderChart(label)) && !_chartFailed) return;
   if (!g || !g.points.length || typeof Chart === 'undefined') {
     canvas.classList.add('hidden');
     if (empty) {
