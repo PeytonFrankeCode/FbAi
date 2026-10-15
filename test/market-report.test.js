@@ -66,6 +66,24 @@ store.set('soldstats:last:30', JSON.stringify(month30));
     const sm = await get('/sitemap-news.xml');
     check('the sitemap lists the report and its week', sm.text.includes('/news/market-movers</loc>') && sm.text.includes(`/news/market-movers/${week}</loc>`));
   }
+  // A week filed without risers or fallers (the boards had none: sales a few
+  // days behind) is filed again once they exist; a full week never is.
+  if (!isMondayEarly) {
+    store.delete(`mmreport:v1:${week}`);
+    store.set('mmreport:index', JSON.stringify([]));
+    const ms = (i) => ({ name: '2024 Prizm Card ' + i, query: '2024 Prizm Card ' + i, sales: 100 - i, avgPrice: 20, topPrice: 90 });
+    store.set('soldstats:last:7', JSON.stringify({ ...week7, cardMovers: [], mostSold: [ms(1), ms(2), ms(3)] }));
+    const thin = await get('/news/market-movers');
+    check('a week with no movers is filed, marked partial', thin.status === 200 && !thin.text.includes('<h2>Biggest risers</h2>')
+      && JSON.parse(store.get(`mmreport:v1:${week}`)).partial === true);
+    store.set('soldstats:last:7', JSON.stringify(week7));
+    const full = await get('/news/market-movers');
+    check('  ...and filed again, whole, once the movers are in', full.text.includes('<h2>Biggest risers</h2>')
+      && JSON.parse(store.get(`mmreport:v1:${week}`)).partial === false);
+    store.set('soldstats:last:7', JSON.stringify({ ...week7, cardMovers: [mover('2020 Prizm Someone Else #1', 99, 9)] }));
+    const kept = await get('/news/market-movers');
+    check('  ...after which it is kept as it stood', kept.text.includes('2024 Prizm Bo Nix #309') && !kept.text.includes('Someone Else'));
+  }
   const missing = await get('/news/market-movers/2001-W01');
   check('a week never filed is a 404, not an empty page', missing.status === 404 && /noindex/.test(missing.text));
   const bad = await get('/news/market-movers/not-a-week');
