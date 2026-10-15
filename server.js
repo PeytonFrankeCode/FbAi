@@ -6,6 +6,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
 const digest = require('./market-digest');
+const mreport = require('./market-report');
 const betaSurvey = require('./beta-survey');
 const accountProfile = require('./account-profile');
 
@@ -18531,7 +18532,7 @@ function newsShell(opts) {
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
-    + '<style>' + NEWS_CSS + '</style>' + jsonLd
+    + '<style>' + NEWS_CSS + (opts.css || '') + '</style>' + jsonLd
     + '</head><body>'
     + '<header class="site"><div class="wrap">'
     + '<a class="brand" href="/">The Card Huddle</a>'
@@ -18545,8 +18546,17 @@ function newsShell(opts) {
     + '</div></footer></body></html>';
 }
 
-app.get('/news', (req, res) => {
+app.get('/news', async (req, res) => {
   const list = newsPublished();
+  // The weekly report, pinned first: it is the section's one page that is
+  // new every week.
+  let report = null;
+  try { report = await _latestReport(); } catch (_) { report = null; }
+  const reportCard = report ? '<div class="card">'
+    + '<span class="kicker">Market Movers &middot; weekly</span>'
+    + '<h2><a href="/news/market-movers">' + NEWS.esc(mreport.reportTitle(report.week, report.builtAt)) + '</a></h2>'
+    + '<p>' + NEWS.esc(mreport.reportSummary(report.content)) + '</p>'
+    + '<div class="foot"><span>Updated every Monday</span></div></div>' : '';
   const cards = list.map(a => '<div class="card">'
     + '<span class="kicker">' + NEWS.esc(a.category || 'News') + '</span>'
     + '<h2><a href="/news/' + NEWS.esc(a.slug) + '">' + NEWS.esc(a.title) + '</a></h2>'
@@ -18557,7 +18567,7 @@ app.get('/news', (req, res) => {
   const body = '<div style="padding:36px 0 0"><h1>Guides &amp; News</h1>'
     + '<p class="lede">Written from our own sold data &mdash; what actually changed hands, '
     + 'and what it means for what you hold.</p></div>'
-    + (list.length ? '<div class="grid">' + cards + '</div>'
+    + ((list.length || reportCard) ? '<div class="grid">' + reportCard + cards + '</div>'
                    : '<p class="lede" style="margin:32px 0 56px">The first guides are being written.</p>');
   res.set('Content-Type', 'text/html; charset=utf-8');
   res.set('Cache-Control', 'public, max-age=300');
@@ -18567,8 +18577,108 @@ app.get('/news', (req, res) => {
     canonical: NEWS_SITE + '/news', body: body,
     // An empty section is exactly what a low-value review counts against a
     // site; it joins the index with its first article.
-    noindex: !list.length,
+    noindex: !list.length && !reportCard,
   }));
+});
+
+// ---- Market Movers: the weekly report as a page (owner, Oct 2026) ----
+//
+// The digest email's content (digestContent, from the 7- and 30-day boards),
+// kept per week as it stood: the first request of a week, from Monday 06:00
+// UTC (after the 05:00 board rebuild), stores it for good, and each stored
+// week is a page in the archive. Before that hour, or in a week too quiet to
+// report, the latest stored week is shown.
+const REPORT_KEY = (week) => `mmreport:v1:${week}`;
+const REPORT_INDEX_KEY = 'mmreport:index';
+const REPORT_KEEP = 60 * 60 * 24 * 800;
+const REPORT_AD_SLOT = '4442737418';
+// The filed weeks, newest first: [{ week, builtAt }].
+async function _reportIndex() {
+  const ix = await cacheGet(REPORT_INDEX_KEY).catch(() => null);
+  return Array.isArray(ix) ? ix.filter(x => x && mreport.WEEK_RE.test(x.week)) : [];
+}
+async function _reportFor(week, { build = false, now = new Date() } = {}) {
+  const have = await cacheGet(REPORT_KEY(week)).catch(() => null);
+  if (have && have.content) return have;
+  if (!build) return null;
+  // The boards are rebuilt at 05:00 UTC Monday; before then they still hold
+  // last week, which must not be filed under this one.
+  if (now.getUTCDay() === 1 && now.getUTCHours() < 6) return null;
+  const content = await _digestContentNow();
+  if (!content) return null;
+  const rec = { week, content, builtAt: now.toISOString() };
+  await cachePut(REPORT_KEY(week), rec, REPORT_KEEP);
+  const ix = await _reportIndex();
+  if (!ix.some(x => x.week === week)) {
+    await cachePut(REPORT_INDEX_KEY, [{ week, builtAt: rec.builtAt }, ...ix]
+      .sort((a, b) => (a.week < b.week ? 1 : -1)).slice(0, 200), REPORT_KEEP);
+  }
+  return rec;
+}
+async function _latestReport() {
+  const now = new Date();
+  const cur = await _reportFor(digest.weekId(now), { build: true, now });
+  if (cur) return cur;
+  for (const x of await _reportIndex()) {
+    const r = await _reportFor(x.week);
+    if (r) return r;
+  }
+  return null;
+}
+const _reportAdUnit = () => '<div class="mm-ad"><span class="mm-ad-label">Advertisement</span>'
+  + '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3644779384068007" data-ad-slot="' + REPORT_AD_SLOT + '"'
+  + ' data-ad-format="auto" data-full-width-responsive="true"></ins>'
+  + '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>';
+async function _sendReport(res, rec, canonicalPath) {
+  const archive = await _reportIndex();
+  const title = mreport.reportTitle(rec.week, rec.builtAt);
+  const desc = mreport.reportSummary(rec.content);
+  const start = mreport.weekEnding(rec.week, rec.builtAt);
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'Article', headline: title, description: desc,
+    datePublished: (start || new Date()).toISOString().slice(0, 10), dateModified: String(rec.builtAt || '').slice(0, 10) || undefined,
+    author: { '@type': 'Organization', name: 'The Card Huddle' },
+    publisher: { '@type': 'Organization', name: 'The Card Huddle' },
+    mainEntityOfPage: NEWS_SITE + canonicalPath,
+  }).replace(/</g, '\\u003c');
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=900');
+  res.send(newsShell({
+    title: title + ' · The Card Huddle', description: desc, canonical: NEWS_SITE + canonicalPath,
+    ads: true, jsonLd, css: mreport.REPORT_CSS,
+    body: mreport.renderReportBody(rec.content, { week: rec.week, builtAt: rec.builtAt, site: NEWS_SITE, adUnit: _reportAdUnit(), archive }),
+  }));
+}
+function _reportMissing(res) {
+  res.status(404).set('Content-Type', 'text/html; charset=utf-8');
+  res.send(newsShell({
+    title: 'Market Movers · The Card Huddle', description: 'The weekly football card market report.',
+    canonical: NEWS_SITE + '/news/market-movers', noindex: true,
+    body: '<div style="padding:56px 0"><h1>Market Movers</h1>'
+      + '<p class="lede">This week&rsquo;s report is not ready yet. <a href="/">Search card prices</a> in the meantime.</p></div>',
+  }));
+}
+app.get('/news/market-movers', async (req, res) => {
+  try {
+    const rec = await _latestReport();
+    if (!rec) return _reportMissing(res);
+    await _sendReport(res, rec, '/news/market-movers');
+  } catch (err) {
+    console.error('[report]', err && err.message);
+    _reportMissing(res);
+  }
+});
+app.get('/news/market-movers/:week', async (req, res) => {
+  const week = String(req.params.week || '').toUpperCase();
+  if (!mreport.WEEK_RE.test(week)) return _reportMissing(res);
+  try {
+    const rec = await _reportFor(week);
+    if (!rec) return _reportMissing(res);
+    await _sendReport(res, rec, '/news/market-movers/' + week);
+  } catch (err) {
+    console.error('[report]', err && err.message);
+    _reportMissing(res);
+  }
 });
 
 app.get('/news/:slug', async (req, res) => {
@@ -18619,11 +18729,15 @@ app.get('/news/:slug', async (req, res) => {
 
 // Its own sitemap, because articles appear between deploys while the main
 // sitemap is generated at build time from the checklists.
-app.get('/sitemap-news.xml', (req, res) => {
-  const urls = newsPublished().map(a =>
+app.get('/sitemap-news.xml', async (req, res) => {
+  let weeks = [];
+  try { weeks = await _reportIndex(); } catch (_) { weeks = []; }
+  const reportUrls = (weeks.length ? ['  <url><loc>' + NEWS_SITE + '/news/market-movers</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>'] : [])
+    .concat(weeks.map(x => '  <url><loc>' + NEWS_SITE + '/news/market-movers/' + x.week + '</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>'));
+  const urls = reportUrls.concat(newsPublished().map(a =>
     '  <url><loc>' + NEWS_SITE + '/news/' + NEWS.esc(a.slug) + '</loc>'
     + '<lastmod>' + NEWS.esc(String(a.updatedAt || a.publishedAt || '').slice(0, 10)) + '</lastmod>'
-    + '<changefreq>monthly</changefreq><priority>0.7</priority></url>').join('\n');
+    + '<changefreq>monthly</changefreq><priority>0.7</priority></url>')).join('\n');
   res.set('Content-Type', 'application/xml; charset=utf-8');
   res.send('<?xml version="1.0" encoding="UTF-8"?>\n'
     + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -19219,6 +19333,8 @@ async function _digestActive() {
 // week's run and records how far it got, so the run spreads over as many
 // ticks as the list needs and each address gets the week's email once.
 async function sendMarketDigest({ now = new Date(), force = false, maxBatches = DIGEST_BATCHES_PER_TICK } = {}) {
+  // The week's report page is filed from the same content the email carries.
+  try { await _reportFor(digest.weekId(now), { build: true, now }); } catch (_) { /* the page builds on its first visit instead */ }
   if (!force && !digest.inSendWindow(now)) return { ok: true, skipped: 'not send time' };
   if (!useResend && !emailTransporter) return { ok: false, reason: 'email not configured' };
   const week = digest.weekId(now);
