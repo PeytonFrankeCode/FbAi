@@ -342,5 +342,17 @@ check('the Pick-a-card dropdowns shrink to their columns instead of overlapping'
     /href="\/apple-touch-icon\.png\?v=2"/.test(html) && man.icons.every(i => /\?v=2$/.test(i.src)));
 }
 
+// ---- Chart.js off the critical path (Oct 2026) -----------------------------
+// 205 KB ran ahead of app.js, so no result and no ad appeared until it had.
+{
+  const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
+  check('Chart.js is not a blocking script on the page; app.js loads it when idle',
+    !/<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/chart\.js/.test(html) && /function _loadChart\(\)/.test(app)
+    && /requestIdleCallback[\s\S]{0,80}_loadChart\(\)/.test(app));
+  check('  ...every chart waits for it and draws when it lands, or says it is unavailable if it fails',
+    (app.match(/_chartReady\(/g) || []).length >= 6 && /s\.onerror = \(\) => \{ _chartFailed = true;/.test(app)
+    && /s\.onload = \(\) => \{ _chartDefaults\(\); _chartScrubPlugin\(\);/.test(app));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall dom-contract checks passed');
 process.exit(failures ? 1 : 0);
