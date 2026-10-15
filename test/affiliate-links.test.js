@@ -237,5 +237,27 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
   check('the landing pages\' links say they are the landing pages', /customid=landing$/.test(core.ebaySearchUrl ? core.ebaySearchUrl('x') : fs.readFileSync(path.join(ROOT, 'price-block-core.js'), 'utf8').match(/customid=landing/)[0]));
 }
 
+// ---- "Available now on eBay" (Oct 2026) -----------------------------------
+// 13 purchases in 90 days averaged $21: most links went to sold listings,
+// which are over. Live copies, on the card page and above sold results.
+{
+  const vm = require('vm');
+  const grab = (name) => { const i = app.indexOf(`function ${name}(`); return app.slice(i, app.indexOf('\n}\n', i) + 3); };
+  const ctx = { escHtml: (x) => String(x), epnUrl: (u) => u + '?campid=1', roundMoney: (n) => '$' + n, EBAY_TAG: '<span class="ebay-tag">View on eBay</span>' };
+  vm.createContext(ctx);
+  vm.runInContext(app.match(/const LIVE_STRIP_MAX = \d+;/)[0] + '\n' + grab('_liveStrip') + '\nthis.f = _liveStrip;', ctx);
+  const L = (p, i) => ({ title: 'card ' + i, price: String(p), itemUrl: 'https://www.ebay.com/itm/' + i });
+  const html = ctx.f([L(90, 1), L(40, 2), L(65, 3), L(0, 4), L(120, 5)], { total: 5, moreLabel: 'See all 5' });
+  const prices = [...html.matchAll(/class="live-price">\$(\d+)/g)].map(m => +m[1]);
+  check('live listings: the three cheapest priced copies, cheapest first', prices.join(',') === '40,65,90', prices.join(','));
+  check('  ...each an affiliate link that says it is eBay', (html.match(/\?campid=1/g) || []).length === 3 && (html.match(/View on eBay/g) || []).length === 3);
+  check('  ...with nothing to show, nothing at all', ctx.f([], {}) === '');
+  const html2 = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
+  check('  ...on the card page and above sold results, each labelled for the eBay report',
+    /id="ca-live"[^>]*data-epn="card-page-live"/.test(html2) && /box\.dataset\.epn = 'search-live'/.test(app)
+    && /if \(isSold\) _searchLiveStrip\(query, seq\)/.test(app));
+  check('  ...never a broadened search\'s other cards', /if \(data\.searchType === 'broadened'\) return;/.test(app));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);
