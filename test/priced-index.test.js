@@ -75,8 +75,10 @@ const check = (label, ok, detail) => {
   // The written side: guides are where original content goes, and an empty
   // section must not be offered to search in the meantime.
   const server = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  // The weekly Market Movers report (Oct 2026) counts as content: the section
+  // is offered to search once it has an article or a report.
   check('Guides & News is noindex while it has no articles, and articles carry the ad tag',
-    /noindex: !list\.length,/.test(server) && /jsonLd: jsonLd, ads: true \}\)\);/.test(server)
+    /noindex: !list\.length && !reportCard,/.test(server) && /jsonLd: jsonLd, ads: true \}\)\);/.test(server)
       && /\(opts\.noindex \? 'noindex, follow' : 'index, follow'\)/.test(server));
   const about = fs.readFileSync(path.join(__dirname, '..', 'public', 'about.html'), 'utf8');
   check('  ...and the About page says which pages are offered to search, and why',
