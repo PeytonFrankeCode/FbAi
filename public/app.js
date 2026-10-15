@@ -3016,6 +3016,35 @@ function _trackSearch(query, kind) {
   return true;
 }
 
+// Live copies of what a sold search found, above its results: the sales say
+// what the card goes for, these are where it can be had now. One eBay
+// lookup, cached on the server for half an hour, after the sales are on
+// screen so it never slows them.
+function _searchLiveClear() {
+  const old = document.getElementById('search-live');
+  if (old) old.remove();
+}
+async function _searchLiveStrip(query, seq) {
+  let data = null;
+  try {
+    const res = await fetch(`/api/direct-search?${new URLSearchParams({ q: query, mode: 'forsale' })}`);
+    data = res.ok ? await res.json() : null;
+  } catch (_) { data = null; }
+  if (_searchStale(seq) || !data || !Array.isArray(data.results)) return;
+  // Only listings the search itself matched: a broadened search's "similar"
+  // listings are other cards, and this strip says it is this one.
+  if (data.searchType === 'broadened') return;
+  const html = _liveStrip(data.results);
+  if (!html) return;
+  _searchLiveClear();
+  const box = document.createElement('div');
+  box.id = 'search-live';
+  box.className = 'live-strip live-strip-search';
+  box.dataset.epn = 'search-live';
+  box.innerHTML = html;
+  grid.parentNode.insertBefore(box, grid);
+}
+
 async function fetchDirectSearch(query) {
   _hideHomeContent();
   _trackSearch(query, currentMode === 'sold' ? 'sold' : 'forsale');
@@ -3040,6 +3069,7 @@ async function fetchDirectSearch(query) {
   meta.classList.add('hidden');
   errorMsg.classList.add('hidden');
 
+  _searchLiveClear();
   const seq = _beginSearch();
   const isSold = currentMode === 'sold';
   loadingText.textContent = isSold ? 'Searching eBay sold listings...' : 'Searching eBay listings...';
@@ -3156,6 +3186,7 @@ async function fetchDirectSearch(query) {
         }
       }
       if (isSold) { buildGradeFilter(); buildParallelFilter(query); }
+      if (isSold) _searchLiveStrip(query, seq);
       _placeResultsAd();
     }
 
@@ -18117,6 +18148,8 @@ function _caReset(keepVisible) {
   });
   const listEl = document.getElementById('ca-list-body');
   if (listEl) listEl.innerHTML = '';
+  const liveEl = document.getElementById('ca-live');
+  if (liveEl) { liveEl.innerHTML = ''; liveEl.classList.add('hidden'); }
   // Hidden on every reset: a stale list would offer to switch to parallels of
   // whichever card was open before this one.
   const parSel = document.getElementById('ca-parallel-select');
@@ -18424,6 +18457,30 @@ function _caDate(d) {
   return isNaN(t) ? '' : t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' });
 }
 
+// ---- "Available now on eBay" (Oct 2026) ----
+// Copies of the card for sale right now, where someone has just looked at
+// what it sells for. Most of the site's eBay links went to sold listings,
+// which are over: eBay still paid on whatever was bought within a day, but
+// that came to $21 a purchase. A live listing can be bought on the spot, at
+// the card's own price. Cheapest first, a few at most, and always saying it
+// is eBay (EBAY_TAG): the Partner Network requires it.
+const LIVE_STRIP_MAX = 3;
+function _liveStrip(listings, opts = {}) {
+  const rows = (listings || []).filter(r => r && r.itemUrl && parseFloat(r.price) > 0)
+    .sort((a, b) => parseFloat(a.price) - parseFloat(b.price)).slice(0, opts.max || LIVE_STRIP_MAX);
+  if (!rows.length) return '';
+  const more = opts.total > rows.length && opts.moreLabel
+    ? `<button type="button" class="live-more">${escHtml(opts.moreLabel)}</button>` : '';
+  return `<div class="live-head"><span class="live-title">Available now on eBay</span>${more}</div>
+    <div class="live-rows">${rows.map(r => `
+      <a class="live-row" href="${escHtml(epnUrl(r.itemUrl))}" target="_blank" rel="noopener sponsored">
+        ${r.imageUrl ? `<img class="live-img" src="${escHtml(r.imageUrl)}" alt="" loading="lazy" />` : '<span class="live-img live-noimg">&#127183;</span>'}
+        <span class="live-text"><span class="live-name">${escHtml(String(r.title || '').slice(0, 80))}</span>
+          <span class="live-meta">${escHtml(r.condition || '')}${EBAY_TAG}</span></span>
+        <span class="live-price">${roundMoney(parseFloat(r.price))}</span>
+      </a>`).join('')}</div>`;
+}
+
 // One row per listing. Shared by both lists so sold and for-sale look alike.
 function _caRow(r, right) {
   const thumb = r.imageUrl
@@ -18510,6 +18567,18 @@ async function _caLoadForSale(itemId) {
   _caForSale = { results: (data && Array.isArray(data.results)) ? data.results : [] };
   _caSyncTabLabels();
   if (_caTab === 'forsale') _caRenderList();
+  const live = document.getElementById('ca-live');
+  if (live) {
+    const html = _liveStrip(_caForSale.results, { total: _caForSale.results.length, moreLabel: `See all ${_caForSale.results.length}` });
+    live.innerHTML = html;
+    live.classList.toggle('hidden', !html);
+    const btn = live.querySelector('.live-more');
+    if (btn) btn.addEventListener('click', () => {
+      _caSetTab('forsale');
+      const list = document.getElementById('ca-list-body');
+      if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 document.querySelectorAll('.ca-tab').forEach(btn => {
