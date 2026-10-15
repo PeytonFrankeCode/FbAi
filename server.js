@@ -543,7 +543,7 @@ const _BOT_UA = /bot|crawl|spider|slurp|bingpreview|headless|phantom|puppeteer|p
 
 const _traffic = { day: '', total: 0, declaredBot: 0, browserLike: 0, noUa: 0,
                    asset: 0, api: 0, page: 0, limited: 0, byUa: {}, byPath: {},
-                   byLimited: {}, captcha: {} };
+                   byLimited: {}, captcha: {}, epnClicks: {} };
 
 function _trafficDay() { return new Date().toISOString().slice(0, 10); }
 
@@ -558,7 +558,7 @@ function _noteRequest(req) {
       _traffic.noUa = 0; _traffic.asset = 0; _traffic.api = 0; _traffic.page = 0;
       _traffic.limited = 0;
       _traffic.byUa = {}; _traffic.byPath = {}; _traffic.byLimited = {};
-      _traffic.captcha = {};
+      _traffic.captcha = {}; _traffic.epnClicks = {};
     }
     _traffic.total++;
 
@@ -597,7 +597,7 @@ async function flushTraffic() {
       prev[k] = (prev[k] || 0) + _traffic[k];
       _traffic[k] = 0;
     }
-    for (const bucket of ['byUa', 'byPath', 'byLimited', 'captcha']) {
+    for (const bucket of ['byUa', 'byPath', 'byLimited', 'captcha', 'epnClicks']) {
       const acc = prev[bucket] || {};
       for (const [k, n] of Object.entries(_traffic[bucket])) acc[k] = (acc[k] || 0) + n;
       // Kept to the top 60 in KV too, or a month of long tails grows without end.
@@ -9382,6 +9382,21 @@ async function flushD1Usage() {
 // Gated, unlike the d1-usage endpoint next door: user agents are close enough
 // to visitor detail that they should not be public, and a traffic profile is
 // exactly what someone probing the site would like to read.
+// ---- eBay clicks, by where on the site they came from ----
+// The page sends one of these as an eBay link opens (app.js _epnPlacement).
+// eBay's own report says how many clicks earned; this says which part of
+// the site they came from, beside the customid on the link itself, so the
+// two can be checked against each other. Counted with the daily traffic
+// tally (/api/debug/traffic, epnClicks); nothing about the person is kept.
+app.post('/api/epn-click', (req, res) => {
+  const p = String((req.body && req.body.p) || '');
+  const ua = String(req.headers['user-agent'] || '');
+  if (/^[a-z0-9-]{1,32}$/.test(p) && ua && !_BOT_UA.test(ua)) {
+    try { _traffic.epnClicks[p] = (_traffic.epnClicks[p] || 0) + 1; } catch (_) { /* never breaks a click */ }
+  }
+  res.status(204).end();
+});
+
 app.get('/api/debug/traffic', async (req, res) => {
   if (!isAdminReq(req)) return res.status(403).json({ error: 'Forbidden' });
   try {
@@ -9420,6 +9435,9 @@ app.get('/api/debug/traffic', async (req, res) => {
         // script is not loading for them, which is a problem with the gate,
         // not with them.
         captcha: row.captcha || {},
+        // Clicks out to eBay, by where on the site they came from: the same
+        // names as the customid on each link in the eBay Partner Network report.
+        ebayClicks: row.epnClicks || {},
       });
     }
 

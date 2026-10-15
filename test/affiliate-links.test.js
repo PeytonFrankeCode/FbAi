@@ -208,5 +208,34 @@ const app = fs.readFileSync(path.join(ROOT, 'public', 'app.js'), 'utf8');
     && /const NEWS_AD_TAG = `<script data-adfree>/.test(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8')));
 }
 
+// ---- where each click came from (Oct 2026) --------------------------------
+// eBay's report said 332 clicks earned $8 and nothing about which part of the
+// site sent them. Each link is labelled as it is clicked (customid), and the
+// site counts the same names, so the two can be checked against each other.
+{
+  const vm = require('vm');
+  const grab = (name) => { const i = app.indexOf(`function ${name}(`); return app.slice(i, app.indexOf('\n}\n', i) + 3); };
+  const places = app.match(/const _EPN_PLACES = \[[\s\S]*?\];/)[0];
+  // A stand-in element: closest() answers for the selectors it is "inside".
+  const el = (inside) => ({ closest: (sel) => (inside.some(c => sel.split(',').map(x => x.trim()).includes(c)) ? { dataset: {} } : null) });
+  const ctx = { document: { querySelector: () => ({ dataset: { view: 'inventory' } }) }, currentMode: 'sold' };
+  vm.createContext(ctx);
+  vm.runInContext(places + '\n' + grab('_epnPlacement') + '\nthis.f = _epnPlacement;', ctx);
+  check('a click is labelled by where it was: card page, alerts, search results, the tab otherwise',
+    ctx.f(el(['.ca-row'])) === 'card-page' && ctx.f(el(['.alert-find'])) === 'alerts'
+    && ctx.f(el(['.card'])) === 'search-sold' && ctx.f(el([])) === 'other-inventory');
+  check('  ...on the link itself, at click time, for clicks and middle-clicks alike',
+    /'customid=' \+ place/.test(app) && /addEventListener\('click', _onEbayClick, true\)/.test(app)
+    && /addEventListener\('auxclick', _onEbayClick, true\)/.test(app));
+  check('  ...never for the site\'s own accounts, whose links lose all tracking first',
+    /if \(_noAffiliate\(\)\) \{ a\.href = _stripEpn\(a\.href\); return; \}/.test(app));
+  const srv = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  check('the site counts the same names, by day, and nothing about the person',
+    /app\.post\('\/api\/epn-click'/.test(srv) && /\/\^\[a-z0-9-\]\{1,32\}\$\/\.test\(p\)/.test(srv)
+    && /'captcha', 'epnClicks'\]/.test(srv) && /ebayClicks: row\.epnClicks/.test(srv));
+  const core = require(path.join(ROOT, 'price-block-core.js'));
+  check('the landing pages\' links say they are the landing pages', /customid=landing$/.test(core.ebaySearchUrl ? core.ebaySearchUrl('x') : fs.readFileSync(path.join(ROOT, 'price-block-core.js'), 'utf8').match(/customid=landing/)[0]));
+}
+
 console.log(failures ? `\n${failures} check(s) failed` : '\nall affiliate-link checks passed');
 process.exit(failures ? 1 : 0);
