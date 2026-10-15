@@ -59,6 +59,19 @@ const check = (label, ok, detail) => {
   check('a year hub yields a key that will miss, not a crash',
     priceKeyForPath('/sets/2024/') === 'set:2024');
 
+  // ---- Where the AdSense script comes off, the ad boxes come off with it ----
+  // The landing pages' hand-placed units (Oct 2026) sit in div.lp-ad. Without
+  // the script, each would be an empty "Advertisement" label holding a gap.
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'worker.js'), 'utf8');
+    check('an unpriced page loses its ad boxes along with the ad script',
+      /rw\.on\('script\[src\]', new AdTagRemover\(\)\);\s*rw\.on\('div\.lp-ad', new AdSlotRemover\(\)\);/.test(src));
+    check('  ...and so does a page served to a bot',
+      /new BotTagRemover\(\)\)\s*\.on\('div\.lp-ad', new AdSlotRemover\(\)\)/.test(src));
+    const lp = fs.readFileSync(path.join(ROOT, 'scripts', 'build-landing-pages.js'), 'utf8');
+    check('  ...and a box Google leaves unfilled collapses', /\.lp-ad:has\(ins\[data-ad-status="unfilled"\]\)\{display:none\}/.test(lp));
+  }
+
   // ---- The remover takes the ad tag and nothing else ----
   {
     const r = new AdTagRemover();

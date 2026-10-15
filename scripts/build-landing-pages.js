@@ -1190,6 +1190,7 @@ h3.lp-setrow{font-size:1.02rem;font-weight:600;margin:1.1rem 0 .4rem;display:fle
 .lp-ad{margin:1.5rem 0;min-height:120px}
 .lp-ad-label{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
 .ch-adfree .lp-ad{display:none}
+.lp-ad:has(ins[data-ad-status="unfilled"]){display:none}
 .lp-footer{border-top:1px solid var(--border);padding:1.75rem 1.25rem;text-align:center;color:var(--muted);font-size:.9rem}
 .lp-footer a{color:var(--accent)}
 @media(max-width:600px){h1{font-size:1.6rem}.lp-main{padding:1rem .9rem 2.5rem}.lp-aznav{top:60px}}
