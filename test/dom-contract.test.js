@@ -229,7 +229,12 @@ check('  ...that locks the page under it, closes on a swipe, and respects reduce
     /RESULTS_AD_SLOT = '9669331752'/.test(app) && /RESULTS_AD_AFTER = 6/.test(app) && /if \(_adFree\(\) \|\| !grid\) return;/.test(pr)
     && (app.match(/_placeResultsAd\(\);/g) || []).length >= 2);
   check('  ...asked of Google once a search, and put back after a redraw instead of re-asked',
-    /new MutationObserver\([\s\S]{0,260}_seatResultsAd\(\)/.test(app) && (pr.match(/\.push\(\{\}\)/g) || []).length === 1);
+    /new MutationObserver\([\s\S]{0,600}_seatResultsAd\(\)/.test(app) && (pr.match(/\.push\(\{\}\)/g) || []).length === 1);
+  // "App In-Content" (Oct 2026): a second tile in a long list, asked once.
+  const seat = app.slice(app.indexOf('function _seatResultsAd('), app.indexOf('function _seatResultsAd(') + 1400);
+  check('  ...and a long list (15+ cards) a second, "App In-Content", after the thirteenth, asked once',
+    /RESULTS_AD2_SLOT = '6056036132'/.test(app) && /RESULTS_AD2_AFTER = 13/.test(app) && /RESULTS_AD2_MIN = 15/.test(app)
+    && /if \(!_resultsAd2Asked && el2\.isConnected\) \{\s*_resultsAd2Asked = true;/.test(seat));
   check('  ...the full width of the grid, collapsing when unfilled',
     /\.results-ad \{\n  grid-column: 1 \/ -1;/.test(css) && /\.results-ad:has\(ins\.adsbygoogle\[data-ad-status="unfilled"\]\) \{ display: none; \}/.test(css));
 }

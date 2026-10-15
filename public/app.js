@@ -5725,37 +5725,67 @@ function _mountHomeAd() {
 // against AdSense policy. Fewer than four results: no ad.
 const RESULTS_AD_SLOT = '9669331752';
 const RESULTS_AD_AFTER = 6;
+// A second tile deep in a long list ("App In-Content", Oct 2026): a sold
+// search often shows 20-40 cards, and AdSense showed 0.5 ads a page view.
+// Only once RESULTS_AD2_MIN cards are on screen (a sold search shows 15 raw
+// at first, then "Load more"), so a short list keeps
+// a single ad; asked of Google the first time it has a place, once a search.
+const RESULTS_AD2_SLOT = '6056036132';
+const RESULTS_AD2_AFTER = 13;
+const RESULTS_AD2_MIN = 15;
 let _resultsAdEl = null;
-// Where the tile goes: after the sixth card, or the last when there are fewer.
+let _resultsAd2El = null;
+let _resultsAd2Asked = false;
+// Where the tiles go: after the sixth card (or the last, when there are
+// fewer), and the second after the thirteenth of a long list.
 function _seatResultsAd() {
-  const el = _resultsAdEl;
-  if (!el || !grid) return;
+  if (!grid) return;
   const cards = grid.querySelectorAll('.card');
-  if (cards.length < 4) return;
-  const at = cards[Math.min(RESULTS_AD_AFTER, cards.length) - 1];
-  if (at.nextElementSibling !== el) at.after(el);
+  const el = _resultsAdEl;
+  if (el && cards.length >= 4) {
+    const at = cards[Math.min(RESULTS_AD_AFTER, cards.length) - 1];
+    if (at.nextElementSibling !== el) at.after(el);
+  }
+  const el2 = _resultsAd2El;
+  if (el2 && cards.length >= RESULTS_AD2_MIN) {
+    const at2 = cards[RESULTS_AD2_AFTER - 1];
+    if (at2.nextElementSibling !== el2) at2.after(el2);
+    if (!_resultsAd2Asked && el2.isConnected) {
+      _resultsAd2Asked = true;
+      try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the tile collapses */ }
+    }
+  }
 }
-// A new search's tile, asked of Google once. The results redraw after they
-// land (versions, parallels, filters), so the same tile is put back in its
-// place on every redraw rather than a new one requested.
-function _placeResultsAd() {
-  if (_adFree() || !grid) return;
+function _resultsAdTile(slot) {
   const el = document.createElement('div');
   el.className = 'results-ad';
   el.setAttribute('aria-label', 'Advertisement');
   el.innerHTML = AD_LABEL
-    + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${RESULTS_AD_SLOT}"`
+    + `<ins class="adsbygoogle" style="display:block" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${slot}"`
     + ' data-ad-format="auto" data-full-width-responsive="true"></ins>';
+  return el;
+}
+// A new search's tiles, each asked of Google once. The results redraw after
+// they land (versions, parallels, filters), so the same tiles are put back in
+// their places on every redraw rather than new ones requested.
+function _placeResultsAd() {
+  if (_adFree() || !grid) return;
   if (_resultsAdEl) _resultsAdEl.remove();
-  _resultsAdEl = el;
+  if (_resultsAd2El) _resultsAd2El.remove();
+  _resultsAdEl = _resultsAdTile(RESULTS_AD_SLOT);
+  _resultsAd2El = _resultsAdTile(RESULTS_AD2_SLOT);
+  _resultsAd2Asked = false;
   _seatResultsAd();
-  if (!el.isConnected) { _resultsAdEl = null; return; }   // too few results: no ad
+  if (!_resultsAdEl.isConnected) { _resultsAdEl = null; _resultsAd2El = null; return; }   // too few results: no ad
   try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* blocked: the tile collapses */ }
 }
 if (typeof MutationObserver === 'function' && grid) {
   let queued = false;
   new MutationObserver(() => {
-    if (queued || !_resultsAdEl || _resultsAdEl.isConnected && grid.contains(_resultsAdEl)) return;
+    const placed = (el) => !el || (el.isConnected && grid.contains(el));
+    // The second tile also waits here for a list that grows long enough.
+    const waiting = _resultsAd2El && !_resultsAd2Asked;
+    if (queued || !_resultsAdEl || (placed(_resultsAdEl) && placed(_resultsAd2El) && !waiting)) return;
     queued = true;
     requestAnimationFrame(() => { queued = false; _seatResultsAd(); });
   }).observe(grid, { childList: true, subtree: true });
