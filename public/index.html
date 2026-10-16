@@ -280,7 +280,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=5f3e190e8a" />
+  <link rel="stylesheet" href="style.css?v=8e03740b91" />
 
 
 </head>
@@ -1399,28 +1399,29 @@
         </div>
         <div class="card-modal-details">
           <p id="card-modal-title" class="card-modal-title"></p>
-          <p id="card-modal-price" class="card-modal-price"></p>
-          <div id="card-modal-meta" class="card-modal-meta"></div>
-          <a id="card-modal-link" class="card-modal-ebay-link" href="#" target="_blank" rel="noopener noreferrer">
-            View on eBay &#8599;
-          </a>
+          <!-- The sale itself. On a card with history (wide screens) it sits
+               under the photo with the recommended price, and the chart takes
+               the column beside them (style.css, .card-modal-layout:has). -->
+          <div class="card-modal-sale">
+            <p id="card-modal-price" class="card-modal-price"></p>
+            <div id="card-modal-meta" class="card-modal-meta"></div>
+            <a id="card-modal-link" class="card-modal-ebay-link" href="#" target="_blank" rel="noopener noreferrer">
+              View on eBay &#8599;
+            </a>
+          </div>
 
           <!-- Everything we hold on this card, when the sale came from our own
                dataset and parsed confidently enough to group on. Hidden
                otherwise, so the modal is unchanged for everything else. -->
           <div id="card-analysis" class="card-analysis hidden">
+            <div class="ca-graph">
             <div class="ca-head">
               <span class="ca-title">Card history</span>
               <span id="ca-summary" class="ca-summary"></span>
             </div>
-            <!-- Recommended price for the selected grade. Sits above the
-                 chart because it's the answer most people opened this for. -->
-            <div id="ca-price" class="ca-price hidden"></div>
-            <!-- Copies of this card for sale now (app.js _liveStrip): bought
-                 straight from the page, at real card prices. -->
-            <div id="ca-live" class="live-strip hidden" data-epn="card-page-live"></div>
             <!-- An estimate's working: the sales it started from, the ladder
-                 step and the comps behind it, and the arithmetic. -->
+                 step and the comps behind it, and the arithmetic. An estimate
+                 has no chart, so this takes the chart's place. -->
             <div id="ca-workings" class="ca-workings hidden"></div>
 
             <div class="ca-chart-head">
@@ -1464,12 +1465,21 @@
             <p class="chart-readout-hint">Tap or drag along the chart to see each day's price.</p>
             <p id="ca-spikes" class="ca-note hidden"></p>
             <p class="ca-note">Each grade is tracked separately — a graded copy and a raw one are the same card but different markets.</p>
+            </div>
+            <!-- Recommended price for the selected grade: the answer most
+                 people opened this for, so it sits with the sale price. -->
+            <div id="ca-price" class="ca-price hidden"></div>
 
+            <div class="ca-below">
+            <!-- Copies of this card for sale now (app.js _liveStrip): bought
+                 straight from the page, at real card prices. -->
+            <div id="ca-live" class="live-strip hidden" data-epn="card-page-live"></div>
             <div class="ca-tabs" role="tablist">
               <button type="button" class="ca-tab active" id="ca-tab-sold" data-catab="sold" role="tab" aria-selected="true">Sold</button>
               <button type="button" class="ca-tab" id="ca-tab-forsale" data-catab="forsale" role="tab" aria-selected="false">For Sale</button>
             </div>
             <div id="ca-list-body" class="ca-list-body"></div>
+            </div>
           </div>
         </div>
       </div>

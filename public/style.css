@@ -9126,6 +9126,50 @@ body.tour-open { overflow: hidden; }
 .social-auth-google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; }
 .social-auth-google:hover { background: #f8f9fa; }
 
+/* ---- Card modal with history, wide screens (owner, Oct 2026) ----
+   The photo column was a short photo over a long empty strip, beside a long
+   column of price, then chart. Now: the chart beside the photo, the sale price
+   and recommended price under the photo, the BCW promo under those, and the
+   for-sale strip and sales list across the full width below. The wrappers
+   (side, details, analysis) step aside (display: contents) so their pieces
+   can sit in one grid; without :has() the modal keeps its old layout. */
+@media (min-width: 601px) {
+  .card-modal-layout:has(#card-analysis:not(.hidden)) {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto 1fr auto;
+    grid-template-areas:
+      "image title"
+      "image graph"
+      "sale  graph"
+      "rec   graph"
+      "promo graph"
+      "below below";
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
+  }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) :is(.card-modal-side, .card-modal-details, #card-analysis) { display: contents; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) :is(.card-modal-image, .card-modal-title, .card-modal-sale, .ca-graph, #ca-price, .card-modal-promo, .ca-below) { align-self: start; min-width: 0; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .card-modal-image { grid-area: image; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .card-modal-title { grid-area: title; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .card-modal-sale { grid-area: sale; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .ca-graph { grid-area: graph; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) #ca-price { grid-area: rec; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .card-modal-promo { grid-area: promo; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .ca-below {
+    grid-area: below; padding-top: 0.9rem; border-top: 1px solid var(--border);
+  }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .ca-graph { padding-top: 0; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .card-modal-price { font-size: 1.7rem; }
+  .card-modal-layout:has(#card-analysis:not(.hidden)) .ca-price { margin: 0; }
+}
+.card-modal-sale { display: flex; flex-direction: column; gap: 0.75rem; }
+/* Phones keep one column: the recommended price first, as it always was. */
+@media (max-width: 600px) {
+  #card-analysis:not(.hidden) { display: flex; flex-direction: column; }
+  #card-analysis #ca-price { order: -1; margin-bottom: 0.75rem; }
+}
+
 /* ---- The week's Market Movers report, linked from home and the Market tab ---- */
 .mm-report-link {
   margin-top: 0.9rem; padding: 0.65rem 0.8rem; border-radius: 10px; border: 1px solid var(--border);
