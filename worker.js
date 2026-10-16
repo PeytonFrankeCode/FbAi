@@ -624,7 +624,7 @@ const HTML_PREFIXES = [/^\/sets\//, /^\/players\//, /^\/teams\//, /^\/news(\/|$)
 // footer links to. soft-404.test.js checks this list against public/ on disk,
 // so a page added without being listed fails the suite instead of vanishing.
 export const STATIC_PAGES = new Set([
-  '_avatar-preview', 'about', 'admin', 'admin-news', 'contact', 'diag', 'index',
+  '_avatar-preview', 'about', 'admin', 'admin-news', 'business', 'contact', 'diag', 'index',
   'insert-desk', 'methodology', 'parallel-desk', 'privacy', 'sale-desk',
   'sort-desk', 'terms', 'usage',
 ]);

@@ -18901,6 +18901,130 @@ app.post('/api/admin/news', (req, res) => {
   res.json({ ok: true, article: article, url: '/news/' + slug });
 });
 
+// ---------------------------------------------------------------------------
+// Card Huddle for Business (owner, Oct 2026): inventory + AI analysis for card
+// shops and online sellers, the one paid product (CLAUDE.md). In build, behind
+// the admin key, at /business. Nothing a collector uses is touched by it.
+const BIZ = require('./business-core');
+const BIZ_INV_KEY = 'biz:inventory:owner';
+const BIZ_VALUE_TTL = 12 * 3600;
+const BIZ_VALUE_BATCH = 40;
+async function _bizLoad() { return (await recordGet(BIZ_INV_KEY)) || { items: [] }; }
+async function _bizSave(inv) { inv.updatedAt = new Date().toISOString(); await recordPut(BIZ_INV_KEY, inv); }
+function _bizGate(req, res) {
+  if (isAdminReq(req)) return true;
+  res.status(401).json({ error: 'Sign in with the admin key' });
+  return false;
+}
+// Sold comps for one card from our own sales: the same words in the title,
+// read the way the sold search reads them.
+async function _bizComps(item) {
+  const data = await fetchViaNflCardDb(item.title, 150, 'business');
+  const m = matchSoldListings(data.results || [], item.title);
+  if (m.relaxedBy) return [];
+  return (m.results || []).map(r => ({ price: Number(r.price), soldDate: r.soldDate, grade: r.grade, grader: r.grader, condition: r.condition }));
+}
+async function _bizValue(item, now = Date.now()) {
+  const key = 'biz:val:' + crypto.createHash('sha1').update(item.title.toLowerCase() + '|' + (item.grade || 'raw')).digest('hex').slice(0, 20);
+  const hit = await cacheGet(key);
+  if (hit && hit.asOf) return hit;
+  const v = BIZ.valueFromSales(item, await _bizComps(item), now);
+  cachePut(key, v, BIZ_VALUE_TTL);
+  return v;
+}
+
+app.get('/api/biz/inventory', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  res.set('Cache-Control', 'no-store').json({ items: inv.items, updatedAt: inv.updatedAt || null });
+});
+// { items: [...rows], mode: 'append' | 'replace' } from a CSV, an eBay export
+// or the add form; each row is read by BIZ.normalizeItem.
+app.post('/api/biz/inventory', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const rows = Array.isArray(req.body && req.body.items) ? req.body.items.slice(0, 5000) : [];
+  const fresh = rows.map(r => BIZ.normalizeItem(r)).filter(Boolean);
+  if (!fresh.length) return res.status(400).json({ error: 'No cards found. Each row needs a title.' });
+  const inv = await _bizLoad();
+  inv.items = (req.body.mode === 'replace' ? [] : inv.items).concat(fresh).slice(0, 10000);
+  await _bizSave(inv);
+  res.json({ ok: true, added: fresh.length, total: inv.items.length });
+});
+app.patch('/api/biz/inventory/:id', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  const it = inv.items.find(x => x.id === req.params.id);
+  if (!it) return res.status(404).json({ error: 'Not found' });
+  const b = req.body || {};
+  if (b.price !== undefined) { const n = Number(b.price); if (!(n >= 0)) return res.status(400).json({ error: 'Price must be a number' }); it.price = Math.round(n * 100) / 100; }
+  if (b.sold) { inv.items = inv.items.filter(x => x !== it); (inv.sold = inv.sold || []).push({ ...it, soldAt: new Date().toISOString(), soldFor: Number(b.soldFor) || it.price }); }
+  await _bizSave(inv);
+  res.json({ ok: true, item: it });
+});
+app.delete('/api/biz/inventory/:id', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  const before = inv.items.length;
+  inv.items = req.params.id === 'all' ? [] : inv.items.filter(x => x.id !== req.params.id);
+  await _bizSave(inv);
+  res.json({ ok: true, removed: before - inv.items.length });
+});
+// Prices the cards with no price yet, or an old one, a batch at a time so a
+// request stays well inside the Worker's limits; the page calls it until
+// `remaining` is 0.
+app.post('/api/biz/value', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  const now = Date.now();
+  const stale = inv.items.filter(it => !it.value || now - Date.parse(it.value.asOf || 0) > BIZ_VALUE_TTL * 1000);
+  const batch = stale.slice(0, BIZ_VALUE_BATCH);
+  for (const it of batch) {
+    try { it.value = await _bizValue(it, now); } catch (err) { it.value = { market: null, n: 0, asOf: new Date(now).toISOString(), error: true }; }
+  }
+  if (batch.length) await _bizSave(inv);
+  res.json({ ok: true, valued: batch.length, remaining: stale.length - batch.length, total: inv.items.length });
+});
+app.get('/api/biz/brief', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  res.set('Cache-Control', 'no-store').json(BIZ.analyze(inv.items));
+});
+// Plain-English questions about the seller's own business, answered by Claude
+// from the brief and the inventory table (business-core aiContext). Needs
+// ANTHROPIC_API_KEY set on the Worker.
+const BIZ_AI_MODEL = 'claude-opus-5-5';
+const BIZ_AI_SYSTEM = [
+  'You are the analyst inside Card Huddle for Business, for a sports card seller.',
+  'Answer only from the inventory, totals and actions provided. Market prices are medians of real eBay sold prices over 60 days, same grade.',
+  'Name specific cards and dollar amounts. If the data does not answer the question, say what is missing.',
+  'Be brief: a one-sentence answer, then at most 5 bullet points. Plain text, no tables.',
+].join(' ');
+let _bizClient = null;
+app.post('/api/biz/ask', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
+  if (!q) return res.status(400).json({ error: 'Ask a question' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI answers need an ANTHROPIC_API_KEY on the Worker.' });
+  const inv = await _bizLoad();
+  const brief = BIZ.analyze(inv.items);
+  try {
+    if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
+    const r = await _bizClient.messages.create({
+      model: BIZ_AI_MODEL,
+      max_tokens: 16000,
+      output_config: { effort: 'low' },
+      system: BIZ_AI_SYSTEM,
+      messages: [{ role: 'user', content: BIZ.aiContext(inv.items, brief) + '\n\nQuestion: ' + q }],
+    });
+    if (r.stop_reason === 'refusal') return res.status(422).json({ error: 'That question could not be answered.' });
+    const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    res.json({ answer: text || 'No answer came back. Try asking another way.' });
+  } catch (err) {
+    console.error('[biz/ask]', err && err.status, err && err.message);
+    res.status(502).json({ error: 'The AI did not answer. Try again in a minute.' });
+  }
+});
+
 app.delete('/api/admin/news/:slug', (req, res) => {
   if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
   const slug = String(req.params.slug || '').toLowerCase();
