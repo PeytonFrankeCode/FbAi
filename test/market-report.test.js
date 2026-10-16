@@ -90,6 +90,15 @@ store.set('soldstats:last:30', JSON.stringify(month30));
     const kept = await get('/news/market-movers');
     check('  ...after which it is kept as it stood', kept.text.includes('2024 Prizm Bo Nix #309') && !kept.text.includes('Someone Else'));
   }
+  // How people find it: the email, the home page and the Market tab.
+  const mail = digest.renderDigest(digest.digestContent(week7, month30), { week: '2026-W42', unsubUrl: 'https://x/u', now: Date.parse('2027-01-01') });
+  check('the Monday email links to that week\'s report page',
+    /href="https:\/\/thecardhuddle\.com\/news\/market-movers\/2026-W42\?utm_source=digest/.test(mail.html) && /Read the full report/.test(mail.html)
+    && /Read the full report: https:\/\/thecardhuddle\.com\/news\/market-movers\/2026-W42/.test(mail.text));
+  const home = require('fs').readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+  check('  ...and so do the home page and the Market tab',
+    /class="mm-report-link" href="\/news\/market-movers\?utm_source=app&amp;utm_medium=home"/.test(home)
+    && /class="mm-report-inline" href="\/news\/market-movers\?utm_source=app&amp;utm_medium=market"/.test(home));
   const missing = await get('/news/market-movers/2001-W01');
   check('a week never filed is a 404, not an empty page', missing.status === 404 && /noindex/.test(missing.text));
   const bad = await get('/news/market-movers/not-a-week');

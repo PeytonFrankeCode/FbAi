@@ -10895,6 +10895,13 @@ function _periodEnds(days, throughMs = Date.now()) {
   const w = _endDays(days);
   return { startBefore: d(throughMs - (days - w) * 86400000), endFrom: d(throughMs - w * 86400000), endDays: w };
 }
+// The middle price of a GROUP_CONCAT'd list of cents (null when empty).
+function _medianCents(list) {
+  const a = String(list == null ? '' : list).split(',').map(Number).filter(n => Number.isFinite(n) && n > 0).sort((x, y) => x - y);
+  if (!a.length) return null;
+  const m = a.length >> 1;
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+}
 const MOVERS_MIN_CENTS = 500;    // $5 — below this, percentages stop meaning much
 const MOVERS_MAX_GROUPS = 4000;  // ceiling on rows pulled back for the JS pass
 
@@ -11115,6 +11122,11 @@ async function _computeSoldStats(db, days, sport = 'football') {
                          SUM(CASE WHEN sold_date <  ? THEN 1 ELSE 0 END) AS n_older,
                          AVG(CASE WHEN sold_date >= ? THEN price_cents END) AS recent_cents,
                          AVG(CASE WHEN sold_date <  ? THEN price_cents END) AS older_cents,
+                         -- Each end's prices, for its median: one stray sale (a
+                         -- graded copy sold as raw, a shill bid) moves an
+                         -- average 60% and a median not at all.
+                         GROUP_CONCAT(CASE WHEN sold_date >= ? THEN price_cents END) AS recent_list,
+                         GROUP_CONCAT(CASE WHEN sold_date <  ? THEN price_cents END) AS older_list,
                          title, item_id${imgCol}
                     FROM m_rows
                    WHERE ok = 1 AND kind = '' AND ${RSI_BASE_TITLE_TEST}
@@ -11123,7 +11135,7 @@ async function _computeSoldStats(db, days, sport = 'football') {
                    ORDER BY n DESC LIMIT ?`)
         .bind(since, NFLDB_MIN_CONFIDENCE, ends.endFrom, MOVERS_MIN_HALF, ends.startBefore, MOVERS_MIN_HALF,
               since, NFLDB_MIN_CONFIDENCE,
-              ends.endFrom, ends.startBefore, ends.endFrom, ends.startBefore,
+              ends.endFrom, ends.startBefore, ends.endFrom, ends.startBefore, ends.endFrom, ends.startBefore,
               MOVERS_MIN_HALF, MOVERS_MIN_HALF, MOVERS_MIN_CENTS, MOVERS_MAX_GROUPS).all(),
     ]);
 
@@ -11151,22 +11163,25 @@ async function _computeSoldStats(db, days, sport = 'football') {
     // Every mover is a base card. "Base" on each row would say nothing; a Rated
     // Rookie is worth naming, since that is how collectors know the card.
     const _moverPar = (p) => (/rated rookie/i.test(String(p || '')) ? 'Rated Rookie' : '');
-    const moverRows = ((movers && movers.results) || []).map(r => ({
+    const moverRows = ((movers && movers.results) || []).map(r => {
+      const recentC = _medianCents(r.recent_list) ?? r.recent_cents;
+      const olderC = _medianCents(r.older_list) ?? r.older_cents;
+      return {
       player: _boardPlayerName(r.player),
       name: [r.year, r.set_name, _boardPlayerName(r.player), _moverPar(r.parallel), r.card_number ? `#${r.card_number}` : '']
         .filter(Boolean).join(' ').trim() || r.title,
       kind: 'base',
       sales: r.n,
-      recent: Math.round((r.recent_cents || 0) / 100),
-      older: Math.round((r.older_cents || 0) / 100),
-      changePct: Math.round(((r.recent_cents - r.older_cents) / r.older_cents) * 1000) / 10,
+      recent: Math.round((recentC || 0) / 100),
+      older: Math.round((olderC || 0) / 100),
+      changePct: olderC ? Math.round(((recentC - olderC) / olderC) * 1000) / 10 : NaN,
       imageUrl: r.image_url || null,
       itemUrl: linkOf(r),
       query: [r.year, r.set_name, _boardPlayerName(r.player), _moverPar(r.parallel)]
         .filter(Boolean).join(' ').trim() || r.title,
       // What the deals finder needs to recognise this card in a listing.
       year: r.year, set: r.set_name, number: r.card_number, playerFull: r.player,
-    })).filter(m => Number.isFinite(m.changePct));
+    }; }).filter(m => Number.isFinite(m.changePct));
 
     const byChange = (a, b) => b.changePct - a.changePct;
 
@@ -19492,7 +19507,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.

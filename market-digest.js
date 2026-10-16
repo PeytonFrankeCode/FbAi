@@ -86,6 +86,9 @@ function renderDigest(c, { week, unsubUrl, site = SITE, now = Date.now() }) {
   const surveyUrl = `${site}/?survey=email&utm_source=digest&utm_medium=email&utm_campaign=beta-survey`;
   const askSurvey = now < SURVEY_ASK_UNTIL;
   const L = (q) => link(q, week, site);
+  // The week's page (server.js files it when this email goes out), so a
+  // reader lands on the site and can share a link that keeps.
+  const reportUrl = `${site}/news/market-movers/${encodeURIComponent(week)}?utm_source=digest&utm_medium=email&utm_campaign=${encodeURIComponent(week)}`;
   const section = (title, sub, rows) => rows.length ? `
     <tr><td style="padding:22px 0 6px;">
       <div style="font-size:17px;font-weight:800;color:#111;">${esc(title)}</div>
@@ -132,7 +135,8 @@ function renderDigest(c, { week, unsubUrl, site = SITE, now = Date.now() }) {
     </div>
   </td></tr>` : ''}
   <tr><td align="center" style="padding:26px 0 6px;">
-    <a href="${esc(`${site}/?utm_source=digest&utm_medium=email&utm_campaign=${encodeURIComponent(week)}`)}" style="display:inline-block;background:#2d6a4f;color:#fff;text-decoration:none;font-weight:800;padding:12px 24px;border-radius:8px;">See the full market</a>
+    <a href="${esc(reportUrl)}" style="display:inline-block;background:#2d6a4f;color:#fff;text-decoration:none;font-weight:800;padding:12px 24px;border-radius:8px;">Read the full report</a>
+    <div style="margin-top:10px;font-size:13px;"><a href="${esc(`${site}/?utm_source=digest&utm_medium=email&utm_campaign=${encodeURIComponent(week)}`)}" style="color:#2d6a4f;font-weight:700;">See the full market</a></div>
   </td></tr>
   <tr><td style="font-size:11px;color:#999;padding-top:18px;border-top:1px solid #eee;line-height:1.5;">
     You're getting this because you signed up for the weekly Market Movers email at thecardhuddle.com. Prices are from eBay sold listings.
@@ -144,6 +148,7 @@ function renderDigest(c, { week, unsubUrl, site = SITE, now = Date.now() }) {
   const text = `THE CARD HUDDLE - MARKET MOVERS
 This week in football cards: ${c.sales.toLocaleString('en-US')} sales, ${money(c.value)} changed hands.
 ${t('BIGGEST RISERS', c.risers.map(r => `- ${r.name || r.player} ${pct(r.changePct)}: ${L(r.query)}`))}${t('PLAYERS ON THE MOVE', c.players.map(r => `- ${r.player} ${pct(r.changePct)}: ${L(r.query)}`))}${t('COOLING OFF', c.fallers.map(r => `- ${r.name || r.player} ${pct(r.changePct)}: ${L(r.query)}`))}${t('MOST SOLD', c.mostSold.map(r => `- ${r.name} (${r.sales} sales): ${L(r.query)}`))}
+Read the full report: ${reportUrl}
 See the full market: ${site}/
 ${askSurvey ? `\nHelp shape The Card Huddle (2-minute beta survey): ${surveyUrl}\n` : ''}
 Unsubscribe: ${unsubUrl}
