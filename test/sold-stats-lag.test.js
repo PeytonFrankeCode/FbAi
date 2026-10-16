@@ -29,6 +29,10 @@ for (const [player, perDay] of [['Steady Climber', 0.03], ['Slow Fader', -0.02]]
     }
   }
 }
+// A flat card with one stray $1,000 sale at the start (Oct 2026: "1984 Topps
+// John Elway -64%"). An average reads that as a crash; the median does not.
+for (let d = -30; d <= -LAG; d++) for (let k = 0; k < 2; k++) ins.run(`s${n++}`, iso(d), '2023 Prizm Flat Spike #9', 4000, 'Flat Spike', '9');
+ins.run(`s${n++}`, iso(-29), '2023 Prizm Flat Spike #9', 100000, 'Flat Spike', '9');
 db.exec(`CREATE TABLE daily (sold_date TEXT, sales INTEGER, priced INTEGER, total_cents INTEGER)`);
 db.exec(`INSERT INTO daily SELECT sold_date, COUNT(*), COUNT(price_cents), SUM(price_cents) FROM sales GROUP BY sold_date`);
 const d1 = { prepare(sql) {
@@ -56,6 +60,11 @@ const port = server.address().port;
     r.available && movers.length >= 4, `${movers.length} movers, ${r.moversBasis && r.moversBasis.cardsConsidered} considered`);
   check('  ...climbers up, faders down',
     movers.filter(m => /Climber/.test(m.name)).every(m => m.changePct > 0) && movers.filter(m => /Fader/.test(m.name)).every(m => m.changePct < 0));
+  const spike = movers.find(m => /Flat Spike/.test(m.name));
+  check('  ...and one stray sale does not make a flat card a mover (each end is a median)',
+    spike && Math.abs(spike.changePct) < 5 && spike.older === 40, spike && `${spike.changePct}% from $${spike.older}`);
+  check('the median of a list of cents', require(path.join(__dirname, '..', 'server.js'))._medianCents('900,100,5000') === 900
+    && require(path.join(__dirname, '..', 'server.js'))._medianCents('100,300') === 200 && require(path.join(__dirname, '..', 'server.js'))._medianCents(null) === null);
   check('  ...its window ending at the newest sale, not today',
     r.moversBasis && r.moversBasis.endFrom <= iso(-LAG) && r.moversBasis.endFrom >= iso(-LAG - 3), r.moversBasis && r.moversBasis.endFrom);
   server.close();

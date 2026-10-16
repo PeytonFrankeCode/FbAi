@@ -9126,6 +9126,19 @@ body.tour-open { overflow: hidden; }
 .social-auth-google { background: #fff; color: #1f1f1f; border: 1px solid #dadce0; }
 .social-auth-google:hover { background: #f8f9fa; }
 
+/* ---- The week's Market Movers report, linked from home and the Market tab ---- */
+.mm-report-link {
+  margin-top: 0.9rem; padding: 0.65rem 0.8rem; border-radius: 10px; border: 1px solid var(--border);
+  display: grid; grid-template-columns: 1fr auto; column-gap: 0.6rem; align-items: center;
+  text-decoration: none; color: var(--text-primary); background: rgba(94, 206, 153, 0.06);
+}
+.mm-report-link:hover { background: rgba(94, 206, 153, 0.12); }
+.mm-report-title { font-size: 0.85rem; font-weight: 700; }
+.mm-report-sub { font-size: 0.7rem; color: var(--text-secondary); grid-column: 1; }
+.mm-report-go { grid-column: 2; grid-row: 1 / span 2; font-size: 1.4rem; color: var(--accent); }
+.mm-report-inline { display: inline-block; margin-top: 0.3rem; font-size: 0.8rem; font-weight: 700; color: var(--accent); text-decoration: none; }
+.mm-report-inline:hover { text-decoration: underline; }
+
 /* ---- Market Movers email signup, under the market boards ---- */
 .digest-signup {
   margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px solid var(--border);
