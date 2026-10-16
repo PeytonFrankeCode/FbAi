@@ -19086,24 +19086,55 @@ const BIZ_AI_SYSTEM = [
   'Be brief: a one-sentence answer, then at most 5 bullet points. Plain text, no tables.',
 ].join(' ');
 let _bizClient = null;
+// One Claude answer from the seller's own data. Throws on API errors; returns
+// null on a refusal.
+async function _bizClaude(inv, instruction) {
+  if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
+  const brief = BIZ.analyze(inv.items);
+  const r = await _bizClient.messages.create({
+    model: BIZ_AI_MODEL,
+    max_tokens: 16000,
+    output_config: { effort: 'low' },
+    system: BIZ_AI_SYSTEM,
+    messages: [{ role: 'user', content: BIZ.aiContext(inv.items, brief, 300, (inv.sold || []).length ? BIZ.salesReport(inv.sold) : null) + '\n\n' + instruction }],
+  });
+  if (r.stop_reason === 'refusal') return null;
+  return (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+}
+// The morning summary at the top of Today: written once a day, and again when
+// the inventory or sales change, so opening the page twice costs one answer.
+const BIZ_SUMMARY_ASK = 'Write this seller\'s morning summary: what changed in their business, '
+  + 'the 2 or 3 things most worth doing today with the dollars involved, and one thing going well. '
+  + 'At most 90 words. Plain sentences, no bullet points, no greeting.';
+app.get('/api/biz/summary', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  if (!process.env.ANTHROPIC_API_KEY) return res.json({ summary: null, reason: 'no-key' });
+  const inv = await _bizLoad();
+  if (!(inv.items || []).length) return res.json({ summary: null, reason: 'empty' });
+  const day = new Date().toISOString().slice(0, 10);
+  const key = 'biz:summary:' + crypto.createHash('sha1').update(day + '|' + (inv.updatedAt || '')).digest('hex').slice(0, 20);
+  const hit = req.query.fresh ? null : await cacheGet(key);
+  if (hit && hit.summary) return res.json({ summary: hit.summary, at: hit.at, cached: true });
+  try {
+    const summary = await _bizClaude(inv, BIZ_SUMMARY_ASK);
+    if (!summary) return res.json({ summary: null, reason: 'declined' });
+    const at = new Date().toISOString();
+    cachePut(key, { summary, at }, 26 * 3600);
+    res.json({ summary, at });
+  } catch (err) {
+    console.error('[biz/summary]', err && err.status, err && err.message);
+    res.json({ summary: null, reason: 'error' });
+  }
+});
 app.post('/api/biz/ask', async (req, res) => {
   if (!_bizGate(req, res)) return;
   const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
   if (!q) return res.status(400).json({ error: 'Ask a question' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI answers need an ANTHROPIC_API_KEY on the Worker.' });
   const inv = await _bizLoad();
-  const brief = BIZ.analyze(inv.items);
   try {
-    if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
-    const r = await _bizClient.messages.create({
-      model: BIZ_AI_MODEL,
-      max_tokens: 16000,
-      output_config: { effort: 'low' },
-      system: BIZ_AI_SYSTEM,
-      messages: [{ role: 'user', content: BIZ.aiContext(inv.items, brief, 300, (inv.sold || []).length ? BIZ.salesReport(inv.sold) : null) + '\n\nQuestion: ' + q }],
-    });
-    if (r.stop_reason === 'refusal') return res.status(422).json({ error: 'That question could not be answered.' });
-    const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    const text = await _bizClaude(inv, 'Question: ' + q);
+    if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
     res.json({ answer: text || 'No answer came back. Try asking another way.' });
   } catch (err) {
     console.error('[biz/ask]', err && err.status, err && err.message);

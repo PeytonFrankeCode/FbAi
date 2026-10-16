@@ -42,7 +42,19 @@
 
   // ---- today ----
   const KIND = { reprice: ['down', 'Reprice'], underpriced: ['', 'Underpriced'], unpriced: ['warn', 'Needs a price'], hot: ['', 'Feature it'], dead: ['warn', 'Dead stock'] };
+  async function loadSummary(fresh) {
+    try {
+      if (fresh) { $('summarytext').textContent = 'Writing…'; }
+      const r = await api('/api/biz/summary' + (fresh ? '?fresh=1' : ''));
+      if (!r.summary) { $('summary').hidden = true; return; }
+      $('summary').hidden = false;
+      $('summarytext').textContent = r.summary;
+      $('summaryat').textContent = r.at ? `Written ${new Date(r.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} from your cards and sales` : '';
+    } catch (_) { $('summary').hidden = true; }
+  }
+  $('summaryfresh').addEventListener('click', () => loadSummary(true));
   async function loadBrief() {
+    loadSummary(false);
     try {
       const b = await api('/api/biz/brief');
       const k = b.kpis;

@@ -105,6 +105,8 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   delete process.env.ANTHROPIC_API_KEY;
   const ask = await call('/api/biz/ask', { method: 'POST', headers: K, body: JSON.stringify({ q: 'What is my dead stock?' }) });
   check('asking without an AI key says what is missing', ask.status === 503 && /ANTHROPIC_API_KEY/.test(ask.body.error));
+  const sum = await call('/api/biz/summary', { headers: K });
+  check('with no AI key the morning summary is simply left out', sum.status === 200 && sum.body.summary === null && sum.body.reason === 'no-key');
   const page = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8');
   check('the page is noindex and signs in with the admin key', /noindex, nofollow/.test(page) && /Admin key/.test(page));
   const w = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
