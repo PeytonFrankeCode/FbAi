@@ -163,4 +163,37 @@ function aiContext(items, brief, maxRows = 300) {
   ].join('\n');
 }
 
-module.exports = { median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// An eBay store sync: the seller's active listings (Browse API, public) folded
+// into the inventory. A listing already held keeps its id, cost and comps and
+// takes eBay's current price; a new one is added; an eBay card no longer
+// listed has sold or ended, and is moved out to `ended` for the seller to
+// confirm (sales tracking). Cards from other platforms are left alone.
+function mergeEbay(items, listings, now = Date.now()) {
+  const byId = new Map(listings.filter(l => l.ebayItemId).map(l => [String(l.ebayItemId), l]));
+  const kept = [], ended = [];
+  let updated = 0;
+  for (const it of items || []) {
+    if (!it.ebayItemId) { kept.push(it); continue; }
+    const l = byId.get(String(it.ebayItemId));
+    if (!l) { ended.push({ ...it, endedAt: new Date(now).toISOString() }); continue; }
+    byId.delete(String(it.ebayItemId));
+    const next = { ...it, title: l.title, price: l.price != null ? l.price : it.price,
+      imageUrl: l.imageUrl || it.imageUrl, itemUrl: l.itemUrl || it.itemUrl };
+    if (l.title !== it.title) {                // a retitled listing is priced again
+      const g = readGrade(l.title);
+      if (g) next.grade = `${g.grader} ${g.grade}`;
+      delete next.value;
+    }
+    kept.push(next);
+    updated++;
+  }
+  const added = [];
+  for (const l of byId.values()) {
+    const it = normalizeItem({ title: l.title, price: l.price, platform: 'eBay', listed: l.listedAt }, now);
+    if (!it) continue;
+    added.push({ ...it, ebayItemId: String(l.ebayItemId), imageUrl: l.imageUrl || null, itemUrl: l.itemUrl || null });
+  }
+  return { items: kept.concat(added), ended, added: added.length, updated };
+}
+
+module.exports = { mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };

@@ -36,6 +36,23 @@ check('the brief says reprice the stale overpriced card, raise the underpriced o
 check('  ...biggest dollars first', br.actions[0].dollars >= br.actions[br.actions.length - 1].dollars);
 check('the AI is given the totals, the actions and the inventory table', /Totals: .*marketValue/.test(B.aiContext(items, br)) && /Over \| raw \| 1 \| 20 \| 80 \| 50/.test(B.aiContext(items, br)));
 
+// eBay sync: kept, updated, added, ended; other platforms untouched.
+const held = [
+  { id: 'eb00001', title: 'Old title PSA 9', ebayItemId: '111', cost: 12, price: 30, qty: 1, platform: 'eBay', value: { market: 25 } },
+  { id: 'eb00002', title: 'Sold one', ebayItemId: '222', cost: 5, price: 10, qty: 1, platform: 'eBay' },
+  { id: 'wn00001', title: 'Whatnot card', cost: 3, price: 8, qty: 1, platform: 'Whatnot' },
+];
+const mg = B.mergeEbay(held, [
+  { ebayItemId: '111', title: 'New title PSA 10', price: 35 },
+  { ebayItemId: '333', title: '2024 Prizm Caleb Williams Silver', price: 22, listedAt: '2026-09-01T00:00:00Z' },
+], now);
+const k1 = mg.items.find(i => i.id === 'eb00001');
+check('a sync keeps a held listing (its cost), takes the new price and title, and re-prices a retitled one',
+  k1 && k1.cost === 12 && k1.price === 35 && k1.grade === 'PSA 10' && !k1.value, JSON.stringify(k1));
+check('  ...adds new listings, moves the ones gone from eBay to ended, and leaves Whatnot cards alone',
+  mg.added === 1 && mg.items.some(i => i.ebayItemId === '333' && i.platform === 'eBay') && mg.ended.length === 1 && mg.ended[0].ebayItemId === '222'
+  && mg.items.some(i => i.id === 'wn00001'));
+
 // ---- server ----
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT, listing_format TEXT, grader TEXT, grade TEXT,
@@ -64,6 +81,8 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('  ...and the brief tells the seller to reprice it to the market', brief.body.actions.some(a => a.kind === 'reprice' && a.suggest === 41));
   const p = await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ price: 41 }) });
   check('  ...which one tap does', p.body.item && p.body.item.price === 41);
+  const noSeller = await call('/api/biz/ebay-sync', { method: 'POST', headers: K, body: JSON.stringify({ seller: '' }) });
+  check('an eBay sync with no username asks for one', noSeller.status === 400 && /eBay username/.test(noSeller.body.error));
   delete process.env.ANTHROPIC_API_KEY;
   const ask = await call('/api/biz/ask', { method: 'POST', headers: K, body: JSON.stringify({ q: 'What is my dead stock?' }) });
   check('asking without an AI key says what is missing', ask.status === 503 && /ANTHROPIC_API_KEY/.test(ask.body.error));
