@@ -76,6 +76,11 @@ const WEBP = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4
       && !/Sales Vetting/.test(admin) && !/loadVetting/.test(admin));
     check('  ...shrinking photos before they upload',
       /toDataURL\('image\/webp', 0\.82\)/.test(admin) && /1600 \/ Math\.max/.test(admin));
+    const idx = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
+    const appjs = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+    check('published articles have their own tab in the app, beside Market',
+      /data-view="market"[\s\S]{0,800}data-view="news" onclick="switchView\('news'\)"/.test(idx) && /id="news-view"/.test(idx)
+      && /view === 'news'/.test(appjs) && /fetch\('\/api\/news'/.test(appjs) && /'\/news\/' \+ encodeURIComponent\(a\.slug\)/.test(appjs));
     const worker = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
     check('on Workers the photos come straight from R2', /env\.PHOTOS\.get\('news\/' \+ name\)/.test(worker));
   } finally {

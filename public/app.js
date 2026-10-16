@@ -7074,6 +7074,7 @@ function switchView(view) {
   const inventoryView = document.getElementById('inventory-view');
   const marketView = document.getElementById('market-view');
   const statsView = document.getElementById('stats-view');
+  const newsView = document.getElementById('news-view');
   const searchSubtabs = document.getElementById('search-subtabs');
   mainEl.classList.add('hidden');
   checklistView.classList.add('hidden');
@@ -7086,6 +7087,7 @@ function switchView(view) {
   if (inventoryView) inventoryView.classList.add('hidden');
   if (marketView) marketView.classList.add('hidden');
   if (statsView) statsView.classList.add('hidden');
+  if (newsView) newsView.classList.add('hidden');
   if (searchSubtabs) searchSubtabs.classList.add('hidden');
 
   if (view === 'checklist') {
@@ -7106,6 +7108,8 @@ function switchView(view) {
       initMarketView();
       _mkSeatAd();
     }
+  } else if (view === 'news') {
+    if (newsView) { newsView.classList.remove('hidden'); initNewsView(); }
   } else if (view === 'stats') {
     if (statsView) {
       statsView.classList.remove('hidden');
@@ -7131,6 +7135,30 @@ function switchView(view) {
       window.history.replaceState({}, '', want + window.location.search);
     }
   } catch (_) { /* history API unavailable */ }
+}
+
+// ---- Guides & News tab ----
+// The list lives in the app; each article opens its own page under /news,
+// which is the page Google indexes and the one that carries its ad.
+let _newsLoaded = false;
+async function initNewsView() {
+  if (_newsLoaded) return;
+  const box = document.getElementById('news-list');
+  const card = (href, kicker, title, sub, meta) => `<a class="news-card" href="${escHtml(href)}">
+      <span class="news-kicker">${escHtml(kicker)}</span><strong>${escHtml(title)}</strong>
+      ${sub ? `<span class="news-card-sub">${escHtml(sub)}</span>` : ''}${meta ? `<span class="news-meta">${escHtml(meta)}</span>` : ''}</a>`;
+  const report = card('/news/market-movers?utm_source=app&utm_medium=news', 'Market Movers · weekly',
+    'This week in football cards', 'Risers, fallers, most sold and the biggest sales, from real sold prices.', 'New every Monday');
+  try {
+    const r = await fetch('/api/news', { cache: 'no-store' });
+    const list = r.ok ? await r.json() : [];
+    const rows = (Array.isArray(list) ? list : []).map(a => card('/news/' + encodeURIComponent(a.slug), a.category || 'News',
+      a.title, a.standfirst, String(a.publishedAt || '').slice(0, 10)));
+    box.innerHTML = report + rows.join('');
+    _newsLoaded = true;
+  } catch (_) {
+    box.innerHTML = report + '<p class="news-sub">Could not load the articles. Try again in a moment.</p>';
+  }
 }
 
 // ---- Chart interaction defaults ----
