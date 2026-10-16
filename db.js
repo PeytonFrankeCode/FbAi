@@ -24,6 +24,7 @@ const cache = {};
 let kv = null;          // Cloudflare KV namespace binding (set by connectDB)
 let nflDb = null;      // NflCardDB Cloudflare D1 binding (set by connectDB)
 let assets = null;     // Cloudflare ASSETS binding (set by connectDB)
+let ai = null;         // Workers AI binding (set by connectDB)
 let photos = null;     // Cloudflare R2 bucket for archived listing photos
 let kvReady = false;    // true after preload completes
 
@@ -46,6 +47,8 @@ async function connectDB(env) {
   // Node and on any deploy predating the bucket, and every caller treats a
   // missing binding as "no archive" rather than an error.
   if (env && env.PHOTOS) photos = env.PHOTOS;
+  // Workers AI, for Card Huddle for Business answers. Optional like the rest.
+  if (env && env.AI) ai = env.AI;
 
   // Stash the KV binding if present. env is only available on Workers.
   if (env && env.KV) {
@@ -326,6 +329,7 @@ async function archivePut(key, value) {
 function getNflDb() { return nflDb; }
 function getAssets() { return assets; }
 function getPhotos() { return photos; }
+function getAI() { return ai; }
 
 // Durable records, one KV key each, listable by prefix with their metadata
 // (no TTL). For data many isolates write at once, which the single-blob
@@ -356,4 +360,4 @@ async function recordList(prefix) {
   return out;
 }
 
-module.exports = { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos };
+module.exports = { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut, archiveGet, archivePut, getNflDb, getAssets, getPhotos, getAI };

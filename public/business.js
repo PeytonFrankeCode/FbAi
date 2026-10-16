@@ -253,11 +253,24 @@
   });
 
   // ---- ask ----
+  const fmt = (text) => esc(text).split(/\n+/).map(l => /^\s*[-•*]\s+/.test(l) ? `<p>• ${l.replace(/^\s*[-•*]\s+/, '')}</p>` : `<p>${l}</p>`).join('');
+  async function compare(q) {
+    $('answer').hidden = true; $('comparebox').hidden = false;
+    $('comparebox').innerHTML = '<div class="answer"><p style="color:var(--fg3)">Asking both…</p></div>';
+    try {
+      const r = await api('/api/biz/compare', { method: 'POST', body: JSON.stringify({ q }) });
+      const col = (name, x) => `<div class="answer" style="max-width:none"><span class="who">${name}</span>
+        <span class="why">${esc(x.model)} · ${(x.ms / 1000).toFixed(1)}s</span>${x.error ? `<p class="err">${esc(x.error)}</p>` : fmt(x.answer || '(no answer)')}</div>`;
+      $('comparebox').innerHTML = col('Claude Haiku 5.5', r.anthropic) + col('Cloudflare Workers AI', r.workers);
+    } catch (err) { $('comparebox').innerHTML = `<div class="answer"><p class="err">${esc(err.message)}</p></div>`; }
+  }
   async function ask(q) {
     if (!q) return;
+    if ($('compare').checked) return compare(q);
+    $('comparebox').hidden = true;
     $('answer').hidden = false; $('answertext').innerHTML = '<p style="color:var(--fg3)">Reading your inventory…</p>';
     try { const r = await api('/api/biz/ask', { method: 'POST', body: JSON.stringify({ q }) });
-      $('answertext').innerHTML = esc(r.answer).split(/\n+/).map(l => /^\s*[-•*]\s+/.test(l) ? `<p>• ${l.replace(/^\s*[-•*]\s+/, '')}</p>` : `<p>${l}</p>`).join(''); }
+      $('answertext').innerHTML = fmt(r.answer); }
     catch (err) { $('answertext').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
   }
   document.querySelectorAll('.q').forEach(b => b.addEventListener('click', () => { $('askq').value = b.textContent; ask(b.textContent); }));
@@ -266,6 +279,7 @@
   function start(me) {
     $('gate').hidden = true; $('app').hidden = false;
     $('billing').hidden = !(me && me.user && !me.admin);
+    $('comparewrap').hidden = !(me && me.admin);
     show('brief');
   }
   gate();
