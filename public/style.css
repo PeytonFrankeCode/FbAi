@@ -10170,3 +10170,16 @@ html.install-open { overflow: hidden; }
 .live-meta { font-size: .72rem; color: var(--text-muted, #9aa3b2); }
 .live-meta .ebay-tag { margin-left: 6px; }
 .live-price { font-weight: 800; font-size: .95rem; white-space: nowrap; }
+
+/* ---- Guides & News tab ---- */
+.news-container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.news-h2 { font-size: 1.5rem; font-weight: 800; margin: 0; color: var(--text-primary); }
+.news-sub { color: var(--text-secondary); font-size: 0.9rem; margin: 0.3rem 0 1.2rem; }
+.news-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.9rem; }
+.news-card { display: flex; flex-direction: column; gap: 0.35rem; padding: 1rem; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--bg-card, rgba(127,127,127,0.04)); color: var(--text-primary); text-decoration: none; }
+.news-card:hover { border-color: var(--accent); }
+.news-card strong { font-size: 1.02rem; line-height: 1.35; }
+.news-kicker { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.news-card-sub { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.45; flex: 1; }
+.news-meta { font-size: 0.72rem; color: var(--text-muted, var(--text-secondary)); }
