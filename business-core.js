@@ -111,6 +111,9 @@ function analyze(items, now = Date.now()) {
     listedValue: sum(r => r.price),
     marketValue: sum(r => r.market),
     costBasis: sum(r => r.cost),
+    // Unrealized gain only where both a cost and a market price are known.
+    unrealized: round2(priced.filter(r => r.cost != null).reduce((a, r) => a + (r.market - r.cost) * r.qty, 0)),
+    pricedWithCost: priced.filter(r => r.cost != null).length,
     pricedShare: rows.length ? Math.round((priced.length / rows.length) * 100) : 0,
     deadStock: rows.filter(r => r.days >= DEAD_DAYS).reduce((a, r) => a + r.qty, 0),
     deadValue: sum(r => (r.days >= DEAD_DAYS ? (r.price || r.market) : 0)),
@@ -148,7 +151,7 @@ function analyze(items, now = Date.now()) {
 
 // What the AI is given: the totals, the actions and a compact table of the
 // inventory. Facts only; the model is told to answer from these.
-function aiContext(items, brief, maxRows = 300) {
+function aiContext(items, brief, maxRows = 300, sales = null) {
   const lines = (items || []).slice(0, maxRows).map(it => {
     const v = it.value || {};
     return [it.title, it.grade || 'raw', it.qty, it.cost ?? '', it.price ?? '', v.market ?? '', v.n || 0, v.trend ?? '', it.platform || '',
@@ -157,6 +160,7 @@ function aiContext(items, brief, maxRows = 300) {
   return [
     `Totals: ${JSON.stringify(brief.kpis)}`,
     `Actions: ${JSON.stringify(brief.actions.map(a => ({ kind: a.kind, title: a.title, text: a.text, why: a.why })))}`,
+    sales ? `Sales (profit after estimated fees): ${JSON.stringify({ last30: sales.last30, allTime: sales.allTime, byMonth: sales.byMonth.slice(0, 6), byPlayer: sales.byPlayer.slice(0, 10), bySet: sales.bySet.slice(0, 10), byPlatform: sales.byPlatform, best: sales.best, worst: sales.worst })}` : 'Sales: none recorded yet.',
     'Inventory (title | grade | qty | cost | asking | market median 60d | comps | 2-week trend % | platform | listed):',
     ...lines,
     (items || []).length > maxRows ? `(${items.length - maxRows} more rows not shown)` : '',
@@ -196,4 +200,52 @@ function mergeEbay(items, listings, now = Date.now()) {
   return { items: kept.concat(added), ended, added: added.length, updated };
 }
 
-module.exports = { mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// Selling fees, estimated: the platform's standard rate for trading cards
+// (eBay final value fee 13.25% + $0.40; Whatnot 8% commission + 2.9% + $0.30
+// processing). Shown as estimates; a seller's real fees vary by store level.
+const FEES = { ebay: [0.1325, 0.40], whatnot: [0.109, 0.30] };
+function feeFor(platform, amount) {
+  const f = FEES[String(platform || '').toLowerCase()];
+  return f && amount > 0 ? round2(amount * f[0] + f[1]) : 0;
+}
+
+// Profit from recorded sales: totals for the last 30 days and all time, and
+// by month, player, set and platform. A sale with no cost counts toward
+// revenue but not profit, and says so.
+function salesReport(sold, now = Date.now()) {
+  const rows = (sold || []).map(s => {
+    const qty = s.qty || 1;
+    const revenue = round2((Number(s.soldFor) || 0) * qty);
+    const fees = s.fees != null ? Number(s.fees) : feeFor(s.platform, revenue);
+    const cost = s.cost != null ? round2(Number(s.cost) * qty) : null;
+    return { ...s, revenue, fees, costTotal: cost, profit: cost != null ? round2(revenue - fees - cost) : null,
+      month: String(s.soldAt || '').slice(0, 7), t: Date.parse(s.soldAt) };
+  });
+  const tally = (list) => {
+    const withCost = list.filter(r => r.profit != null);
+    const revenue = round2(list.reduce((a, r) => a + r.revenue, 0));
+    const profit = round2(withCost.reduce((a, r) => a + r.profit, 0));
+    const costed = withCost.reduce((a, r) => a + r.revenue, 0);
+    return { sales: list.length, revenue, fees: round2(list.reduce((a, r) => a + r.fees, 0)), profit,
+      margin: costed ? Math.round((profit / costed) * 100) : null, missingCost: list.length - withCost.length };
+  };
+  const group = (key) => {
+    const m = new Map();
+    for (const r of rows) { const k = r[key] || 'Unknown'; if (!m.has(k)) m.set(k, []); m.get(k).push(r); }
+    return [...m.entries()].map(([name, list]) => ({ name, ...tally(list) })).sort((a, b) => b.profit - a.profit || b.revenue - a.revenue);
+  };
+  const ranked = rows.filter(r => r.profit != null).sort((a, b) => b.profit - a.profit);
+  const brief = (r) => ({ title: r.title, soldFor: r.soldFor, profit: r.profit, soldAt: String(r.soldAt).slice(0, 10) });
+  return {
+    last30: tally(rows.filter(r => now - r.t <= 30 * DAY)),
+    allTime: tally(rows),
+    byMonth: group('month').sort((a, b) => b.name.localeCompare(a.name)),
+    byPlayer: group('player').slice(0, 15),
+    bySet: group('set').slice(0, 15),
+    byPlatform: group('platform'),
+    best: ranked.slice(0, 5).map(brief),
+    worst: ranked.slice(-5).reverse().filter(r => r.profit < 0).map(brief),
+  };
+}
+
+module.exports = { feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
