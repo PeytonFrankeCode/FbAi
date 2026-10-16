@@ -112,16 +112,24 @@ td .act { padding: 4px 9px; font-size: 12px }
 <div class="wrap">
   <header>
     <div class="brand">The Card Huddle <span>for Business</span></div>
-    <div class="shop"><span class="chip">In build</span><a href="/" style="color:var(--fg2)">Back to the site</a></div>
+    <div class="shop"><span class="chip">Founding sellers</span><button class="act" type="button" id="billing" hidden>Billing</button><a href="/" style="color:var(--fg2)">Back to the site</a></div>
   </header>
 
-  <form class="login" id="login" hidden>
-    <h2 style="margin:0">Sign in</h2>
-    <p style="margin:0;color:var(--fg2);font-size:14px">Card Huddle for Business is in build. Sign in with the admin key.</p>
-    <input id="key" type="password" autocomplete="current-password" placeholder="Admin key" aria-label="Admin key">
-    <button class="act go" type="submit">Sign in</button>
-    <div class="err" id="loginerr"></div>
-  </form>
+  <div class="login" id="gate" hidden>
+    <h2 style="margin:0">Card Huddle for Business</h2>
+    <p style="margin:0;color:var(--fg2);font-size:14.5px">Your inventory priced against real sold prices every day, a brief of what to reprice and what to feature, sales and profit, and an AI analyst that knows your shelf.</p>
+    <p style="margin:0;font-family:var(--display);font-size:22px;font-weight:800">$20 <span style="font-size:14px;color:var(--fg2);font-weight:600">a month</span></p>
+    <div id="gatemsg" style="font-size:14px;color:var(--fg2)"></div>
+    <button class="act go" type="button" id="subscribe" hidden>Subscribe</button>
+    <a class="act" id="logintosite" href="/" hidden style="text-align:center;text-decoration:none">Log in on The Card Huddle</a>
+    <div class="err" id="gateerr"></div>
+    <details><summary style="cursor:pointer;font-size:13px;color:var(--fg3)">Owner sign-in</summary>
+      <form id="login" style="display:grid;gap:8px;margin-top:8px">
+        <input id="key" type="password" autocomplete="current-password" placeholder="Admin key" aria-label="Admin key">
+        <button class="act" type="submit">Sign in with the admin key</button>
+        <div class="err" id="loginerr"></div>
+      </form></details>
+  </div>
 
   <div id="app" hidden>
     <nav role="tablist" aria-label="Sections">

@@ -9,24 +9,48 @@
     const v = Number(n), small = Math.abs(v) < 100 && v % 1 !== 0;
     return (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: small ? 2 : 0, maximumFractionDigits: small ? 2 : 0 });
   };
-  let key = '';
+  // Two ways in: a signed-in Card Huddle account with Business (its session
+  // token, shared with the main site on this origin), or the owner's admin key.
+  let key = '', token = '';
   try { key = sessionStorage.getItem('chBizKey') || ''; } catch (_) {}
+  try { token = localStorage.getItem('cardHuddleToken') || ''; } catch (_) {}
 
   async function api(path, opts = {}) {
     const r = await fetch(path, { ...opts, cache: 'no-store',
-      headers: { 'x-admin-key': key, ...(opts.body ? { 'content-type': 'application/json' } : {}) } });
+      headers: { ...(key ? { 'x-admin-key': key } : {}), ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(opts.body ? { 'content-type': 'application/json' } : {}) } });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) { const e = new Error(data.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
     return data;
   }
 
-  // ---- sign in ----
-  function showLogin(msg) { $('app').hidden = true; $('login').hidden = false; $('loginerr').textContent = msg || ''; }
+  // ---- sign in, or subscribe ----
+  async function gate() {
+    let me = {};
+    try { me = await api('/api/biz/me'); } catch (_) { me = {}; }
+    if (me.active) return start(me);
+    $('app').hidden = true; $('gate').hidden = false;
+    $('subscribe').hidden = !(me.user && me.checkoutOpen);
+    $('logintosite').hidden = !!me.user;
+    $('gatemsg').textContent = !me.user ? 'Log in to your Card Huddle account first, then come back here.'
+      : me.checkoutOpen ? `Signed in as ${me.user}.` : `Signed in as ${me.user}. Business opens to founding sellers soon.`;
+  }
+  function showLogin(msg) { gate(); if (msg) $('loginerr').textContent = msg; }
   $('login').addEventListener('submit', async (e) => {
     e.preventDefault();
     key = $('key').value.trim();
-    try { await api('/api/biz/inventory'); try { sessionStorage.setItem('chBizKey', key); } catch (_) {} start(); }
-    catch (err) { showLogin(err.status === 401 ? 'That key did not work.' : 'Could not reach the server.'); }
+    try { const me = await api('/api/biz/me'); if (!me.admin) throw Object.assign(new Error('bad'), { status: 401 });
+      try { sessionStorage.setItem('chBizKey', key); } catch (_) {} start(me); }
+    catch (err) { key = ''; $('loginerr').textContent = err.status === 401 ? 'That key did not work.' : 'Could not reach the server.'; }
+  });
+  $('subscribe').addEventListener('click', async () => {
+    $('subscribe').disabled = true; $('gateerr').textContent = '';
+    try { const r = await api('/api/biz/checkout', { method: 'POST', body: '{}' }); location.href = r.url; }
+    catch (err) { $('gateerr').textContent = err.message; $('subscribe').disabled = false; }
+  });
+  $('billing').addEventListener('click', async () => {
+    try { const r = await api('/api/biz/billing', { method: 'POST', body: '{}' }); location.href = r.url; }
+    catch (err) { alert(err.message); }
   });
 
   // ---- tabs ----
@@ -75,7 +99,7 @@
         const btn = a.suggest != null && a.id ? `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.suggest}">Set price to ${money(a.suggest)}</button></div>` : '';
         return `<div class="item ${cls}" id="act-${i}"><span class="tag">${tag}</span><strong>${esc(a.title)}</strong><p>${esc(a.text)}</p><span class="why">${esc(a.why || '')}</span>${btn}</div>`;
       }).join('') : `<div class="empty">${!k.cards ? 'No cards yet.' : k.pricedShare ? 'Every priced card is within range of the market. Check back tomorrow.' : 'None of your cards has 3 recent sales of the same grade yet, so none can be priced. Open Inventory to refresh prices.'}</div>`;
-    } catch (err) { if (err.status === 401) showLogin(); else $('brief').innerHTML = `<div class="empty">Could not load the brief: ${esc(err.message)}</div>`; }
+    } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('brief').innerHTML = `<div class="empty">Could not load the brief: ${esc(err.message)}</div>`; }
   }
   $('brief').addEventListener('click', async (e) => {
     const b = e.target.closest('.act.go[data-id]'); if (!b) return;
@@ -111,7 +135,7 @@
       }).join('');
       $('invtable').innerHTML = `<div class="tablewrap"><table><thead><tr><th>Card</th><th>Grade</th><th>Where</th><th class="r">Cost</th><th class="r">Your price</th><th class="r">Market</th><th class="r">Comps</th><th class="r">Days</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
       if (items.some(it => !it.value)) valueAll();
-    } catch (err) { if (err.status === 401) showLogin(); else $('invtable').innerHTML = `<div class="empty">Could not load: ${esc(err.message)}</div>`; }
+    } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('invtable').innerHTML = `<div class="empty">Could not load: ${esc(err.message)}</div>`; }
   }
   $('invtable').addEventListener('click', async (e) => {
     const sb = e.target.closest('[data-sold]');
@@ -214,7 +238,7 @@
       $('salelist').innerHTML = sold.length ? `<div class="tablewrap"><table><thead><tr><th>Card</th><th>Sold</th><th>Where</th><th class="r">For</th><th class="r">Cost</th><th></th></tr></thead><tbody>${
         sold.map(x => `<tr><td>${esc(x.title)}</td><td>${esc(String(x.soldAt).slice(0, 10))}</td><td>${esc(x.platform || '')}</td><td class="r">${money(x.soldFor)}</td><td class="r">${money(x.cost)}</td>
           <td><button class="act" data-undo="${esc(x.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No sales recorded yet. Tap Sold on a card in Inventory, or sync eBay to catch sales automatically.</div>';
-    } catch (err) { if (err.status === 401) showLogin(); else $('salelist').innerHTML = `<div class="empty">Could not load sales: ${esc(err.message)}</div>`; }
+    } catch (err) { if (err.status === 401 || err.status === 402) showLogin(); else $('salelist').innerHTML = `<div class="empty">Could not load sales: ${esc(err.message)}</div>`; }
   }
   $('p-sales').addEventListener('click', async (e) => {
     const s = e.target.closest('[data-endsold]'), n = e.target.closest('[data-endnot]'), u = e.target.closest('[data-undo]');
@@ -239,6 +263,10 @@
   document.querySelectorAll('.q').forEach(b => b.addEventListener('click', () => { $('askq').value = b.textContent; ask(b.textContent); }));
   $('askform').addEventListener('submit', (e) => { e.preventDefault(); ask($('askq').value.trim()); });
 
-  function start() { $('login').hidden = true; $('app').hidden = false; show('brief'); }
-  if (key) api('/api/biz/inventory').then(start).catch(() => showLogin()); else showLogin();
+  function start(me) {
+    $('gate').hidden = true; $('app').hidden = false;
+    $('billing').hidden = !(me && me.user && !me.admin);
+    show('brief');
+  }
+  gate();
 })();

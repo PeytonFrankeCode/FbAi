@@ -426,6 +426,20 @@ if (stripeEnabled) {
   stripe = Stripe(STRIPE_SECRET_KEY, stripeOpts);
 }
 
+// A Stripe subscription event for Card Huddle for Business: matched by its
+// subscription id (or its metadata), and applied to the business record only,
+// so cancelling Business never touches an ad-free plan on the same customer.
+function _bizSubEvent(subs, sub, status) {
+  for (const data of Object.values(subs)) {
+    if (data.business && data.business.stripeSubscriptionId === sub.id) {
+      data.business.status = status;
+      if (status === 'cancelled') data.business.cancelledAt = new Date().toISOString();
+      return true;
+    }
+  }
+  return !!(sub.metadata && sub.metadata.plan === 'business');
+}
+
 // Stripe webhook needs raw body — must be before express.json()
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   if (!stripeEnabled) return res.status(503).json({ error: 'Stripe not configured' });
@@ -460,6 +474,15 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
       const username = session.metadata?.username;
       if (!username) break;
 
+      // Card Huddle for Business: its own record, never the account's plan.
+      if (session.metadata?.plan === 'business') {
+        if (!subs[username]) subs[username] = {};
+        subs[username].business = { status: 'active', stripeCustomerId: session.customer,
+          stripeSubscriptionId: session.subscription, subscribedAt: new Date().toISOString() };
+        saveSubscriptions(subs);
+        break;
+      }
+
       if (session.subscription) {
         // Pro or Pro+ subscription started
         if (!subs[username]) subs[username] = {};
@@ -475,6 +498,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     }
     case 'customer.subscription.deleted': {
       const sub = event.data.object;
+      if (_bizSubEvent(subs, sub, 'cancelled')) { saveSubscriptions(subs); break; }
       for (const [user, data] of Object.entries(subs)) {
         if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = 'cancelled';
@@ -487,6 +511,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), (req,
     }
     case 'customer.subscription.updated': {
       const sub = event.data.object;
+      if (_bizSubEvent(subs, sub, sub.status === 'active' ? 'active' : sub.status)) { saveSubscriptions(subs); break; }
       for (const [user, data] of Object.entries(subs)) {
         if (data.stripeCustomerId === sub.customer && !data.permanent) {
           data.status = sub.status === 'active' ? 'active' : sub.status;
@@ -18908,15 +18933,29 @@ app.post('/api/admin/news', (req, res) => {
 // shops and online sellers, the one paid product (CLAUDE.md). In build, behind
 // the admin key, at /business. Nothing a collector uses is touched by it.
 const BIZ = require('./business-core');
-const BIZ_INV_KEY = 'biz:inventory:owner';
+// One inventory per seller account; the admin key works the owner's own.
+const BIZ_INV_KEY = (who) => 'biz:inventory:' + who;
 const BIZ_VALUE_TTL = 12 * 3600;
 const BIZ_VALUE_BATCH = 40;
-async function _bizLoad() { return (await recordGet(BIZ_INV_KEY)) || { items: [] }; }
-async function _bizSave(inv) { inv.updatedAt = new Date().toISOString(); await recordPut(BIZ_INV_KEY, inv); }
+async function _bizLoad(who) { return (await recordGet(BIZ_INV_KEY(who))) || { items: [] }; }
+async function _bizSave(who, inv) { inv.updatedAt = new Date().toISOString(); await recordPut(BIZ_INV_KEY(who), inv); }
+// Business is its own subscription, kept apart from the account's plan (the
+// ad-free plan lives there), so one never overwrites the other.
+const BIZ_GRANT_USERS = new Set(['thecardhuddle']);
+function bizActive(username) {
+  if (!username) return false;
+  if (BIZ_GRANT_USERS.has(username)) return true;
+  const b = (loadSubscriptions()[username] || {}).business;
+  return !!(b && (b.status === 'active' || b.status === 'trialing'));
+}
+// Who this request works for: 'owner' with the admin key, else a signed-in
+// account with an active Business subscription. Answers 401 / 402 otherwise.
 function _bizGate(req, res) {
-  if (isAdminReq(req)) return true;
-  res.status(401).json({ error: 'Sign in with the admin key' });
-  return false;
+  if (isAdminReq(req)) return 'owner';
+  const user = getSessionUser(req);
+  if (!user) { res.status(401).json({ error: 'Log in to your Card Huddle account.', needs: 'login' }); return null; }
+  if (!bizActive(user)) { res.status(402).json({ error: 'Card Huddle for Business is $20 a month.', needs: 'subscribe', user }); return null; }
+  return 'u:' + user;
 }
 // Sold comps for one card from our own sales: the same words in the title,
 // read the way the sold search reads them.
@@ -18946,56 +18985,123 @@ function _bizSale(it, b) {
   return { ...it, value: undefined, soldAt: new Date().toISOString(), soldFor: soldFor > 0 ? Math.round(soldFor * 100) / 100 : (it.price || 0),
     fees: b.fees != null && Number(b.fees) >= 0 ? Number(b.fees) : undefined, player: kw.player || null, set };
 }
+// Card Huddle for Business checkout: $20 a month on the signed-in account.
+// Closed until BUSINESS_CHECKOUT=on is set on the Worker (owner opens sales).
+const BIZ_PRICE = { unit_amount: 2000, recurring: { interval: 'month' } };
+const BIZ_PRODUCT_KEY = 'stripe:business-product:v1';
+let _bizProduct = process.env.STRIPE_PRODUCT_BUSINESS || null;
+async function _bizProductId() {
+  if (_bizProduct) return _bizProduct;
+  const cached = await cacheGet(BIZ_PRODUCT_KEY);
+  if (cached && cached.id) return (_bizProduct = cached.id);
+  let id = null;
+  try {
+    const found = await stripe.products.search({ query: "metadata['plan']:'business' AND active:'true'", limit: 1 });
+    id = found && found.data && found.data[0] && found.data[0].id;
+  } catch (_) { /* search unavailable: create below */ }
+  if (!id) {
+    const made = await stripe.products.create({ name: 'Card Huddle for Business', description: 'Inventory pricing, daily brief, sales and AI analysis for card sellers.', metadata: { plan: 'business' } });
+    id = made.id;
+  }
+  cachePut(BIZ_PRODUCT_KEY, { id }, 365 * 86400);
+  return (_bizProduct = id);
+}
+app.get('/api/biz/me', (req, res) => {
+  const admin = isAdminReq(req);
+  const user = getSessionUser(req);
+  res.set('Cache-Control', 'no-store').json({ admin, user: user || null, active: admin || bizActive(user),
+    checkoutOpen: process.env.BUSINESS_CHECKOUT === 'on' && stripeEnabled });
+});
+app.post('/api/biz/checkout', async (req, res) => {
+  if (process.env.BUSINESS_CHECKOUT !== 'on') return res.status(503).json({ error: 'Card Huddle for Business opens soon.' });
+  if (!stripeEnabled) return res.status(503).json({ error: 'Payments are not set up yet.' });
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Log in to subscribe.', needs: 'login' });
+  if (bizActive(username)) return res.status(409).json({ error: 'This account already has Business.' });
+  try {
+    const product = await _bizProductId();
+    const sub = loadSubscriptions()[username] || {};
+    const customer = (sub.business && sub.business.stripeCustomerId) || sub.stripeCustomerId;
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      line_items: [{ price_data: { currency: 'usd', product, ...BIZ_PRICE }, quantity: 1 }],
+      allow_promotion_codes: true,
+      ...(customer ? { customer } : {}),
+      client_reference_id: username,
+      metadata: { username, plan: 'business' },
+      subscription_data: { metadata: { username, plan: 'business' } },
+      success_url: `${siteOrigin(req)}/business?welcome=1`,
+      cancel_url: `${siteOrigin(req)}/business`,
+    });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe business checkout error:', err && err.message);
+    res.status(500).json({ error: 'Could not start checkout. Please try again.' });
+  }
+});
+app.post('/api/biz/billing', async (req, res) => {
+  const username = getSessionUser(req);
+  if (!username) return res.status(401).json({ error: 'Log in to manage billing.' });
+  const b = (loadSubscriptions()[username] || {}).business;
+  if (!stripeEnabled || !b || !b.stripeCustomerId) return res.status(404).json({ error: 'No Business subscription on this account.' });
+  try {
+    const session = await stripe.billingPortal.sessions.create({ customer: b.stripeCustomerId, return_url: `${siteOrigin(req)}/business` });
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Stripe business portal error:', err && err.message);
+    res.status(500).json({ error: 'Could not open billing. Please try again.' });
+  }
+});
 app.get('/api/biz/inventory', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   res.set('Cache-Control', 'no-store').json({ items: inv.items, updatedAt: inv.updatedAt || null,
     ebaySeller: inv.ebaySeller || null, ebaySyncedAt: inv.ebaySyncedAt || null, ended: (inv.ended || []).length });
 });
 // { items: [...rows], mode: 'append' | 'replace' } from a CSV, an eBay export
 // or the add form; each row is read by BIZ.normalizeItem.
 app.post('/api/biz/inventory', async (req, res) => {
-  if (!_bizGate(req, res)) return;
+  const who = _bizGate(req, res); if (!who) return;
   const rows = Array.isArray(req.body && req.body.items) ? req.body.items.slice(0, 5000) : [];
   const fresh = rows.map(r => BIZ.normalizeItem(r)).filter(Boolean);
   if (!fresh.length) return res.status(400).json({ error: 'No cards found. Each row needs a title.' });
-  const inv = await _bizLoad();
+  const inv = await _bizLoad(who);
   inv.items = (req.body.mode === 'replace' ? [] : inv.items).concat(fresh).slice(0, 10000);
-  await _bizSave(inv);
+  await _bizSave(who, inv);
   res.json({ ok: true, added: fresh.length, total: inv.items.length });
 });
 app.patch('/api/biz/inventory/:id', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   const it = inv.items.find(x => x.id === req.params.id);
   if (!it) return res.status(404).json({ error: 'Not found' });
   const b = req.body || {};
   if (b.price !== undefined) { const n = Number(b.price); if (!(n >= 0)) return res.status(400).json({ error: 'Price must be a number' }); it.price = Math.round(n * 100) / 100; }
   if (b.sold) { inv.items = inv.items.filter(x => x !== it); (inv.sold = inv.sold || []).push(_bizSale(it, b)); }
-  await _bizSave(inv);
+  await _bizSave(who, inv);
   res.json({ ok: true, item: it });
 });
 app.delete('/api/biz/inventory/:id', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   const before = inv.items.length;
   inv.items = req.params.id === 'all' ? [] : inv.items.filter(x => x.id !== req.params.id);
-  await _bizSave(inv);
+  await _bizSave(who, inv);
   res.json({ ok: true, removed: before - inv.items.length });
 });
 // Prices the cards with no price yet, or an old one, a batch at a time so a
 // request stays well inside the Worker's limits; the page calls it until
 // `remaining` is 0.
 app.post('/api/biz/value', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   const now = Date.now();
   const stale = inv.items.filter(it => !it.value || now - Date.parse(it.value.asOf || 0) > BIZ_VALUE_TTL * 1000);
   const batch = stale.slice(0, BIZ_VALUE_BATCH);
   for (const it of batch) {
     try { it.value = await _bizValue(it, now); } catch (err) { it.value = { market: null, n: 0, asOf: new Date(now).toISOString(), error: true }; }
   }
-  if (batch.length) await _bizSave(inv);
+  if (batch.length) await _bizSave(who, inv);
   res.json({ ok: true, valued: batch.length, remaining: stale.length - batch.length, total: inv.items.length });
 });
 // eBay store sync: the seller's public active listings by username (the same
@@ -19023,8 +19129,8 @@ async function _bizEbayListings(seller) {
   return out.filter(l => l.ebayItemId && l.title);
 }
 app.post('/api/biz/ebay-sync', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   const seller = ebaySellerFromStore((req.body && req.body.seller) || inv.ebaySeller || '');
   if (!seller) return res.status(400).json({ error: 'Enter your eBay username or your ebay.com/usr/ link.' });
   let listings;
@@ -19041,38 +19147,38 @@ app.post('/api/biz/ebay-sync', async (req, res) => {
   inv.ended = (inv.ended || []).concat(m.ended).slice(-2000);
   inv.ebaySeller = seller;
   inv.ebaySyncedAt = new Date().toISOString();
-  await _bizSave(inv);
+  await _bizSave(who, inv);
   res.json({ ok: true, seller, listings: listings.length, added: m.added, updated: m.updated, ended: m.ended.length });
 });
 // Cards the eBay sync found gone: confirm each as sold (at a price) or as
 // ended unsold (back to nothing, or relisted later by the next sync).
 app.post('/api/biz/ended/:id', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   const i = (inv.ended || []).findIndex(x => x.id === req.params.id);
   if (i < 0) return res.status(404).json({ error: 'Not found' });
   const [it] = inv.ended.splice(i, 1);
   if (req.body && req.body.sold) (inv.sold = inv.sold || []).push(_bizSale(it, req.body));
-  await _bizSave(inv);
+  await _bizSave(who, inv);
   res.json({ ok: true });
 });
 app.get('/api/biz/sales', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   res.set('Cache-Control', 'no-store').json({ report: BIZ.salesReport(inv.sold || []), ended: inv.ended || [],
     sold: (inv.sold || []).slice(-200).reverse() });
 });
 app.delete('/api/biz/sales/:id', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   const before = (inv.sold || []).length;
   inv.sold = (inv.sold || []).filter(x => x.id !== req.params.id);
-  await _bizSave(inv);
+  await _bizSave(who, inv);
   res.json({ ok: true, removed: before - inv.sold.length });
 });
 app.get('/api/biz/brief', async (req, res) => {
-  if (!_bizGate(req, res)) return;
-  const inv = await _bizLoad();
+  const who = _bizGate(req, res); if (!who) return;
+  const inv = await _bizLoad(who);
   res.set('Cache-Control', 'no-store').json(BIZ.analyze(inv.items));
 });
 // Plain-English questions about the seller's own business, answered by Claude
@@ -19085,6 +19191,7 @@ const BIZ_AI_SYSTEM = [
   'Name specific cards and dollar amounts. If the data does not answer the question, say what is missing.',
   'Be brief: a one-sentence answer, then at most 5 bullet points. Plain text, no tables.',
 ].join(' ');
+const BIZ_ASKS_PER_DAY = 40;
 let _bizClient = null;
 // One Claude answer from the seller's own data. Throws on API errors; returns
 // null on a refusal.
@@ -19107,12 +19214,12 @@ const BIZ_SUMMARY_ASK = 'Write this seller\'s morning summary: what changed in t
   + 'the 2 or 3 things most worth doing today with the dollars involved, and one thing going well. '
   + 'At most 90 words. Plain sentences, no bullet points, no greeting.';
 app.get('/api/biz/summary', async (req, res) => {
-  if (!_bizGate(req, res)) return;
+  const who = _bizGate(req, res); if (!who) return;
   if (!process.env.ANTHROPIC_API_KEY) return res.json({ summary: null, reason: 'no-key' });
-  const inv = await _bizLoad();
+  const inv = await _bizLoad(who);
   if (!(inv.items || []).length) return res.json({ summary: null, reason: 'empty' });
   const day = new Date().toISOString().slice(0, 10);
-  const key = 'biz:summary:' + crypto.createHash('sha1').update(day + '|' + (inv.updatedAt || '')).digest('hex').slice(0, 20);
+  const key = 'biz:summary:' + crypto.createHash('sha1').update(who + '|' + day + '|' + (inv.updatedAt || '')).digest('hex').slice(0, 20);
   const hit = req.query.fresh ? null : await cacheGet(key);
   if (hit && hit.summary) return res.json({ summary: hit.summary, at: hit.at, cached: true });
   try {
@@ -19127,11 +19234,19 @@ app.get('/api/biz/summary', async (req, res) => {
   }
 });
 app.post('/api/biz/ask', async (req, res) => {
-  if (!_bizGate(req, res)) return;
+  const who = _bizGate(req, res); if (!who) return;
   const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
   if (!q) return res.status(400).json({ error: 'Ask a question' });
   if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI answers need an ANTHROPIC_API_KEY on the Worker.' });
-  const inv = await _bizLoad();
+  // Fair use: a seller's questions a day, so one account cannot run up the
+  // AI bill a $20 plan pays for. The owner is not counted.
+  if (who !== 'owner') {
+    const ck = 'biz:asks:' + who + ':' + new Date().toISOString().slice(0, 10);
+    const used = ((await cacheGet(ck)) || {}).n || 0;
+    if (used >= BIZ_ASKS_PER_DAY) return res.status(429).json({ error: `That's today's ${BIZ_ASKS_PER_DAY} questions. More tomorrow.` });
+    cachePut(ck, { n: used + 1 }, 2 * 86400);
+  }
+  const inv = await _bizLoad(who);
   try {
     const text = await _bizClaude(inv, 'Question: ' + q);
     if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
@@ -19823,7 +19938,7 @@ app.get('/api/debug/digest', async (req, res) => {
   });
 });
 
-module.exports = { _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
+module.exports = { bizActive, _bizSubEvent, _medianCents, _titleNamesANumber, _dominantCardNumber, _soldFallback, SOLD_SOFT_WORDS, _titleHasCardNumber, _ebayPhotoLive, _cardPhotoCandidates, _cardPhotoLookup, _priceSpikes, SPIKE_X, sendPushToUser, _alertPushMessage, isAdFreeUser, ADFREE_PRICES, _playerCardQuery, _purgeListingPhotos, PHOTO_ARCHIVE_RETIRED, _dealMatches, _dealOf, _dealsBuild, DEAL_MAX_RATIO, _reresolveTeamAliases, _attachSlabScores, _flagSlabPricedRaw, _mapNflDbSale: mapNflDbSale, _stripSeason, _isNotACard, _holdOutRawOutliers, _alertFinds, _attributionFor, sendMarketDigest, app, connectDB, _poolParallelRows, _marketMoveFn, _pooledPlayerTrend, _knownFromRows, runEstimatorBacktest, _tuneEstimator, _backtestBuckets, _checklistBuckets, _primeEstimatorParams, _isOversize, _dropOversizeUnlessAsked, _dropAutoMemUnlessAsked, checkCollectionHealth, _collectionReport, _observedChecklist, _gradePremium, _primeParallelLadder, _checklistPrices, _productLevels, _computeParallelLadder, _ladderCurves, _fitRunCurve, warmParallelLadder, parallelLadderMissing, _fitParallelLadder, _checklistParallels, _checklistSetFor, _ladderKey, _ladderSql, _marketDenied, _playerTrendPayload, _baseCardRowsOnly, _basketMove, _basketBaseOnly, _isPackListing, _matchesGradeOpts, _compValue, _estimateGrade, _marketEstimate, _marketRatioFrom, MARKET_ADJ_AFTER_DAYS, warmMarket, _rsiBaseSql, backfillPlayerAliases, flushD1Usage, flushTraffic, rateLimitCheck, RL_TIERS, RSI_JUNK_WORDS, _rsiRawOnlySql, RSI_JUNK_ONLY, _noBestOfferSql, screenCommunityImage, _orderTermsBySelectivity, _soldTimingSummary, _noteSoldTiming, archiveListingPhotos, buildPriceBlocks, warmSoldStats, priceBlocksMissing, PRICE_BLOCKS_KEY, cacheGet, _yearDisagrees, resolveParallelAliased, parallelAliases, parallelIndex, resolveSubsetAliased, insertAliases, insertAliasKeys, CARD_IDENTITY_VERSION, CARD_IDENTITY_MODULES, CARD_IDENTITY_FINGERPRINT, tagSameCard, renderPriceBlock: priceRender, getSessionUserByToken, extractSearchKeywords, matchSoldListings, classifyCardType, buildSimilarCardEstimate, hasExactCardSales, parsePrintRunFromTitle, detectSetTier, getEffectiveSubscription, PRO_GRANT_USERS, checkAlerts, processScanLeadDrip };
 
 // Node.js (local / Render): connect to DB then bind to a port as usual.
 // In Cloudflare Workers, worker.js handles startup via the fetch adapter.
