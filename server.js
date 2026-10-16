@@ -18510,7 +18510,7 @@ const NEWS_CSS = [
   '*{box-sizing:border-box}',
   'body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;line-height:1.6}',
   'a{color:var(--ac);text-decoration:none}a:hover{color:#7edcb0}',
-  '.wrap{max-width:1200px;margin:0 auto;padding:0 24px}',
+  '.wrap{max-width:920px;margin:0 auto;padding:0 1.25rem}',
   'header.site{background:linear-gradient(135deg,#131827 0%,#151d33 50%,#141a2d 100%);border-bottom:1px solid var(--line)}',
   'header.site .wrap{display:flex;align-items:center;gap:24px;padding-top:18px;padding-bottom:18px;flex-wrap:wrap}',
   '.brand{font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--fg)}',
@@ -18576,18 +18576,17 @@ function newsShell(opts) {
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
+    + '<link rel="stylesheet" href="/sets/landing.css">'
     + '<style>' + NEWS_CSS + (opts.css || '') + '</style>' + jsonLd
     + '</head><body>' + (opts.preview ? '<div class="preview-bar">Preview: not published yet</div>' : '')
-    + '<header class="site"><div class="wrap">'
-    + '<a class="brand" href="/">The Card Huddle</a>'
-    + '<nav class="site"><a href="/">Search</a><a href="/sets/">Checklists</a>'
-    + '<a href="/">Market</a><a class="on" href="/news">Guides &amp; News</a></nav>'
-    + '</div></header><main class="wrap">' + opts.body + '</main>'
-    + '<footer class="site"><div class="wrap">&copy; ' + new Date().getFullYear()
-    + ' The Card Huddle &middot; <a href="/news">Guides &amp; News</a> &middot; <a href="/">Prices</a>'
-    + ' &middot; <a href="/about.html">About</a> &middot; <a href="/methodology.html">How prices work</a>'
-    + ' &middot; <a href="/contact.html">Contact</a> &middot; <a href="/privacy.html">Privacy</a>'
-    + '</div></footer></body></html>';
+    // The same chrome as the player and set pages (scripts/build-landing-pages.js).
+    + '<header class="lp-header"><a class="lp-brand" href="/"><img src="/logo-dark.png" alt="The Card Huddle"></a>'
+    + '<a class="lp-cta-top" href="/">Search Card Prices &rarr;</a></header>'
+    + '<main class="wrap">' + (opts.crumbs ? '<nav class="lp-crumbs" aria-label="Breadcrumb">' + opts.crumbs + '</nav>' : '') + opts.body + '</main>'
+    + '<footer class="lp-footer"><p><a href="/">The Card Huddle</a> &mdash; real eBay sold prices for football cards, broken down by grade.</p>'
+    + '<p class="lp-muted"><a href="/sets/">Checklists</a> &bull; <a href="/players/">Players</a> &bull; <a href="/teams/">Teams</a> &bull; <a href="/news">Guides</a>'
+    + ' &bull; <a href="/about.html">About</a> &bull; <a href="/methodology.html">How prices work</a> &bull; <a href="/contact.html">Contact</a>'
+    + ' &bull; <a href="/privacy.html">Privacy</a> &bull; <a href="/terms.html">Terms</a></p></footer></body></html>';
 }
 
 app.get('/news', async (req, res) => {
@@ -18697,6 +18696,7 @@ async function _sendReport(res, rec, canonicalPath) {
   res.send(newsShell({
     title: title + ' · The Card Huddle', description: desc, canonical: NEWS_SITE + canonicalPath,
     ads: true, jsonLd, css: mreport.REPORT_CSS,
+    crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">Guides</a><span class="sep">/</span><span aria-current="page">Market Movers</span>',
     body: mreport.renderReportBody(rec.content, { week: rec.week, builtAt: rec.builtAt, site: NEWS_SITE, adUnit: _reportAdUnit(), archive }),
   }));
 }
@@ -18794,6 +18794,7 @@ async function _articlePage(a, { preview = false } = {}) {
     + '<article>' + withAd + '</article></div>';
   return newsShell({ title: a.title + ' · The Card Huddle', description: desc,
                      canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd,
+                     crumbs: '<a href="/">Home</a><span class="sep">/</span><a href="/news">Guides</a><span class="sep">/</span><span aria-current="page">' + NEWS.esc(a.title) + '</span>',
                      ads: !preview, image, preview, noindex: preview });
 }
 
