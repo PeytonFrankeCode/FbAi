@@ -139,6 +139,12 @@ td .act { padding: 4px 9px; font-size: 12px }
     <section id="p-inv" hidden>
       <h1>Inventory</h1>
       <p class="lede">Add cards one at a time, or paste a spreadsheet (CSV) or an eBay active-listings export. Columns it reads: title, grade, cost, price, platform, quantity, date listed.</p>
+      <div class="panel" style="margin:16px 0;display:grid;gap:8px">
+        <h2 style="margin:0">Sync your eBay store</h2>
+        <p style="margin:0;font-size:13.5px;color:var(--fg2)">Pulls in every active card listing by your eBay username. No eBay login needed. It re-syncs each time you open this page after 6 hours.</p>
+        <div class="ask" style="margin:0"><input id="ebayseller" aria-label="eBay username" placeholder="Your eBay username or ebay.com/usr/ link"><button type="button" id="ebaysync">Sync</button></div>
+        <div class="status" id="ebaystatus"></div>
+      </div>
       <div class="addrow" id="addform">
         <label class="field">Card<input id="a-title" placeholder="2024 Prizm Bo Nix Silver #309"></label>
         <label class="field">Grade<input id="a-grade" placeholder="Raw or PSA 10"></label>

@@ -18936,7 +18936,8 @@ async function _bizValue(item, now = Date.now()) {
 app.get('/api/biz/inventory', async (req, res) => {
   if (!_bizGate(req, res)) return;
   const inv = await _bizLoad();
-  res.set('Cache-Control', 'no-store').json({ items: inv.items, updatedAt: inv.updatedAt || null });
+  res.set('Cache-Control', 'no-store').json({ items: inv.items, updatedAt: inv.updatedAt || null,
+    ebaySeller: inv.ebaySeller || null, ebaySyncedAt: inv.ebaySyncedAt || null, ended: (inv.ended || []).length });
 });
 // { items: [...rows], mode: 'append' | 'replace' } from a CSV, an eBay export
 // or the add form; each row is read by BIZ.normalizeItem.
@@ -18983,6 +18984,52 @@ app.post('/api/biz/value', async (req, res) => {
   }
   if (batch.length) await _bizSave(inv);
   res.json({ ok: true, valued: batch.length, remaining: stale.length - batch.length, total: inv.items.length });
+});
+// eBay store sync: the seller's public active listings by username (the same
+// Browse search The Floor uses; no eBay login needed), up to BIZ_EBAY_MAX.
+const BIZ_EBAY_MAX = 2000;
+async function _bizEbayListings(seller) {
+  const token = await getOAuthToken();
+  const out = [];
+  for (let offset = 0; offset < BIZ_EBAY_MAX; offset += 200) {
+    trackApiCall('browse', 'browse/seller', seller, 'business');
+    const r = await axios.get('https://api.ebay.com/buy/browse/v1/item_summary/search', {
+      params: { category_ids: '261328', filter: `sellers:{${seller}}`, sort: 'newlyListed', limit: 200, offset },
+      headers: { 'Authorization': `Bearer ${token}`, 'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US' },
+      timeout: 10000,
+    });
+    const page = (r.data && r.data.itemSummaries) || [];
+    for (const it of page) {
+      out.push({ ebayItemId: (it.legacyItemId || it.itemId || '').toString(), title: it.title || '',
+        price: it.price && Number(it.price.value) > 0 ? Number(it.price.value) : null,
+        listedAt: it.itemCreationDate || null, itemUrl: it.itemWebUrl || null,
+        imageUrl: (it.image && it.image.imageUrl) || null });
+    }
+    if (page.length < 200 || !(r.data && r.data.next)) break;
+  }
+  return out.filter(l => l.ebayItemId && l.title);
+}
+app.post('/api/biz/ebay-sync', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  const seller = ebaySellerFromStore((req.body && req.body.seller) || inv.ebaySeller || '');
+  if (!seller) return res.status(400).json({ error: 'Enter your eBay username or your ebay.com/usr/ link.' });
+  let listings;
+  try { listings = await _bizEbayListings(seller); }
+  catch (err) {
+    console.error('[biz/ebay-sync]', err && err.message);
+    return res.status(502).json({ error: 'eBay did not answer. Try again in a minute.' });
+  }
+  if (!listings.length && !(inv.items || []).some(it => it.ebayItemId)) {
+    return res.status(404).json({ error: `No active card listings found for "${seller}". Check the username.` });
+  }
+  const m = BIZ.mergeEbay(inv.items, listings);
+  inv.items = m.items;
+  inv.ended = (inv.ended || []).concat(m.ended).slice(-2000);
+  inv.ebaySeller = seller;
+  inv.ebaySyncedAt = new Date().toISOString();
+  await _bizSave(inv);
+  res.json({ ok: true, seller, listings: listings.length, added: m.added, updated: m.updated, ended: m.ended.length });
 });
 app.get('/api/biz/brief', async (req, res) => {
   if (!_bizGate(req, res)) return;

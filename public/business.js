@@ -72,7 +72,11 @@
   // ---- inventory ----
   async function loadInventory() {
     try {
-      const { items } = await api('/api/biz/inventory');
+      const inv = await api('/api/biz/inventory');
+      const { items } = inv;
+      if (inv.ebaySeller && !$('ebayseller').value) $('ebayseller').value = inv.ebaySeller;
+      if (inv.ebaySyncedAt) $('ebaystatus').textContent = `Last synced ${new Date(inv.ebaySyncedAt).toLocaleString()} from ${inv.ebaySeller}.`;
+      if (inv.ebaySeller && Date.now() - Date.parse(inv.ebaySyncedAt || 0) > 6 * 3600 * 1000 && !syncing) { ebaySync(); return; }
       if (!items.length) { $('invtable').innerHTML = '<div class="empty">No cards yet. Add one above or import a spreadsheet.</div>'; return; }
       const now = Date.now();
       const rows = items.map(it => {
@@ -110,6 +114,20 @@
     loadInventory();
   }
   $('reprice').addEventListener('click', valueAll);
+  let syncing = false;
+  async function ebaySync() {
+    const seller = $('ebayseller').value.trim();
+    if (!seller) { $('ebaystatus').textContent = 'Enter your eBay username first.'; return; }
+    syncing = true; $('ebaysync').disabled = true; $('ebaystatus').textContent = 'Reading your eBay listings…';
+    try {
+      const r = await api('/api/biz/ebay-sync', { method: 'POST', body: JSON.stringify({ seller }) });
+      $('ebaystatus').textContent = `Synced ${r.listings} listings from ${r.seller}: ${r.added} new, ${r.updated} updated${r.ended ? `, ${r.ended} sold or ended` : ''}.`;
+    } catch (err) { $('ebaystatus').textContent = err.message; }
+    $('ebaysync').disabled = false;
+    await loadInventory();
+    syncing = false;
+  }
+  $('ebaysync').addEventListener('click', ebaySync);
   $('a-add').addEventListener('click', async () => {
     const row = { title: $('a-title').value, grade: $('a-grade').value, cost: $('a-cost').value, price: $('a-price').value, platform: $('a-platform').value };
     if (!row.title.trim()) { $('invstatus').textContent = 'Type the card first.'; return; }
