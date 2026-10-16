@@ -4,7 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 const crypto = require('crypto');
-const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos } = require('./db');
+const { recordPut, recordGet, recordList, recordDelete, connectDB, loadData, saveData, loadUserData, saveUserData, deleteUserData, loadUserPhoto, saveUserPhoto, deleteUserPhoto, cacheGet, cachePut: _rawCachePut, archiveGet, archivePut, getNflDb: _rawNflDb, getAssets, getPhotos, getAI } = require('./db');
 const digest = require('./market-digest');
 const mreport = require('./market-report');
 const betaSurvey = require('./beta-survey');
@@ -19184,7 +19184,16 @@ app.get('/api/biz/brief', async (req, res) => {
 // Plain-English questions about the seller's own business, answered by Claude
 // from the brief and the inventory table (business-core aiContext). Needs
 // ANTHROPIC_API_KEY set on the Worker.
-const BIZ_AI_MODEL = 'claude-opus-5-5';
+// Two providers, picked by BIZ_AI_PROVIDER ('anthropic' or 'workers', default
+// anthropic when its key is set, else Workers AI). The owner's compare view
+// runs both on one question so the choice is made on real answers.
+const BIZ_AI_MODEL = 'claude-haiku-5-5';
+const BIZ_WORKERS_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+function _bizProvider() {
+  const want = process.env.BIZ_AI_PROVIDER;
+  if (want === 'workers' || want === 'anthropic') return want;
+  return process.env.ANTHROPIC_API_KEY ? 'anthropic' : (getAI() ? 'workers' : null);
+}
 const BIZ_AI_SYSTEM = [
   'You are the analyst inside Card Huddle for Business, for a sports card seller.',
   'Answer only from the inventory, totals and actions provided. Market prices are medians of real eBay sold prices over 60 days, same grade.',
@@ -19193,17 +19202,32 @@ const BIZ_AI_SYSTEM = [
 ].join(' ');
 const BIZ_ASKS_PER_DAY = 40;
 let _bizClient = null;
-// One Claude answer from the seller's own data. Throws on API errors; returns
-// null on a refusal.
-async function _bizClaude(inv, instruction) {
-  if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
+// One answer from the seller's own data, by the chosen provider. Throws on an
+// API error; returns null on a refusal.
+async function _bizLLM(inv, instruction, provider = _bizProvider()) {
   const brief = BIZ.analyze(inv.items);
+  const sales = (inv.sold || []).length ? BIZ.salesReport(inv.sold) : null;
+  if (provider === 'workers') {
+    const ai = getAI();
+    if (!ai) throw new Error('Workers AI is not bound');
+    // A smaller context window than Claude's: 150 inventory rows.
+    const r = await ai.run(BIZ_WORKERS_MODEL, { max_tokens: 1200, messages: [
+      { role: 'system', content: BIZ_AI_SYSTEM },
+      { role: 'user', content: BIZ.aiContext(inv.items, brief, 150, sales) + '\n\n' + instruction }] });
+    return String((r && r.response) || '').trim();
+  }
+  if (!process.env.ANTHROPIC_API_KEY) throw new Error('No ANTHROPIC_API_KEY');
+  if (!_bizClient) { const Anthropic = require('@anthropic-ai/sdk'); _bizClient = new (Anthropic.default || Anthropic)(); }
+  // The seller's data is cached as its own block, so a run of questions reads
+  // it once at full price and then at a tenth.
   const r = await _bizClient.messages.create({
     model: BIZ_AI_MODEL,
     max_tokens: 16000,
     output_config: { effort: 'low' },
     system: BIZ_AI_SYSTEM,
-    messages: [{ role: 'user', content: BIZ.aiContext(inv.items, brief, 300, (inv.sold || []).length ? BIZ.salesReport(inv.sold) : null) + '\n\n' + instruction }],
+    messages: [{ role: 'user', content: [
+      { type: 'text', text: BIZ.aiContext(inv.items, brief, 300, sales), cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: instruction }] }],
   });
   if (r.stop_reason === 'refusal') return null;
   return (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
@@ -19215,7 +19239,7 @@ const BIZ_SUMMARY_ASK = 'Write this seller\'s morning summary: what changed in t
   + 'At most 90 words. Plain sentences, no bullet points, no greeting.';
 app.get('/api/biz/summary', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
-  if (!process.env.ANTHROPIC_API_KEY) return res.json({ summary: null, reason: 'no-key' });
+  if (!_bizProvider()) return res.json({ summary: null, reason: 'no-key' });
   const inv = await _bizLoad(who);
   if (!(inv.items || []).length) return res.json({ summary: null, reason: 'empty' });
   const day = new Date().toISOString().slice(0, 10);
@@ -19223,7 +19247,7 @@ app.get('/api/biz/summary', async (req, res) => {
   const hit = req.query.fresh ? null : await cacheGet(key);
   if (hit && hit.summary) return res.json({ summary: hit.summary, at: hit.at, cached: true });
   try {
-    const summary = await _bizClaude(inv, BIZ_SUMMARY_ASK);
+    const summary = await _bizLLM(inv, BIZ_SUMMARY_ASK);
     if (!summary) return res.json({ summary: null, reason: 'declined' });
     const at = new Date().toISOString();
     cachePut(key, { summary, at }, 26 * 3600);
@@ -19233,11 +19257,26 @@ app.get('/api/biz/summary', async (req, res) => {
     res.json({ summary: null, reason: 'error' });
   }
 });
+// Owner only: one question, both providers, side by side, with timings.
+app.post('/api/biz/compare', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  if (who !== 'owner') return res.status(403).json({ error: 'Owner only' });
+  const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
+  if (!q) return res.status(400).json({ error: 'Ask a question' });
+  const inv = await _bizLoad(who);
+  const one = async (provider) => {
+    const t = Date.now();
+    try { return { answer: await _bizLLM(inv, 'Question: ' + q, provider), ms: Date.now() - t }; }
+    catch (err) { return { error: String((err && err.message) || err).slice(0, 200), ms: Date.now() - t }; }
+  };
+  const [anthropic, workers] = await Promise.all([one('anthropic'), one('workers')]);
+  res.json({ q, anthropic: { model: BIZ_AI_MODEL, ...anthropic }, workers: { model: BIZ_WORKERS_MODEL, ...workers } });
+});
 app.post('/api/biz/ask', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const q = String((req.body && req.body.q) || '').trim().slice(0, 500);
   if (!q) return res.status(400).json({ error: 'Ask a question' });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI answers need an ANTHROPIC_API_KEY on the Worker.' });
+  if (!_bizProvider()) return res.status(503).json({ error: 'AI answers need an ANTHROPIC_API_KEY or Workers AI on the Worker.' });
   // Fair use: a seller's questions a day, so one account cannot run up the
   // AI bill a $20 plan pays for. The owner is not counted.
   if (who !== 'owner') {
@@ -19248,7 +19287,7 @@ app.post('/api/biz/ask', async (req, res) => {
   }
   const inv = await _bizLoad(who);
   try {
-    const text = await _bizClaude(inv, 'Question: ' + q);
+    const text = await _bizLLM(inv, 'Question: ' + q);
     if (text == null) return res.status(422).json({ error: 'That question could not be answered.' });
     res.json({ answer: text || 'No answer came back. Try asking another way.' });
   } catch (err) {

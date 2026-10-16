@@ -104,7 +104,11 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('an eBay sync with no username asks for one', noSeller.status === 400 && /eBay username/.test(noSeller.body.error));
   delete process.env.ANTHROPIC_API_KEY;
   const ask = await call('/api/biz/ask', { method: 'POST', headers: K, body: JSON.stringify({ q: 'What is my dead stock?' }) });
-  check('asking without an AI key says what is missing', ask.status === 503 && /ANTHROPIC_API_KEY/.test(ask.body.error));
+  check('asking with no AI set up says what is missing', ask.status === 503 && /ANTHROPIC_API_KEY or Workers AI/.test(ask.body.error));
+  const cmp = await call('/api/biz/compare', { method: 'POST', headers: K, body: JSON.stringify({ q: 'What is my dead stock?' }) });
+  check('the owner can ask both AIs at once; with neither set up each says why, side by side',
+    cmp.status === 200 && /ANTHROPIC_API_KEY/.test(cmp.body.anthropic.error || '') && /Workers AI/.test(cmp.body.workers.error || '')
+    && cmp.body.anthropic.model === 'claude-haiku-5-5', JSON.stringify(cmp.body));
   const sum = await call('/api/biz/summary', { headers: K });
   check('with no AI key the morning summary is simply left out', sum.status === 200 && sum.body.summary === null && sum.body.reason === 'no-key');
   const page = fs.readFileSync(path.join(__dirname, '..', 'public', 'business.html'), 'utf8');

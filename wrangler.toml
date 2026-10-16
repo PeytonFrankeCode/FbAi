@@ -176,3 +176,8 @@ new_sqlite_classes = ["UserInbox"]
 #        the return URL to https://thecardhuddle.com/.
 #     3. Store the Services ID (not the Bundle ID) as APPLE_CLIENT_ID.
 
+# Workers AI (open models on Cloudflare): one of the two AI providers Card
+# Huddle for Business can answer with (server.js _bizLLM). Billed to this
+# Cloudflare account, with a free daily allowance.
+[ai]
+binding = "AI"

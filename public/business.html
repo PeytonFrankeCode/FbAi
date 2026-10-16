@@ -196,6 +196,9 @@ td .act { padding: 4px 9px; font-size: 12px }
         <button class="q" type="button">Which cards am I overpricing?</button>
         <button class="q" type="button">What should I feature in my next Whatnot show?</button>
       </div>
+      <label id="comparewrap" hidden style="display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--fg2);margin:-6px 0 14px">
+        <input type="checkbox" id="compare"> Owner test: ask both AIs (Claude Haiku and Cloudflare Workers AI) side by side</label>
+      <div class="grid2" id="comparebox" hidden></div>
       <div class="answer" id="answer" hidden><span class="who">The Card Huddle</span><div id="answertext"></div></div>
     </section>
   </div>
