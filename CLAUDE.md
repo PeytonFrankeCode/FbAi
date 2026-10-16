@@ -1,14 +1,21 @@
 # The Card Huddle
 
-## Founding principle: free forever
+## Founding principle: free forever, for collectors
 
-The Card Huddle is free for everyone, forever (owner, Oct 2026). Never
+The Card Huddle is free for every collector, forever (owner, Oct 2026). Never
 propose, build or bring back a paid tier, a paywall, a "Pro" plan or any
-feature locked behind payment. The Pro idea was tried and dropped as a
-mistake.
+collector feature locked behind payment. The Pro idea was tried and dropped
+as a mistake.
 
-The site earns from things that never stand between a collector and a
-feature:
+The principle is for independent collectors, not businesses (owner, Oct
+2026). The one paid offering is **Card Huddle for Business**: a separate
+product for card shops, centred on inventory and AI analysis of it
+(launch price $20/month). It is built for shop workflows, never by taking
+something collectors have and locking it away. Nothing a collector uses on
+the site is ever gated, moved into Business, or degraded to sell it.
+
+The collector site earns from things that never stand between a collector
+and a feature:
 
 - eBay Partner Network links on listings and sales.
 - Display ads (AdSense today; a premium network such as Raptive or
