@@ -882,6 +882,18 @@ export default {
       // from R2 and cached at the edge for a year: the copy of a sold card's
       // photo never changes. Only eBay image addresses are looked up, so this
       // cannot be used to fetch or probe anything else.
+      // Article photos, uploaded from the admin editor (server.js
+      // /api/admin/news/image) into R2 under news/. Named by content, so
+      // cached for good.
+      if (url.pathname.startsWith('/news/img/') && env.PHOTOS && (request.method === 'GET' || request.method === 'HEAD')) {
+        const name = url.pathname.slice('/news/img/'.length);
+        if (!/^[a-f0-9]{20}\.(webp|jpg|png)$/.test(name)) return new Response('Not found', { status: 404 });
+        const obj = await env.PHOTOS.get('news/' + name);
+        if (!obj) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'public, max-age=60' } });
+        return new Response(request.method === 'HEAD' ? null : obj.body, { status: 200, headers: {
+          'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'image/webp',
+          'Cache-Control': 'public, max-age=31536000, immutable' } });
+      }
       if (url.pathname === '/api/photo' && (request.method === 'GET' || request.method === 'HEAD')) {
         return servePhoto(request, env, ctx, url);
       }

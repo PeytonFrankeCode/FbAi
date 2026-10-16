@@ -68,6 +68,16 @@ function renderMarkdown(src, shortcode) {
       if (html) { out.push(html); continue; }
     }
 
+    // A photo is a block of its own: ![caption](src), or wrapped in a link,
+    // [![caption](src)](href), to send the reader to the card it shows.
+    const img = imageBlock(block);
+    if (img) {
+      const pic = `<img src="${esc(img.src)}" alt="${esc(img.caption)}" loading="lazy" decoding="async">`;
+      out.push(`<figure class="photo">${img.href ? `<a href="${esc(img.href)}">${pic}</a>` : pic}`
+        + `${img.caption ? `<figcaption>${inline(img.caption)}</figcaption>` : ''}</figure>`);
+      continue;
+    }
+
     const heading = block.match(/^(#{2,3})\s+(.*)$/);
     if (heading) {
       const level = heading[1].length;
@@ -90,6 +100,26 @@ function renderMarkdown(src, shortcode) {
     out.push(`<p>${inline(block)}</p>`);
   }
   return out.join('\n');
+}
+
+// Photos come from our own upload store (/news/img/...) or any https URL;
+// links go to our pages or https. Anything else is not a photo block.
+const IMG_SRC = /^(\/news\/img\/[a-z0-9]+\.(?:webp|jpg|png)|https:\/\/[^\s)]+)$/i;
+const IMG_HREF = /^(\/[^\s)]*|https?:\/\/[^\s)]+)$/i;
+function imageBlock(block) {
+  let m = block.match(/^\[!\[([^\]]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)$/);
+  if (m && IMG_SRC.test(m[2]) && IMG_HREF.test(m[3])) return { caption: m[1].trim(), src: m[2], href: m[3] };
+  m = block.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
+  if (m && IMG_SRC.test(m[2])) return { caption: m[1].trim(), src: m[2], href: null };
+  return null;
+}
+// The first photo in an article: its share image and its structured-data image.
+function firstImage(body) {
+  for (const b of String(body || '').replace(/\r\n/g, '\n').split(/\n{2,}/)) {
+    const img = imageBlock(b.trim());
+    if (img) return img.src;
+  }
+  return null;
 }
 
 function parseArgs(s) {
@@ -116,6 +146,7 @@ function inline(text) {
 function excerpt(a, max = 165) {
   const src = a.standfirst || String(a.body || '')
     .replace(/\{\{[^}]*\}\}/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
     .replace(/^#{1,6}\s+.*$/gm, ' ')
     .replace(/[*_`>#\[\]]/g, ' ');
   const flat = String(src).replace(/\s+/g, ' ').trim();
@@ -124,5 +155,5 @@ function excerpt(a, max = 165) {
 
 module.exports = {
   CATEGORIES, slugify, esc, readingMinutes, isPublished,
-  renderMarkdown, excerpt, parseArgs,
+  renderMarkdown, excerpt, parseArgs, imageBlock, firstImage,
 };

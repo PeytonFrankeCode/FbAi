@@ -288,37 +288,49 @@
     }
     .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ---- Sales vetting ---- */
-    .vet-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
-    .vet-controls select { background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary);
-      border-radius: 8px; padding: 0.45rem 0.6rem; font-size: 0.85rem; }
-    .vet-card { background: var(--bg-card); border: 1px solid var(--border-primary); border-left: 4px solid var(--yellow);
-      border-radius: 10px; padding: 0.9rem 1rem; margin-bottom: 0.75rem; display: grid; grid-template-columns: 84px 1fr; gap: 0.9rem; }
-    .vet-card.high { border-left-color: var(--accent); }
-    .vet-card.done { opacity: 0.45; }
-    .vet-photo { width: 84px; height: 112px; border-radius: 6px; background: var(--bg-input); object-fit: cover; display: block; }
-    .vet-body { min-width: 0; display: grid; gap: 0.35rem; }
-    .vet-top { display: flex; flex-wrap: wrap; gap: 0.4rem 0.75rem; align-items: baseline; }
-    .vet-price { font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-    .vet-title { color: var(--text-primary); text-decoration: none; font-weight: 600; overflow-wrap: anywhere; }
-    .vet-title:hover { color: var(--accent); }
-    .vet-meta { font-size: 0.8rem; color: var(--text-secondary); overflow-wrap: anywhere; }
-    .vet-meta code { font-size: 0.78rem; color: var(--text-secondary); }
-    .vet-move { font-size: 0.85rem; }
-    .vet-move b { color: var(--yellow); }
-    .vet-card.high .vet-move b { color: var(--accent); }
-    .vet-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.25rem; }
-    .vet-btn { background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary);
-      border-radius: 8px; padding: 0.45rem 0.75rem; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
-    .vet-btn:hover { border-color: var(--accent); }
-    .vet-btn.go { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); }
-    .vet-btn.no { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
-    .vet-btn:disabled { opacity: 0.5; cursor: default; }
-    .vet-pill { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.45rem; border-radius: 4px; }
-    .vet-pill.high { background: var(--accent-bg); color: var(--accent); }
-    .vet-pill.low { background: var(--yellow-bg); color: var(--yellow); }
-    .vet-photo.none { display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--text-muted); height: 60px; }
-    @media (max-width: 560px) { .vet-card { grid-template-columns: 1fr; } .vet-photo { width: 100%; height: 200px; object-fit: contain; } .vet-photo.none { display: none; } }
+    /* ---- Articles: write, add photos, preview, publish (/news) ---- */
+    .art-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+    .art-bar a { color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+    .art-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; background: var(--bg-card);
+      border: 1px solid var(--border-primary); border-radius: 10px; padding: 0.7rem 0.9rem; margin-bottom: 0.5rem; }
+    .art-row-title { flex: 1 1 16rem; min-width: 0; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+    .art-row-meta { font-size: 0.78rem; color: var(--text-secondary); }
+    .art-pill { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.15rem 0.45rem; border-radius: 4px; }
+    .art-pill.published { background: var(--accent-bg); color: var(--accent); }
+    .art-pill.draft { background: var(--yellow-bg); color: var(--yellow); }
+    .art-pill.scheduled { background: rgba(96,165,250,0.12); color: #60a5fa; }
+    .art-editor { background: var(--bg-card); border: 1px solid var(--border-primary); border-radius: 14px; padding: 1.1rem; margin: 1rem 0 0.5rem; }
+    .art-editor[hidden] { display: none; }
+    .art-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.75rem; }
+    .art-field { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.75rem; min-width: 0; }
+    .art-field label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+    .art-field .hint { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-muted); }
+    .art-field input, .art-field select, .art-field textarea { width: 100%; background: var(--bg-input); border: 1px solid var(--border-primary);
+      color: var(--text-primary); border-radius: 8px; padding: 0.6rem 0.7rem; font: inherit; font-size: 0.95rem; }
+    .art-field textarea { resize: vertical; line-height: 1.55; }
+    #art-body { min-height: 22rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88rem; }
+    #art-body.drop { border-color: var(--accent); background: var(--accent-bg); }
+    .art-slug { display: flex; align-items: center; background: var(--bg-input); border: 1px solid var(--border-primary); border-radius: 8px; }
+    .art-slug span { padding-left: 0.7rem; color: var(--text-muted); font-size: 0.9rem; }
+    .art-slug input { border: 0; background: transparent; }
+    .art-tools { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }
+    .art-tools button { background: var(--bg-input); border: 1px solid var(--border-primary); color: var(--text-primary); border-radius: 7px;
+      padding: 0.4rem 0.65rem; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; min-height: 2.2rem; }
+    .art-tools button:hover { border-color: var(--accent); }
+    .art-tools .photo { background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); }
+    .art-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+    .art-actions button { border-radius: 8px; padding: 0.6rem 1rem; font: inherit; font-weight: 700; cursor: pointer; border: 1px solid var(--border-primary);
+      background: var(--bg-input); color: var(--text-primary); }
+    .art-actions .go { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+    .art-actions .danger { color: var(--red); border-color: var(--red-border); background: var(--red-bg); margin-left: auto; }
+    .art-actions button:disabled { opacity: 0.5; cursor: default; }
+    .art-status { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.6rem; min-height: 1.2em; }
+    .art-status.err { color: var(--red); }
+    .art-status.ok { color: var(--accent); }
+    .art-preview { width: 100%; height: 75vh; border: 1px solid var(--border-primary); border-radius: 10px; margin-top: 0.75rem; background: #0c0e14; }
+    .art-preview[hidden] { display: none; }
+    .art-help { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5; }
+    .art-help code { color: var(--text-secondary); }
   </style>
 </head>
 <body>
@@ -343,22 +355,73 @@
 
 <!-- Admin Dashboard -->
 <div id="admin-screen">
-  <!-- Sales vetting (/api/admin/vetting) — docs/vetting-plan.md -->
-  <div class="page-title">Sales Vetting</div>
-  <div class="page-subtitle">Sales the title says are filed under the wrong card, dearest first. Open the listing to check the photo, then answer with one tap. Only the sales the reader can't settle on its own are shown; the ones it is sure of are handled without you. Answers are saved apart from the sales and can be undone; nothing is deleted.</div>
-  <div class="stats-row" id="vet-stats"></div>
-  <div class="vet-controls">
-    <select id="vet-dest" onchange="loadVetting()" aria-label="Category"><option value="all">All categories</option></select>
-    <select id="vet-days" onchange="loadVetting()" aria-label="Window">
-      <option value="1">Newest day</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option>
-    </select>
-    <select id="vet-min" onchange="loadVetting()" aria-label="Price floor">
-      <option value="20">$20 and up</option><option value="100">$100 and up</option><option value="500">$500 and up</option><option value="5">$5 and up</option>
-    </select>
-    <button class="refresh-btn" onclick="loadVetting()">↻ Refresh</button>
+  <!-- Articles: the posting tool (/api/admin/news, /news) -->
+  <div class="page-title">Articles</div>
+  <div class="page-subtitle">Write an article, drop in photos, preview it exactly as it will look, then publish to <a href="/news" target="_blank" style="color:var(--accent)">Guides &amp; News</a>. Photos are shrunk on this device before they upload.</div>
+  <div class="art-bar">
+    <button class="refresh-btn" onclick="artNew()">+ New article</button>
+    <button class="refresh-btn" onclick="loadArticles()">&#8635; Refresh</button>
   </div>
-  <div class="page-subtitle" id="vet-window" style="margin-bottom:1rem"></div>
-  <div id="vet-list"></div>
+  <div id="art-list"></div>
+
+  <div id="art-editor" class="art-editor" hidden>
+    <div class="art-field">
+      <label for="art-title">Headline</label>
+      <input id="art-title" placeholder="What happened, in one line" oninput="artTitleChanged()">
+    </div>
+    <div class="art-grid">
+      <div class="art-field">
+        <label for="art-slug">Link <span class="hint">&mdash; permanent once published</span></label>
+        <div class="art-slug"><span>/news/</span><input id="art-slug" placeholder="from-the-headline" oninput="_art.slugTouched = true"></div>
+      </div>
+      <div class="art-field">
+        <label for="art-category">Category</label>
+        <select id="art-category">
+          <option>Market Moves</option><option>Rookies</option><option>Set Guides</option><option>Grading</option><option>Collecting</option>
+        </select>
+      </div>
+    </div>
+    <div class="art-field">
+      <label for="art-standfirst">Summary <span class="hint">&mdash; under the headline, on the article card and in Google results</span></label>
+      <textarea id="art-standfirst" rows="2" placeholder="One or two sentences that make someone tap."></textarea>
+    </div>
+    <div class="art-field">
+      <label for="art-body">Article</label>
+      <div class="art-tools" role="toolbar" aria-label="Formatting">
+        <button type="button" class="photo" onclick="document.getElementById('art-file').click()">&#128247; Add photos</button>
+        <button type="button" onclick="artWrap('## ', '', 'Section heading', true)">Heading</button>
+        <button type="button" onclick="artWrap('**', '**', 'bold text')"><b>B</b></button>
+        <button type="button" onclick="artWrap('*', '*', 'italic text')"><i>I</i></button>
+        <button type="button" onclick="artLink()">&#128279; Link</button>
+        <button type="button" onclick="artWrap('- ', '', 'List item', true)">&bull; List</button>
+        <button type="button" onclick="artWrap('> ', '', 'A line worth pulling out', true)">&ldquo; Quote</button>
+        <button type="button" onclick="artSoldTable()">&#128202; Sold-price table</button>
+      </div>
+      <input type="file" id="art-file" accept="image/*" multiple hidden onchange="artPickPhotos(this)">
+      <textarea id="art-body" placeholder="Write here. Paste or drop photos straight in, or tap Add photos." oninput="artStash()"></textarea>
+      <div class="art-help">A blank line starts a new paragraph. Photos go in as <code>![caption](link)</code>; edit the caption text any time. A sold-price table stays up to date by itself.</div>
+    </div>
+    <div class="art-grid">
+      <div class="art-field">
+        <label for="art-author">Author</label>
+        <input id="art-author" value="The Card Huddle">
+      </div>
+      <div class="art-field">
+        <label for="art-date">Publish date <span class="hint">&mdash; a future date holds it until then</span></label>
+        <input id="art-date" type="datetime-local">
+      </div>
+    </div>
+    <div class="art-actions">
+      <button type="button" onclick="artPreview()">&#128065; Preview</button>
+      <button type="button" onclick="artSave('draft')">Save draft</button>
+      <button type="button" class="go" id="art-publish" onclick="artSave('published')">Publish</button>
+      <button type="button" id="art-unpublish" onclick="artSave('draft', true)" hidden>Unpublish</button>
+      <button type="button" onclick="artClose()">Close</button>
+      <button type="button" class="danger" id="art-delete" onclick="artDelete()" hidden>Delete</button>
+    </div>
+    <div id="art-status" class="art-status" role="status" aria-live="polite"></div>
+    <iframe id="art-preview" class="art-preview" title="Article preview" hidden></iframe>
+  </div>
 
   <div class="page-title" style="margin-top:2.5rem;">Feedback &amp; Bug Reports</div>
   <div class="page-subtitle" id="last-refreshed">Loading…</div>
@@ -482,7 +545,7 @@
       renderList();
       loadCommunityModeration();
       loadEstimateAccuracy();
-      loadVetting();
+      loadArticles();
       loadSurveys();
       loadGiveawayEntrants();
       const now = new Date();
@@ -633,105 +696,190 @@
       </div>`).join('');
   }
 
-  // ---- Sales vetting (/api/admin/vetting) ----
-  const VET_LABEL = { auto: 'Auto', relic: 'Relic', 'not-auto': 'Not an auto (facsimile)', authentic: 'Authentic (no card grade)',
-    parallel: 'Parallel', year: 'Year', 'category:lot': 'Lot', 'category:reprint': 'Reprint', 'category:custom': 'Custom / fake',
-    'category:you-pick': 'You pick', 'category:break': 'Break', 'category:repack': 'Repack', 'category:redemption': 'Redemption' };
-  const vetLabel = (d) => VET_LABEL[d] || d;
-  let _vet = null;
-  async function loadVetting() {
-    const list = document.getElementById('vet-list');
-    const q = new URLSearchParams({ dest: document.getElementById('vet-dest').value, confidence: 'low',
-      days: document.getElementById('vet-days').value, min: document.getElementById('vet-min').value });
-    list.innerHTML = `<div class="empty-state"><p>Reading sales… the first load of a window takes a few seconds.</p></div>`;
+  // ---- Articles (/api/news, /api/admin/news) ----
+  // The posting tool: list, write, photos (shrunk here, then uploaded),
+  // preview (the real page, rendered by the server), publish.
+  const _art = { list: [], editing: null, slugTouched: false };
+  const artEl = (id) => document.getElementById(id);
+  const artApi = async (url, opts = {}) => {
+    const r = await fetch(url, { ...opts, cache: 'no-store',
+      headers: { 'x-admin-key': adminKey, ...(opts.body ? { 'content-type': 'application/json' } : {}), ...(opts.headers || {}) } });
+    const text = await r.text();
+    let data = null; try { data = JSON.parse(text); } catch (_) { data = text; }
+    if (!r.ok) throw new Error((data && data.error) || `HTTP ${r.status}`);
+    return data;
+  };
+  const artSlugify = (t) => String(t || '').toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+  function artSay(msg, kind) { const el = artEl('art-status'); el.textContent = msg; el.className = 'art-status' + (kind ? ' ' + kind : ''); }
+  function artState(a) {
+    if (a.status !== 'published') return 'draft';
+    return Date.parse(a.publishedAt || '') > Date.now() ? 'scheduled' : 'published';
+  }
+
+  async function loadArticles() {
+    const box = artEl('art-list');
     try {
-      const r = await fetch(`/api/admin/vetting?${q}`, { headers: { 'x-admin-key': adminKey }, cache: 'no-store' });
-      const d = await r.json();
-      if (!r.ok || !d.available) throw new Error(d.error || d.reason || `HTTP ${r.status}`);
-      _vet = d; renderVetting();
-    } catch (err) {
-      list.innerHTML = `<div class="empty-state"><p>Could not load the vetting queue (${escHtml(err.message)}).</p></div>`;
+      const list = await artApi('/api/news');
+      _art.list = (Array.isArray(list) ? list : []).sort((a, b) => String(b.updatedAt || b.publishedAt || '').localeCompare(String(a.updatedAt || a.publishedAt || '')));
+      box.innerHTML = _art.list.length ? _art.list.map((a, i) => {
+        const st = artState(a);
+        return `<div class="art-row"><span class="art-pill ${st}">${st}</span>
+          <span class="art-row-title">${escHtml(a.title)}</span>
+          <span class="art-row-meta">${escHtml(String(a.updatedAt || a.publishedAt || '').slice(0, 10))}</span>
+          ${st === 'published' ? `<a class="refresh-btn" href="/news/${encodeURIComponent(a.slug)}" target="_blank" style="text-decoration:none">View &#8599;</a>` : ''}
+          <button class="refresh-btn" onclick="artEdit(${i})">Edit</button></div>`;
+      }).join('') : '<div class="page-subtitle" style="margin:0">No articles yet. Tap + New article.</div>';
+    } catch (err) { box.innerHTML = `<div class="page-subtitle" style="color:var(--red)">Could not load articles: ${escHtml(err.message)}</div>`; }
+  }
+
+  // datetime-local wants local time without a zone.
+  const artLocal = (iso) => { const d = new Date(iso); if (isNaN(d)) return ''; const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+  function artFill(a) {
+    _art.editing = a && a.slug ? a : null;
+    _art.slugTouched = !!(a && a.slug);
+    artEl('art-title').value = (a && a.title) || '';
+    artEl('art-slug').value = (a && a.slug) || '';
+    artEl('art-slug').disabled = !!(a && a.status === 'published');
+    artEl('art-category').value = (a && a.category) || 'Market Moves';
+    artEl('art-standfirst').value = (a && a.standfirst) || '';
+    artEl('art-body').value = (a && a.body) || '';
+    artEl('art-author').value = (a && a.author) || 'The Card Huddle';
+    artEl('art-date').value = a && a.publishedAt ? artLocal(a.publishedAt) : '';
+    const live = !!(a && a.status === 'published');
+    artEl('art-publish').textContent = live ? 'Update' : 'Publish';
+    artEl('art-unpublish').hidden = !live;
+    artEl('art-delete').hidden = !(a && a.slug);
+    artEl('art-preview').hidden = true;
+    artSay('');
+    artEl('art-editor').hidden = false;
+    artEl('art-editor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function artNew() {
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem('chArtDraft') || 'null'); } catch (_) { draft = null; }
+    if (draft && (draft.title || draft.body) && confirm('Pick up the unsaved article on this device?')) { artFill(draft); _art.editing = null; artEl('art-delete').hidden = true; return; }
+    artFill(null);
+  }
+  function artEdit(i) { const a = _art.list[i]; if (a) artFill(JSON.parse(JSON.stringify(a))); }
+  function artClose() { artEl('art-editor').hidden = true; artEl('art-preview').hidden = true; }
+  function artTitleChanged() { if (!_art.slugTouched) artEl('art-slug').value = artSlugify(artEl('art-title').value); artStash(); }
+  // Unsaved work is kept on this device, so a closed tab loses nothing.
+  function artStash() {
+    if (_art.editing) return;
+    try { localStorage.setItem('chArtDraft', JSON.stringify(artPayload('draft'))); } catch (_) { /* private mode */ }
+  }
+  function artPayload(status) {
+    let when = artEl('art-date').value ? new Date(artEl('art-date').value).toISOString() : null;
+    // A draft going live for the first time goes live now, not on the day the
+    // draft was started; a future date still schedules it.
+    const firstPublish = status === 'published' && !(_art.editing && _art.editing.status === 'published');
+    if (firstPublish && (!when || Date.parse(when) < Date.now())) when = new Date().toISOString();
+    return { title: artEl('art-title').value.trim(), slug: artSlugify(artEl('art-slug').value || artEl('art-title').value),
+      originalSlug: _art.editing ? _art.editing.slug : undefined, category: artEl('art-category').value,
+      standfirst: artEl('art-standfirst').value.trim(), body: artEl('art-body').value,
+      author: artEl('art-author').value.trim() || 'The Card Huddle', status, publishedAt: when };
+  }
+
+  // Insert at the cursor. `block` puts it on its own line(s).
+  function artInsert(text, block) {
+    const ta = artEl('art-body'); const a = ta.selectionStart ?? ta.value.length, b = ta.selectionEnd ?? a;
+    let before = ta.value.slice(0, a), after = ta.value.slice(b);
+    if (block) { if (before && !/\n\n$/.test(before)) before += /\n$/.test(before) ? '\n' : '\n\n'; if (!/^\n\n/.test(after)) after = '\n\n' + after.replace(/^\n+/, ''); }
+    ta.value = before + text + after;
+    const at = before.length + text.length; ta.focus(); ta.setSelectionRange(at, at); artStash();
+  }
+  function artWrap(pre, post, placeholder, block) {
+    const ta = artEl('art-body'); const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd) || placeholder;
+    if (block) artInsert(sel.split('\n').map(l => pre + l).join('\n'), true); else artInsert(pre + sel + post, false);
+  }
+  function artLink() {
+    const ta = artEl('art-body'); const sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    const url = prompt('Link to (a card search like /?q=Bo Nix Prizm, or a full https:// address):', '/?q=');
+    if (!url) return;
+    const text = sel || prompt('Link text:', '') || url;
+    artInsert(`[${text}](${url.trim().replace(/ /g, '%20')})`, false);
+  }
+  function artSoldTable() {
+    const player = prompt('Player for the sold-price table (e.g. Marvin Harrison Jr.):', ''); if (!player) return;
+    const set = prompt('Only one set? (e.g. Prizm). Leave blank for all sets:', '') || '';
+    const days = prompt('Days of sales to cover (7 to 365):', '30') || '30';
+    artInsert(`{{sold-table player="${player.trim()}"${set.trim() ? ` set="${set.trim()}"` : ''} days="${parseInt(days, 10) || 30}"}}`, true);
+  }
+
+  // Photos: shrink to 1600px wide WebP (JPEG where the browser can't make
+  // WebP) before uploading, so a 4 MB phone photo goes up as ~200 KB.
+  async function artShrink(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('Could not read that photo')); i.src = url; });
+      const scale = Math.min(1, 1600 / Math.max(1, img.naturalWidth));
+      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      let data = c.toDataURL('image/webp', 0.82);
+      if (!data.startsWith('data:image/webp')) data = c.toDataURL('image/jpeg', 0.85);
+      return data;
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function artAddPhotos(files) {
+    const list = [...files].filter(f => /^image\//.test(f.type));
+    for (let n = 0; n < list.length; n++) {
+      artSay(`Uploading photo ${n + 1} of ${list.length}…`);
+      try {
+        const dataUrl = await artShrink(list[n]);
+        const r = await artApi('/api/admin/news/image', { method: 'POST', body: JSON.stringify({ dataUrl }) });
+        const caption = (prompt(`Caption for photo ${n + 1} (what should the reader notice?):`, '') || '').replace(/[\[\]]/g, '');
+        const link = (prompt('Link the photo to a card? (e.g. /?q=Marvin Harrison Prizm Silver). Leave blank for none:', '') || '').trim().replace(/ /g, '%20');
+        artInsert(link ? `[![${caption}](${r.url})](${link})` : `![${caption}](${r.url})`, true);
+        artSay(`Photo ${n + 1} added (${Math.round(r.bytes / 1024)} KB).`, 'ok');
+      } catch (err) { artSay(`Photo ${n + 1} failed: ${err.message}`, 'err'); return; }
     }
   }
-  function renderVetting() {
-    const d = _vet;
-    const mine = d.counts.filter(c => c.confidence === 'low');
-    const open = mine.reduce((a, c) => a + c.open, 0);
-    const handled = d.counts.filter(c => c.confidence === 'high').reduce((a, c) => a + c.open + c.done, 0);
-    const card = (lbl, val, cls = '') => `<div class="stat-card"><div class="stat-label">${lbl}</div><div class="stat-value ${cls}">${val}</div></div>`;
-    document.getElementById('vet-stats').innerHTML = card('Waiting', open, 'yellow') + card('Moved', d.decided.moved, 'green')
-      + card('Kept as filed', d.decided.kept) + card('Reader handled', handled.toLocaleString(), 'green')
-      + card('Sales checked', d.scanned.toLocaleString());
-    const sel = document.getElementById('vet-dest'), cur = sel.value;
-    const dests = [...new Set(mine.map(c => c.dest))];
-    sel.innerHTML = `<option value="all">All categories (${open})</option>`
-      + dests.map(x => { const n = mine.filter(c => c.dest === x).reduce((a, c) => a + c.open, 0);
-          return `<option value="${escHtml(x)}">${escHtml(vetLabel(x))} (${n})</option>`; }).join('');
-    sel.value = dests.includes(cur) ? cur : 'all';
-    document.getElementById('vet-window').textContent = `Sales sold ${d.window.since === d.window.through ? d.window.through : d.window.since + ' to ' + d.window.through}, $${d.minDollars} and up`
-      + (d.truncated ? ` · only the ${d.scanned.toLocaleString()} dearest were read; raise the price floor to reach the rest` : '');
-    const list = document.getElementById('vet-list');
-    if (!d.queue.length) { list.innerHTML = `<div class="empty-state"><div class="icon">✅</div><p>Nothing needs your eye here. Try another category or a wider window.</p></div>`; return; }
-    list.innerHTML = d.queue.map((it, i) => {
-      const cat = it.dest.startsWith('category:');
-      const moveTxt = cat ? `Not one card: <b>${escHtml(vetLabel(it.dest))}</b>`
-        : `Move to <b>${escHtml(vetLabel(it.dest))}${it.to ? ' · ' + escHtml(it.to) : ''}</b>`;
-      const done = it._answered ? `<span class="vet-meta">${escHtml(it._said)}</span> <button class="vet-btn" onclick="vetUndo(${i})">Undo</button>` : '';
-      return `<div class="vet-card ${it.confidence}${it._answered ? ' done' : ''}" id="vet-${i}">
-        ${it.imageUrl ? `<img class="vet-photo" src="${escHtml(it.imageUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<div class="vet-photo none">No photo</div>`}
-        <div class="vet-body">
-          <div class="vet-top"><span class="vet-price">$${Number(it.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-            <span class="vet-meta">${escHtml(it.soldDate)}</span></div>
-          <a class="vet-title" href="https://www.ebay.com/itm/${encodeURIComponent(it.itemId)}" target="_blank" rel="noopener">${escHtml(it.title)}</a>
-          <div class="vet-meta">Filed as <code>${escHtml(it.filedAs || '(no card)')}</code></div>
-          <div class="vet-move">${moveTxt} <span class="vet-meta">— ${escHtml(it.reason)}${it.also.length ? '; also: ' + escHtml(it.also.join('; ')) : ''}</span></div>
-          <div class="vet-actions">${done || `
-            <button class="vet-btn go" onclick="vetAnswer(${i}, 'move')">✓ ${cat ? 'Yes, not one card' : 'Move it'}</button>
-            <button class="vet-btn no" onclick="vetAnswer(${i}, 'keep')">✗ Keep as filed</button>
-            ${it.dest !== 'category:lot' ? `<button class="vet-btn" onclick="vetAnswer(${i}, 'category', 'lot')">Lot</button>` : ''}
-            ${it.dest !== 'category:custom' ? `<button class="vet-btn" onclick="vetAnswer(${i}, 'category', 'custom')">Fake / custom</button>` : ''}
-            ${it.dest !== 'category:reprint' ? `<button class="vet-btn" onclick="vetAnswer(${i}, 'category', 'reprint')">Reprint</button>` : ''}`}
-          </div>
-        </div></div>`;
-    }).join('');
-  }
-  async function vetAnswer(i, action, category) {
-    const it = _vet && _vet.queue[i]; if (!it) return;
-    const el = document.getElementById('vet-' + i);
-    el.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  function artPickPhotos(input) { const f = input.files; if (f && f.length) artAddPhotos(f).finally(() => { input.value = ''; }); }
+  (function artWireBody() {
+    const ta = artEl('art-body');
+    ta.addEventListener('paste', (e) => {
+      const files = [...((e.clipboardData && e.clipboardData.files) || [])].filter(f => /^image\//.test(f.type));
+      if (files.length) { e.preventDefault(); artAddPhotos(files); }
+    });
+    ta.addEventListener('dragover', (e) => { e.preventDefault(); ta.classList.add('drop'); });
+    ta.addEventListener('dragleave', () => ta.classList.remove('drop'));
+    ta.addEventListener('drop', (e) => {
+      ta.classList.remove('drop');
+      const files = e.dataTransfer && e.dataTransfer.files;
+      if (files && files.length) { e.preventDefault(); artAddPhotos(files); }
+    });
+  })();
+
+  async function artPreview() {
+    artSay('Building preview…');
     try {
-      const r = await fetch('/api/admin/vetting', { method: 'POST', headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
-        body: JSON.stringify({ itemId: it.itemId, action, category }) });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
-      const said = d.status === 'kept' ? 'Kept as filed' : `Moved to ${vetLabel(d.dest)}${d.to ? ' · ' + d.to : ''}`;
-      el.classList.add('done');
-      el.querySelector('.vet-actions').innerHTML = `<span class="vet-meta">${escHtml(said)}</span>
-        <button class="vet-btn" onclick="vetUndo(${i})">Undo</button>`;
-      const s = _vet.decided; if (d.status === 'kept') s.kept++; else s.moved++;
-      const c = _vet.counts.find(x => x.dest === it.dest && x.confidence === it.confidence); if (c) { c.open--; c.done++; }
-      it._answered = d.status; it._said = said;
-      const cards = document.querySelectorAll('#vet-stats .stat-value');
-      cards[0].textContent = _vet.counts.filter(x => x.confidence === 'low').reduce((a, x) => a + x.open, 0); cards[1].textContent = s.moved; cards[2].textContent = s.kept;
-    } catch (err) {
-      el.querySelectorAll('button').forEach(b => { b.disabled = false; });
-      alertVet(el, `Not saved: ${err.message}`);
-    }
+      const html = await artApi('/api/admin/news/preview', { method: 'POST', body: JSON.stringify(artPayload('draft')) });
+      const fr = artEl('art-preview'); fr.hidden = false; fr.srcdoc = html;
+      artSay('Preview below: this is the page as it will publish.', 'ok');
+      fr.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) { artSay(`Preview failed: ${err.message}`, 'err'); }
   }
-  async function vetUndo(i) {
-    const it = _vet && _vet.queue[i]; if (!it) return;
+  async function artSave(status, unpublish) {
+    const p = artPayload(status);
+    if (!p.title) return artSay('Add a headline first.', 'err');
+    if (status === 'published' && !p.standfirst) return artSay('Add a summary first: it is what Google shows under the headline.', 'err');
+    if (status === 'published' && !confirm(_art.editing && _art.editing.status === 'published' ? 'Update the live article?' : `Publish "${p.title}" to /news/${p.slug}?`)) return;
+    if (unpublish && !confirm('Take this article off the site? It stays here as a draft.')) return;
+    artSay('Saving…');
     try {
-      const r = await fetch('/api/admin/vetting', { method: 'POST', headers: { 'x-admin-key': adminKey, 'content-type': 'application/json' },
-        body: JSON.stringify({ itemId: it.itemId, action: 'undo' }) });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const s = _vet.decided; if (it._answered === 'kept') s.kept--; else s.moved--;
-      const c = _vet.counts.find(x => x.dest === it.dest && x.confidence === it.confidence); if (c) { c.open++; c.done--; }
-      delete it._answered; delete it._said; renderVetting();
-    } catch (err) { alertVet(document.getElementById('vet-' + i), `Undo failed: ${err.message}`); }
+      const r = await artApi('/api/admin/news', { method: 'POST', body: JSON.stringify(p) });
+      if (!_art.editing) { try { localStorage.removeItem('chArtDraft'); } catch (_) { /* fine */ } }
+      artFill(r.article);
+      await loadArticles();
+      artSay(r.article.status === 'published' ? `Live at /news/${r.article.slug}` : 'Saved as a draft.', 'ok');
+    } catch (err) { artSay(`Not saved: ${err.message}`, 'err'); }
   }
-  function alertVet(el, msg) {
-    const m = document.createElement('div'); m.className = 'vet-meta'; m.style.color = 'var(--red)'; m.textContent = msg;
-    el.querySelector('.vet-body').appendChild(m);
+  async function artDelete() {
+    const a = _art.editing; if (!a) return;
+    if (!confirm(`Delete "${a.title}" for good? This can't be undone.`)) return;
+    try { await artApi('/api/admin/news/' + encodeURIComponent(a.slug), { method: 'DELETE' }); artClose(); await loadArticles(); }
+    catch (err) { artSay(`Not deleted: ${err.message}`, 'err'); }
   }
 
   // ---- Giveaway entrants ----
