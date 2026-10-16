@@ -93,6 +93,7 @@ td.r, th.r { text-align: right }
 @media (prefers-reduced-motion: no-preference) { .item { transition: opacity .25s } }
 
 body { margin: 0 }
+[hidden] { display: none !important }
 .login { max-width: 380px; margin: 12vh auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px }
 .login input, .field input, .field select, textarea { font: inherit; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg); width: 100% }
 .err { color: var(--down); font-size: 13px; min-height: 1.2em }
@@ -101,6 +102,7 @@ body { margin: 0 }
 .field { display: grid; gap: 4px; font-size: 12px; color: var(--fg3); min-width: 0 }
 textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px }
 .empty { color: var(--fg2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 22px }
+.mini { width: 90px; font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg) }
 .status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
 td .act { padding: 4px 9px; font-size: 12px }
 @media (max-width: 760px) { .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 } }
@@ -125,6 +127,7 @@ td .act { padding: 4px 9px; font-size: 12px }
     <nav role="tablist" aria-label="Sections">
       <button role="tab" id="t-brief" aria-selected="true" data-tab="brief">Today</button>
       <button role="tab" id="t-inv" aria-selected="false" data-tab="inv">Inventory</button>
+      <button role="tab" id="t-sales" aria-selected="false" data-tab="sales">Sales</button>
       <button role="tab" id="t-ask" aria-selected="false" data-tab="ask">Ask</button>
     </nav>
 
@@ -162,6 +165,16 @@ td .act { padding: 4px 9px; font-size: 12px }
         </div></details>
       <div class="toolbar"><button class="act" type="button" id="reprice">Refresh market prices</button><span class="status" id="invstatus"></span></div>
       <div id="invtable"></div>
+    </section>
+
+    <section id="p-sales" hidden>
+      <h1>Sales and profit</h1>
+      <p class="lede">Profit after estimated selling fees (eBay 13.25% + $0.40, Whatnot 10.9% + $0.30). Add your cost to a card to see its profit.</p>
+      <div class="kpis" id="salekpis"></div>
+      <div id="endedbox"></div>
+      <div class="grid2" id="salegroups"></div>
+      <h2 style="margin-top:22px">Recent sales</h2>
+      <div id="salelist"></div>
     </section>
 
     <section id="p-ask" hidden>

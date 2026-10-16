@@ -4,7 +4,11 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const money = (n) => (n == null || !Number.isFinite(Number(n))) ? '—' : '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: Number(n) < 100 ? 2 : 0 });
+  const money = (n) => {
+    if (n == null || n === '' || !Number.isFinite(Number(n))) return '—';
+    const v = Number(n), small = Math.abs(v) < 100 && v % 1 !== 0;
+    return (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: small ? 2 : 0, maximumFractionDigits: small ? 2 : 0 });
+  };
   let key = '';
   try { key = sessionStorage.getItem('chBizKey') || ''; } catch (_) {}
 
@@ -29,7 +33,8 @@
   const tabs = document.querySelectorAll('nav button');
   function show(name) {
     tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-    ['brief', 'inv', 'ask'].forEach(n => { $('p-' + n).hidden = n !== name; });
+    ['brief', 'inv', 'sales', 'ask'].forEach(n => { $('p-' + n).hidden = n !== name; });
+    if (name === 'sales') loadSales();
     if (name === 'brief') loadBrief();
     if (name === 'inv') loadInventory();
   }
@@ -41,22 +46,23 @@
     try {
       const b = await api('/api/biz/brief');
       const k = b.kpis;
-      const gain = k.marketValue - k.costBasis;
+      const gain = k.unrealized;
+      const plural = (n, w) => `${n.toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
       $('kpis').innerHTML = [
         ['Market value', money(k.marketValue), `${k.pricedShare}% of cards priced`],
-        ['Listed at', money(k.listedValue), `${k.cards.toLocaleString()} cards`],
-        ['Cost basis', money(k.costBasis), k.costBasis ? `<span class="${gain >= 0 ? 'up' : 'down'}">${gain >= 0 ? '+' : ''}${money(gain)} unrealized</span>` : 'Add costs to see profit'],
+        ['Listed at', money(k.listedValue), plural(k.cards, 'card')],
+        ['Cost basis', money(k.costBasis), k.pricedWithCost ? `<span class="${gain >= 0 ? 'up' : 'down'}">${gain >= 0 ? '+' : ''}${money(gain)} unrealized</span>` : (k.costBasis ? 'Gain shows once cards are priced' : 'Add costs to see profit')],
         ['Dead stock (90d+)', k.deadStock.toLocaleString(), `${money(k.deadValue)} tied up`],
       ].map(([l, v, s]) => `<div class="kpi"><small>${l}</small><b>${v}</b><em>${s}</em></div>`).join('');
       const total = b.actions.reduce((a, x) => a + (x.dollars || 0), 0);
       $('headline').textContent = !k.cards ? 'Add your inventory to get your first brief.'
         : b.actions.length ? `${b.actions.length} moves today worth about ${money(total)}.` : 'Nothing needs you today.';
-      $('sub').textContent = k.cards ? `From ${k.cards.toLocaleString()} cards against real sold prices from the last 60 days.` : 'Go to Inventory to add cards or import a spreadsheet.';
+      $('sub').textContent = k.cards ? `From ${plural(k.cards, 'card')} against real sold prices from the last 60 days.` : 'Go to Inventory to add cards or import a spreadsheet.';
       $('brief').innerHTML = b.actions.length ? b.actions.map((a, i) => {
         const [cls, tag] = KIND[a.kind] || ['', a.kind];
         const btn = a.suggest != null && a.id ? `<div class="acts"><button class="act go" data-id="${esc(a.id)}" data-price="${a.suggest}">Set price to ${money(a.suggest)}</button></div>` : '';
         return `<div class="item ${cls}" id="act-${i}"><span class="tag">${tag}</span><strong>${esc(a.title)}</strong><p>${esc(a.text)}</p><span class="why">${esc(a.why || '')}</span>${btn}</div>`;
-      }).join('') : `<div class="empty">${k.cards ? 'Every priced card is within range of the market. Check back tomorrow.' : 'No cards yet.'}</div>`;
+      }).join('') : `<div class="empty">${!k.cards ? 'No cards yet.' : k.pricedShare ? 'Every priced card is within range of the market. Check back tomorrow.' : 'None of your cards has 3 recent sales of the same grade yet, so none can be priced. Open Inventory to refresh prices.'}</div>`;
     } catch (err) { if (err.status === 401) showLogin(); else $('brief').innerHTML = `<div class="empty">Could not load the brief: ${esc(err.message)}</div>`; }
   }
   $('brief').addEventListener('click', async (e) => {
@@ -89,13 +95,22 @@
         if (days >= 90) pill += ' <span class="pill bad">90d+</span>';
         return `<tr><td>${esc(it.title)}${it.qty > 1 ? ` &times;${it.qty}` : ''}</td><td>${esc(it.grade || 'Raw')}</td><td>${esc(it.platform || '')}</td>
           <td class="r">${money(it.cost)}</td><td class="r">${money(it.price)}</td><td class="r">${money(v.market)}</td><td class="r">${v.n || 0}</td><td class="r">${days}</td><td>${pill}</td>
-          <td><button class="act" data-del="${esc(it.id)}" aria-label="Remove ${esc(it.title)}">Remove</button></td></tr>`;
+          <td style="white-space:nowrap"><button class="act" data-sold="${esc(it.id)}" data-price="${it.price ?? ''}">Sold</button> <button class="act" data-del="${esc(it.id)}" aria-label="Remove ${esc(it.title)}">Remove</button></td></tr>`;
       }).join('');
       $('invtable').innerHTML = `<div class="tablewrap"><table><thead><tr><th>Card</th><th>Grade</th><th>Where</th><th class="r">Cost</th><th class="r">Your price</th><th class="r">Market</th><th class="r">Comps</th><th class="r">Days</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
       if (items.some(it => !it.value)) valueAll();
     } catch (err) { if (err.status === 401) showLogin(); else $('invtable').innerHTML = `<div class="empty">Could not load: ${esc(err.message)}</div>`; }
   }
   $('invtable').addEventListener('click', async (e) => {
+    const sb = e.target.closest('[data-sold]');
+    if (sb) {
+      const v = window.prompt('Sold for how much?', sb.dataset.price || '');
+      if (v == null) return;
+      try { await api('/api/biz/inventory/' + encodeURIComponent(sb.dataset.sold), { method: 'PATCH', body: JSON.stringify({ sold: true, soldFor: Number(String(v).replace(/[$,]/g, '')) }) });
+        $('invstatus').textContent = 'Recorded as sold. See it in Sales.'; }
+      catch (err) { $('invstatus').textContent = err.message; }
+      return loadInventory();
+    }
     const b = e.target.closest('[data-del]'); if (!b) return;
     await api('/api/biz/inventory/' + encodeURIComponent(b.dataset.del), { method: 'DELETE' }).catch(() => {});
     loadInventory();
@@ -164,6 +179,41 @@
     try { const r = await api('/api/biz/inventory', { method: 'POST', body: JSON.stringify({ items, mode: $('csvreplace').checked ? 'replace' : 'append' }) });
       $('invstatus').textContent = `Imported ${r.added} cards. Pricing them now…`; $('csvtext').value = ''; loadInventory(); }
     catch (err) { $('invstatus').textContent = err.message; }
+  });
+
+  // ---- sales ----
+  const tbl = (title, rows) => `<div class="panel"><h2>${title}</h2>${rows.length ? `<div class="tablewrap" style="border:0"><table style="min-width:0"><thead><tr><th></th><th class="r">Sales</th><th class="r">Revenue</th><th class="r">Profit</th></tr></thead><tbody>${
+    rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${r.sales}</td><td class="r">${money(r.revenue)}</td><td class="r ${r.profit >= 0 ? 'up' : 'down'}">${r.missingCost === r.sales ? '—' : money(r.profit)}</td></tr>`).join('')}</tbody></table></div>` : '<p style="color:var(--fg3);margin:0">No sales yet.</p>'}</div>`;
+  async function loadSales() {
+    try {
+      const { report: r, ended, sold } = await api('/api/biz/sales');
+      const m = r.last30, a = r.allTime;
+      $('salekpis').innerHTML = [
+        ['Sold, 30 days', money(m.revenue), `${m.sales} sale${m.sales === 1 ? '' : 's'}`],
+        ['Profit, 30 days', money(m.profit), m.margin != null ? `${m.margin}% margin` : 'Add costs to see margin'],
+        ['Fees, 30 days', money(m.fees), 'Estimated'],
+        ['All-time profit', money(a.profit), a.missingCost ? `${a.missingCost} sale${a.missingCost === 1 ? ' has' : 's have'} no cost` : `${a.sales} sale${a.sales === 1 ? '' : 's'}`],
+      ].map(([l, v, x]) => `<div class="kpi"><small>${l}</small><b>${v}</b><em>${x}</em></div>`).join('');
+      $('endedbox').innerHTML = ended.length ? `<div class="panel" style="margin-bottom:18px"><h2>Gone from eBay: sold or ended?</h2><p style="margin:0 0 10px;color:var(--fg2);font-size:13.5px">These left your eBay store since the last sync. Confirm the ones that sold.</p>${
+        ended.slice(-50).reverse().map(it => `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)">
+          <span style="flex:1 1 16rem;min-width:0">${esc(it.title)}</span><input class="mini" data-for="${esc(it.id)}" value="${it.price ?? ''}" inputmode="decimal" aria-label="Sold for">
+          <button class="act go" data-endsold="${esc(it.id)}">Sold</button><button class="act" data-endnot="${esc(it.id)}">Didn't sell</button></div>`).join('')}</div>` : '';
+      $('salegroups').innerHTML = tbl('By month', r.byMonth) + tbl('By player', r.byPlayer) + tbl('By set', r.bySet) + tbl('By platform', r.byPlatform);
+      $('salelist').innerHTML = sold.length ? `<div class="tablewrap"><table><thead><tr><th>Card</th><th>Sold</th><th>Where</th><th class="r">For</th><th class="r">Cost</th><th></th></tr></thead><tbody>${
+        sold.map(x => `<tr><td>${esc(x.title)}</td><td>${esc(String(x.soldAt).slice(0, 10))}</td><td>${esc(x.platform || '')}</td><td class="r">${money(x.soldFor)}</td><td class="r">${money(x.cost)}</td>
+          <td><button class="act" data-undo="${esc(x.id)}">Delete</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No sales recorded yet. Tap Sold on a card in Inventory, or sync eBay to catch sales automatically.</div>';
+    } catch (err) { if (err.status === 401) showLogin(); else $('salelist').innerHTML = `<div class="empty">Could not load sales: ${esc(err.message)}</div>`; }
+  }
+  $('p-sales').addEventListener('click', async (e) => {
+    const s = e.target.closest('[data-endsold]'), n = e.target.closest('[data-endnot]'), u = e.target.closest('[data-undo]');
+    try {
+      if (s) { const v = document.querySelector(`input[data-for="${CSS.escape(s.dataset.endsold)}"]`).value;
+        await api('/api/biz/ended/' + encodeURIComponent(s.dataset.endsold), { method: 'POST', body: JSON.stringify({ sold: true, soldFor: Number(String(v).replace(/[$,]/g, '')) }) }); }
+      else if (n) await api('/api/biz/ended/' + encodeURIComponent(n.dataset.endnot), { method: 'POST', body: JSON.stringify({ sold: false }) });
+      else if (u) await api('/api/biz/sales/' + encodeURIComponent(u.dataset.undo), { method: 'DELETE' });
+      else return;
+    } catch (_) { /* reloads below show the true state */ }
+    loadSales();
   });
 
   // ---- ask ----

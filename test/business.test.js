@@ -53,6 +53,19 @@ check('  ...adds new listings, moves the ones gone from eBay to ended, and leave
   mg.added === 1 && mg.items.some(i => i.ebayItemId === '333' && i.platform === 'eBay') && mg.ended.length === 1 && mg.ended[0].ebayItemId === '222'
   && mg.items.some(i => i.id === 'wn00001'));
 
+// Sales: fees, profit, groupings; a sale with no cost is revenue, not profit.
+const rep = B.salesReport([
+  { id: 's1', title: 'A', soldFor: 100, cost: 40, platform: 'eBay', player: 'Bo Nix', set: '2024 Prizm', soldAt: new Date(now - 2 * DAY).toISOString() },
+  { id: 's2', title: 'B', soldFor: 50, cost: 60, platform: 'Whatnot', player: 'Bo Nix', set: '2024 Prizm', soldAt: new Date(now - 5 * DAY).toISOString() },
+  { id: 's3', title: 'C', soldFor: 20, platform: 'Shop', player: 'Cam Ward', soldAt: new Date(now - 60 * DAY).toISOString() },
+], now);
+check('eBay and Whatnot fees are estimated; profit is after fees and cost',
+  B.feeFor('eBay', 100) === 13.65 && B.feeFor('Whatnot', 50) === 5.75 && B.feeFor('Shop', 20) === 0
+  && rep.last30.sales === 2 && rep.last30.profit === round2(100 - 13.65 - 40 + 50 - 5.75 - 60), JSON.stringify(rep.last30));
+check('  ...grouped by player and set, a sale with no cost counted as missing, and losses listed',
+  rep.byPlayer[0].name === 'Bo Nix' && rep.byPlayer[0].sales === 2 && rep.allTime.missingCost === 1 && rep.worst.length === 1 && rep.worst[0].title === 'B');
+function round2(n) { return Math.round(n * 100) / 100; }
+
 // ---- server ----
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT, listing_format TEXT, grader TEXT, grade TEXT,
@@ -81,6 +94,12 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('  ...and the brief tells the seller to reprice it to the market', brief.body.actions.some(a => a.kind === 'reprice' && a.suggest === 41));
   const p = await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ price: 41 }) });
   check('  ...which one tap does', p.body.item && p.body.item.price === 41);
+  await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ sold: true, soldFor: 45 }) });
+  const sales = await call('/api/biz/sales', { headers: K });
+  const sale = sales.body.sold[0];
+  check('marking a card sold records the sale with its player and set, and the report counts it',
+    sale && sale.soldFor === 45 && sale.player === 'Bo Nix' && /Prizm/.test(sale.set || '') && sales.body.report.allTime.sales === 1
+    && sales.body.report.allTime.profit === round2(45 - B.feeFor(null, 45) - 20), JSON.stringify(sale && { p: sale.player, s: sale.set, r: sales.body.report.allTime }));
   const noSeller = await call('/api/biz/ebay-sync', { method: 'POST', headers: K, body: JSON.stringify({ seller: '' }) });
   check('an eBay sync with no username asks for one', noSeller.status === 400 && /eBay username/.test(noSeller.body.error));
   delete process.env.ANTHROPIC_API_KEY;

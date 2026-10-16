@@ -18391,7 +18391,9 @@ app.get('/api/admin/stats', (req, res) => {
 
 // In Cloudflare Workers the ASSETS binding handles the SPA fallback
 if (!process.env.CF_WORKER) {
-  app.get('*', (req, res) => {
+  app.get('*', (req, res, next) => {
+    // Routes registered further down (the API, articles) answer for themselves.
+    if (/^\/(api|news)\//.test(req.path)) return next();
     res.sendFile(path.join(APP_ROOT, 'public', 'index.html'));
   });
 }
@@ -18933,6 +18935,17 @@ async function _bizValue(item, now = Date.now()) {
   return v;
 }
 
+// One recorded sale, tagged with its player and set so profit can be read by
+// both (the same readers the sold search uses).
+function _bizSale(it, b) {
+  const kw = (() => { try { return extractSearchKeywords(it.title) || {}; } catch (_) { return {}; } })();
+  const tier = detectSetTier(it.title);
+  const year = (String(it.title).match(/\b(19[5-9]\d|20[0-3]\d)\b/) || [])[1];
+  const set = tier ? [year, tier.name.replace(/\b\w/g, c => c.toUpperCase())].filter(Boolean).join(' ') : null;
+  const soldFor = Number(b.soldFor);
+  return { ...it, value: undefined, soldAt: new Date().toISOString(), soldFor: soldFor > 0 ? Math.round(soldFor * 100) / 100 : (it.price || 0),
+    fees: b.fees != null && Number(b.fees) >= 0 ? Number(b.fees) : undefined, player: kw.player || null, set };
+}
 app.get('/api/biz/inventory', async (req, res) => {
   if (!_bizGate(req, res)) return;
   const inv = await _bizLoad();
@@ -18958,7 +18971,7 @@ app.patch('/api/biz/inventory/:id', async (req, res) => {
   if (!it) return res.status(404).json({ error: 'Not found' });
   const b = req.body || {};
   if (b.price !== undefined) { const n = Number(b.price); if (!(n >= 0)) return res.status(400).json({ error: 'Price must be a number' }); it.price = Math.round(n * 100) / 100; }
-  if (b.sold) { inv.items = inv.items.filter(x => x !== it); (inv.sold = inv.sold || []).push({ ...it, soldAt: new Date().toISOString(), soldFor: Number(b.soldFor) || it.price }); }
+  if (b.sold) { inv.items = inv.items.filter(x => x !== it); (inv.sold = inv.sold || []).push(_bizSale(it, b)); }
   await _bizSave(inv);
   res.json({ ok: true, item: it });
 });
@@ -19031,6 +19044,32 @@ app.post('/api/biz/ebay-sync', async (req, res) => {
   await _bizSave(inv);
   res.json({ ok: true, seller, listings: listings.length, added: m.added, updated: m.updated, ended: m.ended.length });
 });
+// Cards the eBay sync found gone: confirm each as sold (at a price) or as
+// ended unsold (back to nothing, or relisted later by the next sync).
+app.post('/api/biz/ended/:id', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  const i = (inv.ended || []).findIndex(x => x.id === req.params.id);
+  if (i < 0) return res.status(404).json({ error: 'Not found' });
+  const [it] = inv.ended.splice(i, 1);
+  if (req.body && req.body.sold) (inv.sold = inv.sold || []).push(_bizSale(it, req.body));
+  await _bizSave(inv);
+  res.json({ ok: true });
+});
+app.get('/api/biz/sales', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  res.set('Cache-Control', 'no-store').json({ report: BIZ.salesReport(inv.sold || []), ended: inv.ended || [],
+    sold: (inv.sold || []).slice(-200).reverse() });
+});
+app.delete('/api/biz/sales/:id', async (req, res) => {
+  if (!_bizGate(req, res)) return;
+  const inv = await _bizLoad();
+  const before = (inv.sold || []).length;
+  inv.sold = (inv.sold || []).filter(x => x.id !== req.params.id);
+  await _bizSave(inv);
+  res.json({ ok: true, removed: before - inv.sold.length });
+});
 app.get('/api/biz/brief', async (req, res) => {
   if (!_bizGate(req, res)) return;
   const inv = await _bizLoad();
@@ -19061,7 +19100,7 @@ app.post('/api/biz/ask', async (req, res) => {
       max_tokens: 16000,
       output_config: { effort: 'low' },
       system: BIZ_AI_SYSTEM,
-      messages: [{ role: 'user', content: BIZ.aiContext(inv.items, brief) + '\n\nQuestion: ' + q }],
+      messages: [{ role: 'user', content: BIZ.aiContext(inv.items, brief, 300, (inv.sold || []).length ? BIZ.salesReport(inv.sold) : null) + '\n\nQuestion: ' + q }],
     });
     if (r.stop_reason === 'refusal') return res.status(422).json({ error: 'That question could not be answered.' });
     const text = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
