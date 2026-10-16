@@ -58,7 +58,10 @@ const check = (label, ok, detail) => {
   check('the sitemap keeps priced pages and navigation, and drops the unpriced',
     locs.join(' ') === '/ /sets/2024-panini-prizm-football/ /players/caleb-williams/ /sets/2024/', locs.join(' '));
   check('  ...and stays valid XML around what it drops', out.startsWith('<?xml') && out.trim().endsWith('</urlset>') && (out.match(/<url>/g) || []).length === (out.match(/<\/url>/g) || []).length);
-  check('an empty map (a KV failure) changes nothing, rather than de-indexing the site', filterSitemap(xml, { pages: {} }) === xml && filterSitemap(xml, null) === xml);
+  // Pruned kinds (worker.js prunedPath, Oct 2026) leave either way; nothing else does.
+  const noMap = filterSitemap(xml, { pages: {} });
+  check('an empty map (a KV failure) removes only the pruned kinds, rather than de-indexing the site',
+    noMap === filterSitemap(xml, null) && !noMap.includes('/basketball/') && (noMap.match(/<loc>/g) || []).length === (xml.match(/<loc>/g) || []).length - 1);
 
   let content = null;
   new RobotsNoindex().element({ setAttribute: (k, v) => { if (k === 'content') content = v; } });
@@ -69,8 +72,8 @@ const check = (label, ok, detail) => {
     /if \(url\.pathname === '\/sitemap\.xml' && resp\.status === 200\)[\s\S]{0,200}filterSitemap\(await resp\.text\(\), await priceBlocks\(env\)\)/.test(worker));
   check('  ...and marks an unpriced page noindex only when the map loaded',
     /unpriced = !!\(blocks && Object\.keys\(blocks\.pages\)\.length && !blocks\.pages\[key\]\)/.test(worker)
-      && /if \(unpriced\) h\.set\('X-Robots-Tag', 'noindex, follow'\)/.test(worker)
-      && /if \(unpriced\) out = new HTMLRewriter\(\)\.on\('meta\[name="robots"\]', new RobotsNoindex\(\)\)/.test(worker));
+      && /if \(unpriced \|\| pruned\) h\.set\('X-Robots-Tag', 'noindex, follow'\)/.test(worker)
+      && /if \(unpriced \|\| pruned\) out = new HTMLRewriter\(\)\.on\('meta\[name="robots"\]', new RobotsNoindex\(\)\)/.test(worker));
 
   // The written side: guides are where original content goes, and an empty
   // section must not be offered to search in the meantime.

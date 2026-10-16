@@ -755,13 +755,45 @@ export class RobotsNoindex {
 
 // The sitemap, without the pages the price blocks leave unpriced: a URL Google
 // is invited to index and then told not to is a contradictory signal.
+// Pages offered to search no longer (owner, Oct 2026, from Search Console's
+// last 3 months): 1,000 pages had impressions, nearly all player pages and
+// main set pages. These kinds earned close to nothing and only spread
+// Google's attention thinner:
+//   /sets/<product>/<insert>/   164 pages, 3 with a click
+//   /basketball/, /baseball/    216 pages, none in the top 1,000 (still in testing)
+//   /players/mystery-rookie*    placeholder names, not players
+// They stay up for anyone who follows a link: noindex, and out of the sitemap.
+export function prunedPath(path) {
+  const p = String(path || '');
+  if (/^\/sets\/[^/]+\/[^/]+\/?$/.test(p) && !/\.(css|js|json)$/.test(p)) return true;
+  if (/^\/(basketball|baseball)(\/|$)/.test(p)) return true;
+  if (/^\/players\/mystery-rookie(-\d+)?\/?$/.test(p)) return true;
+  return false;
+}
+// Old addresses Google still shows that are another player's page under a
+// longer or misspelt name. Most served the app's home page with a 200.
+export const SEARCH_CONSOLE_REDIRECTS = {
+  'garrett-wilson-ohio-state-buckeyes': 'garrett-wilson',
+  'jaxon-smith-njigba-ohio-state-buckeyes': 'jaxon-smith-njigba',
+  'bijan-robinson-texas-longhorns': 'bijan-robinson',
+  'aidan-hutchinson-michigan-wolverines': 'aidan-hutchinson',
+  'breece-hall-iowa-state-cyclones': 'breece-hall',
+  'audric-estim': 'audric-estime',
+};
+
 export function filterSitemap(xml, blocks) {
   const pages = (blocks && blocks.pages) || {};
-  if (!Object.keys(pages).length) return xml;        // no map: change nothing
+  if (!Object.keys(pages).length) {                  // no map: only the pruning
+    return xml.replace(/[ \t]*<url>[\s\S]*?<\/url>\s*/g, (entry) => {
+      const loc = (entry.match(/<loc>([^<]+)<\/loc>/) || [])[1] || '';
+      try { return prunedPath(new URL(loc).pathname) ? '' : entry; } catch (_) { return entry; }
+    });
+  }
   return xml.replace(/[ \t]*<url>[\s\S]*?<\/url>\s*/g, (entry) => {
     const loc = (entry.match(/<loc>([^<]+)<\/loc>/) || [])[1] || '';
     let path = '';
     try { path = new URL(loc).pathname; } catch (_) { return entry; }
+    if (prunedPath(path)) return '';
     const key = pricedPageKey(path);
     return key && !pages[key] ? '' : entry;
   });
@@ -915,7 +947,7 @@ export default {
       // rather than typed here, so it cannot fall out of step with the pages.
       if (url.pathname.startsWith('/players/')) {
         const slug = url.pathname.split('/')[2] || '';
-        const to = await playerRedirect(env, slug);
+        const to = SEARCH_CONSOLE_REDIRECTS[slug] || await playerRedirect(env, slug);
         if (to) {
           url.pathname = `/players/${to}/`;
           return Response.redirect(url.toString(), 301);
@@ -1007,9 +1039,10 @@ export default {
                   } catch (_) { unpriced = false; }
                 }
               }
-              if (unpriced) h.set('X-Robots-Tag', 'noindex, follow');
+              const pruned = resp.status === 200 && prunedPath(url.pathname);
+              if (unpriced || pruned) h.set('X-Robots-Tag', 'noindex, follow');
               let out = new Response(resp.body, { status: resp.status, statusText: resp.statusText, headers: h });
-              if (unpriced) out = new HTMLRewriter().on('meta[name="robots"]', new RobotsNoindex()).transform(out);
+              if (unpriced || pruned) out = new HTMLRewriter().on('meta[name="robots"]', new RobotsNoindex()).transform(out);
 
               // Fill the sold-price block on checklist and player pages.
               //
