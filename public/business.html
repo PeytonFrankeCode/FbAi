@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Card Huddle for Business</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a seller's console. Brief first (what to do today), then the shelf, then ask. */
+:root {
+  --bg: #f3f6f4; --surface: #ffffff; --sunk: #e8eeea; --line: #d5ded8;
+  --fg: #0f1a14; --fg2: #4b5b52; --fg3: #7d8c84;
+  --accent: #1f9a62; --accent-soft: rgba(31,154,98,.12);
+  --up: #1b873f; --down: #c62828; --warn: #b7791f; --warn-soft: rgba(183,121,31,.13); --down-soft: rgba(198,40,40,.1);
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0c0f0d; --surface: #151b17; --sunk: #10150f; --line: #26302a;
+  --fg: #edf2ee; --fg2: #a3b2a9; --fg3: #6b7a71;
+  --accent: #5ece99; --accent-soft: rgba(94,206,153,.13);
+  --up: #5ece99; --down: #f87171; --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --down-soft: rgba(248,113,113,.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0c0f0d; --surface: #151b17; --sunk: #10150f; --line: #26302a;
+  --fg: #edf2ee; --fg2: #a3b2a9; --fg3: #6b7a71;
+  --accent: #5ece99; --accent-soft: rgba(94,206,153,.13);
+  --up: #5ece99; --down: #f87171; --warn: #fbbf24; --warn-soft: rgba(251,191,36,.12); --down-soft: rgba(248,113,113,.12);
+  color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px }
+.wrap { max-width: 1080px; margin: 0 auto }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 20px 14px; border-bottom: 1px solid var(--line) }
+.brand { font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -.01em }
+.brand span { color: var(--accent) }
+.shop { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--fg2) }
+.chip { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent) }
+.sample { margin: 14px 0 0; font-size: 12.5px; color: var(--fg3) }
+nav { display: flex; gap: 4px; margin: 18px 0 22px; border-bottom: 1px solid var(--line); overflow-x: auto }
+nav button { font: inherit; font-weight: 600; font-size: 14px; color: var(--fg2); background: none; border: 0; padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap }
+nav button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent) }
+nav button:focus-visible, .act:focus-visible, .ask input:focus-visible, .ask button:focus-visible, .q:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+h1 { font-family: var(--display); font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.02em; margin: 0; text-wrap: balance }
+h2 { font-family: var(--display); font-size: 18px; margin: 0 0 12px; letter-spacing: -.01em }
+.lede { color: var(--fg2); margin: 6px 0 0; max-width: 62ch }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 22px 0 }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; min-width: 0 }
+.kpi b { display: block; font-family: var(--display); font-size: 24px; font-variant-numeric: tabular-nums }
+.kpi small { font-size: 12px; color: var(--fg3); text-transform: uppercase; letter-spacing: .05em; font-weight: 600 }
+.kpi em { font-style: normal; font-size: 12.5px; font-weight: 600 }
+.up { color: var(--up) } .down { color: var(--down) }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 18px; align-items: start }
+.brief { display: flex; flex-direction: column; gap: 10px }
+.item { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px }
+.item.warn { border-left-color: var(--warn) } .item.down { border-left-color: var(--down) }
+.item .tag { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent) }
+.item.warn .tag { color: var(--warn) } .item.down .tag { color: var(--down) }
+.item strong { font-size: 15.5px }
+.item p { margin: 0; color: var(--fg2); font-size: 14px }
+.item .why { font-family: var(--mono); font-size: 12px; color: var(--fg3) }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px }
+.act { font: inherit; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg); cursor: pointer }
+.act.go { background: var(--accent); border-color: var(--accent); color: #06231a }
+.item.done { opacity: .55 } .item.done .acts { display: none }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0 }
+.chan { display: grid; gap: 10px }
+.chan div { display: grid; grid-template-columns: 80px 1fr auto; gap: 10px; align-items: center; font-size: 13.5px }
+.bar { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden }
+.bar i { display: block; height: 100% ; background: var(--accent) }
+.num { font-variant-numeric: tabular-nums; font-weight: 600 }
+.spark { width: 100%; height: 90px; display: block; margin-top: 6px }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px }
+th { text-align: left; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--fg3); font-weight: 700; padding: 11px 14px; border-bottom: 1px solid var(--line) }
+td { padding: 11px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums }
+tr:last-child td { border-bottom: 0 }
+td.r, th.r { text-align: right }
+.pill { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; white-space: nowrap }
+.pill.ok { background: var(--accent-soft); color: var(--accent) } .pill.warn { background: var(--warn-soft); color: var(--warn) } .pill.bad { background: var(--down-soft); color: var(--down) }
+.ask { display: flex; gap: 8px; margin-top: 4px }
+.ask input { flex: 1; min-width: 0; font: inherit; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--fg) }
+.ask button { font: inherit; font-weight: 700; padding: 0 16px; border-radius: 10px; border: 0; background: var(--accent); color: #06231a; cursor: pointer }
+.qs { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px }
+.q { font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg2); cursor: pointer }
+.answer { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 10px; max-width: 760px }
+.answer .who { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em }
+.answer p { margin: 0 } .answer ul { margin: 0; padding-left: 20px } .answer li { margin: 4px 0 }
+.foot { margin-top: 28px; font-size: 12.5px; color: var(--fg3) }
+@media (max-width: 760px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)) } .grid2 { grid-template-columns: minmax(0, 1fr) } }
+@media (prefers-reduced-motion: no-preference) { .item { transition: opacity .25s } }
+
+body { margin: 0 }
+.login { max-width: 380px; margin: 12vh auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; display: grid; gap: 12px }
+.login input, .field input, .field select, textarea { font: inherit; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--sunk); color: var(--fg); width: 100% }
+.err { color: var(--down); font-size: 13px; min-height: 1.2em }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 }
+.addrow { display: grid; grid-template-columns: 3fr 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin: 12px 0 }
+.field { display: grid; gap: 4px; font-size: 12px; color: var(--fg3); min-width: 0 }
+textarea { min-height: 120px; font-family: var(--mono); font-size: 12.5px }
+.empty { color: var(--fg2); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 22px }
+.status { font-size: 13px; color: var(--fg2); min-height: 1.3em }
+td .act { padding: 4px 9px; font-size: 12px }
+@media (max-width: 760px) { .addrow { grid-template-columns: 1fr 1fr } .addrow .field:first-child { grid-column: 1 / -1 } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">The Card Huddle <span>for Business</span></div>
+    <div class="shop"><span class="chip">In build</span><a href="/" style="color:var(--fg2)">Back to the site</a></div>
+  </header>
+
+  <form class="login" id="login" hidden>
+    <h2 style="margin:0">Sign in</h2>
+    <p style="margin:0;color:var(--fg2);font-size:14px">Card Huddle for Business is in build. Sign in with the admin key.</p>
+    <input id="key" type="password" autocomplete="current-password" placeholder="Admin key" aria-label="Admin key">
+    <button class="act go" type="submit">Sign in</button>
+    <div class="err" id="loginerr"></div>
+  </form>
+
+  <div id="app" hidden>
+    <nav role="tablist" aria-label="Sections">
+      <button role="tab" id="t-brief" aria-selected="true" data-tab="brief">Today</button>
+      <button role="tab" id="t-inv" aria-selected="false" data-tab="inv">Inventory</button>
+      <button role="tab" id="t-ask" aria-selected="false" data-tab="ask">Ask</button>
+    </nav>
+
+    <section id="p-brief">
+      <h1 id="headline">Today</h1>
+      <p class="lede" id="sub">Your inventory, priced against real sold prices.</p>
+      <div class="kpis" id="kpis"></div>
+      <h2>What to do today</h2>
+      <div class="brief" id="brief"></div>
+    </section>
+
+    <section id="p-inv" hidden>
+      <h1>Inventory</h1>
+      <p class="lede">Add cards one at a time, or paste a spreadsheet (CSV) or an eBay active-listings export. Columns it reads: title, grade, cost, price, platform, quantity, date listed.</p>
+      <div class="addrow" id="addform">
+        <label class="field">Card<input id="a-title" placeholder="2024 Prizm Bo Nix Silver #309"></label>
+        <label class="field">Grade<input id="a-grade" placeholder="Raw or PSA 10"></label>
+        <label class="field">Cost<input id="a-cost" inputmode="decimal" placeholder="$"></label>
+        <label class="field">Your price<input id="a-price" inputmode="decimal" placeholder="$"></label>
+        <label class="field">Where<select id="a-platform"><option>eBay</option><option>Whatnot</option><option>Instagram</option><option>TikTok</option><option>Shop</option><option>Other</option></select></label>
+        <button class="act go" type="button" id="a-add">Add</button>
+      </div>
+      <details style="margin:8px 0 14px"><summary style="cursor:pointer;font-weight:600">Import a spreadsheet</summary>
+        <div style="display:grid;gap:8px;margin-top:10px">
+          <input type="file" id="csvfile" accept=".csv,text/csv">
+          <textarea id="csvtext" placeholder="title,grade,cost,price,platform&#10;2024 Prizm Bo Nix Silver #309,,18,45,eBay"></textarea>
+          <div class="toolbar" style="margin:0"><button class="act go" type="button" id="csvgo">Import</button>
+            <label style="font-size:13px;color:var(--fg2);display:flex;gap:6px;align-items:center"><input type="checkbox" id="csvreplace"> Replace everything</label></div>
+        </div></details>
+      <div class="toolbar"><button class="act" type="button" id="reprice">Refresh market prices</button><span class="status" id="invstatus"></span></div>
+      <div id="invtable"></div>
+    </section>
+
+    <section id="p-ask" hidden>
+      <h1>Ask about your business</h1>
+      <p class="lede">Answers come from your own inventory, checked against real sold prices.</p>
+      <form class="ask" id="askform"><input id="askq" aria-label="Your question" placeholder="What's my dead stock?"><button type="submit">Ask</button></form>
+      <div class="qs">
+        <button class="q" type="button">What's my dead stock?</button>
+        <button class="q" type="button">Which cards am I overpricing?</button>
+        <button class="q" type="button">What should I feature in my next Whatnot show?</button>
+      </div>
+      <div class="answer" id="answer" hidden><span class="who">The Card Huddle</span><div id="answertext"></div></div>
+    </section>
+  </div>
+  <p class="foot">Card Huddle for Business &middot; The collector site stays free forever.</p>
+</div>
+<script src="/business.js"></script>
+</body>
+</html>
