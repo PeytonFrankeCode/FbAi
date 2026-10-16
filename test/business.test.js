@@ -111,6 +111,28 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   check('the page is noindex and signs in with the admin key', /noindex, nofollow/.test(page) && /Admin key/.test(page));
   const w = fs.readFileSync(path.join(__dirname, '..', 'worker.js'), 'utf8');
   check('  ...and /business is a page the Worker serves', /'business'/.test(w.slice(w.indexOf('STATIC_PAGES'), w.indexOf('STATIC_PAGES') + 400)));
+  // Accounts: a signed-in seller with Business has their own inventory; one
+  // without is asked to subscribe; Business never overwrites the ad-free plan.
+  dbMod.saveData('sessions', null, { tokPaid: { username: 'seller1', expiresAt: now + DAY }, tokFree: { username: 'seller2', expiresAt: now + DAY } });
+  dbMod.saveData('subscriptions', null, { seller1: { plan: 'adfree', status: 'active', stripeCustomerId: 'cus_1',
+    business: { status: 'active', stripeSubscriptionId: 'sub_biz', stripeCustomerId: 'cus_1' } }, seller2: {} });
+  const P = { Authorization: 'Bearer tokPaid', 'content-type': 'application/json' };
+  const free = await call('/api/biz/inventory', { headers: { Authorization: 'Bearer tokFree' } });
+  check('a signed-in account without Business is asked to subscribe ($20 a month)', free.status === 402 && free.body.needs === 'subscribe');
+  check('  ...and no account at all is asked to log in', (await call('/api/biz/inventory')).body.needs === 'login');
+  await call('/api/biz/inventory', { method: 'POST', headers: P, body: JSON.stringify({ items: [{ title: 'Seller one card', price: 5 }] }) });
+  const mine = await call('/api/biz/inventory', { headers: P });
+  const owners = await call('/api/biz/inventory', { headers: K });
+  check('a paying seller works their own inventory, apart from the owner\'s',
+    mine.body.items.length === 1 && mine.body.items[0].title === 'Seller one card' && !owners.body.items.some(i => i.title === 'Seller one card'));
+  const me = await call('/api/biz/me', { headers: { Authorization: 'Bearer tokPaid' } });
+  check('  ...and the page knows who they are; checkout stays closed until the owner opens it',
+    me.body.user === 'seller1' && me.body.active === true && me.body.checkoutOpen === false
+    && (await call('/api/biz/checkout', { method: 'POST', headers: P, body: '{}' })).status === 503);
+  const subs = { seller1: { plan: 'adfree', status: 'active', stripeCustomerId: 'cus_1', business: { status: 'active', stripeSubscriptionId: 'sub_biz' } } };
+  check('cancelling Business cancels Business only, never the ad-free plan on the same customer',
+    S._bizSubEvent(subs, { id: 'sub_biz', customer: 'cus_1' }, 'cancelled') && subs.seller1.business.status === 'cancelled' && subs.seller1.status === 'active'
+    && !S._bizSubEvent(subs, { id: 'sub_adfree', customer: 'cus_1', metadata: { plan: 'adfree' } }, 'cancelled'));
   await call('/api/biz/inventory/all', { method: 'DELETE', headers: K });
   server.close();
   console.log(failures ? `\n${failures} check(s) failed` : '\nall business checks passed');
