@@ -18544,6 +18544,14 @@ const NEWS_CSS = [
   '.card .foot{display:flex;gap:8px;font-size:12.4px;color:var(--fg3);padding-top:4px;border-top:1px solid var(--line)}',
   '.ad{border:1px dashed #2d6a4f;border-radius:10px;background:rgba(94,206,153,.03);min-height:96px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2d6a4f;margin:32px 0;max-width:680px}',
   'footer.site{border-top:1px solid var(--line);margin-top:48px;padding:24px 0;font-size:12.8px;color:var(--fg3)}',
+  'article figure.photo{margin:28px 0}',
+  'article figure.photo img{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:var(--card2)}',
+  'article figure.photo figcaption{font-size:13.6px;line-height:1.5;color:var(--fg2);margin-top:8px}',
+  '.art-ad{margin:32px 0;max-width:680px}',
+  '.art-ad-label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg3);margin-bottom:4px}',
+  '.art-ad:has(ins[data-ad-status="unfilled"]){display:none}',
+  '.ch-adfree .art-ad{display:none}',
+  '.preview-bar{background:#fbbf24;color:#111;font-weight:800;font-size:13px;text-align:center;padding:8px}',
   '@media(max-width:640px){h1{font-size:30px}article{font-size:16px}}',
 ].join('\n');
 
@@ -18562,13 +18570,14 @@ function newsShell(opts) {
     + '<meta property="og:description" content="' + NEWS.esc(opts.description) + '">'
     + '<meta property="og:type" content="article">'
     + '<meta property="og:url" content="' + NEWS.esc(opts.canonical) + '">'
+    + (opts.image ? '<meta property="og:image" content="' + NEWS.esc(opts.image) + '"><meta name="twitter:card" content="summary_large_image">' : '')
     + '<meta name="robots" content="' + (opts.noindex ? 'noindex, follow' : 'index, follow') + '">'
     + (opts.ads ? NEWS_AD_TAG : '')
     + '<link rel="preconnect" href="https://fonts.googleapis.com">'
     + '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
     + '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
     + '<style>' + NEWS_CSS + (opts.css || '') + '</style>' + jsonLd
-    + '</head><body>'
+    + '</head><body>' + (opts.preview ? '<div class="preview-bar">Preview: not published yet</div>' : '')
     + '<header class="site"><div class="wrap">'
     + '<a class="brand" href="/">The Card Huddle</a>'
     + '<nav class="site"><a href="/">Search</a><a href="/sets/">Checklists</a>'
@@ -18736,6 +18745,18 @@ app.get('/news/:slug', async (req, res) => {
           + '<p class="lede">That article does not exist. <a href="/news">Back to news</a>.</p></div>',
     }));
   }
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=300');
+  res.send(await _articlePage(a));
+});
+
+// An article's whole page: the live one, and the editor's preview (same
+// markup, a banner, never indexed).
+const _articleAdUnit = () => '<div class="art-ad"><span class="art-ad-label">Advertisement</span>'
+  + '<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3644779384068007" data-ad-slot="' + REPORT_AD_SLOT + '"'
+  + ' data-ad-format="auto" data-full-width-responsive="true"></ins>'
+  + '<script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>';
+async function _articlePage(a, { preview = false } = {}) {
   let resolved = new Map();
   try { resolved = await newsResolveShortcodes(a.body); } catch (_) { /* render without it */ }
   const html = NEWS.renderMarkdown(a.body, (name, args) => {
@@ -18746,6 +18767,8 @@ app.get('/news/:slug', async (req, res) => {
     return null;
   });
   const desc = NEWS.excerpt(a);
+  const img = NEWS.firstImage(a.body);
+  const image = img ? (img.startsWith('/') ? NEWS_SITE + img : img) : null;
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org', '@type': 'NewsArticle',
     headline: a.title, description: desc,
@@ -18753,7 +18776,14 @@ app.get('/news/:slug', async (req, res) => {
     author: { '@type': 'Person', name: a.author || 'The Card Huddle' },
     publisher: { '@type': 'Organization', name: 'The Card Huddle' },
     mainEntityOfPage: NEWS_SITE + '/news/' + a.slug,
+    ...(image ? { image: [image] } : {}),
   });
+  // One ad, after the third block (a photo or a few paragraphs in), or at the
+  // end of a short piece. Labelled, and gone when unfilled or ad-free.
+  const parts = html.split('\n');
+  const at = Math.min(3, parts.length);
+  const ad = preview ? '<div class="ad">Ad appears here</div>' : _articleAdUnit();
+  const withAd = parts.slice(0, at).concat(ad, parts.slice(at)).join('\n');
   const body = '<div style="padding:28px 0 0">'
     + '<span class="kicker">' + NEWS.esc(a.category || 'News') + '</span>'
     + '<h1>' + NEWS.esc(a.title) + '</h1>'
@@ -18761,12 +18791,56 @@ app.get('/news/:slug', async (req, res) => {
     + '<div class="meta"><span>' + NEWS.esc(a.author || 'The Card Huddle') + '</span>'
     + '<span>&middot;</span><span>' + NEWS.esc(String(a.publishedAt || '').slice(0, 10)) + '</span>'
     + '<span>&middot;</span><span>' + NEWS.readingMinutes(a.body) + ' min read</span></div>'
-    + '<article>' + html + '</article>'
-    + '<div class="ad">Ad slot</div></div>';
-  res.set('Content-Type', 'text/html; charset=utf-8');
-  res.set('Cache-Control', 'public, max-age=300');
-  res.send(newsShell({ title: a.title + ' · The Card Huddle', description: desc,
-                       canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd, ads: true }));
+    + '<article>' + withAd + '</article></div>';
+  return newsShell({ title: a.title + ' · The Card Huddle', description: desc,
+                     canonical: NEWS_SITE + '/news/' + a.slug, body: body, jsonLd: jsonLd,
+                     ads: !preview, image, preview, noindex: preview });
+}
+
+// Article photos (the editor uploads them, already shrunk to WebP in the
+// browser). Kept in the R2 bucket under news/, named by their content, so the
+// same photo uploaded twice is one file and a URL never changes what it shows.
+// On Workers, worker.js serves /news/img/ straight from R2; this route serves
+// them off-Workers (local and tests) from memory.
+const NEWS_IMG_NAME = /^[a-f0-9]{20}\.(webp|jpg|png)$/;
+const NEWS_IMG_TYPES = { 'image/webp': 'webp', 'image/jpeg': 'jpg', 'image/png': 'png' };
+const NEWS_IMG_MAX = 3 * 1024 * 1024;
+const _newsImgMem = new Map();
+app.post('/api/admin/news/image', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const m = /^data:(image\/(?:webp|jpeg|png));base64,([A-Za-z0-9+/=]+)$/.exec(String((req.body && req.body.dataUrl) || ''));
+  if (!m) return res.status(400).json({ error: 'Expected { dataUrl: "data:image/webp|jpeg|png;base64,..." }' });
+  const bytes = new Uint8Array(Buffer.from(m[2], 'base64'));
+  if (!bytes.length || bytes.length > NEWS_IMG_MAX) return res.status(413).json({ error: 'Photo must be under 3 MB' });
+  const hash = Buffer.from(await webCrypto.subtle.digest('SHA-256', bytes)).toString('hex').slice(0, 20);
+  const name = hash + '.' + NEWS_IMG_TYPES[m[1]];
+  const bucket = getPhotos();
+  try {
+    if (bucket) await bucket.put('news/' + name, bytes, { httpMetadata: { contentType: m[1], cacheControl: 'public, max-age=31536000, immutable' } });
+    else _newsImgMem.set(name, { type: m[1], bytes });
+  } catch (err) {
+    console.error('[news/image] put failed:', err && err.message);
+    return res.status(500).json({ error: 'Could not store the photo' });
+  }
+  res.json({ ok: true, url: '/news/img/' + name, bytes: bytes.length });
+});
+app.get('/news/img/:name', (req, res) => {
+  const name = String(req.params.name || '');
+  const hit = NEWS_IMG_NAME.test(name) && _newsImgMem.get(name);
+  if (!hit) return res.status(404).send('Not found');
+  res.set('Content-Type', hit.type).set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.send(Buffer.from(hit.bytes));
+});
+
+// The editor's preview: the page exactly as it would publish.
+app.post('/api/admin/news/preview', async (req, res) => {
+  if (!isAdminReq(req)) return res.status(401).json({ error: 'Unauthorized' });
+  const b = req.body || {};
+  const a = { slug: NEWS.slugify(b.slug || b.title || 'preview') || 'preview', title: String(b.title || 'Untitled'),
+    standfirst: String(b.standfirst || ''), category: b.category, body: String(b.body || ''),
+    author: String(b.author || 'The Card Huddle'), publishedAt: b.publishedAt || new Date().toISOString() };
+  res.set('Content-Type', 'text/html; charset=utf-8').set('Cache-Control', 'no-store');
+  res.send(await _articlePage(a, { preview: true }));
 });
 
 // Its own sitemap, because articles appear between deploys while the main
