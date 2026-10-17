@@ -19199,6 +19199,21 @@ app.delete('/api/biz/sales/:id', async (req, res) => {
   await _bizSave(who, inv);
   res.json({ ok: true, removed: before - inv.sold.length });
 });
+// Bulk repricing: preview the plan, then apply it. Applying sets the prices
+// here and returns the eBay bulk-edit file for the eBay listings in it; the
+// seller uploads that to eBay, and the next sync sees the new prices.
+app.post('/api/biz/reprice', async (req, res) => {
+  const who = _bizGate(req, res); if (!who) return;
+  const b = req.body || {};
+  const inv = await _bizLoad(who);
+  let plan = BIZ.repricePlan(inv.items, { mode: b.mode, undercut: b.undercut, end99: !!b.end99, floor: b.floor !== false });
+  if (Array.isArray(b.only)) { const keep = new Set(b.only.map(String)); plan = plan.filter(p => keep.has(p.id)); }
+  if (!b.apply) return res.json({ plan, ebayRows: plan.filter(p => p.ebayItemId).length });
+  const byId = new Map(plan.map(p => [p.id, p.to]));
+  for (const it of inv.items) if (byId.has(it.id)) it.price = byId.get(it.id);
+  if (plan.length) await _bizSave(who, inv);
+  res.json({ applied: plan.length, plan, ebayCsv: plan.some(p => p.ebayItemId) ? BIZ.ebayReviseCsv(plan) : null });
+});
 app.get('/api/biz/brief', async (req, res) => {
   const who = _bizGate(req, res); if (!who) return;
   const inv = await _bizLoad(who);

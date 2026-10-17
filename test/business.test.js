@@ -66,6 +66,19 @@ check('  ...grouped by player and set, a sale with no cost counted as missing, a
   rep.byPlayer[0].name === 'Bo Nix' && rep.byPlayer[0].sales === 2 && rep.allTime.missingCost === 1 && rep.worst.length === 1 && rep.worst[0].title === 'B');
 function round2(n) { return Math.round(n * 100) / 100; }
 
+// Bulk reprice: to market, undercut, .99 endings, never below cost; eBay file.
+const rp = B.repricePlan([
+  { id: 'r1', title: 'Over', price: 80, cost: 20, ebayItemId: '111', value: { market: 50, n: 5 } },
+  { id: 'r2', title: 'Under', price: 30, cost: 49, value: { market: 50, n: 5 } },
+  { id: 'r3', title: 'Fine', price: 52, value: { market: 50, n: 5 } },
+  { id: 'r4', title: 'Thin', price: 10, value: { market: 50, n: 2 } },
+], { undercut: 5, end99: true });
+check('bulk reprice moves over- and under-priced cards to market (5% under, .99), never below cost, skipping fine and thin ones',
+  rp.length === 2 && rp.find(p => p.id === 'r1').to === 47.99 && rp.find(p => p.id === 'r2').to === 49 && !rp.some(p => p.id === 'r3' || p.id === 'r4'), JSON.stringify(rp));
+check('  ...and writes the eBay listings into an eBay bulk-edit file',
+  B.ebayReviseCsv(rp) === 'Action(SiteID=US|Country=US|Currency=USD|Version=1193),ItemID,StartPrice\nRevise,111,47.99\n');
+check('  ..."only lower" leaves underpriced cards alone', B.repricePlan([{ id: 'x', price: 30, value: { market: 50, n: 5 } }], { mode: 'over' }).length === 0);
+
 // ---- server ----
 const db = new DatabaseSync(':memory:');
 db.exec(`CREATE TABLE sales (item_id TEXT, sold_date TEXT, title TEXT, price_cents INTEGER, currency TEXT, listing_format TEXT, grader TEXT, grade TEXT,
@@ -95,6 +108,8 @@ const call = async (p, o = {}) => { const r = await fetch(`http://127.0.0.1:${po
   const p = await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ price: 41 }) });
   check('  ...which one tap does', p.body.item && p.body.item.price === 41);
   await call('/api/biz/inventory/' + it.id, { method: 'PATCH', headers: K, body: JSON.stringify({ sold: true, soldFor: 45 }) });
+  const pv = await call('/api/biz/reprice', { method: 'POST', headers: K, body: JSON.stringify({}) });
+  check('the reprice preview returns a plan', Array.isArray(pv.body.plan) && pv.body.ebayRows === 0);
   const sales = await call('/api/biz/sales', { headers: K });
   const sale = sales.body.sold[0];
   check('marking a card sold records the sale with its player and set, and the report counts it',

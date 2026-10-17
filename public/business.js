@@ -175,6 +175,42 @@
     loadInventory();
   }
   $('reprice').addEventListener('click', valueAll);
+
+  // ---- bulk reprice ----
+  const rOpts = () => ({ mode: $('r-mode').value, undercut: Number($('r-cut').value), end99: $('r-99').checked, floor: $('r-floor').checked });
+  $('r-preview').addEventListener('click', async () => {
+    $('r-plan').innerHTML = '<p class="status">Working out new prices…</p>';
+    try {
+      const { plan } = await api('/api/biz/reprice', { method: 'POST', body: JSON.stringify(rOpts()) });
+      if (!plan.length) { $('r-plan').innerHTML = '<p class="status">Every priced card is already within range of the market. Nothing to change.</p>'; return; }
+      const down = plan.filter(p => p.change != null && p.change < 0).length;
+      $('r-plan').innerHTML = `<p class="status">${plan.length} card${plan.length === 1 ? '' : 's'} to reprice: ${down} lower, ${plan.length - down} higher. Untick any to leave alone.</p>
+        <div class="tablewrap"><table><thead><tr><th><input type="checkbox" id="r-all" checked aria-label="Select all"></th><th>Card</th><th class="r">Now</th><th class="r">New</th><th class="r">Market</th><th class="r">Comps</th></tr></thead><tbody>${
+        plan.map(p => `<tr><td><input type="checkbox" class="r-pick" value="${esc(p.id)}" checked aria-label="Reprice ${esc(p.title)}"></td><td>${esc(p.title)}${p.ebayItemId ? ' <span class="pill">eBay</span>' : ''}</td>
+          <td class="r">${money(p.from)}</td><td class="r ${p.change != null && p.change < 0 ? 'down' : 'up'}">${money(p.to)}</td><td class="r">${money(p.market)}</td><td class="r">${p.n}</td></tr>`).join('')}</tbody></table></div>
+        <div class="toolbar"><button class="act go" type="button" id="r-apply">Apply to selected</button></div>`;
+      $('r-all').addEventListener('change', (e) => document.querySelectorAll('.r-pick').forEach(c => { c.checked = e.target.checked; }));
+      $('r-apply').addEventListener('click', applyReprice);
+    } catch (err) { $('r-plan').innerHTML = `<p class="err">${esc(err.message)}</p>`; }
+  });
+  async function applyReprice() {
+    const only = [...document.querySelectorAll('.r-pick:checked')].map(c => c.value);
+    if (!only.length) return;
+    $('r-apply').disabled = true;
+    try {
+      const r = await api('/api/biz/reprice', { method: 'POST', body: JSON.stringify({ ...rOpts(), apply: true, only }) });
+      let html = `<p class="status">Repriced ${r.applied} card${r.applied === 1 ? '' : 's'} here.</p>`;
+      if (r.ebayCsv) {
+        const url = URL.createObjectURL(new Blob([r.ebayCsv], { type: 'text/csv' }));
+        const n = r.plan.filter(p => p.ebayItemId).length;
+        html += `<div class="item warn"><span class="tag">One more step for eBay</span><strong>Upload the new prices to eBay</strong>
+          <p>${n} of these are eBay listings. Download the file, then in eBay go to Seller Hub &rsaquo; Reports &rsaquo; Uploads &rsaquo; Upload template and choose it. eBay changes all ${n} prices at once; your next sync here picks them up.</p>
+          <div class="acts"><a class="act go" href="${url}" download="card-huddle-reprice.csv" style="text-decoration:none">Download eBay file</a></div></div>`;
+      }
+      $('r-plan').innerHTML = html;
+      loadInventory();
+    } catch (err) { $('r-apply').disabled = false; alert(err.message); }
+  }
   let syncing = false;
   async function ebaySync() {
     const seller = $('ebayseller').value.trim();
