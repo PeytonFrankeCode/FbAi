@@ -248,4 +248,39 @@ function salesReport(sold, now = Date.now()) {
   };
 }
 
-module.exports = { feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };
+// Bulk repricing: every card with a market price whose asking price is off
+// by more than the analysis allows, moved to the market. Options:
+//   mode     'over' (only lower), 'under' (only raise) or 'both'
+//   undercut percent below market to list at (0-20), to sell faster
+//   end99    end prices in .99 (on cards $5 and up)
+//   floor    never below what the card cost
+// Returns the plan; nothing changes until it is applied.
+function repricePlan(items, { mode = 'both', undercut = 0, end99 = false, floor = true } = {}) {
+  const cut = Math.max(0, Math.min(20, Number(undercut) || 0)) / 100;
+  const out = [];
+  for (const it of items || []) {
+    const v = it.value || {};
+    if (v.market == null || !(v.n >= MIN_COMPS)) continue;
+    let to = v.market * (1 - cut);
+    if (end99 && to >= 5) to = Math.max(0.99, Math.floor(to) - 0.01 + (to % 1 >= 0.5 ? 1 : 0));
+    to = round2(to);
+    if (floor && it.cost != null && to < it.cost) to = round2(it.cost);
+    const from = it.price;
+    const over = from != null && from > v.market * OVER;
+    const under = from == null || from < v.market * UNDER;
+    if (!((mode !== 'under' && over) || (mode !== 'over' && under))) continue;
+    if (from != null && Math.abs(to - from) < 0.01) continue;
+    out.push({ id: it.id, title: it.title, from, to, market: v.market, n: v.n, ebayItemId: it.ebayItemId || null,
+      change: from != null ? round2(to - from) : null });
+  }
+  return out.sort((a, b) => Math.abs(b.change || b.to) - Math.abs(a.change || a.to));
+}
+// The plan as an eBay bulk-edit file (Seller Hub > Reports > Upload): one
+// Revise row per eBay listing, setting its price.
+function ebayReviseCsv(plan) {
+  const rows = plan.filter(p => p.ebayItemId);
+  return ['Action(SiteID=US|Country=US|Currency=USD|Version=1193),ItemID,StartPrice']
+    .concat(rows.map(p => `Revise,${p.ebayItemId},${p.to.toFixed(2)}`)).join('\n') + '\n';
+}
+
+module.exports = { repricePlan, ebayReviseCsv, feeFor, salesReport, mergeEbay, median, readGrade, normalizeItem, valueFromSales, analyze, aiContext, VALUE_DAYS, MIN_COMPS };

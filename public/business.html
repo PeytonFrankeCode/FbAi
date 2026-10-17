@@ -230,6 +230,18 @@ td .act { padding: 4px 9px; font-size: 12px }
           <div class="toolbar" style="margin:0"><button class="act go" type="button" id="csvgo">Import</button>
             <label style="font-size:13px;color:var(--fg2);display:flex;gap:6px;align-items:center"><input type="checkbox" id="csvreplace"> Replace everything</label></div>
         </div></details>
+      <details class="panel" id="bulkbox" style="margin:0 0 14px"><summary style="cursor:pointer;font-weight:700">Bulk reprice to market</summary>
+        <div style="display:grid;gap:10px;margin-top:12px">
+          <div class="addrow" style="grid-template-columns:repeat(4,minmax(0,1fr)) auto;margin:0">
+            <label class="field">Which cards<select id="r-mode"><option value="both">Over and under market</option><option value="over">Only overpriced (lower)</option><option value="under">Only underpriced (raise)</option></select></label>
+            <label class="field">List at<select id="r-cut"><option value="0">Market price</option><option value="3">3% under market</option><option value="5">5% under market</option><option value="10">10% under market</option></select></label>
+            <label class="field" style="flex-direction:row;align-items:center;gap:6px;display:flex"><input type="checkbox" id="r-99" checked style="width:auto"> End in .99</label>
+            <label class="field" style="flex-direction:row;align-items:center;gap:6px;display:flex"><input type="checkbox" id="r-floor" checked style="width:auto"> Never below cost</label>
+            <button class="act go" type="button" id="r-preview">Preview</button>
+          </div>
+          <div id="r-plan"></div>
+        </div>
+      </details>
       <div class="toolbar"><button class="act" type="button" id="reprice">Refresh market prices</button><span class="status" id="invstatus"></span></div>
       <div id="invtable"></div>
     </section>
